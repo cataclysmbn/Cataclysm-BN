@@ -4,6 +4,7 @@
 #include "client_interaction.h"
 #include "engine_client_state.h"
 #include "engine_client_world.h"
+#include "tile_parts.h"
 
 #include <cstdint>
 #include <deque>
@@ -144,12 +145,10 @@ struct describe_request {
     std::string boundary_id = {};
     position target;
 };
-/// What the native mouse view prints for a square, one entry per printed line.
+/// What the native mouse view prints for a square, as the facts it prints.
 struct tile_description {
-    std::vector<std::string> lines = {};
+    std::vector<tile_part> parts = {};
 };
-/// What the native look-around and mouse views print of bubble square `at`, one entry per printed line.
-auto tile_info_lines( const game_client::interaction_position &at ) -> std::vector<std::string>;
 /// Passive read of the hovered square's native description; nothing is selected or planned.
 /// Rejected with `validation_failed` outside the terrain window or on another level.
 auto describe_tile( const describe_request &request, const std::string &epoch )

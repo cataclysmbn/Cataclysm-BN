@@ -312,7 +312,8 @@ auto target_json( const game_client::interaction_target &target, const bubble_fr
     if( target.maximum_position ) { value["maximum"] = to_json( *target.maximum_position, frame ); }
     value["range"] = target.range;
     value["distance_metric"] = target.distance_metric;
-    value["distance"] = game_client::target_distance( target, target.cursor );
+    value["distance"] = target.distance.value_or( game_client::target_distance( target,
+                        target.cursor ) );
     value["status"] = target.status;
     if( !target.status_text.empty() ) { value["status_text"] = target.status_text; }
     value["candidates"] = json::array();
@@ -321,7 +322,10 @@ auto target_json( const game_client::interaction_target &target, const bubble_fr
             {"description", candidate.description}, {"creature", candidate.creature},
             {"position", to_json( candidate.position, frame )}} );
     }
-    if( !target.description.empty() ) { value["description"] = target.description; }
+    if( !target.parts.empty() ) {
+        value["parts"] = json::array();
+        for( const auto &part : target.parts ) { value["parts"].push_back( to_json( part ) ); }
+    }
     if( frame.omt ) { value["unit"] = "omt"; }
     return value;
 }

@@ -1757,12 +1757,12 @@
             "additionalProperties": false
           }
         },
-        "description": {
+        "parts": {
           "type": "array",
-          "description": "The text the native look window prints of the cursor square, wrapped at 60 columns, one localized line per entry. Present on the look-around screen.",
           "items": {
-            "type": "string"
-          }
+            "$ref": "#/$defs/tile_part"
+          },
+          "description": "What the native look window prints of the cursor square, fact by fact. Present on the look-around screen; on a shot, the creature under the cursor."
         }
       },
       "required": [
@@ -4645,17 +4645,61 @@
     "describe_result": {
       "type": "object",
       "properties": {
-        "lines": {
+        "parts": {
           "type": "array",
           "items": {
-            "type": "string"
+            "$ref": "#/$defs/tile_part"
           }
         }
       },
       "required": [
-        "lines"
+        "parts"
       ],
       "additionalProperties": false
+    },
+    "tile_part": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "visibility",
+            "location",
+            "move_cost",
+            "terrain",
+            "light",
+            "furniture",
+            "description",
+            "concealment",
+            "cover",
+            "features",
+            "sign",
+            "below",
+            "field",
+            "trap",
+            "creature",
+            "vehicle",
+            "vehicle_part",
+            "item",
+            "inscription",
+            "sound"
+          ],
+          "description": "What the fact is about. Parts come in the order the native look view prints them."
+        },
+        "text": {
+          "type": "string",
+          "description": "The fact, localized, with color tags."
+        },
+        "detail": {
+          "type": "string",
+          "description": "What more the view says of it when it has room, such as a creature's description; absent for none."
+        }
+      },
+      "required": [
+        "kind",
+        "text"
+      ],
+      "additionalProperties": false,
+      "description": "One fact the look view prints of a square."
     },
     "tint_vars_layer": {
       "type": "object",

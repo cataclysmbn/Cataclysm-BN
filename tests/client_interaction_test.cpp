@@ -58,6 +58,7 @@
 #    include "string_editor_window.h"
 #    include "string_input_popup.h"
 #    include "string_utils.h"
+#    include "tile_parts.h"
 #    include "ui.h"
 #    include "uistate.h"
 #    include "units_utility.h"
@@ -69,6 +70,7 @@
 #    include <filesystem>
 #    include <functional>
 #    include <nlohmann/json.hpp>
+#    include <ranges>
 #    include <set>
 #    include <sstream>
 #    include <stdexcept>
@@ -258,6 +260,38 @@ auto pick_row(const nlohmann::json& row) -> input_event {
 }
 auto pick_count(const nlohmann::json& row, const std::int64_t count) -> input_event {
     return invoke("pickup:count", {.row = row["id"].get<std::string>(), .count = count});
+}
+
+/// The target the map of the screen on top shows: the aiming or the look cursor, as a client reads
+/// it.
+auto cursor_target() -> nlohmann::json {
+    const auto screen = top_screen();
+    REQUIRE(screen["root"]["id"] == "target");
+    return screen["root"]["child"]["target"];
+}
+/// A square of the published target, in the bubble: the test boundary's frame is taken off.
+auto bubble_at(const nlohmann::json& position) -> tripoint_bub_ms {
+    return {position["x"].get<int>() - stack_state().frame.x,
+            position["y"].get<int>() - stack_state().frame.y, position["z"].get<int>()};
+}
+auto move_cursor(const tripoint_bub_ms& to) -> input_event {
+    return invoke(
+        "target:move",
+        {.position = game_client::interaction_position{.x = to.x(), .y = to.y(), .z = to.z()}});
+}
+/// The screen on top at a terminal of 80x24 and at one of 200x60.
+auto at_two_viewports() -> std::pair<std::string, std::string> {
+    const auto saved_x = TERMX;
+    const auto saved_y = TERMY;
+    TERMX = 80;
+    TERMY = 24;
+    auto narrow = top_screen().dump();
+    TERMX = 200;
+    TERMY = 60;
+    auto wide = top_screen().dump();
+    TERMX = saved_x;
+    TERMY = saved_y;
+    return {std::move(narrow), std::move(wide)};
 }
 
 /// Every list below `node`, outermost first.
@@ -1790,7 +1824,7 @@ TEST_CASE(
     CHECK(dropped.front().count == 2);
 }
 TEST_CASE(
-    "real target UI accepts semantic cursor movement and rejects range overflow",
+    "real target UI moves the cursor by invoke and stops a move at the range",
     "[client][interaction][target][mcp]") {
     clear_all_state();
     const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
@@ -1811,50 +1845,37 @@ TEST_CASE(
     REQUIRE_FALSE(you.sees(hidden));
     auto rock = item::spawn("rock");
     auto reads = 0;
-    auto target_position = game_client::interaction_position{};
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = game_client::current_interaction();
-        REQUIRE(snapshot.kind == game_client::interaction_kind::target);
-        REQUIRE(snapshot.target);
-        if (reads++ == 0) {
-            const auto expected_source = game_client::
-                interaction_position{.x = source.x(), .y = source.y(), .z = source.z()};
-            CHECK(snapshot.target->source == expected_source);
-            const auto visible_candidate = std::ranges::find(
-                snapshot.target->candidates,
-                game_client::
-                    interaction_position{.x = visible.x(), .y = visible.y(), .z = visible.z()},
-                &game_client::interaction_target_candidate::position);
-            CHECK(visible_candidate != snapshot.target->candidates.end());
-            const auto hidden_candidate = std::ranges::find(
-                snapshot.target->candidates,
-                game_client::interaction_position{.x = hidden.x(), .y = hidden.y(), .z = hidden.z()},
-                &game_client::interaction_target_candidate::position);
-            CHECK(hidden_candidate == snapshot.target->candidates.end());
-            target_position = {
-                .x = source.x() + 1,
-                .y = source.y(),
-                .z = source.z(),
+        const auto target = cursor_target();
+        const auto range = target["range"].get<int>();
+        const auto step = reads++;
+        if (step == 0) {
+            CHECK(bubble_at(target["source"]) == source);
+            const auto has_candidate = [&](const tripoint_bub_ms& at) {
+                return std::ranges::any_of(target["candidates"], [&](const nlohmann::json& entry) {
+                    return bubble_at(entry["position"]) == at;
+                });
             };
-            const auto outside = game_client::resolve_interaction_command({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::set_target,
-                .position =
-                    game_client::interaction_position{
-                        .x = source.x() + snapshot.target->range + 1,
-                        .y = source.y(),
-                        .z = source.z(),
-                    },
+            CHECK(has_candidate(visible));
+            CHECK_FALSE(has_candidate(hidden));
+            const auto stats = top_screen()["root"]["stats"];
+            const auto reported = std::ranges::find_if(stats, [](const nlohmann::json& stat) {
+                return stat["key"] == "range";
             });
-            REQUIRE_FALSE(outside);
-            CHECK(outside.error().contains("outside the active range"));
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::set_target,
-                .position = target_position,
-            });
+            REQUIRE(reported != stats.end());
+            CHECK((*reported)["max"].get<std::string>() == std::to_string(range));
+            const auto [narrow, wide] = at_two_viewports();
+            CHECK(narrow == wide);
+            return move_cursor(source + tripoint(range + 5, 0, 0));
         }
-        CHECK(snapshot.target->cursor == target_position);
+        if (step == 1) {
+            // A square beyond the range is not taken: the cursor stops where the range ends.
+            CHECK(target["distance"].get<int>() <= range);
+            CHECK(bubble_at(target["current"]) != source + tripoint(range + 5, 0, 0));
+            return move_cursor(source + tripoint_east);
+        }
+        CHECK(bubble_at(target["current"]) == source + tripoint_east);
+        CHECK(target["distance"] == 1);
         return resolve_action("FIRE");
     });
 
@@ -1880,27 +1901,22 @@ TEST_CASE(
     auto rock = item::spawn("rock");
     auto reads = 0;
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = game_client::current_interaction();
         if (reads++ == 0) {
-            REQUIRE(snapshot.target);
-            const auto expected_position = game_client::interaction_position{
-                .x = npc_position.x(), .y = npc_position.y(), .z = npc_position.z()};
-            const auto candidate = std::ranges::
-                find(snapshot.target->candidates, expected_position,
-                     &game_client::interaction_target_candidate::position);
-            REQUIRE(candidate != snapshot.target->candidates.end());
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::set_target,
-                .target_id = candidate->id,
-                .position = candidate->position,
-            });
+            const auto target = cursor_target();
+            const auto candidate =
+                std::ranges::find_if(target["candidates"], [&](const nlohmann::json& entry) {
+                    return bubble_at(entry["position"]) == npc_position;
+                });
+            REQUIRE(candidate != target["candidates"].end());
+            CHECK((*candidate)["creature"] == true);
+            return move_cursor(npc_position);
         }
         if (reads == 2) {
-            REQUIRE(snapshot.kind == game_client::interaction_kind::target);
+            CHECK(bubble_at(cursor_target()["current"]) == npc_position);
             return resolve_action("FIRE");
         }
         if (reads == 3) {
+            const auto snapshot = game_client::current_interaction();
             REQUIRE(snapshot.kind == game_client::interaction_kind::choices);
             CHECK(snapshot.message.contains("Really attack"));
             const auto no = std::ranges::
@@ -1912,11 +1928,9 @@ TEST_CASE(
                 .target_id = no->id,
             });
         }
-        REQUIRE(snapshot.kind == game_client::interaction_kind::target);
-        return resolve({
-            .input_id = snapshot.input_id,
-            .operation = game_client::interaction_operation::cancel,
-        });
+        // The question is answered: the target screen is the top again, and QUIT leaves it.
+        CHECK(top_screen()["root"]["id"] == "target");
+        return resolve_action("QUIT");
     });
 
     CHECK(target_handler::mode_throw(you, *rock, false).empty());
@@ -3415,8 +3429,8 @@ TEST_CASE(
     CHECK(game_client::current_interaction().choices.front().id == "outer");
 }
 TEST_CASE(
-    "look around publishes its cursor and leaves on semantic cancel",
-    "[client][interaction][mcp]") {
+    "look around moves its cursor by invoke, refuses a square outside the map and leaves on QUIT",
+    "[client][interaction][look][mcp]") {
     clear_map();
     auto& you = get_avatar();
     clear_character(you, false);
@@ -3424,48 +3438,55 @@ TEST_CASE(
     auto reads = 0;
     auto cursor = tripoint_bub_ms{};
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = game_client::current_interaction();
-        REQUIRE(snapshot.target);
-        CHECK(snapshot.kind == game_client::interaction_kind::target);
-        CHECK(snapshot.allow_cancel);
-        cursor = {snapshot.target->cursor.x, snapshot.target->cursor.y, snapshot.target->cursor.z};
-        if (reads++ == 0) { return resolve_action("RIGHT"); }
-        return resolve({
-            .input_id = snapshot.input_id,
-            .operation = game_client::interaction_operation::cancel,
-        });
+        const auto target = cursor_target();
+        CHECK(target["status"] == "look");
+        CHECK(top_screen()["role"] == "dialog");
+        cursor = bubble_at(target["current"]);
+        switch (reads++) {
+            case 0:
+                return resolve_action("RIGHT");
+            // The map the game holds starts at 0; a square before it is not taken.
+            case 1:
+                return move_cursor({-5, you.bub_pos().y(), you.bub_pos().z()});
+            default:
+                return resolve_action("QUIT");
+        }
     });
     auto center = you.bub_pos();
     const auto result = g->look_around(false, center, center, false, false, false);
     CHECK_FALSE(result.position);
-    REQUIRE(reads == 2);
+    REQUIRE(reads == 3);
     CHECK(cursor == tripoint_bub_ms(you.bub_pos().x() + 1, you.bub_pos().y(), you.bub_pos().z()));
 }
 TEST_CASE(
-    "look around publishes what the native look window prints of the cursor square",
-    "[client][interaction][mcp]") {
+    "look around tells what is on the cursor square fact by fact, wherever it moves",
+    "[client][interaction][look][mcp]") {
     clear_map();
     auto& you = get_avatar();
     clear_character(you, false);
     const auto guard = interaction_test_guard{};
     auto reads = 0;
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = game_client::current_interaction();
-        REQUIRE(snapshot.target);
-        const auto& target = *snapshot.target;
-        CHECK(target.status == "look");
-        CHECK_FALSE(target.description.empty());
-        // The square under the cursor, wherever it moves, as the mouse view describes it too.
-        CHECK(target.description == engine_client::tile_info_lines(target.cursor));
+        const auto target = cursor_target();
+        CHECK(target["status"] == "look");
+        // The square under the cursor, as the mouse view describes it too.
+        const auto cursor = bubble_at(target["current"]);
+        const auto expected = engine_client::tile_parts(cursor);
+        REQUIRE(target["parts"].size() == expected.size());
+        for (const auto index : std::views::iota(std::size_t{0}, expected.size())) {
+            CHECK(target["parts"][index]["kind"].get<std::string>() == expected[index].kind);
+            CHECK(target["parts"][index]["text"].get<std::string>() == expected[index].text);
+        }
+        CHECK_FALSE(target.contains("description"));
+        const auto [narrow, wide] = at_two_viewports();
+        CHECK(narrow == wide);
         if (reads++ == 0) {
-            CHECK(target.cursor == target.source);
+            CHECK(cursor == you.bub_pos());
             return resolve_action("RIGHT");
         }
-        CHECK(target.cursor.x == target.source.x + 1);
-        return resolve({
-            .input_id = snapshot.input_id,
-            .operation = game_client::interaction_operation::cancel,
-        });
+        CHECK(cursor == you.bub_pos() + tripoint_east);
+        CHECK(target["distance"] == 1);
+        return resolve_action("QUIT");
     });
     auto center = you.bub_pos();
     g->look_around(false, center, center, false, false, false);

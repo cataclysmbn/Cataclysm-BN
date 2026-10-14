@@ -429,8 +429,10 @@ TEST_CASE(
 
     const auto here = engine_client::describe_tile(at(0), epoch);
     REQUIRE(here);
-    CHECK_FALSE(here->lines.empty());
-    CHECK(std::ranges::none_of(here->lines, [](const auto& line) { return line.empty(); }));
+    CHECK_FALSE(here->parts.empty());
+    CHECK(std::ranges::none_of(here->parts, [](const auto& part) {
+        return part.kind.empty() || part.text.empty();
+    }));
     CHECK(engine_client::describe_tile(at(1), epoch));
     CHECK(get_avatar().bub_pos() == you);
     CHECK(calendar::turn == turn);

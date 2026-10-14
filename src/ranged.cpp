@@ -13,7 +13,6 @@
 #include "catalua_hooks.h"
 #include "catalua_icallback_actor.h"
 #include "catalua_sol.h"
-#include "client_interaction.h"
 #include "client_presentation.h"
 #include "character.h"
 #include "character_functions.h"
@@ -26,6 +25,7 @@
 #include "dispersion.h"
 #include "enchantments/enchantment.h"
 #include "enchantments/enchantment_vision.h"
+#include "engine_client_component.h"
 #include "engine_client_presentation.h"
 #include "enums.h"
 #include "event.h"
@@ -64,6 +64,7 @@
 #include "sounds.h"
 #include "string_formatter.h"
 #include "string_id.h"
+#include "target_screen.h"
 #include "translations.h"
 #include "trap.h"
 #include "type_id.h"
@@ -548,7 +549,9 @@ class target_ui
         // Create window and set up input context
         void init_window_and_input();
 
-        auto interaction_snapshot() -> game_client::interaction_snapshot;
+        // The screen as a client sees it: the map with the cursor's facts, and what the aim reports.
+        auto screen_view() -> engine_client::screen_view;
+        auto add_gun_stats( std::vector<engine_client::panel_stat> &stats ) -> void;
 
         // Handle input related to cursor movement.
         // Returns 'true' if action was recognized and processed.
@@ -2996,8 +2999,9 @@ int burst_penalty( const Character &p, const item &gun, int gun_recoil )
 
 } // namespace ranged
 
-auto target_ui::interaction_snapshot() -> game_client::interaction_snapshot
+auto target_ui::screen_view() -> engine_client::screen_view
 {
+    namespace ec = engine_client;
     const auto position_of = []( const tripoint_bub_ms & position ) {
         return game_client::interaction_position{
             .x = position.x(),
@@ -3027,12 +3031,8 @@ auto target_ui::interaction_snapshot() -> game_client::interaction_snapshot
     auto candidates = std::vector<game_client::interaction_target_candidate> {};
     const auto add_candidate = [&]( const tripoint_bub_ms & position, const std::string & label,
     const std::string & description, const bool creature ) {
-        const auto identity = std::vector<std::string> {
-            std::to_string( position.x() ), std::to_string( position.y() ),
-            std::to_string( position.z() ), label, creature ? "creature" : "tile",
-        };
         candidates.push_back( {
-            .id = game_client::opaque_interaction_id( "target", identity ),
+            .id = target_screen::candidate_id( position, creature ),
             .label = label,
             .description = description,
             .position = position_of( position ),
@@ -3068,23 +3068,66 @@ auto target_ui::interaction_snapshot() -> game_client::interaction_snapshot
         maximum.x = ( 2 * g_half_mapsize + 1 ) * SEEX - 1;
         maximum.y = ( 2 * g_half_mapsize + 1 ) * SEEY - 1;
     }
-    return {
-        .kind = game_client::interaction_kind::target,
-        .title = remove_color_tags( uitext_title() ),
-        .allow_cancel = true,
-        .target = game_client::interaction_target{
-            .source = position_of( src ),
-            .cursor = position_of( dst ),
-            .minimum_position = minimum,
-            .maximum_position = maximum,
-            .range = range,
-            .distance_metric = trigdist ? "trig" : "square",
-            .status = status_name(),
-            .status_text = status_text(),
-            .limit_to_reality_bubble = limit_to_reality_bubble,
-            .candidates = std::move( candidates ),
+    auto stats = std::vector<ec::panel_stat> {
+        {
+            .key = "range", .label = _( "Range" ), .value = std::to_string( dist_fn( dst ) ),
+            .max = std::to_string( range ), .tone = status == Status::OutOfRange && mode != TargetMode::Turrets ? "bad" : ""
         },
+        { .key = "elevation", .label = _( "Elevation" ), .value = std::to_string( dst.z() - src.z() ) },
+        { .key = "targets", .label = _( "Targets" ), .value = std::to_string( targets.size() ) },
     };
+    if( mode == TargetMode::Fire || mode == TargetMode::TurretManual ||
+        ( mode == TargetMode::Shape && relevant->is_gun() ) ) {
+        add_gun_stats( stats );
+    }
+    // The native panel describes the creature under the cursor when the avatar sees it.
+    auto described = std::vector<engine_client::tile_part> {};
+    if( dst_critter != nullptr && you->sees( *dst_critter ) ) {
+        described.push_back( { .kind = "creature", .text = dst_critter->disp_name(), .detail = dst_critter->extended_description() } );
+    }
+    auto target = game_client::interaction_target{
+        .source = position_of( src ),
+        .cursor = position_of( dst ),
+        .minimum_position = minimum,
+        .maximum_position = maximum,
+        .range = range,
+        .distance_metric = trigdist ? "trig" : "square",
+        .status = status_name(),
+        .status_text = status_text(),
+        .limit_to_reality_bubble = limit_to_reality_bubble,
+        .candidates = std::move( candidates ),
+        .distance = dist_fn( dst ),
+        .parts = std::move( described ),
+    };
+    return target_screen::screen_of( { .title = remove_color_tags( uitext_title() ), .target = std::move( target ),
+                                       .stats = std::move( stats ), .ctxt = ctxt } );
+}
+
+auto target_ui::add_gun_stats( std::vector<engine_client::panel_stat> &stats ) -> void
+{
+    const auto mode_of_gun = relevant->gun_current_mode();
+    // A mode that comes from a gunmod is named with the mod.
+    stats.push_back( {
+        .key = "firing_mode", .label = _( "Firing mode" ),
+        .value = string_format( "%s%s (%d)", mode_of_gun.target != relevant ? mode_of_gun->tname() + " " : std::string(),
+                                mode_of_gun.tname(), mode_of_gun.qty )
+    } );
+    if( status == Status::OutOfAmmo ) {
+        stats.push_back( { .key = "ammo", .label = _( "Ammo" ), .value = _( "OUT OF AMMO" ), .tone = "bad" } );
+    } else if( ammo ) {
+        stats.push_back( {
+            .key = "ammo", .label = _( "Ammo" ), .value = std::to_string( mode_of_gun->ammo_remaining() ),
+            .max = std::to_string( mode_of_gun->ammo_capacity() ), .unit = ammo->nname( std::max( mode_of_gun->ammo_remaining(), 1 ) )
+        } );
+    }
+    const auto recoil = ranged::recoil_total( *you );
+    const auto min_recoil = ranged::effective_dispersion( *you, relevant->sight_dispersion() );
+    const auto recoil_range = MAX_RECOIL - min_recoil;
+    const auto level = recoil >= min_recoil + ( recoil_range * 2 / 3 ) ? std::pair{ pgettext( "amount of backward momentum", "<color_red>High</color>" ), "bad" } :
+                       recoil >= min_recoil + ( recoil_range / 2 ) ? std::pair{ pgettext( "amount of backward momentum", "<color_yellow>Medium</color>" ), "" } :
+                       recoil >= min_recoil + ( recoil_range / 4 ) ? std::pair{ pgettext( "amount of backward momentum", "<color_light_green>Low</color>" ), "" } :
+                       std::pair{ pgettext( "amount of backward momentum", "<color_cyan>None</color>" ), "good" };
+    stats.push_back( { .key = "recoil", .label = _( "Recoil" ), .value = remove_color_tags( level.first ), .tone = level.second } );
 }
 
 target_handler::trajectory target_ui::run()
@@ -3211,6 +3254,9 @@ target_handler::trajectory target_ui::run()
         }
     }
 
+    const auto screen = engine_client::screen_scope( ctxt, {
+        .view = [this]( const engine_client::boundary_state & ) { return screen_view(); },
+    } );
     // Event loop!
     ExitCode loop_exit_code;
     std::string timed_out_action;
@@ -3225,20 +3271,10 @@ target_handler::trajectory target_ui::run()
         // Wait for user input (or use value retrieved from activity)
         if( action.empty() ) {
             const auto timeout = get_option<int>( "EDGE_SCROLL" );
-            const auto interaction = game_client::interaction_scope( ctxt, [this]() {
-                return interaction_snapshot();
-            } );
             action = ctxt.handle_input( timeout );
-            const auto &event = ctxt.get_raw_input();
-            if( event.interaction &&
-                event.interaction->operation == game_client::interaction_operation::set_target ) {
-                const auto position = *event.interaction->position;
-                set_cursor_pos( tripoint_bub_ms( position.x, position.y, position.z ) );
+            if( const auto moved = target_screen::moved_to( ctxt.get_raw_input() ) ) {
+                set_cursor_pos( *moved );
                 continue;
-            }
-            if( event.interaction &&
-                event.interaction->operation == game_client::interaction_operation::cancel ) {
-                action = "QUIT";
             }
         }
 

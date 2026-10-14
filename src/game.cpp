@@ -53,6 +53,7 @@
 #include "drop_token.h"
 #include "editmap.h"
 #include "enchantments/enchantment_vision.h"
+#include "engine_client_component.h"
 #include "engine_client_contract.h"
 #include "engine_client_presentation.h"
 #include "enums.h"
@@ -164,6 +165,8 @@
 #include "string_input_popup.h"
 #include "string_utils.h"
 #include "thread_pool.h"
+#include "target_screen.h"
+#include "tile_parts.h"
 #include "tileray.h"
 #include "timed_event.h"
 #include "translations.h"
@@ -180,6 +183,7 @@
 #include "vehicle/veh_interact.h"
 #include "vehicle/veh_type.h"
 #include "vehicle/vehicle.h"
+#include "vehicle/vehicle_display.h"
 #include "vehicle/vehicle_grab.h"
 #include "vehicle/vehicle_part.h"
 #include "vehicle/vpart_position.h"
@@ -8495,32 +8499,33 @@ void game::print_all_tile_info( const tripoint_bub_ms &lp, const catacurses::win
     }
 }
 
+namespace
+{
+/// What the look view says of how well the avatar sees a square.
+auto visibility_message( const visibility_type visibility ) -> std::string
+{
+    switch( visibility ) {
+        case VIS_CLEAR:
+            return _( "Clearly visible." );
+        case VIS_BOOMER:
+            return _( "A bright pink blur." );
+        case VIS_BOOMER_DARK:
+            return _( "A pink blur." );
+        case VIS_DARK:
+            return _( "Darkness." );
+        case VIS_LIT:
+            return _( "Bright light." );
+        case VIS_HIDDEN:
+            return _( "Unseen." );
+    }
+    return {};
+}
+} // namespace
+
 void game::print_visibility_info( const catacurses::window &w_look, int column, int &line,
                                   visibility_type visibility )
 {
-    const char *visibility_message = nullptr;
-    switch( visibility ) {
-        case VIS_CLEAR:
-            visibility_message = _( "Clearly visible." );
-            break;
-        case VIS_BOOMER:
-            visibility_message = _( "A bright pink blur." );
-            break;
-        case VIS_BOOMER_DARK:
-            visibility_message = _( "A pink blur." );
-            break;
-        case VIS_DARK:
-            visibility_message = _( "Darkness." );
-            break;
-        case VIS_LIT:
-            visibility_message = _( "Bright light." );
-            break;
-        case VIS_HIDDEN:
-            visibility_message = _( "Unseen." );
-            break;
-    }
-
-    mvwprintz( w_look, point( column, line ), c_light_gray, visibility_message );
+    mvwprintz( w_look, point( column, line ), c_light_gray, visibility_message( visibility ) );
     line += 2;
 }
 
@@ -8763,6 +8768,197 @@ void game::print_graffiti_info( const tripoint_bub_ms &lp, const catacurses::win
                         m.ter( lp ) == t_grave_new ? _( "Graffiti: %s" ) : _( "Inscription: %s" ),
                         m.graffiti_at( lp ) );
     }
+}
+
+namespace
+{
+/// What the look view prints of the terrain, furniture and cover on a square.
+auto add_terrain_parts( const tripoint_bub_ms &lp,
+                        std::vector<engine_client::tile_part> &parts ) -> void
+{
+    map &m = get_map();
+    avatar &u = get_avatar();
+    const auto add = [&parts]( const std::string & kind, const std::string & text ) {
+        parts.push_back( { .kind = kind, .text = text } );
+    };
+    const auto &terrain = m.ter( lp ).obj();
+    const oter_id &cur_ter_m = get_overmapbuffer( g->get_current_dimension_id() ).ter( tripoint_abs_omt(
+                                   project_to<coords::omt>( bub_to_abs( lp ) ) ) );
+    const auto move_cost = m.move_cost( lp );
+    add( "location", colorize( cur_ter_m->get_name(),
+                               cur_ter_m->get_color( uistate.overmap_show_land_use_codes ) ) );
+    add( "move_cost", move_cost == 0 ? colorize( trim_whitespaces( _( "Impassable " ) ), c_light_red ) :
+         trim_whitespaces( string_format( _( "Move cost: %d " ), move_cost * 50 ) ) );
+    add( "terrain", colorize( m.tername( lp ), terrain.color() ) );
+    const auto light = get_light_level( std::max( 1.0,
+                                        LIGHT_AMBIENT_LIT - m.ambient_light_at( lp ) + 1.0 ) );
+    add( "light", colorize( light.first, light.second ) );
+    if( !terrain.description.translated().empty() ) { add( "description", terrain.description.translated() ); }
+
+    if( m.has_furn( lp ) ) {
+        const auto &furniture = m.furn( lp ).obj();
+        add( "furniture", colorize( m.furnname( lp ), furniture.color() ) );
+        if( !furniture.description.translated().empty() ) { add( "description", furniture.description.translated() ); }
+        if( furniture.fluid_grid && furniture.fluid_grid->role == fluid_grid_role::tank &&
+            furniture.fluid_grid->allow_output ) {
+            auto dispensable_liquids = std::vector<std::string> {};
+            if( furniture.fluid_grid->universal_liquids ) {
+                const auto *vars = m.furn_vars( lp );
+                const auto assigned_liquid = vars == nullptr ? std::string{} :
+                                             vars->get( "fluid_grid_assigned_liquid", "" );
+                if( !assigned_liquid.empty() ) {
+                    dispensable_liquids.emplace_back( item::nname( itype_id( assigned_liquid ) ) );
+                }
+            } else {
+                dispensable_liquids = furniture.fluid_grid->allowed_liquids |
+                std::views::transform( []( const itype_id & liquid ) {
+                    return item::nname( liquid );
+                } ) | std::ranges::to<std::vector>();
+            }
+            add( "description", dispensable_liquids.empty() ?
+                 _( "Can dispense any allowed liquid; the type is assigned when filled." ) :
+                 string_format( _( "Can dispense: %s." ), join( dispensable_liquids, ", " ) ) );
+        }
+    }
+
+    if( const auto concealment = m.coverage( lp ); concealment > 0 ) {
+        add( "concealment", colorize( string_format( _( "Concealment: %d%%" ), concealment ),
+                                      c_dark_gray ) );
+    }
+    const auto cover = m.has_furn( lp ) ? m.furn( lp ).obj().bash.ranged->block_unaimed_chance :
+                       terrain.bash.ranged->block_unaimed_chance;
+    if( cover > 0_pct ) { add( "cover", colorize( string_format( _( "Cover: %d%%" ), cover / 1_pct ), c_dark_gray ) ); }
+    if( const auto features = m.features( lp ); !features.empty() ) { add( "features", colorize( features, c_dark_gray ) ); }
+    if( const auto signage = m.get_signage( lp ); !signage.empty() ) {
+        add( "sign", string_format( _( "Sign: %s" ), u.has_trait( trait_ILLITERATE ) ? "???" : signage ) );
+    }
+    if( lp.z() > -OVERMAP_DEPTH && !m.has_floor( lp ) ) {
+        const auto below = tripoint_bub_ms( lp.xy(), lp.z() - 1 );
+        const auto tile_below = m.has_furn( below ) ? m.tername( below ) + ", " + m.furnname( below ) :
+                                m.tername( below );
+        add( "below", colorize( m.has_floor_or_support( lp ) ? string_format( _( "Below: %s; Walkable" ),
+                                tile_below ) :
+                                string_format( _( "Below: %s; No support" ), tile_below ), c_dark_gray ) );
+    }
+}
+
+/// What the look view prints of the fields and trap on a square.
+auto add_field_parts( const tripoint_bub_ms &lp,
+                      std::vector<engine_client::tile_part> &parts ) -> void
+{
+    map &m = get_map();
+    for( const auto &[type, entry] : m.field_at( lp ) ) {
+        const auto burns = type.obj().has_fire && ( m.has_flag( TFLAG_FIRE_CONTAINER, lp ) ||
+                           m.ter( lp ) == t_pit_shallow || m.ter( lp ) == t_pit );
+        parts.push_back( { .kind = "field", .text = colorize( burns ? get_fire_fuel_string( lp ) : entry.name(), entry.color() ) } );
+    }
+    const trap &tr = m.tr_at( lp );
+    if( !tr.can_see( lp, get_avatar() ) ) { return; }
+    const auto *const construction = m.partial_con_at( lp );
+    parts.push_back( { .kind = "trap", .text = colorize( construction && tr.loadid == tr_unfinished_construction ?
+                       string_format( _( "Unfinished task: %s, %d%% complete" ), construction->id.obj().group->name(),
+                                      construction->counter / 100000 ) : tr.name(), tr.color ) } );
+}
+
+/// What the look view prints of the vehicle part on a square and the parts mounted with it.
+auto add_vehicle_parts( const optional_vpart_position &vp,
+                        std::vector<engine_client::tile_part> &parts ) -> void
+{
+    if( !vp ) { return; }
+    parts.push_back( { .kind = "vehicle", .text = colorize( vp->vehicle().name, c_white ) } );
+    const auto mounted = vp->vehicle().parts_at_relative( vp->mount(), true );
+    for( const auto &[index, part] : std::views::enumerate( mounted ) ) {
+        const auto label = part_list_label_of( vp->vehicle(), part, false );
+        parts.push_back( { .kind = "vehicle_part", .text = label.open + label.name + label.close,
+                           .detail = index != 0 ? std::string{} : vp->is_inside() ? _( "Interior" ) : _( "Exterior" ) } );
+    }
+    if( const auto label = vp.get_label() ) { parts.push_back( { .kind = "vehicle_part", .text = string_format( _( "Label: %s" ), *label ) } ); }
+}
+
+/// What the look view prints of the items on a square: a line per name, with how many alike.
+auto add_item_parts( const tripoint_bub_ms &lp,
+                     std::vector<engine_client::tile_part> &parts ) -> void
+{
+    map &m = get_map();
+    avatar &u = get_avatar();
+    const auto add = [&parts]( const std::string & text ) { parts.push_back( { .kind = "item", .text = text } ); };
+    if( !m.sees_some_items( lp, u ) ) { return; }
+    if( m.has_flag( "CONTAINER", lp ) && !m.could_see_items( lp, u ) ) {
+        add( _( "You cannot see what is inside of it." ) );
+    } else if( ( u.has_effect( effect_blind ) || u.worn_with_flag( flag_BLIND ) ) &&
+               u.clairvoyance() < 1 ) {
+        add( colorize( _( "There's something there, but you can't see what it is." ), c_yellow ) );
+    } else {
+        auto item_names = std::map<std::string, std::pair<int, nc_color>> {};
+        for( auto &entry : m.i_at( lp ) ) {
+            auto &seen = item_names[entry->tname()];
+            ++seen.first;
+            seen.second = entry->color_in_inventory();
+        }
+        for( const auto &[name, seen] : item_names ) {
+            add( colorize( seen.first > 1 ?
+                           string_format( pgettext( "%s is the name of the item.  %d is the quantity of that item.",
+                                                    "%s [%d]" ),
+                                          name, seen.first ) : name, seen.second ) );
+        }
+    }
+}
+} // namespace
+
+auto engine_client::tile_parts( const tripoint_bub_ms &lp ) -> std::vector<tile_part>
+{
+    map &m = get_map();
+    avatar &u = get_avatar();
+    const auto &cache = m.get_visibility_variables_cache();
+    const auto inbounds = m.inbounds( lp );
+    const auto visibility = inbounds ? m.get_visibility( m.apparent_light_at( lp, cache ),
+                            cache ) : VIS_HIDDEN;
+    const Creature *const creature = g->critter_at( lp, true );
+    auto parts = std::vector<tile_part> {};
+    if( visibility == VIS_CLEAR ) {
+        add_terrain_parts( lp, parts );
+        add_field_parts( lp, parts );
+        if( creature != nullptr && ( u.sees( *creature ) || creature == &u ) ) {
+            parts.push_back( { .kind = "creature", .text = creature->disp_name(), .detail = creature->extended_description() } );
+        }
+        add_vehicle_parts( m.veh_at( lp ), parts );
+        add_item_parts( lp, parts );
+        if( m.has_graffiti_at( lp ) ) {
+            parts.push_back( { .kind = "inscription", .text = string_format( m.ter( lp ) == t_grave_new ? _( "Graffiti: %s" ) : _( "Inscription: %s" ), m.graffiti_at( lp ) ) } );
+        }
+    } else {
+        parts.push_back( { .kind = "visibility", .text = colorize( visibility_message( visibility ), c_light_gray ) } );
+        if( creature != nullptr ) {
+            const auto special = u.sees_with_specials( *creature );
+            auto described = std::vector<std::string> {};
+            if( special != enchantment_vision_id::NULL_ID() ) {
+                if( special->use_normal_mon_tile() ) {
+                    parts.push_back( { .kind = "creature", .text = creature->disp_name(), .detail = creature->extended_description() } );
+                } else {
+                    described.emplace_back( special->get_mon_desc( *creature ) );
+                }
+            } else if( u.sees_with_infrared( *creature ) ) {
+                creature->describe_infrared( described );
+            }
+            for( const auto &line : described ) { parts.push_back( { .kind = "creature", .text = line } ); }
+        }
+    }
+    if( !inbounds ) { return parts; }
+    const auto add_sound = [&parts]( const std::string & text ) { parts.push_back( { .kind = "sound", .text = text } ); };
+    if( const auto sound = sounds::sound_at( lp ); !sound.empty() ) {
+        add_sound( string_format( _( "You heard %s from here." ), sound ) );
+        return parts;
+    }
+    // Other z-levels, from the lowest.
+    for( auto level = tripoint_bub_ms( lp.xy(), -OVERMAP_DEPTH ); level.z() <= OVERMAP_HEIGHT;
+         ++level.z() ) {
+        if( level.z() == lp.z() ) { continue; }
+        if( const auto sound = sounds::sound_at( level ); !sound.empty() ) {
+            add_sound( string_format( level.z() > lp.z() ? _( "You heard %s from above." ) :
+                                      _( "You heard %s from below." ), sound ) );
+        }
+    }
+    return parts;
 }
 
 bool game::check_zone( const zone_type_id &type, const tripoint_bub_ms &where ) const
@@ -9622,6 +9818,33 @@ look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
         }
         mark_main_ui_adaptor_resize();
     }
+    const auto position_of = []( const tripoint_bub_ms & position ) {
+        return game_client::interaction_position{ .x = position.x(), .y = position.y(), .z = position.z() };
+    };
+    const auto minimum = tripoint_bub_ms( 0, 0, -OVERMAP_DEPTH );
+    const auto maximum = tripoint_bub_ms( g_mapsize_x - 1, g_mapsize_y - 1, OVERMAP_HEIGHT );
+    const auto look_screen = engine_client::screen_scope( ctxt, {
+        .view = [&]( const engine_client::boundary_state & )
+        {
+            return target_screen::screen_of( {
+                .title = _( "Look Around" ),
+                .target = {
+                    .source = position_of( u.bub_pos() ),
+                    .cursor = position_of( lp ),
+                    .minimum_position = position_of( minimum ),
+                    .maximum_position = position_of( maximum ),
+                    .range = std::max( g_mapsize_x, g_mapsize_y ),
+                    .distance_metric = "square",
+                    .status = is_moving_zone ? "zone_move" : !select_zone ? "look" :
+                    has_first_point ? "zone_second" : "zone_first",
+                    .status_text = is_moving_zone ? _( "Moving zone." ) : !select_zone ? std::string() :
+                    has_first_point ? _( "Select second point." ) : _( "Select first point." ),
+                    .parts = engine_client::tile_parts( lp ),
+                },
+                .ctxt = ctxt,
+            } );
+        },
+    } );
     do {
         u.view_offset = center - u.bub_pos();
         if( select_zone ) {
@@ -9653,46 +9876,17 @@ look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
         const auto edge_scroll = mouse_edge_scrolling_terrain( ctxt );
         const int scroll_timeout = get_option<int>( "EDGE_SCROLL" );
         const bool edge_scrolling = edge_scroll != tripoint_rel_ms::zero() && scroll_timeout >= 0;
-        const auto position_of = []( const tripoint_bub_ms & position ) {
-            return game_client::interaction_position{ .x = position.x(), .y = position.y(), .z = position.z() };
-        };
-        const auto look_interaction = game_client::interaction_scope( ctxt, [&]() {
-            return game_client::interaction_snapshot{
-                .kind = game_client::interaction_kind::target,
-                .title = _( "Look Around" ),
-                .message = is_moving_zone ? _( "Moving zone." ) : !select_zone ? std::string() :
-                has_first_point ? _( "Select second point." ) : _( "Select first point." ),
-                .allow_cancel = true,
-                .target = game_client::interaction_target{
-                    .source = position_of( u.bub_pos() ),
-                    .cursor = position_of( lp ),
-                    .minimum_position = game_client::interaction_position{ .x = 0, .y = 0, .z = -OVERMAP_DEPTH },
-                    .maximum_position = game_client::interaction_position{
-                        .x = g_mapsize_x - 1, .y = g_mapsize_y - 1, .z = OVERMAP_HEIGHT },
-                    .range = std::max( g_mapsize_x, g_mapsize_y ),
-                    .distance_metric = "square",
-                    .status = is_moving_zone ? "zone_move" : !select_zone ? "look" :
-                    has_first_point ? "zone_second" : "zone_first",
-                    .description = engine_client::tile_info_lines( position_of( lp ) ),
-                },
-            };
-        } );
         if( edge_scrolling ) {
             action = ctxt.handle_input( scroll_timeout );
         } else {
             action = ctxt.handle_input();
         }
-        if( ctxt.get_raw_input().interaction &&
-            ctxt.get_raw_input().interaction->operation == game_client::interaction_operation::cancel ) {
-            action = "QUIT";
-        }
         ( void ) zone_blink; // kept for callback signature
-        if( const auto &event = ctxt.get_raw_input(); event.interaction &&
-            event.interaction->operation == game_client::interaction_operation::set_target ) {
-            const auto position = *event.interaction->position;
-            const auto moved = tripoint_bub_ms( position.x, position.y, position.z );
-            center += moved - lp;
-            lp = moved;
+        if( const auto moved = target_screen::moved_to( ctxt.get_raw_input() );
+            moved && moved->x() >= minimum.x() && moved->y() >= minimum.y() && moved->z() >= minimum.z() &&
+            moved->x() <= maximum.x() && moved->y() <= maximum.y() && moved->z() <= maximum.z() ) {
+            center += *moved - lp;
+            lp = *moved;
             continue;
         }
         if( action == "LIST_ITEMS" ) {

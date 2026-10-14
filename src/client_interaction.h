@@ -1,6 +1,7 @@
 #pragma once
 
 #include "client_interaction_data.h"
+#include "tile_parts.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -165,8 +166,10 @@ struct interaction_target {
     std::string status_text;
     bool limit_to_reality_bubble = false;
     std::vector<interaction_target_candidate> candidates;
-    /// What the native look window prints of the cursor square, line by line, localized; empty where the screen prints nothing.
-    std::vector<std::string> description;
+    /// How far the cursor is from the source as the screen measures range; absent: by `distance_metric`.
+    std::optional<int> distance;
+    /// What the native look window prints of the cursor square; empty where the screen prints nothing.
+    std::vector<engine_client::tile_part> parts;
 };
 
 struct interaction_overmap_note {

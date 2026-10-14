@@ -409,7 +409,9 @@ auto serialize_hello( const hello_reply &reply ) -> std::string
 auto serialize_description( const tile_description &value ) -> std::string
 {
     using ordered = nlohmann::ordered_json;
-    return ordered{{"lines", value.lines}}.dump();
+    auto parts = ordered::array();
+    for( const auto &part : value.parts ) { parts.push_back( to_json( part ) ); }
+    return ordered{{"parts", std::move( parts )}}.dump();
 }
 auto serialize_receipt( const receipt &value ) -> std::expected<std::string, error>
 {
