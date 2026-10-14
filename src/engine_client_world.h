@@ -34,6 +34,13 @@ namespace engine_client::world
 {
 
 auto capture_world() -> world_state;
+/// The submaps of the reality bubble with a part of a vehicle in them.
+auto vehicle_submaps( map &here ) -> std::set<tripoint_bub_sm>;
+/// Whether no square of the submap holding `p` can make a cell: it is a uniform block of terrain the engine
+/// never memorizes, which `submap::is_uniform` says until any write of terrain, furniture, field, item or
+/// trap clears it, and none of `vehicles` is in it. Every square of it is then bare.
+auto bare_submap( const map &here, const tripoint_bub_ms &p,
+                  const std::set<tripoint_bub_sm> &vehicles ) -> bool;
 /// An inventory or ground row with the items it stands for.
 struct item_stack {
     inventory_entry row;

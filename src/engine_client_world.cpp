@@ -542,6 +542,30 @@ auto vehicle_squares( map &here ) -> std::set<tripoint_bub_ms>
     return squares;
 }
 
+/// `bare_submap` for the squares of one capture, asked once per run of squares in a submap. Squares on the
+/// avatar's level are never bare here: one without a floor shows what the native view draws below it.
+class bare_scan
+{
+    public:
+        bare_scan( map &here, const avatar &you ) : here_( here ), level_( you.bub_pos().z() ),
+            vehicles_( vehicle_submaps( here ) ) {}
+        auto operator()( const tripoint_bub_ms &p ) -> bool {
+            if( p.z() == level_ ) { return false; }
+            const auto at = project_to<coords::sm>( p );
+            if( last_ != at ) {
+                last_ = at;
+                bare_ = bare_submap( here_, p, vehicles_ );
+            }
+            return bare_;
+        }
+    private:
+        const map &here_;
+        int level_;
+        std::set<tripoint_bub_sm> vehicles_;
+        std::optional<tripoint_bub_sm> last_;
+        bool bare_ = false;
+};
+
 /// Cells the avatar knows by memory or by a vehicle it is entitled to perceive; nothing else costs time.
 auto capture_known( map &here, const avatar &you, const std::string &dimension,
                     std::map<position, cell> &cells ) -> void
@@ -550,7 +574,9 @@ auto capture_known( map &here, const avatar &you, const std::string &dimension,
     {
         ZoneScopedN( "engine_client_capture_visible" );
         const auto view = map_perception::current_sight();
+        auto bare = bare_scan( here, you );
         for( const auto &p : map_perception::visible_cells( here ) ) {
+            if( bare( p ) ) { continue; }
             if( auto out = visible_cell( here, p, you, view, dimension ) ) { cells.emplace( out->at, std::move( *out ) ); }
         }
     }
@@ -1005,6 +1031,23 @@ auto by_level( const tripoint_bub_ms &a, const tripoint_bub_ms &b ) -> bool
 auto basis = patch_basis {};
 } // namespace
 
+auto vehicle_submaps( map &here ) -> std::set<tripoint_bub_sm>
+{
+    auto submaps = std::set<tripoint_bub_sm> {};
+    for( const auto &wrapped : here.get_vehicles() ) {
+        for( const auto &part : wrapped.v->get_all_parts() ) { submaps.insert( project_to<coords::sm>( part.pos() ) ); }
+    }
+    return submaps;
+}
+
+auto bare_submap( const map &here, const tripoint_bub_ms &p,
+                  const std::set<tripoint_bub_sm> &vehicles ) -> bool
+{
+    const auto *const sm = here.get_submap_at( p );
+    return sm != nullptr && sm->is_uniform && here.ter( p )->has_flag( TFLAG_NO_MEMORY ) &&
+           !vehicles.contains( project_to<coords::sm>( p ) );
+}
+
 auto capture_world() -> world_state
 {
     ZoneScopedN( "engine_client_capture_world" );
@@ -1049,13 +1092,16 @@ auto capture_patch( const snapshot &previous, const bool consecutive ) -> world_
     if( !continues ) {
         capture_known( here, you, dimension, patch.cells );
         patch.exhaustive = true;
-        std::ranges::copy_if( visible, std::back_inserter( live ), [&]( const auto & p ) { return patch.cells.contains( position_of( here, p, dimension ) ); } );
+        auto bare = bare_scan( here, you );
+        std::ranges::copy_if( visible, std::back_inserter( live ), [&]( const auto & p ) { return !bare( p ) && patch.cells.contains( position_of( here, p, dimension ) ); } );
     } else {
         const auto view = map_perception::current_sight();
         const auto &known = previous.value.world.cells;
         // A square seen now is named once, by what the avatar knows of it, and not at all when that is what
         // the last patch said.
+        auto bare = bare_scan( here, you );
         for( const auto &p : visible ) {
+            if( bare( p ) ) { continue; }
             if( auto out = visible_cell( here, p, you, view, dimension ) ) {
                 live.push_back( p );
                 const auto before = known.find( out->at );

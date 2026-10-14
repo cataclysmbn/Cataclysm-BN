@@ -444,6 +444,54 @@ TEST_CASE(
     watched.publish();
 }
 
+TEST_CASE(
+    "a submap of open air is skipped only while every square in it is bare",
+    "[engine_client_patch]") {
+    const auto start = make_open_ground(12);
+    auto& here = get_map();
+    const auto item_at = start + tripoint(0, 0, 2);
+    const auto field_at = start + tripoint(SEEX, 0, 4);
+    const auto furniture_at = start + tripoint(0, SEEY, 6);
+    const auto vehicle_at = start + tripoint(-SEEX, 0, 3);
+    const auto cleanup = on_out_of_scope([&] { clear_air_above(furniture_at); });
+    const auto untouched = start + tripoint(-SEEX, -SEEY, 5);
+    const auto skipped = [&](const tripoint_bub_ms& p) {
+        return ec::world::bare_submap(here, p, ec::world::vehicle_submaps(here));
+    };
+    // The check of `bare_unmemorized`, square by square.
+    const auto holds_nothing = [&](const tripoint_bub_ms& p) {
+        return here.ter(p)->has_flag(TFLAG_NO_MEMORY) && here.furn(p) == f_null && !here.veh_at(p)
+            && !here.sees_some_items(p, get_avatar())
+            && std::ranges::none_of(here.field_at(p), [](const auto& field) {
+                   return field.second.is_field_alive();
+               });
+    };
+    // Every square of every submap the capture would skip holds nothing.
+    const auto every_skipped_is_bare = [&]() {
+        map_perception::acquire();
+        const auto vehicles = ec::world::vehicle_submaps(here);
+        const auto visible = map_perception::visible_cells(here);
+        const auto skips = std::ranges::count_if(visible, [&](const auto& p) {
+            return ec::world::bare_submap(here, p, vehicles);
+        });
+        const auto wrong = std::ranges::count_if(visible, [&](const auto& p) {
+            return ec::world::bare_submap(here, p, vehicles) && !holds_nothing(p);
+        });
+        CHECK(skips > 0);
+        CHECK(wrong == 0);
+    };
+    CHECK(skipped(untouched));
+    every_skipped_is_bare();
+    here.add_item_or_charges(item_at, item::spawn("rock"));
+    here.add_field(field_at, field_type_id("fd_smoke"), 1);
+    here.furn_set(furniture_at, furn_id("f_table"));
+    REQUIRE(
+        here.add_vehicle(vproto_id("golf_cart"), vehicle_at, 0_degrees, 0, 0, false) != nullptr);
+    for (const auto& p : {item_at, field_at, furniture_at, vehicle_at}) { CHECK_FALSE(skipped(p)); }
+    CHECK(skipped(untouched));
+    every_skipped_is_bare();
+}
+
 /// Milliseconds a publication costs with a full capture and with a patch, for an avatar who has
 /// memorized `squares` squares: `cata_test-mcp "[.engine_client_patch_cost]"` prints them.
 TEST_CASE("the cost of a publication by squares memorized", "[.engine_client_patch_cost]") {
