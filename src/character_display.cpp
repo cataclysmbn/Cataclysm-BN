@@ -708,11 +708,11 @@ static void draw_bionics_info( const catacurses::window &w_info, const unsigned 
     werase( w_info );
     if( line < bionicslist.size() ) {
         const auto& [bio, cnt] = bionicslist[line];
+        const auto text = cnt > 1 ? string_format( "%s\n\n%s", bio.info().description,
+                          string_format( _( "You have %s instances of this bionic installed." ), cnt ) ) :
+                          bio.info().description.translated();
         // NOLINTNEXTLINE(cata-use-named-point-constants)
-        const auto fmtStr = cnt > 1 ? "%s\n\n" + std::string(
-                                _( "You have %s instances of this bionic installed." ) ) : std::string( "%s" );
-        fold_and_print(
-            w_info, point( 1, 0 ), FULL_SCREEN_WIDTH - 2, c_light_gray, fmtStr, bio.info().description, cnt );
+        fold_and_print( w_info, point( 1, 0 ), FULL_SCREEN_WIDTH - 2, c_light_gray, text );
     }
     wnoutrefresh( w_info );
 }
