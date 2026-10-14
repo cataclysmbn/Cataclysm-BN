@@ -1,133 +1,1099 @@
 {
   "valid": [
     {
-      "name": "advanced inventory pane with totals",
-      "def": "panel",
-      "value": {
-        "id": "panel:pane-destination",
-        "kind": "panel",
-        "title": "Destination",
-        "subtitle": "Directly under you",
-        "stats": [
-          {
-            "key": "weight",
-            "label": "Weight",
-            "value": "0.0",
-            "unit": "kg"
-          },
-          {
-            "key": "volume",
-            "label": "Volume",
-            "value": "0.00",
-            "max": "1000.00",
-            "unit": "L"
-          },
-          {
-            "key": "sort",
-            "label": "Sort",
-            "value": "name"
-          }
-        ]
-      }
-    },
-    {
-      "name": "advanced inventory area picker with the player's keys",
+      "name": "advanced inventory screen",
       "def": "screen",
       "value": {
-        "screen_id": "screen:1",
-        "role": "dialog",
+        "screen_id": "screen:7",
+        "role": "screen",
         "title": "Advanced inventory",
         "root": {
-          "id": "areas",
-          "kind": "list",
+          "id": "aim:panes",
+          "kind": "split",
           "affordances": [
-            "bn:choose:areas"
+            "aim:close"
           ],
-          "columns": [],
-          "rows": [
+          "relation": "peers",
+          "active": "aim:pane:left",
+          "children": [
             {
-              "id": "ITEMS_CONTAINER",
-              "label": "Container",
-              "description": "",
-              "denial": "",
-              "enabled": true,
-              "selectable": true,
-              "selected": false,
-              "columns": []
+              "id": "aim:pane:left",
+              "kind": "panel",
+              "affordances": [
+                "aim:set_area",
+                "aim:toggle_vehicle",
+                "aim:filter"
+              ],
+              "title": "Left pane",
+              "subtitle": "Below",
+              "stats": [
+                {
+                  "key": "weight",
+                  "label": "Weight",
+                  "value": "0.0",
+                  "unit": "kg"
+                },
+                {
+                  "key": "volume",
+                  "label": "Volume",
+                  "value": "0.00",
+                  "max": "1000.00",
+                  "unit": "L"
+                },
+                {
+                  "key": "sort",
+                  "label": "Sort",
+                  "value": "name"
+                }
+              ],
+              "child": {
+                "id": "aim:pane:left:body",
+                "kind": "split",
+                "relation": "peers",
+                "active": "aim:pane:left:items",
+                "children": [
+                  {
+                    "id": "aim:pane:left:areas",
+                    "kind": "list",
+                    "affordances": [
+                      "aim:set_area"
+                    ],
+                    "columns": [],
+                    "rows": [
+                      {
+                        "id": "area:INVENTORY",
+                        "label": "Inventory",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "area:SW",
+                        "label": "South West",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "area:S",
+                        "label": "South",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "area:SE",
+                        "label": "South East",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "area:W",
+                        "label": "West",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "area:CENTER",
+                        "label": "Directly below you",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "area:E",
+                        "label": "East",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "area:NW",
+                        "label": "North West",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "area:N",
+                        "label": "North",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "area:NE",
+                        "label": "North East",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "area:ABOVE",
+                        "label": "Above",
+                        "description": "",
+                        "denial": "You can't put items there!",
+                        "enabled": false,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "area:BELOW",
+                        "label": "Below",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": true,
+                        "columns": [],
+                        "toggled": false
+                      },
+                      {
+                        "id": "area:DRAGGED",
+                        "label": "Grabbed Vehicle",
+                        "description": "",
+                        "denial": "You can't put items there!",
+                        "enabled": false,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "area:ALL",
+                        "label": "Surrounding area",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "area:CONTAINER",
+                        "label": "Container",
+                        "description": "",
+                        "denial": "You can't put items there!",
+                        "enabled": false,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "area:WORN",
+                        "label": "Worn Items",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      }
+                    ],
+                    "total": 16,
+                    "selection": "single",
+                    "activate": "aim:set_area"
+                  },
+                  {
+                    "id": "aim:pane:left:items",
+                    "kind": "list",
+                    "affordances": [
+                      "aim:move"
+                    ],
+                    "columns": [],
+                    "rows": [],
+                    "total": 0,
+                    "selection": "count"
+                  }
+                ]
+              }
             },
             {
-              "id": "ITEMS_N",
-              "label": "North",
-              "description": "",
-              "denial": "",
-              "enabled": true,
-              "selectable": true,
-              "selected": false,
-              "columns": []
-            },
-            {
-              "id": "ITEMS_CE",
-              "label": "Directly below you",
-              "description": "",
-              "denial": "",
-              "enabled": false,
-              "selectable": true,
-              "selected": false,
-              "columns": []
+              "id": "aim:pane:right",
+              "kind": "panel",
+              "affordances": [
+                "aim:set_area",
+                "aim:toggle_vehicle",
+                "aim:filter"
+              ],
+              "title": "Right pane",
+              "subtitle": "Below",
+              "stats": [
+                {
+                  "key": "weight",
+                  "label": "Weight",
+                  "value": "0.0",
+                  "unit": "kg"
+                },
+                {
+                  "key": "volume",
+                  "label": "Volume",
+                  "value": "0.00",
+                  "max": "1000.00",
+                  "unit": "L"
+                },
+                {
+                  "key": "sort",
+                  "label": "Sort",
+                  "value": "name"
+                }
+              ],
+              "child": {
+                "id": "aim:pane:right:body",
+                "kind": "split",
+                "relation": "peers",
+                "active": "aim:pane:right:items",
+                "children": [
+                  {
+                    "id": "aim:pane:right:areas",
+                    "kind": "list",
+                    "affordances": [
+                      "aim:set_area"
+                    ],
+                    "columns": [],
+                    "rows": [
+                      {
+                        "id": "area:INVENTORY",
+                        "label": "Inventory",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "area:SW",
+                        "label": "South West",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "area:S",
+                        "label": "South",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "area:SE",
+                        "label": "South East",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "area:W",
+                        "label": "West",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "area:CENTER",
+                        "label": "Directly below you",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "area:E",
+                        "label": "East",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "area:NW",
+                        "label": "North West",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "area:N",
+                        "label": "North",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "area:NE",
+                        "label": "North East",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "area:ABOVE",
+                        "label": "Above",
+                        "description": "",
+                        "denial": "You can't put items there!",
+                        "enabled": false,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "area:BELOW",
+                        "label": "Below",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": true,
+                        "columns": [],
+                        "toggled": false
+                      },
+                      {
+                        "id": "area:DRAGGED",
+                        "label": "Grabbed Vehicle",
+                        "description": "",
+                        "denial": "You can't put items there!",
+                        "enabled": false,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "area:ALL",
+                        "label": "Surrounding area",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "area:CONTAINER",
+                        "label": "Container",
+                        "description": "",
+                        "denial": "You can't put items there!",
+                        "enabled": false,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "area:WORN",
+                        "label": "Worn Items",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      }
+                    ],
+                    "total": 16,
+                    "selection": "single",
+                    "activate": "aim:set_area"
+                  },
+                  {
+                    "id": "aim:pane:right:items",
+                    "kind": "list",
+                    "columns": [],
+                    "rows": [],
+                    "total": 0,
+                    "selection": "none"
+                  }
+                ]
+              }
             }
-          ],
-          "total": 3,
-          "selection": "single",
-          "activate": "bn:choose:areas"
+          ]
         },
         "affordances": [
           {
-            "id": "bn:choose:areas",
-            "label": "Choose",
+            "id": "aim:move",
+            "label": "Move an amount of item",
             "keys": [],
-            "enabled": true,
+            "enabled": false,
+            "denial": "There are no items to be moved!",
             "args": {
-              "row": {
-                "component_id": "areas"
+              "rows": {
+                "component_id": "aim:panes",
+                "counts": true
+              },
+              "pane": {
+                "component_id": "aim:panes"
               }
             },
             "expect": "boundary"
           },
           {
-            "id": "bn:cancel",
-            "label": "Cancel",
+            "id": "aim:set_area",
+            "label": "Show area",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "aim:panes"
+              },
+              "pane": {
+                "component_id": "aim:panes"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "aim:toggle_vehicle",
+            "label": "Toggle vehicle",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "pane": {
+                "component_id": "aim:panes"
+              }
+            },
+            "expect": "screen"
+          },
+          {
+            "id": "aim:filter",
+            "label": "Filter",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {},
+              "pane": {
+                "component_id": "aim:panes"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "aim:close",
+            "label": "Exit screen",
             "keys": [],
             "enabled": true,
             "role": "cancel",
             "expect": "screen"
           },
           {
-            "id": "ITEMS_CONTAINER",
-            "label": "Container",
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
             "keys": [
-              "C"
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "UP"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Select left inventory",
+            "keys": [
+              "h",
+              "LEFT"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Select right inventory",
+            "keys": [
+              "l",
+              "RIGHT"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_DOWN",
+            "label": "Page down",
+            "keys": [
+              "NPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_UP",
+            "label": "Page up",
+            "keys": [
+              "PPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TOGGLE_TAB",
+            "label": "Toggle tab",
+            "keys": [
+              "TAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TOGGLE_VEH",
+            "label": "Toggle vehicle",
+            "keys": [
+              "v",
+              "V"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "FILTER",
+            "label": "Filter",
+            "keys": [
+              "f",
+              "F",
+              "/"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RESET_FILTER",
+            "label": "Reset filter",
+            "keys": [
+              "r",
+              "R"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TOGGLE_FILTER_AUTORESET",
+            "label": "Toggle AIM Filter Autoreset",
+            "keys": [
+              "T"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "EXAMINE",
+            "label": "Examine",
+            "keys": [
+              "e",
+              "E"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SORT",
+            "label": "Change sorting mode",
+            "keys": [
+              "s",
+              "S"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TOGGLE_AUTO_PICKUP",
+            "label": "Toggle auto-pickup for item",
+            "keys": [
+              "p"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TOGGLE_FAVORITE",
+            "label": "Toggle item as favorite",
+            "keys": [
+              "*"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "MOVE_SINGLE_ITEM",
+            "label": "Move a single item",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "MOVE_VARIABLE_ITEM",
+            "label": "Move an amount of item",
+            "keys": [
+              "m"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "MOVE_ITEM_STACK",
+            "label": "Move item stack",
+            "keys": [
+              "M"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "MOVE_ALL_ITEMS",
+            "label": "Move all items",
+            "keys": [
+              ","
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CATEGORY_SELECTION",
+            "label": "Toggle category selection mode",
+            "keys": [
+              "t"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ITEMS_NW",
+            "label": "Select items @ North-West",
+            "keys": [
+              "7",
+              "NUMPAD_7"
             ],
             "enabled": true,
             "expect": "screen"
           },
           {
             "id": "ITEMS_N",
-            "label": "North",
+            "label": "Select items @ North",
             "keys": [
-              "k"
+              "8",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ITEMS_NE",
+            "label": "Select items @ North-East",
+            "keys": [
+              "9",
+              "NUMPAD_9"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ITEMS_W",
+            "label": "Select items @ West",
+            "keys": [
+              "4",
+              "NUMPAD_4"
             ],
             "enabled": true,
             "expect": "screen"
           },
           {
             "id": "ITEMS_CE",
-            "label": "Directly below you",
+            "label": "Select items @ center",
+            "keys": [
+              "5",
+              "NUMPAD_5"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ITEMS_E",
+            "label": "Select items @ East",
+            "keys": [
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ITEMS_SW",
+            "label": "Select items @ South-West",
+            "keys": [
+              "1",
+              "NUMPAD_1"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ITEMS_S",
+            "label": "Select items @ South",
+            "keys": [
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ITEMS_SE",
+            "label": "Select items @ South-East",
+            "keys": [
+              "3",
+              "NUMPAD_3"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ITEMS_UP",
+            "label": "Select items from above",
+            "keys": [
+              "<"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ITEMS_DOWN",
+            "label": "Select items from below",
+            "keys": [
+              ">"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ITEMS_INVENTORY",
+            "label": "Select items in inventory",
+            "keys": [
+              "i",
+              "I",
+              "0",
+              "NUMPAD_0"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ITEMS_WORN",
+            "label": "Select items currently worn",
+            "keys": [
+              "w",
+              "W"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ITEMS_AROUND",
+            "label": "Select items @ all 9 fields",
+            "keys": [
+              "a",
+              "A"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ITEMS_DRAGGED_CONTAINER",
+            "label": "Select items in dragged container",
+            "keys": [
+              "d",
+              "D"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ITEMS_CONTAINER",
+            "label": "Select items in container",
+            "keys": [
+              "c",
+              "C"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ITEMS_DEFAULT",
+            "label": "Restore default layout",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SAVE_DEFAULT",
+            "label": "Save default layout",
             "keys": [],
             "enabled": true,
             "expect": "screen"
           }
         ],
+        "focus": {
+          "component_id": "aim:pane:left:items"
+        },
         "context": "ADVANCED_INVENTORY"
+      }
+    },
+    {
+      "name": "area shown in the right pane, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:1",
+          "revision": "8"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "aim:set_area",
+          "args": {
+            "row": "area:SW",
+            "pane": "aim:pane:right"
+          }
+        }
+      }
+    },
+    {
+      "name": "area shown in the right pane, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "area shown in the right pane, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "area shown in the right pane, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "area shown in the right pane, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "12",
+          "revision": "9"
+        }
+      }
+    },
+    {
+      "name": "left pane filtered, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:2",
+          "revision": "9"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "aim:filter",
+          "args": {
+            "text": "zzzz",
+            "pane": "aim:pane:left"
+          }
+        }
+      }
+    },
+    {
+      "name": "left pane filtered, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "left pane filtered, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "left pane filtered, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "left pane filtered, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "13",
+          "revision": "10"
+        }
+      }
+    },
+    {
+      "name": "advanced inventory closed, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "screen_id": "screen:7"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "aim:close"
+        }
+      }
+    },
+    {
+      "name": "advanced inventory closed, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "advanced inventory closed, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "advanced inventory closed, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "advanced inventory closed, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "15",
+          "revision": "12"
+        }
       }
     }
   ],
@@ -136,15 +1102,21 @@
       "name": "pane stat with a colour",
       "def": "panel",
       "value": {
-        "id": "panel:pane-destination",
+        "id": "aim:pane:left",
         "kind": "panel",
-        "title": "Destination",
-        "subtitle": "Directly under you",
+        "affordances": [
+          "aim:set_area",
+          "aim:toggle_vehicle",
+          "aim:filter"
+        ],
+        "title": "Left pane",
+        "subtitle": "Below",
         "stats": [
           {
             "key": "weight",
             "label": "Weight",
-            "value": "50",
+            "value": "0.0",
+            "unit": "kg",
             "color": "c_red"
           }
         ]
@@ -155,14 +1127,20 @@
       "name": "pane stat without its value",
       "def": "panel",
       "value": {
-        "id": "panel:pane-destination",
+        "id": "aim:pane:left",
         "kind": "panel",
-        "title": "Destination",
-        "subtitle": "Directly under you",
+        "affordances": [
+          "aim:set_area",
+          "aim:toggle_vehicle",
+          "aim:filter"
+        ],
+        "title": "Left pane",
+        "subtitle": "Below",
         "stats": [
           {
             "key": "weight",
-            "label": "Weight"
+            "label": "Weight",
+            "unit": "kg"
           }
         ]
       },
