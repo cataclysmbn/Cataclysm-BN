@@ -10,7 +10,7 @@
         "root": {
           "id": "messages",
           "kind": "panel",
-          "title": "Messages",
+          "title": "",
           "child": {
             "id": "messages:log",
             "kind": "list",
