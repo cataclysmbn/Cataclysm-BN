@@ -46,6 +46,8 @@
 #    include "client_interaction.h"
 #    include "client_memory.h"
 #    include "cursesdef.h"
+#    include "engine_client_component.h"
+#    include "engine_client_contract.h"
 #    include "inventory_ui.h"
 #    include "pickup.h"
 #    include "ui.h"
@@ -1220,6 +1222,7 @@ TEST_CASE(
     auto marker = item::spawn("test_info_result", calendar::turn);
     auto selector = inventory_pick_selector{you};
     auto run = std::function<auto()->void>{};
+    auto aim = false;
 
     SECTION("inventory selector") {
         you.i_add(item::spawn("test_info_jersey", calendar::turn));
@@ -1245,6 +1248,7 @@ TEST_CASE(
         uistate.transfer_save.pane.area_idx = AIM_INVENTORY;
         uistate.transfer_save.pane_right.area_idx = AIM_CENTER;
         uistate.adv_inv_container_location = -1;
+        aim = true;
         run = []() { create_advanced_inv(); };
     }
 
@@ -1255,6 +1259,39 @@ TEST_CASE(
         ++reads;
         REQUIRE(reads == 1);
         before.check(*marker);
+        if (aim) {
+            // The screen publishes its rows as components; reading them and refusing a row it does
+            // not hold leave the items as they were.
+            const auto state = engine_client::capture_boundary(
+                {.epoch = "epoch:test",
+                 .ready = {.phase = "waiting_for_input",
+                           .accepts_interaction_commands = true,
+                           .accepts_registered_actions = true}});
+            REQUIRE(state);
+            const auto top = engine_client::top_screen(*state);
+            CHECK(top.context == "ADVANCED_INVENTORY");
+            before.check(*marker);
+            const auto request = engine_client::rows_request{
+                .epoch = state->epoch,
+                .boundary_id = state->id,
+                .component_id = "aim:pane:left:items",
+                .limit = 1};
+            const auto page = engine_client::read_rows(request, *state);
+            REQUIRE(page);
+            CHECK(page->total == 2);
+            CHECK(page->rows.size() == 1);
+            before.check(*marker);
+            const auto invalid = engine_client::resolve_invoke(
+                *state,
+                engine_client::invoke_operation{
+                    .affordance_id = "aim:move",
+                    .args =
+                        {.rows = std::vector<engine_client::invoke_row>{{.id = "nonexistent-item"}},
+                         .pane = "aim:pane:right"}});
+            CHECK_FALSE(invalid);
+            before.check(*marker);
+            return native_cancel();
+        }
         const auto page = game_client::current_interaction({.offset = 0, .limit = 1});
         REQUIRE(page.structured);
         REQUIRE(page.choice_total >= 3);

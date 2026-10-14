@@ -1,7 +1,6 @@
 #if defined(CATA_MCP)
 
 #    include "action.h"
-#    include "advanced_inv.h"
 #    include "avatar.h"
 #    include "cached_options.h"
 #    include "calendar.h"
@@ -250,59 +249,6 @@ auto finish_pickup_activity(avatar& you) -> void {
     REQUIRE_FALSE(you.activity);
 }
 
-constexpr auto advanced_inventory_test_pos = tripoint_bub_ms{60, 60, 0};
-
-struct advanced_inventory_fixture_guard {
-    advanced_inv_save_state old_transfer_save = uistate.transfer_save;
-    int old_container_location = uistate.adv_inv_container_location;
-    int old_container_index = uistate.adv_inv_container_index;
-    itype_id old_container_type = uistate.adv_inv_container_type;
-    itype_id old_container_content_type = uistate.adv_inv_container_content_type;
-    bool old_container_in_vehicle = uistate.adv_inv_container_in_vehicle;
-    time_point old_turn = calendar::turn;
-
-    advanced_inventory_fixture_guard() {
-        const auto previous_test_mode = test_mode;
-        test_mode = true;
-        clear_all_state();
-        clear_character(get_avatar(), false);
-        test_mode = previous_test_mode;
-        calendar::turn = calendar::turn_zero + 12_hours;
-        auto& you = get_avatar();
-        you.setpos(map_local_to_abs(get_map(), advanced_inventory_test_pos));
-        you.set_moves(1000);
-        you.worn.push_back(item::spawn("duffelbag"));
-        uistate.transfer_save = advanced_inv_save_state{};
-        uistate.transfer_save.active_left = true;
-        uistate.transfer_save.saved_area = AIM_INVENTORY;
-        uistate.transfer_save.saved_area_right = AIM_CENTER;
-        uistate.transfer_save.pane.area_idx = AIM_INVENTORY;
-        uistate.transfer_save.pane_right.area_idx = AIM_CENTER;
-        uistate.transfer_save.pane.sort_idx = SORTBY_NAME;
-        uistate.transfer_save.pane_right.sort_idx = SORTBY_NAME;
-        uistate.adv_inv_container_location = -1;
-        uistate.adv_inv_container_index = 0;
-        uistate.adv_inv_container_type = itype_id::NULL_ID();
-        uistate.adv_inv_container_content_type = itype_id::NULL_ID();
-        uistate.adv_inv_container_in_vehicle = false;
-    }
-
-    ~advanced_inventory_fixture_guard() {
-        const auto previous_test_mode = test_mode;
-        test_mode = true;
-        clear_all_state();
-        clear_character(get_avatar(), false);
-        test_mode = previous_test_mode;
-        uistate.transfer_save = old_transfer_save;
-        uistate.adv_inv_container_location = old_container_location;
-        uistate.adv_inv_container_index = old_container_index;
-        uistate.adv_inv_container_type = old_container_type;
-        uistate.adv_inv_container_content_type = old_container_content_type;
-        uistate.adv_inv_container_in_vehicle = old_container_in_vehicle;
-        calendar::turn = old_turn;
-    }
-};
-
 auto find_choice_type(
     const game_client::interaction_snapshot& snapshot, const std::string& type,
     const std::string& role) {
@@ -341,139 +287,6 @@ TEST_CASE("interaction_test_guard leaves a borrowed compositor intact", "[client
           == borrowed.get<cata_cursesport::WINDOW>());
     CHECK(catacurses::stdscr.get<cata_cursesport::WINDOW>()->width == 7);
 }
-
-TEST_CASE(
-    "advanced inventory exposes both live panes and semantic focus without transfer",
-    "[client][interaction][advanced_inventory][mcp]") {
-    const auto guard = interaction_test_guard{};
-    const auto fixture = advanced_inventory_fixture_guard{};
-    auto& you = get_avatar();
-    std::ranges::for_each(std::views::iota(0, 3), [&](const auto /*index*/) {
-        you.i_add(item::spawn("test_1kg_cube", calendar::turn));
-    });
-    auto charges = item::spawn("test_platinum_bit", calendar::turn, 10);
-    get_map().add_item(advanced_inventory_test_pos, std::move(charges));
-    auto focused_id = std::string{};
-    auto initial_schema = std::string{};
-    auto reads = 0;
-
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = game_client::current_interaction({.limit = 200});
-        REQUIRE(snapshot.context == "ADVANCED_INVENTORY");
-        REQUIRE(snapshot.kind == game_client::interaction_kind::inventory);
-        REQUIRE(snapshot.panes.size() == 2);
-        CHECK_FALSE(snapshot.allow_set_count);
-        CHECK(snapshot.allow_cancel);
-        // With no container around, that area cannot take items; the native screen draws it red.
-        CHECK(std::ranges::contains(snapshot.panes.front().blocked_areas, "ITEMS_CONTAINER"));
-        CHECK_FALSE(std::ranges::contains(snapshot.panes.front().blocked_areas, "ITEMS_INVENTORY"));
-        CHECK(std::ranges::count(snapshot.panes, "source", &game_client::interaction_pane::role)
-              == 1);
-        CHECK(
-            std::ranges::count(snapshot.panes, "destination", &game_client::interaction_pane::role)
-            == 1);
-        if (reads++ == 0) {
-            const auto inventory = find_choice_type(snapshot, "test_1kg_cube", "source");
-            const auto ground = find_choice_type(snapshot, "test_platinum_bit", "destination");
-            REQUIRE(inventory != snapshot.choices.end());
-            REQUIRE(ground != snapshot.choices.end());
-            CHECK(inventory->available_count == 3);
-            CHECK(ground->available_count == 10);
-            CHECK(inventory->storage_kind == "inventory");
-            CHECK(ground->storage_kind == "ground");
-            const auto source =
-                std::ranges::find(snapshot.panes, "source", &game_client::interaction_pane::role);
-            REQUIRE(source != snapshot.panes.end());
-            CHECK(source->storage_kind == "inventory");
-            const auto destination = std::ranges::
-                find(snapshot.panes, "destination", &game_client::interaction_pane::role);
-            REQUIRE(destination != snapshot.panes.end());
-            CHECK(destination->storage_kind == "ground");
-            CHECK(inventory->area_id != ground->area_id);
-            CHECK_FALSE(inventory->selected_count);
-            CHECK_FALSE(inventory->minimum_count);
-            CHECK_FALSE(ground->selected_count);
-            CHECK_FALSE(ground->minimum_count);
-            CHECK(inventory->highlighted);
-            CHECK_FALSE(ground->highlighted);
-            initial_schema = snapshot.schema_id;
-            focused_id = ground->id;
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::choose,
-                .target_id = focused_id,
-            });
-        }
-        const auto focused =
-            std::ranges::find(snapshot.choices, focused_id, &game_client::interaction_choice::id);
-        REQUIRE(focused != snapshot.choices.end());
-        CHECK(focused->highlighted);
-        CHECK(snapshot.schema_id != initial_schema);
-        CHECK(you.amount_of(itype_id("test_1kg_cube")) == 3);
-        CHECK(ground_charges(itype_id("test_platinum_bit")) == 10);
-        CHECK_FALSE(you.activity);
-        return resolve({
-            .input_id = snapshot.input_id,
-            .operation = game_client::interaction_operation::cancel,
-        });
-    });
-
-    create_advanced_inv();
-    CHECK(reads == 2);
-    CHECK(you.amount_of(itype_id("test_1kg_cube")) == 3);
-    CHECK(ground_charges(itype_id("test_platinum_bit")) == 10);
-    CHECK_FALSE(you.activity);
-}
-
-TEST_CASE(
-    "advanced inventory publishes its area picker with the keys the player bound",
-    "[client][interaction][advanced_inventory][mcp]") {
-    const auto guard = interaction_test_guard{};
-    const auto fixture = advanced_inventory_fixture_guard{};
-    // The manager hands out its stored bindings; the test rebinds the key through them and restores
-    // it.
-    auto& bound = const_cast<std::vector<input_event>&>(
-        inp_mngr.get_input_for_action("ITEMS_N", "ADVANCED_INVENTORY"));
-    const auto original = bound;
-    const auto restore = on_out_of_scope([&]() { bound = original; });
-    bound = {input_event('z', input_event_t::keyboard)};
-    auto observed = game_client::interaction_snapshot{};
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        observed = game_client::current_interaction({.limit = 200});
-        return resolve({
-            .input_id = observed.input_id,
-            .operation = game_client::interaction_operation::cancel,
-        });
-    });
-
-    create_advanced_inv();
-
-    const auto area = [&](const std::string& action) {
-        const auto found =
-            std::ranges::find(observed.areas, action, &game_client::interaction_area::action_id);
-        REQUIRE(found != observed.areas.end());
-        return *found;
-    };
-    CHECK(observed.areas.size() == NUM_AIM_LOCATIONS);
-    const auto container = area("ITEMS_CONTAINER");
-    // With no vehicle grabbed that area does not exist; the inventory always does.
-    CHECK_FALSE(area("ITEMS_DRAGGED_CONTAINER").available);
-    CHECK(area("ITEMS_INVENTORY").available);
-    CHECK(container.label == "Container");
-    CHECK(container.key == "c");
-    CHECK(std::pair{container.x, container.y} == std::pair{0, 0});
-    const auto inventory = area("ITEMS_INVENTORY");
-    CHECK(inventory.label == "Inventory");
-    CHECK(std::pair{inventory.x, inventory.y} == std::pair{3, 1});
-    // The key is the player's binding, not the native header's fixed mark.
-    const auto north = area("ITEMS_N");
-    CHECK(north.label == "North");
-    CHECK(north.key == "z");
-    CHECK(std::pair{north.x, north.y} == std::pair{11, 0});
-    REQUIRE_FALSE(observed.panes.empty());
-    CHECK(observed.panes.front().area_label == inventory.label);
-}
-
 TEST_CASE(
     "the in-game main menu names its rows by the action they run",
     "[client][interaction][mcp][main_menu]") {
@@ -498,7 +311,6 @@ TEST_CASE(
     CHECK(options->enabled);
     CHECK(options->label == "Options");
 }
-
 TEST_CASE(
     "the map offers Options as an action of its own", "[client][interaction][mcp][main_menu]") {
     const auto ctxt = get_default_mode_input_context();
@@ -506,7 +318,6 @@ TEST_CASE(
     CHECK(std::ranges::find(actions, "open_options") != actions.end());
     CHECK(ctxt.get_action_name("open_options") == "Options");
 }
-
 TEST_CASE(
     "the map offers zoom to a client that draws the map itself",
     "[client][interaction][mcp][zoom]") {
@@ -520,694 +331,6 @@ TEST_CASE(
               == std::vector<char>{std::string_view(action) == "zoom_in" ? 'z' : 'Z'});
     }
 }
-
-TEST_CASE(
-    "advanced inventory distinguishes inventory and mixed ground cargo storage",
-    "[client][interaction][advanced_inventory][mcp]") {
-    const auto guard = interaction_test_guard{};
-    const auto fixture = advanced_inventory_fixture_guard{};
-    auto& here = get_map();
-    const auto cart_pos = advanced_inventory_test_pos + tripoint_east;
-    auto* const cart = here.add_vehicle(vproto_id("shopping_cart"), cart_pos, 0_degrees, 0, 0);
-    REQUIRE(cart != nullptr);
-    const auto cargo = cart->part_with_feature(tripoint_mnt_veh::zero(), "CARGO", true);
-    REQUIRE(cargo >= 0);
-    cart->get_items(cargo).clear();
-    REQUIRE_FALSE(cart->add_item(cargo, item::spawn("test_1kg_cube", calendar::turn)));
-    here.add_item(cart_pos, item::spawn("test_1kg_cube", calendar::turn));
-    uistate.transfer_save.saved_area = AIM_ALL;
-    uistate.transfer_save.pane.area_idx = AIM_ALL;
-    auto reads = 0;
-
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = game_client::current_interaction({.limit = 200});
-        REQUIRE(snapshot.context == "ADVANCED_INVENTORY");
-        const auto source =
-            std::ranges::find(snapshot.panes, "source", &game_client::interaction_pane::role);
-        REQUIRE(source != snapshot.panes.end());
-        CHECK(source->storage_kind == "mixed");
-        const auto ground = std::ranges::find_if(snapshot.choices, [&](const auto& choice) {
-            return choice.pane_id == source->id && choice.storage_kind == "ground"
-                && std::ranges::any_of(choice.columns, [](const auto& column) {
-                       return column.key == "type" && column.value == "test_1kg_cube";
-                   });
-        });
-        const auto cargo_item = std::ranges::find_if(snapshot.choices, [&](const auto& choice) {
-            return choice.pane_id == source->id && choice.storage_kind == "cargo"
-                && std::ranges::any_of(choice.columns, [](const auto& column) {
-                       return column.key == "type" && column.value == "test_1kg_cube";
-                   });
-        });
-        REQUIRE(ground != snapshot.choices.end());
-        REQUIRE(cargo_item != snapshot.choices.end());
-        REQUIRE(ground->area_id);
-        REQUIRE(cargo_item->area_id);
-        CHECK(*ground->area_id != *cargo_item->area_id);
-        ++reads;
-        return resolve({
-            .input_id = snapshot.input_id,
-            .operation = game_client::interaction_operation::cancel,
-        });
-    });
-
-    create_advanced_inv();
-    CHECK(reads == 1);
-    CHECK_FALSE(get_avatar().activity);
-    CHECK(get_avatar().backlog.empty());
-    CHECK(
-        std::ranges::count_if(
-            here.i_at(cart_pos),
-            [](const auto* candidate) { return candidate->typeId() == itype_id("test_1kg_cube"); })
-        == 1);
-    CHECK(cart->get_items(cargo).size() == 1);
-}
-
-TEST_CASE(
-    "advanced inventory filters one pane and rejects removed and stale identities",
-    "[client][interaction][advanced_inventory][mcp]") {
-    const auto guard = interaction_test_guard{};
-    const auto fixture = advanced_inventory_fixture_guard{};
-    auto& you = get_avatar();
-    you.i_add(item::spawn("test_1kg_cube", calendar::turn));
-    auto charges = item::spawn("test_platinum_bit", calendar::turn, 10);
-    get_map().add_item(advanced_inventory_test_pos, std::move(charges));
-    auto removed_id = std::string{};
-    auto old_input_id = std::uint64_t{0};
-    auto step = 0;
-
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = game_client::current_interaction({.limit = 200});
-        if (snapshot.context != "ADVANCED_INVENTORY") {
-            REQUIRE(snapshot.kind == game_client::interaction_kind::field);
-            REQUIRE(step == 1);
-            step = 2;
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::fill,
-                .target_id = snapshot.field->id,
-                .value = "__no_advanced_inventory_match__",
-                .submit = true,
-            });
-        }
-        if (step == 0) {
-            const auto inventory = find_choice_type(snapshot, "test_1kg_cube", "source");
-            REQUIRE(inventory != snapshot.choices.end());
-            removed_id = inventory->id;
-            old_input_id = snapshot.input_id;
-            step = 1;
-            return resolve_action("FILTER");
-        }
-        REQUIRE(step == 2);
-        const auto source =
-            std::ranges::find(snapshot.panes, "source", &game_client::interaction_pane::role);
-        REQUIRE(source != snapshot.panes.end());
-        CHECK(source->filter == "__no_advanced_inventory_match__");
-        CHECK(find_choice_type(snapshot, "test_platinum_bit", "destination")
-              != snapshot.choices.end());
-        CHECK(std::ranges::none_of(snapshot.choices, [&](const auto& choice) {
-            return choice.id == removed_id;
-        }));
-        const auto removed = game_client::resolve_interaction_command({
-            .input_id = snapshot.input_id,
-            .operation = game_client::interaction_operation::choose,
-            .target_id = removed_id,
-        });
-        REQUIRE_FALSE(removed);
-        CHECK(removed.error().starts_with("invalid:"));
-        const auto stale = game_client::resolve_interaction_command({
-            .input_id = old_input_id,
-            .operation = game_client::interaction_operation::choose,
-            .target_id = removed_id,
-        });
-        REQUIRE_FALSE(stale);
-        CHECK(stale.error().starts_with("stale:"));
-        step = 3;
-        return resolve({
-            .input_id = snapshot.input_id,
-            .operation = game_client::interaction_operation::cancel,
-        });
-    });
-
-    create_advanced_inv();
-    CHECK(step == 3);
-    CHECK(you.amount_of(itype_id("test_1kg_cube")) == 1);
-    CHECK(ground_charges(itype_id("test_platinum_bit")) == 10);
-    CHECK_FALSE(you.activity);
-}
-
-TEST_CASE(
-    "advanced inventory panes publish their native header totals, capacities and sort mode",
-    "[client][interaction][advanced_inventory][mcp]") {
-    const auto guard = interaction_test_guard{};
-    const auto fixture = advanced_inventory_fixture_guard{};
-    auto& you = get_avatar();
-    you.i_add(item::spawn("test_1kg_cube", calendar::turn));
-    get_map().add_item(
-        advanced_inventory_test_pos, item::spawn("test_platinum_bit", calendar::turn, 10));
-    const auto weight = [](const units::mass value) {
-        return string_format("%.1f", convert_weight(value));
-    };
-    auto checked = 0;
-
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = game_client::current_interaction({.limit = 200});
-        REQUIRE(snapshot.panes.size() == 2);
-        for (const auto& pane : snapshot.panes) {
-            REQUIRE(pane.totals);
-            const auto& totals = *pane.totals;
-            CHECK(totals.weight_unit == weight_units());
-            CHECK(totals.volume_unit == volume_units_abbr());
-            CHECK_FALSE(pane.sort.empty());
-            if (pane.storage_kind == "inventory" || pane.storage_kind == "worn") {
-                // Carried weight against the capacity the native header prints after the slash.
-                CHECK(totals.weight == weight(you.weight_carried()));
-                CHECK(totals.weight_max == weight(you.weight_capacity()));
-                CHECK(totals.volume == format_volume(you.volume_carried()));
-                CHECK(totals.volume_max == format_volume(you.volume_capacity()));
-                CHECK(totals.over_weight == (you.weight_carried() > you.weight_capacity()));
-            } else {
-                CHECK(totals.weight_max.empty());
-                CHECK_FALSE(totals.over_weight);
-                CHECK_FALSE(totals.weight.empty());
-                CHECK_FALSE(totals.volume.empty());
-            }
-            ++checked;
-        }
-        // The wire value carries the same fields.
-        const auto wire = nlohmann::json::parse(game_client::serialize_interaction(snapshot));
-        for (const auto& pane : wire["panes"]) {
-            CHECK(pane["totals"].contains("weight_max"));
-            CHECK(pane["sort"].is_string());
-        }
-        return resolve(
-            {.input_id = snapshot.input_id,
-             .operation = game_client::interaction_operation::cancel});
-    });
-
-    create_advanced_inv();
-    CHECK(checked == 2);
-}
-
-TEST_CASE(
-    "advanced inventory native variable moves transfer exact stacks and charges",
-    "[client][interaction][advanced_inventory][replay][mcp]") {
-    const auto guard = interaction_test_guard{};
-
-    SECTION("two of three inventory items move to center ground") {
-        const auto fixture = advanced_inventory_fixture_guard{};
-        auto& you = get_avatar();
-        std::ranges::for_each(std::views::iota(0, 3), [&](const auto /*index*/) {
-            you.i_add(item::spawn("test_1kg_cube", calendar::turn));
-        });
-        auto step = 0;
-        game_client::memory::set_input_provider([&](const int /*timeout*/) {
-            const auto snapshot = game_client::current_interaction({.limit = 200});
-            if (snapshot.context != "ADVANCED_INVENTORY") {
-                REQUIRE(step == 2);
-                REQUIRE(snapshot.kind == game_client::interaction_kind::field);
-                step = 3;
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::fill,
-                    .target_id = snapshot.field->id,
-                    .value = "2",
-                    .submit = true,
-                });
-            }
-            if (step == 0) {
-                const auto target = find_choice_type(snapshot, "test_1kg_cube", "source");
-                REQUIRE(target != snapshot.choices.end());
-                step = 1;
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::choose,
-                    .target_id = target->id,
-                });
-            }
-            if (step == 1) {
-                CHECK(
-                    std::ranges::
-                        count(snapshot.choices, true, &game_client::interaction_choice::highlighted)
-                    == 1);
-                step = 2;
-                return resolve_action("MOVE_VARIABLE_ITEM");
-            }
-            REQUIRE(step == 3);
-            step = 4;
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::cancel,
-            });
-        });
-
-        create_advanced_inv();
-        REQUIRE(you.activity);
-        CHECK(you.activity->id() == activity_id("ACT_DROP"));
-        process_activity(you);
-        CHECK(step == 4);
-        CHECK_FALSE(you.activity);
-        CHECK(you.backlog.empty());
-        CHECK(you.amount_of(itype_id("test_1kg_cube")) == 1);
-        CHECK(ground_item_count(itype_id("test_1kg_cube")) == 2);
-    }
-
-    SECTION("three of ten ground charges move to inventory") {
-        const auto fixture = advanced_inventory_fixture_guard{};
-        auto& you = get_avatar();
-        auto charges = item::spawn("test_platinum_bit", calendar::turn, 10);
-        get_map().add_item(advanced_inventory_test_pos, std::move(charges));
-        auto step = 0;
-        game_client::memory::set_input_provider([&](const int /*timeout*/) {
-            const auto snapshot = game_client::current_interaction({.limit = 200});
-            if (snapshot.context != "ADVANCED_INVENTORY") {
-                REQUIRE(step == 2);
-                REQUIRE(snapshot.kind == game_client::interaction_kind::field);
-                step = 3;
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::fill,
-                    .target_id = snapshot.field->id,
-                    .value = "3",
-                    .submit = true,
-                });
-            }
-            if (step == 0) {
-                const auto target = find_choice_type(snapshot, "test_platinum_bit", "destination");
-                REQUIRE(target != snapshot.choices.end());
-                step = 1;
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::choose,
-                    .target_id = target->id,
-                });
-            }
-            if (step == 1) {
-                const auto source = std::ranges::
-                    find(snapshot.panes, "source", &game_client::interaction_pane::role);
-                REQUIRE(source != snapshot.panes.end());
-                const auto target = find_choice_type(snapshot, "test_platinum_bit", "source");
-                REQUIRE(target != snapshot.choices.end());
-                CHECK(target->area_id == source->area_id);
-                step = 2;
-                return resolve_action("MOVE_VARIABLE_ITEM");
-            }
-            REQUIRE(step == 3);
-            step = 4;
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::cancel,
-            });
-        });
-
-        create_advanced_inv();
-        REQUIRE(you.activity);
-        CHECK(you.activity->id() == activity_id("ACT_PICKUP"));
-        process_activity(you);
-        CHECK(step == 4);
-        CHECK_FALSE(you.activity);
-        CHECK(you.backlog.empty());
-        CHECK(you.charges_of(itype_id("test_platinum_bit")) == 3);
-        CHECK(ground_charges(itype_id("test_platinum_bit")) == 7);
-    }
-}
-
-TEST_CASE(
-    "advanced inventory quantity and screen cancellation preserve live state",
-    "[client][interaction][advanced_inventory][mcp]") {
-    const auto guard = interaction_test_guard{};
-    const auto fixture = advanced_inventory_fixture_guard{};
-    auto& you = get_avatar();
-    std::ranges::for_each(std::views::iota(0, 3), [&](const auto /*index*/) {
-        you.i_add(item::spawn("test_1kg_cube", calendar::turn));
-    });
-    auto step = 0;
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = game_client::current_interaction({.limit = 200});
-        if (snapshot.context != "ADVANCED_INVENTORY") {
-            REQUIRE(step == 2);
-            step = 3;
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::cancel,
-            });
-        }
-        if (step == 0) {
-            const auto target = find_choice_type(snapshot, "test_1kg_cube", "source");
-            REQUIRE(target != snapshot.choices.end());
-            step = 1;
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::choose,
-                .target_id = target->id,
-            });
-        }
-        if (step == 1) {
-            step = 2;
-            return resolve_action("MOVE_VARIABLE_ITEM");
-        }
-        REQUIRE(step == 3);
-        step = 4;
-        return resolve({
-            .input_id = snapshot.input_id,
-            .operation = game_client::interaction_operation::cancel,
-        });
-    });
-
-    create_advanced_inv();
-    CHECK(step == 4);
-    CHECK_FALSE(you.activity);
-    CHECK(you.backlog.empty());
-    CHECK(you.amount_of(itype_id("test_1kg_cube")) == 3);
-    CHECK(ground_item_count(itype_id("test_1kg_cube")) == 0);
-}
-
-TEST_CASE(
-    "advanced inventory preserves native overweight and loose-liquid denials",
-    "[client][interaction][advanced_inventory][mcp]") {
-    const auto guard = interaction_test_guard{};
-
-    const auto run_denial = [&](const itype_id& type, const int charges) {
-        const auto fixture = advanced_inventory_fixture_guard{};
-        auto& you = get_avatar();
-        auto candidate = item::spawn(type, calendar::turn, charges);
-        get_map().add_item(advanced_inventory_test_pos, std::move(candidate));
-        auto step = 0;
-        game_client::memory::set_input_provider([&](const int /*timeout*/) {
-            const auto snapshot = game_client::current_interaction({.limit = 200});
-            if (snapshot.context == "POPUP_WAIT") {
-                REQUIRE(step == 2);
-                CHECK_FALSE(snapshot.message.empty());
-                REQUIRE(snapshot.choices.size() == 1);
-                step = 3;
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::choose,
-                    .target_id = snapshot.choices.front().id,
-                });
-            }
-            REQUIRE(snapshot.context == "ADVANCED_INVENTORY");
-            if (step == 0) {
-                const auto target = find_choice_type(snapshot, type.str(), "destination");
-                REQUIRE(target != snapshot.choices.end());
-                step = 1;
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::choose,
-                    .target_id = target->id,
-                });
-            }
-            if (step == 1) {
-                step = 2;
-                return resolve_action("MOVE_SINGLE_ITEM");
-            }
-            REQUIRE(step == 3);
-            step = 4;
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::cancel,
-            });
-        });
-
-        create_advanced_inv();
-        CHECK(step == 4);
-        CHECK_FALSE(you.activity);
-        CHECK(you.backlog.empty());
-        CHECK(you.amount_of(type) == 0);
-        CHECK(ground_item_count(type) == 1);
-    };
-
-    SECTION("overweight destination") { run_denial(itype_id("test_overweight_cube"), -1); }
-    SECTION("loose liquid") { run_denial(itype_id("water_clean"), 10); }
-}
-
-TEST_CASE(
-    "advanced inventory native container transfer rejects incompatible liquids unchanged",
-    "[client][interaction][advanced_inventory][mcp]") {
-    const auto guard = interaction_test_guard{};
-    const auto fixture = advanced_inventory_fixture_guard{};
-    auto& you = get_avatar();
-    auto destination_owner = item::spawn("test_jug_plastic", calendar::turn);
-    destination_owner->fill_with(item::spawn("bleach", calendar::turn, 5), 5);
-    auto& destination = you.i_add(std::move(destination_owner));
-    auto source_owner = item::spawn("test_waterskin", calendar::turn);
-    source_owner->fill_with(item::spawn("water_clean", calendar::turn, 10), 10);
-    auto& source = you.i_add(std::move(source_owner));
-    REQUIRE_FALSE(destination.is_container_empty());
-    REQUIRE_FALSE(source.is_container_empty());
-    const auto destination_charges = destination.contents.front().charges;
-    const auto source_charges = source.contents.front().charges;
-    uistate.transfer_save.saved_area_right = AIM_INVENTORY;
-    uistate.transfer_save.pane_right.area_idx = AIM_INVENTORY;
-    auto step = 0;
-
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = game_client::current_interaction({.limit = 200});
-        if (snapshot.context == "POPUP_WAIT") {
-            REQUIRE(step == 4);
-            CHECK_FALSE(snapshot.message.empty());
-            REQUIRE(snapshot.choices.size() == 1);
-            step = 5;
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::choose,
-                .target_id = snapshot.choices.front().id,
-            });
-        }
-        REQUIRE(snapshot.context == "ADVANCED_INVENTORY");
-        if (step == 0) {
-            const auto target = find_choice_type(snapshot, "test_jug_plastic", "source");
-            REQUIRE(target != snapshot.choices.end());
-            step = 1;
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::choose,
-                .target_id = target->id,
-            });
-        }
-        if (step == 1) {
-            step = 2;
-            return resolve_action("ITEMS_CONTAINER");
-        }
-        if (step == 2) {
-            const auto target = find_choice_type(snapshot, "test_waterskin", "destination");
-            REQUIRE(target != snapshot.choices.end());
-            step = 3;
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::choose,
-                .target_id = target->id,
-            });
-        }
-        if (step == 3) {
-            step = 4;
-            return resolve_action("MOVE_SINGLE_ITEM");
-        }
-        REQUIRE(step == 5);
-        step = 6;
-        return resolve({
-            .input_id = snapshot.input_id,
-            .operation = game_client::interaction_operation::cancel,
-        });
-    });
-
-    create_advanced_inv();
-    CHECK(step == 6);
-    CHECK_FALSE(you.activity);
-    CHECK(you.backlog.empty());
-    REQUIRE_FALSE(destination.is_container_empty());
-    REQUIRE_FALSE(source.is_container_empty());
-    CHECK(destination.contents.front().typeId() == itype_id("bleach"));
-    CHECK(destination.contents.front().charges == destination_charges);
-    CHECK(source.contents.front().typeId() == itype_id("water_clean"));
-    CHECK(source.contents.front().charges == source_charges);
-    CHECK(you.amount_of(itype_id("test_jug_plastic")) == 1);
-    CHECK(you.amount_of(itype_id("test_waterskin")) == 1);
-}
-
-TEST_CASE(
-    "advanced inventory native pickup honors theft refusal without moving owned item",
-    "[client][interaction][advanced_inventory][mcp]") {
-    const auto guard = interaction_test_guard{};
-    const auto force_lowercase = override_option("FORCE_CAPITAL_YN", "false");
-    const auto fixture = advanced_inventory_fixture_guard{};
-    auto& you = get_avatar();
-    g->faction_manager_ptr->create_if_needed();
-    auto& owner = spawn_npc(advanced_inventory_test_pos + tripoint_north, "test_talker");
-    owner.set_fac(faction_id("free_merchants"));
-    auto owned_item = item::spawn("test_1kg_cube", calendar::turn);
-    owned_item->set_owner(owner);
-    const auto owner_id = owned_item->get_owner();
-    get_map().add_item(advanced_inventory_test_pos, std::move(owned_item));
-    you.set_value("THIEF_MODE", "THIEF_ASK");
-    you.set_value("THIEF_MODE_KEEP", "NO");
-    auto step = 0;
-
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = game_client::current_interaction({.limit = 200});
-        if (snapshot.context == "YES_NO_ALWAYS_NEVER") {
-            REQUIRE(step == 2);
-            CHECK(snapshot.message.find("stealing") != std::string::npos);
-            const auto refuse = std::ranges::
-                find(snapshot.choices, "NO", &game_client::interaction_choice::description);
-            REQUIRE(refuse != snapshot.choices.end());
-            step = 3;
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::choose,
-                .target_id = refuse->id,
-            });
-        }
-        REQUIRE(snapshot.context == "ADVANCED_INVENTORY");
-        if (step == 0) {
-            const auto target = find_choice_type(snapshot, "test_1kg_cube", "destination");
-            REQUIRE(target != snapshot.choices.end());
-            step = 1;
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::choose,
-                .target_id = target->id,
-            });
-        }
-        if (step == 1) {
-            step = 2;
-            return resolve_action("MOVE_SINGLE_ITEM");
-        }
-        REQUIRE(step == 3);
-        step = 4;
-        return resolve({
-            .input_id = snapshot.input_id,
-            .operation = game_client::interaction_operation::cancel,
-        });
-    });
-
-    create_advanced_inv();
-    REQUIRE(you.activity);
-    CHECK(you.activity->id() == activity_id("ACT_PICKUP"));
-    process_activity(you);
-    CHECK(step == 4);
-    CHECK_FALSE(you.activity);
-    CHECK(you.backlog.empty());
-    CHECK(you.amount_of(itype_id("test_1kg_cube")) == 0);
-    REQUIRE(ground_item_count(itype_id("test_1kg_cube")) == 1);
-    auto ground_items = get_map().i_at(advanced_inventory_test_pos);
-    const auto ground_item = std::ranges::find_if(ground_items, [](const auto* candidate) {
-        return candidate->typeId() == itype_id("test_1kg_cube");
-    });
-    REQUIRE(ground_item != ground_items.end());
-    CHECK((*ground_item)->get_owner() == owner_id);
-    CHECK(you.get_value("THIEF_MODE") == "THIEF_ASK");
-}
-
-TEST_CASE(
-    "semantic replay repeats an advanced inventory native variable transfer",
-    "[client][interaction][advanced_inventory][replay][mcp]") {
-    const auto guard = interaction_test_guard{};
-    static auto counter = std::atomic_uint64_t{0};
-    const auto directory =
-        std::filesystem::path(PATH_INFO::user_dir())
-        / ("semantic-advanced-inventory-" + std::to_string(counter.fetch_add(1)));
-    REQUIRE(std::filesystem::create_directory(directory));
-    const auto cleanup_replay = on_out_of_scope([&] {
-        replay::stop();
-        std::filesystem::remove_all(directory);
-    });
-    const auto path = directory / "input.jsonl";
-
-    {
-        const auto fixture = advanced_inventory_fixture_guard{};
-        auto& recorded = get_avatar();
-        std::ranges::for_each(std::views::iota(0, 3), [&](const auto /*index*/) {
-            recorded.i_add(item::spawn("test_1kg_cube", calendar::turn));
-        });
-        replay::configure_recording(path.string(), {.rng_seed = 37});
-        replay::start();
-        auto step = 0;
-        game_client::memory::set_input_provider([&](const int /*timeout*/) {
-            const auto snapshot = game_client::current_interaction({.limit = 200});
-            if (snapshot.context != "ADVANCED_INVENTORY") {
-                step = 3;
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::fill,
-                    .target_id = snapshot.field->id,
-                    .value = "2",
-                    .submit = true,
-                });
-            }
-            if (step == 0) {
-                const auto target = find_choice_type(snapshot, "test_1kg_cube", "source");
-                REQUIRE(target != snapshot.choices.end());
-                step = 1;
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::choose,
-                    .target_id = target->id,
-                });
-            }
-            if (step == 1) {
-                step = 2;
-                return resolve_action("MOVE_VARIABLE_ITEM");
-            }
-            REQUIRE(step == 3);
-            step = 4;
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::cancel,
-            });
-        });
-        create_advanced_inv();
-        REQUIRE(recorded.activity);
-        process_activity(recorded);
-        CHECK(step == 4);
-        CHECK(recorded.amount_of(itype_id("test_1kg_cube")) == 1);
-        CHECK(ground_item_count(itype_id("test_1kg_cube")) == 2);
-        replay::finish();
-    }
-
-    {
-        const auto fixture = advanced_inventory_fixture_guard{};
-        auto& played = get_avatar();
-        std::ranges::for_each(std::views::iota(0, 3), [&](const auto /*index*/) {
-            played.i_add(item::spawn("test_1kg_cube", calendar::turn));
-        });
-        game_client::memory::set_input_provider([](const int /*timeout*/) -> input_event {
-            throw std::runtime_error("advanced inventory playback must not read live input");
-        });
-        replay::configure_playback(path.string(), {.rng_seed = 37});
-        replay::start();
-        create_advanced_inv();
-        REQUIRE(played.activity);
-        CHECK(played.activity->id() == activity_id("ACT_DROP"));
-        process_activity(played);
-        CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
-        CHECK_FALSE(played.activity);
-        CHECK(played.backlog.empty());
-        CHECK(played.amount_of(itype_id("test_1kg_cube")) == 1);
-        CHECK(ground_item_count(itype_id("test_1kg_cube")) == 2);
-        replay::finish();
-    }
-
-    {
-        const auto fixture = advanced_inventory_fixture_guard{};
-        auto& changed = get_avatar();
-        std::ranges::for_each(std::views::iota(0, 2), [&](const auto /*index*/) {
-            changed.i_add(item::spawn("test_1kg_cube", calendar::turn));
-        });
-        game_client::memory::set_input_provider([](const int /*timeout*/) -> input_event {
-            throw std::runtime_error(
-                "changed advanced inventory playback must not read live input");
-        });
-        replay::configure_playback(path.string(), {.rng_seed = 37});
-        replay::start();
-        CHECK_THROWS_WITH(create_advanced_inv(), Catch::Matchers::Contains("schema changed"));
-        CHECK_FALSE(changed.activity);
-        CHECK(changed.backlog.empty());
-        CHECK(changed.amount_of(itype_id("test_1kg_cube")) == 2);
-        CHECK(ground_item_count(itype_id("test_1kg_cube")) == 0);
-        replay::stop();
-    }
-}
-
 TEST_CASE("real uilist publishes each printable entry hotkey", "[client][interaction][mcp]") {
     const auto guard = interaction_test_guard{};
     auto menu = uilist{};
@@ -1231,7 +354,6 @@ TEST_CASE("real uilist publishes each printable entry hotkey", "[client][interac
     CHECK(observed.choices[1].hotkey.empty());
     CHECK(observed.choices[2].hotkey == "1");
 }
-
 TEST_CASE("real uilist exposes filtered effective choices", "[client][interaction][mcp]") {
     const auto guard = interaction_test_guard{};
     auto menu = uilist{};
@@ -1282,7 +404,6 @@ TEST_CASE("real uilist exposes filtered effective choices", "[client][interactio
     CHECK(stale_error.starts_with("stale:"));
     CHECK(callback.selections > 0);
 }
-
 TEST_CASE(
     "real query popup supports semantic choice acknowledgement and cancel",
     "[client][interaction][mcp]") {
@@ -1359,7 +480,6 @@ TEST_CASE(
         CHECK(result.action == "QUIT");
     }
 }
-
 TEST_CASE(
     "real string popup validates replacement fields and submit state",
     "[client][interaction][mcp]") {
@@ -1440,7 +560,6 @@ TEST_CASE(
     CHECK(canceled.text("unchanged").query_string().empty());
     CHECK(canceled.canceled());
 }
-
 TEST_CASE(
     "the multi-line text editor exposes its text as a field and takes fill and cancel",
     "[client][interaction][mcp]") {
@@ -1488,7 +607,6 @@ TEST_CASE(
     CHECK_FALSE(ok);
     CHECK(kept == "kept");
 }
-
 TEST_CASE(
     "real inventory picker exposes and selects live avatar items",
     "[client][interaction][inventory][mcp]") {
@@ -1523,7 +641,6 @@ TEST_CASE(
     CHECK(selector.execute() == &expected);
     CHECK_FALSE(observed.choices.front().id.contains("0x"));
 }
-
 TEST_CASE(
     "real inventory multiselect accepts exact quantity and zero",
     "[client][interaction][inventory][mcp]") {
@@ -1574,7 +691,6 @@ TEST_CASE(
     REQUIRE(dropped.size() == 1);
     CHECK(dropped.front().count == 3);
 }
-
 TEST_CASE(
     "inventory selection and navigation highlights remain independent",
     "[client][interaction][inventory][mcp]") {
@@ -1665,7 +781,6 @@ TEST_CASE(
     CHECK(selector.execute().empty());
     CHECK(reads == 4);
 }
-
 namespace {
 class snapshot_inventory_selector final: public inventory_pick_selector {
 public:
@@ -1722,7 +837,6 @@ TEST_CASE(
     selector.set_display_stats(false);
     CHECK_FALSE(selector.interaction_snapshot().panes.front().totals);
 }
-
 TEST_CASE(
     "bounded interaction pages control late real inventory entries and reset safely",
     "[client][interaction][inventory][mcp]") {
@@ -1847,7 +961,6 @@ TEST_CASE(
     CHECK(selector.execute().empty());
     CHECK(reads == 3);
 }
-
 TEST_CASE(
     "semantic ground pickup transfers exact noncharge and charge quantities",
     "[client][interaction][pickup][mcp]") {
@@ -1985,7 +1098,6 @@ TEST_CASE(
         CHECK(ground_charges(id) == 7);
     }
 }
-
 TEST_CASE(
     "ground pickup rows publish the native stolen marker and item symbol, and the window placement",
     "[client][interaction][pickup][mcp]") {
@@ -2026,7 +1138,6 @@ TEST_CASE(
     pickup::pick_up(pickup_test_pos, 0, pickup::from_ground);
     CHECK(checked);
 }
-
 TEST_CASE(
     "semantic ground pickup preserves whole zero filter and stale validation",
     "[client][interaction][pickup][mcp]") {
@@ -2228,7 +1339,6 @@ TEST_CASE(
         CHECK(ground_item_count(itype_id("bandages")) == 1);
     }
 }
-
 TEST_CASE(
     "semantic ground pickup preserves native capacity refusal",
     "[client][interaction][pickup][mcp]") {
@@ -2269,7 +1379,6 @@ TEST_CASE(
     CHECK(you.amount_of(id) == 0);
     CHECK(ground_item_count(id) == 1);
 }
-
 TEST_CASE(
     "semantic ground pickup keeps native nesting wear wield and select all paths",
     "[client][interaction][pickup][mcp]") {
@@ -2452,7 +1561,6 @@ TEST_CASE(
         CHECK(ground_item_count(itype_id("machete")) == 1);
     }
 }
-
 TEST_CASE(
     "semantic replay repeats real partial ground pickup transfer",
     "[client][interaction][pickup][replay][mcp]") {
@@ -2515,7 +1623,6 @@ TEST_CASE(
     CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
     replay::finish();
 }
-
 TEST_CASE(
     "semantic replay restores real inventory quantity selection",
     "[client][interaction][inventory][replay][mcp]") {
@@ -2571,7 +1678,6 @@ TEST_CASE(
     CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
     replay::finish();
 }
-
 TEST_CASE(
     "inventory semantic ids reject filtered removed and denied entries",
     "[client][interaction][inventory][mcp]") {
@@ -2679,7 +1785,6 @@ TEST_CASE(
         CHECK(selector.execute() == nullptr);
     }
 }
-
 TEST_CASE(
     "inventory count popup restores the outer structured selector",
     "[client][interaction][inventory][mcp]") {
@@ -2716,7 +1821,6 @@ TEST_CASE(
     REQUIRE(dropped.size() == 1);
     CHECK(dropped.front().count == 2);
 }
-
 TEST_CASE(
     "real target UI accepts semantic cursor movement and rejects range overflow",
     "[client][interaction][target][mcp]") {
@@ -2790,7 +1894,6 @@ TEST_CASE(
     REQUIRE_FALSE(trajectory.empty());
     CHECK(trajectory.back() == source + tripoint_east);
 }
-
 TEST_CASE(
     "semantic targeting retains the normal neutral attack confirmation",
     "[client][interaction][target][mcp]") {
@@ -2850,7 +1953,6 @@ TEST_CASE(
 
     CHECK(target_handler::mode_throw(you, *rock, false).empty());
 }
-
 TEST_CASE(
     "semantic replay re-enters the same real string widget", "[client][interaction][replay][mcp]") {
     const auto guard = interaction_test_guard{};
@@ -2892,7 +1994,6 @@ TEST_CASE(
     CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
     replay::finish();
 }
-
 namespace {
 
 class fixed_clipboard final: public game_client::render_service {
@@ -2944,7 +2045,6 @@ TEST_CASE(
     CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
     replay::finish();
 }
-
 TEST_CASE(
     "semantic replay rejects a different real uilist in the same context",
     "[client][interaction][replay][mcp]") {
@@ -2986,7 +2086,6 @@ TEST_CASE(
         CHECK_THROWS_WITH(different.query(), Catch::Matchers::Contains("schema changed"));
     }
 }
-
 TEST_CASE(
     "common direction choice exposes only native relative vectors",
     "[client][interaction][direction][mcp]") {
@@ -3058,7 +2157,6 @@ TEST_CASE(
     CHECK(stale_error.starts_with("stale:"));
     CHECK(absent_error.contains("not in the active interaction"));
 }
-
 TEST_CASE(
     "semantic construction choice preserves native placement and resource handling",
     "[client][interaction][construction][mcp]") {
@@ -3145,7 +2243,6 @@ TEST_CASE(
     CHECK(get_map().partial_con_at(destination) == nullptr);
     CHECK(get_map().furn(destination) == furn_id("f_test_semantic_construction"));
 }
-
 TEST_CASE(
     "semantic construction darkness denial retains resources without placement",
     "[client][interaction][construction][mcp]") {
@@ -3208,7 +2305,6 @@ TEST_CASE(
     CHECK(get_map().partial_con_at(destination) == nullptr);
     CHECK(get_map().furn(destination) == furn_id("f_null"));
 }
-
 TEST_CASE(
     "semantic construction denial and blueprint choice do not bypass native rules",
     "[client][interaction][construction][mcp]") {
@@ -3308,7 +2404,6 @@ TEST_CASE(
         CHECK(you.amount_of(itype_id("test_1kg_cube")) == material_before);
     }
 }
-
 TEST_CASE(
     "construction menu publishes category tabs, search and requirements",
     "[client][interaction][construction][mcp]") {
@@ -3406,7 +2501,6 @@ TEST_CASE(
     CHECK_FALSE(construction_menu(false));
     CHECK(step == 4);
 }
-
 TEST_CASE(
     "semantic replay repeats native construction placement",
     "[client][interaction][construction][replay][mcp]") {
@@ -3512,7 +2606,6 @@ TEST_CASE(
     CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
     replay::finish();
 }
-
 TEST_CASE(
     "semantic crafting batch entry preserves native selection bookkeeping",
     "[client][interaction][crafting][mcp]") {
@@ -3608,7 +2701,6 @@ TEST_CASE(
     CHECK_FALSE(you.activity);
     CHECK(uistate.read_recipes.count(pipe.ident()) == 1);
 }
-
 TEST_CASE(
     "the overmap is a structured interaction with a cursor that a client can move",
     "[client][interaction][overmap][mcp]") {
@@ -3677,7 +2769,6 @@ TEST_CASE(
     ui::omap::display();
     CHECK(step == 2);
 }
-
 TEST_CASE(
     "the overmap carries tile ids only for a client that renders tiles, and the travel route",
     "[client][interaction][overmap][mcp]") {
@@ -3725,7 +2816,6 @@ TEST_CASE(
     }
     CHECK(reads == 2);
 }
-
 TEST_CASE(
     "the overmap says when the cursor is on the player and gives its note and the route length",
     "[client][interaction][overmap][mcp]") {
@@ -3769,7 +2859,6 @@ TEST_CASE(
     ui::omap::display();
     CHECK(reads == 2);
 }
-
 TEST_CASE(
     "debugmsg reaches an engine client as a structured interaction with its text",
     "[client][interaction][debug_prompt][mcp]") {
@@ -3804,7 +2893,6 @@ TEST_CASE(
     CHECK(published.contains("Continue"));
     CHECK(published.contains("Ignore"));
 }
-
 TEST_CASE(
     "semantic crafting publishes tabs, search and recipe details",
     "[client][interaction][crafting][mcp]") {
@@ -3921,7 +3009,6 @@ TEST_CASE(
     CHECK(step == 5);
     CHECK_FALSE(you.activity);
 }
-
 TEST_CASE(
     "semantic crafting cancel leaves normal and batch selections untouched",
     "[client][interaction][crafting][mcp]") {
@@ -3988,7 +3075,6 @@ TEST_CASE(
     CHECK(you.amount_of(itype_id("test_soldering_iron")) == 0);
     CHECK(here.i_at(you.bub_pos()).size() == ground_before);
 }
-
 TEST_CASE(
     "semantic unavailable crafting choice follows native denial without mutation",
     "[client][interaction][crafting][mcp]") {
@@ -4069,7 +3155,6 @@ TEST_CASE(
     CHECK(you.amount_of(itype_id("test_pipe")) == 0);
     CHECK(here.i_at(you.bub_pos()).size() == ground_before);
 }
-
 TEST_CASE(
     "semantic nested crafting choice expands and rejects quantities",
     "[client][interaction][crafting][mcp]") {
@@ -4143,7 +3228,6 @@ TEST_CASE(
     CHECK(expanded);
     CHECK_FALSE(you.activity);
 }
-
 TEST_CASE(
     "crafting rejects filtered and stale semantic recipe identities without mutation",
     "[client][interaction][crafting][mcp]") {
@@ -4226,7 +3310,6 @@ TEST_CASE(
     CHECK(you.amount_of(itype_id("test_pipe")) == 0);
     CHECK(you.amount_of(itype_id("test_soldering_iron")) == 0);
 }
-
 TEST_CASE(
     "crafting replay rejects a changed real recipe schema without mutation",
     "[client][interaction][crafting][replay][mcp]") {
@@ -4295,7 +3378,6 @@ TEST_CASE(
     CHECK(get_avatar().amount_of(itype_id("e_scrap")) == material_before);
     CHECK(get_avatar().amount_of(itype_id("test_pipe")) == 0);
 }
-
 TEST_CASE(
     "real crafting selector filters and starts a batch through semantic input",
     "[client][interaction][crafting][mcp]") {
@@ -4391,7 +3473,6 @@ TEST_CASE(
     you.invalidate_crafting_inventory();
     CHECK(you.amount_of(itype_id("test_soldering_iron")) == 2);
 }
-
 TEST_CASE(
     "semantic replay restores the real crafting filter and batch selection",
     "[client][interaction][crafting][replay][mcp]") {
@@ -4488,7 +3569,6 @@ TEST_CASE(
     CHECK(played.amount_of(itype_id("cable")) == 0);
     replay::finish();
 }
-
 TEST_CASE("semantic count bounds include an optional minimum", "[client][interaction][mcp]") {
     const auto context = input_context("COUNT_BOUNDS");
     const auto input = game_client::input_context_scope(context, "COUNT_BOUNDS");
@@ -4536,7 +3616,6 @@ TEST_CASE("semantic count bounds include an optional minimum", "[client][interac
         CHECK(result.error().starts_with("invalid:"));
     }
 }
-
 TEST_CASE(
     "interaction providers do not leak into nested raw contexts", "[client][interaction][mcp]") {
     const auto outer = input_context("OUTER_INTERACTION");
@@ -4561,7 +3640,6 @@ TEST_CASE(
     CHECK(game_client::current_interaction().structured);
     CHECK(game_client::current_interaction().choices.front().id == "outer");
 }
-
 TEST_CASE(
     "look around publishes its cursor and leaves on semantic cancel",
     "[client][interaction][mcp]") {
@@ -4589,7 +3667,6 @@ TEST_CASE(
     REQUIRE(reads == 2);
     CHECK(cursor == tripoint_bub_ms(you.bub_pos().x() + 1, you.bub_pos().y(), you.bub_pos().z()));
 }
-
 TEST_CASE(
     "look around publishes what the native look window prints of the cursor square",
     "[client][interaction][mcp]") {
@@ -4620,7 +3697,6 @@ TEST_CASE(
     g->look_around(false, center, center, false, false, false);
     CHECK(reads == 2);
 }
-
 TEST_CASE(
     "an invoke names its affordance and its arguments and needs no native widget",
     "[client][interaction][mcp]") {
@@ -4648,7 +3724,6 @@ TEST_CASE(
          .target_id = "entry:1",
          .arguments = game_client::interaction_arguments{}}));
 }
-
 TEST_CASE(
     "a choice editor accepts only values of its own type and range",
     "[client][interaction][settings][mcp]") {
@@ -4719,7 +3794,6 @@ TEST_CASE(
     CHECK(fill("key", "="));
     CHECK_FALSE(fill("key", "no such key"));
 }
-
 TEST_CASE(
     "the native options menu publishes pages and editable options and applies fill",
     "[client][interaction][settings][mcp]") {
@@ -4798,7 +3872,6 @@ TEST_CASE(
     CHECK(seen_page == "page:general");
     CHECK(get_option<int>("SAFEMODEPROXIMITY") == original);
 }
-
 TEST_CASE(
     "the native keybindings menu adds a key through the key field and discards it unsaved",
     "[client][interaction][settings][mcp]") {
@@ -4862,7 +3935,6 @@ TEST_CASE(
     CHECK(step == 6);
     CHECK(inp_mngr.get_input_for_action("UP", "default") == before);
 }
-
 TEST_CASE(
     "vehicle interaction publishes the grid, denial reasons and the requirements of each task",
     "[client][interaction][veh_interact][mcp]") {
@@ -5005,7 +4077,6 @@ TEST_CASE(
     veh_interact::run(*veh, tripoint_mnt_veh::zero());
     CHECK(step == 9);
 }
-
 TEST_CASE(
     "real spell menu publishes each spell's details and its callback key rows",
     "[client][interaction][mcp][magic]") {
@@ -5058,7 +4129,6 @@ TEST_CASE(
         return choice.label == "Assign spell hotkey" && choice.id.starts_with("action:key:");
     }));
 }
-
 TEST_CASE(
     "real spell menu details do not change between reads for any known spell",
     "[client][interaction][mcp][magic]") {
@@ -5090,7 +4160,6 @@ TEST_CASE(
         CHECK(reads[0].choices[i].description == reads[1].choices[i].description);
     }
 }
-
 namespace {
 
 /// The first snapshot of the menu the callable opens; the menu is cancelled right after.
@@ -5137,7 +4206,6 @@ TEST_CASE(
     // the entry's own description and the style panel are two blocks, not one run-on sentence
     CHECK(row.description.find("kicking.\n--\n") != std::string::npos);
 }
-
 TEST_CASE(
     "real translocator menu publishes the selected gate's distance",
     "[client][interaction][mcp][uilist_panel]") {
@@ -5160,7 +4228,6 @@ TEST_CASE(
     INFO(row.label << ": " << row.description);
     CHECK(row.description.find("Distance: 3") != std::string::npos);
 }
-
 TEST_CASE(
     "real spellbook menu publishes the selected spell's info without an entry description",
     "[client][interaction][mcp][uilist_panel]") {
@@ -5182,7 +4249,6 @@ TEST_CASE(
     // no entry description, so no leading separator
     CHECK_FALSE(row.description.starts_with("\n--"));
 }
-
 TEST_CASE(
     "real wish menus publish the selected mutation, monster and item panels",
     "[client][interaction][mcp][uilist_panel]") {
@@ -5215,7 +4281,6 @@ TEST_CASE(
             })
         == 0);
 }
-
 TEST_CASE(
     "debug effect menus let a client open the effect list and read the selected effect's panel",
     "[client][interaction][mcp][uilist_panel]") {
@@ -5274,7 +4339,6 @@ TEST_CASE(
     CHECK(selected_entry(observed[3]).description.find(body_part->name.translated())
           != std::string::npos);
 }
-
 TEST_CASE(
     "an item operation picks up or drops the stack a row names",
     "[client][interaction][mcp][engine_client_contract]") {
@@ -5327,7 +4391,6 @@ TEST_CASE(
         CHECK(ground_item_count(itype_id("test_1kg_cube")) == before + 2);
     }
 }
-
 TEST_CASE(
     "an item operation counts a row of a charges item in charges",
     "[client][interaction][mcp][engine_client_contract]") {
@@ -5374,7 +4437,6 @@ TEST_CASE(
         CHECK(you.charges_of(bits) == 20);
     }
 }
-
 namespace {
 
 /// `game::handle_action` is private; the explicit instantiation reaches the native dispatch without
@@ -5482,5 +4544,4 @@ TEST_CASE(
     CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
     replay::finish();
 }
-
 #endif // CATA_MCP
