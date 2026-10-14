@@ -121,6 +121,7 @@ TEST_CASE("the cost of an avatar step by its parts", "[.step_cost]") {
                     auto acquisition = std::vector<double>{};
                     auto memory = std::vector<double>{};
                     auto publication = std::vector<double>{};
+                    auto built = std::vector<double>{};
                     for (const auto step : std::views::iota(0, steps)) {
                         get_avatar().setpos(start + tripoint(step % 2 == 0 ? 1 : 0, 0, 0));
                         calendar::turn += 1_turns;
@@ -131,11 +132,14 @@ TEST_CASE("the cost of an avatar step by its parts", "[.step_cost]") {
                         const auto again = steady::now();
                         map_perception::acquire();
                         const auto remembered = steady::now();
+                        const auto cells_before = ec::world::visible_cells_built();
                         REQUIRE(authority.publish_boundary());
                         const auto published = steady::now();
                         acquisition.push_back(ms(acquired - stepped));
                         memory.push_back(ms(remembered - again));
                         publication.push_back(ms(published - remembered));
+                        built.push_back(
+                            static_cast<double>(ec::world::visible_cells_built() - cells_before));
                     }
                     const auto total = median(acquisition);
                     const auto remembering = median(memory);
@@ -144,7 +148,7 @@ TEST_CASE("the cost of an avatar step by its parts", "[.step_cost]") {
                               << ground_name(kind) << ", " << (hour == 12 ? "noon" : "midnight")
                               << ": visibility " << total - remembering << " ms, map memory "
                               << remembering << " ms, publication " << median(publication)
-                              << " ms\n";
+                              << " ms, " << median(built) << " cells built\n";
                 }
             }
         }

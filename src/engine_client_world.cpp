@@ -497,10 +497,13 @@ auto remembered_squares( const avatar &you ) -> const std::vector<remembered_squ
     return squares;
 }
 
+auto cells_built = std::size_t {};
+
 /// The cell of a square the avatar sees now, none when it is plain terrain the engine never memorizes.
 auto visible_cell( map &here, const tripoint_bub_ms &p, const avatar &you,
                    const map_perception::sight &view, const std::string &dimension ) -> std::optional<cell>
 {
+    ++cells_built;
     // A square on the avatar's level without a floor shows what the native view draws through it.
     const auto below = p.z() == you.bub_pos().z() ? drawn_depth( here, p, you ) : std::nullopt;
     // Bare open air elsewhere, or showing nothing, is unknown, and most of what the avatar sees outdoors:
@@ -1030,6 +1033,8 @@ auto by_level( const tripoint_bub_ms &a, const tripoint_bub_ms &b ) -> bool
 }
 auto basis = patch_basis {};
 } // namespace
+
+auto visible_cells_built() -> std::size_t { return cells_built; }
 
 auto vehicle_submaps( map &here ) -> std::set<tripoint_bub_sm>
 {

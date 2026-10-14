@@ -26,6 +26,7 @@
 #    include <algorithm>
 #    include <chrono>
 #    include <iostream>
+#    include <optional>
 #    include <ranges>
 #    include <string>
 
@@ -338,6 +339,118 @@ TEST_CASE(
         CHECK_FALSE(patch.exhaustive);
         CHECK(patch.cells.size() + patch.unknown.size() < static_cast<std::size_t>(seen) / 10);
     }
+}
+
+TEST_CASE(
+    "a patch over open ground builds a cell only for squares whose inputs changed",
+    "[engine_client_patch][open_ground]") {
+    const auto start = make_open_ground(12);
+    auto watched = watched_session{};
+    watched.step_to(start + tripoint(1, 0, 0));
+    const auto& current = watched.authority.current();
+    REQUIRE(current);
+    const auto seen = static_cast<
+        std::size_t>(std::ranges::count_if(current->value.world.cells, [](const auto& entry) {
+        return entry.second.known == ec::knowledge::visible;
+    }));
+    REQUIRE(seen > 10000);
+    const auto built_by = [&] {
+        const auto before = ec::world::visible_cells_built();
+        static_cast<void>(ec::world::capture_patch(*current, true));
+        return ec::world::visible_cells_built() - before;
+    };
+    SECTION("a turn in place") {
+        calendar::turn += 1_turns;
+        map_perception::acquire();
+        CHECK(built_by() < seen / 100);
+    }
+    SECTION("a step") {
+        get_avatar().setpos(start + tripoint(2, 0, 0));
+        map_perception::acquire();
+        CHECK(built_by() < seen / 20);
+    }
+}
+
+TEST_CASE(
+    "a patch over open ground names again the square whose input changed",
+    "[engine_client_patch][open_ground]") {
+    const auto start = make_open_ground(12);
+    auto& here = get_map();
+    auto watched = watched_session{};
+    watched.step_to(start + tripoint(1, 0, 0));
+    // A square far enough from the avatar to be plain ground the patch rebuilds only on a change.
+    const auto at = start + tripoint(7, 5, 0);
+    const auto position = ec::world::position_at(at);
+    const auto cleanup = on_out_of_scope([&] {
+        here.ter_set(at, ter_id("t_grass"));
+        here.ter_set(at + tripoint_east, ter_id("t_grass"));
+        here.furn_set(at, furn_id("f_null"));
+        here.i_clear(at);
+        clear_fields(at.z());
+        clear_vehicles();
+    });
+    // The session hands out a copy of its snapshot, which the lookup must not outlive.
+    const auto cell_at = [&] {
+        const auto snapshot = watched.authority.current();
+        const auto found = snapshot->value.world.cells.find(position);
+        return found == snapshot->value.world.cells.end()
+                 ? std::optional<ec::cell>{}
+                 : std::optional(found->second);
+    };
+    const auto before = cell_at();
+    REQUIRE(before);
+    // The oracle compares every publication with a full capture, which names the changed cell.
+    SECTION("its terrain") {
+        here.ter_set(at, ter_id("t_dirt"));
+        watched.publish();
+        CHECK(cell_at() != before);
+    }
+    SECTION("the terrain beside it a wall connects to") {
+        here.ter_set(at, ter_id("t_wall"));
+        watched.publish();
+        const auto alone = cell_at();
+        here.ter_set(at + tripoint_east, ter_id("t_wall"));
+        watched.publish();
+        CHECK(cell_at() != alone);
+    }
+    SECTION("what lies on it") {
+        here.add_item_or_charges(at, item::spawn("rock"));
+        watched.publish();
+        CHECK(cell_at() != before);
+    }
+    SECTION("the field on it") {
+        here.add_field(at, field_type_id("fd_smoke"), 1);
+        watched.publish();
+        CHECK(cell_at() != before);
+    }
+    SECTION("the furniture on it") {
+        here.furn_set(at, furn_id("f_table"));
+        watched.publish();
+        CHECK(cell_at() != before);
+    }
+    SECTION("the vehicle on it") {
+        REQUIRE(here.add_vehicle(vproto_id("golf_cart"), at, 0_degrees, 0, 0, false) != nullptr);
+        watched.publish();
+        CHECK(cell_at() != before);
+    }
+    SECTION("its light") {
+        calendar::turn = calendar::turn_zero + 2_hours;
+        g->reset_light_level();
+        watched.publish();
+        CHECK(cell_at() != before);
+    }
+    SECTION("the season") {
+        calendar::turn += calendar::season_length();
+        watched.publish();
+    }
+    SECTION("what it was, once it is plain again") {
+        here.add_item_or_charges(at, item::spawn("rock"));
+        watched.publish();
+        here.i_clear(at);
+        watched.publish();
+        CHECK(cell_at() == before);
+    }
+    CHECK(watched.authority.oracle_mismatches().empty());
 }
 
 TEST_CASE(

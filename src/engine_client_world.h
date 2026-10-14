@@ -6,6 +6,7 @@
 #include "color.h"
 #include "type_id.h"
 
+#include <cstddef>
 #include <set>
 #include <string>
 #include <vector>
@@ -41,6 +42,9 @@ auto vehicle_submaps( map &here ) -> std::set<tripoint_bub_sm>;
 /// trap clears it, and none of `vehicles` is in it. Every square of it is then bare.
 auto bare_submap( const map &here, const tripoint_bub_ms &p,
                   const std::set<tripoint_bub_sm> &vehicles ) -> bool;
+/// How many times a visible square has had its cell built from the map since the process started, whether or
+/// not it made one: what a capture costs, which a patch keeps to the squares whose inputs changed.
+auto visible_cells_built() -> std::size_t;
 /// An inventory or ground row with the items it stands for.
 struct item_stack {
     inventory_entry row;
