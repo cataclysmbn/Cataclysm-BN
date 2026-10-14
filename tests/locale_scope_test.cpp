@@ -4,6 +4,7 @@
 #    include "calendar.h"
 #    include "catch/catch.hpp"
 #    include "client_interaction.h"
+#    include "client_interaction_validation.h"
 #    include "engine_client_world.h"
 #    include "item.h"
 #    include "language.h"
@@ -97,6 +98,39 @@ TEST_CASE(
     CHECK(other.schema_id == english.schema_id);
     CHECK(other.choices.front().id == english.choices.front().id);
     CHECK(other.choices.back().id == english.choices.back().id);
+}
+
+TEST_CASE(
+    "an input recorded in one language replays in another without a stale schema",
+    "[engine_client_locale][interaction]") {
+    const auto fixture = korean_catalogue{};
+    const auto boundary = yes_no_boundary{};
+    const auto recorded = game_client::resolve_interaction_command(
+        {.input_id = game_client::current_input_id(),
+         .operation = game_client::interaction_operation::choose,
+         .target_id = "choice:yes"});
+    REQUIRE(recorded);
+    REQUIRE_FALSE(recorded->schema_id.empty());
+    {
+        const auto scope = localization::locale_scope{korean};
+        CHECK(game_client::validate_interaction_event(boundary.context, *recorded));
+        const auto command = game_client::interaction_command{
+            .input_id = game_client::current_input_id(),
+            .operation = game_client::interaction_operation::choose,
+            .target_id = "choice:yes"};
+        CHECK(game_client::resolve_checked_interaction(
+            {.command = command, .expected_schema = recorded->schema_id}));
+        const auto stale = game_client::resolve_checked_interaction(
+            {.command = command, .expected_schema = "stale"});
+        REQUIRE_FALSE(stale);
+        CHECK(stale.error().kind == game_client::interaction_rejection::stale_schema);
+        // The check still compares the schema, so a recording of another screen is refused.
+        auto other = *recorded;
+        other.schema_id = "stale";
+        const auto refused = game_client::validate_interaction_event(boundary.context, other);
+        REQUIRE_FALSE(refused);
+        CHECK(refused.error().find("schema changed") != std::string::npos);
+    }
 }
 
 TEST_CASE("item rows have the same ids in every language", "[engine_client_locale][world]") {
