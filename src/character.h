@@ -67,6 +67,10 @@ class player_morale;
 class vehicle;
 class monster;
 class weather_manager;
+namespace engine_client
+{
+struct fact;
+} // namespace engine_client
 struct bionic;
 struct char_encumbrance_data;
 struct construction;
@@ -2350,6 +2354,10 @@ class Character : public Creature, public location_visitable<Character>
         /** Recalculates morale penalty/bonus from wetness based on mutations, equipment and temperature */
         void apply_wetness_morale( const units::temperature &temperature );
         std::vector<std::string> short_description_parts() const;
+        /// What the avatar or a person wields, wears and shows of their mutations, from what `visibility_cap` allows.
+        auto equipment_facts( int visibility_cap ) const -> std::vector<engine_client::fact>;
+        /// What `print_info` prints, a fact per line.
+        auto info_facts() const -> std::vector<engine_client::fact>;
         std::string short_description() const;
         int print_info( const catacurses::window &w, int vStart, int vLines, int column ) const override;
         // Checks whether a player can hear a sound at a given volume and location.

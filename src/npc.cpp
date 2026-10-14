@@ -66,6 +66,7 @@
 #include "string_formatter.h"
 #include "string_utils.h"
 #include "text_snippets.h"
+#include "tile_parts.h"
 #include "tileray.h"
 #include "trait_group.h"
 #include "translations.h"
@@ -2535,97 +2536,102 @@ nc_color npc::basic_symbol_color() const
     return c_pink;
 }
 
+auto npc::info_facts() const -> std::vector<engine_client::fact>
+{
+    const auto bar = get_hp_bar( hp_percentage(), 100 );
+    auto facts = std::vector<engine_client::fact> {};
+    facts.push_back( { .kind = "hp", .text = bar.first, .color = bar.second, .values = { { "percent", hp_percentage() } } } );
+    facts.push_back( { .kind = "creature", .text = name, .color = basic_symbol_color() } );
+    if( const auto goal = npc_attitude_name( get_attitude() ); !goal.empty() ) {
+        facts.push_back( { .kind = "goal", .text = goal, .color = basic_symbol_color() } );
+    }
+    const auto res = Creature::get_attitude_ui_data( attitude_to( g->u ) );
+    const auto aware = sees( g->u );
+    facts.push_back( { .kind = "senses", .text = aware ? _( "Aware of your presence" ) : _( "Unaware of you" ),
+                       .color = aware ? c_yellow : c_green } );
+    facts.push_back( { .kind = "attitude", .text = res.first.translated(), .color = res.second } );
+    if( display_object_ids ) {
+        facts.push_back( { .kind = "object_id", .text = string_format( "[%s]", myclass ), .color = c_light_blue } );
+    }
+    const int per = g->u.get_per();
+    const int dist = rl_dist( g->u.bub_pos(), bub_pos() );
+    const int visibility_cap = per <= 1 ? INT_MAX : std::round( dist * dist / 20.0 / ( per - 1 ) );
+    std::ranges::copy( equipment_facts( visibility_cap ), std::back_inserter( facts ) );
+    return facts;
+}
+
 auto npc::print_info( const catacurses::window &w, int line, int vLines, int column ) const -> int
 {
     const int last_line = line + vLines;
     const int iWidth = getmaxx( w ) - 2;
+    const auto facts = info_facts();
+    const auto fact_of = [&]( const std::string & kind ) -> const engine_client::fact * { // *NOPAD*
+        const auto found = std::ranges::find( facts, kind, &engine_client::fact::kind );
+        return found == facts.end() ? nullptr :& *found;
+    };
 
-    const auto bar = get_hp_bar( hp_percentage(), 100 );
-    mvwprintz( w, point( column, line ), bar.second, bar.first );
+    const auto &bar = *fact_of( "hp" );
+    mvwprintz( w, point( column, line ), *bar.color, bar.text );
     constexpr auto bar_max_width = 5;
-    const auto bar_width = utf8_width( bar.first );
+    const auto bar_width = utf8_width( bar.text );
     for( int i = 0; i < bar_max_width - bar_width; ++i ) {
         mvwprintz( w, point( column + bar_max_width - 1 - i, line ), c_white, "." );
     }
     const auto name_column = column + bar_max_width + 1;
-    mvwprintz( w, point( name_column, line ), basic_symbol_color(), name );
-    const std::string att_goal = npc_attitude_name( get_attitude() );
-    if( !att_goal.empty() ) {
+    const auto &named = *fact_of( "creature" );
+    mvwprintz( w, point( name_column, line ), *named.color, named.text );
+    if( const auto *const goal = fact_of( "goal" ) ) {
         const auto info_width = getmaxx( w ) - column - 1;
-        const auto name_width = utf8_width( name );
+        const auto name_width = utf8_width( named.text );
         const auto name_end = name_column + name_width;
         const auto available_for_goal = column + info_width - ( name_end + 1 );
         if( available_for_goal > 0 ) {
-            const auto goal_text = utf8_truncate( att_goal, static_cast<size_t>( available_for_goal ) );
+            const auto goal_text = utf8_truncate( goal->text, static_cast<size_t>( available_for_goal ) );
             if( !goal_text.empty() ) {
                 const auto goal_width = utf8_width( goal_text );
                 const auto right_align_offset = std::max( 0, info_width - goal_width );
                 auto goal_column = column + right_align_offset;
                 goal_column = std::max( goal_column, name_end + 1 );
-                mvwprintz( w, point( goal_column, line ), basic_symbol_color(), goal_text );
+                mvwprintz( w, point( goal_column, line ), *goal->color, goal_text );
             }
         }
     }
 
-    Attitude att = attitude_to( g->u );
-    const std::pair<translation, nc_color> res = Creature::get_attitude_ui_data( att );
-
-    const std::string senses_str = sees( g->u ) ? _( "Aware of your presence" ) :
-                                   _( "Unaware of you" );
+    const auto &senses = *fact_of( "senses" );
+    const auto &att = *fact_of( "attitude" );
     line = line + 1;
-    mvwprintz( w, point( column, line ), sees( g->u ) ? c_yellow : c_green, senses_str );
+    mvwprintz( w, point( column, line ), *senses.color, senses.text );
     const auto info_width = getmaxx( w ) - column - 1;
-    const auto senses_end = column + utf8_width( senses_str );
+    const auto senses_end = column + utf8_width( senses.text );
     const auto info_end = column + info_width;
     const int available_for_att = std::max( 0, info_end - ( senses_end + 1 ) );
     if( available_for_att > 0 ) {
-        const auto att_text = utf8_truncate( res.first.translated(),
-                                             static_cast<size_t>( available_for_att ) );
+        const auto att_text = utf8_truncate( att.text, static_cast<size_t>( available_for_att ) );
         if( !att_text.empty() ) {
             const int att_width = utf8_width( att_text );
             const int att_column = info_end - att_width;
-            mvwprintz( w, point( att_column, line ), res.second, att_text );
+            mvwprintz( w, point( att_column, line ), *att.color, att_text );
         }
     }
 
-    if( display_object_ids && line < last_line ) {
-        mvwprintz( w, point( column, ++line ), c_light_blue, string_format( "[%s]", myclass ) );
-    }
-
-    if( is_armed() && line < last_line ) {
-        mvwprintz( w, point( column, ++line ), c_light_gray, _( "Wielding: " ) );
-        trim_and_print( w, point( column + utf8_width( _( "Wielding: " ) ), line ), iWidth, c_red,
-                        primary_weapon().tname() );
-    }
-
-    const std::string worn_str = enumerate_as_string( worn.begin(),
-    worn.end(), []( const item * const & it ) {
-        return it->tname();
-    } );
-    if( !worn_str.empty() ) {
-        std::vector<std::string> worn_lines = foldstring( _( "Wearing: " ) + worn_str, iWidth );
-        int worn_numlines = worn_lines.size();
-        // keeps the light gray color intact; changing this breaks the colorization again
-        for( int i = 0; i < worn_numlines && line < last_line; i++ ) {
-            trim_and_print( w, point( column, ++line ), iWidth, c_light_gray, worn_lines[i] );
-        }
-    }
-
-    const int per = g->u.get_per();
-    const int dist = rl_dist( g->u.bub_pos(), bub_pos() );
-    int visibility_cap;
-    if( per <= 1 ) {
-        visibility_cap = INT_MAX;
-    } else {
-        visibility_cap = std::round( dist * dist / 20.0 / ( per - 1 ) );
-    }
-
-    const std::string trait_str = visible_mutations( visibility_cap );
-    if( !trait_str.empty() ) {
-        std::vector<std::string> trait_lines = foldstring( _( "Traits: " ) + trait_str, iWidth );
-        int trait_numlines = trait_lines.size();
-        for( int i = 0; i < trait_numlines && line < last_line; i++ ) {
-            trim_and_print( w, point( column, ++line ), iWidth, c_light_gray, trait_lines[i] );
+    for( const auto &entry : facts ) {
+        if( entry.kind == "object_id" ) {
+            if( line < last_line ) {
+                mvwprintz( w, point( column, ++line ), *entry.color, entry.text );
+            }
+        } else if( entry.kind == "wielding" ) {
+            if( line < last_line ) {
+                mvwprintz( w, point( column, ++line ), c_light_gray, entry.label );
+                trim_and_print( w, point( column + utf8_width( entry.label ), line ), iWidth, *entry.color,
+                                entry.text );
+            }
+        } else if( entry.kind == "wearing" || entry.kind == "traits" ) {
+            const auto lines = foldstring( entry.label + entry.text, iWidth );
+            const int numlines = lines.size();
+            // keeps the light gray color intact; changing this breaks the colorization again
+            for( int i = 0; i < numlines && line < last_line; i++ ) {
+                trim_and_print( w, point( column, ++line ), iWidth, *entry.color, lines[i] );
+            }
         }
     }
 

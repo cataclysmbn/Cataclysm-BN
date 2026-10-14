@@ -8425,6 +8425,203 @@ void game::draw_look_around_cursor( const tripoint_bub_ms &lp, const visibility_
     }
 }
 
+namespace
+{
+/// What the look view says of how well the avatar sees a square.
+auto visibility_message( const visibility_type visibility ) -> std::string
+{
+    switch( visibility ) {
+        case VIS_CLEAR:
+            return _( "Clearly visible." );
+        case VIS_BOOMER:
+            return _( "A bright pink blur." );
+        case VIS_BOOMER_DARK:
+            return _( "A pink blur." );
+        case VIS_DARK:
+            return _( "Darkness." );
+        case VIS_LIT:
+            return _( "Bright light." );
+        case VIS_HIDDEN:
+            return _( "Unseen." );
+    }
+    return {};
+}
+
+struct colored_text {
+    std::string text;
+    nc_color color;
+};
+
+/// How hard a square is to cross, with the trailing space the native view pads it with.
+auto move_cost_label( const tripoint_bub_ms &lp ) -> colored_text
+{
+    const auto move_cost = get_map().move_cost( lp );
+    return move_cost == 0 ? colored_text{ _( "Impassable " ), c_light_red } :
+           colored_text{ string_format( _( "Move cost: %d " ), move_cost * 50 ), c_light_gray };
+}
+
+/// How well lit a square is.
+auto light_label( const tripoint_bub_ms &lp ) -> colored_text
+{
+    const auto light = get_light_level( std::max( 1.0,
+                                        LIGHT_AMBIENT_LIT - get_map().ambient_light_at( lp ) + 1.0 ) );
+    return { light.first, light.second };
+}
+
+/// What the furniture on a square can dispense; empty when it dispenses nothing.
+auto dispense_label( const tripoint_bub_ms &lp, const furn_t &furniture ) -> std::string
+{
+    if( !furniture.fluid_grid || furniture.fluid_grid->role != fluid_grid_role::tank ||
+        !furniture.fluid_grid->allow_output ) { return {}; }
+    auto dispensable_liquids = std::vector<std::string> {};
+    if( furniture.fluid_grid->universal_liquids ) {
+        const auto *vars = get_map().furn_vars( lp );
+        const auto assigned_liquid = vars == nullptr ? std::string{} :
+                                     vars->get( "fluid_grid_assigned_liquid", "" );
+        if( !assigned_liquid.empty() ) {
+            dispensable_liquids.emplace_back( item::nname( itype_id( assigned_liquid ) ) );
+        }
+    } else {
+        dispensable_liquids = furniture.fluid_grid->allowed_liquids |
+        std::views::transform( []( const itype_id & liquid ) {
+            return item::nname( liquid );
+        } ) | std::ranges::to<std::vector>();
+    }
+    return dispensable_liquids.empty() ?
+           _( "Can dispense any allowed liquid; the type is assigned when filled." ) :
+           string_format( _( "Can dispense: %s." ), join( dispensable_liquids, ", " ) );
+}
+
+/// What lies below a square that has no floor; nullopt when it has one.
+auto below_label( const tripoint_bub_ms &lp ) -> std::optional<std::string>
+{
+    map &m = get_map();
+    if( lp.z() <= -OVERMAP_DEPTH || m.has_floor( lp ) ) { return std::nullopt; }
+    const auto below = tripoint_bub_ms( lp.xy(), lp.z() - 1 );
+    auto tile_below = m.tername( below );
+    if( m.has_furn( below ) ) { tile_below += ", " + m.furnname( below ); }
+    return m.has_floor_or_support( lp ) ? string_format( _( "Below: %s; Walkable" ), tile_below ) :
+           string_format( _( "Below: %s; No support" ), tile_below );
+}
+
+/// Whether the field is a fire kept in a container, which tells its fuel instead of its name.
+auto burns_in_container( const tripoint_bub_ms &lp, const field_type_id &type ) -> bool
+{
+    map &m = get_map();
+    return type.obj().has_fire && ( m.has_flag( TFLAG_FIRE_CONTAINER, lp ) ||
+                                    m.ter( lp ) == t_pit_shallow || m.ter( lp ) == t_pit );
+}
+
+/// The name of a field on a square; a fire in a container tells its fuel.
+auto field_label( const tripoint_bub_ms &lp, const field_type_id &type,
+                  const field_entry &entry ) -> std::string
+{
+    return burns_in_container( lp, type ) ? get_fire_fuel_string( lp ) : entry.name();
+}
+
+/// The trap on a square the avatar can see, or an unfinished construction.
+auto trap_label( const tripoint_bub_ms &lp ) -> std::optional<colored_text>
+{
+    map &m = get_map();
+    const trap &tr = m.tr_at( lp );
+    if( !tr.can_see( lp, get_avatar() ) ) { return std::nullopt; }
+    partial_con *pc = m.partial_con_at( lp );
+    return colored_text{ pc &&tr.loadid == tr_unfinished_construction ?
+                         string_format( _( "Unfinished task: %s, %d%% complete" ), pc->id.obj().group->name(),
+                                        pc->counter / 100000 ) : tr.name(), tr.color };
+}
+
+/// What the avatar makes out of the items on a square.
+struct item_listing {
+    struct entry {
+        std::string name;
+        int count = 0;
+        nc_color color;
+    };
+    enum class sight { none, closed_container, blind, listed };
+    sight seen = sight::none;
+    std::vector<entry> entries = {};
+};
+
+auto item_listing_of( const tripoint_bub_ms &lp ) -> item_listing
+{
+    map &m = get_map();
+    avatar &u = get_avatar();
+    if( !m.sees_some_items( lp, u ) ) { return {}; }
+    if( m.has_flag( "CONTAINER", lp ) && !m.could_see_items( lp, u ) ) {
+        return { .seen = item_listing::sight::closed_container };
+    }
+    if( ( u.has_effect( effect_blind ) || u.worn_with_flag( flag_BLIND ) ) && u.clairvoyance() < 1 ) {
+        return { .seen = item_listing::sight::blind };
+    }
+    auto names = std::map<std::string, std::pair<int, nc_color>> {};
+    for( auto &entry : m.i_at( lp ) ) {
+        ++names[entry->tname()].first;
+        names[entry->tname()].second = entry->color_in_inventory();
+    }
+    auto result = item_listing{ .seen = item_listing::sight::listed };
+    for( const auto &[name, seen] : names ) { result.entries.push_back( { name, seen.first, seen.second } ); }
+    return result;
+}
+
+/// How an item listing names `entry`: its name, and how many when there are several alike.
+auto item_label( const item_listing::entry &entry ) -> std::string
+{
+    return entry.count > 1 ? string_format(
+               pgettext( "%s is the name of the item.  %d is the quantity of that item.",
+                         "%s [%d]" ), entry.name, entry.count ) : entry.name;
+}
+
+auto more_items_label() -> std::string { return _( "More items here…" ); }
+auto closed_container_label() -> std::string { return _( "You cannot see what is inside of it." ); }
+auto blind_items_label() -> std::string { return _( "There's something there, but you can't see what it is." ); }
+
+/// The inscription on a square, labeled as the native view labels it.
+auto graffiti_label( const tripoint_bub_ms &lp ) -> std::optional<std::string>
+{
+    map &m = get_map();
+    if( !m.has_graffiti_at( lp ) ) { return std::nullopt; }
+    return string_format( m.ter( lp ) == t_grave_new ? _( "Graffiti: %s" ) : _( "Inscription: %s" ),
+                          m.graffiti_at( lp ) );
+}
+
+/// What the avatar hears of a square: from it, or from the levels above and below.
+auto heard_sounds( const tripoint_bub_ms &lp ) -> std::vector<std::string>
+{
+    if( const auto sound = sounds::sound_at( lp ); !sound.empty() ) {
+        return { string_format( _( "You heard %s from here." ), sound ) };
+    }
+    auto heard = std::vector<std::string> {};
+    // Other z-levels, from the lowest.
+    for( auto level = tripoint_bub_ms( lp.xy(), -OVERMAP_DEPTH ); level.z() <= OVERMAP_HEIGHT;
+         ++level.z() ) {
+        if( level.z() == lp.z() ) { continue; }
+        if( const auto sound = sounds::sound_at( level ); !sound.empty() ) {
+            heard.push_back( string_format( level.z() > lp.z() ? _( "You heard %s from above." ) :
+                                            _( "You heard %s from below." ), sound ) );
+        }
+    }
+    return heard;
+}
+} // namespace
+
+auto engine_client::sense_of( const Creature &who ) -> sensed_creature
+{
+    const auto &u = get_avatar();
+    const auto special = u.sees_with_specials( who );
+    auto result = sensed_creature{};
+    if( special != enchantment_vision_id::NULL_ID() ) {
+        if( special->use_normal_mon_tile() ) {
+            result.normal = true;
+        } else {
+            result.lines.emplace_back( special->get_mon_desc( who ) );
+        }
+    } else if( u.sees_with_infrared( who ) ) {
+        who.describe_infrared( result.lines );
+    }
+    return result;
+}
+
 void game::print_all_tile_info( const tripoint_bub_ms &lp, const catacurses::window &w_look,
                                 const std::string &area_name, int column,
                                 int &line,
@@ -8458,19 +8655,12 @@ void game::print_all_tile_info( const tripoint_bub_ms &lp, const catacurses::win
             print_visibility_info( w_look, column, line, visibility );
 
             if( creature != nullptr ) {
-                std::vector<std::string> buf;
-                enchantment_vision_id special = u.sees_with_specials( *creature );
-                if( special != enchantment_vision_id::NULL_ID() ) {
-                    if( special->use_normal_mon_tile() ) {
-                        int vLines = last_line - line;
-                        line = creature->print_info( w_look, ++line, vLines, column );
-                    } else {
-                        buf.emplace_back( special->get_mon_desc( *creature ) );
-                    }
-                } else if( u.sees_with_infrared( *creature ) ) {
-                    creature->describe_infrared( buf );
+                const auto sensed = engine_client::sense_of( *creature );
+                if( sensed.normal ) {
+                    int vLines = last_line - line;
+                    line = creature->print_info( w_look, ++line, vLines, column );
                 }
-                for( const std::string &s : buf ) {
+                for( const std::string &s : sensed.lines ) {
                     mvwprintw( w_look, point( 1, ++line ), s );
                 }
             }
@@ -8479,48 +8669,10 @@ void game::print_all_tile_info( const tripoint_bub_ms &lp, const catacurses::win
     if( !inbounds ) {
         return;
     }
-    auto this_sound = sounds::sound_at( lp );
-    if( !this_sound.empty() ) {
-        mvwprintw( w_look, point( 1, ++line ), _( "You heard %s from here." ), this_sound );
-    } else {
-        // Check other z-levels
-        auto tmp = lp;
-        for( tmp.z() = -OVERMAP_DEPTH; tmp.z() <= OVERMAP_HEIGHT; tmp.z()++ ) {
-            if( tmp.z() == lp.z() ) {
-                continue;
-            }
-
-            auto zlev_sound = sounds::sound_at( tmp );
-            if( !zlev_sound.empty() ) {
-                mvwprintw( w_look, point( 1, ++line ), tmp.z() > lp.z() ?
-                           _( "You heard %s from above." ) : _( "You heard %s from below." ), zlev_sound );
-            }
-        }
+    for( const auto &heard : heard_sounds( lp ) ) {
+        mvwprintw( w_look, point( 1, ++line ), heard );
     }
 }
-
-namespace
-{
-/// What the look view says of how well the avatar sees a square.
-auto visibility_message( const visibility_type visibility ) -> std::string
-{
-    switch( visibility ) {
-        case VIS_CLEAR:
-            return _( "Clearly visible." );
-        case VIS_BOOMER:
-            return _( "A bright pink blur." );
-        case VIS_BOOMER_DARK:
-            return _( "A pink blur." );
-        case VIS_DARK:
-            return _( "Darkness." );
-        case VIS_LIT:
-            return _( "Bright light." );
-        case VIS_HIDDEN:
-            return _( "Unseen." );
-    }
-    return {};
-}
-} // namespace
 
 void game::print_visibility_info( const catacurses::window &w_look, int column, int &line,
                                   visibility_type visibility )
@@ -8545,15 +8697,10 @@ void game::print_terrain_info( const tripoint_bub_ms &lp, const catacurses::wind
     const auto concealment = m.coverage( lp );
     const auto cover = m.has_furn( lp ) ? m.furn( lp ).obj().bash.ranged->block_unaimed_chance : m.ter(
                            lp ).obj().bash.ranged->block_unaimed_chance;
-    const auto move_cost = m.move_cost( lp );
-    const auto move_cost_is_zero = move_cost == 0;
-    const auto move_cost_str = move_cost_is_zero ? _( "Impassable " ) :
-                               string_format( _( "Move cost: %d " ), move_cost * 50 );
-    const auto move_cost_color = move_cost_is_zero ? c_light_red : c_light_gray;
+    const auto [move_cost_str, move_cost_color] = move_cost_label( lp );
     const int move_cost_len = utf8_width( move_cost_str );
-    const std::pair<std::string, nc_color> ll = get_light_level( std::max( 1.0,
-            LIGHT_AMBIENT_LIT - m.ambient_light_at( lp ) + 1.0 ) );
-    const int light_len = utf8_width( ll.first );
+    const auto [light_text, light_color] = light_label( lp );
+    const int light_len = utf8_width( light_text );
     const auto location_width = std::max( 0, max_width - move_cost_len - 1 );
     trim_and_print( w_look, point( column, line ), location_width, location_color, area_name );
     const auto move_col = column + std::max( 0, max_width - move_cost_len );
@@ -8562,7 +8709,7 @@ void game::print_terrain_info( const tripoint_bub_ms &lp, const catacurses::wind
     const auto terrain_width = std::max( 0, max_width - light_len - 1 );
     trim_and_print( w_look, point( column, line ), terrain_width, terrain_color, tile );
     const auto light_col = column + std::max( 0, max_width - light_len - 1 );
-    mvwprintz( w_look, point( light_col, line ), ll.second, ll.first );
+    mvwprintz( w_look, point( light_col, line ), light_color, light_text );
     if( !terrain_desc.empty() ) {
         const int desc_lines = fold_and_print( w_look, point( column, ++line ), max_width, c_light_gray,
                                                terrain_desc ) - 1;
@@ -8579,25 +8726,7 @@ void game::print_terrain_info( const tripoint_bub_ms &lp, const catacurses::wind
                                                    furniture_desc ) - 1;
             line += desc_lines;
         }
-        if( furniture.fluid_grid && furniture.fluid_grid->role == fluid_grid_role::tank &&
-            furniture.fluid_grid->allow_output ) {
-            auto dispensable_liquids = std::vector<std::string> {};
-            if( furniture.fluid_grid->universal_liquids ) {
-                const auto *vars = m.furn_vars( lp );
-                const auto assigned_liquid = vars == nullptr ? std::string{} :
-                                             vars->get( "fluid_grid_assigned_liquid", "" );
-                if( !assigned_liquid.empty() ) {
-                    dispensable_liquids.emplace_back( item::nname( itype_id( assigned_liquid ) ) );
-                }
-            } else {
-                dispensable_liquids = furniture.fluid_grid->allowed_liquids |
-                std::views::transform( []( const itype_id & liquid ) {
-                    return item::nname( liquid );
-                } ) | std::ranges::to<std::vector>();
-            }
-            const auto dispense_desc = dispensable_liquids.empty() ?
-                                       _( "Can dispense any allowed liquid; the type is assigned when filled." ) :
-                                       string_format( _( "Can dispense: %s." ), join( dispensable_liquids, ", " ) );
+        if( const auto dispense_desc = dispense_label( lp, furniture ); !dispense_desc.empty() ) {
             fold_and_print( w_look, point( column, ++line ), max_width, c_light_gray, dispense_desc );
         }
     }
@@ -8625,20 +8754,8 @@ void game::print_terrain_info( const tripoint_bub_ms &lp, const catacurses::wind
                             sign_string ) );
     }
 
-    if( lp.z() > -OVERMAP_DEPTH && !m.has_floor( lp ) ) {
-        tripoint_bub_ms below( lp.xy(), lp.z() - 1 );
-        std::string tile_below = m.tername( below );
-        if( m.has_furn( below ) ) {
-            tile_below += ", " + m.furnname( below );
-        }
-
-        if( !m.has_floor_or_support( lp ) ) {
-            fold_and_print( w_look, point( column, ++line ), max_width, c_dark_gray,
-                            _( "Below: %s; No support" ), tile_below );
-        } else {
-            fold_and_print( w_look, point( column, ++line ), max_width, c_dark_gray,
-                            _( "Below: %s; Walkable" ), tile_below );
-        }
+    if( const auto below = below_label( lp ) ) {
+        fold_and_print( w_look, point( column, ++line ), max_width, c_dark_gray, *below );
     }
 
     ++line;
@@ -8651,11 +8768,10 @@ void game::print_fields_info( const tripoint_bub_ms &lp, const catacurses::windo
     const field &tmpfield = m.field_at( lp );
     for( auto &fld : tmpfield ) {
         const field_entry &cur = fld.second;
-        if( fld.first.obj().has_fire && ( m.has_flag( TFLAG_FIRE_CONTAINER, lp ) ||
-                                          m.ter( lp ) == t_pit_shallow || m.ter( lp ) == t_pit ) ) {
+        if( burns_in_container( lp, fld.first ) ) {
             const int max_width = getmaxx( w_look ) - column - 2;
             int lines = fold_and_print( w_look, point( column, ++line ), max_width, cur.color(),
-                                        get_fire_fuel_string( lp ) ) - 1;
+                                        field_label( lp, fld.first, cur ) ) - 1;
             line += lines;
         } else {
             mvwprintz( w_look, point( column, ++line ), cur.color(), cur.name() );
@@ -8672,24 +8788,8 @@ void game::print_trap_info( const tripoint_bub_ms &lp, const catacurses::window 
                             const int column,
                             int &line )
 {
-    const trap &tr = m.tr_at( lp );
-    auto printed = false;
-    if( tr.can_see( lp, u ) ) {
-        partial_con *pc = m.partial_con_at( lp );
-        std::string tr_name;
-        if( pc && tr.loadid == tr_unfinished_construction ) {
-            const construction &built = pc->id.obj();
-            tr_name = string_format( _( "Unfinished task: %s, %d%% complete" ), built.group->name(),
-                                     pc->counter / 100000 );
-        } else {
-            tr_name = tr.name();
-        }
-
-        mvwprintz( w_look, point( column, ++line ), tr.color, tr_name );
-        printed = true;
-    }
-
-    if( printed ) {
+    if( const auto label = trap_label( lp ) ) {
+        mvwprintz( w_look, point( column, ++line ), label->color, label->text );
         ++line;
     }
 }
@@ -8719,38 +8819,27 @@ void game::print_items_info( const tripoint_bub_ms &lp, const catacurses::window
                              int &line,
                              const int last_line )
 {
-    if( !m.sees_some_items( lp, u ) ) {
-        return;
-    } else if( m.has_flag( "CONTAINER", lp ) && !m.could_see_items( lp, u ) ) {
-        mvwprintw( w_look, point( column, ++line ), _( "You cannot see what is inside of it." ) );
-    } else if( ( u.has_effect( effect_blind ) || u.worn_with_flag( flag_BLIND ) ) &&
-               u.clairvoyance() < 1 ) {
-        mvwprintz( w_look, point( column, ++line ), c_yellow,
-                   _( "There's something there, but you can't see what it is." ) );
-        return;
-    } else {
-        std::map<std::string, std::pair<int, nc_color>> item_names;
-        for( auto &item : m.i_at( lp ) ) {
-            ++item_names[item->tname()].first;
-            item_names[item->tname()].second = item->color_in_inventory();
+    const auto listing = item_listing_of( lp );
+    switch( listing.seen ) {
+        case item_listing::sight::none:
+            return;
+        case item_listing::sight::closed_container:
+            mvwprintw( w_look, point( column, ++line ), closed_container_label() );
+            return;
+        case item_listing::sight::blind:
+            mvwprintz( w_look, point( column, ++line ), c_yellow, blind_items_label() );
+            return;
+        case item_listing::sight::listed:
+            break;
+    }
+    const int max_width = getmaxx( w_look ) - column - 1;
+    for( const auto &entry : listing.entries ) {
+        // last line but not last item
+        if( line + 1 >= last_line && &entry != &listing.entries.back() ) {
+            mvwprintz( w_look, point( column, ++line ), c_yellow, more_items_label() );
+            break;
         }
-
-        const int max_width = getmaxx( w_look ) - column - 1;
-        for( auto it = item_names.begin(); it != item_names.end(); ++it ) {
-            // last line but not last item
-            if( line + 1 >= last_line && std::next( it ) != item_names.end() ) {
-                mvwprintz( w_look, point( column, ++line ), c_yellow, _( "More items here…" ) );
-                break;
-            }
-
-            if( it->second.first > 1 ) {
-                trim_and_print( w_look, point( column, ++line ), max_width, it->second.second,
-                                pgettext( "%s is the name of the item.  %d is the quantity of that item.", "%s [%d]" ),
-                                it->first.c_str(), it->second.first );
-            } else {
-                trim_and_print( w_look, point( column, ++line ), max_width, it->second.second, it->first );
-            }
-        }
+        trim_and_print( w_look, point( column, ++line ), max_width, entry.color, item_label( entry ) );
     }
 }
 
@@ -8763,145 +8852,132 @@ void game::print_graffiti_info( const tripoint_bub_ms &lp, const catacurses::win
     }
 
     const int max_width = getmaxx( w_look ) - column - 2;
-    if( m.has_graffiti_at( lp ) ) {
-        fold_and_print( w_look, point( column, ++line ), max_width, c_light_gray,
-                        m.ter( lp ) == t_grave_new ? _( "Graffiti: %s" ) : _( "Inscription: %s" ),
-                        m.graffiti_at( lp ) );
+    if( const auto label = graffiti_label( lp ) ) {
+        fold_and_print( w_look, point( column, ++line ), max_width, c_light_gray, *label );
     }
 }
 
 namespace
 {
+using engine_client::fact;
+
 /// What the look view prints of the terrain, furniture and cover on a square.
-auto add_terrain_parts( const tripoint_bub_ms &lp,
-                        std::vector<engine_client::tile_part> &parts ) -> void
+auto terrain_facts( const tripoint_bub_ms &lp ) -> std::vector<fact>
 {
     map &m = get_map();
     avatar &u = get_avatar();
-    const auto add = [&parts]( const std::string & kind, const std::string & text ) {
-        parts.push_back( { .kind = kind, .text = text } );
-    };
+    auto facts = std::vector<fact> {};
     const auto &terrain = m.ter( lp ).obj();
     const oter_id &cur_ter_m = get_overmapbuffer( g->get_current_dimension_id() ).ter( tripoint_abs_omt(
                                    project_to<coords::omt>( bub_to_abs( lp ) ) ) );
-    const auto move_cost = m.move_cost( lp );
-    add( "location", colorize( cur_ter_m->get_name(),
-                               cur_ter_m->get_color( uistate.overmap_show_land_use_codes ) ) );
-    add( "move_cost", move_cost == 0 ? colorize( trim_whitespaces( _( "Impassable " ) ), c_light_red ) :
-         trim_whitespaces( string_format( _( "Move cost: %d " ), move_cost * 50 ) ) );
-    add( "terrain", colorize( m.tername( lp ), terrain.color() ) );
-    const auto light = get_light_level( std::max( 1.0,
-                                        LIGHT_AMBIENT_LIT - m.ambient_light_at( lp ) + 1.0 ) );
-    add( "light", colorize( light.first, light.second ) );
-    if( !terrain.description.translated().empty() ) { add( "description", terrain.description.translated() ); }
-
+    const auto move_cost = move_cost_label( lp );
+    const auto light = light_label( lp );
+    facts.push_back( { .kind = "location", .text = cur_ter_m->get_name(),
+                       .color = cur_ter_m->get_color( uistate.overmap_show_land_use_codes ) } );
+    facts.push_back( { .kind = "move_cost", .text = move_cost.text, .color = move_cost.color,
+    .values = { { "move_cost", m.move_cost( lp ) * 50 } } } );
+    facts.push_back( { .kind = "terrain", .text = m.tername( lp ), .color = terrain.color(), .id = terrain.id.str() } );
+    facts.push_back( { .kind = "light", .text = light.text, .color = light.color } );
+    if( const auto description = terrain.description.translated(); !description.empty() ) {
+        facts.push_back( { .kind = "description", .text = description, .color = c_light_gray } );
+    }
     if( m.has_furn( lp ) ) {
         const auto &furniture = m.furn( lp ).obj();
-        add( "furniture", colorize( m.furnname( lp ), furniture.color() ) );
-        if( !furniture.description.translated().empty() ) { add( "description", furniture.description.translated() ); }
-        if( furniture.fluid_grid && furniture.fluid_grid->role == fluid_grid_role::tank &&
-            furniture.fluid_grid->allow_output ) {
-            auto dispensable_liquids = std::vector<std::string> {};
-            if( furniture.fluid_grid->universal_liquids ) {
-                const auto *vars = m.furn_vars( lp );
-                const auto assigned_liquid = vars == nullptr ? std::string{} :
-                                             vars->get( "fluid_grid_assigned_liquid", "" );
-                if( !assigned_liquid.empty() ) {
-                    dispensable_liquids.emplace_back( item::nname( itype_id( assigned_liquid ) ) );
-                }
-            } else {
-                dispensable_liquids = furniture.fluid_grid->allowed_liquids |
-                std::views::transform( []( const itype_id & liquid ) {
-                    return item::nname( liquid );
-                } ) | std::ranges::to<std::vector>();
-            }
-            add( "description", dispensable_liquids.empty() ?
-                 _( "Can dispense any allowed liquid; the type is assigned when filled." ) :
-                 string_format( _( "Can dispense: %s." ), join( dispensable_liquids, ", " ) ) );
+        facts.push_back( { .kind = "furniture", .text = m.furnname( lp ), .color = furniture.color(),
+                           .id = furniture.id.str() } );
+        if( const auto description = furniture.description.translated(); !description.empty() ) {
+            facts.push_back( { .kind = "description", .text = description, .color = c_light_gray } );
+        }
+        if( const auto dispense = dispense_label( lp, furniture ); !dispense.empty() ) {
+            facts.push_back( { .kind = "dispenser", .text = dispense, .color = c_light_gray } );
         }
     }
-
     if( const auto concealment = m.coverage( lp ); concealment > 0 ) {
-        add( "concealment", colorize( string_format( _( "Concealment: %d%%" ), concealment ),
-                                      c_dark_gray ) );
+        facts.push_back( { .kind = "concealment", .text = string_format( _( "Concealment: %d%%" ), concealment ),
+        .color = c_dark_gray, .values = { { "percent", concealment } } } );
     }
     const auto cover = m.has_furn( lp ) ? m.furn( lp ).obj().bash.ranged->block_unaimed_chance :
                        terrain.bash.ranged->block_unaimed_chance;
-    if( cover > 0_pct ) { add( "cover", colorize( string_format( _( "Cover: %d%%" ), cover / 1_pct ), c_dark_gray ) ); }
-    if( const auto features = m.features( lp ); !features.empty() ) { add( "features", colorize( features, c_dark_gray ) ); }
+    if( cover > 0_pct ) {
+        facts.push_back( { .kind = "cover", .text = string_format( _( "Cover: %d%%" ), cover / 1_pct ),
+        .color = c_dark_gray, .values = { { "percent", cover / 1_pct } } } );
+    }
+    if( const auto features = m.features( lp ); !features.empty() ) {
+        facts.push_back( { .kind = "features", .text = features, .color = c_dark_gray } );
+    }
     if( const auto signage = m.get_signage( lp ); !signage.empty() ) {
-        add( "sign", string_format( _( "Sign: %s" ), u.has_trait( trait_ILLITERATE ) ? "???" : signage ) );
+        facts.push_back( { .kind = "sign", .text = string_format( _( "Sign: %s" ), u.has_trait( trait_ILLITERATE ) ? "???" : signage ),
+                           .color = c_light_gray } );
     }
-    if( lp.z() > -OVERMAP_DEPTH && !m.has_floor( lp ) ) {
-        const auto below = tripoint_bub_ms( lp.xy(), lp.z() - 1 );
-        const auto tile_below = m.has_furn( below ) ? m.tername( below ) + ", " + m.furnname( below ) :
-                                m.tername( below );
-        add( "below", colorize( m.has_floor_or_support( lp ) ? string_format( _( "Below: %s; Walkable" ),
-                                tile_below ) :
-                                string_format( _( "Below: %s; No support" ), tile_below ), c_dark_gray ) );
+    if( const auto below = below_label( lp ) ) {
+        facts.push_back( { .kind = "below", .text = *below, .color = c_dark_gray } );
     }
+    return facts;
 }
 
 /// What the look view prints of the fields and trap on a square.
-auto add_field_parts( const tripoint_bub_ms &lp,
-                      std::vector<engine_client::tile_part> &parts ) -> void
+auto field_facts( const tripoint_bub_ms &lp ) -> std::vector<fact>
 {
-    map &m = get_map();
-    for( const auto &[type, entry] : m.field_at( lp ) ) {
-        const auto burns = type.obj().has_fire && ( m.has_flag( TFLAG_FIRE_CONTAINER, lp ) ||
-                           m.ter( lp ) == t_pit_shallow || m.ter( lp ) == t_pit );
-        parts.push_back( { .kind = "field", .text = colorize( burns ? get_fire_fuel_string( lp ) : entry.name(), entry.color() ) } );
+    auto facts = std::vector<fact> {};
+    for( const auto &[type, entry] : get_map().field_at( lp ) ) {
+        facts.push_back( { .kind = "field", .text = field_label( lp, type, entry ), .color = entry.color(),
+        .id = entry.get_field_type().id().str(), .values = { { "intensity", entry.get_field_intensity() } } } );
     }
-    const trap &tr = m.tr_at( lp );
-    if( !tr.can_see( lp, get_avatar() ) ) { return; }
-    const auto *const construction = m.partial_con_at( lp );
-    parts.push_back( { .kind = "trap", .text = colorize( construction && tr.loadid == tr_unfinished_construction ?
-                       string_format( _( "Unfinished task: %s, %d%% complete" ), construction->id.obj().group->name(),
-                                      construction->counter / 100000 ) : tr.name(), tr.color ) } );
+    if( const auto trap = trap_label( lp ) ) {
+        facts.push_back( { .kind = "trap", .text = trap->text, .color = trap->color, .id = get_map().tr_at( lp ).id.str() } );
+    }
+    return facts;
 }
 
 /// What the look view prints of the vehicle part on a square and the parts mounted with it.
-auto add_vehicle_parts( const optional_vpart_position &vp,
-                        std::vector<engine_client::tile_part> &parts ) -> void
+auto vehicle_facts( const optional_vpart_position &vp ) -> std::vector<fact>
 {
-    if( !vp ) { return; }
-    parts.push_back( { .kind = "vehicle", .text = colorize( vp->vehicle().name, c_white ) } );
+    auto facts = std::vector<fact> {};
+    if( !vp ) { return facts; }
+    facts.push_back( { .kind = "vehicle", .text = vp->vehicle().name, .color = c_white } );
     const auto mounted = vp->vehicle().parts_at_relative( vp->mount(), true );
     for( const auto &[index, part] : std::views::enumerate( mounted ) ) {
         const auto label = part_list_label_of( vp->vehicle(), part, false );
-        parts.push_back( { .kind = "vehicle_part", .text = label.open + label.name + label.close,
+        facts.push_back( { .kind = "vehicle_part", .text = label.open + label.name + label.close,
                            .detail = index != 0 ? std::string{} : vp->is_inside() ? _( "Interior" ) : _( "Exterior" ) } );
     }
-    if( const auto label = vp.get_label() ) { parts.push_back( { .kind = "vehicle_part", .text = string_format( _( "Label: %s" ), *label ) } ); }
+    if( const auto label = vp.get_label() ) { facts.push_back( { .kind = "vehicle_part", .text = string_format( _( "Label: %s" ), *label ) } ); }
+    return facts;
 }
 
-/// What the look view prints of the items on a square: a line per name, with how many alike.
-auto add_item_parts( const tripoint_bub_ms &lp,
-                     std::vector<engine_client::tile_part> &parts ) -> void
+/// What the look view prints of the items on a square: a line per name, with how many alike. The wire keeps to
+/// `item_limit` of them and says there are more.
+auto item_facts( const tripoint_bub_ms &lp ) -> std::vector<fact>
 {
-    map &m = get_map();
-    avatar &u = get_avatar();
-    const auto add = [&parts]( const std::string & text ) { parts.push_back( { .kind = "item", .text = text } ); };
-    if( !m.sees_some_items( lp, u ) ) { return; }
-    if( m.has_flag( "CONTAINER", lp ) && !m.could_see_items( lp, u ) ) {
-        add( _( "You cannot see what is inside of it." ) );
-    } else if( ( u.has_effect( effect_blind ) || u.worn_with_flag( flag_BLIND ) ) &&
-               u.clairvoyance() < 1 ) {
-        add( colorize( _( "There's something there, but you can't see what it is." ), c_yellow ) );
-    } else {
-        auto item_names = std::map<std::string, std::pair<int, nc_color>> {};
-        for( auto &entry : m.i_at( lp ) ) {
-            auto &seen = item_names[entry->tname()];
-            ++seen.first;
-            seen.second = entry->color_in_inventory();
-        }
-        for( const auto &[name, seen] : item_names ) {
-            add( colorize( seen.first > 1 ?
-                           string_format( pgettext( "%s is the name of the item.  %d is the quantity of that item.",
-                                                    "%s [%d]" ),
-                                          name, seen.first ) : name, seen.second ) );
-        }
+    constexpr auto item_limit = 12;
+    const auto listing = item_listing_of( lp );
+    auto facts = std::vector<fact> {};
+    switch( listing.seen ) {
+        case item_listing::sight::none:
+            break;
+        case item_listing::sight::closed_container:
+            facts.push_back( { .kind = "item", .text = closed_container_label() } );
+            break;
+        case item_listing::sight::blind:
+            facts.push_back( { .kind = "item", .text = blind_items_label(), .color = c_yellow } );
+            break;
+        case item_listing::sight::listed:
+            for( const auto &entry : listing.entries | std::views::take( item_limit ) ) {
+                facts.push_back( { .kind = "item", .text = item_label( entry ), .color = entry.color,
+                .values = { { "count", entry.count } } } );
+            }
+            if( const auto listed = static_cast<int>( listing.entries.size() ); listed > item_limit ) {
+                facts.push_back( { .kind = "more_items", .text = more_items_label(), .color = c_yellow,
+                .values = { { "more", listed - item_limit } } } );
+            }
+            break;
     }
+    return facts;
+}
+
+auto append( std::vector<fact> &facts, std::vector<fact> &&more ) -> void
+{
+    std::ranges::move( more, std::back_inserter( facts ) );
 }
 } // namespace
 
@@ -8914,51 +8990,28 @@ auto engine_client::tile_parts( const tripoint_bub_ms &lp ) -> std::vector<tile_
     const auto visibility = inbounds ? m.get_visibility( m.apparent_light_at( lp, cache ),
                             cache ) : VIS_HIDDEN;
     const Creature *const creature = g->critter_at( lp, true );
-    auto parts = std::vector<tile_part> {};
+    auto facts = std::vector<fact> {};
     if( visibility == VIS_CLEAR ) {
-        add_terrain_parts( lp, parts );
-        add_field_parts( lp, parts );
-        if( creature != nullptr && ( u.sees( *creature ) || creature == &u ) ) {
-            parts.push_back( { .kind = "creature", .text = creature->disp_name(), .detail = creature->extended_description() } );
-        }
-        add_vehicle_parts( m.veh_at( lp ), parts );
-        add_item_parts( lp, parts );
-        if( m.has_graffiti_at( lp ) ) {
-            parts.push_back( { .kind = "inscription", .text = string_format( m.ter( lp ) == t_grave_new ? _( "Graffiti: %s" ) : _( "Inscription: %s" ), m.graffiti_at( lp ) ) } );
+        append( facts, terrain_facts( lp ) );
+        append( facts, field_facts( lp ) );
+        if( creature != nullptr && ( u.sees( *creature ) || creature == &u ) ) { append( facts, creature_facts( *creature ) ); }
+        append( facts, vehicle_facts( m.veh_at( lp ) ) );
+        append( facts, item_facts( lp ) );
+        if( const auto label = graffiti_label( lp ) ) {
+            facts.push_back( { .kind = "inscription", .text = *label, .color = c_light_gray } );
         }
     } else {
-        parts.push_back( { .kind = "visibility", .text = colorize( visibility_message( visibility ), c_light_gray ) } );
+        facts.push_back( { .kind = "visibility", .text = visibility_message( visibility ), .color = c_light_gray } );
         if( creature != nullptr ) {
-            const auto special = u.sees_with_specials( *creature );
-            auto described = std::vector<std::string> {};
-            if( special != enchantment_vision_id::NULL_ID() ) {
-                if( special->use_normal_mon_tile() ) {
-                    parts.push_back( { .kind = "creature", .text = creature->disp_name(), .detail = creature->extended_description() } );
-                } else {
-                    described.emplace_back( special->get_mon_desc( *creature ) );
-                }
-            } else if( u.sees_with_infrared( *creature ) ) {
-                creature->describe_infrared( described );
-            }
-            for( const auto &line : described ) { parts.push_back( { .kind = "creature", .text = line } ); }
+            const auto sensed = sense_of( *creature );
+            if( sensed.normal ) { append( facts, creature_facts( *creature ) ); }
+            for( const auto &line : sensed.lines ) { facts.push_back( { .kind = "creature", .text = line } ); }
         }
     }
-    if( !inbounds ) { return parts; }
-    const auto add_sound = [&parts]( const std::string & text ) { parts.push_back( { .kind = "sound", .text = text } ); };
-    if( const auto sound = sounds::sound_at( lp ); !sound.empty() ) {
-        add_sound( string_format( _( "You heard %s from here." ), sound ) );
-        return parts;
+    if( inbounds ) {
+        for( const auto &heard : heard_sounds( lp ) ) { facts.push_back( { .kind = "sound", .text = heard } ); }
     }
-    // Other z-levels, from the lowest.
-    for( auto level = tripoint_bub_ms( lp.xy(), -OVERMAP_DEPTH ); level.z() <= OVERMAP_HEIGHT;
-         ++level.z() ) {
-        if( level.z() == lp.z() ) { continue; }
-        if( const auto sound = sounds::sound_at( level ); !sound.empty() ) {
-            add_sound( string_format( level.z() > lp.z() ? _( "You heard %s from above." ) :
-                                      _( "You heard %s from below." ), sound ) );
-        }
-    }
-    return parts;
+    return to_parts( facts );
 }
 
 bool game::check_zone( const zone_type_id &type, const tripoint_bub_ms &where ) const
@@ -9882,9 +9935,8 @@ look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
             action = ctxt.handle_input();
         }
         ( void ) zone_blink; // kept for callback signature
-        if( const auto moved = target_screen::moved_to( ctxt.get_raw_input() );
-            moved && moved->x() >= minimum.x() && moved->y() >= minimum.y() && moved->z() >= minimum.z() &&
-            moved->x() <= maximum.x() && moved->y() <= maximum.y() && moved->z() <= maximum.z() ) {
+        // The screen's move only names squares inside its bounds and range; anything else was refused.
+        if( const auto moved = target_screen::moved_to( ctxt.get_raw_input() ) ) {
             center += *moved - lp;
             lp = *moved;
             continue;

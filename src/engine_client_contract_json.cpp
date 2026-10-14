@@ -501,7 +501,10 @@ auto to_json( const arg_shape &shape ) -> json
         result["text"] = json::object();
         if( !shape.text->field_id.empty() ) { result["text"]["field_id"] = shape.text->field_id; }
     }
-    if( shape.pos ) { result["pos"] = {{"unit", shape.pos->unit}}; }
+    if( shape.pos ) {
+        result["pos"] = {{"unit", shape.pos->unit}};
+        if( !shape.pos->component_id.empty() ) { result["pos"]["component_id"] = shape.pos->component_id; }
+    }
     if( shape.pane ) { result["pane"] = {{"component_id", shape.pane->component_id}}; }
     return result;
 }

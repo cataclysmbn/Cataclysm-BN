@@ -68,6 +68,7 @@
 #include "string_id.h"
 #include "string_utils.h"
 #include "text_snippets.h"
+#include "tile_parts.h"
 #include "translations.h"
 #include "trap.h"
 #include "type_id.h"
@@ -1125,74 +1126,103 @@ static std::optional<std::pair<std::string, nc_color>> action_readiness_descript
                            c_light_green );
 }
 
+auto monster::info_facts() const -> std::vector<engine_client::fact>
+{
+    auto facts = std::vector<engine_client::fact> {};
+    auto bar_color = c_white;
+    auto bar = std::string {};
+    get_HP_Bar( bar_color, bar );
+    facts.push_back( { .kind = "hp", .text = bar, .color = bar_color,
+    .values = { { "hp", hp }, { "max", get_hp_max() } } } );
+    facts.push_back( { .kind = "creature", .text = name(), .color = basic_symbol_color(), .id = type->id.str() } );
+    if( const auto effects = get_effect_status(); !effects.empty() ) {
+        facts.push_back( { .kind = "effects", .text = effects } );
+    }
+    const auto att = get_attitude();
+    facts.push_back( { .kind = "attitude", .text = att.first, .color = att.second } );
+    const auto sees_you = sees( g->u );
+    facts.push_back( { .kind = "senses", .text = sees_you ? _( "Can see to your current location" ) :
+                       _( "Can't see to your current location" ), .color = sees_you ? c_red : c_green } );
+    const auto speed_desc = speed_description( speed_rating(), has_flag( MF_IMMOBILE ) );
+    facts.push_back( { .kind = "speed", .text = speed_desc.first, .color = speed_desc.second } );
+    if( const auto ready = action_readiness_description( *this ) ) {
+        facts.push_back( { .kind = "readiness", .text = ready->first, .color = ready->second } );
+    }
+    if( debug_mode ) {
+        facts.push_back( { .kind = "difficulty", .text = _( " Difficulty " ) + std::to_string( type->difficulty ),
+        .color = c_light_gray, .values = { { "difficulty", type->difficulty } } } );
+        facts.push_back( { .kind = "moves", .text = string_format( _( "Moves: %d  Speed: %d" ), get_moves(), get_speed() ),
+        .color = c_light_gray, .values = { { "moves", get_moves() }, { "speed", get_speed() } } } );
+    }
+    if( display_mod_source ) {
+        const auto mod_src = enumerate_as_string( type->src.begin(),
+        type->src.end(), []( const std::pair<mtype_id, mod_id> &source ) {
+            return string_format( "'%s'", source.second->name() );
+        }, enumeration_conjunction::arrow );
+        facts.push_back( { .kind = "origin", .text = string_format( _( "Origin: %s" ), mod_src ), .color = c_cyan } );
+    }
+    if( display_object_ids ) {
+        facts.push_back( { .kind = "object_id", .text = string_format( "[%s]", type->id.str() ), .color = c_light_blue } );
+    }
+    facts.push_back( { .kind = "description", .text = type->get_description(), .color = c_light_gray } );
+    if( has_effect( effect_ridden ) && mounted_player ) {
+        facts.push_back( { .kind = "rider", .text = string_format( _( "Rider: %s" ), mounted_player->disp_name() ),
+                           .color = c_white } );
+    }
+    if( size_bonus > 0 ) {
+        facts.push_back( { .kind = "size", .text = string_format( _( "It is %s." ), size_names.at( get_size() ) ),
+                           .color = c_light_gray } );
+    }
+    return facts;
+}
+
 int monster::print_info( const catacurses::window &w, int vStart, int vLines, int column ) const
 {
     const int vEnd = vStart + vLines;
     const int max_width = getmaxx( w ) - column - 1;
+    const auto facts = info_facts();
+    const auto fact_of = [&]( const std::string & kind ) -> const engine_client::fact * { // *NOPAD*
+        const auto found = std::ranges::find( facts, kind, &engine_client::fact::kind );
+        return found == facts.end() ? nullptr :& *found;
+    };
 
-    nc_color color = c_white;
-    std::string bar_str;
-    get_HP_Bar( color, bar_str );
-    mvwprintz( w, point( column, vStart ), color, bar_str );
+    const auto &bar = *fact_of( "hp" );
+    mvwprintz( w, point( column, vStart ), *bar.color, bar.text );
     const int bar_max_width = 5;
-    const int bar_width = utf8_width( bar_str );
+    const int bar_width = utf8_width( bar.text );
     for( int i = 0; i < bar_max_width - bar_width; ++i ) {
         mvwprintz( w, point( column + 4 - i, vStart ), c_white, "." );
     }
-    mvwprintz( w, point( column + bar_max_width + 1, vStart ), basic_symbol_color(), name() );
+    const auto &named = *fact_of( "creature" );
+    mvwprintz( w, point( column + bar_max_width + 1, vStart ), *named.color, named.text );
 
-    const auto att = get_attitude();
-    const int att_width = utf8_width( att.first );
+    const auto &att = *fact_of( "attitude" );
+    const int att_width = utf8_width( att.text );
     const int att_start = column + std::max( 0, max_width - att_width );
-    const int effect_start = column + bar_max_width + utf8_width( " " + name() + " " );
+    const int effect_start = column + bar_max_width + utf8_width( " " + named.text + " " );
     const int effect_width = std::max( 0, att_start - effect_start - 1 );
     if( effect_width > 0 ) {
-        trim_and_print( w, point( effect_start, vStart ), effect_width, h_white, get_effect_status() );
+        if( const auto *const effects = fact_of( "effects" ) ) {
+            trim_and_print( w, point( effect_start, vStart ), effect_width, h_white, effects->text );
+        }
     }
-    mvwprintz( w, point( att_start, vStart ), att.second, att.first );
+    mvwprintz( w, point( att_start, vStart ), *att.color, att.text );
 
-    const std::string senses_str = sees( g->u ) ? _( "Can see to your current location" ) :
-                                   _( "Can't see to your current location" );
-    mvwprintz( w, point( column, ++vStart ), sees( g->u ) ? c_red : c_green, senses_str );
-
-    const auto speed_desc = speed_description( speed_rating(), has_flag( MF_IMMOBILE ) );
-    mvwprintz( w, point( column, ++vStart ), speed_desc.second, speed_desc.first );
-
-    if( const auto ready = action_readiness_description( *this ) ) {
-        mvwprintz( w, point( column, ++vStart ), ready->second, ready->first );
-    }
-
-    if( debug_mode ) {
-        mvwprintz( w, point( column, ++vStart ), c_light_gray,
-                   _( " Difficulty " ) + std::to_string( type->difficulty ) );
-        mvwprintz( w, point( column, ++vStart ), c_light_gray,
-                   string_format( _( "Moves: %d  Speed: %d" ), get_moves(), get_speed() ) );
-    }
-    if( display_mod_source ) {
-        const std::string mod_src = enumerate_as_string( type->src.begin(),
-        type->src.end(), []( const std::pair<mtype_id, mod_id> &source ) {
-            return string_format( "'%s'", source.second->name() );
-        }, enumeration_conjunction::arrow );
-        vStart += fold_and_print( w, point( column, vStart + 1 ), getmaxx( w ) - 2, c_cyan,
-                                  string_format( _( "Origin: %s" ), mod_src ) );
-    }
-    if( display_object_ids ) {
-        mvwprintz( w, point( column, ++vStart ), c_light_blue, string_format( "[%s]", type->id.str() ) );
-    }
-
-    std::vector<std::string> lines = foldstring( type->get_description(), max_width );
-    const int numlines = lines.size();
-    for( int i = 0; i < numlines && vStart < vEnd; i++ ) {
-        mvwprintz( w, point( column, ++vStart ), c_light_gray, lines[i] );
-    }
-
-    if( has_effect( effect_ridden ) && mounted_player ) {
-        mvwprintz( w, point( column, ++vStart ), c_white, _( "Rider: %s" ), mounted_player->disp_name() );
-    }
-
-    if( size_bonus > 0 ) {
-        mvwprintz( w, point( column, ++vStart ), c_light_gray, _( "It is %s." ),
-                   size_names.at( get_size() ) );
+    for( const auto &entry : facts ) {
+        if( entry.kind == "senses" || entry.kind == "speed" || entry.kind == "readiness" ||
+            entry.kind == "difficulty" || entry.kind == "moves" || entry.kind == "object_id" ||
+            entry.kind == "rider" || entry.kind == "size" ) {
+            mvwprintz( w, point( column, ++vStart ), *entry.color, entry.text );
+        } else if( entry.kind == "origin" ) {
+            vStart += fold_and_print( w, point( column, vStart + 1 ), getmaxx( w ) - 2, *entry.color,
+                                      entry.text );
+        } else if( entry.kind == "description" ) {
+            std::vector<std::string> lines = foldstring( entry.text, max_width );
+            const int numlines = lines.size();
+            for( int i = 0; i < numlines && vStart < vEnd; i++ ) {
+                mvwprintz( w, point( column, ++vStart ), *entry.color, lines[i] );
+            }
+        }
     }
 
     return ++vStart;

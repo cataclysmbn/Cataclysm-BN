@@ -458,8 +458,8 @@ auto read_choices( const choices_request &request, const std::string &epoch )
 namespace
 {
 /// Every member of the shape is supplied and no other; named rows are rows of their component.
-auto matches_shape( const screen_view &view, const arg_shape &shape,
-                    const invoke_args &args ) -> bool
+auto matches_shape( const screen_view &view, const arg_shape &shape, const invoke_args &args,
+                    const bubble_frame &frame ) -> bool
 {
     const auto present = []( const auto & wanted, const auto & given ) { return wanted.has_value() == given.has_value(); };
     if( !present( shape.row, args.row ) || !present( shape.rows, args.rows ) ||
@@ -492,6 +492,13 @@ auto matches_shape( const screen_view &view, const arg_shape &shape,
         const auto *const parent = component_in( shape.pane->component_id );
         if( parent == nullptr || !find_component( *parent, *args.pane ) ) { return false; }
     }
+    if( shape.pos && !shape.pos->component_id.empty() ) {
+        const auto *const found = component_in( shape.pos->component_id );
+        const auto *const body = found ? std::get_if<map_body>( &found->body ) : nullptr;
+        const auto at = to_bubble( *args.pos, frame );
+        if( body == nullptr || !body->target || !at ||
+            !game_client::target_contains( *body->target, *at ) ) { return false; }
+    }
     return true;
 }
 auto semantic_of( const game_client::interaction_operation kind ) -> semantic_operation
@@ -523,7 +530,7 @@ auto resolve_affordance( const resolve_options &opts ) -> std::expected<command_
     const auto &state = opts.state;
     const auto &found = opts.found;
     const auto &args = opts.args;
-    if( !matches_shape( opts.top, found.args, args ) ) { return std::unexpected( error::invalid_arguments ); }
+    if( !matches_shape( opts.top, found.args, args, state.frame ) ) { return std::unexpected( error::invalid_arguments ); }
     // Readiness gates as in the 0.1 lifecycle; `enabled` is the screen's own availability.
     const auto registered = found.runs == invoke_kind::action || found.runs == invoke_kind::travel ||
                             found.runs == invoke_kind::context || found.runs == invoke_kind::pickup ||

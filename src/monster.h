@@ -38,6 +38,10 @@
 #include "visitable.h"
 #include "sounds.h"
 
+namespace engine_client
+{
+struct fact;
+} // namespace engine_client
 class Character;
 class JsonIn;
 class JsonObject;
@@ -159,6 +163,8 @@ class monster : public Creature, public location_visitable<monster>
         void get_HP_Bar( nc_color &color, std::string &text ) const;
         std::pair<std::string, nc_color> get_attitude() const;
         int print_info( const catacurses::window &w, int vStart, int vLines, int column ) const override;
+        /// What `print_info` prints, a fact per line.
+        auto info_facts() const -> std::vector<engine_client::fact>;
 
         nc_color basic_symbol_color() const override;
         nc_color symbol_color() const override;

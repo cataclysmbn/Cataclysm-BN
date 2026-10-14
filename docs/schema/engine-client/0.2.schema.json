@@ -4669,6 +4669,7 @@
             "light",
             "furniture",
             "description",
+            "dispenser",
             "concealment",
             "cover",
             "features",
@@ -4677,11 +4678,30 @@
             "field",
             "trap",
             "creature",
+            "hp",
+            "effects",
+            "attitude",
+            "senses",
+            "speed",
+            "readiness",
+            "difficulty",
+            "moves",
+            "origin",
+            "object_id",
+            "rider",
+            "size",
+            "goal",
+            "wielding",
+            "wearing",
+            "traits",
             "vehicle",
             "vehicle_part",
             "item",
+            "more_items",
             "inscription",
-            "sound"
+            "sound",
+            "turret",
+            "spell"
           ],
           "description": "What the fact is about. Parts come in the order the native look view prints them."
         },
@@ -4692,6 +4712,17 @@
         "detail": {
           "type": "string",
           "description": "What more the view says of it when it has room, such as a creature's description; absent for none."
+        },
+        "id": {
+          "type": "string",
+          "description": "The identity of what the fact is about, such as a terrain id; absent for none."
+        },
+        "values": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "description": "Numbers the fact reports, by name, such as `move_cost`, `count`, `hp` and `max`."
         }
       },
       "required": [
@@ -4699,7 +4730,7 @@
         "text"
       ],
       "additionalProperties": false,
-      "description": "One fact the look view prints of a square."
+      "description": "One fact the look and target views tell of a square or of the creature on it."
     },
     "tint_vars_layer": {
       "type": "object",
@@ -4956,11 +4987,14 @@
                 "square",
                 "overmap"
               ]
+            },
+            "component_id": {
+              "$ref": "#/$defs/opaque_id"
             }
           },
           "required": [],
           "additionalProperties": false,
-          "description": "An absolute position: a map square, or an overmap terrain square with `overmap`."
+          "description": "An absolute position: a map square, or an overmap terrain square with `overmap`. With `component_id`, the square must lie inside the bounds and range of that `map` component's cursor."
         },
         "pane": {
           "type": "object",

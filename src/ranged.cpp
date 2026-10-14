@@ -65,6 +65,7 @@
 #include "string_formatter.h"
 #include "string_id.h"
 #include "target_screen.h"
+#include "tile_parts.h"
 #include "translations.h"
 #include "trap.h"
 #include "type_id.h"
@@ -552,6 +553,21 @@ class target_ui
         // The screen as a client sees it: the map with the cursor's facts, and what the aim reports.
         auto screen_view() -> engine_client::screen_view;
         auto add_gun_stats( std::vector<engine_client::panel_stat> &stats ) -> void;
+        auto add_aim_stats( std::vector<engine_client::panel_stat> &stats ) -> void;
+        auto add_throw_stats( std::vector<engine_client::panel_stat> &stats ) -> void;
+        auto add_spell_stats( std::vector<engine_client::panel_stat> &stats,
+                              std::vector<engine_client::tile_part> &parts ) -> void;
+        auto turret_parts() const -> std::vector<engine_client::tile_part>;
+        auto cursor_creature_parts() const -> std::vector<engine_client::tile_part>;
+
+        // What aiming at the cursor would do to the recoil and how many moves it would delay the shot.
+        struct aim_prediction {
+            double recoil = 0;
+            int delay = 0;
+        };
+        // Runs `read` with the avatar's recoil at the value aiming at the cursor starts from.
+        auto predicting_aim( const std::function < auto( const aim_prediction & ) -> void > &read ) -> void;
+        auto aim_target_size() const -> double;
 
         // Handle input related to cursor movement.
         // Returns 'true' if action was recognized and processed.
@@ -2105,13 +2121,50 @@ static std::string get_colored_bar( const double val, const int width, const std
     return result;
 }
 
+/// One line of the aim table: how the shot is aimed, what it costs and how likely each outcome is.
+struct aim_row {
+    std::string label;
+    /// The registered action that aims and fires this way.
+    std::string action;
+    int moves = 0;
+    double confidence = 0;
+    /// The chance in percent of each rating of the table, in its order.
+    std::vector<int> chances;
+};
+
+struct aim_options {
+    std::vector<ranged::aim_type> aim_types;
+    std::function<dispersion_sources( const ranged::aim_type & )> dispersion_fun;
+    std::function<int( const ranged::aim_type & )> cost_fun;
+    const std::vector<confidence_rating> &confidence_config;
+    double range;
+    double target_size;
+};
+
+static std::vector<aim_row> aim_rows( const aim_options &opts )
+{
+    std::vector<aim_row> rows;
+    for( const ranged::aim_type &type : opts.aim_types ) {
+        aim_row row;
+        row.label = type.has_threshold ? type.name : _( "Current" );
+        row.action = type.action.empty() ? "FIRE" : type.action;
+        const dispersion_sources current_dispersion = opts.dispersion_fun( type );
+        row.moves = opts.cost_fun( type );
+        row.confidence = confidence_estimate( opts.range, opts.target_size, current_dispersion );
+        int last_chance = 0;
+        for( const confidence_rating &cr : opts.confidence_config ) {
+            const int chance = std::min<int>( 100, 100.0 * ( cr.aim_level ) * row.confidence ) - last_chance;
+            last_chance += chance;
+            row.chances.push_back( chance );
+        }
+        rows.push_back( std::move( row ) );
+    }
+    return rows;
+}
+
 static int print_ranged_chance( const catacurses::window &w, int line_number,
-                                input_context &ctxt, const item &,
-                                const std::vector<ranged::aim_type> &aim_types,
-                                const std::function<dispersion_sources( const ranged::aim_type & )> &dispersion_fun,
-                                const std::function<int( const ranged::aim_type & )> &cost_fun,
-                                const std::vector<confidence_rating> &confidence_config,
-                                double range, double target_size )
+                                input_context &ctxt, const std::vector<aim_row> &rows,
+                                const std::vector<confidence_rating> &confidence_config )
 {
     int window_width = getmaxx( w ) - 2; // Window width minus borders.
     std::string display_type = get_option<std::string>( "ACCURACY_DISPLAY" );
@@ -2168,17 +2221,13 @@ static int print_ranged_chance( const catacurses::window &w, int line_number,
         return keys.empty() ? fallback : keys.front();
     };
 
-    for( const ranged::aim_type &type : aim_types ) {
-        dispersion_sources current_dispersion = dispersion_fun( type );
-        std::string label = _( "Current" );
+    for( const aim_row &row : rows ) {
+        const std::string &label = row.label;
         std::string aim_l = _( "Aim" );
-        if( type.has_threshold ) {
-            label = type.name;
-        }
 
-        int moves_to_fire = cost_fun( type );
+        const int moves_to_fire = row.moves;
 
-        auto hotkey = front_or( type.action.empty() ? "FIRE" : type.action, ' ' );
+        auto hotkey = front_or( row.action, ' ' );
         if( ( panel_type == "compact" || panel_type == "labels-narrow" ) ) {
             if( display_type == "numbers" ) {
                 t_aims[aim_iter] = string_format( "<color_dark_gray>%s:</color>", label );
@@ -2196,14 +2245,11 @@ static int print_ranged_chance( const catacurses::window &w, int line_number,
                                                hotkey, label, aim_l, moves_to_fire ) );
         }
 
-        double confidence = confidence_estimate( range, target_size, current_dispersion );
+        const double confidence = row.confidence;
 
         if( display_type == "numbers" ) {
             if( panel_type == "compact" || panel_type == "labels-narrow" ) {
-                int last_chance = 0;
-                for( const confidence_rating &cr : confidence_config ) {
-                    int chance = std::min<int>( 100, 100.0 * ( cr.aim_level ) * confidence ) - last_chance;
-                    last_chance += chance;
+                for( const auto &[cr, chance] : std::views::zip( confidence_config, row.chances ) ) {
                     t_confidence[conf_iter] = string_format( "<color_%s>%3d%%</color>", cr.color, chance );
                     conf_iter++;
                     if( conf_iter == ( aim_iter * 4 ) + 3 ) {
@@ -2212,15 +2258,15 @@ static int print_ranged_chance( const catacurses::window &w, int line_number,
                 }
                 aim_iter++;
             } else {
-                int last_chance = 0;
-                std::string confidence_s = enumerate_as_string( confidence_config.begin(), confidence_config.end(),
-                [&]( const confidence_rating & config ) {
+                const auto labeled = std::views::zip( confidence_config, row.chances ) |
+                std::views::transform( []( const auto & rated ) {
+                    const auto &[config, chance] = rated;
                     // TODO: Consider not printing 0 chances, but only if you can print something (at least miss 100% or so)
-                    int chance = std::min<int>( 100, 100.0 * ( config.aim_level * confidence ) ) - last_chance;
-                    last_chance += chance;
                     return string_format( "%s: <color_%s>%3d%%</color>", pgettext( "aim_confidence",
                                           config.label.c_str() ), config.color, chance );
-                }, enumeration_conjunction::none );
+                } ) | std::ranges::to<std::vector>();
+                std::string confidence_s = enumerate_as_string( labeled.begin(), labeled.end(),
+                []( const std::string & text ) { return text; }, enumeration_conjunction::none );
                 line_number += fold_and_print_from( w, point( 1, line_number ), window_width, 0,
                                                     c_dark_gray, confidence_s );
             }
@@ -2276,10 +2322,27 @@ double ranged::calculate_aim_cap( const Character &p, const tripoint_bub_ms &tar
     return min_recoil;
 }
 
-static int print_aim( const Character &p, const catacurses::window &w, int line_number,
-                      input_context &ctxt, item &weapon,
-                      const double target_size, const tripoint_bub_ms &pos, double predicted_recoil,
-                      item *load_loc )
+/// The aim table of a shot: how steady the aim is and how each way of aiming rates.
+struct aim_table {
+    /// How steady a gun's aim is, from 0 to 1; none for a throw.
+    std::optional<double> steadiness = std::nullopt;
+    const std::vector<confidence_rating> *config = nullptr;
+    std::vector<aim_row> rows;
+};
+
+static const std::vector<confidence_rating> &confidence_config_creature()
+{
+    static const std::vector<confidence_rating> config = {{
+            { accuracy_critical, '*', "green", translate_marker_context( "aim_confidence", "Great" ) },
+            { accuracy_standard, '+', "light_gray", translate_marker_context( "aim_confidence", "Normal" ) },
+            { accuracy_grazing, '|', "magenta", translate_marker_context( "aim_confidence", "Graze" ) }
+        }
+    };
+    return config;
+}
+
+static aim_table gun_aim_table( const Character &p, item &weapon, const double target_size,
+                                const tripoint_bub_ms &pos, double predicted_recoil, item *load_loc )
 {
     // This is absolute accuracy for the player.
     // TODO: push the calculations duplicated from Creature::deal_projectile_attack() and
@@ -2300,14 +2363,6 @@ static int print_aim( const Character &p, const catacurses::window &w, int line_
     // Fairly arbitrary cap on steadiness...
     const double steadiness = 1.0 - ( steady_score / steadiness_range );
 
-    // This could be extracted, to allow more/less verbose displays
-    static const std::vector<confidence_rating> confidence_config = {{
-            { accuracy_critical, '*', "green", translate_marker_context( "aim_confidence", "Great" ) },
-            { accuracy_standard, '+', "light_gray", translate_marker_context( "aim_confidence", "Normal" ) },
-            { accuracy_grazing, '|', "magenta", translate_marker_context( "aim_confidence", "Graze" ) }
-        }
-    };
-
     int shots = std::max( 1, weapon.gun_current_mode().qty );
     const auto dispersion_fun = [&]( const ranged::aim_type & at ) {
         int at_recoil = at.has_threshold ? at.threshold : static_cast<int>( predicted_recoil );
@@ -2319,14 +2374,29 @@ static int print_aim( const Character &p, const catacurses::window &w, int line_
                ranged::time_to_attack( p, weapon, load_loc );
     };
     const double range = rl_dist( p.bub_pos(), pos );
-    line_number = print_steadiness( w, line_number, steadiness );
-    return print_ranged_chance( w, line_number, ctxt, weapon, ranged::get_aim_types( p, weapon ),
-                                dispersion_fun, cost_fun, confidence_config, range, target_size );
+    return {
+        .steadiness = steadiness,
+        .config = &confidence_config_creature(),
+        .rows = aim_rows( {
+            .aim_types = ranged::get_aim_types( p, weapon ), .dispersion_fun = dispersion_fun, .cost_fun = cost_fun,
+            .confidence_config = confidence_config_creature(), .range = range, .target_size = target_size
+        } ),
+    };
 }
 
-static int draw_throw_aim( const player &p, const catacurses::window &w, int line_number,
-                           input_context &ctxt,
-                           const item &weapon, const tripoint_bub_ms &target_pos, bool is_blind_throw )
+static int print_aim( const Character &p, const catacurses::window &w, int line_number,
+                      input_context &ctxt, item &weapon,
+                      const double target_size, const tripoint_bub_ms &pos, double predicted_recoil,
+                      item *load_loc )
+{
+    const auto table = gun_aim_table( p, weapon, target_size, pos, predicted_recoil, load_loc );
+    line_number = print_steadiness( w, line_number, *table.steadiness );
+    return print_ranged_chance( w, line_number, ctxt, table.rows, *table.config );
+}
+
+static aim_table throw_aim_table( const player &p, const item &weapon,
+                                  const tripoint_bub_ms &target_pos,
+                                  bool is_blind_throw )
 {
     Creature *target = g->critter_at( target_pos, true );
     if( target != nullptr && !p.sees( *target ) ) {
@@ -2339,18 +2409,12 @@ static int draw_throw_aim( const player &p, const catacurses::window &w, int lin
 
     const double target_size = target != nullptr ? target->ranged_target_size() : 1.0f;
 
-    static const std::vector<confidence_rating> confidence_config_critter = {{
-            { accuracy_critical, '*', "green", translate_marker_context( "aim_confidence", "Great" ) },
-            { accuracy_standard, '+', "light_gray", translate_marker_context( "aim_confidence", "Normal" ) },
-            { accuracy_grazing, '|', "magenta", translate_marker_context( "aim_confidence", "Graze" ) }
-        }
-    };
     static const std::vector<confidence_rating> confidence_config_object = {{
             { accuracy_grazing, '*', "white", translate_marker_context( "aim_confidence", "Hit" ) }
         }
     };
     const auto &confidence_config = target != nullptr ?
-                                    confidence_config_critter : confidence_config_object;
+                                    confidence_config_creature() : confidence_config_object;
 
     const auto dispersion_fun = [&]( const ranged::aim_type & ) {
         return dispersion;
@@ -2358,8 +2422,21 @@ static int draw_throw_aim( const player &p, const catacurses::window &w, int lin
     const auto cost_fun = [&]( const ranged::aim_type & ) {
         return ranged::throw_cost( p, weapon );
     };
-    return print_ranged_chance( w, line_number, ctxt, weapon, get_default_aim_type(),
-                                dispersion_fun, cost_fun, confidence_config, range, target_size );
+    return {
+        .config = &confidence_config,
+        .rows = aim_rows( {
+            .aim_types = get_default_aim_type(), .dispersion_fun = dispersion_fun, .cost_fun = cost_fun,
+            .confidence_config = confidence_config, .range = range, .target_size = target_size
+        } ),
+    };
+}
+
+static int draw_throw_aim( const player &p, const catacurses::window &w, int line_number,
+                           input_context &ctxt,
+                           const item &weapon, const tripoint_bub_ms &target_pos, bool is_blind_throw )
+{
+    const auto table = throw_aim_table( p, weapon, target_pos, is_blind_throw );
+    return print_ranged_chance( w, line_number, ctxt, table.rows, *table.config );
 }
 
 std::vector<ranged::aim_type> ranged::get_aim_types( const Character &who, const item &gun )
@@ -3080,10 +3157,22 @@ auto target_ui::screen_view() -> engine_client::screen_view
         ( mode == TargetMode::Shape && relevant->is_gun() ) ) {
         add_gun_stats( stats );
     }
-    // The native panel describes the creature under the cursor when the avatar sees it.
-    auto described = std::vector<engine_client::tile_part> {};
-    if( dst_critter != nullptr && you->sees( *dst_critter ) ) {
-        described.push_back( { .kind = "creature", .text = dst_critter->disp_name(), .detail = dst_critter->extended_description() } );
+    if( status == Status::Good ) {
+        if( mode == TargetMode::Fire ) {
+            add_aim_stats( stats );
+        } else if( mode == TargetMode::Throw || mode == TargetMode::ThrowBlind ) {
+            add_throw_stats( stats );
+        }
+    }
+    auto described = cursor_creature_parts();
+    if( mode == TargetMode::Spell ) {
+        add_spell_stats( stats, described );
+    } else if( mode == TargetMode::Turrets ) {
+        stats.push_back( {
+            .key = "turrets", .label = _( "Turrets in range" ), .value = std::to_string( turrets_in_range.size() ),
+            .max = std::to_string( vturrets->size() )
+        } );
+        std::ranges::move( turret_parts(), std::back_inserter( described ) );
     }
     auto target = game_client::interaction_target{
         .source = position_of( src ),
@@ -3101,6 +3190,115 @@ auto target_ui::screen_view() -> engine_client::screen_view
     };
     return target_screen::screen_of( { .title = remove_color_tags( uitext_title() ), .target = std::move( target ),
                                        .stats = std::move( stats ), .ctxt = ctxt } );
+}
+
+/// The aim table as stats: how steady the aim is, and for each way of aiming its moves and chance of each rating.
+static auto table_stats( const aim_table &table,
+                         std::vector<engine_client::panel_stat> &stats ) -> void
+{
+    if( table.steadiness ) {
+        stats.push_back( {
+            .key = "steadiness", .label = _( "Steadiness" ),
+            .value = std::to_string( static_cast<int>( 100.0 * *table.steadiness ) ), .max = "100", .unit = "%"
+        } );
+    }
+    for( const aim_row &row : table.rows ) {
+        stats.push_back( {
+            .key = "aim:" + row.action, .label = string_format( _( "%s Aim" ), row.label ),
+            .value = std::to_string( row.moves ), .unit = _( "Moves" )
+        } );
+        for( const auto &[rating, chance] : std::views::zip( *table.config, row.chances ) ) {
+            stats.push_back( {
+                .key = "aim:" + row.action + ":" + rating.label,
+                .label = pgettext( "aim_confidence", rating.label.c_str() ), .value = std::to_string( chance ), .unit = "%"
+            } );
+        }
+    }
+}
+
+auto target_ui::add_aim_stats( std::vector<engine_client::panel_stat> &stats ) -> void
+{
+    predicting_aim( [&]( const aim_prediction & prediction ) {
+        item *load_loc = activity->reload_loc ? &*activity->reload_loc : nullptr;
+        table_stats( gun_aim_table( *you, *relevant->gun_current_mode(), aim_target_size(), dst,
+                                    prediction.recoil, load_loc ), stats );
+        if( aim_mode->has_threshold ) {
+            stats.push_back( {
+                .key = "aim_delay", .label = string_format( _( "%s Delay" ), aim_mode->name ),
+                .value = std::to_string( prediction.delay ), .unit = _( "Moves" )
+            } );
+        }
+    } );
+}
+
+auto target_ui::add_throw_stats( std::vector<engine_client::panel_stat> &stats ) -> void
+{
+    table_stats( throw_aim_table( *you, *relevant, dst, mode == TargetMode::ThrowBlind ), stats );
+}
+
+auto target_ui::add_spell_stats( std::vector<engine_client::panel_stat> &stats,
+                                 std::vector<engine_client::tile_part> &parts ) -> void
+{
+    parts.push_back( { .kind = "spell", .text = casting->name(), .detail = casting->description(),
+    .values = { { "level", static_cast<int>( casting->get_level() ) } } } );
+    if( !no_mana || casting->energy_source() == energy_type::none_energy ) {
+        stats.push_back( {
+            .key = "spell_cost", .label = _( "Cost" ), .value = casting->energy_cost_string( *you ),
+            .unit = casting->energy_string()
+        } );
+        if( casting->energy_source() != energy_type::hp_energy ) {
+            stats.push_back( {
+                .key = "spell_energy", .label = _( "Current" ), .value = casting->energy_cur_string( *you ),
+                .unit = casting->energy_string()
+            } );
+        }
+    }
+    const auto fail = no_fail ? 0.0f : casting->spell_fail( *you ) * 100.0f;
+    stats.push_back( {
+        .key = "spell_failure", .label = _( "Failure Chance" ), .value = string_format( "%.1f", fail ), .max = "100",
+        .unit = "%", .tone = fail > 75.0f ? "bad" : fail == 0.0f ? "good" : ""
+    } );
+    if( casting->aoe() > 0 ) {
+        const auto fx = casting->effect();
+        const auto aoes = casting->aoe_string();
+        if( fx == "projectile_attack" || fx == "target_attack" || fx == "area_pull" || fx == "area_push" ||
+            fx == "ter_transform" ) {
+            stats.push_back( {
+                .key = "spell_radius", .label = _( "Effective Spell Radius" ), .value = aoes,
+                .tone = casting->in_aoe( src, dst ) ? "bad" : ""
+            } );
+        } else if( fx == "cone_attack" ) {
+            stats.push_back( { .key = "spell_cone", .label = _( "Cone Arc" ), .value = aoes, .unit = _( "degrees" ) } );
+        } else if( fx == "line_attack" ) {
+            stats.push_back( { .key = "spell_line", .label = _( "Line width" ), .value = aoes } );
+        }
+    }
+    stats.push_back( { .key = "spell_damage", .label = _( "Damage" ), .value = casting->damage_string( *you ) } );
+}
+
+auto target_ui::turret_parts() const -> std::vector<engine_client::tile_part>
+{
+    auto parts = std::vector<engine_client::tile_part> {};
+    std::ranges::transform( turrets_in_range,
+    std::back_inserter( parts ), [&]( const turret_with_lof & entry ) {
+        return engine_client::tile_part{ .kind = "turret", .text = entry.turret->name() };
+    } );
+    return parts;
+}
+
+/// What the native panel says of the creature under the cursor: by its info when the avatar sees it, else as it senses it.
+auto target_ui::cursor_creature_parts() const -> std::vector<engine_client::tile_part>
+{
+    if( dst_critter == nullptr ) { return {}; }
+    auto facts = std::vector<engine_client::fact> {};
+    if( you->sees( *dst_critter ) ) {
+        facts = engine_client::creature_facts( *dst_critter );
+    } else {
+        const auto sensed = engine_client::sense_of( *dst_critter );
+        if( sensed.normal ) { facts = engine_client::creature_facts( *dst_critter ); }
+        for( const auto &line : sensed.lines ) { facts.push_back( { .kind = "creature", .text = line } ); }
+    }
+    return engine_client::to_parts( facts );
 }
 
 auto target_ui::add_gun_stats( std::vector<engine_client::panel_stat> &stats ) -> void
@@ -4589,19 +4787,12 @@ void target_ui::panel_target_info( int &text_y, bool fill_with_blank_if_no_targe
             dst_critter->print_info( w_target, text_y, fix_for_print_info, 1 );
             text_y += max_lines;
         } else {
-            std::vector<std::string> buf;
-            enchantment_vision_id special = you->sees_with_specials( *dst_critter );
-            if( special != enchantment_vision_id::NULL_ID() ) {
-                if( special->use_normal_mon_tile() ) {
-                    int fix_for_print_info = max_lines - 2;
-                    dst_critter->print_info( w_target, text_y, fix_for_print_info, 1 );
-                    text_y += max_lines;
-                } else {
-                    buf.emplace_back( special->get_mon_desc( *dst_critter ) );
-                }
-
-            } else if( you->sees_with_infrared( *dst_critter ) ) {
-                dst_critter->describe_infrared( buf );
+            const auto sensed = engine_client::sense_of( *dst_critter );
+            const auto &buf = sensed.lines;
+            if( sensed.normal ) {
+                int fix_for_print_info = max_lines - 2;
+                dst_critter->print_info( w_target, text_y, fix_for_print_info, 1 );
+                text_y += max_lines;
             }
             for( size_t i = 0; i < static_cast<size_t>( max_lines ); i++, text_y++ ) {
                 if( i >= buf.size() ) {
@@ -4618,39 +4809,45 @@ void target_ui::panel_target_info( int &text_y, bool fill_with_blank_if_no_targe
     }
 }
 
-void target_ui::panel_fire_mode_aim( int &text_y )
+auto target_ui::predicting_aim( const std::function < auto( const aim_prediction & ) -> void >
+                                &read ) -> void
 {
     // TODO: saving & restoring pc.recoil may actually be unnecessary
     double saved_pc_recoil = you->recoil;
     you->recoil = predicted_recoil;
-    double predicted_recoil = you->recoil;
-    int predicted_delay = 0;
+    auto prediction = aim_prediction{ .recoil = you->recoil };
     if( aim_mode->has_threshold && aim_mode->threshold < you->recoil ) {
         do {
-            const double aim_amount = ranged::aim_per_move( *you, *relevant, predicted_recoil );
+            const double aim_amount = ranged::aim_per_move( *you, *relevant, prediction.recoil );
             if( aim_amount > 0 ) {
-                predicted_delay++;
-                predicted_recoil = std::max( predicted_recoil - aim_amount, 0.0 );
+                prediction.delay++;
+                prediction.recoil = std::max( prediction.recoil - aim_amount, 0.0 );
             }
-        } while( predicted_recoil > aim_mode->threshold &&
-                 predicted_recoil - sight_dispersion > 0 );
-    } else {
-        predicted_recoil = you->recoil;
+        } while( prediction.recoil > aim_mode->threshold &&
+                 prediction.recoil - sight_dispersion > 0 );
     }
-
-    const double target_size = dst_critter ? dst_critter->ranged_target_size() :
-                               occupied_tile_fraction( creature_size::medium );
-
-    item *load_loc = activity->reload_loc ? &*activity->reload_loc : nullptr;
-    text_y = print_aim( *you, w_target, text_y, ctxt, *relevant->gun_current_mode(),
-                        target_size, dst, predicted_recoil, load_loc );
-
-    if( aim_mode->has_threshold ) {
-        mvwprintw( w_target, point( 1, text_y++ ), _( "%s Delay: %i" ), aim_mode->name,
-                   predicted_delay );
-    }
-
+    read( prediction );
     you->recoil = saved_pc_recoil;
+}
+
+auto target_ui::aim_target_size() const -> double
+{
+    return dst_critter ? dst_critter->ranged_target_size() : occupied_tile_fraction(
+               creature_size::medium );
+}
+
+void target_ui::panel_fire_mode_aim( int &text_y )
+{
+    predicting_aim( [&]( const aim_prediction & prediction ) {
+        item *load_loc = activity->reload_loc ? &*activity->reload_loc : nullptr;
+        text_y = print_aim( *you, w_target, text_y, ctxt, *relevant->gun_current_mode(),
+                            aim_target_size(), dst, prediction.recoil, load_loc );
+
+        if( aim_mode->has_threshold ) {
+            mvwprintw( w_target, point( 1, text_y++ ), _( "%s Delay: %i" ), aim_mode->name,
+                       prediction.delay );
+        }
+    } );
 }
 
 void target_ui::panel_turret_list( int &text_y )

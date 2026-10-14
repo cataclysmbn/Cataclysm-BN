@@ -14,7 +14,7 @@ auto screen_of( const screen_options &opts ) -> ec::screen_view
         .title = opts.title,
         .root = ec::panel( { .id = panel_id, .title = opts.title, .stats = opts.stats, .child = std::move( map ) } ),
         .affordances = {
-            ec::invoke_affordance( { .id = move_id, .label = opts.ctxt.get_action_name( "SELECT" ), .args = { .pos = ec::pos_shape{} } } ),
+            ec::invoke_affordance( { .id = move_id, .label = opts.ctxt.get_action_name( "SELECT" ), .args = { .pos = ec::pos_shape{ .component_id = map_id } } } ),
         },
     };
 }

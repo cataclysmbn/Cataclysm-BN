@@ -418,6 +418,8 @@ auto interaction_kind_name( interaction_kind kind ) -> std::string;
 /// How far `to` is from the target source by the screen's metric, as the game measures range:
 /// rounded Euclidean for `trig`, Chebyshev otherwise.
 auto target_distance( const interaction_target &target, const interaction_position &to ) -> int;
+/// Whether the cursor may be put on `to`: inside the coordinate bounds and the range from the source.
+auto target_contains( const interaction_target &target, const interaction_position &to ) -> bool;
 
 auto opaque_interaction_id( const std::string &prefix, const std::vector<std::string> &identity )
 -> std::string;

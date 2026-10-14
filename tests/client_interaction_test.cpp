@@ -22,6 +22,7 @@
 #    include "debug_menu.h"
 #    include "debug_test_support.h"
 #    include "drop_token.h"
+#    include "editmap.h"
 #    include "engine_client_component.h"
 #    include "engine_client_contract.h"
 #    include "engine_client_event.h"
@@ -273,6 +274,17 @@ auto cursor_target() -> nlohmann::json {
 auto bubble_at(const nlohmann::json& position) -> tripoint_bub_ms {
     return {position["x"].get<int>() - stack_state().frame.x,
             position["y"].get<int>() - stack_state().frame.y, position["z"].get<int>()};
+}
+/// Why the screen on top refuses to put its cursor on `to`; none when it takes the move.
+auto refused_move(const tripoint_bub_ms& to) -> std::optional<engine_client::error> {
+    const auto frame = stack_state().frame;
+    const auto resolved = engine_client::resolve_invoke(
+        stack_state(),
+        {.affordance_id = "target:move",
+         .args = {
+             .pos = engine_client::position{
+                 .dim = frame.dim, .x = to.x() + frame.x, .y = to.y() + frame.y, .z = to.z()}}});
+    return resolved ? std::nullopt : std::optional{resolved.error()};
 }
 auto move_cursor(const tripoint_bub_ms& to) -> input_event {
     return invoke(
@@ -1824,7 +1836,7 @@ TEST_CASE(
     CHECK(dropped.front().count == 2);
 }
 TEST_CASE(
-    "real target UI moves the cursor by invoke and stops a move at the range",
+    "real target UI moves the cursor by invoke and refuses a move beyond the range",
     "[client][interaction][target][mcp]") {
     clear_all_state();
     const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
@@ -1866,12 +1878,12 @@ TEST_CASE(
             CHECK((*reported)["max"].get<std::string>() == std::to_string(range));
             const auto [narrow, wide] = at_two_viewports();
             CHECK(narrow == wide);
-            return move_cursor(source + tripoint(range + 5, 0, 0));
-        }
-        if (step == 1) {
-            // A square beyond the range is not taken: the cursor stops where the range ends.
-            CHECK(target["distance"].get<int>() <= range);
-            CHECK(bubble_at(target["current"]) != source + tripoint(range + 5, 0, 0));
+            // A square beyond the range is refused, and so is one past the end of the map.
+            CHECK(refused_move(source + tripoint(range, 0, 0)) == std::nullopt);
+            CHECK(refused_move(source + tripoint(range + 1, 0, 0))
+                  == engine_client::error::invalid_arguments);
+            CHECK(refused_move({-1, source.y(), source.z()})
+                  == engine_client::error::invalid_arguments);
             return move_cursor(source + tripoint_east);
         }
         CHECK(bubble_at(target["current"]) == source + tripoint_east);
@@ -3445,17 +3457,20 @@ TEST_CASE(
         switch (reads++) {
             case 0:
                 return resolve_action("RIGHT");
-            // The map the game holds starts at 0; a square before it is not taken.
+            // The map the game holds starts at 0; a square before it is refused, one on it is not.
             case 1:
-                return move_cursor({-5, you.bub_pos().y(), you.bub_pos().z()});
-            default:
+                CHECK(refused_move({-5, you.bub_pos().y(), you.bub_pos().z()})
+                      == engine_client::error::invalid_arguments);
+                CHECK(refused_move({0, you.bub_pos().y(), you.bub_pos().z()}) == std::nullopt);
                 return resolve_action("QUIT");
+            default:
+                FAIL("the look screen stays after QUIT");
         }
     });
     auto center = you.bub_pos();
     const auto result = g->look_around(false, center, center, false, false, false);
     CHECK_FALSE(result.position);
-    REQUIRE(reads == 3);
+    REQUIRE(reads == 2);
     CHECK(cursor == tripoint_bub_ms(you.bub_pos().x() + 1, you.bub_pos().y(), you.bub_pos().z()));
 }
 TEST_CASE(
@@ -3476,6 +3491,7 @@ TEST_CASE(
         for (const auto index : std::views::iota(std::size_t{0}, expected.size())) {
             CHECK(target["parts"][index]["kind"].get<std::string>() == expected[index].kind);
             CHECK(target["parts"][index]["text"].get<std::string>() == expected[index].text);
+            CHECK(target["parts"][index].value("id", "") == expected[index].id);
         }
         CHECK_FALSE(target.contains("description"));
         const auto [narrow, wide] = at_two_viewports();
@@ -3491,6 +3507,134 @@ TEST_CASE(
     auto center = you.bub_pos();
     g->look_around(false, center, center, false, false, false);
     CHECK(reads == 2);
+}
+
+namespace {
+auto part_of_kind(const nlohmann::json& parts, const std::string& kind) -> nlohmann::json {
+    for (const auto& part : parts) {
+        if (part["kind"].get<std::string>() == kind) { return part; }
+    }
+    return nullptr;
+}
+} // namespace
+TEST_CASE(
+    "the map editor tells its cursor square by id and number, toggles its view and moves by invoke",
+    "[client][interaction][editmap][mcp]") {
+    clear_map();
+    auto& you = get_avatar();
+    clear_character(you, false);
+    const auto guard = interaction_test_guard{};
+    const auto restore_view = restore_on_out_of_scope<bool>(uistate.editmap_nsa_viewmode);
+    uistate.editmap_nsa_viewmode = false;
+    const auto start = you.bub_pos();
+    auto reads = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto target = cursor_target();
+        CHECK(target["status"] == "editmap");
+        CHECK(top_screen()["role"] == "dialog");
+        const auto terrain = part_of_kind(target["parts"], "terrain");
+        REQUIRE(terrain.is_object());
+        const auto& floor = get_map().ter(bubble_at(target["current"])).obj();
+        CHECK(terrain["id"].get<std::string>() == floor.id.str());
+        CHECK(terrain["values"]["move_cost"] == floor.movecost);
+        switch (reads++) {
+            case 0:
+                CHECK(bubble_at(target["current"]) == start);
+                CHECK(pickup_stat("show_all")["value"] == "Off");
+                return resolve_action("EDITMAP_SHOW_ALL");
+            case 1:
+                CHECK(pickup_stat("show_all")["value"] == "On");
+                CHECK(pickup_stat("show_all")["tone"] == "good");
+                return move_cursor(start + tripoint(2, 0, 0));
+            default:
+                CHECK(bubble_at(target["current"]) == start + tripoint(2, 0, 0));
+                return resolve_action("QUIT");
+        }
+    });
+    auto edit = editmap{};
+    edit.edit();
+    CHECK(reads == 3);
+}
+TEST_CASE(
+    "the map editor menus open from its screen and give it back",
+    "[client][interaction][editmap][mcp]") {
+    clear_map();
+    auto& you = get_avatar();
+    clear_character(you, false);
+    get_map().add_item(you.bub_pos(), item::spawn("rock"));
+    const auto guard = interaction_test_guard{};
+    const auto menus = std::vector<std::pair<std::string, std::string>>{
+        {"EDIT_TERRAIN", "EDITMAP_FEATURE"},
+        {"EDIT_FIELDS", "EDIT_FIELDS"},
+        {"EDIT_ITEMS", "EDIT_ITEMS"},
+        {"EDIT_OVERMAP", "EDIT_MAPGEN"}};
+    auto reads = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto index = static_cast<std::size_t>(reads++ / 2);
+        if (reads % 2 == 1) {
+            CHECK(cursor_target()["status"] == "editmap");
+            return resolve_action(index == menus.size() ? "QUIT" : menus[index].first);
+        }
+        const auto snapshot = game_client::current_interaction();
+        CHECK(snapshot.context == menus[index].second);
+        CHECK(snapshot.choices.size() > 1);
+        return resolve(
+            {.input_id = snapshot.input_id,
+             .operation = game_client::interaction_operation::cancel});
+    });
+    auto edit = editmap{};
+    edit.edit();
+    CHECK(reads == static_cast<int>(menus.size()) * 2 + 1);
+}
+TEST_CASE(
+    "the map editor shape and retarget screens move their cursor by invoke",
+    "[client][interaction][editmap][mcp]") {
+    clear_map();
+    auto& you = get_avatar();
+    clear_character(you, false);
+    const auto guard = interaction_test_guard{};
+    const auto start = you.bub_pos();
+    auto edit = editmap{};
+    edit.target = edit.origin = start;
+    edit.target_list = {start};
+    auto reads = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto target = cursor_target();
+        switch (reads++) {
+            case 0:
+                CHECK(target["status"] == "editmap_shape_resize");
+                return move_cursor(start + tripoint(2, 1, 0));
+            case 1:
+                CHECK(bubble_at(target["current"]) == start + tripoint(2, 1, 0));
+                return resolve_action("EDITMAP_MOVE");
+            case 2:
+                CHECK(target["status"] == "editmap_shape_move");
+                return move_cursor(start + tripoint(4, 1, 0));
+            default:
+                CHECK(bubble_at(target["current"]) == start + tripoint(4, 1, 0));
+                return resolve_action("CONFIRM");
+        }
+    });
+    const auto shape_size = edit.select_shape(editmap_rect);
+    CHECK(reads == 4);
+    CHECK(edit.target == start + tripoint(4, 1, 0));
+    CHECK(edit.origin == start + tripoint_rel_ms(2, 0, 0));
+    CHECK(shape_size > 1);
+
+    // The retarget moves in whole map squares and keeps the old target when it is left.
+    edit.target = start;
+    const auto east = start + tripoint(24, 0, 0);
+    reads = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto target = cursor_target();
+        CHECK(target["status"] == "editmap_retarget");
+        if (reads++ == 0) { return move_cursor(east); }
+        CHECK(bubble_at(target["current"]) == east);
+        return resolve_action("QUIT");
+    });
+    edit.mapgen_retarget();
+    CHECK(reads == 2);
+    CHECK(edit.target == start);
 }
 TEST_CASE(
     "an invoke names its affordance and its arguments and needs no native widget",

@@ -40,9 +40,9 @@ export const look: Scenario = {
       assertEquals(target().current, east)
       assertEquals(target().distance, 1)
 
-      // A square before the map the game holds is not taken: the cursor stays.
+      // A square before the map the game holds is refused: the cursor stays.
       const outside = await engine.invoke(move.id, { pos: { ...east, x: -5 } })
-      assertEquals(outside.stages.at(-1), "completed", JSON.stringify(outside))
+      assertEquals(outside.stages.at(-1), "rejected", JSON.stringify(outside))
       assertEquals(target().current, east)
 
       const cancel = engine.top().affordances.find((entry: Value) => entry.role === "cancel")

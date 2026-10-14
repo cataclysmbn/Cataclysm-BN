@@ -43,6 +43,8 @@ struct text_shape {
 struct pos_shape {
     /// `square` or `overmap`.
     std::string unit = "square";
+    /// The `map` component whose cursor bounds and range the square must lie within; empty for any square.
+    std::string component_id = {};
 };
 struct pane_shape {
     std::string component_id = {};

@@ -94,6 +94,7 @@
 #include "string_id.h"
 #include "string_utils.h"
 #include "text_snippets.h"
+#include "tile_parts.h"
 #include "thread_pool.h"
 #include "translations.h"
 #include "trap.h"
@@ -12315,22 +12316,33 @@ std::vector<std::string> Character::short_description_parts() const
 
     std::string gender = male ? _( "Male" ) : _( "Female" );
     result.push_back( name +  ", "  + gender );
+    const int visibility_cap = 0; // no cap
+    for( const auto &entry : equipment_facts( visibility_cap ) ) {
+        result.push_back( entry.label + entry.text );
+    }
+    return result;
+}
+
+auto Character::equipment_facts( const int visibility_cap ) const ->
+std::vector<engine_client::fact>
+{
+    auto facts = std::vector<engine_client::fact> {};
     if( is_armed() ) {
-        result.push_back( _( "Wielding: " ) + primary_weapon().tname() );
+        facts.push_back( { .kind = "wielding", .label = _( "Wielding: " ), .text = primary_weapon().tname(),
+                           .color = c_red } );
     }
     const std::string worn_str = enumerate_as_string( worn.begin(), worn.end(),
     []( const item * const & it ) {
         return it->tname();
     } );
     if( !worn_str.empty() ) {
-        result.push_back( _( "Wearing: " ) + worn_str );
+        facts.push_back( { .kind = "wearing", .label = _( "Wearing: " ), .text = worn_str, .color = c_light_gray } );
     }
-    const int visibility_cap = 0; // no cap
     const auto trait_str = visible_mutations( visibility_cap );
     if( !trait_str.empty() ) {
-        result.push_back( _( "Traits: " ) + trait_str );
+        facts.push_back( { .kind = "traits", .label = _( "Traits: " ), .text = trait_str, .color = c_light_gray } );
     }
-    return result;
+    return facts;
 }
 
 std::string Character::short_description() const
@@ -12338,28 +12350,39 @@ std::string Character::short_description() const
     return join( short_description_parts(), ";   " );
 }
 
+auto Character::info_facts() const -> std::vector<engine_client::fact>
+{
+    const auto bar = ::get_hp_bar( get_hp(), get_hp_max(), false );
+    auto facts = std::vector<engine_client::fact> {};
+    facts.push_back( { .kind = "hp", .text = bar.first, .color = bar.second,
+    .values = { { "hp", get_hp() }, { "max", get_hp_max() } } } );
+    facts.push_back( { .kind = "creature", .text = string_format( _( "You (%s)" ), name ), .color = basic_symbol_color() } );
+    const int visibility_cap = 0; // no cap
+    std::ranges::copy( equipment_facts( visibility_cap ), std::back_inserter( facts ) );
+    return facts;
+}
+
 auto Character::print_info( const catacurses::window &w, int vStart, int vLines,
                             int column ) const -> int
 {
     const int last_line = vStart + vLines;
     const int iWidth = getmaxx( w ) - 2;
-    const auto bar = ::get_hp_bar( get_hp(), get_hp_max(), false );
-    mvwprintz( w, point( column, vStart ), bar.second, bar.first );
+    const auto facts = info_facts();
+    const auto &bar = facts.at( 0 );
+    mvwprintz( w, point( column, vStart ), *bar.color, bar.text );
     constexpr auto bar_max_width = 5;
-    const auto bar_width = utf8_width( bar.first );
+    const auto bar_width = utf8_width( bar.text );
     for( int i = 0; i < bar_max_width - bar_width; ++i ) {
         mvwprintz( w, point( column + bar_max_width - 1 - i, vStart ), c_white, "." );
     }
     const int name_column = column + bar_max_width + 1;
-    mvwprintz( w, point( name_column, vStart ), basic_symbol_color(), _( "You (%s)" ), name );
+    mvwprintz( w, point( name_column, vStart ), *facts.at( 1 ).color, facts.at( 1 ).text );
     int line = vStart + 1;
-    const auto description_parts = short_description_parts();
-    for( size_t idx = 1; idx < description_parts.size(); ++idx ) {
-        const auto &part = description_parts[idx];
+    for( const auto &entry : facts | std::views::drop( 2 ) ) {
         if( line >= last_line ) {
             break;
         }
-        const std::vector<std::string> part_lines = foldstring( part, iWidth );
+        const std::vector<std::string> part_lines = foldstring( entry.label + entry.text, iWidth );
         for( const std::string &part_line : part_lines ) {
             if( line >= last_line ) {
                 break;
