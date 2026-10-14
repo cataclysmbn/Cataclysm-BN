@@ -10,12 +10,15 @@
 #    include "client_memory_scope.h"
 #    include "cursesdef.h"
 #    include "cursesport.h"
+#    include "engine_client_component.h"
+#    include "engine_client_contract.h"
 #    include "game_constants.h"
 #    include "input.h"
 #    include "output.h"
 
 #    include <algorithm>
 #    include <functional>
+#    include <nlohmann/json.hpp>
 #    include <string>
 #    include <vector>
 
@@ -115,6 +118,108 @@ inline auto open_screen(
     open();
 }
 
+/// The screen on top of the 0.2 stack now, with the 0.1 snapshot of the same read.
+inline auto top_screen_now() -> engine_client::screen_view {
+    const auto state = engine_client::capture_boundary(
+        {.epoch = "epoch:test",
+         .ready = {.phase = "waiting_for_input",
+                   .accepts_interaction_commands = true,
+                   .accepts_registered_actions = true}});
+    REQUIRE(state.has_value());
+    return engine_client::top_screen(*state);
+}
+
+/// Like `open_screen`, for a screen that publishes components: `script` gets the screen on top of
+/// the stack, and the 0.1 snapshot, which a screen of components has none of.
+inline auto open_stack(
+    const std::function<auto()->void>& open,
+    const std::function<auto(const snapshot_t&, const engine_client::screen_view&)->input_event>&
+        script) -> void {
+    auto reads = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        REQUIRE(++reads <= max_screen_reads);
+        return script(game_client::current_interaction(), top_screen_now());
+    });
+    open();
+}
+
+/// The screen on top as the wire carries it, less the serial that is new on every open.
+inline auto top_json() -> nlohmann::json {
+    const auto state = engine_client::capture_boundary(
+        {.epoch = "epoch:test",
+         .ready = {.phase = "waiting_for_input",
+                   .accepts_interaction_commands = true,
+                   .accepts_registered_actions = true}});
+    REQUIRE(state.has_value());
+    auto top =
+        nlohmann::json::parse(engine_client::serialize_interaction_boundary(*state))["stack"]
+            .back();
+    top.erase("screen_id");
+    return top;
+}
+
+/// `value` with every string member emptied, as a client sees the shape of a screen without its
+/// words.
+inline auto without_words(nlohmann::json value) -> nlohmann::json {
+    if (value.is_string()) { return ""; }
+    if (!value.is_structured()) { return value; }
+    for (auto& member : value) { member = without_words(std::move(member)); }
+    return value;
+}
+
+/// The same screen at the sizes of a small and a large terminal: equal when it reads its model
+/// only.
+inline auto at_both_sizes() -> std::pair<nlohmann::json, nlohmann::json> {
+    const auto saved_x = TERMX;
+    const auto saved_y = TERMY;
+    TERMX = 80;
+    TERMY = 24;
+    auto narrow = top_json();
+    TERMX = 200;
+    TERMY = 60;
+    auto wide = top_json();
+    TERMX = saved_x;
+    TERMY = saved_y;
+    return {std::move(narrow), std::move(wide)};
+}
+
+/// The input a client sends to run `affordance` of `top` with `args`, validated as the lifecycle
+/// does.
+inline auto invoke_event(
+    const engine_client::screen_view& top, const std::string& affordance,
+    engine_client::invoke_args args = {}) -> input_event {
+    namespace ec = engine_client;
+    class authority final: public ec::command_authority {
+    public:
+        auto current_permissions() const -> ec::command_permissions override {
+            return {.accepts_interaction_commands = true, .accepts_registered_actions = true};
+        }
+    };
+    const auto state = ec::capture_boundary(
+        {.epoch = "epoch:test",
+         .ready = {.phase = "waiting_for_input",
+                   .accepts_interaction_commands = true,
+                   .accepts_registered_actions = true}});
+    REQUIRE(state.has_value());
+    const auto found = std::ranges::find(top.affordances, affordance, &ec::affordance::id);
+    REQUIRE(found != top.affordances.end());
+    const auto owner = authority{};
+    auto lifecycle = ec::command_lifecycle{"epoch:test", owner};
+    const auto submitted = lifecycle.submit(
+        {.epoch = "epoch:test",
+         .expect = ec::scope_of(*found) == ec::expect_scope::screen
+                     ? ec::expectation{.screen_id = top.screen_id}
+                     : ec::expectation{.revision = 1, .boundary_id = state->id},
+         .operation = ec::invoke_operation{.affordance_id = affordance, .args = std::move(args)}});
+    REQUIRE(submitted.has_value());
+    const auto event = lifecycle.validate(
+        {.epoch = "epoch:test", .sequence = 1, .revision = 1}, *state, point{80, 24});
+    REQUIRE(event.has_value());
+    return *event;
+}
+
+/// The named action of the context the screen reads, as a client runs it.
+inline auto run_action(const std::string& id) -> input_event { return event_of({.action = id}); }
 
 } // namespace client_screen_test
 

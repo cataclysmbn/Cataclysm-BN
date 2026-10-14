@@ -20,8 +20,8 @@ TEST_CASE(
     auto& you = get_avatar();
     clear_character(you, false);
     const auto guard = screen_guard{};
-    open_screen([&] { g->extended_description(you.bub_pos() + tripoint_east); },
-                [](const auto& /*snapshot*/) { return input_event{}; });
+    open_stack([&] { g->extended_description(you.bub_pos() + tripoint_east); },
+               [](const auto& /*snapshot*/, const auto& /*top*/) { return input_event{}; });
 }
 
 #endif // CATA_MCP
