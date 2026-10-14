@@ -2,6 +2,7 @@
 
 #    include "avatar.h"
 #    include "calendar.h"
+#    include "cata_utility.h"
 #    include "catch/catch.hpp"
 #    include "client_input.h"
 #    include "client_interaction.h"
@@ -10,15 +11,18 @@
 #    include "engine_client_session.h"
 #    include "engine_client_world.h"
 #    include "game.h"
+#    include "game_constants.h"
 #    include "game_session.h"
 #    include "input.h"
 #    include "language.h"
 #    include "locale_fixture.h"
+#    include "locale_scope.h"
 #    include "map/map.h"
 #    include "map_helpers.h"
 #    include "map_perception.h"
 #    include "mcp_server.h"
 #    include "messages.h"
+#    include "options_helpers.h"
 #    include "state_helpers.h"
 #    include "translations.h"
 #    include "weather/weather.h"
@@ -407,21 +411,34 @@ TEST_CASE(
     CHECK(implicit.output.str().find(R"("lang")") == std::string::npos);
 }
 
-/// Milliseconds a publication costs with no extra language and with one:
-/// `cata_test-mcp "[.engine_client_locale_cost]"` prints them.
+/// Milliseconds a publication costs with no extra language and with one, for an avatar who steps on
+/// open ground at noon in a reality bubble of 3: `cata_test-mcp "[.engine_client_locale_cost]"`
+/// prints the median of each.
 TEST_CASE("the cost of a publication by reader languages", "[.engine_client_locale_cost]") {
     const auto fixture = korean_catalogue{};
+    const auto map_size = get_map().getmapsize();
+    const auto bubble =
+        override_option("REALITY_BUBBLE_SIZE", std::to_string(g_reality_bubble_size));
+    const auto restore = on_out_of_scope([&] {
+        g->on_options_changed();
+        get_map().resize(map_size);
+        clear_all_state();
+    });
     clear_all_state();
+    const auto sized = override_option("REALITY_BUBBLE_SIZE", "3");
+    g->on_options_changed();
     get_avatar().clear_map_memory();
-    build_test_map(ter_id("t_floor"));
+    clear_map();
+    make_open_air_uniform();
     calendar::turn = calendar::turn_zero + 12_hours;
     get_weather().weather_id = weather_type_id("clear");
     g->reset_light_level();
     game_session::set_running(true);
-    get_avatar().setpos(tripoint_bub_ms(60, 60, 0));
-    map_perception::acquire();
+    const auto start = tripoint_bub_ms(g_half_mapsize_x, g_half_mapsize_y, 0);
+    get_map().invalidate_map_cache(start.z());
     const auto boundary = yes_no_boundary{};
     for (const auto languages : {0, 1}) {
+        get_avatar().setpos(start);
         auto authority = ec::session{};
         authority.set_world_capture(
             &ec::world::capture_world, &ec::world::capture_patch, &ec::world::capture_worded);
@@ -430,20 +447,42 @@ TEST_CASE("the cost of a publication by reader languages", "[.engine_client_loca
         map_perception::acquire();
         REQUIRE(authority.publish_boundary());
         if (languages > 0) { REQUIRE(authority.current(korean)); }
-        const auto turns = 100;
-        auto elapsed = std::chrono::steady_clock::duration{};
-        for (const auto turn : std::views::iota(0, turns)) {
+        auto elapsed = std::vector<double>{};
+        for (const auto step : std::views::iota(0, 40)) {
+            get_avatar().setpos(start + tripoint(step % 2 == 0 ? 1 : 0, 0, 0));
             calendar::turn += 1_turns;
             map_perception::acquire();
             const auto began = std::chrono::steady_clock::now();
             REQUIRE(authority.publish_boundary());
-            elapsed += std::chrono::steady_clock::now() - began;
+            elapsed.push_back(
+                std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - began)
+                    .count());
             static_cast<void>(reader.take());
-            CHECK(turn >= 0);
         }
-        std::cerr << "extra languages " << languages << ": "
-                  << std::chrono::duration<double, std::milli>(elapsed).count() / turns
-                  << " ms/publication\n";
+        std::ranges::sort(elapsed);
+        std::cerr << "bubble " << g_reality_bubble_size << ", extra languages " << languages << ": "
+                  << elapsed[elapsed.size() / 2] << " ms/publication (median)\n";
+    }
+    // The part an extra language adds: the avatar and environment worded once more, with the
+    // scope that swaps the catalogue and refills every translation cache.
+    for (const auto scoped : {false, true}) {
+        auto elapsed = std::vector<double>{};
+        for (const auto step : std::views::iota(0, 40)) {
+            static_cast<void>(step);
+            const auto began = std::chrono::steady_clock::now();
+            if (scoped) {
+                const auto scope = localization::locale_scope{korean};
+                static_cast<void>(ec::world::capture_worded());
+            } else {
+                static_cast<void>(ec::world::capture_worded());
+            }
+            elapsed.push_back(
+                std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - began)
+                    .count());
+        }
+        std::ranges::sort(elapsed);
+        std::cerr << "worded capture " << (scoped ? "in a locale scope: " : "as is: ")
+                  << elapsed[elapsed.size() / 2] << " ms (median)\n";
     }
 }
 
