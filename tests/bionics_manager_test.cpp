@@ -661,6 +661,32 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "a bionic installed several times is one row named by its kind",
+    "[bionics_manager][engine_client_component][mcp]") {
+    const auto guard = manager_guard{};
+    auto& you = get_avatar();
+    const auto storage = bionic_id("bio_power_storage");
+    you.add_bionic(storage);
+    you.add_bionic(bionic_id("bio_power_storage_mkII"));
+    REQUIRE(you.count_bionic_of_type(storage) == 2);
+    auto step = 0;
+    client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        REQUIRE(screen.context == "BIONICS");
+        const auto passive = invoke("bionics:tab", {.row = "passive"});
+        if (step++ == 0) { return passive; }
+        auto ids = std::vector<std::string>{};
+        for (const auto& row : rows(screen)) { ids.push_back(row.id); }
+        CHECK(std::ranges::count(ids, id("bio_power_storage")) == 1);
+        CHECK(std::ranges::count(ids, id("bio_power_storage_mkII")) == 1);
+        std::ranges::sort(ids);
+        CHECK(std::ranges::adjacent_find(ids) == ids.end());
+        return action("QUIT");
+    });
+    show_bionics_ui(you);
+}
+
+TEST_CASE(
     "the bionics screen callbacks run only on explicit native activation and deactivation",
     "[bionics_manager][engine_client_component][mcp]") {
     const auto guard = manager_guard{};
