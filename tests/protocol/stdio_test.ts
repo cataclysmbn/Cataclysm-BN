@@ -801,9 +801,9 @@ Deno.test({
       // Look mode publishes its cursor as a target interaction and its own actions; it can be left.
       await run({ kind: "action", action_id: "look" })
       const ids = session.mirror.interaction.actions.map((a: Value) => a.id)
-      const look = session.mirror.interaction.interaction
-      assertEquals([look.kind, look.context], ["target", "LOOK"])
-      assertEquals(look.target.current, session.mirror.avatar.at)
+      const look = session.mirror.interaction.stack.at(-1)
+      assertEquals(look.context, "LOOK")
+      assertEquals(look.root.child.target.current, session.mirror.avatar.at)
       assert(ids.includes("QUIT") && !ids.includes("look"), ids.join())
       await run({ kind: "action", action_id: "QUIT" })
       assert(session.mirror.interaction.actions.some((a: Value) => a.id === "look"))
@@ -1407,8 +1407,10 @@ Deno.test({
       // The avatar's own square: the native mouse view prints something, and nothing changes.
       const before = JSON.stringify(session.mirror.state())
       const described = await describe(here)
-      assert(described.result.lines.length > 0, JSON.stringify(described))
-      assert(described.result.lines.every((line: string) => line === line.trimEnd()))
+      assert(described.result.parts.length > 0, JSON.stringify(described))
+      assert(
+        described.result.parts.every((part: Value) => part.kind && part.text === part.text.trim()),
+      )
       assertEquals(JSON.stringify(session.mirror.state()), before)
       // A square outside the terrain window and a stale boundary are refused with their kinds.
       const far = await describe({ ...here, x: here.x + 5000 })
@@ -1860,8 +1862,12 @@ Deno.test({
       await chooseItem(session, "active grenade")
       const avatar = session.mirror.avatar.at
       // Nine squares away: outside the fragments' range of seven, inside the lit room.
-      await run({ kind: "set_target", pos: { ...avatar, x: avatar.x + 9 } })
-      assertEquals(session.mirror.interaction.interaction.target.status, "good")
+      await run({
+        kind: "invoke",
+        affordance_id: "target:move",
+        args: { pos: { ...avatar, x: avatar.x + 9 } },
+      })
+      assertEquals(session.mirror.interaction.stack.at(-1).root.child.target.status, "good")
       await run({ kind: "action", action_id: "FIRE" })
       // The fuse burns five turns; tutorial pop-ups may hold the first ones back.
       for (let turn = 0; turn < 7; turn++) {

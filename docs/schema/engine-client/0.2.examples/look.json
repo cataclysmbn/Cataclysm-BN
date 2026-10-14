@@ -1,0 +1,552 @@
+{
+  "valid": [
+    {
+      "name": "look-around screen",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:7",
+        "role": "dialog",
+        "title": "Look Around",
+        "root": {
+          "id": "target",
+          "kind": "panel",
+          "title": "Look Around",
+          "child": {
+            "id": "target:map",
+            "kind": "map",
+            "affordances": [
+              "target:move"
+            ],
+            "mode": "world",
+            "target": {
+              "source": {
+                "dim": "",
+                "x": 1202,
+                "y": 1204,
+                "z": 0
+              },
+              "current": {
+                "dim": "",
+                "x": 1202,
+                "y": 1204,
+                "z": 0
+              },
+              "minimum": {
+                "dim": "",
+                "x": 1116,
+                "y": 1116,
+                "z": -10
+              },
+              "maximum": {
+                "dim": "",
+                "x": 1295,
+                "y": 1295,
+                "z": 10
+              },
+              "range": 180,
+              "distance_metric": "square",
+              "distance": 0,
+              "status": "look",
+              "candidates": [],
+              "parts": [
+                {
+                  "kind": "location",
+                  "text": "<color_c_cyan>tutorial room</color>"
+                },
+                {
+                  "kind": "move_cost",
+                  "text": "Move cost: 100"
+                },
+                {
+                  "kind": "terrain",
+                  "text": "<color_c_cyan>wooden floor</color>"
+                },
+                {
+                  "kind": "light",
+                  "text": "<color_c_black_white>very dark</color>"
+                },
+                {
+                  "kind": "description",
+                  "text": "Interlocking wooden tiles that are more than likely treated against fire, with wooden posts and beams supporting a roof."
+                },
+                {
+                  "kind": "cover",
+                  "text": "<color_c_dark_gray>Cover: 25%</color>"
+                },
+                {
+                  "kind": "features",
+                  "text": "<color_c_dark_gray>Smashable. Flat. Supports a roof. Prone to collapse.</color>"
+                },
+                {
+                  "kind": "creature",
+                  "text": "you",
+                  "detail": "This is you - John Smith.\n--\n<color_c_light_gray>Head  </color><color_c_green>█████</color><color_c_white></color>\n<color_c_light_gray>Torso </color><color_c_green>█████</color><color_c_white></color>\n<color_c_light_gray>L. Arm</color><color_c_green>█████</color><color_c_white></color>\n<color_c_light_gray>R. Arm</color><color_c_green>█████</color><color_c_white></color>\n<color_c_light_gray>L. Leg</color><color_c_green>█████</color><color_c_white></color>\n<color_c_light_gray>R. Leg</color><color_c_green>█████</color><color_c_white></color>\n--\nWielding: Nothing\nWearing: "
+                },
+                {
+                  "kind": "item",
+                  "text": "<color_c_light_gray>lighter</color>"
+                }
+              ]
+            }
+          }
+        },
+        "affordances": [
+          {
+            "id": "target:move",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "pos": {
+                "unit": "square"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Pan left",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Pan right",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFTUP",
+            "label": "Pan up-left",
+            "keys": [
+              "y",
+              "7",
+              "NUMPAD_7"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFTDOWN",
+            "label": "Pan down-left",
+            "keys": [
+              "b",
+              "1",
+              "NUMPAD_1"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHTUP",
+            "label": "Pan up-right",
+            "keys": [
+              "u",
+              "9",
+              "NUMPAD_9"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHTDOWN",
+            "label": "Pan down-right",
+            "keys": [
+              "n",
+              "3",
+              "NUMPAD_3"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "COORDINATE",
+            "label": "COORDINATE",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEVEL_UP",
+            "label": "Go Up",
+            "keys": [
+              "PPAGE",
+              "<"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEVEL_DOWN",
+            "label": "Go Down",
+            "keys": [
+              "NPAGE",
+              ">"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TOGGLE_FAST_SCROLL",
+            "label": "Toggle Fast Scroll",
+            "keys": [
+              "f"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "EXTENDED_DESCRIPTION",
+            "label": "Show extended description",
+            "keys": [
+              "e"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SELECT",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TRAVEL_TO",
+            "label": "Travel to destination",
+            "keys": [
+              "T"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LIST_ITEMS",
+            "label": "List items and monsters",
+            "keys": [
+              "V"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "MOUSE_MOVE",
+            "label": "Mouse Move",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CENTER",
+            "label": "Center On Character",
+            "keys": [
+              "0"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "debug_scent",
+            "label": "debug_scent",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "debug_scent_type",
+            "label": "debug_scent_type",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "debug_temp",
+            "label": "debug_temp",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "debug_visibility",
+            "label": "debug_visibility",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "debug_lighting",
+            "label": "debug_lighting",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "debug_radiation",
+            "label": "debug_radiation",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "debug_outside",
+            "label": "debug_outside",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "debug_sound_absorption",
+            "label": "debug_sound_absorption",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "debug_sound_walls",
+            "label": "debug_sound_walls",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "debug_submap_grid",
+            "label": "debug_submap_grid",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "debug_hour_timer",
+            "label": "debug_hour_timer",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "zoom_out",
+            "label": "Zoom Out",
+            "keys": [
+              "Z"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "zoom_in",
+            "label": "Zoom In",
+            "keys": [
+              "z"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "context": "LOOK"
+      }
+    },
+    {
+      "name": "cursor move of the look-around screen",
+      "def": "affordance",
+      "value": {
+        "id": "target:move",
+        "label": "Select",
+        "keys": [],
+        "enabled": true,
+        "args": {
+          "pos": {
+            "unit": "square"
+          }
+        },
+        "expect": "boundary"
+      }
+    },
+    {
+      "name": "look-around cursor moved one square east, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:1",
+          "revision": "8"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "target:move",
+          "args": {
+            "pos": {
+              "dim": "",
+              "x": 1203,
+              "y": 1204,
+              "z": 0
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "look-around cursor moved one square east, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "look-around cursor moved one square east, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "look-around cursor moved one square east, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "look-around cursor moved one square east, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "12",
+          "revision": "9"
+        }
+      }
+    },
+    {
+      "name": "look-around left, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "screen_id": "screen:7"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "QUIT"
+        }
+      }
+    },
+    {
+      "name": "look-around left, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "look-around left, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "look-around left, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "look-around left, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "14",
+          "revision": "11"
+        }
+      }
+    }
+  ],
+  "invalid": []
+}

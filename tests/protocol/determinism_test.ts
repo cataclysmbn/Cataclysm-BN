@@ -435,7 +435,11 @@ async function playEveryOperation(session: Session) {
     args: { row: selector().id },
   })
   const source = session.mirror.avatar.at
-  await run({ kind: "set_target", pos: { ...source, x: source.x + 1 } })
+  await run({
+    kind: "invoke",
+    affordance_id: "target:move",
+    args: { pos: { ...source, x: source.x + 1 } },
+  })
   await run({ kind: "cancel" })
   await session.clear()
   // The 0.1 count belongs to the screens that have not moved to components; the map has none to give it to.

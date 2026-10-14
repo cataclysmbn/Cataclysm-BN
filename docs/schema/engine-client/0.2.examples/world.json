@@ -1567,9 +1567,16 @@
       "name": "describe result",
       "def": "describe_result",
       "value": {
-        "lines": [
-          "Wall",
-          "You can see a zombie here."
+        "parts": [
+          {
+            "kind": "terrain",
+            "text": "Wall"
+          },
+          {
+            "kind": "creature",
+            "text": "zombie",
+            "detail": "This is a zombie."
+          }
         ]
       }
     },
