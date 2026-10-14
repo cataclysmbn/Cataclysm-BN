@@ -223,6 +223,9 @@ TEST_CASE(
                     const auto* const none = find("factions:none");
                     REQUIRE(none != nullptr);
                     CHECK(std::get<ec::text_body>(none->body).markup == "You have no followers");
+                    const auto swap = std::ranges::find(top.denials, "SWAPTONPC", &ec::denial::id);
+                    REQUIRE(swap != top.denials.end());
+                    CHECK(swap->reason == "You have no followers");
                     return invoke_event(top, "factions:tab", {.row = "creatures"});
                 }
                 case 1: {

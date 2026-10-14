@@ -982,7 +982,12 @@ void faction_manager::display() const
             content = ec::split( { .id = "factions:root", .relation = "detail", .children = std::move( parts ) } );
         }
         auto denials = std::vector<ec::denial> {};
-        if( tab == tab_mode::TAB_FOLLOWERS && guy ) {
+        if( tab != tab_mode::TAB_FOLLOWERS || !guy ) {
+            const auto reason = tab == tab_mode::TAB_FOLLOWERS ? _( "You have no followers" ) :
+                                _( "Pick a follower first" );
+            denials.push_back( { .id = "CONFIRM", .reason = reason } );
+            denials.push_back( { .id = "SWAPTONPC", .reason = reason } );
+        } else {
             if( contact.level == 0 && !guy->has_companion_mission() ) {
                 denials.push_back( { .id = "CONFIRM", .reason = contact.text } );
             }

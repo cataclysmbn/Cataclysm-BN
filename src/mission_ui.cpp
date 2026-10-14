@@ -228,7 +228,7 @@ void game::list_missions()
             .root = ec::tabs( { .id = tabs_id, .tabs = std::move( entries ), .select = select_tab_id, .child = std::move( content ) } ),
             .affordances = {
                 ec::invoke_affordance( { .id = select_tab_id, .label = _( "Category" ), .args = { .row = ec::row_shape{ .component_id = tabs_id } } } ),
-                ec::invoke_affordance( { .id = select_mission_id, .label = ctxt.get_action_name( "CONFIRM" ), .args = { .row = ec::row_shape{ .component_id = list_id } } } ),
+                ec::invoke_affordance( { .id = select_mission_id, .label = ctxt.get_action_name( "CONFIRM" ), .args = { .row = ec::row_shape{ .component_id = list_id } }, .role = "select" } ),
             },
             .focus_component = selection < umissions.size() ? list_id : "",
             .focus_row = selection < umissions.size() ? mission_row_id( *umissions[selection] ) : "",

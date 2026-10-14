@@ -89,7 +89,7 @@ TEST_CASE(
                     const auto& topics = rows_of(top, "help:topics");
                     REQUIRE(topics.size() > 2);
                     CHECK(topics.front().id == "topic:0");
-                    CHECK(topics.front().label == "a: Introduction");
+                    CHECK(topics.front().label == "Introduction");
                     CHECK(topics.front().hotkey == "a");
                     CHECK(topics.at(1).id == "topic:1");
                     CHECK(body<ec::list_body>(part(top, "help:topics")).activate == "help:topic");

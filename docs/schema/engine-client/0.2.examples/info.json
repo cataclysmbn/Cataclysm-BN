@@ -273,291 +273,267 @@
               "rows": [
                 {
                   "id": "topic:0",
-                  "label": "a: Introduction",
+                  "label": "Introduction",
                   "description": "",
                   "denial": "",
                   "hotkey": "a",
                   "enabled": true,
                   "selectable": true,
                   "selected": false,
-                  "columns": [],
-                  "markup": "<color_c_light_blue>a</color>: Introduction"
+                  "columns": []
                 },
                 {
                   "id": "topic:1",
-                  "label": "b: Movement",
+                  "label": "Movement",
                   "description": "",
                   "denial": "",
                   "hotkey": "b",
                   "enabled": true,
                   "selectable": true,
                   "selected": false,
-                  "columns": [],
-                  "markup": "<color_c_light_blue>b</color>: Movement"
+                  "columns": []
                 },
                 {
                   "id": "topic:2",
-                  "label": "c: Viewing",
+                  "label": "Viewing",
                   "description": "",
                   "denial": "",
                   "hotkey": "c",
                   "enabled": true,
                   "selectable": true,
                   "selected": false,
-                  "columns": [],
-                  "markup": "<color_c_light_blue>c</color>: Viewing"
+                  "columns": []
                 },
                 {
                   "id": "topic:3",
-                  "label": "d: Interaction",
+                  "label": "Interaction",
                   "description": "",
                   "denial": "",
                   "hotkey": "d",
                   "enabled": true,
                   "selectable": true,
                   "selected": false,
-                  "columns": [],
-                  "markup": "<color_c_light_blue>d</color>: Interaction"
+                  "columns": []
                 },
                 {
                   "id": "topic:4",
-                  "label": "e: Hunger, thirst, and sleep",
+                  "label": "Hunger, thirst, and sleep",
                   "description": "",
                   "denial": "",
                   "hotkey": "e",
                   "enabled": true,
                   "selectable": true,
                   "selected": false,
-                  "columns": [],
-                  "markup": "<color_c_light_blue>e</color>: Hunger, thirst, and sleep"
+                  "columns": []
                 },
                 {
                   "id": "topic:5",
-                  "label": "f: Pain and stimulants",
+                  "label": "Pain and stimulants",
                   "description": "",
                   "denial": "",
                   "hotkey": "f",
                   "enabled": true,
                   "selectable": true,
                   "selected": false,
-                  "columns": [],
-                  "markup": "<color_c_light_blue>f</color>: Pain and stimulants"
+                  "columns": []
                 },
                 {
                   "id": "topic:6",
-                  "label": "g: Healing and medication",
+                  "label": "Healing and medication",
                   "description": "",
                   "denial": "",
                   "hotkey": "g",
                   "enabled": true,
                   "selectable": true,
                   "selected": false,
-                  "columns": [],
-                  "markup": "<color_c_light_blue>g</color>: Healing and medication"
+                  "columns": []
                 },
                 {
                   "id": "topic:7",
-                  "label": "h: Addiction",
+                  "label": "Addiction",
                   "description": "",
                   "denial": "",
                   "hotkey": "h",
                   "enabled": true,
                   "selectable": true,
                   "selected": false,
-                  "columns": [],
-                  "markup": "<color_c_light_blue>h</color>: Addiction"
+                  "columns": []
                 },
                 {
                   "id": "topic:8",
-                  "label": "i: Morale and learning",
+                  "label": "Morale and learning",
                   "description": "",
                   "denial": "",
                   "hotkey": "i",
                   "enabled": true,
                   "selectable": true,
                   "selected": false,
-                  "columns": [],
-                  "markup": "<color_c_light_blue>i</color>: Morale and learning"
+                  "columns": []
                 },
                 {
                   "id": "topic:9",
-                  "label": "j: Radioactivity and mutation",
+                  "label": "Radioactivity and mutation",
                   "description": "",
                   "denial": "",
                   "hotkey": "j",
                   "enabled": true,
                   "selectable": true,
                   "selected": false,
-                  "columns": [],
-                  "markup": "<color_c_light_blue>j</color>: Radioactivity and mutation"
+                  "columns": []
                 },
                 {
                   "id": "topic:10",
-                  "label": "k: Bionics",
+                  "label": "Bionics",
                   "description": "",
                   "denial": "",
                   "hotkey": "k",
                   "enabled": true,
                   "selectable": true,
                   "selected": false,
-                  "columns": [],
-                  "markup": "<color_c_light_blue>k</color>: Bionics"
+                  "columns": []
                 },
                 {
                   "id": "topic:11",
-                  "label": "l: Crafting",
+                  "label": "Crafting",
                   "description": "",
                   "denial": "",
                   "hotkey": "l",
                   "enabled": true,
                   "selectable": true,
                   "selected": false,
-                  "columns": [],
-                  "markup": "<color_c_light_blue>l</color>: Crafting"
+                  "columns": []
                 },
                 {
                   "id": "topic:12",
-                  "label": "m: Traps",
+                  "label": "Traps",
                   "description": "",
                   "denial": "",
                   "hotkey": "m",
                   "enabled": true,
                   "selectable": true,
                   "selected": false,
-                  "columns": [],
-                  "markup": "<color_c_light_blue>m</color>: Traps"
+                  "columns": []
                 },
                 {
                   "id": "topic:13",
-                  "label": "n: Items overview",
+                  "label": "Items overview",
                   "description": "",
                   "denial": "",
                   "hotkey": "n",
                   "enabled": true,
                   "selectable": true,
                   "selected": false,
-                  "columns": [],
-                  "markup": "<color_c_light_blue>n</color>: Items overview"
+                  "columns": []
                 },
                 {
                   "id": "topic:14",
-                  "label": "o: Combat",
+                  "label": "Combat",
                   "description": "",
                   "denial": "",
                   "hotkey": "o",
                   "enabled": true,
                   "selectable": true,
                   "selected": false,
-                  "columns": [],
-                  "markup": "<color_c_light_blue>o</color>: Combat"
+                  "columns": []
                 },
                 {
                   "id": "topic:15",
-                  "label": "p: Martial arts styles",
+                  "label": "Martial arts styles",
                   "description": "",
                   "denial": "",
                   "hotkey": "p",
                   "enabled": true,
                   "selectable": true,
                   "selected": false,
-                  "columns": [],
-                  "markup": "<color_c_light_blue>p</color>: Martial arts styles"
+                  "columns": []
                 },
                 {
                   "id": "topic:16",
-                  "label": "q: Survival tips",
+                  "label": "Survival tips",
                   "description": "",
                   "denial": "",
                   "hotkey": "q",
                   "enabled": true,
                   "selectable": true,
                   "selected": false,
-                  "columns": [],
-                  "markup": "<color_c_light_blue>q</color>: Survival tips"
+                  "columns": []
                 },
                 {
                   "id": "topic:17",
-                  "label": "r: Vehicles and Driving",
+                  "label": "Vehicles and Driving",
                   "description": "",
                   "denial": "",
                   "hotkey": "r",
                   "enabled": true,
                   "selectable": true,
                   "selected": false,
-                  "columns": [],
-                  "markup": "<color_c_light_blue>r</color>: Vehicles and Driving"
+                  "columns": []
                 },
                 {
                   "id": "topic:18",
-                  "label": "1: Electricity",
+                  "label": "Electricity",
                   "description": "",
                   "denial": "",
                   "hotkey": "1",
                   "enabled": true,
                   "selectable": true,
                   "selected": false,
-                  "columns": [],
-                  "markup": "<color_c_light_blue>1</color>: Electricity"
+                  "columns": []
                 },
                 {
                   "id": "topic:19",
-                  "label": "2: List of item types and data",
+                  "label": "List of item types and data",
                   "description": "",
                   "denial": "",
                   "hotkey": "2",
                   "enabled": true,
                   "selectable": true,
                   "selected": false,
-                  "columns": [],
-                  "markup": "<color_c_light_blue>2</color>: List of item types and data"
+                  "columns": []
                 },
                 {
                   "id": "topic:20",
-                  "label": "3: Description of map symbols",
+                  "label": "Description of map symbols",
                   "description": "",
                   "denial": "",
                   "hotkey": "3",
                   "enabled": true,
                   "selectable": true,
                   "selected": false,
-                  "columns": [],
-                  "markup": "<color_c_light_blue>3</color>: Description of map symbols"
+                  "columns": []
                 },
                 {
                   "id": "topic:21",
-                  "label": "4: Description of gun types",
+                  "label": "Description of gun types",
                   "description": "",
                   "denial": "",
                   "hotkey": "4",
                   "enabled": true,
                   "selectable": true,
                   "selected": false,
-                  "columns": [],
-                  "markup": "<color_c_light_blue>4</color>: Description of gun types"
+                  "columns": []
                 },
                 {
                   "id": "topic:22",
-                  "label": "5: FAQ (contains spoilers!)",
+                  "label": "FAQ (contains spoilers!)",
                   "description": "",
                   "denial": "",
                   "hotkey": "5",
                   "enabled": true,
                   "selectable": true,
                   "selected": false,
-                  "columns": [],
-                  "markup": "<color_c_light_blue>5</color>: FAQ (contains spoilers!)"
+                  "columns": []
                 },
                 {
                   "id": "topic:23",
-                  "label": "6: Resolved game directories",
+                  "label": "Resolved game directories",
                   "description": "",
                   "denial": "",
                   "hotkey": "6",
                   "enabled": true,
                   "selectable": true,
                   "selected": false,
-                  "columns": [],
-                  "markup": "<color_c_light_blue>6</color>: Resolved game directories"
+                  "columns": []
                 }
               ],
               "total": 24,
@@ -572,6 +548,7 @@
             "label": "Confirm Choice",
             "keys": [],
             "enabled": true,
+            "role": "select",
             "args": {
               "row": {
                 "component_id": "help:topics"
@@ -906,6 +883,7 @@
             "label": "Confirm Choice",
             "keys": [],
             "enabled": true,
+            "role": "select",
             "args": {
               "row": {
                 "component_id": "missions:list"
@@ -1224,7 +1202,8 @@
             "keys": [
               "s"
             ],
-            "enabled": true,
+            "enabled": false,
+            "denial": "You have no followers",
             "expect": "screen"
           },
           {
@@ -1233,7 +1212,8 @@
             "keys": [
               "RETURN"
             ],
-            "enabled": true,
+            "enabled": false,
+            "denial": "You have no followers",
             "role": "confirm",
             "expect": "screen"
           },

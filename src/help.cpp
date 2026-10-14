@@ -181,11 +181,13 @@ void help::display_help()
         using namespace std::views;
         auto rows = help_texts | transform( [&]( const auto & entry ) {
             const auto &[order, topic] = entry;
-            const auto name = shortcut_text( c_light_blue, _( topic.first ) );
+            // The hotkey is the row's own; the label is the topic without the key it is chosen by.
+            const auto &named = _( topic.first );
+            auto name = named.substr( named.find( '>' ) + 1 );
+            name.erase( 0, name.find_first_not_of( ": " ) );
             return ec::row{
-                .id = topic_row_id( order ), .label = remove_color_tags( name ),
+                .id = topic_row_id( order ), .label = std::move( name ),
                 .hotkey = static_cast<std::size_t>( order ) < hotkeys.size() && !hotkeys[order].empty() ? hotkeys[order].front() : std::string{},
-                .markup = name,
             };
         } ) | std::ranges::to<std::vector>();
         return ec::screen_view{
@@ -197,7 +199,7 @@ void help::display_help()
                         .markup = _( "Please press one of the following for help on that topic:\n"
                                      "Press ESC to return to the game." ) } },
                 ec::list( { .id = "help:topics", .rows = std::move( rows ), .selection = "single", .activate = open_topic_id } ) ) } ),
-            .affordances = { ec::invoke_affordance( { .id = open_topic_id, .label = ctxt.get_action_name( "CONFIRM" ), .args = { .row = ec::row_shape{ .component_id = "help:topics" } } } ) },
+            .affordances = { ec::invoke_affordance( { .id = open_topic_id, .label = ctxt.get_action_name( "CONFIRM" ), .args = { .row = ec::row_shape{ .component_id = "help:topics" } }, .role = "select" } ) },
         };
     }
                                                 } );
