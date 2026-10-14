@@ -1000,8 +1000,8 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         const auto &low = decoded->min;
         const auto &high = decoded->max;
         const auto inside = [&]( const position & at ) {
-            return std::abs( at.x ) <= bound && std::abs( at.y ) <= bound && at.z >= -OVERMAP_DEPTH &&
-                   at.z <= OVERMAP_HEIGHT;
+            return at.x >= -bound && at.x <= bound && at.y >= -bound && at.y <= bound &&
+                   at.z >= -OVERMAP_DEPTH && at.z <= OVERMAP_HEIGHT;
         };
         if( !low.dim.empty() || !high.dim.empty() || low.z != high.z || low.x > high.x || low.y > high.y ||
             !inside( low ) || !inside( high ) ) { return fail( error::validation_failed ); }

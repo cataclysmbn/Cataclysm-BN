@@ -20,6 +20,7 @@
 #    include <filesystem>
 #    include <fstream>
 #    include <functional>
+#    include <limits>
 #    include <sstream>
 #    include <string>
 #    include <thread>
@@ -987,7 +988,8 @@ TEST_CASE("overmap cells are a passive read of any overmap level", "[engine_clie
         + cells("5", at(3, 0), at(0, 0)) + cells("6", at(0, 0, 0), at(1, 0, 1))
         + cells("7", at(0, 0), at(100, 100))
         + cells("8", at(0, 0, 0, "other"), at(1, 0, 0, "other"))
-        + cells("9", at(0, 0, 500), at(1, 0, 500)) + cells("10", at(0, 0), at(1 << 25, 0)));
+        + cells("9", at(0, 0, 500), at(1, 0, 500)) + cells("10", at(0, 0), at(1 << 25, 0))
+        + cells("11", at(std::numeric_limits<int>::min(), 0), at(0, 0)));
     const auto out = test.output.str();
     CHECK(contains(out, R"("id":3,"result":{"origin":{"dim":"","x":0,"y":0,"z":0})"));
     CHECK(contains(out, R"("cols":4,"rows":2)"));
@@ -996,10 +998,10 @@ TEST_CASE("overmap cells are a passive read of any overmap level", "[engine_clie
     // squares beyond the world are refused.
     CHECK(contains(out, R"("kind":"stale_epoch")"));
     CHECK(contains(out, R"("kind":"resource_limit")"));
-    for (const auto id : {"4", "5", "6", "7", "8", "9", "10"}) {
+    for (const auto id : {"4", "5", "6", "7", "8", "9", "10", "11"}) {
         CHECK(contains(out, std::string(R"("id":)") + id + R"(,"error")"));
     }
-    CHECK(count_of(out, R"("kind":"validation_failed")") == 5);
+    CHECK(count_of(out, R"("kind":"validation_failed")") == 6);
     CHECK(test.authority.at() == before);
     CHECK(rng_get_engine() == rng);
 }
