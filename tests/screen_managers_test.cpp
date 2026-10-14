@@ -34,6 +34,9 @@ auto prompt_answer(const snapshot_t& snapshot, const std::string& answer)
     return choose(snapshot, choice->id);
 }
 
+/// The target the look screen on top shows, as a client reads it.
+auto look_target() -> nlohmann::json { return top_json()["root"]["child"]["target"]; }
+
 } // namespace
 
 TEST_CASE(
@@ -304,40 +307,37 @@ TEST_CASE(
     zone_manager::reset_manager();
     const auto guard = screen_guard{};
     auto stage = 0;
-    open_screen(
-        [] { g->zones_manager(); },
-        [&](const auto& snapshot) {
-            if (const auto answer = prompt_answer(snapshot, "NO")) { return *answer; }
-            switch (stage++) {
-                case 0:
-                    CHECK(snapshot.context == "ZONES_MANAGER");
-                    CHECK(snapshot.message == "No Zones defined.");
-                    return choose(snapshot, "action:ADD_ZONE");
-                case 1:
-                    return choose(snapshot, snapshot.choices.at(0).id);
-                case 2:
-                    REQUIRE(snapshot.field.has_value());
-                    return operate(snapshot, game_client::interaction_operation::fill,
-                                   snapshot.field->id, "new zone");
-                case 3:
-                    REQUIRE(snapshot.target.has_value());
-                    CHECK(snapshot.message == "Select first point.");
-                    CHECK(snapshot.target->status == "zone_first");
-                    return event_of({.action = "CONFIRM"});
-                case 4:
-                    REQUIRE(snapshot.target.has_value());
-                    CHECK(snapshot.message == "Select second point.");
-                    CHECK(snapshot.target->status == "zone_second");
-                    return event_of({.action = "CONFIRM"});
-                case 5:
-                    CHECK(snapshot.context == "ZONES_MANAGER");
-                    CHECK(row(snapshot, "zone:0")->label == "new zone");
-                    return cancel(snapshot);
-                default:
-                    FAIL("unexpected extra screen " << snapshot.context);
-            }
-            return input_event{};
-        });
+    open_stack([] { g->zones_manager(); },
+               [&](const auto& snapshot, const auto& /*top*/) {
+                   if (const auto answer = prompt_answer(snapshot, "NO")) { return *answer; }
+                   switch (stage++) {
+                       case 0:
+                           CHECK(snapshot.context == "ZONES_MANAGER");
+                           CHECK(snapshot.message == "No Zones defined.");
+                           return choose(snapshot, "action:ADD_ZONE");
+                       case 1:
+                           return choose(snapshot, snapshot.choices.at(0).id);
+                       case 2:
+                           REQUIRE(snapshot.field.has_value());
+                           return operate(snapshot, game_client::interaction_operation::fill,
+                                          snapshot.field->id, "new zone");
+                       case 3:
+                           CHECK(look_target()["status"] == "zone_first");
+                           CHECK(look_target()["status_text"] == "Select first point.");
+                           return event_of({.action = "CONFIRM"});
+                       case 4:
+                           CHECK(look_target()["status"] == "zone_second");
+                           CHECK(look_target()["status_text"] == "Select second point.");
+                           return event_of({.action = "CONFIRM"});
+                       case 5:
+                           CHECK(snapshot.context == "ZONES_MANAGER");
+                           CHECK(row(snapshot, "zone:0")->label == "new zone");
+                           return cancel(snapshot);
+                       default:
+                           FAIL("unexpected extra screen " << snapshot.context);
+                   }
+                   return input_event{};
+               });
     CHECK(stage == 6);
     zone_manager::reset_manager();
 }
