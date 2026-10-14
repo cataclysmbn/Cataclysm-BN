@@ -354,6 +354,19 @@ auto make_pane( const pane_options &opts ) -> pane_view
     };
 }
 
+auto title_label_of( npc_trading::deal_kind kind ) -> std::string
+{
+    switch( kind ) {
+        case npc_trading::deal_kind::pay:
+            return _( "Paying" );
+        case npc_trading::deal_kind::reward:
+            return _( "Accepting a reward from" );
+        case npc_trading::deal_kind::trade:
+            break;
+    }
+    return _( "Trading with" );
+}
+
 auto register_trade_actions( input_context &ctxt, bool include_any_input ) -> void
 {
     ctxt.register_action( "SWITCH_LISTS" );
@@ -402,7 +415,7 @@ auto trading_window::setup_win( ui_adaptor &ui ) -> void
     ui.position( point_zero, point( TERMX, TERMY ) );
 }
 
-auto trading_window::update_win( npc &np, const std::string &deal ) -> void
+auto trading_window::update_win( npc &np ) -> void
 {
     // Draw borders, one of which is highlighted
     werase( w_them );
@@ -426,17 +439,7 @@ auto trading_window::update_win( npc &np, const std::string &deal ) -> void
     const auto head_keybinds_label_middle = _( "] keybindings >" );
     const auto head_keybinds_label_width = utf8_width( head_keybinds_label_prefix ) +
                                            1 + utf8_width( head_keybinds_label_middle );
-    const auto title_label = [&deal]() -> std::string {
-        if( deal == _( "Pay:" ) )
-        {
-            return _( "Paying" );
-        }
-        if( deal == _( "Reward" ) )
-        {
-            return _( "Accepting a reward from" );
-        }
-        return _( "Trading with" );
-    }();
+    const auto title_label = title_label_of( kind );
     mvwprintz( w_head, point( 1, head_title_y ), c_white, title_label );
     mvwprintz( w_head, point( 1 + utf8_width( title_label ) + 1, head_title_y ),
                c_light_green, np.disp_name() );
@@ -937,9 +940,6 @@ auto trading_window::show_item_data( size_t index, bool target_is_theirs ) -> in
     ctxt.register_action( "CONFIRM" );
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
-
-    auto result = info_popup_result::none;
-    auto exit = false;
     const auto screen = ec::screen_scope( ctxt, { .view = [&]( const auto & )
     {
         return ec::screen_view{
@@ -947,6 +947,9 @@ auto trading_window::show_item_data( size_t index, bool target_is_theirs ) -> in
             .root = ec::component{ .id = "text:info", .body = ec::text_body{ .markup = info_text } } };
     }
                                                 } );
+
+    auto result = info_popup_result::none;
+    auto exit = false;
     while( !exit ) {
         ui_manager::redraw();
         auto action = ctxt.handle_input();
@@ -1017,8 +1020,7 @@ auto trading_window::view( const npc &np, const input_context &ctxt ) const -> e
     const auto balance = np.will_exchange_items_freely() ? std::string{ _( "Exchange" ) } :
                          string_format( state.your_balance >= 0 ? _( "Credit %s" ) : _( "Debt %s" ),
                                         format_money( std::abs( state.your_balance ) ) );
-    const auto title_label = kind == deal_kind::pay ? _( "Paying" ) :
-                             kind == deal_kind::reward ? _( "Accepting a reward from" ) : _( "Trading with" );
+    const auto title_label = title_label_of( kind );
     const auto title = string_format( "%s %s", title_label, np.disp_name() );
     return {
         .title = title,
@@ -1077,7 +1079,7 @@ auto trading_window::get_var_trade( const item &it, int total_count, int amount_
     return std::min( total_count, how_many );
 }
 
-auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
+auto trading_window::perform_trade( npc &np, npc_trading::deal_kind deal ) -> bool
 {
     state.volume_left = np.volume_capacity() - np.volume_carried();
     state.weight_left = np.weight_capacity() - np.weight_carried();
@@ -1088,9 +1090,7 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
         state.weight_left = 5000_kilogram;
     }
 
-    // The words of the title come from the kind of deal, which the caller names in the game's language.
-    kind = deal == _( "Pay:" ) ? deal_kind::pay : deal == _( "Reward" ) ? deal_kind::reward :
-           deal_kind::trade;
+    kind = deal;
 
     auto ctxt = input_context( "NPC_TRADE" );
     register_trade_actions( ctxt, true );
@@ -1107,7 +1107,7 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
     ui.mark_resize();
 
     ui.on_redraw( [&]( const ui_adaptor & ) {
-        update_win( np, deal );
+        update_win( np );
     } );
 
     auto confirm = false;

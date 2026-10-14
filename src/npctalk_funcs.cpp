@@ -179,7 +179,7 @@ void talk_function::mission_reward( npc &p )
 
     int mission_value = miss->get_value();
     p.op_of_u.owed += mission_value;
-    npc_trading::trade( p, 0, _( "Reward" ) );
+    npc_trading::trade( p, 0, npc_trading::deal_kind::reward );
 }
 
 void talk_function::buy_chicken( npc &p )
@@ -209,7 +209,7 @@ void spawn_animal( npc &p, const mtype_id &mon )
 
 void talk_function::start_trade( npc &p )
 {
-    npc_trading::trade( p, 0, _( "Trade" ) );
+    npc_trading::trade( p, 0, npc_trading::deal_kind::trade );
 }
 
 void talk_function::sort_loot( npc &p )
@@ -872,7 +872,7 @@ bool npc_trading::pay_npc( npc &np, int cost )
         return true;
     }
 
-    return npc_trading::trade( np, cost, _( "Pay:" ) );
+    return npc_trading::trade( np, cost, npc_trading::deal_kind::pay );
 }
 
 void talk_function::start_training( npc &p )

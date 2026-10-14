@@ -1574,7 +1574,7 @@ void debug()
                                 string_id<npc_template>( "marloss_voice" ), true );
             g->load_npcs();
             if( const auto guy = g->find_npc( trader ) ) {
-                npc_trading::trade( *guy, 0, _( "Trade" ) );
+                npc_trading::trade( *guy, 0, npc_trading::deal_kind::trade );
             }
         }
         break;

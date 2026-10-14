@@ -254,7 +254,7 @@ auto npc_trading::update_npc_owed( const trade_state &state, npc &np ) -> void
 // op_of_u.owed is the positive when the NPC owes the player, and negative if the player owes the
 // NPC
 // cost is positive when the player owes the NPC money for a service to be performed
-auto npc_trading::trade( npc &np, int cost, const std::string &deal ) -> bool
+auto npc_trading::trade( npc &np, int cost, deal_kind kind ) -> bool
 {
     // Only allow actual shopkeepers to refresh their inventory like this
     if( np.is_shopkeeper() ) {
@@ -269,7 +269,7 @@ auto npc_trading::trade( npc &np, int cost, const std::string &deal ) -> bool
     npc_trading::setup_trade_state( state, cost, np );
     auto trade_win = trading_window( state );
 
-    const auto traded = trade_win.perform_trade( np, deal );
+    const auto traded = trade_win.perform_trade( np, kind );
     if( traded ) {
         auto practice = 0;
 

@@ -314,7 +314,7 @@ TEST_CASE(
         REQUIRE(reads == 3);
         return action("QUIT");
     });
-    CHECK_FALSE(trading_window(state).perform_trade(trader, "Trade"));
+    CHECK_FALSE(trading_window(state).perform_trade(trader, npc_trading::deal_kind::trade));
     CHECK(reads == 3);
     CHECK(remove_color_tags(traded_item.info_string()) == description);
     CHECK_FALSE(state.theirs.front().selected);
@@ -365,7 +365,7 @@ TEST_CASE(
         CHECK(engine_client::serialize_interaction_boundary(trade_screen::live_state()) == first);
         return action("QUIT");
     });
-    CHECK_FALSE(trading_window(state).perform_trade(trader, "Trade"));
+    CHECK_FALSE(trading_window(state).perform_trade(trader, npc_trading::deal_kind::trade));
     CHECK(reads == 1);
 }
 

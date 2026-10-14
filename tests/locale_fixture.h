@@ -80,6 +80,8 @@ struct korean_catalogue {
             {"North:", "North:-ko"},
             {"Focus", "Focus-ko"},
             {"Trading with", "Trading with-ko"},
+            {"Paying", "Paying-ko"},
+            {"Accepting a reward from", "Accepting a reward from-ko"},
             {plural("TEST 1kg cube", "TEST 1kg cubes"),
              plural("TEST 1kg cube-ko", "TEST 1kg cubes-ko")},
         });

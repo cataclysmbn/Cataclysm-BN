@@ -329,7 +329,8 @@ TEST_CASE(
         return ts::invoke("trade:cancel");
     });
 
-    CHECK_FALSE(trading_window(state).perform_trade(*fixture.trader, "Trade"));
+    CHECK_FALSE(
+        trading_window(state).perform_trade(*fixture.trader, npc_trading::deal_kind::trade));
     CHECK(reads == 1);
     CHECK(get_avatar().amount_of(itype_id("test_pipe")) == original_pipes);
     CHECK(fixture.trader->charges_of(itype_id("test_platinum_bit")) == original_charges);
@@ -414,7 +415,8 @@ TEST_CASE(
         return ts::invoke("trade:cancel");
     });
 
-    CHECK_FALSE(trading_window(state).perform_trade(*fixture.trader, "Trade"));
+    CHECK_FALSE(
+        trading_window(state).perform_trade(*fixture.trader, npc_trading::deal_kind::trade));
     CHECK(step == 6);
     CHECK(get_avatar().amount_of(itype_id("test_pipe")) == original_pipes);
     CHECK(fixture.trader->charges_of(itype_id("test_platinum_bit")) == original_charges);
@@ -496,7 +498,8 @@ TEST_CASE(
         return ts::invoke("trade:cancel");
     });
 
-    CHECK_FALSE(trading_window(state).perform_trade(*fixture.trader, "Trade"));
+    CHECK_FALSE(
+        trading_window(state).perform_trade(*fixture.trader, npc_trading::deal_kind::trade));
     CHECK(step == 6);
 }
 
@@ -554,7 +557,8 @@ TEST_CASE(
         return ts::set_count(pending[checked++], 1);
     });
 
-    CHECK_FALSE(trading_window(state).perform_trade(*fixture.trader, "Trade"));
+    CHECK_FALSE(
+        trading_window(state).perform_trade(*fixture.trader, npc_trading::deal_kind::trade));
     CHECK(checked == pending.size());
     CHECK(checked == 3);
 }
@@ -604,7 +608,7 @@ TEST_CASE(
         return ts::answer("YES");
     });
 
-    CHECK(npc_trading::trade(*fixture.trader, 0, "Trade"));
+    CHECK(npc_trading::trade(*fixture.trader, 0, npc_trading::deal_kind::trade));
     CHECK(step == 3);
     CHECK(get_avatar().amount_of(itype_id("test_pipe")) == original_player_count + 1);
     CHECK(fixture.trader->amount_of(itype_id("test_pipe")) == original_npc_count - 1);
@@ -648,7 +652,8 @@ TEST_CASE(
             return ts::answer();
         });
 
-        CHECK_FALSE(trading_window(state).perform_trade(*fixture.trader, "Trade"));
+        CHECK_FALSE(
+            trading_window(state).perform_trade(*fixture.trader, npc_trading::deal_kind::trade));
         CHECK(step == 4);
         CHECK(fixture.trader->amount_of(itype_id("test_pipe")) == 1);
         CHECK(get_avatar().amount_of(itype_id("test_pipe")) == 0);
@@ -685,7 +690,8 @@ TEST_CASE(
             return ts::answer();
         });
 
-        CHECK_FALSE(trading_window(state).perform_trade(*fixture.trader, "Trade"));
+        CHECK_FALSE(
+            trading_window(state).perform_trade(*fixture.trader, npc_trading::deal_kind::trade));
         CHECK(step == 4);
         CHECK(get_avatar().amount_of(itype_id("test_overweight_cube")) == 1);
         CHECK(fixture.trader->amount_of(itype_id("test_overweight_cube")) == 0);
@@ -716,7 +722,8 @@ TEST_CASE(
         return ts::filter("pane:npc", "");
     });
 
-    CHECK_FALSE(trading_window(state).perform_trade(*fixture.trader, "Trade"));
+    CHECK_FALSE(
+        trading_window(state).perform_trade(*fixture.trader, npc_trading::deal_kind::trade));
     REQUIRE(wires.size() == 2);
     CHECK(wires[0].back()["root"]["kind"] == "panel");
     CHECK(wires[0] == wires[1]);
@@ -753,8 +760,100 @@ TEST_CASE(
         return ts::invoke("trade:cancel");
     });
 
-    CHECK_FALSE(trading_window(state).perform_trade(*fixture.trader, "Trade"));
+    CHECK_FALSE(
+        trading_window(state).perform_trade(*fixture.trader, npc_trading::deal_kind::trade));
     CHECK(reads == 1);
+}
+
+TEST_CASE(
+    "NPC trade title follows the kind the caller names, not the wording of its language",
+    "[client][interaction][npc_trade][engine_client_trade][engine_client_locale][mcp]") {
+    const auto catalogue = locale_fixture::korean_catalogue{};
+    const auto guard = screen_guard{};
+    const auto fixture = trade_fixture{};
+    const auto [kind, word] =
+        GENERATE(std::pair{npc_trading::deal_kind::pay, std::string{"Paying"}},
+                 std::pair{npc_trading::deal_kind::reward, std::string{"Accepting a reward from"}});
+    INFO(word);
+    auto state = npc_trading::trade_state{};
+    npc_trading::setup_trade_state(state, 0, *fixture.trader);
+    auto reads = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        ++reads;
+        const auto english = stack_json();
+        auto korean = nlohmann::json{};
+        {
+            const auto scope = localization::locale_scope{locale_fixture::korean};
+            korean = stack_json();
+        }
+        CHECK(english.back()["title"].get<std::string>().starts_with(word));
+        CHECK(
+            korean.back()["title"].get<std::string>().starts_with(locale_fixture::in_korean(word)));
+        return ts::invoke("trade:cancel");
+    });
+
+    CHECK_FALSE(trading_window(state).perform_trade(*fixture.trader, kind));
+    CHECK(reads == 1);
+}
+
+TEST_CASE(
+    "NPC trade item popup is a screen of its own and closes by an invoke",
+    "[client][interaction][npc_trade][engine_client_trade][mcp]") {
+    const auto guard = screen_guard{};
+    const auto fixture = trade_fixture{};
+    fixture.trader->mission = NPC_MISSION_SHOPKEEP;
+    fixture.add_npc_item(itype_id("test_platinum_bit"), 10);
+    auto state = npc_trading::trade_state{};
+    npc_trading::setup_trade_state(state, 0, *fixture.trader);
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        if (step == 0) {
+            REQUIRE(ts::top());
+            step = 1;
+            auto command = game_client::input_command{};
+            command.action = "EXAMINE";
+            const auto examine =
+                game_client::resolve_input_command(command, game_client::memory::screen_size());
+            REQUIRE(examine.has_value());
+            return *examine;
+        }
+        if (step == 1) {
+            // The window is under the popup, which is published as a screen of its own.
+            const auto captured = ts::captured();
+            const auto stack = ec::interaction_stack(captured);
+            REQUIRE(stack.size() == 3);
+            CHECK(stack[1].affordances.empty());
+            const auto& popup = stack.back();
+            CHECK_FALSE(popup.screen_id.starts_with("screen:read:"));
+            CHECK(popup.screen_id != stack[1].screen_id);
+            CHECK(popup.role == "dialog");
+            REQUIRE(popup.root);
+            CHECK(ts::part(popup, "text:info").id == "text:info");
+            const auto operation = ec::resolve_invoke(captured, {.affordance_id = "QUIT"});
+            REQUIRE(operation.has_value());
+            const auto* const registered = std::get_if<ec::registered_action>(&*operation);
+            REQUIRE(registered != nullptr);
+            auto command = game_client::input_command{};
+            command.action = registered->id;
+            command.input_id = game_client::current_input_id();
+            const auto closed =
+                game_client::resolve_input_command(command, game_client::memory::screen_size());
+            REQUIRE(closed.has_value());
+            step = 2;
+            return *closed;
+        }
+        // The popup is closed: the window is the top screen again.
+        REQUIRE(step == 2);
+        CHECK(ec::interaction_stack(ts::captured()).size() == 2);
+        step = 3;
+        return ts::invoke("trade:cancel");
+    });
+
+    CHECK_FALSE(
+        trading_window(state).perform_trade(*fixture.trader, npc_trading::deal_kind::trade));
+    CHECK(step == 3);
 }
 
 TEST_CASE(
@@ -796,7 +895,7 @@ TEST_CASE(
             step = 3;
             return ts::answer("YES");
         });
-        CHECK(npc_trading::trade(*fixture.trader, 0, "Trade"));
+        CHECK(npc_trading::trade(*fixture.trader, 0, npc_trading::deal_kind::trade));
         CHECK(step == 3);
         CHECK(get_avatar().amount_of(itype_id("test_pipe")) == 1);
         CHECK(fixture.trader->amount_of(itype_id("test_pipe")) == 0);
@@ -812,7 +911,7 @@ TEST_CASE(
         });
         replay::configure_playback(path.string(), {.rng_seed = 41});
         replay::start();
-        CHECK(npc_trading::trade(*fixture.trader, 0, "Trade"));
+        CHECK(npc_trading::trade(*fixture.trader, 0, npc_trading::deal_kind::trade));
         CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
         CHECK(get_avatar().amount_of(itype_id("test_pipe")) == 1);
         CHECK(fixture.trader->amount_of(itype_id("test_pipe")) == 0);
