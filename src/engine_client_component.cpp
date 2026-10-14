@@ -334,6 +334,10 @@ auto screen_of( const boundary_state &state, const slot &entry, const bool top )
             const auto found = std::ranges::find( registered, id, &affordance::id );
             if( found != registered.end() ) { found->enabled = false; found->denial = reason; }
         }
+        // A role has one holder: the screen's own affordance keeps it over the registered action of that role.
+        for( auto &offered_action : registered ) {
+            if( std::ranges::contains( result.affordances, offered_action.role, &affordance::role ) ) { offered_action.role.clear(); }
+        }
         std::ranges::move( registered, std::back_inserter( result.affordances ) );
     }
     return result;
