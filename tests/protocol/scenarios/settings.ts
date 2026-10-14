@@ -44,12 +44,13 @@ export const options: Scenario = {
       assertEquals(set.stages.at(-1), "completed")
       rec.command("option value set through its editor", set)
       assertEquals(part(engine, "options:editor").fields[0].value, "7")
-      // A value the editor does not offer changes nothing.
+      // A value the editor does not offer is refused, and the value stays.
       const over = await engine.invoke("options:set", {
         row: "option:SAFEMODEPROXIMITY",
         text: String(editor.fields[0].max + 1),
       })
-      assertEquals(over.stages.at(-1), "completed")
+      assertEquals(over.error, "invalid_arguments")
+      rec.command("value set that the option's editor does not offer", over)
       assertEquals(part(engine, "options:editor").fields[0].value, "7")
       // The editor is the option's own: another row's id is refused.
       const other = await engine.invoke("options:set", { row: "option:SAFEMODE", text: "false" })

@@ -1203,12 +1203,12 @@ Deno.test({
         "completed",
       )
       assertEquals(optionField(session).value, "false")
-      // A number outside the native range changes nothing; so does a shape the affordance does not take.
+      // A number outside the native range is refused, and so is a shape the affordance does not take.
       const near = await find("option:SAFEMODEPROXIMITY")
       assertEquals(near.type, "integer")
       assertEquals(
-        (await setOption(session, near.id, String(near.max + 1))).stages.at(-1),
-        "completed",
+        (await setOption(session, near.id, String(near.max + 1))).error,
+        "invalid_arguments",
       )
       assertEquals(optionField(session).value, near.value)
       assertEquals(
@@ -1218,7 +1218,7 @@ Deno.test({
       assertEquals((await setOption(session, near.id, "7")).stages.at(-1), "completed")
       assertEquals(optionField(session).value, "7")
       assertEquals(optionRow(session, near.id).columns[0].value, "7")
-      // A select takes one of its own values; a foreign one changes nothing.
+      // A select takes one of its own values; a foreign one is refused.
       let select: Value
       for (const page of pages) {
         await invokeOn(session, "options:page", { row: page.id })
@@ -1234,8 +1234,8 @@ Deno.test({
       }
       assert(select, "a select option exists")
       assertEquals(
-        (await setOption(session, select.id, "no such value")).stages.at(-1),
-        "completed",
+        (await setOption(session, select.id, "no such value")).error,
+        "invalid_arguments",
       )
       assertEquals(optionField(session).value, select.value)
       await leaveAndSave(session, inMainMenu(session))
