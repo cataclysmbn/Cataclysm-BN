@@ -96,8 +96,6 @@ TEST_CASE("screen text and keys are published on the wire", "[engine_client_cont
                       .y = 0,
                       .available = false}},
                 .choices = {{.id = "entry:4", .label = "Options", .action_id = "open_options"}},
-                .overmap = game_client::
-                    interaction_overmap{.cols = 0, .rows = 0, .cursor_description = "forest"},
             };
         }};
     game_client::begin_input_boundary();
@@ -106,7 +104,6 @@ TEST_CASE("screen text and keys are published on the wire", "[engine_client_cont
         wire,
         R"("areas":[{"action_id":"ITEMS_N","label":"North","key":"z","x":11,"y":0,"available":false}])"));
     CHECK(contains(wire, R"("action_id":"open_options")"));
-    CHECK(contains(wire, R"("cursor_description":"forest")"));
 }
 
 TEST_CASE("a colored message line is published with its tone", "[engine_client_contract]") {

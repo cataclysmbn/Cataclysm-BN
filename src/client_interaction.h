@@ -185,17 +185,19 @@ struct interaction_overmap_tile {
     std::string subtile;
 };
 
-/// The native overmap window as drawn: one glyph and curses colors per cell, row-major, with
-/// the sidebar text. Positions are absolute overmap terrain squares.
+/// Overmap squares as the player knows them, row-major, with what the screen says of the cursor
+/// square. Positions are absolute overmap terrain squares.
 struct interaction_overmap {
-    /// The square drawn in the top-left cell.
+    /// The square in the top-left cell.
     interaction_position origin;
     int cols = 0;
     int rows = 0;
+    /// What each square shows: its terrain glyph, or what lies over it, with curses color indexes 0-15.
     std::vector<std::string> glyphs;
     std::vector<int> foreground;
     std::vector<int> background;
     interaction_position player;
+    /// What the sidebar says besides the cursor square's description, one localized line each.
     std::vector<std::string> legend;
     /// What the native sidebar says of the cursor square, without the window frame or the square's glyph.
     std::string cursor_description;
@@ -272,7 +274,6 @@ struct interaction_snapshot {
     std::vector<interaction_choice> choices;
     std::optional<interaction_field> field;
     std::optional<interaction_target> target;
-    std::optional<interaction_overmap> overmap;
     /// Nonzero where the engine redraws the screen on its own every this many milliseconds, with no input.
     int refresh_ms = 0;
     bool allow_set_count = false;

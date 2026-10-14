@@ -28,6 +28,7 @@
 #    include "uistate.h"
 
 #    include <algorithm>
+#    include <cstdlib>
 #    include <format>
 #    include <nlohmann/json.hpp>
 #    include <ranges>
@@ -249,7 +250,9 @@ TEST_CASE(
         CHECK(om.origin.z == cursor.z);
         CHECK(om.player == center);
 
-        // Every square is what the native window draws there: the glyph and both colours.
+        // Every square is what the native window draws there: the glyph and both colours. The
+        // window also draws the cursor and its crosshair over four squares, which a client draws
+        // itself.
         const auto* const window = g->w_overmap.get<cata_cursesport::WINDOW>();
         const auto left = om.origin.x - (cursor.x - window->width / 2);
         const auto top = om.origin.y - (cursor.y - window->height / 2);
@@ -258,13 +261,20 @@ TEST_CASE(
             for (const auto x : std::views::iota(0, om.cols)) {
                 const auto at = static_cast<std::size_t>(y * om.cols + x);
                 const auto drawn = native_cell_at(g->w_overmap, x + left, y + top);
-                differing +=
+                const auto from_cursor = std::pair{x - om.cols / 2, y - om.rows / 2};
+                if (std::abs(from_cursor.first) <= 1 && std::abs(from_cursor.second) <= 1) {
+                    continue;
+                }
+                // The note of the cursor square is boxed over the corner, and said in words below.
+                if (!om.cursor_note.empty() && x < 10 && y < 4) { continue; }
+                const auto same =
                     drawn
-                            == native_cell{.glyph = om.glyphs[at],
-                                           .foreground = om.foreground[at],
-                                           .background = om.background[at]}
-                        ? 0
-                        : 1;
+                    == native_cell{
+                        .glyph = om.glyphs[at],
+                        .foreground = om.foreground[at],
+                        .background = om.background[at]};
+                if (!same) { UNSCOPED_INFO(std::format("square ({}, {}) differs", x, y)); }
+                differing += same ? 0 : 1;
             }
         }
         CHECK(differing == 0);
@@ -277,7 +287,7 @@ TEST_CASE(
                 // The facts the sidebar names, in plain words and without the window's frame or
                 // hints.
                 const auto sidebar_row = trimmed(std::ranges::fold_left(
-                    std::views::iota(3, 30) | std::views::transform([&](const int x) {
+                    std::views::iota(3, 28) | std::views::transform([&](const int x) {
                         return native_cell_at(g->w_omlegend, x, 1).glyph;
                     }),
                     std::string{}, std::plus<>{}));
@@ -346,12 +356,16 @@ TEST_CASE(
                 CHECK(om.glyphs[static_cast<std::size_t>(
                           (om.rows / 2 + 2) * om.cols + om.cols / 2 - 3)]
                       == "@");
-                return move_to(world.center + point(3, -2) + tripoint_rel_omt(0, 0, 1));
+                return move_to(world.center + point(3, 0));
             case 2:
+                // The note under the cursor is said in words.
+                CHECK(om.cursor_note == "Note: cache");
+                return move_to(world.center + point(3, -2) + tripoint_rel_omt(0, 0, 1));
+            case 3:
                 CHECK(cursor.z == center.z + 1);
                 CHECK(om.origin.z == center.z + 1);
                 return act("TOGGLE_MAP_NOTES");
-            case 3:
+            case 4:
                 CHECK(toggle(screen, "TOGGLE_MAP_NOTES").value == "Off");
                 CHECK(toggle(screen, "TOGGLE_MAP_NOTES").tone.empty());
                 return act("QUIT");
@@ -361,7 +375,7 @@ TEST_CASE(
         }
     });
     ui::omap::display();
-    CHECK(step == 4);
+    CHECK(step == 5);
 }
 
 TEST_CASE(

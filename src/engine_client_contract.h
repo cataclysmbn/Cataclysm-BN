@@ -324,6 +324,8 @@ class command_lifecycle
 auto serialize_clock( const clock_point &at ) -> std::string;
 auto serialize_boundary( const boundary_state &state ) -> std::string;
 auto serialize_choices( const choices_page &page ) -> std::string;
+/// The `overmap` value of the 0.2 schema: the squares, with the positions absolute.
+auto serialize_overmap( const game_client::interaction_overmap &squares ) -> std::string;
 /// Params of `bn.command` and result of `bn.command.result`.
 auto serialize_command_result( const command_result &value ) -> std::string;
 

@@ -15,6 +15,7 @@
 #include "cursesdef.h"
 #include "cursesport.h"
 #include "distribution_grid.h"
+#include "engine_client_component.h"
 #include "enums.h"
 #include "game.h"
 #include "game_constants.h"
@@ -862,46 +863,105 @@ static auto corner_note(const tripoint_abs_omt& at) -> std::optional<corner_note
     };
 }
 
-static void draw_ascii(
-    ui_adaptor& ui, const catacurses::window& w, const tripoint_abs_omt& center,
-    const tripoint_abs_omt& /*orig*/, bool blink, bool show_explored, bool /*fast_scroll*/,
-    input_context* /*inp_ctxt*/, const draw_data_t& data, grids_draw_data& grids_data) {
+/// What an overmap square shows: its glyph and its colour.
+struct square_glyph {
+    std::string symbol = " ";
+    nc_color color = c_black;
+};
 
-    const int om_map_width = OVERMAP_WINDOW_WIDTH;
-    const int om_map_height = OVERMAP_WINDOW_HEIGHT;
-    const int om_half_width = om_map_width / 2;
-    const int om_half_height = om_map_height / 2;
-    const bool viewing_weather =
-        ((uistate.overmap_debug_weather || uistate.overmap_visible_weather) && center.z() >= 0);
+struct cell_view_options {
+    tripoint_abs_omt center;
+    bool blink = true;
+    bool show_explored = true;
+    /// The squares a debug trait lets the player see are the player's own. A read that must create
+    /// no overmap leaves it off.
+    bool debug_vision = true;
+    draw_data_t data;
+    grids_draw_data* grids = nullptr;
+    /// Whether one of several NPCs on a square gives it its color by chance, as the window does. A
+    /// read that must draw no random number takes the first.
+    bool random_npc_colors = true;
+    /// Whether the squares show what the overmap editor is placing: only the screen that edits
+    /// does.
+    bool previews = true;
+};
 
+/// What decides the glyph of each square around `center`: what the player knows and the screen's
+/// toggles. The native window and the engine client read the same facts through it.
+struct cell_view {
+    explicit cell_view(const cell_view_options& opts);
+    /// The glyph and colour of the square as the overmap window draws it.
+    auto glyph_at(const tripoint_abs_omt& omp) -> square_glyph;
+
+    cell_view_options options;
     avatar& player_character = get_avatar();
     // Target of current mission
-    const tripoint_abs_omt target = player_character.get_active_mission_target();
-    const bool has_target = target != overmap::invalid_tripoint;
-    oter_id ccur_ter = oter_str_id::NULL_ID();
+    tripoint_abs_omt target = player_character.get_active_mission_target();
+    bool has_target = target != overmap::invalid_tripoint;
     // Debug vision allows seeing everything
-    const bool has_debug_vision = player_character.has_trait(trait_DEBUG_NIGHTVISION);
+    bool has_debug_vision =
+        options.debug_vision && player_character.has_trait(trait_DEBUG_NIGHTVISION);
     // sight_points is hoisted for speed reasons.
-    const int sight_points =
+    int sight_points =
         !has_debug_vision
             ? player_character.overmap_sight_range(g->light_level(player_character.bub_pos().z()))
             : 100;
+    bool viewing_weather =
+        (uistate.overmap_debug_weather || uistate.overmap_visible_weather)
+        && options.center.z() >= 0;
     // Whether showing hordes is currently enabled
-    const bool showhordes = uistate.overmap_show_hordes;
-
-    const oter_id forest = oter_str_id("forest").id();
+    bool showhordes = uistate.overmap_show_hordes;
+    oter_id forest = oter_str_id("forest").id();
 
     // Cache display_oter substitution for this dimension's region settings.
     // When a region defines display_oter, tiles that are the default terrain (e.g., "field")
     // render using the display_oter's symbol/color/name instead. The actual tile ID is unchanged.
-    const regional_settings& active_region = ACTIVE_OVERMAP_BUFFER.get_settings(center);
-    const oter_id default_oter_id = active_region.default_oter.id();
-    const bool has_display_oter = !active_region.display_oter.is_empty();
-    const oter_id display_oter_render_id =
-        has_display_oter ? active_region.display_oter.id() : ccur_ter;
+    const regional_settings& active_region = ACTIVE_OVERMAP_BUFFER.get_settings(options.center);
+    oter_id default_oter_id = active_region.default_oter.id();
+    bool has_display_oter = !active_region.display_oter.is_empty();
+    oter_id display_oter_render_id =
+        has_display_oter ? active_region.display_oter.id() : oter_str_id::NULL_ID().id();
 
     std::string sZoneName;
-    tripoint_abs_omt tripointZone(-1, -1, -1);
+    tripoint_abs_omt tripointZone = tripoint_abs_omt(-1, -1, -1);
+
+    // If we're debugging monster groups, find the monster group we've selected
+    const mongroup* mgroup = nullptr;
+    std::vector<mongroup*> mgroups;
+
+    // A small LRU cache: most oter_id's occur in clumps like forests of swamps.
+    // This cache helps avoid much more costly lookups in the full hashmap.
+    static constexpr size_t cache_size = 8; // used below to calculate the next index
+    std::array<std::pair<oter_id, oter_t const*>, cache_size> cache{{}};
+    size_t cache_next = 0;
+
+    // For use with place_special: cache the color and symbol of each submap
+    // and record the bounds to optimize lookups below
+    std::unordered_map<point_rel_omt, std::pair<std::string, nc_color>> special_cache;
+    point_rel_omt s_begin;
+    point_rel_omt s_end;
+
+    // Cache NPCs since time to draw them is linear (per seen tile) with their count
+    struct npc_coloring {
+        nc_color color;
+        size_t count;
+    };
+    std::unordered_set<tripoint_abs_omt> npc_path_route;
+    std::unordered_map<point_abs_omt, int> player_path_route;
+    std::unordered_map<tripoint_abs_omt, npc_coloring> npc_color;
+    std::vector<shared_ptr_fast<npc>> npcs_near_player = ACTIVE_OVERMAP_BUFFER.get_npcs_near_player(
+        sight_points);
+    tripoint_abs_omt pl_pos = player_character.abs_omt_pos();
+
+    auto set_color_and_symbol(
+        const oter_id& cur_ter, const tripoint_abs_omt& omp, std::string& ter_sym,
+        nc_color& ter_color) -> void;
+};
+
+cell_view::cell_view(const cell_view_options& opts): options(opts) {
+    const auto& center = options.center;
+    const auto& data = options.data;
+    const auto blink = options.blink;
     const auto& zones = zone_manager::get_manager();
 
     if (data.iZoneIndex != -1) {
@@ -911,9 +971,6 @@ static void draw_ascii(
         tripointZone = project_to<coords::omt>(tripoint_abs_ms(zone.get_center_point()));
     }
 
-    // If we're debugging monster groups, find the monster group we've selected
-    const mongroup* mgroup = nullptr;
-    std::vector<mongroup*> mgroups;
     if (uistate.overmap_debug_mongroup) {
         mgroups = ACTIVE_OVERMAP_BUFFER.monsters_at(center);
         for (const auto& mgp : mgroups) {
@@ -922,47 +979,7 @@ static void draw_ascii(
         }
     }
 
-    // A small LRU cache: most oter_id's occur in clumps like forests of swamps.
-    // This cache helps avoid much more costly lookups in the full hashmap.
-    constexpr size_t cache_size = 8; // used below to calculate the next index
-    std::array<std::pair<oter_id, oter_t const*>, cache_size> cache{{}};
-    size_t cache_next = 0;
-
-    const auto set_color_and_symbol =
-        [&](const oter_id& cur_ter, const tripoint_abs_omt& omp, std::string& ter_sym,
-            nc_color& ter_color) {
-            // First see if we have the oter_t cached
-            oter_t const* info = nullptr;
-            for (const auto& c : cache) {
-                if (c.first == cur_ter) {
-                    info = c.second;
-                    break;
-                }
-            }
-            // Nope, look in the hash map next
-            if (!info) {
-                info = &cur_ter.obj();
-                cache[cache_next] = std::make_pair(cur_ter, info);
-                cache_next = (cache_next + 1) % cache_size;
-            }
-            // Ok, we found something
-            if (info) {
-                const bool explored = show_explored && ACTIVE_OVERMAP_BUFFER.is_explored(omp);
-                ter_color =
-                    explored ? c_dark_gray : info->get_color(uistate.overmap_show_land_use_codes);
-                ter_sym = info->get_symbol(uistate.overmap_show_land_use_codes);
-            }
-        };
-
-    const tripoint_abs_omt corner = center - point(om_half_width, om_half_height);
-
-    // For use with place_special: cache the color and symbol of each submap
-    // and record the bounds to optimize lookups below
-    std::unordered_map<point_rel_omt, std::pair<std::string, nc_color>> special_cache;
-
-    point_rel_omt s_begin;
-    point_rel_omt s_end;
-    if (blink && uistate.place_special) {
+    if (options.previews && blink && uistate.place_special) {
         for (const overmap_special_terrain& s_ter : uistate.place_special->preview_terrains()) {
             // Preview should only yield the terrains on the zero z-level
             assert(s_ter.p.z() == 0);
@@ -981,34 +998,28 @@ static void draw_ascii(
         }
     }
 
-    // Cache NPCs since time to draw them is linear (per seen tile) with their count
-    struct npc_coloring {
-        nc_color color;
-        size_t count;
+    // Remembers the color of the NPC on a square; of several, one by chance, or the first.
+    const auto note_npc = [&](const tripoint_abs_omt& pos, const npc& np) {
+        const auto iter = npc_color.find(pos);
+        const nc_color np_color = np.basic_symbol_color();
+        if (iter == npc_color.end()) {
+            npc_color[pos] = {np_color, 1};
+        } else {
+            iter->second.count++;
+            // Randomly change to new NPC's color
+            if (iter->second.color != np_color && options.random_npc_colors
+                && one_in(iter->second.count)) {
+                iter->second.color = np_color;
+            }
+        }
     };
-    std::unordered_set<tripoint_abs_omt> npc_path_route;
-    std::unordered_map<point_abs_omt, int> player_path_route;
-    std::unordered_map<tripoint_abs_omt, npc_coloring> npc_color;
-    auto npcs_near_player = ACTIVE_OVERMAP_BUFFER.get_npcs_near_player(sight_points);
     if (blink) {
         // get seen NPCs
         for (const auto& np : npcs_near_player) {
             if (np->bub_pos().z() != center.z()) { continue; }
 
             const tripoint_abs_omt pos = np->abs_omt_pos();
-            if (has_debug_vision || ACTIVE_OVERMAP_BUFFER.seen(pos)) {
-                auto iter = npc_color.find(pos);
-                nc_color np_color = np->basic_symbol_color();
-                if (iter == npc_color.end()) {
-                    npc_color[pos] = {np_color, 1};
-                } else {
-                    iter->second.count++;
-                    // Randomly change to new NPC's color
-                    if (iter->second.color != np_color && one_in(iter->second.count)) {
-                        iter->second.color = np_color;
-                    }
-                }
-            }
+            if (has_debug_vision || ACTIVE_OVERMAP_BUFFER.seen(pos)) { note_npc(pos, *np); }
         }
         std::vector<npc*> followers;
         // get friendly followers
@@ -1032,210 +1043,250 @@ static void draw_ascii(
         for (auto& elem : player_character.omt_path) { player_path_route[elem.xy()] = elem.z(); }
         for (const auto& np : followers) {
             if (np->bub_pos().z() != center.z()) { continue; }
-            const tripoint_abs_omt pos = np->abs_omt_pos();
-            auto iter = npc_color.find(pos);
-            nc_color np_color = np->basic_symbol_color();
-            if (iter == npc_color.end()) {
-                npc_color[pos] = {np_color, 1};
-            } else {
-                iter->second.count++;
-                // Randomly change to new NPC's color
-                if (iter->second.color != np_color && one_in(iter->second.count)) {
-                    iter->second.color = np_color;
+            note_npc(np->abs_omt_pos(), *np);
+        }
+    }
+}
+
+auto cell_view::set_color_and_symbol(
+    const oter_id& cur_ter, const tripoint_abs_omt& omp, std::string& ter_sym, nc_color& ter_color)
+    -> void {
+    // First see if we have the oter_t cached
+    oter_t const* info = nullptr;
+    for (const auto& c : cache) {
+        if (c.first == cur_ter) {
+            info = c.second;
+            break;
+        }
+    }
+    // Nope, look in the hash map next
+    if (!info) {
+        info = &cur_ter.obj();
+        cache[cache_next] = std::make_pair(cur_ter, info);
+        cache_next = (cache_next + 1) % cache_size;
+    }
+    // Ok, we found something
+    if (info) {
+        const bool explored = options.show_explored && ACTIVE_OVERMAP_BUFFER.is_explored(omp);
+        ter_color = explored ? c_dark_gray : info->get_color(uistate.overmap_show_land_use_codes);
+        ter_sym = info->get_symbol(uistate.overmap_show_land_use_codes);
+    }
+}
+
+auto cell_view::glyph_at(const tripoint_abs_omt& omp) -> square_glyph {
+    const auto& center = options.center;
+    const auto& data = options.data;
+    const bool blink = options.blink;
+    const tripoint_abs_omt omp_sky(omp.xy(), OVERMAP_HEIGHT);
+    oter_id cur_ter = oter_str_id::NULL_ID();
+    auto glyph = square_glyph{};
+    auto& ter_color = glyph.color;
+    auto& ter_sym = glyph.symbol;
+
+    const bool see = has_debug_vision || ACTIVE_OVERMAP_BUFFER.seen(omp);
+    if (see) {
+        // Only load terrain if we can actually see it
+        cur_ter = ACTIVE_OVERMAP_BUFFER.ter(omp);
+    }
+
+    // Whether the location is within player line-of-sight; only asked where it decides a glyph
+    const auto los = [&]() { return see && player_character.overmap_los(omp, sight_points); };
+    const auto los_sky = [&]() { return player_character.overmap_los(omp_sky, sight_points * 2); };
+
+    const bool is_npc_path = npc_path_route.contains(omp);
+    const bool is_player_path = player_path_route.contains(omp.xy());
+    const int player_path_z = is_player_path ? player_path_route[omp.xy()] : 0;
+
+    if (blink && omp == pl_pos) {
+        // Display player pos, should always be visible
+        ter_color = player_character.symbol_color();
+        ter_sym = "@";
+    } else if (viewing_weather && (uistate.overmap_debug_weather || los_sky())) {
+        const weather_type_id type = get_weather_at_point(omp_sky.xy());
+        ter_color = type->map_color;
+        ter_sym = type->get_symbol();
+    } else if (data.debug_scent && get_scent_glyph(omp, ter_color, ter_sym)) {
+        // get_scent_glyph has changed ter_color and ter_sym if omp has a scent
+    } else if (blink && has_target && omp.xy() == target.xy()) {
+        // Mission target, display always, player should know where it is anyway.
+        ter_color = c_red;
+        ter_sym = "*";
+        if (target.z() > center.z()) {
+            ter_sym = "^";
+        } else if (target.z() < center.z()) {
+            ter_sym = "v";
+        }
+    } else if (blink && uistate.overmap_show_map_notes && ACTIVE_OVERMAP_BUFFER.has_note(omp)
+               && !get_map_label_text(omp).has_value()) {
+        // Display notes in all situations, even when not seen
+        std::tie(ter_sym, ter_color, std::ignore) = get_note_display_info(
+            ACTIVE_OVERMAP_BUFFER.note(omp));
+    } else if (!see) {
+        // All cases above ignore the seen-status,
+        ter_color = c_dark_gray;
+        ter_sym = "#";
+        // All cases below assume that see is true.
+    } else if (blink && npc_color.contains(omp)) {
+        // Visible NPCs are cached already
+        ter_color = npc_color[omp].color;
+        ter_sym = "@";
+    } else if (blink && is_player_path) {
+        ter_color = c_blue;
+        if (player_path_z == omp.z()) {
+            ter_sym = "!";
+        } else if (player_path_z > omp.z()) {
+            ter_sym = "^";
+        } else {
+            ter_sym = "v";
+        }
+    } else if (blink && is_npc_path) {
+        ter_color = c_red;
+        ter_sym = "!";
+    } else if (blink && ACTIVE_OVERMAP_BUFFER.is_path(omp)) {
+        ter_color = c_light_blue;
+        ter_sym = "!";
+    } else if (blink && uistate.overmap_highlighted_omts.contains(omp)) {
+        ter_color = c_pink;
+        ter_sym = "&";
+    } else if (blink && showhordes && los()
+               && ACTIVE_OVERMAP_BUFFER.get_horde_size(omp) >= HORDE_VISIBILITY_SIZE) {
+        // Display Hordes only when within player line-of-sight
+        ter_color = c_green;
+        ter_sym = ACTIVE_OVERMAP_BUFFER.get_horde_size(omp) > HORDE_VISIBILITY_SIZE * 2 ? "Z" : "z";
+    } else if (blink && ACTIVE_OVERMAP_BUFFER.has_vehicle(omp)) {
+        // Display Vehicles only when player can see the location
+        ter_color = c_cyan;
+        ter_sym = "c";
+    } else if (!sZoneName.empty() && tripointZone.xy() == omp.xy()) {
+        ter_color = c_yellow;
+        ter_sym = "Z";
+    } else if (!uistate.overmap_show_forest_trails && cur_ter
+               && is_ot_match("forest_trail", cur_ter, ot_match_type::type)) {
+        // If forest trails shouldn't be displayed, and this is a forest trail, then
+        // instead render it like a forest.
+        set_color_and_symbol(forest, omp, ter_sym, ter_color);
+    } else {
+        // Nothing special, but is visible to the player.
+        // Substitute display_oter when rendering the region's default terrain.
+        const oter_id render_ter =
+            (has_display_oter && cur_ter == default_oter_id) ? display_oter_render_id : cur_ter;
+        set_color_and_symbol(render_ter, omp, ter_sym, ter_color);
+    }
+
+    // Are we debugging monster groups?
+    if (blink && uistate.overmap_debug_mongroup) {
+        // Check if this tile is the target of the currently selected group
+
+        // Convert to position within overmap
+        const auto proj = project_remain<coords::om>(omp);
+        if (mgroup && project_to<coords::om>(mgroup->target.xy()) == proj.quotient) {
+            ter_color = c_red;
+            ter_sym = "x";
+        } else {
+            const auto& groups = ACTIVE_OVERMAP_BUFFER.monsters_at(omp);
+            for (auto& mgp : groups) {
+                if (mgp->type == GROUP_FOREST) {
+                    // Don't flood the map with forest creatures.
+                    continue;
+                }
+                if (mgp->type == GROUP_NEMESIS) {
+                    // Nemesis horde shows as &
+                    ter_sym = "&";
+                    ter_color = c_red;
+                    break;
+                }
+                if (mgp->horde) {
+                    // Hordes show as +
+                    ter_sym = "+";
+                    break;
+                } else {
+                    // Regular groups show as -
+                    ter_sym = "-";
+                }
+            }
+            // Set the color only if we encountered an eligible group.
+            if (ter_sym == "+" || ter_sym == "-") {
+                if (los()) {
+                    ter_color = c_light_blue;
+                } else {
+                    ter_color = c_blue;
                 }
             }
         }
     }
 
-    tripoint_abs_omt pl_pos = get_player_character().abs_omt_pos();
+    // Are we debugging distribution grids?
+    if (blink && data.debug_grids && options.grids != nullptr) {
+        std::optional<char> ch = options.grids->get_active(omp);
+        if (ch.has_value()) {
+            ter_sym = *ch;
+            ter_color = c_light_blue_yellow;
+        } else {
+            ch = options.grids->get_inactive(omp);
+            if (ch.has_value()) {
+                ter_sym = *ch;
+                ter_color = c_light_blue;
+            }
+        }
+    }
+
+    // Preview for place_terrain or place_special
+    if (options.previews && (uistate.place_terrain || uistate.place_special)) {
+        if (blink && uistate.place_terrain && omp.xy() == center.xy()) {
+            ter_color = uistate.place_terrain->get_color();
+            ter_sym = uistate.place_terrain->get_symbol();
+        } else if (blink && uistate.place_special) {
+            const point_rel_omt from_center = omp.xy() - center.xy();
+            if (from_center.x() >= s_begin.x() && from_center.x() <= s_end.x()
+                && from_center.y() >= s_begin.y() && from_center.y() <= s_end.y()) {
+                const auto sm = special_cache.find(from_center);
+
+                if (sm != special_cache.end()) {
+                    ter_color = sm->second.second;
+                    ter_sym = sm->second.first;
+                }
+            }
+        }
+        // Highlight areas that already have been generated
+        // TODO: fix point types
+        if (ACTIVE_MAPBUFFER.lookup_submap(project_to<coords::sm>(omp))) {
+            ter_color = red_background(ter_color);
+        }
+    }
+    return glyph;
+}
+
+static void draw_ascii(
+    ui_adaptor& ui, const catacurses::window& w, const tripoint_abs_omt& center,
+    const tripoint_abs_omt& /*orig*/, bool blink, bool show_explored, bool /*fast_scroll*/,
+    input_context* /*inp_ctxt*/, const draw_data_t& data, grids_draw_data& grids_data) {
+
+    const int om_map_width = OVERMAP_WINDOW_WIDTH;
+    const int om_map_height = OVERMAP_WINDOW_HEIGHT;
+    const int om_half_width = om_map_width / 2;
+    const int om_half_height = om_map_height / 2;
+
+    auto view = cell_view({
+        .center = center,
+        .blink = blink,
+        .show_explored = show_explored,
+        .data = data,
+        .grids = &grids_data,
+    });
+    const auto& has_target = view.has_target;
+    const auto& target = view.target;
+    const auto& has_debug_vision = view.has_debug_vision;
+    const auto& sZoneName = view.sZoneName;
+    const auto& tripointZone = view.tripointZone;
+    const auto& npcs_near_player = view.npcs_near_player;
+
+    const tripoint_abs_omt corner = center - point(om_half_width, om_half_height);
 
     for (int i = 0; i < om_map_width; ++i) {
         for (int j = 0; j < om_map_height; ++j) {
             const tripoint_abs_omt omp = corner + point(i, j);
-            const tripoint_abs_omt omp_sky(omp.xy(), OVERMAP_HEIGHT);
-            oter_id cur_ter = oter_str_id::NULL_ID();
-            nc_color ter_color = c_black;
-            std::string ter_sym = " ";
-
-            const bool see = has_debug_vision || ACTIVE_OVERMAP_BUFFER.seen(omp);
-            if (see) {
-                // Only load terrain if we can actually see it
-                cur_ter = ACTIVE_OVERMAP_BUFFER.ter(omp);
-            }
-
-            // Check if location is within player line-of-sight
-            const bool los = see && player_character.overmap_los(omp, sight_points);
-            const bool los_sky = player_character.overmap_los(omp_sky, sight_points * 2);
-
-            const bool is_npc_path = npc_path_route.contains(omp);
-            const bool is_player_path = player_path_route.contains(omp.xy());
-            const int player_path_z = is_player_path ? player_path_route[omp.xy()] : 0;
-
-            if (blink && omp == pl_pos) {
-                // Display player pos, should always be visible
-                ter_color = player_character.symbol_color();
-                ter_sym = "@";
-            } else if (viewing_weather && (uistate.overmap_debug_weather || los_sky)) {
-                const weather_type_id type = get_weather_at_point(omp_sky.xy());
-                ter_color = type->map_color;
-                ter_sym = type->get_symbol();
-            } else if (data.debug_scent && get_scent_glyph(omp, ter_color, ter_sym)) {
-                // get_scent_glyph has changed ter_color and ter_sym if omp has a scent
-            } else if (blink && has_target && omp.xy() == target.xy()) {
-                // Mission target, display always, player should know where it is anyway.
-                ter_color = c_red;
-                ter_sym = "*";
-                if (target.z() > center.z()) {
-                    ter_sym = "^";
-                } else if (target.z() < center.z()) {
-                    ter_sym = "v";
-                }
-            } else if (
-                blink && uistate.overmap_show_map_notes && ACTIVE_OVERMAP_BUFFER.has_note(omp)
-                && !get_map_label_text(omp).has_value()) {
-                // Display notes in all situations, even when not seen
-                std::tie(ter_sym, ter_color, std::ignore) = get_note_display_info(
-                    ACTIVE_OVERMAP_BUFFER.note(omp));
-            } else if (!see) {
-                // All cases above ignore the seen-status,
-                ter_color = c_dark_gray;
-                ter_sym = "#";
-                // All cases below assume that see is true.
-            } else if (blink && npc_color.contains(omp)) {
-                // Visible NPCs are cached already
-                ter_color = npc_color[omp].color;
-                ter_sym = "@";
-            } else if (blink && is_player_path) {
-                ter_color = c_blue;
-                if (player_path_z == omp.z()) {
-                    ter_sym = "!";
-                } else if (player_path_z > omp.z()) {
-                    ter_sym = "^";
-                } else {
-                    ter_sym = "v";
-                }
-            } else if (blink && is_npc_path) {
-                ter_color = c_red;
-                ter_sym = "!";
-            } else if (blink && ACTIVE_OVERMAP_BUFFER.is_path(omp)) {
-                ter_color = c_light_blue;
-                ter_sym = "!";
-            } else if (blink && uistate.overmap_highlighted_omts.contains(omp)) {
-                ter_color = c_pink;
-                ter_sym = "&";
-            } else if (blink && showhordes && los
-                       && ACTIVE_OVERMAP_BUFFER.get_horde_size(omp) >= HORDE_VISIBILITY_SIZE) {
-                // Display Hordes only when within player line-of-sight
-                ter_color = c_green;
-                ter_sym =
-                    ACTIVE_OVERMAP_BUFFER.get_horde_size(omp) > HORDE_VISIBILITY_SIZE * 2
-                        ? "Z"
-                        : "z";
-            } else if (blink && ACTIVE_OVERMAP_BUFFER.has_vehicle(omp)) {
-                // Display Vehicles only when player can see the location
-                ter_color = c_cyan;
-                ter_sym = "c";
-            } else if (!sZoneName.empty() && tripointZone.xy() == omp.xy()) {
-                ter_color = c_yellow;
-                ter_sym = "Z";
-            } else if (!uistate.overmap_show_forest_trails && cur_ter
-                       && is_ot_match("forest_trail", cur_ter, ot_match_type::type)) {
-                // If forest trails shouldn't be displayed, and this is a forest trail, then
-                // instead render it like a forest.
-                set_color_and_symbol(forest, omp, ter_sym, ter_color);
-            } else {
-                // Nothing special, but is visible to the player.
-                // Substitute display_oter when rendering the region's default terrain.
-                const oter_id render_ter =
-                    (has_display_oter && cur_ter == default_oter_id)
-                        ? display_oter_render_id
-                        : cur_ter;
-                set_color_and_symbol(render_ter, omp, ter_sym, ter_color);
-            }
-
-            // Are we debugging monster groups?
-            if (blink && uistate.overmap_debug_mongroup) {
-                // Check if this tile is the target of the currently selected group
-
-                // Convert to position within overmap
-                const auto proj = project_remain<coords::om>(omp);
-                if (mgroup && project_to<coords::om>(mgroup->target.xy()) == proj.quotient) {
-                    ter_color = c_red;
-                    ter_sym = "x";
-                } else {
-                    const auto& groups = ACTIVE_OVERMAP_BUFFER.monsters_at(omp);
-                    for (auto& mgp : groups) {
-                        if (mgp->type == GROUP_FOREST) {
-                            // Don't flood the map with forest creatures.
-                            continue;
-                        }
-                        if (mgp->type == GROUP_NEMESIS) {
-                            // Nemesis horde shows as &
-                            ter_sym = "&";
-                            ter_color = c_red;
-                            break;
-                        }
-                        if (mgp->horde) {
-                            // Hordes show as +
-                            ter_sym = "+";
-                            break;
-                        } else {
-                            // Regular groups show as -
-                            ter_sym = "-";
-                        }
-                    }
-                    // Set the color only if we encountered an eligible group.
-                    if (ter_sym == "+" || ter_sym == "-") {
-                        if (los) {
-                            ter_color = c_light_blue;
-                        } else {
-                            ter_color = c_blue;
-                        }
-                    }
-                }
-            }
-
-            // Are we debugging distribution grids?
-            if (blink && data.debug_grids) {
-                std::optional<char> ch = grids_data.get_active(omp);
-                if (ch.has_value()) {
-                    ter_sym = *ch;
-                    ter_color = c_light_blue_yellow;
-                } else {
-                    ch = grids_data.get_inactive(omp);
-                    if (ch.has_value()) {
-                        ter_sym = *ch;
-                        ter_color = c_light_blue;
-                    }
-                }
-            }
-
-            // Preview for place_terrain or place_special
-            if (uistate.place_terrain || uistate.place_special) {
-                if (blink && uistate.place_terrain && omp.xy() == center.xy()) {
-                    ter_color = uistate.place_terrain->get_color();
-                    ter_sym = uistate.place_terrain->get_symbol();
-                } else if (blink && uistate.place_special) {
-                    const point_rel_omt from_center = omp.xy() - center.xy();
-                    if (from_center.x() >= s_begin.x() && from_center.x() <= s_end.x()
-                        && from_center.y() >= s_begin.y() && from_center.y() <= s_end.y()) {
-                        const auto sm = special_cache.find(from_center);
-
-                        if (sm != special_cache.end()) {
-                            ter_color = sm->second.second;
-                            ter_sym = sm->second.first;
-                        }
-                    }
-                }
-                // Highlight areas that already have been generated
-                // TODO: fix point types
-                if (ACTIVE_MAPBUFFER.lookup_submap(project_to<coords::sm>(omp))) {
-                    ter_color = red_background(ter_color);
-                }
-            }
-
+            const auto [ter_sym, ter_color] = view.glyph_at(omp);
             if (omp.xy() == center.xy() && !uistate.place_special) {
-                ccur_ter = cur_ter;
                 mvwputch_hi(w, point(i, j), ter_color, ter_sym);
             } else {
                 mvwputch(w, point(i, j), ter_color, ter_sym);
@@ -2045,82 +2096,221 @@ static auto get_overmap_path_to(const tripoint_abs_omt dest, bool driving)
     }
 }
 
-/// The overmap as the native screen drew it, for clients that cannot read a terminal window.
-static auto overmap_interaction(const tripoint_abs_omt& center)
-    -> game_client::interaction_snapshot {
-    using game_client::interaction_position;
-    const auto position = [](const tripoint_abs_omt& p) {
-        return interaction_position{.x = p.x(), .y = p.y(), .z = p.z()};
+namespace ec = engine_client;
+
+/// The squares around the cursor that the screen publishes: more than a terminal shows, so that a
+/// client of any size crops its own view.
+constexpr auto published_cols = 61;
+constexpr auto published_rows = 37;
+/// The world is far smaller than this; the bounds only keep the arithmetic safe.
+constexpr auto cursor_bound = 1 << 24;
+constexpr auto cursor_id = "overmap:cursor";
+constexpr auto map_id = "map:overmap";
+
+static auto position_of(const tripoint_abs_omt& at) -> game_client::interaction_position {
+    return {.x = at.x(), .y = at.y(), .z = at.z()};
+}
+
+/// The curses color indexes 0-15 that the window draws `color` with.
+static auto curses_indexes(const nc_color& color) -> std::pair<int, int> {
+    const auto& pair = cata_cursesport::colorpairs[color.to_color_pair_index()];
+    return {static_cast<int>(pair.FG) + (color.is_bold() ? 8 : 0),
+            static_cast<int>(pair.BG) + (color.is_blink() ? 8 : 0)};
+}
+
+/// What the note on `at` says: the text after its symbol and color, else its label.
+static auto note_text(const tripoint_abs_omt& at) -> std::string {
+    if (const auto line = corner_note(at); line && !line->text.empty()) { return line->text; }
+    const auto label = overmap_label_note::extract_label(ACTIVE_OVERMAP_BUFFER.note(at));
+    return label.value_or("");
+}
+
+struct squares_options {
+    tripoint_abs_omt origin;
+    int cols = 0;
+    int rows = 0;
+    bool tiles = false;
+};
+
+/// The squares of one level as the player knows them, read from the model: nothing is drawn.
+static auto squares_of(const squares_options& opts, cell_view& view)
+    -> game_client::interaction_overmap {
+    auto om = game_client::interaction_overmap{
+        .origin = position_of(opts.origin),
+        .cols = opts.cols,
+        .rows = opts.rows,
+        .player = position_of(get_player_character().abs_omt_pos()),
     };
-    // The world is far smaller than this; the bounds only keep the arithmetic safe.
-    constexpr int kilo_range = 1 << 24;
-    auto snapshot = game_client::interaction_snapshot{};
-    snapshot.kind = game_client::interaction_kind::target;
-    snapshot.title = _("Overmap");
-    snapshot.allow_cancel = true;
-    const auto player = get_player_character().abs_omt_pos();
-    snapshot.target = game_client::interaction_target{
-        .coordinate_space = "omt",
-        .source = position(player),
-        .cursor = position(center),
-        .minimum_position =
-            interaction_position{.x = -kilo_range, .y = -kilo_range, .z = -OVERMAP_DEPTH},
-        .maximum_position =
-            interaction_position{.x = kilo_range, .y = kilo_range, .z = OVERMAP_HEIGHT},
-        .range = 2 * kilo_range,
-        .distance_metric = "square",
-    };
-    auto& om = snapshot.overmap.emplace();
-    const auto* const map = g->w_overmap.get<cata_cursesport::WINDOW>();
-    if (map != nullptr) {
-        om.cols = map->width;
-        om.rows = map->height;
-        for (int y = 0; y < om.rows; ++y) {
-            for (int x = 0; x < om.cols; ++x) {
-                const auto& cell = map->line[y].chars[x];
-                om.glyphs.push_back(cell.ch.empty() ? " " : cell.ch);
-                om.foreground.push_back(static_cast<int>(cell.FG));
-                om.background.push_back(static_cast<int>(cell.BG));
-            }
-        }
-    }
-    const tripoint_abs_omt corner = center - point(om.cols / 2, om.rows / 2);
-    om.origin = position(corner);
-    om.player = position(player);
-    for (int y = 0; y < om.rows; ++y) {
-        for (int x = 0; x < om.cols; ++x) {
-            const tripoint_abs_omt omp = corner + point(x, y);
+    const auto& region = ACTIVE_OVERMAP_BUFFER.get_settings(view.options.center);
+    for (const auto y : std::views::iota(0, opts.rows)) {
+        for (const auto x : std::views::iota(0, opts.cols)) {
+            const auto omp = opts.origin + point(x, y);
+            const auto [symbol, color] = view.glyph_at(omp);
+            const auto [foreground, background] = curses_indexes(color);
+            om.glyphs.push_back(symbol);
+            om.foreground.push_back(foreground);
+            om.background.push_back(background);
             if (ACTIVE_OVERMAP_BUFFER.has_note(omp)) {
-                om.notes.push_back({position(omp), ACTIVE_OVERMAP_BUFFER.note(omp)});
+                om.notes.push_back({position_of(omp), note_text(omp)});
+            }
+            if (!opts.tiles) { continue; }
+            const auto tile = omt_tile_shown(
+                omp, view.has_debug_vision || ACTIVE_OVERMAP_BUFFER.seen(omp), region);
+            om.tiles.push_back(
+                {.id = tile.id,
+                 .rotation = tile.rotation,
+                 .subtile = map_perception::multitile_key(tile.subtile)});
+            if (!om.looks_like.contains(tile.id)) {
+                const auto type = oter_type_str_id(tile.id);
+                om.looks_like[tile.id] =
+                    type.is_valid() ? type->looks_like : std::vector<std::string>{};
             }
         }
     }
-    for (const auto& step : get_avatar().omt_path) { om.path.push_back(position(step)); }
-    if (game_client::overmap_tiles()) {
-        const auto& region = ACTIVE_OVERMAP_BUFFER.get_settings(center);
-        const bool debug_vision = get_avatar().has_trait(trait_DEBUG_NIGHTVISION);
-        for (int y = 0; y < om.rows; ++y) {
-            for (int x = 0; x < om.cols; ++x) {
-                const tripoint_abs_omt omp = corner + point(x, y);
-                const bool seen = debug_vision || ACTIVE_OVERMAP_BUFFER.seen(omp);
-                const auto tile = omt_tile_shown(omp, seen, region);
-                om.tiles.push_back(
-                    {.id = tile.id,
-                     .rotation = tile.rotation,
-                     .subtile = map_perception::multitile_key(tile.subtile)});
-                if (!om.looks_like.contains(tile.id)) {
-                    const auto type = oter_type_str_id(tile.id);
-                    om.looks_like[tile.id] =
-                        type.is_valid() ? type->looks_like : std::vector<std::string>{};
+    for (const auto& step : get_avatar().omt_path) { om.path.push_back(position_of(step)); }
+    return om;
+}
+
+auto known_squares(const tripoint_abs_omt& min, const tripoint_abs_omt& max, const bool tiles)
+    -> game_client::interaction_overmap {
+    // The region settings come from the player's overmap on the rect's level, so that no overmap is
+    // made for a square the player has never seen.
+    auto view = cell_view({
+        .center = tripoint_abs_omt(get_player_character().abs_omt_pos().xy(), min.z()),
+        .debug_vision = false,
+        .random_npc_colors = false,
+        .previews = false,
+    });
+    return squares_of(
+        {.origin = min,
+         .cols = max.x() - min.x() + 1,
+         .rows = max.y() - min.y() + 1,
+         .tiles = tiles},
+        view);
+}
+
+struct screen_state {
+    const tripoint_abs_omt& center;
+    const tripoint_abs_omt& orig;
+    bool show_explored = true;
+    bool fast_scroll = false;
+    const draw_data_t& data;
+    grids_draw_data& grids;
+    const input_context& ictxt;
+};
+
+/// What the sidebar says besides the description of the cursor square, composed from the model.
+static auto legend_of(const screen_state& state, const cell_view& view)
+    -> std::vector<std::string> {
+    const auto& center = state.center;
+    auto& you = get_avatar();
+    const auto seen = view.has_debug_vision || ACTIVE_OVERMAP_BUFFER.seen(center);
+    auto lines = std::vector<std::string>{};
+    const auto plain = [](std::string text) {
+        return text.starts_with("# ") ? text.substr(2) : text;
+    };
+
+    if (seen && uistate.overmap_debug_mongroup) {
+        for (const auto* const group : ACTIVE_OVERMAP_BUFFER.monsters_at(center)) {
+            lines.push_back(string_format("Species: %s", group->type.c_str()));
+            lines.push_back(
+                string_format("# monsters: %d", group->population + group->monsters.size()));
+            if (!group->horde) { continue; }
+            lines.push_back(string_format("Interest: %d", group->interest));
+            lines.push_back(string_format("Behaviour: %s", group->horde_behaviour));
+            lines.push_back(string_format("Target: %s", group->target.to_string()));
+        }
+    }
+    if (uistate.overmap_debug_weather || uistate.overmap_visible_weather) {
+        const auto weather_is_visible =
+            center.z() >= 0
+            && (uistate.overmap_debug_weather
+                || you.overmap_los(
+                    tripoint_abs_omt(center.xy(), OVERMAP_HEIGHT), view.sight_points * 2));
+        lines.push_back(
+            weather_is_visible
+                ? get_weather_at_point(center.xy())->name.translated()
+                : plain(_("# Weather unknown")));
+    }
+    if (state.data.debug_editor && seen) {
+        const auto& oter = ACTIVE_OVERMAP_BUFFER.ter(center).obj();
+        lines.push_back(string_format(_("oter: %s (rot %d)"), oter.id.str(), oter.get_rotation()));
+        lines.push_back(string_format(_("oter_type: %s"), oter.get_type_id().str()));
+        for (const auto dir : all_enum_values<cube_direction>()) {
+            if (const auto* const join = ACTIVE_OVERMAP_BUFFER.join_used_at({center, dir})) {
+                lines.push_back(string_format(_("join %s: %s"), io::enum_to_string(dir), *join));
+            }
+        }
+        if (const auto* const args = ACTIVE_OVERMAP_BUFFER.mapgen_args(center)) {
+            if (*args) {
+                for (const auto& [name, value] : (**args).map) {
+                    lines.push_back(string_format("%s = %s", name, value.get_string()));
                 }
+            } else {
+                lines.push_back(_("args not yet set"));
             }
         }
     }
-    const auto seen =
-        get_avatar().has_trait(trait_DEBUG_NIGHTVISION) || ACTIVE_OVERMAP_BUFFER.seen(center);
-    auto unexplored = std::string(_("# Unexplored"));
-    if (unexplored.starts_with("# ")) { unexplored.erase(0, 2); }
-    om.cursor_description = seen ? remove_color_tags(seen_description(center)) : unexplored;
+    if (view.has_target) {
+        lines.push_back(_("Distance to active mission:"));
+        lines.push_back(string_format(_("%d tiles"), rl_dist(center, view.target)));
+        const auto above_below = view.target.z() - state.orig.z();
+        if (above_below > 0) { lines.push_back(_("Above us")); }
+        if (above_below < 0) { lines.push_back(_("Below us")); }
+    }
+    for (const auto& mission : you.get_active_missions()) {
+        if (mission->get_target() == center) { lines.push_back(mission->name()); }
+    }
+    if (uistate.overmap_show_map_notes && corner_note(center)
+        && ACTIVE_OVERMAP_BUFFER.is_marked_dangerous(center)) {
+        lines.push_back(_("DANGEROUS AREA!"));
+    }
+    if (seen) {
+        for (const auto& npc : view.npcs_near_player) {
+            if (!npc->marked_for_death && npc->abs_omt_pos() == center) {
+                lines.push_back(npc->name);
+            }
+        }
+    }
+    for (const auto& vehicle : ACTIVE_OVERMAP_BUFFER.get_vehicle(center)) {
+        lines.push_back(vehicle.name);
+    }
+    if (const auto* const dim = g->get_current_dimension_info()) {
+        lines.push_back(
+            dim->display_name.empty()
+                ? (dim->world_type.is_valid()
+                       ? dim->world_type.obj().name.translated()
+                       : dim->id.str())
+                : dim->display_name);
+    }
+    lines.push_back(string_format(_("LEVEL %i, %s"), center.z(), fmt_omt_coords(center)));
+    return lines;
+}
+
+/// The overmap screen of a client: the squares around the cursor, what is known of the cursor
+/// square, the toggles and the actions of the context.
+static auto screen_of(const screen_state& state) -> ec::screen_view {
+    const auto& center = state.center;
+    const auto player = get_player_character().abs_omt_pos();
+    auto view = cell_view({
+        .center = center,
+        .blink = uistate.overmap_show_overlays,
+        .show_explored = state.show_explored,
+        .data = state.data,
+        .grids = &state.grids,
+        .random_npc_colors = false,
+    });
+    auto om = squares_of(
+        {.origin = center - point(published_cols / 2, published_rows / 2),
+         .cols = published_cols,
+         .rows = published_rows,
+         .tiles = game_client::overmap_tiles()},
+        view);
+    const auto seen = view.has_debug_vision || ACTIVE_OVERMAP_BUFFER.seen(center);
+    om.cursor_description = seen ? remove_color_tags(seen_description(center)) : [] {
+        const auto unexplored = std::string(_("# Unexplored"));
+        return unexplored.starts_with("# ") ? unexplored.substr(2) : unexplored;
+    }();
     if (center == player) { om.cursor_here = _("You are here."); }
     if (const auto note = uistate.overmap_show_map_notes ? corner_note(center) : std::nullopt;
         note && !note->text.empty()) {
@@ -2133,16 +2323,80 @@ static auto overmap_interaction(const tripoint_abs_omt& center)
             vgettext("Route of %d square.", "Route of %d squares.", steps),
             static_cast<int>(steps));
     }
-    if (const auto* const legend = g->w_omlegend.get<cata_cursesport::WINDOW>();
-        legend != nullptr) {
-        for (int y = 0; y < legend->height; ++y) {
-            auto line = std::string();
-            for (int x = 0; x < legend->width; ++x) { line += legend->line[y].chars[x].ch; }
-            while (!line.empty() && line.back() == ' ') { line.pop_back(); }
-            om.legend.push_back(std::move(line));
+    om.legend = legend_of(state, view);
+
+    const auto& ictxt = state.ictxt;
+    const auto switched = [](const bool on) { return on ? _("On") : _("Off"); };
+    const auto is_on = [&](const std::string& action) {
+        const auto& you = get_avatar();
+        if (action == "TOGGLE_MAP_NOTES") { return uistate.overmap_show_map_notes; }
+        if (action == "TOGGLE_BLINKING") { return uistate.overmap_blinking; }
+        if (action == "TOGGLE_OVERLAYS") {
+            return uistate.overmap_show_overlays || uistate.overmap_blinking;
         }
-    }
-    return snapshot;
+        if (action == "TOGGLE_LAND_USE_CODES") { return uistate.overmap_show_land_use_codes; }
+        if (action == "TOGGLE_CITY_LABELS") { return uistate.overmap_show_city_labels; }
+        if (action == "TOGGLE_HORDES") { return uistate.overmap_show_hordes; }
+        if (action == "TOGGLE_EXPLORED") { return ACTIVE_OVERMAP_BUFFER.is_explored(center); }
+        if (action == "TOGGLE_MARK_PATH") { return ACTIVE_OVERMAP_BUFFER.is_path(center); }
+        if (action == "TOGGLE_FAST_SCROLL") { return state.fast_scroll; }
+        if (action == "TOGGLE_FOREST_TRAILS") { return uistate.overmap_show_forest_trails; }
+        if (action == "TOGGLE_OVERMAP_WEATHER") { return uistate.overmap_visible_weather; }
+        if (action == "TOGGLE_DEFAULT_0") { return uistate.overmap_default_0; }
+        return you.custom_waypoint != nullptr;
+    };
+    constexpr auto toggles = std::array{
+        "TOGGLE_MAP_NOTES",      "TOGGLE_BLINKING",        "TOGGLE_OVERLAYS",
+        "TOGGLE_LAND_USE_CODES", "TOGGLE_CITY_LABELS",     "TOGGLE_HORDES",
+        "TOGGLE_EXPLORED",       "TOGGLE_MARK_PATH",       "TOGGLE_FAST_SCROLL",
+        "TOGGLE_FOREST_TRAILS",  "TOGGLE_OVERMAP_WEATHER", "TOGGLE_DEFAULT_0",
+        "SET_CUSTOM_WAYPOINT",
+    };
+    auto stats =
+        toggles | std::views::transform([&](const std::string_view action) {
+            const auto id = std::string(action);
+            const auto on = is_on(id);
+            return ec::panel_stat{
+                .key = id,
+                .label = ictxt.get_action_name(id),
+                .value = switched(on),
+                .tone = on ? "good" : ""};
+        })
+        | std::ranges::to<std::vector>();
+
+    auto map = ec::component{
+        .id = map_id,
+        .affordances = {cursor_id, "CHOOSE_DESTINATION"},
+        .body = ec::map_body{
+            .mode = "overmap",
+            .target =
+                game_client::interaction_target{
+                    .coordinate_space = "omt",
+                    .source = position_of(player),
+                    .cursor = position_of(center),
+                    .minimum_position =
+                        game_client::interaction_position{
+                            .x = -cursor_bound, .y = -cursor_bound, .z = -OVERMAP_DEPTH},
+                    .maximum_position =
+                        game_client::interaction_position{
+                            .x = cursor_bound, .y = cursor_bound, .z = OVERMAP_HEIGHT},
+                    .range = 2 * cursor_bound,
+                    .distance_metric = "square",
+                },
+            .overmap = std::move(om),
+        }};
+    return {
+        .title = _("Overmap"),
+        .root = ec::split(
+            {.id = "overmap",
+             .children = ec::children_of(
+                 std::move(map), ec::panel({.id = "overmap:toggles", .stats = std::move(stats)}))}),
+        .affordances = {ec::invoke_affordance(
+            {.id = cursor_id,
+             .label = ictxt.get_action_name("SELECT"),
+             .args = {.pos = ec::pos_shape{.unit = "overmap", .component_id = map_id}}})},
+        .focus_component = map_id,
+    };
 }
 
 static auto display(const tripoint_abs_omt& orig, const draw_data_t& data = draw_data_t())
@@ -2251,6 +2505,24 @@ static auto display(const tripoint_abs_omt& orig, const draw_data_t& data = draw
              data, grids_data);
     });
 
+    const auto screen = ec::screen_scope(
+        ictxt,
+        {
+            .role = "screen",
+            .view =
+                [&](const ec::boundary_state&) {
+                    return screen_of({
+                        .center = curs,
+                        .orig = orig,
+                        .show_explored = show_explored,
+                        .fast_scroll = fast_scroll,
+                        .data = data,
+                        .grids = grids_data,
+                        .ictxt = ictxt,
+                    });
+                },
+        });
+
     do {
 
         ui_manager::redraw();
@@ -2258,21 +2530,13 @@ static auto display(const tripoint_abs_omt& orig, const draw_data_t& data = draw
         // If EDGE_SCROLL is disabled, it will have a value of -1.
         // blinking won't work if handle_input() is passed a negative integer.
         if (scroll_timeout < 0) { scroll_timeout = get_option<int>("BLINK_SPEED"); }
-        {
-            const auto interaction = game_client::interaction_scope(ictxt, [&]() {
-                return overmap_interaction(curs);
-            });
-            action = ictxt.handle_input(scroll_timeout);
-        }
-        if (const auto& semantic = ictxt.get_raw_input().interaction) {
-            // A client moves the cursor to a square or leaves, as the mouse and Esc do.
-            if (semantic->operation == game_client::interaction_operation::cancel) {
-                action = "QUIT";
-            } else if (semantic->operation == game_client::interaction_operation::set_target) {
-                curs = tripoint_abs_omt(
-                    semantic->position->x, semantic->position->y, semantic->position->z);
-                continue;
-            }
+        action = ictxt.handle_input(scroll_timeout);
+        // A client moves the cursor to a square; leaving is the registered QUIT.
+        if (const auto picked = ec::invoked(ictxt.get_raw_input());
+            picked && picked->affordance_id == cursor_id && picked->args.position) {
+            curs = tripoint_abs_omt(
+                picked->args.position->x, picked->args.position->y, picked->args.position->z);
+            continue;
         }
 
         if (const std::optional<tripoint_rel_ms> vec = ictxt.get_direction(action)) {

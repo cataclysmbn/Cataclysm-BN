@@ -10,6 +10,10 @@ namespace catacurses {
 class window;
 } // namespace catacurses
 
+namespace game_client {
+struct interaction_overmap;
+} // namespace game_client
+
 class input_context;
 class nc_color;
 struct regional_settings;
@@ -112,6 +116,11 @@ auto omt_tile_at(const tripoint_abs_omt& omp) -> omt_tile;
 /// terrain.
 auto omt_tile_shown(const tripoint_abs_omt& omp, bool seen, const regional_settings& region)
     -> omt_tile;
+
+/// The squares of the level `min` and `max` lie on, from `min` to `max`, as the player knows them.
+/// The screen's cursor stays where it is, no random number is drawn and no overmap is made.
+auto known_squares(const tripoint_abs_omt& min, const tripoint_abs_omt& max, bool tiles)
+    -> game_client::interaction_overmap;
 
 auto get_weather_at_point(const point_abs_omt& pos) -> weather_type_id;
 auto get_note_display_info(const std::string& note) -> std::tuple<char, nc_color, size_t>;

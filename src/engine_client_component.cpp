@@ -206,7 +206,6 @@ auto generic( const interaction_snapshot &native ) -> bool
     return native.structured && !native.actions_only &&
            ( native.kind == interaction_kind::choices || native.kind == interaction_kind::field ) &&
            native.panes.empty() && native.areas.empty() && !native.target &&
-           !native.overmap &&
     std::ranges::none_of( native.choices, []( const auto & choice ) {
         return choice.pane_id || choice.area_id;
     } );

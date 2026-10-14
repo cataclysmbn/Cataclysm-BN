@@ -227,13 +227,13 @@ TEST_CASE(
     CHECK(rng_get_engine() == rng);
 }
 
-TEST_CASE(
-    "prepared pages keep the overmap of the model", "[client_interaction_prepared]") {
+TEST_CASE("prepared pages keep the target of the model", "[client_interaction_prepared]") {
     auto context = input_context{"WINDOWS"};
     const auto input = client::input_context_scope{context, "WINDOWS"};
     client::begin_input_boundary();
     auto snapshot = model(3);
-    snapshot.overmap = client::interaction_overmap{.cols = 2, .rows = 1, .glyphs = {"a", "b"}};
+    snapshot.target = client::interaction_target{
+        .coordinate_space = "omt", .cursor = {.x = 4, .y = 5, .z = 1}, .range = 9};
     auto expected = std::string{};
     {
         const auto legacy = client::interaction_scope{context, [&]() { return snapshot; }};
@@ -242,7 +242,8 @@ TEST_CASE(
     const auto scope =
         client::prepared_interaction_scope{context, client::prepare_interaction(context, snapshot)};
     const auto page = client::current_interaction();
-    REQUIRE(page.overmap.has_value());
+    REQUIRE(page.target.has_value());
+    CHECK(page.target->coordinate_space == "omt");
     CHECK(client::serialize_interaction(page) == expected);
 }
 

@@ -329,8 +329,10 @@ auto target_json( const game_client::interaction_target &target, const bubble_fr
     if( frame.omt ) { value["unit"] = "omt"; }
     return value;
 }
-auto overmap_json( const game_client::interaction_overmap &om, const bubble_frame &frame ) -> json
+auto overmap_json( const game_client::interaction_overmap &om ) -> json
 {
+    // Overmap squares are absolute in every frame, even under a popup that has the bubble's.
+    const auto frame = bubble_frame{ .omt = true };
     auto cells = json::array();
     for( const auto y : std::views::iota( 0, om.rows ) ) {
         auto row = json::array();
@@ -398,7 +400,6 @@ auto interaction_json( const boundary_state &state ) -> json
         };
     }
     if( native.target ) { result["target"] = target_json( *native.target, frame ); }
-    if( native.overmap ) { result["overmap"] = overmap_json( *native.overmap, frame ); }
     if( native.refresh_ms > 0 ) { result["refresh_ms"] = native.refresh_ms; }
     if( !native.areas.empty() ) {
         result["areas"] = json::array();
@@ -631,8 +632,11 @@ auto body_json( const grid_body &body, const bubble_frame & /*frame*/ ) -> json
 auto body_json( const map_body &body, const bubble_frame &frame ) -> json
 {
     auto result = json{{"mode", body.mode}};
-    if( body.target ) { result["target"] = target_json( *body.target, frame ); }
-    if( body.overmap ) { result["overmap"] = overmap_json( *body.overmap, frame ); }
+    if( body.target ) {
+        result["target"] = target_json( *body.target, body.mode == "overmap" ? bubble_frame{ .omt = true } :
+                                        frame );
+    }
+    if( body.overmap ) { result["overmap"] = overmap_json( *body.overmap ); }
     return result;
 }
 auto body_json( const game_client::interaction_canvas &body,
@@ -805,6 +809,10 @@ auto serialize_interaction_boundary( const boundary_state &state ) -> std::strin
 auto serialize_choices( const choices_page &page ) -> std::string
 {
     return json{{"boundary_id", page.boundary_id}, {"total", page.total}, {"choices", to_array( page.choices )}}.dump();
+}
+auto serialize_overmap( const game_client::interaction_overmap &squares ) -> std::string
+{
+    return overmap_json( squares ).dump();
 }
 auto serialize_rows( const rows_page &page ) -> std::string
 {
