@@ -40,11 +40,20 @@ struct screen_guard {
     int old_termy = TERMY;
     int old_width = FULL_SCREEN_WIDTH;
     int old_height = FULL_SCREEN_HEIGHT;
+    std::string old_name = get_avatar().name;
+    bool old_male = get_avatar().male;
+    profession_id old_prof = get_avatar().prof;
 
     // The state is cleared before the guard turns off test mode: clearing eats, which asks.
     screen_guard() {
         clear_all_state();
-        newcharacter::add_default_mutation_type_traits(get_avatar());
+        // The header names the avatar, whose name, gender and profession the harness picks at
+        // random.
+        auto& you = get_avatar();
+        you.name = "Tom 'Tom' Tom";
+        you.male = true;
+        you.prof = profession_id("mall_cop");
+        newcharacter::add_default_mutation_type_traits(you);
         test_mode = false;
         TERMX = 100;
         TERMY = 60;
@@ -62,6 +71,9 @@ struct screen_guard {
         FULL_SCREEN_WIDTH = old_width;
         FULL_SCREEN_HEIGHT = old_height;
         test_mode = old_test_mode;
+        get_avatar().name = old_name;
+        get_avatar().male = old_male;
+        get_avatar().prof = old_prof;
     }
 };
 
