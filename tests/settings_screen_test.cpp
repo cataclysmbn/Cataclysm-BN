@@ -225,7 +225,8 @@ TEST_CASE(
     const auto guard = screen_guard{};
     const auto original = get_option<int>("SAFEMODEPROXIMITY");
     auto step = 0;
-    auto maximum = 0.0;
+    auto maximum = 0;
+    auto minimum = 0;
 
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
         const auto state = captured();
@@ -285,20 +286,36 @@ TEST_CASE(
                 CHECK(field.type == "integer");
                 CHECK(field.value == std::to_string(original));
                 REQUIRE(field.max);
-                maximum = *field.max;
+                maximum = static_cast<int>(*field.max);
+                REQUIRE(field.min);
+                minimum = static_cast<int>(*field.min);
                 CHECK(body<ec::panel_body>(part(screen, "options:detail")).title == field.label);
                 CHECK(body<ec::text_body>(part(screen, "options:tooltip")).markup.find('#')
                       != std::string::npos);
-                // Past the maximum is refused: the value stays.
-                return invoke(
-                    "options:set",
-                    {.row = "option:SAFEMODEPROXIMITY", .text = std::to_string(maximum + 1)});
+                // A value the editor does not offer is refused as invalid arguments, and the value
+                // stays.
+                const auto refused = [&](const std::string& row, const std::string& text) {
+                    return ec::resolve_invoke(
+                               state,
+                               {.affordance_id = "options:set", .args = {.row = row, .text = text}})
+                               .error()
+                        == ec::error::invalid_arguments;
+                };
+                CHECK(refused("option:SAFEMODEPROXIMITY", std::to_string(maximum + 1)));
+                CHECK(refused("option:SAFEMODEPROXIMITY", std::to_string(minimum - 1)));
+                CHECK(refused("option:SAFEMODEPROXIMITY", "seven"));
+                // Exponent notation is refused too: the native setValue would read "1e1" as 1,
+                // not 10.
+                CHECK(refused("option:SAFEMODEPROXIMITY", "1e1"));
+                CHECK(refused("option:SAFEMODEPROXIMITY", ""));
+                // Only the option under the cursor has an editor.
+                CHECK(refused("option:SAFEMODE", "false"));
+                CHECK_FALSE(refused("option:SAFEMODEPROXIMITY", std::to_string(maximum)));
+                return invoke("options:select", {.row = "option:SAFEMODEPROXIMITY"});
             }
             case 2:
                 CHECK(field_of(screen).value == std::to_string(original));
-                // Exponent notation is refused too: the native setValue would read "1e1" as 1,
-                // not 10.
-                return invoke("options:set", {.row = "option:SAFEMODEPROXIMITY", .text = "1e1"});
+                return invoke("options:select", {.row = "option:SAFEMODEPROXIMITY"});
             case 3:
                 CHECK(field_of(screen).value == std::to_string(original));
                 return invoke("options:set", {.row = "option:SAFEMODEPROXIMITY", .text = "7"});
@@ -343,6 +360,42 @@ TEST_CASE(
     CHECK(step == 9);
     // The changed value was discarded with the prompt's No.
     CHECK(get_option<int>("SAFEMODEPROXIMITY") == original);
+}
+
+TEST_CASE(
+    "the options editor refuses a value its bool or select field does not offer",
+    "[options_screen][engine_client_component]") {
+    const auto guard = screen_guard{};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto refused = [&](const std::string& row, const std::string& text) {
+            return ec::resolve_invoke(
+                       state, {.affordance_id = "options:set", .args = {.row = row, .text = text}})
+                       .error()
+                == ec::error::invalid_arguments;
+        };
+        switch (step++) {
+            case 0:
+                return invoke("options:select", {.row = "option:SAFEMODE"});
+            case 1:
+                CHECK(refused("option:SAFEMODE", "maybe"));
+                CHECK(refused("option:SAFEMODE", "True"));
+                CHECK_FALSE(refused("option:SAFEMODE", "true"));
+                CHECK_FALSE(refused("option:SAFEMODE", "false"));
+                return invoke("options:select", {.row = "option:DROP_EMPTY"});
+            case 2:
+                CHECK(refused("option:DROP_EMPTY", "nope"));
+                CHECK(refused("option:DROP_EMPTY", ""));
+                CHECK_FALSE(refused("option:DROP_EMPTY", "all"));
+                return act("QUIT");
+            default:
+                FAIL("the options screen outlived its answer");
+                return act("QUIT");
+        }
+    });
+    get_options().show(false);
+    CHECK(step == 3);
 }
 
 TEST_CASE(
