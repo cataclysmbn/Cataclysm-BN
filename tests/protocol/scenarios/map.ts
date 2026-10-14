@@ -37,9 +37,9 @@ export const map: Scenario = {
       // Options opens from the map, with no detour through the main menu.
       const opened = await engine.invoke("open_options")
       assertEquals(opened.stages.at(-1), "completed")
-      assertEquals(engine.mirror.interaction.interaction.context, "OPTIONS")
+      assertEquals(engine.top().context, "OPTIONS")
       rec.command("Options invoked at the map", opened)
-      assertEquals((await engine.submit({ kind: "cancel" })).stages.at(-1), "completed")
+      assertEquals((await engine.invoke("QUIT")).stages.at(-1), "completed")
       await engine.acknowledge(() => engine.top().role === "map")
 
       // A burst aimed at a popup: the first key closes it, the rest meet the map.

@@ -1125,9 +1125,18 @@ const press = (session: Session, id: string) => session.submit({ kind: "choose",
 const setTo = (session: Session, id: string, value: string) =>
   session.submit({ kind: "fill", field_id: id, value, submit: true })
 
+/** Invokes an affordance of the top screen, with the expectation its scope asks for, and follows it to its end. */
+const invokeOn = (session: Session, affordance: string, args?: Value) =>
+  invokeTop(
+    session,
+    affordance,
+    top(session).affordances.find((entry: Value) => entry.id === affordance)?.expect ?? "screen",
+    args,
+  )
+
 /** Leave a settings screen the way Escape does and answer its save prompt. */
 async function leaveAndSave(session: Session, done: () => boolean) {
-  assertEquals((await session.submit({ kind: "cancel" })).stages.at(-1), "completed")
+  assertEquals((await invokeOn(session, "QUIT")).stages.at(-1), "completed")
   assertEquals((await session.choose("Yes")).stages.at(-1), "completed")
   await session.acknowledge(done)
 }
@@ -1145,6 +1154,24 @@ async function startSession(client: Client): Promise<Session> {
   return session
 }
 
+/** The rows of the options list or the keybindings list on top. */
+const listRows = (session: Session, id: string): Value[] =>
+  findComponent(top(session).root, id)?.rows ?? []
+const optionRow = (session: Session, id: string) =>
+  listRows(session, "options:items").find((entry) => entry.id === id)
+/** The value editor of the option under the cursor. */
+const optionField = (session: Session) =>
+  findComponent(top(session).root, "options:editor")?.fields[0]
+/** Puts the cursor on the option and reads its editor. */
+async function editorOf(session: Session, id: string) {
+  assertEquals((await invokeOn(session, "options:select", { row: id })).stages.at(-1), "completed")
+  const field = optionField(session)
+  assertEquals(field.id, id)
+  return field
+}
+const setOption = (session: Session, id: string, text: string) =>
+  invokeOn(session, "options:set", { row: id, text })
+
 Deno.test({
   name: "stdio: options and keybindings are changed through the wire, persist and take effect",
   ignore: !Deno.env.get("BN_BINARY"),
@@ -1155,47 +1182,62 @@ Deno.test({
     try {
       let session = await startSession(client)
       await openSetting(session, "settings:options")
-      const options = session.mirror.interaction.interaction
-      assertEquals(options.context, "OPTIONS")
-      const pages = shown(session).filter((entry) => entry.pane_id === undefined)
-      assert(pages.length >= 5 && pages.every((entry) => entry.id.startsWith("page:")))
+      assertEquals(top(session).context, "OPTIONS")
+      const pages = findComponent(top(session).root, "options:pages")!.tabs as Value[]
+      assert(pages.length >= 5)
       // Find the page that holds an option, as a client would when a tab is clicked.
       const find = async (id: string) => {
         for (const page of pages) {
-          await press(session, page.id)
-          if (rowOf(session, id)) return rowOf(session, id)
+          assertEquals(
+            (await invokeOn(session, "options:page", { row: page.id })).stages.at(-1),
+            "completed",
+          )
+          if (optionRow(session, id)) return await editorOf(session, id)
         }
         throw new Error(`no option ${id}`)
       }
       const safe = await find("option:SAFEMODE")
-      assertEquals(safe.editor.type, "bool")
-      assertEquals(safe.editor.value, "true")
-      assertEquals((await setTo(session, "option:SAFEMODE", "false")).stages.at(-1), "completed")
-      assertEquals(rowOf(session, "option:SAFEMODE").editor.value, "false")
-      // A number outside the native range is refused and changes nothing.
-      const near = await find("option:SAFEMODEPROXIMITY")
-      assertEquals(near.editor.type, "integer")
-      const clock = { ...session.mirror.at }
+      assertEquals([safe.type, safe.value], ["bool", "true"])
       assertEquals(
-        (await setTo(session, near.id, String(near.editor.maximum + 1))).stages.at(-1),
-        "rejected",
+        (await setOption(session, "option:SAFEMODE", "false")).stages.at(-1),
+        "completed",
       )
-      assertEquals(session.mirror.at, clock)
-      assertEquals((await setTo(session, near.id, "7")).stages.at(-1), "completed")
-      assertEquals(rowOf(session, near.id).editor.value, "7")
-      // A select takes one of its own values; a foreign one is refused.
-      const select = shown(session).concat(...[]).find((entry) =>
-        entry.editor?.type === "select"
-      ) ??
-        await (async () => {
-          for (const page of pages) {
-            await press(session, page.id)
-            const found = shown(session).find((entry) => entry.editor?.type === "select")
-            if (found) return found
-          }
-        })()
+      assertEquals(optionField(session).value, "false")
+      // A number outside the native range changes nothing; so does a shape the affordance does not take.
+      const near = await find("option:SAFEMODEPROXIMITY")
+      assertEquals(near.type, "integer")
+      assertEquals(
+        (await setOption(session, near.id, String(near.max + 1))).stages.at(-1),
+        "completed",
+      )
+      assertEquals(optionField(session).value, near.value)
+      assertEquals(
+        (await invokeOn(session, "options:set", { row: near.id })).error,
+        "invalid_arguments",
+      )
+      assertEquals((await setOption(session, near.id, "7")).stages.at(-1), "completed")
+      assertEquals(optionField(session).value, "7")
+      assertEquals(optionRow(session, near.id).columns[0].value, "7")
+      // A select takes one of its own values; a foreign one changes nothing.
+      let select: Value
+      for (const page of pages) {
+        await invokeOn(session, "options:page", { row: page.id })
+        const options = listRows(session, "options:items").filter((entry) =>
+          entry.enabled && entry.toggled === undefined
+        )
+        for (const row of options) {
+          await invokeOn(session, "options:select", { row: row.id })
+          if (optionField(session)?.type === "select") select = optionField(session)
+          if (select) break
+        }
+        if (select) break
+      }
       assert(select, "a select option exists")
-      assertEquals((await setTo(session, select.id, "no such value")).stages.at(-1), "rejected")
+      assertEquals(
+        (await setOption(session, select.id, "no such value")).stages.at(-1),
+        "completed",
+      )
+      assertEquals(optionField(session).value, select.value)
       await leaveAndSave(session, inMainMenu(session))
       await client.close()
 
@@ -1203,9 +1245,9 @@ Deno.test({
       client = new Client(binary, profile)
       session = await startSession(client)
       await openSetting(session, "settings:options")
-      assertEquals((await find("option:SAFEMODE")).editor.value, "false")
-      assertEquals((await find("option:SAFEMODEPROXIMITY")).editor.value, "7")
-      assertEquals((await session.submit({ kind: "cancel" })).stages.at(-1), "completed")
+      assertEquals((await find("option:SAFEMODE")).value, "false")
+      assertEquals((await find("option:SAFEMODEPROXIMITY")).value, "7")
+      assertEquals((await invokeOn(session, "QUIT")).stages.at(-1), "completed")
       await session.acknowledge(() => atMainMenu(session.mirror))
 
       // In the game, the same menu applies a saved change at once: safe mode follows the option.
@@ -1227,19 +1269,27 @@ Deno.test({
         (await session.submit({ kind: "action", action_id: "HELP_KEYBINDINGS" })).stages.at(-1),
         "completed",
       )
-      await setTo(session, session.mirror.interaction.interaction.field.id, "Options")
-      assert(rowOf(session, "action:open_options"), "Options is listed")
-      await press(session, "mode:add_local")
-      await press(session, "action:open_options")
+      assertEquals(
+        (await invokeOn(session, "keybindings:filter", { text: "Options" })).stages.at(-1),
+        "completed",
+      )
+      assert(
+        listRows(session, "keybindings:actions").some((row) => row.id === "action:open_options"),
+      )
+      assertEquals((await invokeOn(session, "ADD_LOCAL")).stages.at(-1), "completed")
+      await invokeOn(session, "keybindings:pick", { row: "action:open_options" })
       assertEquals((await setTo(session, "field:key", "=")).stages.at(-1), "completed")
       await answerPrompts(session)
       await leaveAndSave(session, () => session.mirror.interaction.interaction === null)
       const opened = await session.submit({ kind: "action", action_id: "open_options" })
       assertEquals(opened.stages.at(-1), "completed")
-      assertEquals(session.mirror.interaction.interaction.context, "OPTIONS")
+      assertEquals(top(session).context, "OPTIONS")
       await find("option:AUTOSAFEMODE")
-      assertEquals((await setTo(session, "option:AUTOSAFEMODE", "true")).stages.at(-1), "completed")
-      assertEquals((await session.submit({ kind: "cancel" })).stages.at(-1), "completed")
+      assertEquals(
+        (await setOption(session, "option:AUTOSAFEMODE", "true")).stages.at(-1),
+        "completed",
+      )
+      assertEquals((await invokeOn(session, "QUIT")).stages.at(-1), "completed")
       assertEquals((await session.choose("Yes")).stages.at(-1), "completed")
       await session.acknowledge(() => session.mirror.interaction.interaction === null)
       assertEquals(session.mirror.avatar.sidebar.safe_mode.enabled, true)
@@ -1253,12 +1303,14 @@ Deno.test({
 
 /** The native yes/no prompts that may sit between two keybinding steps. */
 async function answerPrompts(session: Session) {
-  while (session.mirror.interaction.interaction?.context !== "HELP_KEYBINDINGS") {
+  while (top(session).context !== "HELP_KEYBINDINGS") {
     assertEquals((await session.choose("Yes")).stages.at(-1), "completed")
   }
 }
 
-const keysOf = (session: Session, id: string) => rowOf(session, id).columns[0].value
+const keyRow = (session: Session, id: string) =>
+  listRows(session, "keybindings:actions").find((entry) => entry.id === id)
+const keysOf = (session: Session, id: string) => keyRow(session, id).columns[0].value
 
 Deno.test({
   name: "stdio: a keybinding is removed and added through the wire, persists and moves the avatar",
@@ -1270,27 +1322,29 @@ Deno.test({
     try {
       let session = await startSession(client)
       await openSetting(session, "settings:keybindings")
-      const menu = session.mirror.interaction.interaction
-      assertEquals([menu.title, menu.field.type], ["Keybindings", "text"])
-      assertEquals(
-        shown(session).filter((entry) => entry.pane_id === "modes").map((entry) => entry.id),
-        ["mode:add_local", "mode:add_global", "mode:remove"],
-      )
-      // The filter is the native one: only the matching actions remain.
-      await setTo(session, menu.field.id, "Move East")
-      assertEquals(
-        shown(session).filter((entry) => entry.pane_id === "actions").map((entry) => entry.id),
-        ["action:RIGHT"],
-      )
+      const menu = top(session)
+      assertEquals([menu.title, menu.context], ["Keybindings", "HELP_KEYBINDINGS"])
+      const offered = menu.affordances.map((entry: Value) => entry.id)
+      for (const id of ["ADD_LOCAL", "ADD_GLOBAL", "REMOVE", "keybindings:filter"]) {
+        assert(offered.includes(id), id)
+      }
+      // The filter is the screen's: only the matching actions remain.
+      await invokeOn(session, "keybindings:filter", { text: "Move East" })
+      assertEquals(listRows(session, "keybindings:actions").map((entry) => entry.id), [
+        "action:RIGHT",
+      ])
       assertEquals(keysOf(session, "action:RIGHT"), "l, RIGHT, 6 or NUMPAD_6")
-      // Remove every key, then add one.
-      await press(session, "mode:remove")
-      assertEquals(rowOf(session, "mode:remove").selected, true)
-      await press(session, "action:RIGHT")
+      // Remove every key, then add one; the mode is a fact of the screen while it lasts.
+      await invokeOn(session, "REMOVE")
+      assertEquals(
+        findComponent(top(session).root, "keybindings:window").stats.map((stat: Value) => stat.key),
+        ["mode"],
+      )
+      await invokeOn(session, "keybindings:pick", { row: "action:RIGHT" })
       await answerPrompts(session)
-      assertEquals(rowOf(session, "action:RIGHT").columns[1].value, "Unbound")
-      await press(session, "mode:add_global")
-      await press(session, "action:RIGHT")
+      assertEquals(keyRow(session, "action:RIGHT").columns[1].value, "Unbound")
+      await invokeOn(session, "ADD_GLOBAL")
+      await invokeOn(session, "keybindings:pick", { row: "action:RIGHT" })
       const prompt = session.mirror.interaction.interaction
       assertEquals(prompt.field.type, "key")
       // A key the game does not know is refused; a real one is taken.
@@ -1305,9 +1359,9 @@ Deno.test({
       client = new Client(binary, profile)
       session = await startSession(client)
       await openSetting(session, "settings:keybindings")
-      await setTo(session, session.mirror.interaction.interaction.field.id, "Move East")
+      await invokeOn(session, "keybindings:filter", { text: "Move East" })
       assertEquals(keysOf(session, "action:RIGHT"), "z")
-      assertEquals((await session.submit({ kind: "cancel" })).stages.at(-1), "completed")
+      assertEquals((await invokeOn(session, "QUIT")).stages.at(-1), "completed")
       await session.acknowledge(() => atMainMenu(session.mirror))
       await session.pickId("new_game")
       await session.pickId("new_game:tutorial")
