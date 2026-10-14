@@ -2,6 +2,7 @@
 
 #    include "avatar.h"
 #    include "calendar.h"
+#    include "cata_utility.h"
 #    include "catch/catch.hpp"
 #    include "client_input.h"
 #    include "engine_client_session.h"
@@ -62,6 +63,7 @@ auto make_open_ground(const int hour) -> tripoint_bub_ms {
     clear_all_state();
     get_avatar().clear_map_memory();
     clear_map();
+    make_open_air_uniform();
     calendar::turn = calendar::turn_zero + time_duration::from_hours(hour);
     get_weather().weather_id = weather_type_id("clear");
     g->reset_light_level();
@@ -71,6 +73,17 @@ auto make_open_ground(const int hour) -> tripoint_bub_ms {
     get_map().invalidate_map_cache(start.z());
     map_perception::acquire();
     return start;
+}
+
+/// Open air above the avatar holds what a test put in it until it is removed: `clear_map` clears
+/// only the levels from -2 to 0.
+auto clear_air_above(const tripoint_bub_ms& furniture_at) -> void {
+    get_map().furn_set(furniture_at, furn_id("f_null"));
+    clear_vehicles();
+    for (const auto z : std::views::iota(1, OVERMAP_HEIGHT + 1)) {
+        clear_fields(z);
+        clear_items(z);
+    }
 }
 
 /// A session that publishes patches, every one of which it checks against a full capture.
@@ -403,6 +416,7 @@ TEST_CASE(
     const auto field_at = start + tripoint(SEEX, 0, 4);
     const auto furniture_at = start + tripoint(0, SEEY, 6);
     const auto vehicle_at = start + tripoint(-SEEX, 0, 3);
+    const auto cleanup = on_out_of_scope([&] { clear_air_above(furniture_at); });
     const auto published = [&](const tripoint_bub_ms& p) {
         map_perception::acquire();
         const auto abs = map_local_to_abs(here, p);

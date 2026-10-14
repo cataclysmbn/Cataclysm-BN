@@ -22,6 +22,7 @@
 #include <cassert>
 #include <iterator>
 #include <memory>
+#include <ranges>
 #include <string>
 #include <utility>
 #include <vector>
@@ -127,6 +128,20 @@ void clear_map() {
     // test's Catch2 WHEN section do not bleed into the next run.  The tracker
     // is a global singleton; grid_at() rebuilds on demand, so clearing here is safe.
     get_distribution_grid_tracker().clear();
+}
+
+auto make_open_air_uniform() -> void {
+    auto& here = get_map();
+    for (const auto z : std::views::iota(1, OVERMAP_HEIGHT + 1)) {
+        for (const auto y : std::views::iota(0, here.getmapsize())) {
+            for (const auto x : std::views::iota(0, here.getmapsize())) {
+                auto* const sm = here.get_submap_at(tripoint_bub_ms(x * SEEX, y * SEEY, z));
+                if (sm == nullptr) { continue; }
+                sm->set_all_ter(t_open_air);
+                sm->is_uniform = true;
+            }
+        }
+    }
 }
 
 void put_player_underground() {

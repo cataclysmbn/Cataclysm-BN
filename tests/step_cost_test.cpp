@@ -43,6 +43,7 @@ auto make_ground(const ground kind) -> tripoint_bub_ms {
     clear_all_state();
     get_avatar().clear_map_memory();
     clear_map();
+    make_open_air_uniform();
     auto& here = get_map();
     const auto start =
         tripoint_bub_ms(g_half_mapsize_x, g_half_mapsize_y, kind == ground::underground ? -1 : 0);
