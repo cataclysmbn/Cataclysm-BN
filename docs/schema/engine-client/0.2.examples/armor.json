@@ -1,0 +1,3012 @@
+{
+  "valid": [
+    {
+      "name": "armor layers screen",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:30",
+        "role": "dialog",
+        "title": "Sort Armor",
+        "root": {
+          "id": "armor:tabs",
+          "kind": "tabs",
+          "affordances": [
+            "armor:part"
+          ],
+          "tabs": [
+            {
+              "id": "part:all",
+              "label": "All",
+              "selected": true,
+              "enabled": true
+            },
+            {
+              "id": "part:torso",
+              "label": "Torso",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "part:head",
+              "label": "Head",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "part:eyes",
+              "label": "Eyes",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "part:mouth",
+              "label": "Mouth",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "part:arm_l",
+              "label": "L. Arm",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "part:arm_r",
+              "label": "R. Arm",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "part:hand_l",
+              "label": "L. Hand",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "part:hand_r",
+              "label": "R. Hand",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "part:leg_l",
+              "label": "L. Leg",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "part:leg_r",
+              "label": "R. Leg",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "part:foot_l",
+              "label": "L. Foot",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "part:foot_r",
+              "label": "R. Foot",
+              "selected": false,
+              "enabled": true
+            }
+          ],
+          "select": "armor:part",
+          "child": {
+            "id": "armor:panes",
+            "kind": "split",
+            "relation": "peers",
+            "active": "armor:worn",
+            "children": [
+              {
+                "id": "armor:worn",
+                "kind": "panel",
+                "title": "(Innermost)",
+                "subtitle": "(Outermost)",
+                "child": {
+                  "id": "armor:worn:parts",
+                  "kind": "split",
+                  "relation": "peers",
+                  "children": [
+                    {
+                      "id": "armor:worn:rows",
+                      "kind": "list",
+                      "affordances": [
+                        "armor:pick"
+                      ],
+                      "columns": [
+                        {
+                          "key": "storage",
+                          "label": "Storage (L)"
+                        },
+                        {
+                          "key": "hidden",
+                          "label": "Hidden"
+                        }
+                      ],
+                      "rows": [
+                        {
+                          "id": "worn:tshirt:0",
+                          "label": "|| t-shirt",
+                          "description": "",
+                          "denial": "",
+                          "enabled": true,
+                          "selectable": true,
+                          "selected": false,
+                          "columns": [
+                            {
+                              "key": "storage",
+                              "label": "Storage (L)",
+                              "value": "0.00"
+                            },
+                            {
+                              "key": "hidden",
+                              "label": "Hidden",
+                              "value": "No"
+                            }
+                          ],
+                          "color": "c_light_gray",
+                          "look": {
+                            "kind": "item",
+                            "id": "tshirt",
+                            "glyph": "[",
+                            "color": "c_white",
+                            "name": "t-shirt",
+                            "looks_like": [
+                              "camisole",
+                              "tank_top",
+                              "tshirt",
+                              "camisole",
+                              "tank_top",
+                              "tshirt",
+                              "camisole",
+                              "tank_top",
+                              "tshirt",
+                              "camisole"
+                            ]
+                          }
+                        },
+                        {
+                          "id": "worn:jeans:0",
+                          "label": "|| jeans",
+                          "description": "",
+                          "denial": "",
+                          "enabled": true,
+                          "selectable": true,
+                          "selected": false,
+                          "columns": [
+                            {
+                              "key": "storage",
+                              "label": "Storage (L)",
+                              "value": "0.50"
+                            },
+                            {
+                              "key": "hidden",
+                              "label": "Hidden",
+                              "value": "No"
+                            }
+                          ],
+                          "color": "c_light_gray",
+                          "look": {
+                            "kind": "item",
+                            "id": "jeans",
+                            "glyph": "[",
+                            "color": "c_blue",
+                            "name": "jeans",
+                            "looks_like": [
+                              "pants",
+                              "jeans",
+                              "pants",
+                              "jeans",
+                              "pants",
+                              "jeans",
+                              "pants",
+                              "jeans",
+                              "pants",
+                              "jeans"
+                            ]
+                          }
+                        },
+                        {
+                          "id": "worn:hoodie:0",
+                          "label": "|| hoodie",
+                          "description": "",
+                          "denial": "",
+                          "enabled": true,
+                          "selectable": true,
+                          "selected": false,
+                          "columns": [
+                            {
+                              "key": "storage",
+                              "label": "Storage (L)",
+                              "value": "2.25"
+                            },
+                            {
+                              "key": "hidden",
+                              "label": "Hidden",
+                              "value": "No"
+                            }
+                          ],
+                          "color": "c_light_gray",
+                          "look": {
+                            "kind": "item",
+                            "id": "hoodie",
+                            "glyph": "[",
+                            "color": "c_dark_gray",
+                            "name": "hoodie",
+                            "looks_like": [
+                              "sweater",
+                              "longshirt",
+                              "dress_shirt",
+                              "longshirt",
+                              "dress_shirt",
+                              "longshirt",
+                              "dress_shirt",
+                              "longshirt",
+                              "dress_shirt",
+                              "longshirt"
+                            ]
+                          }
+                        }
+                      ],
+                      "total": 3,
+                      "selection": "single",
+                      "activate": "armor:pick"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "armor:detail",
+                "kind": "panel",
+                "title": "t-shirt",
+                "child": {
+                  "id": "armor:detail:parts",
+                  "kind": "split",
+                  "relation": "peers",
+                  "children": [
+                    {
+                      "id": "armor:properties",
+                      "kind": "panel",
+                      "title": "Properties",
+                      "stats": [
+                        {
+                          "key": "coverage",
+                          "label": "Coverage",
+                          "value": "50"
+                        },
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "0"
+                        },
+                        {
+                          "key": "warmth",
+                          "label": "Warmth",
+                          "value": "5"
+                        },
+                        {
+                          "key": "storage",
+                          "label": "Storage (L)",
+                          "value": "0.00"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "armor:protection",
+                      "kind": "panel",
+                      "title": "Protection",
+                      "stats": [
+                        {
+                          "key": "bash",
+                          "label": "Bash",
+                          "value": "1"
+                        },
+                        {
+                          "key": "cut",
+                          "label": "Cut",
+                          "value": "1"
+                        },
+                        {
+                          "key": "ballistic",
+                          "label": "Ballistic",
+                          "value": "1"
+                        },
+                        {
+                          "key": "acid",
+                          "label": "Acid",
+                          "value": "0"
+                        },
+                        {
+                          "key": "fire",
+                          "label": "Fire",
+                          "value": "0"
+                        },
+                        {
+                          "key": "environmental",
+                          "label": "Environmental",
+                          "value": "0"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "armor:notes",
+                      "kind": "text",
+                      "markup": "<color_c_light_blue>It fits you well.</color>"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "armor:encumbrance",
+                "kind": "panel",
+                "title": "Encumbrance and Warmth",
+                "child": {
+                  "id": "armor:encumbrance:rows",
+                  "kind": "list",
+                  "columns": [
+                    {
+                      "key": "encumbrance",
+                      "label": "Encumbrance"
+                    },
+                    {
+                      "key": "layering",
+                      "label": "Layering"
+                    },
+                    {
+                      "key": "warmth",
+                      "label": "Warmth"
+                    }
+                  ],
+                  "rows": [
+                    {
+                      "id": "encumbrance:part:head",
+                      "label": "Head",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "layering",
+                          "label": "Layering",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "warmth",
+                          "label": "Warmth",
+                          "value": "-22",
+                          "color": "c_green"
+                        }
+                      ],
+                      "color": "c_light_gray"
+                    },
+                    {
+                      "id": "encumbrance:part:eyes",
+                      "label": "Eyes",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "layering",
+                          "label": "Layering",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "warmth",
+                          "label": "Warmth",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        }
+                      ],
+                      "color": "c_light_gray"
+                    },
+                    {
+                      "id": "encumbrance:part:mouth",
+                      "label": "Mouth",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "layering",
+                          "label": "Layering",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "warmth",
+                          "label": "Warmth",
+                          "value": "-56",
+                          "color": "c_light_blue"
+                        }
+                      ],
+                      "color": "c_light_gray"
+                    },
+                    {
+                      "id": "encumbrance:part:torso",
+                      "label": "Torso",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "6",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "layering",
+                          "label": "Layering",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "warmth",
+                          "label": "Warmth",
+                          "value": "-16",
+                          "color": "c_green"
+                        }
+                      ],
+                      "color": "c_green"
+                    },
+                    {
+                      "id": "encumbrance:part:arm_l",
+                      "label": "Arms",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "6",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "layering",
+                          "label": "Layering",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "warmth",
+                          "label": "Warmth",
+                          "value": "-16",
+                          "color": "c_green"
+                        }
+                      ],
+                      "color": "c_green"
+                    },
+                    {
+                      "id": "encumbrance:part:hand_l",
+                      "label": "Hands",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "layering",
+                          "label": "Layering",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "warmth",
+                          "label": "Warmth",
+                          "value": "-22",
+                          "color": "c_green"
+                        }
+                      ],
+                      "color": "c_light_gray"
+                    },
+                    {
+                      "id": "encumbrance:part:leg_l",
+                      "label": "Legs",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "8",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "layering",
+                          "label": "Layering",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "warmth",
+                          "label": "Warmth",
+                          "value": "-44",
+                          "color": "c_light_blue"
+                        }
+                      ],
+                      "color": "c_light_gray"
+                    },
+                    {
+                      "id": "encumbrance:part:foot_l",
+                      "label": "Feet",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "layering",
+                          "label": "Layering",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "warmth",
+                          "label": "Warmth",
+                          "value": "-56",
+                          "color": "c_light_blue"
+                        }
+                      ],
+                      "color": "c_light_gray"
+                    }
+                  ],
+                  "total": 8,
+                  "selection": "none"
+                }
+              },
+              {
+                "id": "armor:layers",
+                "kind": "panel",
+                "title": "Encumbrance",
+                "child": {
+                  "id": "armor:layers:rows",
+                  "kind": "list",
+                  "columns": [
+                    {
+                      "key": "encumbrance",
+                      "label": "Encumbrance"
+                    }
+                  ],
+                  "rows": [
+                    {
+                      "id": "cover:part:torso",
+                      "label": "Torso",
+                      "description": "",
+                      "denial": "",
+                      "enabled": false,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [],
+                      "color": "c_white",
+                      "header": true
+                    },
+                    {
+                      "id": "layer:part:torso:worn:tshirt:0",
+                      "label": "|| t-shirt",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "0"
+                        }
+                      ],
+                      "color": "c_light_gray"
+                    },
+                    {
+                      "id": "layer:part:torso:worn:hoodie:0",
+                      "label": "|| hoodie",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "6"
+                        }
+                      ],
+                      "color": "c_light_gray"
+                    },
+                    {
+                      "id": "cover:part:head",
+                      "label": "Head",
+                      "description": "",
+                      "denial": "",
+                      "enabled": false,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [],
+                      "color": "c_white",
+                      "header": true
+                    },
+                    {
+                      "id": "cover:part:eyes",
+                      "label": "Eyes",
+                      "description": "",
+                      "denial": "",
+                      "enabled": false,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [],
+                      "color": "c_white",
+                      "header": true
+                    },
+                    {
+                      "id": "cover:part:mouth",
+                      "label": "Mouth",
+                      "description": "",
+                      "denial": "",
+                      "enabled": false,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [],
+                      "color": "c_white",
+                      "header": true
+                    },
+                    {
+                      "id": "cover:part:arm_l",
+                      "label": "Arms",
+                      "description": "",
+                      "denial": "",
+                      "enabled": false,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [],
+                      "color": "c_white",
+                      "header": true
+                    },
+                    {
+                      "id": "layer:part:arm_l:worn:tshirt:0",
+                      "label": "|| t-shirt",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "0"
+                        }
+                      ],
+                      "color": "c_light_gray"
+                    },
+                    {
+                      "id": "layer:part:arm_l:worn:hoodie:0",
+                      "label": "|| hoodie",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "6"
+                        }
+                      ],
+                      "color": "c_light_gray"
+                    },
+                    {
+                      "id": "cover:part:hand_l",
+                      "label": "Hands",
+                      "description": "",
+                      "denial": "",
+                      "enabled": false,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [],
+                      "color": "c_white",
+                      "header": true
+                    },
+                    {
+                      "id": "cover:part:leg_l",
+                      "label": "Legs",
+                      "description": "",
+                      "denial": "",
+                      "enabled": false,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [],
+                      "color": "c_white",
+                      "header": true
+                    },
+                    {
+                      "id": "layer:part:leg_l:worn:jeans:0",
+                      "label": "|| jeans",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "8"
+                        }
+                      ],
+                      "color": "c_light_gray"
+                    },
+                    {
+                      "id": "cover:part:foot_l",
+                      "label": "Feet",
+                      "description": "",
+                      "denial": "",
+                      "enabled": false,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [],
+                      "color": "c_white",
+                      "header": true
+                    }
+                  ],
+                  "total": 13,
+                  "selection": "none"
+                }
+              }
+            ]
+          }
+        },
+        "affordances": [
+          {
+            "id": "armor:part",
+            "label": "Category",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "armor:tabs"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "armor:pick",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "role": "select",
+            "args": {
+              "row": {
+                "component_id": "armor:worn:rows"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Pan left",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Pan right",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "PREV_TAB",
+            "label": "Go to prev tab",
+            "keys": [
+              "BACKTAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "NEXT_TAB",
+            "label": "Go to next tab",
+            "keys": [
+              "TAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "MOVE_ARMOR",
+            "label": "Select armor for moving",
+            "keys": [
+              "s",
+              "RETURN"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CHANGE_SIDE",
+            "label": "Change side armor is worn on",
+            "keys": [
+              "c"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TOGGLE_CLOTH",
+            "label": "Toggle armor visibility on character sprite",
+            "keys": [
+              "H"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ASSIGN_INVLETS",
+            "label": "Assign invlets to armor",
+            "keys": [
+              "r"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SORT_ARMOR",
+            "label": "Sort armor into natural layer order",
+            "keys": [
+              "S"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "EQUIP_ARMOR",
+            "label": "Equip armor from inventory",
+            "keys": [
+              "e"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "EQUIP_ARMOR_HERE",
+            "label": "Equip armor from inventory at this position",
+            "keys": [
+              "E"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "REMOVE_ARMOR",
+            "label": "Unequip selected armor",
+            "keys": [
+              "u"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "USAGE_HELP",
+            "label": "Display Usage Help",
+            "keys": [
+              "F1"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "armor:worn:rows",
+          "row_id": "worn:tshirt:0"
+        },
+        "context": "SORT_ARMOR"
+      }
+    },
+    {
+      "name": "worn item picked, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:1",
+          "revision": "39"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "armor:pick",
+          "args": {
+            "row": "worn:jeans:0"
+          }
+        }
+      }
+    },
+    {
+      "name": "worn item picked, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "worn item picked, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "worn item picked, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "worn item picked, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "46",
+          "revision": "40"
+        }
+      }
+    },
+    {
+      "name": "pick of a worn item the list does not hold, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:2",
+          "revision": "40"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "armor:pick",
+          "args": {
+            "row": "worn:nothing:0"
+          }
+        }
+      }
+    },
+    {
+      "name": "pick of a worn item the list does not hold, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "pick of a worn item the list does not hold, rejected",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "rejected",
+        "error": "invalid_arguments",
+        "error_text": "That needs other details."
+      }
+    },
+    {
+      "name": "body part picked, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:2",
+          "revision": "40"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "armor:part",
+          "args": {
+            "row": "part:torso"
+          }
+        }
+      }
+    },
+    {
+      "name": "body part picked, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "body part picked, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "body part picked, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "body part picked, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "47",
+          "revision": "41"
+        }
+      }
+    },
+    {
+      "name": "armor layers screen of the torso",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:30",
+        "role": "dialog",
+        "title": "Sort Armor",
+        "root": {
+          "id": "armor:tabs",
+          "kind": "tabs",
+          "affordances": [
+            "armor:part"
+          ],
+          "tabs": [
+            {
+              "id": "part:all",
+              "label": "All",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "part:torso",
+              "label": "Torso",
+              "selected": true,
+              "enabled": true
+            },
+            {
+              "id": "part:head",
+              "label": "Head",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "part:eyes",
+              "label": "Eyes",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "part:mouth",
+              "label": "Mouth",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "part:arm_l",
+              "label": "L. Arm",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "part:arm_r",
+              "label": "R. Arm",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "part:hand_l",
+              "label": "L. Hand",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "part:hand_r",
+              "label": "R. Hand",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "part:leg_l",
+              "label": "L. Leg",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "part:leg_r",
+              "label": "R. Leg",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "part:foot_l",
+              "label": "L. Foot",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "part:foot_r",
+              "label": "R. Foot",
+              "selected": false,
+              "enabled": true
+            }
+          ],
+          "select": "armor:part",
+          "child": {
+            "id": "armor:panes",
+            "kind": "split",
+            "relation": "peers",
+            "active": "armor:worn",
+            "children": [
+              {
+                "id": "armor:worn",
+                "kind": "panel",
+                "title": "(Innermost)",
+                "subtitle": "(Outermost)",
+                "stats": [
+                  {
+                    "key": "bash",
+                    "label": "Bash",
+                    "value": "4"
+                  },
+                  {
+                    "key": "cut",
+                    "label": "Cut",
+                    "value": "4"
+                  },
+                  {
+                    "key": "stab",
+                    "label": "Stab",
+                    "value": "3"
+                  },
+                  {
+                    "key": "ballistic",
+                    "label": "Ballistic",
+                    "value": "4"
+                  }
+                ],
+                "child": {
+                  "id": "armor:worn:parts",
+                  "kind": "split",
+                  "relation": "peers",
+                  "children": [
+                    {
+                      "id": "armor:worn:rows",
+                      "kind": "list",
+                      "affordances": [
+                        "armor:pick"
+                      ],
+                      "columns": [
+                        {
+                          "key": "storage",
+                          "label": "Storage (L)"
+                        },
+                        {
+                          "key": "hidden",
+                          "label": "Hidden"
+                        }
+                      ],
+                      "rows": [
+                        {
+                          "id": "worn:tshirt:0",
+                          "label": "|| t-shirt",
+                          "description": "",
+                          "denial": "",
+                          "enabled": true,
+                          "selectable": true,
+                          "selected": false,
+                          "columns": [
+                            {
+                              "key": "storage",
+                              "label": "Storage (L)",
+                              "value": "0.00"
+                            },
+                            {
+                              "key": "hidden",
+                              "label": "Hidden",
+                              "value": "No"
+                            }
+                          ],
+                          "color": "c_light_gray",
+                          "look": {
+                            "kind": "item",
+                            "id": "tshirt",
+                            "glyph": "[",
+                            "color": "c_white",
+                            "name": "t-shirt",
+                            "looks_like": [
+                              "camisole",
+                              "tank_top",
+                              "tshirt",
+                              "camisole",
+                              "tank_top",
+                              "tshirt",
+                              "camisole",
+                              "tank_top",
+                              "tshirt",
+                              "camisole"
+                            ]
+                          }
+                        },
+                        {
+                          "id": "worn:hoodie:0",
+                          "label": "|| hoodie",
+                          "description": "",
+                          "denial": "",
+                          "enabled": true,
+                          "selectable": true,
+                          "selected": false,
+                          "columns": [
+                            {
+                              "key": "storage",
+                              "label": "Storage (L)",
+                              "value": "2.25"
+                            },
+                            {
+                              "key": "hidden",
+                              "label": "Hidden",
+                              "value": "No"
+                            }
+                          ],
+                          "color": "c_light_gray",
+                          "look": {
+                            "kind": "item",
+                            "id": "hoodie",
+                            "glyph": "[",
+                            "color": "c_dark_gray",
+                            "name": "hoodie",
+                            "looks_like": [
+                              "sweater",
+                              "longshirt",
+                              "dress_shirt",
+                              "longshirt",
+                              "dress_shirt",
+                              "longshirt",
+                              "dress_shirt",
+                              "longshirt",
+                              "dress_shirt",
+                              "longshirt"
+                            ]
+                          }
+                        }
+                      ],
+                      "total": 2,
+                      "selection": "single",
+                      "activate": "armor:pick"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "armor:detail",
+                "kind": "panel",
+                "title": "t-shirt",
+                "child": {
+                  "id": "armor:detail:parts",
+                  "kind": "split",
+                  "relation": "peers",
+                  "children": [
+                    {
+                      "id": "armor:properties",
+                      "kind": "panel",
+                      "title": "Properties",
+                      "stats": [
+                        {
+                          "key": "coverage",
+                          "label": "Coverage",
+                          "value": "90"
+                        },
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "0"
+                        },
+                        {
+                          "key": "warmth",
+                          "label": "Warmth",
+                          "value": "5"
+                        },
+                        {
+                          "key": "storage",
+                          "label": "Storage (L)",
+                          "value": "0.00"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "armor:protection",
+                      "kind": "panel",
+                      "title": "Protection",
+                      "stats": [
+                        {
+                          "key": "bash",
+                          "label": "Bash",
+                          "value": "1"
+                        },
+                        {
+                          "key": "cut",
+                          "label": "Cut",
+                          "value": "1"
+                        },
+                        {
+                          "key": "ballistic",
+                          "label": "Ballistic",
+                          "value": "1"
+                        },
+                        {
+                          "key": "acid",
+                          "label": "Acid",
+                          "value": "0"
+                        },
+                        {
+                          "key": "fire",
+                          "label": "Fire",
+                          "value": "0"
+                        },
+                        {
+                          "key": "environmental",
+                          "label": "Environmental",
+                          "value": "0"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "armor:notes",
+                      "kind": "text",
+                      "markup": "<color_c_light_blue>It fits you well.</color>"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "armor:encumbrance",
+                "kind": "panel",
+                "title": "Encumbrance and Warmth",
+                "child": {
+                  "id": "armor:encumbrance:rows",
+                  "kind": "list",
+                  "columns": [
+                    {
+                      "key": "encumbrance",
+                      "label": "Encumbrance"
+                    },
+                    {
+                      "key": "layering",
+                      "label": "Layering"
+                    },
+                    {
+                      "key": "warmth",
+                      "label": "Warmth"
+                    }
+                  ],
+                  "rows": [
+                    {
+                      "id": "encumbrance:part:head",
+                      "label": "Head",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "layering",
+                          "label": "Layering",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "warmth",
+                          "label": "Warmth",
+                          "value": "-22",
+                          "color": "c_green"
+                        }
+                      ],
+                      "color": "c_light_gray"
+                    },
+                    {
+                      "id": "encumbrance:part:eyes",
+                      "label": "Eyes",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "layering",
+                          "label": "Layering",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "warmth",
+                          "label": "Warmth",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        }
+                      ],
+                      "color": "c_light_gray"
+                    },
+                    {
+                      "id": "encumbrance:part:mouth",
+                      "label": "Mouth",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "layering",
+                          "label": "Layering",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "warmth",
+                          "label": "Warmth",
+                          "value": "-56",
+                          "color": "c_light_blue"
+                        }
+                      ],
+                      "color": "c_light_gray"
+                    },
+                    {
+                      "id": "encumbrance:part:torso",
+                      "label": "Torso",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "6",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "layering",
+                          "label": "Layering",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "warmth",
+                          "label": "Warmth",
+                          "value": "-16",
+                          "color": "c_green"
+                        }
+                      ],
+                      "color": "c_green"
+                    },
+                    {
+                      "id": "encumbrance:part:arm_l",
+                      "label": "Arms",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "6",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "layering",
+                          "label": "Layering",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "warmth",
+                          "label": "Warmth",
+                          "value": "-16",
+                          "color": "c_green"
+                        }
+                      ],
+                      "color": "c_green"
+                    },
+                    {
+                      "id": "encumbrance:part:hand_l",
+                      "label": "Hands",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "layering",
+                          "label": "Layering",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "warmth",
+                          "label": "Warmth",
+                          "value": "-22",
+                          "color": "c_green"
+                        }
+                      ],
+                      "color": "c_light_gray"
+                    },
+                    {
+                      "id": "encumbrance:part:leg_l",
+                      "label": "Legs",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "8",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "layering",
+                          "label": "Layering",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "warmth",
+                          "label": "Warmth",
+                          "value": "-44",
+                          "color": "c_light_blue"
+                        }
+                      ],
+                      "color": "c_light_gray"
+                    },
+                    {
+                      "id": "encumbrance:part:foot_l",
+                      "label": "Feet",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "layering",
+                          "label": "Layering",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "warmth",
+                          "label": "Warmth",
+                          "value": "-56",
+                          "color": "c_light_blue"
+                        }
+                      ],
+                      "color": "c_light_gray"
+                    }
+                  ],
+                  "total": 8,
+                  "selection": "none"
+                }
+              },
+              {
+                "id": "armor:layers",
+                "kind": "panel",
+                "title": "Encumbrance",
+                "child": {
+                  "id": "armor:layers:rows",
+                  "kind": "list",
+                  "columns": [
+                    {
+                      "key": "encumbrance",
+                      "label": "Encumbrance"
+                    }
+                  ],
+                  "rows": [
+                    {
+                      "id": "cover:part:torso",
+                      "label": "Torso",
+                      "description": "",
+                      "denial": "",
+                      "enabled": false,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [],
+                      "color": "c_yellow",
+                      "header": true
+                    },
+                    {
+                      "id": "layer:part:torso:worn:tshirt:0",
+                      "label": "|| t-shirt",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "0"
+                        }
+                      ],
+                      "color": "c_light_gray"
+                    },
+                    {
+                      "id": "layer:part:torso:worn:hoodie:0",
+                      "label": "|| hoodie",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "6"
+                        }
+                      ],
+                      "color": "c_light_gray"
+                    },
+                    {
+                      "id": "cover:part:head",
+                      "label": "Head",
+                      "description": "",
+                      "denial": "",
+                      "enabled": false,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [],
+                      "color": "c_white",
+                      "header": true
+                    },
+                    {
+                      "id": "cover:part:eyes",
+                      "label": "Eyes",
+                      "description": "",
+                      "denial": "",
+                      "enabled": false,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [],
+                      "color": "c_white",
+                      "header": true
+                    },
+                    {
+                      "id": "cover:part:mouth",
+                      "label": "Mouth",
+                      "description": "",
+                      "denial": "",
+                      "enabled": false,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [],
+                      "color": "c_white",
+                      "header": true
+                    },
+                    {
+                      "id": "cover:part:arm_l",
+                      "label": "Arms",
+                      "description": "",
+                      "denial": "",
+                      "enabled": false,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [],
+                      "color": "c_white",
+                      "header": true
+                    },
+                    {
+                      "id": "layer:part:arm_l:worn:tshirt:0",
+                      "label": "|| t-shirt",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "0"
+                        }
+                      ],
+                      "color": "c_light_gray"
+                    },
+                    {
+                      "id": "layer:part:arm_l:worn:hoodie:0",
+                      "label": "|| hoodie",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "6"
+                        }
+                      ],
+                      "color": "c_light_gray"
+                    },
+                    {
+                      "id": "cover:part:hand_l",
+                      "label": "Hands",
+                      "description": "",
+                      "denial": "",
+                      "enabled": false,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [],
+                      "color": "c_white",
+                      "header": true
+                    },
+                    {
+                      "id": "cover:part:leg_l",
+                      "label": "Legs",
+                      "description": "",
+                      "denial": "",
+                      "enabled": false,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [],
+                      "color": "c_white",
+                      "header": true
+                    },
+                    {
+                      "id": "layer:part:leg_l:worn:jeans:0",
+                      "label": "|| jeans",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "8"
+                        }
+                      ],
+                      "color": "c_light_gray"
+                    },
+                    {
+                      "id": "cover:part:foot_l",
+                      "label": "Feet",
+                      "description": "",
+                      "denial": "",
+                      "enabled": false,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [],
+                      "color": "c_white",
+                      "header": true
+                    }
+                  ],
+                  "total": 13,
+                  "selection": "none"
+                }
+              }
+            ]
+          }
+        },
+        "affordances": [
+          {
+            "id": "armor:part",
+            "label": "Category",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "armor:tabs"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "armor:pick",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "role": "select",
+            "args": {
+              "row": {
+                "component_id": "armor:worn:rows"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Pan left",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Pan right",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "PREV_TAB",
+            "label": "Go to prev tab",
+            "keys": [
+              "BACKTAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "NEXT_TAB",
+            "label": "Go to next tab",
+            "keys": [
+              "TAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "MOVE_ARMOR",
+            "label": "Select armor for moving",
+            "keys": [
+              "s",
+              "RETURN"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CHANGE_SIDE",
+            "label": "Change side armor is worn on",
+            "keys": [
+              "c"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TOGGLE_CLOTH",
+            "label": "Toggle armor visibility on character sprite",
+            "keys": [
+              "H"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ASSIGN_INVLETS",
+            "label": "Assign invlets to armor",
+            "keys": [
+              "r"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SORT_ARMOR",
+            "label": "Sort armor into natural layer order",
+            "keys": [
+              "S"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "EQUIP_ARMOR",
+            "label": "Equip armor from inventory",
+            "keys": [
+              "e"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "EQUIP_ARMOR_HERE",
+            "label": "Equip armor from inventory at this position",
+            "keys": [
+              "E"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "REMOVE_ARMOR",
+            "label": "Unequip selected armor",
+            "keys": [
+              "u"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "USAGE_HELP",
+            "label": "Display Usage Help",
+            "keys": [
+              "F1"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "armor:worn:rows",
+          "row_id": "worn:tshirt:0"
+        },
+        "context": "SORT_ARMOR"
+      }
+    },
+    {
+      "name": "pick of a body part the tabs do not hold, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:3",
+          "revision": "41"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "armor:part",
+          "args": {
+            "row": "part:nowhere"
+          }
+        }
+      }
+    },
+    {
+      "name": "pick of a body part the tabs do not hold, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "pick of a body part the tabs do not hold, rejected",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "rejected",
+        "error": "invalid_arguments",
+        "error_text": "That needs other details."
+      }
+    },
+    {
+      "name": "worn item grabbed to be moved, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "screen_id": "screen:30"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "MOVE_ARMOR"
+        }
+      }
+    },
+    {
+      "name": "worn item grabbed to be moved, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:5",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "worn item grabbed to be moved, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:5",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "worn item grabbed to be moved, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:5",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "worn item grabbed to be moved, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:5",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "48",
+          "revision": "42"
+        }
+      }
+    },
+    {
+      "name": "item examine menu",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:32",
+        "role": "dialog",
+        "title": "|| hoodie",
+        "root": {
+          "id": "examine:panes",
+          "kind": "split",
+          "relation": "detail",
+          "active": "examine:actions",
+          "children": [
+            {
+              "id": "examine:info",
+              "kind": "text",
+              "markup": "<color_c_light_blue>Origin: 'Bright Nights'</color>\n--\nMaterial: <color_c_light_blue>Cotton</color>\nVolume: <color_c_yellow>3.000</color> L  Weight: <color_c_yellow>0.40</color> kg\nCategory: <color_c_magenta>CLOTHING</color>\n--\nA sweatshirt with a hood and a \"kangaroo pocket\" in the front for storage.\n--\n<color_c_white>Throw damage</color>: Bash: <color_c_yellow>1</color>\nThrow range: <color_c_yellow>17</color>\nMoves per throw: <color_c_yellow>116</color>\nStamina cost: <color_c_yellow>99</color>\n--\n<color_c_white>Storage</color>: <color_c_yellow>2.25</color> L\n--\n<color_c_white>Covers</color>: The <color_c_cyan>torso</color>. The <color_c_cyan>arms</color>. \nLayer: <color_c_light_blue>Outer</color>. \nThis item <color_c_green>won't conflict with</color> other items on the same <color_c_cyan>layer</color>.\nWarmth: <color_c_yellow>30</color>\n--\n<color_c_white>Coverage</color>: <color_c_yellow>95</color>% <color_c_cyan>(for all parts)</color>\n<color_c_white>Encumbrance</color>: <color_c_yellow>6</color> <color_c_cyan>(for all parts)</color>\n<color_c_white>Protection</color>: Bash: <color_c_yellow>3</color>  Cut: <color_c_yellow>3</color>  Ballistic: <color_c_yellow>3</color>\n  Acid: <color_c_yellow>0</color>  Fire: <color_c_yellow>0</color>  Environmental: <color_c_yellow>0</color>\n--\n<color_c_white>Repair</color> using bone needle, wooden needle, sewing kit, sewing machine, or tailor's kit.\n* This item can be <color_c_green>reinforced</color>.\n--\n* This item <color_c_green>does not conduct</color> electricity.\n* This clothing has a <color_c_cyan>hood</color> to keep your head warm if your head is unencumbered.\n* This gear is generally <color_c_cyan>worn over</color> clothing.\n* This clothing has <color_c_cyan>pockets</color> to warm your hands when you are wielding nothing.\n* This clothing <color_c_cyan>fits</color> you perfectly.\n--\nPrice: $<color_c_yellow>38.00</color>  Barter value: $<color_c_yellow>1.00</color>\n--\nYou know of nothing you could craft with it.\n"
+            },
+            {
+              "id": "examine:actions",
+              "kind": "list",
+              "affordances": [
+                "examine:run"
+              ],
+              "columns": [],
+              "rows": [
+                {
+                  "id": "ACTIVATE",
+                  "label": "Activate",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "a",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "color": "c_light_red"
+                },
+                {
+                  "id": "READ",
+                  "label": "Read",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "R",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "color": "c_light_gray"
+                },
+                {
+                  "id": "EAT",
+                  "label": "Eat",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "E",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "color": "c_light_gray"
+                },
+                {
+                  "id": "WEAR",
+                  "label": "Wear",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "W",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "color": "c_light_red"
+                },
+                {
+                  "id": "WIELD",
+                  "label": "Wield",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "w",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "color": "c_light_green"
+                },
+                {
+                  "id": "THROW",
+                  "label": "Throw",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "t",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "color": "c_light_green"
+                },
+                {
+                  "id": "CHANGE_SIDE",
+                  "label": "Change side",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "c",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "color": "c_light_gray"
+                },
+                {
+                  "id": "TAKE_OFF",
+                  "label": "Take off",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "T",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "color": "c_light_green"
+                },
+                {
+                  "id": "DROP",
+                  "label": "Drop",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "d",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "color": "c_light_green"
+                },
+                {
+                  "id": "UNLOAD",
+                  "label": "Unload",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "u",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "color": "c_light_gray"
+                },
+                {
+                  "id": "RELOAD",
+                  "label": "Reload",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "r",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "color": "c_light_gray"
+                },
+                {
+                  "id": "PART_RELOAD",
+                  "label": "Part reload",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "p",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "color": "c_light_gray"
+                },
+                {
+                  "id": "MEND",
+                  "label": "Mend",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "m",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "color": "c_light_gray"
+                },
+                {
+                  "id": "SALVAGE",
+                  "label": "Salvage",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "S",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "color": "c_light_red"
+                },
+                {
+                  "id": "DISASSEMBLE",
+                  "label": "Disassemble",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "D",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "color": "c_light_gray"
+                },
+                {
+                  "id": "FAVORITE_ADD",
+                  "label": "Favorite",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "f",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "color": "c_light_green"
+                },
+                {
+                  "id": "OPEN_ITEM_IN_HHG",
+                  "label": "Hitchhiker's Guide",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "h",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "color": "c_light_green"
+                },
+                {
+                  "id": "REASSIGN",
+                  "label": "Reassign",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "=",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "color": "c_light_green"
+                },
+                {
+                  "id": "AUTOPICKUP_ADD",
+                  "label": "Autopickup (add)",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "+",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "color": "c_light_green"
+                }
+              ],
+              "total": 19,
+              "selection": "single",
+              "activate": "examine:run"
+            }
+          ]
+        },
+        "affordances": [
+          {
+            "id": "examine:select",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "role": "select",
+            "args": {
+              "row": {
+                "component_id": "examine:actions"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "examine:run",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "examine:actions"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Pan left",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Pan right",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_UP",
+            "label": "Page up",
+            "keys": [
+              "PPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_DOWN",
+            "label": "Page down",
+            "keys": [
+              "NPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SCROLL_UP",
+            "label": "Scroll up",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SCROLL_DOWN",
+            "label": "Scroll down",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ACTIVATE",
+            "label": "Activate",
+            "keys": [
+              "a"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "READ",
+            "label": "Read",
+            "keys": [
+              "R"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "EAT",
+            "label": "Eat",
+            "keys": [
+              "E"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "WEAR",
+            "label": "Wear",
+            "keys": [
+              "W"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "WIELD",
+            "label": "Wield",
+            "keys": [
+              "w"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "THROW",
+            "label": "Throw",
+            "keys": [
+              "t"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CHANGE_SIDE",
+            "label": "Change side",
+            "keys": [
+              "c"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TAKE_OFF",
+            "label": "Take off",
+            "keys": [
+              "T"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DROP",
+            "label": "Drop",
+            "keys": [
+              "d"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "UNLOAD",
+            "label": "Unload",
+            "keys": [
+              "u"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RELOAD",
+            "label": "Reload",
+            "keys": [
+              "r"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PART_RELOAD",
+            "label": "Part reload",
+            "keys": [
+              "p"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "MEND",
+            "label": "Mend",
+            "keys": [
+              "m"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SALVAGE",
+            "label": "Salvage",
+            "keys": [
+              "S"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DISASSEMBLE",
+            "label": "Disassemble",
+            "keys": [
+              "D"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "FAVORITE_ADD",
+            "label": "Favorite",
+            "keys": [
+              "f"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "OPEN_ITEM_IN_HHG",
+            "label": "Hitchhiker's Guide",
+            "keys": [
+              "h"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "REASSIGN",
+            "label": "Reassign",
+            "keys": [
+              "="
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "AUTOPICKUP_ADD",
+            "label": "Autopickup (add)",
+            "keys": [
+              "+"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "examine:actions",
+          "row_id": "ACTIVATE"
+        },
+        "context": "INVENTORY_ITEM"
+      }
+    },
+    {
+      "name": "select affordance of the item examine menu",
+      "def": "affordance",
+      "value": {
+        "id": "examine:select",
+        "label": "Select",
+        "keys": [],
+        "enabled": true,
+        "role": "select",
+        "args": {
+          "row": {
+            "component_id": "examine:actions"
+          }
+        },
+        "expect": "boundary"
+      }
+    },
+    {
+      "name": "run of an action the menu does not hold, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:4",
+          "revision": "46"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "examine:run",
+          "args": {
+            "row": "NOT_AN_ACTION"
+          }
+        }
+      }
+    },
+    {
+      "name": "run of an action the menu does not hold, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:6",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "run of an action the menu does not hold, rejected",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:6",
+        "stage": "rejected",
+        "error": "invalid_arguments",
+        "error_text": "That needs other details."
+      }
+    },
+    {
+      "name": "action selected in the item examine menu, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:4",
+          "revision": "46"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "examine:select",
+          "args": {
+            "row": "READ"
+          }
+        }
+      }
+    },
+    {
+      "name": "action selected in the item examine menu, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:7",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "action selected in the item examine menu, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:7",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "action selected in the item examine menu, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:7",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "action selected in the item examine menu, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:7",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "53",
+          "revision": "47"
+        }
+      }
+    },
+    {
+      "name": "favorite action run in the item examine menu, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:5",
+          "revision": "47"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "examine:run",
+          "args": {
+            "row": "FAVORITE_ADD"
+          }
+        }
+      }
+    },
+    {
+      "name": "favorite action run in the item examine menu, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:8",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "favorite action run in the item examine menu, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:8",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "favorite action run in the item examine menu, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:8",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "favorite action run in the item examine menu, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:8",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "54",
+          "revision": "48"
+        }
+      }
+    }
+  ],
+  "invalid": []
+}
