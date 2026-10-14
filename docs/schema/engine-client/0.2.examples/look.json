@@ -55,11 +55,15 @@
                 },
                 {
                   "kind": "move_cost",
-                  "text": "Move cost: 100"
+                  "text": "<color_c_light_gray>Move cost: 100</color>",
+                  "values": {
+                    "move_cost": 100
+                  }
                 },
                 {
                   "kind": "terrain",
-                  "text": "<color_c_cyan>wooden floor</color>"
+                  "text": "<color_c_cyan>wooden floor</color>",
+                  "id": "t_floor"
                 },
                 {
                   "kind": "light",
@@ -67,24 +71,37 @@
                 },
                 {
                   "kind": "description",
-                  "text": "Interlocking wooden tiles that are more than likely treated against fire, with wooden posts and beams supporting a roof."
+                  "text": "<color_c_light_gray>Interlocking wooden tiles that are more than likely treated against fire, with wooden posts and beams supporting a roof.</color>"
                 },
                 {
                   "kind": "cover",
-                  "text": "<color_c_dark_gray>Cover: 25%</color>"
+                  "text": "<color_c_dark_gray>Cover: 25%</color>",
+                  "values": {
+                    "percent": 25
+                  }
                 },
                 {
                   "kind": "features",
                   "text": "<color_c_dark_gray>Smashable. Flat. Supports a roof. Prone to collapse.</color>"
                 },
                 {
+                  "kind": "hp",
+                  "text": "<color_c_green>█████</color>",
+                  "values": {
+                    "hp": 1008,
+                    "max": 1008
+                  }
+                },
+                {
                   "kind": "creature",
-                  "text": "you",
-                  "detail": "This is you - John Smith.\n--\n<color_c_light_gray>Head  </color><color_c_green>█████</color><color_c_white></color>\n<color_c_light_gray>Torso </color><color_c_green>█████</color><color_c_white></color>\n<color_c_light_gray>L. Arm</color><color_c_green>█████</color><color_c_white></color>\n<color_c_light_gray>R. Arm</color><color_c_green>█████</color><color_c_white></color>\n<color_c_light_gray>L. Leg</color><color_c_green>█████</color><color_c_white></color>\n<color_c_light_gray>R. Leg</color><color_c_green>█████</color><color_c_white></color>\n--\nWielding: Nothing\nWearing: "
+                  "text": "<color_c_white>You (John Smith)</color>"
                 },
                 {
                   "kind": "item",
-                  "text": "<color_c_light_gray>lighter</color>"
+                  "text": "<color_c_light_gray>lighter</color>",
+                  "values": {
+                    "count": 1
+                  }
                 }
               ]
             }
@@ -98,7 +115,8 @@
             "enabled": true,
             "args": {
               "pos": {
-                "unit": "square"
+                "unit": "square",
+                "component_id": "target:map"
               }
             },
             "expect": "boundary"
@@ -422,7 +440,8 @@
         "enabled": true,
         "args": {
           "pos": {
-            "unit": "square"
+            "unit": "square",
+            "component_id": "target:map"
           }
         },
         "expect": "boundary"
@@ -542,8 +561,8 @@
         "stage": "completed",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "14",
-          "revision": "11"
+          "sequence": "13",
+          "revision": "10"
         }
       }
     }
