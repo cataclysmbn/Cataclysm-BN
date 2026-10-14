@@ -440,7 +440,13 @@ async function playEveryOperation(session: Session) {
     affordance_id: "target:move",
     args: { pos: { ...source, x: source.x + 1 } },
   })
-  await run({ kind: "cancel" })
+  // The 0.1 target move belongs to screens with a structured interaction; a screen of components moves its cursor by `target:move`.
+  assertEquals(
+    await session.submit({ kind: "set_target", pos: { ...source, x: source.x + 1 } }),
+    "rejected",
+  )
+  // The targeting screen is one of components: it is left by its own cancel affordance, as the 0.1 cancel belongs to screens with a structured interaction.
+  await run({ kind: "invoke", affordance_id: "QUIT" })
   await session.clear()
   // The 0.1 count belongs to the screens that have not moved to components; the map has none to give it to.
   assertEquals(
