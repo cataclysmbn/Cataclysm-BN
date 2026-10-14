@@ -849,6 +849,7 @@ auto veh_interact::screen_of() -> ec::screen_view {
          .value = veh->get_owner_name(),
          .tone = veh->is_owned_by(you, true) ? "good" : "bad"}};
     std::ranges::move(vehicle_stats(), std::back_inserter(stats));
+    for (auto& stat : stats) { stat.value = remove_color_tags(stat.value); }
 
     // The squares around the cursor, the cursor's own always among them.
     const auto glyph_of = [this](const int part) {
@@ -2934,9 +2935,86 @@ void veh_interact::display_veh_tiles() {
     tile_preview->display(*veh, vehicle_cursor, cpart);
 }
 
+namespace {
+
+/// The label of a figure: what its native line says before the value.
+auto stat_label(const std::string& format) -> std::string {
+    auto label = format.substr(0, format.find_first_of("<%"));
+    label.erase(label.find_last_not_of(" :") + 1);
+    return label;
+}
+
+/// The native line of a figure with a number in it, in its language and color. These are the lines
+/// the stats window has always drawn, so their translations stay.
+auto native_format(const std::string& key, const bool bad = false) -> std::string {
+    if (key == "air_speed") {
+        return _(
+            "Air Safe/Top Speed: <color_light_green>%3d</color>/<color_light_red>%3d</color> %s");
+    }
+    if (key == "air_acceleration") {
+        return _("Air Acceleration: <color_light_blue>%3d</color> %s/s");
+    }
+    if (key == "speed") {
+        return _("Safe/Top Speed: <color_light_green>%3d</color>/<color_light_red>%3d</color> %s");
+    }
+    if (key == "acceleration") {
+        //~ /t means per turn
+        return _("Acceleration: <color_light_blue>%3d</color> %s/s");
+    }
+    if (key == "water_speed") {
+        return _(
+            "Water Safe/Top Speed: <color_light_green>%3d</color>/<color_light_red>%3d</color> %s");
+    }
+    if (key == "water_acceleration") {
+        //~ /t means per turn
+        return _("Water Acceleration: <color_light_blue>%3d</color> %s/s");
+    }
+    if (key == "mass") { return _("Mass: <color_light_blue>%5.0f</color> %s"); }
+    if (key == "lift") { return _("Maximum Lift: <color_light_blue>%5.0f</color> %s"); }
+    if (key == "liftoff_speed") { return _("Liftoff Speed: <color_light_blue>%3d</color> %s"); }
+    if (key == "buoyancy") { return _("Maximum Buoyancy: <color_light_blue>%5.0f</color> %s"); }
+    if (key == "cargo_volume") {
+        return _("Cargo Volume: <color_light_blue>%s</color> / <color_light_blue>%s</color> %s");
+    }
+    if (key == "air_drag") { return _("Air drag:       <color_light_blue>%5.2f</color>"); }
+    if (key == "water_drag") { return _("Water drag:     <color_light_blue>%5.2f</color>"); }
+    if (key == "rolling_drag") { return _("Rolling drag:   <color_light_blue>%5.2f</color>"); }
+    if (key == "static_drag") { return _("Static drag:    <color_light_blue>%5d</color>"); }
+    if (key == "offroad") { return _("Offroad:        <color_light_blue>%4d</color>%%"); }
+    if (key == "draft") {
+        return bad
+                 ? _("Draft/Clearance:<color_light_blue>%4.2f</color>m/<color_light_red>%4.2f</color>m")
+                 : _("Draft/Clearance:<color_light_blue>%4.2f</color>m/<color_light_blue>%4.2f</color>m");
+    }
+    return {};
+}
+
+/// The label of a figure with a number in it.
+auto label_of(const std::string& key) -> std::string { return stat_label(native_format(key)); }
+
+/// A native format with its conversions filled from `args` and padded to their widths.
+auto fill_format(const std::string& format, const std::vector<std::string>& args) -> std::string {
+    auto filled = std::string{};
+    auto next = std::size_t{0};
+    for (auto at = std::size_t{0}; at < format.size(); ++at) {
+        if (format[at] != '%') {
+            filled += format[at];
+        } else if (format[at + 1] == '%') {
+            filled += format[++at];
+        } else {
+            const auto end = format.find_first_of("dfs", at);
+            const auto width = std::atoi(format.c_str() + at + 1);
+            const auto& arg = next < args.size() ? args[next++] : std::string{};
+            filled += std::string(std::max(width - utf8_width(arg), 0), ' ') + arg;
+            at = end;
+        }
+    }
+    return filled;
+}
+
 /// The wheels and the hull as one figure: what the vehicle rolls or floats on, and whether that is
-/// enough.
-static auto wheel_state_stat(const vehicle& veh) -> engine_client::panel_stat {
+/// enough. Its words carry the colors the native window shows them in.
+auto wheel_state_stat(const vehicle& veh) -> engine_client::panel_stat {
     const bool is_boat = !veh.floating.empty();
     const bool is_land = !veh.wheelcache.empty() || !is_boat;
     const float steer = veh.steering_effectiveness();
@@ -2944,41 +3022,44 @@ static auto wheel_state_stat(const vehicle& veh) -> engine_client::panel_stat {
     auto wheel_ok = false;
     std::string wheel_status;
     if (!veh.sufficient_wheel_config() && is_boat) {
-        wheel_status = _("disabled");
+        wheel_status = _("<color_light_red>disabled</color>");
     } else if (!veh.sufficient_wheel_config()) {
-        wheel_status = _("lack");
+        wheel_status = _("<color_light_red>lack</color>");
     } else if (!veh.balanced_wheel_config()) {
-        wheel_status = _("unbalanced");
+        wheel_status = _("<color_light_red>unbalanced</color>");
     } else if (steer < 0) {
-        wheel_status = _("no steering");
+        wheel_status = _("<color_light_red>no steering</color>");
     } else if (steer < 0.033) {
-        wheel_status = _("broken steering");
+        wheel_status = _("<color_light_red>broken steering</color>");
     } else if (steer < 0.5) {
-        wheel_status = _("poor steering");
+        wheel_status = _("<color_light_red>poor steering</color>");
     } else {
-        wheel_status = _("enough");
+        wheel_status = _("<color_light_green>enough</color>");
         wheel_ok = true;
     }
     const bool floats = veh.can_float();
-    const auto boat_status = floats ? _("floats") : _("sinks");
+    const auto boat_status =
+        floats ? _("<color_light_blue>floats</color>") : _("<color_light_red>sinks</color>");
 
     if (is_boat && is_land) {
         return {.key = "wheels",
-                .label = _("Wheels/boat"),
+                .label = stat_label(_("Wheels/boat: %s/%s")),
                 .value = string_format("%s/%s", wheel_status, boat_status),
                 .tone = wheel_ok && floats ? "good" : "bad"};
     }
     if (is_boat) {
         return {.key = "wheels",
-                .label = _("Boat"),
+                .label = stat_label(_("Boat: %s")),
                 .value = boat_status,
                 .tone = floats ? "good" : "bad"};
     }
     return {.key = "wheels",
-            .label = _("Wheels"),
+            .label = stat_label(_("Wheels: %s")),
             .value = wheel_status,
             .tone = wheel_ok ? "good" : "bad"};
 }
+
+} // namespace
 
 auto veh_interact::vehicle_stats() const -> std::vector<engine_client::panel_stat> {
     using stat = engine_client::panel_stat;
@@ -3019,28 +3100,28 @@ auto veh_interact::vehicle_stats() const -> std::vector<engine_client::panel_sta
         };
 
     if (is_aircraft) {
-        speed("air_speed", _("Air Safe/Top Speed"),
+        speed("air_speed", label_of("air_speed"),
               veh->safe_aircraft_velocity(false, !veh->engine_on),
               veh->max_air_velocity(false, !veh->engine_on));
-        acceleration("air_acceleration", _("Air Acceleration"),
+        acceleration("air_acceleration", label_of("air_acceleration"),
                      veh->aircraft_acceleration(false, !veh->engine_on));
     } else {
         if (is_ground) {
-            speed("speed", _("Safe/Top Speed"), veh->safe_ground_velocity(false, !veh->engine_on),
+            speed("speed", label_of("speed"), veh->safe_ground_velocity(false, !veh->engine_on),
                   veh->max_ground_velocity(false, !veh->engine_on));
-            acceleration("acceleration", _("Acceleration"),
+            acceleration("acceleration", label_of("acceleration"),
                          veh->ground_acceleration(false, !veh->engine_on));
         }
         if (is_boat) {
-            speed("water_speed", _("Water Safe/Top Speed"),
+            speed("water_speed", label_of("water_speed"),
                   veh->safe_water_velocity(false, !veh->engine_on),
                   veh->max_water_velocity(false, !veh->engine_on));
-            acceleration("water_acceleration", _("Water Acceleration"),
+            acceleration("water_acceleration", label_of("water_acceleration"),
                          veh->water_acceleration(false, !veh->engine_on));
         }
     }
     add({.key = "mass",
-         .label = _("Mass"),
+         .label = label_of("mass"),
          .value = string_format("%.0f", convert_weight(veh->total_mass())),
          .unit = weight_units()});
     if (veh->has_lift()) {
@@ -3048,12 +3129,12 @@ auto veh_interact::vehicle_stats() const -> std::vector<engine_client::panel_sta
         units::mass lift_as_mass = units::from_newton(
             veh->total_lift(true, false, !veh->engine_on));
         add({.key = "lift",
-             .label = _("Maximum Lift"),
+             .label = label_of("lift"),
              .value = string_format("%.0f", convert_weight(lift_as_mass)),
              .unit = weight_units()});
         if (veh->has_part("WING")) {
             add({.key = "liftoff_speed",
-                 .label = _("Liftoff Speed"),
+                 .label = label_of("liftoff_speed"),
                  .value = std::to_string(veh->get_takeoff_speed()),
                  .unit = speed_unit});
         }
@@ -3063,16 +3144,16 @@ auto veh_interact::vehicle_stats() const -> std::vector<engine_client::panel_sta
         units::mass buoyancy_as_mass = units::from_newton(
             veh->max_buoyancy() + veh->total_balloon_lift());
         add({.key = "buoyancy",
-             .label = _("Maximum Buoyancy"),
+             .label = label_of("buoyancy"),
              .value = string_format("%.0f", convert_weight(buoyancy_as_mass)),
              .unit = weight_units()});
     }
     add({.key = "cargo_volume",
-         .label = _("Cargo Volume"),
+         .label = label_of("cargo_volume"),
          .value = format_volume(total_cargo - free_cargo),
          .max = format_volume(total_cargo),
          .unit = volume_units_abbr()});
-    add({.key = "status", .label = _("Status"), .value = total_durability_text});
+    add({.key = "status", .label = stat_label(_("Status:")), .value = total_durability_text});
     add(wheel_state_stat(*veh));
 
     const vehicle_part* most_damaged = get_most_damaged_part();
@@ -3080,41 +3161,41 @@ auto veh_interact::vehicle_stats() const -> std::vector<engine_client::panel_sta
     if (most_damaged && most_damaged->damage_percent()) {
         add({.key = "most_damaged",
              .label = most_damaged == most_repairable
-                        ? _("Most damaged")
-                        : _("Most damaged (can't repair)"),
-             .value = remove_color_tags(most_damaged->name())});
+                        ? stat_label(_("Most damaged:"))
+                        : stat_label(_("Most damaged (can't repair):")),
+             .value = most_damaged->name()});
     }
     if (most_repairable && most_repairable != most_damaged) {
         add({.key = "needs_repair",
-             .label = _("Needs repair"),
-             .value = remove_color_tags(most_repairable->name())});
+             .label = stat_label(_("Needs repair:")),
+             .value = most_repairable->name()});
     }
 
     add({.key = "air_drag",
-         .label = _("Air drag"),
+         .label = label_of("air_drag"),
          .value = string_format("%.2f", veh->coeff_air_drag())});
     if (is_boat) {
         add({.key = "water_drag",
-             .label = _("Water drag"),
+             .label = label_of("water_drag"),
              .value = string_format("%.2f", veh->coeff_water_drag())});
     }
     if (is_ground) {
         add({.key = "rolling_drag",
-             .label = _("Rolling drag"),
+             .label = label_of("rolling_drag"),
              .value = string_format("%.2f", veh->coeff_rolling_drag())});
     }
     add({.key = "static_drag",
-         .label = _("Static drag"),
+         .label = label_of("static_drag"),
          .value = std::to_string(veh->static_drag(false))});
     add({.key = "offroad",
-         .label = _("Offroad"),
+         .label = label_of("offroad"),
          .value = std::to_string(
              static_cast<int>(veh->k_traction(veh->wheel_area() * veh->average_or_rating()) * 100)),
          .unit = "%"});
     if (is_boat) {
         const double water_clearance = veh->water_hull_height() - veh->water_draft();
         add({.key = "draft",
-             .label = _("Draft/Clearance"),
+             .label = label_of("draft"),
              .value = string_format("%.2f", veh->water_draft()),
              .max = string_format("%.2f", water_clearance),
              .unit = "m",
@@ -3123,17 +3204,50 @@ auto veh_interact::vehicle_stats() const -> std::vector<engine_client::panel_sta
     return stats;
 }
 
-/// The native line of a figure: its label, then the value and what it can reach in the color of its
-/// tone.
-static auto stat_line(const engine_client::panel_stat& stat) -> std::string {
-    const auto color =
-        stat.tone == "bad" ? "light_red"
-        : stat.tone == "good"
-            ? "light_green"
-            : "light_blue";
-    const auto reach = stat.max.empty() ? std::string{} : "/" + stat.max;
-    const auto unit = stat.unit.empty() ? std::string{} : (stat.unit == "%" ? "" : " ") + stat.unit;
-    return string_format("%s: <color_%s>%s%s</color>%s", stat.label, color, stat.value, reach, unit);
+auto veh_interact::stat_lines() const -> std::vector<std::string> {
+    const auto stats = vehicle_stats();
+    const auto has_air = std::ranges::contains(stats, "air_speed", &engine_client::panel_stat::key);
+    // The figures in the order of their slots, and whether one that does not apply keeps its slot.
+    struct slot {
+        std::string key;
+        bool keeps;
+    };
+    const auto slots = std::vector<slot>{
+        {"air_speed", false},      {"air_acceleration", false},
+        {"speed", !has_air},       {"acceleration", !has_air},
+        {"water_speed", !has_air}, {"water_acceleration", !has_air},
+        {"mass", false},           {"lift", false},
+        {"liftoff_speed", false},  {"buoyancy", false},
+        {"cargo_volume", false},   {"status", false},
+        {"wheels", false},         {"most_damaged", true},
+        {"needs_repair", true},    {"air_drag", false},
+        {"water_drag", true},      {"rolling_drag", true},
+        {"static_drag", false},    {"offroad", false},
+        {"draft", false}};
+
+    auto lines = std::vector<std::string>{};
+    for (const auto& [key, keeps] : slots) {
+        const auto found = std::ranges::find(stats, key, &engine_client::panel_stat::key);
+        if (found == stats.end()) {
+            if (keeps) { lines.emplace_back(); }
+        } else if (const auto format = native_format(key, found->tone == "bad"); format.empty()) {
+            // Lines of words: the label, then the value in the colors it carries.
+            lines.push_back(string_format(
+                "%s: %s", found->label,
+                key == "status" ? colorize(found->value, total_durability_color) : found->value));
+        } else {
+            // The unit of an acceleration is a speed unit per second, which its format spells out.
+            const auto unit =
+                key.ends_with("acceleration")
+                    ? found->unit.substr(0, found->unit.size() - 2)
+                    : found->unit;
+            auto args = std::vector<std::string>{found->value};
+            if (!found->max.empty()) { args.push_back(found->max); }
+            args.push_back(unit);
+            lines.push_back(fill_format(format, args));
+        }
+    }
+    return lines;
 }
 
 /**
@@ -3170,9 +3284,11 @@ void veh_interact::display_stats() const {
     }
 
     int i = 0;
-    for (const auto& stat : vehicle_stats()) {
+    for (const std::string& line : stat_lines()) {
         if (i >= slots) { break; }
-        i += fold_and_print(w_stats, point(x[i], y[i]), w[i], c_light_gray, "%s", stat_line(stat));
+        i += line.empty()
+               ? 1
+               : fold_and_print(w_stats, point(x[i], y[i]), w[i], c_light_gray, "%s", line);
     }
 
     i = std::min(std::max(i, 2 * stats_h), slots - 1);

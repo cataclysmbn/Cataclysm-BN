@@ -439,16 +439,22 @@ TEST_CASE(
         CHECK(at("Rolling drag:    0.02").y == mass.y);
         CHECK(at("Static drag:        0").y == mass.y + 1);
         CHECK(at("Offroad:         100%").y == mass.y + 2);
-        CHECK(air.x == mass.x + 32);
-        // Labels are plain, the safe speed is green, the top speed red, the other figures blue and
-        // a wheel setup that suffices green.
-        const auto plain = foreground_at(shot, speed);
-        WARN("plain " << plain);
-        const auto safe = foreground_at(shot, speed, 18);
-        const auto top = foreground_at(shot, speed, 22);
-        WARN("safe " << safe << " top " << top << " mass " << foreground_at(shot, mass, 11)
-                     << " wheels " << foreground_at(shot, at("Wheels: enough"), 8) << " status "
-                     << foreground_at(shot, at("Status: "), 8));
+        CHECK(air.x == mass.x + 34);
+        // Labels are plain, the safe speed is green, the top speed red, the other figures blue, a
+        // wheel setup that suffices light green and the status in the color of its health.
+        const auto light_gray = 7;
+        const auto green = 2;
+        const auto light_green = 10;
+        const auto light_red = 9;
+        const auto light_blue = 12;
+        CHECK(foreground_at(shot, speed) == light_gray);
+        CHECK(foreground_at(shot, speed, 18) == light_green);
+        CHECK(foreground_at(shot, speed, 22) == light_red);
+        CHECK(foreground_at(shot, mass) == light_gray);
+        CHECK(foreground_at(shot, mass, 10) == light_blue);
+        CHECK(foreground_at(shot, air, 20) == light_blue);
+        CHECK(foreground_at(shot, at("Wheels: enough"), 8) == light_green);
+        CHECK(foreground_at(shot, at("Status: "), 8) == green);
         return act("QUIT");
     });
     static_cast<void>(veh_interact::run(*fixture.veh, tripoint_mnt_veh::zero()));

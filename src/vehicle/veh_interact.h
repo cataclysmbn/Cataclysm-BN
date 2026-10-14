@@ -163,6 +163,9 @@ private:
     auto choice_rows() -> std::vector<engine_client::row>;
     /** The vehicle's figures in reading order; a figure that does not apply is left out. */
     auto vehicle_stats() const -> std::vector<engine_client::panel_stat>;
+    /** The lines of the native stats window, one per slot: an empty line keeps the slot of a figure
+     * that does not apply. */
+    auto stat_lines() const -> std::vector<std::string>;
     /** Whether the cursor square cannot take a part. */
     auto cursor_obstructed() const -> bool;
     /**
