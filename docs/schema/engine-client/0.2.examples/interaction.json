@@ -1,6 +1,17 @@
 {
   "valid": [
     {
+      "name": "list window docked at the right",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:4",
+        "role": "dialog",
+        "dock": "right",
+        "root": null,
+        "affordances": []
+      }
+    },
+    {
       "name": "choices request",
       "def": "choices_params",
       "value": {
@@ -440,6 +451,18 @@
     }
   ],
   "invalid": [
+    {
+      "name": "list window docked somewhere the engine does not name",
+      "def": "screen",
+      "why": "dock is left, right, overlapping or cursor",
+      "value": {
+        "screen_id": "screen:4",
+        "role": "dialog",
+        "dock": "middle",
+        "root": null,
+        "affordances": []
+      }
+    },
     {
       "name": "choice window above the limit",
       "def": "choices_params",

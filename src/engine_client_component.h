@@ -325,6 +325,8 @@ struct screen_view {
     std::string focus_component = {};
     std::string focus_row = {};
     int refresh_ms = 0;
+    /// Where the player asked the window to sit: `left`, `right`, `overlapping` or `cursor`; empty for none.
+    std::string dock = {};
 };
 
 /// A const read of the screen's model state: it changes nothing and draws nothing.

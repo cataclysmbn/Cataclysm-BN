@@ -207,6 +207,7 @@ auto screen_of( const screen_options &opts ) -> ec::screen_view
         },
         .focus_component = items_id,
         .focus_row = cursor,
+        .dock = get_option<std::string>( "PICKUP_POSITION" ),
     };
 }
 

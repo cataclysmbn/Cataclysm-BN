@@ -6,6 +6,7 @@
 #include "input.h"
 #include "item.h"
 #include "map/map.h"
+#include "options.h"
 #include "output.h"
 #include "pickup.h"
 #include "pickup_screen.h"
@@ -175,6 +176,7 @@ TEST_CASE("the pickup screen publishes a row per stack with its marks and counts
     CHECK(whole.mark->glyph == "+");
     CHECK(whole.selected_count == 1U);
     CHECK(whole.look->id == "rock");
+    CHECK(view.dock == get_option<std::string>("PICKUP_POSITION"));
     CHECK(view.focus_component == pickup::items_id);
     CHECK(view.focus_row == whole.id);
     // The native window describes the item under the cursor only.

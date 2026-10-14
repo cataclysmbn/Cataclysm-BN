@@ -2566,6 +2566,15 @@
           "minimum": 1,
           "description": "Present where the engine redraws the screen on its own every this many milliseconds with no input, such as the snake game; each redraw publishes a new canvas."
         },
+        "dock": {
+          "enum": [
+            "left",
+            "right",
+            "overlapping",
+            "cursor"
+          ],
+          "description": "Where the player asked a list window to sit, such as the pickup list. Absent when the screen has no such choice."
+        },
         "context": {
           "type": "string",
           "description": "Diagnostics and tests only. Clients must not branch on it."

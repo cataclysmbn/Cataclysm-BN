@@ -685,6 +685,7 @@ auto to_json( const screen_view &view, const bubble_frame &frame ) -> json
         if( !view.focus_row.empty() ) { focus["row_id"] = view.focus_row; }
     }
     if( view.refresh_ms > 0 ) { result["refresh_ms"] = view.refresh_ms; }
+    if( !view.dock.empty() ) { result["dock"] = view.dock; }
     if( !view.context.empty() ) { result["context"] = view.context; }
     return result;
 }
