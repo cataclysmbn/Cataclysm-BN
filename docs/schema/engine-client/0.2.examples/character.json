@@ -2123,10 +2123,121 @@
       }
     },
     {
+      "name": "bionic letter popup",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:27",
+        "role": "dialog",
+        "title": "Power Storage",
+        "root": {
+          "id": "bionics:letter:panes",
+          "kind": "split",
+          "relation": "peers",
+          "children": [
+            {
+              "id": "bionics:letter:message",
+              "kind": "text",
+              "markup": "Power Storage; enter new letter.  Space to clear.  Esc to cancel."
+            },
+            {
+              "id": "bionics:letter",
+              "kind": "form",
+              "affordances": [
+                "bionics:letter:set"
+              ],
+              "fields": [
+                {
+                  "id": "bionics:letter:key",
+                  "label": "Manual (shortcut)",
+                  "description": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ\"#&()*+./:;@[\\]^_{|}",
+                  "value": "",
+                  "type": "key"
+                }
+              ],
+              "submit": "bionics:letter:set"
+            }
+          ]
+        },
+        "affordances": [
+          {
+            "id": "bionics:letter:set",
+            "label": "Manual (shortcut)",
+            "keys": [],
+            "enabled": true,
+            "role": "confirm",
+            "args": {
+              "text": {
+                "field_id": "bionics:letter:key"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "COORDINATE",
+            "label": "COORDINATE",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Cancel popup",
+            "keys": [
+              "ESC",
+              "SPACE",
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "bionics:letter"
+        },
+        "context": "POPUP_WAIT"
+      }
+    },
+    {
+      "name": "letter set without a key, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:6",
+          "revision": "37"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "bionics:letter:set"
+        }
+      }
+    },
+    {
+      "name": "letter set without a key, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:7",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "letter set without a key, rejected",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:7",
+        "stage": "rejected",
+        "error": "invalid_arguments",
+        "error_text": "That needs other details."
+      }
+    },
+    {
       "name": "mutation screen",
       "def": "screen",
       "value": {
-        "screen_id": "screen:36",
+        "screen_id": "screen:37",
         "role": "dialog",
         "title": " MUTATIONS ",
         "root": {
@@ -2499,8 +2610,8 @@
       "value": {
         "epoch": "epoch-2",
         "expect": {
-          "boundary_id": "boundary:6",
-          "revision": "49"
+          "boundary_id": "boundary:7",
+          "revision": "52"
         },
         "operation": {
           "kind": "invoke",
@@ -2516,7 +2627,7 @@
       "def": "submit_result",
       "value": {
         "epoch": "epoch-2",
-        "command_id": "command:7",
+        "command_id": "command:8",
         "stage": "received"
       }
     },
@@ -2525,7 +2636,7 @@
       "def": "command_notification",
       "value": {
         "epoch": "epoch-2",
-        "command_id": "command:7",
+        "command_id": "command:8",
         "stage": "validated"
       }
     },
@@ -2534,7 +2645,7 @@
       "def": "command_notification",
       "value": {
         "epoch": "epoch-2",
-        "command_id": "command:7",
+        "command_id": "command:8",
         "stage": "executing"
       }
     },
@@ -2543,12 +2654,12 @@
       "def": "command_notification",
       "value": {
         "epoch": "epoch-2",
-        "command_id": "command:7",
+        "command_id": "command:8",
         "stage": "completed",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "59",
-          "revision": "50"
+          "sequence": "62",
+          "revision": "53"
         }
       }
     },
@@ -2556,7 +2667,7 @@
       "name": "spell menu",
       "def": "screen",
       "value": {
-        "screen_id": "screen:41",
+        "screen_id": "screen:42",
         "role": "dialog",
         "title": "Choose a Spell",
         "root": {
@@ -3612,7 +3723,7 @@
       "value": {
         "epoch": "epoch-2",
         "expect": {
-          "screen_id": "screen:41"
+          "screen_id": "screen:42"
         },
         "operation": {
           "kind": "invoke",
@@ -3625,7 +3736,7 @@
       "def": "submit_result",
       "value": {
         "epoch": "epoch-2",
-        "command_id": "command:8",
+        "command_id": "command:9",
         "stage": "received"
       }
     },
@@ -3634,7 +3745,7 @@
       "def": "command_notification",
       "value": {
         "epoch": "epoch-2",
-        "command_id": "command:8",
+        "command_id": "command:9",
         "stage": "validated"
       }
     },
@@ -3643,7 +3754,7 @@
       "def": "command_notification",
       "value": {
         "epoch": "epoch-2",
-        "command_id": "command:8",
+        "command_id": "command:9",
         "stage": "executing"
       }
     },
@@ -3652,13 +3763,1068 @@
       "def": "command_notification",
       "value": {
         "epoch": "epoch-2",
-        "command_id": "command:8",
+        "command_id": "command:9",
         "stage": "completed",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "164",
-          "revision": "57"
+          "sequence": "167",
+          "revision": "60"
         }
+      }
+    },
+    {
+      "name": "spell menu with a spell favorited",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:42",
+        "role": "dialog",
+        "title": "Choose a Spell",
+        "root": {
+          "id": "list:choices",
+          "kind": "list",
+          "affordances": [
+            "FILTER",
+            "bn:choose:list:choices"
+          ],
+          "columns": [
+            {
+              "key": "spell_level",
+              "label": "Spell Level"
+            },
+            {
+              "key": "failure_chance",
+              "label": "Failure Chance"
+            },
+            {
+              "key": "casting_cost",
+              "label": "Casting Cost"
+            },
+            {
+              "key": "casting_time",
+              "label": "Casting Time"
+            },
+            {
+              "key": "range",
+              "label": "Range"
+            }
+          ],
+          "rows": [
+            {
+              "id": "action:key:42",
+              "label": "Toggle favorite",
+              "description": "",
+              "denial": "",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": []
+            },
+            {
+              "id": "action:key:73",
+              "label": "Toggle casting distractions",
+              "description": "",
+              "denial": "",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": []
+            },
+            {
+              "id": "action:key:61",
+              "label": "Assign spell hotkey",
+              "description": "",
+              "denial": "",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": []
+            },
+            {
+              "id": "spell:poison",
+              "label": "Poison",
+              "description": "<color_yellow>Classless</color>\n<color_light_gray>Poisons the target.</color>\n<color_light_gray>does not require hands and can be cast through walls</color>\n<color_light_gray>Blocker mutations: None</color>\n<color_light_gray>Skill: spellcraft</color>\n<color_light_gray>Spell Level: 0 (MAX)</color>\n<color_light_gray>Max Level: 0</color>\n<color_light_gray><color_c_magenta>Too Difficult!</color></color>\n<color_light_gray>Difficulty: 0</color>\n<color_light_gray>Current Exp: <color_c_light_green>0</color></color>\n<color_light_gray>to Next Level: <color_c_light_green>4881</color></color>\n\n<color_light_gray>Casting Cost: none  (infinite current)</color>\n<color_light_gray><color_c_light_gray>Casting Time: 0 moves</color></color>\n\n<color_light_gray>Valid Targets: hostile</color>\n<color_light_gray></color>\n<color_light_gray></color>\n<color_light_gray>Range: 2</color>\n<color_light_gray>Duration: 2 minutes and 30 seconds - 5 minutes</color>\n",
+              "denial": "",
+              "hotkey": "a",
+              "enabled": true,
+              "selectable": true,
+              "selected": true,
+              "columns": [
+                {
+                  "key": "spell_level",
+                  "label": "Spell Level",
+                  "value": "0"
+                },
+                {
+                  "key": "failure_chance",
+                  "label": "Failure Chance",
+                  "value": "Too Difficult!"
+                },
+                {
+                  "key": "casting_cost",
+                  "label": "Casting Cost",
+                  "value": "none "
+                },
+                {
+                  "key": "casting_time",
+                  "label": "Casting Time",
+                  "value": "0 moves"
+                },
+                {
+                  "key": "range",
+                  "label": "Range",
+                  "value": "2"
+                }
+              ],
+              "favorite": true
+            },
+            {
+              "id": "spell:example_template",
+              "label": "Template Spell",
+              "description": "<color_yellow>Classless</color>\n<color_light_gray>This is a template to show off all the available values</color>\n<color_light_gray>impeded by gloves and requires mobility</color>\n<color_light_gray>Blocker mutations: None</color>\n<color_light_gray>Skill: spellcraft</color>\n<color_light_gray>Spell Level: 0 </color>\n<color_light_gray>Max Level: 10</color>\n<color_light_gray><color_c_magenta>Too Difficult!</color></color>\n<color_light_gray>Difficulty: 12</color>\n<color_light_gray>Current Exp: <color_c_light_green>0</color></color>\n<color_light_gray>to Next Level: <color_c_light_green>4881</color></color>\n\n<color_light_gray>Casting Cost: <color_c_light_blue>10</color> mana (<color_c_light_blue>1000</color> current)</color>\n<color_light_gray><color_c_light_gray>Casting Time: 100 moves</color></color>\n\n<color_light_gray>Valid Targets: ally, hostile, self and ground</color>\n<color_light_gray></color>\n<color_light_gray></color>\n<color_light_gray>Range: 1</color>\n<color_light_gray></color>\n",
+              "denial": "",
+              "hotkey": "b",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": [
+                {
+                  "key": "spell_level",
+                  "label": "Spell Level",
+                  "value": "0"
+                },
+                {
+                  "key": "failure_chance",
+                  "label": "Failure Chance",
+                  "value": "Too Difficult!"
+                },
+                {
+                  "key": "casting_cost",
+                  "label": "Casting Cost",
+                  "value": "<color_c_light_blue>10</color> mana"
+                },
+                {
+                  "key": "casting_time",
+                  "label": "Casting Time",
+                  "value": "100 moves"
+                },
+                {
+                  "key": "range",
+                  "label": "Range",
+                  "value": "1"
+                }
+              ]
+            },
+            {
+              "id": "spell:spawn_debug_monster",
+              "label": "Spawn Debug Monsters",
+              "description": "<color_yellow>Classless</color>\n<color_light_gray>Set level to number of monsters spawned.</color>\n<color_light_gray>impeded by gloves and requires mobility</color>\n<color_light_gray>Blocker mutations: None</color>\n<color_light_gray>Skill: spellcraft</color>\n<color_light_gray>Spell Level: 0 </color>\n<color_light_gray>Max Level: 30</color>\n<color_light_gray><color_c_magenta>Too Difficult!</color></color>\n<color_light_gray>Difficulty: 0</color>\n<color_light_gray>Current Exp: <color_c_light_green>0</color></color>\n<color_light_gray>to Next Level: <color_c_light_green>4881</color></color>\n\n<color_light_gray>Casting Cost: none  (infinite current)</color>\n<color_light_gray><color_c_light_gray>Casting Time: 100 moves</color></color>\n\n<color_light_gray>Valid Targets: ground</color>\n<color_light_gray>Summon 1 debug monster</color>\n<color_light_gray>Spell Radius: 10</color>\n<color_light_gray>Range: 20</color>\n<color_light_gray>Duration: 10 seconds</color>\n",
+              "denial": "",
+              "hotkey": "c",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": [
+                {
+                  "key": "spell_level",
+                  "label": "Spell Level",
+                  "value": "0"
+                },
+                {
+                  "key": "failure_chance",
+                  "label": "Failure Chance",
+                  "value": "Too Difficult!"
+                },
+                {
+                  "key": "casting_cost",
+                  "label": "Casting Cost",
+                  "value": "none "
+                },
+                {
+                  "key": "casting_time",
+                  "label": "Casting Time",
+                  "value": "100 moves"
+                },
+                {
+                  "key": "range",
+                  "label": "Range",
+                  "value": "20"
+                }
+              ]
+            },
+            {
+              "id": "spell:debug_stamina",
+              "label": "Debug Stamina Spell",
+              "description": "<color_yellow>Classless</color>\n<color_light_gray>Uses a little stamina</color>\n<color_light_gray>impeded by gloves and requires mobility</color>\n<color_light_gray>Blocker mutations: None</color>\n<color_light_gray>Skill: spellcraft</color>\n<color_light_gray>Spell Level: 0 (MAX)</color>\n<color_light_gray>Max Level: 0</color>\n<color_light_gray><color_c_magenta>Too Difficult!</color></color>\n<color_light_gray>Difficulty: 0</color>\n<color_light_gray>Current Exp: <color_c_light_green>0</color></color>\n<color_light_gray>to Next Level: <color_c_light_green>4881</color></color>\n\n<color_light_gray>Casting Cost: <color_c_red>▁</color> stamina (<color_c_green>█████</color> current)</color>\n<color_light_gray><color_c_light_gray>Casting Time: 100 moves</color></color>\n\n<color_light_gray>Valid Targets: self</color>\n<color_light_gray></color>\n<color_light_gray></color>\n<color_light_gray>Range: 1</color>\n<color_light_gray></color>\n",
+              "denial": "",
+              "hotkey": "d",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": [
+                {
+                  "key": "spell_level",
+                  "label": "Spell Level",
+                  "value": "0"
+                },
+                {
+                  "key": "failure_chance",
+                  "label": "Failure Chance",
+                  "value": "Too Difficult!"
+                },
+                {
+                  "key": "casting_cost",
+                  "label": "Casting Cost",
+                  "value": "<color_c_red>▁</color> stamina"
+                },
+                {
+                  "key": "casting_time",
+                  "label": "Casting Time",
+                  "value": "100 moves"
+                },
+                {
+                  "key": "range",
+                  "label": "Range",
+                  "value": "1"
+                }
+              ]
+            },
+            {
+              "id": "spell:debug_fatigue",
+              "label": "Debug Fatigue Spell",
+              "description": "<color_yellow>Classless</color>\n<color_light_gray>Uses a little fatigue</color>\n<color_light_gray>impeded by gloves and requires mobility</color>\n<color_light_gray>Blocker mutations: None</color>\n<color_light_gray>Skill: spellcraft</color>\n<color_light_gray>Spell Level: 0 (MAX)</color>\n<color_light_gray>Max Level: 0</color>\n<color_light_gray><color_c_magenta>Too Difficult!</color></color>\n<color_light_gray>Difficulty: 0</color>\n<color_light_gray>Current Exp: <color_c_light_green>0</color></color>\n<color_light_gray>to Next Level: <color_c_light_green>4881</color></color>\n\n<color_light_gray>Casting Cost: <color_c_cyan>100</color> fatigue (<color_c_white></color> current)</color>\n<color_light_gray><color_c_light_gray>Casting Time: 100 moves</color></color>\n\n<color_light_gray>Valid Targets: self</color>\n<color_light_gray></color>\n<color_light_gray></color>\n<color_light_gray>Range: 1</color>\n<color_light_gray></color>\n",
+              "denial": "",
+              "hotkey": "e",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": [
+                {
+                  "key": "spell_level",
+                  "label": "Spell Level",
+                  "value": "0"
+                },
+                {
+                  "key": "failure_chance",
+                  "label": "Failure Chance",
+                  "value": "Too Difficult!"
+                },
+                {
+                  "key": "casting_cost",
+                  "label": "Casting Cost",
+                  "value": "<color_c_cyan>100</color> fatigue"
+                },
+                {
+                  "key": "casting_time",
+                  "label": "Casting Time",
+                  "value": "100 moves"
+                },
+                {
+                  "key": "range",
+                  "label": "Range",
+                  "value": "1"
+                }
+              ]
+            },
+            {
+              "id": "spell:debug_hp",
+              "label": "Debug HP Spell",
+              "description": "<color_yellow>Classless</color>\n<color_light_gray>Uses a little HP</color>\n<color_light_gray>impeded by gloves and requires mobility</color>\n<color_light_gray>Blocker mutations: None</color>\n<color_light_gray>Skill: spellcraft</color>\n<color_light_gray>Spell Level: 0 (MAX)</color>\n<color_light_gray>Max Level: 0</color>\n<color_light_gray><color_c_magenta>Too Difficult!</color></color>\n<color_light_gray>Difficulty: 0</color>\n<color_light_gray>Current Exp: <color_c_light_green>0</color></color>\n<color_light_gray>to Next Level: <color_c_light_green>4881</color></color>\n\n<color_light_gray>Casting Cost: <color_c_red>█</color> health</color>\n<color_light_gray><color_c_light_gray>Casting Time: 100 moves</color></color>\n\n<color_light_gray>Valid Targets: self</color>\n<color_light_gray></color>\n<color_light_gray></color>\n<color_light_gray>Range: 1</color>\n<color_light_gray></color>\n",
+              "denial": "",
+              "hotkey": "f",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": [
+                {
+                  "key": "spell_level",
+                  "label": "Spell Level",
+                  "value": "0"
+                },
+                {
+                  "key": "failure_chance",
+                  "label": "Failure Chance",
+                  "value": "Too Difficult!"
+                },
+                {
+                  "key": "casting_cost",
+                  "label": "Casting Cost",
+                  "value": "<color_c_red>█</color> health"
+                },
+                {
+                  "key": "casting_time",
+                  "label": "Casting Time",
+                  "value": "100 moves"
+                },
+                {
+                  "key": "range",
+                  "label": "Range",
+                  "value": "1"
+                }
+              ]
+            },
+            {
+              "id": "spell:debug_bionic",
+              "label": "Debug Bionic Spell",
+              "description": "<color_yellow>Classless</color>\n<color_light_gray>Uses a little Bionic Power</color>\n<color_light_gray>impeded by gloves and requires mobility</color>\n<color_light_gray>Blocker mutations: None</color>\n<color_light_gray>Skill: spellcraft</color>\n<color_light_gray>Spell Level: 0 (MAX)</color>\n<color_light_gray>Max Level: 0</color>\n<color_light_gray><color_c_magenta>Too Difficult!</color></color>\n<color_light_gray>Difficulty: 0</color>\n<color_light_gray>Current Exp: <color_c_light_green>0</color></color>\n<color_light_gray>to Next Level: <color_c_light_green>4881</color></color>\n\n<color_light_gray><color_c_red>Not Enough Energy</color>: <color_c_light_blue>150</color> bionic power</color>\n<color_light_gray><color_c_light_gray>Casting Time: 100 moves</color></color>\n\n<color_light_gray>Valid Targets: self</color>\n<color_light_gray></color>\n<color_light_gray></color>\n<color_light_gray>Range: 1</color>\n<color_light_gray></color>\n",
+              "denial": "",
+              "hotkey": "g",
+              "enabled": false,
+              "selectable": false,
+              "selected": false,
+              "columns": [
+                {
+                  "key": "spell_level",
+                  "label": "Spell Level",
+                  "value": "0"
+                },
+                {
+                  "key": "failure_chance",
+                  "label": "Failure Chance",
+                  "value": "Too Difficult!"
+                },
+                {
+                  "key": "casting_cost",
+                  "label": "Casting Cost",
+                  "value": "<color_c_light_blue>150</color> bionic power"
+                },
+                {
+                  "key": "casting_time",
+                  "label": "Casting Time",
+                  "value": "100 moves"
+                },
+                {
+                  "key": "range",
+                  "label": "Range",
+                  "value": "1"
+                }
+              ]
+            },
+            {
+              "id": "spell:debug_effect",
+              "label": "Debug enchantment effect spell",
+              "description": "<color_yellow>Classless</color>\n<color_light_gray>Adds an enchantment effect to the target</color>\n<color_light_gray>impeded by gloves, requires mobility, and can be cast through walls</color>\n<color_light_gray>Blocker mutations: None</color>\n<color_light_gray>Skill: spellcraft</color>\n<color_light_gray>Spell Level: 0 (MAX)</color>\n<color_light_gray>Max Level: 0</color>\n<color_light_gray><color_c_magenta>Too Difficult!</color></color>\n<color_light_gray>Difficulty: 1</color>\n<color_light_gray>Current Exp: <color_c_light_green>0</color></color>\n<color_light_gray>to Next Level: <color_c_light_green>4881</color></color>\n\n<color_light_gray>Casting Cost: <color_c_light_blue>150</color> mana (<color_c_light_blue>1000</color> current)</color>\n<color_light_gray><color_c_light_gray>Casting Time: 100 moves</color></color>\n\n<color_light_gray>Valid Targets: ally, hostile and self</color>\n<color_light_gray></color>\n<color_light_gray></color>\n<color_light_gray>Range: 12</color>\n<color_light_gray>Duration: 5 seconds</color>\n",
+              "denial": "",
+              "hotkey": "h",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": [
+                {
+                  "key": "spell_level",
+                  "label": "Spell Level",
+                  "value": "0"
+                },
+                {
+                  "key": "failure_chance",
+                  "label": "Failure Chance",
+                  "value": "Too Difficult!"
+                },
+                {
+                  "key": "casting_cost",
+                  "label": "Casting Cost",
+                  "value": "<color_c_light_blue>150</color> mana"
+                },
+                {
+                  "key": "casting_time",
+                  "label": "Casting Time",
+                  "value": "100 moves"
+                },
+                {
+                  "key": "range",
+                  "label": "Range",
+                  "value": "12"
+                }
+              ]
+            },
+            {
+              "id": "spell:test_area_pull_all",
+              "label": "Test Area Pull",
+              "description": "<color_yellow>Classless</color>\n<color_light_gray>Pulls all objects inside.</color>\n<color_light_gray>impeded by gloves and requires mobility</color>\n<color_light_gray>Blocker mutations: None</color>\n<color_light_gray>Skill: spellcraft</color>\n<color_light_gray>Spell Level: 0 </color>\n<color_light_gray>Max Level: 20</color>\n<color_light_gray><color_c_magenta>Too Difficult!</color></color>\n<color_light_gray>Difficulty: 1</color>\n<color_light_gray>Current Exp: <color_c_light_green>0</color></color>\n<color_light_gray>to Next Level: <color_c_light_green>4881</color></color>\n\n<color_light_gray>Casting Cost: <color_c_light_blue>100</color> mana (<color_c_light_blue>1000</color> current)</color>\n<color_light_gray><color_c_light_gray>Casting Time: 100 moves</color></color>\n\n<color_light_gray>Valid Targets: ally, hostile, self and ground</color>\n<color_light_gray></color>\n<color_light_gray></color>\n<color_light_gray>Range: 5</color>\n<color_light_gray></color>\n",
+              "denial": "",
+              "hotkey": "i",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": [
+                {
+                  "key": "spell_level",
+                  "label": "Spell Level",
+                  "value": "0"
+                },
+                {
+                  "key": "failure_chance",
+                  "label": "Failure Chance",
+                  "value": "Too Difficult!"
+                },
+                {
+                  "key": "casting_cost",
+                  "label": "Casting Cost",
+                  "value": "<color_c_light_blue>100</color> mana"
+                },
+                {
+                  "key": "casting_time",
+                  "label": "Casting Time",
+                  "value": "100 moves"
+                },
+                {
+                  "key": "range",
+                  "label": "Range",
+                  "value": "5"
+                }
+              ]
+            },
+            {
+              "id": "spell:test_area_pull_field",
+              "label": "Test Area Pull (Field)",
+              "description": "<color_yellow>Classless</color>\n<color_light_gray>Pulls field contents tiles inside.</color>\n<color_light_gray>impeded by gloves and requires mobility</color>\n<color_light_gray>Blocker mutations: None</color>\n<color_light_gray>Skill: spellcraft</color>\n<color_light_gray>Spell Level: 0 </color>\n<color_light_gray>Max Level: 20</color>\n<color_light_gray><color_c_magenta>Too Difficult!</color></color>\n<color_light_gray>Difficulty: 1</color>\n<color_light_gray>Current Exp: <color_c_light_green>0</color></color>\n<color_light_gray>to Next Level: <color_c_light_green>4881</color></color>\n\n<color_light_gray>Casting Cost: <color_c_light_blue>100</color> mana (<color_c_light_blue>1000</color> current)</color>\n<color_light_gray><color_c_light_gray>Casting Time: 100 moves</color></color>\n\n<color_light_gray>Valid Targets: ally, hostile, self and ground</color>\n<color_light_gray></color>\n<color_light_gray></color>\n<color_light_gray>Range: 5</color>\n<color_light_gray></color>\n",
+              "denial": "",
+              "hotkey": "j",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": [
+                {
+                  "key": "spell_level",
+                  "label": "Spell Level",
+                  "value": "0"
+                },
+                {
+                  "key": "failure_chance",
+                  "label": "Failure Chance",
+                  "value": "Too Difficult!"
+                },
+                {
+                  "key": "casting_cost",
+                  "label": "Casting Cost",
+                  "value": "<color_c_light_blue>100</color> mana"
+                },
+                {
+                  "key": "casting_time",
+                  "label": "Casting Time",
+                  "value": "100 moves"
+                },
+                {
+                  "key": "range",
+                  "label": "Range",
+                  "value": "5"
+                }
+              ]
+            },
+            {
+              "id": "spell:test_area_push",
+              "label": "Test Area Push",
+              "description": "<color_yellow>Classless</color>\n<color_light_gray>Pushes all objects outside.</color>\n<color_light_gray>impeded by gloves and requires mobility</color>\n<color_light_gray>Blocker mutations: None</color>\n<color_light_gray>Skill: spellcraft</color>\n<color_light_gray>Spell Level: 0 </color>\n<color_light_gray>Max Level: 20</color>\n<color_light_gray><color_c_magenta>Too Difficult!</color></color>\n<color_light_gray>Difficulty: 1</color>\n<color_light_gray>Current Exp: <color_c_light_green>0</color></color>\n<color_light_gray>to Next Level: <color_c_light_green>4881</color></color>\n\n<color_light_gray>Casting Cost: <color_c_light_blue>100</color> mana (<color_c_light_blue>1000</color> current)</color>\n<color_light_gray><color_c_light_gray>Casting Time: 100 moves</color></color>\n\n<color_light_gray>Valid Targets: ally, hostile, self and ground</color>\n<color_light_gray></color>\n<color_light_gray></color>\n<color_light_gray>Range: 5</color>\n<color_light_gray></color>\n",
+              "denial": "",
+              "hotkey": "k",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": [
+                {
+                  "key": "spell_level",
+                  "label": "Spell Level",
+                  "value": "0"
+                },
+                {
+                  "key": "failure_chance",
+                  "label": "Failure Chance",
+                  "value": "Too Difficult!"
+                },
+                {
+                  "key": "casting_cost",
+                  "label": "Casting Cost",
+                  "value": "<color_c_light_blue>100</color> mana"
+                },
+                {
+                  "key": "casting_time",
+                  "label": "Casting Time",
+                  "value": "100 moves"
+                },
+                {
+                  "key": "range",
+                  "label": "Range",
+                  "value": "5"
+                }
+              ]
+            },
+            {
+              "id": "spell:debug_full_protection",
+              "label": "Debug Full Protection",
+              "description": "<color_yellow>Classless</color>\n<color_light_gray>You can not be harmed by anything.</color>\n<color_light_gray>impeded by gloves and requires mobility</color>\n<color_light_gray>Blocker mutations: None</color>\n<color_light_gray>Skill: spellcraft</color>\n<color_light_gray>Spell Level: 0 (MAX)</color>\n<color_light_gray>Max Level: 0</color>\n<color_light_gray><color_c_magenta>Too Difficult!</color></color>\n<color_light_gray>Difficulty: 0</color>\n<color_light_gray>Current Exp: <color_c_light_green>0</color></color>\n<color_light_gray>to Next Level: <color_c_light_green>4881</color></color>\n\n<color_light_gray>Casting Cost: <color_c_light_blue>100</color> mana (<color_c_light_blue>1000</color> current)</color>\n<color_light_gray><color_c_light_gray>Casting Time: 100 moves</color></color>\n\n<color_light_gray>Valid Targets: self</color>\n<color_light_gray></color>\n<color_light_gray></color>\n<color_light_gray>Range: 1</color>\n<color_light_gray>Duration: 16 minutes and 40 seconds</color>\n",
+              "denial": "",
+              "hotkey": "l",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": [
+                {
+                  "key": "spell_level",
+                  "label": "Spell Level",
+                  "value": "0"
+                },
+                {
+                  "key": "failure_chance",
+                  "label": "Failure Chance",
+                  "value": "Too Difficult!"
+                },
+                {
+                  "key": "casting_cost",
+                  "label": "Casting Cost",
+                  "value": "<color_c_light_blue>100</color> mana"
+                },
+                {
+                  "key": "casting_time",
+                  "label": "Casting Time",
+                  "value": "100 moves"
+                },
+                {
+                  "key": "range",
+                  "label": "Range",
+                  "value": "1"
+                }
+              ]
+            },
+            {
+              "id": "spell:debug_fall_protection",
+              "label": "Debug Feather Falling",
+              "description": "<color_yellow>Classless</color>\n<color_light_gray>You  are light as a feather and fall like.</color>\n<color_light_gray>impeded by gloves and requires mobility</color>\n<color_light_gray>Blocker mutations: None</color>\n<color_light_gray>Skill: spellcraft</color>\n<color_light_gray>Spell Level: 0 (MAX)</color>\n<color_light_gray>Max Level: 0</color>\n<color_light_gray><color_c_magenta>Too Difficult!</color></color>\n<color_light_gray>Difficulty: 0</color>\n<color_light_gray>Current Exp: <color_c_light_green>0</color></color>\n<color_light_gray>to Next Level: <color_c_light_green>4881</color></color>\n\n<color_light_gray>Casting Cost: <color_c_light_blue>100</color> mana (<color_c_light_blue>1000</color> current)</color>\n<color_light_gray><color_c_light_gray>Casting Time: 100 moves</color></color>\n\n<color_light_gray>Valid Targets: self</color>\n<color_light_gray></color>\n<color_light_gray></color>\n<color_light_gray>Range: 1</color>\n<color_light_gray>Duration: 4 seconds</color>\n",
+              "denial": "",
+              "hotkey": "m",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": [
+                {
+                  "key": "spell_level",
+                  "label": "Spell Level",
+                  "value": "0"
+                },
+                {
+                  "key": "failure_chance",
+                  "label": "Failure Chance",
+                  "value": "Too Difficult!"
+                },
+                {
+                  "key": "casting_cost",
+                  "label": "Casting Cost",
+                  "value": "<color_c_light_blue>100</color> mana"
+                },
+                {
+                  "key": "casting_time",
+                  "label": "Casting Time",
+                  "value": "100 moves"
+                },
+                {
+                  "key": "range",
+                  "label": "Range",
+                  "value": "1"
+                }
+              ]
+            },
+            {
+              "id": "spell:debug_antirat_cheese",
+              "label": "Debug Anti-rat Cheese Spawning",
+              "description": "<color_yellow>Classless</color>\n<color_light_gray>You summon some cheese, but not if you're a rat.</color>\n<color_light_gray>impeded by gloves and requires mobility</color>\n<color_light_gray>Blocker mutations: Survivor and Rat Claws</color>\n<color_light_gray>Skill: spellcraft</color>\n<color_light_gray>Spell Level: 0 (MAX)</color>\n<color_light_gray>Max Level: 0</color>\n<color_light_gray><color_c_magenta>Too Difficult!</color></color>\n<color_light_gray>Difficulty: 0</color>\n<color_light_gray>Current Exp: <color_c_light_green>0</color></color>\n<color_light_gray>to Next Level: <color_c_light_green>4881</color></color>\n\n<color_light_gray>Casting Cost: <color_c_light_blue>100</color> mana (<color_c_light_blue>1000</color> current)</color>\n<color_light_gray><color_c_light_gray>Casting Time: 100 moves</color></color>\n\n<color_light_gray>Valid Targets: self</color>\n<color_light_gray>Spawn 0 cheese</color>\n<color_light_gray></color>\n<color_light_gray>Range: 1</color>\n<color_light_gray>Duration: 4 seconds</color>\n",
+              "denial": "",
+              "hotkey": "n",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": [
+                {
+                  "key": "spell_level",
+                  "label": "Spell Level",
+                  "value": "0"
+                },
+                {
+                  "key": "failure_chance",
+                  "label": "Failure Chance",
+                  "value": "Too Difficult!"
+                },
+                {
+                  "key": "casting_cost",
+                  "label": "Casting Cost",
+                  "value": "<color_c_light_blue>100</color> mana"
+                },
+                {
+                  "key": "casting_time",
+                  "label": "Casting Time",
+                  "value": "100 moves"
+                },
+                {
+                  "key": "range",
+                  "label": "Range",
+                  "value": "1"
+                }
+              ]
+            },
+            {
+              "id": "spell:debug_brawler_spell",
+              "label": "Debug Brawler-appropriate spell",
+              "description": "<color_yellow>Classless</color>\n<color_light_gray>Brawlers are allowed to spawn a sword.</color>\n<color_light_gray>impeded by gloves, requires mobility, and can be used by Brawlers</color>\n<color_light_gray>Blocker mutations: None</color>\n<color_light_gray>Skill: spellcraft</color>\n<color_light_gray>Spell Level: 0 (MAX)</color>\n<color_light_gray>Max Level: 0</color>\n<color_light_gray><color_c_magenta>Too Difficult!</color></color>\n<color_light_gray>Difficulty: 0</color>\n<color_light_gray>Current Exp: <color_c_light_green>0</color></color>\n<color_light_gray>to Next Level: <color_c_light_green>4881</color></color>\n\n<color_light_gray>Casting Cost: <color_c_light_blue>100</color> mana (<color_c_light_blue>1000</color> current)</color>\n<color_light_gray><color_c_light_gray>Casting Time: 100 moves</color></color>\n\n<color_light_gray>Valid Targets: self</color>\n<color_light_gray>Spawn 0 jian</color>\n<color_light_gray></color>\n<color_light_gray>Range: 1</color>\n<color_light_gray>Duration: 4 seconds</color>\n",
+              "denial": "",
+              "hotkey": "o",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": [
+                {
+                  "key": "spell_level",
+                  "label": "Spell Level",
+                  "value": "0"
+                },
+                {
+                  "key": "failure_chance",
+                  "label": "Failure Chance",
+                  "value": "Too Difficult!"
+                },
+                {
+                  "key": "casting_cost",
+                  "label": "Casting Cost",
+                  "value": "<color_c_light_blue>100</color> mana"
+                },
+                {
+                  "key": "casting_time",
+                  "label": "Casting Time",
+                  "value": "100 moves"
+                },
+                {
+                  "key": "range",
+                  "label": "Range",
+                  "value": "1"
+                }
+              ]
+            },
+            {
+              "id": "spell:debug_longdesc_spell",
+              "label": "Debug Long Message spell",
+              "description": "<color_yellow>Classless</color>\n<color_light_gray>\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nBrawlers are allowed to spawn a sword.</color>\n<color_light_gray>impeded by gloves, requires mobility, and can be used by Brawlers</color>\n<color_light_gray>Blocker mutations: None</color>\n<color_light_gray>Skill: spellcraft</color>\n<color_light_gray>Spell Level: 0 (MAX)</color>\n<color_light_gray>Max Level: 0</color>\n<color_light_gray><color_c_magenta>Too Difficult!</color></color>\n<color_light_gray>Difficulty: 0</color>\n<color_light_gray>Current Exp: <color_c_light_green>0</color></color>\n<color_light_gray>to Next Level: <color_c_light_green>4881</color></color>\n\n<color_light_gray>Casting Cost: <color_c_light_blue>100</color> mana (<color_c_light_blue>1000</color> current)</color>\n<color_light_gray><color_c_light_gray>Casting Time: 100 moves</color></color>\n\n<color_light_gray>Valid Targets: self</color>\n<color_light_gray>Spawn 0 jian</color>\n<color_light_gray></color>\n<color_light_gray>Range: 1</color>\n<color_light_gray>Duration: 4 seconds</color>\n",
+              "denial": "",
+              "hotkey": "p",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": [
+                {
+                  "key": "spell_level",
+                  "label": "Spell Level",
+                  "value": "0"
+                },
+                {
+                  "key": "failure_chance",
+                  "label": "Failure Chance",
+                  "value": "Too Difficult!"
+                },
+                {
+                  "key": "casting_cost",
+                  "label": "Casting Cost",
+                  "value": "<color_c_light_blue>100</color> mana"
+                },
+                {
+                  "key": "casting_time",
+                  "label": "Casting Time",
+                  "value": "100 moves"
+                },
+                {
+                  "key": "range",
+                  "label": "Range",
+                  "value": "1"
+                }
+              ]
+            },
+            {
+              "id": "spell:AEA_ADRENALINE",
+              "label": "Artifact Adrenaline",
+              "description": "<color_yellow>Classless</color>\n<color_light_gray>Causes a surge of adrenaline to flow throughout your body.</color>\n<color_light_gray>impeded by gloves and requires mobility</color>\n<color_light_gray>Blocker mutations: None</color>\n<color_light_gray>Skill: spellcraft</color>\n<color_light_gray>Spell Level: 0 (MAX)</color>\n<color_light_gray>Max Level: 0</color>\n<color_light_gray><color_c_magenta>Too Difficult!</color></color>\n<color_light_gray>Difficulty: 0</color>\n<color_light_gray>Current Exp: <color_c_light_green>0</color></color>\n<color_light_gray>to Next Level: <color_c_light_green>4881</color></color>\n\n<color_light_gray>Casting Cost: none  (infinite current)</color>\n<color_light_gray><color_c_light_gray>Casting Time: 100 moves</color></color>\n\n<color_light_gray>Valid Targets: self</color>\n<color_light_gray></color>\n<color_light_gray></color>\n<color_light_gray>Range: self</color>\n<color_light_gray>Duration: 20 minutes - 25 minutes</color>\n",
+              "denial": "",
+              "hotkey": "q",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": [
+                {
+                  "key": "spell_level",
+                  "label": "Spell Level",
+                  "value": "0"
+                },
+                {
+                  "key": "failure_chance",
+                  "label": "Failure Chance",
+                  "value": "Too Difficult!"
+                },
+                {
+                  "key": "casting_cost",
+                  "label": "Casting Cost",
+                  "value": "none "
+                },
+                {
+                  "key": "casting_time",
+                  "label": "Casting Time",
+                  "value": "100 moves"
+                },
+                {
+                  "key": "range",
+                  "label": "Range",
+                  "value": "self"
+                }
+              ]
+            },
+            {
+              "id": "spell:AEA_BLOOD",
+              "label": "Artifact Blood",
+              "description": "<color_yellow>Classless</color>\n<color_light_gray>Causes blood to leak from nearby terrain.</color>\n<color_light_gray>impeded by gloves and requires mobility</color>\n<color_light_gray>Blocker mutations: None</color>\n<color_light_gray>Skill: spellcraft</color>\n<color_light_gray>Spell Level: 0 (MAX)</color>\n<color_light_gray>Max Level: 0</color>\n<color_light_gray><color_c_magenta>Too Difficult!</color></color>\n<color_light_gray>Difficulty: 0</color>\n<color_light_gray>Current Exp: <color_c_light_green>0</color></color>\n<color_light_gray>to Next Level: <color_c_light_green>4881</color></color>\n\n<color_light_gray>Casting Cost: none  (infinite current)</color>\n<color_light_gray><color_c_light_gray>Casting Time: 100 moves</color></color>\n\n<color_light_gray>Valid Targets: ally, hostile, self and ground</color>\n<color_light_gray></color>\n<color_light_gray>Spell Radius: 4 </color>\n<color_light_gray>Range: self</color>\n<color_light_gray></color>\n",
+              "denial": "",
+              "hotkey": "r",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": [
+                {
+                  "key": "spell_level",
+                  "label": "Spell Level",
+                  "value": "0"
+                },
+                {
+                  "key": "failure_chance",
+                  "label": "Failure Chance",
+                  "value": "Too Difficult!"
+                },
+                {
+                  "key": "casting_cost",
+                  "label": "Casting Cost",
+                  "value": "none "
+                },
+                {
+                  "key": "casting_time",
+                  "label": "Casting Time",
+                  "value": "100 moves"
+                },
+                {
+                  "key": "range",
+                  "label": "Range",
+                  "value": "self"
+                }
+              ]
+            },
+            {
+              "id": "spell:AEA_HEAL",
+              "label": "Artifact Heal",
+              "description": "<color_yellow>Classless</color>\n<color_light_gray>Will heal injuries all over your body.</color>\n<color_light_gray>impeded by gloves and requires mobility</color>\n<color_light_gray>Blocker mutations: None</color>\n<color_light_gray>Skill: spellcraft</color>\n<color_light_gray>Spell Level: 0 (MAX)</color>\n<color_light_gray>Max Level: 0</color>\n<color_light_gray><color_c_magenta>Too Difficult!</color></color>\n<color_light_gray>Difficulty: 0</color>\n<color_light_gray>Current Exp: <color_c_light_green>0</color></color>\n<color_light_gray>to Next Level: <color_c_light_green>4881</color></color>\n\n<color_light_gray>Casting Cost: none  (infinite current)</color>\n<color_light_gray><color_c_light_gray>Casting Time: 100 moves</color></color>\n\n<color_light_gray>Valid Targets: self</color>\n<color_light_gray>Healing: <color_c_light_green>+2</color></color>\n<color_light_gray></color>\n<color_light_gray>Range: self</color>\n<color_light_gray></color>\n",
+              "denial": "",
+              "hotkey": "s",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": [
+                {
+                  "key": "spell_level",
+                  "label": "Spell Level",
+                  "value": "0"
+                },
+                {
+                  "key": "failure_chance",
+                  "label": "Failure Chance",
+                  "value": "Too Difficult!"
+                },
+                {
+                  "key": "casting_cost",
+                  "label": "Casting Cost",
+                  "value": "none "
+                },
+                {
+                  "key": "casting_time",
+                  "label": "Casting Time",
+                  "value": "100 moves"
+                },
+                {
+                  "key": "range",
+                  "label": "Range",
+                  "value": "self"
+                }
+              ]
+            },
+            {
+              "id": "spell:AEA_CONFUSED",
+              "label": "Artifact Confused",
+              "description": "<color_yellow>Classless</color>\n<color_light_gray>Causes nearby enemies to become confused.</color>\n<color_light_gray>impeded by gloves and requires mobility</color>\n<color_light_gray>Blocker mutations: None</color>\n<color_light_gray>Skill: spellcraft</color>\n<color_light_gray>Spell Level: 0 (MAX)</color>\n<color_light_gray>Max Level: 0</color>\n<color_light_gray><color_c_magenta>Too Difficult!</color></color>\n<color_light_gray>Difficulty: 0</color>\n<color_light_gray>Current Exp: <color_c_light_green>0</color></color>\n<color_light_gray>to Next Level: <color_c_light_green>4881</color></color>\n\n<color_light_gray>Casting Cost: none  (infinite current)</color>\n<color_light_gray><color_c_light_gray>Casting Time: 100 moves</color></color>\n\n<color_light_gray>Valid Targets: hostile</color>\n<color_light_gray></color>\n<color_light_gray>Spell Radius: 8 </color>\n<color_light_gray>Range: self</color>\n<color_light_gray>Duration: 5 seconds - 15 seconds</color>\n",
+              "denial": "",
+              "hotkey": "t",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": [
+                {
+                  "key": "spell_level",
+                  "label": "Spell Level",
+                  "value": "0"
+                },
+                {
+                  "key": "failure_chance",
+                  "label": "Failure Chance",
+                  "value": "Too Difficult!"
+                },
+                {
+                  "key": "casting_cost",
+                  "label": "Casting Cost",
+                  "value": "none "
+                },
+                {
+                  "key": "casting_time",
+                  "label": "Casting Time",
+                  "value": "100 moves"
+                },
+                {
+                  "key": "range",
+                  "label": "Range",
+                  "value": "self"
+                }
+              ]
+            },
+            {
+              "id": "spell:AEA_PAIN",
+              "label": "Artifact Pain",
+              "description": "<color_yellow>Classless</color>\n<color_light_gray>Owchie that hurts.</color>\n<color_light_gray>impeded by gloves and requires mobility</color>\n<color_light_gray>Blocker mutations: None</color>\n<color_light_gray>Skill: spellcraft</color>\n<color_light_gray>Spell Level: 0 (MAX)</color>\n<color_light_gray>Max Level: 0</color>\n<color_light_gray><color_c_magenta>Too Difficult!</color></color>\n<color_light_gray>Difficulty: 0</color>\n<color_light_gray>Current Exp: <color_c_light_green>0</color></color>\n<color_light_gray>to Next Level: <color_c_light_green>4881</color></color>\n\n<color_light_gray>Casting Cost: none  (infinite current)</color>\n<color_light_gray><color_c_light_gray>Casting Time: 100 moves</color></color>\n\n<color_light_gray>Valid Targets: self</color>\n<color_light_gray></color>\n<color_light_gray></color>\n<color_light_gray>Range: self</color>\n<color_light_gray></color>\n",
+              "denial": "",
+              "hotkey": "u",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": [
+                {
+                  "key": "spell_level",
+                  "label": "Spell Level",
+                  "value": "0"
+                },
+                {
+                  "key": "failure_chance",
+                  "label": "Failure Chance",
+                  "value": "Too Difficult!"
+                },
+                {
+                  "key": "casting_cost",
+                  "label": "Casting Cost",
+                  "value": "none "
+                },
+                {
+                  "key": "casting_time",
+                  "label": "Casting Time",
+                  "value": "100 moves"
+                },
+                {
+                  "key": "range",
+                  "label": "Range",
+                  "value": "self"
+                }
+              ]
+            }
+          ],
+          "total": 102,
+          "selection": "single",
+          "activate": "bn:choose:list:choices",
+          "filterable": true
+        },
+        "affordances": [
+          {
+            "id": "bn:choose:list:choices",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "list:choices"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:cancel",
+            "label": "Cancel spell selection",
+            "keys": [],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "UP",
+            "label": "Select previous spell",
+            "keys": [
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Select next spell",
+            "keys": [
+              "DOWN",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Previous category",
+            "keys": [
+              "LEFT",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Next category",
+            "keys": [
+              "RIGHT",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_UP",
+            "label": "Fast scroll up",
+            "keys": [
+              "PPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_DOWN",
+            "label": "Fast scroll down",
+            "keys": [
+              "NPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HOME",
+            "label": "Go to first entry",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "END",
+            "label": "Go to last entry",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SCROLL_UP",
+            "label": "Scroll up",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SCROLL_DOWN",
+            "label": "Scroll down",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Cancel spell selection",
+            "keys": [
+              "ESC"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SELECT",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          },
+          {
+            "id": "FILTER",
+            "label": "Filter spells",
+            "keys": [
+              "/"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TOGGLE_FAVORITE",
+            "label": "Toggle favorite",
+            "keys": [
+              "*"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TOGGLE_CASTING_DISTRACTIONS",
+            "label": "Toggle casting distractions",
+            "keys": [
+              "I"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ASSIGN_SPELL_HOTKEY",
+            "label": "Assign spell hotkey",
+            "keys": [
+              "="
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DESC_UP",
+            "label": "Scroll description up",
+            "keys": [
+              "^"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DESC_DOWN",
+            "label": "Scroll description down",
+            "keys": [
+              "V"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "list:choices",
+          "row_id": "spell:poison"
+        },
+        "context": "SPELL_SELECT"
       }
     }
   ],

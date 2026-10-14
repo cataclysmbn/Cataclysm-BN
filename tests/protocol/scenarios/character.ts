@@ -125,6 +125,22 @@ export const character: Scenario = {
       const unknownBionic = await engine.invoke("bionics:pick", { row: "bionic:nothing" })
       assertEquals(unknownBionic.error, "invalid_arguments")
       rec.command("pick of a bionic the list does not hold", unknownBionic)
+      // Reassigning a letter asks for a key in a screen of its own.
+      assertEquals((await engine.invoke("REASSIGN")).stages.at(-1), "completed")
+      assertEquals(
+        (await engine.invoke("bionics:pick", { row: passiveRows[0].id })).stages.at(-1),
+        "completed",
+      )
+      const letter = engine.top()
+      assertEquals(letter.context, "POPUP_WAIT")
+      rec.accept("bionic letter popup", "screen", letter)
+      const setLetter = letter.affordances.find((entry: Value) => entry.id === "bionics:letter:set")
+      assert(setLetter && setLetter.role === "confirm", "the letter is set by a confirm")
+      const noLetter = await engine.invoke(setLetter.id)
+      assertEquals(noLetter.error, "invalid_arguments")
+      rec.command("letter set without a key", noLetter)
+      assertEquals((await engine.invoke("QUIT")).stages.at(-1), "completed")
+      assertEquals(engine.top().context, "BIONICS")
       for (let step = 0; engine.top().role !== "map" && step < 4; step++) {
         await engine.invoke("QUIT")
       }
@@ -169,6 +185,11 @@ export const character: Scenario = {
       const favorite = await engine.invoke("TOGGLE_FAVORITE")
       assertEquals(favorite.stages.at(-1), "completed")
       rec.command("spell favorited", favorite)
+      assert(
+        part(engine.top(), "list:choices").rows.some((row: Value) => row.favorite),
+        "the favorite spell is marked",
+      )
+      rec.accept("spell menu with a spell favorited", "screen", engine.top())
       await toMap(engine)
     }),
 }
