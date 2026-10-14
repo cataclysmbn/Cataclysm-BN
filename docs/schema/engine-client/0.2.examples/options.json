@@ -1,0 +1,3067 @@
+{
+  "valid": [
+    {
+      "name": "options screen",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:2",
+        "role": "screen",
+        "title": "Options",
+        "root": {
+          "id": "options:pages",
+          "kind": "tabs",
+          "affordances": [
+            "options:page"
+          ],
+          "tabs": [
+            {
+              "id": "general",
+              "label": "General",
+              "selected": true,
+              "enabled": true
+            },
+            {
+              "id": "interface",
+              "label": "Interface",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "graphics",
+              "label": "Graphics",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "performance",
+              "label": "Performance",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "world_default",
+              "label": "World Defaults",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "debug",
+              "label": "Debug",
+              "selected": false,
+              "enabled": true
+            }
+          ],
+          "select": "options:page",
+          "child": {
+            "id": "options:body",
+            "kind": "split",
+            "relation": "detail",
+            "active": "options:items",
+            "children": [
+              {
+                "id": "options:items",
+                "kind": "list",
+                "affordances": [
+                  "options:activate",
+                  "options:select"
+                ],
+                "columns": [
+                  {
+                    "key": "value",
+                    "label": "Value"
+                  }
+                ],
+                "rows": [
+                  {
+                    "id": "option:PROMPT_ON_CHARACTER_DEATH",
+                    "label": "Prompt on character death",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": true,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:DEF_CHAR_NAME",
+                    "label": "Default character name",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:DEF_CHAR_GENDER",
+                    "label": "Default character gender",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "Male",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "group:comestible_merging",
+                    "label": "Merge similar comestibles",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [],
+                    "toggled": false
+                  },
+                  {
+                    "id": "option:AUTO_PICKUP",
+                    "label": "Auto pickup enabled",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:AUTO_PICKUP_ADJACENT",
+                    "label": "Auto pickup adjacent",
+                    "description": "",
+                    "denial": "Prerequisite for this option not met!\n(Auto pickup enabled)",
+                    "enabled": false,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_gray"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "option:AUTO_PICKUP_WEIGHT_LIMIT",
+                    "label": "Auto pickup weight limit",
+                    "description": "",
+                    "denial": "Prerequisite for this option not met!\n(Auto pickup enabled)",
+                    "enabled": false,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "0",
+                        "color": "c_light_gray"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "option:AUTO_PICKUP_VOL_LIMIT",
+                    "label": "Auto pickup volume limit",
+                    "description": "",
+                    "denial": "Prerequisite for this option not met!\n(Auto pickup enabled)",
+                    "enabled": false,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "0",
+                        "color": "c_light_gray"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "option:AUTO_PICKUP_SAFEMODE",
+                    "label": "Auto pickup safe mode",
+                    "description": "",
+                    "denial": "Prerequisite for this option not met!\n(Auto pickup enabled)",
+                    "enabled": false,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_gray"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "option:NO_AUTO_PICKUP_ZONES_LIST_ITEMS",
+                    "label": "List items within no auto pickup zones",
+                    "description": "",
+                    "denial": "Prerequisite for this option not met!\n(Auto pickup enabled)",
+                    "enabled": false,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "True",
+                        "color": "c_light_gray"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "option:AUTO_FEATURES",
+                    "label": "Additional auto features",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:AUTO_PULP_BUTCHER",
+                    "label": "Auto pulp or butcher",
+                    "description": "",
+                    "denial": "Prerequisite for this option not met!\n(Additional auto features)",
+                    "enabled": false,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "Disabled",
+                        "color": "c_light_gray"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "option:AUTO_MINING",
+                    "label": "Auto mining",
+                    "description": "",
+                    "denial": "Prerequisite for this option not met!\n(Additional auto features)",
+                    "enabled": false,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_gray"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "option:AUTO_FORAGING",
+                    "label": "Auto foraging",
+                    "description": "",
+                    "denial": "Prerequisite for this option not met!\n(Additional auto features)",
+                    "enabled": false,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "Disabled",
+                        "color": "c_light_gray"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "option:DANGEROUS_PICKUPS",
+                    "label": "Dangerous pickups",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:DANGEROUS_TERRAIN_WARNING_PROMPT",
+                    "label": "Dangerous terrain warning prompt",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "Always",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:SAFEMODE",
+                    "label": "Safe mode",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "True",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:SAFEMODEPROXIMITY",
+                    "label": "Safe mode proximity distance",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "0",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:SAFEMODEVEH",
+                    "label": "Safe mode when driving",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:AUTOSAFEMODE",
+                    "label": "Auto reactivate safe mode",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:AUTOSAFEMODETURNS",
+                    "label": "Turns to auto reactivate safe mode",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "50",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:SAFEMODEIGNORETURNS",
+                    "label": "Turns to remember ignored monsters",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "200",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:QUERY_BEFORE_ATTACKING_NEUTRAL",
+                    "label": "Query before attacking neutral monsters",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "True",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "group:clothing_destruction_popup",
+                    "label": "Clothing destruction popup",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [],
+                    "toggled": false
+                  },
+                  {
+                    "id": "option:TURN_DURATION",
+                    "label": "Realtime turn progression",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "0.00",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:AUTOSAVE",
+                    "label": "Autosave",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:AUTOSAVE_TURNS",
+                    "label": "Game turns between autosaves",
+                    "description": "",
+                    "denial": "Prerequisite for this option not met!\n(Autosave)",
+                    "enabled": false,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "50",
+                        "color": "c_light_gray"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "option:AUTOSAVE_MINUTES",
+                    "label": "Real minutes between autosaves",
+                    "description": "",
+                    "denial": "Prerequisite for this option not met!\n(Autosave)",
+                    "enabled": false,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "5",
+                        "color": "c_light_gray"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "option:AUTO_NOTES",
+                    "label": "Auto notes",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "True",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:AUTO_NOTES_STAIRS",
+                    "label": "Auto notes (stairs)",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:AUTO_NOTES_MAP_EXTRAS",
+                    "label": "Auto notes (map extras)",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "True",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:AUTO_NOTES_DROPPED_FAVORITES",
+                    "label": "Auto notes (dropped favorites)",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "True",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:CIRCLEDIST",
+                    "label": "Circular distances",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "True",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:DROP_EMPTY",
+                    "label": "Drop empty containers",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "No",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:DEATHCAM",
+                    "label": "DeathCam",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "Ask",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:SOUND_ENABLED",
+                    "label": "Sound Enabled",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "True",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:SOUNDPACKS",
+                    "label": "Choose soundpack",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "Basic",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:MUSIC_VOLUME",
+                    "label": "Music volume",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "100",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:SOUND_EFFECT_VOLUME",
+                    "label": "Sound effect volume",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "100",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:AMBIENT_SOUND_VOLUME",
+                    "label": "Ambient sound volume",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "100",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  }
+                ],
+                "total": 40,
+                "selection": "single",
+                "activate": "options:activate"
+              },
+              {
+                "id": "options:detail",
+                "kind": "panel",
+                "title": "Prompt on character death",
+                "child": {
+                  "id": "options:facts",
+                  "kind": "split",
+                  "relation": "peers",
+                  "children": [
+                    {
+                      "id": "options:tooltip",
+                      "kind": "text",
+                      "markup": "If enabled, when your character dies, the player is given a prompt that gives the option to reload the last saved game instead of dying. #Default: False"
+                    },
+                    {
+                      "id": "options:editor",
+                      "kind": "form",
+                      "affordances": [
+                        "options:set"
+                      ],
+                      "fields": [
+                        {
+                          "id": "option:PROMPT_ON_CHARACTER_DEATH",
+                          "label": "Prompt on character death",
+                          "value": "false",
+                          "type": "bool"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        "affordances": [
+          {
+            "id": "options:select",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "role": "select",
+            "args": {
+              "row": {
+                "component_id": "options:items"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "options:activate",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "options:items"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "options:set",
+            "label": "Value",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "options:editor"
+              },
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "options:page",
+            "label": "Options",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "options:pages"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Pan left",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Pan right",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "NEXT_TAB",
+            "label": "Go to next tab",
+            "keys": [
+              "TAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PREV_TAB",
+            "label": "Go to prev tab",
+            "keys": [
+              "BACKTAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "options:items",
+          "row_id": "option:PROMPT_ON_CHARACTER_DEATH"
+        },
+        "context": "OPTIONS"
+      }
+    },
+    {
+      "name": "option picked in the options list, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-1",
+        "expect": {
+          "boundary_id": "boundary:1",
+          "revision": "2"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "options:select",
+          "args": {
+            "row": "option:SAFEMODEPROXIMITY"
+          }
+        }
+      }
+    },
+    {
+      "name": "option picked in the options list, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:1",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "option picked in the options list, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:1",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "option picked in the options list, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:1",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "option picked in the options list, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:1",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-1",
+          "sequence": "3",
+          "revision": "3"
+        }
+      }
+    },
+    {
+      "name": "options screen with the editor of an integer option",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:2",
+        "role": "screen",
+        "title": "Options",
+        "root": {
+          "id": "options:pages",
+          "kind": "tabs",
+          "affordances": [
+            "options:page"
+          ],
+          "tabs": [
+            {
+              "id": "general",
+              "label": "General",
+              "selected": true,
+              "enabled": true
+            },
+            {
+              "id": "interface",
+              "label": "Interface",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "graphics",
+              "label": "Graphics",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "performance",
+              "label": "Performance",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "world_default",
+              "label": "World Defaults",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "debug",
+              "label": "Debug",
+              "selected": false,
+              "enabled": true
+            }
+          ],
+          "select": "options:page",
+          "child": {
+            "id": "options:body",
+            "kind": "split",
+            "relation": "detail",
+            "active": "options:items",
+            "children": [
+              {
+                "id": "options:items",
+                "kind": "list",
+                "affordances": [
+                  "options:activate",
+                  "options:select"
+                ],
+                "columns": [
+                  {
+                    "key": "value",
+                    "label": "Value"
+                  }
+                ],
+                "rows": [
+                  {
+                    "id": "option:PROMPT_ON_CHARACTER_DEATH",
+                    "label": "Prompt on character death",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:DEF_CHAR_NAME",
+                    "label": "Default character name",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:DEF_CHAR_GENDER",
+                    "label": "Default character gender",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "Male",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "group:comestible_merging",
+                    "label": "Merge similar comestibles",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [],
+                    "toggled": false
+                  },
+                  {
+                    "id": "option:AUTO_PICKUP",
+                    "label": "Auto pickup enabled",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:AUTO_PICKUP_ADJACENT",
+                    "label": "Auto pickup adjacent",
+                    "description": "",
+                    "denial": "Prerequisite for this option not met!\n(Auto pickup enabled)",
+                    "enabled": false,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_gray"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "option:AUTO_PICKUP_WEIGHT_LIMIT",
+                    "label": "Auto pickup weight limit",
+                    "description": "",
+                    "denial": "Prerequisite for this option not met!\n(Auto pickup enabled)",
+                    "enabled": false,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "0",
+                        "color": "c_light_gray"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "option:AUTO_PICKUP_VOL_LIMIT",
+                    "label": "Auto pickup volume limit",
+                    "description": "",
+                    "denial": "Prerequisite for this option not met!\n(Auto pickup enabled)",
+                    "enabled": false,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "0",
+                        "color": "c_light_gray"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "option:AUTO_PICKUP_SAFEMODE",
+                    "label": "Auto pickup safe mode",
+                    "description": "",
+                    "denial": "Prerequisite for this option not met!\n(Auto pickup enabled)",
+                    "enabled": false,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_gray"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "option:NO_AUTO_PICKUP_ZONES_LIST_ITEMS",
+                    "label": "List items within no auto pickup zones",
+                    "description": "",
+                    "denial": "Prerequisite for this option not met!\n(Auto pickup enabled)",
+                    "enabled": false,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "True",
+                        "color": "c_light_gray"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "option:AUTO_FEATURES",
+                    "label": "Additional auto features",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:AUTO_PULP_BUTCHER",
+                    "label": "Auto pulp or butcher",
+                    "description": "",
+                    "denial": "Prerequisite for this option not met!\n(Additional auto features)",
+                    "enabled": false,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "Disabled",
+                        "color": "c_light_gray"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "option:AUTO_MINING",
+                    "label": "Auto mining",
+                    "description": "",
+                    "denial": "Prerequisite for this option not met!\n(Additional auto features)",
+                    "enabled": false,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_gray"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "option:AUTO_FORAGING",
+                    "label": "Auto foraging",
+                    "description": "",
+                    "denial": "Prerequisite for this option not met!\n(Additional auto features)",
+                    "enabled": false,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "Disabled",
+                        "color": "c_light_gray"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "option:DANGEROUS_PICKUPS",
+                    "label": "Dangerous pickups",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:DANGEROUS_TERRAIN_WARNING_PROMPT",
+                    "label": "Dangerous terrain warning prompt",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "Always",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:SAFEMODE",
+                    "label": "Safe mode",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "True",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:SAFEMODEPROXIMITY",
+                    "label": "Safe mode proximity distance",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": true,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "0",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:SAFEMODEVEH",
+                    "label": "Safe mode when driving",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:AUTOSAFEMODE",
+                    "label": "Auto reactivate safe mode",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:AUTOSAFEMODETURNS",
+                    "label": "Turns to auto reactivate safe mode",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "50",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:SAFEMODEIGNORETURNS",
+                    "label": "Turns to remember ignored monsters",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "200",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:QUERY_BEFORE_ATTACKING_NEUTRAL",
+                    "label": "Query before attacking neutral monsters",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "True",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "group:clothing_destruction_popup",
+                    "label": "Clothing destruction popup",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [],
+                    "toggled": false
+                  },
+                  {
+                    "id": "option:TURN_DURATION",
+                    "label": "Realtime turn progression",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "0.00",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:AUTOSAVE",
+                    "label": "Autosave",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:AUTOSAVE_TURNS",
+                    "label": "Game turns between autosaves",
+                    "description": "",
+                    "denial": "Prerequisite for this option not met!\n(Autosave)",
+                    "enabled": false,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "50",
+                        "color": "c_light_gray"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "option:AUTOSAVE_MINUTES",
+                    "label": "Real minutes between autosaves",
+                    "description": "",
+                    "denial": "Prerequisite for this option not met!\n(Autosave)",
+                    "enabled": false,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "5",
+                        "color": "c_light_gray"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "option:AUTO_NOTES",
+                    "label": "Auto notes",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "True",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:AUTO_NOTES_STAIRS",
+                    "label": "Auto notes (stairs)",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:AUTO_NOTES_MAP_EXTRAS",
+                    "label": "Auto notes (map extras)",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "True",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:AUTO_NOTES_DROPPED_FAVORITES",
+                    "label": "Auto notes (dropped favorites)",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "True",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:CIRCLEDIST",
+                    "label": "Circular distances",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "True",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:DROP_EMPTY",
+                    "label": "Drop empty containers",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "No",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:DEATHCAM",
+                    "label": "DeathCam",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "Ask",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:SOUND_ENABLED",
+                    "label": "Sound Enabled",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "True",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:SOUNDPACKS",
+                    "label": "Choose soundpack",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "Basic",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:MUSIC_VOLUME",
+                    "label": "Music volume",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "100",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:SOUND_EFFECT_VOLUME",
+                    "label": "Sound effect volume",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "100",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:AMBIENT_SOUND_VOLUME",
+                    "label": "Ambient sound volume",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "100",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  }
+                ],
+                "total": 40,
+                "selection": "single",
+                "activate": "options:activate"
+              },
+              {
+                "id": "options:detail",
+                "kind": "panel",
+                "title": "Safe mode proximity distance",
+                "child": {
+                  "id": "options:facts",
+                  "kind": "split",
+                  "relation": "peers",
+                  "children": [
+                    {
+                      "id": "options:tooltip",
+                      "kind": "text",
+                      "markup": "If safe mode is enabled, distance to hostiles at which safe mode should show a warning.  0 = Max player view distance.  This option only has effect when no safe mode rule is specified.  Otherwise, edit the default rule in Safe Mode Manager instead of this value. #Default: 0 - Min: 0, Max: 60"
+                    },
+                    {
+                      "id": "options:editor",
+                      "kind": "form",
+                      "affordances": [
+                        "options:set"
+                      ],
+                      "fields": [
+                        {
+                          "id": "option:SAFEMODEPROXIMITY",
+                          "label": "Safe mode proximity distance",
+                          "value": "0",
+                          "type": "integer",
+                          "min": 0,
+                          "max": 60
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        "affordances": [
+          {
+            "id": "options:select",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "role": "select",
+            "args": {
+              "row": {
+                "component_id": "options:items"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "options:activate",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "options:items"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "options:set",
+            "label": "Value",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "options:editor"
+              },
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "options:page",
+            "label": "Options",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "options:pages"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Pan left",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Pan right",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "NEXT_TAB",
+            "label": "Go to next tab",
+            "keys": [
+              "TAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PREV_TAB",
+            "label": "Go to prev tab",
+            "keys": [
+              "BACKTAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "options:items",
+          "row_id": "option:SAFEMODEPROXIMITY"
+        },
+        "context": "OPTIONS"
+      }
+    },
+    {
+      "name": "option value set through its editor, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-1",
+        "expect": {
+          "boundary_id": "boundary:2",
+          "revision": "3"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "options:set",
+          "args": {
+            "row": "option:SAFEMODEPROXIMITY",
+            "text": "7"
+          }
+        }
+      }
+    },
+    {
+      "name": "option value set through its editor, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:2",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "option value set through its editor, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:2",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "option value set through its editor, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:2",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "option value set through its editor, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:2",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-1",
+          "sequence": "4",
+          "revision": "4"
+        }
+      }
+    },
+    {
+      "name": "value set for an option that is not under the cursor, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-1",
+        "expect": {
+          "boundary_id": "boundary:3",
+          "revision": "5"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "options:set",
+          "args": {
+            "row": "option:SAFEMODE",
+            "text": "false"
+          }
+        }
+      }
+    },
+    {
+      "name": "value set for an option that is not under the cursor, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:3",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "value set for an option that is not under the cursor, rejected",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:3",
+        "stage": "rejected",
+        "error": "invalid_arguments",
+        "error_text": "That needs other details."
+      }
+    },
+    {
+      "name": "options page picked by its tab, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-1",
+        "expect": {
+          "boundary_id": "boundary:3",
+          "revision": "5"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "options:page",
+          "args": {
+            "row": "debug"
+          }
+        }
+      }
+    },
+    {
+      "name": "options page picked by its tab, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:4",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "options page picked by its tab, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:4",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "options page picked by its tab, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:4",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "options page picked by its tab, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:4",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-1",
+          "sequence": "6",
+          "revision": "6"
+        }
+      }
+    },
+    {
+      "name": "options group folded open, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-1",
+        "expect": {
+          "boundary_id": "boundary:4",
+          "revision": "6"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "options:activate",
+          "args": {
+            "row": "group:debug_log"
+          }
+        }
+      }
+    },
+    {
+      "name": "options group folded open, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:5",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "options group folded open, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:5",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "options group folded open, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:5",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "options group folded open, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:5",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-1",
+          "sequence": "7",
+          "revision": "7"
+        }
+      }
+    },
+    {
+      "name": "options screen on a page with an open group",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:2",
+        "role": "screen",
+        "title": "Options",
+        "root": {
+          "id": "options:pages",
+          "kind": "tabs",
+          "affordances": [
+            "options:page"
+          ],
+          "tabs": [
+            {
+              "id": "general",
+              "label": "General",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "interface",
+              "label": "Interface",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "graphics",
+              "label": "Graphics",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "performance",
+              "label": "Performance",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "world_default",
+              "label": "World Defaults",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "debug",
+              "label": "Debug",
+              "selected": true,
+              "enabled": true
+            }
+          ],
+          "select": "options:page",
+          "child": {
+            "id": "options:body",
+            "kind": "split",
+            "relation": "detail",
+            "active": "options:items",
+            "children": [
+              {
+                "id": "options:items",
+                "kind": "list",
+                "affordances": [
+                  "options:activate",
+                  "options:select"
+                ],
+                "columns": [
+                  {
+                    "key": "value",
+                    "label": "Value"
+                  }
+                ],
+                "rows": [
+                  {
+                    "id": "option:STRICT_JSON_CHECKS",
+                    "label": "Strict JSON checks",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "True",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:MIGRATION_CHECKS",
+                    "label": "Migration checks",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:FORCE_TILESET_RELOAD",
+                    "label": "Force tileset reload",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:MOD_SOURCE",
+                    "label": "Display Mod Source",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "True",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:SHOW_IDS",
+                    "label": "Display Object IDs",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:LOG_ACTIVITY_SKIP_STATE",
+                    "label": "Log Reason for No Activity Skip State",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "group:debug_log",
+                    "label": "Logging",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": true,
+                    "columns": [],
+                    "toggled": true
+                  },
+                  {
+                    "id": "option:DEBUGLOG_LEV_DEBUG",
+                    "label": "Debug",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ],
+                    "parent_id": "group:debug_log"
+                  },
+                  {
+                    "id": "option:DEBUGLOG_LEV_INFO",
+                    "label": "Info",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "True",
+                        "color": "c_light_green"
+                      }
+                    ],
+                    "parent_id": "group:debug_log"
+                  },
+                  {
+                    "id": "option:DEBUGLOG_LEV_WARNING",
+                    "label": "Warning",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "True",
+                        "color": "c_light_green"
+                      }
+                    ],
+                    "parent_id": "group:debug_log"
+                  },
+                  {
+                    "id": "option:DEBUGLOG_CL_GAME",
+                    "label": "Game",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ],
+                    "parent_id": "group:debug_log"
+                  },
+                  {
+                    "id": "option:DEBUGLOG_CL_DEBUGMODE",
+                    "label": "Debug mode",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ],
+                    "parent_id": "group:debug_log"
+                  },
+                  {
+                    "id": "option:DEBUGLOG_CL_MAIN",
+                    "label": "Main",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "True",
+                        "color": "c_light_green"
+                      }
+                    ],
+                    "parent_id": "group:debug_log"
+                  },
+                  {
+                    "id": "option:DEBUGLOG_CL_MAP",
+                    "label": "Map",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ],
+                    "parent_id": "group:debug_log"
+                  },
+                  {
+                    "id": "option:DEBUGLOG_CL_MAPGEN",
+                    "label": "Mapgen",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ],
+                    "parent_id": "group:debug_log"
+                  },
+                  {
+                    "id": "option:DEBUGLOG_CL_MAPMEM",
+                    "label": "Map memory",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ],
+                    "parent_id": "group:debug_log"
+                  },
+                  {
+                    "id": "option:DEBUGLOG_CL_NPC",
+                    "label": "NPC",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ],
+                    "parent_id": "group:debug_log"
+                  },
+                  {
+                    "id": "option:DEBUGLOG_CL_SDL",
+                    "label": "SDL",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ],
+                    "parent_id": "group:debug_log"
+                  },
+                  {
+                    "id": "option:DEBUGLOG_CL_LUA",
+                    "label": "Lua",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "True",
+                        "color": "c_light_green"
+                      }
+                    ],
+                    "parent_id": "group:debug_log"
+                  },
+                  {
+                    "id": "option:DISTANCE_INITIAL_VISIBILITY",
+                    "label": "Distance initial visibility",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "15",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:INITIAL_STAT_POINTS",
+                    "label": "Initial stat points",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "6",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:INITIAL_TRAIT_POINTS",
+                    "label": "Initial trait points",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "0",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:INITIAL_SKILL_POINTS",
+                    "label": "Initial skill points",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "2",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:MAX_TRAIT_POINTS",
+                    "label": "Maximum trait points",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "12",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:SKILL_TRAINING_SPEED",
+                    "label": "Skill training speed",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "1.00",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:SKILL_RUST",
+                    "label": "Skill rust",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "Off",
+                        "color": "c_light_red"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:PICKUP_RANGE",
+                    "label": "Crafting range",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "6",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:ENABLE_EVENTS",
+                    "label": "Event bus system",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "True",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:ELECTRIC_GRID",
+                    "label": "Electric grid testing",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "True",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:MADE_OF_EXPLODIUM",
+                    "label": "Made of explodium",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "30",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:ITEM_DAMAGE_ON_FLYING_IMPACT",
+                    "label": "Item damage on flying impact",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "True",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:OLD_EXPLOSIONS",
+                    "label": "Old explosions system",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:CHRONIC_PAIN",
+                    "label": "Chronic pain",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:LIMITED_BAYONETS",
+                    "label": "New bayonet system",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:NEW_ARMOR_CALCULATION",
+                    "label": "New armor damage calculation",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "True",
+                        "color": "c_light_green"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:USE_LEGACY_PATHFINDING",
+                    "label": "Use legacy pathfinding",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "option:PATHFINDING_MAX_DIST",
+                    "label": "Legacy Pathfinder Distance Cap",
+                    "description": "",
+                    "denial": "Prerequisite for this option not met!\n(Use legacy pathfinding)",
+                    "enabled": false,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "96",
+                        "color": "c_light_gray"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  }
+                ],
+                "total": 37,
+                "selection": "single",
+                "activate": "options:activate"
+              },
+              {
+                "id": "options:detail",
+                "kind": "panel",
+                "title": "Logging",
+                "child": {
+                  "id": "options:facts",
+                  "kind": "split",
+                  "relation": "peers",
+                  "children": [
+                    {
+                      "id": "options:tooltip",
+                      "kind": "text",
+                      "markup": "Configure debug.log verbosity."
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        "affordances": [
+          {
+            "id": "options:select",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "role": "select",
+            "args": {
+              "row": {
+                "component_id": "options:items"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "options:activate",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "options:items"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "options:set",
+            "label": "Value",
+            "keys": [],
+            "enabled": false,
+            "args": {
+              "row": {
+                "component_id": "options:editor"
+              },
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "options:page",
+            "label": "Options",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "options:pages"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Pan left",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Pan right",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "NEXT_TAB",
+            "label": "Go to next tab",
+            "keys": [
+              "TAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PREV_TAB",
+            "label": "Go to prev tab",
+            "keys": [
+              "BACKTAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "options:items",
+          "row_id": "group:debug_log"
+        },
+        "context": "OPTIONS"
+      }
+    }
+  ],
+  "invalid": []
+}

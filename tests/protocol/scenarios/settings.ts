@@ -70,7 +70,7 @@ export const options: Scenario = {
 
       // Leaving with a change asks to save it; the answer is No, so nothing reaches the profile.
       assertEquals((await engine.invoke("QUIT")).stages.at(-1), "completed")
-      assertEquals((await engine.choose("choice:no")).stages.at(-1), "completed")
+      assertEquals((await engine.choose("option:1")).stages.at(-1), "completed")
       await engine.acknowledge(() => engine.top().role !== "dialog")
     }),
 }
@@ -109,7 +109,7 @@ export const keybindings: Scenario = {
       rec.command("keybindings row that the list does not hold", unknown)
       // The mode is left as it was found; the screen is left the way the native one is.
       assertEquals((await engine.invoke("QUIT")).stages.at(-1), "completed")
-      assertEquals(part(engine, "keybindings:window").stats, [])
+      assertEquals(part(engine, "keybindings:window").stats ?? [], [])
       assertEquals((await engine.invoke("QUIT")).stages.at(-1), "completed")
       await engine.acknowledge(() => engine.top().role !== "dialog")
     }),

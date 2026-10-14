@@ -1,0 +1,3915 @@
+{
+  "valid": [
+    {
+      "name": "keybindings screen",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:2",
+        "role": "dialog",
+        "title": "Keybindings",
+        "root": {
+          "id": "keybindings:window",
+          "kind": "panel",
+          "title": "Keybindings",
+          "child": {
+            "id": "keybindings:body",
+            "kind": "split",
+            "relation": "detail",
+            "active": "keybindings:actions",
+            "children": [
+              {
+                "id": "keybindings:legend",
+                "kind": "text",
+                "markup": "<color_c_light_red>Unbound keys</color>\n<color_c_light_green>Keybinding active only on this screen</color>\n<color_c_light_gray>Keybinding active globally</color>\nPress - to remove keybinding\nPress + to add local keybinding\nPress = to add global keybinding\n"
+              },
+              {
+                "id": "keybindings:actions",
+                "kind": "list",
+                "affordances": [
+                  "keybindings:pick",
+                  "keybindings:select",
+                  "keybindings:filter"
+                ],
+                "columns": [
+                  {
+                    "key": "keys",
+                    "label": "Keys"
+                  },
+                  {
+                    "key": "scope",
+                    "label": "Scope"
+                  }
+                ],
+                "rows": [
+                  {
+                    "id": "action:UP",
+                    "label": "Move North",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": true,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "k, 8, UP or NUMPAD_8"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Global"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "action:RIGHTUP",
+                    "label": "Move Northeast",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "u, 9 or NUMPAD_9"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Global"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "action:RIGHT",
+                    "label": "Move East",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "l, RIGHT, 6 or NUMPAD_6"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Global"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "action:RIGHTDOWN",
+                    "label": "Move Southeast",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "n, 3 or NUMPAD_3"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Global"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "action:DOWN",
+                    "label": "Move South",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "j, DOWN, 2 or NUMPAD_2"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Global"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "action:LEFTDOWN",
+                    "label": "Move Southwest",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "b, 1 or NUMPAD_1"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Global"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "action:LEFT",
+                    "label": "Move West",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "h, LEFT, 4 or NUMPAD_4"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Global"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "action:LEFTUP",
+                    "label": "Move Northwest",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "y, 7 or NUMPAD_7"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Global"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "action:pause",
+                    "label": "Pause",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "., 5 or NUMPAD_5"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:LEVEL_DOWN",
+                    "label": "Descend Stairs",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "NPAGE or >"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Global"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "action:LEVEL_UP",
+                    "label": "Ascend Stairs",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "PPAGE or <"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Global"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "action:toggle_map_memory",
+                    "label": "Toggle Map Memory",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:center",
+                    "label": "Center View",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": ":"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:shift_n",
+                    "label": "Move View North",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "K"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:shift_ne",
+                    "label": "Move View Northeast",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:shift_e",
+                    "label": "Move View East",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "L"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:shift_se",
+                    "label": "Move View Southeast",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:shift_s",
+                    "label": "Move View South",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "J"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:shift_sw",
+                    "label": "Move View Southwest",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:shift_w",
+                    "label": "Move View West",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "H"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:shift_nw",
+                    "label": "Move View Northwest",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:cycle_move",
+                    "label": "Cycle move mode (run/walk/crouch)",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:reset_move",
+                    "label": "Reset Movement to Walk",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:toggle_run",
+                    "label": "Toggle Run",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:toggle_crouch",
+                    "label": "Toggle Crouch",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:toggle_prone",
+                    "label": "Toggle Prone",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:open_movement",
+                    "label": "Movement Mode Menu",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "\""
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:open",
+                    "label": "Open Door",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "o"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:close",
+                    "label": "Close Door",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "c"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:smash",
+                    "label": "Smash Nearby Terrain",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "s"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:loot",
+                    "label": "Zone activities",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "O"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:examine",
+                    "label": "Examine Nearby Terrain",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "e"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:jump",
+                    "label": "Jump across an adjacent tile",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "SPACE"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:advinv",
+                    "label": "Advanced Inventory management",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "/"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:pickup",
+                    "label": "Pick up items from one nearby tile",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "g"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:pickup_all",
+                    "label": "Pick up items from all nearby tiles",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": ","
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:pickup_feet",
+                    "label": "Pickup Item(s) at Player Feet",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:grab",
+                    "label": "Grab something nearby",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "G"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:haul",
+                    "label": "Haul items along the ground",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "\\"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:butcher",
+                    "label": "Butcher",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "B"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:chat",
+                    "label": "Chat with NPC",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "C"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:look",
+                    "label": "Look Around",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "; or x"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:peek",
+                    "label": "Peek Around Corners",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "X"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:listitems",
+                    "label": "List all items around the player",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "V"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:zones",
+                    "label": "Manage zones",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Y"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:inventory",
+                    "label": "Open Inventory",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "i"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:compare",
+                    "label": "Compare two Items",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "I"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:organize",
+                    "label": "Swap Inventory Letters",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "="
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:apply",
+                    "label": "Apply or Use Item",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "a"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:apply_wielded",
+                    "label": "Apply or Use Wielded Item",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "A"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:wear",
+                    "label": "Wear Item",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "W"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:take_off",
+                    "label": "Take Off Worn Item",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "T"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:eat",
+                    "label": "Eat",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "E"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:open_consume",
+                    "label": "Consume Item Menu",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:read",
+                    "label": "Read",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "R"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:wield",
+                    "label": "Wield",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "w"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:pick_style",
+                    "label": "Select Martial Arts Style",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "_"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:reload_item",
+                    "label": "Reload Item",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "r"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:reload_weapon",
+                    "label": "Reload Weapons",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:reload_wielded",
+                    "label": "Reload Wielded Item",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:unload",
+                    "label": "Unload or Empty Wielded Item",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "U"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:unload_all",
+                    "label": "Unload All Items",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:throw",
+                    "label": "Throw Item",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "t"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:fire",
+                    "label": "Fire Wielded Item",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "f"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:cast_spell",
+                    "label": "Spellcasting",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "]"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:cast_last_spell",
+                    "label": "Cast Last Spell",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:fire_burst",
+                    "label": "Burst-Fire Wielded Item",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:select_fire_mode",
+                    "label": "Toggle attack mode of Wielded Item",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "F"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:select_default_ammo",
+                    "label": "Select default ammo for Wielded Item",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "{"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:drop",
+                    "label": "Drop Item",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "d"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:drop_adj",
+                    "label": "Drop Item to Adjacent Tile",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "D"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:bionics",
+                    "label": "View/Activate Bionics",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "p"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:mutations",
+                    "label": "View/Activate Mutations",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "["
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:sort_armor",
+                    "label": "Re-layer armor/clothing",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "+"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:wait",
+                    "label": "Wait for Several Minutes",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "|"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:craft",
+                    "label": "Craft Items",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "&"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:recraft",
+                    "label": "Recraft last recipe",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "-"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:long_craft",
+                    "label": "Craft as long as possible",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:construct",
+                    "label": "Construct Terrain",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "*"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:disassemble",
+                    "label": "Disassemble items",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "("
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:salvage",
+                    "label": "Salvage items",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:sleep",
+                    "label": "Sleep",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "$"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:control_vehicle",
+                    "label": "Control Vehicle",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "^"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:auto_travel_mode",
+                    "label": "Toggle Auto Travel Mode",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "CTRL+M"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:safemode",
+                    "label": "Toggle Safe Mode",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:autosafe",
+                    "label": "Toggle Auto-Safemode",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:autoattack",
+                    "label": "Autoattack",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "TAB"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:toggle_manual_combat_mode",
+                    "label": "Toggle manual combat mode",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "BACKTAB"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:ignore_enemy",
+                    "label": "Ignore Nearby Enemy",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "'"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:whitelist_enemy",
+                    "label": "Whitelist enemy",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "~"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:save",
+                    "label": "Save and Quit",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "S"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:quicksave",
+                    "label": "Quicksave",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:quickload",
+                    "label": "Quickload",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:SUICIDE",
+                    "label": "Commit Suicide",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:player_data",
+                    "label": "View Player Info",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "@"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:map",
+                    "label": "View Map",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "m"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:sky",
+                    "label": "Look at the sky",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:missions",
+                    "label": "View Missions",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "M"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:factions",
+                    "label": "View Factions",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "#"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:scores",
+                    "label": "View Achievements, Scores, and Kills",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": ")"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:morale",
+                    "label": "View Morale",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "v"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:messages",
+                    "label": "View Message Log",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "P"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:help",
+                    "label": "View Help",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "0"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:HELP_KEYBINDINGS",
+                    "label": "Display keybindings menu",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "?"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Global"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "action:open_options",
+                    "label": "Options",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:open_autopickup",
+                    "label": "Autopickup manager",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:open_autonotes",
+                    "label": "Autonotes manager",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:open_safemode",
+                    "label": "Safe Mode manager",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:open_distraction_manager",
+                    "label": "Distractions manager",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:open_color",
+                    "label": "Color manager",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:open_world_mods",
+                    "label": "Active World Mods",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:debug",
+                    "label": "Debug Menu",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "F12"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:lua_console",
+                    "label": "Lua Console",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "`"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:lua_reload",
+                    "label": "Reload Lua Code",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:open_wiki",
+                    "label": "Open Wiki",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "w"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:open_hhg",
+                    "label": "Open Hitchhiker's Guide",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "h"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:debug_scent",
+                    "label": "View Scentmap",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:debug_scent_type",
+                    "label": "View Scent Type",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:debug_temp",
+                    "label": "View Temperature Map",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:debug_visibility",
+                    "label": "View Visibility Map",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:debug_lighting",
+                    "label": "View Lighting Map",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:debug_radiation",
+                    "label": "View Radiation Map",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:debug_outside",
+                    "label": "debug_outside",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound globally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:debug_submap_grid",
+                    "label": "View Submap Grid",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:debug_sound_absorption",
+                    "label": "debug_sound_absorption",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound globally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:debug_sound_walls",
+                    "label": "debug_sound_walls",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound globally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:debug_hour_timer",
+                    "label": "debug_hour_timer",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound globally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:debug_mode",
+                    "label": "Toggle Debug Mode",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:zoom_out",
+                    "label": "Zoom Out",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Z"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Global"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "action:zoom_in",
+                    "label": "Zoom In",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "z"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Global"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "action:toggle_fullscreen",
+                    "label": "Toggle Fullscreen mode",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:toggle_panel_adm",
+                    "label": "Sidebar Options",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "}"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:reload_tileset",
+                    "label": "Reload Tileset",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:toggle_auto_features",
+                    "label": "Toggle Auto Features",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:toggle_auto_pulp_butcher",
+                    "label": "Toggle Auto Pulp/Butcher",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:toggle_auto_mining",
+                    "label": "Toggle Auto Mining",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:toggle_auto_foraging",
+                    "label": "Toggle Auto Foraging",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:toggle_auto_pickup",
+                    "label": "Toggle Auto Pickup",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:toggle_thief_mode",
+                    "label": "Toggle thief mode",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
+                    "id": "action:diary",
+                    "label": "Open Diary",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "HOME"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:action_menu",
+                    "label": "Action Menu",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "RETURN"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:main_menu",
+                    "label": "Main Menu",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "ESC"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:item_action_menu",
+                    "label": "Item Action Menu",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "%"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Local"
+                      }
+                    ],
+                    "color": "c_light_green"
+                  },
+                  {
+                    "id": "action:MOUSE_MOVE",
+                    "label": "Mouse Move",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "MOUSE_MOVE"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Global"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "action:SELECT",
+                    "label": "Select",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "MOUSE_LEFT"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Global"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  },
+                  {
+                    "id": "action:SEC_SELECT",
+                    "label": "Secondary Select",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "MOUSE_RIGHT"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Global"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  }
+                ],
+                "total": 146,
+                "selection": "single",
+                "activate": "keybindings:pick",
+                "filterable": true
+              }
+            ]
+          }
+        },
+        "affordances": [
+          {
+            "id": "keybindings:select",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "role": "select",
+            "args": {
+              "row": {
+                "component_id": "keybindings:actions"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "keybindings:pick",
+            "label": "Select",
+            "keys": [],
+            "enabled": false,
+            "args": {
+              "row": {
+                "component_id": "keybindings:actions"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "keybindings:filter",
+            "label": "Filter",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Scroll up",
+            "keys": [
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Scroll down",
+            "keys": [
+              "DOWN",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_DOWN",
+            "label": "Page down",
+            "keys": [
+              "NPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_UP",
+            "label": "Page up",
+            "keys": [
+              "PPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "REMOVE",
+            "label": "Remove bindings",
+            "keys": [
+              "-"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ADD_LOCAL",
+            "label": "Add local keybinding",
+            "keys": [
+              "+"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ADD_GLOBAL",
+            "label": "Add global keybinding",
+            "keys": [
+              "="
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit this keybinding screen",
+            "keys": [
+              "ESC"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.LEFT",
+            "label": "Move cursor left",
+            "keys": [
+              "LEFT"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.RIGHT",
+            "label": "Move cursor right",
+            "keys": [
+              "RIGHT"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.CLEAR",
+            "label": "Clear text",
+            "keys": [
+              "CTRL+U"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.BACKSPACE",
+            "label": "Remove previous character",
+            "keys": [
+              "BACKSPACE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.HOME",
+            "label": "Move cursor to start",
+            "keys": [
+              "HOME"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.END",
+            "label": "Move cursor to end",
+            "keys": [
+              "END"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.DELETE",
+            "label": "Remove current character",
+            "keys": [
+              "DELETE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.INPUT_FROM_FILE",
+            "label": "Input text from file",
+            "keys": [
+              "F2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "keybindings:actions",
+          "row_id": "action:UP"
+        },
+        "context": "HELP_KEYBINDINGS"
+      }
+    },
+    {
+      "name": "pick affordance of the keybindings screen outside a mode",
+      "def": "affordance",
+      "value": {
+        "id": "keybindings:pick",
+        "label": "Select",
+        "keys": [],
+        "enabled": false,
+        "args": {
+          "row": {
+            "component_id": "keybindings:actions"
+          }
+        },
+        "expect": "boundary"
+      }
+    },
+    {
+      "name": "keybindings filtered by text, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-1",
+        "expect": {
+          "boundary_id": "boundary:1",
+          "revision": "2"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "keybindings:filter",
+          "args": {
+            "text": "Move East"
+          }
+        }
+      }
+    },
+    {
+      "name": "keybindings filtered by text, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:1",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "keybindings filtered by text, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:1",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "keybindings filtered by text, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:1",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "keybindings filtered by text, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:1",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-1",
+          "sequence": "3",
+          "revision": "3"
+        }
+      }
+    },
+    {
+      "name": "keybindings mode chosen, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-1",
+        "expect": {
+          "screen_id": "screen:2"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "REMOVE"
+        }
+      }
+    },
+    {
+      "name": "keybindings mode chosen, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:2",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "keybindings mode chosen, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:2",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "keybindings mode chosen, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:2",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "keybindings mode chosen, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:2",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-1",
+          "sequence": "4",
+          "revision": "4"
+        }
+      }
+    },
+    {
+      "name": "keybindings screen in the remove mode",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:2",
+        "role": "dialog",
+        "title": "Keybindings",
+        "root": {
+          "id": "keybindings:window",
+          "kind": "panel",
+          "title": "Keybindings",
+          "stats": [
+            {
+              "key": "mode",
+              "label": "Mode",
+              "value": "Remove bindings"
+            }
+          ],
+          "filter": "Move East",
+          "child": {
+            "id": "keybindings:body",
+            "kind": "split",
+            "relation": "detail",
+            "active": "keybindings:actions",
+            "children": [
+              {
+                "id": "keybindings:legend",
+                "kind": "text",
+                "markup": "<color_c_light_red>Unbound keys</color>\n<color_c_light_green>Keybinding active only on this screen</color>\n<color_c_light_gray>Keybinding active globally</color>\nPress - to remove keybinding\nPress + to add local keybinding\nPress = to add global keybinding\n"
+              },
+              {
+                "id": "keybindings:actions",
+                "kind": "list",
+                "affordances": [
+                  "keybindings:pick",
+                  "keybindings:select",
+                  "keybindings:filter"
+                ],
+                "columns": [
+                  {
+                    "key": "keys",
+                    "label": "Keys"
+                  },
+                  {
+                    "key": "scope",
+                    "label": "Scope"
+                  }
+                ],
+                "rows": [
+                  {
+                    "id": "action:RIGHT",
+                    "label": "Move East",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": true,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "l, RIGHT, 6 or NUMPAD_6"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Global"
+                      }
+                    ],
+                    "color": "c_light_gray"
+                  }
+                ],
+                "total": 1,
+                "selection": "single",
+                "activate": "keybindings:pick",
+                "filterable": true
+              }
+            ]
+          }
+        },
+        "affordances": [
+          {
+            "id": "keybindings:select",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "role": "select",
+            "args": {
+              "row": {
+                "component_id": "keybindings:actions"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "keybindings:pick",
+            "label": "Remove bindings",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "keybindings:actions"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "keybindings:filter",
+            "label": "Filter",
+            "keys": [],
+            "enabled": false,
+            "args": {
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Scroll up",
+            "keys": [
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Scroll down",
+            "keys": [
+              "DOWN",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_DOWN",
+            "label": "Page down",
+            "keys": [
+              "NPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_UP",
+            "label": "Page up",
+            "keys": [
+              "PPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "REMOVE",
+            "label": "Remove bindings",
+            "keys": [
+              "-"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ADD_LOCAL",
+            "label": "Add local keybinding",
+            "keys": [
+              "+"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ADD_GLOBAL",
+            "label": "Add global keybinding",
+            "keys": [
+              "="
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit this keybinding screen",
+            "keys": [
+              "ESC"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.LEFT",
+            "label": "Move cursor left",
+            "keys": [
+              "LEFT"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.RIGHT",
+            "label": "Move cursor right",
+            "keys": [
+              "RIGHT"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.CLEAR",
+            "label": "Clear text",
+            "keys": [
+              "CTRL+U"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.BACKSPACE",
+            "label": "Remove previous character",
+            "keys": [
+              "BACKSPACE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.HOME",
+            "label": "Move cursor to start",
+            "keys": [
+              "HOME"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.END",
+            "label": "Move cursor to end",
+            "keys": [
+              "END"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.DELETE",
+            "label": "Remove current character",
+            "keys": [
+              "DELETE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.INPUT_FROM_FILE",
+            "label": "Input text from file",
+            "keys": [
+              "F2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "keybindings:actions",
+          "row_id": "action:RIGHT"
+        },
+        "context": "HELP_KEYBINDINGS"
+      }
+    },
+    {
+      "name": "keybindings row that the list does not hold, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-1",
+        "expect": {
+          "boundary_id": "boundary:2",
+          "revision": "4"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "keybindings:pick",
+          "args": {
+            "row": "action:NOTHING"
+          }
+        }
+      }
+    },
+    {
+      "name": "keybindings row that the list does not hold, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:3",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "keybindings row that the list does not hold, rejected",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:3",
+        "stage": "rejected",
+        "error": "invalid_arguments",
+        "error_text": "That needs other details."
+      }
+    }
+  ],
+  "invalid": []
+}

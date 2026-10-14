@@ -182,7 +182,7 @@
       "value": {
         "epoch": "epoch-2",
         "expect": {
-          "screen_id": "screen:8"
+          "screen_id": "screen:9"
         },
         "operation": {
           "kind": "invoke",
