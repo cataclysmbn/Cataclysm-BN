@@ -1081,12 +1081,15 @@ auto starter_cost( const std::string &name, const int cost ) -> std::string
 constexpr auto tabs_id = "newchar:tabs";
 constexpr auto select_tab_id = "newchar:tab";
 
-/// The affordance that picks a row of the list `list` on the tab `tab`.
-auto pick_id( const std::string &tab ) -> std::string { return "newchar:" + tab + ":pick"; }
-auto pick_affordance( const std::string &tab, const std::string &list ) -> ec::affordance
-{
-    return ec::invoke_affordance( { .id = pick_id( tab ), .label = _( "Select" ),
-                                    .args = { .row = ec::row_shape{ .component_id = list } }, .role = "select" } );
+/// The affordance that picks a row of the list `list` on the tab `tab`, or of its page `page`.
+auto pick_id( const std::string &tab, const std::string &page = {} ) -> std::string {
+    return "newchar:" + tab + ( page.empty() ? "" : ":" + page ) + ":pick";
+}
+auto pick_affordance( const std::string &tab, const std::string &list, const std::string &page = {} )
+-> ec::affordance {
+    return ec::invoke_affordance( {
+        .id = pick_id( tab, page ), .label = _( "Select" ),
+        .args = { .row = ec::row_shape{ .component_id = list } }, .role = "select" } );
 }
 
 auto newchar_column( const std::string &key, const std::string &label,
@@ -1171,7 +1174,7 @@ auto starter_pages_view( starter_pages_options options ) -> ec::screen_view
     for( auto page = 0; page < options.used_pages; ++page ) {
         pages.push_back( ec::panel( { .id = prefix + names[page], .title = titles[page],
                                       .child = ec::list( { .id = prefix + names[page] + ":rows", .rows = std::move( options.pages[page] ),
-                                               .selection = "single", .activate = pick_id( options.tab ) } ) } ) );
+                                               .selection = "single", .activate = pick_id( options.tab, names[page] ) } ) } ) );
     }
     auto notes = std::vector<ec::panel_stat> {};
     if( !options.pools.empty() ) { notes.push_back( note_of( "pools", options.pools ) ); }
@@ -1179,7 +1182,10 @@ auto starter_pages_view( starter_pages_options options ) -> ec::screen_view
     return newchar_view( {
         .tab = options.tab, .prof = options.prof, .points = options.points, .notes = std::move( notes ),
         .parts = ec::children_of( ec::split( { .id = prefix + "pages", .active = prefix + names[options.page], .children = std::move( pages ) } ) ),
-        .affordances = { pick_affordance( options.tab, prefix + "pages" ) },
+        .affordances = names | std::views::take( options.used_pages ) | std::views::transform( [&]( const auto & page )
+        {
+            return pick_affordance( options.tab, prefix + page + ":rows", page );
+        } ) | std::ranges::to<std::vector>(),
         .focus_component = prefix + names[options.page] + ":rows", .focus_row = focus_row,
     } );
 }

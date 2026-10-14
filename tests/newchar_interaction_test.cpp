@@ -107,8 +107,9 @@ auto invoke(const std::string& affordance, game_client::interaction_arguments ar
     return event;
 }
 auto go_to(const std::string& tab) -> input_event { return invoke("newchar:tab", {.row = tab}); }
-auto pick(const std::string& tab, const std::string& row) -> input_event {
-    return invoke("newchar:" + tab + ":pick", {.row = row});
+auto pick(const std::string& tab, const std::string& row, const std::string& page = {})
+    -> input_event {
+    return invoke("newchar:" + tab + (page.empty() ? "" : ":" + page) + ":pick", {.row = row});
 }
 
 auto part(const ec::screen_view& screen, const std::string& id) -> const ec::component& {
@@ -316,9 +317,8 @@ TEST_CASE(
                       == ec::error::invalid_arguments);
                 // The traits tab's pick is not offered on the points tab.
                 CHECK(
-                    ec::resolve_invoke(
-                        state,
-                        {.affordance_id = "newchar:traits:pick", .args = {.row = "trait:none"}})
+                    ec::resolve_invoke(state, {.affordance_id = "newchar:traits:advantage:pick",
+                                               .args = {.row = "trait:none"}})
                         .error()
                     == ec::error::unknown_affordance);
                 return go_to("traits");
@@ -333,7 +333,7 @@ TEST_CASE(
                 CHECK_FALSE(trait->description.empty());
                 picked_trait = trait->id;
                 traits_before = static_cast<int>(you.get_mutations().size());
-                return pick("traits", picked_trait);
+                return pick("traits", picked_trait, "advantage");
             }
             case 2: {
                 CHECK(trait_row(screen, picked_trait).toggled == std::optional{true});
@@ -418,7 +418,7 @@ TEST_CASE(
                 prepper_has_metabolics = bionic.toggled.value_or(false);
                 CHECK_FALSE(bionic.description.empty());
                 points_before = points_text(screen);
-                return pick("bionics", "bionic:bio_metabolics");
+                return pick("bionics", "bionic:bio_metabolics", "advantage");
             }
             case 4: {
                 // A locked bionic stays installed and the points are untouched.
