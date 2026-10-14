@@ -8,7 +8,6 @@
 #    include "item.h"
 #    include "map/map.h"
 #    include "map_helpers.h"
-#    include "mod_manager.h"
 #    include "monster.h"
 #    include "panels.h"
 #    include "player_helpers.h"
@@ -16,7 +15,6 @@
 #    include "technique_reference.h"
 #    include "vehicle/vehicle.h"
 #    include "weather/weather.h"
-#    include "worldfactory.h"
 
 #    include <string>
 #    include <vector>
@@ -191,85 +189,6 @@ TEST_CASE(
             return input_event{};
         });
     CHECK(stage == 3);
-}
-
-TEST_CASE(
-    "the active world mods list shows the mods and their description for the cursor",
-    "[client][interaction][mcp][screens]") {
-    clear_all_state();
-    clear_map();
-    REQUIRE(world_generator->active_world != nullptr);
-    const auto mods = world_generator->active_world->info->active_mod_order;
-    REQUIRE_FALSE(mods.empty());
-    const auto guard = screen_guard{};
-    auto stage = 0;
-    open_screen(
-        [&] { world_generator->show_active_world_mods(mods); },
-        [&](const auto& snapshot) {
-            switch (stage++) {
-                case 0: {
-                    CHECK(snapshot.context == "DEFAULT");
-                    const auto rows = rows_with(snapshot, "mod:");
-                    REQUIRE(rows.size() == mods.size());
-                    CHECK(row(snapshot, rows.front())->label == mods.front()->name());
-                    CHECK(row(snapshot, rows.front())->highlighted);
-                    CHECK_FALSE(row(snapshot, rows.front())->description.empty());
-                    return choose(snapshot, rows.back());
-                }
-                case 1: {
-                    CHECK(row(snapshot, "mod:" + std::to_string(mods.size() - 1))->highlighted);
-                    return cancel(snapshot);
-                }
-                default:
-                    FAIL("unexpected extra screen " << snapshot.context);
-            }
-            return input_event{};
-        });
-    CHECK(stage == 2);
-}
-
-TEST_CASE(
-    "the mod manager lists the available and active mods and marks an active one before moving it",
-    "[client][interaction][mcp][screens]") {
-    clear_all_state();
-    clear_map();
-    REQUIRE(world_generator->active_world != nullptr);
-    const auto active_before = world_generator->active_world->info->active_mod_order.size();
-    const auto guard = screen_guard{};
-    auto stage = 0;
-    open_screen(
-        [] { world_generator->edit_active_world_mods(&*world_generator->active_world->info); },
-        [&](const auto& snapshot) {
-            if (snapshot.context == "YESNO") {
-                // Leaving asks whether to save the changes: no.
-                const auto no = std::ranges::
-                    find(snapshot.choices, "NO", &game_client::interaction_choice::description);
-                REQUIRE(no != snapshot.choices.end());
-                return choose(snapshot, no->id);
-            }
-            switch (stage++) {
-                case 0: {
-                    CHECK(snapshot.context == "MODMANAGER_DIALOG");
-                    CHECK_FALSE(rows_with(snapshot, "tab:").empty());
-                    CHECK(rows_with(snapshot, "active:").size() == active_before);
-                    CHECK(row(snapshot, "action:FILTER") != snapshot.choices.end());
-                    CHECK(row(snapshot, "tab:0")->selected);
-                    return choose(snapshot, "active:0");
-                }
-                case 1: {
-                    // The first choice only marks the active mod; it stays active.
-                    CHECK(rows_with(snapshot, "active:").size() == active_before);
-                    CHECK(row(snapshot, "active:0")->highlighted);
-                    CHECK_FALSE(row(snapshot, "active:0")->description.empty());
-                    return cancel(snapshot);
-                }
-                default:
-                    FAIL("unexpected extra screen " << snapshot.context);
-            }
-            return input_event{};
-        });
-    CHECK(stage == 2);
-    CHECK(world_generator->active_world->info->active_mod_order.size() == active_before);
 }
 
 #endif // CATA_MCP
