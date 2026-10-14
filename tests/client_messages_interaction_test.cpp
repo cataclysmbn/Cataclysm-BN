@@ -4,12 +4,19 @@
 #    include "catch/catch.hpp"
 #    include "client_screen_support.h"
 #    include "client_snapshot.h"
+#    include "color.h"
+#    include "locale_fixture.h"
+#    include "locale_scope.h"
 #    include "map_helpers.h"
 #    include "messages.h"
 #    include "player_helpers.h"
 #    include "state_helpers.h"
 
+#    include <algorithm>
 #    include <format>
+#    include <string>
+#    include <variant>
+#    include <vector>
 
 using namespace client_screen_test;
 
@@ -99,58 +106,182 @@ TEST_CASE("the native message log keeps its text and colors", "[messages_native_
 }
 
 
-TEST_CASE(
-    "the message log lists the messages and filters them through the native filter",
-    "[client][interaction][mcp][screens]") {
+namespace {
+
+namespace ec = engine_client;
+
+auto log_of(const ec::screen_view& top) -> const ec::list_body& {
+    REQUIRE(top.root);
+    const auto* const log = ec::find_component(*top.root, "messages:log");
+    REQUIRE(log != nullptr);
+    REQUIRE(std::holds_alternative<ec::list_body>(log->body));
+    return std::get<ec::list_body>(log->body);
+}
+
+auto filter_of(const ec::screen_view& top) -> const std::string& {
+    REQUIRE(top.root);
+    REQUIRE(std::holds_alternative<ec::panel_body>(top.root->body));
+    return std::get<ec::panel_body>(top.root->body).filter;
+}
+
+auto labels_of(const ec::screen_view& top) -> std::vector<std::string> {
+    auto labels = std::vector<std::string>{};
+    for (const auto& row : log_of(top).rows) { labels.push_back(row.label); }
+    return labels;
+}
+
+auto column_of(const ec::row& row, const std::string& key) -> std::string {
+    const auto found = std::ranges::find(row.columns, key, &game_client::interaction_column::key);
+    REQUIRE(found != row.columns.end());
+    return found->value;
+}
+
+/// The log of the avatar after `texts`, each at the type paired with it.
+auto fill_log(const std::vector<std::pair<game_message_type, std::string>>& texts) -> void {
     clear_all_state();
     clear_map();
-    auto& you = get_avatar();
-    clear_character(you, false);
+    clear_character(get_avatar(), false);
     Messages::clear_messages();
-    add_msg("a needle in a haystack");
-    add_msg("something else");
+    for (const auto& [type, text] : texts) { add_msg(type, "%s", text); }
+}
+
+/// The rows the log shows once `typed` is submitted to its filter.
+auto rows_after_filter(const std::string& typed) -> std::vector<std::string> {
+    const auto guard = screen_guard{};
+    auto shown = std::vector<std::string>{};
+    auto stage = 0;
+    open_stack([] { Messages::display_messages(); },
+               [&](const auto& /*snapshot*/, const auto& top) {
+                   switch (stage++) {
+                       case 0:
+                           return run_action("FILTER");
+                       case 1:
+                           return invoke_event(top, "bn:submit:form:field", {.text = typed});
+                       case 2:
+                           shown = labels_of(top);
+                           return run_action("QUIT");
+                       default:
+                           FAIL("unexpected extra screen " << top.context);
+                   }
+                   return input_event{};
+               });
+    CHECK(stage == 3);
+    return shown;
+}
+
+} // namespace
+
+TEST_CASE(
+    "the message log lists its messages by identity and filters them with the native filter",
+    "[client][interaction][mcp][screens][messages_screen]") {
+    fill_log({{m_neutral, "a needle in a haystack"}, {m_neutral, "something else"}});
     const auto guard = screen_guard{};
     auto stage = 0;
-    open_screen(
+    auto ids = std::vector<std::string>{};
+    open_stack(
         [] { Messages::display_messages(); },
-        [&](const auto& snapshot) {
+        [&](const auto& /*snapshot*/, const auto& top) {
             switch (stage++) {
                 case 0: {
-                    CHECK(snapshot.context == "MESSAGE_LOG");
-                    const auto messages = rows_with(snapshot, "message:");
-                    CHECK(messages.size() == 2);
-                    const auto first = row(snapshot, messages.front());
-                    CHECK((first->label == "something else"
-                           || first->label == "a needle in a haystack"));
-                    CHECK_FALSE(first->selectable);
-                    CHECK(first->columns.size() == 2);
-                    CHECK(row(snapshot, "action:FILTER") != snapshot.choices.end());
-                    return choose(snapshot, "action:FILTER");
+                    CHECK(top.context == "MESSAGE_LOG");
+                    CHECK(top.title == "Messages");
+                    const auto& log = log_of(top);
+                    REQUIRE(log.rows.size() == 2);
+                    CHECK(log.selection == "none");
+                    for (const auto& row : log.rows) {
+                        CHECK(row.id.starts_with("message:"));
+                        CHECK_FALSE(row.selectable);
+                        CHECK(column_of(row, "time") == "0 seconds");
+                        CHECK(column_of(row, "type") == "neutral");
+                        ids.push_back(row.id);
+                    }
+                    CHECK(ids.front() != ids.back());
+                    CHECK(filter_of(top).empty());
+                    const auto filter =
+                        std::ranges::find(top.affordances, "FILTER", &ec::affordance::id);
+                    REQUIRE(filter != top.affordances.end());
+                    CHECK(filter->label == "Filter");
+                    return run_action("FILTER");
                 }
                 case 1: {
-                    REQUIRE(snapshot.field);
-                    return operate(snapshot, game_client::interaction_operation::fill,
-                                   snapshot.field->id, "needle");
+                    CHECK(top.context != "MESSAGE_LOG");
+                    return invoke_event(top, "bn:submit:form:field", {.text = "needle"});
                 }
                 case 2: {
-                    CHECK(snapshot.context == "MESSAGE_LOG");
-                    const auto messages = rows_with(snapshot, "message:");
-                    REQUIRE(messages.size() == 1);
-                    CHECK(row(snapshot, messages.front())->label == "a needle in a haystack");
-                    CHECK(snapshot.message == "Filter: needle");
-                    return choose(snapshot, "action:RESET_FILTER");
+                    CHECK(top.context == "MESSAGE_LOG");
+                    REQUIRE(labels_of(top) == std::vector<std::string>{"a needle in a haystack"});
+                    CHECK(filter_of(top) == "needle");
+                    // A message keeps its id while the filter hides the others.
+                    CHECK(log_of(top).rows.front().id == ids.front());
+                    return run_action("RESET_FILTER");
                 }
                 case 3: {
-                    CHECK(rows_with(snapshot, "message:").size() == 2);
-                    CHECK(snapshot.allow_cancel);
-                    return cancel(snapshot);
+                    CHECK(log_of(top).rows.size() == 2);
+                    CHECK(filter_of(top).empty());
+                    return run_action("QUIT");
                 }
                 default:
-                    FAIL("unexpected extra screen " << snapshot.context);
+                    FAIL("unexpected extra screen " << top.context);
             }
             return input_event{};
         });
     CHECK(stage == 4);
+}
+
+TEST_CASE(
+    "the message log filter takes a message type before a colon and keeps unknown prefixes as text",
+    "[client][interaction][mcp][screens][messages_screen]") {
+    fill_log({{m_good, "You heal"}, {m_bad, "You are hit"}, {m_bad, "The hit lands"}});
+    CHECK(rows_after_filter("bad:hit") == std::vector<std::string>{"You are hit", "The hit lands"});
+    CHECK(rows_after_filter("good:hit").empty());
+    CHECK(rows_after_filter("bad:") == std::vector<std::string>{"You are hit", "The hit lands"});
+    // `nosuch` is no message type: the text after the colon is all that is searched.
+    CHECK(rows_after_filter("nosuch:you") == std::vector<std::string>{"You heal", "You are hit"});
+    CHECK(rows_after_filter("YOU ARE") == std::vector<std::string>{"You are hit"});
+}
+
+TEST_CASE(
+    "the message log colors a message by its type and repeats count in its label",
+    "[client][interaction][mcp][screens][messages_screen]") {
+    fill_log({{m_warning, "The floor creaks"}, {m_warning, "The floor creaks"}});
+    const auto guard = screen_guard{};
+    auto stage = 0;
+    open_stack([] { Messages::display_messages(); },
+               [&](const auto& /*snapshot*/, const auto& top) {
+                   REQUIRE(stage++ == 0);
+                   const auto& log = log_of(top);
+                   REQUIRE(log.rows.size() == 1);
+                   CHECK(log.rows.front().label == "The floor creaks x 2");
+                   CHECK(log.rows.front().markup
+                         == colorize("The floor creaks x 2", msgtype_to_color(m_warning, false)));
+                   CHECK(column_of(log.rows.front(), "type") == "warning");
+                   return run_action("QUIT");
+               });
+    CHECK(stage == 1);
+}
+
+TEST_CASE(
+    "the message log is the same at any viewport size and in another language",
+    "[client][interaction][mcp][screens][messages_screen][engine_client_component]") {
+    fill_log({{m_good, "You heal"}, {m_bad, "You are hit"}});
+    const auto guard = screen_guard{};
+    const auto fixture = locale_fixture::korean_catalogue{};
+    auto stage = 0;
+    open_stack([] { Messages::display_messages(); },
+               [&](const auto& /*snapshot*/, const auto& /*top*/) {
+                   if (stage++ == 0) {
+                       const auto [narrow, wide] = at_both_sizes();
+                       CHECK(narrow.dump() == wide.dump());
+                       const auto english = top_json();
+                       const auto korean = [&] {
+                           const auto scope = localization::locale_scope(locale_fixture::korean);
+                           return top_json();
+                       }();
+                       CHECK(without_words(english) == without_words(korean));
+                   }
+                   return run_action("QUIT");
+               });
+    CHECK(stage == 1);
 }
 
 #endif // CATA_MCP && CATA_MESSAGES_NATIVE_TEST
