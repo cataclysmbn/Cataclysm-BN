@@ -518,14 +518,25 @@ auto to_json( const row &value ) -> json
     if( value.look ) { result["look"] = to_json( *value.look ); }
     return result;
 }
+/// The rows that go on the wire: a prefix of `rows` of at most `maximum_rows` and `maximum_list_bytes`, whose first row always goes.
+auto rows_json( const std::vector<row> &rows ) -> json
+{
+    auto result = json::array();
+    auto bytes = std::size_t{ 0 };
+    for( const auto &entry : rows | std::views::take( maximum_rows ) ) {
+        auto value = to_json( entry );
+        bytes += value.dump().size() + 1;
+        if( !result.empty() && bytes > maximum_list_bytes ) { break; }
+        result.push_back( std::move( value ) );
+    }
+    return result;
+}
 auto to_json( const component &value, const bubble_frame &frame ) -> json;
 auto body_json( const list_body &body, const bubble_frame & /*frame*/ ) -> json
 {
     auto columns = json::array();
     for( const auto &column : body.columns ) { columns.push_back( {{"key", column.key}, {"label", column.label}} ); }
-    auto rows = json::array();
-    for( const auto &row : body.rows | std::views::take( maximum_rows ) ) { rows.push_back( to_json( row ) ); }
-    auto result = json{{"columns", std::move( columns )}, {"rows", std::move( rows )}, {"total", body.total}};
+    auto result = json{{"columns", std::move( columns )}, {"rows", rows_json( body.rows )}, {"total", body.total}};
     if( body.offset != 0 ) { result["offset"] = body.offset; }
     result["selection"] = body.selection;
     if( !body.activate.empty() ) { result["activate"] = body.activate; }
@@ -797,10 +808,8 @@ auto serialize_choices( const choices_page &page ) -> std::string
 }
 auto serialize_rows( const rows_page &page ) -> std::string
 {
-    auto rows = json::array();
-    for( const auto &entry : page.rows ) { rows.push_back( to_json( entry ) ); }
     return json{{"boundary_id", page.boundary_id}, {"component_id", page.component_id},
-        {"total", page.total}, {"rows", std::move( rows )}}.dump();
+        {"total", page.total}, {"rows", rows_json( page.rows )}}.dump();
 }
 auto serialize_command_result( const command_result &value ) -> std::string
 {

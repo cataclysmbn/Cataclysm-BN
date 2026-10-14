@@ -320,8 +320,24 @@ auto selector_rows() -> nlohmann::json {
     auto result = nlohmann::json::array();
     for (const auto& list : lists) {
         if (list["id"] != "list:inventory") { continue; }
-        for (const auto& row : list["rows"]) {
-            if (!row.value("header", false)) { result.push_back(row); }
+        // The wire holds a prefix of a long list; the rest is paged as a client pages it.
+        auto loaded = std::size_t{0};
+        auto rows = list["rows"];
+        while (true) {
+            loaded += rows.size();
+            for (const auto& row : rows) {
+                if (!row.value("header", false)) { result.push_back(row); }
+            }
+            if (loaded >= list["total"].get<std::size_t>() || rows.empty()) { break; }
+            const auto page = engine_client::read_rows(
+                {.epoch = "epoch:test",
+                 .boundary_id = "boundary:test",
+                 .component_id = "list:inventory",
+                 .offset = loaded,
+                 .limit = engine_client::maximum_rows},
+                stack_state());
+            REQUIRE(page);
+            rows = nlohmann::json::parse(engine_client::serialize_rows(*page))["rows"];
         }
     }
     return result;
