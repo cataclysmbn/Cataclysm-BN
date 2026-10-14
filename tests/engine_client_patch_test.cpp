@@ -7,6 +7,7 @@
 #    include "engine_client_session.h"
 #    include "engine_client_world.h"
 #    include "game.h"
+#    include "game_constants.h"
 #    include "game_session.h"
 #    include "input.h"
 #    include "item.h"
@@ -52,6 +53,22 @@ auto make_room() -> tripoint_bub_ms {
     }
     here.ter_set(start + tripoint(3, 5, 0), ter_id("t_door_c"));
     get_avatar().setpos(start);
+    map_perception::acquire();
+    return start;
+}
+
+/// Open grass under a clear sky at `hour`, the avatar in the middle of it.
+auto make_open_ground(const int hour) -> tripoint_bub_ms {
+    clear_all_state();
+    get_avatar().clear_map_memory();
+    clear_map();
+    calendar::turn = calendar::turn_zero + time_duration::from_hours(hour);
+    get_weather().weather_id = weather_type_id("clear");
+    g->reset_light_level();
+    game_session::set_running(true);
+    const auto start = tripoint_bub_ms(g_half_mapsize_x, g_half_mapsize_y, 0);
+    get_avatar().setpos(start);
+    get_map().invalidate_map_cache(start.z());
     map_perception::acquire();
     return start;
 }
@@ -226,6 +243,124 @@ TEST_CASE(
     });
     CHECK(patch.cells.size() + patch.unknown.size() <= static_cast<std::size_t>(seen) + 8);
     CHECK(patch.cells.size() + patch.unknown.size() < current->value.world.cells.size() / 2);
+}
+
+TEST_CASE(
+    "a patch publication equals the full capture walking open ground in daylight",
+    "[engine_client_patch][open_ground]") {
+    const auto start = make_open_ground(12);
+    auto& here = get_map();
+    auto watched = watched_session{};
+
+    SECTION("steps, a long jump, and a field and an item on the ground") {
+        for (const auto step : {tripoint(1, 0, 0), tripoint(2, 1, 0), tripoint(2, 2, 0)}) {
+            watched.step_to(start + step);
+        }
+        here.add_field(start + tripoint(4, 4, 0), field_type_id("fd_smoke"), 2);
+        here.add_item_or_charges(start + tripoint(-3, 2, 0), item::spawn("rock"));
+        watched.publish();
+        watched.step_to(start + tripoint(3, 2, 0));
+        watched.step_to(start + tripoint(-20, 17, 0));
+        watched.step_to(start + tripoint(-21, 17, 0));
+        here.remove_field(start + tripoint(4, 4, 0), field_type_id("fd_smoke"));
+        here.i_clear(start + tripoint(-3, 2, 0));
+        watched.publish();
+    }
+
+    SECTION("dusk, night and dawn over open ground") {
+        for (const auto hour : {17, 19, 20, 22, 4, 6, 8}) {
+            calendar::turn = calendar::turn_zero + time_duration::from_hours(hour);
+            g->reset_light_level();
+            watched.publish();
+            watched.step_to(start + tripoint(hour % 3, hour % 2, 0));
+        }
+    }
+
+    SECTION("a roof above and back") {
+        for (const auto y : std::views::iota(-4, 5)) {
+            for (const auto x : std::views::iota(-4, 5)) {
+                here.ter_set(start + tripoint(x, y, 1), ter_id("t_flat_roof"));
+            }
+        }
+        watched.publish();
+        watched.step_to(start + tripoint(1, 0, 0));
+        watched.step_to(start + tripoint(0, 0, 1));
+        watched.step_to(start + tripoint(1, 1, 1));
+        watched.step_to(start);
+        watched.step_to(start + tripoint(9, 0, 0));
+        // The level above is not part of what other cases build.
+        for (const auto y : std::views::iota(-4, 5)) {
+            for (const auto x : std::views::iota(-4, 5)) {
+                here.ter_set(start + tripoint(x, y, 1), ter_id("t_open_air"));
+            }
+        }
+    }
+
+    CHECK(watched.authority.oracle_mismatches().empty());
+}
+
+TEST_CASE(
+    "a patch over open ground names only the squares that changed",
+    "[engine_client_patch][open_ground]") {
+    const auto start = make_open_ground(12);
+    auto watched = watched_session{};
+    watched.step_to(start + tripoint(1, 0, 0));
+    const auto& current = watched.authority.current();
+    REQUIRE(current);
+    const auto seen = std::ranges::count_if(current->value.world.cells, [](const auto& entry) {
+        return entry.second.known == ec::knowledge::visible;
+    });
+    REQUIRE(seen > 10000);
+    SECTION("a turn in place") {
+        calendar::turn += 1_turns;
+        map_perception::acquire();
+        const auto patch = ec::world::capture_patch(*current, true);
+        CHECK_FALSE(patch.exhaustive);
+        CHECK(patch.cells.size() + patch.unknown.size() < 100);
+    }
+    SECTION("a step") {
+        get_avatar().setpos(start + tripoint(2, 0, 0));
+        map_perception::acquire();
+        const auto patch = ec::world::capture_patch(*current, true);
+        CHECK_FALSE(patch.exhaustive);
+        CHECK(patch.cells.size() + patch.unknown.size() < static_cast<std::size_t>(seen) / 10);
+    }
+}
+
+TEST_CASE(
+    "a patch names the squares whose memory changed and is exhaustive after too many changes",
+    "[engine_client_patch]") {
+    const auto start = make_room();
+    auto& you = get_avatar();
+    auto& here = get_map();
+    auto watched = watched_session{};
+    watched.step_to(start + tripoint(1, 0, 0));
+    // Inside the rock around the room, where the avatar sees nothing.
+    const auto far = start + tripoint(12, 0, 0);
+    const auto abs = map_local_to_abs(here, far);
+    const auto position = ec::position{.dim = "", .x = abs.x(), .y = abs.y(), .z = abs.z()};
+
+    SECTION("one forgotten square") {
+        you.memorize_terrain_tile(abs, "t_floor", 0, 0);
+        watched.publish();
+        REQUIRE(watched.authority.current()->value.world.cells.contains(position));
+        you.clear_memorized_tile(abs);
+        const auto patch = ec::world::capture_patch(*watched.authority.current(), true);
+        CHECK_FALSE(patch.exhaustive);
+        CHECK(patch.cells.size() + patch.unknown.size() < 5);
+        CHECK(patch.unknown.contains(position));
+    }
+
+    SECTION("more writes than the log keeps") {
+        for (const auto i : std::views::iota(0, (1 << 18) + 1)) {
+            you.memorize_terrain_tile(
+                tripoint_abs_ms(abs.x() + i, abs.y() + 1000, abs.z()), "t_floor", 0, 0);
+        }
+        CHECK(ec::world::capture_patch(*watched.authority.current(), true).exhaustive);
+        // The log starts over: the next patch is a patch again.
+        watched.publish();
+        CHECK_FALSE(ec::world::capture_patch(*watched.authority.current(), true).exhaustive);
+    }
 }
 
 TEST_CASE("a patch that does not continue the last one names every cell", "[engine_client_patch]") {
