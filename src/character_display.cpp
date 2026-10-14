@@ -1140,7 +1140,7 @@ auto prepare_speed_info( const Character &you,
     for( const auto &speed_effect : speed_effects ) {
         auto col = ( speed_effect.second.value > 0 ? c_green : c_red );
         result.push_back( { .position = point( 1, line ), .color = col, .text = string_format( "%s", speed_effect.first ),
-                            .row = native_speed_row{ .key = "effect:" + speed_effect.second.id, .label = speed_effect.first,
+                            .row = native_speed_row{ .key = "speed:effect:" + speed_effect.second.id, .label = speed_effect.first,
                                                      .value = string_format( "%s%d%%", speed_effect.second.value > 0 ? "+" : "-", std::abs( speed_effect.second.value ) ) } } );
         result.push_back( { .position = point( 21, line ), .color = col, .text = string_format( ( speed_effect.second.value > 0 ? "+" : "-" ) ) } );
         result.push_back( { .position = point( std::abs( speed_effect.second.value ) >= 10 ? 22 : 23, line ), .color = col, .text = string_format( "%d%%", std::abs( speed_effect.second.value ) ) } );
