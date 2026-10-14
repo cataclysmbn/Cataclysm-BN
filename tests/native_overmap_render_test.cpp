@@ -14,7 +14,9 @@
 #    include "game.h"
 #    include "game_constants.h"
 #    include "input.h"
+#    include "mission.h"
 #    include "output.h"
+#    include "overmap/overmap.h"
 #    include "overmap/overmap_ui.h"
 #    include "overmap/overmapbuffer.h"
 #    include "overmap_helpers.h"
@@ -116,6 +118,12 @@ auto level_of(const tripoint_abs_omt& at) -> std::string {
     return std::format("│LEVEL {}, {}, {}", at.z(), at.x(), at.y());
 }
 
+/// The sidebar rows above the key hints, which the plain pin has.
+auto facts_of(const std::vector<std::string>& sidebar) -> std::vector<std::string> {
+    const auto end = std::ranges::find(sidebar, "│Use movement keys to pan.");
+    return {sidebar.begin(), end};
+}
+
 struct frame {
     drawn map;
     std::vector<std::string> sidebar;
@@ -155,6 +163,36 @@ struct fixed_world {
     }
     ~fixed_world() { clear_all_state(); }
 };
+
+/// A city of the overmap the avatar stands on, `offset` squares from `center`.
+void lay_city(const tripoint_abs_omt& center, const point& offset, const std::string& name) {
+    const auto at = center + offset;
+    ACTIVE_OVERMAP_BUFFER.set_seen(at, true);
+    auto& overmap = *ACTIVE_OVERMAP_BUFFER.get_om_global(at).om;
+    auto made = city(ACTIVE_OVERMAP_BUFFER.get_om_global(at).local.xy(), 4);
+    made.name = name;
+    overmap.cities.push_back(made);
+}
+
+/// Makes the avatar's active mission and puts its target at `at`.
+void lay_mission(const tripoint_abs_omt& at) {
+    auto& you = get_avatar();
+    you.reset_all_missions();
+    mission* assigned = nullptr;
+    for (const mission_type& type : mission_type::get_all()) {
+        if (type.goal == MGOAL_ASSASSINATE) {
+            assigned = mission::reserve_new(type.id, you.getID());
+            break;
+        }
+    }
+    REQUIRE(assigned != nullptr);
+    if (assigned->get_assigned_player_id() == you.getID()) {
+        you.on_mission_assignment(*assigned);
+    } else {
+        assigned->assign(you);
+    }
+    assigned->set_target(at);
+}
 
 } // namespace
 
@@ -226,6 +264,51 @@ TEST_CASE(
         CHECK(frames[0].map.digest == 0xd137208964d5d88fULL);
         CHECK(frames[1].map.digest == 0xfdce65e30963d717ULL);
         CHECK(frames[2].map.digest == 0xff4bf3d68729a342ULL);
+        CHECK(level_row(frames[2].sidebar) == level_of(world.center + point_east * 2));
+    }
+}
+
+
+TEST_CASE(
+    "the native overmap draws city and note labels, a mission marker and its distance",
+    "[overmap][native_pin][mcp]") {
+    const auto world = fixed_world{};
+    const auto guard = screen_guard{};
+    uistate.overmap_show_city_labels = true;
+    lay_city(world.center, point(-9, 4), "Testville");
+    ACTIVE_OVERMAP_BUFFER.add_note(world.center + point(8, -5), "LABEL:Depot");
+    ACTIVE_OVERMAP_BUFFER.set_seen(world.center + point(8, -5), true);
+    ACTIVE_OVERMAP_BUFFER.add_note(world.center + point(2, 2), "C:cache");
+
+    SECTION("a target beyond the window") {
+        lay_mission(world.center + point(200, 3));
+        const auto frames = frames_of({});
+        REQUIRE(frames.size() == 1);
+        const auto text = [&](const drawn& map) {
+            return std::ranges::
+                fold_left(map.glyphs[map.glyphs.size() / 2 + 4], std::string{}, std::plus<>{});
+        };
+        CHECK(text(frames.front().map).contains("Testville"));
+        CHECK(frames.front().map.digest == 0x4797df5b5571c084ULL);
+        CHECK(
+            facts_of(frames.front().sidebar)
+            == std::vector<std::string>{
+                "│F forest in northeast", "│  Testville",
+                "│Distance to active mission:", "│200 tiles"});
+        CHECK(level_row(frames.front().sidebar) == level_of(world.center));
+    }
+
+    SECTION("a target on the square of the cursor") {
+        lay_mission(world.center + point(2, 0));
+        const auto frames = frames_of({"RIGHT", "RIGHT"});
+        REQUIRE(frames.size() == 3);
+        CHECK(frames[0].map.digest == 0xa8a7cb686515f642ULL);
+        CHECK(frames[2].map.digest == 0xc04e54f8745bfd6aULL);
+        CHECK(
+            facts_of(frames[2].sidebar)
+            == std::vector<std::string>{
+                "│F forest in east Testville", "│Distance to active mission:", "│0 tiles",
+                "│Missing Caravan"});
         CHECK(level_row(frames[2].sidebar) == level_of(world.center + point_east * 2));
     }
 }
