@@ -30,12 +30,14 @@ const conforms = (example: Example) => {
 
 /**
  * Replaces the masked strings, longest first, in the text of the examples. Command and boundary ids are
- * digests of the epoch, so they are numbered in order of appearance instead.
+ * digests of the epoch, so they are numbered in order of appearance instead. The main menu centers the build
+ * between rules whose length follows the build string, so those rules are cut to a fixed length.
  */
 const masked = (text: string, masks: Map<string, string>) => {
   const numbered = new Map<string, string>()
   return [...masks].sort(([a], [b]) => b.length - a.length)
     .reduce((out, [real, stable]) => out.replaceAll(real, stable), text)
+    .replace(/─+Version: build─+/g, "───Version: build───")
     .replace(/\b(command|boundary):[0-9a-f]{8,}\b/g, (id, kind) => {
       if (!numbered.has(id)) {
         numbered.set(
