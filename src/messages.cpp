@@ -1,6 +1,5 @@
 #include "messages.h"
 #include "message_feed.h"
-#include "client_choice.h"
 #include "client_presentation.h"
 #include "message_types.h"
 #include "calendar.h"
@@ -8,6 +7,7 @@
 #include "color.h"
 #include "cursesdef.h"
 #include "debug.h"
+#include "engine_client_component.h"
 #include "enums.h"
 #include "game.h"
 #include "ime.h"
@@ -324,6 +324,28 @@ bool message_exceeds_ttl( const game_message &message )
            message.timestamp_in_user_actions + message_ttl <= g->get_user_action_counter();
 }
 
+/// What a filter text lets through: an optional message type before a colon, then text to find.
+struct message_filter {
+    std::optional<game_message_type> type;
+    std::string text;
+
+    auto matches( const game_message &msg ) const -> bool {
+        return ( !type || *type == msg.type ) &&
+               ci_find_substr( remove_color_tags( msg.get_with_count() ), text ) >= 0;
+    }
+};
+
+auto parse_filter( const std::string &filter_str ) -> message_filter
+{
+    const auto colon = filter_str.find( ':' );
+    if( colon == std::string::npos ) {
+        return { .text = filter_str };
+    }
+    auto type = m_neutral;
+    const auto typed = msg_type_from_name( type, filter_str.substr( 0, colon ) );
+    return { .type = typed ? std::optional{ type } : std::nullopt, .text = filter_str.substr( colon + 1 ) };
+}
+
 } //namespace
 
 std::vector<std::pair<std::string, std::string>> Messages::recent_messages( const size_t count )
@@ -412,6 +434,8 @@ class dialog
         void do_filter( const std::string &filter_str );
         void set_size();
         static std::vector<std::string> filter_help_text( int width );
+        /// The log the filter lets through, in the order it is shown.
+        auto view() const -> engine_client::screen_view;
 
         const nc_color border_color;
         const nc_color filter_color;
@@ -667,25 +691,14 @@ void Messages::dialog::show()
 
 void Messages::dialog::do_filter( const std::string &filter_str )
 {
-    // Split the search string into type and text
-    bool has_type_filter = false;
-    game_message_type filter_type = m_neutral;
-    std::string filter_text;
-    const auto colon = filter_str.find( ':' );
-    if( colon != std::string::npos ) {
-        has_type_filter = msg_type_from_name( filter_type, filter_str.substr( 0, colon ) );
-        filter_text = filter_str.substr( colon + 1 );
-    } else {
-        filter_text = filter_str;
-    }
+    const auto allowed = parse_filter( filter_str );
 
     // Start filtering the log
     folded_filtered.clear();
     for( size_t folded_ind = 0; folded_ind < folded_all.size(); ) {
         const size_t msg_ind = folded_all[folded_ind].first;
         const game_message &msg = player_messages.history( msg_ind );
-        const bool match = ( !has_type_filter || filter_type == msg.type ) &&
-                           ci_find_substr( remove_color_tags( msg.get_with_count() ), filter_text ) >= 0;
+        const bool match = allowed.matches( msg );
 
         // Always advance the index, but only add to filtered list if the original message matches
         for( ; folded_ind < folded_all.size() && folded_all[folded_ind].first == msg_ind; ++folded_ind ) {
@@ -725,39 +738,7 @@ void Messages::dialog::input( const ui_adaptor &ui )
             filter.text( filter_str );
         }
     } else {
-        const auto interaction = game_client::interaction_scope( ctxt, [&]() {
-            auto snapshot = game_client::interaction_snapshot{
-                .kind = game_client::interaction_kind::choices,
-                .title = _( "Messages" ),
-                .message = filter_str.empty() ? std::string() : string_format( _( "Filter: %s" ), filter_str ),
-                .allow_cancel = true,
-            };
-            const auto type_names = msg_type_and_names() | std::ranges::to<std::map>();
-            auto last = std::optional<size_t> {};
-            for( const auto folded_ind : folded_filtered ) {
-                const auto msg_ind = folded_all[folded_ind].first;
-                if( last == msg_ind ) { continue; }
-                last = msg_ind;
-                const auto &msg = player_messages.history( msg_ind );
-                const auto type = type_names.find( msg.type );
-                snapshot.choices.push_back( {
-                    .id = "message:" + std::to_string( msg_ind ),
-                    .label = remove_color_tags( msg.get_with_count() ), .selectable = false,
-                    .columns = {
-                        { .key = "time", .label = _( "Time" ), .value = to_string_clipped( calendar::turn - msg.timestamp_in_turns, clipped_align::right ) },
-                        { .key = "type", .label = _( "Type" ), .value = type == type_names.end() ? std::string() : type->second },
-                    },
-                } );
-            }
-            for( const auto *id : { "FILTER", "RESET_FILTER", "COPY_MESSAGE", "ERASE_HISTORY" } ) {
-                snapshot.choices.push_back( { .id = std::string( "action:" ) + id,
-                                              .label = remove_color_tags( ctxt.get_action_name( id ) ) } );
-            }
-            return snapshot;
-        } );
-        const auto action = game_client::action_of( ctxt, ctxt.handle_input(), []( const std::string & ) {
-            return std::string();
-        } );
+        const auto action = ctxt.handle_input();
         if( action == "DOWN" && offset + max_lines < folded_filtered.size() ) {
             ++offset;
         } else if( action == "UP" && offset > 0 ) {
@@ -839,6 +820,38 @@ void Messages::dialog::input( const ui_adaptor &ui )
     }
 }
 
+auto Messages::dialog::view() const -> engine_client::screen_view
+{
+    namespace ec = engine_client;
+    const auto allowed = parse_filter( filter_str );
+    const auto type_names = msg_type_and_names() | std::ranges::to<std::map>();
+    const auto count = size();
+    auto rows = std::vector<ec::row> {};
+    for( size_t ind = 0; ind < count; ++ind ) {
+        const auto &msg = player_messages.history( log_from_top ? ind : count - 1 - ind );
+        if( !allowed.matches( msg ) ) {
+            continue;
+        }
+        const auto type = type_names.find( msg.type );
+        rows.push_back( {
+            .id = "message:" + std::to_string( msg.serial ),
+            .label = remove_color_tags( msg.get_with_count() ),
+            .selectable = false,
+            .columns = {
+                { .key = "time", .label = _( "Time" ), .value = to_string_clipped( calendar::turn - msg.timestamp_in_turns ) },
+                { .key = "type", .label = _( "Type" ), .value = type == type_names.end() ? std::string() : pgettext( "message type", type->second ) },
+            },
+            .markup = colorize( msg.get_with_count(), msgtype_to_color( msg.type, false ) ),
+        } );
+    }
+    return {
+        .title = _( "Messages" ),
+        .root = ec::panel( {
+            .id = "messages", .title = _( "Messages" ), .filter = filter_str,
+            .child = ec::list( { .id = "messages:log", .rows = std::move( rows ), .selection = "none" } ) } ),
+    };
+}
+
 void Messages::dialog::run()
 {
     ui_adaptor ui;
@@ -849,6 +862,8 @@ void Messages::dialog::run()
     ui.on_redraw( [this]( const ui_adaptor & ) {
         show();
     } );
+
+    const auto screen = engine_client::screen_scope( ctxt, { .view = [this]( const engine_client::boundary_state & ) { return view(); } } );
 
     while( !errored && !canceled ) {
         ui_manager::redraw();
