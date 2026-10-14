@@ -4,8 +4,9 @@
 #include "avatar.h"
 #include "avatar_action.h"
 #include "avatar_functions.h"
-#include "client_interaction.h"
 #include "crafting.h"
+#include "engine_client_component.h"
+#include "engine_client_world.h"
 #include "game_inventory.h"
 #include "input.h"
 #include "item.h"
@@ -37,6 +38,65 @@ struct action_entry {
     hint_rating hint = hint_rating::good;
     std::function<bool()> on_select;
 };
+
+namespace
+{
+namespace ec = engine_client;
+
+constexpr auto action_rows_id = "examine:actions";
+constexpr auto select_action_id = "examine:select";
+constexpr auto run_action_id = "examine:run";
+
+/// The colour the menu draws an action in, by how well it is rated.
+auto hint_color( const hint_rating hint ) -> nc_color
+{
+    switch( hint ) {
+        case hint_rating::cant:
+            return c_light_gray;
+        case hint_rating::iffy:
+            return c_light_red;
+        case hint_rating::good:
+            return c_light_green;
+        case hint_rating::blood:
+            return c_red;
+    }
+    return c_light_gray;
+}
+
+/// What the menu shows, as its loop keeps it.
+struct examine_model {
+    const item &itm;
+    const input_context &ctxt;
+    const std::vector<action_entry> &actions;
+    const int &selected;
+};
+
+auto examine_view( const examine_model &model ) -> ec::screen_view
+{
+    const auto &itm = model.itm;
+    auto rows = std::vector<ec::row> {};
+    for( const auto &entry : model.actions ) {
+        const auto key = model.ctxt.key_bound_to( entry.action );
+        rows.push_back( { .id = entry.action, .label = entry.name, .hotkey = key.size() == 1 ? key : std::string{},
+                          .color = string_from_color( hint_color( entry.hint ) ) } );
+    }
+    const auto focus = static_cast<std::size_t>( model.selected );
+    return {
+        .title = remove_color_tags( itm.tname() ),
+        .root = ec::split( {
+            .id = "examine:panes", .relation = "detail", .active = action_rows_id,
+            .children = ec::children_of(
+            ec::component{ .id = "examine:info", .body = ec::text_body{ .markup = format_item_info( itm.info( rot::temp::for_location( get_map(), itm ) ), {} ) } },
+            ec::list( { .id = action_rows_id, .rows = std::move( rows ), .selection = "single", .activate = run_action_id } ) ) } ),
+        .affordances = {
+            ec::invoke_affordance( { .id = select_action_id, .label = _( "Select" ), .args = { .row = ec::row_shape{ .component_id = action_rows_id } }, .role = "select" } ),
+            ec::invoke_affordance( { .id = run_action_id, .label = model.ctxt.get_action_name( "CONFIRM" ), .args = { .row = ec::row_shape{ .component_id = action_rows_id } } } ),
+        },
+        .focus_component = action_rows_id,
+        .focus_row = focus < model.actions.size() ? model.actions[focus].action : std::string{},
+    };
+}
+} // namespace
 
 bool run(
     item &loc,
@@ -351,22 +411,8 @@ bool run(
         action_list.show( ui );
     } );
 
-    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
-        auto snapshot = game_client::interaction_snapshot{
-            .kind = game_client::interaction_kind::choices,
-            .title = remove_color_tags( itm.tname() ),
-            .message = remove_color_tags( itm.info_string( { .mode = iteminfo_mode::observation } ) ),
-            .allow_cancel = true,
-        };
-        for( auto index = std::size_t{ 0 }; index < actions.size(); ++index ) {
-            snapshot.choices.push_back( {
-                .id = "action:" + actions[index].action, .label = actions[index].name,
-                .enabled = actions[index].hint != hint_rating::cant,
-                .highlighted = static_cast<int>( index ) == selected_action,
-            } );
-        }
-        return snapshot;
-    } );
+    const auto model = examine_model{ .itm = itm, .ctxt = ctxt, .actions = actions, .selected = selected_action };
+    const auto screen = ec::screen_scope( ctxt, { .view = [&]( const ec::boundary_state & /*state*/ ) { return examine_view( model ); } } );
 
     bool exit = false;
     bool ret_val = true;
@@ -374,16 +420,20 @@ bool run(
         ui->invalidate_ui();
         ui_manager::redraw();
 
-        auto input = std::string{ ctxt.handle_input() };
-        const auto raw = ctxt.get_raw_input();
-        if( raw.interaction ) {
-            if( raw.interaction->operation == game_client::interaction_operation::cancel ) {
-                input = "QUIT";
-            } else if( raw.interaction->operation == game_client::interaction_operation::choose ) {
-                input = raw.interaction->target_id.substr( raw.interaction->target_id.find( ':' ) + 1 );
+        auto action = std::string{ ctxt.handle_input() };
+        // A client moved the cursor to an action, or ran one: the cursor moves there and, for a run, confirms.
+        if( const auto picked = ec::invoked( ctxt.get_raw_input() ); picked && picked->args.row ) {
+            const auto found = std::ranges::find( actions, *picked->args.row, &action_entry::action );
+            if( found == actions.end() ) {
+                continue;
             }
+            selected_action = static_cast<int>( found - actions.begin() );
+            action_list.set_selected( selected_action );
+            if( picked->affordance_id != run_action_id ) {
+                continue;
+            }
+            action = "CONFIRM";
         }
-        const std::string &action = input;
 
         if( action == "QUIT" || action == "LEFT" ) {
             ret_val = false;

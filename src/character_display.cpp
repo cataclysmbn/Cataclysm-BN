@@ -181,13 +181,28 @@ static std::pair<int, int> subindex_around_cursor(
     return std::make_pair( slice_start, slice_start + available_space );
 }
 
+auto character_display::encumbrance_lines( const Character &ch,
+        const item *selected_clothing ) -> std::vector<encumbrance_line>
+{
+    using namespace std::views;
+    const auto &enc_data = ch.get_encumbrance();
+    return list_and_combine_bps( ch, selected_clothing ) | transform( [&]( const auto & entry ) {
+        const auto &[bp, combine] = entry;
+        const encumbrance_data &e = enc_data.elems.at( bp );
+        return encumbrance_line{
+            .part = bp, .combined = combine, .encumbrance = e.encumbrance - e.layer_penalty,
+            .layering = e.layer_penalty, .warmth = temperature_print_rescaling( get_temp_conv( ch, bp ) ),
+            .encumbrance_color = encumb_color( e.encumbrance ), .warmth_color = warmth::bodytemp_color( ch, bp ),
+            .covered = selected_clothing ? selected_clothing->covers( bp.id() ) : false,
+        };
+    } ) | std::ranges::to<std::vector>();
+}
+
 void character_display::print_encumbrance( ui_adaptor &ui, const catacurses::window &win,
         const Character &ch,
         const int line, const item *selected_clothing )
 {
-    // bool represents whether the part has been combined with its other half
-    const std::vector<std::pair<bodypart_str_id, bool>> bps = list_and_combine_bps( ch,
-            selected_clothing );
+    const auto bps = encumbrance_lines( ch, selected_clothing );
 
     // width/height excluding title & scrollbar
     const int height = getmaxy( win ) - 1;
@@ -201,7 +216,6 @@ void character_display::print_encumbrance( ui_adaptor &ui, const catacurses::win
      *** for displaying triple digit encumbrance, due to new encumbrance system.    ***
      *** If the player wants to see the total without having to do them maths, the  ***
      *** armor layers ui shows everything they want :-) -Davek                      ***/
-    const auto &enc_data = ch.get_encumbrance();
     for( int i = 0; i < height; ++i ) {
         int thisline = firstline + i;
         if( thisline < 0 ) {
@@ -210,11 +224,8 @@ void character_display::print_encumbrance( ui_adaptor &ui, const catacurses::win
         if( static_cast<size_t>( thisline ) >= bps.size() ) {
             break;
         }
-        const bodypart_str_id &bp = bps[thisline].first;
-        const bool combine = bps[thisline].second;
-        const encumbrance_data &e = enc_data.elems.at( bp );
-        const bool highlighted = selected_clothing ? selected_clothing->covers( bp.id() ) : false;
-        std::string out = body_part_name_as_heading( bp, combine ? 2 : 1 );
+        const encumbrance_line &entry = bps[thisline];
+        std::string out = body_part_name_as_heading( entry.part, entry.combined ? 2 : 1 );
         if( utf8_width( out ) > 7 ) {
             out = utf8_truncate( out, 7 );
         }
@@ -223,24 +234,22 @@ void character_display::print_encumbrance( ui_adaptor &ui, const catacurses::win
         // Make the text green if this part is covered by the passed in item.
         const bool highlight_line = thisline == line;
         nc_color limb_color = highlight_line ?
-                              ( highlighted ? h_green : h_light_gray ) :
-                              ( highlighted ? c_green : c_light_gray );
+                              ( entry.covered ? h_green : h_light_gray ) :
+                              ( entry.covered ? c_green : c_light_gray );
         const int y_pos = 1 + i;
         if( highlight_line ) {
             ui.set_cursor( win, point( 1, y_pos ) );
         }
         mvwprintz( win, point( 1, y_pos ), limb_color, "%s", out );
         // accumulated encumbrance from clothing, plus extra encumbrance from layering
-        mvwprintz( win, point( 8, 1 + i ), encumb_color( e.encumbrance ), "%3d",
-                   e.encumbrance - e.layer_penalty );
+        mvwprintz( win, point( 8, 1 + i ), entry.encumbrance_color, "%3d", entry.encumbrance );
         // separator in low toned color
         mvwprintz( win, point( 11, y_pos ), c_light_gray, "+" );
         // take into account the new encumbrance system for layers
-        mvwprintz( win, point( 12, y_pos ), encumb_color( e.encumbrance ), "%-3d", e.layer_penalty );
+        mvwprintz( win, point( 12, y_pos ), entry.encumbrance_color, "%-3d", entry.layering );
         // print warmth, tethered to right hand side of the window
 
-        mvwprintz( win, point( width - 6, y_pos ), warmth::bodytemp_color( ch, bp ), "(% 3d)",
-                   temperature_print_rescaling( get_temp_conv( ch, bp ) ) );
+        mvwprintz( win, point( width - 6, y_pos ), entry.warmth_color, "(% 3d)", entry.warmth );
     }
 
     if( do_draw_scrollbar ) {
