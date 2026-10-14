@@ -3051,6 +3051,57 @@ Deno.test({
 })
 
 Deno.test({
+  name:
+    "stdio: 0.2 invoke: the armor layers screen filters by a body part id and refuses rows it does not hold",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      const session = await enterTutorial(client)
+      await session.acknowledge(() => session.mirror.interaction.interaction === null)
+      assertEquals(
+        (await session.submit({ kind: "action", action_id: "sort_armor" })).stages.at(-1),
+        "completed",
+      )
+      const screen = top(session)
+      assertEquals(screen.context, "SORT_ARMOR")
+      const tabs = findComponent(screen.root, "armor:tabs")
+      assertEquals(tabs.tabs[0].id, "part:all")
+      assert(tabs.tabs.some((tab: Value) => tab.id === "part:torso"), "the torso among the parts")
+
+      // A part or an item the screen does not hold is refused before anything runs.
+      for (
+        const [affordance, row] of [["armor:part", "part:nowhere"], [
+          "armor:pick",
+          "worn:nothing:0",
+        ]]
+      ) {
+        const unknown = await invokeTop(session, affordance, "boundary", { row })
+        assertEquals([unknown.stages.at(-1) ?? "rejected", unknown.error], [
+          "rejected",
+          "invalid_arguments",
+        ])
+      }
+      const picked = await invokeTop(session, "armor:part", "boundary", { row: "part:torso" })
+      assertEquals(picked.stages.at(-1), "completed", JSON.stringify(picked))
+      assert(
+        findComponent(top(session).root, "armor:tabs").tabs.find((tab: Value) => tab.selected)
+          .id === "part:torso",
+        "the picked part is selected",
+      )
+      const closed = await invokeTop(session, "QUIT", "screen")
+      assertEquals(closed.stages.at(-1), "completed", JSON.stringify(closed))
+      assertEquals(top(session).role, "map")
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
+Deno.test({
   name: "stdio: the tutorial loads and plays with automatic compute when data/shaders is missing",
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {

@@ -1,6 +1,7 @@
 /** @module The scenarios whose recorded wire becomes the contract examples. */
 import { character } from "./character.ts"
 import { aim } from "./aim.ts"
+import { armor } from "./armor.ts"
 import { construction, crafting } from "./crafting.ts"
 import type { Scenario } from "./driver.ts"
 import { handshake } from "./handshake.ts"
@@ -37,4 +38,5 @@ export const scenarios: Scenario[] = [
   keybindings,
   distractions,
   colors,
+  armor,
 ]
