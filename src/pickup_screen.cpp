@@ -194,7 +194,7 @@ auto screen_of( const screen_options &opts ) -> ec::screen_view
     return {
         .title = _( "Pick up" ),
         .root = ec::panel( {
-            .id = "pickup", .title = _( "Pick up" ), .subtitle = source_name( opts.source ),
+            .id = "pickup", .subtitle = source_name( opts.source ),
             .stats = carry_stats( opts ), .filter = opts.filter, .child = std::move( items )
         } ),
         .affordances = {

@@ -1035,7 +1035,7 @@ auto trading_window::view( const npc &np, input_context &ctxt ) const -> ec::scr
     return {
         .title = title,
         .root = ec::panel( {
-            .id = head_id, .title = title,
+            .id = head_id,
             .stats = { { .key = "category_mode", .label = ctxt.get_action_name( "CATEGORY_SELECTION" ), .value = category_mode ? _( "ON" ) : _( "OFF" ) } },
             .child = ec::split( {
                 .id = panes_id, .active = focus_them ? npc_pane_id : you_pane_id, .children = ec::children_of(

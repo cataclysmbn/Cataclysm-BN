@@ -2186,7 +2186,7 @@ auto inventory_selector::interaction_view() const -> ec::screen_view
     return {
         .title = remove_color_tags( title ),
         .root = ec::panel( {
-            .id = "inventory", .title = remove_color_tags( title ), .subtitle = remove_color_tags( hint ),
+            .id = "inventory", .subtitle = remove_color_tags( hint ),
             .stats = std::move( stats ), .filter = filter, .child = std::move( content ),
         } ),
         .affordances = std::move( affordances ),

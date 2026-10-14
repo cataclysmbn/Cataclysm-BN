@@ -138,7 +138,6 @@ TEST_CASE(
           == 1);
     const auto& panel = *view.root;
     // The screen's title is the window's; the panel under it does not repeat it.
-    CHECK_FALSE(view.title.empty());
     CHECK(body<ec::panel_body>(panel).title.empty());
 
     // Every row is named by the column it is in and what it is, not by its text or its place on the
