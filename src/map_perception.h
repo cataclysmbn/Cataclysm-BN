@@ -2,6 +2,8 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -85,6 +87,10 @@ auto invalidate_visibility( const map &here ) -> void;
 auto invalidate_all( const map &here ) -> void;
 auto invalidate_cell( const map &here, const tripoint_bub_ms &p ) -> void;
 auto memory_changed( const tripoint_abs_ms &p ) -> void;
+/// The squares the avatar's memory was written at since the last call, the one consumer's way to learn what
+/// changed. None when that is not known: on the first call, after the memory was replaced as a whole, or when
+/// more squares changed than are kept.
+auto take_memory_changes() -> std::optional<std::set<tripoint_abs_ms>>;
 /// Clear/load/session replacement must not reuse the previous knowledge baseline.
 auto reset() -> void;
 

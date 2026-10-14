@@ -593,8 +593,25 @@ auto invalidate_cell( const map &here, const tripoint_bub_ms &p ) -> void
     }
 }
 
+namespace
+{
+/// Kept from the first request on; none while the history is unknown, which is also how it outgrowing the
+/// limit shows.
+constexpr auto memory_log_limit = size_t { 1 << 18 };
+auto memory_log = std::optional<std::set<tripoint_abs_ms>> {};
+} // namespace
+
+auto take_memory_changes() -> std::optional<std::set<tripoint_abs_ms>>
+{
+    return std::exchange( memory_log, std::set<tripoint_abs_ms> {} );
+}
+
 auto memory_changed( const tripoint_abs_ms &p ) -> void
 {
+    if( memory_log ) {
+        memory_log->insert( p );
+        if( memory_log->size() > memory_log_limit ) { memory_log.reset(); }
+    }
     if( g ) {
         invalidate_cell( get_map(), abs_to_map_local( get_map(), p ) );
     }
