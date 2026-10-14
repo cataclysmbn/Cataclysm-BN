@@ -6,7 +6,6 @@
 #include <memory>
 #include <ranges>
 
-#include "client_interaction_prepared.h"
 #include "engine_client_component.h"
 #include "engine_client_requirements.h"
 #include "popup.h"
@@ -785,46 +784,59 @@ auto bionics_view( const bionics_model &model ) -> ec::screen_view
     };
 }
 
-/// Keep the native one-key popup, with an owned semantic draft and explicit submit.
+constexpr auto letter_id = "bionics:letter";
+constexpr auto letter_key_id = "bionics:letter:key";
+constexpr auto letter_set_id = "bionics:letter:set";
+
+/// The native one-key popup, published as a screen with one key field; the key is named as keybinding files do.
 auto reassign_bionic_letter( const bionic &bio ) -> int
 {
-    const auto message = string_format(
-                             _( "%s; enter new letter.  Space to clear.  Esc to cancel." ), bio.id->name );
+    const auto message = [&]() {
+        return string_format( _( "%s; enter new letter.  Space to clear.  Esc to cancel." ), bio.id->name );
+    };
     const auto ime = ime_sentry{ ime_sentry::disable };
     auto pop = static_popup{};
-    pop.context( "POPUP_WAIT" ).message( "%s", message ).allow_anykey( true );
+    pop.context( "POPUP_WAIT" ).message( "%s", message() ).allow_anykey( true );
     auto ctxt = input_context{ "POPUP_WAIT" };
     ctxt.register_action( "ANY_INPUT" );
     ctxt.register_action( "COORDINATE" );
     ctxt.register_action( "QUIT" );
-    auto draft = std::string{};
+    const auto screen = ec::screen_scope( ctxt, { .view = [&]( const ec::boundary_state & )
+    {
+        return ec::screen_view{
+            .title = bio.id->name.translated(),
+            .root = ec::split( {
+                .id = "bionics:letter:panes", .children = ec::children_of(
+                ec::component{ .id = "bionics:letter:message", .body = ec::text_body{ .markup = message() } },
+                ec::component{
+                    .id = letter_id, .affordances = { letter_set_id }, .body = ec::form_body{
+                        .fields = { {
+                                .id = letter_key_id, .label = _( "Manual (shortcut)" ),
+                                .description = bionic_chars.get_allowed_chars(), .type = "key"
+                            }
+                        },
+                        .submit = letter_set_id } } ) } ),
+            .affordances = {
+                ec::invoke_affordance( {
+                    .id = letter_set_id, .label = _( "Manual (shortcut)" ),
+                    .args = { .text = ec::text_shape{ .field_id = letter_key_id } }, .role = "confirm" } )
+            },
+            .focus_component = letter_id,
+        };
+    }
+                                                } );
     for( ;; ) {
         ui_manager::redraw();
-        auto snapshot = game_client::interaction_snapshot{
-            .kind = game_client::interaction_kind::field,
-            .title = bio.id->name.translated(),
-            .message = message,
-            .allow_cancel = true,
-            .field = game_client::interaction_field{
-                .id = "bionic-letter", .label = _( "Manual (shortcut)" ),
-                .description = bionic_chars.get_allowed_chars(), .value = draft,
-                .max_length = 1 },
-        };
-        {
-            const auto scope = game_client::prepared_interaction_scope{
-                ctxt, game_client::prepare_interaction( ctxt, std::move( snapshot ) ) };
-            ctxt.handle_input();
-        }
+        const auto action = ctxt.handle_input();
         const auto &input = ctxt.get_raw_input();
-        if( input.interaction ) {
-            if( input.interaction->operation == game_client::interaction_operation::cancel ) {
-                return KEY_ESCAPE;
-            }
-            draft = input.interaction->value;
-            if( !input.interaction->submit.value_or( false ) ) {
-                continue;
-            }
-            return draft.empty() ? UNKNOWN_UNICODE : UTF8_getch( draft );
+        if( const auto picked = ec::invoked( input ); picked && picked->affordance_id == letter_set_id &&
+            picked->args.text ) {
+            const auto &key = *picked->args.text;
+            const auto code = inp_mngr.get_keycode( key );
+            return key.empty() ? UNKNOWN_UNICODE : code != 0 ? code : UTF8_getch( key );
+        }
+        if( action == "QUIT" ) {
+            return KEY_ESCAPE;
         }
         if( input.type == input_event_t::mouse ||
             ( input.type == input_event_t::keyboard && input.sequence.empty() ) ) {
