@@ -84,7 +84,7 @@
           "actions": [
             {
               "id": "UP",
-              "name": "Previous entry",
+              "name": "Move cursor up",
               "keys": [
                 "k",
                 "8",
@@ -94,7 +94,7 @@
             },
             {
               "id": "DOWN",
-              "name": "Next entry",
+              "name": "Move cursor down",
               "keys": [
                 "j",
                 "DOWN",
@@ -104,7 +104,7 @@
             },
             {
               "id": "LEFT",
-              "name": "Previous tab",
+              "name": "Go to prev tab",
               "keys": [
                 "h",
                 "LEFT",
@@ -114,7 +114,7 @@
             },
             {
               "id": "RIGHT",
-              "name": "Next tab",
+              "name": "Go to next tab",
               "keys": [
                 "l",
                 "RIGHT",
@@ -373,7 +373,7 @@
                 },
                 {
                   "id": "UP",
-                  "label": "Previous entry",
+                  "label": "Move cursor up",
                   "keys": [
                     "k",
                     "8",
@@ -385,7 +385,7 @@
                 },
                 {
                   "id": "DOWN",
-                  "label": "Next entry",
+                  "label": "Move cursor down",
                   "keys": [
                     "j",
                     "DOWN",
@@ -397,7 +397,7 @@
                 },
                 {
                   "id": "LEFT",
-                  "label": "Previous tab",
+                  "label": "Go to prev tab",
                   "keys": [
                     "h",
                     "LEFT",
@@ -409,7 +409,7 @@
                 },
                 {
                   "id": "RIGHT",
-                  "label": "Next tab",
+                  "label": "Go to next tab",
                   "keys": [
                     "l",
                     "RIGHT",
@@ -505,7 +505,7 @@
         "actions": [
           {
             "id": "UP",
-            "name": "Previous entry",
+            "name": "Move cursor up",
             "keys": [
               "k",
               "8",
@@ -515,7 +515,7 @@
           },
           {
             "id": "DOWN",
-            "name": "Next entry",
+            "name": "Move cursor down",
             "keys": [
               "j",
               "DOWN",
@@ -525,7 +525,7 @@
           },
           {
             "id": "LEFT",
-            "name": "Previous tab",
+            "name": "Go to prev tab",
             "keys": [
               "h",
               "LEFT",
@@ -535,7 +535,7 @@
           },
           {
             "id": "RIGHT",
-            "name": "Next tab",
+            "name": "Go to next tab",
             "keys": [
               "l",
               "RIGHT",
@@ -794,7 +794,7 @@
               },
               {
                 "id": "UP",
-                "label": "Previous entry",
+                "label": "Move cursor up",
                 "keys": [
                   "k",
                   "8",
@@ -806,7 +806,7 @@
               },
               {
                 "id": "DOWN",
-                "label": "Next entry",
+                "label": "Move cursor down",
                 "keys": [
                   "j",
                   "DOWN",
@@ -818,7 +818,7 @@
               },
               {
                 "id": "LEFT",
-                "label": "Previous tab",
+                "label": "Go to prev tab",
                 "keys": [
                   "h",
                   "LEFT",
@@ -830,7 +830,7 @@
               },
               {
                 "id": "RIGHT",
-                "label": "Next tab",
+                "label": "Go to next tab",
                 "keys": [
                   "l",
                   "RIGHT",
@@ -1097,7 +1097,7 @@
           },
           {
             "id": "UP",
-            "label": "Previous entry",
+            "label": "Move cursor up",
             "keys": [
               "k",
               "8",
@@ -1109,7 +1109,7 @@
           },
           {
             "id": "DOWN",
-            "label": "Next entry",
+            "label": "Move cursor down",
             "keys": [
               "j",
               "DOWN",
@@ -1121,7 +1121,7 @@
           },
           {
             "id": "LEFT",
-            "label": "Previous tab",
+            "label": "Go to prev tab",
             "keys": [
               "h",
               "LEFT",
@@ -1133,7 +1133,7 @@
           },
           {
             "id": "RIGHT",
-            "label": "Next tab",
+            "label": "Go to next tab",
             "keys": [
               "l",
               "RIGHT",
