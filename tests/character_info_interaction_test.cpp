@@ -9,17 +9,20 @@
 #    include "character_display.h"
 #    include "client_command.h"
 #    include "client_input.h"
-#    include "client_interaction_prepared.h"
 #    include "client_memory.h"
 #    include "client_memory_scope.h"
 #    include "cursesdef.h"
 #    include "cursesport.h"
 #    include "effect.h"
+#    include "engine_client_component.h"
+#    include "engine_client_contract.h"
 #    include "game.h"
 #    include "init.h"
 #    include "input.h"
 #    include "json.h"
 #    include "kill_tracker.h"
+#    include "locale_fixture.h"
+#    include "locale_scope.h"
 #    include "map/map.h"
 #    include "map/submap.h"
 #    include "mutation.h"
@@ -38,6 +41,7 @@
 #    include <filesystem>
 #    include <functional>
 #    include <map>
+#    include <nlohmann/json.hpp>
 #    include <ranges>
 #    include <sstream>
 #    include <stdexcept>
@@ -45,6 +49,8 @@
 
 namespace {
 namespace client = game_client;
+namespace ec = engine_client;
+using json = nlohmann::json;
 
 auto actor_state() -> std::string {
     auto stream = std::ostringstream{};
@@ -180,66 +186,96 @@ auto action(const std::string& name) -> input_event {
     return *result;
 }
 
-auto choice(const client::interaction_snapshot& snapshot, const std::string& label)
-    -> client::interaction_choice {
-    const auto found =
-        std::ranges::find(snapshot.choices, label, &client::interaction_choice::label);
-    REQUIRE(found != snapshot.choices.end());
-    return *found;
-}
-
-auto choose(const client::interaction_snapshot& snapshot, const std::string& label) -> input_event {
-    return resolve(
-        {.input_id = snapshot.input_id,
-         .operation = client::interaction_operation::choose,
-         .target_id = choice(snapshot, label).id});
-}
-
+/// Cancels a nested native popup, which only the 0.1 snapshot describes.
 auto cancel(const client::interaction_snapshot& snapshot) -> input_event {
     return resolve(
         {.input_id = snapshot.input_id, .operation = client::interaction_operation::cancel});
 }
 
-/// Materialize every page, not merely a truncated prefix when simultaneous panes exceed 200.
-auto complete_snapshot() -> client::interaction_snapshot {
-    auto snapshot = client::current_interaction({.limit = 200});
-    while (snapshot.choices.size() < snapshot.choice_total) {
-        const auto page = client::current_interaction(
-            {.offset = snapshot.choices.size(), .limit = 200});
-        REQUIRE_FALSE(page.choices.empty());
-        CHECK(page.input_id == snapshot.input_id);
-        CHECK(page.schema_id == snapshot.schema_id);
-        snapshot.choices.insert(snapshot.choices.end(), page.choices.begin(), page.choices.end());
-    }
-    return snapshot;
+/// The top screen as a client reads it.
+auto captured() -> ec::boundary_state {
+    const auto state = ec::capture_boundary(
+        {.epoch = "epoch:character",
+         .ready =
+             {.phase = "waiting_for_input",
+              .game_ready = true,
+              .accepts_interaction_commands = true,
+              .accepts_registered_actions = true}});
+    REQUIRE(state.has_value());
+    return *state;
 }
 
-/// Includes the very first passive read, not merely repeated reads of an already observed model.
-auto observe() -> client::interaction_snapshot {
-    const auto before = actor_state();
-    const auto kills = kills_state();
-    const auto world = world_state();
-    const auto rng = rng_get_engine();
-    client::reset_interaction_work();
-    const auto snapshot = complete_snapshot();
-    const auto repeat = complete_snapshot();
-    CHECK(client::serialize_interaction(snapshot) == client::serialize_interaction(repeat));
-    auto rows = snapshot.choices.size() + repeat.choices.size();
-    for (const auto offset : std::views::iota(std::size_t{0}, snapshot.choice_total)) {
-        const auto page = client::current_interaction({.offset = offset, .limit = 1});
-        REQUIRE(page.choices.size() == 1);
-        CHECK(page.choices[0].id == snapshot.choices[offset].id);
-        CHECK(page.choices[0].description == snapshot.choices[offset].description);
-        rows += page.choices.size();
+/// The invoke a client sends for an affordance the screen's loop runs.
+auto invoke(const std::string& affordance, game_client::interaction_arguments args = {})
+    -> input_event {
+    auto event = input_event{};
+    event.type = input_event_t::interaction;
+    event.interaction = game_client::interaction_event{
+        .operation = game_client::interaction_operation::invoke,
+        .target_id = affordance,
+        .arguments = std::move(args)};
+    return event;
+}
+
+auto part(const ec::screen_view& screen, const std::string& id) -> const ec::component& {
+    REQUIRE(screen.root);
+    const auto* const found = ec::find_component(*screen.root, id);
+    INFO(id);
+    REQUIRE(found != nullptr);
+    return *found;
+}
+template <typename Body> auto body(const ec::component& value) -> const Body& {
+    REQUIRE(std::holds_alternative<Body>(value.body));
+    return std::get<Body>(value.body);
+}
+auto rows(const ec::screen_view& screen, const std::string& tab) -> const std::vector<ec::row>& {
+    return body<ec::list_body>(part(screen, "character:" + tab + ":rows")).rows;
+}
+auto row_of(const ec::screen_view& screen, const std::string& tab, const std::string& id)
+    -> const ec::row& {
+    const auto& all = rows(screen, tab);
+    const auto found = std::ranges::find(all, id, &ec::row::id);
+    INFO(id);
+    REQUIRE(found != all.end());
+    return *found;
+}
+auto stats_of(const ec::screen_view& screen, const std::string& panel)
+    -> const std::vector<ec::panel_stat>& {
+    return body<ec::panel_body>(part(screen, panel)).stats;
+}
+auto affordance(const ec::screen_view& screen, const std::string& id) -> const ec::affordance& {
+    const auto found = std::ranges::find(screen.affordances, id, &ec::affordance::id);
+    INFO(id);
+    REQUIRE(found != screen.affordances.end());
+    return *found;
+}
+auto skill_level(const std::string& skill) -> bool {
+    return get_avatar().get_skill_level_object(skill_id(skill)).isTraining();
+}
+
+/// The top screen as a client reads it, with the ids of this screen instance left out.
+auto published() -> json {
+    auto top = json::parse(ec::serialize_interaction_boundary(captured()))["stack"].back();
+    top.erase("screen_id");
+    return top;
+}
+auto without_words(json value) -> json {
+    if (value.is_string()) { return ""; }
+    if (!value.is_structured()) { return value; }
+    for (auto& member : value) { member = without_words(std::move(member)); }
+    return value;
+}
+void collect_ids(const json& value, std::vector<std::string>& into) {
+    if (value.is_object()) {
+        for (const auto& [name, member] : value.items()) {
+            if ((name == "id" || name == "affordance") && member.is_string()) {
+                into.push_back(member.get<std::string>());
+            }
+            collect_ids(member, into);
+        }
+    } else if (value.is_array()) {
+        for (const auto& member : value) { collect_ids(member, into); }
     }
-    CHECK(client::interaction_work().schema_hashes == 0);
-    CHECK(client::interaction_work().hashed_choices == 0);
-    CHECK(client::interaction_work().materialized_choices == rows);
-    CHECK(actor_state() == before);
-    CHECK(kills_state() == kills);
-    CHECK(world_state() == world);
-    CHECK(rng_get_engine() == rng);
-    return snapshot;
 }
 
 } // namespace
@@ -279,8 +315,8 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "character info native tabs disclose full details without passive actor or RNG work",
-    "[character_info_interaction]") {
+    "the character sheet publishes its tabs and the rows of every tab by identity",
+    "[character_info_interaction][engine_client_component]") {
     const auto guard = character_info_guard{};
     auto& you = get_avatar();
     you.set_mutation(trait_id("test_character_info_visible_trait"));
@@ -289,74 +325,107 @@ TEST_CASE(
     you.add_effect(efftype_id("test_character_info_hidden_effect"), 10_turns);
     you.add_bionic(bionic_id("test_character_info_cbm"));
     you.add_bionic(bionic_id("test_character_info_cbm"));
-    const auto training = you.get_skill_level_object(skill_id("melee")).isTraining();
+    const auto training = skill_level("melee");
     const auto before = actor_state();
     const auto rng = rng_get_engine();
     auto reads = 0;
     client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = observe();
-        REQUIRE(snapshot.context == "PLAYER_INFO");
-        REQUIRE(snapshot.structured);
-        CHECK(snapshot.panes.size() == 8);
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        REQUIRE(screen.root);
+        CHECK(screen.context == "PLAYER_INFO");
+        CHECK(actor_state() == before);
+        CHECK(rng_get_engine() == rng);
         switch (reads++) {
-            case 0:
-                CHECK(choice(snapshot, "Strength:").description.find("Base HP:")
+            case 0: {
+                const auto& tabs = body<ec::tabs_body>(part(screen, "character:tabs"));
+                REQUIRE(tabs.tabs.size() == 6);
+                CHECK(tabs.tabs.front().id == "stats");
+                CHECK(tabs.tabs.front().selected);
+                CHECK(tabs.select == "character:tab");
+                CHECK(body<ec::split_body>(part(screen, "character:panes")).active
+                      == "character:stats");
+                CHECK(screen.focus_component == "character:stats:rows");
+                CHECK(screen.focus_row == "stat:str");
+                CHECK(row_of(screen, "stats", "stat:str").description.find("Base HP:")
                       != std::string::npos);
-                CHECK(choice(snapshot, "Dexterity:").description.find("Throwing penalty")
+                CHECK(row_of(screen, "stats", "stat:dex").description.find("Throwing penalty")
                       != std::string::npos);
-                CHECK(choice(snapshot, "Intelligence:").description.find("Crafting bonus")
+                CHECK(row_of(screen, "stats", "stat:int").description.find("Crafting bonus")
                       != std::string::npos);
-                CHECK(choice(snapshot, "Perception:").description.find("Trap detection")
+                CHECK(row_of(screen, "stats", "stat:per").description.find("Trap detection")
                       != std::string::npos);
-                return choose(snapshot, "ENCUMBRANCE AND WARMTH");
+                CHECK(affordance(screen, "QUIT").role == "cancel");
+                // A tab is picked by its identity, and an unknown one is refused.
+                CHECK(
+                    ec::resolve_invoke(
+                        state, {.affordance_id = "character:tab", .args = {.row = "nowhere"}})
+                        .error()
+                    == ec::error::invalid_arguments);
+                return invoke("character:tab", {.row = "encumbrance"});
+            }
             case 1: {
-                const auto row = std::ranges::find_if(snapshot.choices, [](const auto& entry) {
-                    return entry.pane_id == "encumbrance";
-                });
-                REQUIRE(row != snapshot.choices.end());
-                CHECK_FALSE(row->columns.empty());
-                CHECK_FALSE(row->description.empty());
-                return choose(snapshot, "TRAITS");
+                CHECK(body<ec::split_body>(part(screen, "character:panes")).active
+                      == "character:encumbrance");
+                const auto& all = rows(screen, "encumbrance");
+                REQUIRE_FALSE(all.empty());
+                CHECK(all.front().id.starts_with("body:"));
+                CHECK_FALSE(all.front().columns.empty());
+                CHECK_FALSE(all.front().description.empty());
+                return invoke("character:tab", {.row = "traits"});
             }
             case 2:
-                CHECK(choice(snapshot, "TEST character info visible trait")
+                CHECK(row_of(screen, "traits", "trait:test_character_info_visible_trait")
                           .description.find("last sentence")
                       != std::string::npos);
-                CHECK(std::ranges::none_of(snapshot.choices, [](const auto& entry) {
-                    return entry.label == "TEST character info hidden trait";
+                CHECK(std::ranges::none_of(rows(screen, "traits"), [](const auto& row) {
+                    return row.id == "trait:test_character_info_hidden_trait";
                 }));
-                CHECK_FALSE(client::resolve_interaction_command(
-                    {.input_id = snapshot.input_id,
-                     .operation = client::interaction_operation::choose,
-                     .target_id = client::opaque_interaction_id(
-                         "character-trait", {"test_character_info_hidden_trait"})}));
-                return choose(snapshot, "BIONICS");
-            case 3:
                 CHECK(
-                    choice(snapshot, "TEST character info CBM (2)").description.find("2 instances")
-                    != std::string::npos);
+                    ec::resolve_invoke(
+                        state, {.affordance_id = "character:focus",
+                                .args = {.row = "trait:test_character_info_hidden_trait"}})
+                        .error()
+                    == ec::error::invalid_arguments);
+                return invoke("character:tab", {.row = "bionics"});
+            case 3: {
+                const auto& cbm = row_of(screen, "bionics", "bionic:test_character_info_cbm");
+                CHECK(cbm.label == "TEST character info CBM (2)");
+                CHECK(cbm.description.find("2 instances") != std::string::npos);
+                const auto& power = stats_of(screen, "character:bionics");
+                REQUIRE(power.size() == 1);
+                CHECK(power.front().key == "power");
+                CHECK(power.front().value
+                      == std::to_string(units::to_kilojoule(you.get_power_level())));
+                CHECK(power.front().max
+                      == std::to_string(units::to_kilojoule(you.get_max_power_level())));
+                return invoke("character:tab", {.row = "effects"});
+            }
+            case 4: {
+                const auto& visible = rows(screen, "effects").front();
+                CHECK(visible.label == "TEST character info visible effect");
                 CHECK(
-                    snapshot.panes[4].area_description.find("Bionic Power:") != std::string::npos);
-                return choose(snapshot, "EFFECTS");
-            case 4:
-                CHECK(
-                    choice(snapshot, "TEST character info visible effect").description
+                    visible.description
                     == you.get_effect(efftype_id("test_character_info_visible_effect")).disp_desc());
-                CHECK(std::ranges::none_of(snapshot.choices, [](const auto& entry) {
-                    return entry.description.find("Undisclosed") != std::string::npos;
+                CHECK(std::ranges::none_of(rows(screen, "effects"), [](const auto& row) {
+                    return row.description.find("Undisclosed") != std::string::npos;
                 }));
-                return choose(snapshot, "SKILLS");
-            case 5:
-                return choose(snapshot, "Melee");
+                return invoke("character:tab", {.row = "skills"});
+            }
+            case 5: {
+                const auto& all = rows(screen, "skills");
+                CHECK(all.front().header);
+                CHECK_FALSE(all.front().selectable);
+                CHECK(screen.focus_row == all[1].id);
+                return invoke("character:focus", {.row = "skill:melee"});
+            }
             case 6:
-                CHECK(choice(snapshot, "Melee").highlighted);
-                CHECK(you.get_skill_level_object(skill_id("melee")).isTraining() == training);
-                CHECK(actor_state() == before);
-                CHECK(rng_get_engine() == rng);
-                return cancel(snapshot);
+                CHECK(screen.focus_row == "skill:melee");
+                CHECK(skill_level("melee") == training);
+                return action("QUIT");
             default:
-                FAIL("unexpected native read");
-                return input_event{};
+                FAIL("the character sheet outlived its cancel");
+                return action("QUIT");
         }
     });
     character_display::disp_info(you);
@@ -366,128 +435,68 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "character info publishes native colors and the speed breakdown as rows",
-    "[character_info_interaction][character_info_colors]") {
+    "the character sheet publishes native colors and the speed breakdown as figures",
+    "[character_info_interaction][character_info_colors][engine_client_component]") {
     const auto guard = character_info_guard{};
     auto& you = get_avatar();
     you.set_mutation(trait_id("test_character_info_visible_trait"));
-    const auto value_of = [](const client::interaction_choice& row, const std::string& key) {
-        const auto found = std::ranges::find(row.columns, key, &client::interaction_column::key);
-        REQUIRE(found != row.columns.end());
-        return found->value;
-    };
-    const auto color_of = [](const client::interaction_choice& row, const std::string& key) {
-        const auto found = std::ranges::find(row.columns, key, &client::interaction_column::key);
-        REQUIRE(found != row.columns.end());
-        return found->color;
-    };
     auto reads = 0;
     client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = observe();
+        const auto screen = ec::top_screen(captured());
+        const auto column = [](const ec::row& row, const std::string& key) -> const auto& {
+            const auto found =
+                std::ranges::find(row.columns, key, &client::interaction_column::key);
+            REQUIRE(found != row.columns.end());
+            return *found;
+        };
         if (reads++ == 0) {
-            const auto& strength = choice(snapshot, "Strength:");
-            CHECK(color_of(strength, "current") == string_from_color(c_white));
-            const auto& moves = choice(snapshot, "Current Speed:");
-            CHECK(moves.pane_id == "speed");
-            CHECK_FALSE(moves.selectable);
-            CHECK(value_of(moves, "value") == std::to_string(you.get_speed()));
-            CHECK(color_of(moves, "value")
-                  == string_from_color(you.get_speed() >= 100 ? c_green : c_red));
-            CHECK(value_of(choice(snapshot, "Base Move Cost:"), "value")
-                  == std::to_string(you.run_cost(100)));
-            return choose(snapshot, "TRAITS");
+            const auto& strength = row_of(screen, "stats", "stat:str");
+            CHECK(column(strength, "current").color == string_from_color(c_white));
+            const auto& speed = stats_of(screen, "character:speed");
+            const auto stat = [&](const std::string& key) -> const auto& {
+                const auto found = std::ranges::find(speed, key, &ec::panel_stat::key);
+                REQUIRE(found != speed.end());
+                return *found;
+            };
+            CHECK(stat("current_speed").value == std::to_string(you.get_speed()));
+            CHECK(stat("current_speed").tone == (you.get_speed() >= 100 ? "good" : "bad"));
+            CHECK(stat("base_move_cost").value == std::to_string(you.run_cost(100)));
+            return invoke("character:tab", {.row = "traits"});
         }
-        const auto& trait = choice(snapshot, "TEST character info visible trait");
+        const auto& trait = row_of(screen, "traits", "trait:test_character_info_visible_trait");
         CHECK(trait.color
               == string_from_color(
                   trait_id("test_character_info_visible_trait")->get_display_color()));
-        return cancel(snapshot);
+        return action("QUIT");
     });
     character_display::disp_info(you);
     CHECK(reads == 2);
 }
 
 TEST_CASE(
-    "character info exposes simultaneous native panes independently of focus",
-    "[character_info_interaction][character_info_cross_pane_red]") {
+    "the character sheet publishes every pane at once, whatever the focus",
+    "[character_info_interaction][engine_client_component]") {
     const auto guard = character_info_guard{};
     auto& you = get_avatar();
     you.set_mutation(trait_id("test_character_info_visible_trait"));
     you.add_effect(efftype_id("test_character_info_visible_effect"), 10_turns);
     you.add_bionic(bionic_id("test_character_info_cbm"));
-    const auto before = actor_state();
-    const auto rng = rng_get_engine();
-    auto reads = 0;
     client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = complete_snapshot();
-        REQUIRE(snapshot.context == "PLAYER_INFO");
-        REQUIRE(snapshot.structured);
+        const auto screen = ec::top_screen(captured());
         for (const auto* pane :
              {"stats", "encumbrance", "skills", "traits", "bionics", "effects"}) {
-            CAPTURE(reads, pane);
-            CHECK(std::ranges::any_of(snapshot.choices, [&](const auto& row) {
-                return row.pane_id == pane && row.selectable;
-            }));
+            CAPTURE(pane);
+            CHECK_FALSE(rows(screen, pane).empty());
         }
-        const auto power =
-            std::ranges::find(snapshot.panes, "bionics", &client::interaction_pane::id);
-        REQUIRE(power != snapshot.panes.end());
-        CHECK(power->area_description.find("Bionic Power:") != std::string::npos);
-        CHECK(actor_state() == before);
-        CHECK(rng_get_engine() == rng);
-        if (reads++ == 0) { return choose(snapshot, "SKILLS"); }
-        REQUIRE(reads == 2);
-        return cancel(snapshot);
+        CHECK_FALSE(stats_of(screen, "character:speed").empty());
+        return action("QUIT");
     });
     character_display::disp_info(you);
-    CHECK(reads == 2);
-    CHECK(actor_state() == before);
-    CHECK(rng_get_engine() == rng);
 }
 
 TEST_CASE(
-    "character info cold preparation and unchanged reads have distinct work bounds",
-    "[character_info_interaction]") {
-    const auto guard = character_info_guard{};
-    client::reset_interaction_work();
-    auto step = 0;
-    auto first_rows = std::size_t{};
-    auto first_input = std::uint64_t{};
-    client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto cold = client::interaction_work();
-        const auto snapshot = complete_snapshot();
-        const auto observed = client::interaction_work();
-        CHECK(observed.schema_hashes == cold.schema_hashes);
-        CHECK(observed.hashed_choices == cold.hashed_choices);
-        CHECK(observed.materialized_choices - cold.materialized_choices == snapshot.choice_total);
-        if (step == 0) {
-            CHECK(cold.schema_hashes == 1);
-            CHECK(cold.hashed_choices == snapshot.choice_total);
-            CHECK(cold.materialized_choices == 0);
-            first_rows = snapshot.choice_total;
-            first_input = snapshot.input_id;
-        } else if (step == 1) {
-            CHECK(snapshot.input_id > first_input);
-            CHECK(cold.schema_hashes == 1);
-            CHECK(cold.hashed_choices == first_rows);
-            ++step;
-            return choose(snapshot, "SKILLS");
-        } else {
-            CHECK(cold.schema_hashes == 2);
-            CHECK(cold.hashed_choices == first_rows + snapshot.choice_total);
-            ++step;
-            return cancel(snapshot);
-        }
-        ++step;
-        return input_event{'~', input_event_t::keyboard};
-    });
-    character_display::disp_info(get_avatar());
-    CHECK(step == 3);
-}
-
-TEST_CASE(
-    "character info complete paging retains off-viewport rows and exact focus",
-    "[character_info_interaction]") {
+    "the character sheet pages the rows past the first page and keeps the focus on its row",
+    "[character_info_interaction][engine_client_component]") {
     const auto guard = character_info_guard{};
     auto& you = get_avatar();
     for (const auto i : std::views::iota(0, 205)) {
@@ -495,38 +504,33 @@ TEST_CASE(
     }
     auto step = 0;
     client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = observe();
-        REQUIRE(snapshot.choice_total > 200);
-        CHECK(snapshot.choices.size() == snapshot.choice_total);
-        const auto traits =
-            std::ranges::count(snapshot.choices, "traits", &client::interaction_choice::pane_id);
-        CHECK(traits >= 205);
-        CHECK(
-            std::ranges::count_if(
-                snapshot.choices,
-                [](const auto& row) {
-                    return row.pane_id == "traits"
-                        && row.label.starts_with("TEST character info page ");
-                })
-            == 205);
-        const auto pane =
-            std::ranges::find(snapshot.panes, "traits", &client::interaction_pane::id);
-        REQUIRE(pane != snapshot.panes.end());
-        CHECK(pane->area_description.find("of " + std::to_string(traits)) != std::string::npos);
-        if (step++ == 0) { return choose(snapshot, "TEST character info page 204"); }
-        CHECK(choice(snapshot, "TEST character info page 204").highlighted);
-        CHECK(std::ranges::none_of(snapshot.choices, [](const auto& row) {
-            return row.pane_id != "traits" && row.highlighted && row.pane_id.has_value();
-        }));
-        CHECK(pane->area_description.find(
-                  "-" + std::to_string(traits) + " of " + std::to_string(traits))
-              != std::string::npos);
-        return cancel(snapshot);
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        const auto total = rows(screen, "traits").size();
+        REQUIRE(total >= 205);
+        const auto page = ec::read_rows(
+            {.epoch = "epoch:character",
+             .boundary_id = state.id,
+             .component_id = "character:traits:rows",
+             .offset = 200,
+             .limit = 100},
+            state);
+        REQUIRE(page);
+        CHECK(page->total == total);
+        CHECK(page->rows.size() == total - 200);
+        switch (step++) {
+            case 0:
+                return invoke("character:tab", {.row = "traits"});
+            case 1:
+                return invoke("character:focus", {.row = "trait:test_character_info_page_204"});
+            default:
+                CHECK(screen.focus_row == "trait:test_character_info_page_204");
+                return action("QUIT");
+        }
     });
     character_display::disp_info(you);
-    CHECK(step == 2);
+    CHECK(step == 3);
 }
-
 TEST_CASE(
     "character info fixture restores borrowed window geometry without resizing it",
     "[character_info_interaction]") {
@@ -549,77 +553,54 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "character info focus and native training execution remain distinct",
-    "[character_info_interaction]") {
+    "the character sheet moves its focus by row and runs native training on confirm",
+    "[character_info_interaction][engine_client_component]") {
     const auto guard = character_info_guard{};
     auto& you = get_avatar();
-    const auto initial = you.get_skill_level_object(skill_id("melee")).isTraining();
+    const auto initial = skill_level("melee");
     auto step = 0;
-    auto old_input = std::uint64_t{};
-    auto old_schema = std::string{};
     client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = observe();
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
         switch (step++) {
             case 0:
-                old_input = snapshot.input_id;
-                old_schema = snapshot.schema_id;
-                return action("NEXT_TAB");
+                CHECK_FALSE(
+                    ec::resolve_invoke(
+                        state, {.affordance_id = "character:focus", .args = {.row = "foreign"}})
+                        .has_value());
+                return invoke("character:tab", {.row = "skills"});
             case 1:
-                return action("NEXT_TAB");
-            case 2: {
-                const auto header = std::ranges::find_if(snapshot.choices, [](const auto& entry) {
-                    return !entry.selectable;
-                });
-                REQUIRE(header != snapshot.choices.end());
-                CHECK_FALSE(client::resolve_interaction_command(
-                    {.input_id = snapshot.input_id,
-                     .operation = client::interaction_operation::choose,
-                     .target_id = header->id}));
-                CHECK_FALSE(client::resolve_interaction_command(
-                    {.input_id = snapshot.input_id,
-                     .operation = client::interaction_operation::choose,
-                     .target_id = "foreign"}));
-                CHECK_FALSE(client::resolve_interaction_command(
-                    {.input_id = old_input,
-                     .operation = client::interaction_operation::choose,
-                     .target_id = header->id}));
-                CHECK(snapshot.schema_id != old_schema);
-                REQUIRE(client::active_input_context().context != nullptr);
-                CHECK_FALSE(client::validate_interaction_event(
-                    *client::active_input_context().context,
-                    {.operation = client::interaction_operation::choose,
-                     .schema_id = old_schema,
-                     .target_id = choice(snapshot, "STATS").id}));
-                return choose(snapshot, "Melee");
-            }
-            case 3:
-                CHECK(you.get_skill_level_object(skill_id("melee")).isTraining() == initial);
-                return choose(snapshot, "Toggle skill training");
-            case 4:
-                CHECK(you.get_skill_level_object(skill_id("melee")).isTraining() != initial);
+                return invoke("character:focus", {.row = "skill:melee"});
+            case 2:
+                // Picking a row moves the focus only; training stays as it was.
+                CHECK(screen.focus_row == "skill:melee");
+                CHECK(skill_level("melee") == initial);
                 return action("CONFIRM");
-            case 5:
-                CHECK(you.get_skill_level_object(skill_id("melee")).isTraining() == initial);
-                return cancel(snapshot);
+            case 3:
+                CHECK(skill_level("melee") != initial);
+                return action("CONFIRM");
+            case 4:
+                CHECK(skill_level("melee") == initial);
+                return action("QUIT");
             default:
                 FAIL("unexpected native read");
-                return input_event{};
+                return action("QUIT");
         }
     });
     character_display::disp_info(you);
-    CHECK(step == 6);
+    CHECK(step == 5);
 }
 
 TEST_CASE(
-    "character info stat controls retain native denial and nested confirmation",
-    "[character_info_interaction]") {
+    "the character sheet keeps the native denial and the nested confirmation of a stat upgrade",
+    "[character_info_interaction][engine_client_component]") {
     const auto guard = character_info_guard{};
     const auto enabled = override_option{"STATS_THROUGH_KILLS", "true"};
     const auto coefficient = override_option{"AVATAR_LEVEL_XP_COEFF", "1"};
     auto& you = get_avatar();
     auto grant = false;
     auto raise = false;
-    SECTION("denied XP remains selectable and reaches native warning") {}
+    SECTION("denied XP is a disabled confirm that says why and still reaches the native warning") {}
     SECTION("upgrade cancel") { grant = true; }
     SECTION("upgrade confirm") {
         grant = true;
@@ -637,22 +618,22 @@ TEST_CASE(
         const auto snapshot = client::current_interaction();
         if (snapshot.context != "PLAYER_INFO") {
             nested = true;
-            CHECK_FALSE(std::ranges::any_of(snapshot.choices, [](const auto& entry) {
-                return entry.pane_id == "controls";
-            }));
             if (grant) { return action(raise ? "YES" : "NO"); }
             CHECK(snapshot.message.find("experience") != std::string::npos);
-            return choose(snapshot, snapshot.choices.front().label);
+            return cancel(snapshot);
         }
+        const auto screen = ec::top_screen(captured());
         if (step++ == 0) {
-            const auto control = choice(snapshot, "Upgrade stat");
-            CHECK(control.enabled == grant);
-            CHECK(control.selectable);
-            return choose(snapshot, "Upgrade stat");
+            const auto found = std::ranges::find(screen.denials, "CONFIRM", &ec::denial::id);
+            CHECK((found == screen.denials.end()) == grant);
+            if (found != screen.denials.end()) {
+                CHECK(found->reason.find("experience") != std::string::npos);
+            }
+            return action("CONFIRM");
         }
         CHECK(you.get_str_base() == initial + (raise ? 1 : 0));
         CHECK(you.free_upgrade_points() == points - (raise ? 1 : 0));
-        return cancel(snapshot);
+        return action("QUIT");
     });
     character_display::disp_info(you);
     CHECK(nested);
@@ -660,37 +641,37 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "character info preserves CQB disclosure and native training toggle",
-    "[character_info_interaction]") {
+    "the character sheet preserves the CQB disclosure and the native training toggle",
+    "[character_info_interaction][engine_client_component]") {
     const auto guard = character_info_guard{};
     auto& you = get_avatar();
     you.add_bionic(bionic_id("bio_cqb"));
     you.get_bionic_state(bionic_id("bio_cqb")).powered = true;
-    const auto initial = you.get_skill_level_object(skill_id("melee")).isTraining();
+    const auto initial = skill_level("melee");
     auto step = 0;
     client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = observe();
+        const auto screen = ec::top_screen(captured());
         switch (step++) {
             case 0:
-                return choose(snapshot, "SKILLS");
+                return invoke("character:tab", {.row = "skills"});
             case 1:
-                return choose(snapshot, "Melee");
+                return invoke("character:focus", {.row = "skill:melee"});
             case 2:
             case 3: {
-                const auto row = choice(snapshot, "Melee");
+                const auto& row = row_of(screen, "skills", "skill:melee");
                 CHECK(std::ranges::none_of(row.columns, [](const auto& column) {
                     return column.label == "Training";
                 }));
                 CHECK(row.columns[0].value == std::to_string(BIO_CQB_LEVEL));
                 CHECK(row.columns[1].value == "0%");
-                CHECK(row.columns[0].color == string_from_color(h_yellow));
-                if (step == 3) { return choose(snapshot, "Toggle skill training"); }
-                CHECK(you.get_skill_level_object(skill_id("melee")).isTraining() != initial);
-                return cancel(snapshot);
+                CHECK(row.columns[0].color == string_from_color(c_yellow));
+                if (step == 3) { return action("CONFIRM"); }
+                CHECK(skill_level("melee") != initial);
+                return action("QUIT");
             }
             default:
                 FAIL("unexpected native read");
-                return input_event{};
+                return action("QUIT");
         }
     });
     character_display::disp_info(you);
@@ -698,50 +679,46 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "character info does not offer stat execution when native restrictions exclude it",
-    "[character_info_interaction]") {
+    "the character sheet offers no stat denial when native restrictions exclude the upgrade",
+    "[character_info_interaction][engine_client_component]") {
     const auto guard = character_info_guard{};
     const auto disabled = override_option{"STATS_THROUGH_KILLS", "false"};
     auto& you = get_avatar();
     const auto before = you.get_str_base();
     auto step = 0;
     client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = observe();
-        CHECK(std::ranges::none_of(snapshot.choices, [](const auto& entry) {
-            return entry.label == "Upgrade stat";
-        }));
+        const auto screen = ec::top_screen(captured());
+        CHECK(screen.denials.empty());
         if (step++ == 0) { return action("CONFIRM"); }
         CHECK(you.get_str_base() == before);
-        return cancel(snapshot);
+        return action("QUIT");
     });
     character_display::disp_info(you);
     CHECK(step == 2);
 }
 
 TEST_CASE(
-    "character info avatar-only upgrades stay unavailable for a real NPC",
-    "[character_info_interaction]") {
+    "the character sheet of a real NPC offers no stat upgrade",
+    "[character_info_interaction][engine_client_component]") {
     const auto guard = character_info_guard{};
     const auto enabled = override_option{"STATS_THROUGH_KILLS", "true"};
     auto non_avatar = npc{};
     const auto initial = non_avatar.get_str_base();
     auto step = 0;
     client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = client::current_interaction();
-        REQUIRE(snapshot.context == "PLAYER_INFO");
-        CHECK(std::ranges::none_of(snapshot.choices, [](const auto& entry) {
-            return entry.label == "Upgrade stat";
-        }));
+        const auto screen = ec::top_screen(captured());
+        REQUIRE(screen.context == "PLAYER_INFO");
+        CHECK(screen.denials.empty());
         if (step++ == 0) { return action("CONFIRM"); }
         CHECK(non_avatar.get_str_base() == initial);
-        return cancel(snapshot);
+        return action("QUIT");
     });
     character_display::disp_info(non_avatar);
     CHECK(step == 2);
 }
 
 TEST_CASE(
-    "character info name fields preserve draft submit cancel and nested restoration",
+    "the character sheet names are changed by the native fields and keep their drafts",
     "[character_info_interaction]") {
     const auto guard = character_info_guard{};
     auto& you = get_avatar();
@@ -751,7 +728,7 @@ TEST_CASE(
         const auto snapshot = client::current_interaction();
         switch (step++) {
             case 0:
-                return choose(snapshot, "Change name");
+                return action("CHANGE_NAME");
             case 1:
                 REQUIRE(snapshot.field);
                 CHECK(snapshot.field->max_length == 50);
@@ -791,9 +768,9 @@ TEST_CASE(
                      .submit = true});
             case 3:
                 CHECK(snapshot.context == "PLAYER_INFO");
-                CHECK(snapshot.message.find("After") != std::string::npos);
+                CHECK(ec::top_screen(captured()).title.find("After") != std::string::npos);
                 CHECK(you.name == "After");
-                return choose(snapshot, "Change profession name");
+                return action("CHANGE_PROFESSION_NAME");
             case 4:
                 REQUIRE(snapshot.field);
                 CHECK(snapshot.field->max_length == 25);
@@ -812,7 +789,7 @@ TEST_CASE(
                      .submit = true});
             case 5:
                 CHECK(you.custom_profession == "Survivor");
-                CHECK(snapshot.message.find("Survivor") != std::string::npos);
+                CHECK(ec::top_screen(captured()).title.find("Survivor") != std::string::npos);
                 return action("CHANGE_NAME");
             case 6:
                 REQUIRE(snapshot.field);
@@ -821,7 +798,7 @@ TEST_CASE(
                 CHECK(snapshot.context == "PLAYER_INFO");
                 // Native caller assigns the canceled popup text (empty), not the old name.
                 CHECK(you.name.empty());
-                return cancel(snapshot);
+                return action("QUIT");
             default:
                 FAIL("unexpected native read");
                 return input_event{};
@@ -832,8 +809,8 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "character info native real-object skill hooks are prepared not passively reinvoked",
-    "[character_info_interaction]") {
+    "the character sheet native skill hooks run in the loop and not on a read",
+    "[character_info_interaction][engine_client_component]") {
     const auto guard = character_info_guard{};
     auto& you = get_avatar();
     auto* state = DynamicDataLoader::get_instance().lua.get();
@@ -863,30 +840,32 @@ TEST_CASE(
     };
     hooks["on_character_display_skill_info"] = info_hook;
     hooks["on_character_display_skill_action"] = action_hook;
-    const auto training = you.get_skill_level_object(skill_id("melee")).isTraining();
+    const auto training = skill_level("melee");
     auto step = 0;
     client::memory::set_input_provider([&](const int /*timeout*/) {
         const auto calls = info_calls;
-        const auto snapshot = observe();
+        const auto screen = ec::top_screen(captured());
+        // Publishing the screen again does not run the hook again.
+        static_cast<void>(captured());
         CHECK(info_calls == calls);
         switch (step++) {
             case 0:
-                return choose(snapshot, "SKILLS");
+                return invoke("character:tab", {.row = "skills"});
             case 1:
-                CHECK(info_calls == 1);
-                return choose(snapshot, "Melee");
+                return invoke("character:focus", {.row = "skill:melee"});
             case 2:
-                CHECK(choice(snapshot, "Melee").description.find("final sentence")
+                CHECK(info_calls >= 1);
+                CHECK(row_of(screen, "skills", "skill:melee").description.find("final sentence")
                       != std::string::npos);
                 CHECK(action_calls == 0);
-                return choose(snapshot, "Toggle skill training");
+                return action("CONFIRM");
             case 3:
                 CHECK(action_calls == 1);
-                CHECK(you.get_skill_level_object(skill_id("melee")).isTraining() == training);
-                return cancel(snapshot);
+                CHECK(skill_level("melee") == training);
+                return action("QUIT");
             default:
                 FAIL("unexpected native read");
-                return input_event{};
+                return action("QUIT");
         }
     });
     character_display::disp_info(you);
@@ -894,8 +873,8 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "character info retains actual pane paint before a focused Lua mutation",
-    "[character_info_interaction]") {
+    "the character sheet shows the figures as of the last native paint after a focused Lua mutation",
+    "[character_info_interaction][engine_client_component]") {
     const auto guard = character_info_guard{};
     auto& you = get_avatar();
     auto* state = DynamicDataLoader::get_instance().lua.get();
@@ -911,33 +890,98 @@ TEST_CASE(
         CHECK(params["character"].get<Character*>() == &you);
         ++calls;
         you.str_max = 11;
-        params["results"]["text"] = "Native focused callback changed strength after pane paint.";
+        params["results"]["text"] = "Native focused callback changed strength.";
     };
     hooks["on_character_display_skill_info"] = hook;
     auto step = 0;
     client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = observe();
-        const auto& strength = choice(snapshot, "Strength:");
-        const auto base =
-            std::ranges::find(strength.columns, "base", &client::interaction_column::key);
-        REQUIRE(base != strength.columns.end());
-        if (step++ == 0) {
-            CHECK(calls == 0);
-            CHECK(base->value == "8");
-            return choose(snapshot, "SKILLS");
+        const auto screen = ec::top_screen(captured());
+        const auto base = [&]() -> const std::string& {
+            const auto& strength = row_of(screen, "stats", "stat:str");
+            const auto found =
+                std::ranges::find(strength.columns, "base", &client::interaction_column::key);
+            REQUIRE(found != strength.columns.end());
+            return found->value;
+        };
+        switch (step++) {
+            case 0:
+                CHECK(calls == 0);
+                CHECK(base() == "8");
+                return invoke("character:tab", {.row = "skills"});
+            case 1:
+                CHECK(calls >= 1);
+                CHECK(you.get_str_base() == 11);
+                return invoke("character:tab", {.row = "stats"});
+            default:
+                CHECK(base() == "11");
+                return action("QUIT");
         }
-        if (step == 2) {
-            CHECK(calls == 1);
-            CHECK(you.get_str_base() == 11);
-            CHECK(base->value == "8");
-            return choose(snapshot, "STATS");
-        }
-        CHECK(calls == 1);
-        CHECK(base->value == "11");
-        return cancel(snapshot);
     });
     character_display::disp_info(you);
     CHECK(step == 3);
+}
+
+TEST_CASE(
+    "the character sheet is the same at any viewport size and has the same ids in another language",
+    "[character_info_interaction][engine_client_component]") {
+    const auto guard = character_info_guard{};
+    const auto fixture_ko = locale_fixture::korean_catalogue{};
+    auto& you = get_avatar();
+    you.set_mutation(trait_id("test_character_info_visible_trait"));
+    you.add_bionic(bionic_id("test_character_info_cbm"));
+    auto reads = 0;
+    client::memory::set_input_provider([&](const int /*timeout*/) {
+        ++reads;
+        const auto saved_x = TERMX;
+        const auto saved_y = TERMY;
+        TERMX = 80;
+        TERMY = 24;
+        const auto narrow = published();
+        TERMX = 200;
+        TERMY = 60;
+        const auto wide = published();
+        TERMX = saved_x;
+        TERMY = saved_y;
+        CHECK(narrow.dump() == wide.dump());
+
+        const auto korean = [] {
+            const auto scope = localization::locale_scope(locale_fixture::korean);
+            return published();
+        }();
+        auto english_ids = std::vector<std::string>{};
+        auto korean_ids = std::vector<std::string>{};
+        collect_ids(narrow, english_ids);
+        collect_ids(korean, korean_ids);
+        CHECK(english_ids == korean_ids);
+        CHECK(without_words(narrow) == without_words(korean));
+        return action("QUIT");
+    });
+    character_display::disp_info(you);
+    CHECK(reads == 1);
+}
+
+TEST_CASE(
+    "the character sheet publishes no window text and no native line",
+    "[character_info_interaction][engine_client_component]") {
+    const auto guard = character_info_guard{};
+    client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        for (const auto& stat : stats_of(screen, "character:speed")) {
+            CHECK(stat.value.find("<color") == std::string::npos);
+            CHECK(stat.label.find("<color") == std::string::npos);
+            CHECK_FALSE(stat.key.empty());
+        }
+        for (const auto* tab : {"stats", "encumbrance", "skills", "traits", "bionics", "effects"}) {
+            for (const auto& row : rows(screen, tab)) {
+                CHECK(row.label.find("<color") == std::string::npos);
+                CHECK_FALSE(row.id.empty());
+            }
+        }
+        CHECK(screen.title.find("  ") == std::string::npos);
+        CHECK_FALSE(screen.title.empty());
+        return action("QUIT");
+    });
+    character_display::disp_info(get_avatar());
 }
 
 TEST_CASE(
@@ -971,13 +1015,13 @@ TEST_CASE(
         const auto snapshot = client::current_interaction();
         switch (step++) {
             case 0:
-                return choose(snapshot, "SKILLS");
+                return invoke("character:tab", {.row = "skills"});
             case 1:
-                return choose(snapshot, "Melee");
+                return invoke("character:focus", {.row = "skill:melee"});
             case 2:
-                return choose(snapshot, "Toggle skill training");
+                return action("CONFIRM");
             case 3:
-                return choose(snapshot, "Change name");
+                return action("CHANGE_NAME");
             case 4:
                 REQUIRE(snapshot.field);
                 return resolve(
@@ -987,7 +1031,7 @@ TEST_CASE(
                      .value = "Recorded actor",
                      .submit = true});
             case 5:
-                return cancel(snapshot);
+                return action("QUIT");
             default:
                 FAIL("unexpected native read");
                 return input_event{};
@@ -1022,7 +1066,7 @@ TEST_CASE(
     auto step = 0;
     client::memory::set_input_provider([&](const int /*timeout*/) -> input_event {
         const auto snapshot = client::current_interaction();
-        if (step++ == 0) { return choose(snapshot, "Change name"); }
+        if (step++ == 0) { return action("CHANGE_NAME"); }
         REQUIRE(snapshot.field);
         throw std::runtime_error("character info nested input failure");
     });
@@ -1031,6 +1075,7 @@ TEST_CASE(
     CHECK(client::active_input_context().context == nullptr);
     CHECK(step == 2);
 }
+
 
 namespace {
 
@@ -1151,18 +1196,17 @@ TEST_CASE(
     auto reads = 0;
     const auto show = [&]() {
         client::memory::set_input_provider([&](const int /*timeout*/) -> input_event {
-            const auto snapshot = complete_snapshot();
+            const auto snapshot = client::current_interaction();
             REQUIRE((snapshot.context == "PLAYER_INFO" || snapshot.field.has_value()));
             switch (reads++) {
                 case 0:
-                    return choose(snapshot, "ENCUMBRANCE AND WARMTH");
+                    return invoke("character:tab", {.row = "encumbrance"});
                 case 1: {
-                    const auto body = std::ranges::
-                        find(snapshot.panes, "encumbrance", &client::interaction_pane::id);
-                    REQUIRE(body != snapshot.panes.end());
-                    REQUIRE(body->role == "focused");
-                    if (exit == character_fixture_exit::normal) { return cancel(snapshot); }
-                    return choose(snapshot, "Change name");
+                    const auto screen = ec::top_screen(captured());
+                    CHECK(body<ec::split_body>(part(screen, "character:panes")).active
+                          == "character:encumbrance");
+                    if (exit == character_fixture_exit::normal) { return action("QUIT"); }
+                    return action("CHANGE_NAME");
                 }
                 default:
                     REQUIRE(snapshot.field);

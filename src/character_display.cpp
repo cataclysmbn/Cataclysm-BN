@@ -9,9 +9,11 @@
 #include "catacharset.h"
 #include "character_effects.h"
 #include "character_encumbrance.h"
-#include "client_interaction_prepared.h"
 #include "debug.h"
 #include "effect.h"
+#include "engine_client_component.h"
+#include "engine_client_requirements.h"
+#include "enum_conversions.h"
 #include "game.h"
 #include "input.h"
 #include "melee.h"
@@ -37,9 +39,11 @@
 #include <array>
 #include <cmath>
 #include <cstdlib>
+#include <map>
 #include <memory>
 #include <optional>
 #include <ranges>
+#include <tuple>
 
 static const skill_id skill_swimming( "swimming" );
 static const skill_id skill_unarmed( "unarmed" );
@@ -381,6 +385,14 @@ enum class player_display_tab {
     effects,
     num_tabs,
 };
+
+/// One entry of the effects tab: what natively explains the player's state. The id comes from what
+/// causes it, never from its text.
+struct effect_line {
+    std::string id;
+    std::string name;
+    std::string text;
+};
 } // namespace
 
 static player_display_tab next_tab( const player_display_tab tab )
@@ -712,7 +724,7 @@ static void draw_bionics_info( const catacurses::window &w_info, const unsigned 
 
 static void draw_effects_tab( ui_adaptor &ui, const catacurses::window &w_effects,
                               const unsigned line, const player_display_tab curtab,
-                              const std::vector<std::pair<std::string, std::string>> &effect_name_and_text )
+                              const std::vector<effect_line> &effect_name_and_text )
 {
     werase( w_effects );
     const bool is_current_tab = curtab == player_display_tab::effects;
@@ -735,7 +747,7 @@ static void draw_effects_tab( ui_adaptor &ui, const catacurses::window &w_effect
             ui.set_cursor( w_effects, pos );
         }
         trim_and_print( w_effects, pos, width,
-                        highlight_line ? h_light_gray : c_light_gray, effect_name_and_text[i].first );
+                        highlight_line ? h_light_gray : c_light_gray, effect_name_and_text[i].name );
     }
     if( do_draw_scrollbar ) {
         draw_scrollbar( w_effects, range.first, height, effect_name_and_text.size(), point( width + 1, 1 ),
@@ -745,14 +757,14 @@ static void draw_effects_tab( ui_adaptor &ui, const catacurses::window &w_effect
 }
 
 static void draw_effects_info( const catacurses::window &w_info, const unsigned line,
-                               const std::vector<std::pair<std::string, std::string>> &effect_name_and_text )
+                               const std::vector<effect_line> &effect_name_and_text )
 {
     werase( w_info );
     const size_t actual_size = effect_name_and_text.size();
     if( line < actual_size ) {
         // NOLINTNEXTLINE(cata-use-named-point-constants)
         fold_and_print( w_info, point( 1, 0 ), FULL_SCREEN_WIDTH - 2, c_light_gray,
-                        effect_name_and_text[line].second );
+                        effect_name_and_text[line].text );
     }
     wnoutrefresh( w_info );
 }
@@ -1008,8 +1020,16 @@ auto draw_skills_info( const skill_info_options &opts ) -> std::string
 
 namespace
 {
+/// What an effect adds to the speed: the effects of one name add up, and the first one names the row.
+struct speed_effect {
+    std::string id;
+    int value = 0;
+};
+
 /// The label and value of one speed breakdown row, carried by the line that prints its label.
 struct native_speed_row {
+    /// What the row is about, never its text.
+    std::string key;
     std::string label;
     std::string value;
     /// The value's color when it differs from the label line's.
@@ -1024,48 +1044,48 @@ struct native_speed_line {
 };
 
 auto prepare_speed_info( const Character &you,
-                         const std::map<std::string, int> &speed_effects ) -> std::vector<native_speed_line>
+                         const std::map<std::string, speed_effect> &speed_effects ) -> std::vector<native_speed_line>
 {
     auto result = std::vector<native_speed_line> {};
     const auto runcost = you.run_cost( 100 );
     const auto newmoves = you.get_speed();
     // NOLINTNEXTLINE(cata-use-named-point-constants)
     result.push_back( { .position = point( 1, 1 ), .color = c_light_gray, .text = string_format( _( "Base Move Cost:" ) ),
-                        .row = native_speed_row{ .label = _( "Base Move Cost:" ), .value = std::to_string( runcost ),
+                        .row = native_speed_row{ .key = "base_move_cost", .label = _( "Base Move Cost:" ), .value = std::to_string( runcost ),
                                                  .value_color = runcost <= 100 ? c_green : c_red } } );
     result.push_back( { .position = point( 1, 2 ), .color = c_light_gray, .text = string_format( _( "Current Speed:" ) ),
-                        .row = native_speed_row{ .label = _( "Current Speed:" ), .value = std::to_string( newmoves ),
+                        .row = native_speed_row{ .key = "current_speed", .label = _( "Current Speed:" ), .value = std::to_string( newmoves ),
                                                  .value_color = newmoves >= 100 ? c_green : c_red } } );
     auto pen = 0;
     auto line = 3u;
     if( you.weight_carried() > you.weight_capacity() ) {
         pen = 25 * ( you.weight_carried() - you.weight_capacity() ) / ( you.weight_capacity() );
         //~ %s: Overburdened (already left-justified), %2d%%: speed penalty
-        result.push_back( { .position = point( 1, line ), .color = c_red, .text = string_format( pgettext( "speed penalty", "%s-%2d%%" ), left_justify( _( "Overburdened" ), 20 ), pen ), .row = native_speed_row{ .label = _( "Overburdened" ), .value = string_format( "-%d%%", pen ) } } );
+        result.push_back( { .position = point( 1, line ), .color = c_red, .text = string_format( pgettext( "speed penalty", "%s-%2d%%" ), left_justify( _( "Overburdened" ), 20 ), pen ), .row = native_speed_row{ .key = "overburdened", .label = _( "Overburdened" ), .value = string_format( "-%d%%", pen ) } } );
         ++line;
     }
     pen = character_effects::get_pain_penalty( you ).speed;
     if( pen >= 1 ) {
         //~ %s: Pain (already left-justified), %2d%%: speed penalty
-        result.push_back( { .position = point( 1, line ), .color = c_red, .text = string_format( pgettext( "speed penalty", "%s-%2d%%" ), left_justify( _( "Pain" ), 20 ), pen ), .row = native_speed_row{ .label = _( "Pain" ), .value = string_format( "-%d%%", pen ) } } );
+        result.push_back( { .position = point( 1, line ), .color = c_red, .text = string_format( pgettext( "speed penalty", "%s-%2d%%" ), left_justify( _( "Pain" ), 20 ), pen ), .row = native_speed_row{ .key = "pain", .label = _( "Pain" ), .value = string_format( "-%d%%", pen ) } } );
         ++line;
     }
     if( you.get_thirst() > thirst_levels::very_thirsty ) {
         pen = std::abs( character_effects::get_thirst_speed_penalty( you.get_thirst() ) );
         //~ %s: Thirsty/Parched (already left-justified), %2d%%: speed penalty
-        result.push_back( { .position = point( 1, line ), .color = c_red, .text = string_format( pgettext( "speed penalty", "%s-%2d%%" ), left_justify( _( "Thirst" ), 20 ), pen ), .row = native_speed_row{ .label = _( "Thirst" ), .value = string_format( "-%d%%", pen ) } } );
+        result.push_back( { .position = point( 1, line ), .color = c_red, .text = string_format( pgettext( "speed penalty", "%s-%2d%%" ), left_justify( _( "Thirst" ), 20 ), pen ), .row = native_speed_row{ .key = "thirst", .label = _( "Thirst" ), .value = string_format( "-%d%%", pen ) } } );
         ++line;
     }
     if( character_effects::get_kcal_speed_penalty( you.get_kcal_percent() ) < 0 ) {
         pen = std::abs( character_effects::get_kcal_speed_penalty( you.get_kcal_percent() ) );
         //~ %s: Starving/Underfed (already left-justified), %2d%%: speed penalty
-        result.push_back( { .position = point( 1, line ), .color = c_red, .text = string_format( pgettext( "speed penalty", "%s-%2d%%" ), left_justify( _( "Starving" ), 20 ), pen ), .row = native_speed_row{ .label = _( "Starving" ), .value = string_format( "-%d%%", pen ) } } );
+        result.push_back( { .position = point( 1, line ), .color = c_red, .text = string_format( pgettext( "speed penalty", "%s-%2d%%" ), left_justify( _( "Starving" ), 20 ), pen ), .row = native_speed_row{ .key = "starving", .label = _( "Starving" ), .value = string_format( "-%d%%", pen ) } } );
         ++line;
     }
     if( you.has_trait( trait_id( "SUNLIGHT_DEPENDENT" ) ) && !g->is_in_sunlight( you.bub_pos() ) ) {
         pen = ( g->light_level( you.bub_pos().z() ) >= 12 ? 5 : 10 );
         //~ %s: Out of Sunlight (already left-justified), %2d%%: speed penalty
-        result.push_back( { .position = point( 1, line ), .color = c_red, .text = string_format( pgettext( "speed penalty", "%s-%2d%%" ), left_justify( _( "Out of Sunlight" ), 20 ), pen ), .row = native_speed_row{ .label = _( "Out of Sunlight" ), .value = string_format( "-%d%%", pen ) } } );
+        result.push_back( { .position = point( 1, line ), .color = c_red, .text = string_format( pgettext( "speed penalty", "%s-%2d%%" ), left_justify( _( "Out of Sunlight" ), 20 ), pen ), .row = native_speed_row{ .key = "sunlight", .label = _( "Out of Sunlight" ), .value = string_format( "-%d%%", pen ) } } );
         ++line;
     }
 
@@ -1089,7 +1109,7 @@ auto prepare_speed_info( const Character &you,
             pen = ( player_local_temp - 65 ) * temperature_speed_modifier;
             //~ %s: Cold-Blooded (already left-justified), %s: sign of bonus/penalty, %2d%%: speed modifier
             result.push_back( { .position = point( 1, line ), .color = pen_color, .text = string_format( pgettext( "speed modifier", "%s%s%2d%%" ), left_justify( _( "Cold-Blooded" ), 20 ), pen_sign, std::abs( pen ) ),
-                                .row = native_speed_row{ .label = _( "Cold-Blooded" ), .value = string_format( "%s%d%%", pen_sign, std::abs( pen ) ) } } );
+                                .row = native_speed_row{ .key = "cold_blooded", .label = _( "Cold-Blooded" ), .value = string_format( "%s%d%%", pen_sign, std::abs( pen ) ) } } );
             ++line;
         }
     }
@@ -1102,28 +1122,28 @@ auto prepare_speed_info( const Character &you,
         const auto pen_color = quick_bonus >= 0 ? c_green : c_red;
         //~ %s: Mutations (already left-justified), %s: sign of bonus/penalty, %2d%%: speed modifier
         result.push_back( { .position = point( 1, line ), .color = pen_color, .text = string_format( pgettext( "speed bonus", "%s%s%2d%%" ), left_justify( _( "Mutations" ), 20 ), pen_sign, std::abs( quick_bonus ) ),
-                            .row = native_speed_row{ .label = _( "Mutations" ), .value = string_format( "%s%d%%", pen_sign, std::abs( quick_bonus ) ) } } );
+                            .row = native_speed_row{ .key = "mutations", .label = _( "Mutations" ), .value = string_format( "%s%d%%", pen_sign, std::abs( quick_bonus ) ) } } );
         ++line;
     }
     const auto ench_speed = int( ceil( you.bonus_from_enchantments( 100,
                                        enchantment_value_id( "SPEED" ) ) ) );
     if( ench_speed > 0 ) {
         result.push_back( { .position = point( 1, line ), .color = c_green, .text = string_format( pgettext( "speed bonus", "Misc Speed        +%2d%%" ), ench_speed ),
-                            .row = native_speed_row{ .label = _( "Misc Speed" ), .value = string_format( "+%d%%", ench_speed ) } } );
+                            .row = native_speed_row{ .key = "misc_speed", .label = _( "Misc Speed" ), .value = string_format( "+%d%%", ench_speed ) } } );
         ++line;
     } else if( ench_speed < 0 ) {
         result.push_back( { .position = point( 1, line ), .color = c_red, .text = string_format( pgettext( "speed bonus", "Misc Speed        -%2d%%" ), abs( ench_speed ) ),
-                            .row = native_speed_row{ .label = _( "Misc Speed" ), .value = string_format( "-%d%%", abs( ench_speed ) ) } } );
+                            .row = native_speed_row{ .key = "misc_speed", .label = _( "Misc Speed" ), .value = string_format( "-%d%%", abs( ench_speed ) ) } } );
         ++line;
     }
 
     for( const auto &speed_effect : speed_effects ) {
-        auto col = ( speed_effect.second > 0 ? c_green : c_red );
+        auto col = ( speed_effect.second.value > 0 ? c_green : c_red );
         result.push_back( { .position = point( 1, line ), .color = col, .text = string_format( "%s", speed_effect.first ),
-                            .row = native_speed_row{ .label = speed_effect.first,
-                                                     .value = string_format( "%s%d%%", speed_effect.second > 0 ? "+" : "-", std::abs( speed_effect.second ) ) } } );
-        result.push_back( { .position = point( 21, line ), .color = col, .text = string_format( ( speed_effect.second > 0 ? "+" : "-" ) ) } );
-        result.push_back( { .position = point( std::abs( speed_effect.second ) >= 10 ? 22 : 23, line ), .color = col, .text = string_format( "%d%%", std::abs( speed_effect.second ) ) } );
+                            .row = native_speed_row{ .key = "effect:" + speed_effect.second.id, .label = speed_effect.first,
+                                                     .value = string_format( "%s%d%%", speed_effect.second.value > 0 ? "+" : "-", std::abs( speed_effect.second.value ) ) } } );
+        result.push_back( { .position = point( 21, line ), .color = col, .text = string_format( ( speed_effect.second.value > 0 ? "+" : "-" ) ) } );
+        result.push_back( { .position = point( std::abs( speed_effect.second.value ) >= 10 ? 22 : 23, line ), .color = col, .text = string_format( "%d%%", std::abs( speed_effect.second.value ) ) } );
         ++line;
     }
 
@@ -1137,7 +1157,7 @@ auto prepare_speed_info( const Character &you,
 } // namespace
 
 static auto draw_speed_tab( const catacurses::window &w_speed, const Character &you,
-                            const std::map<std::string, int> &speed_effects ) -> std::vector<native_speed_line>
+                            const std::map<std::string, speed_effect> &speed_effects ) -> void
 {
     const auto lines = prepare_speed_info( you, speed_effects );
     werase( w_speed );
@@ -1146,7 +1166,6 @@ static auto draw_speed_tab( const catacurses::window &w_speed, const Character &
         mvwprintz( w_speed, line.position, line.color, "%s", line.text );
     }
     wnoutrefresh( w_speed );
-    return lines;
 }
 
 namespace
@@ -1158,7 +1177,7 @@ struct info_window_options {
     player_display_tab tab;
     const std::vector<trait_id> &traits;
     const std::vector<std::pair<bionic, int>> &bionics;
-    const std::vector<std::pair<std::string, std::string>> &effects;
+    const std::vector<effect_line> &effects;
     const std::vector<HeaderSkill> &skills;
 };
 
@@ -1240,41 +1259,33 @@ static auto draw_tip( const catacurses::window &w_tip, const std::string &header
 
 namespace
 {
-struct display_target {
-    std::string id;
-    player_display_tab tab = player_display_tab::stats;
-    unsigned line = 0;
-    std::string action;
-    bool navigation = false;
+namespace ec = engine_client;
+
+constexpr auto tabs_id = "character:tabs";
+constexpr auto panes_id = "character:panes";
+constexpr auto select_tab_id = "character:tab";
+constexpr auto focus_row_id = "character:focus";
+
+constexpr auto all_tabs = std::array
+{
+    player_display_tab::stats, player_display_tab::encumbrance, player_display_tab::skills,
+                       player_display_tab::traits, player_display_tab::bionics, player_display_tab::effects,
 };
 
-struct display_boundary {
-    game_client::interaction_snapshot snapshot;
-    std::vector<display_target> targets;
-};
+/// The tab by its identity: its title is translated.
+auto tab_name( const player_display_tab tab ) -> std::string
+{
+    constexpr auto names = std::array{ "stats", "encumbrance", "skills", "traits", "bionics", "effects" };
+    return names[static_cast<std::size_t>( tab )];
+}
 
-struct display_pane_contents {
-    std::vector<game_client::interaction_choice> choices;
-    std::vector<display_target> targets;
-    std::string description;
-};
+auto tab_title( const player_display_tab tab ) -> std::string
+{
+    const auto titles = std::array{ &title_STATS, &title_ENCUMB, &title_SKILLS, &title_TRAITS, &title_BIONICS, &title_EFFECTS };
+    return _( *titles[static_cast<std::size_t>( tab )] );
+}
 
-struct display_model_options {
-    const Character &you;
-    player_display_tab tab;
-    player_display_tab focused_tab;
-    unsigned line;
-    int height;
-    const std::string &header;
-    const std::vector<trait_id> &traits;
-    const std::vector<std::pair<bionic, int>> &bionics;
-    const std::vector<std::pair<std::string, std::string>> &effects;
-    const std::vector<HeaderSkill> &skills;
-    const std::string &skill_description;
-    const std::vector<native_speed_line> &speed_lines;
-    const std::vector<skill_display_values> &skill_values;
-    const std::array<display_pane_contents, 6> &panes;
-};
+auto pane_id( const player_display_tab tab ) -> std::string { return "character:" + tab_name( tab ); }
 
 auto upgrade_denial( const avatar &you ) -> std::string
 {
@@ -1288,230 +1299,265 @@ auto upgrade_denial( const avatar &you ) -> std::string
     return string_format( _( "Needs %d more experience to gain next level." ), *remaining );
 }
 
-/// Capture one pane only when that native pane redraws. Cold row/value work is not repeated
-/// for unrelated panes or unchanged reads. Focused Lua details come solely from the info renderer.
-auto prepare_display_pane( const display_model_options &opts ) -> display_pane_contents
+/// The label of a figure: what its native line says before the value.
+auto figure_label( const std::string &format ) -> std::string
 {
-    const auto &you = opts.you;
-    auto result = display_pane_contents{};
-    const auto pane_ids = std::array{ "stats", "encumbrance", "skills", "traits", "bionics", "effects" };
-    const auto add_row = [&]( game_client::interaction_choice choice, const unsigned row ) {
-        choice.pane_id = pane_ids[static_cast<std::size_t>( opts.tab )];
-        choice.highlighted = opts.focused_tab == opts.tab && row == opts.line;
-        result.targets.push_back( { .id = choice.id, .tab = opts.tab, .line = row } );
-        result.choices.push_back( std::move( choice ) );
-    };
-    const auto focused = opts.tab == opts.focused_tab;
-    switch( opts.tab ) {
-        case player_display_tab::stats: {
-            const auto labels = std::array{ _( "Strength:" ), _( "Dexterity:" ), _( "Intelligence:" ), _( "Perception:" ), _( "Height:" ), _( "Age:" ) };
-            const auto current = std::array{ you.get_str(), you.get_dex(), you.get_int(), you.get_per() };
-            const auto base = std::array{ you.get_str_base(), you.get_dex_base(), you.get_int_base(), you.get_per_base() };
-            for( const auto i : std::views::iota( 0u, 6u ) ) {
-                const auto info = prepare_stat_info( you, i );
-                auto text = info.description;
-                for( const auto &value : info.values ) {
-                    if( !value.empty() ) {
-                        text += "\n" + value;
-                    }
-                }
-                auto columns = std::vector<game_client::interaction_column> {};
-                if( i < 4 ) {
-                    columns.push_back( { .key = "current", .label = _( "Current" ), .value = std::to_string( current[i] ),
-                                         .color = string_from_color( stat_color( current[i], base[i] ) ) } );
-                    columns.push_back( { .key = "base", .label = _( "Base" ), .value = std::to_string( base[i] ) } );
-                } else {
-                    columns.push_back( { .key = "current", .label = labels[i], .value = info.values[0] } );
-                }
-                add_row( { .id = game_client::opaque_interaction_id( "character-stat", { std::to_string( i ) } ),
-                           .label = labels[i], .description = text, .columns = std::move( columns ) }, i );
-            }
-            break;
-        }
-        case player_display_tab::encumbrance: {
-            const auto parts = list_and_combine_bps( you, nullptr );
-            const auto &encumbrance = you.get_encumbrance();
-            for( const auto i : std::views::iota( std::size_t{0}, parts.size() ) ) {
-                const auto &[bp, combined] = parts[i];
-                const auto &data = encumbrance.elems.at( bp );
-                add_row( { .id = game_client::opaque_interaction_id( "character-body", { bp.str(), combined ? "combined" : "single" } ),
-                           .label = body_part_name_as_heading( bp, combined ? 2 : 1 ),
-                           .description = get_encumbrance_description( you, bp, combined ),
-                .columns = {
-                    {
-                        .key = "encumbrance", .label = _( "Encumbrance" ), .value = std::to_string( data.encumbrance - data.layer_penalty ),
-                        .color = string_from_color( encumb_color( data.encumbrance ) )
-                    },
-                    { .key = "layering", .label = _( "Layering" ), .value = std::to_string( data.layer_penalty ) },
-                    {
-                        .key = "warmth", .label = _( "Warmth" ), .value = std::to_string( temperature_print_rescaling( get_temp_conv( you, bp ) ) ),
-                        .color = string_from_color( warmth::bodytemp_color( you, bp ) )
-                    }
-                } }, i );
-            }
-            break;
-        }
-        case player_display_tab::traits:
-            for( const auto i : std::views::iota( std::size_t{0}, opts.traits.size() ) ) {
-                const auto &trait = opts.traits[i];
-                add_row( { .id = game_client::opaque_interaction_id( "character-trait", { trait.str() } ),
-                           .label = trait->name(), .description = string_format( "%s: %s", colorize( trait->name(), trait->get_display_color() ), trait->desc() ),
-                           .color = string_from_color( trait->get_display_color() ) },
-                         i );
-            }
-            break;
-        case player_display_tab::bionics:
-            result.description = string_format(
-                                     _( "Bionic Power: <color_light_blue>%1$d</color> / <color_light_blue>%2$d</color>" ),
-                                     units::to_kilojoule( you.get_power_level() ), units::to_kilojoule( you.get_max_power_level() ) );
-            for( const auto i : std::views::iota( std::size_t{0}, opts.bionics.size() ) ) {
-                const auto &[bio, count] = opts.bionics[i];
-                add_row( { .id = game_client::opaque_interaction_id( "character-bionic", { bio.id.str() } ),
-                           .label = count > 1 ? string_format( "%s (%d)", bio.info().name, count ) : bio.info().name.translated(),
-                           .description = count > 1 ? string_format( "%s\n\nYou have %s instances of this bionic installed.", bio.info().description, count ) : bio.info().description.translated(),
-                           .color = string_from_color( focused && i == opts.line ? hilite( get_bionic_text_color( bio, true ) ) : get_bionic_text_color( bio, false ) ) },
-                         i );
-            }
-            break;
-        case player_display_tab::effects:
-            for( const auto i : std::views::iota( std::size_t{0}, opts.effects.size() ) ) {
-                const auto &[name, text] = opts.effects[i];
-                add_row( { .id = game_client::opaque_interaction_id( "character-effect", { name, std::to_string( i ) } ),
-                           .label = name, .description = text }, i );
-            }
-            break;
-        case player_display_tab::skills:
-            for( const auto i : std::views::iota( std::size_t{0}, opts.skills.size() ) ) {
-                const auto &entry = opts.skills[i];
-                if( entry.is_header ) {
-                    result.choices.push_back( { .id = game_client::opaque_interaction_id( "character-skill-category", { entry.skill->display_category().str() } ),
-                                                .label = SkillDisplayType::get_skill_type( entry.skill->display_category() ).display_string(),
-                                                .pane_id = "skills", .enabled = false, .selectable = false } );
-                    continue;
-                }
-                const auto &values = opts.skill_values[i];
-                auto columns = std::vector<game_client::interaction_column> {
-                    { .key = "level", .label = _( "Level" ), .value = std::to_string( values.number ), .color = string_from_color( values.color ) },
-                    { .key = "exercise", .label = _( "Exercise" ), .value = string_format( "%d%%", values.exercise ) },
-                };
-                if( entry.skill->ident() == skill_unarmed ) {
-                    columns.push_back( { .key = "damage", .label = _( "Damage" ), .value = std::to_string( *values.damage ) } );
-                } else if( entry.skill->ident() == skill_id( "dodge" ) ) {
-                    columns.push_back( { .key = "dodge", .label = _( "Dodge" ), .value = string_format( "%.1f", *values.dodge ) } );
-                }
-                add_row( { .id = game_client::opaque_interaction_id( "character-skill", { entry.skill->ident().str() } ),
-                           .label = entry.skill->name(), .description = entry.skill->description(),
-                           .columns = std::move( columns ) }, i );
-            }
-            break;
-        case player_display_tab::num_tabs:
-            abort();
-    }
-
-    const auto count = static_cast<int>( result.choices.size() );
-    const auto height = std::max( 0,
-                                  opts.height - ( opts.tab == player_display_tab::bionics ? 2 : 1 ) );
-    auto first = 0;
-    auto last = std::min( count, height );
-    if( focused && opts.tab == player_display_tab::skills ) {
-        const auto half = height / 2;
-        if( opts.line > static_cast<unsigned>( half ) ) {
-            first = opts.line >= static_cast<unsigned>( std::max( 0, count - half ) ) ?
-                    std::max( 0, count - height ) : static_cast<int>( opts.line ) - half;
-        }
-        last = std::min( first + height, count );
-    } else {
-        const auto range = subindex_around_cursor( count, height, opts.line, focused );
-        first = range.first;
-        last = range.second;
-    }
-    result.description += "\n" + string_format( _( "Visible rows: %1$d-%2$d of %3$d" ),
-                          first == last ? 0 : first + 1, last, count );
-    return result;
+    return ec::caption( format.substr( 0, format.find_first_of( "<%" ) ) );
 }
 
-/// Assemble all simultaneously rendered panes. Registration still covers one native read only.
-auto prepare_display_boundary( const display_model_options &opts ) -> display_boundary
+/// What the screen shows, as the loop keeps it: the focus is read when the screen is published.
+struct sheet_model {
+    const Character &you;
+    const player_display_tab &tab;
+    const unsigned &line;
+    /// The profession or mutation the header names the character by.
+    const std::string &race;
+    const std::vector<trait_id> &traits;
+    const std::vector<std::pair<bionic, int>> &bionics;
+    const std::vector<effect_line> &effects;
+    const std::vector<HeaderSkill> &skills;
+    /// What the info renderer made of the focused skill, run by the native loop.
+    const std::string &skill_description;
+    const std::map<std::string, speed_effect> &speed_effects;
+};
+
+/// The skills tab never rests on a heading.
+auto focused_line( const sheet_model &model ) -> unsigned
 {
-    auto result = display_boundary{
-        .snapshot = {
-            .kind = game_client::interaction_kind::choices,
-            .title = _( "Character information" ), .message = opts.header,
-            .allow_cancel = true
+    return model.tab == player_display_tab::skills ? std::max( 1u, model.line ) : model.line;
+}
+
+/// The identities of the rows of `tab`, in order: the cause of the row, never its text or place.
+auto row_ids( const sheet_model &model, const player_display_tab tab ) -> std::vector<std::string>
+{
+    using namespace std::views;
+    switch( tab ) {
+        case player_display_tab::stats:
+            return { "stat:str", "stat:dex", "stat:int", "stat:per", "stat:height", "stat:age" };
+        case player_display_tab::encumbrance:
+            return list_and_combine_bps( model.you, nullptr ) | transform( []( const auto & part ) {
+                return "body:" + part.first.str() + ( part.second ? ":pair" : "" );
+            } ) | std::ranges::to<std::vector>();
+        case player_display_tab::skills:
+            return model.skills | transform( []( const auto & entry ) {
+                return entry.is_header ? "skill_type:" + entry.skill->display_category().str() : "skill:" +
+                       entry.skill->ident().str();
+            } ) | std::ranges::to<std::vector>();
+        case player_display_tab::traits:
+            return model.traits | transform( []( const auto & trait ) { return "trait:" + trait.str(); } ) |
+            std::ranges::to<std::vector>();
+        case player_display_tab::bionics:
+            return model.bionics | transform( []( const auto & entry ) { return "bionic:" + entry.first.id.str(); } )
+            | std::ranges::to<std::vector>();
+        case player_display_tab::effects:
+            return model.effects | transform( &effect_line::id ) | std::ranges::to<std::vector>();
+        case player_display_tab::num_tabs:
+            break;
+    }
+    abort();
+}
+
+auto stat_rows( const Character &you, const std::vector<std::string> &ids ) -> std::vector<ec::row>
+{
+    const auto labels = std::array{ _( "Strength:" ), _( "Dexterity:" ), _( "Intelligence:" ), _( "Perception:" ), _( "Height:" ), _( "Age:" ) };
+    const auto current = std::array{ you.get_str(), you.get_dex(), you.get_int(), you.get_per() };
+    const auto base = std::array{ you.get_str_base(), you.get_dex_base(), you.get_int_base(), you.get_per_base() };
+    auto rows = std::vector<ec::row> {};
+    for( const auto i : std::views::iota( 0u, 6u ) ) {
+        const auto info = prepare_stat_info( you, i );
+        auto text = info.description;
+        for( const auto &value : info.values ) {
+            if( !value.empty() ) {
+                text += "\n" + value;
+            }
+        }
+        auto columns = std::vector<game_client::interaction_column> {};
+        if( i < 4 ) {
+            columns.push_back( { .key = "current", .label = _( "Current" ), .value = std::to_string( current[i] ),
+                                 .color = string_from_color( stat_color( current[i], base[i] ) ) } );
+            columns.push_back( { .key = "base", .label = _( "Base" ), .value = std::to_string( base[i] ) } );
+        } else {
+            columns.push_back( { .key = "current", .label = labels[i], .value = info.values[0] } );
+        }
+        rows.push_back( { .id = ids[i], .label = labels[i], .description = text, .columns = std::move( columns ) } );
+    }
+    return rows;
+}
+
+auto encumbrance_rows( const Character &you,
+                       const std::vector<std::string> &ids ) -> std::vector<ec::row>
+{
+    const auto parts = list_and_combine_bps( you, nullptr );
+    const auto &encumbrance = you.get_encumbrance();
+    auto rows = std::vector<ec::row> {};
+    for( const auto i : std::views::iota( std::size_t{0}, parts.size() ) ) {
+        const auto &[bp, combined] = parts[i];
+        const auto &data = encumbrance.elems.at( bp );
+        rows.push_back( { .id = ids[i], .label = body_part_name_as_heading( bp, combined ? 2 : 1 ),
+                          .description = get_encumbrance_description( you, bp, combined ),
+        .columns = {
+            {
+                .key = "encumbrance", .label = _( "Encumbrance" ), .value = std::to_string( data.encumbrance - data.layer_penalty ),
+                .color = string_from_color( encumb_color( data.encumbrance ) )
+            },
+            { .key = "layering", .label = _( "Layering" ), .value = std::to_string( data.layer_penalty ) },
+            {
+                .key = "warmth", .label = _( "Warmth" ), .value = std::to_string( temperature_print_rescaling( get_temp_conv( you, bp ) ) ),
+                .color = string_from_color( warmth::bodytemp_color( you, bp ) )
+            }
+        } } );
+    }
+    return rows;
+}
+
+auto skill_rows( const sheet_model &model,
+                 const std::vector<std::string> &ids ) -> std::vector<ec::row>
+{
+    auto rows = std::vector<ec::row> {};
+    for( const auto i : std::views::iota( std::size_t{0}, model.skills.size() ) ) {
+        const auto &entry = model.skills[i];
+        if( entry.is_header ) {
+            rows.push_back( { .id = ids[i], .label = SkillDisplayType::get_skill_type( entry.skill->display_category() ).display_string(),
+                              .enabled = false, .selectable = false, .header = true } );
+            continue;
+        }
+        const auto values = prepare_skill_values( model.you, *entry.skill, false );
+        auto columns = std::vector<game_client::interaction_column> {
+            { .key = "level", .label = _( "Level" ), .value = std::to_string( values.number ), .color = string_from_color( values.color ) },
+            { .key = "exercise", .label = _( "Exercise" ), .value = string_format( "%d%%", values.exercise ) },
+        };
+        if( entry.skill->ident() == skill_unarmed ) {
+            columns.push_back( { .key = "damage", .label = _( "Damage" ), .value = std::to_string( *values.damage ) } );
+        } else if( entry.skill->ident() == skill_id( "dodge" ) ) {
+            columns.push_back( { .key = "dodge", .label = _( "Dodge" ), .value = string_format( "%.1f", *values.dodge ) } );
+        }
+        // The focused skill is described as the info renderer made it, with what a hook adds.
+        const auto focused = model.tab == player_display_tab::skills && i == focused_line( model );
+        rows.push_back( { .id = ids[i], .label = entry.skill->name(), .description = focused ? model.skill_description : entry.skill->description(),
+                          .columns = std::move( columns ) } );
+    }
+    return rows;
+}
+
+auto trait_rows( const sheet_model &model,
+                 const std::vector<std::string> &ids ) -> std::vector<ec::row>
+{
+    auto rows = std::vector<ec::row> {};
+    for( const auto i : std::views::iota( std::size_t{0}, model.traits.size() ) ) {
+        const auto &trait = model.traits[i];
+        rows.push_back( { .id = ids[i], .label = trait->name(),
+                          .description = string_format( "%s: %s", colorize( trait->name(), trait->get_display_color() ), trait->desc() ),
+                          .color = string_from_color( trait->get_display_color() ) } );
+    }
+    return rows;
+}
+
+auto bionic_rows( const sheet_model &model,
+                  const std::vector<std::string> &ids ) -> std::vector<ec::row>
+{
+    auto rows = std::vector<ec::row> {};
+    for( const auto i : std::views::iota( std::size_t{0}, model.bionics.size() ) ) {
+        const auto &[bio, count] = model.bionics[i];
+        rows.push_back( { .id = ids[i],
+                          .label = count > 1 ? string_format( "%s (%d)", bio.info().name, count ) : bio.info().name.translated(),
+                          .description = count > 1 ? string_format( "%s\n\nYou have %s instances of this bionic installed.", bio.info().description, count ) : bio.info().description.translated(),
+                          .color = string_from_color( get_bionic_text_color( bio, false ) ) } );
+    }
+    return rows;
+}
+
+auto effect_rows( const sheet_model &model,
+                  const std::vector<std::string> &ids ) -> std::vector<ec::row>
+{
+    auto rows = std::vector<ec::row> {};
+    for( const auto i : std::views::iota( std::size_t{0}, model.effects.size() ) ) {
+        rows.push_back( { .id = ids[i], .label = model.effects[i].name, .description = model.effects[i].text } );
+    }
+    return rows;
+}
+
+auto tab_rows( const sheet_model &model, const player_display_tab tab ) -> std::vector<ec::row>
+{
+    const auto ids = row_ids( model, tab );
+    switch( tab ) {
+        case player_display_tab::stats:
+            return stat_rows( model.you, ids );
+        case player_display_tab::encumbrance:
+            return encumbrance_rows( model.you, ids );
+        case player_display_tab::skills:
+            return skill_rows( model, ids );
+        case player_display_tab::traits:
+            return trait_rows( model, ids );
+        case player_display_tab::bionics:
+            return bionic_rows( model, ids );
+        case player_display_tab::effects:
+            return effect_rows( model, ids );
+        case player_display_tab::num_tabs:
+            break;
+    }
+    abort();
+}
+
+/// The figures of the speed breakdown: its base and current cost, then what changes them.
+auto speed_stats( const sheet_model &model ) -> std::vector<ec::panel_stat>
+{
+    using namespace std::views;
+    return prepare_speed_info( model.you, model.speed_effects )
+    | filter( []( const auto & line ) { return line.row.has_value(); } )
+    | transform( []( const auto & line ) {
+        const auto color = line.row->value_color.value_or( line.color );
+        return ec::panel_stat{ .key = line.row->key, .label = ec::caption( line.row->label ), .value = line.row->value,
+                               .tone = color == c_green ? "good" : color == c_red ? "bad" : "" };
+    } ) | std::ranges::to<std::vector>();
+}
+
+/// The panes the native sheet shows at once, one of them focused.
+auto sheet_view( const sheet_model &model ) -> ec::screen_view
+{
+    auto panes = std::vector<ec::component> {};
+    auto entries = std::vector<ec::tab_entry> {};
+    for( const auto tab : all_tabs ) {
+        auto stats = std::vector<ec::panel_stat> {};
+        if( tab == player_display_tab::bionics ) {
+            const auto format =
+                _( "Bionic Power: <color_light_blue>%1$d</color> / <color_light_blue>%2$d</color>" );
+            stats.push_back( { .key = "power", .label = figure_label( format ),
+                               .value = std::to_string( units::to_kilojoule( model.you.get_power_level() ) ),
+                               .max = std::to_string( units::to_kilojoule( model.you.get_max_power_level() ) ) } );
+        }
+        panes.push_back( ec::panel( { .id = pane_id( tab ), .title = tab_title( tab ), .stats = std::move( stats ),
+                                      .child = ec::list( { .id = pane_id( tab ) + ":rows", .rows = tab_rows( model, tab ),
+                                               .selection = "single", .activate = focus_row_id } ) } ) );
+        entries.push_back( { .id = tab_name( tab ), .label = tab_title( tab ), .selected = tab == model.tab } );
+    }
+    panes.push_back( ec::panel( { .id = "character:speed", .title = _( title_SPEED ), .stats = speed_stats( model ) } ) );
+
+    const auto focus = row_ids( model, model.tab );
+    const auto line = focused_line( model );
+    const auto shown = prepare_character_header( model.you, model.race );
+    const auto first = shown.find_first_not_of( ' ' );
+    auto denials = std::vector<ec::denial> {};
+    if( model.tab == player_display_tab::stats && model.line < 4 &&
+        get_option<bool>( "STATS_THROUGH_KILLS" ) &&
+        model.you.is_avatar() ) {
+        if( const auto reason = upgrade_denial( *model.you.as_avatar() ); !reason.empty() ) {
+            denials.push_back( { .id = "CONFIRM", .reason = reason } );
+        }
+    }
+    return {
+.title = first == std::string::npos ? std::string{} :
+        shown.substr( first ),
+        .root = ec::tabs( {
+            .id = tabs_id, .tabs = std::move( entries ), .select = select_tab_id,
+            .child = ec::split( { .id = panes_id, .active = pane_id( model.tab ), .children = std::move( panes ) } ) } ),
+        .affordances = {
+            ec::invoke_affordance( { .id = select_tab_id, .label = _( "Category" ), .args = { .row = ec::row_shape{ .component_id = tabs_id } } } ),
+            ec::invoke_affordance( { .id = focus_row_id, .label = _( "Select" ), .args = { .row = ec::row_shape{ .component_id = panes_id } }, .role = "select" } ),
         },
+        .denials = std::move( denials ),
+        .focus_component = pane_id( model.tab ) + ":rows",
+        .focus_row = line < focus.size() ? focus[line] : std::string{},
     };
-    auto &snapshot = result.snapshot;
-    const auto &you = opts.you;
-    const auto pane_ids = std::array{ "stats", "encumbrance", "skills", "traits", "bionics", "effects" };
-    const auto titles = std::array{ title_STATS, title_ENCUMB, title_SKILLS, title_TRAITS, title_BIONICS, title_EFFECTS };
-    for( const auto i : std::views::iota( std::size_t{0}, pane_ids.size() ) ) {
-        const auto tab = static_cast<player_display_tab>( i );
-        const auto id = game_client::opaque_interaction_id( "character-tab", { pane_ids[i] } );
-        snapshot.panes.push_back( { .id = pane_ids[i], .label = _( titles[i] ),
-                                    .role = tab == opts.tab ? "focused" : "category",
-                                    .area_description = opts.panes[i].description } );
-        snapshot.choices.push_back( { .id = id, .label = _( titles[i] ), .selected = tab == opts.tab } );
-        result.targets.push_back( { .id = id, .tab = tab,
-                                    .line = tab == player_display_tab::skills ? 1u : 0u, .navigation = true } );
-        snapshot.choices.insert( snapshot.choices.end(), opts.panes[i].choices.begin(),
-                                 opts.panes[i].choices.end() );
-        result.targets.insert( result.targets.end(), opts.panes[i].targets.begin(),
-                               opts.panes[i].targets.end() );
-    }
-    // Hook text is the actual focused info-renderer result, never an all-skill reevaluation.
-    if( opts.tab == player_display_tab::skills ) {
-        const auto target = std::ranges::find_if( result.targets, [&]( const auto & entry ) {
-            return entry.tab == opts.tab && entry.line == opts.line && !entry.navigation &&
-                   entry.action.empty();
-        } );
-        if( target != result.targets.end() ) {
-            const auto row = std::ranges::find( snapshot.choices, target->id,
-                                                &game_client::interaction_choice::id );
-            if( row != snapshot.choices.end() ) { row->description = opts.skill_description; }
-        }
-    }
-    // SPEED is not scrollable: retain only text actually inside the native window.
-    auto speed_rows = std::map<int, std::map<int, std::string>> {};
-    for( const auto &entry : opts.speed_lines ) {
-        if( entry.position.y > 0 && entry.position.y < 9 ) {
-            speed_rows[entry.position.y][entry.position.x] = entry.text;
-        }
-    }
-    auto speed_text = std::string{};
-    for( const auto &parts : speed_rows | std::views::values ) {
-        for( const auto &text : parts | std::views::values ) { speed_text += text + " "; }
-        speed_text += "\n";
-    }
-    snapshot.panes.push_back( { .id = "speed", .label = _( title_SPEED ), .role = "information", .area_description = speed_text } );
-    for( const auto &entry : opts.speed_lines ) {
-        if( entry.row ) {
-            snapshot.choices.push_back( { .id = game_client::opaque_interaction_id( "character-speed", { entry.row->label } ),
-                                          .label = entry.row->label, .pane_id = "speed", .selectable = false,
-            .columns = { {
-                    .key = "value", .label = _( "Value" ), .value = entry.row->value,
-                    .color = string_from_color( entry.row->value_color.value_or( entry.color ) )
-                }
-            } } );
-        }
-    }
-    snapshot.panes.push_back( { .id = "controls", .label = _( "Controls" ), .role = "controls" } );
-    const auto add_control = [&]( const std::string & action, const std::string & label,
-    const std::string &denial = std::string{} ) {
-        const auto id = game_client::opaque_interaction_id( "character-control", { action } );
-        snapshot.choices.push_back( { .id = id, .label = label, .denial = denial,
-                                      .pane_id = "controls", .enabled = denial.empty() } );
-        result.targets.push_back( { .id = id, .action = action } );
-    };
-    if( opts.tab == player_display_tab::stats && opts.line < 4 &&
-        get_option<bool>( "STATS_THROUGH_KILLS" ) && you.is_avatar() ) {
-        add_control( "CONFIRM", _( "Upgrade stat" ), upgrade_denial( *you.as_avatar() ) );
-    } else if( opts.tab == player_display_tab::skills && opts.line < opts.skills.size() &&
-               !opts.skills[opts.line].is_header ) {
-        add_control( "CONFIRM", _( "Toggle skill training" ) );
-    }
-    add_control( "CHANGE_NAME", _( "Change name" ) );
-    add_control( "CHANGE_PROFESSION_NAME", _( "Change profession name" ) );
-    return result;
 }
 } // namespace
 
@@ -1530,12 +1576,7 @@ struct display_action_options {
     const ui_adaptor &bionics;
     const ui_adaptor &effects;
     const ui_adaptor &skills;
-    const std::vector<trait_id> &traitslist;
-    const std::vector<std::pair<bionic, int>> &bionicslist;
-    const std::vector<std::pair<std::string, std::string>> &effect_name_and_text;
-    const std::vector<HeaderSkill> &skillslist;
-    display_boundary &boundary;
-    const game_client::prepared_interaction_handle &prepared;
+    const sheet_model &model;
 };
 
 auto handle_player_display_action( const display_action_options &opts ) -> bool
@@ -1552,10 +1593,7 @@ auto handle_player_display_action( const display_action_options &opts ) -> bool
     const auto &ui_bionics = opts.bionics;
     const auto &ui_effects = opts.effects;
     const auto &ui_skills = opts.skills;
-    const auto &traitslist = opts.traitslist;
-    const auto &bionicslist = opts.bionicslist;
-    const auto &effect_name_and_text = opts.effect_name_and_text;
-    const auto &skillslist = opts.skillslist;
+    const auto &skillslist = opts.model.skills;
     const auto invalidate_tab = [&]( const player_display_tab tab ) {
         switch( tab ) {
             case player_display_tab::stats:
@@ -1582,32 +1620,9 @@ auto handle_player_display_action( const display_action_options &opts ) -> bool
     };
 
     unsigned int line_beg = 0;
-    unsigned int line_end = 0;
-    switch( curtab ) {
-        case player_display_tab::stats:
-            line_end = 6;
-            break;
-        case player_display_tab::encumbrance: {
-            line_end = std::ranges::count_if( opts.boundary.targets, []( const auto & target ) {
-                return target.tab == player_display_tab::encumbrance && !target.navigation;
-            } );
-            break;
-        }
-        case player_display_tab::traits:
-            line_end = traitslist.size();
-            break;
-        case player_display_tab::bionics:
-            line_end = bionicslist.size();
-            break;
-        case player_display_tab::effects:
-            line_end = effect_name_and_text.size();
-            break;
-        case player_display_tab::skills:
-            line_beg = 1; // skip first header
-            line_end = skillslist.size();
-            break;
-        case player_display_tab::num_tabs:
-            abort();
+    const auto line_end = static_cast<unsigned>( row_ids( opts.model, curtab ).size() );
+    if( curtab == player_display_tab::skills ) {
+        line_beg = 1; // skip first header
     }
     if( line_beg >= line_end || line < line_beg ) {
         line = line_beg;
@@ -1615,31 +1630,33 @@ auto handle_player_display_action( const display_action_options &opts ) -> bool
         line = line_end - 1;
     }
 
-    const auto &boundary = opts.boundary;
-    auto action = std::string{};
-    {
-        const auto interaction = game_client::prepared_interaction_scope{ ctxt, opts.prepared };
-        action = ctxt.handle_input();
-    }
-    // Registration must end before dispatch, including Lua callbacks and nested fields/popups.
-    const auto &semantic = ctxt.get_raw_input().interaction;
-    if( semantic ) {
-        if( semantic->operation == game_client::interaction_operation::cancel ) {
-            action = "QUIT";
-        } else if( semantic->operation == game_client::interaction_operation::choose ) {
-            const auto target = std::ranges::find( boundary.targets, semantic->target_id, &display_target::id );
-            if( target != boundary.targets.end() ) {
-                if( target->action.empty() ) {
-                    invalidate_tab( curtab );
-                    curtab = target->tab;
-                    line = target->line;
-                    invalidate_tab( curtab );
-                    ui_info.invalidate_ui();
-                    return false;
+    auto action = ctxt.handle_input();
+    // A client picked a tab or a row: the cursor moves there, as a click would.
+    if( const auto picked = ec::invoked( ctxt.get_raw_input() ); picked && picked->args.row ) {
+        auto target = std::optional<std::pair<player_display_tab, unsigned>> {};
+        if( picked->affordance_id == select_tab_id ) {
+            const auto tab = std::ranges::find( all_tabs, *picked->args.row, tab_name );
+            if( tab != all_tabs.end() ) {
+                target = { *tab, *tab == player_display_tab::skills ? 1u : 0u };
+            }
+        } else if( picked->affordance_id == focus_row_id ) {
+            for( const auto tab : all_tabs ) {
+                const auto ids = row_ids( opts.model, tab );
+                const auto found = std::ranges::find( ids, *picked->args.row );
+                const auto selectable = tab != player_display_tab::skills ||
+                                        !skillslist[found - ids.begin()].is_header;
+                if( found != ids.end() && selectable ) {
+                    target = { tab, static_cast<unsigned>( found - ids.begin() ) };
                 }
-                action = target->action;
             }
         }
+        if( target ) {
+            invalidate_tab( curtab );
+            std::tie( curtab, line ) = *target;
+            invalidate_tab( curtab );
+            ui_info.invalidate_ui();
+        }
+        return false;
     }
     auto done = false;
 
@@ -1755,14 +1772,15 @@ static std::pair<unsigned, unsigned> calculate_shared_column_win_height(
 
 void character_display::disp_info( Character &ch )
 {
-    std::vector<std::pair<std::string, std::string>> effect_name_and_text;
+    std::vector<effect_line> effect_name_and_text;
     for( auto &elem : ch.get_all_effects() ) {
         for( auto &_effect_it : elem.second ) {
             const std::string tmp = _effect_it.second.disp_name();
             if( _effect_it.second.is_removed() || tmp.empty() ) {
                 continue;
             }
-            effect_name_and_text.emplace_back( tmp, _effect_it.second.disp_desc() );
+            effect_name_and_text.push_back( { .id = "effect:" + elem.first.str() + ":" + _effect_it.first.str(),
+                                              .name = tmp, .text = _effect_it.second.disp_desc() } );
         }
     }
     if( ch.get_perceived_pain() > 0 ) {
@@ -1778,7 +1796,7 @@ void character_display::disp_info( Character &ch )
         add_if( ppen.intelligence, _( "Intelligence -%d" ) );
         add_if( ppen.perception, _( "Perception -%d" ) );
         add_if( ppen.speed, _( "Speed -%d %%" ) );
-        effect_name_and_text.emplace_back( _( "Pain" ), pain_text );
+        effect_name_and_text.push_back( { .id = "effect:pain", .name = _( "Pain" ), .text = pain_text } );
     }
 
     const float bmi = ch.bmi();
@@ -1807,7 +1825,7 @@ void character_display::disp_info( Character &ch )
                                str_penalty * 50.0f );
         }
 
-        effect_name_and_text.emplace_back( starvation_name, starvation_text );
+        effect_name_and_text.push_back( { .id = "effect:starvation", .name = starvation_name, .text = starvation_text } );
     }
 
     if( ( ch.has_trait( trait_id( "TROGLO" ) ) && g->is_in_sunlight( ch.bub_pos() ) &&
@@ -1815,25 +1833,23 @@ void character_display::disp_info( Character &ch )
         ( ch.has_trait( trait_id( "TROGLO2" ) ) && g->is_in_sunlight( ch.bub_pos() ) &&
           get_weather().weather_id->sun_intensity < sun_intensity_type::high )
       ) {
-        effect_name_and_text.emplace_back( _( "In Sunlight" ),
-                                           _( "The sunlight irritates you.\n"
-                                              "Strength - 1;    Dexterity - 1;    Intelligence - 1;    Perception - 1" )
-                                         );
+        effect_name_and_text.push_back( { .id = "effect:sunlight", .name = _( "In Sunlight" ),
+                                          .text = _( "The sunlight irritates you.\n"
+                                                  "Strength - 1;    Dexterity - 1;    Intelligence - 1;    Perception - 1" ) } );
     } else if( ch.has_trait( trait_id( "TROGLO2" ) ) && g->is_in_sunlight( ch.bub_pos() ) ) {
-        effect_name_and_text.emplace_back( _( "In Sunlight" ),
-                                           _( "The sunlight irritates you badly.\n"
-                                              "Strength - 2;    Dexterity - 2;    Intelligence - 2;    Perception - 2" )
-                                         );
+        effect_name_and_text.push_back( { .id = "effect:sunlight", .name = _( "In Sunlight" ),
+                                          .text = _( "The sunlight irritates you badly.\n"
+                                                  "Strength - 2;    Dexterity - 2;    Intelligence - 2;    Perception - 2" ) } );
     } else if( ch.has_trait( trait_id( "TROGLO3" ) ) && g->is_in_sunlight( ch.bub_pos() ) ) {
-        effect_name_and_text.emplace_back( _( "In Sunlight" ),
-                                           _( "The sunlight irritates you terribly.\n"
-                                              "Strength - 4;    Dexterity - 4;    Intelligence - 4;    Perception - 4" )
-                                         );
+        effect_name_and_text.push_back( { .id = "effect:sunlight", .name = _( "In Sunlight" ),
+                                          .text = _( "The sunlight irritates you terribly.\n"
+                                                  "Strength - 4;    Dexterity - 4;    Intelligence - 4;    Perception - 4" ) } );
     }
 
     for( auto &elem : ch.addictions ) {
         if( elem.sated < 0_turns && elem.intensity >= MIN_ADDICTION_LEVEL ) {
-            effect_name_and_text.emplace_back( addiction_name( elem ), addiction_text( elem ) );
+            effect_name_and_text.push_back( { .id = "effect:addiction:" + io::enum_to_string( elem.type ),
+                                              .name = addiction_name( elem ), .text = addiction_text( elem ) } );
         }
     }
 
@@ -1920,7 +1936,7 @@ void character_display::disp_info( Character &ch )
     ctxt.register_action( "CHANGE_NAME", to_translation( "Change name" ) );
     ctxt.register_action( "HELP_KEYBINDINGS" );
 
-    std::map<std::string, int> speed_effects;
+    std::map<std::string, speed_effect> speed_effects;
     for( auto &elem : ch.get_all_effects() ) {
         for( std::pair<const bodypart_str_id, effect> &_effect_it : elem.second ) {
             effect &it = _effect_it.second;
@@ -1928,7 +1944,11 @@ void character_display::disp_info( Character &ch )
             int move_adjust = it.get_mod( "SPEED", reduced );
             if( move_adjust != 0 ) {
                 const std::string dis_text = it.get_speed_name();
-                speed_effects[dis_text] += move_adjust;
+                auto &entry = speed_effects[dis_text];
+                if( entry.id.empty() ) {
+                    entry.id = elem.first.str();
+                }
+                entry.value += move_adjust;
             }
         }
     }
@@ -1938,25 +1958,11 @@ void character_display::disp_info( Character &ch )
     player_display_tab curtab = player_display_tab::stats;
     unsigned int line = 0;
     auto native_skill_description = std::string{};
-    auto native_speed_lines = std::vector<native_speed_line> {};
-    auto native_header = std::string{};
-    auto native_panes = std::array<display_pane_contents, 6> {};
-    auto boundary_dirty = true;
-    auto boundary = display_boundary{};
-    auto prepared = game_client::prepared_interaction_handle{};
     auto native_skill_values = std::vector<skill_display_values> {};
-    // Capture at the pane's actual redraw, before later info/Lua callbacks can mutate the
-    // actor. Unchanged panes retain exactly their last native-painted values and viewport.
-    const auto capture_pane = [&]( const std::size_t index, const catacurses::window & window ) {
-        native_panes[index] = prepare_display_pane( {
-            .you = ch, .tab = static_cast<player_display_tab>( index ), .focused_tab = curtab,
-            .line = curtab == player_display_tab::skills ? std::max( 1u, line ) : line,
-            .height = getmaxy( window ), .header = native_header,
-            .traits = traitslist, .bionics = bionics_list, .effects = effect_name_and_text,
-            .skills = skillslist, .skill_description = native_skill_description,
-            .speed_lines = native_speed_lines, .skill_values = native_skill_values, .panes = native_panes,
-        } );
-        boundary_dirty = true;
+    const auto model = sheet_model{
+        .you = ch, .tab = curtab, .line = line, .race = race, .traits = traitslist, .bionics = bionics_list,
+        .effects = effect_name_and_text, .skills = skillslist, .skill_description = native_skill_description,
+        .speed_effects = speed_effects,
     };
 
     catacurses::window w_tip;
@@ -1968,9 +1974,7 @@ void character_display::disp_info( Character &ch )
     ui_tip.mark_resize();
     ui_tip.on_redraw( [&]( ui_adaptor & ui_tip ) {
         ui_tip.disable_cursor();
-        native_header = prepare_character_header( ch, race );
-        draw_tip( w_tip, native_header, ctxt );
-        boundary_dirty = true;
+        draw_tip( w_tip, prepare_character_header( ch, race ), ctxt );
     } );
 
     // STATS
@@ -1997,7 +2001,6 @@ void character_display::disp_info( Character &ch )
         wnoutrefresh( w_stats_border );
         ui_stats.disable_cursor();
         draw_stats_tab( ui_stats, w_stats, ch, line, curtab );
-        capture_pane( 0, w_stats );
     } );
 
     // TRAITS & BIONICS
@@ -2025,7 +2028,6 @@ void character_display::disp_info( Character &ch )
         wnoutrefresh( w_traits_border );
         ui_traits.disable_cursor();
         draw_traits_tab( ui_traits, w_traits, line, curtab, traitslist );
-        capture_pane( 3, w_traits );
     } );
 
     // BIONICS
@@ -2051,7 +2053,6 @@ void character_display::disp_info( Character &ch )
         wnoutrefresh( w_bionics_border );
         ui_bionics.disable_cursor();
         draw_bionics_tab( ui_bionics, w_bionics, ch, line, curtab, bionics_list );
-        capture_pane( 4, w_bionics );
     } );
 
     // ENCUMBRANCE
@@ -2071,7 +2072,6 @@ void character_display::disp_info( Character &ch )
         wnoutrefresh( w_encumb_border );
         ui_encumb.disable_cursor();
         draw_encumbrance_tab( ui_encumb, w_encumb, ch, line, curtab );
-        capture_pane( 1, w_encumb );
     } );
 
     // EFFECTS
@@ -2100,7 +2100,6 @@ void character_display::disp_info( Character &ch )
         wnoutrefresh( w_effects_border );
         ui_effects.disable_cursor();
         draw_effects_tab( ui_effects, w_effects, line, curtab, effect_name_and_text );
-        capture_pane( 5, w_effects );
     } );
 
     // SPEED
@@ -2121,8 +2120,7 @@ void character_display::disp_info( Character &ch )
         borders.draw_border( w_speed_border );
         wnoutrefresh( w_speed_border );
         ui_speed.disable_cursor();
-        native_speed_lines = draw_speed_tab( w_speed, ch, speed_effects );
-        boundary_dirty = true;
+        draw_speed_tab( w_speed, ch, speed_effects );
     } );
 
     // SKILLS
@@ -2159,7 +2157,6 @@ void character_display::disp_info( Character &ch )
         }
         draw_skills_tab( { .ui = ui_skills, .window = w_skills, .line = line, .tab = curtab,
                            .skills = skillslist, .height = skill_win_size_y, .values = native_skill_values } );
-        capture_pane( 2, w_skills );
     } );
 
     // info panel
@@ -2186,33 +2183,20 @@ void character_display::disp_info( Character &ch )
             .traits = traitslist, .bionics = bionics_list, .effects = effect_name_and_text,
             .skills = skillslist,
         } );
-        boundary_dirty = true;
     } );
+
+    const auto screen = ec::screen_scope( ctxt, { .view = [&]( const ec::boundary_state & ) { return sheet_view( model ); } } );
 
     bool done = false;
 
     do {
         ui_manager::redraw_invalidated();
 
-        if( boundary_dirty ) {
-            const auto focused_line = curtab == player_display_tab::skills ? std::max( 1u, line ) : line;
-            boundary = prepare_display_boundary( {
-                .you = ch, .tab = curtab, .focused_tab = curtab, .line = focused_line, .height = 0,
-                .header = native_header, .traits = traitslist, .bionics = bionics_list,
-                .effects = effect_name_and_text, .skills = skillslist,
-                .skill_description = native_skill_description, .speed_lines = native_speed_lines,
-                .skill_values = native_skill_values, .panes = native_panes,
-            } );
-            prepared = game_client::prepare_interaction( ctxt, std::move( boundary.snapshot ) );
-            boundary_dirty = false;
-        }
         done = handle_player_display_action( {
             .you = ch, .line = line, .tab = curtab, .context = ctxt,
             .tip = ui_tip, .info = ui_info, .stats = ui_stats, .encumbrance = ui_encumb,
             .traits = ui_traits, .bionics = ui_bionics, .effects = ui_effects, .skills = ui_skills,
-            .traitslist = traitslist, .bionicslist = bionics_list,
-            .effect_name_and_text = effect_name_and_text, .skillslist = skillslist,
-            .boundary = boundary, .prepared = prepared,
+            .model = model,
         } );
     } while( !done );
 }
