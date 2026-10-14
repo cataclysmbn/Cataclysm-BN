@@ -1939,6 +1939,41 @@ Deno.test({
 })
 
 Deno.test({
+  name:
+    "stdio: an open overmap is published again with tile ids when the controller says hello with tiles",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      const session = await enterTutorial(client, { viewport: { cols: 40, rows: 25 } })
+      await session.acknowledge(() => session.mirror.interaction.interaction === null)
+      assertEquals(
+        (await session.submit({ kind: "action", action_id: "map" })).stages.at(-1),
+        "completed",
+      )
+      assertEquals(overmapOf(session).overmap.tiles, undefined)
+      // The player picks Tiles while the overmap is open: hello, the same viewport, a new subscription.
+      await client.result("bn.hello", {
+        versions: ["0.2"],
+        schema: schemaHash,
+        client: { name: "stdio-test", version: "1" },
+        tiles: true,
+        viewport: { cols: 40, rows: 25 },
+      })
+      await client.result("bn.viewport", { cols: 40, rows: 25 })
+      const again = new Session(client)
+      await again.start()
+      assert(overmapOf(again).overmap.tiles, "the open screen carries tile ids now")
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
+Deno.test({
   name: "stdio: a tiles client gets overmap tile ids and the route, others do not",
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
