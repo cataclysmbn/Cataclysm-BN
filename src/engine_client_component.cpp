@@ -354,13 +354,15 @@ auto collect_rows( const component &value, std::vector<std::string> &into ) -> b
     const auto own = std::visit( [&]<typename Body>( const Body & body ) {
         if constexpr( std::is_same_v<Body, list_body> ) {
             if( body.offset != 0 || body.total != body.rows.size() ) { return false; }
-            // A heading is no row an affordance names.
-            std::ranges::transform( body.rows | std::views::filter( []( const row & entry ) { return !entry.header; } ),
+            // A heading, and a row the screen does not let be picked, is no row an affordance names.
+            std::ranges::transform( body.rows | std::views::filter( []( const row & entry ) { return !entry.header && entry.selectable; } ),
             std::back_inserter( into ), &row::id );
         } else if constexpr( std::is_same_v<Body, tabs_body> ) {
-            std::ranges::transform( body.tabs, std::back_inserter( into ), &tab_entry::id );
+            std::ranges::transform( body.tabs | std::views::filter( &tab_entry::enabled ),
+                                    std::back_inserter( into ), &tab_entry::id );
         } else if constexpr( std::is_same_v<Body, grid_body> ) {
-            std::ranges::transform( body.cells, std::back_inserter( into ), &grid_cell::id );
+            std::ranges::transform( body.cells | std::views::filter( &grid_cell::enabled ),
+                                    std::back_inserter( into ), &grid_cell::id );
         } else if constexpr( std::is_same_v<Body, form_body> ) {
             std::ranges::transform( body.fields, std::back_inserter( into ), &form_field::id );
         } else if constexpr( std::is_same_v<Body, map_body> ) {

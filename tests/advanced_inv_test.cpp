@@ -513,18 +513,23 @@ TEST_CASE(
         CHECK(selected->toggled == std::optional{false});
         CHECK(panel_of(top, "aim:pane:left").subtitle.starts_with("East"));
         CHECK(list_rows(top, "aim:pane:left:items").empty());
-        return aim_event("aim:set_area", {.row = "area:CONTAINER", .pane = "aim:pane:left"});
-    });
-    plan.steps.push_back([&](const ec::screen_view& top) {
-        // The refused area raised a popup, which was dismissed, and the pane stayed where it was.
-        CHECK(plan.popups.size() == 1);
-        CHECK(panel_of(top, "aim:pane:left").subtitle.starts_with("East"));
+        // An area the pane cannot put items in is no row to show: the invoke is refused and the
+        // pane stays where it was.
+        const auto areas_now = list_rows(top, "aim:pane:left:areas");
+        const auto container = std::ranges::find(areas_now, "area:CONTAINER", &ec::row::id);
+        REQUIRE(container != areas_now.end());
+        CHECK_FALSE(container->enabled);
+        const auto refused =
+            aim_input("aim:set_area", {.row = "area:CONTAINER", .pane = "aim:pane:left"});
+        REQUIRE_FALSE(refused);
+        CHECK(refused.error() == ec::error::invalid_arguments);
         return aim_event("aim:close");
     });
 
     run_script(plan);
 
-    CHECK(plan.reads == 3);
+    CHECK(plan.reads == 2);
+    CHECK(plan.popups.empty());
     CHECK_FALSE(get_avatar().activity);
 }
 
@@ -615,13 +620,6 @@ TEST_CASE(
         CHECK(refused("aim:move", {.rows = std::vector<ec::invoke_row>{{.id = "area:E"}},
                                    .pane = "aim:pane:right"})
               == invalid);
-        CHECK(
-            refused("aim:move",
-                    {.rows =
-                         std::vector<ec::invoke_row>{
-                             {.id = row_of(top, "aim:pane:right:items", "test_platinum_bit")}},
-                     .pane = "aim:pane:right"})
-            == invalid);
         CHECK(refused("aim:set_area", {.row = cube, .pane = "aim:pane:left"}) == invalid);
         // An area the pane cannot put items in is not shown.
         const auto areas = list_rows(top, "aim:pane:left:areas");
@@ -827,41 +825,30 @@ TEST_CASE(
         const auto left = ids_of(list_rows(top, "aim:pane:left:areas"));
         CHECK(left == ids_of(list_rows(top, "aim:pane:right:areas")));
         CHECK(left == area_names);
-        // The shape holds the rows of both panes, so an area id named as a row to move passes it
-        // and then moves nothing: it is no item of the source.
+        // An area id is no item of the source, and an item id is no area to show.
         const auto state = capture();
         const auto as_item = input_of(request_of(
             state, top, "aim:move",
             {.rows = std::vector<ec::invoke_row>{{.id = "area:E", .count = 1}},
              .pane = "aim:pane:right"}));
-        CHECK(as_item);
+        REQUIRE_FALSE(as_item);
+        CHECK(as_item.error() == ec::error::invalid_arguments);
+        const auto as_area = input_of(request_of(
+            state, top, "aim:set_area",
+            {.row = row_of(top, "aim:pane:left:items", "test_1kg_cube"), .pane = "aim:pane:left"}));
+        REQUIRE_FALSE(as_area);
+        CHECK(as_area.error() == ec::error::invalid_arguments);
         // An id of no list is refused by the shape.
         const auto nowhere = input_of(request_of(
             state, top, "aim:set_area", {.row = "area:NOWHERE", .pane = "aim:pane:left"}));
         REQUIRE_FALSE(nowhere);
         CHECK(nowhere.error() == ec::error::invalid_arguments);
-        return aim_event(
-            "aim:move",
-            {.rows = std::vector<ec::invoke_row>{{.id = "area:E", .count = 1}},
-             .pane = "aim:pane:right"});
-    });
-    // An item row named as the area to show changes no pane.
-    plan.steps.push_back([&](const ec::screen_view& top) {
-        return aim_event(
-            "aim:set_area",
-            {.row = row_of(top, "aim:pane:left:items", "test_1kg_cube"), .pane = "aim:pane:left"});
-    });
-    plan.steps.push_back([&](const ec::screen_view& top) {
-        const auto areas = list_rows(top, "aim:pane:left:areas");
-        const auto shown = std::ranges::find(areas, true, &ec::row::selected);
-        REQUIRE(shown != areas.end());
-        CHECK(shown->id == "area:INVENTORY");
         return aim_event("aim:close");
     });
 
     run_script(plan);
 
-    CHECK(plan.reads == 3);
+    CHECK(plan.reads == 1);
     CHECK(plan.popups.empty());
     CHECK_FALSE(you.activity);
     CHECK(you.amount_of(itype_id("test_1kg_cube")) == 3);

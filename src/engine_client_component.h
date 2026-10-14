@@ -242,8 +242,8 @@ struct component {
 auto component_kind( const component &value ) -> std::string;
 /// The component with `id` in the tree under `root`, `root` included; nullptr when none.
 auto find_component( const component &root, std::string_view id ) -> const component *; // *NOPAD*
-/// The ids an affordance's `row` may name in `value` and the parts inside it; nullopt when it holds only some of
-/// them (a paged list).
+/// The ids an affordance's `row` may name in `value` and the parts inside it: not a heading, nor a row, tab or
+/// cell the screen does not let be picked; nullopt when it holds only some of them (a paged list).
 auto row_ids( const component &value ) -> std::optional<std::vector<std::string>>;
 
 /// Children moved in; a braced list would copy whole subtrees.

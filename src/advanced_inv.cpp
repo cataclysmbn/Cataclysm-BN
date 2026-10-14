@@ -1176,7 +1176,7 @@ auto advanced_inventory::area_rows( const side which,
         return ec::row{
             .id = area_id( area ), .label = aim_area_name( area ),
 .denial = enabled ? std::string{} :
-            _( "You can't put items there!" ), .enabled = enabled,
+            _( "You can't put items there!" ), .enabled = enabled, .selectable = enabled,
             .selected = shown,
             // The shown area lists the vehicle cargo there instead of the ground.
 .toggled = shown ? std::optional{ cargo } :
@@ -1210,12 +1210,12 @@ auto advanced_inventory::aim_view( const input_context &ctxt ) const -> ec::scre
         .affordances = {
             ec::invoke_affordance( {
                 .id = "aim:move", .label = ctxt.get_action_name( "MOVE_VARIABLE_ITEM" ),
-                .args = { .rows = ec::rows_shape{ .component_id = "aim:panes", .counts = true }, .pane = panes_shape },
+                .args = { .rows = ec::rows_shape{ .component_id = items_id( from ), .counts = true }, .pane = panes_shape },
                 .enabled = denial.empty(), .denial = denial
             } ),
             ec::invoke_affordance( {
                 .id = "aim:set_area", .label = _( "Show area" ),
-                .args = { .row = ec::row_shape{ .component_id = "aim:panes" }, .pane = panes_shape }
+                .args = { .row = ec::row_shape{ .component_id = areas_id( from ) }, .pane = panes_shape }
             } ),
             ec::invoke_affordance( { .id = "aim:toggle_vehicle", .label = ctxt.get_action_name( "TOGGLE_VEH" ), .args = { .pane = panes_shape } } ),
             ec::invoke_affordance( { .id = "aim:filter", .label = ctxt.get_action_name( "FILTER" ), .args = { .text = ec::text_shape{}, .pane = panes_shape } } ),
