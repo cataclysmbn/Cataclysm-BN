@@ -1864,8 +1864,17 @@ Deno.test({
   },
 })
 
+/** The `map:overmap` component of the top screen. */
+const overmapOf = (session: Session) => {
+  const find = (node: Value): Value | undefined =>
+    node.id === "map:overmap"
+      ? node
+      : [...(node.children ?? []), ...(node.child ? [node.child] : [])].map(find).find(Boolean)
+  return find(top(session).root)!
+}
+
 Deno.test({
-  name: "stdio: the overmap opens as a structured view, moves its cursor and closes",
+  name: "stdio: the overmap opens as components, moves its cursor by affordance and closes",
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
@@ -1875,35 +1884,51 @@ Deno.test({
       await session.acknowledge(() => session.mirror.interaction.interaction === null)
       const opened = await session.submit({ kind: "action", action_id: "map" })
       assertEquals(opened.stages.at(-1), "completed")
-      const view = () => session.mirror.interaction.interaction
-      assertEquals(view().context, "OVERMAP")
-      assertEquals(view().kind, "target")
-      const first = view().overmap
+      assertEquals(top(session).context, "OVERMAP")
+      assertEquals(top(session).role, "screen")
+      const first = overmapOf(session).overmap
       assert(first.cols > 20 && first.rows > 10, `${first.cols}x${first.rows}`)
       assertEquals(first.cells.length, first.rows)
       assertEquals(first.cells[0].length, first.cols)
-      assert(first.legend.some((line: string) => line.trim().length > 0), "sidebar text")
-      assertEquals(view().target.unit, "omt")
-      assertEquals(view().target.current, first.player)
-      // The window is centered on the cursor.
+      assert(first.legend.some((line: string) => line.trim().length > 0), "legend text")
+      assertEquals(overmapOf(session).target.unit, "omt")
+      assertEquals(overmapOf(session).target.current, first.player)
+      // The squares are centered on the cursor.
       assertEquals(first.origin.x, first.player.x - Math.floor(first.cols / 2))
 
       const to = { ...first.player, x: first.player.x + 3, y: first.player.y - 2 }
-      const moved = await session.submit({ kind: "set_target", pos: to })
+      const moved = await session.submit({
+        kind: "invoke",
+        affordance_id: "overmap:cursor",
+        args: { pos: to },
+      })
       assertEquals(moved.stages.at(-1), "completed")
-      assertEquals(view().target.current, to)
-      assertEquals(view().overmap.origin.x, first.origin.x + 3)
-      assertEquals(view().overmap.player, first.player)
+      assertEquals(overmapOf(session).target.current, to)
+      assertEquals(overmapOf(session).overmap.origin.x, first.origin.x + 3)
+      assertEquals(overmapOf(session).overmap.player, first.player)
 
       // A square outside the safe bounds is refused.
       const far = await session.submit({
-        kind: "set_target",
-        pos: { ...to, x: 1 << 30 },
+        kind: "invoke",
+        affordance_id: "overmap:cursor",
+        args: { pos: { ...to, x: 1 << 30 } },
       })
       assertEquals(far.stages.at(-1), "rejected")
 
-      assertEquals((await session.submit({ kind: "cancel" })).stages.at(-1), "completed")
-      assertEquals(view(), null)
+      // Squares elsewhere are read without moving the cursor.
+      const read = await client.result("bn.overmap.cells", {
+        epoch: session.mirror.at.epoch,
+        min: { ...to, x: to.x + 50 },
+        max: { ...to, x: to.x + 52 },
+      })
+      assertEquals([read.cols, read.rows], [3, 1])
+      assertEquals(overmapOf(session).target.current, to)
+
+      assertEquals(
+        (await session.submit({ kind: "invoke", affordance_id: "QUIT" })).stages.at(-1),
+        "completed",
+      )
+      assertEquals(top(session).role, "map")
       assert(session.mirror.interaction.actions.some((a: Value) => a.id === "map"))
       await client.close()
     } finally {
@@ -1926,7 +1951,7 @@ Deno.test({
         (await session.submit({ kind: "action", action_id: "map" })).stages.at(-1),
         "completed",
       )
-      const overmap = session.mirror.interaction.interaction.overmap
+      const overmap = overmapOf(session).overmap
       assertEquals(overmap.path, [])
       const tiles = overmap.tiles
       assert(tiles, "tile ids for a tiles client")

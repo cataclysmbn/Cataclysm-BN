@@ -2296,9 +2296,6 @@
         "target": {
           "$ref": "#/$defs/target"
         },
-        "overmap": {
-          "$ref": "#/$defs/overmap"
-        },
         "vehicle": {
           "$ref": "#/$defs/vehicle"
         },
@@ -5953,7 +5950,7 @@
             "world",
             "overmap"
           ],
-          "description": "`world`: the streamed map (`bn.snapshot.part`, `bn.events`) with this overlay. `overmap`: the overmap window in `overmap`."
+          "description": "`world`: the streamed map (`bn.snapshot.part`, `bn.events`) with this overlay. `overmap`: the overmap squares in `overmap`, with the cursor in `target`."
         },
         "target": {
           "$ref": "#/$defs/target"
