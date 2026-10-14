@@ -325,11 +325,13 @@ auto read_event(const JsonObject& object) -> replay_event {
         if (!operation) { semantic.throw_error("Unknown semantic interaction operation"); }
         auto payload = game_client::interaction_event{
             .operation = *operation,
-            .schema_id = semantic.get_string("schema_id"),
+            .schema_id = semantic.get_string("schema_id", ""),
             .target_id = semantic.get_string("target_id", ""),
             .value = semantic.get_string("value", ""),
         };
-        if (payload.schema_id.empty()) { semantic.throw_error("schema_id must not be empty"); }
+        if (*operation != game_client::interaction_operation::invoke && payload.schema_id.empty()) {
+            semantic.throw_error("schema_id must not be empty");
+        }
         if (*operation == game_client::interaction_operation::fill) {
             if (!semantic.has_member("submit")) {
                 semantic.throw_error("fill requires explicit submit");
