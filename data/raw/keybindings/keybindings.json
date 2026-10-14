@@ -1287,6 +1287,58 @@
   },
   {
     "type": "keybinding",
+    "id": "UP",
+    "category": "MAIN_MENU",
+    "name": "Move cursor up",
+    "bindings": [
+      { "input_method": "keyboard", "key": "k" },
+      { "input_method": "keyboard", "key": "8" },
+      { "input_method": "keyboard", "key": "UP" },
+      { "input_method": "keyboard", "key": "NUMPAD_8" },
+      { "input_method": "gamepad", "key": "JOY_UP" }
+    ]
+  },
+  {
+    "type": "keybinding",
+    "id": "DOWN",
+    "category": "MAIN_MENU",
+    "name": "Move cursor down",
+    "bindings": [
+      { "input_method": "keyboard", "key": "j" },
+      { "input_method": "keyboard", "key": "DOWN" },
+      { "input_method": "keyboard", "key": "2" },
+      { "input_method": "keyboard", "key": "NUMPAD_2" },
+      { "input_method": "gamepad", "key": "JOY_DOWN" }
+    ]
+  },
+  {
+    "type": "keybinding",
+    "id": "LEFT",
+    "category": "MAIN_MENU",
+    "name": "Go to prev tab",
+    "bindings": [
+      { "input_method": "keyboard", "key": "h" },
+      { "input_method": "keyboard", "key": "LEFT" },
+      { "input_method": "keyboard", "key": "4" },
+      { "input_method": "keyboard", "key": "NUMPAD_4" },
+      { "input_method": "gamepad", "key": "JOY_LEFT" }
+    ]
+  },
+  {
+    "type": "keybinding",
+    "id": "RIGHT",
+    "category": "MAIN_MENU",
+    "name": "Go to next tab",
+    "bindings": [
+      { "input_method": "keyboard", "key": "l" },
+      { "input_method": "keyboard", "key": "RIGHT" },
+      { "input_method": "keyboard", "key": "6" },
+      { "input_method": "keyboard", "key": "NUMPAD_6" },
+      { "input_method": "gamepad", "key": "JOY_RIGHT" }
+    ]
+  },
+  {
+    "type": "keybinding",
     "id": "DELETE_TEMPLATE",
     "category": "MAIN_MENU",
     "name": "Delete template",

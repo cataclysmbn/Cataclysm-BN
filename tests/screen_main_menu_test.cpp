@@ -95,7 +95,7 @@ TEST_CASE(
                     CHECK(std::ranges::none_of(top.affordances, [](const auto& action) {
                         return action.label.find("Pan") != std::string::npos;
                     }));
-                    CHECK(find(top, "UP")->label == "Previous entry");
+                    CHECK(find(top, "UP")->label == "Move cursor up");
                     // No key stands in for a button.
                     CHECK(find(top, "ANY_INPUT") == nullptr);
 
