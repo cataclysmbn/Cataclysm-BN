@@ -5,12 +5,14 @@
 #include <cstdlib>
 #include <iterator>
 #include <map>
+#include <string_view>
+#include <ranges>
 #include <vector>
 
 #include "cata_utility.h"
-#include "client_interaction.h"
 #include "cursesdef.h"
 #include "debug.h"
+#include "engine_client_component.h"
 #include "filesystem.h"
 #include "fstream_utils.h"
 #include "input.h"
@@ -743,6 +745,24 @@ static void draw_header( const catacurses::window &w )
     wnoutrefresh( w );
 }
 
+namespace
+{
+namespace ec = engine_client;
+
+/// The components and affordances of the colour manager.
+constexpr auto colors_columns = "colors:columns";
+constexpr auto colors_items = "colors:items";
+constexpr auto colors_editor = "colors:editor";
+constexpr auto colors_column = "colors:column";
+constexpr auto colors_select = "colors:select";
+constexpr auto colors_activate = "colors:activate";
+constexpr auto colors_set = "colors:set";
+/// The two columns the cursor can be in, by token, in the order of the native column index.
+constexpr auto column_tokens = std::array<std::string_view, 2> { "normal", "invert" };
+/// A colour's row id is its name behind this.
+constexpr auto color_row_prefix = std::string_view { "color:" };
+} // namespace
+
 void color_manager::show_gui()
 {
     const int iHeaderHeight = 4;
@@ -871,50 +891,110 @@ void color_manager::show_gui()
         wnoutrefresh( w_colors );
     } );
 
-    // The two columns the cursor can be in, and one row per color with its custom colors.
-    const auto make_interaction = [&]() {
-        auto snapshot = game_client::interaction_snapshot{
-            .kind = game_client::interaction_kind::choices, .title = _( " COLOR MANAGER " ), .allow_cancel = true,
+    // The two columns the cursor can be in, one row per colour with the customs set on it, and for the colour
+    // under the cursor the editor of its custom colour in the column under the cursor.
+    const auto colors_view = [&]() -> ec::screen_view {
+        const auto column_label = []( const int column )
+        {
+return column == 1 ? std::string{ _( "Normal" ) } :
+            std::string{ _( "Invert" ) };
         };
-        const auto column_labels = std::array<std::string, 2> { _( "Normal" ), _( "Invert" ) };
-        for( auto column = 1; column <= iTotalCols; ++column ) {
-            snapshot.choices.push_back( { .id = "column:" + std::to_string( column ), .label = column_labels[column - 1],
-                                          .pane_id = "columns", .selected = column == iCurrentCol, .highlighted = column == iCurrentCol } );
-        }
-        auto index = 0;
-        for( const auto &[name, entry] : name_color_map ) {
-            snapshot.choices.push_back( {
-                .id = "color:" + name, .label = name, .pane_id = "colors",
-                .selected = index == iCurrentLine, .highlighted = index == iCurrentLine,
-                .columns = { { .key = "normal", .label = column_labels[0], .value = entry.name_custom.empty() ? _( "default" ) : entry.name_custom },
-                    { .key = "invert", .label = column_labels[1], .value = entry.name_invert_custom.empty() ? _( "default" ) : entry.name_invert_custom }
+        const auto custom_label = [&]( const int column )
+        {
+            return string_format( _( "Custom %s color:" ), column_label( column ) );
+        };
+        const auto shade_of = [&]( const std::string & name )
+        {
+            const auto found = name_color_map.find( name );
+            return found == name_color_map.end() ? std::string{} :
+                   string_from_color( found->second.color );
+        };
+        auto rows = std::vector<ec::row> {};
+        for( const auto &[index, named] : std::views::enumerate( name_color_map ) )
+        {
+            const auto &[name, entry] = named;
+            rows.push_back( {
+                .id = std::string{ color_row_prefix } + name, .label = name, .selected = index == iCurrentLine,
+                .columns = {
+                    { .key = "normal", .label = column_label( 1 ), .value = _( "default" ), .color = string_from_color( entry.color ) },
+                    { .key = "normal_custom", .label = custom_label( 1 ), .value = entry.name_custom, .color = shade_of( entry.name_custom ) },
+                    { .key = "invert", .label = column_label( 2 ), .value = _( "default" ), .color = string_from_color( entry.invert ) },
+                    { .key = "invert_custom", .label = custom_label( 2 ), .value = entry.name_invert_custom, .color = shade_of( entry.name_invert_custom ) },
                 },
             } );
-            ++index;
         }
-        return snapshot;
+        const auto row_arg = ec::arg_shape{ .row = ec::row_shape{ .component_id = colors_items } };
+        auto items = ec::list( { .id = colors_items, .rows = std::move( rows ), .selection = "single", .activate = colors_activate } );
+        items.affordances.push_back( colors_select );
+        auto facts = ec::children_of( ec::component{ .id = "colors:note", .body = ec::text_body{
+                .markup = _( "Some color changes may require a restart." ) } } );
+        auto title = std::string{};
+        auto focus = std::string{};
+        if( iCurrentLine < static_cast<int>( name_color_map.size() ) )
+        {
+            const auto &[name, entry] = *std::next( name_color_map.begin(), iCurrentLine );
+            title = name;
+            focus = std::string{ color_row_prefix } + name;
+            facts.push_back( { .id = colors_editor, .affordances = { colors_set }, .body = ec::form_body{ .fields = { {
+                            .id = focus, .label = custom_label( iCurrentCol ), .value = iCurrentCol == 1 ? entry.name_custom : entry.name_invert_custom,
+                            .type = "select", .options = name_color_map | std::views::keys | std::views::transform( []( const auto & option )
+                            {
+                                return ec::form_option{ .id = option, .label = option };
+                            } ) | std::ranges::to<std::vector>()
+                        }
+                    } } } );
+        }
+        return {
+            .title = _( " COLOR MANAGER " ),
+            .root = ec::tabs( {
+                .id = colors_columns,
+                .tabs = std::views::iota( 1, iTotalCols + 1 ) | std::views::transform( [&]( const int column )
+                {
+                    return ec::tab_entry{ .id = std::string{ column_tokens[column - 1] }, .label = column_label( column ), .selected = column == iCurrentCol };
+                } ) | std::ranges::to<std::vector>(),
+                .select = colors_column,
+                .child = ec::split( {
+                    .id = "colors:body", .relation = "detail", .active = colors_items,
+                    .children = ec::children_of( std::move( items ), ec::panel( {
+                        .id = "colors:detail", .title = title,
+                        .child = ec::split( { .id = "colors:facts", .children = std::move( facts ) } ) } ) ) } ) } ),
+            .affordances = {
+                ec::invoke_affordance( { .id = colors_select, .label = _( "Select" ), .args = row_arg, .role = "select" } ),
+                ec::invoke_affordance( { .id = colors_activate, .label = ctxt.get_action_name( "CONFIRM" ), .args = row_arg } ),
+                ec::invoke_affordance( {
+                    .id = colors_set, .label = custom_label( iCurrentCol ), .args = {
+                        .row = ec::row_shape{ .component_id = colors_editor }, .text = ec::text_shape{}
+                    }, .enabled = !focus.empty() } ),
+                ec::invoke_affordance( {
+                    .id = colors_column, .label = _( "Select" ), .args = { .row = ec::row_shape{ .component_id = colors_columns } } } ),
+            },
+            .focus_component = colors_items, .focus_row = focus };
     };
+    const auto screen = ec::screen_scope( ctxt, { .role = "screen", .view = [&]( const auto & /*state*/ ) { return colors_view(); } } );
 
     while( true ) {
         ui_manager::redraw();
 
-        auto action = std::string{};
-        {
-            const auto interaction = game_client::interaction_scope( ctxt, make_interaction );
-            action = ctxt.handle_input();
-        }
-        // A semantic choice moves the cursor and then acts like the matching key.
-        if( const auto raw = ctxt.get_raw_input(); raw.interaction ) {
-            const auto &target = raw.interaction->target_id;
+        auto action = std::string{ ctxt.handle_input() };
+        // A client's affordance acts on the native cursor, like the keypress that does the same.
+        if( const auto invoked = ec::invoked( ctxt.get_raw_input() ) ) {
+            const auto &args = invoked->args;
+            const auto &id = invoked->affordance_id;
+            const auto column = args.row ? std::ranges::find( column_tokens, *args.row ) : column_tokens.end();
+            const auto row = args.row && args.row->starts_with( color_row_prefix ) ?
+                             name_color_map.find( args.row->substr( color_row_prefix.size() ) ) : name_color_map.end();
             action.clear();
-            if( raw.interaction->operation == game_client::interaction_operation::cancel ) {
-                action = "QUIT";
-            } else if( target.starts_with( "column:" ) ) {
-                iCurrentCol = std::stoi( target.substr( 7 ) );
-            } else if( target.starts_with( "color:" ) ) {
-                iCurrentLine = static_cast<int>( std::distance( name_color_map.begin(),
-                                                 name_color_map.find( target.substr( 6 ) ) ) );
-                action = "CONFIRM";
+            if( id == colors_column && column != column_tokens.end() ) {
+                iCurrentCol = static_cast<int>( column - column_tokens.begin() ) + 1;
+            } else if( row != name_color_map.end() ) {
+                iCurrentLine = static_cast<int>( std::distance( name_color_map.begin(), row ) );
+                if( id == colors_activate ) {
+                    action = "CONFIRM";
+                } else if( id == colors_set && args.text && name_color_map.contains( *args.text ) ) {
+                    bStuffChanged = true;
+                    ( iCurrentCol == 1 ? row->second.name_custom : row->second.name_invert_custom ) = *args.text;
+                    finalize(); // Need to recalculate caches
+                }
             }
         }
 
