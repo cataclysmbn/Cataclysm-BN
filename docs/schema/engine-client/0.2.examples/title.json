@@ -188,7 +188,7 @@
           },
           {
             "id": "UP",
-            "label": "Pan up",
+            "label": "Previous entry",
             "keys": [
               "k",
               "8",
@@ -200,7 +200,7 @@
           },
           {
             "id": "DOWN",
-            "label": "Pan down",
+            "label": "Next entry",
             "keys": [
               "j",
               "DOWN",
@@ -212,7 +212,7 @@
           },
           {
             "id": "LEFT",
-            "label": "Pan left",
+            "label": "Previous tab",
             "keys": [
               "h",
               "LEFT",
@@ -224,7 +224,7 @@
           },
           {
             "id": "RIGHT",
-            "label": "Pan right",
+            "label": "Next tab",
             "keys": [
               "l",
               "RIGHT",
@@ -512,7 +512,7 @@
           },
           {
             "id": "UP",
-            "label": "Pan up",
+            "label": "Previous entry",
             "keys": [
               "k",
               "8",
@@ -524,7 +524,7 @@
           },
           {
             "id": "DOWN",
-            "label": "Pan down",
+            "label": "Next entry",
             "keys": [
               "j",
               "DOWN",
@@ -536,7 +536,7 @@
           },
           {
             "id": "LEFT",
-            "label": "Pan left",
+            "label": "Previous tab",
             "keys": [
               "h",
               "LEFT",
@@ -548,7 +548,7 @@
           },
           {
             "id": "RIGHT",
-            "label": "Pan right",
+            "label": "Next tab",
             "keys": [
               "l",
               "RIGHT",

@@ -708,7 +708,11 @@ bool main_menu::opening_screen()
 
     load_char_templates();
 
-    ctxt.register_cardinal();
+    // The arrows move the cursor of the menu, not a map: they are named so.
+    ctxt.register_action( "UP", to_translation( "Previous entry" ) );
+    ctxt.register_action( "DOWN", to_translation( "Next entry" ) );
+    ctxt.register_action( "LEFT", to_translation( "Previous tab" ) );
+    ctxt.register_action( "RIGHT", to_translation( "Next tab" ) );
     ctxt.register_action( "NEXT_TAB" );
     ctxt.register_action( "PREV_TAB" );
     ctxt.register_action( "PAGE_UP" );

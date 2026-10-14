@@ -63,9 +63,11 @@
   "invalid": [
     {
       "name": "canvas run with a color beyond the 16 curses colors",
-      "def": "canvas",
+      "def": "canvas_component",
       "why": "foreground is a curses color index 0-15",
       "value": {
+        "id": "canvas",
+        "kind": "canvas",
         "cols": 4,
         "rows": [
           [

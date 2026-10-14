@@ -2042,46 +2042,6 @@
       ],
       "additionalProperties": false
     },
-    "canvas": {
-      "type": "object",
-      "description": "A native window as drawn, such as a software mini-game: one list of runs per row, each run [text, foreground, background] over cells that share their colors, with curses color indexes 0-15 as in the overmap. Blank cells that end a row are left out.",
-      "properties": {
-        "cols": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "rows": {
-          "type": "array",
-          "items": {
-            "type": "array",
-            "items": {
-              "type": "array",
-              "prefixItems": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 15
-                },
-                {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 15
-                }
-              ],
-              "items": false
-            }
-          }
-        }
-      },
-      "required": [
-        "cols",
-        "rows"
-      ],
-      "additionalProperties": false
-    },
     "overmap": {
       "type": "object",
       "description": "The native overmap window as drawn, row-major. Each cell is [glyph, foreground, background] with curses color indexes 0-15 (0 black, 1 red, 2 green, 3 brown, 4 blue, 5 magenta, 6 cyan, 7 light gray, 8-15 their bright forms). Positions are overmap terrain squares.",
@@ -2268,13 +2228,6 @@
           "type": "string",
           "description": "Present on a press-any-key screen that binds no key: the choice any key press acknowledges. Choose it when the player presses a key no action binds."
         },
-        "banner": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Fixed-width lines drawn above the menu, with color tags: the main menu's title art and version line."
-        },
         "areas": {
           "type": "array",
           "description": "The advanced inventory's area picker as the native header lays it out. `action_id` is the registered action that points the active pane at the area, `key` the key the player has bound to it (empty when none), `x` and `y` its position in character cells from the picker's top-left corner, `available` whether the area exists now (the vehicle is grabbed or on the square, the level is there). A pane is on the area whose `label` is its `area_label`.",
@@ -2337,13 +2290,10 @@
         "vehicle": {
           "$ref": "#/$defs/vehicle"
         },
-        "canvas": {
-          "$ref": "#/$defs/canvas"
-        },
         "refresh_ms": {
           "type": "integer",
           "minimum": 1,
-          "description": "Present where the engine redraws the screen on its own every this many milliseconds with no input, such as the snake game; each redraw publishes a new canvas."
+          "description": "Present where the engine redraws the screen on its own every this many milliseconds with no input, such as the snake game; each redraw publishes a new screen."
         },
         "compat": {
           "type": "object",
@@ -2564,7 +2514,7 @@
         "refresh_ms": {
           "type": "integer",
           "minimum": 1,
-          "description": "Present where the engine redraws the screen on its own every this many milliseconds with no input, such as the snake game; each redraw publishes a new canvas."
+          "description": "Present where the engine redraws the screen on its own every this many milliseconds with no input, such as the snake game; each redraw publishes a new screen."
         },
         "dock": {
           "enum": [

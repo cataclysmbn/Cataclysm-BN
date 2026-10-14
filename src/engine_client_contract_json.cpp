@@ -383,7 +383,6 @@ auto interaction_json( const boundary_state &state ) -> json
         {"kind", game_client::interaction_kind_name( native.kind )}, {"allow_cancel", native.allow_cancel},
         {"allow_set_count", native.allow_set_count}, {"title", native.title}, {"message", native.message},
         {"choices", to_array( native.choices )}, {"choice_total", native.choice_total}};
-    if( !native.banner.empty() ) { result["banner"] = native.banner; }
     if( !native.message_tone.empty() ) { result["message_tone"] = native.message_tone; }
     if( native.category_mode ) { result["category_mode"] = *native.category_mode; }
     if( !native.any_key_choice_id.empty() ) { result["any_key_choice_id"] = native.any_key_choice_id; }
@@ -396,7 +395,6 @@ auto interaction_json( const boundary_state &state ) -> json
     }
     if( native.target ) { result["target"] = target_json( *native.target, frame ); }
     if( native.overmap ) { result["overmap"] = overmap_json( *native.overmap, frame ); }
-    if( native.canvas ) { result["canvas"] = canvas_json( *native.canvas ); }
     if( native.refresh_ms > 0 ) { result["refresh_ms"] = native.refresh_ms; }
     if( native.vehicle ) {
         const auto &veh = *native.vehicle;

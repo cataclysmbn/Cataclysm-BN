@@ -228,15 +228,13 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "prepared pages keep the overmap, vehicle and canvas of the model",
-    "[client_interaction_prepared]") {
+    "prepared pages keep the overmap and vehicle of the model", "[client_interaction_prepared]") {
     auto context = input_context{"WINDOWS"};
     const auto input = client::input_context_scope{context, "WINDOWS"};
     client::begin_input_boundary();
     auto snapshot = model(3);
     snapshot.overmap = client::interaction_overmap{.cols = 2, .rows = 1, .glyphs = {"a", "b"}};
     snapshot.vehicle = client::interaction_vehicle{.name = "Truck", .mode = "main"};
-    snapshot.canvas = client::interaction_canvas{.cols = 1, .rows = {{{.text = "x"}}}};
     auto expected = std::string{};
     {
         const auto legacy = client::interaction_scope{context, [&]() { return snapshot; }};
@@ -247,7 +245,6 @@ TEST_CASE(
     const auto page = client::current_interaction();
     REQUIRE(page.overmap.has_value());
     REQUIRE(page.vehicle.has_value());
-    REQUIRE(page.canvas.has_value());
     CHECK(page.vehicle->name == "Truck");
     CHECK(client::serialize_interaction(page) == expected);
 }
@@ -1039,20 +1036,13 @@ TEST_CASE(
     CHECK(weak.expired()); // last actual owner releases renderer inputs; no provider history
 }
 
-TEST_CASE(
-    "prepared interactions keep the canvas and the refresh interval",
-    "[client_interaction_prepared]") {
+TEST_CASE("prepared interactions keep the refresh interval", "[client_interaction_prepared]") {
     auto context = input_context{"CANVAS"};
     const auto input = client::input_context_scope{context, "CANVAS"};
     auto snapshot = client::interaction_snapshot{.kind = client::interaction_kind::custom};
-    snapshot.canvas =
-        client::interaction_canvas{.cols = 3, .rows = {{{.text = "ab", .foreground = 9}}}};
     snapshot.refresh_ms = 250;
     const auto scope = client::prepared_interaction_scope{
         context, client::prepare_interaction(context, std::move(snapshot))};
     const auto result = client::current_interaction();
-    REQUIRE(result.canvas.has_value());
-    CHECK(result.canvas->cols == 3);
-    CHECK(result.canvas->rows.at(0).at(0).text == "ab");
     CHECK(result.refresh_ms == 250);
 }

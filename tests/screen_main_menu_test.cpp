@@ -91,6 +91,11 @@ TEST_CASE(
                     CHECK(entries.activate == "menu:entry");
                     CHECK(find(top, "menu:entry") != nullptr);
                     CHECK(find(top, "QUIT")->role == "cancel");
+                    // The arrows move the menu's cursor: no action is named for a map.
+                    CHECK(std::ranges::none_of(top.affordances, [](const auto& action) {
+                        return action.label.find("Pan") != std::string::npos;
+                    }));
+                    CHECK(find(top, "UP")->label == "Previous entry");
                     // No key stands in for a button.
                     CHECK(find(top, "ANY_INPUT") == nullptr);
 

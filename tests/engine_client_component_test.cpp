@@ -224,8 +224,6 @@ TEST_CASE("a screen with panes or a target is not described yet", "[engine_clien
                  .choice_total = 1},
              client::interaction_snapshot{
                  .kind = client::interaction_kind::target, .target = client::interaction_target{}},
-             client::interaction_snapshot{
-                 .kind = client::interaction_kind::choices, .banner = {"<color_white>BN</color>"}},
          }) {
         const auto state = boundary(std::move(native));
         const auto view = top_of(state);

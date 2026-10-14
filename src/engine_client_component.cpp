@@ -192,8 +192,8 @@ auto generic( const interaction_snapshot &native ) -> bool
     using game_client::interaction_kind;
     return native.structured && !native.actions_only &&
            ( native.kind == interaction_kind::choices || native.kind == interaction_kind::field ) &&
-           native.panes.empty() && native.areas.empty() && native.banner.empty() && !native.target &&
-           !native.overmap && !native.vehicle && !native.canvas &&
+           native.panes.empty() && native.areas.empty() && !native.target &&
+           !native.overmap && !native.vehicle &&
     std::ranges::none_of( native.choices, []( const auto & choice ) {
         return choice.pane_id || choice.area_id;
     } );

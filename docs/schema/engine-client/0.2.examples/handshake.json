@@ -13,7 +13,7 @@
           "revision": "0"
         },
         "schema": {
-          "engine": "sha256:49564dab26f80340",
+          "engine": "sha256:52f01000bc3be52d",
           "client": "sha256:0000000000000000"
         }
       }
@@ -29,7 +29,7 @@
           "name": "contract-gen",
           "version": "1"
         },
-        "schema": "sha256:49564dab26f80340",
+        "schema": "sha256:52f01000bc3be52d",
         "capabilities": {
           "viewport": {
             "cols": 40,
@@ -58,7 +58,7 @@
           "cells_per_query": 4096,
           "screen_queue": 8
         },
-        "schema": "sha256:49564dab26f80340",
+        "schema": "sha256:52f01000bc3be52d",
         "locale": "en_US",
         "engine_locale": "en_US",
         "role": "controller"
@@ -84,7 +84,7 @@
           "actions": [
             {
               "id": "UP",
-              "name": "Pan up",
+              "name": "Previous entry",
               "keys": [
                 "k",
                 "8",
@@ -94,7 +94,7 @@
             },
             {
               "id": "DOWN",
-              "name": "Pan down",
+              "name": "Next entry",
               "keys": [
                 "j",
                 "DOWN",
@@ -104,7 +104,7 @@
             },
             {
               "id": "LEFT",
-              "name": "Pan left",
+              "name": "Previous tab",
               "keys": [
                 "h",
                 "LEFT",
@@ -114,7 +114,7 @@
             },
             {
               "id": "RIGHT",
-              "name": "Pan right",
+              "name": "Next tab",
               "keys": [
                 "l",
                 "RIGHT",
@@ -373,7 +373,7 @@
                 },
                 {
                   "id": "UP",
-                  "label": "Pan up",
+                  "label": "Previous entry",
                   "keys": [
                     "k",
                     "8",
@@ -385,7 +385,7 @@
                 },
                 {
                   "id": "DOWN",
-                  "label": "Pan down",
+                  "label": "Next entry",
                   "keys": [
                     "j",
                     "DOWN",
@@ -397,7 +397,7 @@
                 },
                 {
                   "id": "LEFT",
-                  "label": "Pan left",
+                  "label": "Previous tab",
                   "keys": [
                     "h",
                     "LEFT",
@@ -409,7 +409,7 @@
                 },
                 {
                   "id": "RIGHT",
-                  "label": "Pan right",
+                  "label": "Next tab",
                   "keys": [
                     "l",
                     "RIGHT",
@@ -505,7 +505,7 @@
         "actions": [
           {
             "id": "UP",
-            "name": "Pan up",
+            "name": "Previous entry",
             "keys": [
               "k",
               "8",
@@ -515,7 +515,7 @@
           },
           {
             "id": "DOWN",
-            "name": "Pan down",
+            "name": "Next entry",
             "keys": [
               "j",
               "DOWN",
@@ -525,7 +525,7 @@
           },
           {
             "id": "LEFT",
-            "name": "Pan left",
+            "name": "Previous tab",
             "keys": [
               "h",
               "LEFT",
@@ -535,7 +535,7 @@
           },
           {
             "id": "RIGHT",
-            "name": "Pan right",
+            "name": "Next tab",
             "keys": [
               "l",
               "RIGHT",
@@ -794,7 +794,7 @@
               },
               {
                 "id": "UP",
-                "label": "Pan up",
+                "label": "Previous entry",
                 "keys": [
                   "k",
                   "8",
@@ -806,7 +806,7 @@
               },
               {
                 "id": "DOWN",
-                "label": "Pan down",
+                "label": "Next entry",
                 "keys": [
                   "j",
                   "DOWN",
@@ -818,7 +818,7 @@
               },
               {
                 "id": "LEFT",
-                "label": "Pan left",
+                "label": "Previous tab",
                 "keys": [
                   "h",
                   "LEFT",
@@ -830,7 +830,7 @@
               },
               {
                 "id": "RIGHT",
-                "label": "Pan right",
+                "label": "Next tab",
                 "keys": [
                   "l",
                   "RIGHT",
@@ -1097,7 +1097,7 @@
           },
           {
             "id": "UP",
-            "label": "Pan up",
+            "label": "Previous entry",
             "keys": [
               "k",
               "8",
@@ -1109,7 +1109,7 @@
           },
           {
             "id": "DOWN",
-            "label": "Pan down",
+            "label": "Next entry",
             "keys": [
               "j",
               "DOWN",
@@ -1121,7 +1121,7 @@
           },
           {
             "id": "LEFT",
-            "label": "Pan left",
+            "label": "Previous tab",
             "keys": [
               "h",
               "LEFT",
@@ -1133,7 +1133,7 @@
           },
           {
             "id": "RIGHT",
-            "label": "Pan right",
+            "label": "Next tab",
             "keys": [
               "l",
               "RIGHT",
@@ -1286,7 +1286,7 @@
           "cells_per_query": 4096,
           "screen_queue": 8
         },
-        "schema": "sha256:49564dab26f80340",
+        "schema": "sha256:52f01000bc3be52d",
         "locale": "en_US",
         "engine_locale": "en_US"
       },
