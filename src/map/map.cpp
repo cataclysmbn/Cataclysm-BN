@@ -9738,7 +9738,7 @@ void map::set_memory_seen_cache_dirty(const tripoint_bub_ms& p) {
 }
 
 auto map::set_memory_seen_cache_dirty(const int zlev) -> void {
-    map_perception::invalidate_visibility(*this);
+    map_perception::invalidate_all(*this);
     level_cache& ch = get_cache(zlev);
     ch.map_memory_seen_cache.reset();
     ch.map_memory_seen_cache_dirty_points.clear();

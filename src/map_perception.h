@@ -81,6 +81,8 @@ struct acquisition_counts {
 
 /// Native cache/knowledge producers invalidate acquisition, never acquire it.
 auto invalidate_visibility( const map &here ) -> void;
+/// Also look at every column again, not only those whose sight changed: the seen flags were reset.
+auto invalidate_all( const map &here ) -> void;
 auto invalidate_cell( const map &here, const tripoint_bub_ms &p ) -> void;
 auto memory_changed( const tripoint_abs_ms &p ) -> void;
 /// Clear/load/session replacement must not reuse the previous knowledge baseline.

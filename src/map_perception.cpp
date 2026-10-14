@@ -3,12 +3,14 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <iterator>
 #include <map>
 #include <ranges>
 #include <random>
 #include <set>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "avatar.h"
@@ -65,6 +67,9 @@ struct acquisition_state {
     bool blind = false;
     float threshold = 0;
     visibility_variables vision{};
+    // Squares the last full scan found clear, by z-level up from -OVERMAP_DEPTH to the avatar's, so
+    // the next scan can skip the columns a visibility refresh left unchanged.
+    std::vector<std::vector<uint8_t>> clear;
     std::set<tripoint_bub_ms> dirty;
     // Keep hidden/unvisited invalidations until a visibility completion can authorize them.
     std::set<tripoint_bub_ms> pending;
@@ -327,9 +332,9 @@ auto derive( const map &here, const cell_facts &facts, const sight &view ) -> ce
     return result;
 }
 
-auto observe( const map &here, const tripoint_bub_ms &p ) -> cell_facts
+auto observe( const map &here, const tripoint_bub_ms &p, const sight &view ) -> cell_facts
 {
-    auto facts = cell_facts{ .position = p, .vehicle_only = !normally_visible( here, p ) };
+    auto facts = cell_facts{ .position = p, .vehicle_only = !normally_visible( here, p, view ) };
     const auto &you = get_avatar();
     if( !facts.vehicle_only ) {
         facts.terrain = here.ter( p );
@@ -456,19 +461,29 @@ auto visible_at( const map &here, const tripoint_bub_ms &p ) -> bool
     return normally_visible( here, p );
 }
 
+namespace
+{
+using clear_levels = std::array < bool, static_cast<size_t>( lit_level::BLANK ) + 1 >;
+
+/// Classify each light level once instead of calling the map per cell.
+auto clear_levels_of( const map &here ) -> clear_levels
+{
+    const auto &vision = here.get_visibility_variables_cache();
+    auto clear = clear_levels {};
+    for( const auto level : std::views::iota( 0, static_cast<int>( clear.size() ) ) ) {
+        clear[level] = here.get_visibility( static_cast<lit_level>( level ), vision ) == VIS_CLEAR;
+    }
+    return clear;
+}
+} // namespace
+
 auto visible_cells( const map &here ) -> std::vector<tripoint_bub_ms>
 {
     const auto &you = get_avatar();
     // A blind avatar sees only within clairvoyance, which needs the per-cell test.
     const auto blind = you.is_blind();
     if( blind && you.clairvoyance() == 0 ) { return {}; }
-    const auto &vision = here.get_visibility_variables_cache();
-    // Classify each light level once instead of calling the map per cell.
-    using clear_levels = std::array < bool, static_cast<size_t>( lit_level::BLANK ) + 1 >;
-    auto clear = clear_levels {};
-    for( const auto level : std::views::iota( 0, static_cast<int>( clear.size() ) ) ) {
-        clear[level] = here.get_visibility( static_cast<lit_level>( level ), vision ) == VIS_CLEAR;
-    }
+    const auto clear = clear_levels_of( here );
     // Scanning every level of every square costs about a millisecond, and a refresh of the visibility
     // caches is the only thing that changes what they hold: a capture without one reuses the last scan.
     struct scan {
@@ -500,12 +515,14 @@ auto visible_cells( const map &here ) -> std::vector<tripoint_bub_ms>
     return result;
 }
 
-auto detailed_at( const map &here, const tripoint_bub_ms &p ) -> bool
+namespace
+{
+auto detailed_at( const map &here, const tripoint_bub_ms &p, const sight &view ) -> bool
 {
     if( !here.inbounds( p ) ) {
         return false;
     }
-    if( normally_visible( here, p ) ) {
+    if( normally_visible( here, p, view ) ) {
         return true;
     }
     const auto vp = here.veh_at( p );
@@ -522,11 +539,17 @@ auto detailed_at( const map &here, const tripoint_bub_ms &p ) -> bool
     }
     for( const auto z : std::views::iota( p.z() + 1, get_avatar().bub_pos().z() + 1 ) ) {
         const auto above = tripoint_bub_ms( p.xy(), z );
-        if( !here.has_flag( TFLAG_NO_FLOOR, above ) || !normally_visible( here, above ) ) {
+        if( !here.has_flag( TFLAG_NO_FLOOR, above ) || !normally_visible( here, above, view ) ) {
             return false;
         }
     }
     return true;
+}
+} // namespace
+
+auto detailed_at( const map &here, const tripoint_bub_ms &p ) -> bool
+{
+    return detailed_at( here, p, current_sight() );
 }
 
 auto reset() -> void { state = acquisition_state{}; }
@@ -544,6 +567,14 @@ auto invalidate_visibility( const map &here ) -> void
 {
     if( state.owner == &here ) {
         state.full_pending = true;
+    }
+}
+
+auto invalidate_all( const map &here ) -> void
+{
+    if( state.owner == &here ) {
+        state.full_pending = true;
+        state.clear.clear();
     }
 }
 
@@ -588,6 +619,59 @@ auto invalidate_stale_visibility( map &here ) -> void
     }
 }
 
+namespace
+{
+using clear_squares_t = std::vector<std::vector<uint8_t>>;
+
+/// Whether ordinary sight shows each square, for every z-level up to `zlev`.
+auto clear_squares( const map &here, const int zlev ) -> clear_squares_t
+{
+    const auto clear = clear_levels_of( here );
+    auto result = clear_squares_t {};
+    for( const auto z : std::views::iota( -OVERMAP_DEPTH, zlev + 1 ) ) {
+        const auto &cache = here.access_cache( z );
+        const auto squares = static_cast<size_t>( cache.cache_x * cache.cache_y );
+        auto &level = result.emplace_back();
+        if( cache.visibility_cache.size() < squares ) { continue; }
+        std::ranges::transform( cache.visibility_cache | std::views::take( squares ),
+                                std::back_inserter( level ),
+        [&]( const lit_level light ) { return static_cast<uint8_t>( clear[static_cast<size_t>( light )] ); } );
+    }
+    return result;
+}
+
+/// A column and the four neighbours that derive their knowledge from it.
+auto mark_column( std::vector<uint8_t> &columns, const level_cache &cache,
+                  const point_bub_ms &p ) -> void
+{
+    if( cache.inbounds( p ) ) { columns[cache.idx( p.x(), p.y() )] = 1; }
+    for( const auto &delta : neighbors ) {
+        if( cache.inbounds( p + delta ) ) { columns[cache.idx( p.x() + delta.x, p.y() + delta.y )] = 1; }
+    }
+}
+
+/// The columns of the map to look at again after a refresh: where the squares ordinary sight shows
+/// differ on any z-level, with their neighbours. Every
+/// column when the two scans do not compare, or when the avatar sees by clairvoyance, which depends
+/// on its position.
+auto changed_columns( const clear_squares_t &before, const clear_squares_t &after,
+                      const level_cache &cache,
+                      const bool clairvoyant ) -> std::vector<uint8_t>
+{
+    const auto squares = static_cast<size_t>( cache.cache_x * cache.cache_y );
+    if( clairvoyant || before.size() != after.size() ) { return std::vector<uint8_t>( squares, 1 ); }
+    auto columns = std::vector<uint8_t>( squares, 0 );
+    for( const auto &[old_level, level] : std::views::zip( before, after ) ) {
+        if( old_level.size() != level.size() ) { return std::vector<uint8_t>( squares, 1 ); }
+        for( const auto i : std::views::iota( size_t{ 0 }, level.size() ) ) {
+            if( old_level[i] == level[i] ) { continue; }
+            mark_column( columns, cache, { static_cast<int>( i ) / cache.cache_y, static_cast<int>( i ) % cache.cache_y } );
+        }
+    }
+    return columns;
+}
+} // namespace
+
 auto acquire() -> acquisition_counts
 {
     ZoneScopedN( "map_perception_acquire" );
@@ -615,28 +699,29 @@ auto acquire() -> acquisition_counts
         ++counts.visibility_updates;
         here.update_visibility_cache( zlev );
     }
-    state.position = you.abs_pos();
+    const auto previous_position = std::exchange( state.position, you.abs_pos() );
+    const auto previous_blind = std::exchange( state.blind, you.is_blind() );
     state.vision = here.get_visibility_variables_cache();
-    state.blind = you.is_blind();
     state.threshold = g_visible_threshold;
+    const auto view = current_sight();
 
     {
         ZoneScopedN( "map_perception_acquire_sparse" );
         auto fields = decltype( state.fields ) {};
         auto traps = decltype( state.traps ) {};
-        for( const auto &view : here.active_submap_views() ) {
+        for( const auto &submap_view : here.active_submap_views() ) {
             ++counts.submaps_checked;
-            const auto &sm = view.get_submap();
+            const auto &sm = submap_view.get_submap();
             for( const auto &local : sm.trap_cache ) {
                 ++counts.traps_checked;
                 const auto trap = sm.get_effective_trap( local );
                 if( trap != tr_null ) {
-                    traps.emplace( abs_to_map_local( here, project_combine( view.abs_pos(), local ) ), trap );
+                    traps.emplace( abs_to_map_local( here, project_combine( submap_view.abs_pos(), local ) ), trap );
                 }
             }
             for( const auto &local : sm.field_cache ) {
                 ++counts.fields_checked;
-                const auto p = abs_to_map_local( here, project_combine( view.abs_pos(), local ) );
+                const auto p = abs_to_map_local( here, project_combine( submap_view.abs_pos(), local ) );
                 const auto &field = sm.get_field( local );
                 if( field.field_count() ) {
                     fields.emplace( p, field_appearance{ .field = field.displayed_field_type(),
@@ -654,10 +739,10 @@ auto acquire() -> acquisition_counts
                 if( !here.inbounds( p ) ) {
                     continue;
                 }
-                const auto facts = observe( here, p );
+                const auto facts = observe( here, p, view );
                 vehicles.emplace( p, vehicle_appearance{ .tile = facts.vehicle_tile,
                                   .symbol = facts.vehicle_symbol, .stationary = facts.stationary_vehicle,
-                                  .detailed = detailed_at( here, p ) } );
+                                  .detailed = detailed_at( here, p, view ) } );
             }
         }
         update_sparse( here, state.vehicles, std::move( vehicles ) );
@@ -671,8 +756,8 @@ auto acquire() -> acquisition_counts
     auto facts = std::vector<cell_facts> {};
     const auto acquire_cell = [&]( const auto & p ) {
         ++counts.candidates;
-        if( detailed_at( here, p ) ) {
-            facts.push_back( observe( here, p ) );
+        if( detailed_at( here, p, view ) ) {
+            facts.push_back( observe( here, p, view ) );
             state.pending.erase( p );
         }
     };
@@ -680,11 +765,25 @@ auto acquire() -> acquisition_counts
         ZoneScopedN( "map_perception_acquire_full_rescan" );
         ++counts.full_rescans;
         auto seen = std::vector<int>( static_cast<size_t>( here.getmapsize() ) * here.getmapsize(), 0 );
+        // Squares whose sight did not change keep what the last scan made of them. The avatar's
+        // surroundings, traps, vehicles and invalidated squares depend on more than sight.
+        auto clear = clear_squares( here, zlev );
+        auto columns = changed_columns( state.clear, clear, cache, view.blind || previous_blind );
+        const auto mark = [&]( const tripoint_bub_ms & p ) { mark_column( columns, cache, p.xy() ); };
+        mark( you.bub_pos() );
+        mark( abs_to_map_local( here, previous_position ) );
+        std::ranges::for_each( state.traps | std::views::keys, mark );
+        std::ranges::for_each( state.vehicles | std::views::keys, mark );
+        std::ranges::for_each( state.dirty, mark );
+        state.clear = std::move( clear );
         for( const auto y : std::views::iota( 0, cache.cache_y ) ) {
             for( const auto x : std::views::iota( 0, cache.cache_x ) ) {
                 const auto light = cache.visibility_cache[cache.idx( x, y )];
                 seen[( x / SEEX ) * here.getmapsize() + y / SEEY] +=
                     light == lit_level::BRIGHT || light == lit_level::LIT;
+                if( !columns[cache.idx( x, y )] ) {
+                    continue;
+                }
                 // Follow exposed surfaces, not the camera and not every clear z-level.
                 for( const auto z : std::views::iota( -OVERMAP_DEPTH, zlev + 1 ) | std::views::reverse ) {
                     const auto p = tripoint_bub_ms( x, y, z );
@@ -728,7 +827,6 @@ auto acquire() -> acquisition_counts
     ZoneNamedN( commit_zone, "map_perception_acquire_commit", true );
     auto memories = std::vector<cell_memory> {};
     memories.reserve( facts.size() );
-    const auto view = current_sight();
     for( const auto &cell : facts ) {
         memories.push_back( derive( here, cell, view ) );
     }
