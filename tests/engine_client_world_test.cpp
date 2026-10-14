@@ -996,7 +996,8 @@ TEST_CASE(
         CHECK(overlay->looks_like.size() >= 3);
         CHECK(overlay->looks_like[1] == std::string(gender) + "worn_" + parent.str());
     }
-    CHECK(overlay->looks_like.size() <= 20);
+    // The schema allows ten.
+    CHECK(overlay->looks_like.size() <= 10);
     // Without tints in the client's tileset no key is published; with them, the keys among them.
     CHECK(overlay->tint_keys.empty());
     ec::world::set_tint_ids({"scarf_fur"});

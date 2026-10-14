@@ -713,7 +713,9 @@ auto overlay_look( const std::string &overlay, const bool male ) -> look
         looks_like = item->looks_like.str();
     }
     auto result = look{ .kind = "overlay", .id = overlay, .tile = candidates.front() };
+    // The schema bounds the list like the native lookup bounds the chain; each step names two ids.
     result.looks_like.assign( std::next( candidates.begin() ), candidates.end() );
+    result.looks_like.resize( std::min( result.looks_like.size(), looks_like_limit ) );
     return result;
 }
 
