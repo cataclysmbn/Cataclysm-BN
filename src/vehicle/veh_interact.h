@@ -4,6 +4,7 @@
 #include "color.h"
 #include "coordinates.h"
 #include "cursesdef.h"
+#include "engine_client_component.h"
 #include "input.h"
 #include "inventory.h"
 #include "memory_fast.h"
@@ -32,6 +33,26 @@ enum task_reason {
     LOW_MORALE,        // Player has too low morale (for operations that require it)
     LOW_LIGHT,         // Player cannot see enough to work (for operations that require it)
     DOUBLE_STACK // Player cannot interact with a vehicle that is blocked off by another vehicle
+};
+
+/** One requirement of the task being previewed; `kind` is `skill`, `component`, `tool` or `extra`.
+ */
+struct task_requirement {
+    std::string kind;
+    std::string text;
+    bool met = true;
+};
+
+/** What the detail pane shows for the part under the list cursor. */
+struct task_detail {
+    std::string name;
+    std::string description;
+    /** How long the task takes; empty when the pane has no time line. */
+    std::string time;
+    std::vector<engine_client::panel_stat> stats;
+    std::vector<task_requirement> requirements;
+    /** Whether the task can be started now: every requirement is met. */
+    bool can_do = true;
 };
 
 class ui_adaptor;
@@ -130,22 +151,28 @@ private:
     /** The highlighted entry of the repair and remove lists. */
     int list_pos = 0;
     /** The preview of the part under the list cursor, with its requirements. */
-    std::optional<game_client::interaction_vehicle_detail> detail;
+    std::optional<task_detail> detail;
     /** How many of `can_mount` the player has the materials for; they come first. */
     int installable_count = 0;
 
-    auto make_interaction() -> game_client::interaction_snapshot;
-    /** The native stat lines in reading order; an empty line is a blank slot. */
-    auto stat_lines() const -> std::vector<std::string>;
+    /** The screen a client sees, from the state of the vehicle and of the task in progress. */
+    auto screen_of() -> engine_client::screen_view;
+    /** The actions the screen cannot run now, with the reason. */
+    auto denials() -> std::vector<engine_client::denial>;
+    /** The rows of the task list, in order: the candidate parts of the task in progress. */
+    auto choice_rows() -> std::vector<engine_client::row>;
+    /** The vehicle's figures in reading order; a figure that does not apply is left out. */
+    auto vehicle_stats() const -> std::vector<engine_client::panel_stat>;
     /** Whether the cursor square cannot take a part. */
     auto cursor_obstructed() const -> bool;
     /**
-     * Turns a client's semantic input into the action the native list would receive.
-     * `part:N` moves the highlight at `pos` to N, or confirms when N is already there; `tab:N` and
-     * other ids are returned as they are. Returns an empty action when the input only moved the
-     * highlight.
+     * The action the native list would receive for the input just read. A client's pick of a row of
+     * the task list moves the highlight at `pos` to it, or confirms when it is already there.
+     * Returns an empty action when the input only moved the highlight.
      */
-    auto interaction_action(const std::string& action, int* pos, size_t size) -> std::string;
+    auto picked_action(const std::string& action, int* pos) -> std::string;
+    /** The tab a client picked in the input just read, as an index into the install tabs. */
+    auto picked_tab() -> std::optional<size_t>;
 
     auto part_at(tripoint_bub_ms d) -> int;
     void move_cursor(tripoint_rel_veh d, int dstart_at = 0);

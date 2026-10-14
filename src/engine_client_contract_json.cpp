@@ -400,40 +400,6 @@ auto interaction_json( const boundary_state &state ) -> json
     if( native.target ) { result["target"] = target_json( *native.target, frame ); }
     if( native.overmap ) { result["overmap"] = overmap_json( *native.overmap, frame ); }
     if( native.refresh_ms > 0 ) { result["refresh_ms"] = native.refresh_ms; }
-    if( native.vehicle ) {
-        const auto &veh = *native.vehicle;
-        auto value = json{{"name", veh.name}, {"owner", veh.owner}, {"owned", veh.owned}, {"mode", veh.mode},
-            {"cursor", {{"x", veh.cursor.x}, {"y", veh.cursor.y}}}, {"blocked", veh.blocked},
-            {"cells", json::array()}, {"parts", json::array()}, {"stats", veh.stats}};
-        for( const auto &cell : veh.cells ) {
-            value["cells"].push_back( {{"dx", cell.dx}, {"dy", cell.dy}, {"glyph", cell.glyph}, {"color", cell.color}} );
-        }
-        for( const auto &part : veh.parts ) {
-            value["parts"].push_back( {{"name", part.name}, {"open", part.open}, {"close", part.close},
-                {"health", part.health}, {"broken", part.broken}} );
-        }
-        if( veh.tabs ) {
-            value["tabs"] = {{"labels", veh.tabs->labels}, {"selected", veh.tabs->selected}, {"filter", veh.tabs->filter}};
-        }
-        if( veh.detail ) {
-            const auto &detail = *veh.detail;
-            auto shown = json{{"name", detail.name}, {"description", detail.description}, {"can_do", detail.can_do},
-                {"stats", json::array()}, {"requirements", json::array()}};
-            if( !detail.time.empty() ) { shown["time"] = detail.time; }
-            if( !detail.time_heading.empty() ) { shown["time_heading"] = detail.time_heading; }
-            shown["groups"] = json::array();
-            for( const auto &group : detail.groups ) {
-                shown["groups"].push_back( {{"kind", group.kind}, {"heading", group.heading}, {"empty_text", group.empty_text}} );
-            }
-            for( const auto &stat : detail.stats ) { shown["stats"].push_back( {{"label", stat.label}, {"value", stat.value}} ); }
-            for( const auto &need : detail.requirements ) {
-                shown["requirements"].push_back( {{"kind", need.kind}, {"text", need.text}, {"met", need.met}} );
-            }
-            value["detail"] = std::move( shown );
-        }
-        if( !veh.verb.empty() ) { value["verb"] = veh.verb; }
-        result["vehicle"] = std::move( value );
-    }
     if( !native.areas.empty() ) {
         result["areas"] = json::array();
         for( const auto &area : native.areas ) {

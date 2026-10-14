@@ -98,17 +98,6 @@ TEST_CASE("screen text and keys are published on the wire", "[engine_client_cont
                 .choices = {{.id = "entry:4", .label = "Options", .action_id = "open_options"}},
                 .overmap = game_client::
                     interaction_overmap{.cols = 0, .rows = 0, .cursor_description = "forest"},
-                .vehicle =
-                    game_client::interaction_vehicle{
-                        .mode = "install",
-                        .verb = "Install",
-                        .detail =
-                            game_client::interaction_vehicle_detail{
-                                .time = "1 minute",
-                                .time_heading = "Time required:",
-                                .groups = {{.kind = "skill",
-                                            .heading = "Skills required:",
-                                            .empty_text = "NONE"}}}},
             };
         }};
     game_client::begin_input_boundary();
@@ -118,10 +107,6 @@ TEST_CASE("screen text and keys are published on the wire", "[engine_client_cont
         R"("areas":[{"action_id":"ITEMS_N","label":"North","key":"z","x":11,"y":0,"available":false}])"));
     CHECK(contains(wire, R"("action_id":"open_options")"));
     CHECK(contains(wire, R"("cursor_description":"forest")"));
-    CHECK(contains(wire, R"("verb":"Install")"));
-    CHECK(contains(wire, R"("time_heading":"Time required:")"));
-    CHECK(contains(
-        wire, R"("groups":[{"kind":"skill","heading":"Skills required:","empty_text":"NONE"}])"));
 }
 
 TEST_CASE("a colored message line is published with its tone", "[engine_client_contract]") {
@@ -165,48 +150,6 @@ TEST_CASE("a paged category list publishes its mode and page", "[engine_client_c
     CHECK_FALSE(contains(wire(std::nullopt), "category_mode"));
     CHECK(contains(wire(true), R"("number":2)"));
     CHECK(contains(wire(true), R"("count":3)"));
-}
-
-TEST_CASE(
-    "a vehicle window is published with its grid, parts and requirements",
-    "[engine_client_contract]") {
-    auto context = input_context{"VEH_INTERACT"};
-    const auto input_scope = game_client::input_context_scope{context, "VEH_INTERACT"};
-    const auto wire = [&context](const bool task) {
-        const auto scope = game_client::interaction_scope{
-            context, [task] {
-                auto value = game_client::interaction_snapshot{
-                    .kind = game_client::interaction_kind::choices,
-                    .choices = {{.id = "action:INSTALL", .label = "install"}},
-                };
-                auto& view = value.vehicle.emplace();
-                view.name = "Bicycle";
-                view.mode = task ? "remove" : "main";
-                view.cells = {{.dx = 0, .dy = 0, .glyph = "o", .color = "light_gray"}};
-                view.parts = {{.name = "frame", .open = "[", .close = "]", .health = 80}};
-                view.stats = {"Mass: 16 kg"};
-                if (task) {
-                    view.detail = game_client::interaction_vehicle_detail{
-                        .name = "frame",
-                        .time = "1 minute",
-                        .requirements = {{.kind = "tool", .text = "wrench", .met = false}},
-                        .can_do = false,
-                    };
-                }
-                return value;
-            }};
-        game_client::begin_input_boundary();
-        return engine_client::serialize_boundary(capture());
-    };
-    const auto main = wire(false);
-    CHECK(contains(main, R"("vehicle":{)"));
-    CHECK(contains(main, R"("cells":[{"dx":0,"dy":0,"glyph":"o","color":"light_gray"}])"));
-    CHECK(contains(main, R"("close":"]")"));
-    CHECK_FALSE(contains(main, "detail"));
-    const auto task = wire(true);
-    CHECK(contains(task, R"("requirements":[{"kind":"tool","text":"wrench","met":false}])"));
-    CHECK(contains(task, R"("can_do":false)"));
-    CHECK(contains(task, R"("time":"1 minute")"));
 }
 
 TEST_CASE(

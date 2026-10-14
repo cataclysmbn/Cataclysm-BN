@@ -1,241 +1,3489 @@
 {
   "valid": [
     {
-      "name": "vehicle install list with the highlighted part's requirements",
-      "def": "panel",
+      "name": "vehicle screen",
+      "def": "screen",
       "value": {
-        "id": "vehicle",
-        "kind": "panel",
+        "screen_id": "screen:19",
+        "role": "dialog",
         "title": "Bicycle",
-        "subtitle": "Install",
-        "stats": [
-          {
-            "key": "owner",
-            "label": "Owner",
-            "value": "Ada"
-          }
-        ],
-        "child": {
-          "id": "vehicle:body",
+        "root": {
+          "id": "vehicle",
           "kind": "split",
           "relation": "peers",
           "children": [
             {
-              "id": "vehicle:grid",
-              "kind": "grid",
-              "cols": 1,
-              "rows": 2,
-              "cursor": {
-                "x": 0,
-                "y": 1
-              },
-              "cells": [
-                {
-                  "x": 0,
-                  "y": 1,
-                  "glyph": "o",
-                  "color": "light_gray",
-                  "enabled": true,
-                  "selected": true
-                },
-                {
-                  "x": 0,
-                  "y": 0,
-                  "glyph": "H",
-                  "color": "light_gray",
-                  "enabled": true
-                }
-              ]
-            },
-            {
-              "id": "vehicle:parts",
-              "kind": "list",
-              "columns": [
-                {
-                  "key": "kind",
-                  "label": "Kind"
-                },
-                {
-                  "key": "health",
-                  "label": "Health"
-                }
-              ],
-              "rows": [
-                {
-                  "id": "vehicle-part:0",
-                  "label": "frame",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": false,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "kind",
-                      "label": "Kind",
-                      "value": "structure"
-                    },
-                    {
-                      "key": "health",
-                      "label": "Health",
-                      "value": "62"
-                    }
-                  ]
-                }
-              ],
-              "total": 1,
-              "selection": "none"
-            },
-            {
-              "id": "vehicle:stats",
-              "kind": "text",
-              "markup": "Safe/Top Speed:  12/ 24 km/h\n\nMass:    16 kg"
-            },
-            {
-              "id": "vehicle:detail",
+              "id": "vehicle:overview",
               "kind": "panel",
-              "title": "wooden board",
+              "title": "Bicycle",
               "stats": [
                 {
-                  "key": "time",
-                  "label": "Time required:",
-                  "value": "30 minutes"
+                  "key": "owner",
+                  "label": "Owner",
+                  "value": "Your Followers",
+                  "tone": "good"
                 },
                 {
-                  "key": "stat:0",
-                  "label": "Durability",
-                  "value": "120"
+                  "key": "speed",
+                  "label": "Safe/Top Speed",
+                  "value": "0",
+                  "max": "0",
+                  "unit": "km/h"
+                },
+                {
+                  "key": "acceleration",
+                  "label": "Acceleration",
+                  "value": "0",
+                  "unit": "km/h/s"
+                },
+                {
+                  "key": "mass",
+                  "label": "Mass",
+                  "value": "97",
+                  "unit": "kg"
+                },
+                {
+                  "key": "cargo_volume",
+                  "label": "Cargo Volume",
+                  "value": "0.00",
+                  "max": "20.00",
+                  "unit": "L"
+                },
+                {
+                  "key": "status",
+                  "label": "Status",
+                  "value": "perfect"
+                },
+                {
+                  "key": "wheels",
+                  "label": "Wheels",
+                  "value": "enough",
+                  "tone": "good"
+                },
+                {
+                  "key": "air_drag",
+                  "label": "Air drag",
+                  "value": "0.61"
+                },
+                {
+                  "key": "rolling_drag",
+                  "label": "Rolling drag",
+                  "value": "0.08"
+                },
+                {
+                  "key": "static_drag",
+                  "label": "Static drag",
+                  "value": "0"
+                },
+                {
+                  "key": "offroad",
+                  "label": "Offroad",
+                  "value": "82",
+                  "unit": "%"
                 }
               ],
               "child": {
-                "id": "vehicle:detail:body",
+                "id": "vehicle:cursor",
                 "kind": "split",
-                "relation": "detail",
+                "relation": "peers",
                 "children": [
                   {
-                    "id": "vehicle:description",
-                    "kind": "text",
-                    "markup": "A board mounted on the frame."
+                    "id": "vehicle:grid",
+                    "kind": "grid",
+                    "cols": 17,
+                    "rows": 9,
+                    "cursor": {
+                      "x": 8,
+                      "y": 4
+                    },
+                    "cells": [
+                      {
+                        "x": 8,
+                        "y": 3,
+                        "id": "mount:1,0",
+                        "glyph": "|",
+                        "label": "|| extra light frame",
+                        "color": "c_dark_gray",
+                        "enabled": true
+                      },
+                      {
+                        "x": 8,
+                        "y": 5,
+                        "id": "mount:-1,0",
+                        "glyph": "o",
+                        "label": "|| extra light frame",
+                        "color": "c_brown",
+                        "enabled": true
+                      },
+                      {
+                        "x": 8,
+                        "y": 4,
+                        "id": "mount:0,0",
+                        "glyph": "#",
+                        "label": "|| extra light frame",
+                        "color": "c_red",
+                        "enabled": true,
+                        "selected": true
+                      }
+                    ]
                   },
                   {
-                    "id": "vehicle:requirements",
+                    "id": "vehicle:parts",
                     "kind": "list",
-                    "columns": [],
-                    "rows": [
+                    "columns": [
                       {
-                        "id": "group:skill",
-                        "label": "Skills required:",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": false,
-                        "selected": false,
-                        "columns": [],
-                        "header": true
-                      },
-                      {
-                        "id": "need:0",
-                        "label": "mechanics 1",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": false,
-                        "selected": false,
-                        "columns": []
-                      },
-                      {
-                        "id": "group:component",
-                        "label": "Components required:",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": false,
-                        "selected": false,
-                        "columns": [],
-                        "header": true
-                      },
-                      {
-                        "id": "need:1",
-                        "label": "2x plank",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": false,
-                        "selected": false,
-                        "columns": []
-                      },
-                      {
-                        "id": "group:tool",
-                        "label": "Tools required:",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": false,
-                        "selected": false,
-                        "columns": [],
-                        "header": true
-                      },
-                      {
-                        "id": "need:2",
-                        "label": "hammer OR rock",
-                        "description": "",
-                        "denial": "",
-                        "enabled": false,
-                        "selectable": false,
-                        "selected": false,
-                        "columns": []
-                      },
-                      {
-                        "id": "group:extra",
-                        "label": "Additional requirements:",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": false,
-                        "selected": false,
-                        "columns": [],
-                        "header": true
-                      },
-                      {
-                        "id": "need:3",
-                        "label": "1 tool with lifting 1 OR strength 10",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": false,
-                        "selected": false,
-                        "columns": []
+                        "key": "health",
+                        "label": "Health"
                       }
                     ],
-                    "total": 8,
+                    "rows": [
+                      {
+                        "id": "part:0,0,0:xlframe_vertical_2:0",
+                        "label": "|| extra light frame",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": false,
+                        "selected": false,
+                        "columns": [
+                          {
+                            "key": "health",
+                            "label": "Health",
+                            "value": "100%"
+                          }
+                        ],
+                        "markup": "[|| extra light frame]"
+                      },
+                      {
+                        "id": "part:0,0,0:horn_bicycle:0",
+                        "label": "|| bicycle horn",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": false,
+                        "selected": false,
+                        "columns": [
+                          {
+                            "key": "health",
+                            "label": "Health",
+                            "value": "100%"
+                          }
+                        ],
+                        "markup": "-|| bicycle horn-"
+                      },
+                      {
+                        "id": "part:0,0,0:saddle_pedal:0",
+                        "label": "|| saddle",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": false,
+                        "selected": false,
+                        "columns": [
+                          {
+                            "key": "health",
+                            "label": "Health",
+                            "value": "100%"
+                          }
+                        ],
+                        "markup": "-|| saddle-"
+                      },
+                      {
+                        "id": "part:0,0,0:foot_pedals:0",
+                        "label": "|| foot pedals",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": false,
+                        "selected": false,
+                        "columns": [
+                          {
+                            "key": "health",
+                            "label": "Health",
+                            "value": "100%"
+                          }
+                        ],
+                        "markup": "-|| foot pedals-"
+                      }
+                    ],
+                    "total": 4,
                     "selection": "none"
                   }
                 ]
               }
             }
           ]
+        },
+        "affordances": [
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Pan left",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Pan right",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFTUP",
+            "label": "Pan up-left",
+            "keys": [
+              "y",
+              "7",
+              "NUMPAD_7"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFTDOWN",
+            "label": "Pan down-left",
+            "keys": [
+              "b",
+              "1",
+              "NUMPAD_1"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHTUP",
+            "label": "Pan up-right",
+            "keys": [
+              "u",
+              "9",
+              "NUMPAD_9"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHTDOWN",
+            "label": "Pan down-right",
+            "keys": [
+              "n",
+              "3",
+              "NUMPAD_3"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "INSTALL",
+            "label": "Install part",
+            "keys": [
+              "i"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "REPAIR",
+            "label": "Repair part",
+            "keys": [
+              "r"
+            ],
+            "enabled": false,
+            "denial": "There are no damaged parts on this vehicle.",
+            "expect": "screen"
+          },
+          {
+            "id": "MEND",
+            "label": "Mend part",
+            "keys": [
+              "m"
+            ],
+            "enabled": false,
+            "denial": "No faulty parts require mending.",
+            "expect": "screen"
+          },
+          {
+            "id": "REFILL",
+            "label": "Refill tank/battery",
+            "keys": [
+              "f"
+            ],
+            "enabled": false,
+            "denial": "No parts can currently be refilled.",
+            "expect": "screen"
+          },
+          {
+            "id": "REMOVE",
+            "label": "Remove part",
+            "keys": [
+              "o"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RENAME",
+            "label": "Rename vehicle",
+            "keys": [
+              "e"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SIPHON",
+            "label": "Siphon from tank",
+            "keys": [
+              "s"
+            ],
+            "enabled": false,
+            "denial": "The vehicle has no liquid fuel left to siphon.",
+            "expect": "screen"
+          },
+          {
+            "id": "UNLOAD",
+            "label": "Unload fuel bunker",
+            "keys": [
+              "d"
+            ],
+            "enabled": false,
+            "denial": "The vehicle has no solid fuel left to remove.",
+            "expect": "screen"
+          },
+          {
+            "id": "ASSIGN_CREW",
+            "label": "Assign crew",
+            "keys": [
+              "w"
+            ],
+            "enabled": false,
+            "denial": "There is no ally to assign or no seat to assign them to.",
+            "expect": "screen"
+          },
+          {
+            "id": "CHANGE_SHAPE",
+            "label": "Change part shape",
+            "keys": [
+              "p"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RELABEL",
+            "label": "Relabel a portion of a vehicle",
+            "keys": [
+              "a"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PREV_TAB",
+            "label": "Go to prev tab",
+            "keys": [
+              "BACKTAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "NEXT_TAB",
+            "label": "Go to next tab",
+            "keys": [
+              "TAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "OVERVIEW_DOWN",
+            "label": "Scroll down through vehicle overview",
+            "keys": [
+              "}"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "OVERVIEW_UP",
+            "label": "Scroll up through vehicle overview",
+            "keys": [
+              "{"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "FUEL_LIST_DOWN",
+            "label": "Scroll down through fuel list",
+            "keys": [
+              "]"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "FUEL_LIST_UP",
+            "label": "Scroll up through fuel list",
+            "keys": [
+              "["
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DESC_LIST_DOWN",
+            "label": "Scroll down through vehicle part descriptions",
+            "keys": [
+              ">"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DESC_LIST_UP",
+            "label": "Scroll up through vehicle part descriptions",
+            "keys": [
+              "<"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PARTS_LIST_DOWN",
+            "label": "Scroll down through parts list",
+            "keys": [
+              "="
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PARTS_LIST_UP",
+            "label": "Scroll up through parts list",
+            "keys": [
+              "-"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "FILTER",
+            "label": "Filter",
+            "keys": [
+              "f",
+              "F",
+              "/"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ZOOM_IN",
+            "label": "Zoom in (tiles mode)",
+            "keys": [
+              "z"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ZOOM_OUT",
+            "label": "Zoom out (tiles mode)",
+            "keys": [
+              "Z"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ANY_INPUT",
+            "label": "ANY_INPUT",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "vehicle:grid"
+        },
+        "context": "VEH_INTERACT"
+      }
+    },
+    {
+      "name": "denied repair of an undamaged vehicle",
+      "def": "affordance",
+      "value": {
+        "id": "REPAIR",
+        "label": "Repair part",
+        "keys": [
+          "r"
+        ],
+        "enabled": false,
+        "denial": "There are no damaged parts on this vehicle.",
+        "expect": "screen"
+      }
+    },
+    {
+      "name": "install list of the vehicle screen",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:19",
+        "role": "dialog",
+        "title": "Choose new part to install here:",
+        "root": {
+          "id": "vehicle",
+          "kind": "split",
+          "relation": "peers",
+          "children": [
+            {
+              "id": "vehicle:overview",
+              "kind": "panel",
+              "title": "Bicycle",
+              "stats": [
+                {
+                  "key": "owner",
+                  "label": "Owner",
+                  "value": "Your Followers",
+                  "tone": "good"
+                },
+                {
+                  "key": "speed",
+                  "label": "Safe/Top Speed",
+                  "value": "0",
+                  "max": "0",
+                  "unit": "km/h"
+                },
+                {
+                  "key": "acceleration",
+                  "label": "Acceleration",
+                  "value": "0",
+                  "unit": "km/h/s"
+                },
+                {
+                  "key": "mass",
+                  "label": "Mass",
+                  "value": "97",
+                  "unit": "kg"
+                },
+                {
+                  "key": "cargo_volume",
+                  "label": "Cargo Volume",
+                  "value": "0.00",
+                  "max": "20.00",
+                  "unit": "L"
+                },
+                {
+                  "key": "status",
+                  "label": "Status",
+                  "value": "perfect"
+                },
+                {
+                  "key": "wheels",
+                  "label": "Wheels",
+                  "value": "enough",
+                  "tone": "good"
+                },
+                {
+                  "key": "air_drag",
+                  "label": "Air drag",
+                  "value": "0.61"
+                },
+                {
+                  "key": "rolling_drag",
+                  "label": "Rolling drag",
+                  "value": "0.08"
+                },
+                {
+                  "key": "static_drag",
+                  "label": "Static drag",
+                  "value": "0"
+                },
+                {
+                  "key": "offroad",
+                  "label": "Offroad",
+                  "value": "82",
+                  "unit": "%"
+                }
+              ],
+              "child": {
+                "id": "vehicle:cursor",
+                "kind": "split",
+                "relation": "peers",
+                "children": [
+                  {
+                    "id": "vehicle:grid",
+                    "kind": "grid",
+                    "cols": 17,
+                    "rows": 9,
+                    "cursor": {
+                      "x": 8,
+                      "y": 4
+                    },
+                    "cells": [
+                      {
+                        "x": 8,
+                        "y": 3,
+                        "id": "mount:1,0",
+                        "glyph": "|",
+                        "label": "|| extra light frame",
+                        "color": "c_dark_gray",
+                        "enabled": true
+                      },
+                      {
+                        "x": 8,
+                        "y": 5,
+                        "id": "mount:-1,0",
+                        "glyph": "o",
+                        "label": "|| extra light frame",
+                        "color": "c_brown",
+                        "enabled": true
+                      },
+                      {
+                        "x": 8,
+                        "y": 4,
+                        "id": "mount:0,0",
+                        "glyph": "#",
+                        "label": "|| extra light frame",
+                        "color": "c_red",
+                        "enabled": true,
+                        "selected": true
+                      }
+                    ]
+                  },
+                  {
+                    "id": "vehicle:parts",
+                    "kind": "list",
+                    "columns": [
+                      {
+                        "key": "health",
+                        "label": "Health"
+                      }
+                    ],
+                    "rows": [
+                      {
+                        "id": "part:0,0,0:xlframe_vertical_2:0",
+                        "label": "|| extra light frame",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": false,
+                        "selected": false,
+                        "columns": [
+                          {
+                            "key": "health",
+                            "label": "Health",
+                            "value": "100%"
+                          }
+                        ],
+                        "markup": "[|| extra light frame]"
+                      },
+                      {
+                        "id": "part:0,0,0:horn_bicycle:0",
+                        "label": "|| bicycle horn",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": false,
+                        "selected": false,
+                        "columns": [
+                          {
+                            "key": "health",
+                            "label": "Health",
+                            "value": "100%"
+                          }
+                        ],
+                        "markup": "-|| bicycle horn-"
+                      },
+                      {
+                        "id": "part:0,0,0:saddle_pedal:0",
+                        "label": "|| saddle",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": false,
+                        "selected": false,
+                        "columns": [
+                          {
+                            "key": "health",
+                            "label": "Health",
+                            "value": "100%"
+                          }
+                        ],
+                        "markup": "-|| saddle-"
+                      },
+                      {
+                        "id": "part:0,0,0:foot_pedals:0",
+                        "label": "|| foot pedals",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": false,
+                        "selected": false,
+                        "columns": [
+                          {
+                            "key": "health",
+                            "label": "Health",
+                            "value": "100%"
+                          }
+                        ],
+                        "markup": "-|| foot pedals-"
+                      }
+                    ],
+                    "total": 4,
+                    "selection": "none"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "vehicle:task",
+              "kind": "split",
+              "relation": "detail",
+              "children": [
+                {
+                  "id": "vehicle:tabs",
+                  "kind": "tabs",
+                  "affordances": [
+                    "vehicle:tab"
+                  ],
+                  "tabs": [
+                    {
+                      "id": "all",
+                      "label": "All",
+                      "selected": true,
+                      "enabled": true
+                    },
+                    {
+                      "id": "cargo",
+                      "label": "Cargo",
+                      "selected": false,
+                      "enabled": true
+                    },
+                    {
+                      "id": "light",
+                      "label": "Light",
+                      "selected": false,
+                      "enabled": true
+                    },
+                    {
+                      "id": "util",
+                      "label": "Util",
+                      "selected": false,
+                      "enabled": true
+                    },
+                    {
+                      "id": "hull",
+                      "label": "Hull",
+                      "selected": false,
+                      "enabled": true
+                    },
+                    {
+                      "id": "internal",
+                      "label": "Internal",
+                      "selected": false,
+                      "enabled": true
+                    },
+                    {
+                      "id": "other",
+                      "label": "Other",
+                      "selected": false,
+                      "enabled": true
+                    },
+                    {
+                      "id": "filter",
+                      "label": "Filter",
+                      "selected": false,
+                      "enabled": true
+                    }
+                  ],
+                  "select": "vehicle:tab",
+                  "child": {
+                    "id": "vehicle:choices",
+                    "kind": "list",
+                    "affordances": [
+                      "vehicle:pick"
+                    ],
+                    "columns": [],
+                    "rows": [
+                      {
+                        "id": "vpart:plating_bone",
+                        "label": "bone plating",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:alternator_bicycle",
+                        "label": "bicycle alternator",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:alternator_motorbike",
+                        "label": "motorbike alternator",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:alternator_car",
+                        "label": "car alternator",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:alternator_truck",
+                        "label": "truck alternator",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:generator_7500w",
+                        "label": "7.5kW generator",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:rebar_plate",
+                        "label": "rebar reinforcement",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:spring_plate",
+                        "label": "shock absorber",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:airship_balloon",
+                        "label": "airship balloon",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:storage_battery_mount",
+                        "label": "swappable storage battery case",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:battery_car",
+                        "label": "car battery",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:battery_motorbike",
+                        "label": "motorbike battery",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:battery_motorbike_small",
+                        "label": "motorbike battery, small",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:storage_battery",
+                        "label": "large storage battery",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:bike_rack",
+                        "label": "bike rack",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:controls",
+                        "label": "controls",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:reins_tackle",
+                        "label": "reins and tackle",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:dashboard",
+                        "label": "dashboard",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:controls_electronic",
+                        "label": "electronics control unit",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:programmable_autopilot",
+                        "label": "programmable autopilot",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:drive_by_wire_controls",
+                        "label": "drive by wire controls",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:cam_control",
+                        "label": "camera control system",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:sonar_array",
+                        "label": "sonar array",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:omnicam",
+                        "label": "security camera",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:tracker",
+                        "label": "tracking device",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:vehicle_alarm",
+                        "label": "security system",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:water_purifier",
+                        "label": "water purifier",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:water_faucet",
+                        "label": "water faucet",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:sail",
+                        "label": "small sail",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:sail_large",
+                        "label": "large sail",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:air_jack",
+                        "label": "air jack system",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:motorcycle_kickstand",
+                        "label": "motorcycle kickstand",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:plow",
+                        "label": "plow",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:reaper_advanced",
+                        "label": "advanced reaper",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:mounted_american_flag",
+                        "label": "mounted American flag",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:leather_funnel",
+                        "label": "leather funnel",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:birchbark_funnel",
+                        "label": "birchbark funnel",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:makeshift_funnel",
+                        "label": "makeshift funnel",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:funnel",
+                        "label": "funnel",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:metal_funnel",
+                        "label": "metal funnel",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:tarp_raincatcher_part",
+                        "label": "tarp raincatcher",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:towel_hanger",
+                        "label": "towel hanger",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:vehicle_clock",
+                        "label": "clock",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:boat_board",
+                        "label": "wooden boat hull",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:raft_board",
+                        "label": "raft boat hull",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:gas_sac_buoyancy_cell",
+                        "label": "gas sac buoyancy cell",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:plastic_boat_hull",
+                        "label": "plastic boat hull",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:metal_boat_hull",
+                        "label": "metal boat hull",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:carbonfiber_boat_hull",
+                        "label": "carbon fiber boat hull",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:aluminium_boat_hull",
+                        "label": "aluminum boat hull",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:hovercraft_section",
+                        "label": "hovercraft impeller",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:inflatable_airbag",
+                        "label": "inflatable airbag",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:ladder_3",
+                        "label": "3-story rope ladder",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:aisle_lights",
+                        "label": "aisle lights",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:atomic_lamp",
+                        "label": "atomic lamp",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:atomic_light",
+                        "label": "atomic nightlight",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:floodlight",
+                        "label": "floodlight",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:directed_floodlight",
+                        "label": "directed floodlight",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:headlight",
+                        "label": "headlight",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:motorcycle_headlight",
+                        "label": "motorcycle headlight",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:wide_headlight",
+                        "label": "wide angle headlight",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:headlight_reinforced",
+                        "label": "reinforced headlight",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:wide_headlight_reinforced",
+                        "label": "reinforced wide-angle headlight",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:light_blue",
+                        "label": "blue light",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:light_red",
+                        "label": "red light",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:light_white",
+                        "label": "white light",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:inboard_mirror",
+                        "label": "inboard mirror",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:black_box",
+                        "label": "military black box",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:vehicle_scoop",
+                        "label": "scoop",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:plating_chitin",
+                        "label": "chitin plating",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:plating_acidchitin",
+                        "label": "biosilicified chitin plating",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:plating_wood",
+                        "label": "wooden armor",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:plating_steel",
+                        "label": "steel plating",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:plating_superalloy",
+                        "label": "superalloy plating",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:plating_spiked",
+                        "label": "spiked plating",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:plating_hard",
+                        "label": "hard plating",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:plating_military",
+                        "label": "military composite armor plating",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:vp_portal_tap",
+                        "label": "Dimensional Portal Tap",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:wind_turbine",
+                        "label": "wind turbine",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:xl_wind_turbine",
+                        "label": "large wind turbine",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:foldable_solar_panel",
+                        "label": "foldable solar panel",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:solar_panel",
+                        "label": "solar panel",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:reinforced_solar_panel",
+                        "label": "reinforced solar panel",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:solar_panel_v2",
+                        "label": "upgraded solar panel",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:reinforced_solar_panel_v2",
+                        "label": "upgraded reinforced solar panel",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:solar_panel_v3",
+                        "label": "quantum solar panel",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:minireactor",
+                        "label": "minireactor",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:roof_cloth",
+                        "label": "cloth roof",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:roof",
+                        "label": "roof",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:hdroof",
+                        "label": "heavy duty roof",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:hdroof_superalloy",
+                        "label": "superalloy roof",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:roof_carbon",
+                        "label": "carbon fiber roof",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:roof_wood",
+                        "label": "wooden roof",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:heavy_duty_military_rotor",
+                        "label": "heavy-duty military rotors",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:small_civilian_rotors",
+                        "label": "small helicopter rotors",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:gyrocopter_rotors",
+                        "label": "gyrocopter rotors",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:heavy_duty_military_blackhawk_rotors",
+                        "label": "heavy-duty military Blackhawk rotors",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:heavy_duty_military_osprey_rotors",
+                        "label": "heavy-duty military Osprey rotors",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:drone_rotors",
+                        "label": "drone quad rotors",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:folding_seat",
+                        "label": "foldable seat",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:aisle_curtain",
+                        "label": "aisle curtain",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:muffler",
+                        "label": "muffler",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:horn_car",
+                        "label": "car horn",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:horn_big",
+                        "label": "truck horn",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:horn_ship",
+                        "label": "ship air horn",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:beeper",
+                        "label": "back-up beeper",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:stereo",
+                        "label": "stereo system",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:chimes",
+                        "label": "chimes",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:tank_little",
+                        "label": "vehicle tank (2L)",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:tank_small",
+                        "label": "vehicle tank (10L)",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:tank_medium",
+                        "label": "vehicle tank (20L)",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:tank",
+                        "label": "vehicle tank (60L)",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:tank_barrel_small",
+                        "label": "wooden barrel (20L)",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:tank_30gal_drum",
+                        "label": "steel drum (100L)",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:fuel_bunker",
+                        "label": "fuel bunker",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:mountable_heater",
+                        "label": "vehicle-mounted heater",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:mountable_cooler",
+                        "label": "vehicle-mounted cooler",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:turret_mount",
+                        "label": "turret mount",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:turret_mount_manual_foldablewood",
+                        "label": "simple foldable wooden turret mount",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:turret_mount_manual_foldablesteel",
+                        "label": "simple foldable light turret mount",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:turret_mount_manual_wood",
+                        "label": "simple wooden turret mount",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:turret_mount_manual_steel",
+                        "label": "simple steel turret mount",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:turret_mount_manual_carbon",
+                        "label": "simple carbon fiber turret mount",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:turret_autoloader",
+                        "label": "turret autoloader",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:bomber controls",
+                        "label": "bomb bay",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:wheel_mount_light",
+                        "label": "light wheel mount",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:wheel_mount_light_steerable",
+                        "label": "light wheel mount (steerable)",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:wheel_mount_medium",
+                        "label": "wheel hub assembly",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:wheel_mount_medium_steerable",
+                        "label": "wheel hub assembly (steerable)",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:wheel_mount_heavy",
+                        "label": "heavy wheel hub assembly",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:wheel_mount_heavy_steerable",
+                        "label": "heavy wheel hub assembly (steerable)",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:rail_wheel",
+                        "label": "rail wheel",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:rail_wheel_steerable",
+                        "label": "rail wheel (steerable)",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:rail_wheel_small_pair",
+                        "label": "pair of small rail wheels",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:wheel_caster",
+                        "label": "casters",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:wheel_mount_skateboard",
+                        "label": "skateboard trucks",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:wheel_10",
+                        "label": "wheels",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:wheel_tricycle",
+                        "label": "tricycle wheels",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:wheel_wood",
+                        "label": "wooden cart wheel",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:wheel_wood_b",
+                        "label": "banded wooden cart wheel",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:wheel_mount_light_wood",
+                        "label": "light wooden wheel mount",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:wheel_mount_light_steerable_wood",
+                        "label": "light wheel mount (steerable)",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:makeshift_sled_runner_part",
+                        "label": "sled runners",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:tread1",
+                        "label": "rubber treads",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:tread2",
+                        "label": "steel treads",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:tread3",
+                        "label": "tank treads",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:wing_metal_left",
+                        "label": "metal wing",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:lit_wing_metal_left",
+                        "label": "metal wing with lights",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:wing_wood_left",
+                        "label": "wooden wing",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:lit_wing_wood_left",
+                        "label": "wooden wing with lights",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:wing_carbon_left",
+                        "label": "carbon wing",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:lit_wing_carbon_left",
+                        "label": "carbon wing with lights",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:spoiler_metal_left",
+                        "label": "metal spoiler",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:spoiler_carbon_left",
+                        "label": "carbon spoiler",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:mounted_trans_flag",
+                        "label": "mounted Trans pride flag",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:mounted_rainbow_flag",
+                        "label": "mounted LGBTQ+ pride flag",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:mounted_aromantic_flag",
+                        "label": "mounted Aromantic pride flag",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:mounted_asexual_flag",
+                        "label": "mounted Asexual pride flag",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:mounted_bisexual_flag",
+                        "label": "mounted Bisexual pride flag",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:mounted_intersex_flag",
+                        "label": "mounted Intersex pride flag",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:mounted_lesbian_flag",
+                        "label": "mounted Lesbian pride flag",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:mounted_enby_flag",
+                        "label": "mounted Non-binary pride flag",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:mounted_pansexual_flag",
+                        "label": "mounted Pansexual pride flag",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:mounted_gay_flag",
+                        "label": "mounted Gay pride flag",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:mounted_genderfluid_flag",
+                        "label": "mounted Genderfluid pride flag",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:mounted_autism_flag",
+                        "label": "mounted Autism pride flag",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:large_storage_battery",
+                        "label": "very large storage battery",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:medium_storage_battery",
+                        "label": "medium storage battery",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:small_storage_battery",
+                        "label": "small storage battery",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:mounted_pirate_flag",
+                        "label": "mounted Jolly Roger",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:vtol_thruster",
+                        "label": "VTOL thruster",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      },
+                      {
+                        "id": "vpart:hover_repulsor",
+                        "label": "hover repulsor",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_dark_gray"
+                      }
+                    ],
+                    "total": 172,
+                    "selection": "single",
+                    "activate": "vehicle:pick"
+                  }
+                },
+                {
+                  "id": "vehicle:detail",
+                  "kind": "panel",
+                  "title": "bone plating",
+                  "stats": [
+                    {
+                      "key": "time",
+                      "label": "Time required",
+                      "value": "about 1 hour"
+                    },
+                    {
+                      "key": "durability",
+                      "label": "Durability",
+                      "value": "120"
+                    },
+                    {
+                      "key": "damage",
+                      "label": "Damage",
+                      "value": "100%"
+                    },
+                    {
+                      "key": "weight",
+                      "label": "Weight",
+                      "value": "4.0kg"
+                    }
+                  ],
+                  "child": {
+                    "id": "vehicle:detail:body",
+                    "kind": "split",
+                    "relation": "peers",
+                    "children": [
+                      {
+                        "id": "vehicle:requirements",
+                        "kind": "list",
+                        "columns": [],
+                        "rows": [
+                          {
+                            "id": "requirement:skill",
+                            "label": "Skills required:",
+                            "description": "",
+                            "denial": "",
+                            "enabled": true,
+                            "selectable": false,
+                            "selected": false,
+                            "columns": [],
+                            "header": true
+                          },
+                          {
+                            "id": "requirement:skill:none",
+                            "label": "NONE",
+                            "description": "",
+                            "denial": "",
+                            "enabled": true,
+                            "selectable": false,
+                            "selected": false,
+                            "columns": [],
+                            "color": "c_light_green"
+                          },
+                          {
+                            "id": "requirement:component",
+                            "label": "Components required:",
+                            "description": "",
+                            "denial": "",
+                            "enabled": true,
+                            "selectable": false,
+                            "selected": false,
+                            "columns": [],
+                            "header": true
+                          },
+                          {
+                            "id": "requirement:component:0",
+                            "label": "1 bone armor kit",
+                            "description": "",
+                            "denial": "",
+                            "enabled": true,
+                            "selectable": false,
+                            "selected": false,
+                            "columns": [],
+                            "color": "c_light_red"
+                          },
+                          {
+                            "id": "requirement:extra",
+                            "label": "Additional requirements:",
+                            "description": "",
+                            "denial": "",
+                            "enabled": true,
+                            "selectable": false,
+                            "selected": false,
+                            "columns": [],
+                            "header": true
+                          },
+                          {
+                            "id": "requirement:extra:0",
+                            "label": "1 tool with lifting 1 OR strength 1",
+                            "description": "",
+                            "denial": "",
+                            "enabled": true,
+                            "selectable": false,
+                            "selected": false,
+                            "columns": [],
+                            "color": "c_light_green"
+                          }
+                        ],
+                        "total": 6,
+                        "selection": "none"
+                      },
+                      {
+                        "id": "vehicle:description",
+                        "kind": "text",
+                        "markup": ""
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "affordances": [
+          {
+            "id": "vehicle:pick",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "vehicle:choices"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "vehicle:tab",
+            "label": "Tab",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "vehicle:tabs"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Pan left",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Pan right",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFTUP",
+            "label": "Pan up-left",
+            "keys": [
+              "y",
+              "7",
+              "NUMPAD_7"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFTDOWN",
+            "label": "Pan down-left",
+            "keys": [
+              "b",
+              "1",
+              "NUMPAD_1"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHTUP",
+            "label": "Pan up-right",
+            "keys": [
+              "u",
+              "9",
+              "NUMPAD_9"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHTDOWN",
+            "label": "Pan down-right",
+            "keys": [
+              "n",
+              "3",
+              "NUMPAD_3"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "INSTALL",
+            "label": "Install part",
+            "keys": [
+              "i"
+            ],
+            "enabled": false,
+            "denial": "The requirements are not met.",
+            "expect": "screen"
+          },
+          {
+            "id": "REPAIR",
+            "label": "Repair part",
+            "keys": [
+              "r"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "MEND",
+            "label": "Mend part",
+            "keys": [
+              "m"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "REFILL",
+            "label": "Refill tank/battery",
+            "keys": [
+              "f"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "REMOVE",
+            "label": "Remove part",
+            "keys": [
+              "o"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RENAME",
+            "label": "Rename vehicle",
+            "keys": [
+              "e"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SIPHON",
+            "label": "Siphon from tank",
+            "keys": [
+              "s"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "UNLOAD",
+            "label": "Unload fuel bunker",
+            "keys": [
+              "d"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ASSIGN_CREW",
+            "label": "Assign crew",
+            "keys": [
+              "w"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CHANGE_SHAPE",
+            "label": "Change part shape",
+            "keys": [
+              "p"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RELABEL",
+            "label": "Relabel a portion of a vehicle",
+            "keys": [
+              "a"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PREV_TAB",
+            "label": "Go to prev tab",
+            "keys": [
+              "BACKTAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "NEXT_TAB",
+            "label": "Go to next tab",
+            "keys": [
+              "TAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "OVERVIEW_DOWN",
+            "label": "Scroll down through vehicle overview",
+            "keys": [
+              "}"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "OVERVIEW_UP",
+            "label": "Scroll up through vehicle overview",
+            "keys": [
+              "{"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "FUEL_LIST_DOWN",
+            "label": "Scroll down through fuel list",
+            "keys": [
+              "]"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "FUEL_LIST_UP",
+            "label": "Scroll up through fuel list",
+            "keys": [
+              "["
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DESC_LIST_DOWN",
+            "label": "Scroll down through vehicle part descriptions",
+            "keys": [
+              ">"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DESC_LIST_UP",
+            "label": "Scroll up through vehicle part descriptions",
+            "keys": [
+              "<"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PARTS_LIST_DOWN",
+            "label": "Scroll down through parts list",
+            "keys": [
+              "="
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PARTS_LIST_UP",
+            "label": "Scroll up through parts list",
+            "keys": [
+              "-"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": false,
+            "denial": "The requirements are not met.",
+            "role": "confirm",
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "FILTER",
+            "label": "Filter",
+            "keys": [
+              "f",
+              "F",
+              "/"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ZOOM_IN",
+            "label": "Zoom in (tiles mode)",
+            "keys": [
+              "z"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ZOOM_OUT",
+            "label": "Zoom out (tiles mode)",
+            "keys": [
+              "Z"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ANY_INPUT",
+            "label": "ANY_INPUT",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "vehicle:choices",
+          "row_id": "vpart:plating_bone"
+        },
+        "context": "VEH_INTERACT"
+      }
+    },
+    {
+      "name": "install tab picked, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:1",
+          "revision": "25"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "vehicle:tab",
+          "args": {
+            "row": "cargo"
+          }
+        }
+      }
+    },
+    {
+      "name": "install tab picked, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "install tab picked, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "install tab picked, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "install tab picked, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "29",
+          "revision": "26"
+        }
+      }
+    },
+    {
+      "name": "install tab the list does not hold, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:2",
+          "revision": "26"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "vehicle:tab",
+          "args": {
+            "row": "nowhere"
+          }
+        }
+      }
+    },
+    {
+      "name": "install tab the list does not hold, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "install tab the list does not hold, rejected",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "rejected",
+        "error": "invalid_arguments",
+        "error_text": "That needs other details."
+      }
+    },
+    {
+      "name": "part picked in the install list, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:2",
+          "revision": "26"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "vehicle:pick",
+          "args": {
+            "row": "vpart:vehicle_scoop"
+          }
+        }
+      }
+    },
+    {
+      "name": "part picked in the install list, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "part picked in the install list, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "part picked in the install list, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "part picked in the install list, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "30",
+          "revision": "27"
+        }
+      }
+    },
+    {
+      "name": "vehicle screen left, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "screen_id": "screen:19"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "QUIT"
+        }
+      }
+    },
+    {
+      "name": "vehicle screen left, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "vehicle screen left, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "vehicle screen left, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "vehicle screen left, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "32",
+          "revision": "29"
         }
       }
     }
   ],
-  "invalid": [
-    {
-      "name": "vehicle grid cell without its availability",
-      "def": "grid",
-      "value": {
-        "id": "vehicle:grid",
-        "kind": "grid",
-        "cols": 1,
-        "rows": 1,
-        "cells": [
-          {
-            "x": 0,
-            "y": 0,
-            "glyph": "o"
-          }
-        ]
-      },
-      "why": "a cell says whether picking it is possible"
-    }
-  ]
+  "invalid": []
 }

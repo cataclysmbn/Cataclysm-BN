@@ -186,14 +186,14 @@ auto registered_affordances( const boundary_state &state ) -> std::vector<afford
 }
 
 /// Whether the generic path describes the screen: a list of rows, a field and editors, with nothing a
-/// screen of its own describes (panes, areas, a target, a vehicle, a drawn window).
+/// screen of its own describes (panes, areas, a target, a drawn window).
 auto generic( const interaction_snapshot &native ) -> bool
 {
     using game_client::interaction_kind;
     return native.structured && !native.actions_only &&
            ( native.kind == interaction_kind::choices || native.kind == interaction_kind::field ) &&
            native.panes.empty() && native.areas.empty() && !native.target &&
-           !native.overmap && !native.vehicle &&
+           !native.overmap &&
     std::ranges::none_of( native.choices, []( const auto & choice ) {
         return choice.pane_id || choice.area_id;
     } );
@@ -316,7 +316,12 @@ auto screen_of( const boundary_state &state, const slot &entry, const bool top )
         if( result.root ) { clear_affordances( *result.root ); }
     } else if( described ) {
         // The registered actions of the context follow the screen's own affordances.
-        std::ranges::move( registered_affordances( state ), std::back_inserter( result.affordances ) );
+        auto registered = registered_affordances( state );
+        for( const auto &[id, reason] : result.denials ) {
+            const auto found = std::ranges::find( registered, id, &affordance::id );
+            if( found != registered.end() ) { found->enabled = false; found->denial = reason; }
+        }
+        std::ranges::move( registered, std::back_inserter( result.affordances ) );
     }
     return result;
 }

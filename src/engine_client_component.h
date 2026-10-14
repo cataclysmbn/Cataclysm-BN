@@ -316,6 +316,12 @@ struct invoked_affordance {
 };
 auto invoked( const input_event &event ) -> std::optional<invoked_affordance>;
 
+/// An action of the screen's context that cannot run now, and why. The registered affordance of that id is published disabled.
+struct denial {
+    std::string id = {};
+    std::string reason = {};
+};
+
 /// What a screen publishes. A provider fills everything but `screen_id`, `role` and `context`, which
 /// come from the screen's scope; `root` is absent for a screen that has no components yet.
 struct screen_view {
@@ -326,6 +332,7 @@ struct screen_view {
     std::string title = {};
     std::optional<component> root = std::nullopt;
     std::vector<affordance> affordances = {};
+    std::vector<denial> denials = {};
     std::string focus_component = {};
     std::string focus_row = {};
     int refresh_ms = 0;

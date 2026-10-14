@@ -1,6 +1,5 @@
 #if defined(CATA_MCP)
 
-#    include "../src/vehicle/veh_interact.h"
 #    include "avatar.h"
 #    include "calendar.h"
 #    include "catch/catch.hpp"
@@ -23,7 +22,6 @@
 #    include "player_activity.h"
 #    include "player_helpers.h"
 #    include "state_helpers.h"
-#    include "vehicle/vehicle.h"
 
 #    include <algorithm>
 #    include <string>
@@ -130,45 +128,6 @@ TEST_CASE(
     CHECK_FALSE(examine_item_menu::run(
         lighter, [] { return 0; }, [] { return 40; }, examine_item_menu::menu_pos_t::right));
     CHECK_FALSE(you.is_wielding(lighter));
-}
-
-TEST_CASE(
-    "the vehicle interaction screen publishes its actions and closes on cancel",
-    "[client][interaction][mcp][vehicle]") {
-    clear_all_state();
-    clear_map();
-    auto& you = get_avatar();
-    clear_character(you, false);
-    const auto guard = screen_guard{};
-    const auto pos = you.bub_pos() + tripoint_east;
-    auto* const cart = get_map().add_vehicle(vproto_id("shopping_cart"), pos, 0_degrees, 0, 0);
-    REQUIRE(cart != nullptr);
-    auto reads = 0;
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = game_client::current_interaction();
-        ++reads;
-        REQUIRE(snapshot.structured);
-        CHECK(snapshot.title == cart->name);
-        CHECK(has_choice(snapshot, "action:INSTALL"));
-        CHECK(has_choice(snapshot, "action:REPAIR"));
-        CHECK(has_choice(snapshot, "action:RIGHT"));
-        if (reads == 1) {
-            // The part under the cursor is named; moving the cursor is a native direction action.
-            REQUIRE(snapshot.vehicle.has_value());
-            CHECK_FALSE(snapshot.vehicle->parts.empty());
-            return event_of({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::choose,
-                .target_id = "action:RIGHT",
-            });
-        }
-        return event_of({
-            .input_id = snapshot.input_id,
-            .operation = game_client::interaction_operation::cancel,
-        });
-    });
-    static_cast<void>(veh_interact::run(*cart, tripoint_mnt_veh::zero()));
-    CHECK(reads == 2);
 }
 
 #endif // CATA_MCP
