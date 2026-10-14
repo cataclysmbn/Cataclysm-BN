@@ -225,7 +225,10 @@ auto generic_view( const boundary_state &state ) -> screen_view
         parts.push_back( { .id = "text:message", .body = text_body{ .markup = native.message, .tone = native.message_tone } } );
     }
     add( make_field( b ) );
-    add( make_list( b ) );
+    // The row any key acknowledges is the `any_key` affordance, not a row to pick.
+    const auto only_acknowledgement = !native.any_key_choice_id.empty() &&
+    std::ranges::all_of( native.choices, [&]( const auto & choice ) { return choice.id == native.any_key_choice_id; } );
+    if( !only_acknowledgement ) { add( make_list( b ) ); }
     add( make_editors( b ) );
     native_affordances( b );
     const auto focused = std::ranges::find( native.choices, native.focus_choice_id,

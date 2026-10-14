@@ -106,6 +106,23 @@ TEST_CASE("a generic list is a list with a choose affordance", "[engine_client_c
     CHECK(affordance(view, "UP").keys == std::vector<std::string>{"k"});
 }
 
+TEST_CASE(
+    "the row any key acknowledges is the any_key affordance, not a list row",
+    "[engine_client_component]") {
+    const auto view = top_of(boundary(
+        {.kind = client::interaction_kind::choices,
+         .message = "The door is locked.",
+         .choices = {{.id = "acknowledge", .label = "Press any key"}},
+         .choice_total = 1,
+         .any_key_choice_id = "acknowledge"}));
+    REQUIRE(view.root);
+    CHECK(ec::find_component(*view.root, "list:choices") == nullptr);
+    const auto& any_key = affordance(view, "bn:any_key");
+    CHECK(any_key.role == "any_key");
+    CHECK(any_key.label == "Press any key");
+    CHECK(any_key.target == "acknowledge");
+}
+
 TEST_CASE("an affordance label is the native action name", "[engine_client_component]") {
     auto state = boundary(menu());
     // Native has no name for CONFIRM or QUIT here: the label is empty, never the id and never
