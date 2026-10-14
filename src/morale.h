@@ -107,6 +107,8 @@ class player_morale
                 // TODO: (optional) use optional
                 bool has_description() const;
                 std::string describe() const;
+                /// What the subtype is of, untranslated; empty for none.
+                std::string id() const;
 
                 bool matches( const morale_subtype &other ) const {
                     return *this == other;
@@ -160,6 +162,8 @@ class player_morale
                 void serialize( JsonOut &json ) const;
 
                 std::string get_name() const;
+                /// What the point is of, untranslated: its type and what the type is about.
+                auto get_id() const -> std::string;
                 int get_net_bonus() const;
                 int get_net_bonus( const morale_mult &mult ) const;
                 bool is_expired() const;

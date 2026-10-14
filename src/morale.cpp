@@ -13,11 +13,12 @@
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "character.h"
-#include "client_interaction.h"
 #include "color.h"
 #include "cursesdef.h"
 #include "debug.h"
 #include "effect.h"
+#include "engine_client_component.h"
+#include "engine_client_requirements.h"
 #include "enum_conversions.h"
 #include "enums.h"
 #include "game.h"
@@ -137,6 +138,12 @@ std::string player_morale::morale_point::get_name() const
     } else {
         return type.obj().describe();
     }
+}
+
+auto player_morale::morale_point::get_id() const -> std::string
+{
+    const auto subtype_id = subtype.id();
+    return subtype_id.empty() ? type.str() : type.str() + ":" + subtype_id;
 }
 
 int player_morale::morale_point::get_net_bonus() const
@@ -534,6 +541,27 @@ void player_morale::decay( const time_duration &ticks )
     invalidate();
 }
 
+namespace
+{
+/// A morale figure as the screen prints it: signed, and a dash for zero.
+auto signed_or_dash( const int num ) -> std::string
+{
+    return num == 0 ? "-" : string_format( "%+d", num );
+}
+
+/// What a figure does to the player: 1 helps, -1 hurts, 0 does nothing; the other way round when `reversed`.
+auto effect_of( const int num, const bool reversed ) -> int
+{
+    return num == 0 ? 0 : ( num > 0 ) != reversed ? 1 : -1;
+}
+
+/// The color the screen prints a figure with, by what it does.
+auto effect_color( const int effect ) -> nc_color
+{
+    return effect == 0 ? c_dark_gray : effect > 0 ? c_green : c_light_red;
+}
+} // namespace
+
 void player_morale::display( int focus_eq, int pain_penalty, int fatigue_cap )
 {
     /*calculates the percent contributions of the morale points,
@@ -585,11 +613,7 @@ void player_morale::display( int focus_eq, int pain_penalty, int fatigue_cap )
                         right = string_format( "%d", num );
                         break;
                     case number_format::signed_or_dash:
-                        if( num == 0 ) {
-                            right = "-";
-                        } else {
-                            right = string_format( "%+d", num );
-                        }
+                        right = signed_or_dash( num );
                         break;
                     case number_format::percent:
                         right = string_format( "%d%%", num );
@@ -601,13 +625,7 @@ void player_morale::display( int focus_eq, int pain_penalty, int fatigue_cap )
                         break;
                     case line_color::green_gray_red:
                     case line_color::red_gray_green:
-                        if( num == 0 ) {
-                            color = c_dark_gray;
-                        } else if( ( num > 0 ) ^ ( col == line_color::red_gray_green ) ) {
-                            color = c_green;
-                        } else {
-                            color = c_light_red;
-                        }
+                        color = effect_color( effect_of( num, col == line_color::red_gray_green ) );
                         break;
                 }
             }
@@ -642,27 +660,35 @@ void player_morale::display( int focus_eq, int pain_penalty, int fatigue_cap )
             }
     };
 
-    // Separate and sort positive and negative morale
-    const morale_mult mult = get_temper_mult();
-    std::vector<morale_point> positive_morale;
-    std::vector<morale_point> negative_morale;
-    for( const morale_point &mp : points ) {
-        const int bonus = mp.get_net_bonus( mult );
-        if( bonus > 0 ) {
-            positive_morale.emplace_back( mp );
-        } else if( bonus < 0 ) {
-            negative_morale.emplace_back( mp );
-        }
-    }
-
-    const auto sort_morale = []( const morale_point & lhs, const morale_point & rhs ) -> bool {
-        const int lhs_percent = lhs.get_percent_contribution();
-        const int rhs_percent = rhs.get_percent_contribution();
-        return localized_compare( std::make_pair( -lhs_percent, lhs.get_name() ),
-                                  std::make_pair( -rhs_percent, rhs.get_name() ) );
+    // The points that raise and lower morale, most contributing first.
+    struct morale_points {
+        std::vector<morale_point> positive;
+        std::vector<morale_point> negative;
     };
-    std::ranges::sort( positive_morale, sort_morale );
-    std::ranges::sort( negative_morale, sort_morale );
+    const auto sorted_points = [this]() -> morale_points {
+        const morale_mult mult = get_temper_mult();
+        morale_points result;
+        for( const morale_point &mp : points )
+        {
+            const int bonus = mp.get_net_bonus( mult );
+            if( bonus > 0 ) {
+                result.positive.emplace_back( mp );
+            } else if( bonus < 0 ) {
+                result.negative.emplace_back( mp );
+            }
+        }
+
+        const auto sort_morale = []( const morale_point & lhs, const morale_point & rhs ) -> bool {
+            const int lhs_percent = lhs.get_percent_contribution();
+            const int rhs_percent = rhs.get_percent_contribution();
+            return localized_compare( std::make_pair( -lhs_percent, lhs.get_name() ),
+                                      std::make_pair( -rhs_percent, rhs.get_name() ) );
+        };
+        std::ranges::sort( result.positive, sort_morale );
+        std::ranges::sort( result.negative, sort_morale );
+        return result;
+    };
+    const auto [positive_morale, negative_morale] = sorted_points();
 
     // Initialize lines
     const std::vector<morale_line> top_lines {
@@ -832,26 +858,62 @@ void player_morale::display( int focus_eq, int pain_penalty, int fatigue_cap )
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
 
-    namespace ranges = std::ranges;
-    auto message = top_lines.back().text();
-    ranges::for_each( middle_lines, [&]( const auto & line ) { message += "\n" + line.ml.text(); } );
-    ranges::for_each( bottom_lines, [&]( const auto & line ) { message += "\n" + line.text(); } );
-    const auto snapshot = game_client::interaction_snapshot{
-        .kind = game_client::interaction_kind::custom,
-        .title = _( "Morale" ),
-        .message = std::move( message ),
-        .allow_cancel = true,
-    };
-    const auto interaction = game_client::interaction_scope( ctxt, [&]() { return snapshot; } );
+    namespace ec = engine_client;
+    const auto screen = ec::screen_scope( ctxt, { .view = [&]( const ec::boundary_state & )
+    {
+        const auto [positive, negative] = sorted_points();
+        const auto tone_name = []( const int effect ) {
+            return effect > 0 ? "good" : effect < 0 ? "bad" : "";
+        };
+        auto rows = std::vector<ec::row> {};
+        const auto add_section = [&]( const std::string & id, const std::string & caption, const int total,
+        const std::vector<morale_point> &section, const bool reversed ) {
+            rows.push_back( {
+                .id = "morale:" + id, .label = caption, .header = true,
+                .columns = { { .key = "value", .label = _( "Value" ), .value = signed_or_dash( total ) } },
+                .color = string_from_color( effect_color( effect_of( total, false ) ) ),
+            } );
+            for( const morale_point &mp : section ) {
+                const int percent = mp.get_percent_contribution();
+                rows.push_back( {
+                    .id = "morale:" + id + ":" + mp.get_id(), .label = mp.get_name(),
+                    .columns = { { .key = "value", .label = _( "Value" ), .value = string_format( "%d%%", percent ) } },
+                    .color = string_from_color( effect_color( effect_of( percent, reversed ) ) ),
+                } );
+            }
+        };
+        auto parts = std::vector<ec::component> {};
+        if( positive.empty() && negative.empty() ) {
+            parts.push_back( { .id = "morale:none", .body = ec::text_body{ .markup = _( "Nothing affects your morale" ) } } );
+        } else {
+            add_section( "positive", _( "Total positive morale" ), get_total_positive_value(), positive,
+                         false );
+            add_section( "negative", _( "Total negative morale" ), -get_total_negative_value(), negative,
+                         true );
+            parts.push_back( ec::list( { .id = "morale:points", .rows = std::move( rows ), .selection = "none" } ) );
+        }
+        auto stats = std::vector<ec::panel_stat> {
+            { .key = "level", .label = ec::caption( _( "Total morale:" ) ), .value = signed_or_dash( get_level() ), .tone = tone_name( effect_of( get_level(), false ) ) },
+        };
+        if( pain_penalty != 0 ) {
+            stats.push_back( { .key = "pain", .label = ec::caption( _( "Pain level:" ) ), .value = signed_or_dash( -pain_penalty ), .tone = tone_name( effect_of( -pain_penalty, false ) ) } );
+        }
+        if( fatigue_cap ) {
+            stats.push_back( { .key = "fatigue_cap", .label = ec::caption( _( "Fatigue Morale Cap:" ) ), .value = std::to_string( fatigue_cap ), .tone = tone_name( effect_of( fatigue_cap, true ) ) } );
+        }
+        stats.push_back( { .key = "focus", .label = ec::caption( _( "Focus trends towards:" ) ), .value = std::to_string( focus_eq ) } );
+        parts.push_back( ec::panel( { .id = "morale:totals", .stats = std::move( stats ) } ) );
+        return ec::screen_view{
+            .title = _( "Morale" ),
+            .root = ec::split( { .id = "morale:root", .children = std::move( parts ) } ),
+        };
+    }
+                                                } );
 
     std::string action;
     do {
         ui_manager::redraw();
         action = ctxt.handle_input();
-        if( const auto &event = ctxt.get_raw_input().interaction;
-            event && event->operation == game_client::interaction_operation::cancel ) {
-            action = "QUIT";
-        }
         if( action == "DOWN" && offset < std::max( 0, rows_total - rows_visible ) ) {
             offset++;
         } else if( action == "UP" && offset > 0 ) {
@@ -1152,6 +1214,18 @@ bool player_morale::morale_subtype::has_description() const
 
 // TODO: Get rid of this ugly include that is only used here!
 #include "itype.h"
+std::string player_morale::morale_subtype::id() const
+{
+    switch( subtype_type ) {
+        case morale_subtype_t::by_item:
+            return item_type->get_id().str();
+        case morale_subtype_t::by_effect:
+            return eff_type.str();
+        default:
+            return {};
+    }
+}
+
 std::string player_morale::morale_subtype::describe() const
 {
     switch( subtype_type ) {
