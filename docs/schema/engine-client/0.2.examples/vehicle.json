@@ -4,7 +4,7 @@
       "name": "vehicle screen",
       "def": "screen",
       "value": {
-        "screen_id": "screen:19",
+        "screen_id": "screen:20",
         "role": "dialog",
         "title": "Bicycle",
         "root": {
@@ -562,13 +562,6 @@
             ],
             "enabled": true,
             "expect": "screen"
-          },
-          {
-            "id": "ANY_INPUT",
-            "label": "ANY_INPUT",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
           }
         ],
         "focus": {
@@ -595,7 +588,7 @@
       "name": "install list of the vehicle screen",
       "def": "screen",
       "value": {
-        "screen_id": "screen:19",
+        "screen_id": "screen:20",
         "role": "dialog",
         "title": "Choose new part to install here:",
         "root": {
@@ -3257,13 +3250,6 @@
             ],
             "enabled": true,
             "expect": "screen"
-          },
-          {
-            "id": "ANY_INPUT",
-            "label": "ANY_INPUT",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
           }
         ],
         "focus": {
@@ -3435,7 +3421,7 @@
       "value": {
         "epoch": "epoch-2",
         "expect": {
-          "screen_id": "screen:19"
+          "screen_id": "screen:20"
         },
         "operation": {
           "kind": "invoke",
