@@ -3,20 +3,22 @@
 #    include "avatar.h"
 #    include "bionics.h"
 #    include "bionics_ui.h"
-#    include "bionics_ui_observation.h"
 #    include "cata_utility.h"
 #    include "catalua_icallback_actor.h"
 #    include "catalua_impl.h"
 #    include "catch/catch.hpp"
 #    include "client_command.h"
 #    include "client_input.h"
-#    include "client_interaction_prepared.h"
 #    include "client_memory.h"
 #    include "client_memory_scope.h"
 #    include "cursesdef.h"
+#    include "engine_client_component.h"
+#    include "engine_client_contract.h"
 #    include "init.h"
 #    include "input.h"
 #    include "json.h"
+#    include "locale_fixture.h"
+#    include "locale_scope.h"
 #    include "messages.h"
 #    include "options.h"
 #    include "options_helpers.h"
@@ -26,13 +28,17 @@
 #    include "state_helpers.h"
 #    include "uistate.h"
 
+#    include <algorithm>
 #    include <array>
+#    include <nlohmann/json.hpp>
 #    include <ranges>
 #    include <sstream>
 #    include <stdexcept>
 
 namespace {
 namespace client = game_client;
+namespace ec = engine_client;
+using json = nlohmann::json;
 
 auto message_state() -> std::string {
     auto stream = std::ostringstream{};
@@ -95,9 +101,7 @@ auto actor_state() -> std::string {
     return stream.str();
 }
 
-auto id(const std::string& native_id) -> std::string {
-    return client::opaque_interaction_id("bionic", {native_id});
-}
+auto id(const std::string& native_id) -> std::string { return "bionic:" + native_id; }
 
 auto resolve(client::interaction_command command) -> input_event {
     auto request = client::input_command{};
@@ -115,56 +119,107 @@ auto action(const std::string& name) -> input_event {
     return *result;
 }
 
-auto choose(const client::interaction_snapshot& snapshot, const std::string& target)
-    -> input_event {
-    return resolve(
-        {.input_id = snapshot.input_id,
-         .operation = client::interaction_operation::choose,
-         .target_id = target});
+/// The invoke a client sends for an affordance the screen's loop runs.
+auto invoke(const std::string& affordance, client::interaction_arguments args = {}) -> input_event {
+    auto event = input_event{};
+    event.type = input_event_t::interaction;
+    event.interaction = client::interaction_event{
+        .operation = client::interaction_operation::invoke,
+        .target_id = affordance,
+        .arguments = std::move(args)};
+    return event;
 }
 
+/// Cancels a nested native popup, which only the 0.1 snapshot describes.
 auto cancel(const client::interaction_snapshot& snapshot) -> input_event {
     return resolve(
         {.input_id = snapshot.input_id, .operation = client::interaction_operation::cancel});
 }
 
-/// Actual native input callback, never a synthetic snapshot or activation-rule mock.
-auto observe() -> client::interaction_snapshot {
-    const auto before = actor_state();
-    const auto rng = rng_get_engine();
-    const auto messages = Messages::recent_messages(100);
-    const auto all = client::current_interaction({.limit = 200});
-    REQUIRE(all.structured);
-    client::reset_interaction_work();
-    for (const auto offset : std::views::iota(std::size_t{0}, all.choices.size() + 1)) {
-        const auto page = client::current_interaction({.offset = offset, .limit = 1});
-        CHECK(page.schema_id == all.schema_id);
-        CHECK(page.message == all.message);
-        CHECK(page.choice_total == all.choice_total);
-        if (offset < all.choices.size()) {
-            REQUIRE(page.choices.size() == 1);
-            CHECK(page.choices.front().description == all.choices[offset].description);
-            CHECK(page.choices.front().id == all.choices[offset].id);
-        }
-    }
-    if (all.context == "BIONICS" || all.field) {
-        CHECK(client::interaction_work().schema_hashes == 0);
-        CHECK(client::interaction_work().hashed_choices == 0);
-        CHECK(client::interaction_work().materialized_choices <= all.choices.size() + 1);
-    }
-    CHECK(actor_state() == before);
-    CHECK(rng_get_engine() == rng);
-    CHECK(Messages::recent_messages(100) == messages);
-    return all;
+auto captured() -> ec::boundary_state {
+    const auto state = ec::capture_boundary(
+        {.epoch = "epoch:bionics",
+         .ready =
+             {.phase = "waiting_for_input",
+              .game_ready = true,
+              .accepts_interaction_commands = true,
+              .accepts_registered_actions = true}});
+    REQUIRE(state.has_value());
+    return *state;
 }
+
+auto part(const ec::screen_view& screen, const std::string& id) -> const ec::component& {
+    REQUIRE(screen.root);
+    const auto* const found = ec::find_component(*screen.root, id);
+    INFO(id);
+    REQUIRE(found != nullptr);
+    return *found;
+}
+auto has_part(const ec::screen_view& screen, const std::string& id) -> bool {
+    return screen.root && ec::find_component(*screen.root, id) != nullptr;
+}
+template <typename Body> auto body(const ec::component& value) -> const Body& {
+    REQUIRE(std::holds_alternative<Body>(value.body));
+    return std::get<Body>(value.body);
+}
+auto rows(const ec::screen_view& screen) -> const std::vector<ec::row>& {
+    return body<ec::list_body>(part(screen, "bionics:list")).rows;
+}
+auto row_of(const ec::screen_view& screen, const std::string& row_id) -> const ec::row& {
+    const auto& all = rows(screen);
+    const auto found = std::ranges::find(all, row_id, &ec::row::id);
+    INFO(row_id);
+    REQUIRE(found != all.end());
+    return *found;
+}
+auto text_of(const ec::screen_view& screen, const std::string& component) -> const std::string& {
+    return body<ec::text_body>(part(screen, component)).markup;
+}
+auto column_of(const ec::row& row, const std::string& key) -> const std::string& {
+    const auto found = std::ranges::find(row.columns, key, &client::interaction_column::key);
+    REQUIRE(found != row.columns.end());
+    return found->value;
+}
+auto denial_of(const ec::screen_view& screen, const std::string& action_id) -> std::string {
+    const auto found = std::ranges::find(screen.denials, action_id, &ec::denial::id);
+    return found == screen.denials.end() ? std::string{} : found->reason;
+}
+
+/// The top screen as a client reads it, with the ids of this screen instance left out.
+auto published() -> json {
+    auto top = json::parse(ec::serialize_interaction_boundary(captured()))["stack"].back();
+    top.erase("screen_id");
+    return top;
+}
+auto without_words(json value) -> json {
+    if (value.is_string()) { return ""; }
+    if (!value.is_structured()) { return value; }
+    for (auto& member : value) { member = without_words(std::move(member)); }
+    return value;
+}
+void collect_ids(const json& value, std::vector<std::string>& into) {
+    if (value.is_object()) {
+        for (const auto& [name, member] : value.items()) {
+            if ((name == "id" || name == "affordance") && member.is_string()) {
+                into.push_back(member.get<std::string>());
+            }
+            collect_ids(member, into);
+        }
+    } else if (value.is_array()) {
+        for (const auto& member : value) { collect_ids(member, into); }
+    }
+}
+
+/// The screen a nested native popup leaves under it is still the bionics screen.
+auto is_bionics() -> bool { return client::current_interaction().context == "BIONICS"; }
 } // namespace
 
+
 TEST_CASE(
-    "cold bionics descriptions are bounded by requested rows rather than installed CBMs",
-    "[bionics_manager][bionics_cold_work][client][interaction][mcp]") {
+    "the bionics screen publishes a row per bionic and describes only the one examined",
+    "[bionics_manager][engine_client_component][mcp]") {
     const auto guard = manager_guard{};
     auto& you = get_avatar();
-    // Real installed native CBMs, not fabricated snapshots or description-provider mocks.
     const auto installed =
         std::array{"bio_flashlight", "bio_hydraulics", "bio_tools", "bio_batteries", "bio_cable"};
     for (const auto* native_id : installed) {
@@ -175,72 +230,63 @@ TEST_CASE(
     const auto before = actor_state();
     const auto rng = rng_get_engine();
     const auto messages = message_state();
-    auto mode = std::string{};
-    SECTION("native only does not produce semantic details") { mode = "native"; }
-    SECTION("cold one row and repeated reads") { mode = "page"; }
-    SECTION("zero limit does not produce details") { mode = "zero"; }
-    SECTION("past end does not produce details") { mode = "past"; }
-    SECTION("full query is a positive semantic production control") { mode = "full"; }
-    SECTION("native examination is a positive native production control") { mode = "examine"; }
     auto polls = 0;
-    bionics_ui::reset_description_work();
     client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto poll = polls++;
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        CHECK(screen.context == "BIONICS");
         CHECK(actor_state() == before);
         CHECK(rng_get_engine() == rng);
         CHECK(message_state() == messages);
-        if (mode == "native" || mode == "examine") {
-            CHECK(bionics_ui::description_work().semantic == 0);
-            if (mode == "examine" && poll == 0) {
-                CHECK(bionics_ui::description_work().native == 0);
-                return input_event{'!', input_event_t::keyboard};
+        switch (polls++) {
+            case 0: {
+                REQUIRE(rows(screen).size() == installed.size());
+                CHECK_FALSE(has_part(screen, "bionics:description"));
+                CHECK(screen.focus_component == "bionics:list");
+                CHECK(screen.focus_row == rows(screen).front().id);
+                const auto& tabs = body<ec::tabs_body>(part(screen, "bionics:tabs"));
+                CHECK(tabs.select == "bionics:tab");
+                REQUIRE(tabs.tabs.size() == 2);
+                CHECK(tabs.tabs.front().id == "active");
+                CHECK(tabs.tabs.front().selected);
+                for (const auto& row : rows(screen)) {
+                    CHECK(row.id.starts_with("bionic:"));
+                    CHECK(row.description.empty());
+                    CHECK_FALSE(row.columns.empty());
+                }
+                const auto& power = body<ec::panel_body>(part(screen, "bionics:status")).stats;
+                REQUIRE(power.size() == 1);
+                CHECK(power.front().key == "power");
+                CHECK(power.front().max
+                      == std::to_string(units::to_kilojoule(you.get_max_power_level())));
+                return action("TOGGLE_EXAMINE");
             }
-            if (mode == "examine") { CHECK(bionics_ui::description_work().native > 0); }
-            return input_event{KEY_ESCAPE, input_event_t::keyboard};
+            case 1:
+                CHECK(text_of(screen, "bionics:description")
+                          .find(bionic_id(installed[0])->description.translated())
+                      != std::string::npos);
+                return action("DOWN");
+            case 2:
+                CHECK(screen.focus_row == rows(screen)[1].id);
+                CHECK(text_of(screen, "bionics:description")
+                          .find(bionic_id(installed[1])->description.translated())
+                      != std::string::npos);
+                return action("QUIT");
+            default:
+                FAIL("the bionics screen outlived its cancel");
+                return action("QUIT");
         }
-        // Reset before opening the manager, NEVER after eager preparation has hidden its work.
-        const auto request = client::interaction_page{
-            .offset = mode == "past" ? installed.size() : 0,
-            .limit = mode == "zero" ? 0
-                   : mode == "full" ? installed.size()
-                                    : 1};
-        const auto first = client::current_interaction(request);
-        REQUIRE(first.context == "BIONICS");
-        REQUIRE(first.choice_total == installed.size());
-        const auto expected =
-            mode == "full" ? installed.size()
-            : mode == "page"
-                ? std::size_t{1}
-                : std::size_t{0};
-        CHECK(first.choices.size() == expected);
-        CHECK(bionics_ui::description_work().semantic == expected);
-        for (const auto& choice : first.choices) { CHECK_FALSE(choice.description.empty()); }
-        const auto work = bionics_ui::description_work().semantic;
-        const auto repeat = client::current_interaction(request);
-        CHECK(repeat.schema_id == first.schema_id);
-        CHECK(repeat.input_id == first.input_id);
-        CHECK(bionics_ui::description_work().semantic == work);
-        if (!first.choices.empty()) {
-            CHECK(repeat.choices.front().description == first.choices.front().description);
-            CHECK(first.choices.front().description.find(
-                      bionic_id(installed.front())->description.translated())
-                  != std::string::npos);
-        }
-        CHECK(actor_state() == before);
-        CHECK(rng_get_engine() == rng);
-        CHECK(message_state() == messages);
-        return input_event{KEY_ESCAPE, input_event_t::keyboard};
     });
     show_bionics_ui(you);
-    CHECK(polls == (mode == "examine" ? 2 : 1));
+    CHECK(polls == 3);
     CHECK(actor_state() == before);
     CHECK(rng_get_engine() == rng);
     CHECK(message_state() == messages);
 }
 
 TEST_CASE(
-    "bionics manager reads are pure and semantic activation uses real power and effects",
-    "[bionics_manager][client][interaction][mcp]") {
+    "the bionics screen reads are pure and its pick activates with real power and effects",
+    "[bionics_manager][engine_client_component][mcp]") {
     const auto guard = manager_guard{};
     auto& you = get_avatar();
     you.add_bionic(bionic_id("bio_flashlight"));
@@ -249,32 +295,27 @@ TEST_CASE(
     const auto cost = bionic_id("bio_flashlight")->power_activate;
     const auto light = you.active_light();
     auto step = 0;
-    auto previous_input = std::uint64_t{0};
     client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = observe();
-        REQUIRE(snapshot.context == "BIONICS");
-        REQUIRE(snapshot.panes.size() == 2);
+        const auto before = actor_state();
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        CHECK(actor_state() == before);
+        REQUIRE(screen.context == "BIONICS");
         if (step++ == 0) {
-            REQUIRE(snapshot.choices.size() == 1);
-            CHECK(snapshot.choices.front().description.find(
-                      bionic_id("bio_flashlight")->description.translated())
-                  != std::string::npos);
-            CHECK(snapshot.choices.front().description.find("eyes") != std::string::npos);
-            CHECK_FALSE(client::resolve_interaction_command(
-                {.input_id = snapshot.input_id,
-                 .operation = client::interaction_operation::choose,
-                 .target_id = id("bio_carbon")}));
-            previous_input = snapshot.input_id;
-            return choose(snapshot, id("bio_flashlight"));
+            REQUIRE(rows(screen).size() == 1);
+            CHECK(rows(screen).front().id == id("bio_flashlight"));
+            // A bionic of the other tab is not a row of this one.
+            CHECK(
+                ec::resolve_invoke(
+                    state, {.affordance_id = "bionics:pick", .args = {.row = id("bio_carbon")}})
+                    .error()
+                == ec::error::invalid_arguments);
+            return invoke("bionics:pick", {.row = id("bio_flashlight")});
         }
         CHECK(you.has_active_bionic(bionic_id("bio_flashlight")));
         CHECK(you.get_power_level() == power - cost);
         CHECK(you.active_light() > light);
-        CHECK_FALSE(client::resolve_interaction_command(
-            {.input_id = previous_input,
-             .operation = client::interaction_operation::choose,
-             .target_id = id("bio_flashlight")}));
-        return cancel(snapshot);
+        return action("QUIT");
     });
     show_bionics_ui(you);
     CHECK(step == 2);
@@ -282,8 +323,8 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "bionics manager preserves native power fuel and incapacitation feedback",
-    "[bionics_manager][client][interaction][mcp]") {
+    "the bionics screen keeps the native power fuel and incapacitation denials",
+    "[bionics_manager][engine_client_component][mcp]") {
     const auto guard = manager_guard{};
     auto& you = get_avatar();
     auto target = std::string{"bio_flashlight"};
@@ -301,15 +342,15 @@ TEST_CASE(
     const auto power = you.get_power_level();
     auto step = 0;
     client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = observe();
-        REQUIRE(snapshot.context == "BIONICS");
+        const auto screen = ec::top_screen(captured());
+        REQUIRE(screen.context == "BIONICS");
         if (step++ == 0) {
-            REQUIRE(snapshot.choices.size() == 1);
-            CHECK(snapshot.choices.front().enabled == !disabled);
-            CHECK(snapshot.choices.front().selectable);
-            CHECK(snapshot.choices.front().denial.empty() == !disabled);
+            REQUIRE(rows(screen).size() == 1);
+            CHECK(rows(screen).front().enabled == !disabled);
+            CHECK(rows(screen).front().denial.empty() == !disabled);
+            CHECK(denial_of(screen, "CONFIRM") == rows(screen).front().denial);
             Messages::clear_messages();
-            return choose(snapshot, id(target));
+            return invoke("bionics:pick", {.row = id(target)});
         }
         CHECK_FALSE(you.has_active_bionic(bionic_id(target)));
         CHECK(you.get_power_level() == power);
@@ -324,45 +365,53 @@ TEST_CASE(
                 : "shorting out";
         CHECK(feedback.back().second.find(expected) != std::string::npos);
 #    endif
-        return cancel(snapshot);
+        return action("QUIT");
     });
     show_bionics_ui(you);
     CHECK(step == 2);
 }
 
 TEST_CASE(
-    "bionics manager passive examination retains denial and hidden-tab rules",
-    "[bionics_manager][client][interaction][mcp]") {
+    "the bionics screen passive tab keeps its denial and the examining rules",
+    "[bionics_manager][engine_client_component][mcp]") {
     const auto guard = manager_guard{};
     auto& you = get_avatar();
     you.add_bionic(bionic_id("bio_flashlight"));
     you.add_bionic(bionic_id("bio_carbon"));
     auto step = 0;
     client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = observe();
-        if (snapshot.context == "POPUP_WAIT") {
+        if (!is_bionics()) {
             REQUIRE(step == 2);
-            CHECK(snapshot.message.find("can not activate") != std::string::npos);
+            CHECK(client::current_interaction().message.find("can not activate")
+                  != std::string::npos);
             ++step;
-            return choose(snapshot, "acknowledge");
+            return action("QUIT");
         }
-        REQUIRE(snapshot.context == "BIONICS");
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
         switch (step++) {
             case 0:
-                return action("NEXT_TAB");
+                CHECK(
+                    ec::resolve_invoke(
+                        state, {.affordance_id = "bionics:tab", .args = {.row = "nowhere"}})
+                        .error()
+                    == ec::error::invalid_arguments);
+                return invoke("bionics:tab", {.row = "passive"});
             case 1:
-                REQUIRE(snapshot.choices.size() == 2);
-                CHECK_FALSE(snapshot.choices.front().enabled);
-                CHECK(snapshot.choices.front().selectable);
-                return choose(snapshot, id("bio_carbon"));
+                CHECK(body<ec::tabs_body>(part(screen, "bionics:tabs")).tabs[1].selected);
+                REQUIRE(rows(screen).size() == 2);
+                CHECK_FALSE(row_of(screen, id("bio_carbon")).enabled);
+                CHECK_FALSE(row_of(screen, id("bio_carbon")).denial.empty());
+                return invoke("bionics:pick", {.row = id("bio_carbon")});
             case 3:
                 return action("TOGGLE_EXAMINE");
             case 4:
-                CHECK(snapshot.choices.front().enabled);
-                CHECK(snapshot.choices.front().denial.empty());
-                return choose(snapshot, id("bio_carbon"));
+                CHECK(row_of(screen, id("bio_carbon")).enabled);
+                CHECK(row_of(screen, id("bio_carbon")).denial.empty());
+                CHECK(denial_of(screen, "CONFIRM").empty());
+                return invoke("bionics:pick", {.row = id("bio_carbon")});
             default:
-                return cancel(snapshot);
+                return action("QUIT");
         }
     });
     show_bionics_ui(you);
@@ -371,8 +420,8 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "bionics manager fuel sprite sort and nested threshold handlers remain native",
-    "[bionics_manager][client][interaction][mcp]") {
+    "the bionics screen fuel sprite sort and nested threshold handlers remain native",
+    "[bionics_manager][engine_client_component][mcp]") {
     const auto guard = manager_guard{};
     auto& you = get_avatar();
     you.add_bionic(bionic_id("bio_batteries"));
@@ -382,22 +431,30 @@ TEST_CASE(
     SECTION("cancel nested threshold and sort") { cancel_nested = true; }
     auto phase = 0;
     client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = observe();
         auto& bio = you.get_bionic_state(bionic_id("bio_batteries"));
-        if (snapshot.context == "UILIST") {
+        if (!is_bionics()) {
+            const auto snapshot = client::current_interaction();
+            REQUIRE(snapshot.context == "UILIST");
+            const auto pick = [&](const std::size_t index) {
+                return cancel_nested
+                         ? cancel(snapshot)
+                         : resolve({.input_id = snapshot.input_id,
+                                    .operation = client::interaction_operation::choose,
+                                    .target_id = snapshot.choices[index].id});
+            };
             if (phase == 3) {
                 phase = 4;
                 REQUIRE(snapshot.choices.size() == 5);
-                return cancel_nested ? cancel(snapshot) : choose(snapshot, snapshot.choices[2].id);
+                return pick(2);
             }
             REQUIRE(phase == 5);
             phase = 6;
-            return cancel_nested ? cancel(snapshot) : choose(snapshot, snapshot.choices[1].id);
+            return pick(1);
         }
-        REQUIRE(snapshot.context == "BIONICS");
+        const auto screen = ec::top_screen(captured());
         switch (phase++) {
             case 0:
-                CHECK(snapshot.message.find("Available Fuel") != std::string::npos);
+                CHECK(text_of(screen, "bionics:fuel").find("Available Fuel") != std::string::npos);
                 return action("TOGGLE_SAFE_FUEL");
             case 1:
                 CHECK(bio.has_flag("SAFE_FUEL_OFF"));
@@ -411,10 +468,10 @@ TEST_CASE(
             case 6:
                 CHECK(uistate.bionic_sort_mode
                       == (cancel_nested ? bionic_ui_sort_mode::NONE : bionic_ui_sort_mode::NAME));
-                return cancel(snapshot);
+                return action("QUIT");
             default:
                 FAIL("unexpected native boundary");
-                return cancel(snapshot);
+                return action("QUIT");
         }
     });
     show_bionics_ui(you);
@@ -422,8 +479,108 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "bionics manager reassignment supports drafts clear swap and cancellation",
-    "[bionics_manager][client][interaction][mcp]") {
+    "the bionics screen publishes power, state and color per row and switches its tabs by the native action",
+    "[bionics_manager][engine_client_component][mcp]") {
+    const auto guard = manager_guard{};
+    auto& you = get_avatar();
+    you.add_bionic(bionic_id("bio_flashlight"));
+    auto step = 0;
+    client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0: {
+                const auto& flashlight = row_of(screen, id("bio_flashlight"));
+                CHECK(column_of(flashlight, "state") == "Off");
+                CHECK(column_of(flashlight, "power").find("act") != std::string::npos);
+                CHECK(flashlight.color == string_from_color(c_light_red));
+                CHECK(flashlight.hotkey.size() == 1);
+                return action("NEXT_TAB");
+            }
+            case 1: {
+                CHECK(body<ec::tabs_body>(part(screen, "bionics:tabs")).tabs[1].selected);
+                const auto& storage = row_of(screen, id("bio_power_storage"));
+                CHECK(column_of(storage, "state") == "Passive");
+                CHECK(storage.color == string_from_color(c_cyan));
+                return action("NEXT_TAB");
+            }
+            default:
+                CHECK(body<ec::tabs_body>(part(screen, "bionics:tabs")).tabs[0].selected);
+                return action("QUIT");
+        }
+    });
+    show_bionics_ui(you);
+    CHECK(step == 3);
+}
+
+TEST_CASE(
+    "the bionics screen refuses fuel toggles on a bionic that burns no fuel",
+    "[bionics_manager][engine_client_component][mcp]") {
+    const auto guard = manager_guard{};
+    auto& you = get_avatar();
+    you.add_bionic(bionic_id("bio_flashlight"));
+    auto step = 0;
+    client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        REQUIRE(screen.context == "BIONICS");
+        CHECK_FALSE(has_part(screen, "bionics:fuel"));
+        CHECK_FALSE(denial_of(screen, "TOGGLE_SAFE_FUEL").empty());
+        CHECK_FALSE(denial_of(screen, "TOGGLE_AUTO_START").empty());
+        CHECK(denial_of(screen, "CONFIRM").empty());
+        ++step;
+        return action("QUIT");
+    });
+    show_bionics_ui(you);
+    CHECK(step == 1);
+}
+
+TEST_CASE(
+    "the bionics screen says when a tab has no bionics",
+    "[bionics_manager][engine_client_component][mcp]") {
+    const auto guard = manager_guard{};
+    client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        CHECK(rows(screen).empty());
+        CHECK(screen.focus_row.empty());
+        CHECK_FALSE(text_of(screen, "bionics:empty").empty());
+        return action("QUIT");
+    });
+    show_bionics_ui(get_avatar());
+}
+
+TEST_CASE(
+    "the bionics screen examining describes power usage instances and slots",
+    "[bionics_manager][engine_client_component][mcp]") {
+    const auto guard = manager_guard{};
+    const auto fixture = bionic_id{"test_bionics_manager_callback"};
+    auto& definition = const_cast<bionic_data&>(fixture.obj());
+    const auto restore_definition = restore_on_out_of_scope{definition};
+    definition.occupied_bodyparts = {{bodypart_str_id("eyes"), 2}};
+    definition.flags.insert(flag_id("MULTIINSTALL"));
+    auto& you = get_avatar();
+    you.add_bionic(fixture);
+    you.add_bionic(fixture);
+    auto step = 0;
+    client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        if (step++ == 0) { return action("TOGGLE_EXAMINE"); }
+        const auto& text = text_of(screen, "bionics:description");
+        CHECK(text.find("Power usage:") != std::string::npos);
+        CHECK(text.find("You have 2 instances") != std::string::npos);
+        CHECK(text.find("(2 slots);") != std::string::npos);
+        const auto& slots = body<ec::panel_body>(part(screen, "bionics:slots")).stats;
+        const auto eyes = std::ranges::find(slots, "slot:eyes", &ec::panel_stat::key);
+        REQUIRE(eyes != slots.end());
+        CHECK(eyes->value == "4");
+        CHECK_FALSE(eyes->max.empty());
+        return action("QUIT");
+    });
+    show_bionics_ui(you);
+    CHECK(step == 2);
+}
+
+TEST_CASE(
+    "the bionics screen reassigns a letter through the native popup",
+    "[bionics_manager][engine_client_component][mcp]") {
     const auto guard = manager_guard{};
     auto& you = get_avatar();
     you.add_bionic(bionic_id("bio_flashlight"));
@@ -441,13 +598,13 @@ TEST_CASE(
     SECTION("slash is a native shortcut") { slash = true; }
     const auto value = invalid ? "?" : clear ? " " : slash ? "/" : "b";
     client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = observe();
+        const auto snapshot = client::current_interaction();
         if (snapshot.context == "POPUP_WAIT" && !snapshot.field) {
             REQUIRE(invalid);
             REQUIRE(phase == 4);
             CHECK(snapshot.message.find("Invalid bionic letter") != std::string::npos);
             ++phase;
-            return choose(snapshot, "acknowledge");
+            return action("QUIT");
         }
         if (snapshot.field) {
             REQUIRE(snapshot.context == "POPUP_WAIT");
@@ -480,9 +637,9 @@ TEST_CASE(
                 return action("REASSIGN");
             case 1:
             case 11:
-                return choose(snapshot, id("bio_flashlight"));
+                return invoke("bionics:pick", {.row = id("bio_flashlight")});
             default:
-                return cancel(snapshot);
+                return action("QUIT");
         }
     });
     show_bionics_ui(you);
@@ -504,8 +661,8 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "bionics manager callbacks run only on explicit native activation and deactivation",
-    "[bionics_manager][client][interaction][mcp]") {
+    "the bionics screen callbacks run only on explicit native activation and deactivation",
+    "[bionics_manager][engine_client_component][mcp]") {
     const auto guard = manager_guard{};
     auto& you = get_avatar();
     const auto fixture_id = bionic_id{"test_bionics_manager_callback"};
@@ -537,13 +694,13 @@ TEST_CASE(
     const auto power = you.get_power_level();
     auto phase = 0;
     client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = observe();
-        REQUIRE(snapshot.context == "BIONICS");
+        const auto screen = ec::top_screen(captured());
+        REQUIRE(screen.context == "BIONICS");
         switch (phase++) {
             case 0:
                 CHECK(activations == 0);
                 CHECK(deactivations == 0);
-                return choose(snapshot, id(fixture_id.str()));
+                return invoke("bionics:pick", {.row = id(fixture_id.str())});
             case 1:
                 CHECK(activations == 1);
                 CHECK(deactivations == 0);
@@ -556,21 +713,21 @@ TEST_CASE(
                 CHECK(you.get_value("test_bionics_manager_callback") == "inactive");
                 CHECK(you.get_power_level()
                       == power - fixture_id->power_activate - fixture_id->power_deactivate);
-                return cancel(snapshot);
+                return action("QUIT");
         }
     });
     show_bionics_ui(you);
     CHECK(phase == 3);
 }
 
+
 TEST_CASE(
     "bionics manager registrations unwind after native input exceptions",
-    "[bionics_manager][client][interaction][mcp]") {
+    "[bionics_manager][engine_client_component][mcp]") {
     const auto guard = manager_guard{};
     get_avatar().add_bionic(bionic_id("bio_flashlight"));
     client::memory::set_input_provider([&](const int /*timeout*/) -> input_event {
-        const auto snapshot = observe();
-        REQUIRE(snapshot.context == "BIONICS");
+        REQUIRE(ec::top_screen(captured()).context == "BIONICS");
         throw std::runtime_error("manager-input-test");
     });
     CHECK_THROWS_AS(show_bionics_ui(get_avatar()), std::runtime_error);
@@ -579,176 +736,61 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "bionic cold capture owns long off-page definition text without cloning it",
-    "[bionics_manager][bionics_lazy_dependencies][mcp]") {
+    "the bionics screen is the same at any viewport size and has the same ids in another language",
+    "[bionics_manager][engine_client_component][mcp]") {
     const auto guard = manager_guard{};
-    const auto fixture = bionic_id{"test_bionics_manager_callback"};
-    auto& definition = const_cast<bionic_data&>(fixture.obj());
-    const auto restore_definition = restore_on_out_of_scope{definition};
+    const auto fixture_ko = locale_fixture::korean_catalogue{};
     auto& you = get_avatar();
     you.add_bionic(bionic_id("bio_flashlight"));
-    you.add_bionic(fixture);
-    const auto long_text = std::string(2 * 1024 * 1024, 'x');
-    definition.description = no_translation(long_text);
-    const auto* original_storage = definition.description.debug_get_raw().data();
-    const auto frozen = definition.description.snapshot();
-    localization::reset_snapshot_work();
-    bionics_ui::reset_description_work();
-    auto calls = 0;
+    you.add_bionic(bionic_id("bio_batteries"));
+    auto reads = 0;
     client::memory::set_input_provider([&](const int /*timeout*/) {
-        CHECK(localization::snapshot_work().input_copied_bytes == 0);
-        CHECK(localization::snapshot_work().input_hashed_bytes == 0);
-        CHECK(frozen.raw_view().data() == original_storage);
-        CHECK(bionics_ui::description_work().semantic == 0);
-        const auto metadata = client::current_interaction({.limit = 0});
-        CHECK(bionics_ui::description_work().semantic == 0);
-        const auto page = client::current_interaction({.limit = 1});
-        CHECK(bionics_ui::description_work().semantic == 1);
-        CHECK(page.choices.front().description.find(long_text) == std::string::npos);
-        // Producer replacement after capture must not change the owned old boundary or its schema.
-        definition.description = no_translation("new short description");
-        const auto old = client::current_interaction({.offset = 1, .limit = 1});
-        CHECK(old.schema_id == metadata.schema_id);
-        CHECK(old.choices.front().description.find(long_text) != std::string::npos);
-        CHECK(bionics_ui::description_work().semantic == 2);
-        ++calls;
-        return input_event{KEY_ESCAPE, input_event_t::keyboard};
+        ++reads;
+        const auto saved_x = TERMX;
+        const auto saved_y = TERMY;
+        TERMX = 80;
+        TERMY = 24;
+        const auto narrow = published();
+        TERMX = 200;
+        TERMY = 60;
+        const auto wide = published();
+        TERMX = saved_x;
+        TERMY = saved_y;
+        CHECK(narrow.dump() == wide.dump());
+        const auto korean = [] {
+            const auto scope = localization::locale_scope(locale_fixture::korean);
+            return published();
+        }();
+        auto english_ids = std::vector<std::string>{};
+        auto korean_ids = std::vector<std::string>{};
+        collect_ids(narrow, english_ids);
+        collect_ids(korean, korean_ids);
+        CHECK(english_ids == korean_ids);
+        CHECK(without_words(narrow) == without_words(korean));
+        return action("QUIT");
     });
     show_bionics_ui(you);
-    CHECK(calls == 1);
-    CHECK(frozen.raw_view() == long_text);
+    CHECK(reads == 1);
 }
 
 TEST_CASE(
-    "bionic descriptions invalidate all frozen text power state and slot dependencies",
-    "[bionics_manager][bionics_lazy_dependencies][mcp]") {
+    "the bionics screen publishes no window text and no native line",
+    "[bionics_manager][engine_client_component][mcp]") {
     const auto guard = manager_guard{};
-    const auto fixture = bionic_id{"test_bionics_manager_callback"};
-    auto& definition = const_cast<bionic_data&>(fixture.obj());
-    const auto restore_definition = restore_on_out_of_scope{definition};
-    auto& heading = const_cast<body_part_type&>(convert_bp(bp_eyes).obj()).name_as_heading;
-    const auto restore_heading = restore_on_out_of_scope{heading};
-    definition.occupied_bodyparts = {{bodypart_str_id("eyes"), 1}};
-    definition.fuel_opts = {itype_id("battery")};
-    definition.flags.insert(flag_id("MULTIINSTALL"));
-    auto& you = get_avatar();
-    you.add_bionic(fixture);
-    you.add_bionic(fixture);
-    auto& bio = you.get_bionic_state(fixture);
-    const auto capture = [&]() {
-        auto result = client::interaction_snapshot{};
-        client::memory::set_input_provider([&](const int /*timeout*/) {
-            result = client::current_interaction({.limit = 1});
-            REQUIRE(result.context == "BIONICS");
-            REQUIRE(result.choices.size() == 1);
-            return input_event{KEY_ESCAPE, input_event_t::keyboard};
-        });
-        show_bionics_ui(you);
-        return result;
-    };
-    const auto previous = capture();
-    const auto old_text = previous.choices.front().description;
-    REQUIRE(old_text.find("You have 2 instances") != std::string::npos);
-    auto changes_schema = true;
-    auto changes_text = true;
-    auto add_instance = false;
-    auto expected_fragment = std::string{};
+    get_avatar().add_bionic(bionic_id("bio_batteries"));
     client::memory::set_input_provider([&](const int /*timeout*/) {
-        // Capture a cold, otherwise-identical boundary. Do not toggle examination/help mode.
-        const auto metadata = client::current_interaction({.limit = 0});
-        REQUIRE(metadata.schema_id == previous.schema_id);
-        SECTION("no mutation") {
-            changes_schema = false;
-            changes_text = false;
+        const auto screen = ec::top_screen(captured());
+        for (const auto& row : rows(screen)) {
+            CHECK(row.label.find("<color") == std::string::npos);
+            CHECK(row.label.find(row.hotkey + " ") != 0);
         }
-        SECTION("name") {
-            definition.name = no_translation("new name");
-            expected_fragment = "new name";
+        for (const auto& stat : body<ec::panel_body>(part(screen, "bionics:status")).stats) {
+            CHECK(stat.value.find("<color") == std::string::npos);
+            CHECK(stat.label.find(':') == std::string::npos);
         }
-        SECTION("raw text") {
-            definition.description = no_translation("new description");
-            expected_fragment = "new description";
-        }
-        SECTION("translation context") {
-            definition.description.add_context("new context");
-            changes_text = false;
-        }
-        SECTION("plural payload") {
-            definition.description.make_plural();
-            changes_text = false;
-        }
-        SECTION("activation cost") {
-            definition.power_activate += 1_J;
-            expected_fragment = "9 J act";
-        }
-        SECTION("deactivation cost") {
-            definition.power_deactivate += 1_J;
-            expected_fragment = "3 J deact";
-        }
-        SECTION("trigger cost") {
-            definition.power_trigger += 1_J;
-            expected_fragment = "1 J trigger";
-        }
-        SECTION("calorie cost") {
-            definition.kcal_trigger += 1;
-            expected_fragment = "1 kcal trigger";
-        }
-        SECTION("periodic power") {
-            definition.charge_time = 2;
-            definition.power_over_time = 1_J;
-            expected_fragment = "1 J/2 turns";
-        }
-        SECTION("powered state") {
-            bio.powered = true;
-            expected_fragment = "Power usage: 8 J act, 2 J deact, ON";
-        }
-        SECTION("incapacitation") {
-            bio.incapacitated_time = 1_hours;
-            expected_fragment = "(incapacitated)";
-        }
-        SECTION("sprite visibility") {
-            bio.show_sprite = false;
-            expected_fragment = "(hidden)";
-        }
-        SECTION("safe fuel state") { bio.toggle_safe_fuel_mod(); }
-        SECTION("auto-start threshold") {
-            bio.set_auto_start_thresh(0.5f);
-            expected_fragment = "auto start < 50 %";
-        }
-        SECTION("multi-install count") {
-            add_instance = true;
-            expected_fragment = "You have 3 instances";
-        }
-        SECTION("slot count") {
-            definition.occupied_bodyparts.begin()->second = 2;
-            expected_fragment = "(2 slots);";
-        }
-        SECTION("heading") {
-            heading = no_translation("new heading");
-            expected_fragment = "new heading (1 slots);";
-        }
-        SECTION("slot option") { get_options().get_option("CBM_SLOTS_ENABLED").setValue("false"); }
-        // First render is after producer mutation: the old boundary must still own every input.
-        const auto retained = client::current_interaction({.limit = 1});
-        CHECK(retained.schema_id == metadata.schema_id);
-        REQUIRE(retained.choices.size() == 1);
-        CHECK(retained.choices.front().description == old_text);
-        return input_event{KEY_ESCAPE, input_event_t::keyboard};
+        return action("QUIT");
     });
-    show_bionics_ui(you);
-    // Structural collection mutation must not invalidate pointers held by a running native UI.
-    if (add_instance) {
-        you.add_bionic(fixture);
-        REQUIRE(you.count_bionic_of_type(fixture) == 3);
-    }
-    const auto current = capture();
-    CHECK((current.schema_id != previous.schema_id) == changes_schema);
-    CHECK((current.choices.front().description != old_text) == changes_text);
-    CHECK(previous.choices.front().description == old_text);
-    if (!expected_fragment.empty()) {
-        CHECK(current.choices.front().description.find(expected_fragment) != std::string::npos);
-    }
-    if (!changes_schema) { CHECK(current.message == previous.message); }
+    show_bionics_ui(get_avatar());
 }
 
 #endif

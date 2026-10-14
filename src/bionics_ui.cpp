@@ -1,5 +1,4 @@
 #include "bionics_ui.h"
-#include "bionics_ui_observation.h"
 
 #include <algorithm> //std::min
 #include <array>
@@ -8,6 +7,8 @@
 #include <ranges>
 
 #include "client_interaction_prepared.h"
+#include "engine_client_component.h"
+#include "engine_client_requirements.h"
 #include "popup.h"
 
 #include "avatar.h"
@@ -45,8 +46,6 @@ bionic_chars( "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ\"#&()*+./:;@
 
 namespace
 {
-thread_local auto description_work = bionics_ui::description_work_counts {};
-
 enum bionic_tab_mode {
     TAB_ACTIVE,
     TAB_PASSIVE
@@ -199,48 +198,36 @@ char get_free_invlet( bionic_collection &bionics )
     return ' ';
 }
 
-namespace
+/// What the available fuels of the bionics add up to; empty when none burns.
+static auto available_fuel_text( Character &who ) -> std::string
 {
-struct bionics_header {
-    std::string power;
-    std::string help;
-    std::string fuel;
-};
-} // namespace
-
-static auto draw_bionics_titlebar( const catacurses::window &window, Character *who,
-                                   bionic_menu_mode mode ) -> bionics_header
-{
-    input_context ctxt( "BIONICS" );
     static const flag_id json_flag_PERPETUAL( "PERPETUAL" );
-
-    werase( window );
     std::string fuel_string;
     bool found_fuel = false;
     fuel_string = _( "Available Fuel: " );
-    for( const bionic &bio : *who->my_bionics ) {
-        for( const itype_id &fuel : who->get_fuel_available( bio.id ) ) {
+    for( const bionic &bio : *who.my_bionics ) {
+        for( const itype_id &fuel : who.get_fuel_available( bio.id ) ) {
             found_fuel = true;
             //TODO!: figure out tname so we don't need this, it's an infinite one
             const item &temp_fuel = *item::spawn_temporary( fuel );
             if( temp_fuel.has_flag( json_flag_PERPETUAL ) ) {
-                if( fuel == itype_id( "sunlight" ) && !g->is_in_sunlight( who->bub_pos() ) ) {
+                if( fuel == itype_id( "sunlight" ) && !g->is_in_sunlight( who.bub_pos() ) ) {
                     continue;
                 }
                 fuel_string += colorize( temp_fuel.tname(), c_green ) + " ";
                 continue;
             }
-            fuel_string += temp_fuel.tname() + ": " + colorize( who->get_value( fuel.str() ),
-                           c_green ) + "/" + std::to_string( who->get_total_fuel_capacity( fuel ) ) + " ";
+            fuel_string += temp_fuel.tname() + ": " + colorize( who.get_value( fuel.str() ),
+                           c_green ) + "/" + std::to_string( who.get_total_fuel_capacity( fuel ) ) + " ";
         }
-        if( bio.info().is_remote_fueled && who->has_active_bionic( bio.id ) ) {
-            const itype_id rem_fuel = who->find_remote_fuel( true );
+        if( bio.info().is_remote_fueled && who.has_active_bionic( bio.id ) ) {
+            const itype_id rem_fuel = who.find_remote_fuel( true );
             if( !rem_fuel.is_empty() ) {
                 const item &tmp_rem_fuel = *item::spawn_temporary( rem_fuel );
                 if( tmp_rem_fuel.has_flag( json_flag_PERPETUAL ) ) {
                     fuel_string += colorize( tmp_rem_fuel.tname(), c_green ) + " ";
                 } else {
-                    fuel_string += tmp_rem_fuel.tname() + ": " + colorize( who->get_value( "rem_" + rem_fuel.str() ),
+                    fuel_string += tmp_rem_fuel.tname() + ": " + colorize( who.get_value( "rem_" + rem_fuel.str() ),
                                    c_green ) + " ";
                 }
                 found_fuel = true;
@@ -250,24 +237,73 @@ static auto draw_bionics_titlebar( const catacurses::window &window, Character *
     if( !found_fuel ) {
         fuel_string.clear();
     }
-    std::string power_string;
-    const int curr_power = units::to_joule( who->get_power_level() );
+    return fuel_string;
+}
+
+namespace
+{
+/// The stored power as the title shows it: kilojoules with the joules after the separator, or joules alone.
+struct power_figure {
+    std::string value;
+    std::string unit;
+};
+
+auto power_level_figure( const Character &who ) -> power_figure
+{
+    const int curr_power = units::to_joule( who.get_power_level() );
     const int kilo = curr_power / units::to_joule( 1_kJ );
     const int joule = ( curr_power % units::to_joule( 1_kJ ) ) / units::to_joule( 1_J );
     if( kilo > 0 ) {
-        power_string = std::to_string( kilo );
+        auto value = std::to_string( kilo );
         if( joule > 0 ) {
-            power_string += pgettext( "decimal separator", "." ) + std::to_string( joule );
+            value += pgettext( "decimal separator", "." ) + std::to_string( joule );
         }
-        power_string += pgettext( "energy unit: kilojoule", "kJ" );
-    } else {
-        power_string = std::to_string( joule );
-        power_string += pgettext( "energy unit: joule", "J" );
+        return { .value = std::move( value ), .unit = pgettext( "energy unit: kilojoule", "kJ" ) };
     }
+    return { .value = std::to_string( joule ), .unit = pgettext( "energy unit: joule", "J" ) };
+}
 
+/// The line the title shows under the power: what the mode does and the keys that change it.
+auto bionics_help( const bionic_menu_mode mode, const input_context &ctxt ) -> std::string
+{
+    std::string desc_append = string_format(
+                                  _( "[<color_yellow>%s</color>] Reassign, [<color_yellow>%s</color>] Switch tabs, "
+                                     "[<color_yellow>%s</color>] Toggle fuel saving mode, "
+                                     "[<color_yellow>%s</color>] Toggle sprite visibility, "
+                                     "[<color_yellow>%s</color>] Toggle auto start mode." ),
+                                  ctxt.get_desc( "REASSIGN" ), ctxt.get_desc( "NEXT_TAB" ), ctxt.get_desc( "TOGGLE_SAFE_FUEL" ),
+                                  ctxt.get_desc( "TOGGLE_SPRITE" ),
+                                  ctxt.get_desc( "TOGGLE_AUTO_START" ) );
+    desc_append += string_format( _( " [<color_yellow>%s</color>] Sort: %s" ), ctxt.get_desc( "SORT" ),
+                                  sort_mode_str( uistate.bionic_sort_mode ) );
+    switch( mode ) {
+        case REASSIGNING:
+            return _( "Reassigning.  Select a bionic to reassign or press [<color_yellow>SPACE</color>] to cancel." );
+        case ACTIVATING:
+            return string_format( _( "<color_green>Activating</color>  "
+                                     "[<color_yellow>%s</color>] Examine, %s" ),
+                                  ctxt.get_desc( "TOGGLE_EXAMINE" ), desc_append );
+        case EXAMINING:
+            return string_format( _( "<color_light_blue>Examining</color>  "
+                                     "[<color_yellow>%s</color>] Activate, %s" ),
+                                  ctxt.get_desc( "TOGGLE_EXAMINE" ), desc_append );
+    }
+    return {};
+}
+} // namespace
+
+static void draw_bionics_titlebar( const catacurses::window &window, Character *who,
+                                   bionic_menu_mode mode )
+{
+    input_context ctxt( "BIONICS" );
+
+    werase( window );
+    auto fuel_string = mode == REASSIGNING ? std::string{} :
+                       available_fuel_text( *who );
+    const auto [power_value, power_unit] = power_level_figure( *who );
     const auto power = string_format(
                            _( "Bionic Power: <color_light_blue>%s</color>/<color_light_blue>%ikJ</color>" ),
-                           power_string, units::to_kilojoule( who->get_max_power_level() ) );
+                           power_value + power_unit, units::to_kilojoule( who->get_max_power_level() ) );
     const int pwr_str_pos = right_print( window, 1, 1, c_white, power );
 
     mvwputch( window, point( pwr_str_pos - 1, 1 ), BORDER_COLOR, LINE_XOXO ); // |
@@ -281,36 +317,11 @@ static auto draw_bionics_titlebar( const catacurses::window &window, Character *
     mvwputch( window, point( pwr_str_pos - 1, 0 ), BORDER_COLOR, LINE_OXXX ); // ^|^
     center_print( window, 0, c_light_red, _( " BIONICS " ) );
 
-    std::string desc_append = string_format(
-                                  _( "[<color_yellow>%s</color>] Reassign, [<color_yellow>%s</color>] Switch tabs, "
-                                     "[<color_yellow>%s</color>] Toggle fuel saving mode, "
-                                     "[<color_yellow>%s</color>] Toggle sprite visibility, "
-                                     "[<color_yellow>%s</color>] Toggle auto start mode." ),
-                                  ctxt.get_desc( "REASSIGN" ), ctxt.get_desc( "NEXT_TAB" ), ctxt.get_desc( "TOGGLE_SAFE_FUEL" ),
-                                  ctxt.get_desc( "TOGGLE_SPRITE" ),
-                                  ctxt.get_desc( "TOGGLE_AUTO_START" ) );
-    desc_append += string_format( _( " [<color_yellow>%s</color>] Sort: %s" ), ctxt.get_desc( "SORT" ),
-                                  sort_mode_str( uistate.bionic_sort_mode ) );
-    std::string desc;
-    if( mode == REASSIGNING ) {
-        desc = _( "Reassigning.  Select a bionic to reassign or press [<color_yellow>SPACE</color>] to cancel." );
-        fuel_string.clear();
-    } else if( mode == ACTIVATING ) {
-        desc = string_format( _( "<color_green>Activating</color>  "
-                                 "[<color_yellow>%s</color>] Examine, %s" ),
-                              ctxt.get_desc( "TOGGLE_EXAMINE" ), desc_append );
-    } else if( mode == EXAMINING ) {
-        desc = string_format( _( "<color_light_blue>Examining</color>  "
-                                 "[<color_yellow>%s</color>] Activate, %s" ),
-                              ctxt.get_desc( "TOGGLE_EXAMINE" ), desc_append );
-    }
-
     // NOLINTNEXTLINE(cata-use-named-point-constants)
-    int lines_count = fold_and_print( window, point( 1, 1 ), pwr_str_pos - 2, c_white, desc );
+    int lines_count = fold_and_print( window, point( 1, 1 ), pwr_str_pos - 2, c_white,
+                                      bionics_help( mode, ctxt ) );
     fold_and_print( window, point( 1, ++lines_count ), pwr_str_pos - 2, c_white, fuel_string );
     wnoutrefresh( window );
-    return { .power = remove_color_tags( power ), .help = remove_color_tags( desc ),
-             .fuel = remove_color_tags( fuel_string ) };
 }
 
 //builds the power usage string of a given bionic
@@ -432,7 +443,6 @@ static void draw_bionics_tabs( const catacurses::window &win, const size_t activ
 static void draw_description( const catacurses::window &win, const bionic &bio,
                               const Character &who )
 {
-    ++description_work.native;
     werase( win );
     const int width = getmaxx( win );
     const std::string poweronly_string = build_bionic_poweronly_string( bio );
@@ -607,90 +617,172 @@ nc_color get_bionic_text_color( const bionic &bio, const bool isHighlightedBioni
 
 namespace
 {
-auto bionic_choice_id( const bionic &bio ) -> std::string
+namespace ec = engine_client;
+
+constexpr auto tabs_id = "bionics:tabs";
+constexpr auto list_id = "bionics:list";
+constexpr auto select_tab_id = "bionics:tab";
+constexpr auto pick_id = "bionics:pick";
+
+/// What the screen shows, as its loop keeps it: the focus is read when the screen is published.
+struct bionics_model {
+    Character &who;
+    const sorted_bionics &active;
+    const sorted_bionics &passive;
+    const bionic_tab_mode &tab;
+    const bionic_menu_mode &mode;
+    const int &cursor;
+    const input_context &ctxt;
+};
+
+auto tab_name( const bionic_tab_mode tab ) -> std::string { return tab == TAB_ACTIVE ? "active" : "passive"; }
+
+auto listed( const bionics_model &model ) -> const sorted_bionics & // *NOPAD*
 {
-    return game_client::opaque_interaction_id( "bionic", { bio.id.str() } );
+    return model.tab == TAB_ACTIVE ? model.active : model.passive;
 }
 
-struct occupied_slot_description {
-    localization::translation_snapshot heading;
-    int slots = 0;
-};
-struct bionic_description_input {
-    localization::translation_snapshot name;
-    localization::translation_snapshot description;
-    std::string power;
-    std::optional<int> count;
-    bool show_slots = false;
-    std::vector<occupied_slot_description> occupied;
-};
-struct bionic_description_model {
-    localization::locale_snapshot locale;
-    std::vector<bionic_description_input> rows;
-};
+/// A bionic by what it is: one row per kind, as the lists hold them.
+auto bionic_row_id( const bionic &bio ) -> std::string { return "bionic:" + bio.id.str(); }
 
-auto capture_bionic_description( const bionic &bio,
-                                 const Character &who ) -> bionic_description_input
+/// Why the bionic cannot be activated now; empty when it can, or when the screen is not activating.
+auto activation_denial( const bionics_model &model, const bionic &bio ) -> std::string
 {
-    auto result = bionic_description_input{
-        .name = bio.id->name.snapshot(), .description = bio.id->description.snapshot(),
-        .power = build_bionic_poweronly_string( bio ),
-        .count = bio.info().has_flag( flag_MULTIINSTALL ) ?
-std::optional{ who.count_bionic_of_type( bio.id ) } :
-        std::nullopt,
-        .show_slots = get_option<bool>( "CBM_SLOTS_ENABLED" ),
+    if( model.mode != ACTIVATING ) {
+        return {};
+    }
+    if( !bio.info().activated ) {
+        return string_format( _( "You can not activate %s!\n"
+                                 "To read a description of %s, press '%s'" ), bio.info().name,
+                              bio.info().name, model.ctxt.get_desc( "TOGGLE_EXAMINE" ) );
+    }
+    if( bio.incapacitated_time > 0_turns ) {
+        return string_format( bio.powered ?
+                              _( "Your %s is shorting out and can't be deactivated." ) :
+                              _( "Your %s is shorting out and can't be activated." ), bio.info().name );
+    }
+    if( !bio.powered && !model.who.enough_power_for( bio.id ) ) {
+        return string_format( _( "You don't have the power to activate your %s." ), bio.info().name );
+    }
+    return {};
+}
+
+auto is_fueled( const bionic &bio ) -> bool { return !bio.info().fuel_opts.empty() || bio.info().is_remote_fueled; }
+
+/// What the examining mode describes of a bionic: its name, power use, text, instances and slots.
+auto bionic_description( const bionic &bio, const Character &who ) -> std::string
+{
+    auto text = colorize( bio.id->name.translated(), c_white );
+    if( const auto power = build_bionic_poweronly_string( bio ); !power.empty() ) {
+        text += "\n" + colorize( string_format( _( "Power usage: %s" ), power ), c_light_gray );
+    }
+    text += "\n\n" + colorize( bio.id->description.translated(), c_light_blue );
+    if( bio.info().has_flag( flag_MULTIINSTALL ) ) {
+        if( const auto count = who.count_bionic_of_type( bio.id ); count != 1 ) {
+            text += "\n" + colorize( string_format( "You have %s instances of this bionic installed.", count ),
+                                     c_magenta );
+        }
+    }
+    if( get_option<bool>( "CBM_SLOTS_ENABLED" ) ) {
+        text += "\n" + colorize( list_occupied_bps( bio.id,
+                                 _( "This bionic occupies the following body parts:" ), true ), c_light_gray );
+    }
+    return text;
+}
+
+auto bionic_rows( const bionics_model &model ) -> std::vector<ec::row>
+{
+    using namespace std::views;
+    return listed( model ) | transform( [&]( const bionic * bio ) {
+        const auto denial = activation_denial( model, *bio );
+        return ec::row{
+            .id = bionic_row_id( *bio ),
+            .label = remove_color_tags( build_bionic_powerdesc_string( *bio ) ),
+            .denial = denial,
+.hotkey = bio->invlet == '\0' ? std::string{} :
+            std::string( 1, bio->invlet ),
+            .enabled = denial.empty(),
+            .columns = {
+                { .key = "power", .label = _( "Power" ), .value = build_bionic_poweronly_string( *bio ) },
+                { .key = "state", .label = _( "State" ), .value = bionic_state_string( *bio ) },
+                { .key = "fuel", .label = _( "Fuel" ), .value = build_bionic_fuel_string( *bio, model.who ) },
+            },
+            .color = string_from_color( get_bionic_text_color( *bio, false ) ),
+        };
+    } ) | std::ranges::to<std::vector>();
+}
+
+/// The power the title shows, with the capacity it can reach.
+auto power_stat( const bionics_model &model ) -> ec::panel_stat
+{
+    const auto format = std::string(
+                            _( "Bionic Power: <color_light_blue>%s</color>/<color_light_blue>%ikJ</color>" ) );
+    const auto [value, unit] = power_level_figure( model.who );
+    return { .key = "power", .label = ec::caption( format.substr( 0, format.find( '<' ) ) ), .value = value,
+             .max = std::to_string( units::to_kilojoule( model.who.get_max_power_level() ) ), .unit = unit };
+}
+
+/// How many slots each body part has taken, when slots are in play.
+auto slot_stats( const bionics_model &model ) -> std::vector<ec::panel_stat>
+{
+    using namespace std::views;
+    return model.who.get_all_body_parts() | transform( [&]( const bodypart_id & bp ) {
+        const auto total = model.who.get_total_bionics_slots( bp );
+        return ec::panel_stat{ .key = "slot:" + bp.id().str(), .label = body_part_name_as_heading( bp->token, 1 ),
+                               .value = std::to_string( total - model.who.get_free_bionics_slots( bp ) ), .max = std::to_string( total ) };
+    } ) | std::ranges::to<std::vector>();
+}
+
+auto bionics_view( const bionics_model &model ) -> ec::screen_view
+{
+    const auto &list = listed( model );
+    const auto empty_text = model.tab == TAB_ACTIVE ? _( "No activatable bionics installed." ) :
+                            _( "No passive bionics installed." );
+    auto parts = std::vector<ec::component> {};
+    parts.push_back( ec::panel( { .id = "bionics:status", .title = _( " BIONICS " ), .stats = { power_stat( model ) },
+                                  .child = ec::component{ .id = "bionics:help", .body = ec::text_body{ .markup = bionics_help( model.mode, model.ctxt ) } } } ) );
+    if( const auto fuel = model.mode == REASSIGNING ? std::string{} : available_fuel_text( model.who );
+        !fuel.empty() ) {
+        parts.push_back( { .id = "bionics:fuel", .body = ec::text_body{ .markup = fuel } } );
+    }
+    auto entries = std::vector<ec::tab_entry> {
+        { .id = tab_name( TAB_ACTIVE ), .label = string_format( _( "ACTIVE (%i)" ), model.active.size() ), .selected = model.tab == TAB_ACTIVE },
+        { .id = tab_name( TAB_PASSIVE ), .label = string_format( _( "PASSIVE (%i)" ), model.passive.size() ), .selected = model.tab == TAB_PASSIVE },
     };
-    if( result.show_slots ) {
-        for( const auto &entry : bio.id->occupied_bodyparts ) {
-            // Match the native legacy-token heading lookup, not a guessed custom-part label.
-            result.occupied.push_back( {
-                .heading = convert_bp( entry.first->token )->name_as_heading.snapshot(), .slots = entry.second } );
+    parts.push_back( ec::tabs( { .id = tabs_id, .tabs = std::move( entries ), .select = select_tab_id,
+                                 .child = ec::list( { .id = list_id, .rows = bionic_rows( model ), .selection = "single", .activate = pick_id } ) } ) );
+    if( list.empty() ) {
+        parts.push_back( { .id = "bionics:empty", .body = ec::text_body{ .markup = empty_text } } );
+    }
+    if( get_option<bool>( "CBM_SLOTS_ENABLED" ) ) {
+        parts.push_back( ec::panel( { .id = "bionics:slots", .stats = slot_stats( model ) } ) );
+    }
+    const auto at_cursor = !list.empty() &&
+                           static_cast<std::size_t>( model.cursor ) < list.size() ? list[model.cursor] : nullptr;
+    if( at_cursor != nullptr && model.mode == EXAMINING ) {
+        parts.push_back( { .id = "bionics:description", .body = ec::text_body{ .markup = bionic_description( *at_cursor, model.who ) } } );
+    }
+    auto denials = std::vector<ec::denial> {};
+    if( at_cursor != nullptr ) {
+        if( const auto reason = activation_denial( model, *at_cursor ); !reason.empty() ) {
+            denials.push_back( { .id = "CONFIRM", .reason = reason } );
+        }
+        if( !is_fueled( *at_cursor ) ) {
+            denials.push_back( { .id = "TOGGLE_SAFE_FUEL", .reason = _( "You can't toggle fuel saving mode on a non-fueled CBM." ) } );
+            denials.push_back( { .id = "TOGGLE_AUTO_START", .reason = _( "You can't toggle auto start mode on a non-fueled CBM." ) } );
         }
     }
-    return result;
-}
-
-auto bionic_description_key( const bionic_description_input &input,
-                             const localization::locale_snapshot &locale ) -> std::string
-{
-    auto hash = localization::content_hash{};
-    hash.add( "bionic-description-v1" );
-    hash.add( std::to_string( locale.fingerprint() ) );
-    hash.add( std::to_string( input.name.fingerprint() ) );
-    hash.add( std::to_string( input.description.fingerprint() ) );
-    hash.add( input.power );
-    hash.add( input.count ? std::to_string( *input.count ) : "single-install" );
-    hash.add( input.show_slots ? "slots" : "no-slots" );
-    for( const auto &entry : input.occupied ) {
-        hash.add( std::to_string( entry.heading.fingerprint() ) );
-        hash.add( std::to_string( entry.slots ) );
-    }
-    return std::to_string( hash.value() );
-}
-
-auto bionic_details( const bionic_description_input &input,
-                     const localization::locale_snapshot &locale ) -> std::string
-{
-    ++description_work.semantic;
-    auto result = input.name.translated( locale );
-    if( !input.power.empty() ) {
-        result += "\n" + string_format( locale.library().get( "Power usage: %s" ), input.power );
-    }
-    result += "\n\n" + input.description.translated( locale );
-    if( input.count && *input.count != 1 ) {
-        result += "\n" + string_format( "You have %s instances of this bionic installed.", *input.count );
-    }
-    if( input.show_slots ) {
-        result += "\n";
-        if( !input.occupied.empty() ) {
-            result += locale.library().get( "This bionic occupies the following body parts:" );
-            for( const auto &entry : input.occupied ) {
-                result += "\n" + string_format( locale.library().get( "%s (%i slots);" ),
-                                                entry.heading.translated( locale ), entry.slots );
-            }
-        }
-    }
-    return remove_color_tags( result );
+    return {
+        .title = _( " BIONICS " ),
+        .root = ec::split( { .id = "bionics:panes", .children = std::move( parts ) } ),
+        .affordances = {
+            ec::invoke_affordance( { .id = select_tab_id, .label = _( "Category" ), .args = { .row = ec::row_shape{ .component_id = tabs_id } } } ),
+            ec::invoke_affordance( { .id = pick_id, .label = _( "Select" ), .args = { .row = ec::row_shape{ .component_id = list_id } }, .role = "select" } ),
+        },
+        .denials = std::move( denials ),
+        .focus_component = list_id,
+        .focus_row = at_cursor != nullptr ? bionic_row_id( *at_cursor ) : std::string{},
+    };
 }
 
 /// Keep the native one-key popup, with an owned semantic draft and explicit submit.
@@ -743,12 +835,6 @@ auto reassign_bionic_letter( const bionic &bio ) -> int
 }
 } // namespace
 
-namespace bionics_ui
-{
-auto description_work() -> description_work_counts { return ::description_work; }
-auto reset_description_work() -> void { ::description_work = {}; }
-} // namespace bionics_ui
-
 void show_bionics_ui( Character &who )
 {
     bionic_collection &bionics = *who.my_bionics;
@@ -771,7 +857,6 @@ void show_bionics_ui( Character &who )
     catacurses::window w_tabs;
 
     bool hide = false;
-    auto header = bionics_header{};
     ui_adaptor ui;
     ui.on_screen_resize( [&]( ui_adaptor & ui ) {
         if( hide ) {
@@ -921,12 +1006,14 @@ void show_bionics_ui( Character &who )
         wnoutrefresh( wBio );
         draw_bionics_tabs( w_tabs, active.size(), passive.size(), tab_mode );
 
-        header = draw_bionics_titlebar( w_title, &who, menu_mode );
+        draw_bionics_titlebar( w_title, &who, menu_mode );
         if( menu_mode == EXAMINING && !current_bionic_list->empty() ) {
             draw_description( w_description, *( *current_bionic_list )[cursor], who );
         }
     } );
 
+    const auto model = bionics_model{ .who = who, .active = active, .passive = passive, .tab = tab_mode, .mode = menu_mode, .cursor = cursor, .ctxt = ctxt };
+    const auto screen = ec::screen_scope( ctxt, { .view = [&]( const ec::boundary_state & ) { return bionics_view( model ); } } );
     for( ;; ) {
         ui_manager::redraw();
 
@@ -944,105 +1031,24 @@ void show_bionics_ui( Character &who )
         }
 #endif
 
-        auto snapshot = game_client::interaction_snapshot{
-            .kind = game_client::interaction_kind::choices,
-            .title = _( " BIONICS " ),
-            .message = header.power + "\n" + header.help + "\n" + header.fuel,
-            .allow_cancel = true,
-            .panes = {
-                {
-                    .id = "active", .label = string_format( _( "ACTIVE (%i)" ), active.size() ),
-                    .role = tab_mode == TAB_ACTIVE ? "current" : "inactive"
-                },
-                {
-                    .id = "passive", .label = string_format( _( "PASSIVE (%i)" ), passive.size() ),
-                    .role = tab_mode == TAB_PASSIVE ? "current" : "inactive"
-                },
-            },
-        };
-        if( get_option<bool>( "CBM_SLOTS_ENABLED" ) ) {
-            for( const auto &bp : who.get_all_body_parts() ) {
-                const auto total = who.get_total_bionics_slots( bp );
-                snapshot.message += "\n" + string_format( "%s: %d/%d",
-                                    body_part_name_as_heading( bp->token, 1 ),
-                                    total - who.get_free_bionics_slots( bp ), total );
+        auto action = ctxt.handle_input();
+        if( const auto picked = ec::invoked( ctxt.get_raw_input() ) ) {
+            if( picked->affordance_id == select_tab_id && picked->args.row ) {
+                scroll_position = 0;
+                cursor = 0;
+                tab_mode = *picked->args.row == tab_name( TAB_ACTIVE ) ? TAB_ACTIVE : TAB_PASSIVE;
+                continue;
             }
-        }
-        if( current_bionic_list->empty() ) {
-            snapshot.message += "\n" + std::string( tab_mode == TAB_ACTIVE ?
-                                                    _( "No activatable bionics installed." ) : _( "No passive bionics installed." ) );
-        }
-        auto descriptions = std::make_shared<bionic_description_model>();
-        descriptions->locale = l10n_data::pin_library();
-        auto dependencies = std::vector<std::string> {};
-        for( const auto index : std::views::iota( std::size_t{ 0 }, current_bionic_list->size() ) ) {
-            const auto &bio = *( *current_bionic_list )[index];
-            auto denial = std::string{};
-            if( menu_mode == ACTIVATING ) {
-                if( !bio.info().activated ) {
-                    denial = string_format( _( "You can not activate %s!\n"
-                                               "To read a description of %s, press '%s'" ), bio.info().name,
-                                            bio.info().name, ctxt.get_desc( "TOGGLE_EXAMINE" ) );
-                } else if( bio.incapacitated_time > 0_turns ) {
-                    denial = string_format( bio.powered ?
-                                            _( "Your %s is shorting out and can't be deactivated." ) :
-                                            _( "Your %s is shorting out and can't be activated." ), bio.info().name );
-                } else if( !bio.powered && !who.enough_power_for( bio.id ) ) {
-                    denial = string_format( _( "You don't have the power to activate your %s." ),
-                                            bio.info().name );
-                }
+            const auto found = picked->affordance_id == pick_id &&
+                               picked->args.row ? std::ranges::find_if( *current_bionic_list,
+            [&]( const auto * bio ) { return bionic_row_id( *bio ) == *picked->args.row; } ) :
+                current_bionic_list->end();
+            if( found == current_bionic_list->end() ) {
+                continue;
             }
-            snapshot.choices.push_back( {
-                .id = bionic_choice_id( bio ),
-                .label = remove_color_tags( build_bionic_powerdesc_string( bio ) ),
-                .denial = denial,
-.hotkey = bio.invlet == '\0' ? std::string{} : std::string( 1, bio.invlet ),
-                .pane_id = tab_mode == TAB_ACTIVE ? "active" : "passive",
-                .enabled = denial.empty(),
-                .selectable = true,
-                .highlighted = index == static_cast<std::size_t>( cursor ),
-                .columns = {
-                    { .key = "power", .label = _( "Power" ), .value = build_bionic_poweronly_string( bio ) },
-                    { .key = "state", .label = _( "State" ), .value = bionic_state_string( bio ) },
-                    { .key = "fuel", .label = _( "Fuel" ), .value = build_bionic_fuel_string( bio, who ) },
-                },
-                .color = string_from_color( get_bionic_text_color( bio, false ) ),
-            } );
-            auto description = capture_bionic_description( bio, who );
-            dependencies.push_back( bionic_description_key( description, descriptions->locale ) );
-            descriptions->rows.push_back( std::move( description ) );
-        }
-        auto action = std::string{};
-        {
-            const auto scope = game_client::prepared_interaction_scope{
-                ctxt, game_client::prepare_interaction( ctxt, std::move( snapshot ), {
-                    .dependency_keys = std::move( dependencies ),
-                    .render = [owned = std::shared_ptr<const bionic_description_model>( std::move( descriptions ) )]( const auto index )
-                    {
-                        return index < owned->rows.size() ? bionic_details( owned->rows[index],
-                                owned->locale ) : std::string{};
-                    },
-                } ) };
-            action = ctxt.handle_input();
-        }
-        if( const auto &event = ctxt.get_raw_input().interaction ) {
-            if( event->operation == game_client::interaction_operation::cancel ) {
-                if( menu_mode == REASSIGNING ) {
-                    menu_mode = ACTIVATING;
-                    continue;
-                }
-                action = "QUIT";
-            } else if( event->operation == game_client::interaction_operation::choose ) {
-                const auto found = std::ranges::find_if( *current_bionic_list, [&]( const auto * bio ) {
-                    return bionic_choice_id( *bio ) == event->target_id;
-                } );
-                if( found == current_bionic_list->end() ) {
-                    continue;
-                }
-                cursor = std::distance( current_bionic_list->begin(), found );
-                scroll_position = clamp( cursor - half_list_view_location, 0, max_scroll_position );
-                action = "CONFIRM";
-            }
+            cursor = std::distance( current_bionic_list->begin(), found );
+            scroll_position = clamp( cursor - half_list_view_location, 0, max_scroll_position );
+            action = "CONFIRM";
         }
         const int ch = ctxt.get_raw_input().get_first_input();
         bionic *tmp = nullptr;

@@ -17,6 +17,8 @@
 #    include "cursesport.h"
 #    include "debug.h"
 #    include "distribution_grid.h"
+#    include "engine_client_component.h"
+#    include "engine_client_contract.h"
 #    include "game.h"
 #    include "input.h"
 #    include "item.h"
@@ -160,15 +162,23 @@ auto check_native_reads() -> void {
     const auto before = serialized(get_avatar());
     const auto rng = rng_get_engine();
     const auto messages = remote_messages();
-    const auto all = client::current_interaction({.limit = 200});
-    REQUIRE(all.context == "BIONICS");
-    const auto first = client::serialize_interaction(all);
-    for (const auto offset : std::views::iota(std::size_t{0}, all.choices.size() + 1)) {
-        const auto page = client::current_interaction({.offset = offset, .limit = 1});
-        CHECK(page.schema_id == all.schema_id);
-        CHECK(page.message == all.message);
-    }
-    CHECK(client::serialize_interaction(client::current_interaction({.limit = 200})) == first);
+    const auto read = []() {
+        const auto state = engine_client::capture_boundary(
+            {.epoch = "epoch:bionics",
+             .ready = {.phase = "waiting_for_input", .game_ready = true}});
+        REQUIRE(state.has_value());
+        return engine_client::top_screen(*state);
+    };
+    const auto screen = read();
+    REQUIRE(screen.context == "BIONICS");
+    REQUIRE(screen.root);
+    const auto* const list = engine_client::find_component(*screen.root, "bionics:list");
+    REQUIRE(list != nullptr);
+    // A second read of the same screen names the same rows and the same focus.
+    const auto again = read();
+    CHECK(again.focus_row == screen.focus_row);
+    CHECK(engine_client::row_ids(*list)
+          == engine_client::row_ids(*engine_client::find_component(*again.root, "bionics:list")));
     CHECK(serialized(get_avatar()) == before);
     CHECK(rng_get_engine() == rng);
     CHECK(remote_messages() == messages);

@@ -172,60 +172,6 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "the bionics list publishes power, state and color per row and switches its tabs by the native action",
-    "[client][interaction][mcp][screens]") {
-    clear_all_state();
-    clear_map();
-    auto& you = get_avatar();
-    clear_character(you, false);
-    you.add_bionic(bionic_id("bio_flashlight"));
-    you.add_bionic(bionic_id("bio_power_storage"));
-    const auto active_id = game_client::opaque_interaction_id("bionic", {"bio_flashlight"});
-    const auto passive_id = game_client::opaque_interaction_id("bionic", {"bio_power_storage"});
-    const auto guard = screen_guard{};
-    auto stage = 0;
-    open_screen(
-        [&] { show_bionics_ui(you); },
-        [&](const auto& snapshot) {
-            switch (stage++) {
-                case 0: {
-                    CHECK(snapshot.context == "BIONICS");
-                    REQUIRE(snapshot.panes.size() == 2);
-                    CHECK(snapshot.panes[0].role == "current");
-                    CHECK(snapshot.panes[1].role == "inactive");
-                    const auto flashlight = row(snapshot, active_id);
-                    REQUIRE(flashlight != snapshot.choices.end());
-                    CHECK(flashlight->pane_id == "active");
-                    CHECK(column(*flashlight, "state") == "Off");
-                    CHECK(column(*flashlight, "power").find("act") != std::string::npos);
-                    CHECK(flashlight->color == string_from_color(c_light_red));
-                    CHECK(row(snapshot, passive_id) == snapshot.choices.end());
-                    return event_of({.action = "NEXT_TAB"});
-                }
-                case 1: {
-                    REQUIRE(snapshot.panes.size() == 2);
-                    CHECK(snapshot.panes[1].role == "current");
-                    CHECK(row(snapshot, active_id) == snapshot.choices.end());
-                    const auto storage = row(snapshot, passive_id);
-                    REQUIRE(storage != snapshot.choices.end());
-                    CHECK(storage->pane_id == "passive");
-                    CHECK(column(*storage, "state") == "Passive");
-                    CHECK(storage->color == string_from_color(c_cyan));
-                    return event_of({.action = "NEXT_TAB"});
-                }
-                case 2:
-                    CHECK(snapshot.panes[0].role == "current");
-                    CHECK(row(snapshot, active_id) != snapshot.choices.end());
-                    return cancel(snapshot);
-                default:
-                    FAIL("unexpected extra screen " << snapshot.context);
-            }
-            return input_event{};
-        });
-    CHECK(stage == 3);
-}
-
-TEST_CASE(
     "the item list shows the items around and moves its cursor to a chosen one",
     "[client][interaction][mcp][screens]") {
     clear_all_state();
