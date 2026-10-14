@@ -3282,3 +3282,103 @@ Deno.test({
     }
   },
 })
+
+/** Hello, subscribe and the way to the main menu; returns the session there. */
+async function toMainMenu(client: Client): Promise<Session> {
+  const session = await startSession(client)
+  await session.acknowledge(() => atMainMenu(session.mirror))
+  return session
+}
+
+/** The world creation from its mods page to the end, naming the world; the options page is stepped over once, then entered. */
+async function createWorld(session: Session, name: string) {
+  const run = async (id: string, args?: Value) =>
+    assertEquals((await invokeOn(session, id, args)).stages.at(-1), "completed", id)
+  assertEquals(top(session).title, "World creation")
+  await run("worldgen:tab", { row: "options" })
+  assertEquals(top(session).title, "World options")
+  await run("NEXT_TAB")
+  assertEquals(top(session).title, "World creation")
+  await run("worldgen:confirm:name", { text: name })
+  assertEquals(
+    findComponent(top(session).root, "worldgen:confirm:name").fields[0].value,
+    name,
+  )
+  await run("NEXT_TAB")
+  await run("YES")
+}
+
+Deno.test({
+  name:
+    "stdio: New Game with a random character creates a world and a character through their affordances and starts the game",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      let session = await toMainMenu(client)
+      await session.pickId("new_game")
+      await session.pickId("new_game:random")
+      await createWorld(session, "Ada")
+      // The random character is offered for review on the overview.
+      assertEquals(top(session).title, "Character creation")
+      const tabs = findComponent(top(session).root, "newchar:tabs")
+      assertEquals(tabs.tabs.find((entry: Value) => entry.selected).id, "overview")
+      const refused = await invokeOn(session, "newchar:tab", { row: "nowhere" })
+      assertEquals(refused.error, "invalid_arguments")
+      assertEquals(
+        (await invokeOn(session, "newchar:tab", { row: "traits" })).stages.at(-1),
+        "completed",
+      )
+      assertEquals(
+        findComponent(top(session).root, "newchar:tabs").tabs
+          .find((entry: Value) => entry.selected).id,
+        "traits",
+      )
+      assertEquals(
+        (await invokeOn(session, "newchar:tab", { row: "overview" })).stages.at(-1),
+        "completed",
+      )
+      assertEquals((await invokeOn(session, "NEXT_TAB")).stages.at(-1), "completed")
+      // The answer starts the new world, so the old one is gone.
+      assertEquals((await invokeOn(session, "YES")).error, "stale_epoch")
+      assertEquals((await client.note()).method, "bn.resync")
+      session = new Session(client)
+      await session.start()
+      await session.acknowledge(() => session.mirror.interaction.interaction === null)
+      assertEquals(top(session).role, "map")
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
+Deno.test({
+  name: "stdio: New Game with Play Now starts the game and a preset without templates says so",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      let session = await toMainMenu(client)
+      await session.pickId("new_game")
+      await session.pickId("new_game:preset")
+      assertEquals(session.mirror.interaction.interaction.context, "POPUP_WAIT")
+      assertEquals((await invokeOn(session, "QUIT")).stages.at(-1), "completed")
+      await session.acknowledge(() => atMainMenu(session.mirror))
+      await session.pickId("new_game")
+      await session.pickId("new_game:play_now_default")
+      assertEquals((await client.note()).method, "bn.resync")
+      session = new Session(client)
+      await session.start()
+      await session.acknowledge(() => session.mirror.interaction.interaction === null)
+      assertEquals(top(session).role, "map")
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
