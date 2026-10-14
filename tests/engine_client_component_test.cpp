@@ -806,3 +806,37 @@ TEST_CASE(
         CHECK_FALSE(ec::row_ids(*ec::top_screen(map_only()).root));
     }
 }
+
+TEST_CASE(
+    "an action the screen denies is published disabled with the reason",
+    "[engine_client_component]") {
+    const auto context = input_context("TEST_DENIAL");
+    const auto scope = ec::screen_scope(
+        context, {.view = [](const auto&) {
+            return ec::screen_view{
+                .root = ec::panel({.id = "panel:one"}),
+                .denials = {{.id = "REPAIR", .reason = "Nothing is damaged."}, {.id = "UNBOUND"}}};
+        }});
+    const auto input = client::input_context_scope(context, "TEST_DENIAL");
+    auto state = map_only();
+    state.actions.push_back({.id = "REPAIR", .name = "Repair", .keys = {"r"}});
+    state.actions.push_back({.id = "INSTALL", .name = "Install", .keys = {"i"}});
+    const auto view = top_of(state);
+
+    CHECK_FALSE(affordance(view, "REPAIR").enabled);
+    CHECK(affordance(view, "REPAIR").denial == "Nothing is damaged.");
+    CHECK(affordance(view, "INSTALL").enabled);
+    CHECK(affordance(view, "INSTALL").denial.empty());
+    // A denial names no affordance of its own, and a refused action is not resolved.
+    CHECK(std::ranges::none_of(view.affordances, [](const auto& each) {
+        return each.id == "UNBOUND";
+    }));
+    CHECK_FALSE(ec::resolve_invoke(state, {.affordance_id = "REPAIR"}).has_value());
+    const auto listed = wire(state)["stack"].back()["affordances"];
+    const auto repair = std::ranges::find_if(listed, [](const auto& each) {
+        return each["id"] == "REPAIR";
+    });
+    REQUIRE(repair != listed.end());
+    CHECK((*repair)["enabled"] == false);
+    CHECK((*repair)["denial"] == "Nothing is damaged.");
+}
