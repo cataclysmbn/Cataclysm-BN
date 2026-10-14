@@ -269,9 +269,6 @@ TEST_CASE(
     CHECK(body<ec::list_body>(view.root->children.front()).activate == pickup::toggle_id);
     CHECK(ec::scope_of(find(pickup::toggle_id)) == ec::expect_scope::boundary);
     CHECK(find(pickup::count_id).args.count->min == 0);
-    CHECK(find(pickup::confirm_id).role == "confirm");
-    CHECK(find(pickup::cancel_id).role == "cancel");
-    CHECK(ec::scope_of(find(pickup::confirm_id)) == ec::expect_scope::screen);
 
     // A row the list holds can be marked; one it does not, and a count below the minimum, are
     // refused.

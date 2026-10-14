@@ -202,8 +202,6 @@ auto screen_of( const screen_options &opts ) -> ec::screen_view
             ec::invoke_affordance( { .id = toggle_id, .label = _( "Mark" ), .args = { .row = ec::row_shape{ .component_id = items_id } } } ),
             // Zero unmarks the stack; a number marks that many of it, and the whole stack when it reaches it.
             ec::invoke_affordance( { .id = count_id, .label = _( "Count" ), .args = { .row = ec::row_shape{ .component_id = items_id }, .count = ec::count_shape{ .min = 0 } } } ),
-            ec::invoke_affordance( { .id = confirm_id, .label = opts.ctxt.get_action_name( "CONFIRM" ), .role = "confirm" } ),
-            ec::invoke_affordance( { .id = cancel_id, .label = opts.ctxt.get_action_name( "QUIT" ), .role = "cancel" } ),
         },
         .focus_component = items_id,
         .focus_row = cursor,

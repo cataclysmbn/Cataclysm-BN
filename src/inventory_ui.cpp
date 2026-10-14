@@ -2174,8 +2174,6 @@ namespace
 {
 namespace ec = engine_client;
 
-constexpr auto confirm_id = "inventory:confirm";
-constexpr auto cancel_id = "inventory:cancel";
 auto list_id( const std::string &column_key ) -> std::string { return "list:" + column_key; }
 auto choose_id( const std::string &column_key ) -> std::string { return list_id( column_key ) + ":choose"; }
 auto count_id( const std::string &column_key ) -> std::string { return list_id( column_key ) + ":count"; }
@@ -2292,8 +2290,6 @@ auto inventory_selector::interaction_view() const -> ec::screen_view
         }
         panels.push_back( ec::panel( { .id = "panel:" + key, .child = std::move( items ) } ) );
     }
-    affordances.push_back( ec::invoke_affordance( { .id = confirm_id, .label = ctxt.get_action_name( "CONFIRM" ), .role = "confirm" } ) );
-    affordances.push_back( ec::invoke_affordance( { .id = cancel_id, .label = ctxt.get_action_name( "QUIT" ), .role = "cancel" } ) );
     auto stats = std::vector<ec::panel_stat> {};
     if( const auto totals = display_stats ? header_totals( get_raw_stats() ) : std::nullopt ) {
         stats.push_back( { .key = "weight", .label = _( "Weight" ), .value = totals->weight, .max = totals->weight_max,
@@ -2355,23 +2351,17 @@ inventory_input inventory_selector::get_input()
                 res.action = "SEMANTIC_COUNT";
             }
         } else if( const auto invoked = engine_client::invoked( event ) ) {
-            // A row of the published screen, chosen or given a count; the confirm and cancel buttons.
+            // A row of the published screen, chosen or given a count.
             res.entry = nullptr;
-            if( invoked->affordance_id == cancel_id ) {
-                res.action = "QUIT";
-            } else if( invoked->affordance_id == confirm_id ) {
-                res.action = "CONFIRM";
-            } else if( invoked->args.row ) {
-                const auto rows = interaction_rows();
-                const auto row = std::ranges::find( rows, *invoked->args.row, &interaction_row::id );
-                if( row != rows.end() && row->entry != nullptr ) {
-                    res.entry = row->entry;
-                    select( res.entry->any_item() );
-                    if( invoked->args.count ) {
-                        apply_semantic_count( *res.entry, static_cast<std::size_t>( *invoked->args.count ) );
-                        res.entry = nullptr;
-                        res.action = "SEMANTIC_COUNT";
-                    }
+            const auto rows = interaction_rows();
+            const auto row = std::ranges::find( rows, invoked->args.row.value_or( "" ), &interaction_row::id );
+            if( row != rows.end() && row->entry != nullptr ) {
+                res.entry = row->entry;
+                select( res.entry->any_item() );
+                if( invoked->args.count ) {
+                    apply_semantic_count( *res.entry, static_cast<std::size_t>( *invoked->args.count ) );
+                    res.entry = nullptr;
+                    res.action = "SEMANTIC_COUNT";
                 }
             }
         }

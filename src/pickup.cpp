@@ -1198,19 +1198,13 @@ auto pick_up_from_items( const pick_up_from_items_options &opts ) -> void
             ui_manager::redraw();
             action = ctxt.handle_input();
             raw_input_char = ctxt.get_raw_input().get_first_input();
-            if( const auto invoked = ec::invoked( ctxt.get_raw_input() ) ) {
-                if( invoked->affordance_id == pickup::cancel_id ) {
-                    action = "QUIT";
-                } else if( invoked->affordance_id == pickup::confirm_id ) {
-                    action = "CONFIRM";
-                } else if( invoked->args.row ) {
-                    const auto ids = pickup::choice_ids( screen_state() );
-                    const auto row = std::ranges::find( ids, *invoked->args.row );
-                    if( row != ids.end() ) {
-                        semantic_index = static_cast<int>( std::distance( ids.begin(), row ) );
-                        if( invoked->affordance_id == pickup::count_id ) {
-                            semantic_count = static_cast<int>( *invoked->args.count );
-                        }
+            if( const auto invoked = ec::invoked( ctxt.get_raw_input() ); invoked && invoked->args.row ) {
+                const auto ids = pickup::choice_ids( screen_state() );
+                const auto row = std::ranges::find( ids, *invoked->args.row );
+                if( row != ids.end() ) {
+                    semantic_index = static_cast<int>( std::distance( ids.begin(), row ) );
+                    if( invoked->affordance_id == pickup::count_id ) {
+                        semantic_count = static_cast<int>( *invoked->args.count );
                     }
                 }
             }

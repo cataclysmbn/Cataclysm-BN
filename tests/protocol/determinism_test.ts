@@ -424,7 +424,7 @@ async function playEveryOperation(session: Session) {
     affordance_id: selector().activate.replace(/:choose$/, ":count"),
     args: { row: selector().id, count: 1 },
   })
-  await run({ kind: "invoke", affordance_id: "inventory:cancel" })
+  await run({ kind: "invoke", affordance_id: "QUIT" })
   await run({ kind: "action", action_id: "throw" })
   await run({
     kind: "invoke",

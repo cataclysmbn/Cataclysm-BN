@@ -32,8 +32,6 @@ enum class source_kind { ground, vehicle_cargo, nearby };
 inline constexpr auto items_id = "pickup:items";
 inline constexpr auto toggle_id = "pickup:toggle";
 inline constexpr auto count_id = "pickup:count";
-inline constexpr auto confirm_id = "pickup:confirm";
-inline constexpr auto cancel_id = "pickup:cancel";
 
 /// The live state of a pickup list.
 struct screen_options {

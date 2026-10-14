@@ -148,7 +148,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "an empty inventory selector says so and offers only to leave",
+    "an empty inventory selector says so and offers nothing of its own",
     "[inventory][engine_client_component]") {
     clear_avatar();
     auto selector = plain_selector(get_avatar());
@@ -156,11 +156,7 @@ TEST_CASE(
     REQUIRE(view.root);
     CHECK(std::holds_alternative<ec::text_body>(view.root->children.front().body));
     CHECK(view.focus_row.empty());
-    const auto roles =
-        view.affordances | std::views::transform(&ec::affordance::role)
-        | std::ranges::to<std::vector>();
-    CHECK(std::ranges::contains(roles, "confirm"));
-    CHECK(std::ranges::contains(roles, "cancel"));
+    CHECK(view.affordances.empty());
 }
 
 TEST_CASE(

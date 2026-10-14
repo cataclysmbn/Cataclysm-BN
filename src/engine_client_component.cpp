@@ -165,10 +165,16 @@ auto native_affordances( build &b ) -> void
     }
 }
 
+/// The role a registered action plays on every screen that has it: CONFIRM accepts and QUIT leaves.
+auto registered_role( const std::string &id ) -> std::string
+{
+    return id == "CONFIRM" ? "confirm" : id == "QUIT" ? "cancel" : std::string{};
+}
+
 auto registered_affordances( const boundary_state &state ) -> std::vector<affordance>
 {
     return state.actions | std::views::transform( [&]( const auto & entry ) {
-        return affordance{ .id = entry.id, .label = entry.name, .keys = entry.keys, .target = entry.id };
+        return affordance{ .id = entry.id, .label = entry.name, .keys = entry.keys, .role = registered_role( entry.id ), .target = entry.id };
     } ) | std::ranges::to<std::vector>();
 }
 

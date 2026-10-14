@@ -117,6 +117,16 @@ TEST_CASE("an affordance label is the native action name", "[engine_client_compo
     CHECK(affordance(top_of(state), "bn:cancel").label == "Quit");
 }
 
+TEST_CASE("the registered CONFIRM accepts and QUIT leaves", "[engine_client_component]") {
+    auto state = boundary(menu());
+    state.actions.push_back({.id = "CONFIRM", .name = "Confirm", .keys = {"RETURN"}});
+    state.actions.push_back({.id = "QUIT", .name = "Quit", .keys = {"ESC"}});
+    const auto view = top_of(state);
+    CHECK(affordance(view, "CONFIRM").role == "confirm");
+    CHECK(affordance(view, "QUIT").role == "cancel");
+    CHECK(affordance(view, "UP").role.empty());
+}
+
 TEST_CASE("ids come from identity, not from the translated text", "[engine_client_component]") {
     auto korean = menu();
     korean.title = "카타클리즘";
