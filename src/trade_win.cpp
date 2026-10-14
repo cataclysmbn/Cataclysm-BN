@@ -417,19 +417,6 @@ auto trading_window::update_win( npc &np, const std::string &deal ) -> void
 
     auto ctxt = input_context( "NPC_TRADE" );
     register_trade_actions( ctxt, false );
-    ctxt.register_action( "SWITCH_LISTS" );
-    ctxt.register_action( "PAGE_UP" );
-    ctxt.register_action( "PAGE_DOWN" );
-    ctxt.register_action( "UP" );
-    ctxt.register_action( "DOWN" );
-    ctxt.register_action( "LEFT" );
-    ctxt.register_action( "RIGHT" );
-    ctxt.register_action( "FILTER" );
-    ctxt.register_action( "RESET_FILTER" );
-    ctxt.register_action( "EXAMINE" );
-    ctxt.register_action( "CONFIRM" );
-    ctxt.register_action( "QUIT" );
-    ctxt.register_action( "HELP_KEYBINDINGS" );
 
     werase( w_head );
     draw_border( w_head );
