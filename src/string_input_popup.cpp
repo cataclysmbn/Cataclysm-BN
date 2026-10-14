@@ -386,9 +386,9 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
 
     _canceled = false;
     _confirmed = false;
-    // A drawing-only call reads no input, so it is no screen of its own.
+    // A drawing-only call reads no input, so it is no screen of its own; nor is a field inside another screen.
     auto screen = std::optional<engine_client::screen_scope> {};
-    if( !draw_only ) { screen.emplace( *ctxt ); }
+    if( !draw_only && !shares_screen ) { screen.emplace( *ctxt ); }
     do {
         if( _position < 0 ) {
             _position = 0;
@@ -435,7 +435,7 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
         auto action = std::string{};
         auto ev = input_event{};
         {
-            const auto interaction = game_client::interaction_scope( *ctxt, [this, &ret, printable]() {
+            const auto field = [this, &ret, printable]() {
                 auto snapshot = game_client::interaction_snapshot{
                     .kind = game_client::interaction_kind::field,
                     .title = remove_color_tags( _title ),
@@ -453,7 +453,9 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
                 };
                 if( extend_interaction ) { extend_interaction( snapshot ); }
                 return snapshot;
-            } );
+            };
+            auto interaction = std::optional<game_client::interaction_scope> {};
+            if( !shares_screen ) { interaction.emplace( *ctxt, field ); }
             action = ctxt->handle_input();
             ev = ctxt->get_raw_input();
         }

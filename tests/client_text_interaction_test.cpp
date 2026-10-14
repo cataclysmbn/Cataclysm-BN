@@ -158,6 +158,33 @@ using client_screen_test::invoke_event;
 using client_screen_test::top_json;
 using client_screen_test::top_screen_now;
 
+/// The top screen of the interaction stack, as a client reads it.
+auto top_screen() -> engine_client::screen_view {
+    const auto state = engine_client::capture_boundary(
+        {.epoch = "epoch:help",
+         .ready =
+             {.phase = "waiting_for_input",
+              .game_ready = true,
+              .accepts_interaction_commands = true,
+              .accepts_registered_actions = true}});
+    REQUIRE(state.has_value());
+    return engine_client::top_screen(*state);
+}
+/// The ids of the action rows and the mode the keybindings screen is in.
+auto action_rows(const engine_client::screen_view& screen) -> std::vector<std::string> {
+    REQUIRE(screen.root);
+    const auto* const list = engine_client::find_component(*screen.root, "keybindings:actions");
+    REQUIRE(list != nullptr);
+    return std::get<engine_client::list_body>(list->body).rows
+         | std::views::transform(&engine_client::row::id) | std::ranges::to<std::vector>();
+}
+auto mode_of(const engine_client::screen_view& screen) -> std::size_t {
+    REQUIRE(screen.root);
+    const auto* const window = engine_client::find_component(*screen.root, "keybindings:window");
+    REQUIRE(window != nullptr);
+    return std::get<engine_client::panel_body>(window->body).stats.size();
+}
+
 auto resolve_action(const std::string& action) -> input_event {
     const auto result =
         game_client::resolve_input_command({.action = action}, game_client::memory::screen_size());
@@ -651,33 +678,31 @@ TEST_CASE(
         CHECK(snapshot.input_id > previous_input);
         previous_input = snapshot.input_id;
         if (reads == 3) {
-            CHECK(snapshot.context == "HELP_KEYBINDINGS");
-            CHECK(snapshot.kind == game_client::interaction_kind::field);
-            CHECK(snapshot.structured);
-            CHECK(snapshot.message != expected_text);
+            const auto screen = top_screen();
+            CHECK(screen.context == "HELP_KEYBINDINGS");
+            CHECK(screen.title == "Keybindings");
             // The first row is the cursor an engine client acts on; Down moves it.
-            CHECK(snapshot.focus_choice_id == "mode:add_local");
+            const auto actions = action_rows(screen);
+            REQUIRE(actions.size() > 1);
+            CHECK(screen.focus_row == actions[0]);
+            CHECK(mode_of(screen) == 0);
             return resolve_action("DOWN");
         }
         if (reads == 4) {
-            CHECK(snapshot.kind == game_client::interaction_kind::field);
-            CHECK(snapshot.focus_choice_id == "mode:add_global");
+            const auto screen = top_screen();
+            CHECK(screen.focus_row == action_rows(screen)[1]);
             return resolve_action("ADD_LOCAL");
         }
         if (reads == 5) {
-            CHECK(snapshot.context == "HELP_KEYBINDINGS");
-            CHECK(snapshot.structured);
-            CHECK(snapshot.kind == game_client::interaction_kind::choices);
-            CHECK(snapshot.title == "Keybindings");
-            CHECK(std::ranges::any_of(snapshot.choices, [](const auto& choice) {
-                return choice.id == "mode:add_local" && choice.selected;
-            }));
-            CHECK_FALSE(snapshot.field);
-            CHECK(snapshot.allow_cancel);
+            // A mode is a fact of the screen until it is left.
+            const auto screen = top_screen();
+            CHECK(screen.context == "HELP_KEYBINDINGS");
+            CHECK(mode_of(screen) == 1);
             return resolve_action("QUIT");
         }
-        CHECK(snapshot.context == "HELP_KEYBINDINGS");
-        CHECK(snapshot.kind == game_client::interaction_kind::field);
+        const auto screen = top_screen();
+        CHECK(screen.context == "HELP_KEYBINDINGS");
+        CHECK(mode_of(screen) == 0);
         return resolve_action("QUIT");
     });
     auto widget = help{};

@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <array>
+#include <charconv>
+#include <cmath>
 #include <locale>
 #include <cfloat>
 #include <climits>
@@ -21,6 +23,7 @@
 #include "cursesdef.h"
 #include "cursesport.h"
 #include "debug.h"
+#include "engine_client_component.h"
 #include "enum_bitset.h"
 #include "filesystem.h"
 #include "fstream_utils.h"
@@ -3673,6 +3676,20 @@ options_manager::PageItem::fmt_tooltip( const Group &group,
     }
 }
 
+namespace
+{
+namespace ec = engine_client;
+
+/// The components and affordances of the options screen.
+constexpr auto options_pages = "options:pages";
+constexpr auto options_items = "options:items";
+constexpr auto options_editor = "options:editor";
+constexpr auto options_page = "options:page";
+constexpr auto options_select = "options:select";
+constexpr auto options_activate = "options:activate";
+constexpr auto options_set = "options:set";
+} // namespace
+
 /** String with color */
 struct string_col {
     std::string s;
@@ -3944,133 +3961,212 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
     } );
 
     // What a client can set on an option directly, from the same values the native menu cycles through.
-    const auto editor_of = []( const cOpt & opt ) -> game_client::interaction_editor {
+    const auto field_of = []( const std::string & id, const cOpt & opt ) -> ec::form_field {
         const auto type = opt.getType();
-        auto editor = game_client::interaction_editor{ .value = opt.getValue( true ) };
+        auto field = ec::form_field{ .id = id, .label = opt.getMenuText(), .value = opt.getValue( true ) };
         if( type == "int" || type == "int_map" )
         {
-            editor.value = std::to_string( opt.iSet );
+            field.value = std::to_string( opt.iSet );
         }
         if( type == "bool" )
         {
-            editor.type = "bool";
+            field.type = "bool";
         } else if( type == "string_select" )
         {
-            editor.type = "select";
+            field.type = "select";
             for( const auto &item : opt.getItems() ) {
-                editor.values.push_back( { .id = item.first, .label = item.second.translated() } );
+                field.options.push_back( { .id = item.first, .label = item.second.translated() } );
             }
         } else if( type == "int_map" )
         {
-            editor.type = "select";
+            field.type = "select";
             for( const auto &[value, name] : opt.mIntValues ) {
-                editor.values.push_back( { .id = std::to_string( value ), .label = name } );
+                field.options.push_back( { .id = std::to_string( value ), .label = name } );
             }
         } else if( type == "int" )
         {
-            editor.type = "integer";
-            editor.minimum = opt.iMin;
-            editor.maximum = opt.iMax;
+            field.type = "integer";
+            field.min = opt.iMin;
+            field.max = opt.iMax;
         } else if( type == "float" )
         {
-            editor.type = "float";
-            editor.minimum = opt.fMin;
-            editor.maximum = opt.fMax;
+            field.type = "float";
+            field.min = opt.fMin;
+            field.max = opt.fMax;
         } else
         {
-            editor.type = "text";
-            editor.max_length = opt.getMaxLength() > 0 ? opt.getMaxLength() : -1;
+            field.max_length = opt.getMaxLength() > 0 ? opt.getMaxLength() : -1;
         }
-        return editor;
+        return field;
     };
+
+    // Whether the field offers the value, so a client cannot set what the native menu would refuse.
+    const auto accepts = []( const ec::form_field & field, const std::string & value ) -> bool {
+        if( field.type == "bool" )
+        {
+            return value == "true" || value == "false";
+        }
+        if( field.type == "select" )
+        {
+            return std::ranges::contains( field.options, value, &ec::form_option::id );
+        }
+        if( field.type == "integer" || field.type == "float" )
+        {
+            auto parsed = 0.0;
+            const auto *const end = value.data() + value.size();
+            const auto result = std::from_chars( value.data(), end, parsed );
+            return result.ec == std::errc{} &&result.ptr == end &&std::isfinite( parsed ) &&
+            ( field.type == "float" || parsed == std::trunc( parsed ) ) &&
+            ( !field.min || parsed >= *field.min ) &&( !field.max || parsed <= *field.max );
+        }
+        return field.max_length < 0 || utf8_width( value ) <= field.max_length;
+    };
+
+    const auto is_selectable = [&]( const PageItem & item ) -> bool {
+        switch( item.type )
+        {
+            case ItemType::BlankLine:
+                return false;
+            case ItemType::GroupHeader:
+                return true;
+            case ItemType::Option:
+                return groups_state[item.group];
+            default:
+                abort();
+        }
+    };
+    const auto row_id_of = []( const PageItem & item ) {
+        return ( item.type == ItemType::GroupHeader ? "group:" : "option:" ) + item.data;
+    };
+
+    // The pages as tabs over the entries of the current page, and beside them the tooltip and the value of
+    // the entry under the cursor.
+    const auto options_view = [&]() -> ec::screen_view {
+        const auto &cOPTIONS = ( ingame || world_options_only ) && iCurrentPage == iWorldOptPage ?
+        ACTIVE_WORLD_OPTIONS : OPTIONS;
+        const auto &page_items = pages_[iCurrentPage].items_;
+        const auto &cursor = page_items[iCurrentLine];
+        auto rows = std::vector<ec::row> {};
+        for( auto index = 0; index < static_cast<int>( page_items.size() ); ++index )
+        {
+            const auto &item = page_items[index];
+            if( !is_selectable( item ) ) {
+                continue;
+            }
+            if( item.type == ItemType::GroupHeader ) {
+                rows.push_back( { .id = row_id_of( item ), .label = find_group( item.data ).name_.translated(),
+                                  .selected = index == iCurrentLine, .toggled = groups_state[item.data] } );
+                continue;
+            }
+            const auto &opt = cOPTIONS.find( item.data )->second;
+            const auto met = !opt.hasPrerequisite() || opt.checkPrerequisite();
+            const auto value = opt.getValue();
+            const auto value_color = !met ? c_light_gray : value == "false" || value == "disabled" ||
+                                     value == "off" ? c_light_red : c_light_green;
+            rows.push_back( {
+                .id = row_id_of( item ), .label = opt.getMenuText(),
+.denial = met ? std::string{} : string_format( _( "Prerequisite for this option not met!\n(%s)" ),
+                        get_options().get_option( opt.getPrerequisite() ).getMenuText() ),
+                .enabled = met, .selected = index == iCurrentLine,
+                .columns = { { .key = "value", .label = _( "Value" ), .value = opt.getValueName(), .color = string_from_color( value_color ) } },
+.color = met ? std::string{} : string_from_color( c_light_gray ),
+.parent_id = item.group.empty() ? std::optional<std::string> {} : "group:" + item.group,
+            } );
+        }
+        const auto selected = cursor.type == ItemType::Option ? cOPTIONS.find( cursor.data ) : cOPTIONS.end();
+        const auto editable = selected != cOPTIONS.end() && ( !selected->second.hasPrerequisite() ||
+                              selected->second.checkPrerequisite() );
+        auto facts = ec::children_of( ec::component{ .id = "options:tooltip", .body = ec::text_body{
+                .markup = cursor.fmt_tooltip( find_group( cursor.group ), cOPTIONS ) } } );
+        if( ingame && iCurrentPage == iWorldOptPage )
+        {
+            facts.push_back( {
+                .id = "options:note", .body = ec::text_body{
+                    .markup = colorize( _( "Note: " ), c_light_red ) +
+                    _( "Some of these options may produce unexpected results if changed." ) } } );
+        }
+        if( editable )
+        {
+            facts.push_back( { .id = options_editor, .affordances = { options_set }, .body = ec::form_body{
+                    .fields = { field_of( row_id_of( cursor ), selected->second ) } } } );
+        }
+        const auto row_arg = ec::arg_shape{ .row = ec::row_shape{ .component_id = options_items } };
+        auto affordances = std::vector<ec::affordance> {
+            ec::invoke_affordance( { .id = options_select, .label = _( "Select" ), .args = row_arg, .role = "select" } ),
+            ec::invoke_affordance( { .id = options_activate, .label = ctxt.get_action_name( "CONFIRM" ), .args = row_arg } ),
+            ec::invoke_affordance( {
+                .id = options_set, .label = _( "Value" ), .args = {
+                    .row = ec::row_shape{ .component_id = options_editor }, .text = ec::text_shape{}
+                }, .enabled = editable } ),
+        };
+        auto items = ec::list( { .id = options_items, .rows = std::move( rows ), .selection = "single",
+                                 .activate = options_activate } );
+        items.affordances.push_back( options_select );
+        auto body = ec::split( {
+            .id = "options:body", .relation = "detail", .active = options_items,
+            .children = ec::children_of( std::move( items ), ec::panel( {
+                .id = "options:detail",
+                .title = cursor.type == ItemType::GroupHeader ? find_group( cursor.data ).name_.translated() :
+                selected != cOPTIONS.end() ? selected->second.getMenuText() : std::string{},
+                .child = ec::split( { .id = "options:facts", .children = std::move( facts ) } ) } ) ) } );
+        if( !world_options_only )
+        {
+            affordances.push_back( ec::invoke_affordance( {
+                .id = options_page, .label = _( "Options" ),
+                .args = { .row = ec::row_shape{ .component_id = options_pages } } } ) );
+            body = ec::tabs( {
+                .id = options_pages,
+                .tabs = std::views::iota( std::size_t{ 0 }, pages_.size() ) | std::views::transform( [&]( const auto index )
+                {
+                    return ec::tab_entry{
+                        .id = pages_[index].id_,
+                        .label = ingame && static_cast<int>( index ) == iWorldOptPage ?
+std::string{ _( "Current world" ) } :
+                        pages_[index].name_.translated(),
+                        .selected = static_cast<int>( index ) == iCurrentPage };
+                } ) | std::ranges::to<std::vector>(),
+                .select = options_page, .child = std::move( body ) } );
+        }
+        return { .title = world_options_only ? _( "World options" ) : _( "Options" ), .root = std::move( body ),
+                 .affordances = std::move( affordances ), .focus_component = options_items,
+                 .focus_row = is_selectable( cursor ) ? row_id_of( cursor ) : std::string{} };
+    };
+    const auto screen = ec::screen_scope( ctxt, { .role = "screen", .view = [&]( const auto & /*state*/ ) { return options_view(); } } );
 
     while( true ) {
         ui_manager::redraw();
 
-        Page &page = pages_[iCurrentPage];
-        auto &page_items = page.items_;
+        auto &page_items = pages_[iCurrentPage].items_;
 
         auto &cOPTIONS = ( ingame || world_options_only ) && iCurrentPage == iWorldOptPage ?
                          ACTIVE_WORLD_OPTIONS : OPTIONS;
 
-        // Tabs are the pages; the rows are the entries of the current page, as the native menu draws them.
-        const auto make_interaction = [&]() {
-            auto snapshot = game_client::interaction_snapshot{
-                .kind = game_client::interaction_kind::choices,
-                .title = world_options_only ? _( "World options" ) : _( "Options" ),
-                .allow_cancel = true,
-            };
-            for( auto index = std::size_t{ 0 }; !world_options_only && index < pages_.size(); ++index ) {
-                const auto selected = static_cast<int>( index ) == iCurrentPage;
-                const auto label = ingame && static_cast<int>( index ) == iWorldOptPage ?
-                                   std::string{ _( "Current world" ) } :
-                                   pages_[index].name_.translated();
-                snapshot.panes.push_back( { .id = "page:" + pages_[index].id_, .label = label,
-                                            .role = selected ? "focused" : "category" } );
-                snapshot.choices.push_back( { .id = "page:" + pages_[index].id_, .label = label,
-                                              .selected = selected, .highlighted = selected } );
-            }
-            for( auto index = 0; index < static_cast<int>( page_items.size() ); ++index ) {
-                const auto &item = page_items[index];
-                if( item.type == ItemType::BlankLine || ( item.type == ItemType::Option &&
-                        !groups_state[item.group] ) ) {
-                    continue;
-                }
-                auto choice = game_client::interaction_choice{
-                    .description = item.fmt_tooltip( find_group( item.group ), cOPTIONS ),
-                    .pane_id = "page:" + page.id_,
-                    .selected = index == iCurrentLine, .highlighted = index == iCurrentLine,
-                };
-                if( item.type == ItemType::GroupHeader ) {
-                    choice.id = "group:" + item.data;
-                    choice.label = find_group( item.data ).name_.translated();
-                    choice.columns = { { .key = "expanded", .label = _( "Expanded" ), .value = groups_state[item.data] ? "true" : "false" } };
-                } else {
-                    const auto &opt = cOPTIONS.find( item.data )->second;
-                    choice.id = "option:" + item.data;
-                    choice.label = ( item.group.empty() ? "" : "  " ) + opt.getMenuText();
-                    choice.columns = { { .key = "value", .label = _( "Value" ), .value = opt.getValueName() } };
-                    choice.editor = editor_of( opt );
-                    if( opt.hasPrerequisite() && !opt.checkPrerequisite() ) {
-                        choice.enabled = choice.selectable = false;
-                        choice.denial = string_format( _( "Prerequisite for this option not met!\n(%s)" ),
-                                                       get_options().get_option( opt.getPrerequisite() ).getMenuText() );
-                    }
-                }
-                snapshot.choices.push_back( std::move( choice ) );
-            }
-            return snapshot;
-        };
+        auto action = std::string{ ctxt.handle_input() };
 
-        auto action = std::string{};
-        {
-            const auto interaction = game_client::interaction_scope( ctxt, make_interaction );
-            action = ctxt.handle_input();
-        }
-
-        // A semantic choice moves the native cursor and then runs the native action, like a keypress.
-        const auto raw_input = ctxt.get_raw_input();
-        if( const auto &event = raw_input.interaction ) {
-            const auto row = std::ranges::find_if( page_items, [&]( const PageItem & item ) {
-                return event->target_id == ( item.type == ItemType::GroupHeader ? "group:" : "option:" ) +
-                       item.data;
-            } );
-            const auto page_index = std::ranges::find_if( pages_, [&]( const Page & candidate ) {
-                return event->target_id == "page:" + candidate.id_;
-            } );
+        // A client's affordance acts on the native cursor, like the keypress that does the same.
+        if( const auto invoked = ec::invoked( ctxt.get_raw_input() ) ) {
+            const auto &args = invoked->args;
+            const auto &id = invoked->affordance_id;
+            const auto row = args.row ? std::ranges::find_if( page_items, [&]( const PageItem & item ) {
+                return is_selectable( item ) && row_id_of( item ) == *args.row;
+            } ) : page_items.end();
+            const auto page_index = args.row ? std::ranges::find( pages_, *args.row,
+                                    &Page::id_ ) : pages_.end();
             action.clear();
-            if( event->operation == game_client::interaction_operation::cancel ) {
-                action = "QUIT";
-            } else if( page_index != pages_.end() ) {
+            if( id == options_page && page_index != pages_.end() && !world_options_only ) {
                 iCurrentPage = static_cast<int>( page_index - pages_.begin() );
                 iCurrentLine = 0;
                 iStartPos = 0;
             } else if( row != page_items.end() ) {
                 iCurrentLine = static_cast<int>( row - page_items.begin() );
-                if( event->operation == game_client::interaction_operation::fill ) {
-                    cOPTIONS[row->data].setValue( event->value );
-                } else {
+                if( id == options_activate ) {
                     action = "CONFIRM";
+                } else if( id == options_set && args.text && row->type == ItemType::Option ) {
+                    auto &opt = cOPTIONS[row->data];
+                    if( ( !opt.hasPrerequisite() || opt.checkPrerequisite() ) &&
+                        accepts( field_of( *args.row, opt ), *args.text ) ) {
+                        opt.setValue( *args.text );
+                    }
                 }
             }
         }
@@ -4137,35 +4233,20 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
             }
         };
 
-        const auto is_selectable = [&]( int i ) -> bool {
-            const PageItem &curr_item = page_items[i];
-            switch( curr_item.type )
-            {
-                case ItemType::BlankLine:
-                    return false;
-                case ItemType::GroupHeader:
-                    return true;
-                case ItemType::Option:
-                    return groups_state[curr_item.group];
-                default:
-                    abort();
-            }
-        };
-
         if( action == "DOWN" ) {
             do {
                 iCurrentLine++;
                 if( iCurrentLine >= static_cast<int>( page_items.size() ) ) {
                     iCurrentLine = 0;
                 }
-            } while( !is_selectable( iCurrentLine ) );
+            } while( !is_selectable( page_items[iCurrentLine] ) );
         } else if( action == "UP" ) {
             do {
                 iCurrentLine--;
                 if( iCurrentLine < 0 ) {
                     iCurrentLine = page_items.size() - 1;
                 }
-            } while( !is_selectable( iCurrentLine ) );
+            } while( !is_selectable( page_items[iCurrentLine] ) );
         } else if( action == "NEXT_TAB" ) {
             iCurrentLine = 0;
             iStartPos = 0;

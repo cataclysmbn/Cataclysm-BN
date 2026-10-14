@@ -288,6 +288,8 @@ class string_input_popup // NOLINT(cata-xy)
         std::map<long, std::function<bool()>> callbacks;
         /// Adds the rows of the screen around this input field to the interaction it publishes.
         std::function < auto( game_client::interaction_snapshot & )->void > extend_interaction;
+        /// The caller's own screen reads this input and offers its text as an affordance, so the popup opens no screen of its own.
+        bool shares_screen = false;
 };
 
 

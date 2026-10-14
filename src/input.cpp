@@ -10,6 +10,7 @@ std::list<input_context *> input_context::input_context_stack;
 #include "client_input.h"
 #include "client_display.h"
 #include "client_interaction.h"
+#include "engine_client_component.h"
 #include "engine_client_contract.h"
 
 #include <algorithm>
@@ -22,6 +23,7 @@ std::list<input_context *> input_context::input_context_stack;
 #include <exception>
 #include <locale>
 #include <memory>
+#include <ranges>
 #include <set>
 #include <utility>
 
@@ -1107,6 +1109,15 @@ enum class fallback_action {
     execute,
 };
 } // namespace
+namespace ec = engine_client;
+namespace
+{
+/// The components and affordances of the keybindings screen.
+constexpr auto keybindings_actions = "keybindings:actions";
+constexpr auto keybindings_select = "keybindings:select";
+constexpr auto keybindings_pick = "keybindings:pick";
+constexpr auto keybindings_filter = "keybindings:filter";
+} // namespace
 static const std::map<fallback_action, int> fallback_keys = {
     { fallback_action::add_local, '+' },
     { fallback_action::add_global, '=' },
@@ -1207,23 +1218,27 @@ action_id input_context::display_menu( const bool permit_execute_action )
     static const nc_color unbound_key = c_light_red;
     // (vertical) scroll offset
     size_t scroll_offset = 0;
-    // The row an engine client acts on: the modes first, then the actions. Native input shows none.
+    // The action row an engine client acts on; native input shows none.
     size_t cursor = 0;
     // keybindings help
-    std::string legend;
-    legend += colorize( _( "Unbound keys" ), unbound_key ) + "\n";
-    legend += colorize( _( "Keybinding active only on this screen" ), local_key ) + "\n";
-    legend += colorize( _( "Keybinding active globally" ), global_key ) + "\n";
-    legend += string_format(
-                  _( "Press %c to remove keybinding\nPress %c to add local keybinding\nPress %c to add global keybinding\n" ),
-                  fallback_keys.at( fallback_action::remove ),
-                  fallback_keys.at( fallback_action::add_local ),
-                  fallback_keys.at( fallback_action::add_global ) );
-    if( permit_execute_action ) {
+    const auto legend_of = [&]() {
+        std::string legend;
+        legend += colorize( _( "Unbound keys" ), unbound_key ) + "\n";
+        legend += colorize( _( "Keybinding active only on this screen" ), local_key ) + "\n";
+        legend += colorize( _( "Keybinding active globally" ), global_key ) + "\n";
         legend += string_format(
-                      _( "Press %c to execute action\n" ),
-                      fallback_keys.at( fallback_action::execute ) );
-    }
+                      _( "Press %c to remove keybinding\nPress %c to add local keybinding\nPress %c to add global keybinding\n" ),
+                      fallback_keys.at( fallback_action::remove ),
+                      fallback_keys.at( fallback_action::add_local ),
+                      fallback_keys.at( fallback_action::add_global ) );
+        if( permit_execute_action ) {
+            legend += string_format(
+                          _( "Press %c to execute action\n" ),
+                          fallback_keys.at( fallback_action::execute ) );
+        }
+        return legend;
+    };
+    const auto legend = legend_of();
 
     std::vector<std::string> filtered_registered_actions = org_registered_actions;
     std::string filter_phrase;
@@ -1286,44 +1301,61 @@ action_id input_context::display_menu( const bool permit_execute_action )
     };
     ui.on_redraw( redraw );
 
-    // The modes and one row per action, as the native menu lists them; the filter field is the native one.
-    const auto extend_interaction = [&]( game_client::interaction_snapshot & snapshot ) {
-        snapshot.title = _( "Keybindings" );
-        snapshot.allow_cancel = true;
-        snapshot.panes = { { .id = "modes", .label = _( "Mode" ), .role = "category" },
-            { .id = "actions", .label = _( "Actions" ), .role = "focused" }
-        };
-        const auto add_mode = [&]( const std::string & id, const std::string & mode_action,
-        const bool active ) {
-            snapshot.choices.push_back( { .id = "mode:" + id, .label = ctxt.get_action_name( mode_action ),
-                                          .pane_id = "modes", .selected = active,
-                                          .highlighted = snapshot.choices.size() == cursor } );
-        };
-        add_mode( "add_local", "ADD_LOCAL", status == s_add );
-        add_mode( "add_global", "ADD_GLOBAL", status == s_add_global );
-        add_mode( "remove", "REMOVE", status == s_remove );
-        if( permit_execute_action ) {
-            add_mode( "execute", "EXECUTE", status == s_execute );
-        }
-        for( const auto &action_id : filtered_registered_actions ) {
+    // One row per action as the native menu lists them, under the mode that picking a row acts in.
+    const auto keybindings_view = [&]() -> ec::screen_view {
+        const auto mode = status == s_add ? "ADD_LOCAL" : status == s_add_global ? "ADD_GLOBAL" :
+        status == s_remove ? "REMOVE" : status == s_execute ? "EXECUTE" : "";
+        auto rows = std::vector<ec::row> {};
+        for( const auto &[index, action_id] : std::views::enumerate( filtered_registered_actions ) )
+        {
             auto is_local = false;
             const auto &attributes = inp_mngr.get_action_attributes( action_id, category, &is_local );
-            snapshot.choices.push_back( {
-                .id = "action:" + action_id, .label = get_action_name( action_id ), .pane_id = "actions",
-                .highlighted = snapshot.choices.size() == cursor,
-                .columns = { { .key = "keys", .label = _( "Keys" ), .value = get_desc( action_id ) },
+            const auto &color = attributes.input_events.empty() ? unbound_key : is_local ? local_key :
+                                global_key;
+            rows.push_back( {
+                .id = "action:" + action_id, .label = get_action_name( action_id ), .selected = static_cast<size_t>( index ) == cursor,
+                .columns = { { .key = "keys", .label = _( "Keys" ), .value = get_desc( action_id ), .color = {} },
                     {
                         .key = "scope", .label = _( "Scope" ), .value = attributes.input_events.empty() ? _( "Unbound" ) :
-                        is_local ? _( "Local" ) : _( "Global" )
+                        is_local ? _( "Local" ) : _( "Global" ), .color = {}
                     }
                 },
+                .color = string_from_color( color ),
             } );
         }
+        const auto focus_row = cursor < rows.size() ? rows[cursor].id : std::string{};
+        const auto row_arg = ec::arg_shape{ .row = ec::row_shape{ .component_id = keybindings_actions } };
+        auto actions = ec::list( { .id = keybindings_actions, .rows = std::move( rows ), .selection = "single",
+                                   .activate = keybindings_pick, .filterable = true } );
+        actions.affordances.push_back( keybindings_select );
+        actions.affordances.push_back( keybindings_filter );
+        auto stats = std::vector<ec::panel_stat> {};
+        if( status != s_show )
+        {
+            stats.push_back( { .key = "mode", .label = _( "Mode" ), .value = ctxt.get_action_name( mode ) } );
+        }
+        return {
+            .title = _( "Keybindings" ),
+            .root = ec::panel( {
+                .id = "keybindings:window", .title = _( "Keybindings" ), .stats = std::move( stats ), .filter = filter_phrase,
+                .child = ec::split( {
+                    .id = "keybindings:body", .relation = "detail", .active = keybindings_actions,
+                    .children = ec::children_of( ec::component{ .id = "keybindings:legend", .body = ec::text_body{ .markup = legend_of() } },
+                    std::move( actions ) ) } ) } ),
+            .affordances = {
+                ec::invoke_affordance( { .id = keybindings_select, .label = _( "Select" ), .args = row_arg, .role = "select" } ),
+                ec::invoke_affordance( {
+.id = keybindings_pick, .label = status == s_show ? std::string{ _( "Select" ) } : ctxt.get_action_name( mode ),
+                    .args = row_arg, .enabled = status != s_show } ),
+                ec::invoke_affordance( {
+                    .id = keybindings_filter, .label = _( "Filter" ), .args = { .text = ec::text_shape{} },
+                    .enabled = status == s_show } ),
+            },
+            .focus_component = keybindings_actions, .focus_row = focus_row,
+        };
     };
-    const auto snapshot_rows = [&]() -> size_t {
-        return 3 + ( permit_execute_action ? 1 : 0 ) + filtered_registered_actions.size();
-    };
-    spopup.extend_interaction = extend_interaction;
+    spopup.shares_screen = true;
+    const auto screen = ec::screen_scope( ctxt, { .view = [&]( const auto & /*state*/ ) { return keybindings_view(); } } );
 
     // do not switch IME mode now, but restore previous mode on return
     ime_sentry sentry( ime_sentry::keep );
@@ -1334,11 +1366,6 @@ action_id input_context::display_menu( const bool permit_execute_action )
             filter_phrase = spopup.query_string( false );
             action = ctxt.input_to_action( ctxt.get_raw_input() );
         } else {
-            const auto interaction = game_client::interaction_scope( ctxt, [&]() {
-                auto snapshot = game_client::interaction_snapshot{ .kind = game_client::interaction_kind::choices };
-                extend_interaction( snapshot );
-                return snapshot;
-            } );
             action = ctxt.handle_input();
         }
         raw_input_char = ctxt.get_raw_input().get_first_input();
@@ -1348,33 +1375,34 @@ action_id input_context::display_menu( const bool permit_execute_action )
             }
         }
 
+        // A client's affordance acts like the key that does the same.
+        const auto invoked = ec::invoked( ctxt.get_raw_input() );
+        if( invoked && invoked->affordance_id == keybindings_filter && invoked->args.text &&
+            status == s_show ) {
+            filter_phrase = *invoked->args.text;
+        }
         filtered_registered_actions = filter_strings_by_phrase( org_registered_actions, filter_phrase );
         if( scroll_offset > filtered_registered_actions.size() ) {
             scroll_offset = 0;
         }
-        cursor = std::min( cursor, snapshot_rows() - 1 );
+        cursor = std::min( cursor, filtered_registered_actions.empty() ? 0 :
+                           filtered_registered_actions.size() - 1 );
 
-        // A semantic choice acts like the keypress that picks the same mode or action.
         auto picked_action = std::optional<size_t> {};
-        if( const auto raw = ctxt.get_raw_input(); raw.interaction ) {
-            const auto &target = raw.interaction->target_id;
-            const auto picked = std::ranges::find_if( filtered_registered_actions, [&](
+        if( invoked ) {
+            const auto picked = invoked->args.row ? std::ranges::find_if( filtered_registered_actions, [&](
             const std::string & id ) {
-                return target == "action:" + id;
-            } );
+                return *invoked->args.row == "action:" + id;
+            } ) : filtered_registered_actions.end();
             action.clear();
-            if( raw.interaction->operation == game_client::interaction_operation::cancel ) {
-                action = "QUIT";
-            } else if( target == "mode:add_local" ) {
-                action = "ADD_LOCAL";
-            } else if( target == "mode:add_global" ) {
-                action = "ADD_GLOBAL";
-            } else if( target == "mode:remove" ) {
-                action = "REMOVE";
-            } else if( target == "mode:execute" ) {
-                action = "EXECUTE";
-            } else if( picked != filtered_registered_actions.end() ) {
-                picked_action = static_cast<size_t>( picked - filtered_registered_actions.begin() );
+            if( picked != filtered_registered_actions.end() ) {
+                cursor = static_cast<size_t>( picked - filtered_registered_actions.begin() );
+                if( invoked->affordance_id == keybindings_pick ) {
+                    picked_action = cursor;
+                }
+            }
+            if( !picked_action ) {
+                continue;
             }
         }
 
@@ -1403,14 +1431,14 @@ action_id input_context::display_menu( const bool permit_execute_action )
                 status = s_execute;
             }
         } else if( action == "DOWN" ) {
-            cursor = cursor + 1 < snapshot_rows() ? cursor + 1 : 0;
+            cursor = cursor + 1 < filtered_registered_actions.size() ? cursor + 1 : 0;
             if( !filtered_registered_actions.empty()
                 && filtered_registered_actions.size() > display_height
                 && scroll_offset < filtered_registered_actions.size() - display_height ) {
                 scroll_offset++;
             }
         } else if( action == "UP" ) {
-            cursor = cursor > 0 ? cursor - 1 : snapshot_rows() - 1;
+            cursor = cursor > 0 ? cursor - 1 : std::max<size_t>( filtered_registered_actions.size(), 1 ) - 1;
             if( !filtered_registered_actions.empty()
                 && scroll_offset > 0 ) {
                 scroll_offset--;
