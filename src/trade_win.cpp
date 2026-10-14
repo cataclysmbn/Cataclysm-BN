@@ -940,6 +940,13 @@ auto trading_window::show_item_data( size_t index, bool target_is_theirs ) -> in
 
     auto result = info_popup_result::none;
     auto exit = false;
+    const auto screen = ec::screen_scope( ctxt, { .view = [&]( const auto & )
+    {
+        return ec::screen_view{
+            .title = itm.tname(),
+            .root = ec::component{ .id = "text:info", .body = ec::text_body{ .markup = info_text } } };
+    }
+                                                } );
     while( !exit ) {
         ui_manager::redraw();
         auto action = ctxt.handle_input();
