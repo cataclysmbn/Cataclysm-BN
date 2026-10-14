@@ -60,6 +60,13 @@ using world_patch_fn = auto( * )( const snapshot &previous, bool consecutive ) -
 /// language other than the engine's. Unset means the world has no text of its own to word.
 using text_capture_fn = auto( * )() -> world_state;
 
+/// What a step that did anything changes: where the avatar stands and the turn it is.
+struct avatar_standing {
+    std::optional<position> at = std::nullopt;
+    std::string turn = {};
+    auto operator<=>( const avatar_standing & ) const = default; // *NOPAD*
+};
+
 /// Game-thread authority shared by connections. Reads and hello never reset its clock.
 class session final : public command_authority
 {
@@ -92,6 +99,8 @@ class session final : public command_authority
         /// The boundary last published, which the client has seen; `not_ready` before the first.
         auto boundary() const -> std::expected<boundary_state, error>;
         auto at() const -> std::optional<clock_point>;
+        /// The avatar's standing in the state last published; empty before the first publication.
+        auto standing() const -> avatar_standing;
         auto submit( command_request request ) -> std::expected<receipt, error>;
         auto prepare_input( point screen_size ) -> std::expected<game_client::input_command, error>;
         /// Return the core-validated event at the actual backend delivery seam.

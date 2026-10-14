@@ -29,6 +29,8 @@ title: 엔진/클라이언트 프로토콜 0.2
 | `bn.hello`               | `versions`, `client`, `schema`, `locale?`, `capabilities?` | `version`, `epoch`, `engine`, `limits`, `delivery?`, `schema`, `locale`, `engine_locale`, `role` |
 | `bn.viewport`            | `cols`, `rows`                                             | 없음                                                                                             |
 | `bn.interrupt`           | 없음                                                       | 없음                                                                                             |
+| `bn.hold`                | `epoch`, `screen_id`, `affordance_id`                      | 없음                                                                                             |
+| `bn.release`             | 없음                                                       | 없음                                                                                             |
 | `bn.subscribe`           | 없음                                                       | 스냅샷 헤더. 이어서 파트와 이벤트가 전송됨                                                       |
 | `bn.unsubscribe`         | 없음                                                       | 없음                                                                                             |
 | `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit`                  | `boundary_id`, `total`, `choices` (읽기 전용)                                                    |
@@ -57,6 +59,10 @@ title: 엔진/클라이언트 프로토콜 0.2
 - `boundary`: `{boundary_id, revision}`, 기존과 같다. 명령이 실행 중이면 `command_busy`로 실패한다.
 
 affordance와 맞지 않는 형식은 `invalid_arguments`다.
+
+## 누르고 있는 키
+
+지도의 이동 한 걸음에는 `holdable`이 붙습니다. 클라이언트는 키가 내려갈 때 `bn.hold`를 한 번, 올라올 때 `bn.release`를 보내며 키 반복에는 invoke를 보내지 않습니다. hold가 유지되고 지도가 최상단 화면이며 입력을 기다리는 동안 엔진은 입력 프롬프트마다 네이티브 키를 한 번 더 누른 것처럼 그 동작을 한 걸음씩 게임에 넘기며, 걸음 전에 클라이언트가 이미 보낸 요청을 먼저 읽습니다. 탭은 먼저 놓아도 한 걸음을 보장합니다. 팝업이나 다른 화면이 위에 오거나, 걸음이 아바타의 칸도 턴도 바꾸지 못했거나, 새 `bn.hello`, 연결 종료가 hold를 끝냅니다. `bn.hold`는 활동 중이면 `not_ready`, 최상단이 아닌 화면이면 `stale_screen`, 없거나 hold할 수 없는 affordance면 `unknown_affordance`/`invalid_arguments`로 실패합니다. 화면 범위 invoke는 그대로 큐에 쌓입니다(목록에서 화살표를 누르고 있을 때).
 
 ## 전달 크레딧
 

@@ -39,6 +39,12 @@ struct hello_request {
 struct credit_request {
     std::size_t frames = 0;
 };
+/// `bn.hold`: an affordance of the screen on top that the client holds down.
+struct hold_request {
+    std::string epoch = {};
+    std::string screen_id = {};
+    std::string affordance_id = {};
+};
 struct result_request {
     std::string epoch = {};
     std::string command_id = {};
@@ -61,6 +67,8 @@ auto decode_viewport_request( std::string_view input ) -> std::expected<viewport
 auto decode_empty_request( std::string_view input ) -> std::expected<void, decode_error>;
 /// `{frames}` for `bn.credit`.
 auto decode_credit_request( std::string_view input ) -> std::expected<credit_request, decode_error>;
+/// `{epoch, screen_id, affordance_id}` for `bn.hold`.
+auto decode_hold_request( std::string_view input ) -> std::expected<hold_request, decode_error>;
 auto decode_choices_request( std::string_view input )
 -> std::expected<choices_request, decode_error>;
 auto decode_describe_request( std::string_view input )

@@ -29,6 +29,8 @@ title: エンジン/クライアントプロトコル 0.2
 | `bn.hello`               | `versions`, `client`, `schema`, `locale?`, `capabilities?` | `version`, `epoch`, `engine`, `limits`, `delivery?`, `schema`, `locale`, `engine_locale`, `role` |
 | `bn.viewport`            | `cols`, `rows`                                             | なし                                                                                             |
 | `bn.interrupt`           | なし                                                       | なし                                                                                             |
+| `bn.hold`                | `epoch`, `screen_id`, `affordance_id`                      | なし                                                                                             |
+| `bn.release`             | なし                                                       | なし                                                                                             |
 | `bn.subscribe`           | なし                                                       | スナップショットヘッダー。続いてパートとイベントが届く                                           |
 | `bn.unsubscribe`         | なし                                                       | なし                                                                                             |
 | `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit`                  | `boundary_id`, `total`, `choices` (読み取り専用)                                                 |
@@ -57,6 +59,10 @@ title: エンジン/クライアントプロトコル 0.2
 - `boundary`: `{boundary_id, revision}`。従来どおり。コマンドの実行中は `command_busy` で失敗する。
 
 affordance に合わない形式は `invalid_arguments` である。
+
+## 押し続けるキー
+
+マップの一歩には `holdable` が付きます。クライアントはキーが下がったときに `bn.hold` を一度、上がったときに `bn.release` を送り、キーリピートには invoke を送りません。hold が有効でマップが最前面の画面で入力待ちの間、エンジンは入力プロンプトごとにネイティブキーをもう一度押したかのようにその操作を一歩ずつゲームへ渡し、一歩の前にクライアントが送済みのリクエストを先に読みます。タップは先に離されても一歩を保証します。ポップアップなど他の画面が上に来る、一歩でアバターのマスもターンも変わらない、新しい `bn.hello`、切断のいずれかで hold は終わります。`bn.hold` は活動中は `not_ready`、最前面でない画面は `stale_screen`、存在しない・hold できない affordance は `unknown_affordance`/`invalid_arguments` で失敗します。画面スコープの invoke はこれまでどおりキューに積まれます(リストで矢印キーを押し続ける場合)。
 
 ## 配信クレジット
 

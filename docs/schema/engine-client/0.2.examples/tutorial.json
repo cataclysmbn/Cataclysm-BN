@@ -1056,7 +1056,8 @@
                   "NUMPAD_8"
                 ],
                 "enabled": true,
-                "expect": "screen"
+                "expect": "screen",
+                "holdable": true
               },
               {
                 "id": "RIGHTUP",
@@ -1067,7 +1068,8 @@
                   "NUMPAD_9"
                 ],
                 "enabled": true,
-                "expect": "screen"
+                "expect": "screen",
+                "holdable": true
               },
               {
                 "id": "RIGHT",
@@ -1079,7 +1081,8 @@
                   "NUMPAD_6"
                 ],
                 "enabled": true,
-                "expect": "screen"
+                "expect": "screen",
+                "holdable": true
               },
               {
                 "id": "RIGHTDOWN",
@@ -1090,7 +1093,8 @@
                   "NUMPAD_3"
                 ],
                 "enabled": true,
-                "expect": "screen"
+                "expect": "screen",
+                "holdable": true
               },
               {
                 "id": "DOWN",
@@ -1102,7 +1106,8 @@
                   "NUMPAD_2"
                 ],
                 "enabled": true,
-                "expect": "screen"
+                "expect": "screen",
+                "holdable": true
               },
               {
                 "id": "LEFTDOWN",
@@ -1113,7 +1118,8 @@
                   "NUMPAD_1"
                 ],
                 "enabled": true,
-                "expect": "screen"
+                "expect": "screen",
+                "holdable": true
               },
               {
                 "id": "LEFT",
@@ -1125,7 +1131,8 @@
                   "NUMPAD_4"
                 ],
                 "enabled": true,
-                "expect": "screen"
+                "expect": "screen",
+                "holdable": true
               },
               {
                 "id": "LEFTUP",
@@ -1136,7 +1143,8 @@
                   "NUMPAD_7"
                 ],
                 "enabled": true,
-                "expect": "screen"
+                "expect": "screen",
+                "holdable": true
               },
               {
                 "id": "pause",
@@ -2367,7 +2375,8 @@
               "NUMPAD_8"
             ],
             "enabled": true,
-            "expect": "screen"
+            "expect": "screen",
+            "holdable": true
           },
           {
             "id": "RIGHTUP",
@@ -2378,7 +2387,8 @@
               "NUMPAD_9"
             ],
             "enabled": true,
-            "expect": "screen"
+            "expect": "screen",
+            "holdable": true
           },
           {
             "id": "RIGHT",
@@ -2390,7 +2400,8 @@
               "NUMPAD_6"
             ],
             "enabled": true,
-            "expect": "screen"
+            "expect": "screen",
+            "holdable": true
           },
           {
             "id": "RIGHTDOWN",
@@ -2401,7 +2412,8 @@
               "NUMPAD_3"
             ],
             "enabled": true,
-            "expect": "screen"
+            "expect": "screen",
+            "holdable": true
           },
           {
             "id": "DOWN",
@@ -2413,7 +2425,8 @@
               "NUMPAD_2"
             ],
             "enabled": true,
-            "expect": "screen"
+            "expect": "screen",
+            "holdable": true
           },
           {
             "id": "LEFTDOWN",
@@ -2424,7 +2437,8 @@
               "NUMPAD_1"
             ],
             "enabled": true,
-            "expect": "screen"
+            "expect": "screen",
+            "holdable": true
           },
           {
             "id": "LEFT",
@@ -2436,7 +2450,8 @@
               "NUMPAD_4"
             ],
             "enabled": true,
-            "expect": "screen"
+            "expect": "screen",
+            "holdable": true
           },
           {
             "id": "LEFTUP",
@@ -2447,7 +2462,8 @@
               "NUMPAD_7"
             ],
             "enabled": true,
-            "expect": "screen"
+            "expect": "screen",
+            "holdable": true
           },
           {
             "id": "pause",
@@ -3609,7 +3625,8 @@
           "NUMPAD_8"
         ],
         "enabled": true,
-        "expect": "screen"
+        "expect": "screen",
+        "holdable": true
       }
     },
     {
@@ -5091,7 +5108,8 @@
                       "NUMPAD_8"
                     ],
                     "enabled": true,
-                    "expect": "screen"
+                    "expect": "screen",
+                    "holdable": true
                   },
                   {
                     "id": "RIGHTUP",
@@ -5102,7 +5120,8 @@
                       "NUMPAD_9"
                     ],
                     "enabled": true,
-                    "expect": "screen"
+                    "expect": "screen",
+                    "holdable": true
                   },
                   {
                     "id": "RIGHT",
@@ -5114,7 +5133,8 @@
                       "NUMPAD_6"
                     ],
                     "enabled": true,
-                    "expect": "screen"
+                    "expect": "screen",
+                    "holdable": true
                   },
                   {
                     "id": "RIGHTDOWN",
@@ -5125,7 +5145,8 @@
                       "NUMPAD_3"
                     ],
                     "enabled": true,
-                    "expect": "screen"
+                    "expect": "screen",
+                    "holdable": true
                   },
                   {
                     "id": "DOWN",
@@ -5137,7 +5158,8 @@
                       "NUMPAD_2"
                     ],
                     "enabled": true,
-                    "expect": "screen"
+                    "expect": "screen",
+                    "holdable": true
                   },
                   {
                     "id": "LEFTDOWN",
@@ -5148,7 +5170,8 @@
                       "NUMPAD_1"
                     ],
                     "enabled": true,
-                    "expect": "screen"
+                    "expect": "screen",
+                    "holdable": true
                   },
                   {
                     "id": "LEFT",
@@ -5160,7 +5183,8 @@
                       "NUMPAD_4"
                     ],
                     "enabled": true,
-                    "expect": "screen"
+                    "expect": "screen",
+                    "holdable": true
                   },
                   {
                     "id": "LEFTUP",
@@ -5171,7 +5195,8 @@
                       "NUMPAD_7"
                     ],
                     "enabled": true,
-                    "expect": "screen"
+                    "expect": "screen",
+                    "holdable": true
                   },
                   {
                     "id": "pause",
@@ -7361,7 +7386,8 @@
           "UP",
           "NUMPAD_8"
         ],
-        "enabled": true
+        "enabled": true,
+        "holdable": true
       },
       "why": "the engine assigns the scope; a client does not guess it"
     }

@@ -264,6 +264,13 @@ auto read_request( const json &value, credit_request &result ) -> void
     result.frames = static_cast<std::size_t>( integer( value, "frames", 1,
                     static_cast<std::int64_t>( maximum_credits ) ) );
 }
+auto read_request( const json &value, hold_request &result ) -> void
+{
+    members( value, {"epoch", "screen_id", "affordance_id"} );
+    result.epoch = id( value, "epoch" );
+    result.screen_id = id( value, "screen_id" );
+    result.affordance_id = id( value, "affordance_id" );
+}
 auto read_request( const json &value, choices_request &result ) -> void
 {
     members( value, {"epoch", "boundary_id", "offset", "limit"}, {"component_id"} );
@@ -362,6 +369,8 @@ auto decode_empty_request( std::string_view input ) -> std::expected<void, decod
 }
 auto decode_credit_request( std::string_view input ) -> std::expected<credit_request, decode_error>
 { return decode<credit_request>( input ); }
+auto decode_hold_request( std::string_view input ) -> std::expected<hold_request, decode_error>
+{ return decode<hold_request>( input ); }
 auto decode_choices_request( std::string_view input ) ->
 std::expected<choices_request, decode_error>
 { return decode<choices_request>( input ); }

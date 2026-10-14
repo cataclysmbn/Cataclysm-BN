@@ -29,6 +29,8 @@ Collect the `parts` snapshot parts, then apply `bn.events` in order. A gap, an e
 | `bn.hello`               | `versions`, `client`, `schema`, `locale?`, `capabilities?` | `version`, `epoch`, `engine`, `limits`, `delivery?`, `schema`, `locale`, `engine_locale`, `role` |
 | `bn.viewport`            | `cols`, `rows`                                             | none                                                                                             |
 | `bn.interrupt`           | none                                                       | none                                                                                             |
+| `bn.hold`                | `epoch`, `screen_id`, `affordance_id`                      | none                                                                                             |
+| `bn.release`             | none                                                       | none                                                                                             |
 | `bn.subscribe`           | none                                                       | snapshot header; parts and events follow                                                         |
 | `bn.unsubscribe`         | none                                                       | none                                                                                             |
 | `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit`                  | `boundary_id`, `total`, `choices` (reads only)                                                   |
@@ -57,6 +59,10 @@ Every interaction boundary (snapshot header and events) carries `stack`, next to
 - `boundary`: `{boundary_id, revision}`, as before. While a command runs the submit fails with `command_busy`.
 
 A form that does not match the affordance is `invalid_arguments`.
+
+## Held keys
+
+A step of the map carries `holdable`. A client sends `bn.hold` once when its key goes down and `bn.release` when it comes up, and never invokes it for key repeats. While a hold stands, the map is the screen on top and input is awaited, the engine gives the game one step of that action at each input prompt, as if the native key were pressed once more, and reads the requests the client has sent before each step. A tap owes one step even if released first. A popup or other screen on top, a step that changes neither the avatar's square nor the turn, a new `bn.hello` and a disconnect end the hold. `bn.hold` fails with `not_ready` during an activity, `stale_screen` for a screen that is not on top, `unknown_affordance` and `invalid_arguments` for an affordance that is missing or not holdable. Screen-scoped invokes still queue (a held arrow in a list).
 
 ## Delivery credits
 

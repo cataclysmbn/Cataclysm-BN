@@ -209,7 +209,79 @@
         "error": "stale_screen",
         "error_text": "That screen has closed."
       }
+    },
+    {
+      "name": "a step of the map the player can hold",
+      "def": "affordance",
+      "value": {
+        "id": "RIGHT",
+        "label": "Move East",
+        "keys": [
+          "l",
+          "RIGHT",
+          "6",
+          "NUMPAD_6"
+        ],
+        "enabled": true,
+        "expect": "screen",
+        "holdable": true
+      }
+    },
+    {
+      "name": "hold of the east step",
+      "def": "hold_params",
+      "value": {
+        "epoch": "epoch-2",
+        "screen_id": "screen:map:epoch-2",
+        "affordance_id": "RIGHT"
+      }
+    },
+    {
+      "name": "hold, result",
+      "def": "empty_params",
+      "value": {}
+    },
+    {
+      "name": "release, result",
+      "def": "empty_params",
+      "value": {}
+    },
+    {
+      "name": "hold of an affordance that is not a step",
+      "def": "application_error",
+      "value": {
+        "kind": "invalid_arguments",
+        "message": "That needs other details.",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "26",
+          "revision": "17"
+        }
+      }
+    },
+    {
+      "name": "hold aimed at a screen that is not on top",
+      "def": "application_error",
+      "value": {
+        "kind": "stale_screen",
+        "message": "That screen has closed.",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "26",
+          "revision": "17"
+        }
+      }
     }
   ],
-  "invalid": []
+  "invalid": [
+    {
+      "name": "hold without the affordance",
+      "def": "hold_params",
+      "value": {
+        "epoch": "epoch-2",
+        "screen_id": "screen:map:epoch-2"
+      },
+      "why": "affordance_id is required"
+    }
+  ]
 }

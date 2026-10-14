@@ -78,6 +78,9 @@ struct affordance {
     invoke_kind runs = invoke_kind::action;
     /// The registered action of `action`; the choice of a `choose` without `args.row`.
     std::string target = {};
+    /// The client may hold the key down with `bn.hold`, and the engine takes one step of it per input prompt
+    /// until `bn.release`: only a step of the map, which is a registered action.
+    bool holdable = false;
 };
 /// The expectation an invoke of `value` carries: its screen's when it takes no `row`, `rows`, `pos` or
 /// `text`, so a held key may queue behind another; the boundary's when it names rows or squares.

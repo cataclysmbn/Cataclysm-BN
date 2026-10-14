@@ -180,6 +180,20 @@ class server
         engine_client::counter delivered_through_ = 0;
         std::optional<engine_client::jsonrpc::response_frame> deferred_frame_;
         std::optional<engine_client::jsonrpc::envelope_cursor> pending_requests_;
+        /// A step of the map the client holds down: while it is held and the map is the screen waiting for input,
+        /// each input prompt is given one step of it, as if the native key were pressed once more.
+        struct held_walk {
+            std::string screen_id;
+            /// The registered action of the step.
+            std::string action;
+            /// Where the avatar stood when the last step was given; the walk goes on only if that step changed
+            /// something, so a wall ends it. Empty until the first step, which a quick tap is owed even when released.
+            std::optional<engine_client::avatar_standing> taken;
+            bool released = false;
+        };
+        std::optional<held_walk> walk_;
+        /// Gives the game the next step of the walk and says so; ends the walk when it is over or the map is not on top.
+        auto step_walk() -> bool;
 
         auto publish_boundary( std::ostream &out, bool settles = true ) -> bool;
         /// Interrupt the open command. A spectator has none, and never ends the controller's.

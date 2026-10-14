@@ -481,6 +481,7 @@ auto to_json( const affordance &value ) -> json
     if( !value.role.empty() ) { result["role"] = value.role; }
     if( auto args = to_json( value.args ); !args.empty() ) { result["args"] = std::move( args ); }
     result["expect"] = scope_name( scope_of( value ) );
+    if( value.holdable ) { result["holdable"] = true; }
     return result;
 }
 /// A 0.1 choice without the members components replace.

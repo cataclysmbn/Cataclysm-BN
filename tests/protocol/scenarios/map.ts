@@ -1,11 +1,11 @@
 /**
  * @module
- * The map screen on the generic path: a held arrow queued as screen-scoped moves that all complete,
- * Options opened through the map's own affordance, and a burst of keys aimed at a popup that an earlier
- * key of the burst closed.
+ * The map screen on the generic path: a burst of screen-scoped moves that all complete, Options opened
+ * through the map's own affordance, a burst of keys aimed at a popup that an earlier key of the burst
+ * closed, and a held step: key down and key up, which the engine answers with a step per input prompt.
  */
 import { assert, assertEquals } from "@std/assert"
-import { Engine, type Scenario, type Value } from "./driver.ts"
+import { Engine, type Scenario, type Value, without } from "./driver.ts"
 
 export const map: Scenario = {
   area: "map",
@@ -25,7 +25,7 @@ export const map: Scenario = {
       assertEquals([options.label, options.expect], ["Options", "screen"])
       rec.accept("Options affordance of the map", "affordance", options)
 
-      // A held arrow: the repeats arrive faster than the moves run, and the engine queues them.
+      // Keys faster than the moves run: the engine queues the screen-scoped ones.
       const arrow = map.affordances.find((entry: Value) => entry.id === "RIGHT")
       assert(arrow, "a movement affordance")
       const held = await engine.burst(Array.from({ length: 5 }, () => ({ affordance: arrow.id })))
@@ -56,5 +56,35 @@ export const map: Scenario = {
       for (const late of keys.slice(1)) assertEquals(late.error, "stale_screen")
       rec.command("key of a burst that met the map after the popup closed", keys[1])
       assertEquals(engine.top().role, "map")
+
+      // A held key is input state, not repeated presses: the client says when it goes down and comes up.
+      assert(arrow.holdable, "a step of the map can be held")
+      const hold = {
+        epoch: engine.mirror.at.epoch,
+        screen_id: engine.top().screen_id,
+        affordance_id: arrow.id,
+      }
+      rec.accept("a step of the map the player can hold", "affordance", arrow)
+      rec.accept("hold of the east step", "hold_params", hold)
+      rec.accept("hold, result", "empty_params", await engine.result("bn.hold", hold))
+      rec.accept("release, result", "empty_params", await engine.result("bn.release", {}))
+      const wait = engine.top().affordances.find((entry: Value) => entry.id === "wait")
+      assert(wait && !wait.holdable, "an action that is not a step cannot be held")
+      const refused = await engine.request("bn.hold", { ...hold, affordance_id: wait.id })
+      assertEquals(refused.error.data.kind, "invalid_arguments")
+      rec.accept(
+        "hold of an affordance that is not a step",
+        "application_error",
+        refused.error.data,
+      )
+      const gone = await engine.request("bn.hold", { ...hold, screen_id: "screen:closed" })
+      assertEquals(gone.error.data.kind, "stale_screen")
+      rec.accept("hold aimed at a screen that is not on top", "application_error", gone.error.data)
+      rec.reject(
+        "hold without the affordance",
+        "hold_params",
+        without(hold, "affordance_id"),
+        "affordance_id is required",
+      )
     }),
 }

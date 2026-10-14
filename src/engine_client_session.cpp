@@ -408,6 +408,15 @@ auto session::at() const -> std::optional<clock_point>
     return stream_->current().at;
 }
 
+auto session::standing() const -> avatar_standing
+{
+    if( !stream_ ) { return {}; }
+    const auto &world = stream_->current().value.world;
+    return { .at = world.avatar ? std::optional{ world.avatar->at } :
+                   std::nullopt,
+             .turn = world.environment ? world.environment->turn : std::string{} };
+}
+
 auto session::submit( command_request request ) -> std::expected<receipt, error>
 {
     if( lifecycle_->busy() ) {

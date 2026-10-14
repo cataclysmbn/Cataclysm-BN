@@ -1,5 +1,6 @@
 #include "engine_client_component.h"
 
+#include "action.h"
 #include "client_input.h"
 #include "input.h"
 #include "translations.h"
@@ -177,11 +178,23 @@ auto registered_role( const std::string &id ) -> std::string
 /// gave it a name.
 auto offered( const action &entry ) -> bool { return entry.id != "ANY_INPUT" || entry.name != entry.id; }
 
-auto registered_affordances( const boundary_state &state ) -> std::vector<affordance>
+/// Whether the registered action is one of the eight steps of the map.
+auto is_step( const std::string &id ) -> bool
+{
+    constexpr auto steps = std::array{ ACTION_MOVE_FORTH, ACTION_MOVE_FORTH_RIGHT, ACTION_MOVE_RIGHT,
+                                       ACTION_MOVE_BACK_RIGHT, ACTION_MOVE_BACK, ACTION_MOVE_BACK_LEFT, ACTION_MOVE_LEFT,
+                                       ACTION_MOVE_FORTH_LEFT };
+    return std::ranges::any_of( steps, [&]( const action_id step ) { return action_ident( step ) == id; } );
+}
+
+/// The context's actions as affordances; on the map its steps may be held.
+auto registered_affordances( const boundary_state &state,
+                             const bool map ) -> std::vector<affordance>
 {
     return state.actions | std::views::filter( offered ) | std::views::transform( [&](
     const auto & entry ) {
-        return affordance{ .id = entry.id, .label = entry.name, .keys = entry.keys, .role = registered_role( entry.id ), .target = entry.id };
+        return affordance{ .id = entry.id, .label = entry.name, .keys = entry.keys, .role = registered_role( entry.id ), .target = entry.id,
+                           .holdable = map && is_step( entry.id ) };
     } ) | std::ranges::to<std::vector>();
 }
 
@@ -316,7 +329,7 @@ auto screen_of( const boundary_state &state, const slot &entry, const bool top )
         if( result.root ) { clear_affordances( *result.root ); }
     } else if( described ) {
         // The registered actions of the context follow the screen's own affordances.
-        auto registered = registered_affordances( state );
+        auto registered = registered_affordances( state, entry.map );
         for( const auto &[id, reason] : result.denials ) {
             const auto found = std::ranges::find( registered, id, &affordance::id );
             if( found != registered.end() ) { found->enabled = false; found->denial = reason; }

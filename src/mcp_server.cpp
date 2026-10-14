@@ -483,6 +483,10 @@ auto server::pump_until_input( std::istream &in, std::ostream &out, std::ostream
             pump_mode_ = false;
             return true;
         }
+        if( walk_ && !pending_response_ && step_walk() ) {
+            pump_mode_ = false;
+            return true;
+        }
         if( pending_response_ ) {
             finish_pending( out, err );
             continue;
@@ -766,6 +770,19 @@ auto server::queue_push() -> void
 
 auto server::foreign_locale() const -> bool { return !locale_.empty() && locale_ != get_language().id; }
 
+auto server::step_walk() -> bool
+{
+    const auto state = session_.boundary();
+    if( !state || engine_client::top_screen( *state ).screen_id != walk_->screen_id ) { walk_.reset(); return false; }
+    if( walk_->taken && ( walk_->released || *walk_->taken == session_.standing() ) ) { walk_.reset(); return false; }
+    // A request the client has already sent is read before the next step: it may be the release.
+    if( walk_->taken && host_.wait_input && host_.wait_input( 0 ) ) { return false; }
+    walk_->taken = session_.standing();
+    if( host_.submit( { key_event{ .action = walk_->action, .input_id = game_client::current_input_id() } } ) ) { return true; }
+    walk_.reset();
+    return false;
+}
+
 auto server::deliver_input() -> bool
 {
     const auto input = session_.prepare_input( game_client::memory::screen_size() );
@@ -827,6 +844,7 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
             return fail( error::command_busy );
         }
         hello_ = true;
+        walk_.reset();
         locale_ = decoded->locale.value_or( std::string{} );
         push_.use_locale( locale_ );
         // At an input boundary the live game is what was published; during an activity a subscribe publishes one.
@@ -861,7 +879,8 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
     }
     if( !hello_ ) { return fail( error::negotiation_failed ); }
     if( options_.spectator && ( request.method == "bn.viewport" || request.method == "bn.interrupt" ||
-                                request.method == "bn.command.submit" ) ) {
+                                request.method == "bn.command.submit" || request.method == "bn.hold" ||
+                                request.method == "bn.release" ) ) {
         return fail( error::read_only );
     }
     if( request.method == "bn.viewport" ) {
@@ -977,6 +996,26 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         const auto encoded = serialize_receipt( *received );
         if( !encoded ) { interrupt( engine_client::error::not_ready ); return fail( encoded.error() ); }
         return rpc::make_result( request, *encoded );
+    }
+    if( request.method == "bn.hold" ) {
+        const auto decoded = decode_hold_request( params );
+        if( !decoded ) { return invalid(); }
+        if( !pump_mode_ ) { return fail( error::not_ready ); }
+        if( decoded->epoch != session_.epoch() ) { return fail( error::stale_epoch ); }
+        const auto state = session_.boundary();
+        if( !state ) { return fail( state.error() ); }
+        const auto top = top_screen( *state );
+        if( decoded->screen_id != top.screen_id ) { return fail( error::stale_screen ); }
+        const auto found = std::ranges::find( top.affordances, decoded->affordance_id, &affordance::id );
+        if( found == top.affordances.end() ) { return fail( error::unknown_affordance ); }
+        if( !found->holdable ) { return fail( error::invalid_arguments ); }
+        walk_ = held_walk{ .screen_id = top.screen_id, .action = found->target };
+        return rpc::make_result( request, "{}" );
+    }
+    if( request.method == "bn.release" ) {
+        if( !decode_empty_request( params ) ) { return invalid(); }
+        if( walk_ ) { walk_->released = true; }
+        return rpc::make_result( request, "{}" );
     }
     if( request.method == "bn.command.result" ) {
         const auto decoded = decode_result_request( params );

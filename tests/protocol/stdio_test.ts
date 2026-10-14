@@ -816,6 +816,112 @@ Deno.test({
 })
 
 Deno.test({
+  name: "stdio: a held walk steps while the key is down and takes no step after its release",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      const session = await enterTutorial(client)
+      const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+      const top = () => session.mirror.interaction.stack.at(-1)
+      const at = () => session.mirror.avatar.at
+      /** The engine answers a request between two steps: everything it published before is handled after it. */
+      const settle = async () => {
+        await client.result("bn.release", {})
+        for (let note = client.notes.shift(); note; note = client.notes.shift()) {
+          session.handle(note)
+        }
+      }
+      const acknowledgePopups = async () => {
+        while (session.mirror.interaction.interaction) {
+          const prompt = session.mirror.interaction.interaction
+          await session.submit({ kind: "choose", choice_id: prompt.choices[0].id })
+        }
+      }
+      const hold = (affordance: string) =>
+        client.request("bn.hold", {
+          epoch: session.mirror.at.epoch,
+          screen_id: top().screen_id,
+          affordance_id: affordance,
+        })
+      const held = top().affordances.filter((entry: Value) => entry.holdable)
+      assertEquals(
+        held.map((entry: Value) => entry.id).sort(),
+        ["DOWN", "LEFT", "LEFTDOWN", "LEFTUP", "RIGHT", "RIGHTDOWN", "RIGHTUP", "UP"],
+      )
+      assertEquals(
+        top().affordances.find((entry: Value) => entry.id === "wait")?.holdable,
+        undefined,
+      )
+      // Holds the engine refuses name why, and move nothing.
+      assertEquals((await hold("wait")).error.data.kind, "invalid_arguments")
+      assertEquals((await hold("bn:nothing")).error.data.kind, "unknown_affordance")
+      assertEquals(
+        (await client.request("bn.hold", {
+          epoch: session.mirror.at.epoch,
+          screen_id: "screen:closed",
+          affordance_id: "DOWN",
+        })).error.data.kind,
+        "stale_screen",
+      )
+      await settle()
+      const start = { ...at() }
+
+      // A tap, released before the step ran, is one step.
+      assertEquals((await hold("DOWN")).error, undefined)
+      await settle()
+      assertEquals(at().y, start.y + 1)
+      await sleep(500)
+      await settle()
+      assertEquals(at().y, start.y + 1, "a released tap takes no second step")
+
+      // A long hold: a step takes ~100 ms on the software GPU, and none follows the release.
+      let longest = 0
+      for (let round = 0; round < 8 && longest < 3; round++) {
+        await acknowledgePopups()
+        const before = at().y
+        assertEquals((await hold("DOWN")).error, undefined)
+        await sleep(450)
+        await settle()
+        const stopped = { ...at() }
+        longest = Math.max(longest, stopped.y - before)
+        const frames = session.frames.length
+        await sleep(600)
+        await settle()
+        assertEquals(at(), stopped, `round ${round}: a step after the release`)
+        assertEquals(session.frames.length, frames, `round ${round}: an event after the release`)
+      }
+      assert(longest >= 3, `a held key walks more than ${longest} squares`)
+
+      // A wall ends the hold instead of repeating the refused step.
+      let blocked = -1
+      for (let round = 0; round < 12; round++) {
+        await acknowledgePopups()
+        blocked = at().y
+        assertEquals((await hold("DOWN")).error, undefined)
+        await sleep(450)
+        await settle()
+        if (at().y === blocked && !session.mirror.interaction.interaction) break
+      }
+      assertEquals(blocked, at().y, "the avatar reached the wall")
+      await acknowledgePopups()
+      const logged = session.eventTypes.filter((type) => type === "message.logged").length
+      assertEquals((await hold("DOWN")).error, undefined)
+      await sleep(700)
+      await settle()
+      assertEquals(at().y, blocked)
+      const spam = session.eventTypes.filter((type) => type === "message.logged").length - logged
+      assert(spam <= 2, `${spam} messages from a walk into a wall`)
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
+Deno.test({
   name: "stdio: 0.2 invoke: the tutorial crafting screen lists recipes, searches and closes",
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {

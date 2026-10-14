@@ -44,6 +44,14 @@
       "params": "result_params",
       "result": "command_result"
     },
+    "bn.hold": {
+      "params": "hold_params",
+      "result": "empty_params"
+    },
+    "bn.release": {
+      "params": "empty_params",
+      "result": "empty_params"
+    },
     "bn.credit": {
       "params": "credit_params",
       "result": "credit_result"
@@ -3947,6 +3955,29 @@
       ],
       "additionalProperties": false
     },
+    "hold_params": {
+      "type": "object",
+      "properties": {
+        "epoch": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "screen_id": {
+          "$ref": "#/$defs/opaque_id",
+          "description": "The screen that must be on top of the stack; otherwise `stale_screen`."
+        },
+        "affordance_id": {
+          "$ref": "#/$defs/opaque_id",
+          "description": "An affordance of that screen with `holdable`; any other is `invalid_arguments`."
+        }
+      },
+      "required": [
+        "epoch",
+        "screen_id",
+        "affordance_id"
+      ],
+      "additionalProperties": false,
+      "description": "The key of a holdable affordance went down. From now on, while the screen stays on top and waits for input, the engine takes one step of it at each input prompt, as if the native key were pressed once more, until `bn.release`. A client sends it once on key down, never for a key repeat. A hold replaces the previous one; a popup or any other screen on top, a step that changed nothing, a new `bn.hello` and a disconnect end it. Fails with `not_ready` while an activity runs."
+    },
     "empty_params": {
       "type": "object",
       "properties": {},
@@ -5049,6 +5080,10 @@
         },
         "args": {
           "$ref": "#/$defs/arg_shape"
+        },
+        "holdable": {
+          "type": "boolean",
+          "description": "The affordance is a step of the map that the player can hold down: a client sends `bn.hold` when its key goes down and `bn.release` when it comes up, and does not invoke it for key repeats."
         },
         "expect": {
           "enum": [
