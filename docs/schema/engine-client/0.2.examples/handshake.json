@@ -174,289 +174,315 @@
             }
           ],
           "interaction": {
-            "schema_id": "89d8b4755f414baf",
+            "schema_id": "screen:4964095150dbc415",
             "context": "MAIN_MENU",
-            "kind": "choices",
+            "kind": "custom",
             "allow_cancel": false,
             "allow_set_count": false,
-            "title": "Cataclysm: Bright Nights",
-            "message": "",
-            "choices": [
-              {
-                "id": "tab:motd",
-                "label": "MOTD",
-                "description": "",
-                "denial": "",
-                "enabled": true,
-                "selectable": true,
-                "selected": false,
-                "columns": []
-              },
-              {
-                "id": "tab:new_game",
-                "label": "New Game",
-                "description": "",
-                "denial": "",
-                "enabled": true,
-                "selectable": true,
-                "selected": true,
-                "columns": []
-              },
-              {
-                "id": "tab:load",
-                "label": "Load",
-                "description": "",
-                "denial": "",
-                "enabled": true,
-                "selectable": true,
-                "selected": false,
-                "columns": []
-              },
-              {
-                "id": "tab:world",
-                "label": "World",
-                "description": "",
-                "denial": "",
-                "enabled": true,
-                "selectable": true,
-                "selected": false,
-                "columns": []
-              },
-              {
-                "id": "tab:settings",
-                "label": "Settings",
-                "description": "",
-                "denial": "",
-                "enabled": true,
-                "selectable": true,
-                "selected": false,
-                "columns": []
-              },
-              {
-                "id": "tab:help",
-                "label": "Help",
-                "description": "",
-                "denial": "",
-                "enabled": true,
-                "selectable": true,
-                "selected": false,
-                "columns": []
-              },
-              {
-                "id": "tab:credits",
-                "label": "Credits",
-                "description": "",
-                "denial": "",
-                "enabled": true,
-                "selectable": true,
-                "selected": false,
-                "columns": []
-              },
-              {
-                "id": "tab:quit",
-                "label": "Quit",
-                "description": "",
-                "denial": "",
-                "enabled": true,
-                "selectable": true,
-                "selected": false,
-                "columns": []
-              },
-              {
-                "id": "new_game:custom",
-                "label": "Custom Character",
-                "description": "Allows you to fully customize points pool, scenario, and character's profession, stats, traits, skills and other parameters.",
-                "denial": "",
-                "pane_id": "new_game",
-                "enabled": true,
-                "selectable": true,
-                "selected": false,
-                "columns": []
-              },
-              {
-                "id": "new_game:preset",
-                "label": "Preset Character",
-                "description": "Select from one of previously created character templates.",
-                "denial": "",
-                "pane_id": "new_game",
-                "enabled": true,
-                "selectable": true,
-                "selected": true,
-                "columns": []
-              },
-              {
-                "id": "new_game:random",
-                "label": "Random Character",
-                "description": "Creates random character, but lets you preview the generated character and the scenario and change character and/or scenario if needed.",
-                "denial": "",
-                "pane_id": "new_game",
-                "enabled": true,
-                "selectable": true,
-                "selected": false,
-                "columns": []
-              },
-              {
-                "id": "new_game:play_now_default",
-                "label": "Play Now!  (Default Scenario)",
-                "description": "Puts you right in the game, randomly choosing character's traits, profession, skills and other parameters.  Scenario is fixed to Evacuee.",
-                "denial": "",
-                "pane_id": "new_game",
-                "enabled": true,
-                "selectable": true,
-                "selected": false,
-                "columns": []
-              },
-              {
-                "id": "new_game:play_now",
-                "label": "Play Now!",
-                "description": "Puts you right in the game, randomly choosing scenario and character's traits, profession, skills and other parameters.",
-                "denial": "",
-                "pane_id": "new_game",
-                "enabled": true,
-                "selectable": true,
-                "selected": false,
-                "columns": []
-              },
-              {
-                "id": "new_game:tutorial",
-                "label": "Tutorial",
-                "description": "Learn controls and basic game mechanics while exploring a small underground complex.",
-                "denial": "",
-                "pane_id": "new_game",
-                "enabled": true,
-                "selectable": true,
-                "selected": false,
-                "columns": []
-              },
-              {
-                "id": "new_game:defence",
-                "label": "Defence mode",
-                "description": "Defend against waves of incoming enemies.  This game mode hasn't been updated in a while and may contain bugs.",
-                "denial": "",
-                "pane_id": "new_game",
-                "enabled": true,
-                "selectable": true,
-                "selected": false,
-                "columns": []
-              }
-            ],
-            "choice_total": 15,
-            "banner": [
-              "<color_light_cyan>   _________            __                   .__                                </color>",
-              "<color_light_cyan>   \\_   ___ \\ _____   _/  |_ _____     ____  |  |   ___.__   ______  _____      </color>",
-              "<color_light_cyan>   /    \\  \\/ \\__  \\  \\   __\\\\__  \\  _/ ___\\ |  |  <   |  | /  ___/ /     \\     </color>",
-              "<color_light_cyan>   \\     \\____ / __ \\_ |  |   / __ \\_\\  \\___ |  |__ \\___  | \\___ \\ |  Y Y  \\    </color>",
-              "<color_light_cyan>    \\______  /(____  / |__|  (____  / \\___  >|____/ / ____|/____  >|__|_|  /    </color>",
-              "<color_light_cyan>           \\/      \\/             \\/      \\/        \\/          \\/       \\/     </color>",
-              "<color_light_blue>           ____       _       _     _     _   _ _       _     _                 </color>",
-              "<color_light_blue>          |  _ \\     (_)     | |   | |   | \\ | (_)     | |   | |                </color>",
-              "<color_light_blue>          | |_) |_ __ _  __ _| |__ | |_  |  \\| |_  __ _| |__ | |_ ___           </color>",
-              "<color_light_blue>          |  _ <| '__| |/ _` | '_ \\| __| | . ` | |/ _` | '_ \\| __/ __|          </color>",
-              "<color_light_blue>          | |_) | |  | | (_| | | | | |_  | |\\  | | (_| | | | | |_\\__ \\          </color>",
-              "<color_light_blue>          |____/|_|  |_|\\__, |_| |_|\\__| |_| \\_|_|\\__, |_| |_|\\__|___/          </color>",
-              "<color_light_blue>                         __/ |                     __/ |                        </color>",
-              "<color_light_blue>                        |___/                     |___/                         </color>",
-              "<color_light_blue>                                                                                </color>",
-              "<color_light_blue>                                                                                </color>",
-              "<color_light_blue>                                                                                </color>",
-              "<color_light_blue>                                                                                </color>",
-              "",
-              "<color_light_blue>Version: build</color>"
-            ],
+            "title": "",
+            "message": "   _________            __                   .__\n   \\_   ___ \\ _____   _/  |_ _____     ____  |  |   ___.__   ______  _____\n   /    \\  \\/ \\__  \\  \\   __\\\\__  \\  _/ ___\\ |  |  <   |  | /  ___/ /     \\\n   \\     \\____ / __ \\_ |  |   / __ \\_\\  \\___ |  |__ \\___  | \\___ \\ |  Y Y  \\\n    \\______  /(____  / |__|  (____  / \\___  >|____/ / ____|/____  >|__|_|  /\n           \\/      \\/             \\/      \\/        \\/          \\/       \\/\n           ____       _       _     _     _   _ _       _     _\n          |  _ \\     (_)     | |   | |   | \\ | (_)     | |   | |\n          | |_) |_ __ _  __ _| |__ | |_  |  \\| |_  __ _| |__ | |_ ___\n          |  _ <| '__| |/ _` | '_ \\| __| | . ` | |/ _` | '_ \\| __/ __|\n        ┌───────────────────────────────┐| |\\  | | (_| | | | | |_\\__ \\\n        │  Custom Character             │|_| \\_|_|\\__, |_| |_|\\__|___/\n        │» Preset Character             │          __/ |\n        │  Random Character             │         |___/\n        │  Play Now!  (Default Scenario)│\n        │  Play Now!                    │\n        │  Tutorial                     │\n        │  Defence mode                 │\n        └───────────────────────────────┘\n ───────────────────────Version: build────────────────────────\n   [MOTD]  [New Game]  [Load]  [World]  [Settings]  [Help]  [Credits]  [Quit]\n           Select from one of previously created character templates.",
+            "choices": [],
+            "choice_total": 0,
             "compat": {
-              "focus": {
-                "choice_id": "tab:new_game"
-              },
-              "panes": [
-                {
-                  "id": "motd",
-                  "label": "MOTD",
-                  "role": "category",
-                  "area_id": "",
-                  "area_label": "",
-                  "area_description": "",
-                  "filter": "",
-                  "storage_kind": ""
-                },
-                {
-                  "id": "new_game",
-                  "label": "New Game",
-                  "role": "focused",
-                  "area_id": "",
-                  "area_label": "",
-                  "area_description": "",
-                  "filter": "",
-                  "storage_kind": ""
-                },
-                {
-                  "id": "load",
-                  "label": "Load",
-                  "role": "category",
-                  "area_id": "",
-                  "area_label": "",
-                  "area_description": "",
-                  "filter": "",
-                  "storage_kind": ""
-                },
-                {
-                  "id": "world",
-                  "label": "World",
-                  "role": "category",
-                  "area_id": "",
-                  "area_label": "",
-                  "area_description": "",
-                  "filter": "",
-                  "storage_kind": ""
-                },
-                {
-                  "id": "settings",
-                  "label": "Settings",
-                  "role": "category",
-                  "area_id": "",
-                  "area_label": "",
-                  "area_description": "",
-                  "filter": "",
-                  "storage_kind": ""
-                },
-                {
-                  "id": "help",
-                  "label": "Help",
-                  "role": "category",
-                  "area_id": "",
-                  "area_label": "",
-                  "area_description": "",
-                  "filter": "",
-                  "storage_kind": ""
-                },
-                {
-                  "id": "credits",
-                  "label": "Credits",
-                  "role": "category",
-                  "area_id": "",
-                  "area_label": "",
-                  "area_description": "",
-                  "filter": "",
-                  "storage_kind": ""
-                },
-                {
-                  "id": "quit",
-                  "label": "Quit",
-                  "role": "category",
-                  "area_id": "",
-                  "area_label": "",
-                  "area_description": "",
-                  "filter": "",
-                  "storage_kind": ""
-                }
-              ]
+              "panes": []
             }
           },
           "stack": [
             {
-              "screen_id": "screen:read:boundary:1",
+              "screen_id": "screen:1",
               "role": "screen",
-              "root": null,
-              "affordances": [],
+              "title": "Cataclysm: Bright Nights",
+              "root": {
+                "id": "menu",
+                "kind": "split",
+                "relation": "peers",
+                "children": [
+                  {
+                    "id": "menu:banner",
+                    "kind": "text",
+                    "markup": "<color_light_cyan>   _________            __                   .__                                </color>\n<color_light_cyan>   \\_   ___ \\ _____   _/  |_ _____     ____  |  |   ___.__   ______  _____      </color>\n<color_light_cyan>   /    \\  \\/ \\__  \\  \\   __\\\\__  \\  _/ ___\\ |  |  <   |  | /  ___/ /     \\     </color>\n<color_light_cyan>   \\     \\____ / __ \\_ |  |   / __ \\_\\  \\___ |  |__ \\___  | \\___ \\ |  Y Y  \\    </color>\n<color_light_cyan>    \\______  /(____  / |__|  (____  / \\___  >|____/ / ____|/____  >|__|_|  /    </color>\n<color_light_cyan>           \\/      \\/             \\/      \\/        \\/          \\/       \\/     </color>\n<color_light_blue>           ____       _       _     _     _   _ _       _     _                 </color>\n<color_light_blue>          |  _ \\     (_)     | |   | |   | \\ | (_)     | |   | |                </color>\n<color_light_blue>          | |_) |_ __ _  __ _| |__ | |_  |  \\| |_  __ _| |__ | |_ ___           </color>\n<color_light_blue>          |  _ <| '__| |/ _` | '_ \\| __| | . ` | |/ _` | '_ \\| __/ __|          </color>\n<color_light_blue>          | |_) | |  | | (_| | | | | |_  | |\\  | | (_| | | | | |_\\__ \\          </color>\n<color_light_blue>          |____/|_|  |_|\\__, |_| |_|\\__| |_| \\_|_|\\__, |_| |_|\\__|___/          </color>\n<color_light_blue>                         __/ |                     __/ |                        </color>\n<color_light_blue>                        |___/                     |___/                         </color>\n<color_light_blue>                                                                                </color>\n<color_light_blue>                                                                                </color>\n<color_light_blue>                                                                                </color>\n<color_light_blue>                                                                                </color>\n\n<color_light_blue>Version: build</color>",
+                    "role": "banner"
+                  },
+                  {
+                    "id": "menu:tabs",
+                    "kind": "tabs",
+                    "affordances": [
+                      "menu:tab"
+                    ],
+                    "tabs": [
+                      {
+                        "id": "motd",
+                        "label": "MOTD",
+                        "selected": false,
+                        "enabled": true
+                      },
+                      {
+                        "id": "new_game",
+                        "label": "New Game",
+                        "selected": true,
+                        "enabled": true
+                      },
+                      {
+                        "id": "load",
+                        "label": "Load",
+                        "selected": false,
+                        "enabled": true
+                      },
+                      {
+                        "id": "world",
+                        "label": "World",
+                        "selected": false,
+                        "enabled": true
+                      },
+                      {
+                        "id": "settings",
+                        "label": "Settings",
+                        "selected": false,
+                        "enabled": true
+                      },
+                      {
+                        "id": "help",
+                        "label": "Help",
+                        "selected": false,
+                        "enabled": true
+                      },
+                      {
+                        "id": "credits",
+                        "label": "Credits",
+                        "selected": false,
+                        "enabled": true
+                      },
+                      {
+                        "id": "quit",
+                        "label": "Quit",
+                        "selected": false,
+                        "enabled": true
+                      }
+                    ],
+                    "select": "menu:tab",
+                    "child": {
+                      "id": "menu:entries",
+                      "kind": "list",
+                      "affordances": [
+                        "menu:entry"
+                      ],
+                      "columns": [],
+                      "rows": [
+                        {
+                          "id": "new_game:custom",
+                          "label": "Custom Character",
+                          "description": "Allows you to fully customize points pool, scenario, and character's profession, stats, traits, skills and other parameters.",
+                          "denial": "",
+                          "enabled": true,
+                          "selectable": true,
+                          "selected": false,
+                          "columns": []
+                        },
+                        {
+                          "id": "new_game:preset",
+                          "label": "Preset Character",
+                          "description": "Select from one of previously created character templates.",
+                          "denial": "",
+                          "enabled": true,
+                          "selectable": true,
+                          "selected": false,
+                          "columns": []
+                        },
+                        {
+                          "id": "new_game:random",
+                          "label": "Random Character",
+                          "description": "Creates random character, but lets you preview the generated character and the scenario and change character and/or scenario if needed.",
+                          "denial": "",
+                          "enabled": true,
+                          "selectable": true,
+                          "selected": false,
+                          "columns": []
+                        },
+                        {
+                          "id": "new_game:play_now_default",
+                          "label": "Play Now!  (Default Scenario)",
+                          "description": "Puts you right in the game, randomly choosing character's traits, profession, skills and other parameters.  Scenario is fixed to Evacuee.",
+                          "denial": "",
+                          "enabled": true,
+                          "selectable": true,
+                          "selected": false,
+                          "columns": []
+                        },
+                        {
+                          "id": "new_game:play_now",
+                          "label": "Play Now!",
+                          "description": "Puts you right in the game, randomly choosing scenario and character's traits, profession, skills and other parameters.",
+                          "denial": "",
+                          "enabled": true,
+                          "selectable": true,
+                          "selected": false,
+                          "columns": []
+                        },
+                        {
+                          "id": "new_game:tutorial",
+                          "label": "Tutorial",
+                          "description": "Learn controls and basic game mechanics while exploring a small underground complex.",
+                          "denial": "",
+                          "enabled": true,
+                          "selectable": true,
+                          "selected": false,
+                          "columns": []
+                        },
+                        {
+                          "id": "new_game:defence",
+                          "label": "Defence mode",
+                          "description": "Defend against waves of incoming enemies.  This game mode hasn't been updated in a while and may contain bugs.",
+                          "denial": "",
+                          "enabled": true,
+                          "selectable": true,
+                          "selected": false,
+                          "columns": []
+                        }
+                      ],
+                      "total": 7,
+                      "selection": "single",
+                      "activate": "menu:entry"
+                    }
+                  }
+                ]
+              },
+              "affordances": [
+                {
+                  "id": "menu:tab",
+                  "label": "Confirm Choice",
+                  "keys": [],
+                  "enabled": true,
+                  "args": {
+                    "row": {
+                      "component_id": "menu:tabs"
+                    }
+                  },
+                  "expect": "boundary"
+                },
+                {
+                  "id": "menu:entry",
+                  "label": "Confirm Choice",
+                  "keys": [],
+                  "enabled": true,
+                  "args": {
+                    "row": {
+                      "component_id": "menu:entries"
+                    }
+                  },
+                  "expect": "boundary"
+                },
+                {
+                  "id": "UP",
+                  "label": "Pan up",
+                  "keys": [
+                    "k",
+                    "8",
+                    "UP",
+                    "NUMPAD_8"
+                  ],
+                  "enabled": true,
+                  "expect": "screen"
+                },
+                {
+                  "id": "DOWN",
+                  "label": "Pan down",
+                  "keys": [
+                    "j",
+                    "DOWN",
+                    "2",
+                    "NUMPAD_2"
+                  ],
+                  "enabled": true,
+                  "expect": "screen"
+                },
+                {
+                  "id": "LEFT",
+                  "label": "Pan left",
+                  "keys": [
+                    "h",
+                    "LEFT",
+                    "4",
+                    "NUMPAD_4"
+                  ],
+                  "enabled": true,
+                  "expect": "screen"
+                },
+                {
+                  "id": "RIGHT",
+                  "label": "Pan right",
+                  "keys": [
+                    "l",
+                    "RIGHT",
+                    "6",
+                    "NUMPAD_6"
+                  ],
+                  "enabled": true,
+                  "expect": "screen"
+                },
+                {
+                  "id": "NEXT_TAB",
+                  "label": "Go to next tab",
+                  "keys": [
+                    "TAB"
+                  ],
+                  "enabled": true,
+                  "expect": "screen"
+                },
+                {
+                  "id": "PREV_TAB",
+                  "label": "Go to prev tab",
+                  "keys": [
+                    "BACKTAB"
+                  ],
+                  "enabled": true,
+                  "expect": "screen"
+                },
+                {
+                  "id": "PAGE_UP",
+                  "label": "Page up",
+                  "keys": [
+                    "PPAGE"
+                  ],
+                  "enabled": true,
+                  "expect": "screen"
+                },
+                {
+                  "id": "PAGE_DOWN",
+                  "label": "Page down",
+                  "keys": [
+                    "NPAGE"
+                  ],
+                  "enabled": true,
+                  "expect": "screen"
+                },
+                {
+                  "id": "CONFIRM",
+                  "label": "Confirm Choice",
+                  "keys": [
+                    "RETURN"
+                  ],
+                  "enabled": true,
+                  "role": "confirm",
+                  "expect": "screen"
+                },
+                {
+                  "id": "QUIT",
+                  "label": "Exit screen",
+                  "keys": [
+                    "ESC",
+                    "q",
+                    "Q",
+                    "SPACE"
+                  ],
+                  "enabled": true,
+                  "role": "cancel",
+                  "expect": "screen"
+                }
+              ],
+              "focus": {
+                "component_id": "menu:entries",
+                "row_id": "new_game:preset"
+              },
               "context": "MAIN_MENU"
             }
           ]
@@ -466,283 +492,16 @@
       }
     },
     {
-      "name": "startup prompt answered, request",
-      "def": "submit_params",
-      "value": {
-        "epoch": "epoch-1",
-        "expect": {
-          "revision": "0",
-          "boundary_id": "boundary:1",
-          "schema_id": "89d8b4755f414baf"
-        },
-        "operation": {
-          "kind": "choose",
-          "choice_id": "tab:motd"
-        }
-      }
-    },
-    {
-      "name": "startup prompt answered, receipt",
-      "def": "submit_result",
-      "value": {
-        "epoch": "epoch-1",
-        "command_id": "command:1",
-        "stage": "received"
-      }
-    },
-    {
-      "name": "startup prompt answered, validated",
-      "def": "command_notification",
-      "value": {
-        "epoch": "epoch-1",
-        "command_id": "command:1",
-        "stage": "validated"
-      }
-    },
-    {
-      "name": "startup prompt answered, executing",
-      "def": "command_notification",
-      "value": {
-        "epoch": "epoch-1",
-        "command_id": "command:1",
-        "stage": "executing"
-      }
-    },
-    {
-      "name": "startup prompt answered, completed",
-      "def": "command_notification",
-      "value": {
-        "epoch": "epoch-1",
-        "command_id": "command:1",
-        "stage": "completed",
-        "at": {
-          "epoch": "epoch-1",
-          "sequence": "1",
-          "revision": "1"
-        }
-      }
-    },
-    {
       "name": "boundary of the main menu",
       "def": "interaction_boundary",
       "value": {
-        "boundary_id": "boundary:2",
+        "boundary_id": "boundary:1",
         "readiness": {
           "phase": "menu",
           "game_ready": false,
           "accepts_interaction_commands": true,
           "accepts_registered_actions": true
         },
-        "interaction": {
-          "schema_id": "6be240671ef7bcca",
-          "context": "MAIN_MENU",
-          "kind": "choices",
-          "allow_cancel": false,
-          "allow_set_count": false,
-          "title": "Cataclysm: Bright Nights",
-          "message": "Visit us:\n \n* Homepage:    https://github.com/cataclysmbn/Cataclysm-BN/\n* Wiki:        https://github.com/cataclysmbn/Cataclysm-BN/wiki\n \nReport bugs, suggestion and follow the development at:\n \n* Github: https://github.com/cataclysmbn/Cataclysm-BN/issues\n* e-mail: Coolthulhu@gmail.com\n \nJoin the discussion on forums and chats:\n \n* Reddit:                    https://www.reddit.com/r/cataclysmbn/\n* Discord:                   https://discord.gg/XW7XhXuZ89\n* Modding Discord:           https://discord.gg/B5q4XCa\n \nOther useful links are also available at our Homepage.\n \nIn game you can access the options via the main menu (Esc).\n \n******************************************************************************\n    Disclaimer for the nightly builds:\n******************************************************************************\n \nQ: What is a nightly build?\n \nA: Nightly builds are released every day, and have the latest features.  Compared to the unchanging stone of stable builds, nightly builds can be said to be ever-changing.  As such, they're often preferred by most players.\n \nQ: Why are nightly builds even a thing?\n \nA: Players want to play with the latest features, and if we had to wait for the infrequent stable builds before anyone could play with new content, we'd likely have a much smaller community.  Additionally, whenever a big change is made, bugs are not uncommon.  By having frequent releases, we are better able to fix up bugs that somehow slipped through our current testing process.\n \nQ: Are nightly builds playable then?\n \nA: Yes!  In fact, the majority of players prefer Nightly builds to the stables thanks to all the fresh content.  Additionally, the testing that we do before PRs get merged means that you're very unlikely to encounter seriously game-breaking bugs, even in Nightly.\n \nQ: Should I play nightly builds then, or stick to stable build?\n \nA: Your choice to play nightly builds as opposed to stables is entirely up to you, but we would note that a majority of \"Stable Releases\" are really moreso just bookmarks in our history.  In truth, many in the community would highly recommend playing on a recent Nightly build for the sake of experiencing the new content.\n \nQ: Should I be aware of anything else?\n \nA: Many mods that are not in-repo, unless having created a release specifically labeled for a given stable, are based on the latest Nightly as opposed to latest Stable.  As such, if you wish to use certain mods, it may likely be in your best interest to be using the latest (or at least fairly recent) Nightly builds.\n \nQ: What if I find the risk of playing nightly build unacceptable?\n \nA: While we would note that, unlike in DDA's Experimentals, the Nightly builds are generally still fairly well-balanced and tested, it is ultimately up to you if you feel that Nightly releases are too risky for you.  However, if you ever report a bug or request a feature, we kindly ask you to make sure it hasn't already been fixed or implemented in a Nightly build if you do choose to stick to Stable releases.\n",
-          "choices": [
-            {
-              "id": "tab:motd",
-              "label": "MOTD",
-              "description": "",
-              "denial": "",
-              "enabled": true,
-              "selectable": true,
-              "selected": true,
-              "columns": []
-            },
-            {
-              "id": "tab:new_game",
-              "label": "New Game",
-              "description": "",
-              "denial": "",
-              "enabled": true,
-              "selectable": true,
-              "selected": false,
-              "columns": []
-            },
-            {
-              "id": "tab:load",
-              "label": "Load",
-              "description": "",
-              "denial": "",
-              "enabled": true,
-              "selectable": true,
-              "selected": false,
-              "columns": []
-            },
-            {
-              "id": "tab:world",
-              "label": "World",
-              "description": "",
-              "denial": "",
-              "enabled": true,
-              "selectable": true,
-              "selected": false,
-              "columns": []
-            },
-            {
-              "id": "tab:settings",
-              "label": "Settings",
-              "description": "",
-              "denial": "",
-              "enabled": true,
-              "selectable": true,
-              "selected": false,
-              "columns": []
-            },
-            {
-              "id": "tab:help",
-              "label": "Help",
-              "description": "",
-              "denial": "",
-              "enabled": true,
-              "selectable": true,
-              "selected": false,
-              "columns": []
-            },
-            {
-              "id": "tab:credits",
-              "label": "Credits",
-              "description": "",
-              "denial": "",
-              "enabled": true,
-              "selectable": true,
-              "selected": false,
-              "columns": []
-            },
-            {
-              "id": "tab:quit",
-              "label": "Quit",
-              "description": "",
-              "denial": "",
-              "enabled": true,
-              "selectable": true,
-              "selected": false,
-              "columns": []
-            }
-          ],
-          "choice_total": 8,
-          "banner": [
-            "<color_light_cyan>   _________            __                   .__                                </color>",
-            "<color_light_cyan>   \\_   ___ \\ _____   _/  |_ _____     ____  |  |   ___.__   ______  _____      </color>",
-            "<color_light_cyan>   /    \\  \\/ \\__  \\  \\   __\\\\__  \\  _/ ___\\ |  |  <   |  | /  ___/ /     \\     </color>",
-            "<color_light_cyan>   \\     \\____ / __ \\_ |  |   / __ \\_\\  \\___ |  |__ \\___  | \\___ \\ |  Y Y  \\    </color>",
-            "<color_light_cyan>    \\______  /(____  / |__|  (____  / \\___  >|____/ / ____|/____  >|__|_|  /    </color>",
-            "<color_light_cyan>           \\/      \\/             \\/      \\/        \\/          \\/       \\/     </color>",
-            "<color_light_blue>           ____       _       _     _     _   _ _       _     _                 </color>",
-            "<color_light_blue>          |  _ \\     (_)     | |   | |   | \\ | (_)     | |   | |                </color>",
-            "<color_light_blue>          | |_) |_ __ _  __ _| |__ | |_  |  \\| |_  __ _| |__ | |_ ___           </color>",
-            "<color_light_blue>          |  _ <| '__| |/ _` | '_ \\| __| | . ` | |/ _` | '_ \\| __/ __|          </color>",
-            "<color_light_blue>          | |_) | |  | | (_| | | | | |_  | |\\  | | (_| | | | | |_\\__ \\          </color>",
-            "<color_light_blue>          |____/|_|  |_|\\__, |_| |_|\\__| |_| \\_|_|\\__, |_| |_|\\__|___/          </color>",
-            "<color_light_blue>                         __/ |                     __/ |                        </color>",
-            "<color_light_blue>                        |___/                     |___/                         </color>",
-            "<color_light_blue>                                                                                </color>",
-            "<color_light_blue>                                                                                </color>",
-            "<color_light_blue>                                                                                </color>",
-            "<color_light_blue>                                                                                </color>",
-            "",
-            "<color_light_blue>Version: build</color>"
-          ],
-          "compat": {
-            "focus": {
-              "choice_id": "tab:motd"
-            },
-            "panes": [
-              {
-                "id": "motd",
-                "label": "MOTD",
-                "role": "focused",
-                "area_id": "",
-                "area_label": "",
-                "area_description": "",
-                "filter": "",
-                "storage_kind": ""
-              },
-              {
-                "id": "new_game",
-                "label": "New Game",
-                "role": "category",
-                "area_id": "",
-                "area_label": "",
-                "area_description": "",
-                "filter": "",
-                "storage_kind": ""
-              },
-              {
-                "id": "load",
-                "label": "Load",
-                "role": "category",
-                "area_id": "",
-                "area_label": "",
-                "area_description": "",
-                "filter": "",
-                "storage_kind": ""
-              },
-              {
-                "id": "world",
-                "label": "World",
-                "role": "category",
-                "area_id": "",
-                "area_label": "",
-                "area_description": "",
-                "filter": "",
-                "storage_kind": ""
-              },
-              {
-                "id": "settings",
-                "label": "Settings",
-                "role": "category",
-                "area_id": "",
-                "area_label": "",
-                "area_description": "",
-                "filter": "",
-                "storage_kind": ""
-              },
-              {
-                "id": "help",
-                "label": "Help",
-                "role": "category",
-                "area_id": "",
-                "area_label": "",
-                "area_description": "",
-                "filter": "",
-                "storage_kind": ""
-              },
-              {
-                "id": "credits",
-                "label": "Credits",
-                "role": "category",
-                "area_id": "",
-                "area_label": "",
-                "area_description": "",
-                "filter": "",
-                "storage_kind": ""
-              },
-              {
-                "id": "quit",
-                "label": "Quit",
-                "role": "category",
-                "area_id": "",
-                "area_label": "",
-                "area_description": "",
-                "filter": "",
-                "storage_kind": ""
-              }
-            ]
-          }
-        },
-        "stack": [
-          {
-            "screen_id": "screen:read:boundary:2",
-            "role": "screen",
-            "root": null,
-            "affordances": [],
-            "context": "MAIN_MENU"
-          }
-        ],
         "actions": [
           {
             "id": "UP",
@@ -834,6 +593,319 @@
             "name": "ANY_INPUT",
             "keys": []
           }
+        ],
+        "interaction": {
+          "schema_id": "screen:4964095150dbc415",
+          "context": "MAIN_MENU",
+          "kind": "custom",
+          "allow_cancel": false,
+          "allow_set_count": false,
+          "title": "",
+          "message": "   _________            __                   .__\n   \\_   ___ \\ _____   _/  |_ _____     ____  |  |   ___.__   ______  _____\n   /    \\  \\/ \\__  \\  \\   __\\\\__  \\  _/ ___\\ |  |  <   |  | /  ___/ /     \\\n   \\     \\____ / __ \\_ |  |   / __ \\_\\  \\___ |  |__ \\___  | \\___ \\ |  Y Y  \\\n    \\______  /(____  / |__|  (____  / \\___  >|____/ / ____|/____  >|__|_|  /\n           \\/      \\/             \\/      \\/        \\/          \\/       \\/\n           ____       _       _     _     _   _ _       _     _\n          |  _ \\     (_)     | |   | |   | \\ | (_)     | |   | |\n          | |_) |_ __ _  __ _| |__ | |_  |  \\| |_  __ _| |__ | |_ ___\n          |  _ <| '__| |/ _` | '_ \\| __| | . ` | |/ _` | '_ \\| __/ __|\n        ┌───────────────────────────────┐| |\\  | | (_| | | | | |_\\__ \\\n        │  Custom Character             │|_| \\_|_|\\__, |_| |_|\\__|___/\n        │» Preset Character             │          __/ |\n        │  Random Character             │         |___/\n        │  Play Now!  (Default Scenario)│\n        │  Play Now!                    │\n        │  Tutorial                     │\n        │  Defence mode                 │\n        └───────────────────────────────┘\n ───────────────────────Version: build────────────────────────\n   [MOTD]  [New Game]  [Load]  [World]  [Settings]  [Help]  [Credits]  [Quit]\n           Select from one of previously created character templates.",
+          "choices": [],
+          "choice_total": 0,
+          "compat": {
+            "panes": []
+          }
+        },
+        "stack": [
+          {
+            "screen_id": "screen:1",
+            "role": "screen",
+            "title": "Cataclysm: Bright Nights",
+            "root": {
+              "id": "menu",
+              "kind": "split",
+              "relation": "peers",
+              "children": [
+                {
+                  "id": "menu:banner",
+                  "kind": "text",
+                  "markup": "<color_light_cyan>   _________            __                   .__                                </color>\n<color_light_cyan>   \\_   ___ \\ _____   _/  |_ _____     ____  |  |   ___.__   ______  _____      </color>\n<color_light_cyan>   /    \\  \\/ \\__  \\  \\   __\\\\__  \\  _/ ___\\ |  |  <   |  | /  ___/ /     \\     </color>\n<color_light_cyan>   \\     \\____ / __ \\_ |  |   / __ \\_\\  \\___ |  |__ \\___  | \\___ \\ |  Y Y  \\    </color>\n<color_light_cyan>    \\______  /(____  / |__|  (____  / \\___  >|____/ / ____|/____  >|__|_|  /    </color>\n<color_light_cyan>           \\/      \\/             \\/      \\/        \\/          \\/       \\/     </color>\n<color_light_blue>           ____       _       _     _     _   _ _       _     _                 </color>\n<color_light_blue>          |  _ \\     (_)     | |   | |   | \\ | (_)     | |   | |                </color>\n<color_light_blue>          | |_) |_ __ _  __ _| |__ | |_  |  \\| |_  __ _| |__ | |_ ___           </color>\n<color_light_blue>          |  _ <| '__| |/ _` | '_ \\| __| | . ` | |/ _` | '_ \\| __/ __|          </color>\n<color_light_blue>          | |_) | |  | | (_| | | | | |_  | |\\  | | (_| | | | | |_\\__ \\          </color>\n<color_light_blue>          |____/|_|  |_|\\__, |_| |_|\\__| |_| \\_|_|\\__, |_| |_|\\__|___/          </color>\n<color_light_blue>                         __/ |                     __/ |                        </color>\n<color_light_blue>                        |___/                     |___/                         </color>\n<color_light_blue>                                                                                </color>\n<color_light_blue>                                                                                </color>\n<color_light_blue>                                                                                </color>\n<color_light_blue>                                                                                </color>\n\n<color_light_blue>Version: build</color>",
+                  "role": "banner"
+                },
+                {
+                  "id": "menu:tabs",
+                  "kind": "tabs",
+                  "affordances": [
+                    "menu:tab"
+                  ],
+                  "tabs": [
+                    {
+                      "id": "motd",
+                      "label": "MOTD",
+                      "selected": false,
+                      "enabled": true
+                    },
+                    {
+                      "id": "new_game",
+                      "label": "New Game",
+                      "selected": true,
+                      "enabled": true
+                    },
+                    {
+                      "id": "load",
+                      "label": "Load",
+                      "selected": false,
+                      "enabled": true
+                    },
+                    {
+                      "id": "world",
+                      "label": "World",
+                      "selected": false,
+                      "enabled": true
+                    },
+                    {
+                      "id": "settings",
+                      "label": "Settings",
+                      "selected": false,
+                      "enabled": true
+                    },
+                    {
+                      "id": "help",
+                      "label": "Help",
+                      "selected": false,
+                      "enabled": true
+                    },
+                    {
+                      "id": "credits",
+                      "label": "Credits",
+                      "selected": false,
+                      "enabled": true
+                    },
+                    {
+                      "id": "quit",
+                      "label": "Quit",
+                      "selected": false,
+                      "enabled": true
+                    }
+                  ],
+                  "select": "menu:tab",
+                  "child": {
+                    "id": "menu:entries",
+                    "kind": "list",
+                    "affordances": [
+                      "menu:entry"
+                    ],
+                    "columns": [],
+                    "rows": [
+                      {
+                        "id": "new_game:custom",
+                        "label": "Custom Character",
+                        "description": "Allows you to fully customize points pool, scenario, and character's profession, stats, traits, skills and other parameters.",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "new_game:preset",
+                        "label": "Preset Character",
+                        "description": "Select from one of previously created character templates.",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "new_game:random",
+                        "label": "Random Character",
+                        "description": "Creates random character, but lets you preview the generated character and the scenario and change character and/or scenario if needed.",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "new_game:play_now_default",
+                        "label": "Play Now!  (Default Scenario)",
+                        "description": "Puts you right in the game, randomly choosing character's traits, profession, skills and other parameters.  Scenario is fixed to Evacuee.",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "new_game:play_now",
+                        "label": "Play Now!",
+                        "description": "Puts you right in the game, randomly choosing scenario and character's traits, profession, skills and other parameters.",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "new_game:tutorial",
+                        "label": "Tutorial",
+                        "description": "Learn controls and basic game mechanics while exploring a small underground complex.",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "new_game:defence",
+                        "label": "Defence mode",
+                        "description": "Defend against waves of incoming enemies.  This game mode hasn't been updated in a while and may contain bugs.",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      }
+                    ],
+                    "total": 7,
+                    "selection": "single",
+                    "activate": "menu:entry"
+                  }
+                }
+              ]
+            },
+            "affordances": [
+              {
+                "id": "menu:tab",
+                "label": "Confirm Choice",
+                "keys": [],
+                "enabled": true,
+                "args": {
+                  "row": {
+                    "component_id": "menu:tabs"
+                  }
+                },
+                "expect": "boundary"
+              },
+              {
+                "id": "menu:entry",
+                "label": "Confirm Choice",
+                "keys": [],
+                "enabled": true,
+                "args": {
+                  "row": {
+                    "component_id": "menu:entries"
+                  }
+                },
+                "expect": "boundary"
+              },
+              {
+                "id": "UP",
+                "label": "Pan up",
+                "keys": [
+                  "k",
+                  "8",
+                  "UP",
+                  "NUMPAD_8"
+                ],
+                "enabled": true,
+                "expect": "screen"
+              },
+              {
+                "id": "DOWN",
+                "label": "Pan down",
+                "keys": [
+                  "j",
+                  "DOWN",
+                  "2",
+                  "NUMPAD_2"
+                ],
+                "enabled": true,
+                "expect": "screen"
+              },
+              {
+                "id": "LEFT",
+                "label": "Pan left",
+                "keys": [
+                  "h",
+                  "LEFT",
+                  "4",
+                  "NUMPAD_4"
+                ],
+                "enabled": true,
+                "expect": "screen"
+              },
+              {
+                "id": "RIGHT",
+                "label": "Pan right",
+                "keys": [
+                  "l",
+                  "RIGHT",
+                  "6",
+                  "NUMPAD_6"
+                ],
+                "enabled": true,
+                "expect": "screen"
+              },
+              {
+                "id": "NEXT_TAB",
+                "label": "Go to next tab",
+                "keys": [
+                  "TAB"
+                ],
+                "enabled": true,
+                "expect": "screen"
+              },
+              {
+                "id": "PREV_TAB",
+                "label": "Go to prev tab",
+                "keys": [
+                  "BACKTAB"
+                ],
+                "enabled": true,
+                "expect": "screen"
+              },
+              {
+                "id": "PAGE_UP",
+                "label": "Page up",
+                "keys": [
+                  "PPAGE"
+                ],
+                "enabled": true,
+                "expect": "screen"
+              },
+              {
+                "id": "PAGE_DOWN",
+                "label": "Page down",
+                "keys": [
+                  "NPAGE"
+                ],
+                "enabled": true,
+                "expect": "screen"
+              },
+              {
+                "id": "CONFIRM",
+                "label": "Confirm Choice",
+                "keys": [
+                  "RETURN"
+                ],
+                "enabled": true,
+                "role": "confirm",
+                "expect": "screen"
+              },
+              {
+                "id": "QUIT",
+                "label": "Exit screen",
+                "keys": [
+                  "ESC",
+                  "q",
+                  "Q",
+                  "SPACE"
+                ],
+                "enabled": true,
+                "role": "cancel",
+                "expect": "screen"
+              }
+            ],
+            "focus": {
+              "component_id": "menu:entries",
+              "row_id": "new_game:preset"
+            },
+            "context": "MAIN_MENU"
+          }
         ]
       }
     },
@@ -841,10 +913,300 @@
       "name": "screen 1 of the main menu stack",
       "def": "screen",
       "value": {
-        "screen_id": "screen:read:boundary:2",
+        "screen_id": "screen:1",
         "role": "screen",
-        "root": null,
-        "affordances": [],
+        "title": "Cataclysm: Bright Nights",
+        "root": {
+          "id": "menu",
+          "kind": "split",
+          "relation": "peers",
+          "children": [
+            {
+              "id": "menu:banner",
+              "kind": "text",
+              "markup": "<color_light_cyan>   _________            __                   .__                                </color>\n<color_light_cyan>   \\_   ___ \\ _____   _/  |_ _____     ____  |  |   ___.__   ______  _____      </color>\n<color_light_cyan>   /    \\  \\/ \\__  \\  \\   __\\\\__  \\  _/ ___\\ |  |  <   |  | /  ___/ /     \\     </color>\n<color_light_cyan>   \\     \\____ / __ \\_ |  |   / __ \\_\\  \\___ |  |__ \\___  | \\___ \\ |  Y Y  \\    </color>\n<color_light_cyan>    \\______  /(____  / |__|  (____  / \\___  >|____/ / ____|/____  >|__|_|  /    </color>\n<color_light_cyan>           \\/      \\/             \\/      \\/        \\/          \\/       \\/     </color>\n<color_light_blue>           ____       _       _     _     _   _ _       _     _                 </color>\n<color_light_blue>          |  _ \\     (_)     | |   | |   | \\ | (_)     | |   | |                </color>\n<color_light_blue>          | |_) |_ __ _  __ _| |__ | |_  |  \\| |_  __ _| |__ | |_ ___           </color>\n<color_light_blue>          |  _ <| '__| |/ _` | '_ \\| __| | . ` | |/ _` | '_ \\| __/ __|          </color>\n<color_light_blue>          | |_) | |  | | (_| | | | | |_  | |\\  | | (_| | | | | |_\\__ \\          </color>\n<color_light_blue>          |____/|_|  |_|\\__, |_| |_|\\__| |_| \\_|_|\\__, |_| |_|\\__|___/          </color>\n<color_light_blue>                         __/ |                     __/ |                        </color>\n<color_light_blue>                        |___/                     |___/                         </color>\n<color_light_blue>                                                                                </color>\n<color_light_blue>                                                                                </color>\n<color_light_blue>                                                                                </color>\n<color_light_blue>                                                                                </color>\n\n<color_light_blue>Version: build</color>",
+              "role": "banner"
+            },
+            {
+              "id": "menu:tabs",
+              "kind": "tabs",
+              "affordances": [
+                "menu:tab"
+              ],
+              "tabs": [
+                {
+                  "id": "motd",
+                  "label": "MOTD",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "new_game",
+                  "label": "New Game",
+                  "selected": true,
+                  "enabled": true
+                },
+                {
+                  "id": "load",
+                  "label": "Load",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "world",
+                  "label": "World",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "settings",
+                  "label": "Settings",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "help",
+                  "label": "Help",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "credits",
+                  "label": "Credits",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "quit",
+                  "label": "Quit",
+                  "selected": false,
+                  "enabled": true
+                }
+              ],
+              "select": "menu:tab",
+              "child": {
+                "id": "menu:entries",
+                "kind": "list",
+                "affordances": [
+                  "menu:entry"
+                ],
+                "columns": [],
+                "rows": [
+                  {
+                    "id": "new_game:custom",
+                    "label": "Custom Character",
+                    "description": "Allows you to fully customize points pool, scenario, and character's profession, stats, traits, skills and other parameters.",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": []
+                  },
+                  {
+                    "id": "new_game:preset",
+                    "label": "Preset Character",
+                    "description": "Select from one of previously created character templates.",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": []
+                  },
+                  {
+                    "id": "new_game:random",
+                    "label": "Random Character",
+                    "description": "Creates random character, but lets you preview the generated character and the scenario and change character and/or scenario if needed.",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": []
+                  },
+                  {
+                    "id": "new_game:play_now_default",
+                    "label": "Play Now!  (Default Scenario)",
+                    "description": "Puts you right in the game, randomly choosing character's traits, profession, skills and other parameters.  Scenario is fixed to Evacuee.",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": []
+                  },
+                  {
+                    "id": "new_game:play_now",
+                    "label": "Play Now!",
+                    "description": "Puts you right in the game, randomly choosing scenario and character's traits, profession, skills and other parameters.",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": []
+                  },
+                  {
+                    "id": "new_game:tutorial",
+                    "label": "Tutorial",
+                    "description": "Learn controls and basic game mechanics while exploring a small underground complex.",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": []
+                  },
+                  {
+                    "id": "new_game:defence",
+                    "label": "Defence mode",
+                    "description": "Defend against waves of incoming enemies.  This game mode hasn't been updated in a while and may contain bugs.",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": []
+                  }
+                ],
+                "total": 7,
+                "selection": "single",
+                "activate": "menu:entry"
+              }
+            }
+          ]
+        },
+        "affordances": [
+          {
+            "id": "menu:tab",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "menu:tabs"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "menu:entry",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "menu:entries"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Pan left",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Pan right",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "NEXT_TAB",
+            "label": "Go to next tab",
+            "keys": [
+              "TAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PREV_TAB",
+            "label": "Go to prev tab",
+            "keys": [
+              "BACKTAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_UP",
+            "label": "Page up",
+            "keys": [
+              "PPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_DOWN",
+            "label": "Page down",
+            "keys": [
+              "NPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "menu:entries",
+          "row_id": "new_game:preset"
+        },
         "context": "MAIN_MENU"
       }
     },
@@ -854,7 +1216,7 @@
       "value": {
         "epoch": "epoch-1",
         "expect": {
-          "screen_id": "screen:read:boundary:2"
+          "screen_id": "screen:1"
         },
         "operation": {
           "kind": "invoke",
@@ -867,7 +1229,7 @@
       "def": "submit_result",
       "value": {
         "epoch": "epoch-1",
-        "command_id": "command:2",
+        "command_id": "command:1",
         "stage": "received"
       }
     },
@@ -876,7 +1238,7 @@
       "def": "command_notification",
       "value": {
         "epoch": "epoch-1",
-        "command_id": "command:2",
+        "command_id": "command:1",
         "stage": "rejected",
         "error": "unknown_affordance",
         "error_text": "That is not possible on this screen."

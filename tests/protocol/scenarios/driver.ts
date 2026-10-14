@@ -5,7 +5,7 @@
  * their end; what a scenario records is the engine's own bytes, never a hand-written value.
  */
 import { assert, assertEquals } from "@std/assert"
-import { Mirror } from "../mirror.ts"
+import { atMainMenu, Mirror } from "../mirror.ts"
 
 // deno-lint-ignore no-explicit-any
 export type Value = any
@@ -390,14 +390,14 @@ export class Engine {
   async toMainMenu() {
     const hello = await this.hello()
     await this.subscribe()
-    await this.acknowledge(() => this.mirror.interaction.interaction?.context === "MAIN_MENU")
+    await this.acknowledge(() => atMainMenu(this.mirror))
     return hello
   }
 
   /** From the main menu to the tutorial map: New Game, Tutorial, the new world's snapshot, its first lessons. */
   async enterTutorial() {
-    await this.choose("tab:new_game")
-    await this.choose("new_game:tutorial")
+    assertEquals((await this.invoke("menu:tab", { row: "new_game" })).stages.at(-1), "completed")
+    await this.invoke("menu:entry", { row: "new_game:tutorial" })
     await this.follow(() => this.stale)
     await this.subscribe()
     await this.acknowledge(() => this.mirror.interaction.interaction === null)

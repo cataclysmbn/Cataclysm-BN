@@ -101,7 +101,7 @@ Deno.test({
   async fn() {
     await Engine.run(new Recorder(), async (engine) => {
       await engine.toMainMenu()
-      // The main menu offers no affordances yet; the walk starts on the tutorial map.
+      // The walk starts on the tutorial map, not on the main menu.
       await engine.enterTutorial()
       const random = mulberry32(walkSeed)
       const pick = <T>(items: T[]) => items[Math.floor(random() * items.length)]

@@ -4,7 +4,7 @@
       "name": "advanced inventory screen",
       "def": "screen",
       "value": {
-        "screen_id": "screen:7",
+        "screen_id": "screen:8",
         "role": "screen",
         "title": "Advanced inventory",
         "root": {
@@ -1048,7 +1048,7 @@
       "value": {
         "epoch": "epoch-2",
         "expect": {
-          "screen_id": "screen:7"
+          "screen_id": "screen:8"
         },
         "operation": {
           "kind": "invoke",

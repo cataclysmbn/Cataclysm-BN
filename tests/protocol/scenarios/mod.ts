@@ -6,6 +6,7 @@ import { generic } from "./generic.ts"
 import { inventory } from "./inventory.ts"
 import { map } from "./map.ts"
 import { pickup } from "./pickup.ts"
+import { title } from "./title.ts"
 import { trade } from "./trade.ts"
 import { tutorial } from "./tutorial.ts"
 
@@ -18,4 +19,5 @@ export const scenarios: Scenario[] = [
   aim,
   inventory,
   pickup,
+  title,
 ]

@@ -10,7 +10,7 @@
  *   --allow-run --allow-env tests/protocol/determinism_test.ts
  */
 import { assert, assertEquals, assertNotEquals } from "@std/assert"
-import { itemRows, Mirror } from "./mirror.ts"
+import { atMainMenu, itemRows, Mirror, stackPick } from "./mirror.ts"
 
 // deno-lint-ignore no-explicit-any
 type Value = any
@@ -275,11 +275,14 @@ class Session {
 
   /** Choose the entry; the stage is returned, as loading a world ends its command `interrupted`. */
   async pick(label: string) {
-    const choice = this.mirror.interaction.interaction.choices.find((entry: Value) =>
+    const choice = this.mirror.interaction.interaction?.choices?.find((entry: Value) =>
       entry.enabled && entry.label === label
     )
-    assert(choice, `no choice ${label}`)
-    return await this.submit({ kind: "choose", choice_id: choice.id })
+    if (choice) return await this.submit({ kind: "choose", choice_id: choice.id })
+    // A screen of components has no choices: its tab or row is picked by its own affordance.
+    const pick = stackPick(this.mirror, label)
+    assert(pick, `no choice ${label}`)
+    return await this.submit({ kind: "invoke", ...pick })
   }
 
   async choose(label: string) {
@@ -495,7 +498,7 @@ async function drive(
     let session = new Session(client)
     session.window = condition.delivery?.credits ?? 0
     await session.start()
-    await session.acknowledge(() => session.mirror.interaction.interaction?.context === "MAIN_MENU")
+    await session.acknowledge(() => atMainMenu(session.mirror))
     await session.choose("New Game")
     await session.pick("Tutorial")
     assertEquals((await client.note()).method, "bn.resync")

@@ -8,7 +8,7 @@
  */
 import { assert, assertEquals, assertNotEquals } from "@std/assert"
 import { Ajv2020 } from "npm:ajv@8.17.1/dist/2020.js"
-import { itemRows, Mirror } from "./mirror.ts"
+import { atMainMenu, itemRows, Mirror, stackPick } from "./mirror.ts"
 
 // deno-lint-ignore no-explicit-any
 type Value = any
@@ -373,11 +373,21 @@ class Session {
   }
 
   async choose(label: string) {
-    const choice = this.mirror.interaction.interaction.choices.find((entry: Value) =>
+    const choice = this.mirror.interaction.interaction?.choices?.find((entry: Value) =>
       entry.enabled && entry.label === label
     )
-    assert(choice, `no choice ${label}`)
-    return await this.submit({ kind: "choose", choice_id: choice.id })
+    if (choice) return await this.submit({ kind: "choose", choice_id: choice.id })
+    // A screen of components has no choices: its tab or row is picked by its own affordance.
+    const pick = stackPick(this.mirror, label)
+    assert(pick, `no choice ${label}`)
+    return await this.submit({ kind: "invoke", ...pick })
+  }
+
+  /** Picks the tab or row `id` of the top screen of the stack. */
+  async pickId(id: string) {
+    const pick = stackPick(this.mirror, id)
+    assert(pick, `nothing to pick as ${id}`)
+    return await this.submit({ kind: "invoke", ...pick })
   }
 
   /** Acknowledge single-choice prompts until `done` holds. */
@@ -473,7 +483,7 @@ async function enterTutorial(client: Client, extra: Value = {}): Promise<Session
   let session = new Session(client)
   session.window = window
   await session.start()
-  await session.acknowledge(() => session.mirror.interaction.interaction?.context === "MAIN_MENU")
+  await session.acknowledge(() => atMainMenu(session.mirror))
   await session.choose("New Game")
   await session.choose("Tutorial")
   assertEquals((await client.note()).method, "bn.resync")
@@ -509,41 +519,38 @@ Deno.test({
       assertEquals(epoch, hello.epoch)
 
       // Startup prompts, then a semantic choose into a loaded world.
-      await session.acknowledge(() =>
-        session.mirror.interaction.interaction?.context === "MAIN_MENU"
-      )
-      // The main menu is tabbed: tab rows have no pane_id, entries belong to the selected tab only.
+      await session.acknowledge(() => atMainMenu(session.mirror))
+      // The main menu is a tab strip over the selected tab's text or entries.
       const menu = () => {
-        const choices = session.mirror.interaction.interaction.choices as Value[]
-        const tabs = choices.filter((entry) => entry.pane_id === undefined)
+        const parts = (node: Value): Value[] =>
+          !node ? [] : [
+            node,
+            ...(node.child ? parts(node.child) : []),
+            ...(node.children ?? []).flatMap(parts),
+          ]
+        const components = parts(session.mirror.interaction.stack.at(-1).root)
+        const tabs = components.find((part) => part.kind === "tabs")
         return {
-          tabs: tabs.map((entry) => entry.id),
-          selected: tabs.filter((entry) => entry.selected).map((entry) => entry.id),
-          entries: choices.filter((entry) => entry.pane_id !== undefined),
+          tabs: tabs.tabs.map((entry: Value) => entry.id) as string[],
+          selected: tabs.tabs.filter((entry: Value) => entry.selected).map((entry: Value) =>
+            entry.id
+          ) as string[],
+          text: components.find((part) => part.kind === "text" && part.role !== "banner"),
+          entries: (components.find((part) => part.kind === "list")?.rows ?? []) as Value[],
         }
       }
-      const allTabs = [
-        "tab:motd",
-        "tab:new_game",
-        "tab:load",
-        "tab:world",
-        "tab:settings",
-        "tab:help",
-        "tab:credits",
-        "tab:quit",
-      ]
+      const allTabs = ["motd", "new_game", "load", "world", "settings", "help", "credits", "quit"]
       assertEquals(menu().tabs, allTabs)
-      // The text tabs publish their text as the interaction message.
-      for (const [label, tab] of [["MOTD", "tab:motd"], ["Credits", "tab:credits"]]) {
+      // The text tabs publish their text as a text component.
+      for (const [label, tab] of [["MOTD", "motd"], ["Credits", "credits"]]) {
         assertEquals((await session.choose(label)).stages.at(-1), "completed")
         assertEquals(menu().selected, [tab])
-        assert(session.mirror.interaction.interaction.message.length > 20, label)
-        assert(!session.mirror.interaction.interaction.message.includes("<color"), label)
+        assert(menu().text.markup.length > 20, label)
       }
       const settings = await session.choose("Settings")
       assertEquals(settings.stages, ["received", "validated", "executing", "completed"])
       assertEquals(menu().tabs, allTabs)
-      assertEquals(menu().selected, ["tab:settings"])
+      assertEquals(menu().selected, ["settings"])
       assertEquals(menu().entries.map((entry) => entry.id), [
         "settings:options",
         "settings:keybindings",
@@ -556,9 +563,9 @@ Deno.test({
       assertEquals(newGame.stages, ["received", "validated", "executing", "completed"])
       assert(session.eventTypes.includes("interaction.changed"))
       assertEquals(menu().tabs, allTabs)
-      assertEquals(menu().selected, ["tab:new_game"])
+      assertEquals(menu().selected, ["new_game"])
       assertEquals(
-        menu().entries.map((entry) => [entry.id, entry.pane_id]),
+        menu().entries.map((entry) => entry.id),
         [
           "custom",
           "preset",
@@ -567,7 +574,7 @@ Deno.test({
           "play_now",
           "tutorial",
           "defence",
-        ].map((id) => [`new_game:${id}`, "new_game"]),
+        ].map((id) => `new_game:${id}`),
       )
 
       // Entering the world replaces the authority: the command is interrupted, the stream resyncs.
@@ -996,9 +1003,9 @@ Deno.test({
 
 /** Main menu to the Settings tab entry `id`, at the first menu boundary. */
 async function openSetting(session: Session, id: string) {
-  await session.acknowledge(() => session.mirror.interaction.interaction?.context === "MAIN_MENU")
-  await session.submit({ kind: "choose", choice_id: "tab:settings" })
-  assertEquals((await session.submit({ kind: "choose", choice_id: id })).stages.at(-1), "completed")
+  await session.acknowledge(() => atMainMenu(session.mirror))
+  await session.pickId("settings")
+  assertEquals((await session.pickId(id)).stages.at(-1), "completed")
 }
 
 const shown = (session: Session): Value[] => session.mirror.interaction.interaction.choices
@@ -1014,8 +1021,7 @@ async function leaveAndSave(session: Session, done: () => boolean) {
   await session.acknowledge(done)
 }
 
-const inMainMenu = (session: Session) => () =>
-  session.mirror.interaction.interaction?.context === "MAIN_MENU"
+const inMainMenu = (session: Session) => () => atMainMenu(session.mirror)
 
 async function startSession(client: Client): Promise<Session> {
   await client.result("bn.hello", {
@@ -1089,13 +1095,11 @@ Deno.test({
       assertEquals((await find("option:SAFEMODE")).editor.value, "false")
       assertEquals((await find("option:SAFEMODEPROXIMITY")).editor.value, "7")
       assertEquals((await session.submit({ kind: "cancel" })).stages.at(-1), "completed")
-      await session.acknowledge(() =>
-        session.mirror.interaction.interaction?.context === "MAIN_MENU"
-      )
+      await session.acknowledge(() => atMainMenu(session.mirror))
 
       // In the game, the same menu applies a saved change at once: safe mode follows the option.
-      await press(session, "tab:new_game")
-      await press(session, "new_game:tutorial")
+      await session.pickId("new_game")
+      await session.pickId("new_game:tutorial")
       assertEquals((await client.note()).method, "bn.resync")
       session = new Session(client)
       await session.start()
@@ -1193,11 +1197,9 @@ Deno.test({
       await setTo(session, session.mirror.interaction.interaction.field.id, "Move East")
       assertEquals(keysOf(session, "action:RIGHT"), "z")
       assertEquals((await session.submit({ kind: "cancel" })).stages.at(-1), "completed")
-      await session.acknowledge(() =>
-        session.mirror.interaction.interaction?.context === "MAIN_MENU"
-      )
-      await press(session, "tab:new_game")
-      await press(session, "new_game:tutorial")
+      await session.acknowledge(() => atMainMenu(session.mirror))
+      await session.pickId("new_game")
+      await session.pickId("new_game:tutorial")
       assertEquals((await client.note()).method, "bn.resync")
       session = new Session(client)
       await session.start()
@@ -1698,25 +1700,21 @@ Deno.test({
       })
       const session = new Session(client)
       await session.start()
-      await session.acknowledge(() =>
-        session.mirror.interaction.interaction?.context === "MAIN_MENU"
-      )
+      await session.acknowledge(() => atMainMenu(session.mirror))
       const stale = session.mirror
       const epoch = stale.at.epoch
 
       // Unsubscribed, a command still runs; nothing is pushed, and its outcome is read by id.
       await client.result("bn.unsubscribe", {})
-      const choice = stale.interaction.interaction.choices.find((entry: Value) =>
-        entry.enabled && entry.label === "Settings"
-      )
+      const pick = stackPick(stale, "Settings")!
       const submit = await client.result("bn.command.submit", {
         epoch,
+        // The tab affordance names a row, so it expects the boundary.
         expect: {
           revision: stale.at.revision,
           boundary_id: stale.interaction.boundary_id,
-          schema_id: stale.interaction.interaction.schema_id,
         },
-        operation: { kind: "choose", choice_id: choice.id },
+        operation: { kind: "invoke", ...pick },
       })
       let outcome = await client.result("bn.command.result", {
         epoch,
@@ -1742,13 +1740,7 @@ Deno.test({
       session.mirror = fresh
 
       // The stream continues contiguously from that snapshot and equals another fresh one.
-      const next = session.mirror.interaction.interaction.choices.find((entry: Value) =>
-        entry.enabled && entry.label === "New Game"
-      )
-      assertEquals(
-        (await session.submit({ kind: "choose", choice_id: next.id })).stages.at(-1),
-        "completed",
-      )
+      assertEquals((await session.choose("New Game")).stages.at(-1), "completed")
       assertEquals(session.mirror.state(), (await session.subscribe()).state())
 
       // A stale epoch is refused with the documented error, by every request that names one.

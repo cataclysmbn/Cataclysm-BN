@@ -175,3 +175,31 @@ export function itemRows(screen: Value): { id: string; label: string; activate: 
     }))
   )
 }
+
+/** Whether the title screen is the top of the stack: the main menu publishes components, not a choice list. */
+export const atMainMenu = (mirror: Mirror): boolean =>
+  mirror.interaction.stack.at(-1)?.context === "MAIN_MENU"
+
+/**
+ * The invoke that picks `key` on the top screen of the stack, for a screen that publishes components
+ * instead of choices: the tab, then the list row, whose id is `key` or whose label starts with it.
+ */
+export function stackPick(
+  mirror: Mirror,
+  key: string,
+): { affordance_id: string; args: { row: string } } | undefined {
+  const parts = (node: Value): Value[] =>
+    !node
+      ? []
+      : [node, ...(node.child ? parts(node.child) : []), ...(node.children ?? []).flatMap(parts)]
+  const named = (entry: Value) => entry.id === key || entry.label?.startsWith(key)
+  const components = parts(mirror.interaction.stack.at(-1)?.root)
+  for (const tabs of components.filter((part) => part.kind === "tabs" && part.select)) {
+    const tab = tabs.tabs.find((entry: Value) => entry.enabled && named(entry))
+    if (tab) return { affordance_id: tabs.select, args: { row: tab.id } }
+  }
+  for (const list of components.filter((part) => part.kind === "list" && part.activate)) {
+    const row = list.rows.find((entry: Value) => !entry.header && entry.enabled && named(entry))
+    if (row) return { affordance_id: list.activate, args: { row: row.id } }
+  }
+}

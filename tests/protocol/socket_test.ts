@@ -9,7 +9,7 @@
  */
 import { assert, assertEquals } from "@std/assert"
 import { Ajv2020 } from "npm:ajv@8.17.1/dist/2020.js"
-import { Mirror } from "./mirror.ts"
+import { atMainMenu, Mirror, stackPick } from "./mirror.ts"
 
 // deno-lint-ignore no-explicit-any
 type Value = any
@@ -205,14 +205,23 @@ class Peer {
   /** Submit against what the mirror believes, then follow the pushes until the command is terminal. */
   async submit(operation: Value, patch: Value = {}) {
     const mirror = this.mirror
+    const top = mirror.interaction.stack.at(-1)
+    const offered = operation.kind === "invoke"
+      ? top?.affordances.find((entry: Value) => entry.id === operation.affordance_id)
+      : undefined
     const response = await this.request("bn.command.submit", {
       epoch: mirror.at.epoch,
-      expect: {
-        revision: mirror.at.revision,
-        boundary_id: mirror.interaction.boundary_id,
-        schema_id: mirror.interaction.interaction?.schema_id ?? null,
-        ...patch,
-      },
+      // An invoke names what its affordance's scope asks for; every other operation, the boundary.
+      expect: operation.kind === "invoke"
+        ? offered?.expect === "boundary"
+          ? { revision: mirror.at.revision, boundary_id: mirror.interaction.boundary_id }
+          : { screen_id: top.screen_id }
+        : {
+          revision: mirror.at.revision,
+          boundary_id: mirror.interaction.boundary_id,
+          schema_id: mirror.interaction.interaction?.schema_id ?? null,
+          ...patch,
+        },
       operation,
     })
     if (response.error) return { error: response.error, stages: [] as string[] }
@@ -225,11 +234,14 @@ class Peer {
   }
 
   async choose(label: string) {
-    const choice = this.mirror.interaction.interaction.choices.find((entry: Value) =>
+    const choice = this.mirror.interaction.interaction?.choices?.find((entry: Value) =>
       entry.enabled && entry.label.startsWith(label)
     )
-    assert(choice, `no choice ${label}`)
-    return await this.submit({ kind: "choose", choice_id: choice.id })
+    if (choice) return await this.submit({ kind: "choose", choice_id: choice.id })
+    // A screen of components has no choices: its tab or row is picked by its own affordance.
+    const pick = stackPick(this.mirror, label)
+    assert(pick, `no choice ${label}`)
+    return await this.submit({ kind: "invoke", ...pick })
   }
 
   async acknowledge(done: () => boolean) {
@@ -300,9 +312,7 @@ function launch(profile: string) {
 async function enterTutorial(controller: Peer) {
   await controller.hello({ credits: 256 })
   await controller.subscribe()
-  await controller.acknowledge(() =>
-    controller.mirror.interaction.interaction?.context === "MAIN_MENU"
-  )
+  await controller.acknowledge(() => atMainMenu(controller.mirror))
   await controller.choose("New Game")
   await controller.choose("Tutorial")
   assertEquals((await controller.note())?.method, "bn.resync")

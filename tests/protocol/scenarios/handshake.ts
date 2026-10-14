@@ -5,6 +5,7 @@
  */
 import { assert, assertEquals } from "@std/assert"
 import { Engine, helloClient, type Scenario, schemaHash, type Value, without } from "./driver.ts"
+import { atMainMenu } from "../mirror.ts"
 
 export const handshake: Scenario = {
   area: "handshake",
@@ -47,16 +48,7 @@ export const handshake: Scenario = {
       const { header } = await engine.subscribe()
       rec.accept("subscribe result before the main menu", "subscribe_result", header)
 
-      // The first prompt, answered with the 0.1 choice the boundary still carries beside its stack.
-      const prompt = engine.mirror.interaction.interaction.choices.find((entry: Value) =>
-        entry.enabled
-      )
-      assert(prompt, "a startup prompt to answer")
-      rec.command(
-        "startup prompt answered",
-        await engine.submit({ kind: "choose", choice_id: prompt.id }),
-      )
-      await engine.acknowledge(() => engine.mirror.interaction.interaction?.context === "MAIN_MENU")
+      await engine.acknowledge(() => atMainMenu(engine.mirror))
 
       const menu = engine.mirror.interaction
       rec.accept("boundary of the main menu", "interaction_boundary", menu)
@@ -64,7 +56,7 @@ export const handshake: Scenario = {
         rec.accept(`screen ${n + 1} of the main menu stack`, "screen", screen)
       }
 
-      // The main menu offers no affordance yet.
+      // An affordance the screen does not offer is refused.
       const unknown = await engine.invoke("no-such-affordance")
       assertEquals(unknown.error, "unknown_affordance")
       rec.command("invoke of an affordance the screen does not offer", unknown)

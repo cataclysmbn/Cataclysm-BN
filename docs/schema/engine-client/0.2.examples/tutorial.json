@@ -2255,13 +2255,6 @@
                 "expect": "screen"
               },
               {
-                "id": "ANY_INPUT",
-                "label": "ANY_INPUT",
-                "keys": [],
-                "enabled": true,
-                "expect": "screen"
-              },
-              {
                 "id": "COORDINATE",
                 "label": "COORDINATE",
                 "keys": [],
@@ -3569,13 +3562,6 @@
             "keys": [
               "%"
             ],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "ANY_INPUT",
-            "label": "ANY_INPUT",
-            "keys": [],
             "enabled": true,
             "expect": "screen"
           },
@@ -6304,13 +6290,6 @@
                     "expect": "screen"
                   },
                   {
-                    "id": "ANY_INPUT",
-                    "label": "ANY_INPUT",
-                    "keys": [],
-                    "enabled": true,
-                    "expect": "screen"
-                  },
-                  {
                     "id": "COORDINATE",
                     "label": "COORDINATE",
                     "keys": [],
@@ -6619,7 +6598,7 @@
             "affordances": []
           },
           {
-            "screen_id": "screen:7",
+            "screen_id": "screen:8",
             "role": "dialog",
             "root": {
               "id": "split:root",
@@ -6915,13 +6894,6 @@
                 "expect": "screen"
               },
               {
-                "id": "ANY_INPUT",
-                "label": "ANY_INPUT",
-                "keys": [],
-                "enabled": true,
-                "expect": "screen"
-              },
-              {
                 "id": "HELP_KEYBINDINGS",
                 "label": "Display keybindings menu",
                 "keys": [
@@ -6944,7 +6916,7 @@
       "name": "wait menu screen",
       "def": "screen",
       "value": {
-        "screen_id": "screen:7",
+        "screen_id": "screen:8",
         "role": "dialog",
         "root": {
           "id": "split:root",
@@ -7240,13 +7212,6 @@
             "expect": "screen"
           },
           {
-            "id": "ANY_INPUT",
-            "label": "ANY_INPUT",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
             "id": "HELP_KEYBINDINGS",
             "label": "Display keybindings menu",
             "keys": [
@@ -7281,7 +7246,7 @@
       "value": {
         "epoch": "epoch-2",
         "expect": {
-          "screen_id": "screen:7"
+          "screen_id": "screen:8"
         },
         "operation": {
           "kind": "invoke",
@@ -7336,7 +7301,7 @@
       "value": {
         "epoch": "epoch-2",
         "expect": {
-          "screen_id": "screen:7"
+          "screen_id": "screen:8"
         },
         "operation": {
           "kind": "invoke",

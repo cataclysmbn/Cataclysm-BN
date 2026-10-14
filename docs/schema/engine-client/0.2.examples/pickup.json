@@ -4,7 +4,7 @@
       "name": "pickup screen",
       "def": "screen",
       "value": {
-        "screen_id": "screen:13",
+        "screen_id": "screen:14",
         "role": "dialog",
         "title": "Pick up",
         "root": {
@@ -233,13 +233,6 @@
             ],
             "enabled": true,
             "role": "cancel",
-            "expect": "screen"
-          },
-          {
-            "id": "ANY_INPUT",
-            "label": "ANY_INPUT",
-            "keys": [],
-            "enabled": true,
             "expect": "screen"
           },
           {
@@ -517,7 +510,7 @@
       "value": {
         "epoch": "epoch-2",
         "expect": {
-          "screen_id": "screen:13"
+          "screen_id": "screen:14"
         },
         "operation": {
           "kind": "invoke",

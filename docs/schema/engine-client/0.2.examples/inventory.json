@@ -4,7 +4,7 @@
       "name": "drop selector screen",
       "def": "screen",
       "value": {
-        "screen_id": "screen:14",
+        "screen_id": "screen:15",
         "role": "screen",
         "title": "Multidrop",
         "root": {
@@ -289,13 +289,6 @@
             "expect": "screen"
           },
           {
-            "id": "ANY_INPUT",
-            "label": "ANY_INPUT",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
             "id": "RIGHT",
             "label": "Mark/unmark selected item",
             "keys": [
@@ -566,7 +559,7 @@
       "value": {
         "epoch": "epoch-2",
         "expect": {
-          "screen_id": "screen:14"
+          "screen_id": "screen:15"
         },
         "operation": {
           "kind": "invoke",

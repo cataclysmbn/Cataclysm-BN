@@ -4,7 +4,7 @@
       "name": "trade screen",
       "def": "screen",
       "value": {
-        "screen_id": "screen:9",
+        "screen_id": "screen:10",
         "role": "screen",
         "title": "Trading with Denver Tolbert, Marloss Voice",
         "root": {
@@ -556,13 +556,6 @@
             ],
             "enabled": true,
             "expect": "screen"
-          },
-          {
-            "id": "ANY_INPUT",
-            "label": "ANY_INPUT",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
           }
         ],
         "focus": {
@@ -698,7 +691,7 @@
       "value": {
         "epoch": "epoch-2",
         "expect": {
-          "screen_id": "screen:9"
+          "screen_id": "screen:10"
         },
         "operation": {
           "kind": "invoke",
