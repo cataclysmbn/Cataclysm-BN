@@ -662,6 +662,7 @@ TEST_CASE("the native morale screen keeps its text and colors", "[info_native_pi
 TEST_CASE("the native mission list keeps its text and colors", "[info_native_pin]") {
     const auto guard = screen_guard{};
     auto& you = get_avatar();
+    you.reset_all_missions();
     mission* assigned = nullptr;
     for (const mission_type& type : mission_type::get_all()) {
         if (type.goal == MGOAL_ASSASSINATE) {

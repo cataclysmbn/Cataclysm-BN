@@ -10,8 +10,10 @@
 #    include "client_memory.h"
 #    include "client_memory_scope.h"
 #    include "client_screen_support.h"
+#    include "color.h"
 #    include "cursesdef.h"
 #    include "cursesport.h"
+#    include "engine_client_component.h"
 #    include "game.h"
 #    include "game_constants.h"
 #    include "input.h"
@@ -59,11 +61,12 @@ auto column(const game_client::interaction_choice& choice, const std::string& ke
 
 TEST_CASE(
     "the mission list switches tabs and makes the chosen mission active",
-    "[client][interaction][mcp][screens]") {
+    "[client][interaction][mcp][screens][info_screens][missions_screen]") {
     clear_all_state();
     clear_map();
     auto& you = get_avatar();
     clear_character(you, false);
+    you.reset_all_missions();
     mission* assigned = nullptr;
     for (const mission_type& type : mission_type::get_all()) {
         if (type.goal == MGOAL_ASSASSINATE) {
@@ -78,33 +81,55 @@ TEST_CASE(
         assigned->assign(you);
     }
     REQUIRE(you.get_active_missions().size() == 1);
+    const auto row_id = "mission:" + std::to_string(assigned->get_id());
     const auto guard = screen_guard{};
     auto stage = 0;
-    open_screen(
+    open_stack(
         [] { g->list_missions(); },
-        [&](const auto& snapshot) {
+        [&](const auto& /*snapshot*/, const auto& top) {
+            namespace ec = engine_client;
+            const auto find = [&](const std::string& id) {
+                REQUIRE(top.root);
+                return ec::find_component(*top.root, id);
+            };
             switch (stage++) {
                 case 0: {
-                    CHECK(snapshot.context == "MISSIONS");
-                    CHECK(rows_with(snapshot, "tab:").size() == 3);
-                    REQUIRE(rows_with(snapshot, "mission:").size() == 1);
-                    const auto mission_row = row(snapshot, "mission:0");
-                    CHECK(mission_row->label == assigned->name());
-                    CHECK(mission_row->highlighted);
-                    CHECK_FALSE(mission_row->description.empty());
-                    return choose(snapshot, "tab:1");
+                    CHECK(top.context == "MISSIONS");
+                    const auto* const tabs = find("missions:tabs");
+                    REQUIRE(tabs != nullptr);
+                    const auto& entries = std::get<ec::tabs_body>(tabs->body).tabs;
+                    REQUIRE(entries.size() == 3);
+                    CHECK(entries[0].id == "active");
+                    CHECK(entries[0].selected);
+                    CHECK(entries[1].id == "completed");
+                    CHECK(entries[2].id == "failed");
+                    const auto* const list = find("missions:list");
+                    REQUIRE(list != nullptr);
+                    const auto& rows = std::get<ec::list_body>(list->body).rows;
+                    REQUIRE(rows.size() == 1);
+                    CHECK(rows[0].id == row_id);
+                    CHECK(rows[0].label == assigned->name());
+                    CHECK(rows[0].color == string_from_color(c_light_green));
+                    CHECK(top.focus_row == row_id);
+                    const auto* const detail = find("missions:detail");
+                    REQUIRE(detail != nullptr);
+                    CHECK(std::get<ec::panel_body>(detail->body).title.find(assigned->name()) == 0);
+                    return invoke_event(top, "missions:tab", {.row = "completed"});
                 }
                 case 1: {
                     // Nothing is completed yet: the tab says so and lists no mission.
-                    CHECK(rows_with(snapshot, "mission:").empty());
-                    CHECK(snapshot.message == "You haven't completed any missions!");
-                    CHECK(row(snapshot, "tab:1")->selected);
-                    return choose(snapshot, "tab:0");
+                    CHECK(find("missions:list") == nullptr);
+                    const auto* const none = find("missions:none");
+                    REQUIRE(none != nullptr);
+                    CHECK(std::get<ec::text_body>(none->body).markup
+                          == "You haven't completed any missions!");
+                    CHECK(top.focus_row.empty());
+                    return invoke_event(top, "missions:tab", {.row = "active"});
                 }
                 case 2:
-                    return choose(snapshot, "mission:0");
+                    return invoke_event(top, "missions:select", {.row = row_id});
                 default:
-                    FAIL("unexpected extra screen " << snapshot.context);
+                    FAIL("unexpected extra screen " << top.context);
             }
             return input_event{};
         });
