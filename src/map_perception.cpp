@@ -23,6 +23,7 @@
 #include "overmap/overmapbuffer.h"
 #include "overmap/overmapbuffer_registry.h"
 #include "output.h"
+#include "profile.h"
 #include "trap.h"
 #include "vehicle/vehicle.h"
 #include "vehicle/vehicle_part.h"
@@ -589,6 +590,7 @@ auto invalidate_stale_visibility( map &here ) -> void
 
 auto acquire() -> acquisition_counts
 {
+    ZoneScopedN( "map_perception_acquire" );
     auto counts = acquisition_counts{};
     auto &here = get_map();
     auto &you = get_avatar();
@@ -618,45 +620,48 @@ auto acquire() -> acquisition_counts
     state.blind = you.is_blind();
     state.threshold = g_visible_threshold;
 
-    auto fields = decltype( state.fields ) {};
-    auto traps = decltype( state.traps ) {};
-    for( const auto &view : here.active_submap_views() ) {
-        ++counts.submaps_checked;
-        const auto &sm = view.get_submap();
-        for( const auto &local : sm.trap_cache ) {
-            ++counts.traps_checked;
-            const auto trap = sm.get_effective_trap( local );
-            if( trap != tr_null ) {
-                traps.emplace( abs_to_map_local( here, project_combine( view.abs_pos(), local ) ), trap );
+    {
+        ZoneScopedN( "map_perception_acquire_sparse" );
+        auto fields = decltype( state.fields ) {};
+        auto traps = decltype( state.traps ) {};
+        for( const auto &view : here.active_submap_views() ) {
+            ++counts.submaps_checked;
+            const auto &sm = view.get_submap();
+            for( const auto &local : sm.trap_cache ) {
+                ++counts.traps_checked;
+                const auto trap = sm.get_effective_trap( local );
+                if( trap != tr_null ) {
+                    traps.emplace( abs_to_map_local( here, project_combine( view.abs_pos(), local ) ), trap );
+                }
+            }
+            for( const auto &local : sm.field_cache ) {
+                ++counts.fields_checked;
+                const auto p = abs_to_map_local( here, project_combine( view.abs_pos(), local ) );
+                const auto &field = sm.get_field( local );
+                if( field.field_count() ) {
+                    fields.emplace( p, field_appearance{ .field = field.displayed_field_type(),
+                                                         .terrain = sm.get_ter( local ), .furniture = sm.get_furn( local ) } );
+                }
             }
         }
-        for( const auto &local : sm.field_cache ) {
-            ++counts.fields_checked;
-            const auto p = abs_to_map_local( here, project_combine( view.abs_pos(), local ) );
-            const auto &field = sm.get_field( local );
-            if( field.field_count() ) {
-                fields.emplace( p, field_appearance{ .field = field.displayed_field_type(),
-                                                     .terrain = sm.get_ter( local ), .furniture = sm.get_furn( local ) } );
+        update_sparse( here, state.fields, std::move( fields ) );
+        update_sparse( here, state.traps, std::move( traps ) );
+        auto vehicles = decltype( state.vehicles ) {};
+        for( const auto &wrapped : here.get_vehicles() ) {
+            for( const auto &abs : wrapped.v->get_points() ) {
+                ++counts.vehicle_points_checked;
+                const auto p = abs_to_map_local( here, abs );
+                if( !here.inbounds( p ) ) {
+                    continue;
+                }
+                const auto facts = observe( here, p );
+                vehicles.emplace( p, vehicle_appearance{ .tile = facts.vehicle_tile,
+                                  .symbol = facts.vehicle_symbol, .stationary = facts.stationary_vehicle,
+                                  .detailed = detailed_at( here, p ) } );
             }
         }
+        update_sparse( here, state.vehicles, std::move( vehicles ) );
     }
-    update_sparse( here, state.fields, std::move( fields ) );
-    update_sparse( here, state.traps, std::move( traps ) );
-    auto vehicles = decltype( state.vehicles ) {};
-    for( const auto &wrapped : here.get_vehicles() ) {
-        for( const auto &abs : wrapped.v->get_points() ) {
-            ++counts.vehicle_points_checked;
-            const auto p = abs_to_map_local( here, abs );
-            if( !here.inbounds( p ) ) {
-                continue;
-            }
-            const auto facts = observe( here, p );
-            vehicles.emplace( p, vehicle_appearance{ .tile = facts.vehicle_tile,
-                              .symbol = facts.vehicle_symbol, .stationary = facts.stationary_vehicle,
-                              .detailed = detailed_at( here, p ) } );
-        }
-    }
-    update_sparse( here, state.vehicles, std::move( vehicles ) );
     if( !state.full_pending && state.dirty.empty() ) {
         return counts;
     }
@@ -672,6 +677,7 @@ auto acquire() -> acquisition_counts
         }
     };
     if( state.full_pending ) {
+        ZoneScopedN( "map_perception_acquire_full_rescan" );
         ++counts.full_rescans;
         auto seen = std::vector<int>( static_cast<size_t>( here.getmapsize() ) * here.getmapsize(), 0 );
         for( const auto y : std::views::iota( 0, cache.cache_y ) ) {
@@ -699,6 +705,7 @@ auto acquire() -> acquisition_counts
             }
         }
     } else {
+        ZoneScopedN( "map_perception_acquire_dirty" );
         for( const auto &p : state.dirty ) {
             // Only exposed surfaces in this column are candidates, even for dirty lower cells.
             if( p.z() > zlev ) {
@@ -718,6 +725,7 @@ auto acquire() -> acquisition_counts
         }
     }
     // Derive against the completed facts and previous memory, before committing anything.
+    ZoneNamedN( commit_zone, "map_perception_acquire_commit", true );
     auto memories = std::vector<cell_memory> {};
     memories.reserve( facts.size() );
     const auto view = current_sight();
