@@ -2134,6 +2134,42 @@
             "additionalProperties": false
           }
         },
+        "notes_title": {
+          "type": "string",
+          "description": "The heading of the notes, localized: the name of the action that lists them."
+        },
+        "labels": {
+          "type": "array",
+          "description": "The names the native window prints over squares while its city-label toggle is on and the level is 0: the cities and labelled squares the player has seen, with the curses color indexes 0-15 the window prints them in. Absent when none.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "pos": {
+                "$ref": "#/$defs/pos"
+              },
+              "text": {
+                "type": "string"
+              },
+              "foreground": {
+                "type": "integer"
+              },
+              "background": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "pos",
+              "text",
+              "foreground",
+              "background"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "mission_target": {
+          "$ref": "#/$defs/pos",
+          "description": "The square of the active mission's target while the overlays are shown; the native window marks it at its edge when it lies outside the window. Absent without a target."
+        },
         "path": {
           "type": "array",
           "description": "The planned travel route, nearest square first.",

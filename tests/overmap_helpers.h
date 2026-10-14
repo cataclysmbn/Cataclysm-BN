@@ -2,13 +2,19 @@
 
 #if defined(CATA_MCP)
 
+#    include "avatar.h"
+#    include "catch/catch.hpp"
 #    include "coordinates.h"
+#    include "game.h"
+#    include "mission.h"
 #    include "overmap/omdata.h"
+#    include "overmap/overmap.h"
 #    include "overmap/overmapbuffer.h"
 #    include "type_id.h"
 
 #    include <array>
 #    include <cstddef>
+#    include <string>
 
 namespace overmap_helpers {
 
@@ -29,6 +35,36 @@ inline void lay_terrain(const tripoint_abs_omt& center) {
             }
         }
     }
+}
+
+/// A city of the overmap the avatar stands on, `offset` squares from `center`.
+inline void lay_city(const tripoint_abs_omt& center, const point& offset, const std::string& name) {
+    const auto at = center + offset;
+    ACTIVE_OVERMAP_BUFFER.set_seen(at, true);
+    auto& overmap = *ACTIVE_OVERMAP_BUFFER.get_om_global(at).om;
+    auto made = city(ACTIVE_OVERMAP_BUFFER.get_om_global(at).local.xy(), 4);
+    made.name = name;
+    overmap.cities.push_back(made);
+}
+
+/// Makes the avatar's active mission and puts its target at `at`.
+inline void lay_mission(const tripoint_abs_omt& at) {
+    auto& you = get_avatar();
+    you.reset_all_missions();
+    mission* assigned = nullptr;
+    for (const mission_type& type : mission_type::get_all()) {
+        if (type.goal == MGOAL_ASSASSINATE) {
+            assigned = mission::reserve_new(type.id, you.getID());
+            break;
+        }
+    }
+    REQUIRE(assigned != nullptr);
+    if (assigned->get_assigned_player_id() == you.getID()) {
+        you.on_mission_assignment(*assigned);
+    } else {
+        assigned->assign(you);
+    }
+    assigned->set_target(at);
 }
 
 } // namespace overmap_helpers

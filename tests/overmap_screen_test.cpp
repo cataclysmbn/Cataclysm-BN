@@ -44,6 +44,7 @@ using game_client::interaction_position;
 /// The squares the screen publishes around its cursor, which the tests below name.
 constexpr auto published_cols = 61;
 constexpr auto published_rows = 37;
+constexpr auto map_id = "map:overmap";
 
 struct screen_guard {
     const game_client::memory::scoped_state memory;
@@ -537,6 +538,97 @@ TEST_CASE(
         CHECK(rng_get_engine() == rng_before);
         // The controller's cursor did not move with the reads.
         CHECK(cursor_of(ec::top_screen(captured())) == cursor);
+        return act("QUIT");
+    });
+    ui::omap::display();
+    CHECK(reads == 1);
+}
+
+TEST_CASE(
+    "the overmap screen publishes the labels, mission target and note heading the native one prints",
+    "[overmap_screen][engine_client_component]") {
+    const auto world = fixed_world{};
+    const auto guard = screen_guard{};
+    uistate.overmap_show_city_labels = true;
+    overmap_helpers::lay_city(world.center, point(-9, 4), "Testville");
+    ACTIVE_OVERMAP_BUFFER.add_note(world.center + point(8, -5), "LABEL:Depot");
+    ACTIVE_OVERMAP_BUFFER.set_seen(world.center + point(8, -5), true);
+    // A city on a square the player has not seen is not a label.
+    overmap_helpers::lay_city(world.center, point(-20, -9), "Hidden");
+    ACTIVE_OVERMAP_BUFFER.set_seen(world.center + point(-20, -9), false);
+    overmap_helpers::lay_mission(world.center + point(200, 3));
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        const auto& om = squares(screen);
+        const auto label_at = [&](const point& offset) {
+            const auto at = world.center + offset;
+            return std::ranges::
+                find(om.labels, interaction_position{at.x(), at.y(), at.z()},
+                     &game_client::interaction_overmap_label::position);
+        };
+        switch (step++) {
+            case 0: {
+                const auto city = label_at(point(-9, 4));
+                REQUIRE(city != om.labels.end());
+                CHECK(city->text == "Testville");
+                // The colours are those the native window prints the name in.
+                const auto* const window = g->w_overmap.get<cata_cursesport::WINDOW>();
+                const auto printed = native_cell_at(
+                    g->w_overmap, city->position.x - (world.center.x() - window->width / 2),
+                    city->position.y - (world.center.y() - window->height / 2));
+                CHECK(city->foreground == printed.foreground);
+                CHECK(city->background == printed.background);
+                const auto note = label_at(point(8, -5));
+                REQUIRE(note != om.labels.end());
+                CHECK(note->text == "Depot");
+                CHECK(label_at(point(-20, -9)) == om.labels.end());
+                REQUIRE(om.mission_target);
+                CHECK(*om.mission_target
+                      == interaction_position{
+                          world.center.x() + 200, world.center.y() + 3, world.center.z()});
+                CHECK(om.notes_title == "List Notes");
+                // The sidebar's own words about the mission, as the native sidebar prints them.
+                CHECK(
+                    om.legend
+                    == std::vector<std::string>{
+                        "Distance to active mission:", "200 tiles",
+                        std::format("LEVEL {}, {}", world.center.z(),
+                                    overmap_ui::fmt_omt_coords(world.center))});
+                return act("TOGGLE_CITY_LABELS");
+            }
+            case 1:
+                CHECK(om.labels.empty());
+                return act("TOGGLE_OVERLAYS");
+            case 2:
+                // The marker is drawn only while the overlays are.
+                CHECK_FALSE(om.mission_target);
+                return act("QUIT");
+            default:
+                FAIL("the overmap outlived its quit");
+                return act("QUIT");
+        }
+    });
+    ui::omap::display();
+    CHECK(step == 3);
+}
+
+TEST_CASE(
+    "a map target in overmap squares says so whatever the mode of its map",
+    "[overmap_screen][engine_client_component]") {
+    const auto world = fixed_world{};
+    const auto guard = screen_guard{};
+    auto reads = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        ++reads;
+        auto state = captured();
+        auto stack = std::make_shared<std::vector<ec::screen_view>>(*state.stack);
+        // The component is the copy's own, so that a mode other than `overmap` can be tried on it.
+        auto& map = const_cast<ec::component&>(part(stack->back(), map_id));
+        std::get<ec::map_body>(map.body).mode = "world";
+        state.stack = std::move(stack);
+        const auto top = json::parse(ec::serialize_interaction_boundary(state))["stack"].back();
+        CHECK(top["root"]["children"][0]["target"]["unit"] == "omt");
         return act("QUIT");
     });
     ui::omap::display();

@@ -11434,7 +11434,8 @@
                 "cursor_description": "tutorial room north from Leominster",
                 "notes": [],
                 "path": [],
-                "cursor_here": "You are here."
+                "cursor_here": "You are here.",
+                "notes_title": "List Notes"
               }
             },
             {
@@ -12038,6 +12039,61 @@
       }
     },
     {
+      "name": "overmap city labels toggled, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "screen_id": "screen:2"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "TOGGLE_CITY_LABELS"
+        }
+      }
+    },
+    {
+      "name": "overmap city labels toggled, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "overmap city labels toggled, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "overmap city labels toggled, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "overmap city labels toggled, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "4",
+          "revision": "4"
+        }
+      }
+    },
+    {
       "name": "overmap cells query",
       "def": "world_cells_params",
       "value": {
@@ -12206,6 +12262,177 @@
         "cursor_description": "",
         "notes": [],
         "path": []
+      }
+    },
+    {
+      "name": "overmap squares with a label and a mission target",
+      "def": "overmap",
+      "value": {
+        "origin": {
+          "dim": "",
+          "x": 90,
+          "y": 80,
+          "z": 0
+        },
+        "player": {
+          "dim": "",
+          "x": 50,
+          "y": 50,
+          "z": 0
+        },
+        "cols": 8,
+        "rows": 3,
+        "cells": [
+          [
+            [
+              "#",
+              4,
+              0
+            ],
+            [
+              "#",
+              4,
+              0
+            ],
+            [
+              "#",
+              4,
+              0
+            ],
+            [
+              "#",
+              4,
+              0
+            ],
+            [
+              "#",
+              4,
+              0
+            ],
+            [
+              "#",
+              4,
+              0
+            ],
+            [
+              "#",
+              4,
+              0
+            ],
+            [
+              "#",
+              4,
+              0
+            ]
+          ],
+          [
+            [
+              "#",
+              4,
+              0
+            ],
+            [
+              "#",
+              4,
+              0
+            ],
+            [
+              "#",
+              4,
+              0
+            ],
+            [
+              "#",
+              4,
+              0
+            ],
+            [
+              "#",
+              4,
+              0
+            ],
+            [
+              "#",
+              4,
+              0
+            ],
+            [
+              "#",
+              4,
+              0
+            ],
+            [
+              "#",
+              4,
+              0
+            ]
+          ],
+          [
+            [
+              "#",
+              4,
+              0
+            ],
+            [
+              "#",
+              4,
+              0
+            ],
+            [
+              "#",
+              4,
+              0
+            ],
+            [
+              "#",
+              4,
+              0
+            ],
+            [
+              "#",
+              4,
+              0
+            ],
+            [
+              "#",
+              4,
+              0
+            ],
+            [
+              "#",
+              4,
+              0
+            ],
+            [
+              "#",
+              4,
+              0
+            ]
+          ]
+        ],
+        "legend": [],
+        "cursor_description": "",
+        "notes": [],
+        "path": [],
+        "labels": [
+          {
+            "pos": {
+              "dim": "",
+              "x": 90,
+              "y": 80,
+              "z": 0
+            },
+            "text": "Label",
+            "foreground": 11,
+            "background": 0
+          }
+        ],
+        "mission_target": {
+          "dim": "",
+          "x": 97,
+          "y": 82,
+          "z": 0
+        }
       }
     },
     {
@@ -23643,6 +23870,7 @@
                 "notes": [],
                 "path": [],
                 "cursor_here": "You are here.",
+                "notes_title": "List Notes",
                 "tiles": {
                   "cells": [
                     [

@@ -68,6 +68,16 @@ export const overmap: Scenario = {
       const stat = (key: string) =>
         part(engine.top(), "overmap:toggles").stats.find((entry: Value) => entry.key === key)
       assertEquals(stat("TOGGLE_MAP_NOTES").value === "Off", true)
+      assertEquals(typeof part(engine.top(), "map:overmap").overmap.notes_title, "string")
+
+      const before = stat("TOGGLE_CITY_LABELS").value
+      const labelled = await engine.invoke("TOGGLE_CITY_LABELS")
+      assertEquals(labelled.stages.at(-1), "completed")
+      rec.command("overmap city labels toggled", labelled)
+      assertEquals(stat("TOGGLE_CITY_LABELS").value, before === "On" ? "Off" : "On")
+      for (const label of part(engine.top(), "map:overmap").overmap.labels ?? []) {
+        assertEquals(typeof label.text, "string")
+      }
 
       // Squares far from the cursor are read without moving it: a spectator's way to pan.
       const stack = JSON.stringify(engine.mirror.interaction.stack)
@@ -79,6 +89,12 @@ export const overmap: Scenario = {
       const read = await engine.result("bn.overmap.cells", box)
       rec.accept("overmap cells query", "world_cells_params", box)
       rec.accept("overmap squares read away from the cursor", "overmap", read)
+      // The members the tutorial has nothing to put in: a name over a square and the mission's target.
+      rec.accept("overmap squares with a label and a mission target", "overmap", {
+        ...read,
+        labels: [{ pos: box.min, text: "Label", foreground: 11, background: 0 }],
+        mission_target: box.max,
+      })
       assertEquals([read.cols, read.rows], [8, 3])
       assertEquals(read.origin, box.min)
       assertEquals(read.legend, [])

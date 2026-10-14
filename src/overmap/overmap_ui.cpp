@@ -431,6 +431,27 @@ static auto has_player_label(const tripoint_abs_omt& pos) -> bool {
     return player_label.has_value() && !player_label->empty();
 }
 
+/// A label the window prints over the square it names.
+struct map_label {
+    tripoint_abs_omt at;
+    std::string text;
+};
+
+/// The cities near `center` that the player has seen and has not labelled in a note, on its level.
+static auto city_labels_near(const tripoint_abs_omt& center, const int sm_radius)
+    -> std::vector<map_label> {
+    auto labels = std::vector<map_label>{};
+    for (const auto& element :
+         ACTIVE_OVERMAP_BUFFER.get_cities_near(project_to<coords::sm>(center), sm_radius)) {
+        const auto label_pos =
+            tripoint_abs_omt(project_to<coords::omt>(element.abs_sm_pos.xy()), center.z());
+        if (ACTIVE_OVERMAP_BUFFER.seen(label_pos) && !has_player_label(label_pos)) {
+            labels.push_back({label_pos, element.city->name});
+        }
+    }
+    return labels;
+}
+
 static void draw_city_labels(const catacurses::window& w, const tripoint_abs_omt& center) {
     const int win_x_max = getmaxx(w);
     const int win_y_max = getmaxy(w);
@@ -438,12 +459,10 @@ static void draw_city_labels(const catacurses::window& w, const tripoint_abs_omt
 
     const point screen_center_pos(win_x_max / 2, win_y_max / 2);
 
-    for (const auto& element :
-         ACTIVE_OVERMAP_BUFFER.get_cities_near(project_to<coords::sm>(center), sm_radius)) {
-        const point_abs_omt city_pos = project_to<coords::omt>(element.abs_sm_pos.xy());
-        const point_rel_omt screen_pos(city_pos - center.xy() + screen_center_pos);
+    for (const auto& label : city_labels_near(center, sm_radius)) {
+        const point_rel_omt screen_pos(label.at.xy() - center.xy() + screen_center_pos);
 
-        const int text_width = utf8_width(element.city->name, true);
+        const int text_width = utf8_width(label.text, true);
         const int text_x_min = screen_pos.x() - text_width / 2;
         const int text_x_max = text_x_min + text_width;
         const int text_y = screen_pos.y();
@@ -457,13 +476,7 @@ static void draw_city_labels(const catacurses::window& w, const tripoint_abs_omt
             continue; // right under the cursor.
         }
 
-        const auto label_pos = tripoint_abs_omt(city_pos, center.z());
-        if (!ACTIVE_OVERMAP_BUFFER.seen(label_pos)) {
-            continue; // haven't seen it.
-        }
-        if (has_player_label(label_pos)) { continue; }
-
-        mvwprintz(w, point(text_x_min, text_y), i_yellow, element.city->name);
+        mvwprintz(w, point(text_x_min, text_y), i_yellow, label.text);
     }
 }
 
@@ -483,6 +496,11 @@ static auto get_map_label_text(const tripoint_abs_omt& pos) -> std::optional<std
     return std::nullopt;
 }
 
+/// The label of a square the player has seen.
+static auto seen_map_label_text(const tripoint_abs_omt& pos) -> std::optional<std::string> {
+    return ACTIVE_OVERMAP_BUFFER.seen(pos) ? get_map_label_text(pos) : std::nullopt;
+}
+
 static auto draw_map_labels(const catacurses::window& w, const tripoint_abs_omt& center) -> void {
     const auto win_x_max = getmaxx(w);
     const auto win_y_max = getmaxy(w);
@@ -493,9 +511,7 @@ static auto draw_map_labels(const catacurses::window& w, const tripoint_abs_omt&
                 center.xy() + point(x - screen_center_pos.x, y - screen_center_pos.y);
             const auto map_pos_z = tripoint_abs_omt(map_pos, center.z());
 
-            if (!ACTIVE_OVERMAP_BUFFER.seen(map_pos_z)) { continue; }
-
-            const auto label_text = get_map_label_text(map_pos_z);
+            const auto label_text = seen_map_label_text(map_pos_z);
             if (!label_text.has_value()) { continue; }
 
             const auto screen_pos = point_rel_omt(point(x, y));
@@ -861,6 +877,35 @@ static auto corner_note(const tripoint_abs_omt& at) -> std::optional<corner_note
                   ? std::string()
                   : note_label_utils::strip_label_commands(note_text.substr(pos)),
     };
+}
+
+struct corner_line {
+    nc_color color;
+    std::string text;
+};
+
+/// What the window's corner box says of the cursor square beside its note: the danger of the
+/// square and who and what stands on it. The native window prints them in its corner box and the
+/// engine client publishes the same lines in its legend.
+static auto corner_facts_of(
+    const tripoint_abs_omt& center, const bool has_debug_vision,
+    const std::vector<shared_ptr_fast<npc>>& npcs_near_player) -> std::vector<corner_line> {
+    auto lines = std::vector<corner_line>{};
+    if (uistate.overmap_show_map_notes && corner_note(center)
+        && ACTIVE_OVERMAP_BUFFER.is_marked_dangerous(center)) {
+        lines.push_back({c_red, _("DANGEROUS AREA!")});
+    }
+    if (has_debug_vision || ACTIVE_OVERMAP_BUFFER.seen(center)) {
+        for (const auto& npc : npcs_near_player) {
+            if (!npc->marked_for_death && npc->abs_omt_pos() == center) {
+                lines.push_back({npc->basic_symbol_color(), npc->name});
+            }
+        }
+    }
+    for (auto& v : ACTIVE_OVERMAP_BUFFER.get_vehicle(center)) {
+        lines.push_back({c_white, v.name});
+    }
+    return lines;
 }
 
 /// What an overmap square shows: its glyph and its colour.
@@ -1340,25 +1385,11 @@ static void draw_ascii(
 
     std::vector<std::pair<nc_color, std::string>> corner_text;
 
-    if (uistate.overmap_show_map_notes) {
-        if (const auto note = corner_note(center)) {
-            if (!note->text.empty()) { corner_text.emplace_back(note->color, note->text); }
-            if (ACTIVE_OVERMAP_BUFFER.is_marked_dangerous(center)) {
-                corner_text.emplace_back(c_red, _("DANGEROUS AREA!"));
-            }
-        }
-    }
-
-    if (has_debug_vision || ACTIVE_OVERMAP_BUFFER.seen(center)) {
-        for (const auto& npc : npcs_near_player) {
-            if (!npc->marked_for_death && npc->abs_omt_pos() == center) {
-                corner_text.emplace_back(npc->basic_symbol_color(), npc->name);
-            }
-        }
-    }
-
-    for (auto& v : ACTIVE_OVERMAP_BUFFER.get_vehicle(center)) {
-        corner_text.emplace_back(c_white, v.name);
+    // The note comes first, then the danger of the square and who stands on it.
+    const auto note = uistate.overmap_show_map_notes ? corner_note(center) : std::nullopt;
+    if (note && !note->text.empty()) { corner_text.emplace_back(note->color, note->text); }
+    for (const auto& line : corner_facts_of(center, has_debug_vision, npcs_near_player)) {
+        corner_text.emplace_back(line.color, line.text);
     }
 
     if (!corner_text.empty()) {
@@ -1426,6 +1457,123 @@ static auto seen_description(const tripoint_abs_omt& center) -> std::string {
              : ACTIVE_OVERMAP_BUFFER.get_description_at(project_to<coords::sm>(center));
 }
 
+/// One monster group the debug view puts on a square, as the lines the sidebar prints for it.
+struct group_facts {
+    std::string species;
+    std::string monsters;
+    /// Interest, behaviour and target; empty for a group that is no horde.
+    std::vector<std::string> horde;
+};
+
+struct weather_facts {
+    bool visible = false;
+    /// `# Weather unknown` while the weather cannot be seen.
+    std::string text;
+    nc_color color = c_dark_gray;
+};
+
+struct sidebar_facts_options {
+    tripoint_abs_omt center;
+    tripoint_abs_omt orig;
+    bool has_debug_vision = false;
+    int sight_points = 0;
+    /// The active mission's target, when it has one.
+    std::optional<tripoint_abs_omt> target;
+    bool debug_editor = false;
+};
+
+/// What the sidebar says besides the description of the cursor square, composed from the model.
+/// The native sidebar prints these lines with its own layout and colours, and the engine client
+/// publishes the same text, so that the two cannot say different things.
+struct sidebar_facts {
+    bool seen = false;
+    std::vector<group_facts> groups;
+    std::optional<weather_facts> weather;
+    std::vector<std::string> debug;
+    /// The distance to the active mission's target, and whether it is above or below.
+    std::vector<std::string> mission;
+    /// The active missions whose target is the cursor square.
+    std::vector<std::string> mission_names;
+    std::string dimension;
+    std::string level;
+};
+
+static auto sidebar_facts_of(const sidebar_facts_options& opts) -> sidebar_facts {
+    const auto& center = opts.center;
+    auto& you = get_avatar();
+    auto facts = sidebar_facts{.seen = opts.has_debug_vision || ACTIVE_OVERMAP_BUFFER.seen(center)};
+    if (facts.seen && uistate.overmap_debug_mongroup) {
+        for (const auto* const group : ACTIVE_OVERMAP_BUFFER.monsters_at(center)) {
+            auto shown = group_facts{
+                .species = string_format("Species: %s", group->type.c_str()),
+                .monsters =
+                    string_format("# monsters: %d", group->population + group->monsters.size()),
+            };
+            if (group->horde) {
+                shown.horde =
+                    {string_format("Interest: %d", group->interest),
+                     string_format("Behaviour: %s", group->horde_behaviour),
+                     string_format("Target: %s", group->target.to_string())};
+            }
+            facts.groups.push_back(std::move(shown));
+        }
+    }
+    if (uistate.overmap_debug_weather || uistate.overmap_visible_weather) {
+        const auto visible =
+            center.z() >= 0
+            && (uistate.overmap_debug_weather
+                || you.overmap_los(
+                    tripoint_abs_omt(center.xy(), OVERMAP_HEIGHT), opts.sight_points * 2));
+        facts.weather =
+            visible
+                ? weather_facts{.visible = true,
+                                .text = get_weather_at_point(center.xy())->name.translated(),
+                                .color = get_weather_at_point(center.xy())->color}
+                : weather_facts{.text = _("# Weather unknown")};
+    }
+    if (opts.debug_editor && facts.seen) {
+        const auto& oter = ACTIVE_OVERMAP_BUFFER.ter(center).obj();
+        facts.debug.push_back(
+            string_format(_("oter: %s (rot %d)"), oter.id.str(), oter.get_rotation()));
+        facts.debug.push_back(string_format(_("oter_type: %s"), oter.get_type_id().str()));
+        for (const auto dir : all_enum_values<cube_direction>()) {
+            if (const auto* const join = ACTIVE_OVERMAP_BUFFER.join_used_at({center, dir})) {
+                facts.debug.push_back(
+                    string_format(_("join %s: %s"), io::enum_to_string(dir), *join));
+            }
+        }
+        if (const auto* const args = ACTIVE_OVERMAP_BUFFER.mapgen_args(center)) {
+            if (*args) {
+                for (const auto& [name, value] : (**args).map) {
+                    facts.debug.push_back(string_format("%s = %s", name, value.get_string()));
+                }
+            } else {
+                facts.debug.push_back(_("args not yet set"));
+            }
+        }
+    }
+    if (opts.target) {
+        facts.mission.push_back(_("Distance to active mission:"));
+        facts.mission.push_back(string_format(_("%d tiles"), rl_dist(center, *opts.target)));
+        const auto above_below = opts.target->z() - opts.orig.z();
+        if (above_below > 0) { facts.mission.push_back(_("Above us")); }
+        if (above_below < 0) { facts.mission.push_back(_("Below us")); }
+    }
+    for (const auto& mission : you.get_active_missions()) {
+        if (mission->get_target() == center) { facts.mission_names.push_back(mission->name()); }
+    }
+    if (const auto* const dim = g->get_current_dimension_info()) {
+        facts.dimension =
+            dim->display_name.empty()
+                ? (dim->world_type.is_valid()
+                       ? dim->world_type.obj().name.translated()
+                       : dim->id.str())
+                : dim->display_name;
+    }
+    facts.level = string_format(_("LEVEL %i, %s"), center.z(), fmt_omt_coords(center));
+    return facts;
+}
+
 static void draw_om_sidebar(
     const catacurses::window& wbar, const tripoint_abs_omt& center, const tripoint_abs_omt& orig,
     bool /* blink */, bool fast_scroll, input_context* inp_ctxt, const draw_data_t& data) {
@@ -1437,19 +1585,16 @@ static void draw_om_sidebar(
         !has_debug_vision
             ? player_character.overmap_sight_range(g->light_level(player_character.bub_pos().z()))
             : 100;
-    const bool center_seen = has_debug_vision || ACTIVE_OVERMAP_BUFFER.seen(center);
     const tripoint_abs_omt target = player_character.get_active_mission_target();
     const bool has_target = target != overmap::invalid_tripoint;
-    const bool viewing_weather = uistate.overmap_debug_weather || uistate.overmap_visible_weather;
-
-    // If we're debugging monster groups, find the monster group we've selected
-    std::vector<mongroup*> mgroups;
-    if (uistate.overmap_debug_mongroup) {
-        mgroups = ACTIVE_OVERMAP_BUFFER.monsters_at(center);
-        for (const auto& mgp : mgroups) {
-            if (mgp->horde) { break; }
-        }
-    }
+    const auto facts = sidebar_facts_of({
+        .center = center,
+        .orig = orig,
+        .has_debug_vision = has_debug_vision,
+        .sight_points = sight_points,
+        .target = has_target ? std::optional(target) : std::nullopt,
+        .debug_editor = data.debug_editor,
+    });
 
     // Draw the vertical line
     for (int j = 0; j < TERMY; j++) { mvwputch(wbar, point(0, j), c_white, LINE_XOXO); }
@@ -1461,20 +1606,16 @@ static void draw_om_sidebar(
 
     // Draw text describing the overmap tile at the cursor position.
     int lines = 1;
-    if (center_seen) {
-        if (!mgroups.empty()) {
+    if (facts.seen) {
+        if (!facts.groups.empty()) {
             int line_number = 6;
-            for (const auto& mgroup : mgroups) {
-                mvwprintz(wbar, point(3, line_number++), c_blue, "  Species: %s",
-                          mgroup->type.c_str());
-                mvwprintz(wbar, point(3, line_number++), c_blue, "# monsters: %d",
-                          mgroup->population + mgroup->monsters.size());
-                if (!mgroup->horde) { continue; }
-                mvwprintz(wbar, point(3, line_number++), c_blue, "  Interest: %d", mgroup->interest);
-                mvwprintz(wbar, point(3, line_number++), c_blue, "  Behaviour: %s",
-                          mgroup->horde_behaviour);
-                mvwprintz(wbar, point(3, line_number), c_blue, "  Target: %s",
-                          mgroup->target.to_string());
+            for (const auto& group : facts.groups) {
+                mvwprintz(wbar, point(3, line_number++), c_blue, "  %s", group.species);
+                mvwprintz(wbar, point(3, line_number++), c_blue, "%s", group.monsters);
+                if (group.horde.empty()) { continue; }
+                mvwprintz(wbar, point(3, line_number++), c_blue, "  %s", group.horde[0]);
+                mvwprintz(wbar, point(3, line_number++), c_blue, "  %s", group.horde[1]);
+                mvwprintz(wbar, point(3, line_number), c_blue, "  %s", group.horde[2]);
                 mvwprintz(wbar, point(3, line_number++), c_red, "x");
             }
         } else {
@@ -1500,67 +1641,18 @@ static void draw_om_sidebar(
     }
 
     // Describe the weather conditions on the following line, if weather is visible
-    if (viewing_weather) {
-        const bool weather_is_visible =
-            center.z() >= 0
-            && (uistate.overmap_debug_weather
-                || player_character.overmap_los(
-                    tripoint_abs_omt(center.xy(), OVERMAP_HEIGHT), sight_points * 2));
-        if (weather_is_visible) {
-            // NOLINTNEXTLINE(cata-use-named-point-constants)
-            mvwprintz(wbar, point(3, ++lines), get_weather_at_point(center.xy())->color,
-                      get_weather_at_point(center.xy())->name.translated());
-        } else {
-            // NOLINTNEXTLINE(cata-use-named-point-constants)
-            mvwprintz(wbar, point(1, ++lines), c_dark_gray, _("# Weather unknown"));
-        }
+    if (facts.weather && facts.weather->visible) {
+        // NOLINTNEXTLINE(cata-use-named-point-constants)
+        mvwprintz(wbar, point(3, ++lines), facts.weather->color, "%s", facts.weather->text);
+    } else if (facts.weather) {
+        // NOLINTNEXTLINE(cata-use-named-point-constants)
+        mvwprintz(wbar, point(1, ++lines), c_dark_gray, "%s", facts.weather->text);
     }
 
-    if (data.debug_editor && center_seen) {
-        const oter_t& oter = ACTIVE_OVERMAP_BUFFER.ter(center).obj();
-        mvwprintz(wbar, point(1, ++lines), c_white, _("oter: %s (rot %d)"), oter.id.str(),
-                  oter.get_rotation());
-        mvwprintz(wbar, point(1, ++lines), c_white, _("oter_type: %s"), oter.get_type_id().str());
-
-        for (cube_direction dir : all_enum_values<cube_direction>()) {
-            if (std::string* join = ACTIVE_OVERMAP_BUFFER.join_used_at({center, dir})) {
-                mvwprintz(wbar, point(1, ++lines), c_white, _("join %s: %s"),
-                          io::enum_to_string(dir), *join);
-            }
-        }
-        std::optional<mapgen_arguments>* args = ACTIVE_OVERMAP_BUFFER.mapgen_args(center);
-        if (args) {
-            if (*args) {
-                for (const std::pair<const std::string, cata_variant>& arg : (**args).map) {
-                    mvwprintz(wbar, point(1, ++lines), c_white, "%s = %s", arg.first,
-                              arg.second.get_string());
-                }
-            } else {
-                mvwprintz(wbar, point(1, ++lines), c_white, _("args not yet set"));
-            }
-        }
-    }
-
-    if (has_target) {
-        const int distance = rl_dist(center, target);
-        mvwprintz(wbar, point(1, ++lines), c_white, _("Distance to active mission:"));
-        mvwprintz(wbar, point(1, ++lines), c_white, _("%d tiles"), distance);
-
-        const int above_below = target.z() - orig.z();
-        std::string msg;
-        if (above_below > 0) {
-            msg = _("Above us");
-        } else if (above_below < 0) {
-            msg = _("Below us");
-        }
-        if (above_below != 0) { mvwprintz(wbar, point(1, ++lines), c_white, _("%s"), msg); }
-    }
-
-    // Show mission targets on this location
-    for (auto& mission : player_character.get_active_missions()) {
-        if (mission->get_target() == center) {
-            mvwprintz(wbar, point(1, ++lines), c_white, mission->name());
-        }
+    // Debug facts, the distance to the active mission's target and the missions aimed at this
+    // square.
+    for (const auto* const rows : {&facts.debug, &facts.mission, &facts.mission_names}) {
+        for (const auto& line : *rows) { mvwprintz(wbar, point(1, ++lines), c_white, "%s", line); }
     }
 
     mvwprintz(wbar, point(1, 12), c_magenta, _("Use movement keys to pan."));
@@ -1614,19 +1706,9 @@ static void draw_om_sidebar(
     }
 
     // Display dimension name above the coordinate line
-    std::string dim_name;
-    if (const dimension_info* dim = g->get_current_dimension_info()) {
-        dim_name =
-            dim->display_name.empty()
-                ? (dim->world_type.is_valid()
-                       ? dim->world_type.obj().name.translated()
-                       : dim->id.str())
-                : dim->display_name;
-    }
-    mvwprintz(wbar, point(1, getmaxy(wbar) - 2), c_cyan, dim_name);
+    mvwprintz(wbar, point(1, getmaxy(wbar) - 2), c_cyan, "%s", facts.dimension);
 
-    mvwprintz(wbar, point(1, getmaxy(wbar) - 1), c_red, _("LEVEL %i, %s"), center.z(),
-              fmt_omt_coords(center));
+    mvwprintz(wbar, point(1, getmaxy(wbar) - 1), c_red, "%s", facts.level);
 
     wnoutrefresh(wbar);
 }
@@ -2111,11 +2193,16 @@ static auto position_of(const tripoint_abs_omt& at) -> game_client::interaction_
     return {.x = at.x(), .y = at.y(), .z = at.z()};
 }
 
+struct curses_indexes_pair {
+    int foreground = 0;
+    int background = 0;
+};
+
 /// The curses color indexes 0-15 that the window draws `color` with.
-static auto curses_indexes(const nc_color& color) -> std::pair<int, int> {
+static auto curses_indexes(const nc_color& color) -> curses_indexes_pair {
     const auto& pair = cata_cursesport::colorpairs[color.to_color_pair_index()];
-    return {static_cast<int>(pair.FG) + (color.is_bold() ? 8 : 0),
-            static_cast<int>(pair.BG) + (color.is_blink() ? 8 : 0)};
+    return {.foreground = static_cast<int>(pair.FG) + (color.is_bold() ? 8 : 0),
+            .background = static_cast<int>(pair.BG) + (color.is_blink() ? 8 : 0)};
 }
 
 /// What the note on `at` says: the text after its symbol and color, else its label.
@@ -2189,6 +2276,34 @@ auto known_squares(const tripoint_abs_omt& min, const tripoint_abs_omt& max, con
         view);
 }
 
+/// The labels the window prints over the squares of the published window around `center`.
+static auto labels_of(const tripoint_abs_omt& center, const game_client::interaction_overmap& om)
+    -> std::vector<game_client::interaction_overmap_label> {
+    const auto [foreground, background] = curses_indexes(i_yellow);
+    auto labels = std::vector<game_client::interaction_overmap_label>{};
+    const auto push = [&](const map_label& label) {
+        labels.push_back(
+            {.position = position_of(label.at),
+             .text = label.text,
+             .foreground = foreground,
+             .background = background});
+    };
+    const auto in_window = [&](const tripoint_abs_omt& at) {
+        return at.x() >= om.origin.x && at.x() < om.origin.x + om.cols && at.y() >= om.origin.y
+            && at.y() < om.origin.y + om.rows;
+    };
+    for (const auto& label : city_labels_near(center, std::max(om.cols, om.rows))) {
+        if (in_window(label.at)) { push(label); }
+    }
+    for (const auto y : std::views::iota(0, om.rows)) {
+        for (const auto x : std::views::iota(0, om.cols)) {
+            const auto at = tripoint_abs_omt(om.origin.x + x, om.origin.y + y, center.z());
+            if (const auto text = seen_map_label_text(at)) { push({at, *text}); }
+        }
+    }
+    return labels;
+}
+
 struct screen_state {
     const tripoint_abs_omt& center;
     const tripoint_abs_omt& orig;
@@ -2199,91 +2314,37 @@ struct screen_state {
     const input_context& ictxt;
 };
 
-/// What the sidebar says besides the description of the cursor square, composed from the model.
+/// What the sidebar says besides the description of the cursor square, one line each: the facts the
+/// native sidebar and corner box print, in the order they are printed.
 static auto legend_of(const screen_state& state, const cell_view& view)
     -> std::vector<std::string> {
-    const auto& center = state.center;
-    auto& you = get_avatar();
-    const auto seen = view.has_debug_vision || ACTIVE_OVERMAP_BUFFER.seen(center);
-    auto lines = std::vector<std::string>{};
     const auto plain = [](std::string text) {
         return text.starts_with("# ") ? text.substr(2) : text;
     };
-
-    if (seen && uistate.overmap_debug_mongroup) {
-        for (const auto* const group : ACTIVE_OVERMAP_BUFFER.monsters_at(center)) {
-            lines.push_back(string_format("Species: %s", group->type.c_str()));
-            lines.push_back(
-                string_format("# monsters: %d", group->population + group->monsters.size()));
-            if (!group->horde) { continue; }
-            lines.push_back(string_format("Interest: %d", group->interest));
-            lines.push_back(string_format("Behaviour: %s", group->horde_behaviour));
-            lines.push_back(string_format("Target: %s", group->target.to_string()));
-        }
+    const auto facts = sidebar_facts_of({
+        .center = state.center,
+        .orig = state.orig,
+        .has_debug_vision = view.has_debug_vision,
+        .sight_points = view.sight_points,
+        .target = view.has_target ? std::optional(view.target) : std::nullopt,
+        .debug_editor = state.data.debug_editor,
+    });
+    auto lines = std::vector<std::string>{};
+    for (const auto& group : facts.groups) {
+        lines.push_back(group.species);
+        lines.push_back(group.monsters);
+        std::ranges::copy(group.horde, std::back_inserter(lines));
     }
-    if (uistate.overmap_debug_weather || uistate.overmap_visible_weather) {
-        const auto weather_is_visible =
-            center.z() >= 0
-            && (uistate.overmap_debug_weather
-                || you.overmap_los(
-                    tripoint_abs_omt(center.xy(), OVERMAP_HEIGHT), view.sight_points * 2));
-        lines.push_back(
-            weather_is_visible
-                ? get_weather_at_point(center.xy())->name.translated()
-                : plain(_("# Weather unknown")));
+    if (facts.weather) { lines.push_back(plain(facts.weather->text)); }
+    for (const auto* const rows : {&facts.debug, &facts.mission, &facts.mission_names}) {
+        std::ranges::copy(*rows, std::back_inserter(lines));
     }
-    if (state.data.debug_editor && seen) {
-        const auto& oter = ACTIVE_OVERMAP_BUFFER.ter(center).obj();
-        lines.push_back(string_format(_("oter: %s (rot %d)"), oter.id.str(), oter.get_rotation()));
-        lines.push_back(string_format(_("oter_type: %s"), oter.get_type_id().str()));
-        for (const auto dir : all_enum_values<cube_direction>()) {
-            if (const auto* const join = ACTIVE_OVERMAP_BUFFER.join_used_at({center, dir})) {
-                lines.push_back(string_format(_("join %s: %s"), io::enum_to_string(dir), *join));
-            }
-        }
-        if (const auto* const args = ACTIVE_OVERMAP_BUFFER.mapgen_args(center)) {
-            if (*args) {
-                for (const auto& [name, value] : (**args).map) {
-                    lines.push_back(string_format("%s = %s", name, value.get_string()));
-                }
-            } else {
-                lines.push_back(_("args not yet set"));
-            }
-        }
+    for (const auto& line :
+         corner_facts_of(state.center, view.has_debug_vision, view.npcs_near_player)) {
+        lines.push_back(line.text);
     }
-    if (view.has_target) {
-        lines.push_back(_("Distance to active mission:"));
-        lines.push_back(string_format(_("%d tiles"), rl_dist(center, view.target)));
-        const auto above_below = view.target.z() - state.orig.z();
-        if (above_below > 0) { lines.push_back(_("Above us")); }
-        if (above_below < 0) { lines.push_back(_("Below us")); }
-    }
-    for (const auto& mission : you.get_active_missions()) {
-        if (mission->get_target() == center) { lines.push_back(mission->name()); }
-    }
-    if (uistate.overmap_show_map_notes && corner_note(center)
-        && ACTIVE_OVERMAP_BUFFER.is_marked_dangerous(center)) {
-        lines.push_back(_("DANGEROUS AREA!"));
-    }
-    if (seen) {
-        for (const auto& npc : view.npcs_near_player) {
-            if (!npc->marked_for_death && npc->abs_omt_pos() == center) {
-                lines.push_back(npc->name);
-            }
-        }
-    }
-    for (const auto& vehicle : ACTIVE_OVERMAP_BUFFER.get_vehicle(center)) {
-        lines.push_back(vehicle.name);
-    }
-    if (const auto* const dim = g->get_current_dimension_info()) {
-        lines.push_back(
-            dim->display_name.empty()
-                ? (dim->world_type.is_valid()
-                       ? dim->world_type.obj().name.translated()
-                       : dim->id.str())
-                : dim->display_name);
-    }
-    lines.push_back(string_format(_("LEVEL %i, %s"), center.z(), fmt_omt_coords(center)));
+    if (!facts.dimension.empty()) { lines.push_back(facts.dimension); }
+    lines.push_back(facts.level);
     return lines;
 }
 
@@ -2324,6 +2385,9 @@ static auto screen_of(const screen_state& state) -> ec::screen_view {
             static_cast<int>(steps));
     }
     om.legend = legend_of(state, view);
+    if (center.z() == 0 && uistate.overmap_show_city_labels) { om.labels = labels_of(center, om); }
+    if (view.has_target && view.options.blink) { om.mission_target = position_of(view.target); }
+    om.notes_title = state.ictxt.get_action_name("LIST_NOTES");
 
     const auto& ictxt = state.ictxt;
     const auto switched = [](const bool on) { return on ? _("On") : _("Off"); };

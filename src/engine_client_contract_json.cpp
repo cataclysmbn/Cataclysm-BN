@@ -356,6 +356,16 @@ auto overmap_json( const game_client::interaction_overmap &om ) -> json
     if( !om.cursor_here.empty() ) { result["cursor_here"] = om.cursor_here; }
     if( !om.cursor_note.empty() ) { result["cursor_note"] = om.cursor_note; }
     if( !om.route_text.empty() ) { result["route_text"] = om.route_text; }
+    if( !om.notes_title.empty() ) { result["notes_title"] = om.notes_title; }
+    if( !om.labels.empty() ) {
+        auto labels = json::array();
+        for( const auto &label : om.labels ) {
+            labels.push_back( {{"pos", to_json( label.position, frame )}, {"text", label.text},
+                {"foreground", label.foreground}, {"background", label.background}} );
+        }
+        result["labels"] = std::move( labels );
+    }
+    if( om.mission_target ) { result["mission_target"] = to_json( *om.mission_target, frame ); }
     if( !om.tiles.empty() ) {
         auto rows = json::array();
         for( const auto y : std::views::iota( 0, om.rows ) ) {
@@ -633,8 +643,8 @@ auto body_json( const map_body &body, const bubble_frame &frame ) -> json
 {
     auto result = json{{"mode", body.mode}};
     if( body.target ) {
-        result["target"] = target_json( *body.target, body.mode == "overmap" ? bubble_frame{ .omt = true } :
-                                        frame );
+        result["target"] = target_json( *body.target, body.target->coordinate_space == "omt" ?
+                                        bubble_frame{ .omt = true } : frame );
     }
     if( body.overmap ) { result["overmap"] = overmap_json( *body.overmap ); }
     return result;

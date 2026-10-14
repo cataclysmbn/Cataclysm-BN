@@ -14,9 +14,7 @@
 #    include "game.h"
 #    include "game_constants.h"
 #    include "input.h"
-#    include "mission.h"
 #    include "output.h"
-#    include "overmap/overmap.h"
 #    include "overmap/overmap_ui.h"
 #    include "overmap/overmapbuffer.h"
 #    include "overmap_helpers.h"
@@ -164,36 +162,6 @@ struct fixed_world {
     ~fixed_world() { clear_all_state(); }
 };
 
-/// A city of the overmap the avatar stands on, `offset` squares from `center`.
-void lay_city(const tripoint_abs_omt& center, const point& offset, const std::string& name) {
-    const auto at = center + offset;
-    ACTIVE_OVERMAP_BUFFER.set_seen(at, true);
-    auto& overmap = *ACTIVE_OVERMAP_BUFFER.get_om_global(at).om;
-    auto made = city(ACTIVE_OVERMAP_BUFFER.get_om_global(at).local.xy(), 4);
-    made.name = name;
-    overmap.cities.push_back(made);
-}
-
-/// Makes the avatar's active mission and puts its target at `at`.
-void lay_mission(const tripoint_abs_omt& at) {
-    auto& you = get_avatar();
-    you.reset_all_missions();
-    mission* assigned = nullptr;
-    for (const mission_type& type : mission_type::get_all()) {
-        if (type.goal == MGOAL_ASSASSINATE) {
-            assigned = mission::reserve_new(type.id, you.getID());
-            break;
-        }
-    }
-    REQUIRE(assigned != nullptr);
-    if (assigned->get_assigned_player_id() == you.getID()) {
-        you.on_mission_assignment(*assigned);
-    } else {
-        assigned->assign(you);
-    }
-    assigned->set_target(at);
-}
-
 } // namespace
 
 TEST_CASE(
@@ -275,13 +243,13 @@ TEST_CASE(
     const auto world = fixed_world{};
     const auto guard = screen_guard{};
     uistate.overmap_show_city_labels = true;
-    lay_city(world.center, point(-9, 4), "Testville");
+    overmap_helpers::lay_city(world.center, point(-9, 4), "Testville");
     ACTIVE_OVERMAP_BUFFER.add_note(world.center + point(8, -5), "LABEL:Depot");
     ACTIVE_OVERMAP_BUFFER.set_seen(world.center + point(8, -5), true);
     ACTIVE_OVERMAP_BUFFER.add_note(world.center + point(2, 2), "C:cache");
 
     SECTION("a target beyond the window") {
-        lay_mission(world.center + point(200, 3));
+        overmap_helpers::lay_mission(world.center + point(200, 3));
         const auto frames = frames_of({});
         REQUIRE(frames.size() == 1);
         const auto text = [&](const drawn& map) {
@@ -299,7 +267,7 @@ TEST_CASE(
     }
 
     SECTION("a target on the square of the cursor") {
-        lay_mission(world.center + point(2, 0));
+        overmap_helpers::lay_mission(world.center + point(2, 0));
         const auto frames = frames_of({"RIGHT", "RIGHT"});
         REQUIRE(frames.size() == 3);
         CHECK(frames[0].map.digest == 0xa8a7cb686515f642ULL);

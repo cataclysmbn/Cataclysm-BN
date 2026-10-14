@@ -177,6 +177,14 @@ struct interaction_overmap_note {
     std::string text;
 };
 
+/// A name the native window prints over an overmap square, in curses color indexes 0-15.
+struct interaction_overmap_label {
+    interaction_position position;
+    std::string text;
+    int foreground = 7;
+    int background = 0;
+};
+
 /// The tile the native tiles view draws for an overmap square.
 struct interaction_overmap_tile {
     std::string id;
@@ -208,6 +216,12 @@ struct interaction_overmap {
     /// The length of the planned travel route as one localized line; empty without a route.
     std::string route_text;
     std::vector<interaction_overmap_note> notes;
+    /// The heading of the notes, localized.
+    std::string notes_title;
+    /// The names of cities and labelled squares the native window prints over the squares, while its toggle is on.
+    std::vector<interaction_overmap_label> labels;
+    /// The target of the active mission while the overlays show it; the native window marks it at its edge when it lies outside.
+    std::optional<interaction_position> mission_target;
     /// The planned travel route, nearest square first.
     std::vector<interaction_position> path;
     /// Row-major like `glyphs`; empty unless the client renders tiles.
