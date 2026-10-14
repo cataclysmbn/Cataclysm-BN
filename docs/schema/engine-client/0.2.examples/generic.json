@@ -227,7 +227,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:49",
+                  "id": "entry:50",
                   "label": "Quit to main menu",
                   "description": "",
                   "denial": "",
@@ -502,7 +502,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:49",
+                  "id": "entry:50",
                   "label": "Quit to main menu",
                   "description": "",
                   "denial": "",
@@ -1203,7 +1203,7 @@
               "columns": [],
               "rows": [
                 {
-                  "id": "entry:7",
+                  "id": "entry:8",
                   "label": "Check game state",
                   "description": "",
                   "denial": "",
@@ -1214,7 +1214,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:23",
+                  "id": "entry:24",
                   "label": "Display hordes",
                   "description": "",
                   "denial": "",
@@ -1225,7 +1225,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:24",
+                  "id": "entry:25",
                   "label": "Test item group",
                   "description": "",
                   "denial": "",
@@ -1236,7 +1236,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:26",
+                  "id": "entry:27",
                   "label": "Show sound clustering",
                   "description": "",
                   "denial": "",
@@ -1247,7 +1247,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:27",
+                  "id": "entry:28",
                   "label": "Display weather",
                   "description": "",
                   "denial": "",
@@ -1258,7 +1258,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:28",
+                  "id": "entry:29",
                   "label": "Display overmap scents",
                   "description": "",
                   "denial": "",
@@ -1269,7 +1269,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:29",
+                  "id": "entry:30",
                   "label": "Display overmap distribution grids",
                   "description": "",
                   "denial": "",
@@ -1280,7 +1280,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:56",
+                  "id": "entry:57",
                   "label": "Toggle display local scents",
                   "description": "",
                   "denial": "",
@@ -1292,7 +1292,7 @@
                   "toggled": false
                 },
                 {
-                  "id": "entry:57",
+                  "id": "entry:58",
                   "label": "Toggle display local scents type",
                   "description": "",
                   "denial": "",
@@ -1304,7 +1304,7 @@
                   "toggled": false
                 },
                 {
-                  "id": "entry:58",
+                  "id": "entry:59",
                   "label": "Toggle display temperature",
                   "description": "",
                   "denial": "",
@@ -1316,7 +1316,7 @@
                   "toggled": false
                 },
                 {
-                  "id": "entry:59",
+                  "id": "entry:60",
                   "label": "Toggle display vehicle autopilot overlay",
                   "description": "",
                   "denial": "",
@@ -1328,7 +1328,7 @@
                   "toggled": false
                 },
                 {
-                  "id": "entry:60",
+                  "id": "entry:61",
                   "label": "Toggle display visibility",
                   "description": "",
                   "denial": "",
@@ -1340,7 +1340,7 @@
                   "toggled": false
                 },
                 {
-                  "id": "entry:61",
+                  "id": "entry:62",
                   "label": "Toggle display lighting",
                   "description": "",
                   "denial": "",
@@ -1352,7 +1352,7 @@
                   "toggled": false
                 },
                 {
-                  "id": "entry:63",
+                  "id": "entry:64",
                   "label": "Toggle display transparency",
                   "description": "",
                   "denial": "",
@@ -1364,7 +1364,7 @@
                   "toggled": false
                 },
                 {
-                  "id": "entry:64",
+                  "id": "entry:65",
                   "label": "Toggle display outside/sheltered/indoors",
                   "description": "",
                   "denial": "",
@@ -1376,7 +1376,7 @@
                   "toggled": false
                 },
                 {
-                  "id": "entry:62",
+                  "id": "entry:63",
                   "label": "Toggle display radiation",
                   "description": "",
                   "denial": "",
@@ -1388,7 +1388,7 @@
                   "toggled": false
                 },
                 {
-                  "id": "entry:65",
+                  "id": "entry:66",
                   "label": "Toggle display submap grid",
                   "description": "",
                   "denial": "",
@@ -1400,7 +1400,7 @@
                   "toggled": false
                 },
                 {
-                  "id": "entry:66",
+                  "id": "entry:67",
                   "label": "Toggle display terrain sound absorption",
                   "description": "",
                   "denial": "",
@@ -1412,7 +1412,7 @@
                   "toggled": false
                 },
                 {
-                  "id": "entry:67",
+                  "id": "entry:68",
                   "label": "Toggle display sound walls",
                   "description": "",
                   "denial": "",
@@ -1436,7 +1436,7 @@
                   "toggled": false
                 },
                 {
-                  "id": "entry:31",
+                  "id": "entry:32",
                   "label": "Set automove target",
                   "description": "",
                   "denial": "",
@@ -1447,7 +1447,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:32",
+                  "id": "entry:33",
                   "label": "Show mutation category levels",
                   "description": "",
                   "denial": "",
@@ -1458,7 +1458,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:33",
+                  "id": "entry:34",
                   "label": "Show mutation trait chances",
                   "description": "",
                   "denial": "",
@@ -1469,7 +1469,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:35",
+                  "id": "entry:36",
                   "label": "Draw benchmark",
                   "description": "",
                   "denial": "",
@@ -1480,7 +1480,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:36",
+                  "id": "entry:37",
                   "label": "FPS benchmark",
                   "description": "",
                   "denial": "",
@@ -1491,7 +1491,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:71",
+                  "id": "entry:72",
                   "label": "Toggle hour timer",
                   "description": "",
                   "denial": "",
@@ -1502,7 +1502,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:39",
+                  "id": "entry:40",
                   "label": "Test trait group",
                   "description": "",
                   "denial": "",
@@ -1513,7 +1513,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:40",
+                  "id": "entry:41",
                   "label": "Show debug message",
                   "description": "",
                   "denial": "",
@@ -1524,7 +1524,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:41",
+                  "id": "entry:42",
                   "label": "Crash game (test crash handling)",
                   "description": "",
                   "denial": "",
@@ -1535,7 +1535,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:42",
+                  "id": "entry:43",
                   "label": "Show debug message (worker thread)",
                   "description": "",
                   "denial": "",
@@ -1545,7 +1545,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:43",
+                  "id": "entry:44",
                   "label": "Crash worker thread (test crash handling)",
                   "description": "",
                   "denial": "",
@@ -1555,7 +1555,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:44",
+                  "id": "entry:45",
                   "label": "Reload translations",
                   "description": "",
                   "denial": "",
@@ -1566,7 +1566,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:46",
+                  "id": "entry:47",
                   "label": "Toggle NPC pathfinding on map",
                   "description": "",
                   "denial": "",
@@ -1578,7 +1578,7 @@
                   "toggled": false
                 },
                 {
-                  "id": "entry:47",
+                  "id": "entry:48",
                   "label": "Print faction info to console",
                   "description": "",
                   "denial": "",
@@ -1589,7 +1589,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:48",
+                  "id": "entry:49",
                   "label": "Print NPC magic info to console",
                   "description": "",
                   "denial": "",
@@ -1600,7 +1600,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:51",
+                  "id": "entry:52",
                   "label": "Test weather",
                   "description": "",
                   "denial": "",
@@ -1611,7 +1611,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:68",
+                  "id": "entry:69",
                   "label": "Test map extra list",
                   "description": "",
                   "denial": "",
@@ -1622,7 +1622,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:73",
+                  "id": "entry:74",
                   "label": "Reset ignored debug messages",
                   "description": "",
                   "denial": "",
@@ -1633,7 +1633,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:75",
+                  "id": "entry:76",
                   "label": "Control NPC follower",
                   "description": "",
                   "denial": "",
@@ -1644,7 +1644,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:74",
+                  "id": "entry:75",
                   "label": "Reload tileset and show missing tiles",
                   "description": "",
                   "denial": "",
@@ -1655,7 +1655,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:76",
+                  "id": "entry:77",
                   "label": "Dump dynamic tile atlas",
                   "description": "",
                   "denial": "",
@@ -1666,7 +1666,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:77",
+                  "id": "entry:78",
                   "label": "Toggle tileset visual effects",
                   "description": "",
                   "denial": "",
@@ -1677,7 +1677,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:52",
+                  "id": "entry:53",
                   "label": "Take screenshot",
                   "description": "",
                   "denial": "",
@@ -1688,7 +1688,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:53",
+                  "id": "entry:54",
                   "label": "Submit a bug report on github",
                   "description": "",
                   "denial": "",
@@ -1699,7 +1699,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:54",
+                  "id": "entry:55",
                   "label": "Generate game report",
                   "description": "",
                   "denial": "",
@@ -1710,7 +1710,7 @@
                   "columns": []
                 },
                 {
-                  "id": "entry:55",
+                  "id": "entry:56",
                   "label": "Join the Discord",
                   "description": "",
                   "denial": "",
@@ -1868,7 +1868,7 @@
         ],
         "focus": {
           "component_id": "list:choices",
-          "row_id": "entry:7"
+          "row_id": "entry:8"
         },
         "context": "UILIST"
       }
