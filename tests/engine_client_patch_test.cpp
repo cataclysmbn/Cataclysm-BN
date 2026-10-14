@@ -394,6 +394,42 @@ TEST_CASE("open air publishes a cell only while something is in it", "[engine_cl
     here.i_clear(air);
 }
 
+TEST_CASE(
+    "anything placed in open air above the avatar publishes a cell", "[engine_client_patch]") {
+    const auto start = make_open_ground(12);
+    auto& here = get_map();
+    // One square on each of three levels, each in a submap of its own.
+    const auto item_at = start + tripoint(0, 0, 2);
+    const auto field_at = start + tripoint(SEEX, 0, 4);
+    const auto furniture_at = start + tripoint(0, SEEY, 6);
+    const auto vehicle_at = start + tripoint(-SEEX, 0, 3);
+    const auto published = [&](const tripoint_bub_ms& p) {
+        map_perception::acquire();
+        const auto abs = map_local_to_abs(here, p);
+        return ec::world::capture_world().cells.contains(
+            ec::position{.dim = "", .x = abs.x(), .y = abs.y(), .z = abs.z()});
+    };
+    for (const auto& p : {item_at, field_at, furniture_at, vehicle_at}) {
+        REQUIRE(here.has_flag(TFLAG_NO_MEMORY, p));
+        REQUIRE_FALSE(published(p));
+    }
+    here.add_item_or_charges(item_at, item::spawn("rock"));
+    here.add_field(field_at, field_type_id("fd_smoke"), 1);
+    here.furn_set(furniture_at, furn_id("f_table"));
+    REQUIRE(
+        here.add_vehicle(vproto_id("golf_cart"), vehicle_at, 0_degrees, 0, 0, false) != nullptr);
+    CHECK(published(item_at));
+    CHECK(published(field_at));
+    CHECK(published(furniture_at));
+    CHECK(published(vehicle_at));
+    // The same square a patch later: the oracle compares it with a full capture.
+    auto watched = watched_session{};
+    here.i_clear(item_at);
+    watched.publish();
+    here.furn_set(furniture_at, furn_id("f_null"));
+    watched.publish();
+}
+
 /// Milliseconds a publication costs with a full capture and with a patch, for an avatar who has
 /// memorized `squares` squares: `cata_test-mcp "[.engine_client_patch_cost]"` prints them.
 TEST_CASE("the cost of a publication by squares memorized", "[.engine_client_patch_cost]") {
