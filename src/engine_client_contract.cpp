@@ -15,6 +15,8 @@
 
 #include <algorithm>
 #include <array>
+#include <charconv>
+#include <cmath>
 #include <limits>
 #include <random>
 #include <ranges>
@@ -457,6 +459,25 @@ auto read_choices( const choices_request &request, const std::string &epoch )
 
 namespace
 {
+/// Whether the form field offers the value: a bool or select only its values, a number whole digits
+/// (an integer) or a decimal within its bounds, a text within its length.
+auto offers( const form_field &field, const std::string &value ) -> bool
+{
+    if( field.type == "bool" ) { return value == "true" || value == "false"; }
+    if( field.type == "select" ) { return std::ranges::contains( field.options, value, &form_option::id ); }
+    if( field.type == "integer" || field.type == "float" ) {
+        auto number = 0.0;
+        auto whole = 0LL;
+        const auto *const end = value.data() + value.size();
+        const auto result = field.type == "float" ? std::from_chars( value.data(), end, number ) :
+                            std::from_chars( value.data(), end, whole );
+        if( field.type == "integer" ) { number = static_cast<double>( whole ); }
+        return result.ec == std::errc{} &&result.ptr == end &&std::isfinite( number ) &&
+               ( !field.min || number >= *field.min ) &&( !field.max || number <= *field.max );
+    }
+    return field.max_length < 0 || static_cast<int>( value.size() ) <= field.max_length;
+}
+
 /// Every member of the shape is supplied and no other; named rows are rows of their component.
 auto matches_shape( const screen_view &view, const arg_shape &shape, const invoke_args &args,
                     const bubble_frame &frame ) -> bool
@@ -488,6 +509,14 @@ auto matches_shape( const screen_view &view, const arg_shape &shape, const invok
     if( shape.count && ( ( shape.count->min && *args.count < *shape.count->min ) ||
                          ( shape.count->max && *args.count > *shape.count->max ) ) ) { return false; }
     if( shape.text && args.text->size() > maximum_inline_bytes ) { return false; }
+    // The text for the field a form names by row is a value that field offers.
+    if( shape.text && shape.row && shape.text->field_id.empty() ) {
+        const auto *const found = component_in( shape.row->component_id );
+        const auto *const form = found ? std::get_if<form_body>( &found->body ) : nullptr;
+        const auto field = form ? std::ranges::find( form->fields, *args.row,
+                           &form_field::id ) : std::vector<form_field>::const_iterator{};
+        if( form && field != form->fields.end() && !offers( *field, *args.text ) ) { return false; }
+    }
     if( shape.pane ) {
         const auto *const parent = component_in( shape.pane->component_id );
         if( parent == nullptr || !find_component( *parent, *args.pane ) ) { return false; }

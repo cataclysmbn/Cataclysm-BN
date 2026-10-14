@@ -2,8 +2,6 @@
 
 #include <algorithm>
 #include <array>
-#include <charconv>
-#include <cmath>
 #include <locale>
 #include <cfloat>
 #include <climits>
@@ -4001,33 +3999,6 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
         return field;
     };
 
-    // Whether the field offers the value, so a client cannot set what the native menu would refuse.
-    const auto accepts = []( const ec::form_field & field, const std::string & value ) -> bool {
-        if( field.type == "bool" )
-        {
-            return value == "true" || value == "false";
-        }
-        if( field.type == "select" )
-        {
-            return std::ranges::contains( field.options, value, &ec::form_option::id );
-        }
-        if( field.type == "integer" || field.type == "float" )
-        {
-            // Whole digits for an integer, as the native setValue reads it: "1e2" is not 100.
-            auto number = 0.0;
-            auto whole = 0LL;
-            const auto *const end = value.data() + value.size();
-            const auto result = field.type == "float" ? std::from_chars( value.data(), end, number ) :
-            std::from_chars( value.data(), end, whole );
-            if( field.type == "integer" ) {
-                number = static_cast<double>( whole );
-            }
-            return result.ec == std::errc{} &&result.ptr == end &&std::isfinite( number ) &&
-                   ( !field.min || number >= *field.min ) &&( !field.max || number <= *field.max );
-        }
-        return field.max_length < 0 || static_cast<int>( value.size() ) <= field.max_length;
-    };
-
     const auto is_selectable = [&]( const PageItem & item ) -> bool {
         switch( item.type )
         {
@@ -4168,8 +4139,7 @@ std::string{ _( "Current world" ) } :
                     action = "CONFIRM";
                 } else if( id == options_set && args.text && row->type == ItemType::Option ) {
                     auto &opt = cOPTIONS[row->data];
-                    if( ( !opt.hasPrerequisite() || opt.checkPrerequisite() ) &&
-                        accepts( field_of( *args.row, opt ), *args.text ) ) {
+                    if( !opt.hasPrerequisite() || opt.checkPrerequisite() ) {
                         opt.setValue( *args.text );
                     }
                 }
