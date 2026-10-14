@@ -840,3 +840,23 @@ TEST_CASE(
     CHECK((*repair)["enabled"] == false);
     CHECK((*repair)["denial"] == "Nothing is damaged.");
 }
+
+namespace {
+auto holdable_on_wire(const ec::boundary_state& state, const std::string& id) -> bool {
+    const auto json = wire(state);
+    const auto& affordances = json["stack"].back()["affordances"];
+    const auto found = std::ranges::find_if(affordances, [&](const nlohmann::json& entry) {
+        return entry["id"].get<std::string>() == id;
+    });
+    REQUIRE(found != affordances.end());
+    return found->value("holdable", false);
+}
+} // namespace
+
+TEST_CASE("only a step of the map may be held", "[engine_client_component][held_walk]") {
+    CHECK(holdable_on_wire(map_only(), "UP"));
+    CHECK_FALSE(holdable_on_wire(map_only(), "bn:travel"));
+    CHECK_FALSE(holdable_on_wire(map_only(), "bn:pickup"));
+    // The same action on a list is a key press, not a walk.
+    CHECK_FALSE(holdable_on_wire(boundary(menu()), "UP"));
+}

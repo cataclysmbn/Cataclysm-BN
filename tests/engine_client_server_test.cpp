@@ -6,6 +6,7 @@
 #    include "engine_client_component.h"
 #    include "engine_client_schema.h"
 #    include "engine_client_session.h"
+#    include "game_session.h"
 #    include "input.h"
 #    include "json.h"
 #    include "mcp_server.h"
@@ -88,6 +89,8 @@ auto world_cell(const int x) -> cell {
 auto known_cells = std::vector<int>{1, 2};
 auto declared_viewport = std::vector<std::pair<int, int>>{};
 auto with_avatar = true;
+/// Where the test world puts the avatar; a step moves it by changing this.
+auto avatar_x = 0;
 auto capture_test_world() -> world_state {
     auto result = world_state{};
     result.coverage = bounds{.min = {.x = 0, .y = -5, .z = 0}, .max = {.x = 1000, .y = 5, .z = 0}};
@@ -97,7 +100,9 @@ auto capture_test_world() -> world_state {
         result.view =
             bounds{.min = {.x = 0, .y = 0, .z = 0}, .max = {.x = cols - 1, .y = rows - 1, .z = 0}};
     }
-    if (with_avatar) { result.avatar = avatar_value{.id = "e:avatar", .name = "Ada"}; }
+    if (with_avatar) {
+        result.avatar = avatar_value{.id = "e:avatar", .at = {.x = avatar_x}, .name = "Ada"};
+    }
     return result;
 }
 
@@ -154,6 +159,7 @@ struct fixture {
         known_cells = {1, 2};
         declared_viewport.clear();
         with_avatar = true;
+        avatar_x = 0;
         authority.set_world_capture(&capture_test_world);
     }
     /// Feed `text`, then stop at the next native input. Ending without queued input ends the
@@ -730,6 +736,183 @@ TEST_CASE("screen-scoped invokes queue behind the running command", "[engine_cli
         CHECK_FALSE(test.pump(""));
         CHECK(count_of(test.output.str(), R"("stage":"interrupted","error":"stale_epoch")") == 3);
     }
+}
+
+namespace {
+/// The map is the top screen: a running game whose input context is the map's, with a move action.
+struct map_boundary {
+    bool was_running = game_session::running();
+    input_context context{"DEFAULTMODE"};
+    game_client::input_context_scope input{context, "DEFAULTMODE"};
+    map_boundary() {
+        game_session::set_running(true);
+        context.register_action("UP");
+        game_client::begin_input_boundary();
+    }
+    ~map_boundary() { game_session::set_running(was_running); }
+};
+
+/// A controller that holds a key, reading its requests from a stream it can ask about, and the
+/// steps the game takes for it: one native input per prompt.
+struct held_walk {
+    fixture test;
+    std::stringstream in;
+    int steps = 0;
+    bn::mcp::server server{
+        {
+            .observe = [] { return bn::mcp::screen_snapshot{.json = "{}"}; },
+            .submit = [this](const auto& input) { return test.queued = input, true; },
+            .has_input = [this] { return !test.queued.empty(); },
+            .wait_input = [this](int) { return in.rdbuf()->in_avail() > 0; },
+            .contract_session = &test.authority,
+        },
+        {.now = [] { return std::chrono::steady_clock::time_point{}; }}};
+    auto map_id() -> std::string { return "screen:map:" + test.authority.epoch(); }
+    auto frame(const std::string& method, const std::string& params, const std::string& id = "5")
+        -> std::string {
+        return rpc(method, params, id);
+    }
+    auto hold(
+        const std::string& affordance = "UP", const std::string& screen = {},
+        const std::string& id = "5") -> std::string {
+        return frame(
+            "bn.hold",
+            R"({"epoch":")" + test.authority.epoch() + R"(","screen_id":")"
+                + (screen.empty() ? map_id() : screen) + R"(","affordance_id":")" + affordance
+                + R"("})",
+            id);
+    }
+    auto release(const std::string& id = "6") -> std::string {
+        return frame("bn.release", "{}", id);
+    }
+    /// Reaches the next prompt; true when the game was given a step to take there.
+    auto prompt() -> bool { return server.pump_until_input(in, test.output, test.errors); }
+    /// The game takes the step it was given: the avatar moves one square east.
+    auto take_step(const bool moves = true) -> void {
+        REQUIRE(test.queued.size() == 1);
+        CHECK(test.queued.front().action == "UP");
+        test.run_native_input();
+        ++steps;
+        if (moves) { ++avatar_x; }
+    }
+};
+} // namespace
+
+TEST_CASE(
+    "a held walk takes one step per prompt until it is released",
+    "[engine_client_server][held_walk]") {
+    auto map = map_boundary{};
+    auto walk = held_walk{};
+    walk.in << hello << subscribe << walk.hold();
+    REQUIRE(walk.prompt());
+    walk.take_step();
+    REQUIRE(walk.prompt());
+    walk.take_step();
+    REQUIRE(walk.prompt());
+    walk.take_step();
+    CHECK(walk.steps == 3);
+    walk.in << walk.release();
+    // The prompt reads the release before it can give the game another step.
+    CHECK_FALSE(walk.prompt());
+    CHECK(walk.test.queued.empty());
+    CHECK(walk.steps == 3);
+    CHECK(contains(walk.test.output.str(), R"("id":6,"result":{})"));
+}
+
+TEST_CASE(
+    "a walk holds until the key is released, not until a request waits",
+    "[engine_client_server][held_walk]") {
+    auto map = map_boundary{};
+    auto walk = held_walk{};
+    walk.in << hello << subscribe << walk.hold();
+    REQUIRE(walk.prompt());
+    walk.take_step();
+    // A request that arrives mid-walk is served before the next step.
+    walk.in << rpc("bn.viewport", R"({"cols":10,"rows":10})", "7");
+    REQUIRE(walk.prompt());
+    CHECK(contains(walk.test.output.str(), R"("id":7,"result":{})"));
+    walk.take_step();
+    CHECK(walk.steps == 2);
+}
+
+TEST_CASE(
+    "a tap steps exactly once even when it is released before the step ran",
+    "[engine_client_server][held_walk]") {
+    auto map = map_boundary{};
+    auto walk = held_walk{};
+    walk.in << hello << subscribe << batch_of({walk.hold(), walk.release()});
+    REQUIRE(walk.prompt());
+    walk.take_step();
+    CHECK_FALSE(walk.prompt());
+    CHECK(walk.test.queued.empty());
+    CHECK(walk.steps == 1);
+}
+
+TEST_CASE(
+    "a walk that changes nothing ends instead of spinning", "[engine_client_server][held_walk]") {
+    auto map = map_boundary{};
+    auto walk = held_walk{};
+    walk.in << hello << subscribe << walk.hold();
+    REQUIRE(walk.prompt());
+    // A wall: no time passes and the avatar stays.
+    walk.take_step(false);
+    CHECK_FALSE(walk.prompt());
+    CHECK(walk.test.queued.empty());
+    CHECK(walk.steps == 1);
+}
+
+TEST_CASE("another screen on top ends the walk", "[engine_client_server][held_walk]") {
+    auto map = map_boundary{};
+    auto walk = held_walk{};
+    walk.in << hello << subscribe << walk.hold();
+    REQUIRE(walk.prompt());
+    walk.take_step();
+    // A confirmation popup opens over the map: the walk does not go on under it.
+    auto popup = input_context{"YESNO"};
+    const auto popup_input = game_client::input_context_scope{popup, "YESNO"};
+    const auto popup_screen = screen_scope{popup};
+    game_client::begin_input_boundary();
+    CHECK_FALSE(walk.prompt());
+    CHECK(walk.test.queued.empty());
+    CHECK(walk.steps == 1);
+}
+
+TEST_CASE(
+    "a hold is refused unless the map is on top and the affordance may be held",
+    "[engine_client_server][held_walk]") {
+    auto map = map_boundary{};
+    auto walk = held_walk{};
+    walk.in << hello << subscribe << walk.hold("UP", "screen:closed", "5")
+            << walk.hold("bn:travel", {}, "6") << walk.hold("bn:nothing", {}, "7");
+    CHECK_FALSE(walk.prompt());
+    const auto out = walk.test.output.str();
+    CHECK(contains(out, R"("id":5,"error")"));
+    CHECK(contains(out, R"("kind":"stale_screen")"));
+    CHECK(contains(out, R"("id":6,"error")"));
+    CHECK(contains(out, R"("kind":"invalid_arguments")"));
+    CHECK(contains(out, R"("id":7,"error")"));
+    CHECK(contains(out, R"("kind":"unknown_affordance")"));
+    CHECK(walk.steps == 0);
+}
+
+TEST_CASE(
+    "a new hello ends the walk and a spectator cannot hold", "[engine_client_server][held_walk]") {
+    auto map = map_boundary{};
+    auto walk = held_walk{};
+    walk.in << hello << subscribe << walk.hold();
+    REQUIRE(walk.prompt());
+    walk.take_step();
+    walk.in << hello;
+    CHECK_FALSE(walk.prompt());
+    CHECK(walk.test.queued.empty());
+    auto spectator = bn::mcp::server{
+        {.observe = [] { return bn::mcp::screen_snapshot{.json = "{}"}; },
+         .submit = [](const auto&) { return true; },
+         .contract_session = &walk.test.authority},
+        {.spectator = true}};
+    auto reads = std::istringstream{hello + walk.hold("UP", {}, "9")};
+    CHECK_FALSE(spectator.pump_until_input(reads, walk.test.output, walk.test.errors));
+    CHECK(contains(walk.test.output.str(), R"("kind":"read_only")"));
 }
 
 TEST_CASE("world cells are a passive read of the known box", "[engine_client_server]") {
