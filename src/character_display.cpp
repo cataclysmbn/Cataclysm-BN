@@ -1264,7 +1264,6 @@ namespace ec = engine_client;
 constexpr auto tabs_id = "character:tabs";
 constexpr auto panes_id = "character:panes";
 constexpr auto select_tab_id = "character:tab";
-constexpr auto focus_row_id = "character:focus";
 
 constexpr auto all_tabs = std::array
 {
@@ -1286,6 +1285,9 @@ auto tab_title( const player_display_tab tab ) -> std::string
 }
 
 auto pane_id( const player_display_tab tab ) -> std::string { return "character:" + tab_name( tab ); }
+
+/// One select affordance per pane: the client names the one whose row target holds its focus.
+auto focus_row_id( const player_display_tab tab ) -> std::string { return "character:focus:" + tab_name( tab ); }
 
 auto upgrade_denial( const avatar &you ) -> std::string
 {
@@ -1516,6 +1518,7 @@ auto sheet_view( const sheet_model &model ) -> ec::screen_view
 {
     auto panes = std::vector<ec::component> {};
     auto entries = std::vector<ec::tab_entry> {};
+    auto affordances = std::vector<ec::affordance> { ec::invoke_affordance( { .id = select_tab_id, .label = _( "Category" ), .args = { .row = ec::row_shape{ .component_id = tabs_id } } } ) };
     for( const auto tab : all_tabs ) {
         auto stats = std::vector<ec::panel_stat> {};
         if( tab == player_display_tab::bionics ) {
@@ -1527,7 +1530,8 @@ auto sheet_view( const sheet_model &model ) -> ec::screen_view
         }
         panes.push_back( ec::panel( { .id = pane_id( tab ), .title = tab_title( tab ), .stats = std::move( stats ),
                                       .child = ec::list( { .id = pane_id( tab ) + ":rows", .rows = tab_rows( model, tab ),
-                                               .selection = "single", .activate = focus_row_id } ) } ) );
+                                               .selection = "single", .activate = focus_row_id( tab ) } ) } ) );
+        affordances.push_back( ec::invoke_affordance( { .id = focus_row_id( tab ), .label = _( "Select" ), .args = { .row = ec::row_shape{ .component_id = pane_id( tab ) + ":rows" } }, .role = "select" } ) );
         entries.push_back( { .id = tab_name( tab ), .label = tab_title( tab ), .selected = tab == model.tab } );
     }
     panes.push_back( ec::panel( { .id = "character:speed", .title = _( title_SPEED ), .stats = speed_stats( model ) } ) );
@@ -1550,10 +1554,7 @@ auto sheet_view( const sheet_model &model ) -> ec::screen_view
         .root = ec::tabs( {
             .id = tabs_id, .tabs = std::move( entries ), .select = select_tab_id,
             .child = ec::split( { .id = panes_id, .active = pane_id( model.tab ), .children = std::move( panes ) } ) } ),
-        .affordances = {
-            ec::invoke_affordance( { .id = select_tab_id, .label = _( "Category" ), .args = { .row = ec::row_shape{ .component_id = tabs_id } } } ),
-            ec::invoke_affordance( { .id = focus_row_id, .label = _( "Select" ), .args = { .row = ec::row_shape{ .component_id = panes_id } }, .role = "select" } ),
-        },
+        .affordances = std::move( affordances ),
         .denials = std::move( denials ),
         .focus_component = pane_id( model.tab ) + ":rows",
         .focus_row = line < focus.size() ? focus[line] : std::string{},
@@ -1639,7 +1640,7 @@ auto handle_player_display_action( const display_action_options &opts ) -> bool
             if( tab != all_tabs.end() ) {
                 target = { *tab, *tab == player_display_tab::skills ? 1u : 0u };
             }
-        } else if( picked->affordance_id == focus_row_id ) {
+        } else if( picked->affordance_id.starts_with( "character:focus:" ) ) {
             for( const auto tab : all_tabs ) {
                 const auto ids = row_ids( opts.model, tab );
                 const auto found = std::ranges::find( ids, *picked->args.row );

@@ -195,16 +195,15 @@ TEST_CASE(
                 CHECK(screen.focus_component == "mutations:passive:rows");
                 CHECK_FALSE(has_part(screen, "mutations:description"));
                 CHECK(
-                    ec::resolve_invoke(
-                        state,
-                        {.affordance_id = "mutations:pick", .args = {.row = "mutation:none"}})
+                    ec::resolve_invoke(state, {.affordance_id = "mutations:pick:passive",
+                                               .args = {.row = "mutation:none"}})
                         .error()
                     == ec::error::invalid_arguments);
                 return act("TOGGLE_EXAMINE");
             }
             case 1:
                 CHECK(text_of(screen, "mutations:help").find("Examining") != std::string::npos);
-                return invoke("mutations:pick", {.row = active_id});
+                return invoke("mutations:pick:active", {.row = active_id});
             case 2:
                 // Examining only moves the cursor to the mutation and describes it.
                 CHECK(screen.focus_row == active_id);
@@ -213,7 +212,7 @@ TEST_CASE(
                 return act("TOGGLE_EXAMINE");
             case 3:
                 CHECK(you.my_mutations[trait_id("test_preview_active_trait")].powered);
-                return invoke("mutations:pick", {.row = active_id});
+                return invoke("mutations:pick:active", {.row = active_id});
             default:
                 FAIL("the mutation screen outlived its confirm");
                 return act("QUIT");
@@ -293,7 +292,7 @@ TEST_CASE(
             case 0:
                 return act(reassign ? "REASSIGN" : "TOGGLE_SPRITE");
             case 1:
-                return invoke("mutations:pick", {.row = passive_id});
+                return invoke("mutations:pick:passive", {.row = passive_id});
             case 2:
                 if (reassign) {
                     CHECK(row_of(screen, "passive", passive_id).hotkey == "q");

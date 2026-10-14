@@ -78,7 +78,7 @@ export const character: Scenario = {
       const skills = part(engine.top(), "character:skills:rows").rows
       const skill = skills.find((row: Value) => !row.header)
       assert(skill, "a skill row")
-      const focus = await engine.invoke("character:focus", { row: skill.id })
+      const focus = await engine.invoke("character:focus:skills", { row: skill.id })
       assertEquals(focus.stages.at(-1), "completed")
       rec.command("sheet row picked", focus)
       assertEquals(engine.top().focus?.row_id ?? engine.top().focus_row, skill.id)
@@ -147,7 +147,7 @@ export const character: Scenario = {
       const passiveTraits = part(mutations, "mutations:passive:rows").rows
       const activeTraits = part(mutations, "mutations:active:rows").rows
       assert(passiveTraits.length > 0 && activeTraits.length > 0, "a trait of each kind")
-      const traitPick = await engine.invoke("mutations:pick", { row: activeTraits[0].id })
+      const traitPick = await engine.invoke("mutations:pick:active", { row: activeTraits[0].id })
       assertEquals(traitPick.stages.at(-1), "completed")
       rec.command("mutation picked", traitPick)
       await toMap(engine)

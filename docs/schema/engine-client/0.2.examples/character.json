@@ -66,7 +66,7 @@
                   "id": "character:stats:rows",
                   "kind": "list",
                   "affordances": [
-                    "character:focus"
+                    "character:focus:stats"
                   ],
                   "columns": [
                     {
@@ -202,7 +202,7 @@
                   ],
                   "total": 6,
                   "selection": "single",
-                  "activate": "character:focus"
+                  "activate": "character:focus:stats"
                 }
               },
               {
@@ -213,7 +213,7 @@
                   "id": "character:encumbrance:rows",
                   "kind": "list",
                   "affordances": [
-                    "character:focus"
+                    "character:focus:encumbrance"
                   ],
                   "columns": [
                     {
@@ -457,7 +457,7 @@
                   ],
                   "total": 8,
                   "selection": "single",
-                  "activate": "character:focus"
+                  "activate": "character:focus:encumbrance"
                 }
               },
               {
@@ -468,7 +468,7 @@
                   "id": "character:skills:rows",
                   "kind": "list",
                   "affordances": [
-                    "character:focus"
+                    "character:focus:skills"
                   ],
                   "columns": [
                     {
@@ -1151,7 +1151,7 @@
                   ],
                   "total": 32,
                   "selection": "single",
-                  "activate": "character:focus"
+                  "activate": "character:focus:skills"
                 }
               },
               {
@@ -1162,7 +1162,7 @@
                   "id": "character:traits:rows",
                   "kind": "list",
                   "affordances": [
-                    "character:focus"
+                    "character:focus:traits"
                   ],
                   "columns": [],
                   "rows": [
@@ -1180,7 +1180,7 @@
                   ],
                   "total": 1,
                   "selection": "single",
-                  "activate": "character:focus"
+                  "activate": "character:focus:traits"
                 }
               },
               {
@@ -1199,13 +1199,13 @@
                   "id": "character:bionics:rows",
                   "kind": "list",
                   "affordances": [
-                    "character:focus"
+                    "character:focus:bionics"
                   ],
                   "columns": [],
                   "rows": [],
                   "total": 0,
                   "selection": "single",
-                  "activate": "character:focus"
+                  "activate": "character:focus:bionics"
                 }
               },
               {
@@ -1216,13 +1216,13 @@
                   "id": "character:effects:rows",
                   "kind": "list",
                   "affordances": [
-                    "character:focus"
+                    "character:focus:effects"
                   ],
                   "columns": [],
                   "rows": [],
                   "total": 0,
                   "selection": "single",
-                  "activate": "character:focus"
+                  "activate": "character:focus:effects"
                 }
               },
               {
@@ -1267,14 +1267,79 @@
             "expect": "boundary"
           },
           {
-            "id": "character:focus",
+            "id": "character:focus:stats",
             "label": "Select",
             "keys": [],
             "enabled": true,
             "role": "select",
             "args": {
               "row": {
-                "component_id": "character:panes"
+                "component_id": "character:stats:rows"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "character:focus:encumbrance",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "role": "select",
+            "args": {
+              "row": {
+                "component_id": "character:encumbrance:rows"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "character:focus:skills",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "role": "select",
+            "args": {
+              "row": {
+                "component_id": "character:skills:rows"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "character:focus:traits",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "role": "select",
+            "args": {
+              "row": {
+                "component_id": "character:traits:rows"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "character:focus:bionics",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "role": "select",
+            "args": {
+              "row": {
+                "component_id": "character:bionics:rows"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "character:focus:effects",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "role": "select",
+            "args": {
+              "row": {
+                "component_id": "character:effects:rows"
               }
             },
             "expect": "boundary"
@@ -1487,7 +1552,7 @@
         },
         "operation": {
           "kind": "invoke",
-          "affordance_id": "character:focus",
+          "affordance_id": "character:focus:skills",
           "args": {
             "row": "skill:bashing"
           }
@@ -2083,7 +2148,7 @@
                 "id": "mutations:passive:rows",
                 "kind": "list",
                 "affordances": [
-                  "mutations:pick"
+                  "mutations:pick:passive"
                 ],
                 "columns": [
                   {
@@ -2201,7 +2266,7 @@
                 ],
                 "total": 2,
                 "selection": "single",
-                "activate": "mutations:pick"
+                "activate": "mutations:pick:passive"
               }
             },
             {
@@ -2212,7 +2277,7 @@
                 "id": "mutations:active:rows",
                 "kind": "list",
                 "affordances": [
-                  "mutations:pick"
+                  "mutations:pick:active"
                 ],
                 "columns": [
                   {
@@ -2288,21 +2353,34 @@
                 ],
                 "total": 1,
                 "selection": "single",
-                "activate": "mutations:pick"
+                "activate": "mutations:pick:active"
               }
             }
           ]
         },
         "affordances": [
           {
-            "id": "mutations:pick",
+            "id": "mutations:pick:passive",
             "label": "Select",
             "keys": [],
             "enabled": true,
             "role": "select",
             "args": {
               "row": {
-                "component_id": "mutations:panes"
+                "component_id": "mutations:passive:rows"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "mutations:pick:active",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "role": "select",
+            "args": {
+              "row": {
+                "component_id": "mutations:active:rows"
               }
             },
             "expect": "boundary"
@@ -2426,7 +2504,7 @@
         },
         "operation": {
           "kind": "invoke",
-          "affordance_id": "mutations:pick",
+          "affordance_id": "mutations:pick:active",
           "args": {
             "row": "mutation:BIOLUM1"
           }

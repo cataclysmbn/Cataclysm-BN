@@ -383,7 +383,7 @@ TEST_CASE(
                 }));
                 CHECK(
                     ec::resolve_invoke(
-                        state, {.affordance_id = "character:focus",
+                        state, {.affordance_id = "character:focus:traits",
                                 .args = {.row = "trait:test_character_info_hidden_trait"}})
                         .error()
                     == ec::error::invalid_arguments);
@@ -417,7 +417,7 @@ TEST_CASE(
                 CHECK(all.front().header);
                 CHECK_FALSE(all.front().selectable);
                 CHECK(screen.focus_row == all[1].id);
-                return invoke("character:focus", {.row = "skill:melee"});
+                return invoke("character:focus:skills", {.row = "skill:melee"});
             }
             case 6:
                 CHECK(screen.focus_row == "skill:melee");
@@ -522,7 +522,8 @@ TEST_CASE(
             case 0:
                 return invoke("character:tab", {.row = "traits"});
             case 1:
-                return invoke("character:focus", {.row = "trait:test_character_info_page_204"});
+                return invoke(
+                    "character:focus:traits", {.row = "trait:test_character_info_page_204"});
             default:
                 CHECK(screen.focus_row == "trait:test_character_info_page_204");
                 return action("QUIT");
@@ -566,11 +567,12 @@ TEST_CASE(
             case 0:
                 CHECK_FALSE(
                     ec::resolve_invoke(
-                        state, {.affordance_id = "character:focus", .args = {.row = "foreign"}})
+                        state,
+                        {.affordance_id = "character:focus:skills", .args = {.row = "foreign"}})
                         .has_value());
                 return invoke("character:tab", {.row = "skills"});
             case 1:
-                return invoke("character:focus", {.row = "skill:melee"});
+                return invoke("character:focus:skills", {.row = "skill:melee"});
             case 2:
                 // Picking a row moves the focus only; training stays as it was.
                 CHECK(screen.focus_row == "skill:melee");
@@ -655,7 +657,7 @@ TEST_CASE(
             case 0:
                 return invoke("character:tab", {.row = "skills"});
             case 1:
-                return invoke("character:focus", {.row = "skill:melee"});
+                return invoke("character:focus:skills", {.row = "skill:melee"});
             case 2:
             case 3: {
                 const auto& row = row_of(screen, "skills", "skill:melee");
@@ -852,7 +854,7 @@ TEST_CASE(
             case 0:
                 return invoke("character:tab", {.row = "skills"});
             case 1:
-                return invoke("character:focus", {.row = "skill:melee"});
+                return invoke("character:focus:skills", {.row = "skill:melee"});
             case 2:
                 CHECK(info_calls >= 1);
                 CHECK(row_of(screen, "skills", "skill:melee").description.find("final sentence")
@@ -1017,7 +1019,7 @@ TEST_CASE(
             case 0:
                 return invoke("character:tab", {.row = "skills"});
             case 1:
-                return invoke("character:focus", {.row = "skill:melee"});
+                return invoke("character:focus:skills", {.row = "skill:melee"});
             case 2:
                 return action("CONFIRM");
             case 3:

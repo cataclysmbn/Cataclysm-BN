@@ -136,7 +136,8 @@ namespace
 {
 namespace ec = engine_client;
 
-constexpr auto pick_id = "mutations:pick";
+/// One select affordance per column: the client names the one whose row target holds its focus.
+auto pick_id( const std::string &column ) -> std::string { return "mutations:pick:" + column; }
 
 /// What the screen shows, as its loop keeps it: the focus is read when the screen is published.
 struct mutations_model {
@@ -216,18 +217,19 @@ auto mutations_view( const mutations_model &model ) -> ec::screen_view
     const auto active_id = std::string( "mutations:active" );
     auto parts = std::vector<ec::component> {};
     parts.push_back( { .id = "mutations:help", .body = ec::text_body{ .markup = mutations_help( model.mode, model.ctxt ) } } );
-    const auto add_column = [&]( const std::string & id, const std::string & title,
+    const auto add_column = [&]( const std::string & id, const std::string & name,
+                                 const std::string & title,
                                  const std::vector<trait_id> &traits,
     const bool active_kind ) {
         parts.push_back( ec::panel( { .id = id, .title = ec::caption( title ),
                                       .child = ec::list( { .id = id + ":rows", .rows = mutation_rows( model, traits, active_kind ),
-                                               .selection = "single", .activate = pick_id } ) } ) );
+                                               .selection = "single", .activate = pick_id( name ) } ) } ) );
         if( traits.empty() ) {
             parts.push_back( { .id = id + ":none", .body = ec::text_body{ .markup = _( "None" ) } } );
         }
     };
-    add_column( passive_id, _( "Passive:" ), model.passive, false );
-    add_column( active_id, _( "Active:" ), model.active, true );
+    add_column( passive_id, "passive", _( "Passive:" ), model.passive, false );
+    add_column( active_id, "active", _( "Active:" ), model.active, true );
     if( model.mode == mutation_menu_mode::examining && model.examined ) {
         parts.push_back( { .id = "mutations:description", .body = ec::text_body{ .markup = colorize( ( *model.examined )->desc(), c_light_blue ) } } );
     }
@@ -246,7 +248,8 @@ auto mutations_view( const mutations_model &model ) -> ec::screen_view
         .title = _( " MUTATIONS " ),
         .root = ec::split( { .id = "mutations:panes", .active = column, .children = std::move( parts ) } ),
         .affordances = {
-            ec::invoke_affordance( { .id = pick_id, .label = _( "Select" ), .args = { .row = ec::row_shape{ .component_id = "mutations:panes" } }, .role = "select" } ),
+            ec::invoke_affordance( { .id = pick_id( "passive" ), .label = _( "Select" ), .args = { .row = ec::row_shape{ .component_id = passive_id + ":rows" } }, .role = "select" } ),
+            ec::invoke_affordance( { .id = pick_id( "active" ), .label = _( "Select" ), .args = { .row = ec::row_shape{ .component_id = active_id + ":rows" } }, .role = "select" } ),
         },
         .denials = std::move( denials ),
         .focus_component = column + ":rows",
@@ -507,7 +510,7 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
         auto action = ctxt.handle_input();
         if( const auto picked = ec::invoked( ctxt.get_raw_input() ) ) {
             // A picked mutation is Enter on it: the same cursor, whichever mode the menu is in.
-            const auto row = picked->affordance_id == pick_id ? picked->args.row.value_or(
+            const auto row = picked->affordance_id.starts_with( pick_id( "" ) ) ? picked->args.row.value_or(
                                  std::string() ) : std::string();
             const auto named = [&]( const trait_id & trait ) { return mutation_row_id( trait ) == row; };
             const auto in_active = std::ranges::find_if( active, named );
