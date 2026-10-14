@@ -9,6 +9,7 @@
 #    include "client_interaction.h"
 #    include "client_memory.h"
 #    include "client_memory_scope.h"
+#    include "client_snapshot.h"
 #    include "coordinates.h"
 #    include "cursesdef.h"
 #    include "cursesport.h"
@@ -160,6 +161,42 @@ void collect_ids(const json& value, std::vector<std::string>& into) {
     } else if (value.is_array()) {
         for (const auto& member : value) { collect_ids(member, into); }
     }
+}
+
+
+/// The composed terminal row `y` as text, and where each character starts among the row's cells.
+struct composed_row {
+    std::string text;
+    std::vector<std::size_t> starts;
+};
+auto composed(const game_client::screen_snapshot& shot, const int y) -> composed_row {
+    auto row = composed_row{};
+    for (auto x = 0; x < shot.width; ++x) {
+        const auto& cell = shot.cells[static_cast<std::size_t>(y * shot.width + x)];
+        row.starts.push_back(row.text.size());
+        row.text += cell.text;
+    }
+    return row;
+}
+/// Where `needle` shows on the composed screen: its row, and the cell it starts at; none when
+/// absent.
+struct shown_at {
+    int y = -1;
+    int x = -1;
+};
+auto find_shown(const game_client::screen_snapshot& shot, const std::string& needle) -> shown_at {
+    for (auto y = 0; y < shot.height; ++y) {
+        const auto row = composed(shot, y);
+        const auto found = row.text.find(needle);
+        if (found == std::string::npos) { continue; }
+        const auto cell = std::ranges::find(row.starts, found);
+        return {.y = y, .x = static_cast<int>(cell - row.starts.begin())};
+    }
+    return {};
+}
+auto foreground_at(const game_client::screen_snapshot& shot, const shown_at at, const int dx = 0)
+    -> int {
+    return shot.cells[static_cast<std::size_t>(at.y * shot.width + at.x + dx)].foreground;
 }
 
 struct bicycle_fixture {
@@ -371,6 +408,47 @@ TEST_CASE(
         const auto mass = std::ranges::find(stats, "mass", &ec::panel_stat::key);
         REQUIRE(mass != stats.end());
         CHECK(mass->value.find(' ') == std::string::npos);
+        return act("QUIT");
+    });
+    static_cast<void>(veh_interact::run(*fixture.veh, tripoint_mnt_veh::zero()));
+}
+
+TEST_CASE(
+    "the native stats window keeps its blank slots, its padding and its colors",
+    "[vehicle_screen]") {
+    auto fixture = bicycle_fixture{};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto shot = game_client::memory::snapshot();
+        const auto at = [&](const std::string& line) {
+            const auto found = find_shown(shot, line);
+            INFO(line);
+            REQUIRE(found.y >= 0);
+            return found;
+        };
+        // Eight slots to a column. A bicycle is no boat, so two slots stay empty after the speeds
+        // and the damage lines leave two empty ones at the top of the second column.
+        const auto speed = at("Safe/Top Speed:   0/  0 km/h");
+        CHECK(at("Acceleration:   0 km/h/s").y == speed.y + 1);
+        const auto mass = at("Mass:    21 kg");
+        CHECK(mass.y == speed.y + 4);
+        CHECK(at("Cargo Volume: 0.00 / 20.00 L").y == speed.y + 5);
+        CHECK(at("Status: ").y == speed.y + 6);
+        CHECK(at("Wheels: enough").y == speed.y + 7);
+        const auto air = at("Air drag:        0.61");
+        CHECK(air.y == speed.y + 2);
+        CHECK(at("Rolling drag:    0.02").y == mass.y);
+        CHECK(at("Static drag:        0").y == mass.y + 1);
+        CHECK(at("Offroad:         100%").y == mass.y + 2);
+        CHECK(air.x == mass.x + 32);
+        // Labels are plain, the safe speed is green, the top speed red, the other figures blue and
+        // a wheel setup that suffices green.
+        const auto plain = foreground_at(shot, speed);
+        WARN("plain " << plain);
+        const auto safe = foreground_at(shot, speed, 18);
+        const auto top = foreground_at(shot, speed, 22);
+        WARN("safe " << safe << " top " << top << " mass " << foreground_at(shot, mass, 11)
+                     << " wheels " << foreground_at(shot, at("Wheels: enough"), 8) << " status "
+                     << foreground_at(shot, at("Status: "), 8));
         return act("QUIT");
     });
     static_cast<void>(veh_interact::run(*fixture.veh, tripoint_mnt_veh::zero()));
