@@ -15,9 +15,9 @@
 #    include "game_constants.h"
 #    include "input.h"
 #    include "output.h"
-#    include "overmap/omdata.h"
 #    include "overmap/overmap_ui.h"
 #    include "overmap/overmapbuffer.h"
+#    include "overmap_helpers.h"
 #    include "player_helpers.h"
 #    include "state_helpers.h"
 #    include "type_id.h"
@@ -105,25 +105,6 @@ auto trimmed(std::string text) -> std::string {
     return text;
 }
 
-/// Sets every square the window can show, so that the picture comes from the code alone: terrain
-/// that cycles through the kinds the cell logic tells apart, every fifth square unseen and some
-/// explored.
-void lay_terrain(const tripoint_abs_omt& center) {
-    constexpr auto kinds = std::array{
-        "forest", "field", "road_ns", "road_ew", "forest_trail_ns", "lake_surface", "forest_thick"};
-    for (auto y = -25; y <= 25; ++y) {
-        for (auto x = -40; x <= 40; ++x) {
-            const auto at = center + point(x, y);
-            ACTIVE_OVERMAP_BUFFER
-                .ter_set(at, oter_id(kinds[static_cast<std::size_t>((x * 7 + y * 3 + 1000) % 7)]));
-            ACTIVE_OVERMAP_BUFFER.set_seen(at, (x + 2 * y + 1001) % 5 != 0);
-            if ((x * 3 + y + 1000) % 11 == 0 && ACTIVE_OVERMAP_BUFFER.seen(at)) {
-                ACTIVE_OVERMAP_BUFFER.toggle_explored(at);
-            }
-        }
-    }
-}
-
 /// The sidebar's coordinate row, which starts with its first words.
 auto level_row(const std::vector<std::string>& sidebar) -> std::string {
     const auto found = std::ranges::find_if(sidebar, [](const auto& row) {
@@ -162,7 +143,7 @@ struct fixed_world {
     explicit fixed_world() {
         clear_all_state();
         center = get_avatar().abs_omt_pos();
-        lay_terrain(center);
+        overmap_helpers::lay_terrain(center);
         uistate.overmap_show_overlays = true;
         uistate.overmap_blinking = false;
         uistate.overmap_show_land_use_codes = false;
