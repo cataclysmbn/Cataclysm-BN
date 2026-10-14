@@ -686,6 +686,8 @@ void veh_interact::do_main_loop() {
 namespace {
 namespace ec = engine_client;
 
+auto stat_label(const std::string& format) -> std::string;
+
 /// The affordances the vehicle screen runs from its own loop, and the lists they act on.
 constexpr auto pick_id = "vehicle:pick";
 constexpr auto tab_id = "vehicle:tab";
@@ -845,7 +847,7 @@ auto veh_interact::screen_of() -> ec::screen_view {
 
     auto stats = std::vector<ec::panel_stat>{
         {.key = "owner",
-         .label = _("Owner"),
+         .label = stat_label(_("Owner: %s")),
          .value = veh->get_owner_name(),
          .tone = veh->is_owned_by(you, true) ? "good" : "bad"}};
     std::ranges::move(vehicle_stats(), std::back_inserter(stats));
