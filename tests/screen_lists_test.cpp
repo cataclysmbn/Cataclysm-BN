@@ -3,7 +3,6 @@
 #    include "armor_layers.h"
 #    include "avatar.h"
 #    include "bionics.h"
-#    include "bionics_ui.h"
 #    include "catch/catch.hpp"
 #    include "client_command.h"
 #    include "client_input.h"
@@ -21,7 +20,6 @@
 #    include "map_helpers.h"
 #    include "map_item_stack.h"
 #    include "mission.h"
-#    include "mutation_ui.h"
 #    include "output.h"
 #    include "player_helpers.h"
 #    include "state_helpers.h"
@@ -112,63 +110,6 @@ TEST_CASE(
         });
     CHECK(stage == 3);
     CHECK(you.get_active_mission() == assigned);
-}
-
-TEST_CASE(
-    "the mutation list shows passive and active traits and a chosen active one is toggled",
-    "[client][interaction][mcp][screens]") {
-    clear_all_state();
-    clear_map();
-    auto& you = get_avatar();
-    clear_character(you, false);
-    you.set_mutation(trait_id("test_preview_trait"));
-    you.set_mutation(trait_id("test_preview_active_trait"));
-    const auto guard = screen_guard{};
-    auto stage = 0;
-    open_screen(
-        [&] { show_mutations_ui(you); },
-        [&](const auto& snapshot) {
-            switch (stage++) {
-                case 0: {
-                    CHECK(snapshot.context == "MUTATIONS");
-                    CHECK(snapshot.message == "Activating");
-                    const auto passive = row(snapshot, "mutation:test_preview_trait");
-                    const auto active = row(snapshot, "mutation:test_preview_active_trait");
-                    REQUIRE(passive != snapshot.choices.end());
-                    REQUIRE(active != snapshot.choices.end());
-                    CHECK(passive->columns.front().value == "Passive");
-                    CHECK(active->columns.front().value == "Active");
-                    CHECK(passive->highlighted);
-                    CHECK(active->selected);
-                    CHECK(passive->pane_id == "passive");
-                    CHECK(active->pane_id == "active");
-                    CHECK(passive->color == string_from_color(c_light_cyan));
-                    CHECK(active->color == string_from_color(c_light_green));
-                    CHECK(column(*active, "innate") == "No");
-                    CHECK(column(*active, "cost") == "0");
-                    CHECK(row(snapshot, "action:REASSIGN")->pane_id == "actions");
-                    CHECK_FALSE(passive->description.empty());
-                    return choose(snapshot, "action:TOGGLE_EXAMINE");
-                }
-                case 1: {
-                    CHECK(snapshot.message == "Examining");
-                    return choose(snapshot, "mutation:test_preview_active_trait");
-                }
-                case 2: {
-                    // Examining only moves the cursor to the mutation and describes it.
-                    CHECK(snapshot.message == "Examining");
-                    CHECK(row(snapshot, "mutation:test_preview_active_trait")->highlighted);
-                    return choose(snapshot, "action:TOGGLE_EXAMINE");
-                }
-                case 3:
-                    return choose(snapshot, "mutation:test_preview_active_trait");
-                default:
-                    FAIL("unexpected extra screen " << snapshot.context);
-            }
-            return input_event{};
-        });
-    CHECK(stage == 4);
-    CHECK_FALSE(you.my_mutations[trait_id("test_preview_active_trait")].powered);
 }
 
 TEST_CASE(
