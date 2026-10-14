@@ -79,7 +79,6 @@ void advanced_inv_area::init()
         case AIM_DRAGGED:
             if( g->u.get_grab_type() != OBJECT_VEHICLE ) {
                 canputitemsloc = false;
-                desc[0] = _( "Not dragging any vehicle!" );
                 break;
             }
             // offset for dragged vehicles is not statically initialized, so get it
@@ -95,13 +94,11 @@ void advanced_inv_area::init()
                 vstor = -1;
             }
             if( vstor >= 0 ) {
-                desc[0] = veh->name;
                 canputitemsloc = true;
                 max_size = MAX_ITEM_IN_VEHICLE_STORAGE;
             } else {
                 veh = nullptr;
                 canputitemsloc = false;
-                desc[0] = _( "No dragged vehicle!" );
             }
             break;
         case AIM_CONTAINER:
@@ -110,12 +107,8 @@ void advanced_inv_area::init()
             // location always valid, actual check is done in canputitems()
             // and depends on selected item in pane (if it is valid container)
             canputitemsloc = true;
-            if( get_container() == nullptr ) {
-                desc[0] = _( "Invalid container!" );
-            }
             break;
         case AIM_ALL:
-            desc[0] = _( "All 9 squares" );
             canputitemsloc = true;
             break;
         case AIM_ABOVE:
@@ -145,18 +138,62 @@ void advanced_inv_area::init()
             }
             canputitemsloc = can_store_in_vehicle() || here.can_put_items_ter_furn( pos );
             max_size = MAX_ITEM_IN_SQUARE;
-            if( can_store_in_vehicle() ) {
-                std::string part_name = vp->info().name();
-                desc[1] = vp->get_label().value_or( part_name );
-            }
-            // get graffiti or terrain name
-            desc[0] = here.has_graffiti_at( pos ) ?
-                      here.graffiti_at( pos ) : here.name( pos );
         }
         default:
             break;
     }
 
+    desc = { describe( false ), describe( true ) };
+    flags = hazards();
+}
+
+auto advanced_inv_area::describe( bool in_vehicle ) -> std::string
+{
+    map &here = get_map();
+    switch( id ) {
+        case AIM_DRAGGED:
+            if( g->u.get_grab_type() != OBJECT_VEHICLE ) {
+                return _( "Not dragging any vehicle!" );
+            }
+            return veh != nullptr && vstor >= 0 ? veh->name : _( "No dragged vehicle!" );
+        case AIM_CONTAINER:
+            return get_container() == nullptr ? _( "Invalid container!" ) : std::string();
+        case AIM_ALL:
+            return _( "All 9 squares" );
+        case AIM_ABOVE:
+        case AIM_BELOW:
+            if( !g->m.valid_move( g->u.bub_pos(), pos ) ) {
+                return std::string();
+            }
+        // Intentional fallthrough
+        case AIM_SOUTHWEST:
+        case AIM_SOUTH:
+        case AIM_SOUTHEAST:
+        case AIM_WEST:
+        case AIM_CENTER:
+        case AIM_EAST:
+        case AIM_NORTHWEST:
+        case AIM_NORTH:
+        case AIM_NORTHEAST:
+            if( in_vehicle ) {
+                if( !can_store_in_vehicle() ) {
+                    return std::string();
+                }
+                // the label of the cargo part
+                const std::optional<vpart_reference> vp = here.veh_at( pos ).part_with_feature( "CARGO", false );
+                return vp ? vp->get_label().value_or( vp->info().name() ) : std::string();
+            }
+            // get graffiti or terrain name
+            return here.has_graffiti_at( pos ) ? here.graffiti_at( pos ) : here.name( pos );
+        default:
+            return std::string();
+    }
+}
+
+auto advanced_inv_area::hazards() const -> std::string
+{
+    std::string traits;
+    map &here = get_map();
     /* assemble a list of interesting traits of the target square */
     // fields? with a special case for fire
     bool danger_field = false;
@@ -164,7 +201,7 @@ void advanced_inv_area::init()
     for( auto &fld : tmpfld ) {
         const field_entry &cur = fld.second;
         if( fld.first.obj().has_fire ) {
-            flags.append( _( " <color_white_red>FIRE</color>" ) );
+            traits.append( _( " <color_white_red>FIRE</color>" ) );
         } else {
             if( cur.is_dangerous() ) {
                 danger_field = true;
@@ -172,13 +209,13 @@ void advanced_inv_area::init()
         }
     }
     if( danger_field ) {
-        flags.append( _( " DANGER" ) );
+        traits.append( _( " DANGER" ) );
     }
 
     // trap?
     const trap &tr = here.tr_at( pos );
     if( tr.can_see( pos, g->u ) && !tr.is_benign() ) {
-        flags.append( _( " TRAP" ) );
+        traits.append( _( " TRAP" ) );
     }
 
     // water?
@@ -190,13 +227,14 @@ void advanced_inv_area::init()
         return get_map().ter( this->pos ) == id;
     };
     if( std::ranges::any_of( ter_water, ter_check ) ) {
-        flags.append( _( " WATER" ) );
+        traits.append( _( " WATER" ) );
     }
 
     // remove leading space
-    if( !flags.empty() && flags[0] == ' ' ) {
-        flags.erase( 0, 1 );
+    if( !traits.empty() && traits[0] == ' ' ) {
+        traits.erase( 0, 1 );
     }
+    return traits;
 }
 
 units::volume advanced_inv_area::free_volume( bool in_vehicle ) const

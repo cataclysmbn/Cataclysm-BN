@@ -85,6 +85,10 @@ class advanced_inv_area
             aim_location relative_location );
 
         void init();
+        /** The vehicle, label or terrain at the area, in the current locale; with `in_vehicle`, its cargo part. */
+        auto describe( bool in_vehicle ) -> std::string;
+        /** Flags of the area, e.g. FIRE, TRAP, WATER, in the current locale. */
+        auto hazards() const -> std::string;
 
         template <typename T>
         advanced_inv_area::itemstack i_stacked( T items );

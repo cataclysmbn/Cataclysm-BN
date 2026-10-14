@@ -8,7 +8,9 @@
 #include <array>
 #include <cctype>
 #include <functional>
+#include <map>
 #include <string>
+#include <vector>
 
 class input_context;
 class item;
@@ -16,9 +18,17 @@ struct advanced_inv_save_state;
 
 namespace game_client
 {
-struct interaction_snapshot;
-struct interaction_totals;
+struct interaction_row_count;
 } // namespace game_client
+
+namespace engine_client
+{
+struct component;
+struct invoked_affordance;
+struct panel_stat;
+struct row;
+struct screen_view;
+} // namespace engine_client
 
 void create_advanced_inv();
 
@@ -106,14 +116,62 @@ class advanced_inventory
          * registers all the ctxt for display()
          */
         input_context register_ctxt() const;
-        auto interaction_snapshot() const -> game_client::interaction_snapshot;
-        auto focus_interaction_choice( const std::string &id ) -> bool;
-        /**
-         *  a smaller chunk of display()
-         */
-        void start_activity(
-            aim_location destarea, advanced_inv_listitem *sitem, int &amount_to_move, bool from_vehicle,
-            bool to_vehicle ) const;
+        /// What the screen publishes to a protocol client: a const read of the panes, never of a window.
+        auto aim_view( const input_context &ctxt ) const -> engine_client::screen_view;
+        auto pane_component( side which ) const -> engine_client::component;
+        /// The areas a pane can show, with the one it shows selected and, on it, whether it lists the vehicle cargo.
+        auto area_rows( side which, bool cargo ) const -> std::vector<engine_client::row>;
+        auto pane_stats( const advanced_inventory_pane &pane ) const
+        -> std::vector<engine_client::panel_stat>;
+        /// The id of each entry of `panes[which].items`, from where the item is and what it is; empty for
+        /// an entry that is no item. Never from the translated name.
+        auto row_ids_of( side which ) const -> std::vector<std::string>;
+        /// Runs an affordance a protocol client invoked; true when the screen is left.
+        auto run_affordance( const engine_client::invoked_affordance &call ) -> bool;
+
+        /// A row of a move and how much of it.
+        struct moved_row {
+            advanced_inv_listitem *item;
+            int amount;
+        };
+        /// A move of rows to one destination.
+        struct carry_options {
+            std::vector<moved_row> rows;
+            aim_location destarea;
+            bool to_vehicle;
+        };
+        /// What is already on its way to the destination when the next row is checked against it.
+        struct pending_load {
+            units::volume volume = 0_ml;
+            units::mass weight = 0_gram;
+            int items = 0;
+            std::map<itype_id, int> worn;
+        };
+        struct limit_options {
+            aim_location destarea;
+            const advanced_inv_listitem &sitem;
+            int requested;
+            bool to_vehicle;
+            pending_load pending = {};
+        };
+        /// How much of a row the destination takes, or why it takes none.
+        struct limited_amount {
+            int amount = 0;
+            std::string denial;
+        };
+        auto limit_amount( const limit_options &opts ) const -> limited_amount;
+        /// Moves rows of the pane opposite `to` to the pane `to` as one move: all of them or none. True
+        /// when the screen is left for the activity that carries them out.
+        auto move_rows( const std::vector<game_client::interaction_row_count> &requested,
+                        side to ) -> bool;
+        /// Starts the activity that carries rows out of the inventory, the worn items or the map; true when
+        /// the screen is left for it. Nothing is changed when it refuses to
+        /// take several worn items off at once. A worn item that cannot be taken off leaves the screen with
+        /// nothing carried, as the native move does.
+        auto carry_out( const carry_options &opts ) -> bool;
+        auto toggle_vehicle( advanced_inventory_pane &spane, advanced_inventory_pane &dpane ) -> void;
+        /// Starts the pickup or move activity that carries rows out of the map or a vehicle.
+        auto start_activity( const carry_options &opts ) const -> void;
 
         /**
          * returns whether the display loop exits or not
@@ -138,8 +196,6 @@ class advanced_inventory
         void print_items( const advanced_inventory_pane &pane, bool active );
         /// The most volume the area of `pane` can hold, as the native header prints after the slash.
         auto max_volume_of( const advanced_inventory_pane &pane ) const -> units::volume;
-        /// The numbers of the pane's header, for clients that do not draw the curses window.
-        auto totals_of( const advanced_inventory_pane &pane ) const -> game_client::interaction_totals;
         void recalc_pane( side p );
         void redraw_pane( side p );
         void redraw_sidebar();
