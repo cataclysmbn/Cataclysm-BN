@@ -114,12 +114,75 @@ auto resolve(game_client::interaction_command command) -> input_event {
     return *result;
 }
 
-/// The crafting menu lists its tabs ahead of the recipes; most checks only look at the recipes.
-auto recipe_rows(game_client::interaction_snapshot snapshot) -> game_client::interaction_snapshot {
-    std::erase_if(snapshot.choices, [](const auto& choice) {
-        return choice.id.starts_with("tab:") || choice.id.starts_with("subtab:");
+/// An invoke of a screen's affordance, as a client sends it.
+auto invoke_event(const std::string& affordance, game_client::interaction_arguments args = {})
+    -> input_event {
+    auto event = input_event{};
+    event.type = input_event_t::interaction;
+    event.interaction = game_client::interaction_event{
+        .operation = game_client::interaction_operation::invoke,
+        .target_id = affordance,
+        .arguments = std::move(args),
+    };
+    return event;
+}
+
+auto current_boundary() -> engine_client::boundary_state {
+    const auto state = engine_client::capture_boundary(
+        {.epoch = "screen-test-epoch",
+         .ready = {.phase = "waiting_for_input",
+                   .game_ready = false,
+                   .accepts_interaction_commands = true}});
+    REQUIRE(state.has_value());
+    return *state;
+}
+
+/// The screen input goes to, as a client reads it at this boundary.
+auto current_screen() -> engine_client::screen_view {
+    return engine_client::top_screen(current_boundary());
+}
+
+/// The same screen as the wire carries it.
+auto screen_wire() -> nlohmann::json {
+    return nlohmann::json::parse(engine_client::serialize_interaction_boundary(current_boundary()))
+        .at("stack")
+        .back();
+}
+
+auto component_of(const engine_client::screen_view& screen, const std::string& id)
+    -> const engine_client::component& {
+    REQUIRE(screen.root);
+    const auto* const found = engine_client::find_component(*screen.root, id);
+    INFO(id);
+    REQUIRE(found != nullptr);
+    return *found;
+}
+
+/// The rows of the list `id` of `screen`.
+auto rows_of(const engine_client::screen_view& screen, const std::string& id)
+    -> std::vector<engine_client::row> {
+    const auto& list = component_of(screen, id);
+    REQUIRE(std::holds_alternative<engine_client::list_body>(list.body));
+    return std::get<engine_client::list_body>(list.body).rows;
+}
+
+/// The first row whose text has `text`; fails the test when no row has it.
+auto row_with(const std::vector<engine_client::row>& rows, const std::string& text)
+    -> engine_client::row {
+    const auto found = std::ranges::find_if(rows, [&](const auto& row) {
+        return row.label.find(text) != std::string::npos;
     });
-    return snapshot;
+    INFO(text);
+    REQUIRE(found != rows.end());
+    return *found;
+}
+
+auto tab_ids_of(const engine_client::screen_view& screen, const std::string& id)
+    -> std::vector<std::string> {
+    const auto& tabs = component_of(screen, id);
+    REQUIRE(std::holds_alternative<engine_client::tabs_body>(tabs.body));
+    return std::get<engine_client::tabs_body>(tabs.body).tabs
+         | std::views::transform(&engine_client::tab_entry::id) | std::ranges::to<std::vector>();
 }
 
 auto resolve_action(const std::string& action) -> input_event {
@@ -2062,83 +2125,166 @@ TEST_CASE(
     CHECK(stale_error.starts_with("stale:"));
     CHECK(absent_error.contains("not in the active interaction"));
 }
-TEST_CASE(
-    "semantic construction choice preserves native placement and resource handling",
-    "[client][interaction][construction][mcp]") {
-    clear_all_state();
-    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
-    const auto guard = interaction_test_guard{};
-    const auto restore_turn = restore_on_out_of_scope<decltype(calendar::turn)>(calendar::turn);
-    const auto restore_filter = restore_on_out_of_scope<decltype(uistate.construction_filter)>(
-        uistate.construction_filter);
-    const auto restore_tab = restore_on_out_of_scope<decltype(uistate.construction_tab)>(
-        uistate.construction_tab);
-    const auto restore_last = restore_on_out_of_scope<decltype(uistate.last_construction)>(
-        uistate.last_construction);
+namespace {
+
+/// What the construction tests restore: the menu state that persists between openings.
+struct construction_state_guard {
+    decltype(uistate.construction_filter) filter = uistate.construction_filter;
+    decltype(uistate.construction_tab) tab = uistate.construction_tab;
+    decltype(uistate.last_construction) last = uistate.last_construction;
+    ~construction_state_guard() {
+        uistate.construction_filter = filter;
+        uistate.construction_tab = tab;
+        uistate.last_construction = last;
+    }
+};
+
+auto construct_row(const std::string& affordance, const std::string& row) -> input_event {
+    return invoke_event(affordance, {.row = row});
+}
+
+/// Lights the test map and gives the avatar the materials of the semantic construction.
+auto prepare_semantic_construction() -> tripoint_bub_ms {
     calendar::turn = calendar::turn_zero + 12_hours;
     g->reset_light_level();
-    uistate.construction_filter.clear();
     build_test_map(ter_id("t_floor"));
     auto& you = get_avatar();
     add_crafting_fixture_item(you, itype_id("e_scrap"), 2);
-    const auto origin = you.bub_pos();
-    const auto destination = origin + tripoint_east;
+    const auto destination = you.bub_pos() + tripoint_east;
     clear_construction_fixture(destination);
-    const auto cleanup_construction = on_out_of_scope(
-        std::bind_front(clear_construction_fixture, destination));
     get_map().invalidate_map_cache(you.bub_pos().z());
     get_map().build_map_cache(you.bub_pos().z());
     get_map().update_visibility_cache(you.bub_pos().z());
     REQUIRE(character_funcs::can_see_fine_details(you));
-    auto step = 0;
+    return destination;
+}
 
+/// Answers the native direction prompt that follows a construction: East.
+auto choose_east(const game_client::interaction_snapshot& snapshot) -> input_event {
+    const auto east =
+        std::ranges::find(snapshot.choices, "East", &game_client::interaction_choice::label);
+    REQUIRE(east != snapshot.choices.end());
+    return resolve({
+        .input_id = snapshot.input_id,
+        .operation = game_client::interaction_operation::choose,
+        .target_id = east->id,
+    });
+}
+
+} // namespace
+
+TEST_CASE(
+    "the construction screen is published by group identity with its requirements",
+    "[construction][engine_client_component][mcp]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    const auto guard = interaction_test_guard{};
+    const auto state = construction_state_guard{};
+    uistate.construction_filter.clear();
+    build_test_map(ter_id("t_floor"));
+    add_crafting_fixture_item(get_avatar(), itype_id("e_scrap"), 2);
+    get_avatar().invalidate_crafting_inventory();
+    const auto& con = construction_str_id("constr_test_semantic_construction").obj();
+
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = current_screen();
+        REQUIRE(screen.context == "CONSTRUCTION");
+        switch (step++) {
+            case 0: {
+                CHECK(screen.role == "screen");
+                CHECK(screen.focus_component == "construction:groups");
+                const auto tabs = tab_ids_of(screen, "construction:tabs");
+                CHECK(tabs.size() > 2);
+                REQUIRE(std::ranges::contains(tabs, "OTHER"));
+                const auto ids = std::set<std::string>{
+                    screen.affordances | std::views::transform(&engine_client::affordance::id)
+                    | std::ranges::to<std::set>()};
+                for (const auto* id :
+                     {"construct:construct", "construct:favorite", "construct:search",
+                      "construct:tab", "construct:select"}) {
+                    CHECK(ids.contains(id));
+                }
+                return construct_row("construct:tab", "OTHER");
+            }
+            case 1: {
+                const auto rows = rows_of(screen, "construction:groups");
+                const auto mine = row_with(rows, "TEST semantic construction");
+                // A group is its own id, not its words.
+                CHECK(mine.id == con.group.str());
+                CHECK(mine.look.has_value());
+                CHECK(mine.enabled);
+                return invoke_event("construct:search", {.text = "TEST semantic construction"});
+            }
+            case 2: {
+                const auto rows = rows_of(screen, "construction:groups");
+                REQUIRE_FALSE(rows.empty());
+                return construct_row("construct:select", con.group.str());
+            }
+            case 3: {
+                CHECK(screen.focus_row == con.group.str());
+                const auto stage = "construction:stage:" + con.id.str();
+                REQUIRE_FALSE(rows_of(screen, stage + ":components").empty());
+                const auto select = std::ranges::
+                    find(screen.affordances, "construct:select", &engine_client::affordance::id);
+                REQUIRE(select != screen.affordances.end());
+                CHECK(select->role == "select");
+                return invoke_event("construct:search", {.text = "no such construction"});
+            }
+            case 4: {
+                // A search replaces the category tabs by one, as natively.
+                CHECK(rows_of(screen, "construction:groups").empty());
+                CHECK(tab_ids_of(screen, "construction:tabs").size() == 1);
+                CHECK(std::ranges::none_of(screen.affordances, [](const auto& affordance) {
+                    return affordance.id == "construct:tab";
+                }));
+                return invoke_event("construct:search", {.text = ""});
+            }
+            default: {
+                CHECK(tab_ids_of(screen, "construction:tabs").size() > 2);
+                return resolve_action("QUIT");
+            }
+        }
+    });
+    CHECK_FALSE(construction_menu(false));
+    CHECK(step == 6);
+}
+
+TEST_CASE(
+    "constructing through the screen keeps the native placement and resource handling",
+    "[construction][engine_client_component][mcp]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    const auto guard = interaction_test_guard{};
+    const auto restore_turn = restore_on_out_of_scope<decltype(calendar::turn)>(calendar::turn);
+    const auto state = construction_state_guard{};
+    uistate.construction_filter.clear();
+    const auto destination = prepare_semantic_construction();
+    const auto cleanup_construction = on_out_of_scope(
+        std::bind_front(clear_construction_fixture, destination));
+    const auto& con = construction_str_id("constr_test_semantic_construction").obj();
+    auto& you = get_avatar();
+
+    auto step = 0;
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
         const auto snapshot = game_client::current_interaction();
         if (snapshot.context == "CONSTRUCTION") {
-            if (step == 0) {
-                step = 1;
-                return resolve_action("FILTER");
+            const auto screen = current_screen();
+            if (step++ == 0) {
+                return invoke_event("construct:search", {.text = "TEST semantic construction"});
             }
-            REQUIRE(step == 2);
-            const auto choice = std::ranges::
-                find(snapshot.choices, "TEST semantic construction",
-                     &game_client::interaction_choice::label);
-            REQUIRE(choice != snapshot.choices.end());
-            CHECK(choice->enabled);
-            CHECK(choice->selectable);
-            step = 3;
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::choose,
-                .target_id = choice->id,
-            });
+            const auto mine =
+                row_with(rows_of(screen, "construction:groups"), "TEST semantic construction");
+            CHECK(mine.enabled);
+            CHECK(mine.selectable);
+            return construct_row("construct:construct", mine.id);
         }
-        if (snapshot.context != "DEFAULTMODE") {
-            REQUIRE(step == 1);
-            REQUIRE(snapshot.field);
-            step = 2;
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::fill,
-                .target_id = snapshot.field->id,
-                .value = "TEST semantic construction",
-                .submit = true,
-            });
-        }
-        REQUIRE(step == 3);
-        const auto east =
-            std::ranges::find(snapshot.choices, "East", &game_client::interaction_choice::label);
-        REQUIRE(east != snapshot.choices.end());
-        step = 4;
-        return resolve({
-            .input_id = snapshot.input_id,
-            .operation = game_client::interaction_operation::choose,
-            .target_id = east->id,
-        });
+        REQUIRE(snapshot.context == "DEFAULTMODE");
+        step = 10;
+        return choose_east(snapshot);
     });
-
     CHECK_FALSE(construction_menu(false));
-    CHECK(step == 4);
+    CHECK(step == 10);
     CHECK(you.amount_of(itype_id("e_scrap")) == 0);
     CHECK(get_map().partial_con_at(destination) != nullptr);
     REQUIRE(you.activity);
@@ -2148,9 +2294,10 @@ TEST_CASE(
     CHECK(get_map().partial_con_at(destination) == nullptr);
     CHECK(get_map().furn(destination) == furn_id("f_test_semantic_construction"));
 }
+
 TEST_CASE(
-    "semantic construction darkness denial retains resources without placement",
-    "[client][interaction][construction][mcp]") {
+    "constructing in the dark through the screen retains the resources",
+    "[construction][engine_client_component][mcp]") {
     const auto restore_light = on_out_of_scope([]() {
         g->reset_light_level();
         get_map().invalidate_map_cache(get_avatar().bub_pos().z());
@@ -2159,12 +2306,7 @@ TEST_CASE(
     clear_all_state();
     const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
     const auto guard = interaction_test_guard{};
-    const auto restore_filter = restore_on_out_of_scope<decltype(uistate.construction_filter)>(
-        uistate.construction_filter);
-    const auto restore_tab = restore_on_out_of_scope<decltype(uistate.construction_tab)>(
-        uistate.construction_tab);
-    const auto restore_last = restore_on_out_of_scope<decltype(uistate.last_construction)>(
-        uistate.last_construction);
+    const auto state = construction_state_guard{};
     calendar::turn = calendar::turn_zero;
     g->reset_light_level();
     uistate.construction_filter = "TEST semantic construction";
@@ -2182,26 +2324,18 @@ TEST_CASE(
     REQUIRE_FALSE(you.has_trait(trait_id("DEBUG_HS")));
     const auto& con = construction_str_id("constr_test_semantic_construction").obj();
     REQUIRE_FALSE(con.dark_craftable);
-    REQUIRE(can_construct(con, destination));
     REQUIRE(player_can_build(you, you.crafting_inventory(), con));
     const auto materials_before = you.charges_of(itype_id("e_scrap"));
-    REQUIRE(materials_before == 2);
     auto reads = 0;
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
         ++reads;
-        const auto snapshot = game_client::current_interaction();
-        REQUIRE(snapshot.context == "CONSTRUCTION");
+        const auto screen = current_screen();
+        REQUIRE(screen.context == "CONSTRUCTION");
         REQUIRE(reads == 1);
-        const auto choice = std::ranges::
-            find(snapshot.choices, "TEST semantic construction",
-                 &game_client::interaction_choice::label);
-        REQUIRE(choice != snapshot.choices.end());
-        REQUIRE(choice->enabled);
-        return resolve({
-            .input_id = snapshot.input_id,
-            .operation = game_client::interaction_operation::choose,
-            .target_id = choice->id,
-        });
+        const auto mine =
+            row_with(rows_of(screen, "construction:groups"), "TEST semantic construction");
+        REQUIRE(mine.enabled);
+        return construct_row("construct:construct", mine.id);
     });
     CHECK_FALSE(construction_menu(false));
     CHECK(reads == 1);
@@ -2210,18 +2344,14 @@ TEST_CASE(
     CHECK(get_map().partial_con_at(destination) == nullptr);
     CHECK(get_map().furn(destination) == furn_id("f_null"));
 }
+
 TEST_CASE(
-    "semantic construction denial and blueprint choice do not bypass native rules",
-    "[client][interaction][construction][mcp]") {
+    "the construction screen denies what the crafter cannot build and a blueprint ignores materials",
+    "[construction][engine_client_component][mcp]") {
     clear_all_state();
     const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
     const auto guard = interaction_test_guard{};
-    const auto restore_filter = restore_on_out_of_scope<decltype(uistate.construction_filter)>(
-        uistate.construction_filter);
-    const auto restore_tab = restore_on_out_of_scope<decltype(uistate.construction_tab)>(
-        uistate.construction_tab);
-    const auto restore_last = restore_on_out_of_scope<decltype(uistate.last_construction)>(
-        uistate.last_construction);
+    const auto state = construction_state_guard{};
     uistate.construction_filter.clear();
     build_test_map(ter_id("t_floor"));
     auto& you = get_avatar();
@@ -2231,57 +2361,39 @@ TEST_CASE(
         auto step = 0;
         game_client::memory::set_input_provider([&](const int /*timeout*/) {
             const auto snapshot = game_client::current_interaction();
-            if (snapshot.context == "CONSTRUCTION") {
-                if (step == 0) {
-                    step = 1;
-                    return resolve_action("FILTER");
-                }
-                if (step == 2 && recipe_rows(snapshot).choices.empty()) {
-                    return resolve_action("TOGGLE_UNAVAILABLE_CONSTRUCTIONS");
-                }
-                if (step == 2) {
-                    const auto rows = recipe_rows(snapshot).choices;
+            if (snapshot.context != "CONSTRUCTION") {
+                // The native denial is a popup of its own; closing it returns to the screen.
+                CHECK(snapshot.message.contains("can't build"));
+                REQUIRE(step++ == 2);
+                return resolve({
+                    .input_id = snapshot.input_id,
+                    .operation = game_client::interaction_operation::choose,
+                    .target_id = snapshot.choices.front().id,
+                });
+            }
+            const auto screen = current_screen();
+            switch (step++) {
+                case 0:
+                    return invoke_event(
+                        "construct:search", {.text = "TEST semantic unavailable construction"});
+                case 1: {
+                    if (rows_of(screen, "construction:groups").empty()) {
+                        --step;
+                        return resolve_action("TOGGLE_UNAVAILABLE_CONSTRUCTIONS");
+                    }
+                    const auto rows = rows_of(screen, "construction:groups");
                     REQUIRE(rows.size() == 1);
-                    const auto& choice = rows.front();
-                    CHECK_FALSE(choice.enabled);
-                    CHECK(choice.selectable);
-                    CHECK_FALSE(choice.denial.empty());
-                    step = 3;
-                    return resolve({
-                        .input_id = snapshot.input_id,
-                        .operation = game_client::interaction_operation::choose,
-                        .target_id = choice.id,
-                    });
+                    CHECK_FALSE(rows.front().enabled);
+                    CHECK(rows.front().selectable);
+                    CHECK_FALSE(rows.front().denial.empty());
+                    return construct_row("construct:construct", rows.front().id);
                 }
-                REQUIRE(step == 4);
-                step = 5;
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::cancel,
-                });
+                default:
+                    return resolve_action("QUIT");
             }
-            if (step == 1) {
-                REQUIRE(snapshot.field);
-                step = 2;
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::fill,
-                    .target_id = snapshot.field->id,
-                    .value = "TEST semantic unavailable construction",
-                    .submit = true,
-                });
-            }
-            REQUIRE(step == 3);
-            CHECK(snapshot.message.contains("can't build"));
-            step = 4;
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::choose,
-                .target_id = recipe_rows(snapshot).choices.front().id,
-            });
         });
         CHECK_FALSE(construction_menu(false));
-        CHECK(step == 5);
+        CHECK(step == 4);
         CHECK_FALSE(you.activity);
         CHECK(you.amount_of(itype_id("test_1kg_cube")) == material_before);
     }
@@ -2289,17 +2401,12 @@ TEST_CASE(
     SECTION("blueprint ignores material availability") {
         uistate.construction_filter = "TEST semantic unavailable construction";
         game_client::memory::set_input_provider([&](const int /*timeout*/) {
-            const auto snapshot = game_client::current_interaction();
-            const auto rows = recipe_rows(snapshot).choices;
+            const auto screen = current_screen();
+            const auto rows = rows_of(screen, "construction:groups");
             if (rows.empty()) { return resolve_action("TOGGLE_UNAVAILABLE_CONSTRUCTIONS"); }
-            REQUIRE(snapshot.context == "CONSTRUCTION");
             REQUIRE(rows.size() == 1);
             CHECK(rows.front().enabled);
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::choose,
-                .target_id = recipe_rows(snapshot).choices.front().id,
-            });
+            return construct_row("construct:construct", rows.front().id);
         });
         const auto result = construction_menu(true);
         REQUIRE(result);
@@ -2309,116 +2416,53 @@ TEST_CASE(
         CHECK(you.amount_of(itype_id("test_1kg_cube")) == material_before);
     }
 }
+
 TEST_CASE(
-    "construction menu publishes category tabs, search and requirements",
-    "[client][interaction][construction][mcp]") {
+    "the construction screen ignores a stale or unknown row and an unknown tab",
+    "[construction][engine_client_component][mcp]") {
     clear_all_state();
     const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
     const auto guard = interaction_test_guard{};
-    const auto restore_filter = restore_on_out_of_scope<decltype(uistate.construction_filter)>(
-        uistate.construction_filter);
-    const auto restore_tab = restore_on_out_of_scope<decltype(uistate.construction_tab)>(
-        uistate.construction_tab);
+    const auto state = construction_state_guard{};
     uistate.construction_filter.clear();
     build_test_map(ter_id("t_floor"));
-    add_crafting_fixture_item(get_avatar(), itype_id("e_scrap"), 2);
-    get_avatar().invalidate_crafting_inventory();
-    const auto choose = [](const game_client::interaction_snapshot& snapshot, const auto& id) {
-        return resolve({
-            .input_id = snapshot.input_id,
-            .operation = game_client::interaction_operation::choose,
-            .target_id = id,
-        });
-    };
-    const auto tabs = [](const game_client::interaction_snapshot& snapshot) {
-        return snapshot.choices
-             | std::views::filter([](const auto& choice) { return choice.id.starts_with("tab:"); })
-             | std::ranges::to<std::vector>();
-    };
+    auto before = nlohmann::json{};
     auto step = 0;
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = game_client::current_interaction({.limit = 200});
-        REQUIRE(snapshot.context == "CONSTRUCTION");
-        const auto rows = recipe_rows(snapshot).choices;
-        const auto mine = std::ranges::
-            find(rows, "TEST semantic construction", &game_client::interaction_choice::label);
+        const auto screen = current_screen();
+        REQUIRE(screen.context == "CONSTRUCTION");
         switch (step++) {
             case 0: {
-                const auto all_tabs = tabs(snapshot);
-                CHECK(all_tabs.size() > 2);
-                CHECK(std::ranges::count_if(all_tabs, &game_client::interaction_choice::selected)
-                      == 1);
-                CHECK(snapshot.panes.size() == all_tabs.size());
-                REQUIRE(snapshot.field);
-                CHECK(snapshot.field->id == "filter");
-                CHECK_FALSE(snapshot.field->description.empty());
-                CHECK_FALSE(snapshot.field->description.contains("<color"));
-                REQUIRE(
-                    std::ranges::find(all_tabs, "tab:OTHER", &game_client::interaction_choice::id)
-                    != all_tabs.end());
-                return choose(snapshot, "tab:OTHER");
+                before = screen_wire();
+                return construct_row("construct:construct", "no_such_group");
             }
-            case 1: {
-                const auto selected =
-                    tabs(snapshot)
-                    | std::views::filter([](const auto& choice) { return choice.selected; })
-                    | std::ranges::to<std::vector>();
-                REQUIRE(selected.size() == 1);
-                CHECK(selected.front().id == "tab:OTHER");
-                REQUIRE(mine != rows.end());
-                // Requirements arrive with the row as plain text: time, terrain, components.
-                CHECK(mine->description.contains("Time to complete"));
-                CHECK(mine->description.contains("Requires"));
-                CHECK(mine->description.contains("scrap"));
-                CHECK_FALSE(mine->description.contains("<color"));
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::fill,
-                    .target_id = "filter",
-                    .value = "no such construction",
-                    .submit = true,
-                });
-            }
-            case 2: {
-                // A search replaces the category tabs by one, as natively.
-                CHECK(rows.empty());
-                REQUIRE(tabs(snapshot).size() == 1);
-                CHECK(tabs(snapshot).front().id == "tab:FILTER");
-                REQUIRE(snapshot.field);
-                CHECK(snapshot.field->value == "no such construction");
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::fill,
-                    .target_id = "filter",
-                    .value = "",
-                    .submit = true,
-                });
-            }
+            case 1:
+                return construct_row("construct:favorite", "no_such_group");
+            case 2:
+                return construct_row("construct:tab", "NO_SUCH_TAB");
+            case 3:
+                return invoke_event("construct:search");
+            case 4:
+                return invoke_event("construct:no_such_affordance", {.row = "no_such_group"});
             default: {
-                CHECK(tabs(snapshot).size() > 2);
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::cancel,
-                });
+                CHECK(screen_wire().at("root") == before.at("root"));
+                return resolve_action("QUIT");
             }
         }
     });
     CHECK_FALSE(construction_menu(false));
-    CHECK(step == 4);
+    CHECK(step == 6);
+    CHECK_FALSE(get_avatar().activity);
 }
+
 TEST_CASE(
-    "semantic replay repeats native construction placement",
-    "[client][interaction][construction][replay][mcp]") {
+    "constructing through the screen replays from the recorded invokes",
+    "[construction][engine_client_component][replay][mcp]") {
     clear_all_state();
     const auto cleanup_state = on_out_of_scope([]() { clear_all_state(); });
     const auto guard = interaction_test_guard{};
     const auto restore_turn = restore_on_out_of_scope<decltype(calendar::turn)>(calendar::turn);
-    const auto restore_filter = restore_on_out_of_scope<decltype(uistate.construction_filter)>(
-        uistate.construction_filter);
-    const auto restore_tab = restore_on_out_of_scope<decltype(uistate.construction_tab)>(
-        uistate.construction_tab);
-    const auto restore_last = restore_on_out_of_scope<decltype(uistate.last_construction)>(
-        uistate.last_construction);
+    const auto state = construction_state_guard{};
     static auto counter = std::atomic_uint64_t{0};
     const auto directory =
         std::filesystem::path(PATH_INFO::user_dir())
@@ -2429,71 +2473,43 @@ TEST_CASE(
         std::filesystem::remove_all(directory);
     });
     const auto path = directory / "input.jsonl";
+    const auto& con = construction_str_id("constr_test_semantic_construction").obj();
 
-    const auto prepare = [&]() {
-        calendar::turn = calendar::turn_zero + 12_hours;
-        g->reset_light_level();
-        uistate.construction_filter = "TEST semantic construction";
-        build_test_map(ter_id("t_floor"));
-        auto& you = get_avatar();
-        const auto destination = you.bub_pos() + tripoint_east;
-        clear_construction_fixture(destination);
-        get_map().invalidate_map_cache(you.bub_pos().z());
-        get_map().build_map_cache(you.bub_pos().z());
-        get_map().update_visibility_cache(you.bub_pos().z());
-        REQUIRE(character_funcs::can_see_fine_details(you));
-        add_crafting_fixture_item(you, itype_id("e_scrap"), 2);
-        return destination;
-    };
-    auto recorded_reads = 0;
+    auto reads = 0;
     const auto semantic_provider = [&](const int /*timeout*/) {
-        ++recorded_reads;
+        ++reads;
         const auto snapshot = game_client::current_interaction();
         if (snapshot.context == "CONSTRUCTION") {
-            const auto choice = std::ranges::
-                find(snapshot.choices, "TEST semantic construction",
-                     &game_client::interaction_choice::label);
-            REQUIRE(choice != snapshot.choices.end());
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::choose,
-                .target_id = choice->id,
-            });
+            return construct_row("construct:construct", con.group.str());
         }
+        CAPTURE(snapshot.title, snapshot.message, reads);
         REQUIRE(snapshot.context == "DEFAULTMODE");
-        const auto east =
-            std::ranges::find(snapshot.choices, "East", &game_client::interaction_choice::label);
-        REQUIRE(east != snapshot.choices.end());
-        return resolve({
-            .input_id = snapshot.input_id,
-            .operation = game_client::interaction_operation::choose,
-            .target_id = east->id,
-        });
+        return choose_east(snapshot);
     };
-
-    const auto recorded_destination = prepare();
+    uistate.construction_filter = "TEST semantic construction";
+    const auto recorded_destination = prepare_semantic_construction();
     const auto cleanup_construction = on_out_of_scope(
         std::bind_front(clear_construction_fixture, recorded_destination));
     replay::configure_recording(path.string(), {.rng_seed = 37});
     replay::start();
     game_client::memory::set_input_provider(semantic_provider);
     CHECK_FALSE(construction_menu(false));
-    CHECK(recorded_reads == 2);
+    CHECK(reads == 2);
     REQUIRE(get_avatar().activity);
     CHECK(get_avatar().activity->id() == activity_id("ACT_BUILD"));
     CHECK(get_avatar().amount_of(itype_id("e_scrap")) == 0);
-    CHECK(get_map().partial_con_at(recorded_destination) != nullptr);
     finish_construction_activity(get_avatar());
-    CHECK_FALSE(get_avatar().activity);
-    CHECK(get_map().partial_con_at(recorded_destination) == nullptr);
     CHECK(get_map().furn(recorded_destination) == furn_id("f_test_semantic_construction"));
     replay::finish();
 
+    // Normalising the avatar may ask whether to eat while full; the recorded provider must not
+    // answer that.
     game_client::memory::set_input_provider([](const int /*timeout*/) {
         return resolve_action("YES");
     });
     clear_all_state();
-    const auto played_destination = prepare();
+    uistate.construction_filter = "TEST semantic construction";
+    const auto played_destination = prepare_semantic_construction();
     game_client::memory::set_input_provider([](const int /*timeout*/) -> input_event {
         throw std::runtime_error("construction playback must not read live input");
     });
@@ -2503,109 +2519,638 @@ TEST_CASE(
     REQUIRE(get_avatar().activity);
     CHECK(get_avatar().activity->id() == activity_id("ACT_BUILD"));
     CHECK(get_avatar().amount_of(itype_id("e_scrap")) == 0);
-    CHECK(get_map().partial_con_at(played_destination) != nullptr);
     finish_construction_activity(get_avatar());
-    CHECK_FALSE(get_avatar().activity);
     CHECK(get_map().partial_con_at(played_destination) == nullptr);
     CHECK(get_map().furn(played_destination) == furn_id("f_test_semantic_construction"));
     CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
     replay::finish();
 }
+
+namespace {
+
+/// What the crafting tests restore: the lists the screen reads and writes.
+struct crafting_state_guard {
+    decltype(uistate.read_recipes) read = uistate.read_recipes;
+    decltype(uistate.expanded_recipes) expanded = uistate.expanded_recipes;
+    decltype(uistate.hidden_recipes) hidden = uistate.hidden_recipes;
+    decltype(uistate.favorite_recipes) favorite = uistate.favorite_recipes;
+    ~crafting_state_guard() {
+        uistate.read_recipes = read;
+        uistate.expanded_recipes = expanded;
+        uistate.hidden_recipes = hidden;
+        uistate.favorite_recipes = favorite;
+    }
+};
+
+/// The input that searches the crafting screen for `text`.
+auto craft_search(const std::string& text) -> input_event {
+    return invoke_event("craft:search", {.text = text});
+}
+
+auto craft_row(const std::string& affordance, const std::string& row) -> input_event {
+    return invoke_event(affordance, {.row = row});
+}
+
+auto craft_batch(const std::string& row, const std::int64_t count) -> input_event {
+    return invoke_event("craft:batch", {.row = row, .count = count});
+}
+
+} // namespace
+
 TEST_CASE(
-    "semantic crafting batch entry preserves native selection bookkeeping",
-    "[client][interaction][crafting][mcp]") {
+    "the crafting screen is published by recipe identity with its tabs and affordances",
+    "[crafting][engine_client_component][mcp]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    const auto guard = interaction_test_guard{};
+    const auto state = crafting_state_guard{};
+    prepare_crafting_fixture();
+    const auto& iron = recipe_id("test_soldering_iron").obj();
+
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = current_screen();
+        REQUIRE(screen.context == "CRAFTING");
+        const auto at = step++;
+        if (at == 0) {
+            CHECK(screen.role == "screen");
+            CHECK(screen.focus_component == "crafting:recipes");
+            const auto tabs = tab_ids_of(screen, "crafting:tabs");
+            CHECK(tabs.size() > 1);
+            CHECK(std::ranges::contains(tabs, "CC_ELECTRONIC"));
+            CHECK_FALSE(tab_ids_of(screen, "crafting:subtabs").empty());
+            CHECK(std::ranges::contains(
+                screen.affordances, "craft:subtab", &engine_client::affordance::id));
+            return craft_search("TEST");
+        }
+        if (at == 1) {
+            const auto rows = rows_of(screen, "crafting:recipes");
+            REQUIRE_FALSE(rows.empty());
+            // A row is its recipe, never its position or its words.
+            for (const auto& row : rows) {
+                CAPTURE(row.id);
+                CHECK(recipe_id(row.id.substr(0, row.id.find('#'))).is_valid());
+            }
+            CHECK(std::ranges::count_if(rows, &engine_client::row::selected) == 1);
+            const auto ids = std::set<std::string>{
+                screen.affordances | std::views::transform(&engine_client::affordance::id)
+                | std::ranges::to<std::set>()};
+            for (const auto* id :
+                 {"craft:craft", "craft:batch", "craft:tab", "craft:search", "craft:favorite",
+                  "craft:hide", "craft:select"}) {
+                CHECK(ids.contains(id));
+            }
+            return craft_search(iron.result_name());
+        }
+        const auto rows = rows_of(screen, "crafting:recipes");
+        REQUIRE(rows.size() == 1);
+        CHECK(rows.front().id == iron.ident().str());
+        CHECK(rows.front().enabled);
+        CHECK(rows.front().minimum_count == 1);
+        CHECK(rows.front().max == 50);
+        CHECK(rows.front().look.has_value());
+        const auto available = std::ranges::
+            find(rows.front().columns, "availability", &game_client::interaction_column::key);
+        REQUIRE(available != rows.front().columns.end());
+        CHECK(available->value == "Ready");
+        const auto select =
+            std::ranges::find(screen.affordances, "craft:select", &engine_client::affordance::id);
+        REQUIRE(select != screen.affordances.end());
+        CHECK(select->role == "select");
+        CHECK(screen.focus_row == iron.ident().str());
+        // A search replaces the tabs by one, as natively, and freezes the subcategories.
+        CHECK(tab_ids_of(screen, "crafting:tabs") == std::vector<std::string>{"search"});
+        CHECK(std::ranges::none_of(screen.affordances, [](const auto& affordance) {
+            return affordance.id == "craft:subtab";
+        }));
+        return resolve_action("QUIT");
+    });
+    get_avatar().craft(get_avatar().bub_pos());
+    CHECK(step == 3);
+}
+
+TEST_CASE(
+    "selecting a crafting row moves the cursor and its detail without crafting",
+    "[crafting][engine_client_component][mcp]") {
     clear_all_state();
     const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
     const auto guard = interaction_test_guard{};
     const auto highlight_unread = override_option("HIGHLIGHT_UNREAD_RECIPES", "true");
-    const auto restore_read = restore_on_out_of_scope<decltype(uistate.read_recipes)>(
-        uistate.read_recipes);
-    const auto restore_expanded = restore_on_out_of_scope<decltype(uistate.expanded_recipes)>(
-        uistate.expanded_recipes);
+    const auto state = crafting_state_guard{};
     uistate.read_recipes.clear();
     auto& you = get_avatar();
+    prepare_crafting_fixture();
+    const auto scrap_before = you.amount_of(itype_id("e_scrap"));
+    const auto detail_title = [](const engine_client::screen_view& screen) {
+        const auto& panel = component_of(screen, "crafting:detail");
+        REQUIRE(std::holds_alternative<engine_client::panel_body>(panel.body));
+        return std::get<engine_client::panel_body>(panel.body).title;
+    };
+
+    auto step = 0;
+    auto first_title = std::string{};
+    auto last_id = std::string{};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = current_screen();
+        REQUIRE(screen.context == "CRAFTING");
+        switch (step++) {
+            case 0:
+                return craft_search("TEST");
+            case 1: {
+                const auto rows = rows_of(screen, "crafting:recipes");
+                REQUIRE(rows.size() == 2);
+                // A tab with something new in it says so as data.
+                const auto& tabs = std::get<engine_client::tabs_body>(
+                    component_of(screen, "crafting:tabs").body);
+                CHECK(std::ranges::any_of(tabs.tabs, &engine_client::tab_entry::unread));
+                first_title = detail_title(screen);
+                last_id = rows.back().id;
+                CHECK(rows.back().id != screen.focus_row);
+                return craft_row("craft:select", last_id);
+            }
+            case 2: {
+                CHECK(screen.focus_row == last_id);
+                CHECK(detail_title(screen) != first_title);
+                // Selecting a row that is gone changes nothing.
+                return craft_row("craft:select", "no_such_recipe");
+            }
+            default: {
+                CHECK(screen.focus_row == last_id);
+                return resolve_action("QUIT");
+            }
+        }
+    });
+    you.craft(you.bub_pos());
+    CHECK(step == 4);
+    CHECK_FALSE(you.activity);
+    CHECK(you.amount_of(itype_id("e_scrap")) == scrap_before);
+}
+
+TEST_CASE(
+    "the crafting detail tells what the crafter has and lacks",
+    "[crafting][engine_client_component][mcp]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    const auto guard = interaction_test_guard{};
+    const auto state = crafting_state_guard{};
+    const auto& iron = recipe_id("test_soldering_iron").obj();
+    get_avatar().learn_recipe(&iron);
+    get_avatar().set_skill_level(iron.skill_used, 2);
+
+    const auto enabled_count = [](const engine_client::screen_view& screen, const std::string& id) {
+        const auto rows = rows_of(screen, id);
+        return std::pair{std::ranges::count_if(rows, &engine_client::row::enabled), rows.size()};
+    };
+    auto step = 0;
+    auto lacking = std::size_t{0};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = current_screen();
+        REQUIRE(screen.context == "CRAFTING");
+        switch (step++) {
+            case 0:
+                return resolve_action("TOGGLE_UNAVAILABLE");
+            case 1:
+                return craft_search(iron.result_name());
+            case 2: {
+                const auto rows = rows_of(screen, "crafting:recipes");
+                REQUIRE(rows.size() == 1);
+                CHECK_FALSE(rows.front().enabled);
+                CHECK_FALSE(rows.front().denial.empty());
+                const auto [have, total] = enabled_count(screen, "requirements:components");
+                CHECK(total > 0);
+                CHECK(have == 0);
+                lacking = total;
+                // The tools are listed beside the components, none of them held yet.
+                CHECK(enabled_count(screen, "requirements:tools").first == 0);
+                add_crafting_fixture_item(get_avatar(), itype_id("e_scrap"), 4);
+                add_crafting_fixture_item(get_avatar(), itype_id("copper"), 2);
+                add_crafting_fixture_item(get_avatar(), itype_id("scrap"), 2);
+                add_crafting_fixture_item(get_avatar(), itype_id("duct_tape"), 20);
+                add_crafting_fixture_item(get_avatar(), itype_id("cable"), 10);
+                get_avatar().invalidate_crafting_inventory();
+                return craft_search(iron.result_name());
+            }
+            default: {
+                const auto [have, total] = enabled_count(screen, "requirements:components");
+                CHECK(total == lacking);
+                CHECK(have > 0);
+                return resolve_action("QUIT");
+            }
+        }
+    });
+    get_avatar().craft(get_avatar().bub_pos());
+    CHECK(step == 4);
+}
+
+TEST_CASE(
+    "the crafting screen reads the same at any viewport size",
+    "[crafting][engine_client_component][mcp]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    const auto guard = interaction_test_guard{};
+    const auto state = crafting_state_guard{};
+    prepare_crafting_fixture();
+
+    const auto top_json = screen_wire;
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        if (step++ == 0) { return craft_search("TEST"); }
+        const auto wide = top_json();
+        TERMX = 200;
+        TERMY = 60;
+        const auto large = top_json();
+        TERMX = 80;
+        TERMY = 24;
+        const auto small = top_json();
+        CHECK(wide.at("root") == large.at("root"));
+        CHECK(wide.at("root") == small.at("root"));
+        CHECK(wide.at("affordances") == small.at("affordances"));
+        return resolve_action("QUIT");
+    });
+    get_avatar().craft(get_avatar().bub_pos());
+    CHECK(step == 2);
+}
+
+TEST_CASE(
+    "invoking the crafting screen starts a searched batch",
+    "[crafting][engine_client_component][mcp]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    const auto guard = interaction_test_guard{};
+    const auto state = crafting_state_guard{};
+    auto& you = get_avatar();
+    const auto& iron = recipe_id("test_soldering_iron").obj();
+    prepare_crafting_fixture();
+
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = current_screen();
+        REQUIRE(screen.context == "CRAFTING");
+        switch (step++) {
+            case 0:
+                return craft_search(iron.result_name());
+            case 1:
+                return craft_batch(iron.ident().str(), 2);
+            default: {
+                // The batch list holds the sizes, the cursor on the one asked for.
+                CHECK(tab_ids_of(screen, "crafting:tabs") == std::vector<std::string>{"batch"});
+                const auto rows = rows_of(screen, "crafting:recipes");
+                CHECK(rows.size() == 50);
+                CHECK(rows.front().id == "1");
+                CHECK(screen.focus_row == "2");
+                return craft_row("craft:craft", "2");
+            }
+        }
+    });
+    you.craft(you.bub_pos());
+    REQUIRE(you.activity);
+    REQUIRE(you.activity->id() == activity_id("ACT_CRAFT"));
+    CHECK(step == 3);
+    CHECK(you.amount_of(itype_id("e_scrap")) == 0);
+    CHECK(you.amount_of(itype_id("copper")) == 0);
+    CHECK(you.amount_of(itype_id("scrap")) == 0);
+    CHECK(you.charges_of(itype_id("duct_tape")) == 0);
+    CHECK(you.amount_of(itype_id("cable")) == 0);
+    finish_crafting_activity(you);
+    REQUIRE_FALSE(you.activity);
+    you.invalidate_crafting_inventory();
+    CHECK(you.amount_of(itype_id("test_soldering_iron")) == 2);
+}
+
+TEST_CASE(
+    "a batch entered through the crafting screen keeps the native bookkeeping",
+    "[crafting][engine_client_component][mcp]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    const auto guard = interaction_test_guard{};
+    const auto highlight_unread = override_option("HIGHLIGHT_UNREAD_RECIPES", "true");
+    const auto state = crafting_state_guard{};
+    uistate.read_recipes.clear();
     const auto& pipe = recipe_id("test_pipe").obj();
     prepare_crafting_fixture();
 
     auto step = 0;
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = recipe_rows(game_client::current_interaction({.limit = 100}));
-        if (snapshot.context != "CRAFTING") {
-            REQUIRE(step == 1);
-            step = 2;
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::fill,
-                .target_id = snapshot.field->id,
-                .value = "TEST",
-                .submit = true,
-            });
+        const auto screen = current_screen();
+        REQUIRE(screen.context == "CRAFTING");
+        switch (step++) {
+            case 0:
+                return craft_search("TEST");
+            case 1: {
+                CHECK(uistate.read_recipes.count(pipe.ident()) == 0);
+                const auto row = row_with(rows_of(screen, "crafting:recipes"), pipe.result_name());
+                CHECK(row.id == pipe.ident().str());
+                return craft_batch(row.id, 3);
+            }
+            case 2: {
+                CHECK(uistate.read_recipes.count(pipe.ident()) == 1);
+                CHECK(screen.focus_row == "3");
+                // In a batch, the same affordance moves the cursor to another size.
+                return craft_batch("5", 5);
+            }
+            case 3: {
+                CHECK(screen.focus_row == "5");
+                CHECK(tab_ids_of(screen, "crafting:tabs") == std::vector<std::string>{"batch"});
+                return resolve_action("CYCLE_BATCH");
+            }
+            default: {
+                CHECK(screen.focus_row == pipe.ident().str());
+                CHECK(tab_ids_of(screen, "crafting:tabs") == std::vector<std::string>{"search"});
+                return resolve_action("QUIT");
+            }
         }
-        if (step == 0) {
-            step = 1;
-            return resolve_action("FILTER");
-        }
-        if (step == 2) {
-            const auto target = std::ranges::find_if(snapshot.choices, [&](const auto& choice) {
-                return choice.label.find(pipe.result_name()) != std::string::npos;
-            });
-            REQUIRE(target != snapshot.choices.end());
-            CHECK(std::distance(snapshot.choices.begin(), target) > 0);
-            CHECK(uistate.read_recipes.count(pipe.ident()) == 0);
-            step = 3;
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::set_count,
-                .target_id = target->id,
-                .count = 3,
-            });
-        }
-        if (step == 3) {
-            const auto selected = std::ranges::
-                find(snapshot.choices, true, &game_client::interaction_choice::highlighted);
-            REQUIRE(selected != snapshot.choices.end());
-            CHECK(selected->selected_count == 3);
-            CHECK(uistate.read_recipes.count(pipe.ident()) == 1);
-            const auto five =
-                std::ranges::find(snapshot.choices, std::uint64_t{5}, [](const auto& choice) {
-                    return choice.selected_count.value_or(0);
-                });
-            REQUIRE(five != snapshot.choices.end());
-            step = 4;
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::set_count,
-                .target_id = five->id,
-                .count = 5,
-            });
-        }
-        if (step == 4) {
-            const auto selected = std::ranges::
-                find(snapshot.choices, true, &game_client::interaction_choice::highlighted);
-            REQUIRE(selected != snapshot.choices.end());
-            CHECK(selected->selected_count == 5);
-            CHECK(snapshot.message.contains("Batch"));
-            step = 5;
-            return resolve_action("CYCLE_BATCH");
-        }
-        REQUIRE(step == 5);
-        const auto selected = std::ranges::
-            find(snapshot.choices, true, &game_client::interaction_choice::highlighted);
-        REQUIRE(selected != snapshot.choices.end());
-        CHECK(selected->label.find(pipe.result_name()) != std::string::npos);
-        CHECK_FALSE(snapshot.message.contains("Batch"));
-        step = 6;
-        return resolve({
-            .input_id = snapshot.input_id,
-            .operation = game_client::interaction_operation::cancel,
-        });
     });
-
-    you.craft(you.bub_pos());
-    CHECK(step == 6);
-    CHECK_FALSE(you.activity);
-    CHECK(uistate.read_recipes.count(pipe.ident()) == 1);
+    get_avatar().craft(get_avatar().bub_pos());
+    CHECK(step == 5);
+    CHECK_FALSE(get_avatar().activity);
 }
+
+TEST_CASE(
+    "leaving the crafting screen after a search or a batch crafts nothing",
+    "[crafting][engine_client_component][mcp]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    const auto guard = interaction_test_guard{};
+    const auto state = crafting_state_guard{};
+    auto& you = get_avatar();
+    const auto& iron = recipe_id("test_soldering_iron").obj();
+    prepare_crafting_fixture();
+    auto& here = get_map();
+    here.add_item_or_charges(you.bub_pos(), item::spawn("test_rock"));
+    const auto scrap_before = you.amount_of(itype_id("e_scrap"));
+    const auto ground_before = here.i_at(you.bub_pos()).size();
+
+    const auto batch = GENERATE(false, true);
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        switch (step++) {
+            case 0:
+                return craft_search(iron.result_name());
+            case 1:
+                return batch ? craft_batch(iron.ident().str(), 2) : resolve_action("QUIT");
+            default:
+                return resolve_action("QUIT");
+        }
+    });
+    you.craft(you.bub_pos());
+    CHECK(step == (batch ? 3 : 2));
+    CHECK_FALSE(you.activity);
+    CHECK(you.amount_of(itype_id("e_scrap")) == scrap_before);
+    CHECK(you.amount_of(itype_id("test_soldering_iron")) == 0);
+    CHECK(here.i_at(you.bub_pos()).size() == ground_before);
+}
+
+TEST_CASE(
+    "crafting an unavailable recipe through the screen is denied without mutation",
+    "[crafting][engine_client_component][mcp]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    const auto guard = interaction_test_guard{};
+    const auto state = crafting_state_guard{};
+    auto& you = get_avatar();
+    add_crafting_fixture_item(you, itype_id("copper"), 3);
+    auto& here = get_map();
+    here.add_item_or_charges(you.bub_pos(), item::spawn("test_rock"));
+    const auto material_before = you.amount_of(itype_id("copper"));
+    const auto ground_before = here.i_at(you.bub_pos()).size();
+    const auto& unavailable = recipe_id("test_pipe").obj();
+
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto snapshot = game_client::current_interaction();
+        if (snapshot.context != "CRAFTING") {
+            // The native denial is a popup of its own; closing it returns to the screen.
+            CHECK(snapshot.message.contains("You can't do that"));
+            REQUIRE(step++ == 3);
+            return resolve({
+                .input_id = snapshot.input_id,
+                .operation = game_client::interaction_operation::choose,
+                .target_id = snapshot.choices.front().id,
+            });
+        }
+        const auto screen = current_screen();
+        switch (step++) {
+            case 0:
+                return resolve_action("TOGGLE_UNAVAILABLE");
+            case 1:
+                return craft_search(unavailable.result_name());
+            case 2: {
+                const auto rows = rows_of(screen, "crafting:recipes");
+                REQUIRE(rows.size() == 1);
+                CHECK_FALSE(rows.front().enabled);
+                CHECK_FALSE(rows.front().denial.empty());
+                return craft_row("craft:craft", rows.front().id);
+            }
+            default:
+                return resolve_action("QUIT");
+        }
+    });
+    you.craft(you.bub_pos());
+    CHECK(step == 5);
+    CHECK_FALSE(you.activity);
+    CHECK(you.amount_of(itype_id("copper")) == material_before);
+    CHECK(you.amount_of(itype_id("test_pipe")) == 0);
+    CHECK(here.i_at(you.bub_pos()).size() == ground_before);
+}
+
+TEST_CASE(
+    "a nested recipe row expands when invoked and takes no batch",
+    "[crafting][engine_client_component][mcp]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    const auto guard = interaction_test_guard{};
+    const auto nested_categories = override_option("ENABLE_NESTED_CATEGORIES", "true");
+    const auto state = crafting_state_guard{};
+    uistate.expanded_recipes.clear();
+    prepare_crafting_fixture();
+    const auto& nested = recipe_id("test_semantic_recipes").obj();
+
+    auto step = 0;
+    auto tab = std::size_t{0};
+    auto subtab = std::size_t{0};
+    auto rows_before = std::size_t{0};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = current_screen();
+        REQUIRE(screen.context == "CRAFTING");
+        if (step == 0) {
+            ++step;
+            return resolve_action("TOGGLE_UNAVAILABLE");
+        }
+        const auto rows = rows_of(screen, "crafting:recipes");
+        if (step == 1) {
+            // Look for the category through the tabs and the subtabs of each.
+            const auto at = std::ranges::find(rows, nested.ident().str(), &engine_client::row::id);
+            if (at == rows.end()) {
+                const auto tabs = tab_ids_of(screen, "crafting:tabs");
+                const auto subtabs = tab_ids_of(screen, "crafting:subtabs");
+                if (subtab + 1 < subtabs.size()) {
+                    return craft_row("craft:subtab", subtabs[++subtab]);
+                }
+                subtab = 0;
+                REQUIRE(tab + 1 < tabs.size());
+                return craft_row("craft:tab", tabs[++tab]);
+            }
+        }
+        switch (step++) {
+            case 1: {
+                const auto category = row_with(rows, nested.result_name());
+                CHECK(category.id == nested.ident().str());
+                CHECK_FALSE(category.max);
+                CHECK_FALSE(category.minimum_count);
+                CHECK(category.toggled == false);
+                rows_before = rows.size();
+                // A batch of a category is not a thing; the screen stays as it was.
+                return craft_batch(category.id, 2);
+            }
+            case 2: {
+                CHECK(rows.size() == rows_before);
+                CHECK(uistate.expanded_recipes.count(nested.ident()) == 0);
+                return craft_row("craft:craft", nested.ident().str());
+            }
+            default: {
+                CHECK(uistate.expanded_recipes.count(nested.ident()) == 1);
+                CHECK(rows.size() >= rows_before + 2);
+                CHECK(row_with(rows, nested.result_name()).toggled == true);
+                // The members hang under their category.
+                CHECK(
+                    std::ranges::count_if(
+                        rows,
+                        [&](const auto& row) { return row.parent_id == nested.ident().str(); })
+                    >= 2);
+                return resolve_action("QUIT");
+            }
+        }
+    });
+    get_avatar().craft(get_avatar().bub_pos());
+    CHECK(step == 4);
+    CHECK_FALSE(get_avatar().activity);
+}
+
+TEST_CASE(
+    "the crafting screen ignores a stale or unknown row and an unknown tab",
+    "[crafting][engine_client_component][mcp]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    const auto guard = interaction_test_guard{};
+    const auto state = crafting_state_guard{};
+    auto& you = get_avatar();
+    prepare_crafting_fixture();
+    const auto scrap_before = you.amount_of(itype_id("e_scrap"));
+    auto before = nlohmann::json{};
+
+    // A row of the listing before a search, as a client that has not read the new one would name
+    // it.
+    auto step = 0;
+    const auto stale_recipe = std::string{"test_soldering_iron"};
+    auto stale = std::string{};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = current_screen();
+        REQUIRE(screen.context == "CRAFTING");
+        switch (step++) {
+            case 0: {
+                stale = stale_recipe;
+                return craft_search("__no_semantic_recipe__");
+            }
+            case 1: {
+                CHECK(rows_of(screen, "crafting:recipes").empty());
+                before = screen_wire();
+                return craft_row("craft:craft", stale);
+            }
+            case 2:
+                return craft_row("craft:favorite", stale);
+            case 3:
+                return craft_row("craft:hide", "no_such_recipe");
+            case 4:
+                return craft_batch(stale, 2);
+            case 5:
+                return craft_row("craft:tab", "CC_NO_SUCH_TAB");
+            case 6:
+                return craft_row("craft:subtab", "CSC_NO_SUCH_TAB");
+            case 7:
+                return invoke_event("craft:search");
+            case 8:
+                return invoke_event("craft:no_such_affordance", {.row = stale});
+            default: {
+                CHECK(screen_wire().at("root") == before.at("root"));
+                return resolve_action("QUIT");
+            }
+        }
+    });
+    you.craft(you.bub_pos());
+    CHECK(step == 10);
+    CHECK_FALSE(you.activity);
+    CHECK(you.amount_of(itype_id("e_scrap")) == scrap_before);
+    CHECK(you.amount_of(itype_id("test_soldering_iron")) == 0);
+}
+
+TEST_CASE(
+    "crafting through the screen replays from the recorded invokes",
+    "[crafting][engine_client_component][replay][mcp]") {
+    clear_all_state();
+    const auto cleanup_state = on_out_of_scope([]() { clear_all_state(); });
+    const auto guard = interaction_test_guard{};
+    const auto state = crafting_state_guard{};
+    static auto counter = std::atomic_uint64_t{0};
+    const auto directory =
+        std::filesystem::path(PATH_INFO::user_dir())
+        / ("semantic-crafting-replay-" + std::to_string(counter.fetch_add(1)));
+    REQUIRE(std::filesystem::create_directory(directory));
+    const auto cleanup_replay = on_out_of_scope([&] {
+        replay::stop();
+        std::filesystem::remove_all(directory);
+    });
+    const auto path = directory / "input.jsonl";
+    const auto& iron = recipe_id("test_soldering_iron").obj();
+    prepare_crafting_fixture();
+
+    replay::configure_recording(path.string(), {.rng_seed = 29});
+    replay::start();
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        switch (step++) {
+            case 0:
+                return craft_search(iron.result_name());
+            case 1:
+                return craft_batch(iron.ident().str(), 2);
+            default:
+                return craft_row("craft:craft", "2");
+        }
+    });
+    auto& recorded = get_avatar();
+    recorded.craft(recorded.bub_pos());
+    REQUIRE(recorded.activity);
+    REQUIRE(recorded.activity->id() == activity_id("ACT_CRAFT"));
+    CHECK(recorded.amount_of(itype_id("e_scrap")) == 0);
+    finish_crafting_activity(recorded);
+    REQUIRE_FALSE(recorded.activity);
+    CHECK(recorded.amount_of(itype_id("test_soldering_iron")) == 2);
+    replay::finish();
+
+    // Normalising the avatar may ask whether to eat while full; the recorded provider must not
+    // answer that.
+    game_client::memory::set_input_provider([](const int /*timeout*/) {
+        return resolve_action("YES");
+    });
+    clear_all_state();
+    prepare_crafting_fixture();
+    game_client::memory::set_input_provider([](const int /*timeout*/) -> input_event {
+        throw std::runtime_error("crafting playback must not read live input");
+    });
+    replay::configure_playback(path.string(), {.rng_seed = 29});
+    replay::start();
+    auto& played = get_avatar();
+    played.craft(played.bub_pos());
+    REQUIRE(played.activity);
+    REQUIRE(played.activity->id() == activity_id("ACT_CRAFT"));
+    CHECK(played.amount_of(itype_id("e_scrap")) == 0);
+    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
+    finish_crafting_activity(played);
+    REQUIRE_FALSE(played.activity);
+    CHECK(played.amount_of(itype_id("test_soldering_iron")) == 2);
+    CHECK(played.amount_of(itype_id("cable")) == 0);
+    replay::finish();
+}
+
 TEST_CASE(
     "the overmap is a structured interaction with a cursor that a client can move",
     "[client][interaction][overmap][mcp]") {
@@ -2797,682 +3342,6 @@ TEST_CASE(
     CHECK(published.contains("wire path marker 4217"));
     CHECK(published.contains("Continue"));
     CHECK(published.contains("Ignore"));
-}
-TEST_CASE(
-    "semantic crafting publishes tabs, search and recipe details",
-    "[client][interaction][crafting][mcp]") {
-    clear_all_state();
-    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
-    const auto guard = interaction_test_guard{};
-    const auto restore_read = restore_on_out_of_scope<decltype(uistate.read_recipes)>(
-        uistate.read_recipes);
-    const auto restore_expanded = restore_on_out_of_scope<decltype(uistate.expanded_recipes)>(
-        uistate.expanded_recipes);
-    auto& you = get_avatar();
-    const auto& pipe = recipe_id("test_pipe").obj();
-    prepare_crafting_fixture();
-
-    const auto choose =
-        [](const game_client::interaction_snapshot& snapshot, const std::string& id) {
-            REQUIRE(
-                std::ranges::contains(snapshot.choices, id, &game_client::interaction_choice::id));
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::choose,
-                .target_id = id,
-            });
-        };
-    const auto selected =
-        [](const game_client::interaction_snapshot& snapshot, const std::string& prefix) {
-            return snapshot.choices | std::views::filter([&](const auto& choice) {
-                       return choice.selected && choice.id.starts_with(prefix);
-                   })
-                 | std::views::transform(&game_client::interaction_choice::id)
-                 | std::ranges::to<std::vector>();
-        };
-    const auto pipe_row = [&](const game_client::interaction_snapshot& snapshot) {
-        return std::ranges::find_if(snapshot.choices, [&](const auto& choice) {
-            return choice.id.starts_with("recipe:")
-                && choice.label.find(pipe.result_name()) != std::string::npos;
-        });
-    };
-
-    auto step = 0;
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = game_client::current_interaction({.limit = 200});
-        REQUIRE(snapshot.context == "CRAFTING");
-        const auto recipes = recipe_rows(snapshot).choices;
-        switch (step++) {
-            case 0: {
-                // Tab rows have no pane; exactly one is selected; the search is a field.
-                CHECK(
-                    std::ranges::count_if(
-                        snapshot.choices,
-                        [](const auto& choice) { return choice.id.starts_with("tab:"); })
-                    > 1);
-                CHECK(std::ranges::none_of(snapshot.choices, [](const auto& choice) {
-                    return choice.id.starts_with("tab:") && choice.pane_id;
-                }));
-                CHECK(selected(snapshot, "tab:").size() == 1);
-                REQUIRE(snapshot.field);
-                CHECK(snapshot.field->id == "filter");
-                CHECK(snapshot.field->value.empty());
-                CHECK_FALSE(snapshot.field->description.empty());
-                CHECK_FALSE(snapshot.field->description.contains("<color"));
-                return choose(snapshot, "tab:CC_ELECTRONIC");
-            }
-            case 1: {
-                CHECK(selected(snapshot, "tab:") == std::vector<std::string>{"tab:CC_ELECTRONIC"});
-                CHECK(std::ranges::all_of(recipes, [](const auto& choice) {
-                    return choice.pane_id == "CC_ELECTRONIC";
-                }));
-                // Details come with the row, without color markup.
-                const auto row = pipe_row(snapshot);
-                REQUIRE(row != snapshot.choices.end());
-                CHECK(row->description.contains("Time to complete"));
-                CHECK_FALSE(row->description.contains("<color"));
-                return choose(snapshot, "subtab:CSC_ELECTRONIC_TOOLS");
-            }
-            case 2: {
-                CHECK(selected(snapshot, "subtab:")
-                      == std::vector<std::string>{"subtab:CSC_ELECTRONIC_TOOLS"});
-                CHECK(pipe_row(snapshot) != snapshot.choices.end());
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::fill,
-                    .target_id = "filter",
-                    .value = "no recipe is named like this",
-                    .submit = true,
-                });
-            }
-            case 3: {
-                // A search lists across the tab and freezes the sub-tabs, as native does.
-                CHECK(recipes.empty());
-                CHECK(snapshot.field->value == "no recipe is named like this");
-                CHECK(std::ranges::none_of(snapshot.choices, [](const auto& choice) {
-                    return choice.id.starts_with("subtab:");
-                }));
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::fill,
-                    .target_id = "filter",
-                    .value = "",
-                    .submit = true,
-                });
-            }
-            default: {
-                CHECK(pipe_row(snapshot) != snapshot.choices.end());
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::cancel,
-                });
-            }
-        }
-    });
-
-    you.craft(you.bub_pos());
-    CHECK(step == 5);
-    CHECK_FALSE(you.activity);
-}
-TEST_CASE(
-    "semantic crafting cancel leaves normal and batch selections untouched",
-    "[client][interaction][crafting][mcp]") {
-    clear_all_state();
-    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
-    const auto guard = interaction_test_guard{};
-    const auto restore_read = restore_on_out_of_scope<decltype(uistate.read_recipes)>(
-        uistate.read_recipes);
-    const auto restore_expanded = restore_on_out_of_scope<decltype(uistate.expanded_recipes)>(
-        uistate.expanded_recipes);
-    auto& you = get_avatar();
-    const auto& recipe = recipe_id("test_soldering_iron").obj();
-    prepare_crafting_fixture();
-    auto& here = get_map();
-    here.add_item_or_charges(you.bub_pos(), item::spawn("test_rock"));
-    const auto e_scrap_before = you.amount_of(itype_id("e_scrap"));
-    const auto ground_before = here.i_at(you.bub_pos()).size();
-
-    const auto run_cancel = [&](const bool batch) {
-        auto step = 0;
-        game_client::memory::set_input_provider([&](const int /*timeout*/) {
-            const auto snapshot = recipe_rows(game_client::current_interaction({.limit = 100}));
-            if (snapshot.context != "CRAFTING") {
-                REQUIRE(step == 1);
-                step = 2;
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::fill,
-                    .target_id = snapshot.field->id,
-                    .value = recipe.result_name(),
-                    .submit = true,
-                });
-            }
-            if (step == 0) {
-                step = 1;
-                return resolve_action("FILTER");
-            }
-            if (batch && step == 2) {
-                REQUIRE(snapshot.choices.size() == 1);
-                step = 3;
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::set_count,
-                    .target_id = snapshot.choices.front().id,
-                    .count = 2,
-                });
-            }
-            CHECK(step == (batch ? 3 : 2));
-            step = 4;
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::cancel,
-            });
-        });
-        you.craft(you.bub_pos());
-        CHECK(step == 4);
-    };
-
-    SECTION("normal") { run_cancel(false); }
-    SECTION("batch") { run_cancel(true); }
-
-    CHECK_FALSE(you.activity);
-    CHECK(you.amount_of(itype_id("e_scrap")) == e_scrap_before);
-    CHECK(you.amount_of(itype_id("test_soldering_iron")) == 0);
-    CHECK(here.i_at(you.bub_pos()).size() == ground_before);
-}
-TEST_CASE(
-    "semantic unavailable crafting choice follows native denial without mutation",
-    "[client][interaction][crafting][mcp]") {
-    clear_all_state();
-    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
-    const auto guard = interaction_test_guard{};
-    const auto restore_read = restore_on_out_of_scope<decltype(uistate.read_recipes)>(
-        uistate.read_recipes);
-    const auto restore_expanded = restore_on_out_of_scope<decltype(uistate.expanded_recipes)>(
-        uistate.expanded_recipes);
-    auto& you = get_avatar();
-    add_crafting_fixture_item(you, itype_id("copper"), 3);
-    auto& here = get_map();
-    here.add_item_or_charges(you.bub_pos(), item::spawn("test_rock"));
-    const auto material_before = you.amount_of(itype_id("copper"));
-    const auto ground_before = here.i_at(you.bub_pos()).size();
-    const auto& unavailable = recipe_id("test_pipe").obj();
-
-    auto step = 0;
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = recipe_rows(game_client::current_interaction({.limit = 100}));
-        if (snapshot.context == "CRAFTING") {
-            if (step == 0) {
-                step = 1;
-                return resolve_action("TOGGLE_UNAVAILABLE");
-            }
-            if (step == 1) {
-                step = 2;
-                return resolve_action("FILTER");
-            }
-            if (step == 3) {
-                REQUIRE(snapshot.choices.size() == 1);
-                const auto& choice = snapshot.choices.front();
-                CHECK(choice.label.find(unavailable.result_name()) != std::string::npos);
-                CHECK_FALSE(choice.enabled);
-                CHECK(choice.selectable);
-                CHECK_FALSE(choice.denial.empty());
-                step = 4;
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::choose,
-                    .target_id = choice.id,
-                });
-            }
-            REQUIRE(step == 5);
-            step = 6;
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::cancel,
-            });
-        }
-        if (step == 2) {
-            REQUIRE(snapshot.field);
-            step = 3;
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::fill,
-                .target_id = snapshot.field->id,
-                .value = unavailable.result_name(),
-                .submit = true,
-            });
-        }
-        REQUIRE(step == 4);
-        CHECK(snapshot.message.contains("You can't do that"));
-        REQUIRE(snapshot.choices.size() == 1);
-        step = 5;
-        return resolve({
-            .input_id = snapshot.input_id,
-            .operation = game_client::interaction_operation::choose,
-            .target_id = snapshot.choices.front().id,
-        });
-    });
-
-    you.craft(you.bub_pos());
-    CHECK(step == 6);
-    CHECK_FALSE(you.activity);
-    CHECK(you.amount_of(itype_id("copper")) == material_before);
-    CHECK(you.amount_of(itype_id("test_pipe")) == 0);
-    CHECK(here.i_at(you.bub_pos()).size() == ground_before);
-}
-TEST_CASE(
-    "semantic nested crafting choice expands and rejects quantities",
-    "[client][interaction][crafting][mcp]") {
-    clear_all_state();
-    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
-    const auto guard = interaction_test_guard{};
-    const auto nested_categories = override_option("ENABLE_NESTED_CATEGORIES", "true");
-    const auto restore_read = restore_on_out_of_scope<decltype(uistate.read_recipes)>(
-        uistate.read_recipes);
-    const auto restore_expanded = restore_on_out_of_scope<decltype(uistate.expanded_recipes)>(
-        uistate.expanded_recipes);
-    uistate.expanded_recipes.clear();
-    auto& you = get_avatar();
-    prepare_crafting_fixture();
-    const auto& nested = recipe_id("test_semantic_recipes").obj();
-
-    auto visited = std::set<std::string>{};
-    auto choice_count_before = std::size_t{0};
-    auto show_unavailable = false;
-    auto expanded = false;
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = game_client::current_interaction({.limit = 200});
-        REQUIRE(snapshot.context == "CRAFTING");
-        if (!expanded) {
-            const auto category = std::ranges::find_if(snapshot.choices, [&](const auto& choice) {
-                return choice.label.find(nested.result_name()) != std::string::npos;
-            });
-            if (category == snapshot.choices.end()) {
-                if (!show_unavailable) {
-                    show_unavailable = true;
-                    return resolve_action("TOGGLE_UNAVAILABLE");
-                }
-                return resolve_action(
-                    visited.insert(snapshot.message).second ? "RIGHT" : "NEXT_TAB");
-            }
-            CHECK_FALSE(category->selected_count);
-            CHECK_FALSE(category->available_count);
-            const auto rejected = game_client::resolve_interaction_command({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::set_count,
-                .target_id = category->id,
-                .count = 2,
-            });
-            REQUIRE_FALSE(rejected);
-            CHECK(rejected.error().starts_with("invalid:"));
-            choice_count_before = snapshot.choices.size();
-            expanded = true;
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::choose,
-                .target_id = category->id,
-            });
-        }
-        CHECK(uistate.expanded_recipes.count(nested.ident()) == 1);
-        CHECK(snapshot.choices.size() >= choice_count_before + 2);
-        CHECK(
-            std::ranges::count_if(
-                snapshot.choices,
-                [&](const auto& choice) {
-                    return choice.label.find("TEST soldering iron") != std::string::npos
-                        || choice.label.find("TEST pipe") != std::string::npos;
-                })
-            == 2);
-        return resolve({
-            .input_id = snapshot.input_id,
-            .operation = game_client::interaction_operation::cancel,
-        });
-    });
-
-    you.craft(you.bub_pos());
-    CHECK(expanded);
-    CHECK_FALSE(you.activity);
-}
-TEST_CASE(
-    "crafting rejects filtered and stale semantic recipe identities without mutation",
-    "[client][interaction][crafting][mcp]") {
-    clear_all_state();
-    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
-    const auto guard = interaction_test_guard{};
-    const auto restore_read = restore_on_out_of_scope<decltype(uistate.read_recipes)>(
-        uistate.read_recipes);
-    const auto restore_expanded = restore_on_out_of_scope<decltype(uistate.expanded_recipes)>(
-        uistate.expanded_recipes);
-    auto& you = get_avatar();
-    prepare_crafting_fixture();
-    const auto material_before = you.amount_of(itype_id("e_scrap"));
-    auto old_id = std::string{};
-    auto old_input_id = std::uint64_t{0};
-    auto step = 0;
-
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = recipe_rows(game_client::current_interaction({.limit = 100}));
-        if (snapshot.context != "CRAFTING") {
-            REQUIRE(snapshot.field);
-            if (step == 1) {
-                step = 2;
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::fill,
-                    .target_id = snapshot.field->id,
-                    .value = "TEST",
-                    .submit = true,
-                });
-            }
-            REQUIRE(step == 3);
-            step = 4;
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::fill,
-                .target_id = snapshot.field->id,
-                .value = "__no_semantic_recipe__",
-                .submit = true,
-            });
-        }
-        if (step == 0) {
-            step = 1;
-            return resolve_action("FILTER");
-        }
-        if (step == 2) {
-            REQUIRE(snapshot.choices.size() == 2);
-            old_id = snapshot.choices.back().id;
-            old_input_id = snapshot.input_id;
-            step = 3;
-            return resolve_action("FILTER");
-        }
-        REQUIRE(step == 4);
-        CHECK(snapshot.choices.empty());
-        const auto removed = game_client::resolve_interaction_command({
-            .input_id = snapshot.input_id,
-            .operation = game_client::interaction_operation::choose,
-            .target_id = old_id,
-        });
-        REQUIRE_FALSE(removed);
-        CHECK(removed.error().starts_with("invalid:"));
-        const auto stale = game_client::resolve_interaction_command({
-            .input_id = old_input_id,
-            .operation = game_client::interaction_operation::choose,
-            .target_id = old_id,
-        });
-        REQUIRE_FALSE(stale);
-        CHECK(stale.error().starts_with("stale:"));
-        step = 5;
-        return resolve({
-            .input_id = snapshot.input_id,
-            .operation = game_client::interaction_operation::cancel,
-        });
-    });
-
-    you.craft(you.bub_pos());
-    CHECK(step == 5);
-    CHECK_FALSE(you.activity);
-    CHECK(you.amount_of(itype_id("e_scrap")) == material_before);
-    CHECK(you.amount_of(itype_id("test_pipe")) == 0);
-    CHECK(you.amount_of(itype_id("test_soldering_iron")) == 0);
-}
-TEST_CASE(
-    "crafting replay rejects a changed real recipe schema without mutation",
-    "[client][interaction][crafting][replay][mcp]") {
-    clear_all_state();
-    const auto cleanup_state = on_out_of_scope([]() { clear_all_state(); });
-    const auto guard = interaction_test_guard{};
-    const auto restore_read = restore_on_out_of_scope<decltype(uistate.read_recipes)>(
-        uistate.read_recipes);
-    const auto restore_expanded = restore_on_out_of_scope<decltype(uistate.expanded_recipes)>(
-        uistate.expanded_recipes);
-    const auto restore_hidden = restore_on_out_of_scope<decltype(uistate.hidden_recipes)>(
-        uistate.hidden_recipes);
-    static auto counter = std::atomic_uint64_t{0};
-    const auto directory =
-        std::filesystem::path(PATH_INFO::user_dir())
-        / ("semantic-crafting-schema-" + std::to_string(counter.fetch_add(1)));
-    REQUIRE(std::filesystem::create_directory(directory));
-    const auto cleanup_replay = on_out_of_scope([&] {
-        replay::stop();
-        std::filesystem::remove_all(directory);
-    });
-    const auto path = directory / "input.jsonl";
-    prepare_crafting_fixture();
-
-    replay::configure_recording(path.string(), {.rng_seed = 31});
-    replay::start();
-    auto reads = 0;
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = recipe_rows(game_client::current_interaction({.limit = 100}));
-        if (snapshot.context != "CRAFTING") {
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::fill,
-                .target_id = snapshot.field->id,
-                .value = "TEST",
-                .submit = true,
-            });
-        }
-        if (reads++ == 0) { return resolve_action("FILTER"); }
-        REQUIRE(snapshot.choices.size() == 2);
-        return resolve({
-            .input_id = snapshot.input_id,
-            .operation = game_client::interaction_operation::cancel,
-        });
-    });
-    auto& recorded = get_avatar();
-    recorded.craft(recorded.bub_pos());
-    CHECK_FALSE(recorded.activity);
-    replay::finish();
-
-    game_client::memory::set_input_provider([](const int /*timeout*/) {
-        return resolve_action("YES");
-    });
-    clear_all_state();
-    prepare_crafting_fixture(false);
-    uistate.hidden_recipes.insert(recipe_id("test_pipe"));
-    const auto material_before = get_avatar().amount_of(itype_id("e_scrap"));
-    game_client::memory::set_input_provider([](const int /*timeout*/) -> input_event {
-        throw std::runtime_error("crafting schema playback must not read live input");
-    });
-    replay::configure_playback(path.string(), {.rng_seed = 31});
-    replay::start();
-    CHECK_THROWS_WITH(
-        get_avatar().craft(get_avatar().bub_pos()), Catch::Matchers::Contains("schema changed"));
-    CHECK_FALSE(get_avatar().activity);
-    CHECK(get_avatar().amount_of(itype_id("e_scrap")) == material_before);
-    CHECK(get_avatar().amount_of(itype_id("test_pipe")) == 0);
-}
-TEST_CASE(
-    "real crafting selector filters and starts a batch through semantic input",
-    "[client][interaction][crafting][mcp]") {
-    clear_all_state();
-    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
-    const auto guard = interaction_test_guard{};
-    const auto restore_read = restore_on_out_of_scope<decltype(uistate.read_recipes)>(
-        uistate.read_recipes);
-    const auto restore_expanded = restore_on_out_of_scope<decltype(uistate.expanded_recipes)>(
-        uistate.expanded_recipes);
-    auto& you = get_avatar();
-    const auto& recipe = recipe_id("test_soldering_iron").obj();
-    prepare_crafting_fixture();
-
-    auto crafting_reads = 0;
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = recipe_rows(game_client::current_interaction({.limit = 100}));
-        if (snapshot.context == "CRAFTING") {
-            if (crafting_reads++ == 0) { return resolve_action("FILTER"); }
-            const auto target =
-                crafting_reads == 2
-                    ? std::ranges::find_if(
-                          snapshot.choices,
-                          [&](const auto& choice) {
-                              return choice.label.find(recipe.result_name()) != std::string::npos;
-                          })
-                    : std::ranges::find(
-                          snapshot.choices, true, &game_client::interaction_choice::highlighted);
-            REQUIRE(target != snapshot.choices.end());
-            if (crafting_reads == 2) {
-                CHECK(snapshot.choices.size() == 1);
-                CHECK(target->enabled);
-                CHECK(target->selectable);
-                CHECK(target->minimum_count == 1);
-                CHECK(target->available_count == 50);
-                for (const auto count : {std::uint64_t{1}, std::uint64_t{50}}) {
-                    CHECK(game_client::resolve_interaction_command({
-                        .input_id = snapshot.input_id,
-                        .operation = game_client::interaction_operation::set_count,
-                        .target_id = target->id,
-                        .count = count,
-                    }));
-                }
-                for (const auto count : {std::uint64_t{0}, std::uint64_t{51}}) {
-                    const auto rejected = game_client::resolve_interaction_command({
-                        .input_id = snapshot.input_id,
-                        .operation = game_client::interaction_operation::set_count,
-                        .target_id = target->id,
-                        .count = count,
-                    });
-                    REQUIRE_FALSE(rejected);
-                    CHECK(rejected.error().starts_with("invalid:"));
-                }
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::set_count,
-                    .target_id = target->id,
-                    .count = 2,
-                });
-            }
-            CHECK(snapshot.choices.size() == 50);
-            CHECK(target->selected_count == 2);
-            CHECK(target->highlighted);
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::choose,
-                .target_id = target->id,
-            });
-        }
-        REQUIRE(snapshot.kind == game_client::interaction_kind::field);
-        return resolve({
-            .input_id = snapshot.input_id,
-            .operation = game_client::interaction_operation::fill,
-            .target_id = snapshot.field->id,
-            .value = recipe.result_name(),
-            .submit = true,
-        });
-    });
-
-    you.craft(you.bub_pos());
-    REQUIRE(you.activity);
-    REQUIRE(you.activity->id() == activity_id("ACT_CRAFT"));
-    CHECK(crafting_reads == 3);
-    CHECK_FALSE(you.has_amount(itype_id("e_scrap"), 1));
-
-    CHECK(you.amount_of(itype_id("e_scrap")) == 0);
-    CHECK(you.amount_of(itype_id("copper")) == 0);
-    CHECK(you.amount_of(itype_id("scrap")) == 0);
-    CHECK(you.charges_of(itype_id("duct_tape")) == 0);
-    CHECK(you.amount_of(itype_id("cable")) == 0);
-    finish_crafting_activity(you);
-    REQUIRE_FALSE(you.activity);
-    you.invalidate_crafting_inventory();
-    CHECK(you.amount_of(itype_id("test_soldering_iron")) == 2);
-}
-TEST_CASE(
-    "semantic replay restores the real crafting filter and batch selection",
-    "[client][interaction][crafting][replay][mcp]") {
-    clear_all_state();
-    const auto cleanup_state = on_out_of_scope([]() { clear_all_state(); });
-    const auto guard = interaction_test_guard{};
-    const auto restore_read = restore_on_out_of_scope<decltype(uistate.read_recipes)>(
-        uistate.read_recipes);
-    const auto restore_expanded = restore_on_out_of_scope<decltype(uistate.expanded_recipes)>(
-        uistate.expanded_recipes);
-    static auto counter = std::atomic_uint64_t{0};
-    const auto directory =
-        std::filesystem::path(PATH_INFO::user_dir())
-        / ("semantic-crafting-replay-" + std::to_string(counter.fetch_add(1)));
-    REQUIRE(std::filesystem::create_directory(directory));
-    const auto cleanup_replay = on_out_of_scope([&] {
-        replay::stop();
-        std::filesystem::remove_all(directory);
-    });
-    const auto path = directory / "input.jsonl";
-    const auto& recipe = recipe_id("test_soldering_iron").obj();
-    prepare_crafting_fixture();
-
-    replay::configure_recording(path.string(), {.rng_seed = 29});
-    replay::start();
-    auto reads = 0;
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = game_client::current_interaction({.limit = 100});
-        if (snapshot.context != "CRAFTING") {
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::fill,
-                .target_id = snapshot.field->id,
-                .value = recipe.result_name(),
-                .submit = true,
-            });
-        }
-        if (reads++ == 0) { return resolve_action("FILTER"); }
-        const auto target =
-            reads == 2
-                ? std::ranges::find_if(
-                      snapshot.choices,
-                      [&](const auto& choice) {
-                          return choice.label.find(recipe.result_name()) != std::string::npos;
-                      })
-                : std::ranges::
-                      find(snapshot.choices, true, &game_client::interaction_choice::highlighted);
-        REQUIRE(target != snapshot.choices.end());
-        return reads == 2
-                 ? resolve({
-                       .input_id = snapshot.input_id,
-                       .operation = game_client::interaction_operation::set_count,
-                       .target_id = target->id,
-                       .count = 2,
-                   })
-                 : resolve({
-                       .input_id = snapshot.input_id,
-                       .operation = game_client::interaction_operation::choose,
-                       .target_id = target->id,
-                   });
-    });
-    auto& recorded = get_avatar();
-    recorded.craft(recorded.bub_pos());
-    REQUIRE(recorded.activity);
-    REQUIRE(recorded.activity->id() == activity_id("ACT_CRAFT"));
-    CHECK(recorded.amount_of(itype_id("e_scrap")) == 0);
-    finish_crafting_activity(recorded);
-    REQUIRE_FALSE(recorded.activity);
-    CHECK(recorded.amount_of(itype_id("test_soldering_iron")) == 2);
-    replay::finish();
-
-    game_client::memory::set_input_provider([](const int /*timeout*/) {
-        return resolve_action("YES");
-    });
-    clear_all_state();
-    prepare_crafting_fixture();
-    game_client::memory::set_input_provider([](const int /*timeout*/) -> input_event {
-        throw std::runtime_error("crafting playback must not read live input");
-    });
-    replay::configure_playback(path.string(), {.rng_seed = 29});
-    replay::start();
-    auto& played = get_avatar();
-    played.craft(played.bub_pos());
-    REQUIRE(played.activity);
-    REQUIRE(played.activity->id() == activity_id("ACT_CRAFT"));
-    CHECK(played.amount_of(itype_id("e_scrap")) == 0);
-    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
-    finish_crafting_activity(played);
-    REQUIRE_FALSE(played.activity);
-    CHECK(played.amount_of(itype_id("test_soldering_iron")) == 2);
-    CHECK(played.amount_of(itype_id("copper")) == 0);
-    CHECK(played.amount_of(itype_id("scrap")) == 0);
-    CHECK(played.charges_of(itype_id("duct_tape")) == 0);
-    CHECK(played.amount_of(itype_id("cable")) == 0);
-    replay::finish();
 }
 TEST_CASE("semantic count bounds include an optional minimum", "[client][interaction][mcp]") {
     const auto context = input_context("COUNT_BOUNDS");

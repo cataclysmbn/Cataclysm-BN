@@ -7,8 +7,6 @@
 #include "character.h"
 #include "character_functions.h"
 #include "color.h"
-#include "client_interaction.h"
-#include "client_interaction_prepared.h"
 #include "consistency_report.h"
 #include "construction_category.h"
 #include "construction_group.h"
@@ -17,6 +15,9 @@
 #include "crafting_quality.h"
 #include "cursesdef.h"
 #include "debug.h"
+#include "engine_client_component.h"
+#include "engine_client_requirements.h"
+#include "engine_client_world.h"
 #include "enums.h"
 #include "event.h"
 #include "event_bus.h"
@@ -418,6 +419,70 @@ static void favorite_remove( const construction_group_str_id &c )
 namespace
 {
 
+namespace ec = engine_client;
+
+/// The factors of the construction speed, the total first.
+auto construction_speed_modifiers( const construction &con ) -> std::vector<ec::speed_modifier>
+{
+    const auto assistants_mult = 1.0f / construction_assistant_time_multiplier( con, g->u );
+    const auto tools_mult = crafting_tools_speed_multiplier( g->u, con.requirements.obj() );
+    const auto mutation_mult = g->u.mutation_value( "construction_speed_modifier" );
+    const auto ench_mult = 1.0 + g->u.bonus_from_enchantments( 1.0,
+                           enchantment_value_id( "CONSTRUCTION_SPEED_CON" ) );
+    const auto scaling = get_option<int>( "CONSTRUCTION_SCALING" );
+    const auto game_opt_mult = scaling == 0 ? 9999.0f : 100.0f / scaling;
+    const auto total_mult = assistants_mult * tools_mult * mutation_mult * game_opt_mult;
+    return {
+        { .key = "total", .label = _( "Total" ), .multiplier = static_cast<float>( total_mult ) },
+        { .key = "assistants", .label = _( "Assistants" ), .multiplier = assistants_mult },
+        { .key = "tools", .label = _( "Tools" ), .multiplier = static_cast<float>( tools_mult ) },
+        { .key = "traits", .label = _( "Traits" ), .multiplier = static_cast<float>( mutation_mult ) },
+        { .key = "game_option", .label = _( "Game option" ), .multiplier = game_opt_mult },
+        { .key = "enchantments", .label = _( "Enchantments" ), .multiplier = static_cast<float>( ench_mult ) },
+    };
+}
+
+/// Where the result of a group comes from: the mods that define its terrain or furniture, else the base game.
+auto construction_origin( const std::vector<const construction *> &options ) -> std::string
+{
+    const auto origin_from_tile = []( const auto & tile ) -> std::optional<std::string> {
+        if( tile.src.empty() )
+        {
+            return std::nullopt;
+        }
+        return enumerate_as_string( tile.src.begin(), tile.src.end(), []( const auto & source )
+        {
+            return string_format( "'%s'", source.second->name() );
+        }, enumeration_conjunction::arrow );
+    };
+    const auto terrain_it = std::ranges::find_if( options, []( const construction * con_variant ) {
+        return !con_variant->post_terrain.is_empty();
+    } );
+    const auto furniture_it = std::ranges::find_if( options, []( const construction * con_variant ) {
+        return !con_variant->post_furniture.is_empty();
+    } );
+    const auto origin_line = terrain_it != options.end()
+                             ? origin_from_tile( ( *terrain_it )->post_terrain.obj() )
+                             : ( furniture_it != options.end()
+                                 ? origin_from_tile( ( *furniture_it )->post_furniture.obj() )
+                                 : std::nullopt );
+    return origin_line.value_or( string_format( "'%s'", _( "Bright Nights" ) ) );
+}
+
+/// The category of the first variant of a group that has one among `categories`; none when no variant does.
+auto group_category( const std::vector<const construction *> &options,
+                     const std::vector<construction_category> &categories ) -> const construction_category * // *NOPAD*
+{
+    for( const construction *con_variant : options ) {
+        const auto found = std::ranges::find( categories, con_variant->category,
+                                              &construction_category::id );
+        if( found != categories.end() ) {
+            return &*found;
+        }
+    }
+    return nullptr;
+}
+
 struct construction_stage_options {
     const construction &con;
     int stage;
@@ -617,49 +682,23 @@ auto construction_stage_lines( const construction_stage_options &opts ) -> std::
                                   multiplier_color( percent ), percent );
         };
 
-        const auto assistants_time_mult =
-            construction_assistant_time_multiplier( *current_con, g->u );
-        const auto assistants_mult = 1.0f / assistants_time_mult;
-        const auto tools_mult =
-            crafting_tools_speed_multiplier( g->u, current_con->requirements.obj() );
-        const auto mutation_mult = g->u.mutation_value( "construction_speed_modifier" );
-        const auto ench_mult = 1.0 + g->u.bonus_from_enchantments( 1.0,
-                               enchantment_value_id( "CONSTRUCTION_SPEED_CON" ) );
-        const auto scaling = get_option<int>( "CONSTRUCTION_SCALING" );
-        const auto game_opt_mult = scaling == 0 ? 9999.0f : 100.0f / scaling;
-        const auto total_mult =
-            assistants_mult * tools_mult * mutation_mult * game_opt_mult;
-
-        const auto total_label = _( "Total" );
-        const auto multipliers =
-        std::array<std::pair<std::string, float>, 6> { {
-                { total_label, total_mult },
-                { _( "Assistants" ), assistants_mult },
-                { _( "Tools" ), tools_mult },
-                { _( "Traits" ), mutation_mult },
-                { _( "Game option" ), game_opt_mult },
-                { _( "Enchantments" ), ench_mult }
-            }
-        };
-
+        const auto multipliers = construction_speed_modifiers( *current_con );
+        const auto &total = multipliers.front();
         auto multiplier_lines = std::vector<std::string>();
-        const auto total_percent = static_cast<int>( total_mult * 100 );
-        std::ranges::for_each( multipliers, [&]( const auto & entry ) {
-            if( entry.first == total_label ) {
-                return;
-            }
-            const auto percent = static_cast<int>( entry.second * 100 );
+        const auto total_percent = static_cast<int>( total.multiplier * 100 );
+        std::ranges::for_each( multipliers | std::views::drop( 1 ), [&]( const auto & entry ) {
+            const auto percent = static_cast<int>( entry.multiplier * 100 );
             if( percent == 100 && !verbose_multipliers ) {
                 return;
             }
-            multiplier_lines.push_back( format_multiplier( entry.first, entry.second ) );
+            multiplier_lines.push_back( format_multiplier( entry.label, entry.multiplier ) );
         } );
 
         const auto show_total = verbose_multipliers || total_percent != 100 ||
                                 !multiplier_lines.empty();
         if( show_total ) {
             multiplier_lines.insert( multiplier_lines.begin(),
-                                     format_multiplier( total_label, total_mult ) );
+                                     format_multiplier( total.label, total.multiplier ) );
         }
 
         if( multiplier_lines.empty() && !verbose_multipliers ) {
@@ -690,6 +729,199 @@ auto construction_stage_lines( const construction_stage_options &opts ) -> std::
     add_folded( current_con->requirements->get_folded_components_list( available_window_width,
                 color_stage, total_inv, is_crafting_component ) );
     return current_buffer;
+}
+
+
+constexpr auto construct_tab = "construct:tab";
+constexpr auto construct_search = "construct:search";
+constexpr auto construct_select = "construct:select";
+constexpr auto construct_construct = "construct:construct";
+constexpr auto construct_favorite = "construct:favorite";
+constexpr auto groups_id = "construction:groups";
+
+struct stage_view_options {
+    const construction &con;
+    int stage;
+    const inventory &inv;
+};
+
+/// One variant of a construction: what it makes, what it needs and how long it takes.
+auto stage_view( const stage_view_options &opts ) -> ec::component
+{
+    const auto &con = opts.con;
+    const auto id = "construction:stage:" + con.id.str();
+    auto stats = std::vector<ec::panel_stat> {};
+    auto parts = std::vector<ec::component> {};
+    auto title = con.group->name();
+    const map_data_common_t *tile = nullptr;
+    auto result_description = std::string{};
+    if( !con.post_terrain.is_empty() ) {
+        const auto &result = con.post_terrain.obj();
+        title = result.name();
+        result_description = result.description.translated();
+        tile = &result;
+    } else if( !con.post_furniture.is_empty() ) {
+        const auto &result = con.post_furniture.obj();
+        title = result.name();
+        result_description = result.description.translated();
+        tile = &result;
+    }
+    if( tile != nullptr ) {
+        stats.push_back( { .key = "move_cost", .label = ec::caption( _( "Move cost:" ) ), .value = std::to_string( tile->movecost ) } );
+        const auto indestructible = tile->bash.str_min == -1 && tile->bash.str_max == -1;
+        stats.push_back( { .key = "bash", .label = ec::caption( _( "Bash str:" ) ),
+                           .value = indestructible ? _( "Indestructible" ) :
+                                    string_format( "%d - %d", tile->bash.str_min, tile->bash.str_max ) } );
+        parts.push_back( { .id = id + ":result", .label = ec::caption( _( "Result: " ) ), .body = ec::text_body{ .markup = result_description } } );
+    }
+    if( !con.pre_terrain.is_empty() || !con.pre_furniture.is_empty() ) {
+        stats.push_back( { .key = "requires", .label = ec::caption( _( "Requires: " ) ),
+                           .value = !con.pre_furniture.is_empty() ? con.pre_furniture->name() : con.pre_terrain->name(),
+                           .tone = has_pre_terrain( con ) ? "good" : "bad" } );
+    }
+    if( !con.pre_note.empty() ) {
+        stats.push_back( { .key = "annotation", .label = ec::caption( _( "Annotation: " ) ), .value = con.pre_note.translated() } );
+    }
+    stats.push_back( { .key = "time", .label = ec::caption( _( "Time to complete: " ) ),
+                       .value = to_string( time_duration::from_turns( con.adjusted_time() / 100 ) ) } );
+    std::ranges::move( ec::speed_stats( construction_speed_modifiers( con ),
+                                        get_option<bool>( "VERBOSE_CRAFTING_SPEED_MODIFIERS" ) ), std::back_inserter( stats ) );
+    if( !con.pre_flags.empty() ) {
+        stats.push_back( { .key = "terrain_needs", .label = ec::caption( _( "Terrain needs: " ) ),
+                           .value = enumerate_as_string( con.pre_flags.begin(), con.pre_flags.end(),
+                                    []( const auto & flag ) -> std::string { return flag; }, enumeration_conjunction::and_ ) } );
+    }
+    const auto skills = ec::skill_requirements( {
+        .id = id + ":skills", .label = ec::caption( _( "Required skills: " ) ),
+        .skills = { con.required_skills.begin(), con.required_skills.end() }, .crafter = g->u,
+    } );
+    if( skills ) { parts.push_back( *skills ); }
+    const auto requirements = ec::requirement_view_options{
+        .requirements = con.requirements.obj(), .available = opts.inv, .filter = is_crafting_component,
+        .prefix = id + ":",
+    };
+    parts.push_back( ec::tool_requirements( requirements ) );
+    parts.push_back( ec::component_requirements( requirements ) );
+    return ec::panel( {
+        .id = id, .title = title, .subtitle = ec::caption( string_format( _( "Stage/Variant #%d: " ), opts.stage ) ),
+        .stats = std::move( stats ), .child = ec::split( { .id = id + ":facts", .children = std::move( parts ) } ),
+    } );
+}
+
+/// What the first variant of a group that builds a terrain or furniture looks like when built.
+auto group_look( const construction_group_str_id &group ) -> std::optional<ec::look>
+{
+    for( const auto *const con : constructions_by_group( group ) ) {
+        if( !con->post_terrain.is_empty() ) { return ec::world::terrain_appearance( con->post_terrain.id() ); }
+        if( !con->post_furniture.is_empty() ) { return ec::world::furniture_appearance( con->post_furniture.id() ); }
+    }
+    return std::nullopt;
+}
+
+struct construction_view_options {
+    const std::vector<construction_group_str_id> &constructs;
+    const std::vector<bool> &buildable;
+    const std::vector<construction_category> &categories;
+    /// The indices into `categories` of the tabs, in order.
+    const std::vector<size_t> &category_order;
+    const inventory &inv;
+    int tabindex;
+    int select;
+    bool filter_mode;
+    bool blueprint;
+    bool hide_unconstructable;
+};
+
+/// The variants of the selected group.
+auto group_detail( const construction_view_options &opts ) -> ec::component
+{
+    const auto &group = opts.constructs[opts.select];
+    const auto options = constructions_by_group( group );
+    auto stats = std::vector<ec::panel_stat> {
+        { .key = "origin", .label = ec::caption( _( "Origin: " ) ), .value = construction_origin( options ) },
+    };
+    if( const auto *const category = group_category( options, opts.categories ) ) {
+        stats.push_back( { .key = "category", .label = ec::caption( _( "Category: " ) ), .value = category->name() } );
+    }
+    auto stages = std::vector<ec::component> {};
+    auto stage = 0;
+    for( const auto *const con : options ) {
+        stage++;
+        if( opts.hide_unconstructable && !can_construct( *con ) ) {
+            continue;
+        }
+        stages.push_back( stage_view( { .con = *con, .stage = stage, .inv = opts.inv } ) );
+    }
+    auto result = ec::panel( { .id = "construction:detail", .title = group->name(), .stats = std::move( stats ) } );
+    if( !stages.empty() ) {
+        result.children.push_back( ec::split( { .id = "construction:stages", .children = std::move( stages ) } ) );
+    }
+    return result;
+}
+
+/// The category tabs around `body`, or the one tab that a search replaces them with.
+auto construction_tabs( const construction_view_options &opts, ec::component body ) -> ec::component
+{
+    if( opts.filter_mode ) {
+        return ec::tabs( {
+            .id = "construction:tabs",
+            .tabs = { { .id = construction_category_FILTER.str(), .label = _( "Searched" ), .selected = true } },
+            .child = std::move( body ),
+        } );
+    }
+    auto entries = std::views::iota( size_t{ 0 }, opts.category_order.size() ) |
+    std::views::transform( [&]( const auto tab ) {
+        const auto &category = opts.categories[opts.category_order[tab]];
+        return ec::tab_entry{ .id = category.id.str(), .label = category.name(), .selected = static_cast<int>( tab ) == opts.tabindex };
+    } ) | std::ranges::to<std::vector>();
+    return ec::tabs( { .id = "construction:tabs", .tabs = std::move( entries ), .select = construct_tab, .child = std::move( body ) } );
+}
+
+/// The screen from the construction menu's model state, which its loop keeps current.
+auto construction_view( const construction_view_options &opts ) -> ec::screen_view
+{
+    const auto row_arg = ec::arg_shape{ .row = ec::row_shape{ .component_id = groups_id } };
+    auto affordances = std::vector<ec::affordance> {
+        ec::invoke_affordance( { .id = construct_select, .label = _( "Select" ), .args = row_arg, .role = "select" } ),
+        ec::invoke_affordance( { .id = construct_construct, .label = _( "Construct" ), .args = row_arg } ),
+        ec::invoke_affordance( { .id = construct_favorite, .label = _( "Favorite" ), .args = row_arg } ),
+        ec::invoke_affordance( { .id = construct_search, .label = ec::caption( _( "Search:" ) ), .args = { .text = ec::text_shape{} } } ),
+    };
+    if( !opts.filter_mode ) {
+        affordances.push_back( ec::invoke_affordance( {
+            .id = construct_tab, .label = _( "Category" ), .args = { .row = ec::row_shape{ .component_id = "construction:tabs" } },
+        } ) );
+    }
+    auto rows = std::vector<ec::row> {};
+    for( const auto index : std::views::iota( size_t{ 0 }, opts.constructs.size() ) ) {
+        const auto &group = opts.constructs[index];
+        const auto enabled = opts.blueprint || opts.buildable[index];
+        auto entry = ec::row{
+.id = group.str(), .label = group->name(), .denial = enabled ? std::string{} :
+            _( "You can't build that!" ),
+            .enabled = enabled, .selected = static_cast<int>( index ) == opts.select, .favorite = is_favorite( group ),
+        };
+        entry.look = group_look( group );
+        rows.push_back( std::move( entry ) );
+    }
+    auto groups = ec::list( { .id = groups_id, .rows = std::move( rows ), .selection = "single",
+                              .activate = construct_construct, .filterable = true } );
+    std::ranges::copy( std::array{ construct_favorite, construct_search }, std::back_inserter(
+                           groups.affordances ) );
+    const auto cursor = static_cast<size_t>( opts.select );
+    auto parts = ec::children_of( std::move( groups ) );
+    if( cursor < opts.constructs.size() ) {
+        parts.push_back( group_detail( opts ) );
+    }
+    return {
+        .title = _( "Construction" ),
+        .root = construction_tabs( opts, ec::split( {
+            .id = "construction:body", .relation = "detail", .active = groups_id,
+            .children = std::move( parts ) } ) ),
+        .affordances = std::move( affordances ),
+        .focus_component = groups_id,
+        .focus_row = cursor < opts.constructs.size() ? opts.constructs[cursor].str() : std::string{},
+    };
 }
 
 } // namespace
@@ -817,96 +1049,17 @@ std::optional<construction_id> construction_menu( const bool blueprint )
     const nc_color color_stage = c_light_gray;
     ui_adaptor ui;
 
-    const auto interaction_snapshot = [&]() {
-        auto message = filter.empty() ? category_id.str() :
-                       string_format( _( "Filter: %s" ), filter );
-        auto snapshot = game_client::interaction_snapshot{
-            .kind = game_client::interaction_kind::choices,
-            .title = _( "Construction" ),
-            .message = std::move( message ),
-            .allow_cancel = true,
-        };
-        // A search replaces the category tabs with one "Searched" tab, as natively.
-        const auto add_tab = [&]( const std::string & id, const std::string & label,
-        const bool selected ) {
-            snapshot.panes.push_back( {
-                .id = id, .label = label, .role = selected ? "focused" : "category",
+    const auto screen = ec::screen_scope( ctxt, {
+        .role = "screen",
+        .view = [&]( const auto & /*state*/ )
+        {
+            return construction_view( {
+                .constructs = constructs, .buildable = construct_buildable, .categories = construct_cat,
+                .category_order = construct_cat_order, .inv = total_inv, .tabindex = tabindex, .select = select,
+                .filter_mode = filter_mode, .blueprint = blueprint, .hide_unconstructable = hide_unconstructable,
             } );
-            snapshot.choices.push_back( {
-                .id = "tab:" + id, .label = label, .selected = selected,
-            } );
-        };
-        if( filter_mode ) {
-            add_tab( construction_category_FILTER.str(), _( "Searched" ), true );
-        } else {
-            std::ranges::for_each( std::views::iota( 0, normal_tabcount ), [&]( const int tab ) {
-                const auto &cat = construct_cat[construct_cat_order[tab]];
-                add_tab( cat.id.str(), cat.name(), tab == tabindex );
-            } );
-        }
-        snapshot.field = game_client::interaction_field{
-            .id = "filter", .label = _( "Search:" ),
-            .description = remove_color_tags( construction_filter_help() ), .value = filter,
-        };
-        const auto indices = std::views::iota( std::size_t{ 0 }, constructs.size() );
-        std::ranges::transform( indices, std::back_inserter( snapshot.choices ),
-        [&]( const auto index ) {
-            const auto &group = constructs[index];
-            const auto buildable = construct_buildable[index];
-            return game_client::interaction_choice{
-                .id = game_client::opaque_interaction_id( "construction", { group.str() } ),
-                .label = group->name(),
-.denial = blueprint || buildable ? std::string{} :
-                _( "You can't build that!" ),
-                .enabled = blueprint || buildable,
-                .selectable = true,
-                .selected = static_cast<int>( index ) == select,
-                .highlighted = static_cast<int>( index ) == select,
-                .columns = {
-                    { .key = "favorite", .label = _( "Favorite" ), .value = is_favorite( group ) ? _( "yes" ) : _( "no" ) },
-                    { .key = "buildable", .label = _( "Buildable" ), .value = buildable ? _( "yes" ) : _( "no" ) },
-                },
-            };
-        } );
-        return snapshot;
-    };
-
-    // Publishes the rows now and renders each group's requirements only when a client reads them.
-    const auto prepare_menu = [&]() {
-        auto snapshot = interaction_snapshot();
-        const auto first_row = snapshot.choices.size() - constructs.size();
-        auto dependencies = std::vector<std::string>( first_row );
-        std::ranges::transform( std::views::iota( std::size_t{ 0 }, constructs.size() ),
-        std::back_inserter( dependencies ), [&]( const auto index ) {
-            return string_format( "%s:%d:%d", constructs[index].str(), construct_buildable[index] ? 1 : 0,
-                                  hide_unconstructable ? 1 : 0 );
-        } );
-        return game_client::prepare_interaction( ctxt, std::move( snapshot ), {
-            .dependency_keys = std::move( dependencies ),
-            .render = [first_row, groups = constructs, hide = hide_unconstructable, &total_inv]( const auto index )
-            {
-                if( index < first_row ) {
-                    return std::string{};
-                }
-                // Clients wrap the text themselves.
-                const auto unfolded = 10000;
-                auto stage = 0;
-                auto text = std::string{};
-                std::ranges::for_each( constructions_by_group( groups[index - first_row] ),
-                [&]( const construction * con ) {
-                    stage++;
-                    if( hide && !can_construct( *con ) ) {
-                        return;
-                    }
-                    const auto lines = construction_stage_lines( {
-                        .con = *con, .stage = stage, .inv = total_inv, .width = unfolded,
-                    } );
-                    text += ( text.empty() ? "" : "\n\n" ) + join( lines, "\n" );
-                } );
-                return remove_color_tags( text );
-            },
-        } );
-    };
+        },
+    } );
 
     const auto recalc_buffer = [&]() {
         const int hint_width = available_window_width;
@@ -955,51 +1108,14 @@ std::optional<construction_id> construction_menu( const bool blueprint )
             };
             add_header_line( current_group->name() );
             add_header_line( " " );
-            const auto origin_from_tile = []( const auto & tile ) -> std::optional<std::string> {
-                if( tile.src.empty() )
-                {
-                    return std::nullopt;
-                }
-                return enumerate_as_string( tile.src.begin(), tile.src.end(), []( const auto & source )
-                {
-                    return string_format( "'%s'", source.second->name() );
-                }, enumeration_conjunction::arrow );
-            };
-            const auto terrain_it = std::ranges::find_if( options,
-            []( const construction * con_variant ) {
-                return !con_variant->post_terrain.is_empty();
-            } );
-            const auto furniture_it = std::ranges::find_if( options,
-            []( const construction * con_variant ) {
-                return !con_variant->post_furniture.is_empty();
-            } );
-            const auto origin_line = terrain_it != options.end()
-                                     ? origin_from_tile( ( *terrain_it )->post_terrain.obj() )
-                                     : ( furniture_it != options.end()
-                                         ? origin_from_tile( ( *furniture_it )->post_furniture.obj() )
-                                         : std::nullopt );
-            const auto origin_to_display = origin_line.value_or( string_format( "'%s'",
-                                           _( "Bright Nights" ) ) );
+            const auto origin_to_display = construction_origin( options );
             add_header_line( colorize( _( "Origin: " ) + origin_to_display, c_light_blue ) );
             construct_separator_line = std::string( available_window_width,
                                                     static_cast<char>( LINE_OXOX ) );
             add_header_line( construct_separator_line );
-            const auto category_it = [&]() {
-                for( const construction *con_variant : options ) {
-                    const auto it = std::ranges::find_if( construct_cat,
-                    [&]( const construction_category & cat ) {
-                        return cat.id == con_variant->category;
-                    } );
-                    if( it != construct_cat.end() ) {
-                        return it;
-                    }
-                }
-                return construct_cat.end();
-            }
-            ();
-            if( category_it != construct_cat.end() ) {
+            if( const auto *const category = group_category( options, construct_cat ) ) {
                 add_header_line( colorize( _( "Category: " ), c_light_gray ) +
-                                 colorize( category_it->name(), c_magenta ) );
+                                 colorize( category->name(), c_magenta ) );
             }
             add_header_line( construct_separator_line );
             construct_buffers.push_back( header_buffer );
@@ -1524,33 +1640,22 @@ std::optional<construction_id> construction_menu( const bool blueprint )
 
         ui_manager::redraw();
 
-        auto action = std::string{};
-        {
-            const auto interaction = game_client::prepared_interaction_scope( ctxt, prepare_menu() );
-            action = ctxt.handle_input();
-        }
-        const auto &event = ctxt.get_raw_input();
-        if( event.interaction ) {
-            const auto &command = *event.interaction;
-            const auto snapshot = interaction_snapshot();
-            const auto choice = std::ranges::find( snapshot.choices, command.target_id,
-                                                   &game_client::interaction_choice::id );
-            const auto row = std::distance( snapshot.choices.begin(), choice ) -
-                             static_cast<std::ptrdiff_t>( snapshot.choices.size() - constructs.size() );
-            if( command.operation == game_client::interaction_operation::cancel ) {
-                action = "QUIT";
-            } else if( command.operation == game_client::interaction_operation::fill ) {
-                filter = command.value;
+        auto action = std::string{ ctxt.handle_input() };
+        if( const auto invoked = ec::invoked( ctxt.get_raw_input() ) ) {
+            const auto &args = invoked->args;
+            const auto &id = invoked->affordance_id;
+            const auto found = args.row ? std::ranges::find( constructs, *args.row,
+                               &construction_group_str_id::str ) :
+                               constructs.end();
+            if( id == construct_search && args.text ) {
+                filter = *args.text;
                 uistate.construction_filter = filter;
                 set_filter_mode( !filter.empty() );
                 update_info = true;
                 update_cat = true;
                 continue;
-            } else if( choice == snapshot.choices.end() ) {
-                continue;
-            } else if( command.target_id.starts_with( "tab:" ) ) {
-                const auto tab = std::ranges::find( construct_cat_order, command.target_id.substr( 4 ),
-                [&]( const size_t cat ) {
+            } else if( id == construct_tab && args.row ) {
+                const auto tab = std::ranges::find( construct_cat_order, *args.row, [&]( const size_t cat ) {
                     return construct_cat[cat].id.str();
                 } );
                 if( !filter_mode && tab != construct_cat_order.end() ) {
@@ -1559,9 +1664,20 @@ std::optional<construction_id> construction_menu( const bool blueprint )
                     update_cat = true;
                 }
                 continue;
-            } else if( command.operation == game_client::interaction_operation::choose ) {
-                select = static_cast<int>( row );
+            } else if( found == constructs.end() ) {
+                continue;
+            } else if( id == construct_select ) {
+                select = static_cast<int>( std::distance( constructs.begin(), found ) );
+                update_info = true;
+                continue;
+            } else if( id == construct_construct ) {
+                select = static_cast<int>( std::distance( constructs.begin(), found ) );
                 action = "CONFIRM";
+            } else if( id == construct_favorite ) {
+                select = static_cast<int>( std::distance( constructs.begin(), found ) );
+                action = "TOGGLE_FAVORITE";
+            } else {
+                continue;
             }
         }
         if( action == "FILTER" ) {

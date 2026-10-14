@@ -9,12 +9,13 @@
 #include "catalua_sol.h"
 #include "character.h"
 #include "character_functions.h"
-#include "client_interaction.h"
-#include "client_interaction_prepared.h"
 #include "color.h"
 #include "crafting.h"
 #include "crafting_quality.h"
 #include "cursesdef.h"
+#include "engine_client_component.h"
+#include "engine_client_requirements.h"
+#include "engine_client_world.h"
 #include "game.h"
 #include "game_inventory.h"
 #include "input.h"
@@ -290,117 +291,41 @@ auto crafting_filter_help() -> std::string
     return description;
 }
 
-struct crafting_interaction_options {
-    const std::vector<const recipe *> &current;
-    const std::vector<availability> &available;
-    const std::string &category;
-    const std::string &subcategory;
-    const std::string &filter;
-    int line;
-    bool batch;
-};
-
-auto crafting_interaction_snapshot( const crafting_interaction_options &opts )
--> game_client::interaction_snapshot
+/// The factors of the crafting speed for a batch of `recp`, the total first.
+auto craft_speed_modifiers( Character &crafter, const recipe &recp, const item &craft_preview,
+                            const int batch_size ) -> std::vector<engine_client::speed_modifier>
 {
-    auto category = normalized_names.contains( opts.category )
-                    ? normalized_names.at( opts.category ) : opts.category;
-    auto subcategory = normalized_names.contains( opts.subcategory )
-                       ? normalized_names.at( opts.subcategory ) : opts.subcategory;
-    auto message = string_format( "%s / %s", category, subcategory );
-    if( !opts.filter.empty() ) {
-        message += string_format( _( " | Filter: %s" ), opts.filter );
-    }
-    if( opts.batch ) {
-        message += _( " | Batch" );
-    }
-
-    auto snapshot = game_client::interaction_snapshot{
-        .kind = game_client::interaction_kind::choices,
-        .title = _( "Crafting" ),
-        .message = std::move( message ),
-        .allow_cancel = true,
-        .allow_set_count = true,
+    const auto best_bench = find_best_bench( crafter, craft_preview );
+    const auto bench_mult = workbench_crafting_speed_multiplier( craft_preview, best_bench );
+    const auto tools_mult = crafting_tools_speed_multiplier( crafter, recp );
+    const auto light_mult = lighting_crafting_speed_multiplier( crafter, recp );
+    const auto morale_mult = morale_crafting_speed_multiplier( crafter, recp );
+    const auto mutation_mult = crafter.mutation_value( "crafting_speed_modifier" );
+    const auto game_opt_mult = get_option<int>( "CRAFTING_SPEED_MULT" ) == 0
+                               ? 9999
+                               : 100.0f / get_option<int>( "CRAFTING_SPEED_MULT" );
+    const auto assistants = crafter.available_assistant_count( recp );
+    const auto base_total_moves = std::max( 1, recp.batch_time( batch_size, 1.0f, 0 ) );
+    const auto assist_total_moves = std::max( 1, recp.batch_time( batch_size, 1.0f, assistants ) );
+    const auto assist_mult = static_cast<float>( base_total_moves ) /
+                             static_cast<float>( assist_total_moves );
+    const auto total_mult_without_enchant = bench_mult * assist_mult * tools_mult * light_mult *
+                                            morale_mult * mutation_mult * game_opt_mult;
+    const auto enchant_mult_add = crafter.bonus_from_enchantments( total_mult_without_enchant,
+                                  enchantment_value_id( "CRAFTING_SPEED" ) );
+    const auto total_mult = total_mult_without_enchant + enchant_mult_add;
+    const auto enchant_mult = total_mult / total_mult_without_enchant;
+    return {
+        { .key = "total", .label = _( "Total" ), .multiplier = static_cast<float>( total_mult ) },
+        { .key = "workbench", .label = _( "Workbench" ), .multiplier = static_cast<float>( bench_mult ) },
+        { .key = "assistants", .label = _( "Assistants" ), .multiplier = assist_mult },
+        { .key = "tools", .label = _( "Tools" ), .multiplier = static_cast<float>( tools_mult ) },
+        { .key = "light", .label = _( "Light" ), .multiplier = static_cast<float>( light_mult ) },
+        { .key = "morale", .label = _( "Morale" ), .multiplier = static_cast<float>( morale_mult ) },
+        { .key = "traits", .label = _( "Traits" ), .multiplier = static_cast<float>( mutation_mult ) },
+        { .key = "misc", .label = _( "Misc" ), .multiplier = static_cast<float>( enchant_mult ) },
+        { .key = "game_option", .label = _( "Game option" ), .multiplier = static_cast<float>( game_opt_mult ) },
     };
-    // Batch mode lists the quantities of one recipe, so tabs and search do not apply.
-    if( !opts.batch ) {
-        const auto tab_choice = [&]( const std::string & prefix, const std::string & id,
-        const bool selected ) {
-            return game_client::interaction_choice{
-                .id = prefix + id, .label = normalized_names.at( id ), .selected = selected,
-            };
-        };
-        std::ranges::for_each( craft_cat_list, [&]( const auto & id ) {
-            const auto selected = id == opts.category;
-            snapshot.panes.push_back( {
-                .id = id, .label = normalized_names.at( id ),
-                .role = selected ? "focused" : "category",
-            } );
-            snapshot.choices.push_back( tab_choice( "tab:", id, selected ) );
-        } );
-        // The native subtabs are frozen while a search is active.
-        if( opts.filter.empty() ) {
-            std::ranges::for_each( craft_subcat_list.at( opts.category ), [&]( const auto & id ) {
-                auto choice = tab_choice( "subtab:", id, id == opts.subcategory );
-                choice.pane_id = opts.category;
-                snapshot.choices.push_back( std::move( choice ) );
-            } );
-        }
-        snapshot.field = game_client::interaction_field{
-            .id = "filter", .label = _( "Search:" ),
-            .description = remove_color_tags( crafting_filter_help() ), .value = opts.filter,
-        };
-    }
-    auto identity_counts = std::unordered_map<std::string, std::size_t> {};
-    const auto indices = std::views::iota( std::size_t{ 0 }, opts.current.size() );
-    std::ranges::transform( indices, std::back_inserter( snapshot.choices ), [&]( const auto index ) {
-        const auto *rec = opts.current[index];
-        const auto count = opts.batch ? index + 1 : std::size_t{ 1 };
-        const auto mode = opts.batch ? "batch" : "normal";
-        const auto base_identity = string_format( "%s:%s:%zu", rec->ident().str(), mode,
-                                   opts.batch ? count : 0 );
-        const auto occurrence = identity_counts[base_identity]++;
-        auto columns = std::vector<game_client::interaction_column> {
-            {
-                .key = "category", .label = _( "Category" ), .value = normalized_names.contains( rec->category )
-                ? normalized_names.at( rec->category ) : rec->category
-            },
-            {
-                .key = "subcategory", .label = _( "Subcategory" ), .value = normalized_names.contains( rec->subcategory )
-                ? normalized_names.at( rec->subcategory ) : rec->subcategory
-            },
-            { .key = "difficulty", .label = _( "Difficulty" ), .value = std::to_string( rec->difficulty ) },
-            { .key = "known", .label = _( "Known" ), .value = opts.available[index].known ? _( "yes" ) : _( "no" ) },
-            {
-                .key = "craftable", .label = _( "Craftable" ),
-                .value = opts.available[index].can_craft ? _( "yes" ) : _( "no" )
-            },
-            { .key = "batch", .label = _( "Batch" ), .value = std::to_string( count ) },
-        };
-        auto choice = game_client::interaction_choice{
-            .id = game_client::opaque_interaction_id( "recipe", {
-                rec->ident().str(), mode, opts.batch ? std::to_string( count ) : "",
-                std::to_string( occurrence )
-            } ),
-            .label = opts.batch ? string_format( _( "%2dx %s" ), count, rec->result_name( true ) )
-            : rec->result_name( true ),
-.denial = opts.available[index].can_craft || rec->is_nested() ? std::string{} :
-            _( "You can't do that!" ),
-            .pane_id = opts.batch ? std::nullopt : std::optional{ opts.category },
-            .enabled = opts.available[index].can_craft || rec->is_nested(),
-            .selectable = true,
-            .selected = static_cast<int>( index ) == opts.line,
-            .highlighted = static_cast<int>( index ) == opts.line,
-            .columns = std::move( columns ),
-        };
-        if( !rec->is_nested() ) {
-            choice.selected_count = count;
-            choice.minimum_count = 1;
-            choice.available_count = 50;
-        }
-        return choice;
-    } );
-    return snapshot;
 }
 
 struct list_nested_options {
@@ -663,61 +588,23 @@ static std::vector<std::string> recipe_info(
         };
 
         const auto craft_preview = recp.create_result();
-        const auto best_bench = find_best_bench( crafter, *craft_preview );
-        const auto bench_mult = workbench_crafting_speed_multiplier( *craft_preview, best_bench );
-        const auto tools_mult = crafting_tools_speed_multiplier( crafter, recp );
-        const auto light_mult = lighting_crafting_speed_multiplier( crafter, recp );
-        const auto morale_mult = morale_crafting_speed_multiplier( crafter, recp );
-        const auto mutation_mult = crafter.mutation_value( "crafting_speed_modifier" );
-        const auto game_opt_mult = get_option<int>( "CRAFTING_SPEED_MULT" ) == 0
-                                   ? 9999
-                                   : 100.0f / get_option<int>( "CRAFTING_SPEED_MULT" );
-        const auto assistants = crafter.available_assistant_count( recp );
-        const auto base_total_moves = std::max( 1, recp.batch_time( batch_size, 1.0f, 0 ) );
-        const auto assist_total_moves = std::max( 1, recp.batch_time( batch_size, 1.0f, assistants ) );
-        const auto assist_mult = static_cast<float>( base_total_moves ) /
-                                 static_cast<float>( assist_total_moves );
-        auto total_mult_without_enchant = bench_mult * assist_mult * tools_mult * light_mult * morale_mult *
-                                          mutation_mult * game_opt_mult;
-
-        const auto enchant_mult_add = crafter.bonus_from_enchantments( total_mult_without_enchant,
-                                      enchantment_value_id( "CRAFTING_SPEED" ) );
-
-        const auto total_mult = total_mult_without_enchant + enchant_mult_add;
-
-        const auto enchant_mult = total_mult / total_mult_without_enchant;
-
-        const std::array<std::pair<std::string, float>, 9> multipliers = { {
-                { _( "Total" ), total_mult },
-                { _( "Workbench" ), bench_mult },
-                { _( "Assistants" ), assist_mult },
-                { _( "Tools" ), tools_mult },
-                { _( "Light" ), light_mult },
-                { _( "Morale" ), morale_mult },
-                { _( "Traits" ), mutation_mult },
-                { _( "Misc" ), enchant_mult },
-                { _( "Game option" ), game_opt_mult }
-            }
-        };
-
+        const auto multipliers = craft_speed_modifiers( crafter, recp, *craft_preview, batch_size );
+        const auto &total = multipliers.front();
         auto multiplier_lines = std::vector<std::string>();
-        const auto total_percent = static_cast<int>( total_mult * 100 );
-        std::ranges::for_each( multipliers, [&]( const auto & entry ) {
-            if( entry.first == _( "Total" ) ) {
-                return;
-            }
-            const auto percent = static_cast<int>( entry.second * 100 );
+        const auto total_percent = static_cast<int>( total.multiplier * 100 );
+        std::ranges::for_each( multipliers | std::views::drop( 1 ), [&]( const auto & entry ) {
+            const auto percent = static_cast<int>( entry.multiplier * 100 );
             if( percent == 100 && !verbose_multipliers ) {
                 return;
             }
-            multiplier_lines.push_back( format_multiplier( entry.first, entry.second ) );
+            multiplier_lines.push_back( format_multiplier( entry.label, entry.multiplier ) );
         } );
 
         const auto show_total = verbose_multipliers || total_percent != 100 ||
                                 !multiplier_lines.empty();
         if( show_total ) {
             multiplier_lines.insert( multiplier_lines.begin(),
-                                     format_multiplier( _( "Total" ), total_mult ) );
+                                     format_multiplier( total.label, total.multiplier ) );
         }
 
         if( multiplier_lines.empty() && !verbose_multipliers ) {
@@ -830,65 +717,384 @@ static std::vector<std::string> recipe_info(
     return result;
 }
 
-struct crafting_prepare_options {
-    const input_context &ctxt;
+
+namespace
+{
+namespace ec = engine_client;
+
+constexpr auto craft_tab = "craft:tab";
+constexpr auto craft_subtab = "craft:subtab";
+constexpr auto craft_search = "craft:search";
+constexpr auto craft_select = "craft:select";
+constexpr auto craft_craft = "craft:craft";
+constexpr auto craft_batch = "craft:batch";
+constexpr auto craft_favorite = "craft:favorite";
+constexpr auto craft_hide = "craft:hide";
+constexpr auto recipes_id = "crafting:recipes";
+/// The largest batch the native batch list offers.
+constexpr auto largest_batch = 50;
+
+/// The ids of the rows of the recipe list: a recipe's own id (a second row of it numbered), or in a batch
+/// the batch size.
+auto recipe_row_ids( const std::vector<const recipe *> &current,
+                     const bool batch ) -> std::vector<std::string>
+{
+    auto seen = std::unordered_map<std::string, std::size_t> {};
+    return std::views::iota( std::size_t{ 0 }, current.size() ) | std::views::transform( [&](
+    const auto index ) -> std::string {
+        if( batch ) { return std::to_string( index + 1 ); }
+        const auto &id = current[index]->ident().str();
+        const auto occurrence = seen[id]++;
+        return occurrence == 0 ? id : string_format( "%s#%zu", id, occurrence );
+    } ) | std::ranges::to<std::vector>();
+}
+
+/// The result of `rec` as the native item info previews it: with its recipe and the Lua hooks that change a result.
+auto result_preview( Character &crafter, const recipe &rec, const int count ) -> detached_ptr<item>
+{
+    auto preview = rec.create_result();
+    preview->set_var( "recipe_exemplar", rec.ident().str() );
+    apply_craft_result_hooks( { .crafter = crafter, .rec = rec, .result = *preview, .batch_size = count } );
+    return preview;
+}
+
+/// The item info of a preview for `count`, with the category of the recipe in the place of the item's.
+auto result_info( const recipe &rec, const item &preview, const int count ) -> std::vector<iteminfo>
+{
+    std::vector<iteminfo> info = preview.info( count );
+    const auto category_name = normalized_names.contains( rec.category )
+                               ? normalized_names[rec.category]
+                               : rec.category;
+    const auto subcategory_name = normalized_names.contains( rec.subcategory )
+                                  ? normalized_names[rec.subcategory]
+                                  : rec.subcategory;
+    const auto category_label = subcategory_name.empty()
+                                ? category_name
+                                : string_format( "%s / %s", category_name, subcategory_name );
+    const auto category_label_upper = to_upper_case( category_label );
+    const auto category_name_label = _( "Category: " );
+    const auto category_entry = std::ranges::find_if( info, [&]( const iteminfo & entry ) {
+        return entry.sType == "BASE" && entry.sName == category_name_label;
+    } );
+    if( category_entry != info.end() ) {
+        category_entry->sFmt = string_format( "<color_magenta>%s</color>", category_label_upper );
+    }
+    return info;
+}
+
+/// A native sentence as plain text; its translation is the one the native screen prints.
+auto plain( const std::string &native ) -> std::string { return trim( remove_color_tags( native ) ); }
+
+struct crafting_detail_options {
     Character &crafter;
-    const crafting_interaction_options &list;
+    const inventory &inv;
+    const recipe &rec;
+    const availability &avail;
+    const recipe_subset &known_recipes;
+    int batch_size;
     bool show_unavailable;
 };
 
-/// Publishes the visible rows now and renders each recipe's details only when a client reads its page.
-auto prepare_crafting_interaction( const crafting_prepare_options &opts ) ->
-game_client::prepared_interaction_handle
+/// What a nested category tells besides its name.
+auto nested_detail( const crafting_detail_options &opts ) -> ec::component
 {
-    struct frozen_rows {
-        std::vector<const recipe *> recipes;
-        std::vector<availability> available;
-        std::string qry_comps;
-        std::size_t first_recipe;
-        bool batch;
-        bool show_unavailable;
-    };
-    const auto &list = opts.list;
-    auto snapshot = crafting_interaction_snapshot( list );
-    const auto first_recipe = snapshot.choices.size() - list.current.size();
-    const auto qry = trim( list.filter );
-    auto dependencies = std::vector<std::string>( first_recipe );
-    for( const auto index : std::views::iota( std::size_t{ 0 }, list.current.size() ) ) {
-        const auto &avail = list.available[index];
-        const auto flags = ( avail.known ? 1 : 0 ) | ( avail.can_craft ? 2 : 0 ) |
-                           ( avail.can_craft_non_rotten ? 4 : 0 ) | ( avail.has_all_skills ? 8 : 0 ) |
-                           ( opts.show_unavailable ? 16 : 0 );
-        dependencies.push_back( string_format( "%s:%zu:%d:%s", list.current[index]->ident().str(),
-                                               list.batch ? index + 1 : 1, flags, qry ) );
-    }
-    auto rows = std::make_shared<const frozen_rows>( frozen_rows{
-        .recipes = list.current, .available = list.available,
-        .qry_comps = qry.starts_with( "c:" ) ? qry.substr( 2 ) : std::string{},
-        .first_recipe = first_recipe, .batch = list.batch, .show_unavailable = opts.show_unavailable,
+    const auto &nested = opts.rec;
+    const auto known = std::ranges::count_if( nested.nested_category_data, [&](
+    const recipe_id & nested_id ) {
+        return opts.known_recipes.contains( nested_id.obj() );
     } );
-    return game_client::prepare_interaction( opts.ctxt, std::move( snapshot ), {
-        .dependency_keys = std::move( dependencies ),
-        .render = [rows, &crafter = opts.crafter]( const auto index )
-        {
-            if( index < rows->first_recipe ) {
-                return std::string{};
-            }
-            const auto row = index - rows->first_recipe;
-            const auto &rec = *rows->recipes[row];
-            const auto &avail = rows->available[row];
-            auto text = rec.description.translated();
-            if( !rec.is_nested() ) {
-                // Clients wrap the text themselves.
-                const auto unfolded = 10000;
-                text += "\n" + join( recipe_info( rec, avail, crafter, rows->show_unavailable, rows->qry_comps,
-                                                  rows->batch ? static_cast<int>( row ) + 1 : 1, unfolded,
-                                                  avail.color( true ) ), "\n" );
-            }
-            return remove_color_tags( text );
-        },
+    auto stats = std::vector<ec::panel_stat> {
+        { .key = "known_recipes", .label = _( "Known recipes" ), .value = std::to_string( known ) },
+    };
+    if( !nested.src.empty() && nested.src.back().second.is_valid() ) {
+        stats.push_back( { .key = "origin", .label = _( "Origin" ), .value = nested.src.back().second.obj().name() } );
+    }
+    return ec::panel( {
+        .id = "crafting:detail", .title = nested.result_name(), .stats = std::move( stats ),
+        .child = ec::component{ .id = "crafting:description", .body = ec::text_body{ .markup = nested.description.translated() } },
     } );
 }
+
+/// The facts of one recipe for a batch, from the recipe and the crafter and not from the screen's text.
+auto recipe_detail( const crafting_detail_options &opts ) -> ec::component
+{
+    if( opts.rec.is_nested() ) { return nested_detail( opts ); }
+    const auto &rec = opts.rec;
+    const auto &crafter = opts.crafter;
+    const auto batch = opts.batch_size;
+    const auto &inv = opts.inv;
+    auto stats = std::vector<ec::panel_stat> {};
+    const auto add_stat = [&]( ec::panel_stat stat ) { stats.push_back( std::move( stat ) ); };
+
+    const auto expected_turns = crafter.expected_time_to_craft( rec, batch ) / to_moves<int>( 1_turns );
+    add_stat( { .key = "time", .label = _( "Time to complete" ),
+                .value = to_string( time_duration::from_turns( expected_turns ) ) } );
+    add_stat( { .key = "batch_savings", .label = _( "Batch time savings" ), .value = rec.batch_savings_string() } );
+
+    std::ranges::move( ec::speed_stats( craft_speed_modifiers( opts.crafter, rec,
+                                        *rec.create_result_for_display(), batch ),
+                                        get_option<bool>( "VERBOSE_CRAFTING_SPEED_MODIFIERS" ) ), std::back_inserter( stats ) );
+
+    if( rec.makes_amount() > 1 ) {
+        add_stat( { .key = "makes", .label = _( "Recipe makes" ), .value = std::to_string( rec.makes_amount() ) } );
+    }
+    add_stat( { .key = "dark", .label = _( "Craftable in the dark?" ),
+                .value = rec.has_flag( flag_BLIND_NO_EFFECT ) ? _( "Effortless" ) :
+                         rec.has_flag( flag_BLIND_EASY ) ? _( "Easy" ) :
+                         rec.has_flag( flag_BLIND_HARD ) ? _( "Awkward" ) :
+                         rec.has_flag( flag_BLIND_NEARLY_IMPOSSIBLE ) ? _( "Very Hard" ) :
+                         rec.has_flag( flag_BLIND_IMPOSSIBLE ) ? _( "Impossible" ) : _( "Reasonable" ) } );
+    add_stat( { .key = "nearby", .label = _( "Nearby" ), .value = std::to_string( inv.count_item( rec.result() ) ) } );
+    if( !crafter.knows_recipe( &rec ) ) {
+        add_stat( { .key = "recipe_id", .label = ec::caption( _( "id: " ) ), .value = rec.ident().str() } );
+    }
+
+    auto warnings = std::vector<std::string> {};
+    const auto &avail = opts.avail;
+    if( avail.can_craft && !avail.can_craft_non_rotten ) {
+        warnings.push_back( plain( _( "<color_red>Will use rotten ingredients</color>\n" ) ) );
+    }
+    if( avail.can_craft && rec.deduped_requirements().is_too_complex() ) {
+        warnings.push_back( plain( _( "Due to the complex overlapping requirements, this "
+                                      "recipe <color_yellow>may appear to be craftable "
+                                      "when it is not</color>.\n" ) ) );
+    }
+    if( !avail.can_craft && avail.apparently_craftable && avail.known ) {
+        warnings.push_back( plain( _( "<color_red>Cannot be crafted because the same item is needed "
+                                      "for multiple components</color>\n" ) ) );
+    }
+    if( !avail.known ) { warnings.push_back( plain( _( "<color_red>Not known</color>\n" ) ) ); }
+    if( !crafter.knows_recipe( &rec ) ) { warnings.push_back( plain( _( "Recipe not memorized yet\n" ) ) ); }
+
+    auto parts = std::vector<ec::component> {};
+    parts.push_back( { .id = "crafting:description", .body = ec::text_body{ .markup = rec.description.translated() } } );
+    // The item the crafter would get, as the native item info describes it.
+    const auto preview = result_preview( opts.crafter, rec, batch );
+    parts.push_back( { .id = "crafting:result", .label = preview->tname( batch ),
+                       .body = ec::text_body{ .markup = format_item_info( result_info( rec, *preview, batch ), {} ) } } );
+    if( !warnings.empty() ) {
+        parts.push_back( { .id = "crafting:warnings", .body = ec::text_body{ .markup = join( warnings, "\n" ), .tone = "bad" } } );
+    }
+    const auto add_part = [&]( std::optional<ec::component> part ) {
+        if( part ) { parts.push_back( std::move( *part ) ); }
+    };
+    add_part( ec::skill_requirements( {
+        .id = "crafting:primary_skill", .label = _( "Primary skill" ),
+.skills = rec.skill_used.is_null() ? std::vector<std::pair<skill_id, int>> {} :
+        std::vector{ std::pair{ rec.skill_used, rec.difficulty } },
+        .crafter = crafter,
+    } ) );
+    add_part( ec::skill_requirements( {
+        .id = "crafting:other_skills", .label = _( "Other skills" ),
+        .skills = { rec.required_skills.begin(), rec.required_skills.end() }, .crafter = crafter,
+    } ) );
+    const auto requirements = ec::requirement_view_options{
+        .requirements = rec.simple_requirements(), .available = inv,
+        .filter = rec.get_component_filter(), .batch = batch,
+    };
+    parts.push_back( ec::tool_requirements( requirements ) );
+    parts.push_back( ec::component_requirements( requirements ) );
+
+    if( rec.has_byproducts() ) {
+        auto byproducts = ec::list( {
+            .id = "crafting:byproducts",
+            .rows = rec.byproducts | std::views::transform( [&]( const auto & byproduct )
+            {
+                const auto &type = *byproduct.first;
+                const auto amount = byproduct.second * batch * ( type.count_by_charges() ? type.charges_default() :
+                        1 );
+                return ec::row{
+                    .id = byproduct.first.str(), .label = type.nname( type.count_by_charges() ? 1 : static_cast<unsigned int>( amount ) ),
+                    .selectable = false, .columns = { { .key = "amount", .label = _( "Amount" ), .value = std::to_string( amount ), .color = {} } } };
+            } ) | std::ranges::to<std::vector>(), .selection = "none" } );
+        byproducts.label = ec::caption( _( "Byproducts:\n" ) );
+        parts.push_back( std::move( byproducts ) );
+    }
+    if( !crafter.knows_recipe( &rec ) ) {
+        const auto books = opts.show_unavailable ? crafting::get_books_for_recipe( &rec ) :
+                           crafting::get_books_for_recipe( crafter, inv, &rec );
+        if( !books.empty() ) {
+            auto written_in = ec::list( {
+                .id = "crafting:books",
+                .rows = books | std::views::transform( []( const auto & book )
+                {
+                    return ec::row{ .id = book.str(), .label = item::nname( book ), .selectable = false };
+                } ) | std::ranges::to<std::vector>(), .selection = "none" } );
+            written_in.label = _( "Written in" );
+            parts.push_back( std::move( written_in ) );
+        }
+        add_part( ec::skill_requirements( {
+            .id = "crafting:autolearn", .label = ec::caption( _( "Autolearn when all are met:\n" ) ),
+            .skills = { rec.autolearn_requirements.begin(), rec.autolearn_requirements.end() }, .crafter = crafter,
+        } ) );
+    }
+    return ec::panel( {
+        .id = "crafting:detail", .title = rec.result_name(), .stats = std::move( stats ),
+        .child = ec::split( { .id = "crafting:facts", .children = std::move( parts ) } ),
+    } );
+}
+
+struct crafting_view_options {
+    Character &crafter;
+    const inventory &inv;
+    const std::vector<const recipe *> &current;
+    const std::vector<int> &indent;
+    const std::vector<availability> &available;
+    const recipe_subset &known_recipes;
+    const recipe_subset &all_recipes;
+    const std::string &category;
+    const std::string &subcategory;
+    const std::string &filter;
+    const std::map<std::string, bool> &unread_categories;
+    const std::map<std::string, std::map<std::string, bool>> &unread_subcategories;
+    int line;
+    bool batch;
+    bool show_unavailable;
+    bool highlight_unread;
+    bool filtered_unread;
+};
+
+auto flagged( const std::map<std::string, bool> &flags, const std::string &key ) -> bool
+{
+    const auto found = flags.find( key );
+    return found != flags.end() && found->second;
+}
+
+/// How the native list colors a recipe, in words: ready, strained (craftable with rotten ingredients or too
+/// little skill), unlearned (all there but the recipe is not known) or missing.
+auto availability_state( const availability &avail ) -> std::string
+{
+    return avail.can_craft ? ( avail.can_craft_non_rotten &&
+                               avail.has_all_skills ? _( "Ready" ) : _( "Strained" ) ) :
+           avail.could_craft_if_knew && avail.has_all_skills ? _( "Unlearned" ) : _( "Missing" );
+}
+
+/// The tabs of the screen around `body`: categories over subcategories, or the one tab that a search or a
+/// batch replaces them with.
+auto crafting_tabs( const crafting_view_options &opts, ec::component body ) -> ec::component
+{
+    if( opts.batch || !opts.filter.empty() ) {
+        return ec::tabs( {
+            .id = "crafting:tabs",
+            .tabs = {
+opts.batch ? ec::tab_entry{ .id = "batch", .label = _( "Batch" ), .selected = true } :
+                ec::tab_entry{ .id = "search", .label = _( "Searched" ), .selected = true, .enabled = true, .unread = opts.filtered_unread }
+            },
+            .child = std::move( body ),
+        } );
+    }
+    const auto &shown = opts.show_unavailable ? opts.all_recipes : opts.known_recipes;
+    const auto categories = craft_cat_list | std::views::transform( [&]( const std::string & id ) {
+        return ec::tab_entry{ .id = id, .label = normalized_names.at( id ), .selected = id == opts.category,
+                              .unread = flagged( opts.unread_categories, id ) };
+    } ) | std::ranges::to<std::vector>();
+    const auto unread = opts.unread_subcategories.find( opts.category );
+    const auto subcategories = craft_subcat_list.at( opts.category ) | std::views::transform( [&](
+    const std::string & id ) {
+        return ec::tab_entry{ .id = id, .label = normalized_names.at( id ), .selected = id == opts.subcategory,
+                              .enabled = !shown.empty_category( opts.category, id != "CSC_ALL" ? id : "" ),
+                              .unread = unread != opts.unread_subcategories.end() && flagged( unread->second, id ) };
+    } ) | std::ranges::to<std::vector>();
+    return ec::tabs( {
+        .id = "crafting:tabs", .tabs = categories, .select = craft_tab,
+        .child = ec::tabs( { .id = "crafting:subtabs", .tabs = subcategories, .select = craft_subtab, .child = std::move( body ) } ),
+    } );
+}
+
+auto recipe_rows( const crafting_view_options &opts,
+                  const std::vector<std::string> &ids ) -> std::vector<ec::row>
+{
+    auto rows = std::vector<ec::row> {};
+    for( const auto index : std::views::iota( std::size_t{ 0 }, opts.current.size() ) ) {
+        const auto &rec = *opts.current[index];
+        const auto &avail = opts.available[index];
+        const auto enabled = avail.can_craft || rec.is_nested();
+        auto entry = ec::row{
+            .id = ids[index],
+            .label = opts.batch ? string_format( _( "%2dx %s" ), static_cast<int>( index ) + 1, rec.result_name() ) : rec.result_name(),
+.denial = enabled ? std::string{} :
+            _( "You can't do that!" ),
+            .enabled = enabled, .selected = static_cast<int>( index ) == opts.line,
+            .favorite = uistate.favorite_recipes.contains( rec.ident() ),
+        };
+        if( !opts.batch && opts.indent[index] > 0 ) {
+            // The nearest row above that is one level up.
+            const auto above = std::views::iota( std::size_t{ 0 }, index ) | std::views::reverse;
+            const auto parent = std::ranges::find_if( above, [&]( const auto before ) { return opts.indent[before] < opts.indent[index]; } );
+            if( parent != above.end() ) { entry.parent_id = ids[*parent]; }
+        }
+        if( !opts.batch && opts.highlight_unread && avail.known &&
+            !uistate.read_recipes.count( rec.ident() ) ) {
+            const auto fresh = pgettext( "crafting gui", "NEW!" );
+            entry.columns.push_back( { .key = "unread", .label = fresh, .value = fresh, .color = {} } );
+        }
+        if( !avail.known ) {
+            entry.columns.push_back( { .key = "known", .label = _( "Known" ), .value = _( "No" ), .color = {} } );
+        }
+        if( rec.is_nested() ) {
+            entry.toggled = uistate.expanded_recipes.contains( rec.ident() );
+        } else {
+            entry.columns.push_back( { .key = "availability", .label = _( "Available" ), .value = availability_state( avail ),
+                                       .color = string_from_color( avail.color( true ) ) } );
+            entry.look = ec::world::item_appearance( *rec.create_result_for_display() );
+            entry.minimum_count = 1;
+            entry.max = largest_batch;
+        }
+        rows.push_back( std::move( entry ) );
+    }
+    return rows;
+}
+
+/// The screen from the crafter and the screen's model state, which the loop below keeps current.
+auto crafting_view( const crafting_view_options &opts ) -> ec::screen_view
+{
+    const auto ids = recipe_row_ids( opts.current, opts.batch );
+    const auto row_arg = ec::arg_shape{ .row = ec::row_shape{ .component_id = recipes_id } };
+    auto affordances = std::vector<ec::affordance> {
+        ec::invoke_affordance( { .id = craft_select, .label = _( "Select" ), .args = row_arg, .role = "select" } ),
+        ec::invoke_affordance( { .id = craft_craft, .label = pgettext( "crafting gui", "Craft" ), .args = row_arg } ),
+        ec::invoke_affordance( {
+            .id = craft_batch, .label = pgettext( "crafting gui", "Batch" ),
+            .args = { .row = row_arg.row, .count = ec::count_shape{ .min = 1, .max = largest_batch } } } ),
+    };
+    auto recipes = ec::list( { .id = recipes_id, .rows = recipe_rows( opts, ids ), .selection = "single",
+                               .activate = craft_craft, .filterable = !opts.batch } );
+    std::ranges::copy( std::array{ craft_select, craft_batch }, std::back_inserter(
+                           recipes.affordances ) );
+    if( !opts.batch ) {
+        affordances.push_back( ec::invoke_affordance( { .id = craft_tab, .label = _( "Category" ),
+                               .args = { .row = ec::row_shape{ .component_id = "crafting:tabs" } } } ) );
+        if( opts.filter.empty() ) {
+            affordances.push_back( ec::invoke_affordance( { .id = craft_subtab, .label = _( "Subcategory" ),
+                                   .args = { .row = ec::row_shape{ .component_id = "crafting:subtabs" } } } ) );
+        }
+        affordances.push_back( ec::invoke_affordance( { .id = craft_search, .label = pgettext( "crafting gui", "Filter" ),
+                               .args = { .text = ec::text_shape{} } } ) );
+        affordances.push_back( ec::invoke_affordance( { .id = craft_favorite, .label = pgettext( "crafting gui", "Favorite" ), .args = row_arg } ) );
+        affordances.push_back( ec::invoke_affordance( { .id = craft_hide, .label = pgettext( "crafting gui", "Show/hide" ), .args = row_arg } ) );
+        std::ranges::copy( std::array{ craft_search, craft_favorite, craft_hide }, std::back_inserter(
+                               recipes.affordances ) );
+    }
+    const auto cursor = static_cast<std::size_t>( opts.line );
+    auto parts = ec::children_of( std::move( recipes ) );
+    if( cursor < opts.current.size() ) {
+        parts.push_back( recipe_detail( {
+            .crafter = opts.crafter, .inv = opts.inv, .rec = *opts.current[cursor], .avail = opts.available[cursor],
+            .known_recipes = opts.known_recipes, .batch_size = opts.batch ? opts.line + 1 : 1, .show_unavailable = opts.show_unavailable,
+        } ) );
+    }
+    return {
+        .title = _( "Crafting" ),
+        .root = crafting_tabs( opts, ec::split( {
+            .id = "crafting:body", .relation = "detail", .active = recipes_id,
+            .children = std::move( parts ) } ) ),
+        .affordances = std::move( affordances ),
+        .focus_component = recipes_id,
+        .focus_row = cursor < ids.size() ? ids[cursor] : std::string{},
+    };
+}
+
+} // namespace
 
 static input_context make_crafting_context( bool highlight_unread_recipes )
 {
@@ -971,36 +1177,11 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
         if( item_info_cache.last_recipe != rec || item_info_cache.batch_size != count ) {
             item_info_cache.last_recipe = rec;
             item_info_cache.batch_size = count;
-            item_info_cache.dummy = rec->create_result();
-            item_info_cache.dummy->set_var( "recipe_exemplar", rec->ident().str() );
-            apply_craft_result_hooks( {
-                .crafter = crafter,
-                .rec = *rec,
-                .result = *item_info_cache.dummy,
-                .batch_size = count
-            } );
+            item_info_cache.dummy = result_preview( crafter, *rec, count );
             item_info_scroll = 0;
             item_info_scroll_popup = 0;
         }
-        std::vector<iteminfo> info = item_info_cache.dummy->info( count );
-        const auto category_name = normalized_names.contains( rec->category )
-                                   ? normalized_names[rec->category]
-                                   : rec->category;
-        const auto subcategory_name = normalized_names.contains( rec->subcategory )
-                                      ? normalized_names[rec->subcategory]
-                                      : rec->subcategory;
-        const auto category_label = subcategory_name.empty()
-                                    ? category_name
-                                    : string_format( "%s / %s", category_name, subcategory_name );
-        const auto category_label_upper = to_upper_case( category_label );
-        const auto category_name_label = _( "Category: " );
-        const auto category_entry = std::ranges::find_if( info,
-        [&]( const iteminfo & entry ) {
-            return entry.sType == "BASE" && entry.sName == category_name_label;
-        } );
-        if( category_entry != info.end() ) {
-            category_entry->sFmt = string_format( "<color_magenta>%s</color>", category_label_upper );
-        }
+        std::vector<iteminfo> info = result_info( *rec, *item_info_cache.dummy, count );
         item_info_data data( item_info_cache.dummy->tname( count ),
                              item_info_cache.dummy->type_name( count ),
                              info, {}, scroll_pos );
@@ -1343,6 +1524,21 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
                 draw_item_info( w_iteminfo, data );
             }
         }
+    } );
+
+    const auto screen = ec::screen_scope( ctxt, {
+        .role = "screen",
+        .view = [&]( const auto & /*state*/ )
+        {
+            return crafting_view( {
+                .crafter = crafter, .inv = crafting_inv, .current = current, .indent = indent, .available = available,
+                .known_recipes = available_recipes, .all_recipes = all_recipes, .category = tab.cur(),
+                .subcategory = subtab.cur(), .filter = filterstring, .unread_categories = is_cat_unread,
+                .unread_subcategories = is_subcat_unread, .line = line, .batch = batch,
+                .show_unavailable = show_unavailable, .highlight_unread = highlight_unread_recipes,
+                .filtered_unread = is_filtered_unread,
+            } );
+        },
     } );
 
     do {
@@ -1726,64 +1922,58 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
 
         ui_manager::redraw();
         const int scroll_recipe_info_lines = catacurses::getmaxy( w_iteminfo ) - 4;
-        auto action = std::string{};
-        const auto list = crafting_interaction_options{
-            .current = current,
-            .available = available,
-            .category = tab.cur(),
-            .subcategory = subtab.cur(),
-            .filter = filterstring,
-            .line = line,
-            .batch = batch,
-        };
-        {
-            const auto interaction = game_client::prepared_interaction_scope( ctxt,
-            prepare_crafting_interaction( {
-                .ctxt = ctxt, .crafter = crafter, .list = list, .show_unavailable = show_unavailable
-            } ) );
-            action = ctxt.handle_input();
-        }
-        const auto &event = ctxt.get_raw_input();
-        if( event.interaction ) {
-            const auto &command = *event.interaction;
-            const auto snapshot = crafting_interaction_snapshot( list );
-            const auto choice = std::ranges::find( snapshot.choices, command.target_id,
-                                                   &game_client::interaction_choice::id );
-            const auto row = std::distance( snapshot.choices.begin(), choice ) -
-                             static_cast<int>( snapshot.choices.size() - current.size() );
-            if( command.operation == game_client::interaction_operation::cancel ) {
-                action = "QUIT";
-            } else if( command.operation == game_client::interaction_operation::fill ) {
-                filterstring = command.value;
+        auto action = std::string{ ctxt.handle_input() };
+        if( const auto invoked = ec::invoked( ctxt.get_raw_input() ) ) {
+            const auto &args = invoked->args;
+            const auto ids = recipe_row_ids( current, batch );
+            const auto found = args.row ? std::ranges::find( ids, *args.row ) : ids.end();
+            const auto row = static_cast<int>( std::distance( ids.begin(), found ) );
+            const auto &id = invoked->affordance_id;
+            if( id == craft_search && args.text && !batch ) {
+                filterstring = *args.text;
                 recalc = true;
                 recalc_unread = highlight_unread_recipes;
                 continue;
-            } else if( choice == snapshot.choices.end() ) {
-                continue;
-            } else if( command.target_id.starts_with( "tab:" ) ) {
-                while( tab.cur() != command.target_id.substr( 4 ) ) {
+            } else if( id == craft_tab && args.row && !batch &&
+                       std::ranges::contains( craft_cat_list, *args.row ) ) {
+                while( tab.cur() != *args.row ) {
                     tab.next();
                 }
                 subtab = list_circularizer<std::string>( craft_subcat_list[tab.cur()] );
                 recalc = true;
                 continue;
-            } else if( command.target_id.starts_with( "subtab:" ) ) {
-                while( subtab.cur() != command.target_id.substr( 7 ) ) {
+            } else if( id == craft_subtab && args.row && !batch && filterstring.empty() &&
+                       std::ranges::contains( craft_subcat_list[tab.cur()], *args.row ) ) {
+                while( subtab.cur() != *args.row ) {
                     subtab.next();
                 }
                 recalc = true;
                 continue;
-            } else if( command.operation == game_client::interaction_operation::choose ) {
-                line = static_cast<int>( row );
+            } else if( found == ids.end() ) {
+                continue;
+            } else if( id == craft_select ) {
+                line = row;
+                user_moved_line = highlight_unread_recipes;
+                continue;
+            } else if( id == craft_craft ) {
+                line = row;
                 action = "CONFIRM";
-            } else if( command.operation == game_client::interaction_operation::set_count ) {
-                semantic_batch_line = static_cast<int>( *command.count ) - 1;
+            } else if( id == craft_favorite ) {
+                line = row;
+                action = "TOGGLE_FAVORITE";
+            } else if( id == craft_hide ) {
+                line = row;
+                action = "HIDE_SHOW_RECIPE";
+            } else if( id == craft_batch && args.count && !current[row]->is_nested() ) {
+                semantic_batch_line = static_cast<int>( *args.count ) - 1;
                 if( batch ) {
                     recalc = true;
                     continue;
                 }
-                line = static_cast<int>( row );
+                line = row;
                 action = "CYCLE_BATCH";
+            } else {
+                continue;
             }
         }
         if( action == "SCROLL_RECIPE_INFO_UP" ) {

@@ -1,72 +1,436 @@
 {
   "valid": [
     {
-      "name": "construction menu: tabs over the buildable rows",
-      "def": "tabs",
+      "name": "Construction screen",
+      "def": "screen",
       "value": {
-        "id": "tabs",
-        "kind": "tabs",
-        "affordances": [
-          "bn:choose:tabs"
-        ],
-        "tabs": [
-          {
-            "id": "tab:ALL",
-            "label": "All",
-            "selected": false,
-            "enabled": true
-          },
-          {
-            "id": "tab:WALLS",
-            "label": "Walls",
-            "selected": true,
-            "enabled": true
-          }
-        ],
-        "select": "bn:choose:tabs",
-        "child": {
-          "id": "list",
-          "kind": "list",
+        "screen_id": "screen:8",
+        "role": "screen",
+        "title": "Construction",
+        "root": {
+          "id": "construction:tabs",
+          "kind": "tabs",
           "affordances": [
-            "bn:choose:list"
+            "construct:tab"
           ],
-          "columns": [
+          "tabs": [
             {
-              "key": "favorite",
-              "label": "Favorite"
+              "id": "FAVORITE",
+              "label": "Favorite",
+              "selected": true,
+              "enabled": true
             },
             {
-              "key": "buildable",
-              "label": "Buildable"
-            }
-          ],
-          "rows": [
+              "id": "ALL",
+              "label": "All",
+              "selected": false,
+              "enabled": true
+            },
             {
-              "id": "construction:4f2a",
-              "label": "Build Wooden Wall",
-              "description": "Wooden Wall\n\nStage/Variant #1: wooden wall\nMove cost: 0\nBash str: 12 - 40\nResult: A wall made of wood.\nRequired skills: fabrication (1)\nRequires: floor\nTime to complete: 1 h 30 m\nTools required:\n  hammer\nComponents required:\n  2x4 (10)\n  nail (20)",
-              "denial": "",
-              "enabled": true,
-              "selectable": true,
-              "selected": true,
-              "columns": [
-                {
-                  "key": "favorite",
-                  "label": "Favorite",
-                  "value": "no"
-                },
-                {
-                  "key": "buildable",
-                  "label": "Buildable",
-                  "value": "yes"
-                }
-              ]
+              "id": "CONSTRUCT",
+              "label": "Constructions",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "WORKSHOP",
+              "label": "Workshop",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "FURN",
+              "label": "Furniture",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "DIG",
+              "label": "Digging and Mining",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "REPAIR",
+              "label": "Repairing",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "REINFORCE",
+              "label": "Reinforcing",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "DECORATE",
+              "label": "Decorative",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "FARM_WOOD",
+              "label": "Farming and Woodcutting",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "WINDOWS",
+              "label": "Windows",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "RECREATION",
+              "label": "Place Recreational Furniture",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "OTHER",
+              "label": "Others",
+              "selected": false,
+              "enabled": true
             }
           ],
-          "total": 1,
-          "selection": "single",
-          "activate": "bn:choose:list"
+          "select": "construct:tab",
+          "child": {
+            "id": "construction:body",
+            "kind": "split",
+            "relation": "detail",
+            "active": "construction:groups",
+            "children": [
+              {
+                "id": "construction:groups",
+                "kind": "list",
+                "affordances": [
+                  "construct:construct",
+                  "construct:favorite",
+                  "construct:search"
+                ],
+                "columns": [],
+                "rows": [],
+                "total": 0,
+                "selection": "single",
+                "activate": "construct:construct",
+                "filterable": true
+              }
+            ]
+          }
+        },
+        "affordances": [
+          {
+            "id": "construct:select",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "role": "select",
+            "args": {
+              "row": {
+                "component_id": "construction:groups"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "construct:construct",
+            "label": "Construct",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "construction:groups"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "construct:favorite",
+            "label": "Favorite",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "construction:groups"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "construct:search",
+            "label": "Search",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "construct:tab",
+            "label": "Category",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "construction:tabs"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Move cursor up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Move cursor down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Move tab right",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Move tab left",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TAB",
+            "label": "Move tab right",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "BACKTAB",
+            "label": "Move tab left",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_UP",
+            "label": "Page up",
+            "keys": [
+              "PPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_DOWN",
+            "label": "Page down",
+            "keys": [
+              "NPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          },
+          {
+            "id": "TOGGLE_UNAVAILABLE_CONSTRUCTIONS",
+            "label": "Toggle unavailable constructions",
+            "keys": [
+              ";"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "TOGGLE_FAVORITE",
+            "label": "Toggle construction as favorite",
+            "keys": [
+              "*"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "FILTER",
+            "label": "Filter",
+            "keys": [
+              "f",
+              "F",
+              "/"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RESET_FILTER",
+            "label": "Reset filter",
+            "keys": [
+              "r",
+              "R"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "construction:groups"
+        },
+        "context": "CONSTRUCTION"
+      }
+    },
+    {
+      "name": "a construction search, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:1",
+          "revision": "9"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "construct:search",
+          "args": {
+            "text": "wall"
+          }
         }
+      }
+    },
+    {
+      "name": "a construction search, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "a construction search, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "a construction search, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "a construction search, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "13",
+          "revision": "10"
+        }
+      }
+    },
+    {
+      "name": "a construction row that is not in the list, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:2",
+          "revision": "10"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "construct:construct",
+          "args": {
+            "row": "no_such_group"
+          }
+        }
+      }
+    },
+    {
+      "name": "a construction row that is not in the list, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "a construction row that is not in the list, rejected",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "rejected",
+        "error": "invalid_arguments",
+        "error_text": "That needs other details."
       }
     }
   ],

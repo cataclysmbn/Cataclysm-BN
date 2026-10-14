@@ -816,7 +816,7 @@ Deno.test({
 })
 
 Deno.test({
-  name: "stdio: the tutorial crafting menu lists recipes, searches and closes",
+  name: "stdio: 0.2 invoke: the tutorial crafting screen lists recipes, searches and closes",
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
@@ -824,57 +824,58 @@ Deno.test({
     try {
       const session = await enterTutorial(client)
       await session.acknowledge(() => session.mirror.interaction.interaction === null)
-      const interaction = () => session.mirror.interaction.interaction
       const opened = await session.submit({ kind: "action", action_id: "craft" })
       assertEquals(opened.stages.at(-1), "completed")
-      assertEquals(interaction().context, "CRAFTING")
-      assertEquals(interaction().kind, "choices")
-      assertEquals(interaction().field.id, "filter")
-      // Tab rows have no pane; the sub-tab and recipe rows belong to the selected tab.
-      const rows = () => interaction().choices as Value[]
-      const tabs = () => rows().filter((entry) => entry.id.startsWith("tab:"))
-      const recipes = () => rows().filter((entry) => entry.id.startsWith("recipe:"))
-      assert(tabs().length > 1 && tabs().every((entry) => entry.pane_id === undefined))
-      assertEquals(tabs().filter((entry) => entry.selected).length, 1)
-      const selected = tabs().find((entry) => entry.selected)
-      assert(rows().some((entry) => entry.id.startsWith("subtab:") && entry.pane_id !== undefined))
+      assertEquals(session.mirror.interaction.interaction.context, "CRAFTING")
 
-      // Each tab lists its own recipes, with the native detail text on the row.
-      let tab: Value
-      for (const candidate of tabs()) {
-        if (candidate.id === selected.id) continue
-        assertEquals(
-          (await session.submit({ kind: "choose", choice_id: candidate.id })).stages.at(-1),
-          "completed",
-        )
-        assertEquals(interaction().context, "CRAFTING")
-        if (recipes().length > 0) {
-          tab = candidate
-          break
+      const find = (node: Value, id: string): Value | undefined => {
+        if (node.id === id) return node
+        for (const child of [...(node.children ?? []), ...(node.child ? [node.child] : [])]) {
+          const found = find(child, id)
+          if (found) return found
         }
+        return undefined
       }
-      assert(tab, "some tab lists recipes")
-      assertEquals(tabs().filter((entry) => entry.selected).map((entry) => entry.id), [tab.id])
-      assert(recipes().every((entry) => entry.pane_id === tab.id.slice(4)))
-      const first = recipes()[0]
-      assert(first.description.includes("Time to complete"), first.description)
-      assert(!first.description.includes("<color"), first.description)
+      const recipes = () => find(top(session).root, "crafting:recipes")!.rows as Value[]
+      const tabs = () => find(top(session).root, "crafting:tabs")!.tabs as Value[]
+      const invoke = async (affordance: string, args?: Value) => {
+        const offered = top(session).affordances.find((entry: Value) => entry.id === affordance)
+        const outcome = await invokeTop(session, affordance, offered?.expect ?? "screen", args)
+        assertEquals(
+          outcome.stages.at(-1),
+          "completed",
+          JSON.stringify({ outcome, affordance, args }),
+        )
+      }
 
-      // Searching replaces the list; clearing restores it.
-      const all = recipes().length
-      const word = first.label.split(" ")[0]
-      const search = (value: string) =>
-        session.submit({ kind: "fill", field_id: "filter", value, submit: true })
-      assertEquals((await search(word)).stages.at(-1), "completed")
-      assertEquals(interaction().field.value, word)
-      assert(recipes().length > 0 && recipes().length <= all)
-      assert(recipes().some((entry) => entry.label.includes(word)))
-      assertEquals((await search("")).stages.at(-1), "completed")
-      assertEquals(recipes().length, all)
+      // The first tab can be empty; another tab lists recipes of its own.
+      assert(tabs().length > 1)
+      assertEquals(tabs().filter((entry) => entry.selected).length, 1)
+      for (const other of tabs().filter((entry) => !entry.selected)) {
+        await invoke("craft:tab", { row: other.id })
+        assertEquals(tabs().find((entry) => entry.selected)!.id, other.id)
+        if (recipes().length > 0) break
+      }
+
+      // Rows are recipes by identity; the detail follows the cursor row.
+      const first = recipes()
+      assert(first.length > 0)
+      assert(find(top(session).root, "crafting:detail"))
+      assert(first.every((row) => !row.id.startsWith("recipe:")))
+
+      // Searching replaces the tabs by one; clearing restores them.
+      const word = first[0].label.split(" ")[0]
+      await invoke("craft:search", { text: word })
+      assertEquals(tabs().map((entry) => entry.id), ["search"])
+      assert(recipes().length > 0)
+      await invoke("craft:search", { text: "" })
+      assert(tabs().length > 1)
 
       // Closing returns to the map.
-      assertEquals((await session.submit({ kind: "cancel" })).stages.at(-1), "completed")
-      assertEquals(interaction(), null)
+      const cancel = top(session).affordances.find((entry: Value) => entry.role === "cancel")
+      assert(cancel, "a cancel affordance")
+      await invoke(cancel.id)
+      assertEquals(session.mirror.interaction.interaction, null)
       assert(session.mirror.interaction.actions.some((a: Value) => a.id === "craft"))
       await client.close()
     } finally {

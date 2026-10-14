@@ -1,0 +1,714 @@
+{
+  "valid": [
+    {
+      "name": "Crafting screen",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:8",
+        "role": "screen",
+        "title": "Crafting",
+        "root": {
+          "id": "crafting:tabs",
+          "kind": "tabs",
+          "affordances": [
+            "craft:tab"
+          ],
+          "tabs": [
+            {
+              "id": "CC_*",
+              "label": "*",
+              "selected": true,
+              "enabled": true
+            },
+            {
+              "id": "CC_WEAPON",
+              "label": "WEAPON",
+              "selected": false,
+              "enabled": true,
+              "unread": true
+            },
+            {
+              "id": "CC_AMMO",
+              "label": "AMMO",
+              "selected": false,
+              "enabled": true,
+              "unread": true
+            },
+            {
+              "id": "CC_FOOD",
+              "label": "FOOD",
+              "selected": false,
+              "enabled": true,
+              "unread": true
+            },
+            {
+              "id": "CC_CHEM",
+              "label": "CHEM",
+              "selected": false,
+              "enabled": true,
+              "unread": true
+            },
+            {
+              "id": "CC_ELECTRONIC",
+              "label": "ELECTRONIC",
+              "selected": false,
+              "enabled": true,
+              "unread": true
+            },
+            {
+              "id": "CC_ARMOR",
+              "label": "ARMOR",
+              "selected": false,
+              "enabled": true,
+              "unread": true
+            },
+            {
+              "id": "CC_OTHER",
+              "label": "OTHER",
+              "selected": false,
+              "enabled": true,
+              "unread": true
+            },
+            {
+              "id": "CC_ANIMALS",
+              "label": "ANIMALS",
+              "selected": false,
+              "enabled": true
+            }
+          ],
+          "select": "craft:tab",
+          "child": {
+            "id": "crafting:subtabs",
+            "kind": "tabs",
+            "affordances": [
+              "craft:subtab"
+            ],
+            "tabs": [
+              {
+                "id": "CSC_*_FAVORITE",
+                "label": "FAVORITE",
+                "selected": true,
+                "enabled": false
+              },
+              {
+                "id": "CSC_*_RECENT",
+                "label": "RECENT",
+                "selected": false,
+                "enabled": false
+              },
+              {
+                "id": "CSC_*_HIDDEN",
+                "label": "HIDDEN",
+                "selected": false,
+                "enabled": false
+              }
+            ],
+            "select": "craft:subtab",
+            "child": {
+              "id": "crafting:body",
+              "kind": "split",
+              "relation": "detail",
+              "active": "crafting:recipes",
+              "children": [
+                {
+                  "id": "crafting:recipes",
+                  "kind": "list",
+                  "affordances": [
+                    "craft:craft",
+                    "craft:select",
+                    "craft:batch",
+                    "craft:search",
+                    "craft:favorite",
+                    "craft:hide"
+                  ],
+                  "columns": [],
+                  "rows": [],
+                  "total": 0,
+                  "selection": "single",
+                  "activate": "craft:craft",
+                  "filterable": true
+                }
+              ]
+            }
+          }
+        },
+        "affordances": [
+          {
+            "id": "craft:select",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "role": "select",
+            "args": {
+              "row": {
+                "component_id": "crafting:recipes"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "craft:craft",
+            "label": "Craft",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "crafting:recipes"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "craft:batch",
+            "label": "Batch",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "crafting:recipes"
+              },
+              "count": {
+                "min": 1,
+                "max": 50
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "craft:tab",
+            "label": "Category",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "crafting:tabs"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "craft:subtab",
+            "label": "Subcategory",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "crafting:subtabs"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "craft:search",
+            "label": "Filter",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "craft:favorite",
+            "label": "Favorite",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "crafting:recipes"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "craft:hide",
+            "label": "Show/hide",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "crafting:recipes"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Pan left",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Pan right",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          },
+          {
+            "id": "SCROLL_RECIPE_INFO_UP",
+            "label": "Scroll recipe info up",
+            "keys": [
+              "["
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SCROLL_RECIPE_INFO_DOWN",
+            "label": "Scroll recipe info down",
+            "keys": [
+              "]"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_UP",
+            "label": "Fast scroll up",
+            "keys": [
+              "PPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_DOWN",
+            "label": "Fast scroll down",
+            "keys": [
+              "NPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PREV_TAB",
+            "label": "Go to prev tab",
+            "keys": [
+              "BACKTAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "NEXT_TAB",
+            "label": "Go to next tab",
+            "keys": [
+              "TAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "FILTER",
+            "label": "Filter",
+            "keys": [
+              "f",
+              "F",
+              "/"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RESET_FILTER",
+            "label": "Reset filter",
+            "keys": [
+              "r",
+              "R"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TOGGLE_FAVORITE",
+            "label": "Toggle recipes to be shown in favorite tab",
+            "keys": [
+              "*"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_RECIPE",
+            "label": "Show recipe result",
+            "keys": [
+              "e",
+              "E"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CYCLE_BATCH",
+            "label": "Batch crafting",
+            "keys": [
+              "b"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RELATED_RECIPES",
+            "label": "Related recipes",
+            "keys": [
+              "L"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HIDE_SHOW_RECIPE",
+            "label": "Hide/show recipe",
+            "keys": [
+              "s"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "COMPARE",
+            "label": "Compare",
+            "keys": [
+              "I"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TOGGLE_UNAVAILABLE",
+            "label": "Hide/show unavailable",
+            "keys": [
+              "u"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ASSIGN_NPC_CRAFT",
+            "label": "Assign nearest NPC to craft",
+            "keys": [
+              "N"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TOGGLE_RECIPE_UNREAD",
+            "label": "Toggle read/unread",
+            "keys": [
+              "v"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "MARK_ALL_RECIPES_READ",
+            "label": "Mark all recipes as read",
+            "keys": [
+              "V"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TOGGLE_UNREAD_RECIPES_FIRST",
+            "label": "Show unread recipes on top",
+            "keys": [
+              "U"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "crafting:recipes"
+        },
+        "context": "CRAFTING"
+      }
+    },
+    {
+      "name": "a tab chosen, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:1",
+          "revision": "8"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "craft:tab",
+          "args": {
+            "row": "CC_WEAPON"
+          }
+        }
+      }
+    },
+    {
+      "name": "a tab chosen, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "a tab chosen, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "a tab chosen, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "a tab chosen, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "12",
+          "revision": "9"
+        }
+      }
+    },
+    {
+      "name": "a search, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:2",
+          "revision": "9"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "craft:search",
+          "args": {
+            "text": "2-by-sword"
+          }
+        }
+      }
+    },
+    {
+      "name": "a search, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "a search, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "a search, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "a search, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "13",
+          "revision": "10"
+        }
+      }
+    },
+    {
+      "name": "a row selected, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:3",
+          "revision": "11"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "craft:select",
+          "args": {
+            "row": "bowling_axe"
+          }
+        }
+      }
+    },
+    {
+      "name": "a row selected, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "a row selected, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "a row selected, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "a row selected, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "15",
+          "revision": "12"
+        }
+      }
+    },
+    {
+      "name": "a row that is not in the list, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:4",
+          "revision": "12"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "craft:craft",
+          "args": {
+            "row": "no_such_recipe"
+          }
+        }
+      }
+    },
+    {
+      "name": "a row that is not in the list, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "a row that is not in the list, rejected",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "rejected",
+        "error": "invalid_arguments",
+        "error_text": "That needs other details."
+      }
+    }
+  ],
+  "invalid": []
+}
