@@ -847,7 +847,7 @@ auto Messages::dialog::view() const -> engine_client::screen_view
     return {
         .title = _( "Messages" ),
         .root = ec::panel( {
-            .id = "messages", .title = _( "Messages" ), .filter = filter_str,
+            .id = "messages", .filter = filter_str,
             .child = ec::list( { .id = "messages:log", .rows = std::move( rows ), .selection = "none" } ) } ),
     };
 }

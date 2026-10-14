@@ -893,9 +893,6 @@ void faction_manager::display() const
         }
         return rows;
     };
-    const auto colored_line = []( const std::string & text, const nc_color & color ) {
-        return colorize( text, color );
-    };
     const auto figure_label = []( const std::string & format ) {
         return ec::caption( format.substr( 0, format.find( '%' ) ) );
     };
@@ -910,11 +907,11 @@ void faction_manager::display() const
                     return std::nullopt;
                 }
                 title = guy->disp_name();
-                lines.push_back( colored_line( contact.text, contact.color ) );
+                lines.push_back( colorize( contact.text, contact.color ) );
                 for( const auto &[text, color] : npc_condition_lines( *guy ) ) {
-                    lines.push_back( colored_line( text, color ) );
+                    lines.push_back( colorize( text, color ) );
                 }
-                lines.push_back( colored_line( _( "Wielding: " ) + guy->primary_weapon().tname(), c_white ) );
+                lines.push_back( colorize( _( "Wielding: " ) + guy->primary_weapon().tname(), c_white ) );
                 const auto skills = skills_of( *guy );
                 lines.push_back( skills.combat );
                 lines.push_back( _( "Best other skills: " ) + join( skills.others, ", " ) );
@@ -944,7 +941,7 @@ void faction_manager::display() const
                 }
                 title = cur_creature->nname();
                 for( const auto &line : mtype_display_lines( *cur_creature, 60 ) ) {
-                    lines.push_back( std::string( line.indent, ' ' ) + colored_line( line.text, line.color ) );
+                    lines.push_back( std::string( line.indent, ' ' ) + colorize( line.text, line.color ) );
                 }
                 break;
             default:

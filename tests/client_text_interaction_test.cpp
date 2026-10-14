@@ -313,8 +313,10 @@ TEST_CASE(
         CHECK(top_json() == menu_shape);
         for (auto index = std::size_t{0}; index < topics.size(); ++index) {
             CHECK(rows[index].id == "topic:" + std::to_string(topics[index].order));
-            CHECK(rows[index].label
-                  == remove_color_tags(shortcut_text(c_light_blue, _(topics[index].name))));
+            // The row carries its hotkey apart, so its label is the native line without "x: ".
+            const auto native = remove_color_tags(
+                shortcut_text(c_light_blue, _(topics[index].name)));
+            CHECK(rows[index].label == native.substr(native.find(": ") + 2));
         }
         const auto state = live_state();
         const auto page = ec::read_rows(
