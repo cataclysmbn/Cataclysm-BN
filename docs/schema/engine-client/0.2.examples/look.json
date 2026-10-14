@@ -4,7 +4,7 @@
       "name": "look-around screen",
       "def": "screen",
       "value": {
-        "screen_id": "screen:7",
+        "screen_id": "screen:8",
         "role": "dialog",
         "title": "Look Around",
         "root": {
@@ -517,7 +517,7 @@
       "value": {
         "epoch": "epoch-2",
         "expect": {
-          "screen_id": "screen:7"
+          "screen_id": "screen:8"
         },
         "operation": {
           "kind": "invoke",
