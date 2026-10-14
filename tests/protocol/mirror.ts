@@ -158,3 +158,20 @@ export class Mirror {
     }
   }
 }
+
+/** The item rows of every list of a screen's components, header rows left out, with the affordance their list activates. */
+export function itemRows(screen: Value): { id: string; label: string; activate: string }[] {
+  const lists = (node: Value): Value[] =>
+    !node ? [] : [
+      ...(node.kind === "list" ? [node] : []),
+      ...(node.child ? lists(node.child) : []),
+      ...(node.children ?? []).flatMap(lists),
+    ]
+  return lists(screen.root).flatMap((list) =>
+    list.rows.filter((row: Value) => !row.header).map((row: Value) => ({
+      id: row.id,
+      label: row.label,
+      activate: list.activate,
+    }))
+  )
+}

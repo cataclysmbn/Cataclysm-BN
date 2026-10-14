@@ -10,7 +10,7 @@
  *   --allow-run --allow-env tests/protocol/determinism_test.ts
  */
 import { assert, assertEquals, assertNotEquals } from "@std/assert"
-import { Mirror } from "./mirror.ts"
+import { itemRows, Mirror } from "./mirror.ts"
 
 // deno-lint-ignore no-explicit-any
 type Value = any
@@ -215,12 +215,15 @@ class Session {
     await this.client.result("bn.credit", { frames })
   }
 
+  refused = ""
+
   handle(note: Value) {
     const { method, params } = note
     if (method === "bn.events" || method === "bn.command") this.#unpaid++
     if (method === "bn.events") {
       this.mirror.applyEvents(params.epoch, params.events)
     } else if (method === "bn.command") {
+      if (params.error) this.refused = params.error
       const stages = this.stages.get(params.command_id) ?? ["received"]
       stages.push(params.stage)
       this.stages.set(params.command_id, stages)
@@ -233,13 +236,22 @@ class Session {
   async submit(operation: Value) {
     this.kinds.add(operation.kind)
     const mirror = this.mirror
+    const top = mirror.interaction.stack.at(-1)
+    const offered = operation.kind === "invoke"
+      ? top?.affordances.find((entry: Value) => entry.id === operation.affordance_id)
+      : undefined
     const { command_id: id } = await this.client.result("bn.command.submit", {
       epoch: mirror.at.epoch,
-      expect: {
-        revision: mirror.at.revision,
-        boundary_id: mirror.interaction.boundary_id,
-        schema_id: mirror.interaction.interaction?.schema_id ?? null,
-      },
+      // An invoke names what its affordance's scope asks for; every other operation, the boundary.
+      expect: operation.kind === "invoke"
+        ? offered?.expect === "boundary"
+          ? { revision: mirror.at.revision, boundary_id: mirror.interaction.boundary_id }
+          : { screen_id: top.screen_id }
+        : {
+          revision: mirror.at.revision,
+          boundary_id: mirror.interaction.boundary_id,
+          schema_id: mirror.interaction.interaction?.schema_id ?? null,
+        },
       operation,
     })
     this.stages.set(id, ["received"])
@@ -254,7 +266,11 @@ class Session {
 
   /** Submit and expect the command to complete. */
   async run(operation: Value) {
-    assertEquals(await this.submit(operation), "completed", JSON.stringify(operation))
+    assertEquals(
+      await this.submit(operation),
+      "completed",
+      `${JSON.stringify(operation)} ${this.refused}`,
+    )
   }
 
   /** Choose the entry; the stage is returned, as loading a world ends its command `interrupted`. */
@@ -401,14 +417,29 @@ async function playEveryOperation(session: Session) {
 
   // The drop selector counts a quantity; the throw picker leads to the target UI.
   await run({ kind: "action", action_id: "drop" })
-  await run({ kind: "set_count", choice_id: choices(session)[0].id, count: 1 })
-  await run({ kind: "cancel" })
+  const selector = () =>
+    itemRows(session.mirror.interaction.stack.at(-1)).find((row) => /grenade/.test(row.label))!
+  await run({
+    kind: "invoke",
+    affordance_id: selector().activate.replace(/:choose$/, ":count"),
+    args: { row: selector().id, count: 1 },
+  })
+  await run({ kind: "invoke", affordance_id: "inventory:cancel" })
   await run({ kind: "action", action_id: "throw" })
-  await run({ kind: "choose", choice_id: choices(session)[0].id })
+  await run({
+    kind: "invoke",
+    affordance_id: selector().activate,
+    args: { row: selector().id },
+  })
   const source = session.mirror.avatar.at
   await run({ kind: "set_target", pos: { ...source, x: source.x + 1 } })
   await run({ kind: "cancel" })
   await session.clear()
+  // The 0.1 count belongs to the screens that have not moved to components; the map has none to give it to.
+  assertEquals(
+    await session.submit({ kind: "set_count", choice_id: "entry:0", count: 1 }),
+    "rejected",
+  )
 
   // A long wait is an activity: the client conditions act on its frames.
   await run({ kind: "action", action_id: "wait" })
@@ -529,7 +560,8 @@ Deno.test({
     const offered = schema["$defs"].operation.oneOf.flatMap((operation: Value) =>
       operation.properties ? operation.properties.kind.const ?? operation.properties.kind.enum : []
     ).sort()
-    assertEquals([...baseline.kinds].sort(), offered)
+    // An invoke is not a boundary operation: each affordance names the scope it expects.
+    assertEquals([...baseline.kinds].filter((kind) => kind !== "invoke").sort(), offered)
 
     for (const [i, condition] of conditions.entries()) {
       assertEquals(

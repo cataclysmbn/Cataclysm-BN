@@ -8,7 +8,7 @@
  */
 import { assert, assertEquals, assertNotEquals } from "@std/assert"
 import { Ajv2020 } from "npm:ajv@8.17.1/dist/2020.js"
-import { Mirror } from "./mirror.ts"
+import { itemRows, Mirror } from "./mirror.ts"
 
 // deno-lint-ignore no-explicit-any
 type Value = any
@@ -326,14 +326,23 @@ class Session {
     afterHeartbeat?: () => Promise<void>,
   ) {
     const mirror = this.mirror
+    const top = mirror.interaction.stack.at(-1)
+    const offered = operation.kind === "invoke"
+      ? top?.affordances.find((entry: Value) => entry.id === operation.affordance_id)
+      : undefined
     const response = await this.client.request("bn.command.submit", {
       epoch: mirror.at.epoch,
-      expect: {
-        revision: mirror.at.revision,
-        boundary_id: mirror.interaction.boundary_id,
-        schema_id: mirror.interaction.interaction?.schema_id ?? null,
-        ...patch,
-      },
+      // An invoke names what its affordance's scope asks for; every other operation, the boundary.
+      expect: operation.kind === "invoke"
+        ? offered?.expect === "boundary"
+          ? { revision: mirror.at.revision, boundary_id: mirror.interaction.boundary_id }
+          : { screen_id: top.screen_id }
+        : {
+          revision: mirror.at.revision,
+          boundary_id: mirror.interaction.boundary_id,
+          schema_id: mirror.interaction.interaction?.schema_id ?? null,
+          ...patch,
+        },
       operation,
     })
     if (response.error) return { error: response.error, stages: [] as string[] }
@@ -1808,12 +1817,15 @@ async function wishItem(client: Client, session: Session, name: string) {
 
 /** Chooses the inventory row whose label starts with `prefix`. */
 async function chooseItem(session: Session, prefix: string) {
-  const row = session.mirror.interaction.interaction.choices.find((entry: Value) =>
-    entry.label.startsWith(prefix)
-  )
+  const screen = session.mirror.interaction.stack.at(-1)
+  const row = itemRows(screen).find((entry) => entry.label.startsWith(prefix))
   assert(row, `no item ${prefix}`)
   assertEquals(
-    (await session.submit({ kind: "choose", choice_id: row.id })).stages.at(-1),
+    (await session.submit({
+      kind: "invoke",
+      affordance_id: row.activate,
+      args: { row: row.id },
+    })).stages.at(-1),
     "completed",
   )
 }
