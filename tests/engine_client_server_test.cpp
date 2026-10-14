@@ -962,6 +962,48 @@ TEST_CASE("world cells are a passive read of the known box", "[engine_client_ser
     CHECK(serialize_snapshot(*test.authority.current())->header == state_before);
 }
 
+TEST_CASE("overmap cells are a passive read of any overmap level", "[engine_client_server]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    const auto before = test.authority.at();
+    const auto rng = rng_get_engine();
+    const auto epoch = test.authority.epoch();
+    const auto cells =
+        [&](const std::string& id, const std::string& min, const std::string& max,
+            const std::string& with = {}) {
+            return rpc(
+                "bn.overmap.cells",
+                R"({"epoch":")" + (with.empty() ? epoch : with) + R"(","min":)" + min + R"(,"max":)"
+                    + max + "}",
+                id);
+        };
+    const auto at = [](const int x, const int y, const int z = 0, const std::string& dim = {}) {
+        return R"({"dim":")" + dim + R"(","x":)" + std::to_string(x) + R"(,"y":)"
+             + std::to_string(y) + R"(,"z":)" + std::to_string(z) + "}";
+    };
+    test.pump(
+        hello + cells("3", at(0, 0), at(3, 1)) + cells("4", at(0, 0), at(3, 1), "epoch:old")
+        + cells("5", at(3, 0), at(0, 0)) + cells("6", at(0, 0, 0), at(1, 0, 1))
+        + cells("7", at(0, 0), at(100, 100))
+        + cells("8", at(0, 0, 0, "other"), at(1, 0, 0, "other"))
+        + cells("9", at(0, 0, 500), at(1, 0, 500)) + cells("10", at(0, 0), at(1 << 25, 0)));
+    const auto out = test.output.str();
+    CHECK(contains(out, R"("id":3,"result":{"origin":{"dim":"","x":0,"y":0,"z":0})"));
+    CHECK(contains(out, R"("cols":4,"rows":2)"));
+    CHECK(contains(out, R"("legend":[])"));
+    // A stale epoch, an inverted box, a box across levels, an oversized one, another dimension and
+    // squares beyond the world are refused.
+    CHECK(contains(out, R"("kind":"stale_epoch")"));
+    CHECK(contains(out, R"("kind":"resource_limit")"));
+    for (const auto id : {"4", "5", "6", "7", "8", "9", "10"}) {
+        CHECK(contains(out, std::string(R"("id":)") + id + R"(,"error")"));
+    }
+    CHECK(count_of(out, R"("kind":"validation_failed")") == 5);
+    CHECK(test.authority.at() == before);
+    CHECK(rng_get_engine() == rng);
+}
+
 TEST_CASE("a registered action is submittable as a command", "[engine_client_server]") {
     auto boundary = input_boundary{};
     auto test = fixture{};

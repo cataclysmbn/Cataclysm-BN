@@ -473,4 +473,74 @@ TEST_CASE(
     CHECK(reads == 1);
 }
 
+
+TEST_CASE(
+    "a read of overmap squares leaves the cursor, the rng and the overmaps alone",
+    "[overmap_screen][engine_client_component]") {
+    const auto world = fixed_world{};
+    const auto guard = screen_guard{};
+    ACTIVE_OVERMAP_BUFFER.add_note(world.center + point(3, 0), "C:cache");
+    get_avatar().omt_path = {world.center + point_east};
+    auto reads = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        ++reads;
+        const auto screen = ec::top_screen(captured());
+        const auto& om = squares(screen);
+        const auto cursor = cursor_of(screen);
+        const auto rng_before = rng_get_engine();
+
+        // A box around the player, a few squares of it outside the published window's reach.
+        const auto min = world.center + point(-4, -2);
+        const auto max = world.center + point(5, 3);
+        const auto read = overmap_ui::known_squares(min, max, false);
+        CHECK(read.cols == 10);
+        CHECK(read.rows == 6);
+        CHECK(read.origin == interaction_position{min.x(), min.y(), min.z()});
+        CHECK(read.glyphs.size() == 60);
+        CHECK(read.player == om.player);
+        CHECK(read.path == om.path);
+        CHECK(read.tiles.empty());
+        // The squares are the screen's own, where the two overlap; the player marker is the
+        // screen's overlay and shows in both.
+        auto compared = 0;
+        for (const auto y : std::views::iota(0, read.rows)) {
+            for (const auto x : std::views::iota(0, read.cols)) {
+                const auto there = static_cast<std::size_t>(
+                    (min.y() + y - om.origin.y) * om.cols + (min.x() + x - om.origin.x));
+                const auto here = static_cast<std::size_t>(y * read.cols + x);
+                ++compared;
+                CHECK(read.glyphs[here] == om.glyphs[there]);
+                CHECK(read.foreground[here] == om.foreground[there]);
+                CHECK(read.background[here] == om.background[there]);
+            }
+        }
+        CHECK(compared == 60);
+        CHECK(std::ranges::any_of(read.notes, [](const auto& note) {
+            return note.text == "cache";
+        }));
+
+        // Squares no overmap holds are read as unknown, and no overmap is made for them.
+        const auto far = world.center + point(180 * 40, 180 * 40);
+        const auto om_of = [&](const tripoint_abs_omt& at) {
+            return ACTIVE_OVERMAP_BUFFER.get_existing(project_to<coords::om>(at.xy()));
+        };
+        REQUIRE(om_of(far) == nullptr);
+        const auto elsewhere = overmap_ui::known_squares(far, far + point(2, 2), true);
+        CHECK(om_of(far) == nullptr);
+        CHECK(elsewhere.cols == 3);
+        CHECK(std::ranges::all_of(elsewhere.glyphs, [](const auto& glyph) {
+            return glyph == "#";
+        }));
+        CHECK(std::ranges::all_of(elsewhere.tiles, [](const auto& tile) {
+            return tile.id == "unknown_terrain";
+        }));
+        CHECK(rng_get_engine() == rng_before);
+        // The controller's cursor did not move with the reads.
+        CHECK(cursor_of(ec::top_screen(captured())) == cursor);
+        return act("QUIT");
+    });
+    ui::omap::display();
+    CHECK(reads == 1);
+}
+
 #endif

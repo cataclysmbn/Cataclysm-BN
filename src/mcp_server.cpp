@@ -4,6 +4,7 @@
 #include "engine_client_world.h"
 
 #include <algorithm>
+#include <cstdlib>
 #include <chrono>
 #include <functional>
 #include <iostream>
@@ -14,8 +15,10 @@
 
 #include "json.h"
 #include "client_memory.h"
+#include "game_constants.h"
 #include "language.h"
 #include "locale_scope.h"
+#include "overmap/overmap_ui.h"
 #include <ranges>
 
 namespace bn::mcp
@@ -985,6 +988,30 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         const auto page = read_cells( *decoded, *current );
         if( !page ) { return fail( page.error() ); }
         return rpc::make_result( request, serialize_cells( *page ) );
+    }
+    if( request.method == "bn.overmap.cells" ) {
+        const auto decoded = decode_cells_request( params );
+        if( !decoded ) { return invalid(); }
+        const auto current = session_.current();
+        if( !current ) { return fail( current.error() ); }
+        if( decoded->epoch != current->at.epoch ) { return fail( error::stale_epoch ); }
+        // A spectator pans through this read; the controller's cursor is not what it reads.
+        constexpr auto bound = 1 << 24;
+        const auto &low = decoded->min;
+        const auto &high = decoded->max;
+        const auto inside = [&]( const position & at ) {
+            return std::abs( at.x ) <= bound && std::abs( at.y ) <= bound && at.z >= -OVERMAP_DEPTH &&
+                   at.z <= OVERMAP_HEIGHT;
+        };
+        if( !low.dim.empty() || !high.dim.empty() || low.z != high.z || low.x > high.x || low.y > high.y ||
+            !inside( low ) || !inside( high ) ) { return fail( error::validation_failed ); }
+        const auto squares = ( std::int64_t{high.x} - low.x + 1 ) * ( std::int64_t{high.y} - low.y + 1 );
+        if( squares > static_cast<std::int64_t>( cells_per_query ) ) { return fail( error::resource_limit ); }
+        const auto wire = serialize_overmap( overmap_ui::known_squares(
+                tripoint_abs_omt( low.x, low.y, low.z ), tripoint_abs_omt( high.x, high.y, high.z ),
+                game_client::overmap_tiles() ) );
+        if( wire.size() > maximum_inline_bytes ) { return fail( error::resource_limit ); }
+        return rpc::make_result( request, wire );
     }
     if( request.method == "bn.command.submit" ) {
         const auto decoded = decode_command_request( params );

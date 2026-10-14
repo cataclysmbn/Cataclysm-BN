@@ -36,6 +36,7 @@ Collect the `parts` snapshot parts, then apply `bn.events` in order. A gap, an e
 | `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit`                  | `boundary_id`, `total`, `choices` (reads only)                                                   |
 | `bn.world.describe`      | `epoch`, `boundary_id`, `pos`                              | `lines` (reads only)                                                                             |
 | `bn.world.cells`         | `epoch`, `min`, `max`                                      | `at`, `cells`, `forgotten` (reads only)                                                          |
+| `bn.overmap.cells`       | `epoch`, `min`, `max`                                      | `overmap` squares of an overmap level, whatever the cursor (reads only)                          |
 | `bn.command.submit`      | `epoch`, `expect`, `operation`                             | `command_id`, `stage: "received"`                                                                |
 | `bn.command.result`      | `epoch`, `command_id`                                      | latest stage, for recovering a lost notification                                                 |
 | `bn.credit`              | `frames`                                                   | `credits` held after the grant                                                                   |

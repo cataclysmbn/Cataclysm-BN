@@ -36,6 +36,10 @@
       "params": "world_cells_params",
       "result": "world_cells_result"
     },
+    "bn.overmap.cells": {
+      "params": "world_cells_params",
+      "result": "overmap"
+    },
     "bn.command.submit": {
       "params": "submit_params",
       "result": "submit_result"
@@ -2052,7 +2056,7 @@
     },
     "overmap": {
       "type": "object",
-      "description": "The native overmap window as drawn, row-major. Each cell is [glyph, foreground, background] with curses color indexes 0-15 (0 black, 1 red, 2 green, 3 brown, 4 blue, 5 magenta, 6 cyan, 7 light gray, 8-15 their bright forms). Positions are overmap terrain squares.",
+      "description": "Overmap squares as the player knows them, row-major. Each cell is [glyph, foreground, background] with curses color indexes 0-15 (0 black, 1 red, 2 green, 3 brown, 4 blue, 5 magenta, 6 cyan, 7 light gray, 8-15 their bright forms). Positions are overmap terrain squares.",
       "properties": {
         "origin": {
           "$ref": "#/$defs/pos"
