@@ -267,6 +267,9 @@ struct pane_options {
     std::optional<size_t> cursor = std::nullopt;
     /// Set while the category selection is on in this pane.
     std::optional<size_t> category = std::nullopt;
+    /// The entry of `filtered` the page starts at, and the letters that pick the entries from there on.
+    size_t offset = 0;
+    std::string hotkeys = {};
 };
 struct pane_view {
     ec::component component;
@@ -315,6 +318,8 @@ auto make_pane( const pane_options &opts ) -> pane_view
         }
         rows.push_back( {
             .id = ids[position],
+            .hotkey = position >= opts.offset && position - opts.offset < opts.hotkeys.size() ?
+            std::string( 1, opts.hotkeys[position - opts.offset] ) : std::string{},
             .label = candidate.display_name() + ( off_person ? " (" + candidate.describe_location( &g->u ) + ")" : std::string{} ),
             // What the native examine shows, for the row the cursor is on; the rows left are many and long.
             .description = opts.cursor == position ? remove_color_tags( candidate.info_string( { .mode = iteminfo_mode::observation } ) ) : std::string{},
@@ -991,8 +996,11 @@ auto trading_window::build_filtered_indices( const std::vector<item_pricing> &li
     | std::ranges::to<std::vector>();
 }
 
-auto trading_window::view( const npc &np, const input_context &ctxt ) const -> ec::screen_view
+auto trading_window::view( const npc &np, input_context &ctxt ) const -> ec::screen_view
 {
+    // The letters the native list prints before its rows, as the loop reads them.
+    const auto hotkeys =
+        ctxt.get_available_single_char_hotkeys( "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" );
     const auto theirs_selected = selected_totals( state.theirs, true );
     const auto yours_selected = selected_totals( state.yours, false );
     const auto filtered_theirs = build_filtered_indices( state.theirs, them_filter );
@@ -1006,6 +1014,7 @@ auto trading_window::view( const npc &np, const input_context &ctxt ) const -> e
             } },
 .cursor = focus_them ? std::optional{ them_cursor } : std::nullopt,
 .category = category_mode && focus_them ? std::optional{ them_category_cursor } : std::nullopt,
+        .offset = them_off, .hotkeys = hotkeys,
     } );
     const auto yours = make_pane( {
         .np = np, .list = state.yours, .filtered = filtered_yours, .filter = you_filter,
@@ -1016,6 +1025,7 @@ auto trading_window::view( const npc &np, const input_context &ctxt ) const -> e
         },
         .cursor = focus_them ? std::nullopt : std::optional{ you_cursor },
 .category = category_mode && !focus_them ? std::optional{ you_category_cursor } : std::nullopt,
+        .offset = you_off, .hotkeys = hotkeys,
     } );
     const auto balance = np.will_exchange_items_freely() ? std::string{ _( "Exchange" ) } :
                          string_format( state.your_balance >= 0 ? _( "Credit %s" ) : _( "Debt %s" ),

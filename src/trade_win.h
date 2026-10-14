@@ -39,7 +39,7 @@ class trading_window
         auto build_filtered_indices( const std::vector<item_pricing> &list,
                                      const std::string &filter ) const -> std::vector<size_t>;
         /// The screen as the model state shows it, whatever the size of the window.
-        auto view( const npc &np, const input_context &ctxt ) const -> engine_client::screen_view;
+        auto view( const npc &np, input_context &ctxt ) const -> engine_client::screen_view;
         auto get_var_trade( const item &it, int total_count, int amount_hint ) -> int;
 
         npc_trading::trade_state &state;
