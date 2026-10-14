@@ -1120,8 +1120,6 @@ async function openSetting(session: Session, id: string) {
 }
 
 const shown = (session: Session): Value[] => session.mirror.interaction.interaction.choices
-const rowOf = (session: Session, id: string) => shown(session).find((entry) => entry.id === id)
-const press = (session: Session, id: string) => session.submit({ kind: "choose", choice_id: id })
 const setTo = (session: Session, id: string, value: string) =>
   session.submit({ kind: "fill", field_id: id, value, submit: true })
 
@@ -1384,14 +1382,13 @@ Deno.test({
 })
 
 Deno.test({
-  name: "stdio: the other settings screens are structured and a distraction persists",
+  name: "stdio: the rule screens are structured",
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const binary = Deno.env.get("BN_BINARY")!
-    let client = new Client(binary, profile)
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
     try {
-      let session = await startSession(client)
+      const session = await startSession(client)
       const leave = async () => {
         assertEquals((await session.submit({ kind: "cancel" })).stages.at(-1), "completed")
         await session.acknowledge(inMainMenu(session))
@@ -1401,7 +1398,6 @@ Deno.test({
         const [entry, context, first] of [
           ["settings:autopickup", "AUTO_PICKUP", "column:1"],
           ["settings:safemode", "SAFEMODE", "page:0"],
-          ["settings:colors", "COLORS", "column:1"],
         ]
       ) {
         await openSetting(session, entry)
@@ -1409,32 +1405,156 @@ Deno.test({
         assertEquals([screen.context, shown(session)[0].id], [context, first])
         await leave()
       }
-      const colors = await (async () => {
-        await openSetting(session, "settings:colors")
-        return shown(session).filter((row) => row.id.startsWith("color:"))
-      })()
-      assert(colors.length > 10 && colors.every((row) => row.columns.length === 2))
-      // Choosing a color row opens the native list of colors for the cursor's column.
-      await press(session, colors[0].id)
-      assert(session.mirror.interaction.interaction.choices.length > 10)
-      assertEquals((await session.submit({ kind: "cancel" })).stages.at(-1), "completed")
-      assertEquals(session.mirror.interaction.interaction.context, "COLORS")
-      await leave()
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
 
+/** The distraction rows, in the order of the list. */
+const distractionRows = (session: Session) => listRows(session, "distractions:items")
+const distractionRow = (session: Session, id: string) =>
+  distractionRows(session).find((entry) => entry.id === id)
+
+Deno.test({
+  name: "stdio: the distraction manager switches a distraction through the wire and it persists",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const binary = Deno.env.get("BN_BINARY")!
+    let client = new Client(binary, profile)
+    try {
+      let session = await startSession(client)
       await openSetting(session, "settings:distractions")
-      const rows = shown(session)
-      assert(rows.length >= 8 && rows.every((row) => row.editor.type === "bool"))
-      const target = rows[0]
-      assertEquals(target.editor.value, "true")
-      assertEquals((await setTo(session, target.id, "false")).stages.at(-1), "completed")
-      assertEquals(rowOf(session, target.id).columns[0].value, "Disabled")
-      await leave()
+      assertEquals(top(session).context, "DISTRACTION_MANAGER")
+      const rows = distractionRows(session)
+      assert(rows.length >= 8 && rows.every((row) => row.toggled === true))
+      const target = rows[1]
+      // The cursor and the switch are the screen's; a row the list does not hold is refused.
+      assertEquals(
+        (await invokeOn(session, "distractions:select", { row: target.id })).stages.at(-1),
+        "completed",
+      )
+      assertEquals(top(session).focus.row_id, target.id)
+      assertEquals(
+        (await invokeOn(session, "distractions:toggle", { row: "distraction:Nothing" })).error,
+        "invalid_arguments",
+      )
+      assertEquals(
+        (await invokeOn(session, "distractions:toggle", { row: target.id })).stages.at(-1),
+        "completed",
+      )
+      assertEquals(distractionRow(session, target.id).toggled, false)
+      assertEquals(distractionRow(session, target.id).columns[0].value, "Disabled")
+      assertEquals(distractionRow(session, rows[0].id).toggled, true)
+      // The registered action of the screen switches it back, and then off again.
+      assertEquals((await invokeOn(session, "CONFIRM")).stages.at(-1), "completed")
+      assertEquals(distractionRow(session, target.id).toggled, true)
+      assertEquals((await invokeOn(session, "CONFIRM")).stages.at(-1), "completed")
+      // Leaving saves at once, with no question.
+      assertEquals((await invokeOn(session, "QUIT")).stages.at(-1), "completed")
+      await session.acknowledge(inMainMenu(session))
       await client.close()
 
       client = new Client(binary, profile)
       session = await startSession(client)
       await openSetting(session, "settings:distractions")
-      assertEquals(rowOf(session, target.id).editor.value, "false")
+      assertEquals(distractionRow(session, target.id).toggled, false)
+      assertEquals(distractionRow(session, rows[0].id).toggled, true)
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
+const colorRows = (session: Session) => listRows(session, "colors:items")
+const colorColumn = (session: Session, id: string, key: string) =>
+  colorRows(session).find((entry) => entry.id === id).columns.find((column: Value) =>
+    column.key === key
+  ).value
+
+Deno.test({
+  name:
+    "stdio: the colour manager sets and clears a custom colour through the wire and it persists",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const binary = Deno.env.get("BN_BINARY")!
+    let client = new Client(binary, profile)
+    try {
+      let session = await startSession(client)
+      await openSetting(session, "settings:colors")
+      assertEquals(top(session).context, "COLORS")
+      const rows = colorRows(session)
+      assert(findComponent(top(session).root, "colors:items").total > 100)
+      assert(rows.length > 2 && rows.every((row) => row.id === "color:" + row.label))
+      assertEquals(
+        findComponent(top(session).root, "colors:columns").tabs.map((tab: Value) => tab.id),
+        ["normal", "invert"],
+      )
+      const [first, second, third] = rows
+      assertEquals(top(session).focus.row_id, first.id)
+      // The column and the colour are named by token; the editor is the colour under the cursor's.
+      assertEquals(
+        (await invokeOn(session, "colors:column", { row: "middle" })).error,
+        "invalid_arguments",
+      )
+      assertEquals(
+        (await invokeOn(session, "colors:column", { row: "invert" })).stages.at(-1),
+        "completed",
+      )
+      assertEquals(
+        (await invokeOn(session, "colors:select", { row: second.id })).stages.at(-1),
+        "completed",
+      )
+      const editor = findComponent(top(session).root, "colors:editor").fields[0]
+      assertEquals([editor.id, editor.type, editor.value], [second.id, "select", ""])
+      // A colour the editor does not offer, and a colour that is not under the cursor, are refused.
+      assertEquals(
+        (await invokeOn(session, "colors:set", { row: second.id, text: "no such colour" })).error,
+        "invalid_arguments",
+      )
+      assertEquals(
+        (await invokeOn(session, "colors:set", { row: third.id, text: first.label })).error,
+        "invalid_arguments",
+      )
+      assertEquals(
+        (await invokeOn(session, "colors:set", { row: second.id, text: first.label })).stages.at(
+          -1,
+        ),
+        "completed",
+      )
+      assertEquals(colorColumn(session, second.id, "invert_custom"), first.label)
+      assertEquals(colorColumn(session, second.id, "normal_custom"), "")
+      // The registered action clears the custom colour of the cursor's column.
+      assertEquals((await invokeOn(session, "REMOVE_CUSTOM")).stages.at(-1), "completed")
+      assertEquals(colorColumn(session, second.id, "invert_custom"), "")
+      assertEquals(
+        (await invokeOn(session, "colors:set", { row: second.id, text: first.label })).stages.at(
+          -1,
+        ),
+        "completed",
+      )
+      // The activation opens the native list of colours for the cursor's column, over the screen.
+      assertEquals(
+        (await invokeOn(session, "colors:activate", { row: second.id })).stages.at(-1),
+        "completed",
+      )
+      assert(session.mirror.interaction.interaction.choices.length > 10)
+      assertEquals((await session.submit({ kind: "cancel" })).stages.at(-1), "completed")
+      assertEquals(top(session).context, "COLORS")
+      await leaveAndSave(session, inMainMenu(session))
+      await client.close()
+
+      client = new Client(binary, profile)
+      session = await startSession(client)
+      await openSetting(session, "settings:colors")
+      assertEquals(colorColumn(session, second.id, "invert_custom"), first.label)
+      assertEquals(colorColumn(session, first.id, "invert_custom"), "")
       await client.close()
     } finally {
       client.kill()

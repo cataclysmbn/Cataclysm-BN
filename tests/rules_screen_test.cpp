@@ -149,9 +149,6 @@ auto part(const ec::screen_view& screen, const std::string& id) -> const ec::com
     REQUIRE(found != nullptr);
     return *found;
 }
-auto has_part(const ec::screen_view& screen, const std::string& id) -> bool {
-    return screen.root && ec::find_component(*screen.root, id) != nullptr;
-}
 template <typename Body> auto body(const ec::component& value) -> const Body& {
     REQUIRE(std::holds_alternative<Body>(value.body));
     return std::get<Body>(value.body);
