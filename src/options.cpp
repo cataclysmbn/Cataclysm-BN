@@ -3680,6 +3680,13 @@ namespace
 {
 namespace ec = engine_client;
 
+/// The colour the options list prints a value in: off values red, a refused option gray.
+auto option_value_color( const std::string &value, bool prerequisite_met ) -> nc_color
+{
+    return !prerequisite_met ? c_light_gray : value == "false" || value == "disabled" ||
+           value == "off" ? c_light_red : c_light_green;
+}
+
 /// The components and affordances of the options screen.
 constexpr auto options_pages = "options:pages";
 constexpr auto options_items = "options:items";
@@ -3862,14 +3869,8 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
                     string_col name( name_prefix + opt.getMenuText(), !hasPrerequisite ||
                                      hasPrerequisiteFulfilled ? c_white : c_light_gray );
 
-                    nc_color cLineColor;
-                    if( hasPrerequisite && !hasPrerequisiteFulfilled ) {
-                        cLineColor = c_light_gray;
-                    } else if( opt.getValue() == "false" || opt.getValue() == "disabled" || opt.getValue() == "off" ) {
-                        cLineColor = c_light_red;
-                    } else {
-                        cLineColor = c_light_green;
-                    }
+                    const auto cLineColor = option_value_color( opt.getValue(), !hasPrerequisite ||
+                                            hasPrerequisiteFulfilled );
 
                     string_col value( opt.getValueName(), is_selected ? hilite( cLineColor ) : cLineColor );
 
@@ -4012,14 +4013,19 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
         }
         if( field.type == "integer" || field.type == "float" )
         {
-            auto parsed = 0.0;
+            // Whole digits for an integer, as the native setValue reads it: "1e2" is not 100.
+            auto number = 0.0;
+            auto whole = 0LL;
             const auto *const end = value.data() + value.size();
-            const auto result = std::from_chars( value.data(), end, parsed );
-            return result.ec == std::errc{} &&result.ptr == end &&std::isfinite( parsed ) &&
-            ( field.type == "float" || parsed == std::trunc( parsed ) ) &&
-            ( !field.min || parsed >= *field.min ) &&( !field.max || parsed <= *field.max );
+            const auto result = field.type == "float" ? std::from_chars( value.data(), end, number ) :
+            std::from_chars( value.data(), end, whole );
+            if( field.type == "integer" ) {
+                number = static_cast<double>( whole );
+            }
+            return result.ec == std::errc{} &&result.ptr == end &&std::isfinite( number ) &&
+                   ( !field.min || number >= *field.min ) &&( !field.max || number <= *field.max );
         }
-        return field.max_length < 0 || utf8_width( value ) <= field.max_length;
+        return field.max_length < 0 || static_cast<int>( value.size() ) <= field.max_length;
     };
 
     const auto is_selectable = [&]( const PageItem & item ) -> bool {
@@ -4061,8 +4067,7 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
             const auto &opt = cOPTIONS.find( item.data )->second;
             const auto met = !opt.hasPrerequisite() || opt.checkPrerequisite();
             const auto value = opt.getValue();
-            const auto value_color = !met ? c_light_gray : value == "false" || value == "disabled" ||
-                                     value == "off" ? c_light_red : c_light_green;
+            const auto value_color = option_value_color( value, met );
             rows.push_back( {
                 .id = row_id_of( item ), .label = opt.getMenuText(),
 .denial = met ? std::string{} : string_format( _( "Prerequisite for this option not met!\n(%s)" ),

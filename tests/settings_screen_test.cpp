@@ -296,8 +296,9 @@ TEST_CASE(
             }
             case 2:
                 CHECK(field_of(screen).value == std::to_string(original));
-                // Not a number is refused too.
-                return invoke("options:set", {.row = "option:SAFEMODEPROXIMITY", .text = "seven"});
+                // Exponent notation is refused too: the native setValue would read "1e1" as 1,
+                // not 10.
+                return invoke("options:set", {.row = "option:SAFEMODEPROXIMITY", .text = "1e1"});
             case 3:
                 CHECK(field_of(screen).value == std::to_string(original));
                 return invoke("options:set", {.row = "option:SAFEMODEPROXIMITY", .text = "7"});
