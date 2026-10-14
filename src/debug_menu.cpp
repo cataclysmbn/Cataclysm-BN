@@ -54,6 +54,7 @@
 #include "mtype.h"
 #include "npc.h"
 #include "npc_class.h"
+#include "npctrade.h"
 #include "options.h"
 #include "output.h"
 #include "overmap/omdata.h"
@@ -135,6 +136,7 @@ enum debug_menu_index {
     DEBUG_TELEPORT_TO_OVERMAP_SPECIAL,
     DEBUG_REVEAL_MAP,
     DEBUG_SPAWN_NPC,
+    DEBUG_TRADE_NPC,
     DEBUG_SPAWN_MON,
     DEBUG_GAME_STATE,
     DEBUG_REPRODUCE_AREA,
@@ -313,6 +315,7 @@ static int spawning_uilist()
     const std::vector<uilist_entry> uilist_initializer = {
         { uilist_entry( DEBUG_WISH, true, 'w', _( "Spawn an item" ) ) },
         { uilist_entry( DEBUG_SPAWN_NPC, true, 'n', _( "Spawn NPC" ) ) },
+        { uilist_entry( DEBUG_TRADE_NPC, true, 't', _( "Trade with a spawned shopkeeper" ) ) },
         { uilist_entry( DEBUG_SPAWN_MON, true, 'm', _( "Spawn monster" ) ) },
         { uilist_entry( DEBUG_SPAWN_VEHICLE, true, 'v', _( "Spawn a vehicle" ) ) },
         { uilist_entry( DEBUG_SPAWN_ARTIFACT, true, 'a', _( "Spawn artifact" ) ) },
@@ -1563,6 +1566,16 @@ void debug()
                 params["npc"] = temp.get();
             } );
             g->load_npcs();
+        }
+        break;
+
+        case DEBUG_TRADE_NPC: {
+            const auto trader = get_map().place_npc( u.bub_pos() + tripoint_east,
+                                string_id<npc_template>( "marloss_voice" ), true );
+            g->load_npcs();
+            if( const auto guy = g->find_npc( trader ) ) {
+                npc_trading::trade( *guy, 0, _( "Trade" ) );
+            }
         }
         break;
 
