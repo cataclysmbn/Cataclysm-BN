@@ -1224,7 +1224,7 @@ auto uilist::as_interaction() const -> game_client::interaction_snapshot
             } ) | std::ranges::to<std::vector>(),
             .favorite = details.favorite,
             .action_id = entry.action_id,
-            .identity = identities[entry_index],
+            .identity = details.identity.empty() ? identities[entry_index] : details.identity,
             .toggled = entry.toggled,
         } );
     }

@@ -199,6 +199,8 @@ struct uilist_row_details {
     std::string description;
     std::vector<uilist_detail_column> columns;
     bool favorite = false;
+    /// What the entry is, when its return value is only its place: the row is known by it in the 0.2 components.
+    std::string identity;
 };
 
 class uilist_callback

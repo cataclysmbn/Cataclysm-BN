@@ -1880,7 +1880,8 @@ public:
         };
         return {.description = spell_info_text(sp, no_fold_width),
                 .columns = std::move(columns),
-                .favorite = categories.spells[index].favorite};
+                .favorite = categories.spells[index].favorite,
+                .identity = "spell:" + sp.id().str()};
     }
     auto key(const input_context& ctxt, const input_event& event, int entnum, uilist* menu)
         -> bool override {
