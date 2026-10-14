@@ -6,10 +6,10 @@
 #include "catacharset.h"
 #include "catalua.h"
 #include "character_id.h"
-#include "client_interaction.h"
 #include "color.h"
 #include "debug.h"
 #include "distraction_manager.h"
+#include "engine_client_component.h"
 #include "enums.h"
 #include "filesystem.h"
 #include "fstream_utils.h"
@@ -79,6 +79,13 @@ struct submenu_entry {
     std::string label;
     std::string description;
 };
+
+namespace ec = engine_client;
+/// The affordances the main menu runs from its own loop.
+constexpr auto tabs_id = "menu:tabs";
+constexpr auto tab_id = "menu:tab";
+constexpr auto entries_id = "menu:entries";
+constexpr auto entry_id = "menu:entry";
 } // namespace
 
 static int getopt( main_menu_opts o )
@@ -768,6 +775,46 @@ bool main_menu::opening_screen()
         return entries;
     };
 
+    // The title art over the tabs, and under them the selected tab's text or entries.
+    const auto screen = ec::screen_scope( ctxt, {
+        .role = "screen",
+        .view = [this, &submenu_entries]( const ec::boundary_state & )
+        {
+            auto tabs = std::views::iota( std::size_t{ 0 }, vMenuItems.size() ) | std::views::transform( [&](
+            const auto index ) {
+                return ec::tab_entry{ .id = std::string{ menu_tab_ids[index] }, .label = remove_color_tags( shortcut_text( c_white, vMenuItems[index] ) ),
+                                      .selected = static_cast<int>( index ) == sel1 };
+            } ) | std::ranges::to<std::vector>();
+            const auto entries = submenu_entries();
+            const auto prose = sel1 == getopt( main_menu_opts::MOTD ) ? mmenu_motd :
+                               sel1 == getopt( main_menu_opts::CREDITS ) ? mmenu_credits : std::string{};
+            const auto listed = prose.empty() && !entries.empty();
+            auto content = ec::component{ .id = "menu:text", .body = ec::text_body{ .markup = prose } };
+            if( listed ) {
+                auto rows = entries | std::views::transform( []( const auto & entry ) {
+                    return ec::row{ .id = entry.id, .label = entry.label, .description = entry.description };
+                } ) | std::ranges::to<std::vector>();
+                content = ec::list( { .id = entries_id, .rows = std::move( rows ), .selection = "single", .activate = entry_id } );
+            }
+            const auto banner = banner_lines() | std::views::join_with( '\n' ) | std::ranges::to<std::string>();
+            auto result = ec::screen_view{
+                .title = "Cataclysm: Bright Nights",
+                .root = ec::split( {
+                    .id = "menu", .children = ec::children_of(
+                    ec::component{ .id = "menu:banner", .body = ec::text_body{ .markup = banner, .role = "banner" } },
+                    ec::tabs( { .id = tabs_id, .tabs = std::move( tabs ), .select = tab_id, .child = std::move( content ) } ) ) } ),
+                .affordances = { ec::invoke_affordance( { .id = tab_id, .label = ctxt.get_action_name( "CONFIRM" ), .args = { .row = ec::row_shape{ .component_id = tabs_id } } } ) },
+            };
+            if( listed ) {
+                result.affordances.push_back( ec::invoke_affordance( { .id = entry_id, .label = ctxt.get_action_name( "CONFIRM" ), .args = { .row = ec::row_shape{ .component_id = entries_id } } } ) );
+                result.focus_component = entries_id;
+                result.focus_row = sel2 >= 0 &&
+                                   static_cast<std::size_t>( sel2 ) < entries.size() ? entries[sel2].id : std::string{};
+            }
+            return result;
+        },
+    } );
+
     bool start_new = false;
     while( !start ) {
         ui_manager::redraw();
@@ -776,55 +823,13 @@ bool main_menu::opening_screen()
         const size_t last_world_pos = world_generator->get_world_index( world_generator->last_world_name );
         auto action = std::string{};
         auto sInput = input_event{};
-        {
-            const auto interaction = game_client::interaction_scope( ctxt, [this, &submenu_entries]() {
-                auto snapshot = game_client::interaction_snapshot{
-                    .kind = game_client::interaction_kind::choices,
-                    .title = "Cataclysm: Bright Nights",
-                    .message = remove_color_tags( sel1 == getopt( main_menu_opts::MOTD ) ? mmenu_motd :
-                    sel1 == getopt( main_menu_opts::CREDITS ) ? mmenu_credits : std::string{} ),
-                    .banner = banner_lines(),
-                    // Esc here only asks "Really quit?"; the Quit tab is the visible way out, as in the native menu.
-                    .allow_cancel = false,
-                };
-                for( auto index = std::size_t{ 0 }; index < vMenuItems.size(); ++index ) {
-                    const auto selected = static_cast<int>( index ) == sel1;
-                    const auto label = remove_color_tags( shortcut_text( c_white, vMenuItems[index] ) );
-                    snapshot.panes.push_back( {
-                        .id = std::string{ menu_tab_ids[index] }, .label = label,
-                        .role = selected ? "focused" : "category",
-                    } );
-                    snapshot.choices.push_back( {
-                        .id = "tab:" + std::string{ menu_tab_ids[index] }, .label = label,
-                        .selected = selected, .highlighted = selected,
-                    } );
-                }
-                const auto entries = submenu_entries();
-                for( auto index = std::size_t{ 0 }; index < entries.size(); ++index ) {
-                    const auto selected = static_cast<int>( index ) == sel2;
-                    snapshot.choices.push_back( {
-                        .id = entries[index].id, .label = entries[index].label,
-                        .description = entries[index].description,
-                        .pane_id = std::string{ menu_tab_ids[sel1] },
-                        .selected = selected, .highlighted = selected,
-                    } );
-                }
-                return snapshot;
-            } );
-            action = ctxt.handle_input();
-            sInput = ctxt.get_raw_input();
-        }
+        action = ctxt.handle_input();
+        sInput = ctxt.get_raw_input();
 
-        if( sInput.interaction &&
-            sInput.interaction->operation == game_client::interaction_operation::cancel ) {
-            action = "QUIT";
-        } else if( sInput.interaction &&
-                   sInput.interaction->operation == game_client::interaction_operation::choose ) {
-            const auto &choice_id = sInput.interaction->target_id;
-            const auto tab = std::ranges::find_if( menu_tab_ids, [&]( const auto id ) {
-                return choice_id == "tab:" + std::string{ id };
-            } );
-            if( tab != menu_tab_ids.end() ) {
+        if( const auto invoked = ec::invoked( sInput ); invoked && invoked->args.row ) {
+            const auto &row_id = *invoked->args.row;
+            const auto tab = std::ranges::find( menu_tab_ids, row_id );
+            if( invoked->affordance_id == tab_id && tab != menu_tab_ids.end() ) {
                 const auto next = static_cast<int>( tab - menu_tab_ids.begin() );
                 if( next != sel1 ) {
                     sel1 = next;
@@ -839,9 +844,9 @@ bool main_menu::opening_screen()
                 } else {
                     action.clear();
                 }
-            } else {
+            } else if( invoked->affordance_id == entry_id ) {
                 const auto entries = submenu_entries();
-                const auto entry = std::ranges::find( entries, choice_id, &submenu_entry::id );
+                const auto entry = std::ranges::find( entries, row_id, &submenu_entry::id );
                 if( entry != entries.end() ) {
                     sel2 = static_cast<int>( entry - entries.begin() );
                     action = "CONFIRM";

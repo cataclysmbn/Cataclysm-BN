@@ -4,10 +4,10 @@
 #include <cstdlib>  // Needed for rand()
 #include <vector>
 
-#include "client_interaction.h"
 #include "input.h"
 #include "output.h"
 #include "rng.h"
+#include "iuse_software_screen.h"
 #include "translations.h"
 #include "ui_manager.h"
 
@@ -421,32 +421,16 @@ void robot_finds_kitten::process_input()
     input_context ctxt( "IUSE_SOFTWARE_KITTEN" );
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
-    ctxt.register_action( "ANY_INPUT" );
+    // Named, so that a client offers it as the action that stands for any key.
+    ctxt.register_action( "ANY_INPUT", to_translation( "Press any key" ) );
     const auto final_frame = end_animation_frame + 1 == num_end_animation_frames;
     const auto animating = current_ui_state == ui_state::end_animation && !final_frame;
-    // Every state but the cinema's frames takes any key: the instructions start the game, the field
-    // answers a key it has no action for with its invalid command line.
-    const auto awaiting_any_key = !animating && current_ui_state != ui_state::exit;
-    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
-        auto snapshot = game_client::interaction_snapshot{
-            .kind = game_client::interaction_kind::custom,
-            .title = _( "robotfindskitten v22July2008" ),
-            .canvas = game_client::window_canvas( { bkatwin, w } ),
-            .refresh_ms = animating ? end_animation_frame_ms : 0,
-        };
-        if( awaiting_any_key ) {
-            // As the any-key popups: whatever a client presses acknowledges it.
-            snapshot.choices.push_back( {
-                .id = "acknowledge",
-                .label = _( "Press any key" ),
-                .description = "ANY_INPUT",
-                .selected = true,
-                .highlighted = true,
-            } );
-            snapshot.any_key_choice_id = "acknowledge";
-        }
-        return snapshot;
-    } );
+    const auto screen = engine_client::screen_scope( ctxt, { .view = [&]( const engine_client::boundary_state & )
+    {
+        return iuse_software::canvas_screen( { .title = _( "robotfindskitten v22July2008" ), .layers = { bkatwin, w },
+                                               .refresh_ms = animating ? end_animation_frame_ms : 0 } );
+    }
+                                                           } );
 
     switch( current_ui_state ) {
         case ui_state::instructions: {
@@ -454,7 +438,7 @@ void robot_finds_kitten::process_input()
             if( action == "QUIT" ) {
                 current_ui_state = ui_state::exit;
             } else if( action == "ANY_INPUT" &&
-                       ( !ctxt.get_raw_input().sequence.empty() || ctxt.get_raw_input().interaction ) ) {
+                       ( !ctxt.get_raw_input().sequence.empty() || !ctxt.get_raw_input().action.empty() ) ) {
                 current_ui_state = ui_state::main;
             }
             break;
@@ -467,7 +451,7 @@ void robot_finds_kitten::process_input()
             if( action == "QUIT" ) {
                 current_ui_state = ui_state::exit;
             } else if( action == "ANY_INPUT" ) {
-                if( !ctxt.get_raw_input().sequence.empty() || ctxt.get_raw_input().interaction ) {
+                if( !ctxt.get_raw_input().sequence.empty() || !ctxt.get_raw_input().action.empty() ) {
                     current_ui_state = ui_state::invalid_input;
                 }
             } else if( action != "HELP_KEYBINDINGS" ) {

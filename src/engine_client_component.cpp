@@ -165,15 +165,22 @@ auto native_affordances( build &b ) -> void
     }
 }
 
-/// The role a registered action plays on every screen that has it: CONFIRM accepts and QUIT leaves.
+/// The role a registered action plays on every screen that has it: CONFIRM accepts, QUIT leaves, and any key
+/// acknowledges where a screen names that key.
 auto registered_role( const std::string &id ) -> std::string
 {
-    return id == "CONFIRM" ? "confirm" : id == "QUIT" ? "cancel" : std::string{};
+    return id == "CONFIRM" ? "confirm" : id == "QUIT" ? "cancel" : id == "ANY_INPUT" ? "any_key" :
+           std::string{};
 }
+
+/// Whether the action is a button: ANY_INPUT stands for every unbound key, so it is one only where the screen
+/// gave it a name.
+auto offered( const action &entry ) -> bool { return entry.id != "ANY_INPUT" || entry.name != entry.id; }
 
 auto registered_affordances( const boundary_state &state ) -> std::vector<affordance>
 {
-    return state.actions | std::views::transform( [&]( const auto & entry ) {
+    return state.actions | std::views::filter( offered ) | std::views::transform( [&](
+    const auto & entry ) {
         return affordance{ .id = entry.id, .label = entry.name, .keys = entry.keys, .role = registered_role( entry.id ), .target = entry.id };
     } ) | std::ranges::to<std::vector>();
 }

@@ -2,10 +2,10 @@
 
 #include "avatar.h"
 #include "calendar.h"
-#include "client_interaction.h"
 #include "character_id.h"
 #include "color.h"
 #include "debug.h"
+#include "engine_client_component.h"
 #include "enums.h"
 #include "event.h"
 #include "event_bus.h"
@@ -50,6 +50,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <string>
 #include <utility>
 
@@ -79,24 +80,16 @@ static const std::string flag_CONSOLE( "CONSOLE" );
 namespace
 {
 
-/// The terminal as the native window draws it: its text lines under the computer's name, with `choices` as the answers.
-auto terminal_snapshot( const std::string &title,
-                        const std::vector<std::pair<int, std::string>> &lines,
-                        std::vector<game_client::interaction_choice> choices ) -> game_client::interaction_snapshot
+namespace ec = engine_client;
+
+/// The terminal as the native window draws it: its lines under the computer's name, green unless a line is colored.
+auto terminal_screen( const std::string &title,
+                      const std::vector<std::pair<int, std::string>> &lines ) -> ec::screen_view
 {
-    auto snapshot = game_client::interaction_snapshot{
-        .kind = game_client::interaction_kind::choices,
-        .title = title,
-        .allow_cancel = true,
-        .choices = std::move( choices ),
-    };
-    for( auto &choice : snapshot.choices ) {
-        choice.pane_id = "terminal";
-    }
-    for( const auto &[indent, text] : lines ) {
-        snapshot.message += ( snapshot.message.empty() ? "" : "\n" ) + std::string( indent, ' ' ) + text;
-    }
-    return snapshot;
+    using namespace std::views;
+    const auto text = lines | transform( []( const auto & line ) { return std::string( line.first, ' ' ) + line.second; } )
+    | join_with( '\n' ) | std::ranges::to<std::string>();
+    return { .title = title, .root = ec::component{ .id = "terminal:output", .body = ec::text_body{ .markup = colorize( text, c_green ), .role = "terminal_output" } } };
 }
 
 } // namespace
@@ -1594,12 +1587,8 @@ bool computer_session::query_any( const std::string &text, Args &&... args )
 bool computer_session::query_any()
 {
     input_context ctxt( "COMPUTER_TERMINAL" );
-    ctxt.register_action( "ANY_INPUT" );
-    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
-        auto snapshot = terminal_snapshot( comp.name, lines, { { .id = "continue", .label = _( "Press any key" ) } } );
-        snapshot.any_key_choice_id = "continue";
-        return snapshot;
-    } );
+    ctxt.register_action( "ANY_INPUT", to_translation( "Press any key" ) );
+    const auto screen = ec::screen_scope( ctxt, { .view = [&]( const ec::boundary_state & ) { return terminal_screen( comp.name, lines ); } } );
     ui_manager::redraw();
     ctxt.handle_input();
     return true;
@@ -1627,23 +1616,12 @@ computer_session::ynq computer_session::query_ynq( const std::string &text, Args
                          ctxt.describe_key_and_name( "NO", allow_key ),
                          ctxt.describe_key_and_name( "QUIT", allow_key ) );
 
-    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
-        return terminal_snapshot( comp.name, lines, {
-            { .id = "yes", .label = ctxt.get_action_name( "YES" ) },
-            { .id = "no", .label = ctxt.get_action_name( "NO" ) },
-            { .id = "quit", .label = ctxt.get_action_name( "QUIT" ) },
-        } );
-    } );
+    const auto screen = ec::screen_scope( ctxt, { .view = [&]( const ec::boundary_state & ) { return terminal_screen( comp.name, lines ); } } );
     do {
         ui_manager::redraw();
         const std::string action = ctxt.handle_input();
-        if( const auto &event = ctxt.get_raw_input().interaction ) {
-            if( event->operation == game_client::interaction_operation::cancel || event->target_id == "quit" ) {
-                return ynq::quit;
-            }
-            return event->target_id == "yes" ? ynq::yes : ynq::no;
-        }
-        if( allow_key( ctxt.get_raw_input() ) ) {
+        // An offered action a client runs by id carries no key to check the case of.
+        if( !ctxt.get_raw_input().action.empty() || allow_key( ctxt.get_raw_input() ) ) {
             if( action == "YES" ) {
                 return ynq::yes;
             } else if( action == "NO" ) {

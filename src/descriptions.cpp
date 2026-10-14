@@ -1,7 +1,7 @@
 #include "avatar.h"
 #include "calendar.h"
-#include "client_interaction.h"
 #include "color.h"
+#include "engine_client_component.h"
 #include "game.h" // IWYU pragma: associated
 #include "harvest.h"
 #include "input.h"
@@ -21,6 +21,8 @@
 #include <sstream>
 #include <type_traits>
 #include <utility>
+
+namespace ec = engine_client;
 
 static const skill_id skill_survival( "survival" );
 
@@ -165,33 +167,21 @@ void game::extended_description( const tripoint_bub_ms &p )
         wnoutrefresh( w_main );
     } );
 
-    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
-        auto snapshot = game_client::interaction_snapshot{
-            .kind = game_client::interaction_kind::choices,
+    // The target being described is the panel's title, under the name of the action that picked it.
+    const auto screen = ec::screen_scope( ctxt, { .view = [&]( const ec::boundary_state & )
+    {
+        const auto target = cur_target == description_target::creature ? "CREATURE" :
+                            cur_target == description_target::furniture ? "FURNITURE" : "TERRAIN";
+        return ec::screen_view{
             .title = _( "Description" ),
-            .message = describe(),
-            .allow_cancel = true,
+            .root = ec::panel( { .id = "description", .title = ctxt.get_action_name( target ), .child = ec::component{ .id = "description:text", .body = ec::text_body{ .markup = colorize( describe(), c_light_gray ) } } } ),
         };
-        const auto add_target = [&]( const std::string & id, const std::string & action_id,
-        const description_target target ) {
-            snapshot.choices.push_back( { .id = "describe:" + id, .label = ctxt.get_action_name( action_id ),
-                                          .selected = cur_target == target,
-                                          .highlighted = cur_target == target } );
-        };
-        add_target( "creature", "CREATURE", description_target::creature );
-        add_target( "furniture", "FURNITURE", description_target::furniture );
-        add_target( "terrain", "TERRAIN", description_target::terrain );
-        return snapshot;
-    } );
+    }
+                                                } );
 
     do {
         ui_manager::redraw();
         action = ctxt.handle_input();
-        if( const auto &event = ctxt.get_raw_input().interaction ) {
-            action = event->operation == game_client::interaction_operation::cancel ? "QUIT" :
-                     event->target_id == "describe:creature" ? "CREATURE" :
-                     event->target_id == "describe:furniture" ? "FURNITURE" : "TERRAIN";
-        }
         if( action == "CREATURE" ) {
             cur_target = description_target::creature;
         } else if( action == "FURNITURE" ) {
