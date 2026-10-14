@@ -6885,6 +6885,7 @@
                   "ESC"
                 ],
                 "enabled": true,
+                "role": "cancel",
                 "expect": "screen"
               },
               {
@@ -6901,6 +6902,7 @@
                   "RETURN"
                 ],
                 "enabled": true,
+                "role": "confirm",
                 "expect": "screen"
               },
               {
@@ -7208,6 +7210,7 @@
               "ESC"
             ],
             "enabled": true,
+            "role": "cancel",
             "expect": "screen"
           },
           {
@@ -7224,6 +7227,7 @@
               "RETURN"
             ],
             "enabled": true,
+            "role": "confirm",
             "expect": "screen"
           },
           {

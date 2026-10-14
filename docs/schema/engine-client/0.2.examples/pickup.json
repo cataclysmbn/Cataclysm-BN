@@ -1,0 +1,571 @@
+{
+  "valid": [
+    {
+      "name": "pickup screen",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:13",
+        "role": "dialog",
+        "title": "Pick up",
+        "root": {
+          "id": "pickup",
+          "kind": "panel",
+          "title": "Pick up",
+          "subtitle": "ground",
+          "stats": [
+            {
+              "key": "weight",
+              "label": "Weight",
+              "value": "0.0",
+              "max": "45.0",
+              "unit": "kg"
+            },
+            {
+              "key": "volume",
+              "label": "Volume",
+              "value": "0.00",
+              "max": "0.00",
+              "unit": "L"
+            }
+          ],
+          "child": {
+            "id": "pickup:items",
+            "kind": "list",
+            "affordances": [
+              "pickup:toggle",
+              "pickup:count"
+            ],
+            "columns": [],
+            "rows": [
+              {
+                "id": "pickup:f795a3383eb0f889",
+                "label": "lighter (2/25)",
+                "description": "Origin: 'Bright Nights'\n--\nMaterial: Aluminum, Plastic\nVolume: 0.025 L  Weight: 0.01 kg\nOwner: Your Followers\nCategory: COOKING TOOLS\n--\nThis is a disposable plastic lighter.  A lighter must be carried to use various drugs, like cigarettes, or to light things like Molotov cocktails.  You can also use a lighter to light nearby items on fire.\n--\nThrow range: 8\nMoves per throw: 56\nStamina cost: 50\n--\nAmmunition: butane\n--\nCharges: 2\nMaximum 25 charges of butane.\n--\nRepair using advanced 3D printer, 3D printer, charcoal forge, Grid 3D Printer, Advanced Grid 3D Printer, grid forge, grid soldering iron, grid welder, electric forge, alcohol-fueled soldering iron, electric soldering iron, integrated toolset, arc welder, or makeshift arc welder.\n* This item can be reinforced.\n--\nDisassembly takes about 6 seconds and might yield: 1 pilot light and plastic scrap (1).\n--\n* This item conducts electricity.\n* This item can start fire.\n--\nPrice: $0.11  Barter value: $0.14\n--\nYou know of nothing you could craft with it.\n",
+                "denial": "",
+                "hotkey": "a",
+                "enabled": true,
+                "selectable": true,
+                "selected": false,
+                "columns": [],
+                "color": "c_light_gray",
+                "markup": "lighter<color_c_red> (2/25)</color>",
+                "mark": {
+                  "glyph": "-"
+                },
+                "selected_count": 0,
+                "minimum_count": 0,
+                "max": 1,
+                "look": {
+                  "kind": "item",
+                  "id": "lighter",
+                  "glyph": ",",
+                  "color": "c_blue",
+                  "name": "lighter"
+                }
+              },
+              {
+                "id": "pickup:5bcc2b0e7290dffe",
+                "label": "rock (1)",
+                "description": "",
+                "denial": "",
+                "hotkey": "b",
+                "enabled": true,
+                "selectable": true,
+                "selected": false,
+                "columns": [],
+                "color": "c_light_gray",
+                "markup": "rock (1)",
+                "mark": {
+                  "glyph": "-"
+                },
+                "selected_count": 0,
+                "minimum_count": 0,
+                "max": 1,
+                "look": {
+                  "kind": "item",
+                  "id": "rock",
+                  "glyph": "*",
+                  "color": "c_light_gray",
+                  "name": "rock"
+                }
+              }
+            ],
+            "total": 2,
+            "selection": "single",
+            "activate": "pickup:toggle"
+          }
+        },
+        "affordances": [
+          {
+            "id": "pickup:toggle",
+            "label": "Mark",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "pickup:items"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "pickup:count",
+            "label": "Count",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "pickup:items"
+              },
+              "count": {
+                "min": 0
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Previous item",
+            "keys": [
+              "k",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Next item",
+            "keys": [
+              "j",
+              "DOWN",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Mark selected item",
+            "keys": [
+              "l",
+              "RIGHT",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Unmark selected item",
+            "keys": [
+              "h",
+              "LEFT",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "NEXT_TAB",
+            "label": "Next page",
+            "keys": [
+              "TAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PREV_TAB",
+            "label": "Previous page",
+            "keys": [
+              "BACKTAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SCROLL_UP",
+            "label": "Scroll item info up",
+            "keys": [
+              "PPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SCROLL_DOWN",
+            "label": "Scroll item info down",
+            "keys": [
+              "NPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          },
+          {
+            "id": "SELECT_ALL",
+            "label": "Select all",
+            "keys": [
+              ","
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Cancel",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "ANY_INPUT",
+            "label": "ANY_INPUT",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "FILTER",
+            "label": "Filter",
+            "keys": [
+              "f",
+              "F",
+              "/"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "WEAR",
+            "label": "Wear",
+            "keys": [
+              "W"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "WIELD",
+            "label": "Wield",
+            "keys": [
+              "w"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "pickup:items",
+          "row_id": "pickup:f795a3383eb0f889"
+        },
+        "dock": "left",
+        "context": "PICKUP"
+      }
+    },
+    {
+      "name": "stack of the pickup list, not yet marked",
+      "def": "row",
+      "value": {
+        "id": "pickup:f795a3383eb0f889",
+        "label": "lighter (2/25)",
+        "description": "Origin: 'Bright Nights'\n--\nMaterial: Aluminum, Plastic\nVolume: 0.025 L  Weight: 0.01 kg\nOwner: Your Followers\nCategory: COOKING TOOLS\n--\nThis is a disposable plastic lighter.  A lighter must be carried to use various drugs, like cigarettes, or to light things like Molotov cocktails.  You can also use a lighter to light nearby items on fire.\n--\nThrow range: 8\nMoves per throw: 56\nStamina cost: 50\n--\nAmmunition: butane\n--\nCharges: 2\nMaximum 25 charges of butane.\n--\nRepair using advanced 3D printer, 3D printer, charcoal forge, Grid 3D Printer, Advanced Grid 3D Printer, grid forge, grid soldering iron, grid welder, electric forge, alcohol-fueled soldering iron, electric soldering iron, integrated toolset, arc welder, or makeshift arc welder.\n* This item can be reinforced.\n--\nDisassembly takes about 6 seconds and might yield: 1 pilot light and plastic scrap (1).\n--\n* This item conducts electricity.\n* This item can start fire.\n--\nPrice: $0.11  Barter value: $0.14\n--\nYou know of nothing you could craft with it.\n",
+        "denial": "",
+        "hotkey": "a",
+        "enabled": true,
+        "selectable": true,
+        "selected": false,
+        "columns": [],
+        "color": "c_light_gray",
+        "markup": "lighter<color_c_red> (2/25)</color>",
+        "mark": {
+          "glyph": "-"
+        },
+        "selected_count": 0,
+        "minimum_count": 0,
+        "max": 1,
+        "look": {
+          "kind": "item",
+          "id": "lighter",
+          "glyph": ",",
+          "color": "c_blue",
+          "name": "lighter"
+        }
+      }
+    },
+    {
+      "name": "mark affordance of the pickup list",
+      "def": "affordance",
+      "value": {
+        "id": "pickup:toggle",
+        "label": "Mark",
+        "keys": [],
+        "enabled": true,
+        "args": {
+          "row": {
+            "component_id": "pickup:items"
+          }
+        },
+        "expect": "boundary"
+      }
+    },
+    {
+      "name": "stack marked in the pickup list, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:1",
+          "revision": "16"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "pickup:toggle",
+          "args": {
+            "row": "pickup:f795a3383eb0f889"
+          }
+        }
+      }
+    },
+    {
+      "name": "stack marked in the pickup list, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "stack marked in the pickup list, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "stack marked in the pickup list, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "stack marked in the pickup list, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "20",
+          "revision": "17"
+        }
+      }
+    },
+    {
+      "name": "count affordance of the pickup list",
+      "def": "affordance",
+      "value": {
+        "id": "pickup:count",
+        "label": "Count",
+        "keys": [],
+        "enabled": true,
+        "args": {
+          "row": {
+            "component_id": "pickup:items"
+          },
+          "count": {
+            "min": 0
+          }
+        },
+        "expect": "boundary"
+      }
+    },
+    {
+      "name": "stack given a count in the pickup list, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:2",
+          "revision": "17"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "pickup:count",
+          "args": {
+            "row": "pickup:f795a3383eb0f889",
+            "count": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "stack given a count in the pickup list, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "stack given a count in the pickup list, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "stack given a count in the pickup list, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "stack given a count in the pickup list, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "21",
+          "revision": "18"
+        }
+      }
+    },
+    {
+      "name": "mark of a row the list does not hold, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:3",
+          "revision": "18"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "pickup:toggle",
+          "args": {
+            "row": "pickup:nothing"
+          }
+        }
+      }
+    },
+    {
+      "name": "mark of a row the list does not hold, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "mark of a row the list does not hold, rejected",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "rejected",
+        "error": "invalid_arguments",
+        "error_text": "That needs other details."
+      }
+    },
+    {
+      "name": "pickup list left, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "screen_id": "screen:13"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "QUIT"
+        }
+      }
+    },
+    {
+      "name": "pickup list left, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "pickup list left, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "pickup list left, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "pickup list left, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "23",
+          "revision": "19"
+        }
+      }
+    }
+  ],
+  "invalid": []
+}

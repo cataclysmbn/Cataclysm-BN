@@ -548,6 +548,7 @@
               "SPACE"
             ],
             "enabled": true,
+            "role": "cancel",
             "expect": "screen"
           },
           {

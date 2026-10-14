@@ -1,33 +1,617 @@
 {
   "valid": [
     {
-      "name": "inventory selector header with hint and carried totals",
-      "def": "panel",
+      "name": "drop selector screen",
+      "def": "screen",
       "value": {
-        "id": "panel:pane-inventory",
-        "kind": "panel",
-        "title": "Inventory",
-        "subtitle": "Inventory",
-        "stats": [
+        "screen_id": "screen:14",
+        "role": "screen",
+        "title": "Multidrop",
+        "root": {
+          "id": "inventory",
+          "kind": "panel",
+          "title": "Multidrop",
+          "subtitle": "To drop x items, type a number before selecting.",
+          "stats": [
+            {
+              "key": "weight",
+              "label": "Weight",
+              "value": "0.5",
+              "max": "45.0",
+              "unit": "kg"
+            },
+            {
+              "key": "volume",
+              "label": "Volume",
+              "value": "0.00",
+              "max": "0.00",
+              "unit": "L"
+            }
+          ],
+          "child": {
+            "id": "split:columns",
+            "kind": "split",
+            "relation": "peers",
+            "active": "panel:worn",
+            "children": [
+              {
+                "id": "panel:worn",
+                "kind": "panel",
+                "title": "",
+                "child": {
+                  "id": "list:worn",
+                  "kind": "list",
+                  "affordances": [
+                    "list:worn:choose",
+                    "list:worn:count"
+                  ],
+                  "columns": [],
+                  "rows": [
+                    {
+                      "id": "category:5599950bad45a4f1",
+                      "label": "WEAPON HELD",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [],
+                      "header": true
+                    },
+                    {
+                      "id": "item:be11971306960c02",
+                      "label": "rock (1)",
+                      "description": "Origin: 'Bright Nights'\n--\nMaterial: Stone\nVolume: 0.250 L  Weight: 0.50 kg\nCategory: ROCKS\n--\nA rock the size of a baseball.  Makes a decent melee weapon, and is also good for throwing at enemies.\n--\nAmount: 1\n--\nMelee damage: Bash: 7  To-hit bonus: -1\nMoves per attack: 77\nStamina Cost: 67\nTypical damage per second:\nBest: 0.00  Vs. Agile: 0.00  Vs. Armored: 0.00\n--\nAverage melee damage:\nCritical hit chance 5% - 20%\nBashing: 6  Critical bash: 10\nMoves per attack: 55\n--\nBase throw damage: Bash: 7\nThrow damage: Bash: 9\nThrow range: 16\nMoves per throw: 68\nStamina cost: 81\n--\nAmmunition type: rocks\nDamage: 7\nRange: 10  Dispersion: 14\n--\nThis ammo never misfires.\n--\nHas level 1 hammering quality.\nHas level 1 sanding quality.\n--\n* This item is not repairable.\n--\n* This item does not conduct electricity.\n--\nPrice: $0.00\n--\nYou could use it to craft: pebble, primitive knife, rock in a sock, stone chisel, and stone hammer\n",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [],
+                      "color": "c_light_gray",
+                      "key_color": "c_white",
+                      "markup": "rock (1)",
+                      "mark": {
+                        "glyph": "-",
+                        "color": "c_dark_gray"
+                      },
+                      "selected_count": 0,
+                      "minimum_count": 0,
+                      "max": 1,
+                      "look": {
+                        "kind": "item",
+                        "id": "rock",
+                        "glyph": "*",
+                        "color": "c_light_gray",
+                        "name": "rock"
+                      }
+                    }
+                  ],
+                  "total": 2,
+                  "selection": "single",
+                  "activate": "list:worn:choose"
+                }
+              }
+            ]
+          }
+        },
+        "affordances": [
           {
-            "key": "weight",
-            "label": "Weight",
-            "value": "3.8",
-            "max": "45.0",
-            "unit": "kg"
+            "id": "list:worn:choose",
+            "label": "Mark/unmark selected item",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "list:worn"
+              }
+            },
+            "expect": "boundary"
           },
           {
-            "key": "volume",
-            "label": "Volume",
-            "value": "1.20",
-            "max": "15.00",
-            "unit": "L"
+            "id": "list:worn:count",
+            "label": "Count",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "list:worn"
+              },
+              "count": {
+                "min": 0
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "DOWN",
+            "label": "Next item",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "UP",
+            "label": "Previous item",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_DOWN",
+            "label": "Page down",
+            "keys": [
+              "NPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_UP",
+            "label": "Page up",
+            "keys": [
+              "PPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Mark/unmark selected item",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Previous column",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm your selection",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Cancel",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "CATEGORY_SELECTION",
+            "label": "Switch category selection mode",
+            "keys": [
+              "TAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TOGGLE_FAVORITE",
+            "label": "Toggle favorite",
+            "keys": [
+              "*"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HOME",
+            "label": "Home",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "END",
+            "label": "End",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "INVENTORY_FILTER",
+            "label": "Set item filter",
+            "keys": [
+              "/"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "EXAMINE",
+            "label": "Examine item",
+            "keys": [
+              "e"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "WIELD",
+            "label": "Wield selected item",
+            "keys": [
+              "w"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "WEAR",
+            "label": "Wear selected item",
+            "keys": [
+              "W"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ANY_INPUT",
+            "label": "ANY_INPUT",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Mark/unmark selected item",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DROP_NON_FAVORITE",
+            "label": "Mark/unmark non-favorite items",
+            "keys": [
+              ","
+            ],
+            "enabled": true,
+            "expect": "screen"
           }
         ],
-        "child": {
-          "id": "text:pane-inventory",
-          "kind": "text",
-          "markup": "Item hotkeys assigned: 3/52"
+        "focus": {
+          "component_id": "list:worn",
+          "row_id": "item:be11971306960c02"
+        },
+        "context": "INVENTORY"
+      }
+    },
+    {
+      "name": "category heading of the drop selector",
+      "def": "row",
+      "value": {
+        "id": "category:5599950bad45a4f1",
+        "label": "WEAPON HELD",
+        "description": "",
+        "denial": "",
+        "enabled": true,
+        "selectable": false,
+        "selected": false,
+        "columns": [],
+        "header": true
+      }
+    },
+    {
+      "name": "stack of the drop selector, not yet chosen",
+      "def": "row",
+      "value": {
+        "id": "item:be11971306960c02",
+        "label": "rock (1)",
+        "description": "Origin: 'Bright Nights'\n--\nMaterial: Stone\nVolume: 0.250 L  Weight: 0.50 kg\nCategory: ROCKS\n--\nA rock the size of a baseball.  Makes a decent melee weapon, and is also good for throwing at enemies.\n--\nAmount: 1\n--\nMelee damage: Bash: 7  To-hit bonus: -1\nMoves per attack: 77\nStamina Cost: 67\nTypical damage per second:\nBest: 0.00  Vs. Agile: 0.00  Vs. Armored: 0.00\n--\nAverage melee damage:\nCritical hit chance 5% - 20%\nBashing: 6  Critical bash: 10\nMoves per attack: 55\n--\nBase throw damage: Bash: 7\nThrow damage: Bash: 9\nThrow range: 16\nMoves per throw: 68\nStamina cost: 81\n--\nAmmunition type: rocks\nDamage: 7\nRange: 10  Dispersion: 14\n--\nThis ammo never misfires.\n--\nHas level 1 hammering quality.\nHas level 1 sanding quality.\n--\n* This item is not repairable.\n--\n* This item does not conduct electricity.\n--\nPrice: $0.00\n--\nYou could use it to craft: pebble, primitive knife, rock in a sock, stone chisel, and stone hammer\n",
+        "denial": "",
+        "enabled": true,
+        "selectable": true,
+        "selected": false,
+        "columns": [],
+        "color": "c_light_gray",
+        "key_color": "c_white",
+        "markup": "rock (1)",
+        "mark": {
+          "glyph": "-",
+          "color": "c_dark_gray"
+        },
+        "selected_count": 0,
+        "minimum_count": 0,
+        "max": 1,
+        "look": {
+          "kind": "item",
+          "id": "rock",
+          "glyph": "*",
+          "color": "c_light_gray",
+          "name": "rock"
+        }
+      }
+    },
+    {
+      "name": "choose affordance of the drop selector",
+      "def": "affordance",
+      "value": {
+        "id": "list:worn:choose",
+        "label": "Mark/unmark selected item",
+        "keys": [],
+        "enabled": true,
+        "args": {
+          "row": {
+            "component_id": "list:worn"
+          }
+        },
+        "expect": "boundary"
+      }
+    },
+    {
+      "name": "stack chosen in the drop selector, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:1",
+          "revision": "18"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "list:worn:choose",
+          "args": {
+            "row": "item:be11971306960c02"
+          }
+        }
+      }
+    },
+    {
+      "name": "stack chosen in the drop selector, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "stack chosen in the drop selector, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "stack chosen in the drop selector, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "stack chosen in the drop selector, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "23",
+          "revision": "19"
+        }
+      }
+    },
+    {
+      "name": "stack given a count in the drop selector, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:2",
+          "revision": "19"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "list:worn:count",
+          "args": {
+            "row": "item:be11971306960c02",
+            "count": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "stack given a count in the drop selector, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "stack given a count in the drop selector, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "stack given a count in the drop selector, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "stack given a count in the drop selector, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "24",
+          "revision": "20"
+        }
+      }
+    },
+    {
+      "name": "choose of a row the list does not hold, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:3",
+          "revision": "20"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "list:worn:choose",
+          "args": {
+            "row": "item:nothing"
+          }
+        }
+      }
+    },
+    {
+      "name": "choose of a row the list does not hold, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "choose of a row the list does not hold, rejected",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "rejected",
+        "error": "invalid_arguments",
+        "error_text": "That needs other details."
+      }
+    },
+    {
+      "name": "cancel affordance of the drop selector",
+      "def": "affordance",
+      "value": {
+        "id": "QUIT",
+        "label": "Cancel",
+        "keys": [
+          "ESC",
+          "q",
+          "Q",
+          "SPACE"
+        ],
+        "enabled": true,
+        "role": "cancel",
+        "expect": "screen"
+      }
+    },
+    {
+      "name": "drop selector left, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "screen_id": "screen:14"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "QUIT"
+        }
+      }
+    },
+    {
+      "name": "drop selector left, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "drop selector left, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "drop selector left, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "drop selector left, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "25",
+          "revision": "21"
         }
       }
     }
