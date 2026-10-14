@@ -3,12 +3,13 @@
 #include <algorithm>
 #include <functional>
 #include <fstream>
+#include <ranges>
 #include <string>
 
 #include "cata_utility.h"
-#include "client_interaction.h"
 #include "color.h"
 #include "cursesdef.h"
+#include "engine_client_component.h"
 #include "input.h"
 #include "json.h"
 #include "output.h"
@@ -59,6 +60,19 @@ distraction_desc = {
     {distraction_type::asthma,               { translate_marker( "Asthma" ),                    translate_marker( "Interrupts you if you have an asthma attack." ) } },
     {distraction_type::weather_change,       { translate_marker( "Weather change" ),            translate_marker( "Interrupts you if the weather becomes dangerous." ) } }
 };
+
+namespace
+{
+namespace ec = engine_client;
+
+/// The components and affordances of the distraction manager.
+constexpr auto distractions_items = "distractions:items";
+constexpr auto distractions_select = "distractions:select";
+constexpr auto distractions_toggle = "distractions:toggle";
+
+/// A distraction's row: its serialized token, which no language or position changes.
+auto row_id_of( const distraction_type type ) -> std::string { return "distraction:" + io::enum_to_string( type ); }
+} // namespace
 
 void distraction_manager_gui::show()
 {
@@ -171,49 +185,56 @@ void distraction_manager_gui::show()
         wnoutrefresh( w );
     } );
 
-    // One row per distraction; the editor value is whether it interrupts, the inverse of what is stored.
-    const auto make_interaction = [&]() {
-        auto snapshot = game_client::interaction_snapshot{
-            .kind = game_client::interaction_kind::choices,
+    // One row per distraction with its switch and status, and beside the rows the description of the one
+    // under the cursor.
+    const auto distractions_view = [&]() -> ec::screen_view {
+        using namespace std::views;
+        auto rows = iota( 0, num_distractions ) | transform( [&]( const int index )
+        {
+            const auto type = distractions_status[index];
+            const auto enabled = !distractions.at( type );
+            return ec::row{
+                .id = row_id_of( type ), .label = _( distraction_desc.at( type ).first.c_str() ),
+                .selected = index == currentLine, .columns = { {
+                        .key = "status", .label = _( "Status" ), .value = enabled ? _( "Enabled" ) : _( "Disabled" ),
+                        .color = string_from_color( enabled ? c_light_green : c_red )
+                    }
+                },
+                .toggled = enabled };
+        } ) | std::ranges::to<std::vector>();
+        const auto row_arg = ec::arg_shape{ .row = ec::row_shape{ .component_id = distractions_items } };
+        auto items = ec::list( { .id = distractions_items, .rows = std::move( rows ), .selection = "single",
+                                 .activate = distractions_toggle } );
+        items.affordances.push_back( distractions_select );
+        return {
             .title = _( "Distractions manager" ),
-            .allow_cancel = true,
-        };
-        for( auto index = 0; index < num_distractions; ++index ) {
-            const auto &[name, description] = distraction_desc.at( distractions_status[index] );
-            const auto enabled = !distractions.at( distractions_status[index] );
-            snapshot.choices.push_back( {
-                .id = "distraction:" + io::enum_to_string( distractions_status[index] ),
-                .label = _( name ), .description = _( description ),
-                .selected = index == currentLine, .highlighted = index == currentLine,
-                .columns = { { .key = "status", .label = _( "Status" ), .value = enabled ? _( "Enabled" ) : _( "Disabled" ) } },
-                .editor = game_client::interaction_editor{ .type = "bool", .value = enabled ? "true" : "false" },
-            } );
-        }
-        return snapshot;
+            .root = ec::split( {
+                .id = "distractions:body", .relation = "detail", .active = distractions_items,
+                .children = ec::children_of( std::move( items ), ec::component{
+                    .id = "distractions:description", .body = ec::text_body{
+                        .markup = _( distraction_desc.at( cur_distraction ).second.c_str() ) } } ) } ),
+            .affordances = {
+                ec::invoke_affordance( { .id = distractions_select, .label = _( "Select" ), .args = row_arg, .role = "select" } ),
+                ec::invoke_affordance( { .id = distractions_toggle, .label = ctx.get_action_name( "CONFIRM" ), .args = row_arg } ),
+            },
+            .focus_component = distractions_items, .focus_row = row_id_of( cur_distraction ) };
     };
+    const auto screen = ec::screen_scope( ctx, { .role = "screen", .view = [&]( const auto & /*state*/ ) { return distractions_view(); } } );
 
     while( true ) {
         ui_manager::redraw();
 
-        auto currentAction = std::string{};
-        {
-            const auto interaction = game_client::interaction_scope( ctx, make_interaction );
-            currentAction = ctx.handle_input();
-        }
-        // A semantic choice moves the cursor and then acts like the matching key.
-        if( const auto raw = ctx.get_raw_input(); raw.interaction ) {
-            const auto row = std::ranges::find_if( distractions_status, [&]( const distraction_type type ) {
-                return raw.interaction->target_id == "distraction:" + io::enum_to_string( type );
-            } );
+        auto currentAction = std::string{ ctx.handle_input() };
+        // A client's affordance moves the cursor to its row and then acts like the matching key.
+        if( const auto invoked = ec::invoked( ctx.get_raw_input() ) ) {
+            const auto row = invoked->args.row ? std::ranges::find( distractions_status, *invoked->args.row,
+                             row_id_of ) :
+                             distractions_status.end();
             currentAction.clear();
-            if( raw.interaction->operation == game_client::interaction_operation::cancel ) {
-                currentAction = "QUIT";
-            } else if( row != distractions_status.end() ) {
+            if( row != distractions_status.end() ) {
                 currentLine = static_cast<int>( row - distractions_status.begin() );
                 cur_distraction = *row;
-                if( raw.interaction->operation == game_client::interaction_operation::fill ) {
-                    distractions[cur_distraction] = raw.interaction->value == "false";
-                } else {
+                if( invoked->affordance_id == distractions_toggle ) {
                     currentAction = "CONFIRM";
                 }
             }
