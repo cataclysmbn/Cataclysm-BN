@@ -2659,6 +2659,102 @@ Deno.test({
   },
 })
 
+/** Invokes an affordance of the top screen and follows it to its end; `scope` picks the form of the expectation. */
+async function invokeTop(
+  session: Session,
+  affordance: string,
+  scope: "screen" | "boundary",
+  args?: Value,
+) {
+  const expect = scope === "screen" ? { screen_id: top(session).screen_id } : {
+    revision: session.mirror.at.revision,
+    boundary_id: session.mirror.interaction.boundary_id,
+  }
+  const response = await session.client.request("bn.command.submit", {
+    epoch: session.mirror.at.epoch,
+    expect,
+    operation: { kind: "invoke", affordance_id: affordance, ...(args ? { args } : {}) },
+  })
+  if (response.error) return { stages: [] as string[], error: response.error.data?.kind as string }
+  const id = response.result.command_id
+  session.stages.set(id, ["received"])
+  while (!["completed", "rejected", "interrupted"].includes(session.stages.get(id)!.at(-1)!)) {
+    session.handle(await session.client.note())
+    await session.pay()
+  }
+  return { stages: session.stages.get(id)!, error: session.errors.get(id) }
+}
+
+const findComponent = (component: Value, id: string): Value | undefined =>
+  component.id === id
+    ? component
+    : (component.children ?? (component.child ? [component.child] : []))
+      .map((child: Value) => findComponent(child, id)).find(Boolean)
+
+Deno.test({
+  name: "stdio: 0.2 invoke: the advanced inventory takes rows, panes and text by id",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      const session = await enterTutorial(client)
+      await session.acknowledge(() => session.mirror.interaction.interaction === null)
+      assertEquals(
+        (await session.submit({ kind: "action", action_id: "advinv" })).stages.at(-1),
+        "completed",
+      )
+      const screen = top(session)
+      assertEquals(screen.context, "ADVANCED_INVENTORY")
+      const areas = findComponent(screen.root, "aim:pane:left:areas")
+      assertEquals(areas.rows.length, 16)
+      assertEquals(areas.rows.map((row: Value) => row.id).slice(0, 2), [
+        "area:INVENTORY",
+        "area:SW",
+      ])
+      const move = screen.affordances.find((entry: Value) => entry.id === "aim:move")
+      assert(move, `no aim:move in ${JSON.stringify(screen.affordances.map((a: Value) => a.id))}`)
+      // It takes rows with counts and a pane, so it expects the boundary.
+      assertEquals(move.expect, "boundary")
+
+      // A row the list does not hold, and a pane that is not there, are refused before anything runs.
+      const unknown = await invokeTop(session, "aim:move", "boundary", {
+        rows: [{ id: "nowhere", count: 1 }],
+        pane: "aim:pane:right",
+      })
+      assertEquals([unknown.stages.at(-1) ?? "rejected", unknown.error], [
+        "rejected",
+        "invalid_arguments",
+      ])
+      const nopane = await invokeTop(session, "aim:filter", "boundary", {
+        text: "x",
+        pane: "aim:pane:middle",
+      })
+      assertEquals([nopane.stages.at(-1) ?? "rejected", nopane.error], [
+        "rejected",
+        "invalid_arguments",
+      ])
+
+      // Text for a pane filters that pane's rows, and the pane says what filters it.
+      const filtered = await invokeTop(session, "aim:filter", "boundary", {
+        text: "zzzz",
+        pane: "aim:pane:left",
+      })
+      assertEquals(filtered.stages.at(-1), "completed", JSON.stringify(filtered))
+      assertEquals(findComponent(top(session).root, "aim:pane:left").filter, "zzzz")
+      assertEquals(findComponent(top(session).root, "aim:pane:left:items").rows.length, 0)
+
+      const closed = await invokeTop(session, "aim:close", "screen")
+      assertEquals(closed.stages.at(-1), "completed", JSON.stringify(closed))
+      assertEquals(top(session).role, "map")
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
 Deno.test({
   name: "stdio: the tutorial loads and plays with automatic compute when data/shaders is missing",
   ignore: !Deno.env.get("BN_BINARY"),
