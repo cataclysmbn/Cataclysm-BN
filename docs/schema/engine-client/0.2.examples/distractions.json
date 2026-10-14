@@ -1,0 +1,755 @@
+{
+  "valid": [
+    {
+      "name": "distraction manager",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:2",
+        "role": "screen",
+        "title": "Distractions manager",
+        "root": {
+          "id": "distractions:body",
+          "kind": "split",
+          "relation": "detail",
+          "active": "distractions:items",
+          "children": [
+            {
+              "id": "distractions:items",
+              "kind": "list",
+              "affordances": [
+                "distractions:toggle",
+                "distractions:select"
+              ],
+              "columns": [
+                {
+                  "key": "status",
+                  "label": "Status"
+                }
+              ],
+              "rows": [
+                {
+                  "id": "distraction:Noise",
+                  "label": "Noise",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": true,
+                  "columns": [
+                    {
+                      "key": "status",
+                      "label": "Status",
+                      "value": "Enabled",
+                      "color": "c_light_green"
+                    }
+                  ],
+                  "toggled": true
+                },
+                {
+                  "id": "distraction:Pain",
+                  "label": "Pain",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "status",
+                      "label": "Status",
+                      "value": "Enabled",
+                      "color": "c_light_green"
+                    }
+                  ],
+                  "toggled": true
+                },
+                {
+                  "id": "distraction:Attacked",
+                  "label": "Attacked",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "status",
+                      "label": "Status",
+                      "value": "Enabled",
+                      "color": "c_light_green"
+                    }
+                  ],
+                  "toggled": true
+                },
+                {
+                  "id": "distraction:Hostile Far",
+                  "label": "Hostile Spotted",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "status",
+                      "label": "Status",
+                      "value": "Enabled",
+                      "color": "c_light_green"
+                    }
+                  ],
+                  "toggled": true
+                },
+                {
+                  "id": "distraction:Hostile Near",
+                  "label": "Hostile Dangerously Close",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "status",
+                      "label": "Status",
+                      "value": "Enabled",
+                      "color": "c_light_green"
+                    }
+                  ],
+                  "toggled": true
+                },
+                {
+                  "id": "distraction:Talk",
+                  "label": "Conversation",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "status",
+                      "label": "Status",
+                      "value": "Enabled",
+                      "color": "c_light_green"
+                    }
+                  ],
+                  "toggled": true
+                },
+                {
+                  "id": "distraction:Asthma",
+                  "label": "Asthma",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "status",
+                      "label": "Status",
+                      "value": "Enabled",
+                      "color": "c_light_green"
+                    }
+                  ],
+                  "toggled": true
+                },
+                {
+                  "id": "distraction:Weather Change",
+                  "label": "Weather change",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "status",
+                      "label": "Status",
+                      "value": "Enabled",
+                      "color": "c_light_green"
+                    }
+                  ],
+                  "toggled": true
+                }
+              ],
+              "total": 8,
+              "selection": "single",
+              "activate": "distractions:toggle"
+            },
+            {
+              "id": "distractions:description",
+              "kind": "text",
+              "markup": "Interrupts you if you hear a noise."
+            }
+          ]
+        },
+        "affordances": [
+          {
+            "id": "distractions:select",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "role": "select",
+            "args": {
+              "row": {
+                "component_id": "distractions:items"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "distractions:toggle",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "distractions:items"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Pan left",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Pan right",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "distractions:items",
+          "row_id": "distraction:Noise"
+        },
+        "context": "DISTRACTION_MANAGER"
+      }
+    },
+    {
+      "name": "distraction picked in the list, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-1",
+        "expect": {
+          "boundary_id": "boundary:1",
+          "revision": "2"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "distractions:select",
+          "args": {
+            "row": "distraction:Pain"
+          }
+        }
+      }
+    },
+    {
+      "name": "distraction picked in the list, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:1",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "distraction picked in the list, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:1",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "distraction picked in the list, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:1",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "distraction picked in the list, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:1",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-1",
+          "sequence": "3",
+          "revision": "3"
+        }
+      }
+    },
+    {
+      "name": "distraction switched off, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-1",
+        "expect": {
+          "boundary_id": "boundary:2",
+          "revision": "3"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "distractions:toggle",
+          "args": {
+            "row": "distraction:Pain"
+          }
+        }
+      }
+    },
+    {
+      "name": "distraction switched off, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:2",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "distraction switched off, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:2",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "distraction switched off, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:2",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "distraction switched off, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:2",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-1",
+          "sequence": "4",
+          "revision": "4"
+        }
+      }
+    },
+    {
+      "name": "distraction manager with a distraction switched off",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:2",
+        "role": "screen",
+        "title": "Distractions manager",
+        "root": {
+          "id": "distractions:body",
+          "kind": "split",
+          "relation": "detail",
+          "active": "distractions:items",
+          "children": [
+            {
+              "id": "distractions:items",
+              "kind": "list",
+              "affordances": [
+                "distractions:toggle",
+                "distractions:select"
+              ],
+              "columns": [
+                {
+                  "key": "status",
+                  "label": "Status"
+                }
+              ],
+              "rows": [
+                {
+                  "id": "distraction:Noise",
+                  "label": "Noise",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "status",
+                      "label": "Status",
+                      "value": "Enabled",
+                      "color": "c_light_green"
+                    }
+                  ],
+                  "toggled": true
+                },
+                {
+                  "id": "distraction:Pain",
+                  "label": "Pain",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": true,
+                  "columns": [
+                    {
+                      "key": "status",
+                      "label": "Status",
+                      "value": "Disabled",
+                      "color": "c_red"
+                    }
+                  ],
+                  "toggled": false
+                },
+                {
+                  "id": "distraction:Attacked",
+                  "label": "Attacked",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "status",
+                      "label": "Status",
+                      "value": "Enabled",
+                      "color": "c_light_green"
+                    }
+                  ],
+                  "toggled": true
+                },
+                {
+                  "id": "distraction:Hostile Far",
+                  "label": "Hostile Spotted",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "status",
+                      "label": "Status",
+                      "value": "Enabled",
+                      "color": "c_light_green"
+                    }
+                  ],
+                  "toggled": true
+                },
+                {
+                  "id": "distraction:Hostile Near",
+                  "label": "Hostile Dangerously Close",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "status",
+                      "label": "Status",
+                      "value": "Enabled",
+                      "color": "c_light_green"
+                    }
+                  ],
+                  "toggled": true
+                },
+                {
+                  "id": "distraction:Talk",
+                  "label": "Conversation",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "status",
+                      "label": "Status",
+                      "value": "Enabled",
+                      "color": "c_light_green"
+                    }
+                  ],
+                  "toggled": true
+                },
+                {
+                  "id": "distraction:Asthma",
+                  "label": "Asthma",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "status",
+                      "label": "Status",
+                      "value": "Enabled",
+                      "color": "c_light_green"
+                    }
+                  ],
+                  "toggled": true
+                },
+                {
+                  "id": "distraction:Weather Change",
+                  "label": "Weather change",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "status",
+                      "label": "Status",
+                      "value": "Enabled",
+                      "color": "c_light_green"
+                    }
+                  ],
+                  "toggled": true
+                }
+              ],
+              "total": 8,
+              "selection": "single",
+              "activate": "distractions:toggle"
+            },
+            {
+              "id": "distractions:description",
+              "kind": "text",
+              "markup": "Interrupts you if you feel pain."
+            }
+          ]
+        },
+        "affordances": [
+          {
+            "id": "distractions:select",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "role": "select",
+            "args": {
+              "row": {
+                "component_id": "distractions:items"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "distractions:toggle",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "distractions:items"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Pan left",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Pan right",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "distractions:items",
+          "row_id": "distraction:Pain"
+        },
+        "context": "DISTRACTION_MANAGER"
+      }
+    },
+    {
+      "name": "distraction that the list does not hold, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-1",
+        "expect": {
+          "boundary_id": "boundary:3",
+          "revision": "4"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "distractions:toggle",
+          "args": {
+            "row": "distraction:Nothing"
+          }
+        }
+      }
+    },
+    {
+      "name": "distraction that the list does not hold, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:3",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "distraction that the list does not hold, rejected",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:3",
+        "stage": "rejected",
+        "error": "invalid_arguments",
+        "error_text": "That needs other details."
+      }
+    }
+  ],
+  "invalid": []
+}
