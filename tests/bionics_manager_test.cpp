@@ -579,7 +579,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "the bionics screen reassigns a letter through the native popup",
+    "the bionics screen reassigns a letter through a screen of its own",
     "[bionics_manager][engine_client_component][mcp]") {
     const auto guard = manager_guard{};
     auto& you = get_avatar();
@@ -596,41 +596,38 @@ TEST_CASE(
     SECTION("invalid retains native feedback") { invalid = true; }
     SECTION("cancel") { phase = 10; }
     SECTION("slash is a native shortcut") { slash = true; }
-    const auto value = invalid ? "?" : clear ? " " : slash ? "/" : "b";
+    const auto value = invalid ? "?" : clear ? "SPACE" : slash ? "/" : "b";
     client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = client::current_interaction();
-        if (snapshot.context == "POPUP_WAIT" && !snapshot.field) {
+        const auto screen = ec::top_screen(captured());
+        if (screen.context == "POPUP_WAIT" && !has_part(screen, "bionics:letter")) {
             REQUIRE(invalid);
-            REQUIRE(phase == 4);
-            CHECK(snapshot.message.find("Invalid bionic letter") != std::string::npos);
+            REQUIRE(phase == 3);
+            CHECK(client::current_interaction().message.find("Invalid bionic letter")
+                  != std::string::npos);
             ++phase;
             return action("QUIT");
         }
-        if (snapshot.field) {
-            REQUIRE(snapshot.context == "POPUP_WAIT");
+        if (has_part(screen, "bionics:letter")) {
+            REQUIRE(screen.context == "POPUP_WAIT");
+            const auto& form = body<ec::form_body>(part(screen, "bionics:letter"));
+            REQUIRE(form.fields.size() == 1);
+            CHECK(form.fields.front().type == "key");
+            CHECK(form.submit == "bionics:letter:set");
+            CHECK(text_of(screen, "bionics:letter:message").find("enter new letter")
+                  != std::string::npos);
+            const auto set =
+                std::ranges::find(screen.affordances, "bionics:letter:set", &ec::affordance::id);
+            REQUIRE(set != screen.affordances.end());
+            CHECK(set->role == "confirm");
+            CHECK(you.get_bionic_state(bionic_id("bio_flashlight")).invlet == 'a');
             if (phase == 12) {
                 phase = 13;
-                return cancel(snapshot);
+                return action("QUIT");
             }
-            if (phase++ == 2) {
-                return resolve(
-                    {.input_id = snapshot.input_id,
-                     .operation = client::interaction_operation::fill,
-                     .target_id = snapshot.field->id,
-                     .value = value,
-                     .submit = false});
-            }
-            REQUIRE(phase == 4);
-            CHECK(snapshot.field->value == value);
-            CHECK(you.get_bionic_state(bionic_id("bio_flashlight")).invlet == 'a');
-            return resolve(
-                {.input_id = snapshot.input_id,
-                 .operation = client::interaction_operation::fill,
-                 .target_id = snapshot.field->id,
-                 .value = value,
-                 .submit = true});
+            ++phase;
+            return invoke("bionics:letter:set", {.text = value});
         }
-        REQUIRE(snapshot.context == "BIONICS");
+        REQUIRE(screen.context == "BIONICS");
         switch (phase++) {
             case 0:
             case 10:
