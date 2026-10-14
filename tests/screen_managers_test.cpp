@@ -43,7 +43,7 @@ auto look_target() -> nlohmann::json { return top_json()["root"]["child"]["targe
 
 TEST_CASE(
     "the scores screen switches its tabs and shows the text of each",
-    "[client][interaction][mcp][screens]") {
+    "[client][interaction][mcp][screens][info_screens][scores_screen]") {
     clear_all_state();
     clear_map();
     auto& you = get_avatar();
@@ -54,30 +54,63 @@ TEST_CASE(
     const auto guard = screen_guard{};
     auto stage = 0;
     auto first_text = std::string{};
-    open_screen(
-        [&] { show_scores_ui(achievements, stats, kills); },
-        [&](const auto& snapshot) {
-            switch (stage++) {
-                case 0: {
-                    CHECK(snapshot.context == "SCORES");
-                    CHECK(rows_with(snapshot, "tab:").size() == 3);
-                    CHECK(row(snapshot, "tab:0")->selected);
-                    CHECK_FALSE(snapshot.message.empty());
-                    first_text = snapshot.message;
-                    return choose(snapshot, "tab:1");
-                }
-                case 1: {
-                    CHECK(row(snapshot, "tab:1")->selected);
-                    CHECK_FALSE(row(snapshot, "tab:0")->selected);
-                    CHECK(snapshot.message != first_text);
-                    return cancel(snapshot);
-                }
-                default:
-                    FAIL("unexpected extra screen " << snapshot.context);
-            }
-            return input_event{};
-        });
+    open_stack([&] { show_scores_ui(achievements, stats, kills); },
+               [&](const auto& /*snapshot*/, const auto& top) {
+                   namespace ec = engine_client;
+                   REQUIRE(top.root);
+                   const auto* const tabs = ec::find_component(*top.root, "scores:tabs");
+                   REQUIRE(tabs != nullptr);
+                   const auto& entries = std::get<ec::tabs_body>(tabs->body).tabs;
+                   REQUIRE(entries.size() == 3);
+                   CHECK(entries[0].id == "achievements");
+                   CHECK(entries[1].id == "scores");
+                   CHECK(entries[2].id == "kills");
+                   const auto* const text = ec::find_component(*top.root, "scores:text");
+                   REQUIRE(text != nullptr);
+                   const auto& markup = std::get<ec::text_body>(text->body).markup;
+                   switch (stage++) {
+                       case 0: {
+                           CHECK(top.context == "SCORES");
+                           CHECK(entries[0].selected);
+                           CHECK_FALSE(markup.empty());
+                           first_text = markup;
+                           return invoke_event(top, "scores:tab", {.row = "scores"});
+                       }
+                       case 1: {
+                           CHECK(entries[1].selected);
+                           CHECK_FALSE(entries[0].selected);
+                           CHECK(markup != first_text);
+                           return run_action("QUIT");
+                       }
+                       default:
+                           FAIL("unexpected extra screen " << top.context);
+                   }
+                   return input_event{};
+               });
     CHECK(stage == 2);
+}
+
+TEST_CASE(
+    "the kills screen shows the kill text of the tracker",
+    "[client][interaction][mcp][screens][info_screens][scores_screen]") {
+    clear_all_state();
+    clear_map();
+    clear_character(get_avatar(), false);
+    auto kills = kill_tracker{};
+    const auto guard = screen_guard{};
+    auto stage = 0;
+    open_stack([&] { show_kills(kills); },
+               [&](const auto& /*snapshot*/, const auto& top) {
+                   namespace ec = engine_client;
+                   REQUIRE(stage++ == 0);
+                   CHECK(top.title == "Kills");
+                   REQUIRE(top.root);
+                   const auto* const text = ec::find_component(*top.root, "kills:text");
+                   REQUIRE(text != nullptr);
+                   CHECK(std::get<ec::text_body>(text->body).markup == kills.get_kills_text());
+                   return run_action("QUIT");
+               });
+    CHECK(stage == 1);
 }
 
 TEST_CASE(
