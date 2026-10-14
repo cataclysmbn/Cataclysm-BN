@@ -197,6 +197,43 @@ auto pick_count(const nlohmann::json& row, const std::int64_t count) -> input_ev
     return invoke("pickup:count", {.row = row["id"].get<std::string>(), .count = count});
 }
 
+/// Every list below `node`, outermost first.
+auto lists_below(const nlohmann::json& node, std::vector<nlohmann::json>& into) -> void {
+    if (!node.is_object()) { return; }
+    if (node["kind"] == "list") { into.push_back(node); }
+    if (node.contains("child")) { lists_below(node["child"], into); }
+    for (const auto& child : node.value("children", nlohmann::json::array())) {
+        lists_below(child, into);
+    }
+}
+
+/// The item rows of the inventory list of the selector on top, category headings left out.
+auto selector_rows() -> nlohmann::json {
+    auto lists = std::vector<nlohmann::json>{};
+    lists_below(top_screen()["root"], lists);
+    auto result = nlohmann::json::array();
+    for (const auto& list : lists) {
+        if (list["id"] != "list:inventory") { continue; }
+        for (const auto& row : list["rows"]) {
+            if (!row.value("header", false)) { result.push_back(row); }
+        }
+    }
+    return result;
+}
+
+/// The row the selector's cursor is on.
+auto selector_cursor() -> std::string {
+    return top_screen().value("focus", nlohmann::json::object()).value("row_id", "");
+}
+
+/// The selector's own affordances for a row of the carried items' list.
+auto choose_item(const nlohmann::json& row) -> input_event {
+    return invoke("list:inventory:choose", {.row = row["id"].get<std::string>()});
+}
+auto count_item(const nlohmann::json& row, const std::int64_t count) -> input_event {
+    return invoke("list:inventory:count", {.row = row["id"].get<std::string>(), .count = count});
+}
+
 class denied_inventory_preset final: public inventory_selector_preset {
 public:
     auto get_denial(const item* candidate) const -> std::string override {
@@ -684,29 +721,25 @@ TEST_CASE(
     auto& expected = you.i_add(item::spawn("test_platinum_bit", calendar::turn, 7));
     auto selector = inventory_pick_selector(you);
     selector.add_character_items(you);
-    auto observed = game_client::interaction_snapshot{};
+    auto observed = std::string{};
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        observed = game_client::current_interaction();
-        REQUIRE(observed.kind == game_client::interaction_kind::inventory);
-        REQUIRE(observed.choices.size() == 1);
-        const auto& choice = observed.choices.front();
-        CHECK(choice.selectable);
-        CHECK_FALSE(choice.selected);
-        CHECK(choice.highlighted);
-        CHECK(choice.selected_count == 0);
-        CHECK(choice.available_count == 7);
-        REQUIRE_FALSE(choice.columns.empty());
-        CHECK(choice.columns.front().value == "inventory");
-        CHECK(choice.description.size() > choice.label.size());
-        return resolve({
-            .input_id = observed.input_id,
-            .operation = game_client::interaction_operation::choose,
-            .target_id = choice.id,
-        });
+        const auto rows = selector_rows();
+        REQUIRE(rows.size() == 1);
+        const auto& choice = rows.front();
+        CHECK(choice["selectable"] == true);
+        CHECK(choice["selected"] == false);
+        CHECK(selector_cursor() == choice["id"].get<std::string>());
+        CHECK_FALSE(choice.contains("selected_count"));
+        CHECK(choice["look"]["id"] == "test_platinum_bit");
+        CHECK(top_screen()["root"]["child"]["children"][0]["id"] == "panel:inventory");
+        CHECK(choice["description"].get<std::string>().size()
+              > choice["label"].get<std::string>().size());
+        observed = choice["id"];
+        return choose_item(choice);
     });
 
     CHECK(selector.execute() == &expected);
-    CHECK_FALSE(observed.choices.front().id.contains("0x"));
+    CHECK_FALSE(observed.contains("0x"));
 }
 TEST_CASE(
     "real inventory multiselect accepts exact quantity and zero",
@@ -720,37 +753,33 @@ TEST_CASE(
     selector.add_character_items(you);
     auto reads = 0;
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = game_client::current_interaction();
-        REQUIRE(snapshot.choices.size() == 1);
-        const auto& choice = snapshot.choices.front();
-        REQUIRE(snapshot.allow_set_count);
+        const auto rows = selector_rows();
+        REQUIRE(rows.size() == 1);
+        const auto& choice = rows.front();
+        const auto screen = top_screen();
+        REQUIRE(std::ranges::any_of(screen["affordances"], [](const auto& entry) {
+            return entry["id"] == "list:inventory:count";
+        }));
         if (reads++ == 0) {
-            CHECK(choice.selected_count == 0);
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::set_count,
-                .target_id = choice.id,
-                .count = 0,
-            });
+            CHECK(choice["selected_count"] == 0);
+            return count_item(choice, 0);
         }
         if (reads == 2) {
-            CHECK(choice.selected_count == 0);
-            const auto too_many = game_client::resolve_interaction_command({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::set_count,
-                .target_id = choice.id,
-                .count = 8,
-            });
-            REQUIRE_FALSE(too_many);
-            CHECK(too_many.error().starts_with("invalid:"));
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::set_count,
-                .target_id = choice.id,
-                .count = 3,
-            });
+            CHECK(choice["selected_count"] == 0);
+            // Below the shape's minimum is refused; above what the stack holds is the whole stack.
+            const auto below = engine_client::resolve_invoke(
+                stack_state(),
+                {.affordance_id = "list:inventory:count",
+                 .args = {.row = choice["id"].get<std::string>(), .count = -1}});
+            REQUIRE_FALSE(below);
+            CHECK(below.error() == engine_client::error::invalid_arguments);
+            return count_item(choice, 8);
         }
-        CHECK(choice.selected_count == 3);
+        if (reads == 3) {
+            CHECK(choice["selected_count"] == 7);
+            return count_item(choice, 3);
+        }
+        CHECK(choice["selected_count"] == 3);
         return resolve_action("CONFIRM");
     });
 
@@ -775,85 +804,81 @@ TEST_CASE(
     }
     auto reads = 0;
     auto selected_id = std::string{};
+    const auto row_by_id = [](const std::string& id) {
+        const auto rows = selector_rows();
+        const auto found = std::ranges::find(rows, id, [](const auto& row) {
+            return row["id"].template get<std::string>();
+        });
+        REQUIRE(found != rows.end());
+        return *found;
+    };
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = game_client::current_interaction();
-        REQUIRE(snapshot.choices.size() == 3);
+        const auto rows = selector_rows();
+        REQUIRE(rows.size() == 3);
         if (reads++ == 0) {
-            const auto highlighted = std::ranges::
-                find(snapshot.choices, true, &game_client::interaction_choice::highlighted);
-            REQUIRE(highlighted != snapshot.choices.end());
-            CHECK_FALSE(highlighted->selected);
-            CHECK(highlighted->selected_count == 0);
-            selected_id = highlighted->id;
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::set_count,
-                .target_id = selected_id,
-                .count = 1,
-            });
+            const auto cursor = row_by_id(selector_cursor());
+            CHECK(cursor["selected"] == false);
+            CHECK(cursor["selected_count"] == 0);
+            selected_id = cursor["id"];
+            return count_item(cursor, 1);
         }
-        const auto selected =
-            std::ranges::find(snapshot.choices, selected_id, &game_client::interaction_choice::id);
-        REQUIRE(selected != snapshot.choices.end());
+        const auto selected = row_by_id(selected_id);
         if (reads == 2) {
-            CHECK(selected->selected);
-            CHECK(selected->highlighted);
-            CHECK(selected->selected_count == 1);
+            CHECK(selected["selected"] == true);
+            CHECK(selector_cursor() == selected_id);
+            CHECK(selected["selected_count"] == 1);
             auto moved = false;
             for (const auto& candidate : items) {
                 REQUIRE(selector.select(candidate.get()));
-                const auto updated = game_client::current_interaction();
-                const auto original = std::ranges::
-                    find(updated.choices, selected_id, &game_client::interaction_choice::id);
-                REQUIRE(original != updated.choices.end());
-                if (!original->highlighted) {
+                if (selector_cursor() != selected_id) {
                     moved = true;
                     break;
                 }
             }
             REQUIRE(moved);
-            const auto moved_snapshot = game_client::current_interaction();
-            const auto persisted = std::ranges::
-                find(moved_snapshot.choices, selected_id, &game_client::interaction_choice::id);
-            REQUIRE(persisted != moved_snapshot.choices.end());
-            CHECK(persisted->selected);
-            CHECK_FALSE(persisted->highlighted);
-            CHECK(persisted->selected_count == 1);
-            CHECK(std::ranges::count(
-                      moved_snapshot.choices, true, &game_client::interaction_choice::highlighted)
-                  == 1);
-            return resolve({
-                .input_id = moved_snapshot.input_id,
-                .operation = game_client::interaction_operation::set_count,
-                .target_id = selected_id,
-                .count = 0,
-            });
+            const auto persisted = row_by_id(selected_id);
+            CHECK(persisted["selected"] == true);
+            CHECK(persisted["selected_count"] == 1);
+            CHECK(selector_cursor() != selected_id);
+            return count_item(persisted, 0);
         }
         if (reads == 3) {
-            CHECK_FALSE(selected->selected);
-            CHECK(selected->highlighted);
-            CHECK(selected->selected_count == 0);
+            CHECK(selected["selected"] == false);
+            CHECK(selector_cursor() == selected_id);
+            CHECK(selected["selected_count"] == 0);
             return resolve_action("CATEGORY_SELECTION");
         }
-        CHECK(std::ranges::none_of(snapshot.choices, &game_client::interaction_choice::selected));
-        CHECK(
-            std::ranges::count(snapshot.choices, true, &game_client::interaction_choice::highlighted)
-            == 3);
-        return resolve({
-            .input_id = snapshot.input_id,
-            .operation = game_client::interaction_operation::cancel,
-        });
+        CHECK(std::ranges::none_of(rows, [](const auto& row) { return row["selected"] == true; }));
+        // The cursor is on the category's heading, which is no item row.
+        CHECK(std::ranges::none_of(rows, [](const auto& row) {
+            return row["id"].template get<std::string>() == selector_cursor();
+        }));
+        CHECK_FALSE(selector_cursor().empty());
+        return resolve_action("QUIT");
     });
 
     CHECK(selector.execute().empty());
     CHECK(reads == 4);
 }
 namespace {
-class snapshot_inventory_selector final: public inventory_pick_selector {
+class view_inventory_selector final: public inventory_pick_selector {
 public:
     using inventory_pick_selector::inventory_pick_selector;
-    using inventory_selector::interaction_snapshot;
+    using inventory_selector::interaction_view;
+    using inventory_selector::open_screen;
 };
+
+/// The component of `view` with `id`, null when it has none.
+auto component_of(const nlohmann::json& node, const std::string& id) -> nlohmann::json {
+    if (!node.is_object()) { return nullptr; }
+    if (node["id"].get<std::string>() == id) { return node; }
+    auto found = nlohmann::json(nullptr);
+    if (node.contains("child")) { found = component_of(node["child"], id); }
+    for (const auto& child : node.value("children", nlohmann::json::array())) {
+        if (found.is_null()) { found = component_of(child, id); }
+    }
+    return found;
+}
 } // namespace
 
 TEST_CASE(
@@ -864,45 +889,47 @@ TEST_CASE(
     auto& you = get_avatar();
     you.i_add(item::spawn("bandages"), false);
     REQUIRE_FALSE(you.wear_item(item::spawn("tshirt"), false));
-    auto selector = snapshot_inventory_selector(you);
+    auto selector = view_inventory_selector(you);
     selector.set_hint("Item hotkeys assigned: <color_light_gray>1</color>/52");
     selector.add_character_items(you);
 
-    const auto snapshot = selector.interaction_snapshot();
-    REQUIRE(snapshot.panes.size() == 1);
-    const auto& pane = snapshot.panes.front();
-    CHECK(pane.area_description == "Item hotkeys assigned: 1/52");
-    REQUIRE(pane.totals);
-    CHECK(pane.totals->weight_unit == weight_units());
-    CHECK(pane.totals->volume_unit == volume_units_abbr());
-    CHECK_FALSE(pane.totals->weight_max.empty());
-    CHECK(snapshot.category_mode == false);
-    const auto column = [](const game_client::interaction_choice& choice, const std::string& key) {
-        const auto found =
-            std::ranges::find(choice.columns, key, &game_client::interaction_column::key);
-        return found == choice.columns.end() ? std::string{} : found->value;
-    };
-    const auto worn = std::ranges::find_if(snapshot.choices, [&](const auto& choice) {
-        return column(choice, "source") == "worn_or_wielded";
-    });
-    REQUIRE(worn != snapshot.choices.end());
-    CHECK(column(*worn, "category") == "ITEMS WORN");
-    CHECK_FALSE(worn->color.empty());
-    CHECK_FALSE(worn->key_color.empty());
-    CHECK_FALSE(worn->markup.empty());
-    CHECK(std::ranges::all_of(snapshot.choices, [](const auto& choice) {
-        return std::ranges::all_of(choice.columns, [](const auto& column) {
-            return !column.key.empty();
+    const auto screen = [&] {
+        const auto scope = selector.open_screen();
+        return top_screen();
+    }();
+    const auto& panel = screen["root"];
+    CHECK(panel["subtitle"] == "Item hotkeys assigned: 1/52");
+    REQUIRE(panel.contains("stats"));
+    CHECK(panel["stats"][0]["unit"] == weight_units());
+    CHECK(panel["stats"][1]["unit"] == volume_units_abbr());
+    CHECK_FALSE(panel["stats"][0]["max"].get<std::string>().empty());
+    // The cursor is on an item, not on a category heading.
+    auto lists = std::vector<nlohmann::json>{};
+    lists_below(panel, lists);
+    CHECK(std::ranges::any_of(lists, [&](const auto& list) {
+        return std::ranges::any_of(list["rows"], [&](const auto& row) {
+            return !row.value("header", false)
+                && row["id"].template get<std::string>()
+                       == screen["focus"]["row_id"].template get<std::string>();
         });
     }));
-    const auto carried = std::ranges::find_if(snapshot.choices, [&](const auto& choice) {
-        return column(choice, "source") == "inventory";
-    });
-    REQUIRE(carried != snapshot.choices.end());
-    CHECK(column(*carried, "category") != "ITEMS WORN");
+
+    const auto worn_list = component_of(panel, "list:worn");
+    REQUIRE(worn_list.is_object());
+    const auto& worn_rows = worn_list["rows"];
+    CHECK(worn_rows.front()["header"] == true);
+    CHECK(worn_rows.front()["label"] == "ITEMS WORN");
+    const auto& worn = worn_rows[1];
+    CHECK_FALSE(worn["color"].get<std::string>().empty());
+    CHECK_FALSE(worn["key_color"].get<std::string>().empty());
+    CHECK_FALSE(worn["markup"].get<std::string>().empty());
+    const auto carried_list = component_of(panel, "list:inventory");
+    REQUIRE(carried_list.is_object());
+    CHECK(carried_list["rows"].front()["label"] != "ITEMS WORN");
 
     selector.set_display_stats(false);
-    CHECK_FALSE(selector.interaction_snapshot().panes.front().totals);
+    const auto bare = selector.interaction_view();
+    CHECK(std::get<engine_client::panel_body>(bare.root->body).stats.empty());
 }
 TEST_CASE(
     "bounded interaction pages control late real inventory entries and reset safely",
@@ -923,110 +950,64 @@ TEST_CASE(
     const auto preset = denied_inventory_preset{};
     auto selector = inventory_drop_selector(you, preset);
     selector.add_character_items(you);
-    auto page = game_client::interaction_page_state{};
     auto selected_id = std::string{};
     auto reads = 0;
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        auto snapshot = game_client::paginated_interaction(page);
+        const auto rows = selector_rows();
         if (reads++ == 0) {
-            CHECK(snapshot.choice_offset == 0);
-            CHECK(snapshot.choices.size() == 100);
-            CHECK(snapshot.choice_total == 102);
-            const auto full = game_client::current_interaction({.limit = 200});
-            const auto disabled = std::ranges::
-                find(full.choices, false, &game_client::interaction_choice::selectable);
-            REQUIRE(disabled != full.choices.end());
-            const auto disabled_result = game_client::resolve_interaction_command({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::set_count,
-                .target_id = disabled->id,
-                .count = 1,
+            REQUIRE(rows.size() == 102);
+            const auto disabled = std::ranges::find_if(rows, [](const auto& row) {
+                return row["selectable"] == false;
             });
-            REQUIRE_FALSE(disabled_result);
-            CHECK(disabled_result.error().starts_with("disabled:"));
-            const auto stale_result = game_client::resolve_interaction_command({
-                .input_id = snapshot.input_id + 1,
-                .operation = game_client::interaction_operation::set_count,
-                .target_id = full.choices.front().id,
-                .count = 1,
-            });
-            REQUIRE_FALSE(stale_result);
-            CHECK(stale_result.error().starts_with("stale:"));
-            CHECK(std::ranges::none_of(
-                game_client::current_interaction({.limit = 200}).choices,
-                &game_client::interaction_choice::selected));
-
-            page.offset = 100;
-            snapshot = game_client::paginated_interaction(page);
-            CHECK(snapshot.choice_offset == 100);
-            REQUIRE(snapshot.choices.size() == 2);
-            const auto late = std::ranges::
-                find(snapshot.choices, true, &game_client::interaction_choice::selectable);
-            REQUIRE(late != snapshot.choices.end());
-            selected_id = late->id;
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::set_count,
-                .target_id = selected_id,
-                .count = 1,
-            });
+            REQUIRE(disabled != rows.end());
+            CHECK((*disabled)["denial"] == "Denied by test preset");
+            // A denied row is neither chosen nor counted.
+            return count_item(*disabled, 1);
         }
-
-        const auto selected =
-            std::ranges::find(snapshot.choices, selected_id, &game_client::interaction_choice::id);
-        REQUIRE(selected != snapshot.choices.end());
-        CHECK(snapshot.choice_offset == 100);
         if (reads == 2) {
-            CHECK(selected->selected);
-            CHECK(selected->selected_count == 1);
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::set_count,
-                .target_id = selected_id,
-                .count = 0,
+            CHECK(std::ranges::none_of(rows, [](const auto& row) {
+                return row["selected"] == true;
+            }));
+            // The late entry is a row like any other, however far down the list.
+            const auto late = std::ranges::find_if(rows, [](const auto& row) {
+                return row["selectable"] == true && row.value("max", 0) == 7;
             });
+            REQUIRE(late != rows.end());
+            selected_id = (*late)["id"];
+            return count_item(*late, 1);
+        }
+        const auto selected = std::ranges::find_if(rows, [&](const auto& row) {
+            return row["id"].template get<std::string>() == selected_id;
+        });
+        REQUIRE(selected != rows.end());
+        if (reads == 3) {
+            CHECK((*selected)["selected"] == true);
+            CHECK((*selected)["selected_count"] == 1);
+            return count_item(*selected, 0);
         }
 
-        CHECK_FALSE(selected->selected);
-        CHECK(selected->selected_count == 0);
+        CHECK((*selected)["selected"] == false);
+        CHECK((*selected)["selected_count"] == 0);
         selector.set_filter("__interaction_paging_no_match__");
-        const auto filtered = game_client::paginated_interaction(page);
-        CHECK(filtered.choice_offset == 0);
-        CHECK(filtered.choice_total == 0);
-        CHECK(filtered.choices.empty());
-        const auto removed = game_client::resolve_interaction_command({
-            .input_id = snapshot.input_id,
-            .operation = game_client::interaction_operation::set_count,
-            .target_id = selected_id,
-            .count = 1,
-        });
+        CHECK(selector_rows().empty());
+        const auto removed = engine_client::resolve_invoke(
+            stack_state(),
+            {.affordance_id = "list:inventory:count", .args = {.row = selected_id, .count = 1}});
         REQUIRE_FALSE(removed);
-        CHECK(removed.error().starts_with("invalid:"));
 
         selector.set_filter("");
-        const auto restored = game_client::paginated_interaction(page);
-        CHECK(restored.choice_offset == 0);
-        CHECK(restored.choice_total == 102);
+        CHECK(selector_rows().size() == 102);
         selector.clear_items();
         selector.add_item(selector.own_inv_column, items.back());
-        const auto shrunk = game_client::paginated_interaction(page);
-        CHECK(shrunk.choice_offset == 0);
-        CHECK(shrunk.choice_total == 1);
-        CHECK(shrunk.choices.size() == 1);
+        CHECK(selector_rows().size() == 1);
         selector.add_item(selector.own_inv_column, items.front());
         selector.set_filter(selector.get_filter());
-        const auto reordered = game_client::paginated_interaction(page);
-        CHECK(reordered.choice_offset == 0);
-        CHECK(reordered.choice_total == 2);
-        CHECK(reordered.choices.size() == 2);
-        return resolve({
-            .input_id = reordered.input_id,
-            .operation = game_client::interaction_operation::cancel,
-        });
+        CHECK(selector_rows().size() == 2);
+        return resolve_action("QUIT");
     });
 
     CHECK(selector.execute().empty());
-    CHECK(reads == 3);
+    CHECK(reads == 4);
 }
 TEST_CASE(
     "semantic ground pickup transfers exact noncharge and charge quantities",
@@ -1597,15 +1578,7 @@ TEST_CASE(
     replay::start();
     auto reads = 0;
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = game_client::current_interaction();
-        if (reads++ == 0) {
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::set_count,
-                .target_id = snapshot.choices.front().id,
-                .count = 2,
-            });
-        }
+        if (reads++ == 0) { return count_item(selector_rows().front(), 2); }
         return resolve_action("CONFIRM");
     });
     auto recorded_selector = inventory_drop_selector(you);
@@ -1637,54 +1610,50 @@ TEST_CASE(
     const auto guard = interaction_test_guard{};
     auto& you = get_avatar();
 
-    SECTION("filter invalidates the old opaque id") {
+    const auto stale = [](const std::string& id) {
+        return engine_client::resolve_invoke(
+            stack_state(), {.affordance_id = "list:inventory:choose", .args = {.row = id}});
+    };
+
+    SECTION("filter removes the rows it hides and keeps the ids of the rest") {
         auto bandages = item::spawn("bandages");
         auto heroin = item::spawn("heroin");
         auto selector = inventory_pick_selector(you);
         selector.add_item(selector.own_inv_column, bandages.get());
         selector.add_item(selector.own_inv_column, heroin.get());
+        auto kept = std::string{};
         game_client::memory::set_input_provider([&](const int /*timeout*/) {
-            const auto before = game_client::current_interaction();
-            REQUIRE(before.choices.size() == 2);
-            const auto old_id = before.choices.back().id;
+            const auto before = selector_rows();
+            REQUIRE(before.size() == 2);
+            const auto bandage_row = row_of(before, "bandages");
+            const auto old_id = row_of(before, "heroin")["id"].get<std::string>();
+            REQUIRE(bandage_row.is_object());
+            kept = bandage_row["id"];
             selector.set_filter("bandage");
-            const auto stale = game_client::resolve_interaction_command({
-                .input_id = before.input_id,
-                .operation = game_client::interaction_operation::choose,
-                .target_id = old_id,
-            });
-            REQUIRE_FALSE(stale);
-            const auto after = game_client::current_interaction();
-            REQUIRE(after.choices.size() == 1);
-            return resolve({
-                .input_id = after.input_id,
-                .operation = game_client::interaction_operation::choose,
-                .target_id = after.choices.front().id,
-            });
+            REQUIRE_FALSE(stale(old_id));
+            const auto after = selector_rows();
+            REQUIRE(after.size() == 1);
+            CHECK(after.front()["id"].get<std::string>() == kept);
+            return choose_item(after.front());
         });
         CHECK(selector.execute() == bandages.get());
     }
 
-    SECTION("reorder invalidates the old row-bound opaque id") {
+    SECTION("a row is named by what it is, so adding another leaves its id as it was") {
         auto heroin = item::spawn("heroin");
         auto bandages = item::spawn("bandages");
         auto selector = inventory_pick_selector(you);
         selector.add_item(selector.own_inv_column, heroin.get());
         game_client::memory::set_input_provider([&](const int /*timeout*/) {
-            const auto before = game_client::current_interaction();
-            REQUIRE(before.choices.size() == 1);
+            const auto before = selector_rows();
+            REQUIRE(before.size() == 1);
             selector.add_item(selector.own_inv_column, bandages.get());
             selector.set_filter(selector.get_filter());
-            const auto stale = game_client::resolve_interaction_command({
-                .input_id = before.input_id,
-                .operation = game_client::interaction_operation::choose,
-                .target_id = before.choices.front().id,
-            });
-            REQUIRE_FALSE(stale);
-            return resolve({
-                .input_id = game_client::current_interaction().input_id,
-                .operation = game_client::interaction_operation::cancel,
-            });
+            const auto after = selector_rows();
+            REQUIRE(after.size() == 2);
+            CHECK(row_of(after, "heroin")["id"] == before.front()["id"]);
+            REQUIRE(stale(before.front()["id"].get<std::string>()));
+            return resolve_action("QUIT");
         });
         CHECK(selector.execute() == nullptr);
     }
@@ -1694,19 +1663,11 @@ TEST_CASE(
         auto selector = inventory_pick_selector(you);
         selector.add_item(selector.own_inv_column, bandages.get());
         game_client::memory::set_input_provider([&](const int /*timeout*/) {
-            const auto before = game_client::current_interaction();
-            REQUIRE(before.choices.size() == 1);
+            const auto before = selector_rows();
+            REQUIRE(before.size() == 1);
             selector.remove_item(bandages.get());
-            const auto stale = game_client::resolve_interaction_command({
-                .input_id = before.input_id,
-                .operation = game_client::interaction_operation::choose,
-                .target_id = before.choices.front().id,
-            });
-            REQUIRE_FALSE(stale);
-            return resolve({
-                .input_id = game_client::current_interaction().input_id,
-                .operation = game_client::interaction_operation::cancel,
-            });
+            REQUIRE_FALSE(stale(before.front()["id"].get<std::string>()));
+            return resolve_action("QUIT");
         });
         CHECK(selector.execute() == nullptr);
     }
@@ -1716,24 +1677,17 @@ TEST_CASE(
         const auto preset = denied_inventory_preset{};
         auto selector = inventory_pick_selector(you, preset);
         selector.add_item(selector.own_inv_column, bandages.get());
+        auto reads = 0;
         game_client::memory::set_input_provider([&](const int /*timeout*/) {
-            const auto snapshot = game_client::current_interaction();
-            REQUIRE(snapshot.choices.size() == 1);
-            CHECK_FALSE(snapshot.choices.front().selectable);
-            CHECK(snapshot.choices.front().denial == "Denied by test preset");
-            const auto denied = game_client::resolve_interaction_command({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::choose,
-                .target_id = snapshot.choices.front().id,
-            });
-            REQUIRE_FALSE(denied);
-            CHECK(denied.error().starts_with("disabled:"));
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::cancel,
-            });
+            const auto rows = selector_rows();
+            REQUIRE(rows.size() == 1);
+            CHECK(rows.front()["selectable"] == false);
+            CHECK(rows.front()["denial"] == "Denied by test preset");
+            if (reads++ == 0) { return choose_item(rows.front()); }
+            return resolve_action("QUIT");
         });
         CHECK(selector.execute() == nullptr);
+        CHECK(reads == 2);
     }
 }
 TEST_CASE(
@@ -1750,7 +1704,7 @@ TEST_CASE(
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
         const auto snapshot = game_client::current_interaction();
         if (reads++ == 0) {
-            REQUIRE(snapshot.kind == game_client::interaction_kind::inventory);
+            REQUIRE(selector_rows().size() == 1);
             auto input = input_event('2', input_event_t::keyboard);
             return input;
         }
@@ -1764,8 +1718,8 @@ TEST_CASE(
                 .submit = true,
             });
         }
-        REQUIRE(snapshot.kind == game_client::interaction_kind::inventory);
-        CHECK(snapshot.choices.front().selected_count == 2);
+        REQUIRE(selector_rows().size() == 1);
+        CHECK(selector_rows().front()["selected_count"] == 2);
         return resolve_action("CONFIRM");
     });
     const auto dropped = selector.execute();

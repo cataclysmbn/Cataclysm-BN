@@ -35,10 +35,13 @@
 #        include "client_memory.h"
 #        include "client_memory_scope.h"
 #        include "cursesdef.h"
+#        include "engine_client_component.h"
 #        include "game_inventory.h"
 #        include "output.h"
 #        include "pickup.h"
 #        include "uistate.h"
+
+#        include <nlohmann/json.hpp>
 #    endif
 
 #    if defined(TILES)
@@ -350,9 +353,21 @@ TEST_CASE(
         const auto avatar_before = saved_avatar();
         const auto messages_before = saved_messages();
         const auto engine = rng_get_engine();
-        const auto snapshot = game_client::current_interaction();
-        REQUIRE(snapshot.structured);
-        CHECK(snapshot.choice_total == 1);
+        const auto state = engine_client::boundary_state{
+            .id = "boundary:test",
+            .epoch = "epoch:test",
+            .ready =
+                {.phase = "waiting_for_input",
+                 .game_ready = true,
+                 .accepts_interaction_commands = true,
+                 .accepts_registered_actions = true},
+            .interaction = std::nullopt,
+            .frame = {.dim = "", .x = 100, .y = 200}};
+        const auto screen =
+            nlohmann::json::parse(engine_client::serialize_interaction_boundary(state))["stack"]
+                .back();
+        REQUIRE(screen["root"].is_object());
+        CHECK(screen.dump().find(coat_id.str()) != std::string::npos);
         CHECK(fixture.read() == before);
         CHECK(saved_avatar() == avatar_before);
         CHECK(saved_messages() == messages_before);

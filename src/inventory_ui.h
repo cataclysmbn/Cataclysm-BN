@@ -33,11 +33,6 @@ class string_input_popup;
 struct tripoint;
 class ui_adaptor;
 
-namespace game_client
-{
-struct interaction_snapshot;
-}
-
 namespace engine_client
 {
 class screen_scope;
@@ -554,8 +549,6 @@ class inventory_selector
                         const item_category *custom_category = nullptr );
 
         inventory_input get_input();
-        auto interaction_snapshot() const -> game_client::interaction_snapshot;
-        auto find_interaction_entry( const std::string &id ) const -> inventory_entry *; // *NOPAD*
         struct interaction_row {
             std::string id;
             /// The key of the column the row is in, which names its panel, list and affordances.

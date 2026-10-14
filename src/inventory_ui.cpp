@@ -2053,123 +2053,6 @@ static auto selection_mark( const inventory_entry &entry ) -> game_client::inter
     return { .glyph = entry.chosen_count >= entry.get_available_count() ? "+" : "#", .color = "c_light_green" };
 }
 
-auto inventory_selector::interaction_snapshot() const -> game_client::interaction_snapshot
-{
-    const auto message = !filter.empty() ? string_format( _( "Filter: %s" ), filter ) :
-                         empty() ? std::string{ _( "Your inventory is empty." ) } :
-                         std::string{};
-    auto result = game_client::interaction_snapshot{
-        .kind = game_client::interaction_kind::inventory,
-        .title = remove_color_tags( title ),
-        .message = message,
-        .category_mode = mode == navigation_mode::CATEGORY,
-        .allow_cancel = true,
-        .allow_set_count = supports_semantic_count(),
-    };
-    // The header of the native window: the hint under the title and the carried totals at its right.
-    result.panes.push_back( {
-        .id = game_client::opaque_interaction_id( "inventory-pane", { "inventory" } ),
-        .label = result.title,
-        .role = "inventory",
-        .area_label = result.title,
-        .area_description = remove_color_tags( hint ),
-        .filter = filter,
-        .totals = display_stats ? header_totals( get_raw_stats() ) : std::nullopt,
-    } );
-    auto identity_counts = std::unordered_map<std::string, std::size_t> {};
-    const auto &all_columns = get_all_columns();
-    for( const auto column_index : std::views::iota( std::size_t{ 0 }, all_columns.size() ) ) {
-        const auto &column = *all_columns[column_index];
-        if( !column.allows_selecting() ) {
-            continue;
-        }
-        const auto source = &column == &own_inv_column ? "inventory" :
-                            &column == &map_column ? "map_or_vehicle" :
-                            &column == &own_gear_column ? "worn_or_wielded" : "other";
-        for( const auto entry_index : std::views::iota( std::size_t{ 0 }, column.entries.size() ) ) {
-            const auto &entry = column.entries[entry_index];
-            if( !entry.is_item() ) {
-                continue;
-            }
-            auto columns = std::vector<game_client::interaction_column> {};
-            columns.reserve( preset.get_cells_count() + 1 );
-            columns.push_back( { .key = "source", .label = "source", .value = source } );
-            for( const auto cell_index : std::views::iota( std::size_t{ 0 },
-                    preset.get_cells_count() ) ) {
-                columns.push_back( {
-                    .key = "cell" + std::to_string( cell_index ),
-                    .label = preset.get_cell_title( cell_index ),
-                    .value = remove_color_tags( preset.get_cell_text( entry, cell_index ) ),
-                } );
-            }
-            // The category header the row sits under.
-            columns.push_back( { .key = "category", .label = "Category", .value = entry.get_category_ptr()->name() } );
-            const auto denial = remove_color_tags( preset.get_observed_denial( entry ) );
-            const auto description = remove_color_tags( entry.any_item()->info_string( { .mode = iteminfo_mode::observation } ) );
-            auto identity = std::vector<std::string> {
-                std::to_string( column_index ), std::to_string( entry_index ),
-                entry.any_item()->typeId().str(),
-                entry.get_category_ptr()->get_id().str(), description,
-                std::to_string( entry.get_available_count() ),
-            };
-            for( const auto &cell : columns ) {
-                identity.push_back( cell.label );
-                identity.push_back( cell.value );
-            }
-            const auto base_id = game_client::opaque_interaction_id( "item", identity );
-            const auto occurrence = identity_counts[base_id]++;
-            const auto id = game_client::opaque_interaction_id(
-                                "item", { base_id, std::to_string( occurrence ) } );
-            result.choices.push_back( {
-                .id = id,
-                .label = columns.size() > 1 ? columns[1].value : entry.any_item()->display_name(),
-                .description = description,
-                .denial = denial,
-                .hotkey = invlet_hotkey( entry ),
-                .enabled = entry.is_selectable(),
-                .selectable = entry.is_selectable() && denial.empty(),
-                .selected = entry.chosen_count > 0,
-                .highlighted = is_active_column( column ) && column.is_selected( entry ),
-                .columns = std::move( columns ),
-                .selected_count = entry.chosen_count,
-                .available_count = entry.get_available_count(),
-                .color = string_from_color( preset.get_color( entry ) ),
-                .key_color = string_from_color( entry.get_invlet_color() ),
-                .markup = preset.get_cell_text( entry, 0 ),
-                .mark = column.is_multiselect() && column.activatable() ?
-                std::optional( selection_mark( entry ) ) : std::nullopt,
-            } );
-        }
-    }
-    return result;
-}
-
-auto inventory_selector::find_interaction_entry( const std::string &id ) const -> inventory_entry *
-{
-    const auto snapshot = interaction_snapshot();
-    const auto choice = std::ranges::find( snapshot.choices, id,
-                                           &game_client::interaction_choice::id );
-    if( choice == snapshot.choices.end() ) {
-        return nullptr;
-    }
-    auto choice_index = static_cast<std::size_t>( std::distance( snapshot.choices.begin(), choice ) );
-    for( auto *column : get_all_columns() ) {
-        if( !column->allows_selecting() ) {
-            continue;
-        }
-        for( auto &entry : column->entries ) {
-            if( !entry.is_item() ) {
-                continue;
-            }
-            if( choice_index == 0 ) {
-                return &entry;
-            }
-            --choice_index;
-        }
-    }
-    return nullptr;
-}
-
 namespace
 {
 namespace ec = engine_client;
@@ -2324,45 +2207,27 @@ auto inventory_selector::open_screen() -> ec::screen_scope
 inventory_input inventory_selector::get_input()
 {
     auto res = inventory_input{};
-    const auto interaction = game_client::interaction_scope( ctxt, [this]() {
-        return interaction_snapshot();
-    } );
-
     res.action = ctxt.handle_input();
     const auto &event = ctxt.get_raw_input();
     res.ch = event.get_first_input();
     res.entry = find_entry_by_invlet( res.ch );
 
-    if( event.interaction ) {
-        if( event.interaction->operation == game_client::interaction_operation::cancel ) {
-            res.action = "QUIT";
-        } else if( event.interaction->operation == game_client::interaction_operation::choose ) {
-            res.entry = find_interaction_entry( event.interaction->target_id );
-            if( res.entry != nullptr ) {
-                select( res.entry->any_item() );
-            }
-        } else if( event.interaction->operation == game_client::interaction_operation::set_count ) {
-            res.entry = find_interaction_entry( event.interaction->target_id );
-            if( res.entry != nullptr ) {
-                select( res.entry->any_item() );
-                apply_semantic_count( *res.entry,
-                                      static_cast<std::size_t>( *event.interaction->count ) );
+    if( const auto invoked = engine_client::invoked( event ) ) {
+        // A row of the published screen, chosen or given a count.
+        res.entry = nullptr;
+        const auto rows = interaction_rows();
+        const auto row = std::ranges::find( rows, invoked->args.row.value_or( "" ), &interaction_row::id );
+        // A row the player may not choose, as the screen says, is not chosen or counted.
+        const auto choosable = row != rows.end() && row->entry != nullptr &&
+                               row->column->allows_selecting() &&
+                               row->entry->is_selectable() && preset.get_observed_denial( *row->entry ).empty();
+        if( choosable ) {
+            res.entry = row->entry;
+            select( res.entry->any_item() );
+            if( invoked->args.count ) {
+                apply_semantic_count( *res.entry, static_cast<std::size_t>( *invoked->args.count ) );
                 res.entry = nullptr;
                 res.action = "SEMANTIC_COUNT";
-            }
-        } else if( const auto invoked = engine_client::invoked( event ) ) {
-            // A row of the published screen, chosen or given a count.
-            res.entry = nullptr;
-            const auto rows = interaction_rows();
-            const auto row = std::ranges::find( rows, invoked->args.row.value_or( "" ), &interaction_row::id );
-            if( row != rows.end() && row->entry != nullptr ) {
-                res.entry = row->entry;
-                select( res.entry->any_item() );
-                if( invoked->args.count ) {
-                    apply_semantic_count( *res.entry, static_cast<std::size_t>( *invoked->args.count ) );
-                    res.entry = nullptr;
-                    res.action = "SEMANTIC_COUNT";
-                }
             }
         }
     }

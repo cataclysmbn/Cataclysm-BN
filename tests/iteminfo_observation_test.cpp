@@ -52,6 +52,8 @@
 #    include "pickup.h"
 #    include "ui.h"
 #    include "uistate.h"
+
+#    include <nlohmann/json.hpp>
 #endif
 
 namespace {
@@ -1292,23 +1294,27 @@ TEST_CASE(
             before.check(*marker);
             return native_cancel();
         }
-        const auto page = game_client::current_interaction({.offset = 0, .limit = 1});
-        REQUIRE(page.structured);
-        REQUIRE(page.choice_total >= 3);
-        CHECK(page.choices.size() == 1);
+        const auto state = engine_client::boundary_state{
+            .id = "boundary:test",
+            .epoch = "epoch:test",
+            .ready =
+                {.phase = "waiting_for_input",
+                 .game_ready = true,
+                 .accepts_interaction_commands = true,
+                 .accepts_registered_actions = true},
+            .interaction = std::nullopt,
+            .frame = {.dim = "", .x = 100, .y = 200}};
+        const auto read = [&] {
+            return nlohmann::json::parse(engine_client::serialize_interaction_boundary(
+                state))["stack"]
+                .back();
+        };
+        const auto first = read();
         before.check(*marker);
-        const auto repeated = game_client::current_interaction({.offset = 1, .limit = 1});
-        CHECK(repeated.choice_total == page.choice_total);
+        CHECK(read().dump() == first.dump());
         before.check(*marker);
-        const auto invalid = game_client::resolve_interaction_command({
-            .input_id = page.input_id,
-            .operation = game_client::interaction_operation::choose,
-            .target_id = "nonexistent-item",
-            .value = {},
-            .submit = std::nullopt,
-            .count = std::nullopt,
-            .position = std::nullopt,
-        });
+        const auto invalid =
+            engine_client::resolve_invoke(state, {.affordance_id = "nonexistent", .args = {}});
         CHECK_FALSE(invalid);
         before.check(*marker);
         return native_cancel();
