@@ -10,7 +10,7 @@
         "root": {
           "id": "pickup",
           "kind": "panel",
-          "title": "Pick up",
+          "title": "",
           "subtitle": "ground",
           "stats": [
             {

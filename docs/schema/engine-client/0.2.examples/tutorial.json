@@ -6889,7 +6889,6 @@
                   "ESC"
                 ],
                 "enabled": true,
-                "role": "cancel",
                 "expect": "screen"
               },
               {
@@ -7207,7 +7206,6 @@
               "ESC"
             ],
             "enabled": true,
-            "role": "cancel",
             "expect": "screen"
           },
           {

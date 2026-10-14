@@ -10,7 +10,7 @@
         "root": {
           "id": "trade:head",
           "kind": "panel",
-          "title": "Trading with Denver Tolbert, Marloss Voice",
+          "title": "",
           "stats": [
             {
               "key": "category_mode",
@@ -94,6 +94,7 @@
                       "label": "marloss berry (3)",
                       "description": "Origin: 'Bright Nights'\n--\nMaterial: Fruit Matter\nVolume: 0.188 L  Weight: 0.53 kg\nOwner: Marloss Evangelists\nCategory: FOOD\n--\nThis looks like a blueberry the size of your fist, but pinkish in color.  It has a strong but delicious aroma, but is clearly either mutated or of alien origin.\n--\nNutrition will vary with available ingredients.\nCalories (kcal): 347  Quench: 20\nEnjoyability: 30\nPortions: 3\nOther contents: Fruit (1%)\n--\nThrow damage: Bash: 2\nThrow range: 24\nMoves per throw: 60\nStamina cost: 83\n--\n* This item is not repairable.\n--\n* This item conducts electricity.\n* This comestible can be eaten even on full stomach.\n--\nPrice: $0.00\n--\nYou know of nothing you could craft with it.\n",
                       "denial": "",
+                      "hotkey": "a",
                       "enabled": true,
                       "selectable": true,
                       "selected": false,
@@ -149,6 +150,7 @@
                       "label": "Mycenacean Hymns (unread)",
                       "description": "",
                       "denial": "",
+                      "hotkey": "b",
                       "enabled": true,
                       "selectable": true,
                       "selected": false,
@@ -217,6 +219,7 @@
                       "label": "Marloss seed (3)",
                       "description": "",
                       "denial": "",
+                      "hotkey": "c",
                       "enabled": true,
                       "selectable": true,
                       "selected": false,
@@ -272,6 +275,7 @@
                       "label": "long stick (1)",
                       "description": "",
                       "denial": "",
+                      "hotkey": "d",
                       "enabled": true,
                       "selectable": true,
                       "selected": false,
@@ -535,7 +539,6 @@
               "RETURN"
             ],
             "enabled": true,
-            "role": "confirm",
             "expect": "screen"
           },
           {
@@ -545,7 +548,6 @@
               "ESC"
             ],
             "enabled": true,
-            "role": "cancel",
             "expect": "screen"
           },
           {

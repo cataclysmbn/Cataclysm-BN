@@ -10,7 +10,7 @@
         "root": {
           "id": "inventory",
           "kind": "panel",
-          "title": "Multidrop",
+          "title": "",
           "subtitle": "To drop x items, type a number before selecting.",
           "stats": [
             {

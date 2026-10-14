@@ -166,7 +166,7 @@
                         "description": "",
                         "denial": "You can't put items there!",
                         "enabled": false,
-                        "selectable": true,
+                        "selectable": false,
                         "selected": false,
                         "columns": []
                       },
@@ -187,7 +187,7 @@
                         "description": "",
                         "denial": "You can't put items there!",
                         "enabled": false,
-                        "selectable": true,
+                        "selectable": false,
                         "selected": false,
                         "columns": []
                       },
@@ -207,7 +207,7 @@
                         "description": "",
                         "denial": "You can't put items there!",
                         "enabled": false,
-                        "selectable": true,
+                        "selectable": false,
                         "selected": false,
                         "columns": []
                       },
@@ -390,7 +390,7 @@
                         "description": "",
                         "denial": "You can't put items there!",
                         "enabled": false,
-                        "selectable": true,
+                        "selectable": false,
                         "selected": false,
                         "columns": []
                       },
@@ -411,7 +411,7 @@
                         "description": "",
                         "denial": "You can't put items there!",
                         "enabled": false,
-                        "selectable": true,
+                        "selectable": false,
                         "selected": false,
                         "columns": []
                       },
@@ -431,7 +431,7 @@
                         "description": "",
                         "denial": "You can't put items there!",
                         "enabled": false,
-                        "selectable": true,
+                        "selectable": false,
                         "selected": false,
                         "columns": []
                       },
@@ -472,7 +472,7 @@
             "denial": "There are no items to be moved!",
             "args": {
               "rows": {
-                "component_id": "aim:panes",
+                "component_id": "aim:pane:left:items",
                 "counts": true
               },
               "pane": {
@@ -488,7 +488,7 @@
             "enabled": true,
             "args": {
               "row": {
-                "component_id": "aim:panes"
+                "component_id": "aim:pane:left:areas"
               },
               "pane": {
                 "component_id": "aim:panes"
@@ -548,7 +548,6 @@
               "SPACE"
             ],
             "enabled": true,
-            "role": "cancel",
             "expect": "screen"
           },
           {
