@@ -7,11 +7,13 @@
 #    include "client_screen_support.h"
 #    include "clzones.h"
 #    include "diary.h"
+#    include "engine_client_component.h"
 #    include "faction.h"
 #    include "game.h"
 #    include "kill_tracker.h"
 #    include "map/map.h"
 #    include "map_helpers.h"
+#    include "npc.h"
 #    include "player_helpers.h"
 #    include "scores_ui.h"
 #    include "state_helpers.h"
@@ -160,7 +162,7 @@ TEST_CASE(
 
 TEST_CASE(
     "the faction manager lists the tabs and the creatures the avatar knows",
-    "[client][interaction][mcp][screens]") {
+    "[client][interaction][mcp][screens][info_screens][factions_screen]") {
     clear_all_state();
     clear_map();
     auto& you = get_avatar();
@@ -168,39 +170,98 @@ TEST_CASE(
     you.set_knows_creature_type(mtype_id("mon_zombie"));
     const auto guard = screen_guard{};
     auto stage = 0;
-    open_screen(
+    open_stack(
         [] { g->faction_manager_ptr->display(); },
-        [&](const auto& snapshot) {
+        [&](const auto& /*snapshot*/, const auto& top) {
+            namespace ec = engine_client;
+            const auto find = [&](const std::string& id) {
+                REQUIRE(top.root);
+                return ec::find_component(*top.root, id);
+            };
             switch (stage++) {
                 case 0: {
-                    CHECK(snapshot.context == "FACTION MANAGER");
-                    CHECK(rows_with(snapshot, "tab:").size() == 4);
-                    CHECK(rows_with(snapshot, "follower:").empty());
-                    CHECK(snapshot.message == "You have no followers");
-                    return choose(snapshot, "tab:3");
+                    CHECK(top.context == "FACTION MANAGER");
+                    const auto* const tabs = find("factions:tabs");
+                    REQUIRE(tabs != nullptr);
+                    const auto& entries = std::get<ec::tabs_body>(tabs->body).tabs;
+                    REQUIRE(entries.size() == 4);
+                    CHECK(entries[0].id == "followers");
+                    CHECK(entries[3].id == "creatures");
+                    const auto* const none = find("factions:none");
+                    REQUIRE(none != nullptr);
+                    CHECK(std::get<ec::text_body>(none->body).markup == "You have no followers");
+                    return invoke_event(top, "factions:tab", {.row = "creatures"});
                 }
                 case 1: {
-                    CHECK(row(snapshot, "tab:3")->selected);
-                    const auto creatures = rows_with(snapshot, "creature:");
-                    REQUIRE(creatures.size() == 1);
-                    const auto zombie = row(snapshot, creatures.front());
-                    CHECK(zombie->highlighted);
-                    CHECK(zombie->description.find("Difficulty") != std::string::npos);
-                    CHECK(zombie->description.find("Origin") != std::string::npos);
-                    CHECK(zombie->description.find("Species") != std::string::npos);
-                    return choose(snapshot, "tab:2");
+                    const auto* const list = find("factions:list");
+                    REQUIRE(list != nullptr);
+                    const auto& rows = std::get<ec::list_body>(list->body).rows;
+                    REQUIRE(rows.size() == 1);
+                    CHECK(rows[0].id == "creature:mon_zombie");
+                    CHECK(top.focus_row == "creature:mon_zombie");
+                    const auto* const facts = find("factions:facts");
+                    REQUIRE(facts != nullptr);
+                    const auto& markup = std::get<ec::text_body>(facts->body).markup;
+                    CHECK(markup.find("Difficulty") != std::string::npos);
+                    CHECK(markup.find("Origin") != std::string::npos);
+                    CHECK(markup.find("Species") != std::string::npos);
+                    return invoke_event(top, "factions:tab", {.row = "lore"});
                 }
                 case 2: {
-                    CHECK(rows_with(snapshot, "creature:").empty());
-                    CHECK(snapshot.message == "You haven't learned anything about the world.");
-                    return cancel(snapshot);
+                    CHECK(find("factions:list") == nullptr);
+                    const auto* const none = find("factions:none");
+                    REQUIRE(none != nullptr);
+                    CHECK(std::get<ec::text_body>(none->body).markup
+                          == "You haven't learned anything about the world.");
+                    return run_action("QUIT");
                 }
                 default:
-                    FAIL("unexpected extra screen " << snapshot.context);
+                    FAIL("unexpected extra screen " << top.context);
             }
             return input_event{};
         });
     CHECK(stage == 3);
+}
+
+TEST_CASE(
+    "the faction manager lets the player talk to and swap to a follower only within reach",
+    "[client][interaction][mcp][screens][info_screens][factions_screen]") {
+    clear_all_state();
+    clear_map();
+    auto& you = get_avatar();
+    clear_character(you, false);
+    const auto within_reach = GENERATE(true, false);
+    auto& near = spawn_npc(you.bub_pos() + tripoint_east * (within_reach ? 1 : 30), "test_talker");
+    near.set_fac(faction_id("your_followers"));
+    near.set_attitude(NPCATT_FOLLOW);
+    const auto guard = screen_guard{};
+    auto stage = 0;
+    open_stack(
+        [] { g->faction_manager_ptr->display(); },
+        [&](const auto& /*snapshot*/, const auto& top) {
+            namespace ec = engine_client;
+            REQUIRE(stage++ == 0);
+            REQUIRE(top.root);
+            const auto* const list = ec::find_component(*top.root, "factions:list");
+            REQUIRE(list != nullptr);
+            const auto& rows = std::get<ec::list_body>(list->body).rows;
+            REQUIRE(rows.size() == 1);
+            CHECK(rows[0].id == "follower:" + std::to_string(near.getID().get_value()));
+            const auto* const facts = ec::find_component(*top.root, "factions:facts");
+            REQUIRE(facts != nullptr);
+            CHECK((std::get<ec::text_body>(facts->body).markup.find("Within interaction range")
+                   != std::string::npos)
+                  == within_reach);
+            CHECK(top.denials.empty() == within_reach);
+            if (!within_reach) {
+                const auto confirm = std::ranges::find(top.denials, "CONFIRM", &ec::denial::id);
+                REQUIRE(confirm != top.denials.end());
+                CHECK(confirm->reason == "Both you and follower need a radio");
+                CHECK(std::ranges::count(top.denials, "SWAPTONPC", &ec::denial::id) == 1);
+            }
+            return run_action("QUIT");
+        });
+    CHECK(stage == 1);
 }
 
 TEST_CASE(
