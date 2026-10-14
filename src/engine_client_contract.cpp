@@ -432,7 +432,8 @@ auto validate_boundary( const boundary_state &state ) -> std::expected<void, err
 }
 auto same_boundary( const boundary_state &left, const boundary_state &right ) -> bool
 {
-    return serialize_boundary( left ) == serialize_boundary( right );
+    // The open screens are part of what a client reads: a change of theirs alone is a change.
+    return serialize_interaction_boundary( left ) == serialize_interaction_boundary( right );
 }
 
 auto read_choices( const choices_request &request, const std::string &epoch )
