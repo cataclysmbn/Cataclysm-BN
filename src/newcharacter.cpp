@@ -1080,7 +1080,6 @@ auto starter_cost( const std::string &name, const int cost ) -> std::string
 
 constexpr auto tabs_id = "newchar:tabs";
 constexpr auto select_tab_id = "newchar:tab";
-constexpr auto points_text_id = "newchar:points_left";
 
 /// The affordance that picks a row of the list `list` on the tab `tab`.
 auto pick_id( const std::string &tab ) -> std::string { return "newchar:" + tab + ":pick"; }
@@ -1096,11 +1095,17 @@ auto newchar_column( const std::string &key, const std::string &label,
     return { .key = key, .label = label, .value = value, .color = {} };
 }
 
-/// A short line the tab says about the row under the cursor: what it costs, or why it cannot be taken.
-auto hint_part( const std::string &tab, const std::string &markup,
-                const std::string &tone ) -> ec::component
-{
-    return { .id = "newchar:" + tab + ":hint", .body = ec::text_body{ .markup = markup, .tone = tone } };
+/// A line the tab says above its lists, in the tone of good or bad news: what the row under the cursor
+/// costs, or why it cannot be taken.
+auto note_of( const std::string &key, const std::string &markup, const std::string &tone = {} ) ->
+ec::panel_stat {
+    return { .key = key, .label = markup, .value = {}, .max = {}, .unit = {}, .tone = tone };
+}
+
+/// What a tab tells of the row or the character: a heading and its value.
+auto fact( const std::string &key, const std::string &label, const std::string &value,
+const std::string &tone = {} ) -> ec::panel_stat {
+    return { .key = key, .label = ec::caption( label ), .value = value, .max = {}, .unit = {}, .tone = tone };
 }
 
 struct newchar_view_options {
@@ -1108,7 +1113,9 @@ struct newchar_view_options {
     std::string tab;
     const profession_id &prof;
     points_left &points;
-    /// What the tab shows below the points.
+    /// The lines the tab says below the points.
+    std::vector<ec::panel_stat> notes;
+    /// What the tab shows beside each other, the lists first.
     std::vector<ec::component> parts;
     std::vector<ec::affordance> affordances;
     std::string focus_component;
@@ -1122,14 +1129,16 @@ auto newchar_view( newchar_view_options options ) -> ec::screen_view
     auto entries = character_tabs( options.prof ) | transform( [&]( const newchar_tab & tab ) {
         return ec::tab_entry{ .id = tab.id, .label = tab.caption, .selected = tab.id == options.tab };
     } ) | std::ranges::to<std::vector>();
-    auto parts = ec::children_of( ec::component{ .id = points_text_id, .body = ec::text_body{ .markup = options.points.to_string() } } );
-    std::ranges::move( options.parts, std::back_inserter( parts ) );
+    auto notes = std::vector<ec::panel_stat> { note_of( "points_left", options.points.to_string() ) };
+    std::ranges::move( options.notes, std::back_inserter( notes ) );
     options.affordances.push_back( ec::invoke_affordance( { .id = select_tab_id, .label = _( "Category" ), .args = { .row = ec::row_shape{ .component_id = tabs_id } } } ) );
     return {
         .title = _( "Character creation" ),
         .root = ec::tabs( {
             .id = tabs_id, .tabs = std::move( entries ), .select = select_tab_id,
-            .child = ec::split( { .id = "newchar:" + options.tab, .children = std::move( parts ) } ) } ),
+            .child = ec::panel( {
+                .id = "newchar:" + options.tab + ":notes", .stats = std::move( notes ),
+                .child = ec::split( { .id = "newchar:" + options.tab, .relation = "detail", .children = std::move( options.parts ) } ) } ) } ),
         .affordances = std::move( options.affordances ),
         .focus_component = std::move( options.focus_component ), .focus_row = std::move( options.focus_row ),
     };
@@ -1164,12 +1173,12 @@ auto starter_pages_view( starter_pages_options options ) -> ec::screen_view
                                       .child = ec::list( { .id = prefix + names[page] + ":rows", .rows = std::move( options.pages[page] ),
                                                .selection = "single", .activate = pick_id( options.tab ) } ) } ) );
     }
-    auto parts = std::vector<ec::component> {};
-    if( !options.pools.empty() ) { parts.push_back( { .id = prefix + "pools", .body = ec::text_body{ .markup = options.pools } } ); }
-    if( !options.cost.empty() ) { parts.push_back( hint_part( options.tab, options.cost, options.page == 0 ? "good" : options.page == 1 ? "bad" : "" ) ); }
-    parts.push_back( ec::split( { .id = prefix + "pages", .active = prefix + names[options.page], .children = std::move( pages ) } ) );
+    auto notes = std::vector<ec::panel_stat> {};
+    if( !options.pools.empty() ) { notes.push_back( note_of( "pools", options.pools ) ); }
+    if( !options.cost.empty() ) { notes.push_back( note_of( "hint", options.cost, options.page == 0 ? "good" : options.page == 1 ? "bad" : "" ) ); }
     return newchar_view( {
-        .tab = options.tab, .prof = options.prof, .points = options.points, .parts = std::move( parts ),
+        .tab = options.tab, .prof = options.prof, .points = options.points, .notes = std::move( notes ),
+        .parts = ec::children_of( ec::split( { .id = prefix + "pages", .active = prefix + names[options.page], .children = std::move( pages ) } ) ),
         .affordances = { pick_affordance( options.tab, prefix + "pages" ) },
         .focus_component = prefix + names[options.page] + ":rows", .focus_row = focus_row,
     } );
@@ -1618,11 +1627,12 @@ tab_direction set_stats( avatar &u, points_left &points )
                               .columns = { newchar_column( "value", _( "Value" ), std::to_string( stat.value ) ) } } );
         }
         const auto &focus = stats[sel - 1];
+        auto notes = std::vector<ec::panel_stat> {};
+        if( focus.value >= HIGH_STAT ) { notes.push_back( note_of( "hint", focus.warning, "bad" ) ); }
         auto parts = ec::children_of( ec::list( { .id = "newchar:stats:rows", .rows = std::move( rows ), .selection = "single", .activate = pick_id( "stats" ) } ) );
-        if( focus.value >= HIGH_STAT ) { parts.push_back( hint_part( "stats", focus.warning, "bad" ) ); }
         parts.push_back( { .id = "newchar:stats:details", .body = ec::text_body{ .markup = stat_details( u, sel ) } } );
         return newchar_view( {
-            .tab = "stats", .prof = u.prof, .points = points, .parts = std::move( parts ),
+            .tab = "stats", .prof = u.prof, .points = points, .notes = std::move( notes ), .parts = std::move( parts ),
             .affordances = { pick_affordance( "stats", "newchar:stats:rows" ) },
             .focus_component = "newchar:stats:rows", .focus_row = std::string( "stat:" ) + focus.id,
         } );
@@ -3116,18 +3126,19 @@ tab_direction set_profession( avatar &u, points_left &points,
             .id = "newchar:profession:list", .filter = filterstring, .rows = std::move( rows ), .pick = pick_id( "profession" ),
         } ) );
         auto focus = std::string();
+        auto notes = std::vector<ec::panel_stat> {};
         if( cur_id >= 0 && static_cast<std::size_t>( cur_id ) < sorted_profs.size() ) {
             const auto &prof = *sorted_profs[cur_id];
             focus = "profession:" + sorted_profs[cur_id].str();
-            parts.push_back( hint_part( "profession",
-                                        profession_cost_text( prof.gender_appropriate_name( u.male ), prof.point_cost() ),
-                                        can_pick_prof( prof, u, points.skill_points_left() ) ? "good" : "bad" ) );
-            parts.push_back( { .id = "newchar:profession:sort", .body = ec::text_body{ .markup = sorting_text( ctxt, profession_sorter ) } } );
-            parts.push_back( { .id = "newchar:profession:gender", .body = ec::text_body{ .markup = gender_switch_text( ctxt, u, prof ) } } );
+            notes.push_back( note_of( "hint", profession_cost_text( prof.gender_appropriate_name( u.male ),
+                                      prof.point_cost() ),
+                                      can_pick_prof( prof, u, points.skill_points_left() ) ? "good" : "bad" ) );
+            notes.push_back( note_of( "sort", sorting_text( ctxt, profession_sorter ) ) );
+            notes.push_back( note_of( "gender", gender_switch_text( ctxt, u, prof ) ) );
             parts.push_back( { .id = "newchar:profession:details", .body = ec::text_body{ .markup = profession_details( u, prof ) } } );
         }
         return newchar_view( {
-            .tab = "profession", .prof = u.prof, .points = points, .parts = std::move( parts ),
+            .tab = "profession", .prof = u.prof, .points = points, .notes = std::move( notes ), .parts = std::move( parts ),
             .affordances = { pick_affordance( "profession", "newchar:profession:list:rows" ) },
             .focus_component = "newchar:profession:list:rows", .focus_row = std::move( focus ),
         } );
@@ -3429,9 +3440,8 @@ tab_direction set_skills( avatar &u, points_left &points )
         }
         const auto upgrade = skill_upgrade_hint( u, points, *currentSkill );
         return newchar_view( {
-            .tab = "skills", .prof = u.prof, .points = points,
+            .tab = "skills", .prof = u.prof, .points = points, .notes = { note_of( "hint", upgrade.text, upgrade.affordable ? "good" : "bad" ) },
             .parts = ec::children_of( ec::list( { .id = "newchar:skills:rows", .rows = std::move( rows ), .selection = "single", .activate = pick_id( "skills" ) } ),
-            hint_part( "skills", upgrade.text, upgrade.affordable ? "good" : "bad" ),
             ec::component{ .id = "newchar:skills:details", .body = ec::text_body{ .markup = skill_description_text( u, prof_skills, *currentSkill ) } } ),
             .affordances = { pick_affordance( "skills", "newchar:skills:rows" ) },
             .focus_component = "newchar:skills:rows", .focus_row = "skill:" + currentSkill->ident().str(),
@@ -3688,9 +3698,8 @@ tab_direction set_magic( avatar &u, points_left &points )
         }
         const auto upgrade = spell_upgrade_hint( u, points, *current_spell );
         return newchar_view( {
-            .tab = "magic", .prof = u.prof, .points = points,
-            .parts = ec::children_of( ec::list( { .id = "newchar:magic:rows", .rows = std::move( rows ), .selection = "single", .activate = pick_id( "magic" ) } ),
-            hint_part( "magic", upgrade.text, upgrade.affordable ? "good" : "bad" ) ),
+            .tab = "magic", .prof = u.prof, .points = points, .notes = { note_of( "hint", upgrade.text, upgrade.affordable ? "good" : "bad" ) },
+            .parts = ec::children_of( ec::list( { .id = "newchar:magic:rows", .rows = std::move( rows ), .selection = "single", .activate = pick_id( "magic" ) } ) ),
             .affordances = { pick_affordance( "magic", "newchar:magic:rows" ) },
             .focus_component = "newchar:magic:rows", .focus_row = "spell:" + current_spell.str(),
         } );
@@ -3850,14 +3859,6 @@ auto scenario_flag_lines( const scenario &scen ) -> std::vector<std::string>
         lines.emplace_back( _( "Starting location is bordered by an immense wall" ) );
     }
     return lines;
-}
-
-/// A heading over a short text.
-auto labelled_text( const std::string &id, const std::string &title,
-                    const std::string &markup ) -> ec::component
-{
-    return ec::panel( { .id = id, .title = ec::caption( title ),
-                        .child = ec::component{ .id = id + ":text", .body = ec::text_body{ .markup = markup } } } );
 }
 
 } // namespace
@@ -4065,29 +4066,28 @@ tab_direction set_scenario( avatar &u, points_left &points,
             .id = "newchar:scenario:list", .filter = filterstring, .rows = std::move( rows ), .pick = pick_id( "scenario" ),
         } ) );
         auto focus = std::string();
+        auto notes = std::vector<ec::panel_stat> {};
         if( cur_id >= 0 && static_cast<std::size_t>( cur_id ) < sorted_scens.size() ) {
             const auto &scen = *sorted_scens[cur_id];
             focus = "scenario:" + scen.ident().str();
-            parts.push_back( hint_part( "scenario", scenario_cost_text( scen.gender_appropriate_name( u.male ),
-                                        scen.point_cost() ),
-                                        scen.can_pick( *g->scen, points.skill_points_left() ) ? "good" : "bad" ) );
-            parts.push_back( { .id = "newchar:scenario:sort", .body = ec::text_body{ .markup = sorting_text( ctxt, scenario_sorter ) } } );
+            notes.push_back( note_of( "hint", scenario_cost_text( scen.gender_appropriate_name( u.male ),
+                                      scen.point_cost() ),
+                                      scen.can_pick( *g->scen, points.skill_points_left() ) ? "good" : "bad" ) );
+            notes.push_back( note_of( "sort", sorting_text( ctxt, scenario_sorter ) ) );
             const auto default_prof = default_profession( scen );
             const auto prof_points = default_prof->point_cost();
-            parts.push_back( labelled_text( "newchar:scenario:professions", _( "Professions:" ),
-                                            scen.prof_count_str() + _( ", default:\n" ) + default_prof->gender_appropriate_name( u.male ) +
-                                            ( prof_points > 0 ? colorize( string_format( " (-%d)", prof_points ), c_red ) :
-                                              prof_points < 0 ? colorize( string_format( " (+%d)", -prof_points ),
-                                                      c_green ) : std::string() ) ) );
-            parts.push_back( labelled_text( "newchar:scenario:location", _( "Scenario Location:" ),
-                                            scenario_location_text( scen ) ) );
-            parts.push_back( labelled_text( "newchar:scenario:vehicle", _( "Scenario Vehicle:" ),
-                                            scen.vehicle() ? scen.vehicle()->name : std::string() ) );
-            parts.push_back( labelled_text( "newchar:scenario:flags", _( "Scenario Flags:" ),
-                                            join( scenario_flag_lines( scen ), "\n" ) ) );
+            parts.push_back( ec::panel( { .id = "newchar:scenario:details", .stats = {
+                    fact( "professions", _( "Professions:" ),
+                          scen.prof_count_str() + _( ", default:\n" ) + default_prof->gender_appropriate_name( u.male ) +
+                          ( prof_points > 0 ? colorize( string_format( " (-%d)", prof_points ), c_red ) :
+                            prof_points < 0 ? colorize( string_format( " (+%d)", -prof_points ), c_green ) : std::string() ) ),
+                    fact( "location", _( "Scenario Location:" ), scenario_location_text( scen ) ),
+                    fact( "vehicle", _( "Scenario Vehicle:" ), scen.vehicle() ? scen.vehicle()->name : std::string() ),
+                    fact( "flags", _( "Scenario Flags:" ), join( scenario_flag_lines( scen ), "\n" ) ),
+                } } ) );
         }
         return newchar_view( {
-            .tab = "scenario", .prof = u.prof, .points = points, .parts = std::move( parts ),
+            .tab = "scenario", .prof = u.prof, .points = points, .notes = std::move( notes ), .parts = std::move( parts ),
             .affordances = { pick_affordance( "scenario", "newchar:scenario:list:rows" ) },
             .focus_component = "newchar:scenario:list:rows", .focus_row = std::move( focus ),
         } );
@@ -4799,7 +4799,8 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
         const auto none = colorize( _( "None!" ), c_light_red );
         const auto section = [&]( const std::string & id, const std::string & title,
         const std::vector<std::string> &lines ) {
-            return labelled_text( "newchar:overview:" + id, title, lines.empty() ? none : join( lines, "\n" ) );
+            return fact( id, title, lines.empty() ? std::string( _( "None!" ) ) : join( lines, "\n" ),
+                         lines.empty() ? "bad" : "" );
         };
         const auto field = [&]( const std::string & id, const std::string & label,
         const std::string & value ) {
@@ -4911,23 +4912,20 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
                     worn ) + "\n" + listed( _( "Inventory: " ), inventory );
         }
 
+        auto facts = std::move( stats );
+        for( auto &entry : std::vector<ec::panel_stat> {
+        section( "traits", _( "Traits: " ), trait_lines ), section( "bionics", _( "Bionics: " ), bionic_lines ),
+            section( "spells", _( "Spells: " ), spell_lines ), section( "skills", _( "Skills:" ), skill_lines ),
+            section( "vehicle", _( "Vehicle: " ), vehicle_lines ), section( "companions", _( "Companions: " ), companion_lines ),
+            fact( "cash", _( "Cash: " ), cash ), section( "pets", _( "Pets: " ), pet_lines ),
+            section( "addictions", _( "Addictions: " ), addiction_lines ),
+            items.empty() ? section( "items", _( "Items: " ), {} ) : fact( "items", _( "Items: " ), items ),
+                fact( "scenario", _( "Scenario: " ), g->scen->gender_appropriate_name( you.male ) ),
+                fact( "profession", _( "Profession: " ), you.prof->gender_appropriate_name( you.male ) ),
+            } ) { facts.push_back( std::move( entry ) ); }
         auto parts = ec::children_of(
-        ec::panel( { .id = "newchar:overview:description", .child = ec::list( {
-                .id = "newchar:overview:fields", .rows = std::move( fields ), .selection = "single", .activate = pick_id( "overview" ) } ) } ),
-        ec::panel( { .id = "newchar:overview:stats", .title = ec::caption( _( "Stats:" ) ), .stats = std::move( stats ) } ),
-        section( "traits", _( "Traits: " ), trait_lines ), section( "bionics", _( "Bionics: " ),
-                bionic_lines ),
-        section( "spells", _( "Spells: " ), spell_lines ), section( "skills", _( "Skills:" ), skill_lines ),
-        section( "vehicle", _( "Vehicle: " ), vehicle_lines ), section( "companions", _( "Companions: " ),
-                companion_lines ),
-        labelled_text( "newchar:overview:cash", _( "Cash: " ), cash ), section( "pets", _( "Pets: " ),
-                pet_lines ),
-        section( "addictions", _( "Addictions: " ), addiction_lines ),
-        labelled_text( "newchar:overview:items", _( "Items: " ), items.empty() ? none : items ),
-        labelled_text( "newchar:overview:scenario", _( "Scenario: " ),
-                       g->scen->gender_appropriate_name( you.male ) ),
-        labelled_text( "newchar:overview:profession", _( "Profession: " ),
-                       you.prof->gender_appropriate_name( you.male ) ) );
+                         ec::list( { .id = "newchar:overview:fields", .rows = std::move( fields ), .selection = "single", .activate = pick_id( "overview" ) } ),
+                         ec::panel( { .id = "newchar:overview:facts", .stats = std::move( facts ) } ) );
         return newchar_view( {
             .tab = "overview", .prof = you.prof, .points = points, .parts = std::move( parts ),
             .affordances = { pick_affordance( "overview", "newchar:overview:fields" ) },

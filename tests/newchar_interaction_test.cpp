@@ -166,6 +166,14 @@ auto selected_tab(const ec::screen_view& screen) -> std::string {
     return found->id;
 }
 
+auto points_text(const ec::screen_view& screen) -> std::string {
+    const auto& stats =
+        body<ec::panel_body>(part(screen, "newchar:" + selected_tab(screen) + ":notes")).stats;
+    const auto found = std::ranges::find(stats, "points_left", &ec::panel_stat::key);
+    REQUIRE(found != stats.end());
+    return found->label;
+}
+
 /// Runs the creation with a scripted client. Popups are answered here (a name into the field, yes
 /// to a question, a plain message dismissed); `script` sees every creation screen.
 auto create_with(
@@ -282,7 +290,7 @@ TEST_CASE(
                 CHECK(tab_ids(screen).front() == "points");
                 CHECK(tab_ids(screen).back() == "overview");
                 CHECK(tab_ids(screen).size() >= 8);
-                CHECK_FALSE(text_of(screen, "newchar:points_left").empty());
+                CHECK_FALSE(points_text(screen).empty());
                 const auto& pools = rows_of(screen, "newchar:points:rows");
                 CHECK(std::ranges::count(
                           pools, true, [](const auto& row) { return row.toggled.value_or(false); })
@@ -318,7 +326,7 @@ TEST_CASE(
             case 1: {
                 // Scenario, profession and stats were stepped over; traits shows its rows.
                 CHECK(selected_tab(screen) == "traits");
-                trait_points = text_of(screen, "newchar:points_left");
+                trait_points = points_text(screen);
                 const auto* const trait = affordable_trait(screen);
                 REQUIRE(trait != nullptr);
                 CHECK(trait->id.starts_with("trait:"));
@@ -329,7 +337,7 @@ TEST_CASE(
             }
             case 2: {
                 CHECK(trait_row(screen, picked_trait).toggled == std::optional{true});
-                CHECK(text_of(screen, "newchar:points_left") != trait_points);
+                CHECK(points_text(screen) != trait_points);
                 CHECK(screen.focus_row == picked_trait);
                 traits_after = static_cast<int>(you.get_mutations().size());
                 return go_to("skills");
@@ -409,7 +417,7 @@ TEST_CASE(
                 const auto& bionic = row_of(screen, list, "bionic:bio_metabolics");
                 prepper_has_metabolics = bionic.toggled.value_or(false);
                 CHECK_FALSE(bionic.description.empty());
-                points_before = text_of(screen, "newchar:points_left");
+                points_before = points_text(screen);
                 return pick("bionics", "bionic:bio_metabolics");
             }
             case 4: {
@@ -417,7 +425,7 @@ TEST_CASE(
                 const auto list = std::string{"newchar:bionics:advantage:rows"};
                 CHECK(row_of(screen, list, "bionic:bio_metabolics").toggled == std::optional{true});
                 CHECK(screen.focus_row == "bionic:bio_metabolics");
-                CHECK(text_of(screen, "newchar:points_left") == points_before);
+                CHECK(points_text(screen) == points_before);
                 return go_to("overview");
             }
             case 5:
@@ -465,7 +473,7 @@ TEST_CASE(
                     row_of(screen, "newchar:magic:rows", "spell:test_spell_apprentice");
                 CHECK_FALSE(spell.toggled.value_or(false));
                 CHECK_FALSE(spell.description.empty());
-                points_before = text_of(screen, "newchar:points_left");
+                points_before = points_text(screen);
                 return pick("magic", spell.id);
             }
             case 4:
@@ -477,7 +485,7 @@ TEST_CASE(
             case 5:
                 CHECK(row_of(screen, "newchar:magic:rows", "spell:test_spell_apprentice").toggled
                       == std::optional{true});
-                CHECK(text_of(screen, "newchar:points_left") != points_before);
+                CHECK(points_text(screen) != points_before);
                 return go_to("overview");
             case 6:
                 return act("NEXT_TAB");

@@ -113,6 +113,13 @@ template <typename Body> auto body(const ec::component& value) -> const Body& {
 auto text_of(const ec::screen_view& screen, const std::string& id) -> const std::string& {
     return body<ec::text_body>(part(screen, id)).markup;
 }
+auto note_of(const ec::screen_view& screen, const std::string& panel, const std::string& key)
+    -> std::string {
+    const auto& stats = body<ec::panel_body>(part(screen, panel)).stats;
+    const auto found = std::ranges::find(stats, key, &ec::panel_stat::key);
+    REQUIRE(found != stats.end());
+    return found->label;
+}
 auto rows_of(const ec::screen_view& screen, const std::string& list)
     -> const std::vector<ec::row>& {
     return body<ec::list_body>(part(screen, list)).rows;
@@ -239,7 +246,7 @@ TEST_CASE(
                 if (available.empty()) {
                     const auto categories = tab_ids(screen, "worldgen:mods:categories");
                     REQUIRE(++category < categories.size());
-                    CHECK_FALSE(text_of(screen, "worldgen:mods:available:none").empty());
+                    CHECK_FALSE(note_of(screen, "worldgen:mods:available", "none").empty());
                     stage = 1;
                     return invoke("worldgen:mods:category", {.row = categories[category]});
                 }
@@ -265,7 +272,8 @@ TEST_CASE(
                 REQUIRE(form.fields.size() == 1);
                 CHECK(form.fields.front().id == "name");
                 CHECK(form.fields.front().max_length > 0);
-                CHECK(text_of(screen, "worldgen:confirm:format").find("V2") != std::string::npos);
+                CHECK(note_of(screen, "worldgen:confirm:notes", "format").find("V2")
+                      != std::string::npos);
                 return invoke("worldgen:confirm:name", {.text = "Ada"});
             }
             case 4:
@@ -274,7 +282,8 @@ TEST_CASE(
                     == "Ada");
                 return act("TOGGLE_V2_SAVE_FORMAT");
             case 5:
-                CHECK(text_of(screen, "worldgen:confirm:format").find("V1") != std::string::npos);
+                CHECK(note_of(screen, "worldgen:confirm:notes", "format").find("V1")
+                      != std::string::npos);
                 return act("NEXT_TAB");
             default:
                 FAIL("the world creation outlived its finish");

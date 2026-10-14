@@ -134,9 +134,10 @@ auto pick_affordance( const std::string &id, const std::string &label,
     return ec::invoke_affordance( { .id = id, .label = label, .args = { .row = ec::row_shape{ .component_id = list } }, .role = "select" } );
 }
 
-auto text_part( const std::string &id, const std::string &markup ) -> ec::component
-{
-    return { .id = id, .body = ec::text_body{ .markup = markup } };
+/// A line a panel says above its content.
+auto note_of( const std::string &key, const std::string &markup, const std::string &tone = {} ) ->
+ec::panel_stat {
+    return { .key = key, .label = markup, .value = {}, .max = {}, .unit = {}, .tone = tone };
 }
 
 /// The mods a list shows, by their ids.
@@ -825,13 +826,12 @@ void worldfactory::show_active_world_mods( const std::vector<mod_id> &world_mods
     {
         const auto title = trim( _( " ACTIVE WORLD MODS " ) );
         auto parts = ec::children_of( ec::panel( { .id = "worldgen:active_mods", .title = title,
+                                      .stats = world_mods.empty() ? std::vector<ec::panel_stat> { note_of( "none", _( "--NO ACTIVE MODS--" ) ) } : std::vector<ec::panel_stat> {},
                                       .child = ec::list( { .id = "worldgen:active_mods:rows", .rows = mod_rows( world_mods, "mod:" ),
                                                .selection = "single", .activate = "worldgen:active_mods:pick" } ) } ) );
-        if( world_mods.empty() ) {
-            parts.push_back( text_part( "worldgen:active_mods:none", _( "--NO ACTIVE MODS--" ) ) );
-        } else {
-            parts.push_back( text_part( "worldgen:active_mods:details",
-                                        remove_color_tags( mman_ui->get_information( &world_mods[cursor].obj() ) ) ) );
+        if( !world_mods.empty() ) {
+            parts.push_back( { .id = "worldgen:active_mods:details", .body = ec::text_body{
+                    .markup = remove_color_tags( mman_ui->get_information( &world_mods[cursor].obj() ) ) } } );
         }
         return worldgen_view( {
             .id = "worldgen:active_mods", .title = title, .parts = std::move( parts ),
@@ -1257,40 +1257,39 @@ int worldfactory::show_modselection_window( const catacurses::window &win,
         for( auto i = std::size_t{ 0 }; i < categories.size(); ++i ) {
             entries.push_back( { .id = all_tabs[i].id, .label = _( categories[i].second ), .selected = i == iCurrentTab } );
         }
-        auto available = ec::children_of( ec::list( { .id = "worldgen:mods:available:rows", .rows = mod_rows( current_tab.mods, "mod:" ),
-                                          .selection = "single", .activate = "worldgen:mods:add" } ) );
+        auto available = std::vector<ec::panel_stat> {};
         if( current_tab.mods.empty() ) {
-            available.push_back( text_part( "worldgen:mods:available:none",
-                                            current_tab.mods_unfiltered.empty() ?
-                                            _( "--NO AVAILABLE MODS--" ) : _( "--NO MATCHES--" ) ) );
+            available.push_back( note_of( "none", current_tab.mods_unfiltered.empty() ?
+                                          _( "--NO AVAILABLE MODS--" ) : _( "--NO MATCHES--" ) ) );
         }
         auto active_rows = mod_rows( active_mod_order, "active:" );
         for( auto i = std::size_t{ 0 }; i < active_rows.size(); ++i ) {
             active_rows[i].columns = { { .key = "order", .label = _( "Order" ), .value = std::to_string( i + 1 ), .color = {} } };
             active_rows[i].toggled = true;
         }
-        auto active = ec::children_of( ec::list( { .id = "worldgen:mods:active:rows", .rows = std::move( active_rows ),
-                                       .selection = "single", .activate = "worldgen:mods:remove" } ) );
+        auto active = std::vector<ec::panel_stat> {};
         if( active_mod_order.empty() ) {
-            active.push_back( text_part( "worldgen:mods:active:none", _( "--NO ACTIVE MODS--" ) ) );
+            active.push_back( note_of( "none", _( "--NO ACTIVE MODS--" ) ) );
         }
-        auto parts = std::vector<ec::component> {};
+        auto notes = std::vector<ec::panel_stat> {};
         if( !current_filter.empty() ) {
-            parts.push_back( text_part( "worldgen:mods:filter", string_format( _( "Filter: %s" ),
-                                        current_filter ) ) );
+            notes.push_back( note_of( "filter", string_format( _( "Filter: %s" ), current_filter ) ) );
         }
-        parts.push_back( ec::split( { .id = "worldgen:mods:lists",
+        auto parts = ec::children_of( ec::split( { .id = "worldgen:mods:lists",
                                       .active = active_header == 0 ? "worldgen:mods:categories" : "worldgen:mods:active",
                                       .children = ec::children_of(
                                               ec::tabs( { .id = "worldgen:mods:categories", .tabs = std::move( entries ), .select = "worldgen:mods:category",
-                                                      .child = ec::panel( { .id = "worldgen:mods:available", .title = headers[0],
-                                                              .child = ec::split( { .id = "worldgen:mods:available:parts", .children = std::move( available ) } ) } ) } ),
-                                              ec::panel( { .id = "worldgen:mods:active", .title = headers[1],
-                                                      .child = ec::split( { .id = "worldgen:mods:active:parts", .children = std::move( active ) } ) } ) ) } ) );
+                                                      .child = ec::panel( { .id = "worldgen:mods:available", .title = headers[0], .stats = std::move( available ),
+                                                              .child = ec::list( { .id = "worldgen:mods:available:rows", .rows = mod_rows( current_tab.mods, "mod:" ),
+                                                                      .selection = "single", .activate = "worldgen:mods:add" } ) } ) } ),
+                                              ec::panel( { .id = "worldgen:mods:active", .title = headers[1], .stats = std::move( active ),
+                                                      .child = ec::list( { .id = "worldgen:mods:active:rows", .rows = std::move( active_rows ),
+                                                              .selection = "single", .activate = "worldgen:mods:remove" } ) } ) ) } ) );
         if( const auto *const selected = get_selected_mod() ) {
-            parts.push_back( text_part( "worldgen:mods:details",
-                                        remove_color_tags( mman_ui->get_information( selected ) ) ) );
+            parts.push_back( { .id = "worldgen:mods:details", .body = ec::text_body{ .markup = remove_color_tags( mman_ui->get_information( selected ) ) } } );
         }
+        parts = ec::children_of( ec::panel( { .id = "worldgen:mods:header", .stats = std::move( notes ),
+                                              .child = ec::split( { .id = "worldgen:mods:body", .relation = "detail", .children = std::move( parts ) } ) } ) );
         const auto &focused = active_header == 0 ? current_tab.mods : active_mod_order;
         const auto line = active_header == 0 ? cursel[0] : cursel[1];
         return worldgen_view( {
@@ -1577,28 +1576,25 @@ int worldfactory::show_worldgen_tab_confirm( const catacurses::window &win, WORL
     const auto screen = ec::screen_scope( ctxt, { .role = "screen", .view = [&]( const ec::boundary_state & )
     {
         const auto v2 = world->world_save_format == save_format::V2_COMPRESSED_SQLITE3;
-        auto parts = ec::children_of(
-                         ec::component{ .id = "worldgen:confirm:name", .affordances = { "worldgen:confirm:name" },
+        auto notes = std::vector<ec::panel_stat> {
+            note_of( "random", string_format( _( "Press [<color_yellow>%s</color>] to pick a random name for your world." ),
+                                              ctxt.get_desc( "PICK_RANDOM_WORLDNAME" ) ) ),
+            note_of( "format", v2 ? _( "Save Format: V2 (Current)" ) : _( "Save Format: V1 (Legacy)" ), v2 ? "good" : "" ),
+            note_of( "format_help", string_format( _( "Press [<color_yellow>%s</color>] to toggle save format.\n"
+                                                   "<color_light_blue>V2 format shrinks save files and reduces save corruption. "
+                                                   "V1 is the legacy format. You can convert existing V1 worlds to V2 from the main menu. "
+                                                   "V2 worlds cannot currently be converted back to V1.</color>" ),
+                                                   ctxt.get_desc( "TOGGLE_V2_SAVE_FORMAT" ) ) ),
+            note_of( "finish", string_format( _( "Press [<color_yellow>%s</color>] when you are satisfied with the world as it is and are ready "
+                                                 "to continue, or [<color_yellow>%s</color>] to go back and review your world." ),
+                                              ctxt.get_desc( "NEXT_TAB" ), ctxt.get_desc( "PREV_TAB" ) ) ),
+        };
+        auto parts = ec::children_of( ec::panel( { .id = "worldgen:confirm:notes", .stats = std::move( notes ),
+                                      .child = ec::component{ .id = "worldgen:confirm:name", .affordances = { "worldgen:confirm:name" },
         .body = ec::form_body{ .fields = { {
                     .id = "name", .label = _( "World Name:" ), .value = worldname, .max_length = max_worldname_len, .printable = true,
                 }
-            } } },
-        text_part( "worldgen:confirm:random",
-                   string_format( _( "Press [<color_yellow>%s</color>] to pick a random name for your world." ),
-                                  ctxt.get_desc( "PICK_RANDOM_WORLDNAME" ) ) ),
-        ec::component{ .id = "worldgen:confirm:format", .body = ec::text_body{
-                .markup = v2 ? _( "Save Format: V2 (Current)" ) : _( "Save Format: V1 (Legacy)" ), .tone = v2 ? "good" : "" } },
-        text_part( "worldgen:confirm:format_help",
-                   string_format( _( "Press [<color_yellow>%s</color>] to toggle save format.\n"
-                                     "<color_light_blue>V2 format shrinks save files and reduces save corruption. "
-                                     "V1 is the legacy format. You can convert existing V1 worlds to V2 from the main menu. "
-                                     "V2 worlds cannot currently be converted back to V1.</color>" ),
-                                  ctxt.get_desc( "TOGGLE_V2_SAVE_FORMAT" ) ) ),
-        text_part( "worldgen:confirm:finish",
-                   string_format(
-                       _( "Press [<color_yellow>%s</color>] when you are satisfied with the world as it is and are ready "
-                          "to continue, or [<color_yellow>%s</color>] to go back and review your world." ),
-                       ctxt.get_desc( "NEXT_TAB" ), ctxt.get_desc( "PREV_TAB" ) ) ) );
+            } } } } ) );
         return worldgen_view( {
             .tab = "confirm", .parts = std::move( parts ),
             .affordances = {
