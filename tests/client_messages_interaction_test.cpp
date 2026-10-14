@@ -3,12 +3,101 @@
 #    include "avatar.h"
 #    include "catch/catch.hpp"
 #    include "client_screen_support.h"
+#    include "client_snapshot.h"
 #    include "map_helpers.h"
 #    include "messages.h"
 #    include "player_helpers.h"
 #    include "state_helpers.h"
 
+#    include <format>
+
 using namespace client_screen_test;
+
+namespace {
+
+/// Each non-blank row as `<fg>` or `<fg:bg>` runs and text, split where the colours change.
+auto rendered() -> std::vector<std::string> {
+    const auto shot = game_client::memory::snapshot();
+    auto rows = std::vector<std::string>{};
+    for (auto y = 0; y < shot.height; ++y) {
+        auto line = std::string{};
+        auto colors = std::string{};
+        for (auto x = 0; x < shot.width; ++x) {
+            const auto& cell = shot.cells[static_cast<std::size_t>(y * shot.width + x)];
+            if (cell.text == " ") {
+                line += ' ';
+                continue;
+            }
+            const auto now =
+                cell.background == 0
+                    ? std::format("<{}>", cell.foreground)
+                    : std::format("<{}:{}>", cell.foreground, cell.background);
+            if (now != colors) {
+                colors = now;
+                line += now;
+            }
+            line += cell.text;
+        }
+        while (!line.empty() && line.back() == ' ') { line.pop_back(); }
+        if (!line.empty()) { rows.push_back(line); }
+    }
+    return rows;
+}
+
+/// The recorded screen.
+auto recorded() -> const std::vector<std::string>& {
+    static const auto screen = std::vector<std::string>{
+        R"pin(          <7>┌──────────────────────────────────────────────────────────────────────────────┐)pin",
+        R"pin(          <7>│          <8>┌ <15>You hear a whack! x 2                                             <7>│)pin",
+        R"pin(          <7>│          <8>│ <10>Your wound closes.                                                <7>│)pin",
+        R"pin(          <7>│          <8>│ <9>You are hit!                                                      <7>│)pin",
+        R"pin(          <7>│  <12>0 seconds <11>The floor creaks.                                                 <7>│)pin",
+        R"pin(          <7>│                                                                              │)pin",
+        R"pin(          <7>│                                                                              │)pin",
+        R"pin(          <7>│                                                                              │)pin",
+        R"pin(          <7>│                                                                              │)pin",
+        R"pin(          <7>│                                                                              │)pin",
+        R"pin(          <7>│                                                                              │)pin",
+        R"pin(          <7>│                                                                              │)pin",
+        R"pin(          <7>│                                                                              │)pin",
+        R"pin(          <7>│                                                                              │)pin",
+        R"pin(          <7>│                                                                              │)pin",
+        R"pin(          <7>│                                                                              │)pin",
+        R"pin(          <7>│                                                                              │)pin",
+        R"pin(          <7>│                                                                              │)pin",
+        R"pin(          <7>│                                                                              │)pin",
+        R"pin(          <7>│                                                                              │)pin",
+        R"pin(          <7>│                                                                              │)pin",
+        R"pin(          <7>│                                                                              │)pin",
+        R"pin(          <7>│                                                                              │)pin",
+        R"pin(          <7>└< f, F or / to filter, r or R to reset, w/h to adjust size, c or C to copy, x o)pin",
+    };
+    return screen;
+}
+
+} // namespace
+
+TEST_CASE("the native message log keeps its text and colors", "[messages_native_pin]") {
+    clear_all_state();
+    clear_map();
+    clear_character(get_avatar(), false);
+    Messages::clear_messages();
+    add_msg("You hear a whack!");
+    add_msg("You hear a whack!");
+    add_msg(m_good, "Your wound closes.");
+    add_msg(m_bad, "You are hit!");
+    add_msg(m_warning, "The floor creaks.");
+    const auto guard = screen_guard{};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        REQUIRE(step++ == 0);
+        CHECK(rendered() == recorded());
+        return event_of({.action = "QUIT"});
+    });
+    Messages::display_messages();
+    CHECK(step == 1);
+}
+
 
 TEST_CASE(
     "the message log lists the messages and filters them through the native filter",
