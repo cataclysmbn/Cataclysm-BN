@@ -5,6 +5,7 @@ import { construction, crafting } from "./crafting.ts"
 import type { Scenario } from "./driver.ts"
 import { handshake } from "./handshake.ts"
 import { generic } from "./generic.ts"
+import { info } from "./info.ts"
 import { inventory } from "./inventory.ts"
 import { look } from "./look.ts"
 import { map } from "./map.ts"
@@ -29,4 +30,5 @@ export const scenarios: Scenario[] = [
   look,
   vehicle,
   character,
+  info,
 ]

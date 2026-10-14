@@ -1,0 +1,1549 @@
+{
+  "valid": [
+    {
+      "name": "message log",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:8",
+        "role": "dialog",
+        "title": "Messages",
+        "root": {
+          "id": "messages",
+          "kind": "panel",
+          "title": "Messages",
+          "child": {
+            "id": "messages:log",
+            "kind": "list",
+            "columns": [
+              {
+                "key": "time",
+                "label": "Time"
+              },
+              {
+                "key": "type",
+                "label": "Type"
+              }
+            ],
+            "rows": [
+              {
+                "id": "message:1",
+                "label": "You have survived the initial wave of panic, and have achieved (relative) safety in one of the many government evac shelters.",
+                "description": "",
+                "denial": "",
+                "enabled": true,
+                "selectable": false,
+                "selected": false,
+                "columns": [
+                  {
+                    "key": "time",
+                    "label": "Time",
+                    "value": "5 minutes"
+                  },
+                  {
+                    "key": "type",
+                    "label": "Type",
+                    "value": "neutral"
+                  }
+                ],
+                "markup": "<color_c_white>You have survived the initial wave of panic, and have achieved (relative) safety in one of the many government evac shelters.</color>"
+              },
+              {
+                "id": "message:2",
+                "label": "Your lighter tumbles to the wooden floor.",
+                "description": "",
+                "denial": "",
+                "enabled": true,
+                "selectable": false,
+                "selected": false,
+                "columns": [
+                  {
+                    "key": "time",
+                    "label": "Time",
+                    "value": "5 minutes"
+                  },
+                  {
+                    "key": "type",
+                    "label": "Type",
+                    "value": "bad"
+                  }
+                ],
+                "markup": "<color_c_light_red>Your lighter tumbles to the wooden floor.</color>"
+              },
+              {
+                "id": "message:3",
+                "label": "You have learned a new style: Brawling!",
+                "description": "",
+                "denial": "",
+                "enabled": true,
+                "selectable": false,
+                "selected": false,
+                "columns": [
+                  {
+                    "key": "time",
+                    "label": "Time",
+                    "value": "5 minutes"
+                  },
+                  {
+                    "key": "type",
+                    "label": "Type",
+                    "value": "info"
+                  }
+                ],
+                "markup": "<color_c_light_blue>You have learned a new style: Brawling!</color>"
+              },
+              {
+                "id": "message:4",
+                "label": "You finish waiting.",
+                "description": "",
+                "denial": "",
+                "enabled": true,
+                "selectable": false,
+                "selected": false,
+                "columns": [
+                  {
+                    "key": "time",
+                    "label": "Time",
+                    "value": "1 second"
+                  },
+                  {
+                    "key": "type",
+                    "label": "Type",
+                    "value": "neutral"
+                  }
+                ],
+                "markup": "<color_c_white>You finish waiting.</color>"
+              }
+            ],
+            "total": 4,
+            "selection": "none"
+          }
+        },
+        "affordances": [
+          {
+            "id": "UP",
+            "label": "Scroll up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Scroll down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_UP",
+            "label": "Page up",
+            "keys": [
+              "PPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_DOWN",
+            "label": "Page down",
+            "keys": [
+              "NPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "FILTER",
+            "label": "Filter",
+            "keys": [
+              "f",
+              "F",
+              "/"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RESET_FILTER",
+            "label": "Reset filter",
+            "keys": [
+              "r",
+              "R"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TOGGLE_WIDE_DISPLAY",
+            "label": "Toggle wide display",
+            "keys": [
+              "w"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TOGGLE_FULL_HEIGHT_DISPLAY",
+            "label": "Toggle full height display",
+            "keys": [
+              "h"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "COPY_MESSAGE",
+            "label": "Copy visible messages to clipboard",
+            "keys": [
+              "c",
+              "C"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ERASE_HISTORY",
+            "label": "Erase message history",
+            "keys": [
+              "x",
+              "X"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "context": "MESSAGE_LOG"
+      }
+    },
+    {
+      "name": "help topics",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:9",
+        "role": "dialog",
+        "title": " HELP ",
+        "root": {
+          "id": "help:root",
+          "kind": "split",
+          "relation": "peers",
+          "children": [
+            {
+              "id": "help:intro",
+              "kind": "text",
+              "markup": "Please press one of the following for help on that topic:\nPress ESC to return to the game."
+            },
+            {
+              "id": "help:topics",
+              "kind": "list",
+              "affordances": [
+                "help:topic"
+              ],
+              "columns": [],
+              "rows": [
+                {
+                  "id": "topic:0",
+                  "label": "a: Introduction",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "a",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "markup": "<color_c_light_blue>a</color>: Introduction"
+                },
+                {
+                  "id": "topic:1",
+                  "label": "b: Movement",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "b",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "markup": "<color_c_light_blue>b</color>: Movement"
+                },
+                {
+                  "id": "topic:2",
+                  "label": "c: Viewing",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "c",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "markup": "<color_c_light_blue>c</color>: Viewing"
+                },
+                {
+                  "id": "topic:3",
+                  "label": "d: Interaction",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "d",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "markup": "<color_c_light_blue>d</color>: Interaction"
+                },
+                {
+                  "id": "topic:4",
+                  "label": "e: Hunger, thirst, and sleep",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "e",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "markup": "<color_c_light_blue>e</color>: Hunger, thirst, and sleep"
+                },
+                {
+                  "id": "topic:5",
+                  "label": "f: Pain and stimulants",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "f",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "markup": "<color_c_light_blue>f</color>: Pain and stimulants"
+                },
+                {
+                  "id": "topic:6",
+                  "label": "g: Healing and medication",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "g",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "markup": "<color_c_light_blue>g</color>: Healing and medication"
+                },
+                {
+                  "id": "topic:7",
+                  "label": "h: Addiction",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "h",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "markup": "<color_c_light_blue>h</color>: Addiction"
+                },
+                {
+                  "id": "topic:8",
+                  "label": "i: Morale and learning",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "i",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "markup": "<color_c_light_blue>i</color>: Morale and learning"
+                },
+                {
+                  "id": "topic:9",
+                  "label": "j: Radioactivity and mutation",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "j",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "markup": "<color_c_light_blue>j</color>: Radioactivity and mutation"
+                },
+                {
+                  "id": "topic:10",
+                  "label": "k: Bionics",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "k",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "markup": "<color_c_light_blue>k</color>: Bionics"
+                },
+                {
+                  "id": "topic:11",
+                  "label": "l: Crafting",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "l",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "markup": "<color_c_light_blue>l</color>: Crafting"
+                },
+                {
+                  "id": "topic:12",
+                  "label": "m: Traps",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "m",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "markup": "<color_c_light_blue>m</color>: Traps"
+                },
+                {
+                  "id": "topic:13",
+                  "label": "n: Items overview",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "n",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "markup": "<color_c_light_blue>n</color>: Items overview"
+                },
+                {
+                  "id": "topic:14",
+                  "label": "o: Combat",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "o",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "markup": "<color_c_light_blue>o</color>: Combat"
+                },
+                {
+                  "id": "topic:15",
+                  "label": "p: Martial arts styles",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "p",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "markup": "<color_c_light_blue>p</color>: Martial arts styles"
+                },
+                {
+                  "id": "topic:16",
+                  "label": "q: Survival tips",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "q",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "markup": "<color_c_light_blue>q</color>: Survival tips"
+                },
+                {
+                  "id": "topic:17",
+                  "label": "r: Vehicles and Driving",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "r",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "markup": "<color_c_light_blue>r</color>: Vehicles and Driving"
+                },
+                {
+                  "id": "topic:18",
+                  "label": "1: Electricity",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "1",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "markup": "<color_c_light_blue>1</color>: Electricity"
+                },
+                {
+                  "id": "topic:19",
+                  "label": "2: List of item types and data",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "2",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "markup": "<color_c_light_blue>2</color>: List of item types and data"
+                },
+                {
+                  "id": "topic:20",
+                  "label": "3: Description of map symbols",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "3",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "markup": "<color_c_light_blue>3</color>: Description of map symbols"
+                },
+                {
+                  "id": "topic:21",
+                  "label": "4: Description of gun types",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "4",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "markup": "<color_c_light_blue>4</color>: Description of gun types"
+                },
+                {
+                  "id": "topic:22",
+                  "label": "5: FAQ (contains spoilers!)",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "5",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "markup": "<color_c_light_blue>5</color>: FAQ (contains spoilers!)"
+                },
+                {
+                  "id": "topic:23",
+                  "label": "6: Resolved game directories",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "6",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "markup": "<color_c_light_blue>6</color>: Resolved game directories"
+                }
+              ],
+              "total": 24,
+              "selection": "single",
+              "activate": "help:topic"
+            }
+          ]
+        },
+        "affordances": [
+          {
+            "id": "help:topic",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "help:topics"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Pan left",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Pan right",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          }
+        ],
+        "context": "default"
+      }
+    },
+    {
+      "name": "help topic the list does not hold, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:1",
+          "revision": "10"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "help:topic",
+          "args": {
+            "row": "topic:nowhere"
+          }
+        }
+      }
+    },
+    {
+      "name": "help topic the list does not hold, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "help topic the list does not hold, rejected",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "rejected",
+        "error": "invalid_arguments",
+        "error_text": "That needs other details."
+      }
+    },
+    {
+      "name": "help topic picked, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:1",
+          "revision": "10"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "help:topic",
+          "args": {
+            "row": "topic:1"
+          }
+        }
+      }
+    },
+    {
+      "name": "help topic picked, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "help topic picked, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "help topic picked, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "help topic picked, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "14",
+          "revision": "11"
+        }
+      }
+    },
+    {
+      "name": "morale",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:11",
+        "role": "dialog",
+        "title": "Morale",
+        "root": {
+          "id": "morale:root",
+          "kind": "split",
+          "relation": "peers",
+          "children": [
+            {
+              "id": "morale:none",
+              "kind": "text",
+              "markup": "Nothing affects your morale"
+            },
+            {
+              "id": "morale:totals",
+              "kind": "panel",
+              "title": "",
+              "stats": [
+                {
+                  "key": "level",
+                  "label": "Total morale",
+                  "value": "-"
+                },
+                {
+                  "key": "focus",
+                  "label": "Focus trends towards",
+                  "value": "100"
+                }
+              ]
+            }
+          ]
+        },
+        "affordances": [
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "context": "MORALE"
+      }
+    },
+    {
+      "name": "mission list",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:12",
+        "role": "dialog",
+        "title": "Missions",
+        "root": {
+          "id": "missions:tabs",
+          "kind": "tabs",
+          "affordances": [
+            "missions:tab"
+          ],
+          "tabs": [
+            {
+              "id": "active",
+              "label": "ACTIVE MISSIONS",
+              "selected": true,
+              "enabled": true
+            },
+            {
+              "id": "completed",
+              "label": "COMPLETED MISSIONS",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "failed",
+              "label": "FAILED MISSIONS",
+              "selected": false,
+              "enabled": true
+            }
+          ],
+          "select": "missions:tab",
+          "child": {
+            "id": "missions:none",
+            "kind": "text",
+            "markup": "You have no active missions!"
+          }
+        },
+        "affordances": [
+          {
+            "id": "missions:tab",
+            "label": "Category",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "missions:tabs"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "missions:select",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "missions:list"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Pan left",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Pan right",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "context": "MISSIONS"
+      }
+    },
+    {
+      "name": "mission tab picked, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:2",
+          "revision": "16"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "missions:tab",
+          "args": {
+            "row": "completed"
+          }
+        }
+      }
+    },
+    {
+      "name": "mission tab picked, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "mission tab picked, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "mission tab picked, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "mission tab picked, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "20",
+          "revision": "17"
+        }
+      }
+    },
+    {
+      "name": "faction manager",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:13",
+        "role": "dialog",
+        "title": "Factions",
+        "root": {
+          "id": "factions:tabs",
+          "kind": "tabs",
+          "affordances": [
+            "factions:tab"
+          ],
+          "tabs": [
+            {
+              "id": "followers",
+              "label": "YOUR FOLLOWERS",
+              "selected": true,
+              "enabled": true
+            },
+            {
+              "id": "factions",
+              "label": "OTHER FACTIONS",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "lore",
+              "label": "LORE",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "creatures",
+              "label": "CREATURES",
+              "selected": false,
+              "enabled": true
+            }
+          ],
+          "select": "factions:tab",
+          "child": {
+            "id": "factions:none",
+            "kind": "text",
+            "markup": "You have no followers"
+          }
+        },
+        "affordances": [
+          {
+            "id": "factions:tab",
+            "label": "Category",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "factions:tabs"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "factions:select",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "role": "select",
+            "args": {
+              "row": {
+                "component_id": "factions:list"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Pan left",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Pan right",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "NEXT_TAB",
+            "label": "Go to next tab",
+            "keys": [
+              "TAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PREV_TAB",
+            "label": "Go to prev tab",
+            "keys": [
+              "BACKTAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SWAPTONPC",
+            "label": "Swap To NPC",
+            "keys": [
+              "s"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "context": "FACTION MANAGER"
+      }
+    },
+    {
+      "name": "faction tab picked, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:3",
+          "revision": "19"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "factions:tab",
+          "args": {
+            "row": "creatures"
+          }
+        }
+      }
+    },
+    {
+      "name": "faction tab picked, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "faction tab picked, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "faction tab picked, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "faction tab picked, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "23",
+          "revision": "20"
+        }
+      }
+    },
+    {
+      "name": "scores",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:14",
+        "role": "dialog",
+        "title": "Scores",
+        "root": {
+          "id": "scores:tabs",
+          "kind": "tabs",
+          "affordances": [
+            "scores:tab"
+          ],
+          "tabs": [
+            {
+              "id": "achievements",
+              "label": "ACHIEVEMENTS",
+              "selected": true,
+              "enabled": true
+            },
+            {
+              "id": "scores",
+              "label": "SCORES",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "kills",
+              "label": "KILLS",
+              "selected": false,
+              "enabled": true
+            }
+          ],
+          "select": "scores:tab",
+          "child": {
+            "id": "scores:text",
+            "kind": "text",
+            "markup": "<color_c_red>\nInternal error: achievement lacks watcher.</color>\n<color_c_red>\nInternal error: achievement lacks watcher.</color>\n<color_c_red>\nInternal error: achievement lacks watcher.</color>\n<color_c_red>\nInternal error: achievement lacks watcher.</color>\n<color_c_red>No turn is too sharp.\nInternal error: achievement lacks watcher.</color>\n<color_c_red>Every strike brings me closer to a home run.\nInternal error: achievement lacks watcher.</color>\n<color_c_red>Bottle in left hand, chair leg in right hand.\nInternal error: achievement lacks watcher.</color>\n<color_c_red>Wilhelm Tell?  Never heard of him.\nInternal error: achievement lacks watcher.</color>\n<color_c_red>Take this thing, put it in that thing, and voila.\nInternal error: achievement lacks watcher.</color>\n<color_c_red>I like to keep this handy for close encounters.\nInternal error: achievement lacks watcher.</color>\n<color_c_red>Only me and my target.\nInternal error: achievement lacks watcher.</color>\n<color_c_red>We're friends, aren't we?\nInternal error: achievement lacks watcher.</color>\n<color_c_red>The strongest of blows is nothing if it doesn't land.\nInternal error: achievement lacks watcher.</color>\n<color_c_red>Just give me my wrench.\nInternal error: achievement lacks watcher.</color>\n<color_c_red>Glazed tenderloin is a cakewalk.\nInternal error: achievement lacks watcher.</color>\n<color_c_red>Extraordinary gizmos for obscenely low prices!\nInternal error: achievement lacks watcher.</color>\n<color_c_red>Caliber makes the difference.\nInternal error: achievement lacks watcher.</color>\n<color_c_red>This OS has a back door.  there is always a back door.\nInternal error: achievement lacks watcher.</color>\n<color_c_red>He learned to deal the far-off stone, and poke the long, safe spear.\nInternal error: achievement lacks watcher.</color>\n<color_c_red>Is there a doctor in the house?\nInternal error: achievement lacks watcher.</color>\n<color_c_red>This is my rifle.  there are many like it, but this one is mine.  My rifle is my best friend.  It is my life.  I must master it as I must master my life.\nInternal error: achievement lacks watcher.</color>\n<color_c_red>I feel an army in my fist.\nInternal error: achievement lacks watcher.</color>\n<color_c_red>Caliber doesn't count when you're on the receiving side of the barrel.\nInternal error: achievement lacks watcher.</color>\n<color_c_red>One will hit.  It's a matter of statistics.\nInternal error: achievement lacks watcher.</color>\n<color_c_red>Survival is my game.\nInternal error: achievement lacks watcher.</color>\n<color_c_red>Like a fish to water.\nInternal error: achievement lacks watcher.</color>\n<color_c_red>A needle, a thread and a dream.\nInternal error: achievement lacks watcher.</color>\n<color_c_red>Two volts enter, one volt leaves.  Resistance is futile.\nInternal error: achievement lacks watcher.</color>\n<color_c_red>A good trap doesn't discriminate between beavers and zombeavers.\nInternal error: achievement lacks watcher.</color>\n<color_c_red>When the sword is once drawn, the passions of men observe no bounds of moderation.\nInternal error: achievement lacks watcher.</color>\n<color_c_red>And never come back.\nInternal error: achievement lacks watcher.</color>\n<color_c_red>Survive for a day and find a safe place to sleep\nInternal error: achievement lacks watcher.</color>\n<color_c_red>\nInternal error: achievement lacks watcher.</color>\n<color_c_red>\nInternal error: achievement lacks watcher.</color>\n<color_c_red>\nInternal error: achievement lacks watcher.</color>\n<color_c_red>Run a marathon…plus a little bit more.\nInternal error: achievement lacks watcher.</color>\n<color_c_red>Walk 500 miles, then walk 500 more.\nInternal error: achievement lacks watcher.</color>\n<color_c_red>\nInternal error: achievement lacks watcher.</color>\nNote that only achievements that existed when you started this game and still exist now will appear here."
+          }
+        },
+        "affordances": [
+          {
+            "id": "scores:tab",
+            "label": "Category",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "scores:tabs"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Pan left",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Pan right",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_UP",
+            "label": "Page up",
+            "keys": [
+              "PPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_DOWN",
+            "label": "Page down",
+            "keys": [
+              "NPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "PREV_TAB",
+            "label": "Go to prev tab",
+            "keys": [
+              "BACKTAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "NEXT_TAB",
+            "label": "Go to next tab",
+            "keys": [
+              "TAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "context": "SCORES"
+      }
+    },
+    {
+      "name": "scores tab picked, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:4",
+          "revision": "22"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "scores:tab",
+          "args": {
+            "row": "scores"
+          }
+        }
+      }
+    },
+    {
+      "name": "scores tab picked, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:5",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "scores tab picked, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:5",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "scores tab picked, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:5",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "scores tab picked, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:5",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "26",
+          "revision": "23"
+        }
+      }
+    }
+  ],
+  "invalid": []
+}
