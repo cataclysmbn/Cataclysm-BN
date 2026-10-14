@@ -403,8 +403,9 @@ TEST_CASE(
         };
         CHECK(affordance("aim:move").enabled);
         CHECK(affordance("aim:move").args.rows->counts);
-        CHECK(affordance("aim:move").args.rows->component_id == "aim:panes");
+        CHECK(affordance("aim:move").args.rows->component_id == "aim:pane:left:items");
         CHECK(affordance("aim:close").role == "cancel");
+        CHECK(std::ranges::count(top.affordances, "cancel", &ec::affordance::role) == 1);
         for (const auto* const id : {"aim:set_area", "aim:toggle_vehicle", "aim:filter", "QUIT"}) {
             CHECK(affordance(id).enabled);
         }
@@ -610,6 +611,25 @@ TEST_CASE(
                 {.rows = std::vector<ec::invoke_row>{{.id = "aim:pane:right:items:area:CENTER:x:0"}},
                  .pane = "aim:pane:right"})
             == invalid);
+        // An area is no item, and an item is no area.
+        CHECK(refused("aim:move", {.rows = std::vector<ec::invoke_row>{{.id = "area:E"}},
+                                   .pane = "aim:pane:right"})
+              == invalid);
+        CHECK(
+            refused("aim:move",
+                    {.rows =
+                         std::vector<ec::invoke_row>{
+                             {.id = row_of(top, "aim:pane:right:items", "test_platinum_bit")}},
+                     .pane = "aim:pane:right"})
+            == invalid);
+        CHECK(refused("aim:set_area", {.row = cube, .pane = "aim:pane:left"}) == invalid);
+        // An area the pane cannot put items in is not shown.
+        const auto areas = list_rows(top, "aim:pane:left:areas");
+        const auto denied = std::ranges::find_if(areas, [](const ec::row& row) {
+            return !row.enabled;
+        });
+        REQUIRE(denied != areas.end());
+        CHECK(refused("aim:set_area", {.row = denied->id, .pane = "aim:pane:left"}) == invalid);
         CHECK(refused("aim:set_area", {.row = "nowhere", .pane = "aim:pane:left"}) == invalid);
         CHECK(refused("aim:set_area", {.row = "area:E"}) == invalid);
         CHECK(refused("aim:filter", {.pane = "aim:pane:left"}) == invalid);

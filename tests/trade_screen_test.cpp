@@ -209,6 +209,10 @@ TEST_CASE(
         CHECK(view.role == "screen");
         CHECK(view.title.starts_with("Trading with"));
         CHECK(view.title.find(fixture.trader->disp_name()) != std::string::npos);
+        // The screen's title is shown once: the header panel under it carries none of its own.
+        CHECK(ts::body<ec::panel_body>(ts::part(view, "trade:head")).title.empty());
+        CHECK(std::ranges::count(view.affordances, "cancel", &ec::affordance::role) == 1);
+        CHECK(std::ranges::count(view.affordances, "confirm", &ec::affordance::role) == 1);
 
         // The header: the trade's balance, as the native line colors it, and the category mode.
         const auto& balance = ts::body<ec::text_body>(ts::part(view, "trade:balance"));
@@ -258,8 +262,27 @@ TEST_CASE(
         CHECK(bits->selected_count == 0);
         CHECK(bits->minimum_count == 0);
         CHECK(bits->mark->glyph == "-");
-        // The letters that pick a row belong to the window's page, so no row carries one.
-        CHECK(bits->hotkey.empty());
+        // The letters the native list prints before its rows, in order from the first row of the
+        // pane's page; a category heading has none.
+        auto native = input_context("NPC_TRADE");
+        for (const auto* const action :
+             {"SWITCH_LISTS", "PAGE_UP", "PAGE_DOWN", "UP", "DOWN", "LEFT", "RIGHT", "FILTER",
+              "RESET_FILTER", "CATEGORY_SELECTION", "EXAMINE", "AUTOBALANCE", "TOGGLE_ITEM_INFO",
+              "CONFIRM", "QUIT", "HELP_KEYBINDINGS", "ANY_INPUT"}) {
+            native.register_action(action);
+        }
+        const auto letters = native.get_available_single_char_hotkeys(
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        for (const auto* const list : {"list:npc", "list:you"}) {
+            auto next = std::size_t{0};
+            for (const auto& entry : ts::rows(view, list)) {
+                if (entry.header) {
+                    CHECK(entry.hotkey.empty());
+                    continue;
+                }
+                CHECK(entry.hotkey == std::string(1, letters.at(next++)));
+            }
+        }
         CHECK(keys_of(*bits) == std::vector<std::string>{"qty", "weight", "vol", "price"});
         CHECK(bits->columns[0].value == "10");
         CHECK(halligan->columns[0].value.empty());

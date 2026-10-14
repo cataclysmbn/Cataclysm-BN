@@ -24,6 +24,9 @@ inline constexpr auto contract_version = "0.2";
 inline constexpr auto maximum_queued_commands = std::size_t {8};
 inline constexpr auto maximum_rows = std::size_t {200};
 inline constexpr auto maximum_inline_bytes = std::size_t {262144};
+/// The most bytes of rows one list puts on the wire, in the boundary and in a page of `bn.interaction.choices`;
+/// `total` states the rest, which the client pages. The first row always goes.
+inline constexpr auto maximum_list_bytes = maximum_inline_bytes / 8;
 /// Delivery credits a client may hold, each paying for one pushed `bn.events` or `bn.command` frame.
 inline constexpr auto maximum_credits = std::size_t {256};
 /// The most frames per second a client may ask activity publication for; a display refreshes no faster.

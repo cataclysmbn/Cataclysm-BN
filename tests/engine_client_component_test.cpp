@@ -8,6 +8,7 @@
 #include "ui.h"
 
 #include <algorithm>
+#include <map>
 #include <nlohmann/json.hpp>
 #include <ranges>
 #include <string>
@@ -118,13 +119,57 @@ TEST_CASE("an affordance label is the native action name", "[engine_client_compo
 }
 
 TEST_CASE("the registered CONFIRM accepts and QUIT leaves", "[engine_client_component]") {
-    auto state = boundary(menu());
+    auto native = menu();
+    native.allow_cancel = false;
+    auto state = boundary(std::move(native));
     state.actions.push_back({.id = "CONFIRM", .name = "Confirm", .keys = {"RETURN"}});
     state.actions.push_back({.id = "QUIT", .name = "Quit", .keys = {"ESC"}});
     const auto view = top_of(state);
     CHECK(affordance(view, "CONFIRM").role == "confirm");
     CHECK(affordance(view, "QUIT").role == "cancel");
     CHECK(affordance(view, "UP").role.empty());
+}
+
+TEST_CASE("a screen publishes each role once", "[engine_client_component]") {
+    const auto holders = [](const ec::screen_view& view, const std::string& role) {
+        return view.affordances
+             | std::views::filter([&](const ec::affordance& each) { return each.role == role; })
+             | std::views::transform(&ec::affordance::id) | std::ranges::to<std::vector>();
+    };
+    auto state = map_only();
+    state.actions.push_back({.id = "CONFIRM", .name = "Confirm", .keys = {"RETURN"}});
+    state.actions.push_back({.id = "QUIT", .name = "Quit", .keys = {"ESC"}});
+    state.actions.push_back({.id = "ANY_INPUT", .name = "Press any key", .keys = {}});
+    SECTION("the generic screen's own cancel keeps the role over the registered QUIT") {
+        auto generic = boundary(menu());
+        generic.actions = state.actions;
+        const auto view = top_of(generic);
+        CHECK(holders(view, "cancel") == std::vector<std::string>{"bn:cancel"});
+        CHECK(holders(view, "confirm") == std::vector<std::string>{"CONFIRM"});
+        CHECK(affordance(view, "QUIT").role.empty());
+        CHECK(affordance(view, "QUIT").enabled);
+    }
+    SECTION("a provider's own cancel and confirm keep the role over the registered ones") {
+        const auto context = input_context("TEST_ROLES");
+        const auto scope = ec::screen_scope(
+            context, {.view = [](const auto&) {
+                return ec::screen_view{
+                    .root = ec::panel({.id = "panel:one"}),
+                    .affordances =
+                        {ec::invoke_affordance({.id = "own:close", .role = "cancel"}),
+                         ec::invoke_affordance({.id = "own:ok", .role = "confirm"})}};
+            }});
+        const auto input = client::input_context_scope(context, "TEST_ROLES");
+        const auto view = top_of(state);
+        CHECK(holders(view, "cancel") == std::vector<std::string>{"own:close"});
+        CHECK(holders(view, "confirm") == std::vector<std::string>{"own:ok"});
+        CHECK(holders(view, "any_key") == std::vector<std::string>{"ANY_INPUT"});
+        CHECK(affordance(view, "QUIT").runs == ec::invoke_kind::action);
+    }
+    SECTION("a screen with no cancel of its own takes the registered one") {
+        const auto view = top_of(state);
+        CHECK(holders(view, "cancel") == std::vector<std::string>{"QUIT"});
+    }
 }
 
 TEST_CASE("ids come from identity, not from the translated text", "[engine_client_component]") {
@@ -579,6 +624,71 @@ TEST_CASE("rows are paged within the list a component names", "[engine_client_co
 }
 
 TEST_CASE(
+    "a screen's list puts on the wire the rows that fit its byte budget and pages the rest",
+    "[engine_client_component]") {
+    // Two hundred rows of a kilobyte each are far over the budget of one list.
+    constexpr auto count = std::size_t{200};
+    auto rows = std::vector<ec::row>{};
+    for (const auto index : std::views::iota(std::size_t{0}, count)) {
+        rows.push_back(
+            {.id = "row:" + std::to_string(index), .description = std::string(1024, 'x')});
+    }
+    const auto context = input_context("TEST_LONG");
+    const auto scope = ec::screen_scope(
+        context, {.view = [&](const auto&) {
+            return ec::screen_view{
+                .root = ec::list({.id = "list:long", .rows = rows, .activate = "own:pick"}),
+                .affordances = {ec::invoke_affordance(
+                    {.id = "own:pick",
+                     .args = {.row = ec::row_shape{.component_id = "list:long"}}})}};
+        }});
+    const auto input = client::input_context_scope(context, "TEST_LONG");
+    const auto state = map_only();
+
+    SECTION("the boundary lists a prefix and states the total") {
+        const auto json = wire(state);
+        const auto& list = json["stack"].back()["root"];
+        REQUIRE(list["rows"].size() < count);
+        CHECK_FALSE(list["rows"].empty());
+        CHECK(list["rows"].dump().size() <= ec::maximum_list_bytes + 2000);
+        CHECK(list["total"] == count);
+        CHECK(list["rows"].front()["id"] == "row:0");
+        CHECK(ec::serialize_interaction_boundary(state).size() <= ec::maximum_inline_bytes);
+    }
+    SECTION("a page is a prefix of its window that fits the budget, and pages reach every row") {
+        auto seen = std::vector<std::string>{};
+        while (seen.size() < count) {
+            const auto page = ec::read_rows(
+                {.epoch = "epoch:test",
+                 .boundary_id = "boundary:test",
+                 .component_id = "list:long",
+                 .offset = seen.size(),
+                 .limit = ec::maximum_rows},
+                state);
+            REQUIRE(page);
+            const auto json = nlohmann::json::parse(ec::serialize_rows(*page));
+            REQUIRE_FALSE(json["rows"].empty());
+            CHECK(json["total"] == count);
+            CHECK(ec::serialize_rows(*page).size() <= ec::maximum_list_bytes + 2000);
+            for (const auto& row : json["rows"]) { seen.push_back(row["id"]); }
+        }
+        CHECK(
+            seen
+            == ids_of(*ec::read_rows(
+                {.epoch = "epoch:test",
+                 .boundary_id = "boundary:test",
+                 .component_id = "list:long",
+                 .limit = ec::maximum_rows},
+                state)));
+    }
+    SECTION("a row past the wire's prefix is still a row of the list") {
+        CHECK(ec::resolve_invoke(
+            state,
+            {.affordance_id = "own:pick", .args = {.row = "row:" + std::to_string(count - 1)}}));
+    }
+}
+
+TEST_CASE(
     "a partial list pages natively beyond the page the boundary holds",
     "[engine_client_component]") {
     const auto context = input_context("TEST_PAGED");
@@ -745,11 +855,43 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "a uilist row is known by its entry's return value, not by its place",
+    "[engine_client_component]") {
+    // A list is built only outside the test harness; nothing here reads input.
+    const auto live = restore_on_out_of_scope<bool>(test_mode);
+    test_mode = false;
+    const auto ids_by_label = [](const std::vector<std::pair<std::string, int>>& entries) {
+        auto menu = uilist();
+        for (const auto& [label, retval] : entries) { menu.addentry(retval, true, -1, label); }
+        menu.filterlist();
+        const auto state = boundary(menu.as_interaction());
+        auto result = std::map<std::string, std::string>{};
+        for (const auto& row : body<ec::list_body>(find(top_of(state), "list:choices")).rows) {
+            result[row.label] = row.id;
+        }
+        return result;
+    };
+    const auto first = ids_by_label({{"Heal", 7}, {"Repair", 9}, {"Craft", 12}});
+    const auto reordered = ids_by_label({{"Craft", 12}, {"Heal", 7}, {"Repair", 9}});
+    const auto inserted = ids_by_label({{"Eat", 3}, {"Heal", 7}, {"Repair", 9}, {"Craft", 12}});
+    CHECK(first == reordered);
+    for (const auto& [label, id] : first) { CHECK(inserted.at(label) == id); }
+    CHECK(first.at("Heal") == "entry:7");
+    // Two entries that return the same value are told apart by their order among them.
+    const auto twins = ids_by_label({{"One", 5}, {"Two", 5}});
+    CHECK(twins.at("One") == "entry:5");
+    CHECK(twins.at("Two") == "entry:5#1");
+}
+
+TEST_CASE(
     "a row an affordance names must be one the component or the lists inside its panes hold",
     "[engine_client_component]") {
     const auto left = ec::list({.id = "list:left", .rows = {{.id = "item:1"}, {.id = "item:2"}}});
     const auto right = ec::list(
-        {.id = "list:right", .rows = {{.id = "heading", .header = true}, {.id = "item:3"}}});
+        {.id = "list:right",
+         .rows = {{.id = "heading", .header = true},
+                  {.id = "item:3"},
+                  {.id = "item:5", .denial = "No room.", .selectable = false}}});
     const auto paged = ec::list({.id = "list:paged", .rows = {{.id = "item:4"}}, .total = 9});
     // A screen of its own with one affordance per container, each naming rows of that container.
     const auto context = input_context("TEST_ROWS");
@@ -767,9 +909,12 @@ TEST_CASE(
                      .children = ec::children_of(
                          ec::split({.id = "split:two", .children = ec::children_of(left, right)}),
                          ec::panel({.id = "panel:one", .child = left}),
-                         ec::tabs({.id = "tabs:page",
-                                   .tabs = {{.id = "tab:a"}, {.id = "tab:b"}},
-                                   .child = left}),
+                         ec::tabs(
+                             {.id = "tabs:page",
+                              .tabs = {{.id = "tab:a"},
+                                       {.id = "tab:b"},
+                                       {.id = "tab:off", .enabled = false}},
+                              .child = left}),
                          ec::panel({.id = "panel:paged", .child = paged}))}),
                 .affordances =
                     {naming("own:split", "split:two"), naming("own:panel", "panel:one"),
@@ -801,6 +946,11 @@ TEST_CASE(
         CHECK(resolve("own:tabs", "tab:b"));
         refused("own:tabs", "item:1");
         refused("own:tabs", "tab:c");
+    }
+    SECTION("a row or tab the screen does not let be picked is no row an affordance may name") {
+        refused("own:split", "item:5");
+        refused("own:tabs", "tab:off");
+        CHECK(resolve("own:tabs", "tab:a"));
     }
     SECTION("the rows a paged list did not read are checked natively") {
         CHECK_FALSE(ec::row_ids(*ec::top_screen(map_only()).root));

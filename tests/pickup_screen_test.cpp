@@ -177,6 +177,9 @@ TEST_CASE("the pickup screen publishes a row per stack with its marks and counts
     CHECK(whole.selected_count == 1U);
     CHECK(whole.look->id == "rock");
     CHECK(view.dock == get_option<std::string>("PICKUP_POSITION"));
+    // The screen's title is the window's; the panel under it does not repeat it.
+    CHECK_FALSE(view.title.empty());
+    CHECK(body<ec::panel_body>(*view.root).title.empty());
     CHECK(view.focus_component == pickup::items_id);
     CHECK(view.focus_row == whole.id);
     // The native window describes the item under the cursor only.
