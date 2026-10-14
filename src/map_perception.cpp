@@ -388,6 +388,14 @@ auto visible_orientations( const map &here, const tripoint_bub_ms &p,
     return orientations( here, facts, view );
 }
 
+auto terrain_orientation( const map &here, const tripoint_bub_ms &p,
+                          const sight &view ) -> orientation
+{
+    auto adjacent = std::array<ter_id, 4> {};
+    for( const auto i : std::views::iota( 0, 4 ) ) { adjacent[i] = known_terrain( here, p + neighbors[i], view ); }
+    return orient( connection_mask( here.ter( p ), adjacent ) );
+}
+
 auto multitile_key( const int subtile ) -> std::string
 {
     const auto keys = std::array<const char *, num_multitile_types> {

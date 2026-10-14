@@ -19,6 +19,7 @@
 #include "game.h"
 #include "game_session.h"
 #include "inventory_ui.h"
+#include "language.h"
 #include "line.h"
 #include "bionics.h"
 #include "effect.h"
@@ -372,6 +373,8 @@ auto bare_unmemorized( const map &here, const tripoint_bub_ms &p, const avatar &
 auto drawn_depth( map &here, const tripoint_bub_ms &p,
                   const avatar &you ) -> std::optional<int>
 {
+    // The square is in sight, so one with a floor is drawn as itself.
+    if( here.dont_draw_lower_floor( p ) ) { return std::nullopt; }
     auto lowest_seen = std::optional<int> {};
     auto seen_open_air = false;
     for( auto z = p.z(); z >= -OVERMAP_DEPTH; --z ) {
@@ -395,6 +398,14 @@ auto drawn_depth( map &here, const tripoint_bub_ms &p,
         return p.z() - *drawn;
     }
     return std::nullopt;
+}
+
+/// The variables of the terrain at a square, none when it has none. Reads without adding an empty entry.
+auto ter_vars_at( const map &here, const tripoint_bub_ms &p ) -> const data_vars::data_set *
+{
+    auto offset = point_sm_ms{};
+    const auto *const sm = here.get_submap_at( p, offset );
+    return sm == nullptr ? nullptr : &sm->get_ter_vars( offset );
 }
 
 /// Fill the facts of a currently visible cell that is not bare. False when it is plain terrain the engine never memorizes.
@@ -465,7 +476,7 @@ auto fill_visible( map &here, const tripoint_bub_ms &p, const avatar &you,
         return out.below.has_value();
     }
     out.terrain = terrain_look( here.ter( p ), map_perception::connected_wall_symbol( here, p ),
-                                shapes.terrain, here.ter_vars( p ) );
+                                shapes.terrain, ter_vars_at( here, p ) );
     const auto &cache = here.access_cache( p.z() );
     out.light = static_cast<int>( cache.visibility_cache[cache.idx( p.x(), p.y() )] );
     return true;
@@ -498,6 +509,39 @@ auto remembered_squares( const avatar &you ) -> const std::vector<remembered_squ
 }
 
 auto cells_built = std::size_t {};
+
+/// Marks a key, so that none is nothing.
+constexpr auto plain_mark = std::uint64_t { 1 } << 63;
+
+/// What the cell of a visible square that holds nothing but its terrain is a function of, packed, or none
+/// when something else is on the square (furniture, a field, a trap, an item, a vehicle, variables of the
+/// terrain), which a cell is then built for every time. Such a cell is built from the terrain, the shape the
+/// squares around it the avatar knows give it (and its symbol, for a wall), its light, what the native view
+/// draws below it, and the season (symbol and color); the language and the tints of the looks are
+/// the capture's, not the square's. So two captures that find the same key at a square would build the same
+/// cell there, and the second need not build it.
+auto plain_key( map &here, const tripoint_bub_ms &p, const avatar &you,
+                const map_perception::sight &view ) -> std::uint64_t
+{
+    const auto tile = here.maptile_at( p );
+    const auto *const vars = ter_vars_at( here, p );
+    if( tile.get_furn() != f_null || !tile.get_trap_t().is_null() || tile.get_item_count() != 0 ||
+        tile.get_field().field_count() != 0 || here.veh_at( p ) || ( vars != nullptr && !vars->empty() ) ) {
+        return 0;
+    }
+    const auto shape = map_perception::terrain_orientation( here, p, view );
+    const auto below = p.z() == you.bub_pos().z() ? drawn_depth( here, p, you ) : std::nullopt;
+    const auto &cache = here.access_cache( p.z() );
+    auto key = plain_mark;
+    const auto put = [&]( const auto value, const int shift ) { key |= static_cast<std::uint64_t>( value ) << shift; };
+    put( tile.get_ter().to_i(), 0 );
+    put( shape.subtile, 20 );
+    put( shape.rotation, 24 );
+    put( cache.visibility_cache[cache.idx( p.x(), p.y() )], 28 );
+    put( below ? *below + 1 : 0, 36 );
+    put( season_of_year( calendar::turn ), 44 );
+    return key;
+}
 
 /// The cell of a square the avatar sees now, none when it is plain terrain the engine never memorizes.
 auto visible_cell( map &here, const tripoint_bub_ms &p, const avatar &you,
@@ -1020,10 +1064,13 @@ struct patch_basis {
     std::optional<bounds> coverage = std::nullopt;
     std::uint64_t memory_owner = 0;
     std::size_t tints = 0;
+    std::string language = {};
     /// The squares the avatar saw, in the order of `by_level`.
     std::vector<tripoint_bub_ms> visible = {};
     /// The seen squares that made a cell, in the same order.
     std::vector<tripoint_bub_ms> live = {};
+    /// `plain_key` of each of those, as of the last patch.
+    std::vector<std::uint64_t> keys = {};
     std::set<tripoint_bub_ms> vehicles = {};
 };
 /// The order `map_perception::visible_cells` lists squares in, so that two lists merge in one pass.
@@ -1090,25 +1137,37 @@ auto capture_patch( const snapshot &previous, const bool consecutive ) -> world_
     const auto continues = consecutive && basis.valid && basis.epoch == previous.at.epoch &&
                            previous.at.revision >= basis.revision && previous.at.revision - basis.revision <= 1 &&
                            basis.coverage == patch.world.coverage && changes && basis.memory_owner == memory_owner &&
-                           basis.tints == tint_generation();
+                           basis.tints == tint_generation() &&
+                           basis.language == get_language().id;
+    const auto view = map_perception::current_sight();
     auto visible = map_perception::visible_cells( here );
     auto vehicles = vehicle_squares( here );
     auto live = std::vector<tripoint_bub_ms> {};
+    auto keys = std::vector<std::uint64_t> {};
     if( !continues ) {
         capture_known( here, you, dimension, patch.cells );
         patch.exhaustive = true;
         auto bare = bare_scan( here, you );
         std::ranges::copy_if( visible, std::back_inserter( live ), [&]( const auto & p ) { return !bare( p ) && patch.cells.contains( position_of( here, p, dimension ) ); } );
+        std::ranges::transform( live, std::back_inserter( keys ), [&]( const auto & p ) { return plain_key( here, p, you, view ); } );
     } else {
-        const auto view = map_perception::current_sight();
         const auto &known = previous.value.world.cells;
         // A square seen now is named once, by what the avatar knows of it, and not at all when that is what
-        // the last patch said.
+        // the last patch said. A plain one that has the key it had then is not even built.
         auto bare = bare_scan( here, you );
+        auto last = std::size_t{};
         for( const auto &p : visible ) {
             if( bare( p ) ) { continue; }
+            while( last < basis.live.size() && by_level( basis.live[last], p ) ) { ++last; }
+            const auto key = plain_key( here, p, you, view );
+            if( key != 0 && last < basis.live.size() && basis.live[last] == p && basis.keys[last] == key ) {
+                live.push_back( p );
+                keys.push_back( key );
+                continue;
+            }
             if( auto out = visible_cell( here, p, you, view, dimension ) ) {
                 live.push_back( p );
+                keys.push_back( key );
                 const auto before = known.find( out->at );
                 if( before == known.end() || before->second != *out ) { patch.cells.emplace( out->at, std::move( *out ) ); }
             }
@@ -1117,9 +1176,9 @@ auto capture_patch( const snapshot &previous, const bool consecutive ) -> world_
         const auto lived = [&]( const tripoint_bub_ms & p ) { return std::ranges::binary_search( live, p, by_level ); };
         const auto unknown = [&]( const tripoint_bub_ms & p ) { patch.unknown.insert( position_of( here, p, dimension ) ); };
         // A seen square made a cell before only if the last patch made one of it, and one that is gone is unknown.
-        for( const auto &p : basis.live | std::views::filter( seen ) ) {
-            if( !lived( p ) ) { unknown( p ); }
-        }
+        auto gone = std::vector<tripoint_bub_ms> {};
+        std::ranges::set_difference( basis.live, live, std::back_inserter( gone ), by_level );
+        for( const auto &p : gone | std::views::filter( seen ) ) { unknown( p ); }
         // A square that comes into sight without a cell may have been remembered with one.
         auto arrived = std::vector<tripoint_bub_ms> {};
         std::ranges::set_difference( visible, basis.visible, std::back_inserter( arrived ), by_level );
@@ -1143,7 +1202,8 @@ auto capture_patch( const snapshot &previous, const bool consecutive ) -> world_
     basis = {
         .valid = true, .epoch = previous.at.epoch, .revision = previous.at.revision,
         .coverage = patch.world.coverage, .memory_owner = memory_owner, .tints = tint_generation(),
-        .visible = std::move( visible ), .live = std::move( live ), .vehicles = std::move( vehicles )
+        .language = get_language().id, .visible = std::move( visible ), .live = std::move( live ),
+        .keys = std::move( keys ), .vehicles = std::move( vehicles )
     };
     return patch;
 }

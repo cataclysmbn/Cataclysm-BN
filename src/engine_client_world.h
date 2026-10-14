@@ -67,7 +67,8 @@ auto capture_worded() -> world_state;
 ///
 /// What it leaves out is what nothing that changes it can have touched. Sections whose inputs the engine
 /// does not announce (what a visible square holds, the creatures, the avatar's body and belongings,
-/// the environment) are captured again every time; a square the avatar does not see is named only when its
+/// the environment) are captured again every time, but of a visible square that holds nothing but its terrain
+/// only the inputs of its cell are read, and it is built again only when they changed; a square the avatar does not see is named only when its
 /// map memory, the vehicle on it, or whether it is seen has changed.
 auto capture_patch( const snapshot &previous, bool consecutive ) -> world_patch;
 /// The ids of the tints the client's tileset has. Looks carry the keys among them that apply to them.

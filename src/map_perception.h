@@ -41,6 +41,10 @@ auto current_sight() -> sight;
 auto visible_orientations( const map &here, const tripoint_bub_ms &p,
                            const sight &view ) -> cell_orientations;
 
+/// The orientation of the terrain of a square in sight alone, `visible_orientations( ... ).terrain`.
+auto terrain_orientation( const map &here, const tripoint_bub_ms &p,
+                          const sight &view ) -> orientation;
+
 /// The multitile key `tile_config.json` names a native subtile index by; empty for an unknown index.
 auto multitile_key( int subtile ) -> std::string;
 

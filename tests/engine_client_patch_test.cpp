@@ -385,6 +385,7 @@ TEST_CASE(
         here.ter_set(at, ter_id("t_grass"));
         here.ter_set(at + tripoint_east, ter_id("t_grass"));
         here.furn_set(at, furn_id("f_null"));
+        here.trap_set(at, trap_id("tr_null"));
         here.i_clear(at);
         clear_fields(at.z());
         clear_vehicles();
@@ -425,6 +426,13 @@ TEST_CASE(
     }
     SECTION("the furniture on it") {
         here.furn_set(at, furn_id("f_table"));
+        watched.publish();
+        CHECK(cell_at() != before);
+    }
+    SECTION("the trap on it") {
+        here.trap_set(at, trap_id("tr_beartrap"));
+        // The avatar sees only the traps it knows.
+        get_avatar().add_known_trap(at, here.tr_at(at));
         watched.publish();
         CHECK(cell_at() != before);
     }
