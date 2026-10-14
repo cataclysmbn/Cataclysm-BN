@@ -562,7 +562,9 @@ auto body_json( const tabs_body &body, const bubble_frame & /*frame*/ ) -> json
 {
     auto tabs = json::array();
     for( const auto &tab : body.tabs ) {
-        tabs.push_back( {{"id", tab.id}, {"label", tab.label}, {"selected", tab.selected}, {"enabled", tab.enabled}} );
+        auto entry = json{{"id", tab.id}, {"label", tab.label}, {"selected", tab.selected}, {"enabled", tab.enabled}};
+        if( tab.unread ) { entry["unread"] = true; }
+        tabs.push_back( std::move( entry ) );
     }
     auto result = json{{"tabs", std::move( tabs )}};
     if( !body.select.empty() ) { result["select"] = body.select; }

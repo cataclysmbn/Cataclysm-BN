@@ -133,6 +133,8 @@ struct tab_entry {
     std::string label = {};
     bool selected = false;
     bool enabled = true;
+    /// Something in the tab is new to the player.
+    bool unread = false;
 };
 /// The selected tab's content is the component's one child.
 struct tabs_body {

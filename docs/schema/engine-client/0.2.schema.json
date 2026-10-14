@@ -4964,9 +4964,10 @@
           "enum": [
             "confirm",
             "cancel",
-            "any_key"
+            "any_key",
+            "select"
           ],
-          "description": "What the affordance means for the screen. `any_key` runs on a key no affordance binds."
+          "description": "What the affordance means for the screen. `any_key` runs on a key no affordance binds. `select` moves the screen's cursor to the row named by `args.row` without activating it, so the detail that follows the cursor shows that row; a client invokes it when its focus moves in the list its `args.row` targets."
         },
         "args": {
           "$ref": "#/$defs/arg_shape"
@@ -5390,6 +5391,10 @@
               },
               "enabled": {
                 "type": "boolean"
+              },
+              "unread": {
+                "type": "boolean",
+                "description": "Something in the tab is new to the player."
               }
             },
             "required": [
