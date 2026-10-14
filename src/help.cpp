@@ -12,10 +12,10 @@
 #include "action.h"
 #include "cata_utility.h"
 #include "catacharset.h"
-#include "client_interaction.h"
 #include "color.h"
 #include "cursesdef.h"
 #include "debug.h"
+#include "engine_client_component.h"
 #include "fstream_utils.h"
 #include "input.h"
 #include "json.h"
@@ -173,25 +173,34 @@ void help::display_help()
         draw_menu( w_help );
     } );
 
-    const auto topic_id = []( const auto order, const auto & name ) {
-        return game_client::opaque_interaction_id( "help-topic", { std::to_string( order ), name } );
-    };
-    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
-        auto snapshot = game_client::interaction_snapshot{
-            .kind = game_client::interaction_kind::choices,
+    namespace ec = engine_client;
+    constexpr auto open_topic_id = "help:topic";
+    const auto topic_row_id = []( const int order ) { return "topic:" + std::to_string( order ); };
+    const auto screen = ec::screen_scope( ctxt, { .view = [&]( const ec::boundary_state & )
+    {
+        using namespace std::views;
+        auto rows = help_texts | transform( [&]( const auto & entry ) {
+            const auto &[order, topic] = entry;
+            const auto name = shortcut_text( c_light_blue, _( topic.first ) );
+            return ec::row{
+                .id = topic_row_id( order ), .label = remove_color_tags( name ),
+                .hotkey = static_cast<std::size_t>( order ) < hotkeys.size() && !hotkeys[order].empty() ? hotkeys[order].front() : std::string{},
+                .markup = name,
+            };
+        } ) | std::ranges::to<std::vector>();
+        return ec::screen_view{
             .title = _( " HELP " ),
-            .message = _( "Please press one of the following for help on that topic:\n"
-                          "Press ESC to return to the game." ),
-            .allow_cancel = true,
+            .root = ec::split( {
+                .id = "help:root", .children = ec::children_of(
+                ec::component{
+                    .id = "help:intro", .body = ec::text_body{
+                        .markup = _( "Please press one of the following for help on that topic:\n"
+                                     "Press ESC to return to the game." ) } },
+                ec::list( { .id = "help:topics", .rows = std::move( rows ), .selection = "single", .activate = open_topic_id } ) ) } ),
+            .affordances = { ec::invoke_affordance( { .id = open_topic_id, .label = ctxt.get_action_name( "CONFIRM" ), .args = { .row = ec::row_shape{ .component_id = "help:topics" } } } ) },
         };
-        for( const auto &[order, topic] : help_texts ) {
-            snapshot.choices.push_back( {
-                .id = topic_id( order, topic.first ),
-                .label = remove_color_tags( shortcut_text( c_light_blue, _( topic.first ) ) ),
-            } );
-        }
-        return snapshot;
-    } );
+    }
+                                                } );
 
     do {
         ui_manager::redraw();
@@ -199,16 +208,12 @@ void help::display_help()
         action = ctxt.handle_input();
         const auto &input = ctxt.get_raw_input();
         auto selected_topic = std::optional<int> {};
-        if( input.interaction ) {
-            if( input.interaction->operation == game_client::interaction_operation::cancel ) {
-                action = "QUIT";
-            } else if( input.interaction->operation == game_client::interaction_operation::choose ) {
-                for( const auto &[order, topic] : help_texts ) {
-                    if( input.interaction->target_id == topic_id( order, topic.first ) ) {
-                        selected_topic = order;
-                        break;
-                    }
-                }
+        if( const auto picked = ec::invoked( input ) ) {
+            const auto row = picked->affordance_id == open_topic_id ? picked->args.row.value_or(
+                                 std::string() ) : std::string();
+            const auto topic = std::ranges::find_if( help_texts, [&]( const auto & entry ) { return topic_row_id( entry.first ) == row; } );
+            if( topic != help_texts.end() ) {
+                selected_topic = topic->first;
             }
         } else {
             for( auto i = std::size_t{0}; i < hotkeys.size(); ++i ) {

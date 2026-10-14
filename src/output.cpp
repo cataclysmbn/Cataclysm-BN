@@ -24,6 +24,7 @@
 #include <cmath>
 
 #include "cached_options.h"
+#include "engine_client_component.h"
 #include "engine_client_presentation.h"
 #include "cata_utility.h"
 #include "catacharset.h"
@@ -413,24 +414,20 @@ void scrollable_text( const std::function<catacurses::window()> &init_window,
         wnoutrefresh( w );
     } );
 
-    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
-        return game_client::interaction_snapshot{
-            .kind = game_client::interaction_kind::custom,
+    const auto screen = engine_client::screen_scope( ctxt, { .view = [&]( const engine_client::boundary_state & )
+    {
+        return engine_client::screen_view{
             .title = title,
-            .message = text,
-            .allow_cancel = true,
+            .root = engine_client::component{ .id = "text:body", .body = engine_client::text_body{ .markup = text } },
         };
-    } );
+    }
+                                                           } );
 
     std::string action;
     do {
         ui_manager::redraw();
 
         action = ctxt.handle_input();
-        if( const auto &event = ctxt.get_raw_input().interaction;
-            event && event->operation == game_client::interaction_operation::cancel ) {
-            action = "QUIT";
-        }
         if( action == "UP" ) {
             if( beg_line > 0 ) {
                 --beg_line;
