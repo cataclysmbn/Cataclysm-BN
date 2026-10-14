@@ -22,6 +22,7 @@
 #    include "debug_menu.h"
 #    include "debug_test_support.h"
 #    include "drop_token.h"
+#    include "engine_client_component.h"
 #    include "engine_client_contract.h"
 #    include "engine_client_event.h"
 #    include "engine_client_session.h"
@@ -128,6 +129,72 @@ auto resolve_action(const std::string& action) -> input_event {
         game_client::resolve_input_command(input, game_client::memory::screen_size());
     REQUIRE(result.has_value());
     return *result;
+}
+
+/// The invoke a 0.2 client sends: the affordance with its arguments, as the screen's loop reads it.
+auto invoke(const std::string& affordance, game_client::interaction_arguments args = {})
+    -> input_event {
+    auto event = input_event{};
+    event.type = input_event_t::interaction;
+    event.interaction = game_client::interaction_event{
+        .operation = game_client::interaction_operation::invoke,
+        .target_id = affordance,
+        .arguments = std::move(args)};
+    return event;
+}
+
+/// A boundary of a game that takes input, with no 0.1 interaction beside the 0.2 screens.
+auto stack_state() -> engine_client::boundary_state {
+    return {
+        .id = "boundary:test",
+        .epoch = "epoch:test",
+        .ready =
+            {.phase = "waiting_for_input",
+             .game_ready = true,
+             .accepts_interaction_commands = true,
+             .accepts_registered_actions = true},
+        .interaction = std::nullopt,
+        .frame = {.dim = "", .x = 100, .y = 200}};
+}
+
+/// The screen on top of the published 0.2 stack.
+auto top_screen() -> nlohmann::json {
+    return nlohmann::json::parse(engine_client::serialize_interaction_boundary(
+        stack_state()))["stack"]
+        .back();
+}
+
+/// The pickup list's rows while it is the screen on top; none while another screen is.
+auto pickup_rows() -> nlohmann::json {
+    const auto screen = top_screen();
+    if (!screen["root"].is_object() || screen["root"]["id"] != "pickup") {
+        return nlohmann::json::array();
+    }
+    return screen["root"]["child"]["rows"];
+}
+
+/// The weight and volume stats of the pickup list on top, by key.
+auto pickup_stat(const std::string& key) -> nlohmann::json {
+    for (const auto& stat : top_screen()["root"]["stats"]) {
+        if (stat["key"].get<std::string>() == key) { return stat; }
+    }
+    return nlohmann::json::object();
+}
+
+/// The row of the item type `type`, null when the list has none.
+auto row_of(const nlohmann::json& rows, const std::string& type) -> nlohmann::json {
+    for (const auto& row : rows) {
+        if (row["look"]["id"].get<std::string>() == type) { return row; }
+    }
+    return nullptr;
+}
+
+/// Marks or unmarks the row, or sets how many of it are marked.
+auto pick_row(const nlohmann::json& row) -> input_event {
+    return invoke("pickup:toggle", {.row = row["id"].get<std::string>()});
+}
+auto pick_count(const nlohmann::json& row, const std::int64_t count) -> input_event {
+    return invoke("pickup:count", {.row = row["id"].get<std::string>(), .count = count});
 }
 
 class denied_inventory_preset final: public inventory_selector_preset {
@@ -974,29 +1041,18 @@ TEST_CASE(
         });
         auto reads = 0;
         game_client::memory::set_input_provider([&](const int /*timeout*/) {
-            const auto snapshot = game_client::current_interaction();
-            REQUIRE(snapshot.context == "PICKUP");
-            REQUIRE(snapshot.kind == game_client::interaction_kind::inventory);
-            REQUIRE(snapshot.choices.size() == 1);
-            const auto& choice = snapshot.choices.front();
-            CHECK(choice.available_count == 3);
-            CHECK(choice.minimum_count == 0);
-            CHECK(choice.columns[0].value == id.str());
-            CHECK_FALSE(choice.hotkey.empty());
-            REQUIRE(snapshot.panes.size() == 1);
-            REQUIRE(snapshot.panes.front().totals);
-            CHECK_FALSE(snapshot.panes.front().totals->weight_max.empty());
-            if (reads++ == 0) {
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::set_count,
-                    .target_id = choice.id,
-                    .count = 2,
-                });
-            }
-            CHECK(choice.selected);
-            CHECK(choice.selected_count == 2);
-            return resolve_action("CONFIRM");
+            const auto rows = pickup_rows();
+            REQUIRE(rows.size() == 1);
+            const auto& choice = rows.front();
+            CHECK(choice["max"] == 3);
+            CHECK(choice["minimum_count"] == 0);
+            CHECK(choice["look"]["id"].get<std::string>() == id.str());
+            CHECK_FALSE(choice["hotkey"].get<std::string>().empty());
+            CHECK_FALSE(pickup_stat("weight")["max"].get<std::string>().empty());
+            if (reads++ == 0) { return pick_count(choice, 2); }
+            CHECK(choice["selected"] == true);
+            CHECK(choice["selected_count"] == 2);
+            return invoke("pickup:confirm");
         });
 
         pickup::pick_up(pickup_test_pos, 0, pickup::from_ground);
@@ -1015,21 +1071,16 @@ TEST_CASE(
         auto reads = 0;
         auto before = std::string{};
         game_client::memory::set_input_provider([&](const int /*timeout*/) {
-            const auto snapshot = game_client::current_interaction();
-            REQUIRE(snapshot.context == "PICKUP");
-            CHECK(snapshot.message.starts_with("PICK Wgt "));
-            CHECK(snapshot.message.contains("Vol "));
+            const auto rows = pickup_rows();
+            REQUIRE(rows.size() == 1);
+            CHECK_FALSE(pickup_stat("volume")["value"].get<std::string>().empty());
+            const auto weight = pickup_stat("weight")["value"].get<std::string>();
             if (reads++ == 0) {
-                before = snapshot.message;
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::set_count,
-                    .target_id = snapshot.choices.front().id,
-                    .count = 2,
-                });
+                before = weight;
+                return pick_count(rows.front(), 2);
             }
-            CHECK(snapshot.message != before);
-            return resolve_action("CONFIRM");
+            CHECK(weight != before);
+            return invoke("pickup:confirm");
         });
 
         pickup::pick_up(pickup_test_pos, 0, pickup::from_ground);
@@ -1044,29 +1095,21 @@ TEST_CASE(
             add_ground_item(id);
         });
         auto reads = 0;
-        auto message = std::string{};
+        auto tone = std::string{};
         game_client::memory::set_input_provider([&](const int /*timeout*/) {
-            const auto snapshot = game_client::current_interaction();
-            REQUIRE(snapshot.context == "PICKUP");
+            const auto rows = pickup_rows();
+            REQUIRE(rows.size() == 1);
             if (reads++ == 0) {
-                CHECK_FALSE(snapshot.message.contains("<color_c_red>"));
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::set_count,
-                    .target_id = snapshot.choices.front().id,
-                    .count = 60,
-                });
+                CHECK(pickup_stat("weight").value("tone", "") != "bad");
+                return pick_count(rows.front(), 60);
             }
-            message = snapshot.message;
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::cancel,
-            });
+            tone = pickup_stat("weight").value("tone", "");
+            return invoke("pickup:cancel");
         });
 
         pickup::pick_up(pickup_test_pos, 0, pickup::from_ground);
         CHECK(reads == 2);
-        CHECK(message.contains("<color_c_red>"));
+        CHECK(tone == "bad");
     }
 
     SECTION("three of ten charges") {
@@ -1075,20 +1118,13 @@ TEST_CASE(
         add_ground_item(id, 10);
         auto reads = 0;
         game_client::memory::set_input_provider([&](const int /*timeout*/) {
-            const auto snapshot = game_client::current_interaction();
-            REQUIRE(snapshot.choices.size() == 1);
-            const auto& choice = snapshot.choices.front();
-            CHECK(choice.available_count == 10);
-            if (reads++ == 0) {
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::set_count,
-                    .target_id = choice.id,
-                    .count = 3,
-                });
-            }
-            CHECK(choice.selected_count == 3);
-            return resolve_action("CONFIRM");
+            const auto rows = pickup_rows();
+            REQUIRE(rows.size() == 1);
+            const auto& choice = rows.front();
+            CHECK(choice["max"] == 10);
+            if (reads++ == 0) { return pick_count(choice, 3); }
+            CHECK(choice["selected_count"] == 3);
+            return invoke("pickup:confirm");
         });
 
         pickup::pick_up(pickup_test_pos, 0, pickup::from_ground);
@@ -1099,7 +1135,7 @@ TEST_CASE(
     }
 }
 TEST_CASE(
-    "ground pickup rows publish the native stolen marker and item symbol, and the window placement",
+    "ground pickup rows publish the native stolen marker and item symbol, and the window dock",
     "[client][interaction][pickup][mcp]") {
     const auto guard = interaction_test_guard{};
     const auto fixture = pickup_fixture_guard{};
@@ -1115,25 +1151,19 @@ TEST_CASE(
     add_ground_item(own);
     auto checked = false;
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = game_client::current_interaction();
+        const auto rows = pickup_rows();
         const auto markup = [&](const itype_id& type) {
-            const auto row = std::ranges::find(snapshot.choices, type.str(), [](const auto& c) {
-                return c.columns[0].value;
-            });
-            REQUIRE(row != snapshot.choices.end());
-            return row->markup;
+            const auto row = row_of(rows, type.str());
+            REQUIRE(row.is_object());
+            return row["markup"].get<std::string>();
         };
         CHECK(markup(id).starts_with("<color_light_red>!</color> "));
         CHECK(markup(id).find(item::spawn(id)->symbol() + " ") != std::string::npos);
         CHECK_FALSE(markup(own).starts_with("<color_light_red>!</color>"));
         CHECK(markup(own).starts_with(item::spawn(own)->symbol() + " "));
-        REQUIRE(snapshot.panes.size() == 1);
-        CHECK(snapshot.panes.front().area_id == "right");
+        CHECK(top_screen()["dock"] == "right");
         checked = true;
-        return resolve({
-            .input_id = snapshot.input_id,
-            .operation = game_client::interaction_operation::cancel,
-        });
+        return invoke("pickup:cancel");
     });
     pickup::pick_up(pickup_test_pos, 0, pickup::from_ground);
     CHECK(checked);
@@ -1151,24 +1181,21 @@ TEST_CASE(
         });
         auto reads = 0;
         game_client::memory::set_input_provider([&](const int /*timeout*/) {
-            const auto snapshot = game_client::current_interaction();
+            const auto rows = pickup_rows();
+            REQUIRE(rows.size() == 1);
             if (reads++ == 0) {
-                const auto too_many = game_client::resolve_interaction_command({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::set_count,
-                    .target_id = snapshot.choices.front().id,
-                    .count = 3,
-                });
-                REQUIRE_FALSE(too_many);
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::set_count,
-                    .target_id = snapshot.choices.front().id,
-                    .count = 2,
-                });
+                // Below the shape's minimum is refused; above what the stack holds is the whole
+                // stack.
+                const auto below = engine_client::resolve_invoke(
+                    stack_state(),
+                    {.affordance_id = "pickup:count",
+                     .args = {.row = rows.front()["id"].get<std::string>(), .count = -1}});
+                REQUIRE_FALSE(below);
+                return pick_count(rows.front(), 3);
             }
-            CHECK(snapshot.choices.front().selected_count == 2);
-            return resolve_action("CONFIRM");
+            CHECK(rows.front()["selected_count"] == 2);
+            CHECK(rows.front()["mark"]["glyph"] == "+");
+            return invoke("pickup:confirm");
         });
         pickup::pick_up(pickup_test_pos, 0, pickup::from_ground);
         finish_pickup_activity(get_avatar());
@@ -1182,32 +1209,21 @@ TEST_CASE(
         add_ground_item(id);
         auto reads = 0;
         game_client::memory::set_input_provider([&](const int /*timeout*/) {
-            const auto snapshot = game_client::current_interaction();
-            const auto& choice = snapshot.choices.front();
+            const auto rows = pickup_rows();
+            REQUIRE(rows.size() == 1);
+            const auto& choice = rows.front();
             if (reads == 0) {
                 ++reads;
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::choose,
-                    .target_id = choice.id,
-                });
+                return pick_row(choice);
             }
             if (reads == 1) {
                 ++reads;
-                CHECK(choice.selected);
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::set_count,
-                    .target_id = choice.id,
-                    .count = 0,
-                });
+                CHECK(choice["selected"] == true);
+                return pick_count(choice, 0);
             }
-            CHECK_FALSE(choice.selected);
-            CHECK(choice.selected_count == 0);
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::cancel,
-            });
+            CHECK(choice["selected"] == false);
+            CHECK(choice["selected_count"] == 0);
+            return invoke("pickup:cancel");
         });
         pickup::pick_up(pickup_test_pos, 0, pickup::from_ground);
         CHECK_FALSE(get_avatar().activity);
@@ -1234,51 +1250,40 @@ TEST_CASE(
                     .submit = true,
                 });
             }
-            REQUIRE(snapshot.context == "PICKUP");
+            const auto rows = pickup_rows();
             if (step == 0) {
-                const auto hidden = std::ranges::find_if(snapshot.choices, [&](const auto& choice) {
-                    return choice.columns.front().value == hidden_id.str();
-                });
-                REQUIRE(hidden != snapshot.choices.end());
-                hidden_choice_id = hidden->id;
+                const auto hidden = row_of(rows, hidden_id.str());
+                REQUIRE(hidden.is_object());
+                hidden_choice_id = hidden["id"].get<std::string>();
                 ++step;
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::choose,
-                    .target_id = hidden->id,
-                });
+                return pick_row(hidden);
             }
             if (step == 1) {
-                CHECK(std::ranges::any_of(snapshot.choices, [&](const auto& choice) {
-                    return choice.id == hidden_choice_id && choice.selected;
+                CHECK(std::ranges::any_of(rows, [&](const auto& row) {
+                    return row["id"].template get<std::string>() == hidden_choice_id
+                        && row["selected"] == true;
                 }));
                 ++step;
                 return resolve_action("FILTER");
             }
-            REQUIRE(snapshot.choices.size() == 1);
-            const auto& visible = snapshot.choices.front();
-            CHECK(visible.columns.front().value == visible_id.str());
-            CHECK(visible.id != hidden_choice_id);
-            CHECK(visible.label.find("screwdriver") == std::string::npos);
-            CHECK(visible.description.find("screwdriver") == std::string::npos);
-            const auto stale_hidden = game_client::resolve_interaction_command({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::choose,
-                .target_id = hidden_choice_id,
-            });
+            REQUIRE(rows.size() == 1);
+            const auto& visible = rows.front();
+            CHECK(visible["look"]["id"].get<std::string>() == visible_id.str());
+            CHECK(visible["id"].get<std::string>() != hidden_choice_id);
+            CHECK(visible["label"].get<std::string>().find("screwdriver") == std::string::npos);
+            CHECK(
+                visible["description"].get<std::string>().find("screwdriver") == std::string::npos);
+            const auto stale_hidden = engine_client::resolve_invoke(
+                stack_state(),
+                {.affordance_id = "pickup:toggle", .args = {.row = hidden_choice_id}});
             REQUIRE_FALSE(stale_hidden);
             if (step == 2) {
                 ++step;
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::set_count,
-                    .target_id = visible.id,
-                    .count = 1,
-                });
+                return pick_count(visible, 1);
             }
-            CHECK(visible.selected);
-            CHECK(visible.selected_count == 1);
-            return resolve_action("CONFIRM");
+            CHECK(visible["selected"] == true);
+            CHECK(visible["selected_count"] == 1);
+            return invoke("pickup:confirm");
         });
         pickup::pick_up(pickup_test_pos, 0, pickup::from_ground);
         finish_pickup_activity(get_avatar());
@@ -1293,14 +1298,13 @@ TEST_CASE(
         add_ground_item(itype_id("test_screwdriver"));
         add_ground_item(itype_id("bandages"));
         auto old_id = std::string{};
-        auto old_schema = std::string{};
         auto reads = 0;
         game_client::memory::set_input_provider([&](const int /*timeout*/) {
             const auto snapshot = game_client::current_interaction();
-            if (snapshot.context == "PICKUP" && reads++ == 0) {
-                REQUIRE(snapshot.choices.size() == 2);
-                old_id = snapshot.choices.front().id;
-                old_schema = snapshot.schema_id;
+            if (snapshot.kind != game_client::interaction_kind::field && reads++ == 0) {
+                const auto rows = pickup_rows();
+                REQUIRE(rows.size() == 2);
+                old_id = rows.front()["id"].get<std::string>();
                 return resolve_action("FILTER");
             }
             if (snapshot.kind == game_client::interaction_kind::field) {
@@ -1312,26 +1316,17 @@ TEST_CASE(
                     .submit = true,
                 });
             }
-            REQUIRE(snapshot.context == "PICKUP");
-            REQUIRE(snapshot.choices.size() == 1);
-            CHECK(snapshot.choices.front().columns.front().value == "bandages");
-            CHECK(snapshot.schema_id != old_schema);
-            const auto removed = game_client::resolve_interaction_command({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::choose,
-                .target_id = old_id,
-            });
+            const auto rows = pickup_rows();
+            REQUIRE(rows.size() == 1);
+            CHECK(rows.front()["look"]["id"] == "bandages");
+            CHECK(rows.front()["id"].get<std::string>() != old_id);
+            const auto removed = engine_client::resolve_invoke(
+                stack_state(), {.affordance_id = "pickup:toggle", .args = {.row = old_id}});
             REQUIRE_FALSE(removed);
-            const auto stale_boundary = game_client::resolve_interaction_command({
-                .input_id = snapshot.input_id + 1,
-                .operation = game_client::interaction_operation::choose,
-                .target_id = snapshot.choices.front().id,
-            });
-            REQUIRE_FALSE(stale_boundary);
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::cancel,
-            });
+            const auto unknown = engine_client::resolve_invoke(
+                stack_state(), {.affordance_id = "pickup:removed", .args = {.row = old_id}});
+            REQUIRE_FALSE(unknown);
+            return invoke("pickup:cancel");
         });
         pickup::pick_up(pickup_test_pos, 0, pickup::from_ground);
         CHECK_FALSE(get_avatar().activity);
@@ -1353,15 +1348,9 @@ TEST_CASE(
     auto saw_capacity_prompt = false;
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
         const auto snapshot = game_client::current_interaction();
-        if (snapshot.context == "PICKUP") {
-            if (!snapshot.choices.front().selected) {
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::choose,
-                    .target_id = snapshot.choices.front().id,
-                });
-            }
-            return resolve_action("CONFIRM");
+        if (const auto rows = pickup_rows(); !rows.empty()) {
+            if (rows.front()["selected"] == false) { return pick_row(rows.front()); }
+            return invoke("pickup:confirm");
         }
         REQUIRE(snapshot.context == "UILIST");
         CHECK(snapshot.message.find("heavy") != std::string::npos);
@@ -1401,38 +1390,33 @@ TEST_CASE(
         add_nested_items();
         auto reads = 0;
         game_client::memory::set_input_provider([&](const int /*timeout*/) {
-            const auto snapshot = game_client::current_interaction();
-            REQUIRE(snapshot.choices.size() == 3);
-            const auto parent = std::ranges::find_if(snapshot.choices, [](const auto& choice) {
-                return choice.columns.front().value == "backpack";
-            });
-            REQUIRE(parent != snapshot.choices.end());
+            const auto rows = pickup_rows();
+            REQUIRE(rows.size() == 3);
+            const auto parent = row_of(rows, "backpack");
+            REQUIRE(parent.is_object());
             if (reads++ == 0) {
-                CHECK(parent->columns[2].value.find("2 child stacks") != std::string::npos);
-                CHECK(parent->nest_color.empty());
-                CHECK_FALSE(parent->parent_id);
-                CHECK(parent->mark->glyph == "-");
-                for (const auto& child : snapshot.choices) {
-                    if (child.id == parent->id) { continue; }
-                    CHECK(child.parent_id == parent->id);
-                    CHECK(child.nest_color == "c_dark_gray");
+                CHECK_FALSE(parent.contains("nest_color"));
+                CHECK_FALSE(parent.contains("parent_id"));
+                CHECK(parent["mark"]["glyph"] == "-");
+                for (const auto& child : rows) {
+                    if (child["id"] == parent["id"]) { continue; }
+                    CHECK(child["parent_id"] == parent["id"]);
+                    CHECK(child["nest_color"] == "c_dark_gray");
                 }
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::choose,
-                    .target_id = parent->id,
-                });
+                return pick_row(parent);
             }
-            CHECK(
-                std::ranges::all_of(snapshot.choices, &game_client::interaction_choice::selected));
-            CHECK(std::ranges::all_of(snapshot.choices, [](const auto& choice) {
-                return choice.mark->glyph == "+" && choice.mark->color == "c_light_blue";
+            CHECK(std::ranges::all_of(rows, [](const auto& row) {
+                return row["selected"] == true;
+            }));
+            CHECK(std::ranges::all_of(rows, [](const auto& row) {
+                return row["mark"]["glyph"] == "+" && row["mark"]["color"] == "c_light_blue";
             }));
             CHECK(
-                std::ranges::count(
-                    snapshot.choices, "c_light_blue", &game_client::interaction_choice::nest_color)
+                std::ranges::count_if(
+                    rows,
+                    [](const auto& row) { return row.value("nest_color", "") == "c_light_blue"; })
                 == 2);
-            return resolve_action("CONFIRM");
+            return invoke("pickup:confirm");
         });
         pickup::pick_up(pickup_test_pos, 0, pickup::from_ground);
         finish_pickup_activity(get_avatar());
@@ -1447,26 +1431,19 @@ TEST_CASE(
         add_nested_items();
         auto reads = 0;
         game_client::memory::set_input_provider([&](const int /*timeout*/) {
-            const auto snapshot = game_client::current_interaction();
-            const auto child = std::ranges::find_if(snapshot.choices, [](const auto& choice) {
-                return choice.columns.front().value == "test_screwdriver";
-            });
-            REQUIRE(child != snapshot.choices.end());
+            const auto rows = pickup_rows();
+            const auto child = row_of(rows, "test_screwdriver");
+            REQUIRE(child.is_object());
             if (reads++ == 0) {
-                CHECK(child->columns[2].value.starts_with("child of pickup:"));
-                CHECK(child->parent_id->starts_with("pickup:"));
-                CHECK(child->nest_color == "c_dark_gray");
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::choose,
-                    .target_id = child->id,
-                });
+                CHECK(child["parent_id"].get<std::string>().starts_with("pickup:"));
+                CHECK(child["nest_color"] == "c_dark_gray");
+                return pick_row(child);
             }
-            CHECK(child->selected);
-            CHECK(std::ranges::
-                      count(snapshot.choices, true, &game_client::interaction_choice::selected)
-                  == 1);
-            return resolve_action("CONFIRM");
+            CHECK(child["selected"] == true);
+            CHECK(
+                std::ranges::count_if(rows, [](const auto& row) { return row["selected"] == true; })
+                == 1);
+            return invoke("pickup:confirm");
         });
         pickup::pick_up(pickup_test_pos, 0, pickup::from_ground);
         finish_pickup_activity(get_avatar());
@@ -1492,9 +1469,10 @@ TEST_CASE(
                     .submit = true,
                 });
             }
-            REQUIRE(snapshot.choices.size() == 1);
-            if (!snapshot.choices.front().selected) { return resolve_action("SELECT_ALL"); }
-            return resolve_action("CONFIRM");
+            const auto rows = pickup_rows();
+            REQUIRE(rows.size() == 1);
+            if (rows.front()["selected"] == false) { return resolve_action("SELECT_ALL"); }
+            return invoke("pickup:confirm");
         });
         pickup::pick_up(pickup_test_pos, 0, pickup::from_ground);
         finish_pickup_activity(get_avatar());
@@ -1507,14 +1485,7 @@ TEST_CASE(
         add_ground_item(itype_id("backpack"));
         auto step = 0;
         game_client::memory::set_input_provider([&](const int /*timeout*/) {
-            const auto snapshot = game_client::current_interaction();
-            if (step++ == 0) {
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::choose,
-                    .target_id = snapshot.choices.front().id,
-                });
-            }
+            if (step++ == 0) { return pick_row(pickup_rows().front()); }
             return resolve_action("WEAR");
         });
         pickup::pick_up(pickup_test_pos, 0, pickup::from_ground);
@@ -1527,14 +1498,7 @@ TEST_CASE(
         add_ground_item(itype_id("machete"));
         step = 0;
         game_client::memory::set_input_provider([&](const int /*timeout*/) {
-            const auto snapshot = game_client::current_interaction();
-            if (step++ == 0) {
-                return resolve({
-                    .input_id = snapshot.input_id,
-                    .operation = game_client::interaction_operation::choose,
-                    .target_id = snapshot.choices.front().id,
-                });
-            }
+            if (step++ == 0) { return pick_row(pickup_rows().front()); }
             return resolve_action("WIELD");
         });
         pickup::pick_up(pickup_test_pos, 0, pickup::from_ground);
@@ -1547,14 +1511,9 @@ TEST_CASE(
         add_ground_item(itype_id("machete"));
         auto reads = 0;
         game_client::memory::set_input_provider([&](const int /*timeout*/) {
-            const auto snapshot = game_client::current_interaction();
-            REQUIRE(snapshot.choices.size() == 1);
-            CHECK(snapshot.choices.front().columns[3].value != "available");
+            REQUIRE(pickup_rows().size() == 1);
             if (reads++ == 0) { return resolve_action("WEAR"); }
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::cancel,
-            });
+            return invoke("pickup:cancel");
         });
         pickup::pick_up(pickup_test_pos, 0, pickup::from_ground);
         CHECK_FALSE(get_avatar().activity);
@@ -1593,16 +1552,8 @@ TEST_CASE(
     replay::start();
     auto reads = 0;
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = game_client::current_interaction();
-        if (reads++ == 0) {
-            return resolve({
-                .input_id = snapshot.input_id,
-                .operation = game_client::interaction_operation::set_count,
-                .target_id = snapshot.choices.front().id,
-                .count = 2,
-            });
-        }
-        return resolve_action("CONFIRM");
+        if (reads++ == 0) { return pick_count(pickup_rows().front(), 2); }
+        return invoke("pickup:confirm");
     });
     pickup::pick_up(pickup_test_pos, 0, pickup::from_ground);
     finish_pickup_activity(get_avatar());
