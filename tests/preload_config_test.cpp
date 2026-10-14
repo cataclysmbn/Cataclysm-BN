@@ -15,7 +15,11 @@ public:
         remove_file(PATH_INFO::preload());
         preload_config::set_compute_accel(preload_config::compute_accel::auto_select);
         preload_config::set_texture_streaming(preload_config::tristate::auto_select);
+        preload_config::set_gpu_backend_override(gpu_backend);
     }
+
+private:
+    std::string gpu_backend = std::string{preload_config::get_gpu_backend_override()};
 };
 
 auto read_preload_config() -> std::string {
@@ -55,6 +59,30 @@ TEST_CASE("preload config loads legacy numeric texture streaming", "[preload_con
     preload_config::load();
 
     CHECK(preload_config::get_texture_streaming() == preload_config::tristate::auto_select);
+}
+
+TEST_CASE("a gpu backend from the command line is not saved to the profile", "[preload_config]") {
+    auto restore_preload_config = preload_config_file_guard();
+    write_preload_config(R"({ "compute_acceleration": "auto" })");
+
+    preload_config::set_gpu_backend_override("software");
+    preload_config::load();
+    preload_config::save();
+
+    CHECK(preload_config::get_gpu_backend_override() == "software");
+    CHECK(read_preload_config().find("gpu_backend") == std::string::npos);
+}
+
+TEST_CASE("a gpu backend from the command line keeps the profile's backend", "[preload_config]") {
+    auto restore_preload_config = preload_config_file_guard();
+    write_preload_config(R"({ "compute_acceleration": "auto", "gpu_backend": "vulkan" })");
+
+    preload_config::set_gpu_backend_override("software");
+    preload_config::load();
+    preload_config::save();
+
+    CHECK(preload_config::get_gpu_backend_override() == "software");
+    CHECK(read_preload_config().find(R"("gpu_backend": "vulkan")") != std::string::npos);
 }
 
 TEST_CASE("preload config accepts explicit compute acceleration backends", "[preload_config]") {
