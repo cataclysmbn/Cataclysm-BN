@@ -876,13 +876,16 @@ Deno.test({
       await settle()
       assertEquals(at().y, start.y + 1, "a released tap takes no second step")
 
-      // A long hold: a step takes ~100 ms on the software GPU, and none follows the release.
+      // A long hold walks as long as the key is down, however slow a step is, and none follows the release.
       let longest = 0
       for (let round = 0; round < 8 && longest < 3; round++) {
         await acknowledgePopups()
         const before = at().y
         assertEquals((await hold("DOWN")).error, undefined)
-        await sleep(450)
+        // Each step publishes: read until three have been taken or a popup stopped the walk.
+        while (at().y - before < 3 && !session.mirror.interaction.interaction) {
+          session.handle(await client.note())
+        }
         await settle()
         const stopped = { ...at() }
         longest = Math.max(longest, stopped.y - before)
@@ -894,15 +897,16 @@ Deno.test({
       }
       assert(longest >= 3, `a held key walks more than ${longest} squares`)
 
-      // A wall ends the hold instead of repeating the refused step.
+      // A wall ends the hold instead of repeating the refused step; a slow step is not a wall, so
+      // the avatar must stay put in two holds in a row.
       let blocked = -1
-      for (let round = 0; round < 12; round++) {
+      for (let round = 0, still = 0; round < 12 && still < 2; round++) {
         await acknowledgePopups()
         blocked = at().y
         assertEquals((await hold("DOWN")).error, undefined)
         await sleep(450)
         await settle()
-        if (at().y === blocked && !session.mirror.interaction.interaction) break
+        still = at().y === blocked && !session.mirror.interaction.interaction ? still + 1 : 0
       }
       assertEquals(blocked, at().y, "the avatar reached the wall")
       await acknowledgePopups()
