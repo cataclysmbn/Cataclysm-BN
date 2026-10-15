@@ -214,13 +214,6 @@
             "expect": "screen"
           },
           {
-            "id": "COORDINATE",
-            "label": "COORDINATE",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
             "id": "LEVEL_UP",
             "label": "Go Up",
             "keys": [
@@ -296,83 +289,6 @@
             "keys": [
               "0"
             ],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "debug_scent",
-            "label": "debug_scent",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "debug_scent_type",
-            "label": "debug_scent_type",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "debug_temp",
-            "label": "debug_temp",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "debug_visibility",
-            "label": "debug_visibility",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "debug_lighting",
-            "label": "debug_lighting",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "debug_radiation",
-            "label": "debug_radiation",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "debug_outside",
-            "label": "debug_outside",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "debug_sound_absorption",
-            "label": "debug_sound_absorption",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "debug_sound_walls",
-            "label": "debug_sound_walls",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "debug_submap_grid",
-            "label": "debug_submap_grid",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "debug_hour_timer",
-            "label": "debug_hour_timer",
-            "keys": [],
             "enabled": true,
             "expect": "screen"
           },

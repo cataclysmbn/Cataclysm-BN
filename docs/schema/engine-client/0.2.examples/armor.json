@@ -128,7 +128,7 @@
                       ],
                       "rows": [
                         {
-                          "id": "item:1",
+                          "id": "item:2",
                           "label": "|| t-shirt",
                           "description": "",
                           "denial": "",
@@ -169,7 +169,7 @@
                           }
                         },
                         {
-                          "id": "item:2",
+                          "id": "item:3",
                           "label": "|| jeans",
                           "description": "",
                           "denial": "",
@@ -210,7 +210,7 @@
                           }
                         },
                         {
-                          "id": "item:3",
+                          "id": "item:4",
                           "label": "|| hoodie",
                           "description": "",
                           "denial": "",
@@ -633,7 +633,7 @@
                       "header": true
                     },
                     {
-                      "id": "layer:part:torso:item:1",
+                      "id": "layer:part:torso:item:2",
                       "label": "|| t-shirt",
                       "description": "",
                       "denial": "",
@@ -650,7 +650,7 @@
                       "color": "c_light_gray"
                     },
                     {
-                      "id": "layer:part:torso:item:3",
+                      "id": "layer:part:torso:item:4",
                       "label": "|| hoodie",
                       "description": "",
                       "denial": "",
@@ -715,7 +715,7 @@
                       "header": true
                     },
                     {
-                      "id": "layer:part:arm_l:item:1",
+                      "id": "layer:part:arm_l:item:2",
                       "label": "|| t-shirt",
                       "description": "",
                       "denial": "",
@@ -732,7 +732,7 @@
                       "color": "c_light_gray"
                     },
                     {
-                      "id": "layer:part:arm_l:item:3",
+                      "id": "layer:part:arm_l:item:4",
                       "label": "|| hoodie",
                       "description": "",
                       "denial": "",
@@ -773,7 +773,7 @@
                       "header": true
                     },
                     {
-                      "id": "layer:part:leg_l:item:2",
+                      "id": "layer:part:leg_l:item:3",
                       "label": "|| jeans",
                       "description": "",
                       "denial": "",
@@ -1008,7 +1008,7 @@
         ],
         "focus": {
           "component_id": "armor:worn:rows",
-          "row_id": "item:1"
+          "row_id": "item:2"
         },
         "context": "SORT_ARMOR"
       }
@@ -1026,7 +1026,7 @@
           "kind": "invoke",
           "affordance_id": "armor:pick",
           "args": {
-            "row": "item:2"
+            "row": "item:3"
           }
         }
       }
@@ -1319,7 +1319,7 @@
                       ],
                       "rows": [
                         {
-                          "id": "item:1",
+                          "id": "item:2",
                           "label": "|| t-shirt",
                           "description": "",
                           "denial": "",
@@ -1360,7 +1360,7 @@
                           }
                         },
                         {
-                          "id": "item:3",
+                          "id": "item:4",
                           "label": "|| hoodie",
                           "description": "",
                           "denial": "",
@@ -1783,7 +1783,7 @@
                       "header": true
                     },
                     {
-                      "id": "layer:part:torso:item:1",
+                      "id": "layer:part:torso:item:2",
                       "label": "|| t-shirt",
                       "description": "",
                       "denial": "",
@@ -1800,7 +1800,7 @@
                       "color": "c_light_gray"
                     },
                     {
-                      "id": "layer:part:torso:item:3",
+                      "id": "layer:part:torso:item:4",
                       "label": "|| hoodie",
                       "description": "",
                       "denial": "",
@@ -1865,7 +1865,7 @@
                       "header": true
                     },
                     {
-                      "id": "layer:part:arm_l:item:1",
+                      "id": "layer:part:arm_l:item:2",
                       "label": "|| t-shirt",
                       "description": "",
                       "denial": "",
@@ -1882,7 +1882,7 @@
                       "color": "c_light_gray"
                     },
                     {
-                      "id": "layer:part:arm_l:item:3",
+                      "id": "layer:part:arm_l:item:4",
                       "label": "|| hoodie",
                       "description": "",
                       "denial": "",
@@ -1923,7 +1923,7 @@
                       "header": true
                     },
                     {
-                      "id": "layer:part:leg_l:item:2",
+                      "id": "layer:part:leg_l:item:3",
                       "label": "|| jeans",
                       "description": "",
                       "denial": "",
@@ -2158,7 +2158,7 @@
         ],
         "focus": {
           "component_id": "armor:worn:rows",
-          "row_id": "item:1"
+          "row_id": "item:2"
         },
         "context": "SORT_ARMOR"
       }

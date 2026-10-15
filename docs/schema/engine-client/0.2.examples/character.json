@@ -2173,13 +2173,6 @@
             "expect": "boundary"
           },
           {
-            "id": "COORDINATE",
-            "label": "COORDINATE",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
             "id": "QUIT",
             "label": "Cancel popup",
             "keys": [

@@ -2102,36 +2102,8 @@
                 "expect": "screen"
               },
               {
-                "id": "debug_outside",
-                "label": "debug_outside",
-                "keys": [],
-                "enabled": true,
-                "expect": "screen"
-              },
-              {
                 "id": "debug_submap_grid",
                 "label": "View Submap Grid",
-                "keys": [],
-                "enabled": true,
-                "expect": "screen"
-              },
-              {
-                "id": "debug_sound_absorption",
-                "label": "debug_sound_absorption",
-                "keys": [],
-                "enabled": true,
-                "expect": "screen"
-              },
-              {
-                "id": "debug_sound_walls",
-                "label": "debug_sound_walls",
-                "keys": [],
-                "enabled": true,
-                "expect": "screen"
-              },
-              {
-                "id": "debug_hour_timer",
-                "label": "debug_hour_timer",
                 "keys": [],
                 "enabled": true,
                 "expect": "screen"
@@ -2259,13 +2231,6 @@
                 "keys": [
                   "%"
                 ],
-                "enabled": true,
-                "expect": "screen"
-              },
-              {
-                "id": "COORDINATE",
-                "label": "COORDINATE",
-                "keys": [],
                 "enabled": true,
                 "expect": "screen"
               },
@@ -3421,36 +3386,8 @@
             "expect": "screen"
           },
           {
-            "id": "debug_outside",
-            "label": "debug_outside",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
             "id": "debug_submap_grid",
             "label": "View Submap Grid",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "debug_sound_absorption",
-            "label": "debug_sound_absorption",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "debug_sound_walls",
-            "label": "debug_sound_walls",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "debug_hour_timer",
-            "label": "debug_hour_timer",
             "keys": [],
             "enabled": true,
             "expect": "screen"
@@ -3578,13 +3515,6 @@
             "keys": [
               "%"
             ],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "COORDINATE",
-            "label": "COORDINATE",
-            "keys": [],
             "enabled": true,
             "expect": "screen"
           },
@@ -6154,36 +6084,8 @@
                     "expect": "screen"
                   },
                   {
-                    "id": "debug_outside",
-                    "label": "debug_outside",
-                    "keys": [],
-                    "enabled": true,
-                    "expect": "screen"
-                  },
-                  {
                     "id": "debug_submap_grid",
                     "label": "View Submap Grid",
-                    "keys": [],
-                    "enabled": true,
-                    "expect": "screen"
-                  },
-                  {
-                    "id": "debug_sound_absorption",
-                    "label": "debug_sound_absorption",
-                    "keys": [],
-                    "enabled": true,
-                    "expect": "screen"
-                  },
-                  {
-                    "id": "debug_sound_walls",
-                    "label": "debug_sound_walls",
-                    "keys": [],
-                    "enabled": true,
-                    "expect": "screen"
-                  },
-                  {
-                    "id": "debug_hour_timer",
-                    "label": "debug_hour_timer",
                     "keys": [],
                     "enabled": true,
                     "expect": "screen"
@@ -6311,13 +6213,6 @@
                     "keys": [
                       "%"
                     ],
-                    "enabled": true,
-                    "expect": "screen"
-                  },
-                  {
-                    "id": "COORDINATE",
-                    "label": "COORDINATE",
-                    "keys": [],
                     "enabled": true,
                     "expect": "screen"
                   },
