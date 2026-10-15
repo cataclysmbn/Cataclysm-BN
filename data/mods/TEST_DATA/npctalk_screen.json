@@ -1,0 +1,25 @@
+[
+  {
+    "type": "talk_topic",
+    "id": "TALK_TEST_NPCTALK_PIN",
+    "dynamic_line": "Pinned narrative.",
+    "responses": [
+      { "text": "Plain response.", "topic": "TALK_DONE" },
+      { "text": "*Acts helpless.", "topic": "TALK_DONE" },
+      { "text": "&Acts out loud.", "topic": "TALK_DONE" },
+      {
+        "text": "Persuade the NPC.",
+        "trial": { "type": "PERSUADE", "difficulty": 20 },
+        "success": { "topic": "TALK_DONE" },
+        "failure": { "topic": "TALK_DONE" }
+      },
+      {
+        "text": "Intimidate the NPC.",
+        "trial": { "type": "INTIMIDATE", "difficulty": 40 },
+        "success": { "topic": "TALK_DONE" },
+        "failure": { "topic": "TALK_DONE" }
+      },
+      { "text": "Goodbye.", "topic": "TALK_DONE" }
+    ]
+  }
+]
