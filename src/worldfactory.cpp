@@ -125,9 +125,8 @@ auto worldgen_view( worldgen_view_options options ) -> ec::screen_view
         return view;
     }
     using namespace std::views;
-    auto entries = worldgen_tabs() | transform( [&]( const worldgen_tab & tab ) {
-        return ec::tab_entry{ .id = tab.id, .label = _( tab.caption ), .selected = tab.id == options.tab };
-    } ) | std::ranges::to<std::vector>();
+    auto entries = worldgen_tabs() | transform( [&]( const worldgen_tab & tab ) { return ec::tab_entry{ .id = tab.id, .label = _( tab.caption ), .selected = tab.id == options.tab }; } )
+    | std::ranges::to<std::vector>();
     view.title = _( "World creation" );
     view.root = ec::tabs( { .id = worldgen_tabs_id, .tabs = std::move( entries ), .select = worldgen_select_id,
                             .child = ec::split( { .id = "worldgen:" + options.tab, .children = std::move( options.parts ) } ) } );
@@ -152,9 +151,8 @@ ec::panel_stat {
 auto mod_rows( const std::vector<mod_id> &mods, const std::string &prefix ) -> std::vector<ec::row>
 {
     using namespace std::views;
-    return mods | transform( [&]( const mod_id & mod ) {
-        return ec::row{ .id = prefix + mod.str(), .label = mod->name() };
-    } ) | std::ranges::to<std::vector>();
+    return mods | transform( [&]( const mod_id & mod ) { return ec::row{ .id = prefix + mod.str(), .label = mod->name() }; } )
+    | std::ranges::to<std::vector>();
 }
 
 } // namespace
@@ -1747,9 +1745,8 @@ void worldfactory::draw_worldgen_tabs( const catacurses::window &w, size_t curre
     werase( w );
 
     using namespace std::views;
-    const auto tab_strings_translated = worldgen_tabs() | transform( []( const worldgen_tab & tab ) {
-        return std::string( _( tab.caption ) );
-    } ) | std::ranges::to<std::vector>();
+    const auto tab_strings_translated = worldgen_tabs() | transform( []( const worldgen_tab & tab ) { return std::string( _( tab.caption ) ); } )
+    | std::ranges::to<std::vector>();
 
     draw_tabs( w, tab_strings_translated, current );
     draw_border_below_tabs( w );

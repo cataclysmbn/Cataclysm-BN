@@ -247,14 +247,14 @@ struct upgrade_hint {
 auto skill_upgrade_hint( const avatar &u, const points_left &points,
                          const Skill &skill ) -> upgrade_hint
 {
-    const int cost = skill_increment_cost( u, skill.ident() );
-    const int level = u.get_skill_level( skill.ident(), true );
-    const int upgrade_levels = level == 0 ? 2 : 1;
+    const auto cost = skill_increment_cost( u, skill.ident() );
+    const auto level = u.get_skill_level( skill.ident(), true );
+    const auto upgrade_levels = level == 0 ? 2 : 1;
     // We have two different strings to pluralize, so we have to use two
     // translation calls.
-    const std::string upgrade_levels_s = string_format(
-            //~ levels here are skill levels at character creation time
-            vgettext( "%d level", "%d levels", upgrade_levels ), upgrade_levels );
+    const auto upgrade_levels_s = string_format(
+                                      //~ levels here are skill levels at character creation time
+                                      vgettext( "%d level", "%d levels", upgrade_levels ), upgrade_levels );
     return {
         //~ Second string is e.g. "1 level" or "2 levels"
         .text = string_format( vgettext( "Upgrading %s by %s costs %d point",
@@ -270,7 +270,7 @@ auto skill_description_text( const avatar &u, const std::map<skill_id, int> &pro
 {
     // We want recipes from profession skills displayed, but without boosting the skills
     // Copy the skills, and boost the copy
-    SkillLevelMap with_prof_skills = u.get_all_skills();
+    auto with_prof_skills = u.get_all_skills();
     for( const auto &sk : prof_skills ) {
         with_prof_skills.mod_skill_level( sk.first, sk.second );
     }
@@ -283,8 +283,8 @@ auto skill_description_text( const avatar &u, const std::map<skill_id, int> &pro
         }
         //Find out if the current skill and its level is in the requirement list
         auto req_skill = r.required_skills.find( selected.ident() );
-        int skill = req_skill != r.required_skills.end() ? req_skill->second : 0;
-        bool would_autolearn_recipe =
+        const auto skill = req_skill != r.required_skills.end() ? req_skill->second : 0;
+        const auto would_autolearn_recipe =
             recipe_dict.all_autolearn().contains( &r ) &&
             with_prof_skills.meets_skill_requirements( r.autolearn_requirements );
 
@@ -299,7 +299,7 @@ auto skill_description_text( const avatar &u, const std::map<skill_id, int> &pro
         }
     }
 
-    std::string rec_disp;
+    auto rec_disp = std::string();
 
     for( auto &elem : recipes ) {
         std::sort( elem.second.begin(), elem.second.end(),
@@ -309,10 +309,8 @@ auto skill_description_text( const avatar &u, const std::map<skill_id, int> &pro
                                       std::make_pair( rhs.second, rhs.first ) );
         } );
 
-        const std::string rec_temp = enumerate_as_string( elem.second.begin(), elem.second.end(),
-        []( const std::pair<std::string, int> &rec ) {
-            return string_format( "%s (%d)", rec.first, rec.second );
-        } );
+        const auto rec_temp = enumerate_as_string( elem.second.begin(), elem.second.end(),
+        []( const std::pair<std::string, int> &rec ) { return string_format( "%s (%d)", rec.first, rec.second ); } );
 
         if( elem.first == selected.name() ) {
             rec_disp = "\n\n" + colorize( rec_temp, c_brown ) + rec_disp;
@@ -1120,9 +1118,10 @@ ec::panel_stat {
 }
 
 /// What a tab tells of the row or the character: a heading and its value.
-auto fact( const std::string &key, const std::string &label, const std::string &value,
-const std::string &tone = {} ) -> ec::panel_stat {
-    return { .key = key, .label = ec::caption( label ), .value = value, .max = {}, .unit = {}, .tone = tone };
+auto fact( ec::panel_stat stat ) -> ec::panel_stat
+{
+    stat.label = ec::caption( stat.label );
+    return stat;
 }
 
 struct newchar_view_options {
@@ -1143,9 +1142,8 @@ struct newchar_view_options {
 auto newchar_view( newchar_view_options options ) -> ec::screen_view
 {
     using namespace std::views;
-    auto entries = character_tabs( options.prof ) | transform( [&]( const newchar_tab & tab ) {
-        return ec::tab_entry{ .id = tab.id, .label = tab.caption, .selected = tab.id == options.tab };
-    } ) | std::ranges::to<std::vector>();
+    auto entries = character_tabs( options.prof ) | transform( [&]( const newchar_tab & tab ) { return ec::tab_entry{ .id = tab.id, .label = tab.caption, .selected = tab.id == options.tab }; } )
+    | std::ranges::to<std::vector>();
     auto notes = std::vector<ec::panel_stat> { note_of( "points_left", options.points.to_string() ) };
     std::ranges::move( options.notes, std::back_inserter( notes ) );
     options.affordances.push_back( ec::invoke_affordance( { .id = select_tab_id, .label = _( "Category" ), .args = { .row = ec::row_shape{ .component_id = tabs_id } } } ) );
@@ -1196,10 +1194,8 @@ auto starter_pages_view( starter_pages_options options ) -> ec::screen_view
     return newchar_view( {
         .tab = options.tab, .prof = options.prof, .points = options.points, .notes = std::move( notes ),
         .parts = ec::children_of( ec::split( { .id = prefix + "pages", .active = prefix + names[options.page], .children = std::move( pages ) } ) ),
-        .affordances = names | std::views::take( options.used_pages ) | std::views::transform( [&]( const auto & page )
-        {
-            return pick_affordance( options.tab, prefix + page + ":rows", page );
-        } ) | std::ranges::to<std::vector>(),
+        .affordances = names | std::views::take( options.used_pages ) | std::views::transform( [&]( const auto & page ) { return pick_affordance( options.tab, prefix + page + ":rows", page ); } ) |
+        std::ranges::to<std::vector>(),
         .focus_component = prefix + names[options.page] + ":rows", .focus_row = focus_row,
     } );
 }
@@ -1240,16 +1236,21 @@ struct newchar_input {
 
 /// Reads input for a tab. A row a client picked is given to `on_row`, which applies it to the tab's state
 /// and names the native action to run.
-auto newchar_read( input_context &ctxt, const std::string &tab, const profession_id &prof,
-                   const std::function < auto( const std::string & )->std::string > &on_row ) -> newchar_input
+struct newchar_read_options {
+    std::string tab;
+    profession_id prof;
+    /// The action a pick of the row of this id stands for.
+    std::function < auto( const std::string & )->std::string > on_row;
+};
+auto newchar_read( input_context &ctxt, const newchar_read_options &options ) -> newchar_input
 {
     auto result = newchar_input{ .action = ctxt.handle_input() };
     const auto picked = ec::invoked( ctxt.get_raw_input() );
     if( !picked || !picked->args.row ) { return result; }
     if( picked->affordance_id == select_tab_id ) {
-        result.jump = newchar_jump( *picked->args.row, tab, prof );
+        result.jump = newchar_jump( *picked->args.row, options.tab, options.prof );
     } else {
-        result.action = on_row( *picked->args.row );
+        result.action = options.on_row( *picked->args.row );
     }
     return result;
 }
@@ -1435,10 +1436,12 @@ tab_direction set_points( avatar &u, points_left &points )
             highlighted = 0;
         }
         ui_manager::redraw();
-        const auto input = newchar_read( ctxt, "points", u.prof, [&]( const std::string & id ) {
+        const auto input = newchar_read( ctxt, { .tab = "points", .prof = u.prof, .on_row = [&]( const std::string & id )
+        {
             highlighted = std::ranges::find( opts, id, row_id ) - opts.begin();
             return std::string( "CONFIRM" );
-        } );
+        }
+                                               } );
         if( input.jump != tab_direction::NONE ) {
             return input.jump;
         }
@@ -1661,11 +1664,13 @@ tab_direction set_stats( avatar &u, points_left &points )
 
     do {
         ui_manager::redraw();
-        const auto input = newchar_read( ctxt, "stats", u.prof, [&]( const std::string & id ) {
+        const auto input = newchar_read( ctxt, { .tab = "stats", .prof = u.prof, .on_row = [&]( const std::string & id )
+        {
             const auto at = std::array<std::string, 4> { "str", "dex", "int", "per" };
             sel = static_cast<unsigned char>( 1 + std::ranges::find( at, id.substr( 5 ) ) - at.begin() );
             return std::string();
-        } );
+        }
+                                               } );
         if( input.jump != tab_direction::NONE ) {
             return input.jump;
         }
@@ -1926,7 +1931,7 @@ tab_direction set_traits( avatar &u, points_left &points )
         int full_string_length = 0;
         const int remaining_points_length = utf8_width( points.to_string(), true );
         if( !points.is_freeform() ) {
-            std::string full_string = trait_pools_text( num_good, num_bad, max_trait_points );
+            auto full_string = trait_pools_text( num_good, num_bad, max_trait_points );
             fold_and_print( w, point( remaining_points_length + 3, 3 ), getmaxx( w ) - 2, c_white,
                             full_string );
             full_string_length = utf8_width( full_string, true ) + remaining_points_length + 3;
@@ -2045,7 +2050,8 @@ tab_direction set_traits( avatar &u, points_left &points )
 
     do {
         ui_manager::redraw();
-        const auto input = newchar_read( ctxt, "traits", u.prof, [&]( const std::string & id ) {
+        const auto input = newchar_read( ctxt, { .tab = "traits", .prof = u.prof, .on_row = [&]( const std::string & id )
+        {
             for( auto page = 0; page < used_pages; ++page ) {
                 for( auto line = std::size_t{ 0 }; line < vStartingTraits[page].size(); ++line ) {
                     if( "trait:" + vStartingTraits[page][line].id.str() == id ) {
@@ -2055,7 +2061,8 @@ tab_direction set_traits( avatar &u, points_left &points )
                 }
             }
             return std::string( "CONFIRM" );
-        } );
+        }
+                                               } );
         if( input.jump != tab_direction::NONE ) {
             if( use_character_preview ) {
                 character_preview->clear();
@@ -2401,7 +2408,7 @@ tab_direction set_bionics( avatar &u, points_left &points )
         int full_string_length = 0;
         const int remaining_points_length = utf8_width( points.to_string(), true );
         if( !points.is_freeform() ) {
-            std::string full_string = trait_pools_text( num_good, num_bad, max_trait_points );
+            auto full_string = trait_pools_text( num_good, num_bad, max_trait_points );
             fold_and_print( w, point( remaining_points_length + 3, 3 ), getmaxx( w ) - 2, c_white,
                             full_string );
             full_string_length = utf8_width( full_string, true ) + remaining_points_length + 3;
@@ -2520,7 +2527,8 @@ tab_direction set_bionics( avatar &u, points_left &points )
 
     do {
         ui_manager::redraw();
-        const auto input = newchar_read( ctxt, "bionics", u.prof, [&]( const std::string & id ) {
+        const auto input = newchar_read( ctxt, { .tab = "bionics", .prof = u.prof, .on_row = [&]( const std::string & id )
+        {
             for( auto page = 0; page < used_pages; ++page ) {
                 for( auto line = std::size_t{ 0 }; line < vStartingBionics[page].size(); ++line ) {
                     if( "bionic:" + vStartingBionics[page][line].id.str() == id ) {
@@ -2530,7 +2538,8 @@ tab_direction set_bionics( avatar &u, points_left &points )
                 }
             }
             return std::string( "CONFIRM" );
-        } );
+        }
+                                               } );
         if( input.jump != tab_direction::NONE ) {
             if( use_character_preview ) {
                 character_preview->clear();
@@ -2854,9 +2863,9 @@ auto profession_details( const avatar &u, const profession &prof ) -> std::strin
         // and it won't match what you actually start with
         // TODO: Put like items together like the inventory does, so we don't have to scroll
         // through a list of a dozen forks.
-        std::string buffer_wielded;
-        std::string buffer_worn;
-        std::string buffer_inventory;
+        auto buffer_wielded = std::string();
+        auto buffer_worn = std::string();
+        auto buffer_inventory = std::string();
         for( const auto &it : prof_items ) {
             if( it->has_flag( json_flag_no_auto_equip ) ) {
                 buffer_inventory += it->display_name() + "\n";
@@ -2880,9 +2889,7 @@ auto profession_details( const avatar &u, const profession &prof ) -> std::strin
 
     // Profession bionics, active bionics shown first
     auto prof_CBMs = prof.CBMs();
-    std::sort( begin( prof_CBMs ), end( prof_CBMs ), []( const bionic_id & a, const bionic_id & b ) {
-        return a->activated && !b->activated;
-    } );
+    std::sort( begin( prof_CBMs ), end( prof_CBMs ), []( const bionic_id & a, const bionic_id & b ) { return a->activated && !b->activated; } );
     buffer += colorize( _( "Bionics:" ), c_light_blue ) + "\n";
     if( prof_CBMs.empty() ) {
         buffer += pgettext( "set_profession_bionic", "None" ) + std::string( "\n" );
@@ -2929,7 +2936,7 @@ auto profession_details( const avatar &u, const profession &prof ) -> std::strin
         buffer += format_money( cash.value() ) + "\n";
     }
     // Profession companions
-    std::vector<npc_class_id> npcs = prof.npcs();
+    auto npcs = prof.npcs();
 
     if( !npcs.empty() ) {
         buffer += "\n" + colorize( _( "Companions:" ), c_light_blue ) + "\n";
@@ -3200,12 +3207,14 @@ tab_direction set_profession( avatar &u, points_left &points,
         }
 
         ui_manager::redraw();
-        const auto input = newchar_read( ctxt, "profession", u.prof, [&]( const std::string & id ) {
+        const auto input = newchar_read( ctxt, { .tab = "profession", .prof = u.prof, .on_row = [&]( const std::string & id )
+        {
             for( auto i = 0; i < profs_length; ++i ) {
                 if( "profession:" + sorted_profs[i].str() == id ) { cur_id = i; }
             }
             return std::string( "CONFIRM" );
-        } );
+        }
+                                               } );
         if( input.jump != tab_direction::NONE ) {
             return input.jump;
         }
@@ -3471,7 +3480,8 @@ tab_direction set_skills( avatar &u, points_left &points )
 
     do {
         ui_manager::redraw();
-        const auto input = newchar_read( ctxt, "skills", u.prof, [&]( const std::string & id ) {
+        const auto input = newchar_read( ctxt, { .tab = "skills", .prof = u.prof, .on_row = [&]( const std::string & id )
+        {
             for( auto i = 0; i < num_skills; ++i ) {
                 if( "skill:" + skill_list[i].first->ident().str() == id ) {
                     cur_pos = i;
@@ -3479,7 +3489,8 @@ tab_direction set_skills( avatar &u, points_left &points )
                 }
             }
             return std::string();
-        } );
+        }
+                                               } );
         if( input.jump != tab_direction::NONE ) {
             return input.jump;
         }
@@ -3529,7 +3540,7 @@ namespace
 auto spell_upgrade_hint( const avatar &u, const points_left &points,
                          const spell_type &spell ) -> upgrade_hint
 {
-    const int cost = u.magic->knows_spell( spell.id ) ? spell.increase_points : spell.starting_points;
+    const auto cost = u.magic->knows_spell( spell.id ) ? spell.increase_points : spell.starting_points;
     return {
         //~ Second string is e.g. "1 level" or "2 levels"
         .text = string_format( vgettext( "Upgrading %s by 1 level costs %d point",
@@ -3628,7 +3639,7 @@ tab_direction set_magic( avatar &u, points_left &points )
                    upgrade.affordable ? COL_SKILL_USED : c_light_red,
                    "%s", upgrade.text );
 
-        std::string rec_disp = current_spell->description.translated();
+        auto rec_disp = current_spell->description.translated();
 
         const auto vFolded = foldstring( rec_disp, getmaxx( w_description ) );
         int iLines = vFolded.size();
@@ -3728,7 +3739,8 @@ tab_direction set_magic( avatar &u, points_left &points )
 
     do {
         ui_manager::redraw();
-        const auto input = newchar_read( ctxt, "magic", u.prof, [&]( const std::string & id ) {
+        const auto input = newchar_read( ctxt, { .tab = "magic", .prof = u.prof, .on_row = [&]( const std::string & id )
+        {
             for( auto i = 0; i < num_spells; ++i ) {
                 if( "spell:" + spell_list[i].first.str() == id ) {
                     cur_pos = i;
@@ -3736,7 +3748,8 @@ tab_direction set_magic( avatar &u, points_left &points )
                 }
             }
             return std::string();
-        } );
+        }
+                                               } );
         if( input.jump != tab_direction::NONE ) {
             return input.jump;
         }
@@ -4097,13 +4110,14 @@ tab_direction set_scenario( avatar &u, points_left &points,
             const auto default_prof = default_profession( scen );
             const auto prof_points = default_prof->point_cost();
             parts.push_back( ec::panel( { .id = "newchar:scenario:details", .stats = {
-                    fact( "professions", _( "Professions:" ),
-                          scen.prof_count_str() + _( ", default:\n" ) + default_prof->gender_appropriate_name( u.male ) +
-                          ( prof_points > 0 ? colorize( string_format( " (-%d)", prof_points ), c_red ) :
-                            prof_points < 0 ? colorize( string_format( " (+%d)", -prof_points ), c_green ) : std::string() ) ),
-                    fact( "location", _( "Scenario Location:" ), scenario_location_text( scen ) ),
-                    fact( "vehicle", _( "Scenario Vehicle:" ), scen.vehicle() ? scen.vehicle()->name : std::string() ),
-                    fact( "flags", _( "Scenario Flags:" ), join( scenario_flag_lines( scen ), "\n" ) ),
+                    fact( {
+                        .key = "professions", .label = _( "Professions:" ), .value = scen.prof_count_str() + _( ", default:\n" ) +
+                        default_prof->gender_appropriate_name( u.male ) +
+                        ( prof_points > 0 ? colorize( string_format( " (-%d)", prof_points ), c_red ) :
+                          prof_points < 0 ? colorize( string_format( " (+%d)", -prof_points ), c_green ) : std::string() ) } ),
+                    fact( { .key = "location", .label = _( "Scenario Location:" ), .value = scenario_location_text( scen ) } ),
+                    fact( { .key = "vehicle", .label = _( "Scenario Vehicle:" ), .value = scen.vehicle() ? scen.vehicle()->name : std::string() } ),
+                    fact( { .key = "flags", .label = _( "Scenario Flags:" ), .value = join( scenario_flag_lines( scen ), "\n" ) } ),
                 } } ) );
         }
         return newchar_view( {
@@ -4164,12 +4178,14 @@ tab_direction set_scenario( avatar &u, points_left &points,
         }
 
         ui_manager::redraw();
-        const auto input = newchar_read( ctxt, "scenario", u.prof, [&]( const std::string & id ) {
+        const auto input = newchar_read( ctxt, { .tab = "scenario", .prof = u.prof, .on_row = [&]( const std::string & id )
+        {
             for( auto i = 0; i < scens_length; ++i ) {
                 if( "scenario:" + sorted_scens[i]->ident().str() == id ) { cur_id = i; }
             }
             return std::string( "CONFIRM" );
-        } );
+        }
+                                               } );
         if( input.jump != tab_direction::NONE ) {
             return input.jump;
         }
@@ -4670,7 +4686,7 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
                             c_white, "\t" + _( prof_veh->name ) );
             misc_point++;
         }
-        std::vector<npc_class_id> npcs = you.prof->npcs();
+        auto npcs = you.prof->npcs();
         mvwprintz( w_misc, point( 0, misc_point ), c_white, _( "Companions: " ) );
         misc_point ++;
         if( !npcs.empty() ) {
@@ -4819,8 +4835,8 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
         const auto none = colorize( _( "None!" ), c_light_red );
         const auto section = [&]( const std::string & id, const std::string & title,
         const std::vector<std::string> &lines ) {
-            return fact( id, title, lines.empty() ? std::string( _( "None!" ) ) : join( lines, "\n" ),
-                         lines.empty() ? "bad" : "" );
+            return fact( { .key = id, .label = title, .value = lines.empty() ? std::string( _( "None!" ) ) : join( lines, "\n" ),
+                           .tone = lines.empty() ? "bad" : "" } );
         };
         const auto field = [&]( const std::string & id, const std::string & label,
         const std::string & value ) {
@@ -4849,21 +4865,15 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
         std::ranges::sort( current_traits, trait_display_sort );
         auto trait_lines = std::vector<std::string> {};
         std::ranges::transform( current_traits,
-        std::back_inserter( trait_lines ), []( const trait_id & id ) {
-            return colorize( id->name(), id->get_display_color() );
-        } );
+        std::back_inserter( trait_lines ), []( const trait_id & id ) { return colorize( id->name(), id->get_display_color() ); } );
 
         auto current_bionics = you.prof->CBMs();
         std::ranges::transform( you.get_bionic_collection(), std::back_inserter( current_bionics ),
                                 &bionic::id );
-        std::ranges::sort( current_bionics, []( const bionic_id & a, const bionic_id & b ) {
-            return localized_compare( a->name.translated(), b->name.translated() );
-        } );
+        std::ranges::sort( current_bionics, []( const bionic_id & a, const bionic_id & b ) { return localized_compare( a->name.translated(), b->name.translated() ); } );
         auto bionic_lines = std::vector<std::string> {};
         std::ranges::transform( current_bionics,
-        std::back_inserter( bionic_lines ), []( const bionic_id & id ) {
-            return id->name.translated();
-        } );
+        std::back_inserter( bionic_lines ), []( const bionic_id & id ) { return id->name.translated(); } );
 
         auto spell_lines = std::vector<std::string> {};
         for( const auto &[id, level] : you.prof->spells() ) {
@@ -4908,9 +4918,7 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
         }
         auto addiction_lines = std::vector<std::string> {};
         std::ranges::transform( you.prof->addictions(),
-        std::back_inserter( addiction_lines ), []( const addiction & addict ) {
-            return addiction_name( addict );
-        } );
+        std::back_inserter( addiction_lines ), []( const addiction & addict ) { return addiction_name( addict ); } );
         const auto cash = you.prof->starting_cash() ? format_money( *you.prof->starting_cash() ) :
                           std::string( _( "Random!" ) );
 
@@ -4925,9 +4933,7 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
                   wielded :
                   it->is_armor() ? worn : inventory ).push_back( it->display_name() );
             }
-            const auto listed = [&]( const std::string & title, const std::vector<std::string> &names ) {
-                return colorize( title, c_yellow ) + "\n" + ( names.empty() ? none : join( names, "\n" ) );
-            };
+            const auto listed = [&]( const std::string & title, const std::vector<std::string> &names ) { return colorize( title, c_yellow ) + "\n" + ( names.empty() ? none : join( names, "\n" ) ); };
             items = listed( _( "Wielded: " ), wielded ) + "\n" + listed( _( "Worn: " ),
                     worn ) + "\n" + listed( _( "Inventory: " ), inventory );
         }
@@ -4937,12 +4943,12 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
         section( "traits", _( "Traits: " ), trait_lines ), section( "bionics", _( "Bionics: " ), bionic_lines ),
             section( "spells", _( "Spells: " ), spell_lines ), section( "skills", _( "Skills:" ), skill_lines ),
             section( "vehicle", _( "Vehicle: " ), vehicle_lines ), section( "companions", _( "Companions: " ), companion_lines ),
-            fact( "cash", _( "Cash: " ), cash ), section( "pets", _( "Pets: " ), pet_lines ),
+            fact( { .key = "cash", .label = _( "Cash: " ), .value = cash } ), section( "pets", _( "Pets: " ), pet_lines ),
             section( "addictions", _( "Addictions: " ), addiction_lines ),
-            items.empty() ? section( "items", _( "Items: " ), {} ) : fact( "items", _( "Items: " ), items ),
-                fact( "scenario", _( "Scenario: " ), g->scen->gender_appropriate_name( you.male ) ),
-                fact( "profession", _( "Profession: " ), you.prof->gender_appropriate_name( you.male ) ),
-            } ) { facts.push_back( std::move( entry ) ); }
+            items.empty() ? section( "items", _( "Items: " ), {} ) : fact( { .key = "items", .label = _( "Items: " ), .value = items } ),
+            fact( { .key = "scenario", .label = _( "Scenario: " ), .value = g->scen->gender_appropriate_name( you.male ) } ),
+            fact( { .key = "profession", .label = _( "Profession: " ), .value = you.prof->gender_appropriate_name( you.male ) } ),
+        } ) { facts.push_back( std::move( entry ) ); }
         auto parts = ec::children_of(
                          ec::list( { .id = "newchar:overview:fields", .rows = std::move( fields ), .selection = "single", .activate = pick_id( "overview" ) } ),
                          ec::panel( { .id = "newchar:overview:facts", .stats = std::move( facts ) } ) );
@@ -4961,13 +4967,15 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
         max_allowed_age = new_max_age;
         you.set_base_age( clamp( you.base_age(), min_allowed_age, max_allowed_age ) );
         ui_manager::redraw();
-        const auto input = newchar_read( ctxt, "overview", you.prof, [&]( const std::string & id ) {
+        const auto input = newchar_read( ctxt, { .tab = "overview", .prof = you.prof, .on_row = [&]( const std::string & id )
+        {
             if( id == "gender" ) { return std::string( "CHANGE_GENDER" ); }
             if( id == "location" ) { return std::string( "CHOOSE_LOCATION" ); }
             current_selector = id == "height" ? char_creation::HEIGHT :
                                id == "age" ? char_creation::AGE : char_creation::NAME;
             return std::string( "CONFIRM" );
-        } );
+        }
+                                               } );
         if( input.jump != tab_direction::NONE ) {
             if( use_character_preview ) {
                 character_preview->clear();
