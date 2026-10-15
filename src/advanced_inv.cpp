@@ -24,6 +24,7 @@
 #include "iteminfo_request.h"
 #include "item_category.h"
 #include "item_contents.h"
+#include "item_serial.h"
 #include "item_stack.h"
 #include "map/map.h"
 #include "map/map_selector.h"
@@ -1081,12 +1082,10 @@ auto aim_row( const advanced_inv_listitem &entry, std::string id,
 
 auto advanced_inventory::row_ids_of( const side which ) const -> std::vector<std::string>
 {
-    auto ordinals = std::map<std::string, int> {};
-    return panes[which].items | std::views::transform( [&]( const advanced_inv_listitem & entry ) {
+    return panes[which].items | std::views::transform( []( const advanced_inv_listitem & entry ) {
         if( !entry.is_item_entry() ) { return std::string{}; }
-        const auto stem = string_format( "%s:%s:%s%s", items_id( which ), area_id( entry.area ),
-                                         entry.from_vehicle ? "cargo:" : "", entry.id.str() );
-        return string_format( "%s:%d", stem, ordinals[stem]++ );
+        const auto members = entry.items | std::ranges::to<std::vector<const item *>>();
+        return game_client::stack_row_id( members );
     } ) | std::ranges::to<std::vector>();
 }
 

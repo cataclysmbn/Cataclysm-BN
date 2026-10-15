@@ -10,6 +10,7 @@
 #include "input.h"
 #include "item.h"
 #include "iteminfo_request.h"
+#include "item_serial.h"
 #include "options.h"
 #include "output.h"
 #include "player.h"
@@ -27,19 +28,6 @@
 namespace
 {
 namespace ec = engine_client;
-
-auto item_pickup_identity( const item &candidate ) -> std::string
-{
-    const auto &token = *candidate.drop_token;
-    auto position = std::string{ "unknown" };
-    if( candidate.has_position() ) {
-        const auto pos = candidate.abs_pos();
-        position = string_format( "%d:%d:%d", pos.x(), pos.y(), pos.z() );
-    }
-    return string_format( "%s:%s:%d:%d:%d:%d", candidate.typeId().str(), position,
-                          to_turn<int>( token.turn ), token.drop_number, token.parent_number,
-                          candidate.count_by_charges() ? candidate.charges : 1 );
-}
 
 /// The row text with its color tags: the stack size in front, the charges colored, money as cards and cash.
 auto name_markup( const std::list<item_stack::iterator> &stack,
@@ -137,18 +125,11 @@ namespace pickup
 
 auto choice_ids( const screen_options &opts ) -> std::vector<std::string>
 {
-    auto identity_counts = std::unordered_map<std::string, std::size_t> {};
     return opts.matches | std::views::transform( [&]( const auto stack_index ) {
-        const auto &stack = opts.stacked_here[static_cast<std::size_t>( stack_index )];
-        auto identity = std::vector<std::string> { opts.source_identity };
-        identity.reserve( stack.size() + 2 );
-        std::ranges::transform( stack, std::back_inserter( identity ), []( const auto iter ) {
-            return item_pickup_identity( **iter );
-        } );
-        const auto base_identity = std::accumulate( identity.begin(), identity.end(), std::string{},
-        []( const auto & joined, const auto & part ) { return joined + part + "|"; } );
-        identity.push_back( std::to_string( identity_counts[base_identity]++ ) );
-        return game_client::opaque_interaction_id( "pickup", identity );
+        const auto members = opts.stacked_here[static_cast<std::size_t>( stack_index )]
+                             | std::views::transform( []( const auto iter ) -> const item * { return *iter; } )
+                             | std::ranges::to<std::vector>();
+        return game_client::stack_row_id( members );
     } ) | std::ranges::to<std::vector>();
 }
 

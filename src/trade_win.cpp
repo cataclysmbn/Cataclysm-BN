@@ -27,6 +27,7 @@
 #include "item_category.h"
 #include "item_contents.h"
 #include "item_search.h"
+#include "item_serial.h"
 #include "itype.h"
 #include "npc.h"
 #include "output.h"
@@ -58,27 +59,6 @@ struct trade_selection_totals {
     units::volume volume = 0_ml;
     units::mass weight = 0_gram;
 };
-
-auto trade_item_source_identity( const item &candidate ) -> std::string
-{
-    auto position = std::string{ "no-position" };
-    if( candidate.has_position() ) {
-        const auto pos = candidate.abs_pos();
-        position = string_format( "%d:%d:%d", pos.x(), pos.y(), pos.z() );
-    }
-    return string_format( "%d:%s:%s", static_cast<int>( candidate.where() ), position,
-                          item_owner_for_observation( candidate ).str() );
-}
-
-auto trade_item_identity( const item &candidate ) -> std::string
-{
-    const auto &token = *candidate.drop_token;
-    return string_format( "%s:%s:%d:%d:%d:%d:%d:%d", candidate.typeId().str(),
-                          trade_item_source_identity( candidate ),
-                          to_turn<int>( candidate.birthday() ), to_turn<int>( token.turn ),
-                          token.drop_number, token.parent_number, candidate.damage(),
-                          candidate.count_by_charges() ? candidate.charges : 1 );
-}
 
 auto selected_trade_amount( const item_pricing &pricing, const bool is_theirs ) -> int
 {
@@ -198,23 +178,13 @@ auto selected_totals( const std::vector<item_pricing> &list,
     } );
 }
 
-/// The ids of a pane's rows, one per entry of `filtered`: from what the items are, never from their words.
-auto item_row_ids( const std::vector<item_pricing> &list, const std::vector<size_t> &filtered,
-                   const std::string &role ) -> std::vector<std::string>
+/// The ids of a pane's rows, one per entry of `filtered`: from the items' own serials, never from their words.
+auto item_row_ids( const std::vector<item_pricing> &list, const std::vector<size_t> &filtered ) ->
+std::vector<std::string>
 {
-    auto ordinals = std::unordered_map<std::string, size_t> {};
     return filtered | std::views::transform( [&]( const size_t index ) {
-        const auto &pricing = list[index];
-        auto identity = std::vector<std::string> {
-            role, trade_item_source_identity( *pricing.locs.front() ), pricing.locs.front()->typeId().str(),
-            std::to_string( pricing.locs.size() )
-        };
-        std::ranges::transform( pricing.locs, std::back_inserter( identity ),
-        []( const item * member ) { return trade_item_identity( *member ); } );
-        // Equal stacks are told apart by their order, as natively.
-        identity.push_back( std::to_string( ordinals[game_client::opaque_interaction_id( "trade-item",
-                                                                                identity )]++ ) );
-        return game_client::opaque_interaction_id( "trade-item", identity );
+        const auto members = list[index].locs | std::ranges::to<std::vector<const item *>>();
+        return game_client::stack_row_id( members );
     } ) | std::ranges::to<std::vector>();
 }
 
@@ -284,7 +254,7 @@ auto make_pane( const pane_options &opts ) -> pane_view
     const auto &list = opts.list;
     const auto &filtered = opts.filtered;
     const auto role = std::string{ opts.is_theirs ? "npc" : "you" };
-    const auto ids = item_row_ids( list, filtered, role );
+    const auto ids = item_row_ids( list, filtered );
     const auto ranges = build_category_ranges( list, filtered );
     const auto active = opts.category && *opts.category < ranges.size() ?
                         std::optional{ ranges[*opts.category].id } :
@@ -1453,7 +1423,7 @@ auto trading_window::perform_trade( npc &np, npc_trading::deal_kind deal ) -> bo
         {
             auto &list = is_theirs ? state.theirs : state.yours;
             auto &visible = is_theirs ? them_filtered : you_filtered;
-            const auto ids = item_row_ids( list, visible, is_theirs ? "npc" : "you" );
+            const auto ids = item_row_ids( list, visible );
             const auto found = std::ranges::find( ids, row_id );
             if( found == ids.end() ) { continue; }
             focus_them = is_theirs;

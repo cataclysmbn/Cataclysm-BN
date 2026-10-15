@@ -1538,7 +1538,7 @@ TEST_CASE(
             const auto child = row_of(rows, "test_screwdriver");
             REQUIRE(child.is_object());
             if (reads++ == 0) {
-                CHECK(child["parent_id"].get<std::string>().starts_with("pickup:"));
+                CHECK(child["parent_id"].get<std::string>().starts_with("item:"));
                 CHECK(child["nest_color"] == "c_dark_gray");
                 return pick_row(child);
             }

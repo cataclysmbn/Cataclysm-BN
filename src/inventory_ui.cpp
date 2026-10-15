@@ -18,6 +18,7 @@
 #include "iteminfo_request.h"
 #include "item_category.h"
 #include "item_search.h"
+#include "item_serial.h"
 #include "item_stack.h"
 #include "itype.h"
 #include "line.h"
@@ -2065,7 +2066,7 @@ auto count_id( const std::string &column_key ) -> std::string { return list_id( 
 auto inventory_selector::interaction_rows() const -> std::vector<interaction_row>
 {
     auto result = std::vector<interaction_row> {};
-    // Equal things are told apart by their order, as the native list does.
+    // Equal categories are told apart by their order; an item is told by its own serial.
     auto seen = std::unordered_map<std::string, std::size_t> {};
     for( const auto index : std::views::iota( std::size_t{ 0 }, columns.size() ) ) {
         const auto &column = *columns[index];
@@ -2084,10 +2085,9 @@ auto inventory_selector::interaction_rows() const -> std::vector<interaction_row
                     .column_key = key, .column = &column, .category = category,
                 } );
             }
-            const auto type = entry.any_item()->typeId().str();
-            const auto ordinal = seen[key + "|" + category_id + "|" + type]++;
+            const auto members = entry.locations | std::ranges::to<std::vector<const item *>>();
             result.push_back( {
-                .id = game_client::opaque_interaction_id( "item", { key, category_id, type, std::to_string( ordinal ) } ),
+                .id = game_client::stack_row_id( members ),
                 .column_key = key, .column = &column, .category = category,
                 .entry = const_cast<inventory_entry *>( &entry ),
             } );

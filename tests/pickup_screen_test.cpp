@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <list>
 #include <nlohmann/json.hpp>
+#include <numeric>
 #include <ranges>
 #include <set>
 #include <string>
@@ -225,7 +226,7 @@ TEST_CASE("an empty cursor list publishes no focus row", "[pickup]") {
     CHECK(view.focus_row.empty());
 }
 
-TEST_CASE("a pickup row id comes from where the items lie and what they are", "[pickup]") {
+TEST_CASE("a pickup row id comes from the items' own serials", "[pickup]") {
     auto list = ground({"rock", "stick", "stick"});
     const auto first = pickup::choice_ids(list.options());
     REQUIRE(first.size() == list.stacks.size());
@@ -234,12 +235,17 @@ TEST_CASE("a pickup row id comes from where the items lie and what they are", "[
     list.picks[0] = {.pick = true};
     list.cursor = 1;
     CHECK(pickup::choice_ids(list.options()) == first);
-    // Another square names the same items otherwise.
+    // Another source name changes nothing: the rows name the items, not where they lie.
     list.identity = "ground:61:60:0:-1";
-    const auto elsewhere = pickup::choice_ids(list.options());
-    CHECK(std::ranges::none_of(elsewhere, [&](const auto& id) {
-        return std::ranges::contains(first, id);
-    }));
+    CHECK(pickup::choice_ids(list.options()) == first);
+    // Reordering the rows moves each id with its stack.
+    std::ranges::reverse(list.stacks);
+    std::ranges::reverse(list.picks);
+    list.matches.resize(list.stacks.size());
+    std::ranges::iota(list.matches, 0);
+    auto reordered = pickup::choice_ids(list.options());
+    std::ranges::reverse(reordered);
+    CHECK(reordered == first);
 }
 
 TEST_CASE(

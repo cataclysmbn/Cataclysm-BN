@@ -83,6 +83,7 @@
 #include "item_category.h"
 #include "item_contents.h"
 #include "item_functions.h"
+#include "item_serial.h"
 #include "item_stack.h"
 #include "itype.h"
 #include "iuse.h"
@@ -4014,6 +4015,7 @@ bool game::load( const save_t &name )
 
     using namespace std::placeholders;
 
+    game_client::reset_item_serials();
     saving_blocked_by_failed_load = true;
     auto save_json_valid = false;
     const auto validate_save = [&]( std::istream & fin ) { save_json_valid = validate_save_json( fin ); };

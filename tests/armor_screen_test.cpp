@@ -16,6 +16,7 @@
 #    include "game_constants.h"
 #    include "input.h"
 #    include "item.h"
+#    include "item_serial.h"
 #    include "locale_fixture.h"
 #    include "locale_scope.h"
 #    include "map_helpers.h"
@@ -67,17 +68,26 @@ struct screen_guard {
     }
 };
 
+// The row ids of the worn items, which are the items' own serials: set by dress().
+auto shirt_a = std::string{};
+auto shirt_b = std::string{};
+auto jeans_id = std::string{};
+auto hoodie_id = std::string{};
+
 /// Two equal shirts, jeans and a hoodie, worn in that order.
 void dress(avatar& you) {
     for (const auto* const id : {"tshirt", "tshirt", "jeans", "hoodie"}) {
         you.wear_item(item::spawn(id), false);
     }
+    const auto worn = std::vector<const item*>(you.worn.begin(), you.worn.end());
+    const auto id_of = [&](const std::size_t index) {
+        return game_client::item_row_id(*worn[index]);
+    };
+    shirt_a = id_of(0);
+    shirt_b = id_of(1);
+    jeans_id = id_of(2);
+    hoodie_id = id_of(3);
 }
-
-const auto shirt_a = std::string{"worn:tshirt:0"};
-const auto shirt_b = std::string{"worn:tshirt:1"};
-const auto jeans_id = std::string{"worn:jeans:0"};
-const auto hoodie_id = std::string{"worn:hoodie:0"};
 
 auto captured() -> ec::boundary_state {
     const auto state = ec::capture_boundary(

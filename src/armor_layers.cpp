@@ -27,6 +27,7 @@
 #include "input.h"
 #include "inventory.h"
 #include "item.h"
+#include "item_serial.h"
 #include "line.h"
 #include "output.h"
 #include "player_activity.h"
@@ -500,17 +501,11 @@ auto part_id( const bodypart_id &part ) -> std::string
     return part.id().is_null() ? "part:all" : "part:" + part.id().str();
 }
 
-/// The identity of each worn item, by its position in the worn items: its type and its place among the worn
-/// items of that type, never its name or its position among the others.
+/// The identity of each worn item: its own serial, so it keeps it when the layers are reordered.
 auto worn_ids( const Character &who ) -> std::vector<std::string>
 {
-    auto seen = std::map<std::string, int> {};
-    auto ids = std::vector<std::string> {};
-    for( const item * const &worn : who.worn ) {
-        const auto type = worn->typeId().str();
-        ids.push_back( "worn:" + type + ":" + std::to_string( seen[type]++ ) );
-    }
-    return ids;
+    return who.worn | std::views::transform( []( const item * worn ) { return game_client::item_row_id( *worn ); } )
+    | std::ranges::to<std::vector>();
 }
 
 auto stat_of( const item_stat &stat ) -> ec::panel_stat

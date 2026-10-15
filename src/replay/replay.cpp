@@ -1,6 +1,7 @@
 #include "replay/replay.h"
 
 #include "client_interaction.h"
+#include "item_serial.h"
 #include "json.h"
 #include "rng.h"
 
@@ -494,6 +495,7 @@ auto start() -> void {
     if (!is_enabled()) { return; }
     if (current.started) { throw std::runtime_error("Replay is already started"); }
     if (current.path.empty()) { throw std::runtime_error("Replay path must not be empty"); }
+    game_client::reset_item_serials();
     try {
         if (is_recording()) {
             if (current.metadata.rng_seed == 0) {

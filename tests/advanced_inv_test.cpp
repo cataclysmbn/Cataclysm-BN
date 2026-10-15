@@ -253,7 +253,7 @@ auto row_of(const ec::screen_view& top, const std::string& list, const std::stri
     -> std::string {
     const auto rows = list_rows(top, list);
     const auto found = std::ranges::find_if(rows, [&](const ec::row& row) {
-        return row.id.find(":" + type + ":") != std::string::npos;
+        return row.look && row.look->id == type;
     });
     REQUIRE(found != rows.end());
     return found->id;
@@ -375,7 +375,7 @@ TEST_CASE(
         CHECK(std::get<ec::split_body>(panes.body).active == "aim:pane:left");
         const auto left = list_rows(top, "aim:pane:left:items");
         REQUIRE(left.size() == 1);
-        CHECK(left.front().id == "aim:pane:left:items:area:INVENTORY:test_1kg_cube:0");
+        CHECK(left.front().id.starts_with("stack:"));
         CHECK(left.front().max == 3);
         CHECK(left.front().look.has_value());
         CHECK_FALSE(left.front().description.empty());
@@ -385,7 +385,7 @@ TEST_CASE(
         CHECK(amount->value == "3");
         const auto right = list_rows(top, "aim:pane:right:items");
         REQUIRE(right.size() == 1);
-        CHECK(right.front().id == "aim:pane:right:items:area:CENTER:test_platinum_bit:0");
+        CHECK(right.front().id.starts_with("item:"));
         CHECK(right.front().max == 10);
         // Only the pane the player works in takes counts.
         const auto selection = [&](const std::string& id) {
@@ -474,8 +474,7 @@ TEST_CASE(
         const auto rows = list_rows(top, "aim:pane:left:items");
         REQUIRE(rows.size() == 2);
         const auto ids = ids_of(rows);
-        CHECK(std::ranges::contains(ids, "aim:pane:left:items:area:E:test_1kg_cube:0"));
-        CHECK(std::ranges::contains(ids, "aim:pane:left:items:area:E:cargo:test_1kg_cube:0"));
+        CHECK(ids.front() != ids.back());
         // A pane that shows several squares names where each stack is.
         for (const auto& row : rows) {
             const auto source =
@@ -610,12 +609,9 @@ TEST_CASE(
         CHECK(refused("aim:move", {.rows = std::vector<ec::invoke_row>{}, .pane = "aim:pane:right"})
               == invalid);
         // The right pane's rows are not the source's.
-        CHECK(
-            refused(
-                "aim:move",
-                {.rows = std::vector<ec::invoke_row>{{.id = "aim:pane:right:items:area:CENTER:x:0"}},
-                 .pane = "aim:pane:right"})
-            == invalid);
+        CHECK(refused("aim:move", {.rows = std::vector<ec::invoke_row>{{.id = "item:0"}},
+                                   .pane = "aim:pane:right"})
+              == invalid);
         // An area is no item, and an item is no area.
         CHECK(refused("aim:move", {.rows = std::vector<ec::invoke_row>{{.id = "area:E"}},
                                    .pane = "aim:pane:right"})
@@ -926,7 +922,11 @@ TEST_CASE(
     auto plan = script{};
     plan.steps.push_back([&](const ec::screen_view& top) {
         // The jug sorts first, so it is the item the left pane's cursor is on.
-        REQUIRE(top.focus_row.find("test_jug_plastic") != std::string::npos);
+        const auto rows = list_rows(top, "aim:pane:left:items");
+        const auto jug = std::ranges::find(rows, top.focus_row, &ec::row::id);
+        REQUIRE(jug != rows.end());
+        REQUIRE(jug->look.has_value());
+        REQUIRE(jug->look->id == "test_jug_plastic");
         return aim_event("aim:set_area", {.row = "area:CONTAINER", .pane = "aim:pane:left"});
     });
     plan.steps.push_back(key_action("TOGGLE_TAB"));
