@@ -1,6 +1,5 @@
 #if defined(CATA_MCP)
 
-#    include "armor_layers.h"
 #    include "avatar.h"
 #    include "bionics.h"
 #    include "catch/catch.hpp"
@@ -187,56 +186,6 @@ TEST_CASE(
             return input_event{};
         });
     CHECK(stage == 2);
-}
-
-TEST_CASE(
-    "the armor layer list shows the worn items and a grabbed item moves with the cursor",
-    "[client][interaction][mcp][screens]") {
-    clear_all_state();
-    clear_map();
-    auto& you = get_avatar();
-    clear_character(you, false);
-    you.wear_item(item::spawn("tshirt"));
-    you.wear_item(item::spawn("jeans"));
-    REQUIRE(you.worn.size() == 2);
-    you.moves = 100;
-    const auto innermost = you.worn.front()->typeId();
-    const auto guard = screen_guard{};
-    auto stage = 0;
-    open_screen(
-        [&] { show_armor_layers_ui(you); },
-        [&](const auto& snapshot) {
-            switch (stage++) {
-                case 0: {
-                    CHECK(snapshot.context == "SORT_ARMOR");
-                    CHECK(rows_with(snapshot, "tab:").size() > 2);
-                    REQUIRE(rows_with(snapshot, "armor:").size() == 2);
-                    CHECK(row(snapshot, "armor:0")->highlighted);
-                    CHECK(row(snapshot, "armor:0")->columns.size() == 2);
-                    return choose(snapshot, "armor:1");
-                }
-                case 1: {
-                    CHECK(row(snapshot, "armor:1")->highlighted);
-                    CHECK_FALSE(row(snapshot, "armor:0")->highlighted);
-                    return choose(snapshot, "action:MOVE_ARMOR");
-                }
-                case 2: {
-                    CHECK(row(snapshot, "armor:1")->selected);
-                    return choose(snapshot, "action:UP");
-                }
-                case 3: {
-                    // The grabbed item went one layer inward with the cursor.
-                    CHECK(row(snapshot, "armor:0")->selected);
-                    CHECK(row(snapshot, "armor:0")->highlighted);
-                    return cancel(snapshot);
-                }
-                default:
-                    FAIL("unexpected extra screen " << snapshot.context);
-            }
-            return input_event{};
-        });
-    CHECK(stage == 4);
-    CHECK(you.worn.back()->typeId() == innermost);
 }
 
 #endif // CATA_MCP

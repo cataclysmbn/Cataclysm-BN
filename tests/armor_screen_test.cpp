@@ -524,6 +524,23 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the item examine menu runs wield like its key and closes",
+    "[armor_screen][engine_client_component]") {
+    const auto guard = screen_guard{};
+    auto& you = get_avatar();
+    auto& lighter = you.i_add(item::spawn("lighter"));
+    auto reads = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        ++reads;
+        return invoke("examine:run", {.row = "WIELD"});
+    });
+    CHECK(examine_item_menu::run(
+        lighter, [] { return 50; }, [] { return 40; }, examine_item_menu::menu_pos_t::right));
+    CHECK(reads == 1);
+    CHECK(you.is_wielding(lighter));
+}
+
+TEST_CASE(
     "the item examine menu moves its cursor with the native keys and is the same at any viewport size",
     "[armor_screen][engine_client_component]") {
     const auto guard = screen_guard{};
