@@ -25,10 +25,12 @@
 
 #    include <algorithm>
 #    include <chrono>
+#    include <ctime>
 #    include <iostream>
 #    include <optional>
 #    include <ranges>
 #    include <string>
+#    include <vector>
 
 namespace {
 namespace ec = engine_client;
@@ -690,6 +692,61 @@ TEST_CASE("the cost of a publication by squares memorized", "[.engine_client_pat
                       << std::chrono::duration<double, std::milli>(elapsed).count() / turns
                       << " ms/publication\n";
         }
+    }
+}
+
+namespace {
+/// Whether the next patch asked for must not continue the last: the map has moved since the one
+/// before.
+auto force_full_at_shift = false;
+auto last_origin = std::optional<point_abs_sm>{};
+auto shift_cost_patch(const ec::snapshot& previous, const bool consecutive) -> ec::world_patch {
+    const auto origin = get_map().get_abs_sub();
+    const auto moved = last_origin && *last_origin != origin;
+    last_origin = origin;
+    return ec::world::capture_patch(previous, consecutive && !(force_full_at_shift && moved));
+}
+auto thread_cpu_ms() -> double {
+    auto now = timespec{};
+    clock_gettime(CLOCK_THREAD_CPUTIME_ID, &now);
+    return static_cast<double>(now.tv_sec) * 1e3 + static_cast<double>(now.tv_nsec) / 1e6;
+}
+} // namespace
+
+/// Thread CPU milliseconds of a publication that follows a step of the avatar over open ground,
+/// split by whether the step shifted the map, once with a patch that follows the shift and once
+/// with the full capture a shift used to need: `cata_test-mcp "[.engine_client_patch_cost_shift]"`
+/// prints them.
+TEST_CASE(
+    "the cost of a publication across a shift of the map", "[.engine_client_patch_cost_shift]") {
+    for (const auto full : {true, false}) {
+        make_open_ground(12);
+        auto& here = get_map();
+        auto& you = get_avatar();
+        auto watched = watched_session{};
+        watched.authority.set_oracle(false);
+        watched.authority.set_world_capture(&ec::world::capture_world, &shift_cost_patch);
+        force_full_at_shift = full;
+        last_origin = std::nullopt;
+        auto plain = std::vector<double>{};
+        auto shifted = std::vector<double>{};
+        for (const auto i : std::views::iota(0, 80)) {
+            static_cast<void>(i);
+            const auto origin = here.get_abs_sub();
+            static_cast<void>(g->place_player(you.bub_pos() + tripoint_east));
+            map_perception::acquire();
+            const auto began = thread_cpu_ms();
+            REQUIRE(watched.authority.publish_boundary());
+            (here.get_abs_sub() != origin ? shifted : plain).push_back(thread_cpu_ms() - began);
+        }
+        const auto median = [](std::vector<double> values) {
+            std::ranges::sort(values);
+            return values.empty() ? 0.0 : values[values.size() / 2];
+        };
+        std::cerr << (full ? "full capture at a shift" : "patch across a shift") << ": "
+                  << plain.size() << " plain steps median " << median(plain) << " ms, "
+                  << shifted.size() << " shift steps median " << median(shifted) << " ms max "
+                  << (shifted.empty() ? 0.0 : *std::ranges::max_element(shifted)) << " ms\n";
     }
 }
 
