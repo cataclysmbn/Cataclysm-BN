@@ -1,7 +1,9 @@
 #include "game.h" // IWYU pragma: associated
 
 #include <algorithm>
+#include <array>
 #include <map>
+#include <ranges>
 #include <string>
 #include <utility>
 #include <vector>
@@ -9,11 +11,12 @@
 #include "color.h"
 #include "cursesdef.h"
 #include "debug.h"
-#include "client_choice.h"
 #include "diary.h"
+#include "engine_client_component.h"
 #include "input.h"
 #include "options.h"
 #include "output.h"
+#include "page_serial.h"
 #include "popup.h"
 #include "string_editor_window.h"
 #include "string_formatter.h"
@@ -148,6 +151,66 @@ void draw_diary_border( catacurses::window *win, const nc_color &color = c_white
     mvwprintw( *win, point( midx, max.y - 1 ), "\\|/" );
     mvwprintw( *win, point( midx, max.y - 0 ), "___" );
     wattroff( *win, color );
+}
+
+namespace ec = engine_client;
+
+constexpr auto pages_list_id = "diary:pages:list";
+constexpr auto changes_text_id = "diary:changes:text";
+constexpr auto page_text_id = "diary:page:text";
+constexpr auto info_text_id = "diary:info:text";
+constexpr auto select_page_id = "diary:page";
+
+/// What the diary window shows, as the loop of `diary::show_diary_ui` keeps it.
+struct diary_model {
+    std::string owner = {};
+    std::vector<ec::row> pages = {};
+    /// The head of the opened page, then its changes since the page before it.
+    std::string changes = {};
+    std::string text = {};
+    /// The description of the change line the player is on; empty when the pages window has the cursor.
+    std::string info = {};
+    /// The window the cursor is in: the id of its panel and of the part inside it.
+    std::string focus_panel = {};
+    std::string focus_part = {};
+};
+
+auto window_panel( const std::string &panel_id, const std::string &title,
+                   ec::component part ) -> ec::component
+{
+    return ec::panel( { .id = panel_id, .title = title, .child = std::move( part ) } );
+}
+
+auto diary_view( diary_model model ) -> ec::screen_view
+{
+    const auto count = model.pages.size();
+    const auto text_part = []( const std::string & id, std::string markup ) {
+        return ec::component{ .id = id, .body = ec::text_body{ .markup = std::move( markup ) } };
+    };
+    auto selected = std::string{};
+    for( const auto &page : model.pages ) {
+        if( page.selected ) { selected = page.id; }
+    }
+    return {
+        .title = string_format( _( "%s's Diary" ), model.owner ),
+        .root = ec::split( {
+            .id = "diary:panes", .active = model.focus_panel,
+            .children = ec::children_of(
+                window_panel( "diary:pages", string_format( _( "pages: %d" ), count ),
+            ec::list( {
+                .id = pages_list_id, .rows = std::move( model.pages ), .selection = "single",
+                .activate = select_page_id } ) ),
+            window_panel( "diary:changes", "", text_part( changes_text_id, std::move( model.changes ) ) ),
+            window_panel( "diary:text", "", text_part( page_text_id, std::move( model.text ) ) ),
+            window_panel( "diary:info", _( "Info" ), text_part( info_text_id, std::move( model.info ) ) ) ) } ),
+        .affordances = {
+            ec::invoke_affordance( {
+                .id = select_page_id, .label = _( "Select" ),
+                .args = { .row = ec::row_shape{ .component_id = pages_list_id } } } ),
+        },
+        .focus_component = model.focus_part,
+        .focus_row = model.focus_part == pages_list_id ? selected : std::string{},
+    };
 }
 } // namespace
 
@@ -304,32 +367,41 @@ void diary::show_diary_ui( diary *c_diary )
         wnoutrefresh( w_info );
     } );
 
-    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
-        auto snapshot = game_client::interaction_snapshot{
-            .kind = game_client::interaction_kind::choices,
-            .title = string_format( _( "%s's Diary" ), c_diary->owner ),
-            .message = remove_color_tags( c_diary->get_page_text() ),
-            .allow_cancel = true,
-        };
-        for( const auto &line : c_diary->get_head_text() ) {
-            snapshot.message += "\n" + remove_color_tags( line );
+    // A const read of the diary as the loop below keeps it: the pages, the opened page and the window the
+    // cursor is in.
+    const auto screen = ec::screen_scope( ctxt, { .view = [&]( const ec::boundary_state & /*state*/ )
+    {
+        auto model = diary_model{ .owner = c_diary->owner };
+        const auto labels = c_diary->get_pages_list();
+        for( const auto index : std::views::iota( std::size_t{ 0 }, c_diary->pages.size() ) ) {
+            model.pages.push_back( { .id = game_client::diary_page_row_id( *c_diary->pages[index] ), .label = labels[index],
+                                     .selected = static_cast<int>( index ) == selected[window_mode::PAGE_WIN] } );
         }
-        for( const auto &line : c_diary->get_change_list() ) {
-            snapshot.message += "\n" + remove_color_tags( line );
+        const auto head = c_diary->get_head_text();
+        const auto changes = c_diary->get_change_list();
+        model.changes = std::ranges::to<std::string>( std::views::join_with( std::views::join( std::array{ head, changes } ),
+                        '\n' ) );
+        model.text = c_diary->get_page_text();
+        switch( currwin ) {
+            case window_mode::PAGE_WIN:
+                model.focus_panel = "diary:pages";
+                model.focus_part = pages_list_id;
+                break;
+            case window_mode::CHANGE_WIN:
+                model.focus_panel = "diary:changes";
+                model.focus_part = changes_text_id;
+                break;
+            default:
+                model.focus_panel = "diary:text";
+                model.focus_part = page_text_id;
+                break;
         }
-        const auto pages = c_diary->get_pages_list();
-        for( auto i = std::size_t{ 0 }; i < pages.size(); ++i ) {
-            snapshot.choices.push_back( {
-                .id = "page:" + std::to_string( i ), .label = remove_color_tags( pages[i] ),
-                .highlighted = static_cast<int>( i ) == selected[window_mode::PAGE_WIN],
-            } );
+        if( currwin != window_mode::PAGE_WIN ) {
+            model.info = c_diary->get_desc_map()[selected[window_mode::CHANGE_WIN]];
         }
-        for( const auto *id : { "NEW_PAGE", "CONFIRM", "DELETE PAGE", "EXPORT_DIARY" } ) {
-            snapshot.choices.push_back( { .id = std::string( "action:" ) + id,
-                                          .label = remove_color_tags( ctxt.get_action_name( id ) ) } );
-        }
-        return snapshot;
-    } );
+        return diary_view( std::move( model ) );
+    }
+                                                } );
 
     while( true ) {
 
@@ -344,14 +416,19 @@ void diary::show_diary_ui( diary *c_diary )
         ui_desc.invalidate_ui();
         ui_info.invalidate_ui();
         ui_manager::redraw_invalidated();
-        const auto action = game_client::action_of( ctxt,
-        ctxt.handle_input(), [&]( const std::string & id ) {
-            if( id.starts_with( "page:" ) ) {
+        const auto action = ctxt.handle_input();
+        if( const auto picked = ec::invoked( ctxt.get_raw_input() ) ) {
+            // A page the diary does not hold is none, so nothing is opened.
+            const auto page = std::ranges::find( c_diary->pages,
+            picked->args.row.value_or( "" ), []( const auto & entry ) {
+                return game_client::diary_page_row_id( *entry );
+            } );
+            if( picked->affordance_id == select_page_id && page != c_diary->pages.end() ) {
                 currwin = window_mode::PAGE_WIN;
-                selected[window_mode::PAGE_WIN] = std::stoi( id.substr( 5 ) );
+                selected[window_mode::PAGE_WIN] = static_cast<int>( page - c_diary->pages.begin() );
             }
-            return std::string();
-        } );
+            continue;
+        }
         if( action == "RIGHT" ) {
             currwin = static_cast<window_mode>( static_cast<int>( currwin ) + 1 );
             if( currwin >= window_mode::NUM_WIN ) {

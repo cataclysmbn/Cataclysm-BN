@@ -8,9 +8,11 @@
 #    include "client_screen_support.h"
 #    include "diary.h"
 #    include "engine_client_component.h"
+#    include "item_serial.h"
 #    include "locale_fixture.h"
 #    include "locale_scope.h"
 #    include "map_helpers.h"
+#    include "page_serial.h"
 #    include "player_helpers.h"
 #    include "state_helpers.h"
 #    include "string_editor_window.h"
@@ -18,6 +20,7 @@
 #    include <algorithm>
 #    include <functional>
 #    include <nlohmann/json.hpp>
+#    include <sstream>
 #    include <string>
 #    include <variant>
 #    include <vector>
@@ -87,15 +90,13 @@ struct diary_fixture {
     const bool cleared =
         (clear_all_state(), clear_map(), clear_character(get_avatar(), false), true);
     const screen_guard guard;
-    diary* book = nullptr;
+    const bool named =
+        (get_avatar().name = "Pin",
+         calendar::turn = calendar::start_of_cataclysm + 3_days + 5_hours, true);
+    // The avatar's own diary keeps its pages from one test to the next.
+    diary book;
 
-    diary_fixture() {
-        auto& you = get_avatar();
-        you.name = "Pin";
-        calendar::turn = calendar::start_of_cataclysm + 3_days + 5_hours;
-        book = you.get_avatar_diary();
-        REQUIRE(book != nullptr);
-    }
+    diary_fixture() = default;
     ~diary_fixture() {
         game_client::memory::set_input_provider({});
         get_avatar().name = old_name;
@@ -111,7 +112,7 @@ struct diary_fixture {
             REQUIRE(reads < max_screen_reads);
             return script(reads++, top_screen_now());
         });
-        diary::show_diary_ui(book);
+        diary::show_diary_ui(&book);
     }
 };
 
@@ -234,6 +235,37 @@ TEST_CASE(
         }
         return input_event{};
     });
+}
+
+TEST_CASE(
+    "a diary page keeps its serial, gets none twice and starts the numbering again with the items'",
+    "[diary_identity]") {
+    game_client::reset_item_serials();
+    auto first = diary_page{};
+    auto second = diary_page{};
+    const auto a = game_client::diary_page_serial(first);
+    const auto b = game_client::diary_page_serial(second);
+    CHECK(a == 1);
+    CHECK(b == 2);
+    CHECK(game_client::diary_page_serial(first) == a);
+    CHECK(game_client::diary_page_row_id(second) == "page:2");
+    // A page deleted makes its serial unused, not free: the next page takes a new one.
+    game_client::forget_diary_page_serial(&first);
+    auto third = diary_page{};
+    CHECK(game_client::diary_page_serial(third) == 3);
+    game_client::reset_item_serials();
+    CHECK(game_client::diary_page_serial(second) == 1);
+}
+
+TEST_CASE("the serial of a diary page is not saved", "[diary_identity]") {
+    auto fixture = diary_fixture{};
+    fixture.open([&](const int read, const ec::screen_view& /*top*/) {
+        return run_action(read == 0 ? "NEW_PAGE" : "QUIT");
+    });
+    auto saved = std::ostringstream{};
+    fixture.book.serialize(saved);
+    CHECK(saved.str().find("serial") == std::string::npos);
+    CHECK(saved.str().find("page:") == std::string::npos);
 }
 
 TEST_CASE("the diary edits the text of a page through the text editor", "[diary_screen]") {

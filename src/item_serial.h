@@ -25,7 +25,7 @@ auto stack_row_id( std::span<const item *const> members ) -> std::string;
 auto forget_item_serial( const item *it ) -> void;
 
 /// Drops every serial and starts the numbering again: for a loaded world, and for the start of a recorded or
-/// replayed session, whose inputs name rows by these ids.
+/// replayed session, whose inputs name rows by these ids. The serials of diary pages go with them.
 auto reset_item_serials() -> void;
 
 /// How many items hold a serial.

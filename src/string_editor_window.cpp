@@ -1,5 +1,5 @@
 #include "string_editor_window.h"
-#include "client_interaction.h"
+#include "engine_client_component.h"
 #include "translations.h"
 #include "client_presentation.h"
 #include "cata_utility.h"
@@ -13,6 +13,36 @@
 #include "wcwidth.h"
 #include "replay/replay.h"
 #include "ui_manager.h"
+
+namespace
+{
+namespace ec = engine_client;
+
+constexpr auto editor_form_id = "editor:form";
+constexpr auto editor_field_id = "editor:text";
+constexpr auto editor_set_id = "editor:set";
+
+/// The text being edited and where its cursor stands, as the editor keeps them.
+auto editor_view( const std::string &text, const int cursor ) -> ec::screen_view
+{
+    return {
+        .title = _( "Text" ),
+        .root = ec::component{
+            .id = editor_form_id, .affordances = { editor_set_id },
+            .body = ec::form_body{
+                .fields = { {
+                        .id = editor_field_id, .label = _( "Text" ), .value = text, .type = "text",
+                        .multiline = true, .cursor = cursor
+                    }
+                } } },
+        .affordances = {
+            ec::invoke_affordance( {
+                .id = editor_set_id, .label = _( "Text" ),
+                .args = { .text = ec::text_shape{ .field_id = editor_field_id } } } ),
+        },
+    };
+}
+} // namespace
 
 static bool is_linebreak( const uint32_t uc )
 {
@@ -601,43 +631,31 @@ std::pair<bool, std::string> string_editor_window::query_string()
 
     const auto stop_text_input = on_out_of_scope( []() { game_client::presentation().stop_text_input(); } );
 
+    const auto screen = ec::screen_scope( *ctxt, { .view = [this]( const ec::boundary_state & /*state*/ )
+    {
+        return editor_view( _utext.str(), _position );
+    }
+                                                 } );
+
     int ch = 0;
     do {
         ui_manager::redraw();
 
-        auto action = std::string{};
-        auto ev = input_event{};
-        {
-            const auto interaction = game_client::interaction_scope( *ctxt, [this]() {
-                return game_client::interaction_snapshot{
-                    .kind = game_client::interaction_kind::field,
-                    .title = _( "Text" ),
-                    .allow_cancel = true,
-                    .field = game_client::interaction_field{
-                        .id = "field:value", .label = _( "Text" ), .value = _utext.str(), .type = "text",
-                        .printable = true,
-                    },
-                };
-            } );
-            action = ctxt->handle_input();
-            ev = ctxt->get_raw_input();
-        }
+        const auto action = ctxt->handle_input();
+        const auto ev = ctxt->get_raw_input();
         ch = ev.type == input_event_t::keyboard ? ev.get_first_input() : 0;
 
-        if( ev.interaction ) {
-            if( ev.interaction->operation == game_client::interaction_operation::cancel ) {
-                return { false, _utext.str() };
-            }
-            if( ev.interaction->operation == game_client::interaction_operation::fill ) {
-                _utext = utf8_wrapper( ev.interaction->value );
+        if( const auto set = ec::invoked( ev ) ) {
+            // The whole text at once, as a client that cannot type key by key sends it.
+            if( set->affordance_id == editor_set_id && set->args.text ) {
+                _utext = utf8_wrapper( *set->args.text );
                 _position = _utext.length();
                 _cursor_desired_x = -1;
                 edit = utf8_wrapper();
                 ctxt->set_edittext( {} );
                 refold = true;
-                if( *ev.interaction->submit ) { return { true, _utext.str() }; }
-                continue;
             }
+            continue;
         }
 
         if( action == "TEXT.QUIT" ) {

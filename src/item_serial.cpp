@@ -4,6 +4,8 @@
 #include <mutex>
 #include <unordered_map>
 
+#include "page_serial.h"
+
 namespace game_client
 {
 namespace
@@ -44,6 +46,7 @@ auto reset_item_serials() -> void
     const auto guard = std::lock_guard( table_mutex );
     serials.clear();
     last_serial = 0;
+    reset_diary_page_serials();
 }
 
 auto item_serial_count() -> std::size_t

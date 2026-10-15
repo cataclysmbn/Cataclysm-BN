@@ -6,7 +6,6 @@
 #    include "catch/catch.hpp"
 #    include "client_screen_support.h"
 #    include "clzones.h"
-#    include "diary.h"
 #    include "engine_client_component.h"
 #    include "faction.h"
 #    include "game.h"
@@ -111,46 +110,6 @@ TEST_CASE(
                    return run_action("QUIT");
                });
     CHECK(stage == 1);
-}
-
-TEST_CASE(
-    "the diary lists its pages and adds and deletes one", "[client][interaction][mcp][screens]") {
-    clear_all_state();
-    clear_map();
-    auto& you = get_avatar();
-    clear_character(you, false);
-    auto* diary = you.get_avatar_diary();
-    REQUIRE(diary != nullptr);
-    auto pages_before = std::size_t{0};
-    const auto guard = screen_guard{};
-    auto stage = 0;
-    open_screen(
-        [&] { diary::show_diary_ui(diary); },
-        [&](const auto& snapshot) {
-            if (const auto answer = prompt_answer(snapshot, "YES")) { return *answer; }
-            switch (stage++) {
-                case 0: {
-                    CHECK(snapshot.context == "DIARY");
-                    pages_before = rows_with(snapshot, "page:").size();
-                    CHECK(row(snapshot, "action:NEW_PAGE") != snapshot.choices.end());
-                    return choose(snapshot, "action:NEW_PAGE");
-                }
-                case 1: {
-                    const auto pages = rows_with(snapshot, "page:");
-                    CHECK(pages.size() == pages_before + 1);
-                    CHECK(row(snapshot, pages.back())->highlighted);
-                    return choose(snapshot, "action:DELETE PAGE");
-                }
-                case 2: {
-                    CHECK(rows_with(snapshot, "page:").size() == pages_before);
-                    return cancel(snapshot);
-                }
-                default:
-                    FAIL("unexpected extra screen " << snapshot.context);
-            }
-            return input_event{};
-        });
-    CHECK(stage == 3);
 }
 
 TEST_CASE(
