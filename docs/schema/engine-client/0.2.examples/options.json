@@ -921,16 +921,6 @@
             "expect": "screen"
           },
           {
-            "id": "CONFIRM",
-            "label": "Confirm Choice",
-            "keys": [
-              "RETURN"
-            ],
-            "enabled": true,
-            "role": "confirm",
-            "expect": "screen"
-          },
-          {
             "id": "HELP_KEYBINDINGS",
             "label": "Display keybindings menu",
             "keys": [
@@ -1926,16 +1916,6 @@
               "BACKTAB"
             ],
             "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "CONFIRM",
-            "label": "Confirm Choice",
-            "keys": [
-              "RETURN"
-            ],
-            "enabled": true,
-            "role": "confirm",
             "expect": "screen"
           },
           {
@@ -3072,16 +3052,6 @@
               "BACKTAB"
             ],
             "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "CONFIRM",
-            "label": "Confirm Choice",
-            "keys": [
-              "RETURN"
-            ],
-            "enabled": true,
-            "role": "confirm",
             "expect": "screen"
           },
           {

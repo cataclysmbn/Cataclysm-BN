@@ -89,6 +89,7 @@
                               "id": "worldgen:mods:available:rows",
                               "kind": "list",
                               "affordances": [
+                                "worldgen:mods:add",
                                 "worldgen:mods:add"
                               ],
                               "columns": [],
@@ -396,7 +397,7 @@
                               ],
                               "total": 30,
                               "selection": "single",
-                              "activate": "worldgen:mods:add"
+                              "activate": "bn:activate:worldgen:mods:add"
                             }
                           }
                         },
@@ -408,6 +409,7 @@
                             "id": "worldgen:mods:active:rows",
                             "kind": "list",
                             "affordances": [
+                              "worldgen:mods:remove",
                               "worldgen:mods:remove"
                             ],
                             "columns": [
@@ -607,7 +609,7 @@
                             ],
                             "total": 11,
                             "selection": "single",
-                            "activate": "worldgen:mods:remove"
+                            "activate": "bn:activate:worldgen:mods:remove"
                           }
                         }
                       ]
@@ -670,6 +672,30 @@
             "args": {
               "row": {
                 "component_id": "worldgen:tabs"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:activate:worldgen:mods:add",
+            "label": "Activate / deactivate mod",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "worldgen:mods:available:rows"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:activate:worldgen:mods:remove",
+            "label": "Activate / deactivate mod",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "worldgen:mods:active:rows"
               }
             },
             "expect": "boundary"
@@ -778,16 +804,6 @@
               "BACKTAB"
             ],
             "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "CONFIRM",
-            "label": "Activate / deactivate mod",
-            "keys": [
-              "RETURN"
-            ],
-            "enabled": true,
-            "role": "confirm",
             "expect": "screen"
           },
           {
@@ -1411,6 +1427,7 @@
                   "id": "newchar:points:rows",
                   "kind": "list",
                   "affordances": [
+                    "newchar:points:pick",
                     "newchar:points:pick"
                   ],
                   "columns": [],
@@ -1451,7 +1468,7 @@
                   ],
                   "total": 3,
                   "selection": "single",
-                  "activate": "newchar:points:pick"
+                  "activate": "bn:activate:newchar:points:pick"
                 }
               ]
             }
@@ -1479,6 +1496,18 @@
             "args": {
               "row": {
                 "component_id": "newchar:tabs"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:activate:newchar:points:pick",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "newchar:points:rows"
               }
             },
             "expect": "boundary"
@@ -1569,16 +1598,6 @@
             ],
             "enabled": true,
             "role": "cancel",
-            "expect": "screen"
-          },
-          {
-            "id": "CONFIRM",
-            "label": "Confirm Choice",
-            "keys": [
-              "RETURN"
-            ],
-            "enabled": true,
-            "role": "confirm",
             "expect": "screen"
           }
         ],
@@ -1743,7 +1762,8 @@
                     "kind": "list",
                     "affordances": [
                       "newchar:scenario:pick",
-                      "FILTER"
+                      "FILTER",
+                      "newchar:scenario:pick"
                     ],
                     "columns": [
                       {
@@ -2435,7 +2455,7 @@
                     ],
                     "total": 40,
                     "selection": "single",
-                    "activate": "newchar:scenario:pick",
+                    "activate": "bn:activate:newchar:scenario:pick",
                     "filterable": true
                   }
                 },
@@ -2497,6 +2517,18 @@
             "expect": "boundary"
           },
           {
+            "id": "bn:activate:newchar:scenario:pick",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "newchar:scenario:list:rows"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
             "id": "UP",
             "label": "Pan up",
             "keys": [
@@ -2542,16 +2574,6 @@
               "NUMPAD_6"
             ],
             "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "CONFIRM",
-            "label": "Confirm Choice",
-            "keys": [
-              "RETURN"
-            ],
-            "enabled": true,
-            "role": "confirm",
             "expect": "screen"
           },
           {
@@ -2736,7 +2758,8 @@
                     "kind": "list",
                     "affordances": [
                       "newchar:profession:pick",
-                      "FILTER"
+                      "FILTER",
+                      "newchar:profession:pick"
                     ],
                     "columns": [
                       {
@@ -4142,7 +4165,7 @@
                     ],
                     "total": 195,
                     "selection": "single",
-                    "activate": "newchar:profession:pick",
+                    "activate": "bn:activate:newchar:profession:pick",
                     "filterable": true
                   }
                 },
@@ -4177,6 +4200,18 @@
             "args": {
               "row": {
                 "component_id": "newchar:tabs"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:activate:newchar:profession:pick",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "newchar:profession:list:rows"
               }
             },
             "expect": "boundary"
@@ -4227,16 +4262,6 @@
               "NUMPAD_6"
             ],
             "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "CONFIRM",
-            "label": "Confirm Choice",
-            "keys": [
-              "RETURN"
-            ],
-            "enabled": true,
-            "role": "confirm",
             "expect": "screen"
           },
           {
@@ -4409,6 +4434,7 @@
                   "id": "newchar:stats:rows",
                   "kind": "list",
                   "affordances": [
+                    "newchar:stats:pick",
                     "newchar:stats:pick"
                   ],
                   "columns": [
@@ -4485,7 +4511,7 @@
                   ],
                   "total": 4,
                   "selection": "single",
-                  "activate": "newchar:stats:pick"
+                  "activate": "bn:activate:newchar:stats:pick"
                 },
                 {
                   "id": "newchar:stats:details",
@@ -4518,6 +4544,18 @@
             "args": {
               "row": {
                 "component_id": "newchar:tabs"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:activate:newchar:stats:pick",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "newchar:stats:rows"
               }
             },
             "expect": "boundary"
@@ -4791,6 +4829,7 @@
                         "id": "newchar:traits:advantage:rows",
                         "kind": "list",
                         "affordances": [
+                          "newchar:traits:advantage:pick",
                           "newchar:traits:advantage:pick"
                         ],
                         "columns": [
@@ -5857,7 +5896,7 @@
                         ],
                         "total": 62,
                         "selection": "single",
-                        "activate": "newchar:traits:advantage:pick"
+                        "activate": "bn:activate:newchar:traits:advantage:pick"
                       }
                     },
                     {
@@ -5868,6 +5907,7 @@
                         "id": "newchar:traits:disadvantage:rows",
                         "kind": "list",
                         "affordances": [
+                          "newchar:traits:disadvantage:pick",
                           "newchar:traits:disadvantage:pick"
                         ],
                         "columns": [
@@ -6968,7 +7008,7 @@
                         ],
                         "total": 64,
                         "selection": "single",
-                        "activate": "newchar:traits:disadvantage:pick"
+                        "activate": "bn:activate:newchar:traits:disadvantage:pick"
                       }
                     },
                     {
@@ -6979,6 +7019,7 @@
                         "id": "newchar:traits:neutral:rows",
                         "kind": "list",
                         "affordances": [
+                          "newchar:traits:neutral:pick",
                           "newchar:traits:neutral:pick"
                         ],
                         "columns": [
@@ -8147,7 +8188,7 @@
                         ],
                         "total": 68,
                         "selection": "single",
-                        "activate": "newchar:traits:neutral:pick"
+                        "activate": "bn:activate:newchar:traits:neutral:pick"
                       }
                     }
                   ]
@@ -8209,6 +8250,42 @@
             "expect": "boundary"
           },
           {
+            "id": "bn:activate:newchar:traits:advantage:pick",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "newchar:traits:advantage:rows"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:activate:newchar:traits:disadvantage:pick",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "newchar:traits:disadvantage:rows"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:activate:newchar:traits:neutral:pick",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "newchar:traits:neutral:rows"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
             "id": "UP",
             "label": "Pan up",
             "keys": [
@@ -8254,16 +8331,6 @@
               "NUMPAD_6"
             ],
             "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "CONFIRM",
-            "label": "Confirm Choice",
-            "keys": [
-              "RETURN"
-            ],
-            "enabled": true,
-            "role": "confirm",
             "expect": "screen"
           },
           {
@@ -8455,6 +8522,7 @@
                         "id": "newchar:bionics:advantage:rows",
                         "kind": "list",
                         "affordances": [
+                          "newchar:bionics:advantage:pick",
                           "newchar:bionics:advantage:pick"
                         ],
                         "columns": [
@@ -8858,7 +8926,7 @@
                         ],
                         "total": 23,
                         "selection": "single",
-                        "activate": "newchar:bionics:advantage:pick"
+                        "activate": "bn:activate:newchar:bionics:advantage:pick"
                       }
                     },
                     {
@@ -8869,6 +8937,7 @@
                         "id": "newchar:bionics:disadvantage:rows",
                         "kind": "list",
                         "affordances": [
+                          "newchar:bionics:disadvantage:pick",
                           "newchar:bionics:disadvantage:pick"
                         ],
                         "columns": [
@@ -9238,7 +9307,7 @@
                         ],
                         "total": 21,
                         "selection": "single",
-                        "activate": "newchar:bionics:disadvantage:pick"
+                        "activate": "bn:activate:newchar:bionics:disadvantage:pick"
                       }
                     }
                   ]
@@ -9282,6 +9351,30 @@
             "args": {
               "row": {
                 "component_id": "newchar:tabs"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:activate:newchar:bionics:advantage:pick",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "newchar:bionics:advantage:rows"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:activate:newchar:bionics:disadvantage:pick",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "newchar:bionics:disadvantage:rows"
               }
             },
             "expect": "boundary"
@@ -9332,16 +9425,6 @@
               "NUMPAD_6"
             ],
             "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "CONFIRM",
-            "label": "Confirm Choice",
-            "keys": [
-              "RETURN"
-            ],
-            "enabled": true,
-            "role": "confirm",
             "expect": "screen"
           },
           {
@@ -9518,6 +9601,7 @@
                   "id": "newchar:skills:rows",
                   "kind": "list",
                   "affordances": [
+                    "newchar:skills:pick",
                     "newchar:skills:pick"
                   ],
                   "columns": [
@@ -10295,7 +10379,7 @@
                   ],
                   "total": 32,
                   "selection": "single",
-                  "activate": "newchar:skills:pick"
+                  "activate": "bn:activate:newchar:skills:pick"
                 },
                 {
                   "id": "newchar:skills:details",
@@ -10328,6 +10412,18 @@
             "args": {
               "row": {
                 "component_id": "newchar:tabs"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:activate:newchar:skills:pick",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "newchar:skills:rows"
               }
             },
             "expect": "boundary"
@@ -10539,6 +10635,7 @@
                   "id": "newchar:overview:fields",
                   "kind": "list",
                   "affordances": [
+                    "newchar:overview:pick",
                     "newchar:overview:pick"
                   ],
                   "columns": [
@@ -10631,7 +10728,7 @@
                   ],
                   "total": 5,
                   "selection": "single",
-                  "activate": "newchar:overview:pick"
+                  "activate": "bn:activate:newchar:overview:pick"
                 },
                 {
                   "id": "newchar:overview:facts",
@@ -10753,6 +10850,18 @@
             "args": {
               "row": {
                 "component_id": "newchar:tabs"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:activate:newchar:overview:pick",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "newchar:overview:fields"
               }
             },
             "expect": "boundary"
@@ -10887,16 +10996,6 @@
             "expect": "screen"
           },
           {
-            "id": "CONFIRM",
-            "label": "Confirm Choice",
-            "keys": [
-              "RETURN"
-            ],
-            "enabled": true,
-            "role": "confirm",
-            "expect": "screen"
-          },
-          {
             "id": "QUIT",
             "label": "Exit new character screen",
             "keys": [
@@ -10925,7 +11024,7 @@
         },
         "operation": {
           "kind": "invoke",
-          "affordance_id": "newchar:overview:pick",
+          "affordance_id": "bn:activate:newchar:overview:pick",
           "args": {
             "row": "name"
           }

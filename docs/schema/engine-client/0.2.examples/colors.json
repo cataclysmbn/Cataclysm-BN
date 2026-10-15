@@ -3257,16 +3257,6 @@
             "expect": "screen"
           },
           {
-            "id": "CONFIRM",
-            "label": "Confirm Choice",
-            "keys": [
-              "RETURN"
-            ],
-            "enabled": true,
-            "role": "confirm",
-            "expect": "screen"
-          },
-          {
             "id": "QUIT",
             "label": "Exit screen",
             "keys": [
@@ -6749,16 +6739,6 @@
               "NUMPAD_6"
             ],
             "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "CONFIRM",
-            "label": "Confirm Choice",
-            "keys": [
-              "RETURN"
-            ],
-            "enabled": true,
-            "role": "confirm",
             "expect": "screen"
           },
           {

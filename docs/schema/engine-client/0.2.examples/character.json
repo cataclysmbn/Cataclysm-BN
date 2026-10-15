@@ -66,6 +66,7 @@
                   "id": "character:stats:rows",
                   "kind": "list",
                   "affordances": [
+                    "character:focus:stats",
                     "character:focus:stats"
                   ],
                   "columns": [
@@ -202,7 +203,7 @@
                   ],
                   "total": 6,
                   "selection": "single",
-                  "activate": "character:focus:stats"
+                  "activate": "bn:activate:character:focus:stats"
                 }
               },
               {
@@ -213,6 +214,7 @@
                   "id": "character:encumbrance:rows",
                   "kind": "list",
                   "affordances": [
+                    "character:focus:encumbrance",
                     "character:focus:encumbrance"
                   ],
                   "columns": [
@@ -457,7 +459,7 @@
                   ],
                   "total": 8,
                   "selection": "single",
-                  "activate": "character:focus:encumbrance"
+                  "activate": "bn:activate:character:focus:encumbrance"
                 }
               },
               {
@@ -468,6 +470,7 @@
                   "id": "character:skills:rows",
                   "kind": "list",
                   "affordances": [
+                    "character:focus:skills",
                     "character:focus:skills"
                   ],
                   "columns": [
@@ -1151,7 +1154,7 @@
                   ],
                   "total": 32,
                   "selection": "single",
-                  "activate": "character:focus:skills"
+                  "activate": "bn:activate:character:focus:skills"
                 }
               },
               {
@@ -1162,6 +1165,7 @@
                   "id": "character:traits:rows",
                   "kind": "list",
                   "affordances": [
+                    "character:focus:traits",
                     "character:focus:traits"
                   ],
                   "columns": [],
@@ -1180,7 +1184,7 @@
                   ],
                   "total": 1,
                   "selection": "single",
-                  "activate": "character:focus:traits"
+                  "activate": "bn:activate:character:focus:traits"
                 }
               },
               {
@@ -1199,13 +1203,14 @@
                   "id": "character:bionics:rows",
                   "kind": "list",
                   "affordances": [
+                    "character:focus:bionics",
                     "character:focus:bionics"
                   ],
                   "columns": [],
                   "rows": [],
                   "total": 0,
                   "selection": "single",
-                  "activate": "character:focus:bionics"
+                  "activate": "bn:activate:character:focus:bionics"
                 }
               },
               {
@@ -1216,13 +1221,14 @@
                   "id": "character:effects:rows",
                   "kind": "list",
                   "affordances": [
+                    "character:focus:effects",
                     "character:focus:effects"
                   ],
                   "columns": [],
                   "rows": [],
                   "total": 0,
                   "selection": "single",
-                  "activate": "character:focus:effects"
+                  "activate": "bn:activate:character:focus:effects"
                 }
               },
               {
@@ -1345,6 +1351,78 @@
             "expect": "boundary"
           },
           {
+            "id": "bn:activate:character:focus:stats",
+            "label": "Toggle skill training / Upgrade stat",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "character:stats:rows"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:activate:character:focus:encumbrance",
+            "label": "Toggle skill training / Upgrade stat",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "character:encumbrance:rows"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:activate:character:focus:skills",
+            "label": "Toggle skill training / Upgrade stat",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "character:skills:rows"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:activate:character:focus:traits",
+            "label": "Toggle skill training / Upgrade stat",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "character:traits:rows"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:activate:character:focus:bionics",
+            "label": "Toggle skill training / Upgrade stat",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "character:bionics:rows"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:activate:character:focus:effects",
+            "label": "Toggle skill training / Upgrade stat",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "character:effects:rows"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
             "id": "UP",
             "label": "Pan up",
             "keys": [
@@ -1397,16 +1475,6 @@
             ],
             "enabled": true,
             "role": "cancel",
-            "expect": "screen"
-          },
-          {
-            "id": "CONFIRM",
-            "label": "Toggle skill training / Upgrade stat",
-            "keys": [
-              "RETURN"
-            ],
-            "enabled": true,
-            "role": "confirm",
             "expect": "screen"
           },
           {
@@ -1656,6 +1724,7 @@
                 "id": "bionics:list",
                 "kind": "list",
                 "affordances": [
+                  "bionics:pick",
                   "bionics:pick"
                 ],
                 "columns": [
@@ -1704,7 +1773,7 @@
                 ],
                 "total": 1,
                 "selection": "single",
-                "activate": "bionics:pick"
+                "activate": "bn:activate:bionics:pick"
               }
             },
             {
@@ -1807,6 +1876,18 @@
             "keys": [],
             "enabled": true,
             "role": "select",
+            "args": {
+              "row": {
+                "component_id": "bionics:list"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:activate:bionics:pick",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
             "args": {
               "row": {
                 "component_id": "bionics:list"
@@ -2036,7 +2117,7 @@
         },
         "operation": {
           "kind": "invoke",
-          "affordance_id": "bionics:pick",
+          "affordance_id": "bn:activate:bionics:pick",
           "args": {
             "row": "bionic:bio_power_storage"
           }
@@ -2252,6 +2333,7 @@
                 "id": "mutations:passive:rows",
                 "kind": "list",
                 "affordances": [
+                  "mutations:pick:passive",
                   "mutations:pick:passive"
                 ],
                 "columns": [
@@ -2370,7 +2452,7 @@
                 ],
                 "total": 2,
                 "selection": "single",
-                "activate": "mutations:pick:passive"
+                "activate": "bn:activate:mutations:pick:passive"
               }
             },
             {
@@ -2381,6 +2463,7 @@
                 "id": "mutations:active:rows",
                 "kind": "list",
                 "affordances": [
+                  "mutations:pick:active",
                   "mutations:pick:active"
                 ],
                 "columns": [
@@ -2457,7 +2540,7 @@
                 ],
                 "total": 1,
                 "selection": "single",
-                "activate": "mutations:pick:active"
+                "activate": "bn:activate:mutations:pick:active"
               }
             }
           ]
@@ -2482,6 +2565,30 @@
             "keys": [],
             "enabled": true,
             "role": "select",
+            "args": {
+              "row": {
+                "component_id": "mutations:active:rows"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:activate:mutations:pick:passive",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "mutations:passive:rows"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:activate:mutations:pick:active",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
             "args": {
               "row": {
                 "component_id": "mutations:active:rows"
@@ -2608,7 +2715,7 @@
         },
         "operation": {
           "kind": "invoke",
-          "affordance_id": "mutations:pick:active",
+          "affordance_id": "bn:activate:mutations:pick:active",
           "args": {
             "row": "mutation:BIOLUM1"
           }

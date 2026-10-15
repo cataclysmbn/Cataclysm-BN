@@ -548,7 +548,6 @@
             "label": "Confirm Choice",
             "keys": [],
             "enabled": true,
-            "role": "select",
             "args": {
               "row": {
                 "component_id": "help:topics"
@@ -615,16 +614,6 @@
             ],
             "enabled": true,
             "role": "cancel",
-            "expect": "screen"
-          },
-          {
-            "id": "CONFIRM",
-            "label": "Confirm Choice",
-            "keys": [
-              "RETURN"
-            ],
-            "enabled": true,
-            "role": "confirm",
             "expect": "screen"
           }
         ],

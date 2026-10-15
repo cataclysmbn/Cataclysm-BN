@@ -366,16 +366,6 @@
             "expect": "screen"
           },
           {
-            "id": "CONFIRM",
-            "label": "Confirm Choice",
-            "keys": [
-              "RETURN"
-            ],
-            "enabled": true,
-            "role": "confirm",
-            "expect": "screen"
-          },
-          {
             "id": "ENABLE_MAPEXTRA_NOTE",
             "label": "Enable auto note for map extra",
             "keys": [
