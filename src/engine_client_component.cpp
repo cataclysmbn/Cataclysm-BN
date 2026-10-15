@@ -174,9 +174,8 @@ auto registered_role( const std::string &id ) -> std::string
            std::string{};
 }
 
-/// Whether the action is a button: ANY_INPUT stands for every unbound key, so it is one only where the screen
-/// gave it a name.
-auto offered( const action &entry ) -> bool { return entry.id != "ANY_INPUT" || entry.name != entry.id; }
+/// Whether the action is a button: only one native names, since the name of an unnamed action is its id.
+auto offered( const action &entry ) -> bool { return entry.name != entry.id; }
 
 /// Whether the registered action is one of the eight steps of the map.
 auto is_step( const std::string &id ) -> bool
