@@ -219,6 +219,36 @@ auto measure_subscribe(const ec::world_state& world) -> subscribe_size {
 } // namespace
 
 TEST_CASE(
+    "world capture centers the view on the avatar that moved or shifted the map since the last draw",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    const auto restore_terrain = restore_on_out_of_scope<catacurses::window>(g->w_terrain);
+    const auto restore_view = restore_on_out_of_scope<tripoint_bub_ms>(g->ter_view_p);
+    g->w_terrain = catacurses::newwin(9, 15, point(2, 1));
+    g->ter_view_p = setup.start;
+    const auto centered = [&]() {
+        const auto state = ec::world::capture_world();
+        REQUIRE(state.view);
+        REQUIRE(state.avatar);
+        CHECK(state.view->min.x == state.avatar->at.x - 7);
+        CHECK(state.view->min.y == state.avatar->at.y - 4);
+        CHECK(state.view->max.x - state.view->min.x == 14);
+    };
+    SECTION("a step without a draw") {
+        centered();
+        get_avatar().setpos(setup.start + tripoint_east);
+        centered();
+    }
+    SECTION("a shift of the map without a draw") {
+        auto& you = get_avatar();
+        const auto old_origin = get_map().get_abs_sub();
+        you.setpos(you.abs_pos() + tripoint(3 * SEEX, 0, 0));
+        REQUIRE(get_map().get_abs_sub() != old_origin);
+        centered();
+    }
+}
+
+TEST_CASE(
     "world capture lists only known cells, visible with live facts", "[engine_client_world]") {
     const auto setup = make_scene();
     const auto state = ec::world::capture_world();
