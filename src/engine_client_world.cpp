@@ -1067,7 +1067,7 @@ struct patch_basis {
     std::uint64_t memory_owner = 0;
     std::size_t tints = 0;
     std::string language = {};
-    /// The squares the avatar saw, in the order of `by_level`.
+    /// The squares the avatar saw, in the order of `by_level`. Where they are in the map of that patch.
     std::vector<tripoint_bub_ms> visible = {};
     /// The seen squares that made a cell, in the same order.
     std::vector<tripoint_bub_ms> live = {};
@@ -1079,6 +1079,40 @@ struct patch_basis {
 auto by_level( const tripoint_bub_ms &a, const tripoint_bub_ms &b ) -> bool
 {
     return std::tuple( a.z(), a.x(), a.y() ) < std::tuple( b.z(), b.x(), b.y() );
+}
+
+/// How far the map moved, in squares, between two coverages that keep the size and dimension of the map;
+/// none when they do not, and the basis then says nothing about the new map.
+auto shift_between( const bounds &before, const bounds &after ) -> std::optional<point>
+{
+    const auto extent = []( const bounds & b ) { return std::tuple( b.min.dim, b.max.x - b.min.x, b.max.y - b.min.y, b.min.z, b.max.z ); };
+    if( extent( before ) != extent( after ) ) { return std::nullopt; }
+    return point( before.min.x - after.min.x, before.min.y - after.min.y );
+}
+
+/// The basis in the coordinates of a map that moved by `by`, without the squares that left the map.
+auto shifted( patch_basis from, const map &here, const point &by ) -> patch_basis
+{
+    const auto translate = [&]( const tripoint_bub_ms & p ) { return p + tripoint( by, 0 ); };
+    const auto kept = [&]( const tripoint_bub_ms & p ) { return here.inbounds( p ); };
+    const auto moved = [&]( const auto & squares ) {
+        return squares | std::views::transform( translate ) | std::views::filter( kept ) |
+               std::ranges::to<std::vector>();
+    };
+    auto live = std::vector<tripoint_bub_ms> {};
+    auto keys = std::vector<std::uint64_t> {};
+    for( const auto i : std::views::iota( std::size_t{}, from.live.size() ) ) {
+        if( const auto p = translate( from.live[i] ); kept( p ) ) {
+            live.push_back( p );
+            keys.push_back( from.keys[i] );
+        }
+    }
+    from.visible = moved( from.visible );
+    from.live = std::move( live );
+    from.keys = std::move( keys );
+    from.vehicles = from.vehicles | std::views::transform( translate ) | std::views::filter(
+                        kept ) | std::ranges::to<std::set>();
+    return from;
 }
 auto basis = patch_basis {};
 } // namespace
@@ -1136,9 +1170,12 @@ auto capture_patch( const snapshot &previous, const bool consecutive ) -> world_
     // Taken at every patch, so that what it holds is what changed since the last one.
     const auto changes = map_perception::take_memory_changes();
     const auto memory_owner = you.map_memory_revision().owner;
+    // The map moves with the avatar; what the last patch held is then where it was, so it is moved with the map.
+    const auto moved = basis.coverage && patch.world.coverage ?
+                       shift_between( *basis.coverage, *patch.world.coverage ) : std::nullopt;
     const auto continues = consecutive && basis.valid && basis.epoch == previous.at.epoch &&
                            previous.at.revision >= basis.revision && previous.at.revision - basis.revision <= 1 &&
-                           basis.coverage == patch.world.coverage && changes && basis.memory_owner == memory_owner &&
+                           moved && changes && basis.memory_owner == memory_owner &&
                            basis.tints == tint_generation() &&
                            basis.language == get_language().id;
     const auto view = map_perception::current_sight();
@@ -1154,6 +1191,7 @@ auto capture_patch( const snapshot &previous, const bool consecutive ) -> world_
         std::ranges::transform( live, std::back_inserter( keys ), [&]( const auto & p ) { return plain_key( here, p, you, view ); } );
     } else {
         const auto &known = previous.value.world.cells;
+        if( *moved != point_zero ) { basis = shifted( std::move( basis ), here, *moved ); }
         // A square seen now is named once, by what the avatar knows of it, and not at all when that is what
         // the last patch said. A plain one that has the key it had then is not even built.
         auto bare = bare_scan( here, you );
@@ -1200,6 +1238,14 @@ auto capture_patch( const snapshot &previous, const bool consecutive ) -> world_
         std::ranges::for_each( vehicles, name );
         if( vehicles != basis.vehicles ) { std::ranges::for_each( basis.vehicles, name ); }
         for( const auto &abs : *changes ) { name( abs_to_map_local( here, abs ) ); }
+        // A square the map came to cover is named by what the avatar remembers of it.
+        if( *moved != point_zero ) {
+            const auto before = tripoint( *moved, 0 );
+            for( const auto &abs : you.memorized_positions() ) {
+                if( const auto p = abs_to_map_local( here, abs ); here.inbounds( p ) &&
+                    !here.inbounds( p - before ) ) { name( p ); }
+            }
+        }
     }
     basis = {
         .valid = true, .epoch = previous.at.epoch, .revision = previous.at.revision,

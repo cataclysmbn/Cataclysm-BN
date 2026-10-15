@@ -194,7 +194,7 @@ auto diff( const state_value &from, const boundary_state &interaction,
         }
     } else {
         for( const auto &at : patch.unknown ) {
-            if( known.contains( at ) ) { result.forgotten.push_back( at ); }
+            if( known.contains( at ) && survives( result, at ) ) { result.forgotten.push_back( at ); }
         }
     }
     return result;
@@ -378,10 +378,6 @@ std::expected<std::optional<public_event>, error>
         if( const auto boundary = validate_boundary( request.interaction ); !boundary ) { return std::unexpected( boundary.error() ); }
     }
     if( removes_value( current_.value.world, patch.world ) ) { return std::unexpected( error::resync_required ); }
-    // Without the cells of a new coverage, the patch cannot say what the coverage drops.
-    if( !patch.exhaustive && patch.world.coverage != current_.value.world.coverage ) {
-        return std::unexpected( error::validation_failed );
-    }
     auto delta = [&] {
         ZoneScopedN( "engine_client_diff" );
         return diff( current_.value, request.interaction, patch );
@@ -394,6 +390,7 @@ std::expected<std::optional<public_event>, error>
     if( patch.exhaustive ) {
         cells = std::move( patch.cells );
     } else {
+        if( changed.coverage ) { erase_where( cells, [&]( const auto & entry ) { return !inside( *changed.coverage, entry.first ); } ); }
         for( const auto &at : changed.forgotten ) { cells.erase( at ); }
         for( const auto &entry : changed.cells ) { cells.insert_or_assign( entry.at, std::move( patch.cells.at( entry.at ) ) ); }
     }
