@@ -3,6 +3,7 @@
 #    include "avatar.h"
 #    include "cata_arena.h"
 #    include "catch/catch.hpp"
+#    include "engine_client_world.h"
 #    include "item.h"
 #    include "item_serial.h"
 #    include "json.h"
@@ -94,6 +95,31 @@ TEST_CASE(
     REQUIRE(left.size() == 2);
     CHECK(game_client::item_row_id(*left.back()) == kept);
     CHECK(game_client::item_row_id(*left.front()) != removed);
+}
+
+TEST_CASE(
+    "a worn row of the map screen keeps its id when an equal item before it is taken off",
+    "[item_serial]") {
+    fresh_game();
+    auto& you = get_avatar();
+    you.wear_item(item::spawn("tshirt"), false);
+    you.wear_item(item::spawn("tshirt"), false);
+    const auto worn_rows = [] {
+        auto result = std::vector<std::string>{};
+        for (const auto& stack :
+             engine_client::world::item_stacks(get_map(), get_avatar()).inventory) {
+            if (stack.row.slot == "worn") { result.push_back(stack.row.id); }
+        }
+        return result;
+    };
+    const auto before = worn_rows();
+    REQUIRE(before.size() == 2);
+    auto* const second = you.worn.back();
+    const auto second_id = game_client::item_row_id(*second);
+    CHECK(std::ranges::find(before, second_id) != before.end());
+    auto taken = std::vector<detached_ptr<item>>{};
+    REQUIRE(you.takeoff(*you.worn.front(), &taken));
+    CHECK(worn_rows() == std::vector<std::string>{second_id});
 }
 
 TEST_CASE("a destroyed item's serial is dropped and never given again", "[item_serial]") {
