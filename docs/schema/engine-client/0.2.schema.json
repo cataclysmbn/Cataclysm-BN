@@ -5737,6 +5737,15 @@
           "type": "boolean",
           "description": "Only printable text is accepted."
         },
+        "multiline": {
+          "type": "boolean",
+          "description": "The text may run over several lines."
+        },
+        "cursor": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Where the cursor stands in a text, in characters from its start; absent: the field has no cursor."
+        },
         "options": {
           "type": "array",
           "items": {

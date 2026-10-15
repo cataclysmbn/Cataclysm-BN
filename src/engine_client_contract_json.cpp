@@ -599,6 +599,8 @@ auto body_json( const form_body &body, const bubble_frame & /*frame*/ ) -> json
         entry["type"] = field.type;
         if( field.max_length != -1 ) { entry["max_length"] = field.max_length; }
         if( field.printable ) { entry["printable"] = true; }
+        if( field.multiline ) { entry["multiline"] = true; }
+        if( field.cursor ) { entry["cursor"] = *field.cursor; }
         if( !field.options.empty() ) {
             entry["options"] = json::array();
             for( const auto &option : field.options ) { entry["options"].push_back( {{"id", option.id}, {"label", option.label}} ); }

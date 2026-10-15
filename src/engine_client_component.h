@@ -181,6 +181,10 @@ struct form_field {
     std::string type = "text";
     int max_length = -1;
     bool printable = false;
+    /// The text may run over several lines.
+    bool multiline = false;
+    /// Where the cursor stands in a text, in characters from its start; none: the field has no cursor.
+    std::optional<int> cursor = std::nullopt;
     std::vector<form_option> options = {};
     std::optional<double> min = std::nullopt;
     std::optional<double> max = std::nullopt;
