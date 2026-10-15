@@ -66,12 +66,13 @@ struct korean_catalogue {
     std::string base_path = PATH_INFO::base_path();
     std::filesystem::path directory =
         std::filesystem::path{PATH_INFO::user_dir()} / "locale-scope-fixture";
-    korean_catalogue() {
+    /// `extra` words are translated too.
+    explicit korean_catalogue(const std::vector<std::pair<std::string, std::string>>& extra = {}) {
         std::filesystem::remove_all(directory);
         const auto path = directory / "lang/mo" / korean / "LC_MESSAGES/cataclysm-bn.mo";
         std::filesystem::create_directories(path.parent_path());
         auto output = std::ofstream{path, std::ios::binary};
-        const auto bytes = catalogue({
+        auto words = std::vector<std::pair<std::string, std::string>>{
             {"Yes", "Yes-ko"},
             {"No", "No-ko"},
             {"Confirm", "Confirm-ko"},
@@ -87,7 +88,9 @@ struct korean_catalogue {
             {"Look Around", "Look Around-ko"},
             {plural("TEST 1kg cube", "TEST 1kg cubes"),
              plural("TEST 1kg cube-ko", "TEST 1kg cubes-ko")},
-        });
+        };
+        words.insert(words.end(), extra.begin(), extra.end());
+        const auto bytes = catalogue(std::move(words));
         output.write(bytes.data(), static_cast<std::streamsize>(bytes.size()));
         REQUIRE(output.good());
         output.close();

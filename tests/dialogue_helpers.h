@@ -12,6 +12,8 @@
 #    include "cursesdef.h"
 #    include "dialogue.h"
 #    include "dialogue_win.h"
+#    include "engine_client_component.h"
+#    include "engine_client_contract.h"
 #    include "faction.h"
 #    include "game.h"
 #    include "input.h"
@@ -26,10 +28,15 @@
 #    include "state_helpers.h"
 #    include "uistate.h"
 
+#    include <algorithm>
+#    include <ranges>
 #    include <string>
 #    include <unordered_map>
+#    include <variant>
+#    include <vector>
 
 namespace dialogue_test {
+namespace ec = engine_client;
 
 inline const auto start_topic = std::string{"TALK_TEST_CLIENT_DIALOGUE_START"};
 inline const auto first_topic = std::string{"TALK_TEST_CLIENT_DIALOGUE_FIRST"};
@@ -145,6 +152,75 @@ inline auto act(const std::string& action) -> input_event {
         game_client::resolve_input_command(input, game_client::memory::screen_size());
     REQUIRE(result.has_value());
     return *result;
+}
+
+inline constexpr auto responses_id = "talk:responses";
+inline constexpr auto special_id = "talk:special";
+inline constexpr auto respond_id = "talk:respond";
+inline constexpr auto special_affordance_id = "talk:special:run";
+
+inline auto captured() -> ec::boundary_state {
+    const auto state = ec::capture_boundary(
+        {.epoch = "epoch:dialogue",
+         .ready =
+             {.phase = "waiting_for_input",
+              .game_ready = true,
+              .accepts_interaction_commands = true,
+              .accepts_registered_actions = true}});
+    REQUIRE(state.has_value());
+    return *state;
+}
+
+/// The invoke a client sends for an affordance the screen's loop runs.
+inline auto invoke(const std::string& affordance, game_client::interaction_arguments args = {})
+    -> input_event {
+    auto event = input_event{};
+    event.type = input_event_t::interaction;
+    event.interaction = game_client::interaction_event{
+        .operation = game_client::interaction_operation::invoke,
+        .target_id = affordance,
+        .arguments = std::move(args)};
+    return event;
+}
+inline auto respond(const std::string& row) -> input_event {
+    return invoke(respond_id, {.row = row});
+}
+
+inline auto part(const ec::screen_view& screen, const std::string& id) -> const ec::component& {
+    REQUIRE(screen.root);
+    const auto* const found = ec::find_component(*screen.root, id);
+    INFO(id);
+    REQUIRE(found != nullptr);
+    return *found;
+}
+inline auto rows(const ec::screen_view& screen, const std::string& id)
+    -> const std::vector<ec::row>& {
+    const auto& value = part(screen, id);
+    REQUIRE(std::holds_alternative<ec::list_body>(value.body));
+    return std::get<ec::list_body>(value.body).rows;
+}
+inline auto history(const ec::screen_view& screen) -> const std::string& {
+    const auto& value = part(screen, "talk:history:text");
+    REQUIRE(std::holds_alternative<ec::text_body>(value.body));
+    return std::get<ec::text_body>(value.body).markup;
+}
+inline auto ids_of(const std::vector<ec::row>& list) -> std::vector<std::string> {
+    return list | std::views::transform(&ec::row::id) | std::ranges::to<std::vector>();
+}
+/// The id of the response whose label holds `label`.
+inline auto row_with(const ec::screen_view& screen, const std::string& label) -> std::string {
+    const auto& list = rows(screen, responses_id);
+    const auto found = std::ranges::find_if(list, [&](const auto& row) {
+        return row.label.find(label) != std::string::npos;
+    });
+    INFO(label);
+    REQUIRE(found != list.end());
+    return found->id;
+}
+inline auto top() -> ec::screen_view {
+    const auto screen = ec::top_screen(captured());
+    REQUIRE(screen.context == "DIALOGUE_CHOOSE_RESPONSE");
+    return screen;
 }
 
 /// A key the player types.

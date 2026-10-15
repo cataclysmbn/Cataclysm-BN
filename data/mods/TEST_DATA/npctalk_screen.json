@@ -21,5 +21,35 @@
       },
       { "text": "Goodbye.", "topic": "TALK_DONE" }
     ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_TEST_NPCTALK_IDENTITY",
+    "dynamic_line": "Identity narrative.",
+    "responses": [
+      {
+        "text": "Only while flagged.",
+        "condition": { "u_has_var": "flagged", "type": "test", "context": "npctalk_identity", "value": "yes" },
+        "topic": "TALK_DONE"
+      },
+      { "text": "Plain response.", "topic": "TALK_NONE" },
+      { "id": "leave", "text": "Leave.", "topic": "TALK_DONE" },
+      { "text": "Plain response.", "topic": "TALK_NONE" }
+    ],
+    "repeat_responses": [
+      { "for_item": [ "tshirt", "jeans" ], "response": { "text": "Offer the <topic_item>.", "topic": "TALK_NONE" } },
+      { "for_category": "clothing", "response": { "text": "Hand over the <topic_item>.", "topic": "TALK_NONE" } }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_TEST_NPCTALK_EXTENDED",
+    "dynamic_line": "Extended narrative.",
+    "responses": [ { "text": "First of the base data.", "topic": "TALK_DONE" } ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_TEST_NPCTALK_EXTENDED",
+    "responses": [ { "text": "First of the extension.", "topic": "TALK_DONE" } ]
   }
 ]
