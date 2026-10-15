@@ -3715,11 +3715,22 @@ bool game::try_get_left_click_action( action_id &act, const tripoint_bub_ms &mou
     return true;
 }
 
+namespace
+{
+/// The square the terrain window is centered on: the one the last draw centered it on while looking around, else
+/// where the next draw will center it, since the avatar moves and the map shifts between draws.
+auto terrain_view_center( const bool looking, const avatar &you,
+                          const tripoint_bub_ms &drawn ) -> point
+{
+    return ( looking ? drawn : you.bub_pos() + you.view_offset ).xy().raw();
+}
+} // namespace
+
 auto game::click_window() const -> std::optional<half_open_rectangle<point_bub_ms>>
 {
     if( !w_terrain ) { return std::nullopt; }
     const auto view_size = point( getmaxx( w_terrain ), getmaxy( w_terrain ) );
-    const auto min = ter_view_p.xy().raw() - view_size / 2;
+    const auto min = terrain_view_center( is_looking, u, ter_view_p ) - view_size / 2;
     return half_open_rectangle<point_bub_ms>( point_bub_ms( min ), point_bub_ms( min + view_size ) );
 }
 
@@ -3730,7 +3741,7 @@ auto game::click_cell_of( const tripoint_bub_ms &target ) const -> std::optional
         return std::nullopt;
     }
     const auto win_min = point( getbegx( w_terrain ), getbegy( w_terrain ) );
-    return win_min + target.xy().raw() - ter_view_p.xy().raw() +
+    return win_min + target.xy().raw() - terrain_view_center( is_looking, u, ter_view_p ) +
            point( getmaxx( w_terrain ), getmaxy( w_terrain ) ) / 2;
 }
 
