@@ -1,10 +1,19 @@
 #if defined(CATA_MCP)
 
+#    include "avatar.h"
 #    include "catch/catch.hpp"
 #    include "engine_client_event.h"
 #    include "engine_client_session.h"
+#    include "game.h"
+#    include "locale_fixture.h"
+#    include "locale_scope.h"
+#    include "map_helpers.h"
+#    include "map_perception.h"
 #    include "message_feed.h"
 #    include "messages.h"
+#    include "mondeath.h"
+#    include "monster.h"
+#    include "state_helpers.h"
 #    include "translations.h"
 
 #    include <nlohmann/json.hpp>
@@ -14,6 +23,7 @@
 namespace {
 namespace ec = engine_client;
 using json = nlohmann::json;
+using namespace locale_fixture;
 
 /// The newest line of the native log, as a reader of the feed sees it.
 auto newest_line() -> Messages::feed_entry {
@@ -33,6 +43,17 @@ auto published_line() -> json {
     return json::parse(wire->header)["messages"].back();
 }
 
+/// A zombie the avatar sees.
+auto seen_zombie() -> monster& {
+    clear_all_state();
+    build_test_map(ter_id("t_floor"));
+    get_avatar().setpos(tripoint_bub_ms{60, 60, 0});
+    auto& zombie = spawn_test_monster("mon_zombie", tripoint_bub_ms{62, 60, 0});
+    get_map().build_map_cache(0);
+    map_perception::acquire();
+    REQUIRE(get_avatar().sees(zombie));
+    return zombie;
+}
 } // namespace
 
 TEST_CASE(
@@ -78,13 +99,13 @@ TEST_CASE(
         CHECK(lines.back().text == "Letter x");
         CHECK_FALSE(lines.back().localised);
     }
-    SECTION("a string that needs no translation, a plural form and a plain format have no key") {
+    SECTION(
+        "a string that needs no translation, a plural form and an already rendered line have no key") {
         add_msg(no_translation("Plain"));
         add_msg(pl_translation("%d rat", "%d rats"), 2);
-        add_msg("Format %d", 1);
-        add_msg(_("Translated %d"), 1);
+        Messages::add_msg("Already rendered 1");
         const auto lines = Messages::feed_since({});
-        REQUIRE(lines.size() == 4);
+        REQUIRE(lines.size() == 3);
         for (const auto& line : lines) { CHECK_FALSE(line.localised); }
         CHECK(lines.front().text == "Plain");
     }
@@ -126,7 +147,7 @@ TEST_CASE(
         CHECK(line["label"] == json::parse(R"({"key":"%s x %d","args":[{"key":"Again."},2]})"));
     }
     SECTION("a line with no format is the string it was") {
-        add_msg("Plain %d.", 5);
+        Messages::add_msg("Plain 5.");
         const auto line = published_line();
         CHECK(line["text"] == "Plain 5.");
         CHECK(line["label"] == "Plain 5.");
@@ -138,6 +159,45 @@ TEST_CASE(
                 .key = "%d rat", .ctx = "animal", .plural = 2.0, .args = {std::int64_t{2}}});
         CHECK(published_line()["text"]
               == json::parse(R"({"key":"%d rat","ctx":"animal","plural":2.0,"args":[2]})"));
+    }
+}
+
+TEST_CASE(
+    "the monster death messages read as before in the engine language and carry their format",
+    "[engine_client_localised][messages]") {
+    auto& zombie = seen_zombie();
+    Messages::clear_messages();
+
+    SECTION("in English") {
+        mdeath::disappear(zombie);
+        mdeath::melt(zombie);
+        mdeath::disintegrate(zombie);
+        const auto lines = Messages::feed_since({});
+        REQUIRE(lines.size() == 3);
+        CHECK(lines[0].text == "The zombie disappears.");
+        CHECK(lines[1].text == "The zombie melts away.");
+        CHECK(lines[2].text == "The zombie disintegrates!");
+        CHECK(
+            lines[0].localised
+            == localised_text{
+                .key = "The %s disappears.",
+                .ctx = std::nullopt,
+                .plural = std::nullopt,
+                .args = {std::string{"zombie"}}});
+        CHECK(lines[1].localised->key == "The %s melts away.");
+        CHECK(lines[2].localised->key == "The %s disintegrates!");
+        for (const auto& line : lines) { CHECK(line.type == m_good); }
+    }
+    SECTION("in a translated engine language the text is translated and the key stays the msgid") {
+        const auto fixture = korean_catalogue{{{"The %s disappears.", "%s-ko disappears."}}};
+        {
+            const auto scope = localization::locale_scope{korean};
+            mdeath::disappear(zombie);
+        }
+        const auto line = newest_line();
+        CHECK(line.text == "zombie-ko disappears.");
+        REQUIRE(line.localised);
+        CHECK(line.localised->key == "The %s disappears.");
     }
 }
 
