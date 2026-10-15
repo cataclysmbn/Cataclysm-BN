@@ -11,7 +11,7 @@ import { inventory } from "./inventory.ts"
 import { look } from "./look.ts"
 import { map } from "./map.ts"
 import { pickup } from "./pickup.ts"
-import { colors, distractions } from "./rules.ts"
+import { autopickup, colors, distractions, safemode } from "./rules.ts"
 import { keybindings, options } from "./settings.ts"
 import { title } from "./title.ts"
 import { trade } from "./trade.ts"
@@ -38,5 +38,7 @@ export const scenarios: Scenario[] = [
   keybindings,
   distractions,
   colors,
+  autopickup,
+  safemode,
   armor,
 ]

@@ -693,8 +693,8 @@ TEST_CASE(
 
     settings.show();
     CHECK(step == 12);
-    // The answer was No, so nothing reached the profile.
-    CHECK(file.content() == pickup_rules);
+    // The answer was No, so the rules saved are the ones the manager was opened with.
+    CHECK(json::parse(file.content()) == json::parse(pickup_rules));
 }
 
 TEST_CASE(
@@ -777,8 +777,7 @@ TEST_CASE(
                 // The matches of the rule over the manager, each by the item it is.
                 REQUIRE(screen.context == "AUTO_PICKUP_TEST");
                 CHECK(screen.role == "dialog");
-                const auto& panel = body<ec::panel_body>(part(screen, "autopickup_test:panel"));
-                CHECK(panel.title == "1 item matches: sledge hammer");
+                CHECK(screen.title == "1 item matches: sledge hammer");
                 const auto& all = rows(screen, "autopickup_test:matches");
                 REQUIRE(all.size() == 1);
                 CHECK(all[0].id == "item:hammer_sledge");
@@ -1033,8 +1032,7 @@ TEST_CASE(
                       })
                     | std::ranges::to<std::vector>();
                 REQUIRE_FALSE(expected.empty());
-                const auto& panel = body<ec::panel_body>(part(screen, "safemode_test:panel"));
-                CHECK(panel.title == std::to_string(expected.size()) + " monsters match: zombie");
+                CHECK(screen.title == std::to_string(expected.size()) + " monsters match: zombie");
                 CHECK(ids_of(screen, "safemode_test:matches") == expected);
                 CHECK(row_of(screen, "safemode_test:matches", expected[0]).label == "zombie");
                 CHECK(row_of(screen, "safemode_test:matches", expected[0]).selected);

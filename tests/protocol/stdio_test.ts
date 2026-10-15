@@ -1381,6 +1381,20 @@ Deno.test({
   },
 })
 
+/** The rows of the rule list `id` on top, in order. */
+const ruleRows = (session: Session, id: string) => listRows(session, id)
+const ruleColumn = (session: Session, id: string, row: string, key: string) =>
+  ruleRows(session, id).find((entry) => entry.id === row).columns.find((column: Value) =>
+    column.key === key
+  ).value
+
+/** Answers the text entry on top with `text`, through its confirming affordance. */
+async function typeText(session: Session, text: string) {
+  const confirm = top(session).affordances.find((entry: Value) => entry.role === "confirm")
+  assert(confirm, "the text entry confirms")
+  return await invokeOn(session, confirm.id, { text })
+}
+
 Deno.test({
   name: "stdio: the rule screens are structured",
   ignore: !Deno.env.get("BN_BINARY"),
@@ -1390,21 +1404,155 @@ Deno.test({
     try {
       const session = await startSession(client)
       const leave = async () => {
-        assertEquals((await session.submit({ kind: "cancel" })).stages.at(-1), "completed")
+        assertEquals((await invokeOn(session, "QUIT")).stages.at(-1), "completed")
         await session.acknowledge(inMainMenu(session))
       }
-      // Each screen publishes its tabs and columns or rows; the rule screens start empty.
+      // Each screen publishes its tabs by token and its list of rules, which start empty; without a character
+      // there is the global page only.
       for (
-        const [entry, context, first] of [
-          ["settings:autopickup", "AUTO_PICKUP", "column:1"],
-          ["settings:safemode", "SAFEMODE", "page:0"],
+        const [entry, context, prefix] of [
+          ["settings:autopickup", "AUTO_PICKUP", "autopickup"],
+          ["settings:safemode", "SAFEMODE", "safemode"],
         ]
       ) {
         await openSetting(session, entry)
-        const screen = session.mirror.interaction.interaction
-        assertEquals([screen.context, shown(session)[0].id], [context, first])
+        assertEquals(top(session).context, context)
+        const tabs = findComponent(top(session).root, prefix + ":tabs")
+        assertEquals(tabs.select, prefix + ":tab")
+        assertEquals(tabs.tabs[0].id, "global")
+        assertEquals(ruleRows(session, prefix + ":rules"), [])
         await leave()
       }
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
+Deno.test({
+  name:
+    "stdio: the auto pickup manager adds, switches, moves and removes rules by id through the wire and they persist",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const binary = Deno.env.get("BN_BINARY")!
+    let client = new Client(binary, profile)
+    try {
+      let session = await startSession(client)
+      await openSetting(session, "settings:autopickup")
+      assertEquals((await invokeOn(session, "ADD_RULE")).stages.at(-1), "completed")
+      assertEquals((await typeText(session, "*knife*")).stages.at(-1), "completed")
+      assertEquals((await invokeOn(session, "ADD_RULE")).stages.at(-1), "completed")
+      assertEquals((await typeText(session, "*axe*")).stages.at(-1), "completed")
+      const [knife, axe] = ruleRows(session, "autopickup:rules")
+      assertEquals([knife.label, axe.label], ["*knife*", "*axe*"])
+      assert(/^rule:[1-9]\d*$/.test(knife.id) && knife.id !== axe.id)
+      // A rule is named by its id: a move keeps it, and a position or a rule of no list is refused.
+      assertEquals(
+        (await invokeOn(session, "autopickup:select", { row: "rule:0" })).error,
+        "invalid_arguments",
+      )
+      assertEquals(
+        (await invokeOn(session, "autopickup:mode", { row: "entry:0" })).error,
+        "invalid_arguments",
+      )
+      assertEquals(
+        (await invokeOn(session, "autopickup:tab", { row: "middle" })).error,
+        "invalid_arguments",
+      )
+      assertEquals((await invokeOn(session, "MOVE_RULE_DOWN")).stages.at(-1), "completed")
+      assertEquals(ruleRows(session, "autopickup:rules").map((row) => row.id), [axe.id, knife.id])
+      assertEquals(
+        (await invokeOn(session, "autopickup:mode", { row: axe.id })).stages.at(-1),
+        "completed",
+      )
+      assertEquals(ruleColumn(session, "autopickup:rules", axe.id, "i_e"), "Exclude")
+      assertEquals(ruleColumn(session, "autopickup:rules", knife.id, "i_e"), "Include")
+      // A copy has an id of its own, and removing it leaves the others their ids.
+      assertEquals((await invokeOn(session, "COPY_RULE")).stages.at(-1), "completed")
+      const copy = ruleRows(session, "autopickup:rules")
+      assertEquals(copy.length, 3)
+      assert(![axe.id, knife.id].includes(copy[2].id))
+      assertEquals((await invokeOn(session, "REMOVE_RULE")).stages.at(-1), "completed")
+      assertEquals(ruleRows(session, "autopickup:rules").map((row) => row.id), [axe.id, knife.id])
+      await leaveAndSave(session, inMainMenu(session))
+      await client.close()
+
+      // The rules are the profile's; the ids are the new session's.
+      client = new Client(binary, profile)
+      session = await startSession(client)
+      await openSetting(session, "settings:autopickup")
+      const saved = ruleRows(session, "autopickup:rules")
+      assertEquals(saved.map((row) => row.label), ["*axe*", "*knife*"])
+      assertEquals(ruleColumn(session, "autopickup:rules", saved[0].id, "i_e"), "Exclude")
+      assertEquals(ruleColumn(session, "autopickup:rules", saved[1].id, "i_e"), "Include")
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
+Deno.test({
+  name:
+    "stdio: the safe mode manager adds, edits, switches and removes rules by id through the wire and they persist",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const binary = Deno.env.get("BN_BINARY")!
+    let client = new Client(binary, profile)
+    try {
+      let session = await startSession(client)
+      await openSetting(session, "settings:safemode")
+      assert(findComponent(top(session).root, "safemode:notice"), "the page says it lists no rule")
+      assertEquals((await invokeOn(session, "ADD_RULE")).stages.at(-1), "completed")
+      const [rule] = ruleRows(session, "safemode:rules")
+      assertEquals(rule.label, "<empty rule>")
+      assertEquals(
+        (await invokeOn(session, "safemode:edit", { row: "rule:0" })).error,
+        "invalid_arguments",
+      )
+      assertEquals(
+        (await invokeOn(session, "safemode:edit", { row: rule.id })).stages.at(-1),
+        "completed",
+      )
+      assertEquals((await typeText(session, "zombie")).stages.at(-1), "completed")
+      assertEquals(ruleRows(session, "safemode:rules")[0].label, "zombie")
+      assertEquals(ruleColumn(session, "safemode:rules", rule.id, "whitelist"), "Blacklist")
+      assertEquals(
+        (await invokeOn(session, "safemode:list", { row: rule.id })).stages.at(-1),
+        "completed",
+      )
+      assertEquals(ruleColumn(session, "safemode:rules", rule.id, "whitelist"), "Whitelist")
+      assertEquals(
+        (await invokeOn(session, "safemode:category", { row: rule.id })).stages.at(-1),
+        "completed",
+      )
+      assertEquals(ruleColumn(session, "safemode:rules", rule.id, "category"), "Sound")
+      assertEquals(ruleColumn(session, "safemode:rules", rule.id, "attitude"), "---")
+      // The default ruleset adds two rules after it; the first keeps its id.
+      assertEquals((await invokeOn(session, "ADD_DEFAULT_RULESET")).stages.at(-1), "completed")
+      const rules = ruleRows(session, "safemode:rules")
+      assertEquals(rules.length, 3)
+      assertEquals(rules[0].id, rule.id)
+      assertEquals((await invokeOn(session, "REMOVE_RULE")).stages.at(-1), "completed")
+      assertEquals(ruleRows(session, "safemode:rules").map((row) => row.id), [
+        rules[0].id,
+        rules[1].id,
+      ])
+      await leaveAndSave(session, inMainMenu(session))
+      await client.close()
+
+      client = new Client(binary, profile)
+      session = await startSession(client)
+      await openSetting(session, "settings:safemode")
+      const saved = ruleRows(session, "safemode:rules")
+      assertEquals(saved.map((row) => row.label), ["zombie", "*"])
+      assertEquals(ruleColumn(session, "safemode:rules", saved[0].id, "category"), "Sound")
+      assertEquals(ruleColumn(session, "safemode:rules", saved[0].id, "whitelist"), "Whitelist")
       await client.close()
     } finally {
       client.kill()
