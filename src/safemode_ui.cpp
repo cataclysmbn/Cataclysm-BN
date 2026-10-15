@@ -6,15 +6,18 @@
 #include <fstream>
 #include <map>
 #include <memory>
+#include <optional>
+#include <ranges>
 #include <string>
+#include <string_view>
 #include <utility>
 
 #include "avatar.h"
 #include "cata_utility.h"
-#include "client_interaction.h"
 #include "color.h"
 #include "cursesdef.h"
 #include "debug.h"
+#include "engine_client_component.h"
 #include "filesystem.h"
 #include "fstream_utils.h"
 #include "game.h"
@@ -38,6 +41,68 @@ safemode &get_safemode()
     static safemode single_instance;
     return single_instance;
 }
+
+namespace
+{
+namespace ec = engine_client;
+
+/// The components and affordances of the safe mode manager and of the list of the monsters a rule matches.
+constexpr auto safemode_tabs = "safemode:tabs";
+constexpr auto safemode_rules = "safemode:rules";
+constexpr auto safemode_details = "safemode:details";
+constexpr auto safemode_help = "safemode:help";
+constexpr auto safemode_notice = "safemode:notice";
+constexpr auto safemode_tab = "safemode:tab";
+constexpr auto safemode_select = "safemode:select";
+constexpr auto test_matches = "safemode_test:matches";
+constexpr auto test_note = "safemode_test:note";
+constexpr auto test_select = "safemode_test:select";
+/// The affordances that confirm the column of a rule, in the order of the columns: its rule, attitude,
+/// distance, list and category.
+constexpr auto column_affordances = std::array<std::string_view, 5>
+{ "safemode:edit", "safemode:attitude", "safemode:dist",
+    "safemode:list", "safemode:category"
+};
+/// The tabs by token, in the order of the tabs.
+constexpr auto tab_tokens = std::array<std::string_view, 2> { "global", "character" };
+/// The actions of the manager that act on the rule under the cursor.
+constexpr auto actions_on_a_rule = std::array<std::string_view, 8>
+{ "REMOVE_RULE", "COPY_RULE", "SWAP_RULE_GLOBAL_CHAR",
+    "ENABLE_RULE", "DISABLE_RULE", "MOVE_RULE_UP", "MOVE_RULE_DOWN", "TEST_RULE"
+};
+/// The actions of the manager that change a page, which a page without a character cannot take.
+constexpr auto actions_on_a_page = std::array<std::string_view, 3> { "ADD_RULE", "ADD_DEFAULT_RULESET", "SWITCH_SAFEMODE_OPTION" };
+
+/// What the text entry of a rule explains about the patterns it takes, for a sound rule or a monster rule.
+auto pattern_help( const bool sound ) -> std::string
+{
+    return sound ? std::string{ _(
+                                    "* is used as a Wildcard.  A few Examples:\n"
+                                    "\n"
+                                    "footsteps      matches the sound name exactly\n"
+                                    "a loud ba*     matches sounds beginning with 'a loud ba'\n"
+                                    "*losion!       matches sounds ending with 'losion!'\n"
+                                    "a *oud*ba*     multiple * are allowed\n"
+                                    "*LoU*bA*       case insensitive search" )
+                              } :
+           std::string{ _(
+                            "* is used as a Wildcard.  A few Examples:\n"
+                            "\n"
+                            "human          matches every NPC\n"
+                            "zombie         matches the monster name exactly\n"
+                            "acidic zo*     matches monsters beginning with 'acidic zo'\n"
+                            "*mbie          matches monsters ending with 'mbie'\n"
+                            "*cid*zo*ie     multiple * are allowed\n"
+                            "AcI*zO*iE      case insensitive search" )
+                      };
+}
+
+/// A monster a rule matches: the row id its monster type gives it, and its name.
+struct monster_match {
+    std::string id;
+    std::string name;
+};
+} // namespace
 
 void safemode::show()
 {
@@ -252,72 +317,150 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
         wnoutrefresh( w );
     } );
 
-    // Tabs, the columns the cursor can be in, and one row per rule, as the native screen shows them.
-    const auto make_interaction = [&]() {
-        auto snapshot = game_client::interaction_snapshot{
-            .kind = game_client::interaction_kind::choices, .title = custom_name_in, .allow_cancel = true,
-        };
-        const auto tab_labels = std::array<std::string, 2> { _( "Global" ), _( "Character" ) };
-        for( auto index = 0; index < MAX_TAB; ++index ) {
-            snapshot.choices.push_back( { .id = "page:" + std::to_string( index ), .label = tab_labels[index],
-                                          .selected = index == tab, .highlighted = index == tab } );
-        }
-        const auto column_labels = std::array<std::string, 5> { _( "Rules" ), _( "Attitude" ), _( "Dist" ),
-                   _( "B/W" ), pgettext( "category", "Cat" )
-                                                              };
-        for( auto index = 0; index < num_columns; ++index ) {
-            snapshot.choices.push_back( { .id = "column:" + std::to_string( index ), .label = column_labels[index],
-                                          .pane_id = "columns", .selected = index == column, .highlighted = index == column } );
-        }
-        const auto &rules = tab == GLOBAL_TAB ? global_rules : character_rules;
-        for( auto index = 0; !( tab == CHARACTER_TAB && g->u.name.empty() ) &&
-             index < static_cast<int>( rules.size() ); ++index ) {
-            const auto &rule = rules[index];
-            snapshot.choices.push_back( {
-                .id = "rule:" + std::to_string( index ),
-                .label = rule.rule.empty() ? _( "<empty rule>" ) : rule.rule,
-                .pane_id = "rules", .selected = index == line, .highlighted = index == line,
-                .columns = { {
-                        .key = "attitude", .label = column_labels[1], .value = rule.category == Categories::HOSTILE_SPOTTED ?
-                        Creature::get_attitude_ui_data( rule.attitude ).first.translated() : "---"
-                    },
-                    {
-                        .key = "dist", .label = column_labels[2], .value = rule.category == Categories::SOUND || !rule.whitelist ?
-                        std::to_string( rule.proximity ) : "---"
-                    },
-                    { .key = "whitelist", .label = column_labels[3], .value = rule.whitelist ? _( "Whitelist" ) : _( "Blacklist" ) },
-                    { .key = "category", .label = column_labels[4], .value = rule.category == Categories::SOUND ? _( "Sound" ) : _( "Hostile" ) },
-                    { .key = "active", .label = _( "Active" ), .value = rule.active ? _( "True" ) : _( "False" ) }
-                },
-            } );
-        }
-        return snapshot;
+    static_assert( tab_tokens.size() == MAX_TAB );
+    const auto row_id_of = []( const rules_class & value ) {
+        return "rule:" + std::to_string( value.serial );
     };
+    const auto column_labels = [&]() {
+        return std::array<std::string, 5> { _( "Rules" ), _( "Attitude" ), _( "Dist" ), _( "B/W" ), pgettext( "category", "Cat" ) };
+    };
+
+    // The tabs, one row per rule, and beside them what the page says when it lists none and the help of the
+    // patterns of the rule under the cursor.
+    const auto rules_view = [&]() -> ec::screen_view {
+        using namespace std::views;
+        const auto no_character = tab == CHARACTER_TAB && g->u.name.empty();
+        const auto &page = tab == GLOBAL_TAB ? global_rules : character_rules;
+const auto shown = no_character ? std::vector<rules_class> {} :
+        page;
+        const auto labels = column_labels();
+        const auto enabled = get_option<bool>( "SAFEMODE" );
+        auto rows = shown | enumerate | transform( [&]( const auto & entry )
+        {
+            const auto &[index, value] = entry;
+            const auto hostile = value.category == Categories::HOSTILE_SPOTTED;
+            return ec::row{
+.id = row_id_of( value ), .label = value.rule.empty() ? std::string{ _( "<empty rule>" ) } :
+                value.rule,
+                .selected = index == line, .columns = {
+                    { .key = "attitude", .label = labels[1], .value = hostile ? Creature::get_attitude_ui_data( value.attitude ).first.translated() : "---" },
+                    { .key = "dist", .label = labels[2], .value = !hostile || !value.whitelist ? std::to_string( value.proximity ) : "---" },
+                    { .key = "whitelist", .label = labels[3], .value = value.whitelist ? _( "Whitelist" ) : _( "Blacklist" ) },
+                    { .key = "category", .label = labels[4], .value = hostile ? _( "Hostile" ) : _( "Sound" ) },
+                    { .key = "active", .label = _( "Active" ), .value = value.active ? _( "True" ) : _( "False" ) }
+                },
+                .color = string_from_color( value.active ? c_white : c_light_gray ) };
+        } ) | std::ranges::to<std::vector>();
+        const auto row_arg = ec::arg_shape{ .row = ec::row_shape{ .component_id = safemode_rules } };
+        auto items = ec::list( { .id = safemode_rules, .rows = std::move( rows ), .selection = "single", .activate = std::string{ column_affordances[COLUMN_RULE] } } );
+        items.affordances.push_back( safemode_select );
+        std::ranges::transform( column_affordances | drop( 1 ), std::back_inserter( items.affordances ), []( const std::string_view id )
+        {
+            return std::string{ id };
+        } );
+        auto parts = ec::children_of( std::move( items ) );
+        auto notice = std::string{};
+        if( no_character )
+        {
+            notice = _( "Please load a character first to use this page!" );
+        } else if( empty() )
+        {
+            notice = string_format( "%s\n%s\n%s", _( "Safe Mode manager currently inactive." ),
+                                    _( "Default rules are used.  Add a rule to activate." ),
+                                    _( "Press ~ to add a default ruleset to get started." ) );
+        }
+        if( !notice.empty() )
+        {
+            parts.push_back( { .id = safemode_notice, .body = ec::text_body{ .markup = notice } } );
+        }
+        parts.push_back( ec::panel( {
+            .id = safemode_details,
+            .stats = { {
+                    .key = "enabled", .label = _( "Safe Mode enabled:" ), .value = enabled ? _( "True" ) : _( "False" ),
+                    .tone = enabled ? "good" : "bad"
+                }
+            },
+            .child = ec::component{
+                .id = safemode_help, .body = ec::text_body{
+                    .markup = pattern_help(
+                        !shown.empty() && shown[line].category == Categories::SOUND ) } } } ) );
+        // A page that lists no rule has nothing to act on, and a game without a character no page to change.
+        auto denials = std::vector<ec::denial> {};
+        const auto deny = [&]( const auto & ids, const std::string & reason )
+        {
+            std::ranges::transform( ids, std::back_inserter( denials ), [&]( const std::string_view id ) {
+                return ec::denial{ .id = std::string{ id }, .reason = reason };
+            } );
+        };
+        if( no_character )
+        {
+            deny( actions_on_a_rule, _( "Please load a character first to use this page!" ) );
+            deny( actions_on_a_page, _( "Please load a character first to use this page!" ) );
+        } else if( shown.empty() )
+        {
+            deny( actions_on_a_rule, {} );
+        } else if( g->u.name.empty() )
+        {
+            deny( std::array<std::string_view, 1> { "TEST_RULE" },
+                  _( "No monsters loaded.  Please start a game first." ) );
+            deny( std::array<std::string_view, 1> { "SWAP_RULE_GLOBAL_CHAR" },
+                  _( "Please load a character first to use this page!" ) );
+        }
+        auto affordances = std::vector<ec::affordance> {
+            ec::invoke_affordance( { .id = safemode_select, .label = _( "Select" ), .args = row_arg, .role = "select" } ),
+            ec::invoke_affordance( { .id = safemode_tab, .label = _( "Select" ), .args = { .row = ec::row_shape{ .component_id = safemode_tabs } } } ),
+        };
+        std::ranges::transform( iota( 0, num_columns ), std::back_inserter( affordances ), [&]( const int index )
+        {
+            return ec::invoke_affordance( { .id = std::string{ column_affordances[index] }, .label = labels[index], .args = row_arg } );
+        } );
+        return {
+            .title = custom_name_in,
+            .root = ec::tabs( {
+                .id = safemode_tabs,
+                .tabs = iota( 0, static_cast<int>( MAX_TAB ) ) | transform( [&]( const int index )
+                {
+                    return ec::tab_entry{
+                        .id = std::string{ tab_tokens[index] },
+                        .label = index == GLOBAL_TAB ? _( "Global" ) : _( "Character" ), .selected = index == tab };
+                } ) | std::ranges::to<std::vector>(),
+                .select = safemode_tab,
+                .child = ec::split( {
+                    .id = "safemode:body", .relation = "detail", .active = safemode_rules, .children = std::move( parts ) } ) } ),
+            .affordances = std::move( affordances ),
+            .denials = std::move( denials ),
+.focus_component = safemode_rules, .focus_row = shown.empty() ? std::string{} :
+            row_id_of( shown[line] ) };
+    };
+    const auto screen = ec::screen_scope( ctxt, { .role = "screen", .view = [&]( const auto & /*state*/ ) { return rules_view(); } } );
 
     while( true ) {
         auto &current_tab = ( tab == GLOBAL_TAB ) ? global_rules : character_rules;
 
         ui_manager::redraw();
 
-        auto action = std::string{};
-        {
-            const auto interaction = game_client::interaction_scope( ctxt, make_interaction );
-            action = ctxt.handle_input();
-        }
-        // A semantic choice moves the cursor and then acts like the matching key.
-        if( const auto raw = ctxt.get_raw_input(); raw.interaction ) {
-            const auto &target = raw.interaction->target_id;
+        auto action = std::string{ ctxt.handle_input() };
+        // A client's affordance acts on the native cursor, like the keypress that does the same.
+        if( const auto invoked = ec::invoked( ctxt.get_raw_input() ) ) {
+            const auto &id = invoked->affordance_id;
+            const auto &row = invoked->args.row;
             action.clear();
-            if( raw.interaction->operation == game_client::interaction_operation::cancel ) {
-                action = "QUIT";
-            } else if( target.starts_with( "page:" ) ) {
-                tab = std::stoi( target.substr( 5 ) );
-                line = 0;
-            } else if( target.starts_with( "column:" ) ) {
-                column = std::stoi( target.substr( 7 ) );
-            } else if( target.starts_with( "rule:" ) ) {
-                line = std::stoi( target.substr( 5 ) );
-                action = "CONFIRM";
+            if( id == safemode_tab ) {
+                if( const auto tab_found = row ? std::ranges::find( tab_tokens, *row ) : tab_tokens.end();
+                    tab_found != tab_tokens.end() ) {
+                    tab = static_cast<int>( tab_found - tab_tokens.begin() );
+                    line = 0;
+                }
+            } else if( const auto rule_found = row ? std::ranges::find( current_tab, *row,
+                                               row_id_of ) : current_tab.end();
+                       rule_found != current_tab.end() ) {
+                line = static_cast<int>( rule_found - current_tab.begin() );
+                // Editing a column of the rule is the confirmation of that column.
+                if( const auto edited = std::ranges::find( column_affordances, id );
+                    edited != column_affordances.end() ) {
+                    column = static_cast<int>( edited - column_affordances.begin() );
+                    action = "CONFIRM";
+                }
             }
         }
 
@@ -371,6 +514,7 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
         } else if( action == "COPY_RULE" && !current_tab.empty() ) {
             changes_made = true;
             current_tab.push_back( current_tab[line] );
+            current_tab.back().serial = next_rule_serial();
             line = current_tab.size() - 1;
         } else if( action == "SWAP_RULE_GLOBAL_CHAR" && !current_tab.empty() ) {
             if( ( tab == GLOBAL_TAB && !g->u.name.empty() ) || tab == CHARACTER_TAB ) {
@@ -380,6 +524,7 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
                 auto &temp_rules_to = ( tab == GLOBAL_TAB ) ? character_rules : global_rules;
 
                 temp_rules_to.push_back( temp_rules_from[line] );
+                temp_rules_to.back().serial = next_rule_serial();
 
                 //remove old
                 temp_rules_from.erase( temp_rules_from.begin() + line );
@@ -404,37 +549,9 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
                 help_ui.on_screen_resize( init_help_window );
 
                 help_ui.on_redraw( [&]( const ui_adaptor & ) {
-                    switch( current_tab[line].category ) {
-                        case Categories::HOSTILE_SPOTTED:
-                            // NOLINTNEXTLINE(cata-use-named-point-constants)
-                            fold_and_print( w_help, point( 1, 1 ), 999, c_white,
-                                            _(
-                                                "* is used as a Wildcard.  A few Examples:\n"
-                                                "\n"
-                                                "human          matches every NPC\n"
-                                                "zombie         matches the monster name exactly\n"
-                                                "acidic zo*     matches monsters beginning with 'acidic zo'\n"
-                                                "*mbie          matches monsters ending with 'mbie'\n"
-                                                "*cid*zo*ie     multiple * are allowed\n"
-                                                "AcI*zO*iE      case insensitive search" )
-                                          );
-                            break;
-                        case Categories::SOUND:
-                            // NOLINTNEXTLINE(cata-use-named-point-constants)
-                            fold_and_print( w_help, point( 1, 1 ), 999, c_white,
-                                            _(
-                                                "* is used as a Wildcard.  A few Examples:\n"
-                                                "\n"
-                                                "footsteps      matches the sound name exactly\n"
-                                                "a loud ba*     matches sounds beginning with 'a loud ba'\n"
-                                                "*losion!       matches sounds ending with 'losion!'\n"
-                                                "a *oud*ba*     multiple * are allowed\n"
-                                                "*LoU*bA*       case insensitive search" )
-                                          );
-                            break;
-                        default:
-                            break;
-                    }
+                    // NOLINTNEXTLINE(cata-use-named-point-constants)
+                    fold_and_print( w_help, point( 1, 1 ), 999, c_white,
+                                    pattern_help( current_tab[line].category == Categories::SOUND ) );
                     draw_border( w_help );
                     wnoutrefresh( w_help );
                 } );
@@ -549,7 +666,7 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
 
 void safemode::test_pattern( const int tab_in, const int row_in )
 {
-    std::vector<std::string> creature_list;
+    std::vector<monster_match> creature_list;
 
     auto &temp_rules = ( tab_in == GLOBAL_TAB ) ? global_rules : character_rules;
 
@@ -566,7 +683,7 @@ void safemode::test_pattern( const int tab_in, const int row_in )
     for( const auto &mtype : MonsterGenerator::generator().get_all_mtypes() ) {
         std::string creature_name = mtype.nname();
         if( wildcard_match( creature_name, temp_rules[row_in].rule ) ) {
-            creature_list.push_back( creature_name );
+            creature_list.push_back( { .id = "monster:" + mtype.id.str(), .name = creature_name } );
         }
     }
 
@@ -636,17 +753,49 @@ void safemode::test_pattern( const int tab_in, const int row_in )
                 wprintz( w_test_rule_content, c_yellow, ( line == i ) ? ">> " : "   " );
 
                 wprintz( w_test_rule_content, ( line == i ) ? hilite( line_color ) : line_color,
-                         creature_list[i] );
+                         creature_list[i].name );
             }
         }
 
         wnoutrefresh( w_test_rule_content );
     } );
 
+    // One row per matching monster, and under them the note on what the list leaves out.
+    const auto matches_view = [&]() -> ec::screen_view {
+        using namespace std::views;
+        auto rows = creature_list | enumerate | transform( [&]( const auto & entry )
+        {
+            const auto &[index, match] = entry;
+            return ec::row{ .id = match.id, .label = match.name, .selected = index == line };
+        } ) | std::ranges::to<std::vector>();
+        return {
+            .title = buf,
+            .root = ec::split( {
+                .id = "safemode_test:body", .relation = "detail", .active = test_matches,
+                .children = ec::children_of(
+                ec::list( { .id = test_matches, .rows = std::move( rows ), .selection = "single" } ),
+                ec::component{ .id = test_note, .body = ec::text_body{ .markup = _( "Lists monsters regardless of their attitude." ), .tone = "bad" } } ) } ),
+            .affordances = {
+                ec::invoke_affordance( { .id = test_select, .label = _( "Select" ), .args = { .row = ec::row_shape{ .component_id = test_matches } }, .role = "select" } ),
+            },
+.focus_component = test_matches, .focus_row = creature_list.empty() ? std::string{} :
+            creature_list[line].id };
+    };
+    const auto screen = ec::screen_scope( ctxt, { .role = "dialog", .view = [&]( const auto & /*state*/ ) { return matches_view(); } } );
+
     while( true ) {
         ui_manager::redraw();
 
-        const std::string action = ctxt.handle_input();
+        auto action = std::string{ ctxt.handle_input() };
+        // A client's affordance moves the cursor to its row, like the keypress that does the same.
+        if( const auto invoked = ec::invoked( ctxt.get_raw_input() ) ) {
+            const auto found = invoked->args.row ? std::ranges::find( creature_list, *invoked->args.row,
+                               &monster_match::id ) : creature_list.end();
+            action.clear();
+            if( found != creature_list.end() ) {
+                line = static_cast<int>( found - creature_list.begin() );
+            }
+        }
         if( action == "DOWN" ) {
             line++;
             if( line >= static_cast<int>( creature_list.size() ) ) {

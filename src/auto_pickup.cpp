@@ -5,13 +5,15 @@
 #include <cstddef>
 #include <functional>
 #include <memory>
+#include <ranges>
+#include <string_view>
 #include <utility>
 
 #include "avatar.h"
-#include "client_interaction.h"
 #include "color.h"
 #include "cursesdef.h"
 #include "debug.h"
+#include "engine_client_component.h"
 #include "filesystem.h"
 #include "fstream_utils.h"
 #include "game.h"
@@ -53,6 +55,59 @@ auto_pickup::player_settings &get_auto_pickup()
     static auto_pickup::player_settings single_instance;
     return single_instance;
 }
+
+namespace
+{
+namespace ec = engine_client;
+
+/// The components and affordances of the auto pickup manager and of the list of the items a rule matches.
+constexpr auto pickup_tabs = "autopickup:tabs";
+constexpr auto pickup_rules = "autopickup:rules";
+constexpr auto pickup_details = "autopickup:details";
+constexpr auto pickup_help = "autopickup:help";
+constexpr auto pickup_tab = "autopickup:tab";
+constexpr auto pickup_select = "autopickup:select";
+constexpr auto pickup_edit = "autopickup:edit";
+constexpr auto pickup_mode = "autopickup:mode";
+constexpr auto test_matches = "autopickup_test:matches";
+constexpr auto test_note = "autopickup_test:note";
+constexpr auto test_select = "autopickup_test:select";
+/// The actions of the manager that act on the rule under the cursor.
+constexpr auto actions_on_a_rule = std::array<std::string_view, 8>
+{ "REMOVE_RULE", "COPY_RULE", "SWAP_RULE_GLOBAL_CHAR",
+    "ENABLE_RULE", "DISABLE_RULE", "MOVE_RULE_UP", "MOVE_RULE_DOWN", "TEST_RULE"
+};
+
+/// A rule's row: the number the session gave it, which no language or position changes.
+auto row_id_of( const rule &value ) -> std::string { return "rule:" + std::to_string( value.serial ); }
+
+/// What the text entry of a rule explains about the patterns it takes.
+auto pattern_help() -> std::string
+{
+    return _(
+               "* is used as a Wildcard.  A few Examples:\n"
+               "\n"
+               "wooden arrow    matches the itemname exactly\n"
+               "wooden ar*      matches items beginning with wood ar\n"
+               "*rrow           matches items ending with rrow\n"
+               "*avy fle*fi*arrow     multiple * are allowed\n"
+               "heAVY*woOD*arrOW      case insensitive search\n"
+               "\n"
+               "Pickup using:\n"
+               "c:food          matches item in category food\n"
+               "m:kevlar        matches items made of Kevlar\n"
+               "M:copper        matches items made purely of copper\n"
+               "q:drilling      matches items with drilling qualites\n"
+               "k:fabrication   matches books that teach fabrication\n"
+               "b:c:food;*meat* matches conditions c:food and *meat*" );
+}
+
+/// An item a rule matches: the row id its item type gives it, and its name.
+struct item_match {
+    std::string id;
+    std::string name;
+};
+} // namespace
 
 void user_interface::show()
 {
@@ -226,33 +281,67 @@ void user_interface::show()
         ctxt.register_action( "SWITCH_AUTO_PICKUP_OPTION" );
     }
 
-    // Tabs, the two columns the cursor can be in, and one row per rule, as the native screen shows them.
-    const auto make_interaction = [&]() {
-        auto snapshot = game_client::interaction_snapshot{
-            .kind = game_client::interaction_kind::choices, .title = title, .allow_cancel = true,
-        };
-        for( auto index = std::size_t{ 0 }; tabs.size() > 1 && index < tabs.size(); ++index ) {
-            snapshot.choices.push_back( { .id = "page:" + std::to_string( index ), .label = tabs[index].title,
-                                          .selected = index == iTab, .highlighted = index == iTab } );
-        }
-        const auto column_labels = std::array<std::string, 2> { _( "Rules" ), _( "I/E" ) };
-        for( auto column = 1; column <= iTotalCols; ++column ) {
-            snapshot.choices.push_back( { .id = "column:" + std::to_string( column ), .label = column_labels[column - 1],
-                                          .pane_id = "columns", .selected = column == iColumn, .highlighted = column == iColumn } );
-        }
+    // The tabs, one row per rule, and the help of the rule patterns beside them.
+    const auto rules_view = [&]() -> ec::screen_view {
+        using namespace std::views;
         const auto &rules = tabs[iTab].new_rules;
-        for( auto index = 0; index < static_cast<int>( rules.size() ); ++index ) {
-            snapshot.choices.push_back( {
-                .id = "rule:" + std::to_string( index ),
-                .label = rules[index].sRule.empty() ? _( "<empty rule>" ) : rules[index].sRule,
-                .pane_id = "rules", .selected = index == iLine, .highlighted = index == iLine,
-                .columns = { { .key = "i_e", .label = _( "I/E" ), .value = rules[index].bExclude ? _( "Exclude" ) : _( "Include" ) },
-                    { .key = "active", .label = _( "Active" ), .value = rules[index].bActive ? _( "True" ) : _( "False" ) }
+        const auto enabled = get_option<bool>( "AUTO_PICKUP" );
+        auto rows = rules | enumerate | transform( [&]( const auto & entry )
+        {
+            const auto &[index, value] = entry;
+            return ec::row{
+.id = row_id_of( value ), .label = value.sRule.empty() ? std::string{ _( "<empty rule>" ) } :
+                value.sRule,
+                .selected = index == iLine, .columns = {
+                    { .key = "i_e", .label = _( "I/E" ), .value = value.bExclude ? _( "Exclude" ) : _( "Include" ) },
+                    { .key = "active", .label = _( "Active" ), .value = value.bActive ? _( "True" ) : _( "False" ) }
                 },
-            } );
-        }
-        return snapshot;
+                .color = string_from_color( value.bActive ? c_white : c_light_gray ) };
+        } ) | std::ranges::to<std::vector>();
+        const auto row_arg = ec::arg_shape{ .row = ec::row_shape{ .component_id = pickup_rules } };
+        auto items = ec::list( { .id = pickup_rules, .rows = std::move( rows ), .selection = "single", .activate = pickup_edit } );
+        items.affordances.push_back( pickup_select );
+        items.affordances.push_back( pickup_mode );
+        auto details = ec::panel( {
+            .id = pickup_details,
+            .stats = { {
+                    .key = "enabled", .label = _( "Auto pickup enabled:" ), .value = enabled ? _( "True" ) : _( "False" ),
+                    .tone = enabled ? "good" : "bad"
+                }
+            },
+            .child = ec::component{ .id = pickup_help, .body = ec::text_body{ .markup = pattern_help() } } } );
+        // Without a rule there is nothing to act on; testing a rule also needs a character.
+        auto denials = actions_on_a_rule | filter( [&]( const std::string_view id )
+        {
+            return rules.empty() || ( id == "TEST_RULE" && g->u.name.empty() );
+        } ) | transform( []( const std::string_view id )
+        {
+            return ec::denial{ .id = std::string{ id } };
+        } ) | std::ranges::to<std::vector>();
+        return {
+            .title = title,
+            .root = ec::tabs( {
+                .id = pickup_tabs,
+                .tabs = tabs | enumerate | transform( [&]( const auto & entry )
+                {
+                    const auto &[index, value] = entry;
+                    return ec::tab_entry{ .id = value.id, .label = value.title, .selected = static_cast<size_t>( index ) == iTab };
+                } ) | std::ranges::to<std::vector>(),
+                .select = pickup_tab,
+                .child = ec::split( {
+                    .id = "autopickup:body", .relation = "detail", .active = pickup_rules,
+                    .children = ec::children_of( std::move( items ), std::move( details ) ) } ) } ),
+            .affordances = {
+                ec::invoke_affordance( { .id = pickup_select, .label = _( "Select" ), .args = row_arg, .role = "select" } ),
+                ec::invoke_affordance( { .id = pickup_edit, .label = _( "Rules" ), .args = row_arg } ),
+                ec::invoke_affordance( { .id = pickup_mode, .label = _( "I/E" ), .args = row_arg } ),
+                ec::invoke_affordance( { .id = pickup_tab, .label = _( "Select" ), .args = { .row = ec::row_shape{ .component_id = pickup_tabs } } } ),
+            },
+            .denials = std::move( denials ),
+.focus_component = pickup_rules, .focus_row = rules.empty() ? std::string{} :
+            row_id_of( rules[iLine] ) };
     };
+    const auto screen = ec::screen_scope( ctxt, { .role = "screen", .view = [&]( const auto & /*state*/ ) { return rules_view(); } } );
 
     while( true ) {
         rule_list &cur_rules = tabs[iTab].new_rules;
@@ -261,26 +350,27 @@ void user_interface::show()
 
         ui_manager::redraw();
 
-        auto action = std::string{};
-        {
-            const auto interaction = game_client::interaction_scope( ctxt, make_interaction );
-            action = ctxt.handle_input();
-        }
-        // A semantic choice moves the cursor and then acts like the matching key.
-        if( const auto raw = ctxt.get_raw_input(); raw.interaction ) {
-            const auto &target = raw.interaction->target_id;
+        auto action = std::string{ ctxt.handle_input() };
+        // A client's affordance acts on the native cursor, like the keypress that does the same.
+        if( const auto invoked = ec::invoked( ctxt.get_raw_input() ) ) {
+            const auto &id = invoked->affordance_id;
+            const auto &row = invoked->args.row;
             action.clear();
-            if( raw.interaction->operation == game_client::interaction_operation::cancel ) {
-                action = "QUIT";
-            } else if( target.starts_with( "page:" ) && std::stoul( target.substr( 5 ) ) < tabs.size() ) {
-                iTab = std::stoul( target.substr( 5 ) );
-                iLine = 0;
-            } else if( target.starts_with( "column:" ) ) {
-                iColumn = std::stoi( target.substr( 7 ) );
-            } else if( target.starts_with( "rule:" ) &&
-                       std::stoi( target.substr( 5 ) ) < static_cast<int>( cur_rules.size() ) ) {
-                iLine = std::stoi( target.substr( 5 ) );
-                action = "CONFIRM";
+            if( id == pickup_tab ) {
+                if( const auto tab_found = row ? std::ranges::find( tabs, *row, &tab::id ) : tabs.end();
+                    tab_found != tabs.end() ) {
+                    iTab = static_cast<size_t>( tab_found - tabs.begin() );
+                    iLine = 0;
+                }
+            } else if( const auto rule_found = row ? std::ranges::find( cur_rules, *row,
+                                               row_id_of ) : cur_rules.end();
+                       rule_found != cur_rules.end() ) {
+                iLine = static_cast<int>( rule_found - cur_rules.begin() );
+                // Editing the rule or its list kind is the confirmation of the column that holds it.
+                if( id == pickup_edit || id == pickup_mode ) {
+                    iColumn = id == pickup_edit ? 1 : 2;
+                    action = "CONFIRM";
+                }
             }
         }
 
@@ -323,6 +413,7 @@ void user_interface::show()
         } else if( action == "COPY_RULE" && currentPageNonEmpty ) {
             bStuffChanged = true;
             cur_rules.push_back( cur_rules[iLine] );
+            cur_rules.back().serial = next_rule_serial();
             iLine = cur_rules.size() - 1;
         } else if( allow_swapping && action == "SWAP_RULE_GLOBAL_CHAR" && currentPageNonEmpty ) {
             const size_t other_iTab = ( iTab + 1 ) % 2;
@@ -330,6 +421,7 @@ void user_interface::show()
             bStuffChanged = true;
             //copy over
             other_rules.push_back( cur_rules[iLine] );
+            other_rules.back().serial = next_rule_serial();
             //remove old
             cur_rules.erase( cur_rules.begin() + iLine );
             iTab = other_iTab;
@@ -358,24 +450,7 @@ void user_interface::show()
 
                 help_ui.on_redraw( [&]( const ui_adaptor & ) {
                     // NOLINTNEXTLINE(cata-use-named-point-constants)
-                    fold_and_print( w_help, point( 1, 1 ), 999, c_white,
-                                    _(
-                                        "* is used as a Wildcard.  A few Examples:\n"
-                                        "\n"
-                                        "wooden arrow    matches the itemname exactly\n"
-                                        "wooden ar*      matches items beginning with wood ar\n"
-                                        "*rrow           matches items ending with rrow\n"
-                                        "*avy fle*fi*arrow     multiple * are allowed\n"
-                                        "heAVY*woOD*arrOW      case insensitive search\n"
-                                        "\n"
-                                        "Pickup using:\n"
-                                        "c:food          matches item in category food\n"
-                                        "m:kevlar        matches items made of Kevlar\n"
-                                        "M:copper        matches items made purely of copper\n"
-                                        "q:drilling      matches items with drilling qualites\n"
-                                        "k:fabrication   matches books that teach fabrication\n"
-                                        "b:c:food;*meat* matches conditions c:food and *meat*" )
-                                  );
+                    fold_and_print( w_help, point( 1, 1 ), 999, c_white, pattern_help() );
 
                     draw_border( w_help );
                     wnoutrefresh( w_help );
@@ -456,9 +531,9 @@ void player_settings::show()
     user_interface ui;
 
     ui.title = _( " AUTO PICKUP MANAGER " );
-    ui.tabs.emplace_back( _( "[<Global>]" ), global_rules );
+    ui.tabs.emplace_back( "global", _( "[<Global>]" ), global_rules );
     if( !g->u.name.empty() ) {
-        ui.tabs.emplace_back( _( "[<Character>]" ), character_rules );
+        ui.tabs.emplace_back( "character", _( "[<Character>]" ), character_rules );
     }
     ui.is_autopickup = true;
 
@@ -477,7 +552,7 @@ void player_settings::show()
 
 void rule::test_pattern() const
 {
-    std::vector<std::string> vMatchingItems;
+    std::vector<item_match> vMatchingItems;
 
     if( sRule.empty() ) {
         return;
@@ -491,7 +566,7 @@ void rule::test_pattern() const
             continue;
         }
 
-        vMatchingItems.push_back( sItemName );
+        vMatchingItems.push_back( { .id = "item:" + e->get_id().str(), .name = sItemName } );
     }
 
     int iStartPos = 0;
@@ -564,17 +639,50 @@ void rule::test_pattern() const
                     wprintz( w_test_rule_content, c_yellow, "   " );
                 }
 
-                wprintz( w_test_rule_content, iLine == i ? hilite( cLineColor ) : cLineColor, vMatchingItems[i] );
+                wprintz( w_test_rule_content, iLine == i ? hilite( cLineColor ) : cLineColor,
+                         vMatchingItems[i].name );
             }
         }
 
         wnoutrefresh( w_test_rule_content );
     } );
 
+    // One row per matching item, and under them the note on what the list leaves out.
+    const auto matches_view = [&]() -> ec::screen_view {
+        using namespace std::views;
+        auto rows = vMatchingItems | enumerate | transform( [&]( const auto & entry )
+        {
+            const auto &[index, match] = entry;
+            return ec::row{ .id = match.id, .label = match.name, .selected = index == iLine };
+        } ) | std::ranges::to<std::vector>();
+        return {
+            .title = buf,
+            .root = ec::split( {
+                .id = "autopickup_test:body", .relation = "detail", .active = test_matches,
+                .children = ec::children_of(
+                ec::list( { .id = test_matches, .rows = std::move( rows ), .selection = "single" } ),
+                ec::component{ .id = test_note, .body = ec::text_body{ .markup = _( "Won't display content or suffix matches" ), .tone = "bad" } } ) } ),
+            .affordances = {
+                ec::invoke_affordance( { .id = test_select, .label = _( "Select" ), .args = { .row = ec::row_shape{ .component_id = test_matches } }, .role = "select" } ),
+            },
+.focus_component = test_matches, .focus_row = vMatchingItems.empty() ? std::string{} :
+            vMatchingItems[iLine].id };
+    };
+    const auto screen = ec::screen_scope( ctxt, { .role = "dialog", .view = [&]( const auto & /*state*/ ) { return matches_view(); } } );
+
     while( true ) {
         ui_manager::redraw();
 
-        const std::string action = ctxt.handle_input();
+        auto action = std::string{ ctxt.handle_input() };
+        // A client's affordance moves the cursor to its row, like the keypress that does the same.
+        if( const auto invoked = ec::invoked( ctxt.get_raw_input() ) ) {
+            const auto found = invoked->args.row ? std::ranges::find( vMatchingItems, *invoked->args.row,
+                               &item_match::id ) : vMatchingItems.end();
+            action.clear();
+            if( found != vMatchingItems.end() ) {
+                iLine = static_cast<int>( found - vMatchingItems.begin() );
+            }
+        }
         if( action == "DOWN" ) {
             iLine++;
             if( iLine >= static_cast<int>( vMatchingItems.size() ) ) {
@@ -831,7 +939,7 @@ void npc_settings::show( const std::string &name )
 {
     user_interface ui;
     ui.title = string_format( _( "Pickup rules for %s" ), name );
-    ui.tabs.emplace_back( name, rules );
+    ui.tabs.emplace_back( "npc", name, rules );
     ui.show();
     // Don't need to save the rules here, it will be save along with the NPC object itself.
     if( !ui.bStuffChanged ) {
