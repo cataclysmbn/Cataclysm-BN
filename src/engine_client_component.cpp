@@ -2,6 +2,8 @@
 
 #include "action.h"
 #include "client_input.h"
+#include "client_shortcut.h"
+#include "game.h"
 #include "input.h"
 #include "translations.h"
 
@@ -279,6 +281,27 @@ auto map_view( const boundary_state &state ) -> screen_view
     return result;
 }
 
+/// The shortcut bar: every data-defined button whose action the map's input context names. The label and keys
+/// are the map context's own, so a covered map still shows them; the button runs only while the map is on top.
+auto shortcuts_of( const boundary_state &state, const bool top ) -> std::vector<shortcut>
+{
+    const auto context = get_default_mode_input_context();
+    const auto registered = context.get_registered_actions_copy();
+    const auto runnable = [&]( const std::string & id ) {
+        return top && state.ready.accepts_registered_actions &&
+        std::ranges::any_of( state.actions, [&]( const action & entry ) { return entry.id == id && offered( entry ); } );
+    };
+    return client_shortcuts::all()
+    | std::views::filter( [&]( const client_shortcut & entry ) { return std::ranges::contains( registered, entry.action ); } )
+    | std::views::transform( [&]( const client_shortcut & entry ) {
+        return shortcut{ .affordance_id = entry.action, .label = context.get_action_name( entry.action ),
+                         .keys = key_names( inp_mngr.get_input_for_action( entry.action, "DEFAULTMODE" ) ),
+                         .icon = entry.icon, .glyph = entry.glyph, .enabled = runnable( entry.action ) };
+    } )
+    | std::views::filter( [&]( const shortcut & entry ) { return entry.label != entry.affordance_id; } )
+    | std::ranges::to<std::vector>();
+}
+
 /// One entry of the stack before its content is read.
 struct slot {
     std::string id = {};
@@ -353,6 +376,7 @@ auto screen_of( const boundary_state &state, const slot &entry, const bool top )
     result.screen_id = entry.id;
     result.role = entry.role;
     result.context = entry.context;
+    if( entry.map ) { result.shortcuts = shortcuts_of( state, top ); }
     if( !top ) {
         result.affordances.clear();
         if( result.root ) { clear_affordances( *result.root ); }

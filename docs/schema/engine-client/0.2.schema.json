@@ -2573,6 +2573,13 @@
         "context": {
           "type": "string",
           "description": "Diagnostics and tests only. Clients must not branch on it."
+        },
+        "shortcuts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/shortcut"
+          },
+          "description": "The shortcut bar; only the map screen has one."
         }
       },
       "required": [
@@ -6287,6 +6294,47 @@
       ],
       "additionalProperties": false,
       "description": "The creatures the native compass panel lists toward one direction."
+    },
+    "shortcut": {
+      "type": "object",
+      "properties": {
+        "affordance_id": {
+          "$ref": "#/$defs/opaque_id",
+          "description": "The registered action the button runs: invoke the map affordance of this id while `enabled`."
+        },
+        "label": {
+          "$ref": "#/$defs/text",
+          "description": "The action's native name."
+        },
+        "keys": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The player's bindings of the action in the map's input context."
+        },
+        "icon": {
+          "type": "string",
+          "description": "An opaque sprite id a client may map to its own art."
+        },
+        "glyph": {
+          "type": "string",
+          "description": "What a client without that art draws instead."
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "The map is on top and offers the action now."
+        }
+      },
+      "required": [
+        "affordance_id",
+        "label",
+        "keys",
+        "icon",
+        "enabled"
+      ],
+      "additionalProperties": false,
+      "description": "A button of the map's shortcut bar. The list is data (`client_shortcut` in the game's JSON), so mods add buttons; it keeps its order and is published whether or not the map is on top, so a client can leave the bar in place under a menu."
     },
     "tile_action": {
       "type": "object",

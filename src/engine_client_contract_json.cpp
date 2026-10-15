@@ -687,6 +687,15 @@ auto to_json( const screen_view &view, const bubble_frame &frame ) -> json
     }
     if( view.refresh_ms > 0 ) { result["refresh_ms"] = view.refresh_ms; }
     if( !view.dock.empty() ) { result["dock"] = view.dock; }
+    if( !view.shortcuts.empty() ) {
+        result["shortcuts"] = json::array();
+        for( const auto &entry : view.shortcuts ) {
+            auto item = json{{"affordance_id", entry.affordance_id}, {"label", entry.label}, {"keys", entry.keys},
+                {"icon", entry.icon}, {"enabled", entry.enabled}};
+            if( !entry.glyph.empty() ) { item["glyph"] = entry.glyph; }
+            result["shortcuts"].push_back( std::move( item ) );
+        }
+    }
     if( !view.context.empty() ) { result["context"] = view.context; }
     return result;
 }

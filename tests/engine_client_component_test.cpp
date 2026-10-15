@@ -3,6 +3,7 @@
 #include "catch/catch.hpp"
 #include "client_input.h"
 #include "client_interaction.h"
+#include "client_shortcut.h"
 #include "engine_client_component.h"
 #include "input.h"
 #include "ui.h"
@@ -1130,4 +1131,92 @@ TEST_CASE(
     const auto generic = top_of(state);
     CHECK(affordance(generic, "CONFIRM").role == "confirm");
     CHECK_FALSE(body<ec::list_body>(find(generic, "list:choices")).activate.empty());
+}
+
+namespace {
+auto shortcut_of(const ec::screen_view& view, const std::string& id) -> const ec::shortcut& {
+    const auto found = std::ranges::find(view.shortcuts, id, &ec::shortcut::affordance_id);
+    INFO(id);
+    REQUIRE(found != view.shortcuts.end());
+    return *found;
+}
+auto with_map_actions() -> ec::boundary_state {
+    auto state = map_only();
+    state.actions = {
+        {.id = "inventory", .name = "Open Inventory", .keys = {"i"}},
+        {.id = "craft", .name = "Craft Items", .keys = {"&"}},
+        {.id = "map", .name = "map", .keys = {"m"}},
+    };
+    return state;
+}
+} // namespace
+
+TEST_CASE(
+    "the map publishes the data-defined shortcuts the way its input context names them",
+    "[engine_client_component][shortcuts]") {
+    const auto map = ec::interaction_stack(with_map_actions()).front();
+    REQUIRE_FALSE(map.shortcuts.empty());
+    const auto& inventory = shortcut_of(map, "inventory");
+    CHECK(inventory.label == "Open Inventory");
+    CHECK(inventory.icon == "inventory");
+    CHECK_FALSE(inventory.glyph.empty());
+    CHECK(std::ranges::contains(inventory.keys, "i"));
+    CHECK(inventory.enabled);
+    // Order is the data's `order`, not the id.
+    const auto ids =
+        map.shortcuts | std::views::transform(&ec::shortcut::affordance_id)
+        | std::ranges::to<std::vector>();
+    CHECK(ids.front() == "inventory");
+    // An action the context does not offer now is listed but cannot run; one native does not name
+    // is not listed.
+    CHECK_FALSE(shortcut_of(map, "player_data").enabled);
+    CHECK(std::ranges::none_of(map.shortcuts, [](const auto& each) {
+        return each.label == each.affordance_id;
+    }));
+}
+
+TEST_CASE(
+    "a screen over the map leaves the shortcut bar in place but not runnable",
+    "[engine_client_component][shortcuts]") {
+    auto state = boundary(menu());
+    state.actions = with_map_actions().actions;
+    const auto stack = ec::interaction_stack(state);
+    REQUIRE(stack.size() == 2);
+    CHECK(shortcut_of(stack.front(), "inventory").label == "Open Inventory");
+    CHECK(std::ranges::none_of(stack.front().shortcuts, &ec::shortcut::enabled));
+    CHECK(stack.back().shortcuts.empty());
+}
+
+TEST_CASE(
+    "a mod adds a shortcut with a new id and replaces one by reusing its id",
+    "[engine_client_component][shortcuts]") {
+    const auto original = client_shortcuts::all();
+    const auto before = ec::interaction_stack(with_map_actions()).front().shortcuts.size();
+    const auto restore = on_out_of_scope([&] {
+        client_shortcuts::reset();
+        std::ranges::for_each(original, [](const auto& each) { client_shortcuts::add(each); });
+    });
+    client_shortcuts::add({.id = "mod_craft", .action = "craft", .icon = "mod", .order = 1});
+    client_shortcuts::add({.id = "inventory", .action = "inventory", .icon = "bag", .order = 5});
+    const auto map = ec::interaction_stack(with_map_actions()).front();
+    CHECK(map.shortcuts.size() == before + 1);
+    CHECK(map.shortcuts.front().affordance_id == "craft");
+    CHECK(map.shortcuts.front().icon == "mod");
+    CHECK(shortcut_of(map, "inventory").icon == "bag");
+}
+
+TEST_CASE(
+    "the shortcut bar is on the wire as the schema has it",
+    "[engine_client_component][shortcuts]") {
+    const auto json = wire(with_map_actions())["stack"].front();
+    const auto& bar = json["shortcuts"];
+    REQUIRE(bar.is_array());
+    const auto inventory = std::ranges::find_if(bar, [](const nlohmann::json& each) {
+        return each["affordance_id"] == "inventory";
+    });
+    REQUIRE(inventory != bar.end());
+    CHECK((*inventory)["label"] == "Open Inventory");
+    CHECK((*inventory)["enabled"] == true);
+    CHECK((*inventory)["icon"] == "inventory");
+    CHECK_FALSE(wire(boundary(menu()))["stack"].back().contains("shortcuts"));
 }

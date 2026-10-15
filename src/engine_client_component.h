@@ -336,6 +336,19 @@ struct denial {
     std::string reason = {};
 };
 
+/// A button of the map's shortcut bar: the registered action it runs, named and keyed as the map's input
+/// context has it, and the icon the data gives it.
+struct shortcut {
+    /// The id of the registered action; the affordance of that id runs it while the map is on top.
+    std::string affordance_id = {};
+    std::string label = {};
+    std::vector<std::string> keys = {};
+    std::string icon = {};
+    std::string glyph = {};
+    /// The map is on top and the action can run now.
+    bool enabled = true;
+};
+
 /// What a screen publishes. A provider fills everything but `screen_id`, `role` and `context`, which
 /// come from the screen's scope; `root` is absent for a screen that has no components yet.
 struct screen_view {
@@ -352,6 +365,8 @@ struct screen_view {
     int refresh_ms = 0;
     /// Where the player asked the window to sit: `left`, `right`, `overlapping` or `cursor`; empty for none.
     std::string dock = {};
+    /// The map's shortcut bar; empty on every other screen.
+    std::vector<shortcut> shortcuts = {};
 };
 
 /// A const read of the screen's model state: it changes nothing and draws nothing.
