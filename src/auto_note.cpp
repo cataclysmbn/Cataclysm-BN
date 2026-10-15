@@ -1,9 +1,9 @@
 #include "auto_note.h"
-#include "client_choice.h"
 
 #include "cata_utility.h"
 #include "color.h"
 #include "cursesdef.h"
+#include "engine_client_component.h"
 #include "filesystem.h"
 #include "fstream_utils.h"
 #include "game.h"
@@ -21,7 +21,37 @@
 #include <algorithm>
 #include <iostream>
 #include <memory>
+#include <ranges>
+#include <string>
 #include <vector>
+
+namespace
+{
+namespace ec = engine_client;
+
+/// The components and affordances of the auto notes manager.
+constexpr auto extras_list = "autonote:extras";
+constexpr auto status_panel = "autonote:status";
+constexpr auto empty_notice = "autonote:notice";
+constexpr auto extra_select = "autonote:select";
+constexpr auto extra_toggle = "autonote:toggle";
+
+/// A map extra's row: its data name, never its translated name or its place in the list.
+auto row_id_of( const string_id<map_extra> &id ) -> std::string { return "extra:" + id.str(); }
+
+auto manager_title() -> std::string { return _( " AUTO NOTES MANAGER " ); }
+
+auto empty_message() -> std::string { return _( "Discover more special encounters to populate this list" ); }
+
+/// What the manager says of a map extra's note, for the native table and the published rows alike.
+auto note_status( const bool enabled ) -> std::string
+{
+    return enabled ? pgettext( "auto notes status value", "yes" ) : pgettext( "auto notes status value",
+            "no" );
+}
+
+auto note_status_color( const bool enabled ) -> nc_color { return enabled ? c_green : c_red; }
+} // namespace
 
 namespace auto_notes
 {
@@ -219,7 +249,6 @@ void auto_note_manager_gui::show()
     if( !emptyMode ) {
         ctx.register_cardinal();
         ctx.register_action( "CONFIRM" );
-        ctx.register_action( "QUIT" );
         ctx.register_action( "ENABLE_MAPEXTRA_NOTE" );
         ctx.register_action( "DISABLE_MAPEXTRA_NOTE" );
         ctx.register_action( "CHANGE_MAPEXTRA_CHARACTER" );
@@ -227,7 +256,7 @@ void auto_note_manager_gui::show()
 
     ui.on_redraw( [&]( const ui_adaptor & ) {
         // == Draw border
-        draw_border( w_border, BORDER_COLOR, _( " AUTO NOTES MANAGER " ) );
+        draw_border( w_border, BORDER_COLOR, manager_title() );
         mvwputch( w_border, point( 0, 2 ), c_light_gray, LINE_XXXO );
         mvwputch( w_border, point( 79, 2 ), c_light_gray, LINE_XOXX );
         mvwputch( w_border, point( 61, FULL_SCREEN_HEIGHT - 1 ), c_light_gray, LINE_XXOX );
@@ -281,8 +310,7 @@ void auto_note_manager_gui::show()
 
         if( emptyMode ) {
             // NOLINTNEXTLINE(cata-use-named-point-constants)
-            mvwprintz( w, point( 1, 0 ), c_light_gray,
-                       _( "Discover more special encounters to populate this list" ) );
+            mvwprintz( w, point( 1, 0 ), c_light_gray, "%s", empty_message() );
         } else {
             calcStartPos( startPosition, currentLine, iContentHeight, displayCache.size() );
             endPosition = startPosition + ( iContentHeight > cacheSize ? cacheSize : iContentHeight );
@@ -292,10 +320,8 @@ void auto_note_manager_gui::show()
                 const auto &cacheEntry = mapExtraCache[displayCacheEntry];
 
                 const auto lineColor = ( i == currentLine ) ? hilite( c_white ) : c_white;
-                const auto statusColor = cacheEntry.second ? c_green : c_red;
-                const auto statusString = cacheEntry.second ?
-                                          pgettext( "auto notes status value", "yes" ) :
-                                          pgettext( "auto notes status value", "no" );
+                const auto statusColor = note_status_color( cacheEntry.second );
+                const auto statusString = note_status( cacheEntry.second );
                 const auto charColor = cacheEntry.first.color;
                 const auto displayChar = cacheEntry.first.get_symbol();
 
@@ -323,56 +349,63 @@ void auto_note_manager_gui::show()
         wnoutrefresh( w );
     } );
 
-    const auto interaction = game_client::interaction_scope( ctx, [&]() {
-        auto snapshot = game_client::interaction_snapshot{
-            .kind = game_client::interaction_kind::choices,
-            .title = _( "Auto Notes Manager" ),
-            .message = string_format( _( "Auto notes enabled: %s" ),
-                                      get_option<bool>( "AUTO_NOTES" ) ? _( "True" ) : _( "False" ) ),
-            .allow_cancel = true,
-        };
-        if( emptyMode ) {
-            snapshot.message += "\n" + std::string(
-                                    _( "Discover more special encounters to populate this list" ) );
-        }
-        for( auto i = std::size_t{ 0 }; i < displayCache.size(); ++i ) {
-            const auto &entry = mapExtraCache[displayCache[i]];
-            snapshot.choices.push_back( {
-                .id = "extra:" + displayCache[i].str(), .label = entry.first.name(),
-                .selected = entry.second, .highlighted = static_cast<int>( i ) == currentLine,
+    // One row per discovered map extra, and beside them the option and what an empty list asks of the player.
+    const auto extras_view = [&]() -> ec::screen_view {
+        using namespace std::views;
+        auto rows = displayCache | enumerate | transform( [&]( const auto & entry )
+        {
+            const auto &[index, id] = entry;
+            const auto &[extra, enabled] = mapExtraCache.at( id );
+            return ec::row{
+                .id = row_id_of( id ), .label = extra.name(), .selected = index == currentLine,
                 .columns = {
-                    { .key = "symbol", .label = _( "Symbol" ), .value = entry.first.get_symbol() },
-                    {
-                        .key = "enabled", .label = _( "Enabled" ), .value = entry.second ? pgettext( "auto notes status value", "yes" )
-                        : pgettext( "auto notes status value", "no" )
-                    },
+                    { .key = "symbol", .label = _( "Symbol" ), .value = extra.get_symbol(), .color = string_from_color( extra.color ) },
+                    { .key = "enabled", .label = _( "Enabled" ), .value = note_status( enabled ), .color = string_from_color( note_status_color( enabled ) ) },
                 },
-            } );
+                .toggled = enabled };
+        } ) | std::ranges::to<std::vector>();
+        const auto notes_on = get_option<bool>( "AUTO_NOTES" );
+        auto parts = ec::children_of( ec::list( { .id = extras_list, .rows = std::move( rows ), .selection = "single",
+                                                .activate = emptyMode ? std::string{} : std::string{ extra_toggle } } ),
+        ec::panel( { .id = status_panel, .stats = { {
+                    .key = "enabled", .label = _( "Auto notes enabled:" ), .value = notes_on ? _( "True" ) : _( "False" ),
+                    .tone = notes_on ? "good" : "bad"
+                }
+            } } ) );
+        auto affordances = std::vector<ec::affordance> {};
+        if( emptyMode )
+        {
+            parts.push_back( { .id = empty_notice, .body = ec::text_body{ .markup = empty_message() } } );
+        } else
+        {
+            parts.front().affordances.push_back( extra_select );
+            const auto row_arg = ec::arg_shape{ .row = ec::row_shape{ .component_id = extras_list } };
+            affordances.push_back( ec::invoke_affordance( { .id = extra_select, .label = _( "Select" ), .args = row_arg, .role = "select" } ) );
+            affordances.push_back( ec::invoke_affordance( { .id = extra_toggle, .label = ctx.get_action_name( "CONFIRM" ), .args = row_arg } ) );
         }
-        const auto actions = emptyMode
-                             ? std::vector<const char *> { "SWITCH_AUTO_NOTE_OPTION" }
-                             :
-                             std::vector<const char *> { "SWITCH_AUTO_NOTE_OPTION", "ENABLE_MAPEXTRA_NOTE",
-                                     "DISABLE_MAPEXTRA_NOTE"
-                                                       };
-        for( const auto *id : actions ) {
-            snapshot.choices.push_back( { .id = std::string( "action:" ) + id,
-                                          .label = remove_color_tags( ctx.get_action_name( id ) ) } );
-        }
-        return snapshot;
-    } );
+        return {
+            .title = manager_title(),
+            .root = ec::split( { .id = "autonote:body", .relation = "detail", .active = extras_list, .children = std::move( parts ) } ),
+            .affordances = std::move( affordances ),
+.focus_component = extras_list, .focus_row = emptyMode ? std::string{} :
+            row_id_of( displayCache[currentLine] ) };
+    };
+    const auto screen = ec::screen_scope( ctx, { .role = "screen", .view = [&]( const auto & /*state*/ ) { return extras_view(); } } );
 
     while( true ) {
         ui_manager::redraw();
 
-        const auto currentAction = game_client::action_of( ctx,
-        ctx.handle_input(), [&]( const std::string & id ) {
-            // Choosing a map extra is Enter on it, which toggles its note.
-            const auto found = std::ranges::find( displayCache, string_id<map_extra>( id.substr( 6 ) ) );
-            if( found == displayCache.end() ) { return std::string(); }
-            currentLine = static_cast<int>( found - displayCache.begin() );
-            return std::string( "CONFIRM" );
-        } );
+        auto currentAction = std::string{ ctx.handle_input() };
+        // A client's affordance moves the cursor to its row, and toggling is the confirmation of that row.
+        if( const auto invoked = ec::invoked( ctx.get_raw_input() ) ) {
+            const auto found = invoked->args.row ? std::ranges::find( displayCache, *invoked->args.row,
+                               row_id_of ) : displayCache.end();
+            currentAction.clear();
+            if( found != displayCache.end() ) {
+                currentLine = static_cast<int>( found - displayCache.begin() );
+                if( invoked->affordance_id == extra_toggle ) { currentAction = "CONFIRM"; }
+            }
+        }
 
         // Actions that also work with no items to display
         if( currentAction == "SWITCH_AUTO_NOTE_OPTION" ) {

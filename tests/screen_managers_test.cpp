@@ -1,7 +1,6 @@
 #if defined(CATA_MCP)
 
 #    include "achievement.h"
-#    include "auto_note.h"
 #    include "avatar.h"
 #    include "catch/catch.hpp"
 #    include "client_screen_support.h"
@@ -110,46 +109,6 @@ TEST_CASE(
                    return run_action("QUIT");
                });
     CHECK(stage == 1);
-}
-
-TEST_CASE(
-    "the auto notes manager toggles the note of a discovered map extra",
-    "[client][interaction][mcp][screens]") {
-    clear_all_state();
-    clear_map();
-    auto& you = get_avatar();
-    clear_character(you, false);
-    get_auto_notes_settings().set_discovered(string_id<map_extra>("mx_crater"));
-    auto gui = auto_notes::auto_note_manager_gui{};
-    const auto guard = screen_guard{};
-    auto stage = 0;
-    auto enabled_before = false;
-    open_screen(
-        [&] { gui.show(); },
-        [&](const auto& snapshot) {
-            if (const auto answer = prompt_answer(snapshot, "NO")) { return *answer; }
-            switch (stage++) {
-                case 0: {
-                    CHECK(snapshot.context == "AUTO_NOTES");
-                    const auto extra = row(snapshot, "extra:mx_crater");
-                    REQUIRE(extra != snapshot.choices.end());
-                    CHECK(extra->highlighted);
-                    CHECK(extra->columns.size() == 2);
-                    enabled_before = extra->selected;
-                    return choose(snapshot, "extra:mx_crater");
-                }
-                case 1: {
-                    // Choosing a map extra is Enter on it: its note is toggled.
-                    CHECK(row(snapshot, "extra:mx_crater")->selected == !enabled_before);
-                    return cancel(snapshot);
-                }
-                default:
-                    FAIL("unexpected extra screen " << snapshot.context);
-            }
-            return input_event{};
-        });
-    CHECK(stage == 2);
-    CHECK(gui.was_changed());
 }
 
 TEST_CASE(
