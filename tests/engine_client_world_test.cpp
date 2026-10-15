@@ -46,6 +46,7 @@
 #include <algorithm>
 #include <chrono>
 #include <map>
+#include <nlohmann/json.hpp>
 #include <set>
 #include <sstream>
 #include <string>
@@ -1711,4 +1712,28 @@ TEST_CASE(
     REQUIRE(state.avatar);
     CHECK(state.entities.empty());
     CHECK(state.avatar->compass.empty());
+}
+
+TEST_CASE(
+    "world capture marks terrain the data flags as a wall when seen and when remembered",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    const auto below = map_local_to_abs(get_map(), setup.start + tripoint(1, 0, -3));
+    get_avatar().memorize_terrain_tile(below, "t_wall", 0, 0);
+    const auto state = ec::world::capture_world();
+    const auto* wall = find_cell(state, at(setup.start + tripoint(2, 0, 0)));
+    const auto* floor = find_cell(state, at(setup.start));
+    const auto* remembered =
+        find_cell(state, {.dim = "", .x = below.x(), .y = below.y(), .z = below.z()});
+    REQUIRE(wall != nullptr);
+    REQUIRE(floor != nullptr);
+    REQUIRE(remembered != nullptr);
+    REQUIRE(wall->terrain->id == "t_wall");
+    // The wire form: a wall terrain says so, other terrain leaves it out.
+    const auto cells = nlohmann::json::parse(
+        ec::serialize_cells({.cells = {*wall, *floor, *remembered}}))["cells"];
+    REQUIRE(cells.size() == 3);
+    CHECK(cells[0]["terrain"].value("wall", false));
+    CHECK_FALSE(cells[1]["terrain"].contains("wall"));
+    CHECK(cells[2]["memory"]["terrain"].value("wall", false));
 }
