@@ -408,11 +408,12 @@ void gunmod_add( avatar &you, item &gun, item &mod )
     std::vector<std::function<void()>> actions;
 
     if( roll < 100 ) {
-        prompt.addentry( -1, true, 'w',
+        prompt.addentry( static_cast<int>( actions.size() ), true, 'w',
                          string_format( _( "Try without tools (%i%%) risking damage (%i%%)" ), roll, risk ) );
         actions.emplace_back( [&] {} );
 
-        prompt.addentry( -1, you.has_charges( itype_small_repairkit, 100 ), 'f',
+        prompt.addentry( static_cast<int>( actions.size() ), you.has_charges( itype_small_repairkit, 100 ),
+                         'f',
                          string_format( _( "Use 100 charges of firearm repair kit (%i%%)" ), std::min( roll * 2, 100 ) ) );
 
         actions.emplace_back( [&] {
@@ -422,7 +423,8 @@ void gunmod_add( avatar &you, item &gun, item &mod )
             risk /= 2; // ...and reduces the risk of damage upon failure
         } );
 
-        prompt.addentry( -1, you.has_charges( itype_large_repairkit, 25 ), 'g',
+        prompt.addentry( static_cast<int>( actions.size() ), you.has_charges( itype_large_repairkit, 25 ),
+                         'g',
                          string_format( _( "Use 25 charges of gunsmith repair kit (%i%%)" ), std::min( roll * 3, 100 ) ) );
 
         actions.emplace_back( [&] {
@@ -432,11 +434,12 @@ void gunmod_add( avatar &you, item &gun, item &mod )
             risk = 0;  // ...and entirely prevents damage upon failure
         } );
     } else {
-        prompt.addentry( -1, true, 'w', _( "Install without tools" ) );
+        prompt.addentry( static_cast<int>( actions.size() ), true, 'w', _( "Install without tools" ) );
         actions.emplace_back( [&] {} );
     }
 
-    prompt.addentry( -1, true, 'c', _( "Compare before/after installation" ) );
+    prompt.addentry( static_cast<int>( actions.size() ), true, 'c',
+                     _( "Compare before/after installation" ) );
     actions.emplace_back( [&] {
         requery = true;
         game_menus::inv::compare( gun, modded );

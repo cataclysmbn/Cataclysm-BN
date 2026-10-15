@@ -704,7 +704,7 @@ bool avatar::read( item *loc, const bool continuous )
                 menu.addentry( getID().get_value(), lvl < type->level, '0',
                                string_format( _( "Read until you gain a level | current level: %d" ), lvl ) );
             } else {
-                menu.addentry( -1, false, '0', _( "Read until you gain a level" ) );
+                menu.addentry( getID().get_value(), false, '0', _( "Read until you gain a level" ) );
             }
             menu.addentry( 0, true, '1', _( "Read once" ) );
 
@@ -718,13 +718,13 @@ bool avatar::read( item *loc, const bool continuous )
             if( !fun_learners.empty() ) {
                 add_header( _( "Reading for fun:" ) );
                 for( const auto &elem : fun_learners ) {
-                    menu.addentry( -1, false, -1, get_text( fun_learners, elem ) );
+                    menu.addentry( elem.first->getID().get_value(), false, -1, get_text( fun_learners, elem ) );
                 }
             }
             if( !nonlearners.empty() ) {
                 add_header( _( "Not participating:" ) );
                 for( const auto &elem : nonlearners ) {
-                    menu.addentry( -1, false, -1, get_text( nonlearners, elem ) );
+                    menu.addentry( elem.first->getID().get_value(), false, -1, get_text( nonlearners, elem ) );
                 }
             }
 

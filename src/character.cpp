@@ -8907,9 +8907,10 @@ detached_ptr<item> Character::dispose_item( detached_ptr<item> &&obj, const std:
     menu.text += std::string( w + 2 - utf8_width( menu.text, true ), ' ' );
     menu.text += _( " | Moves  " );
 
-    for( const auto &e : opts ) {
-        menu.addentry( -1, e.enabled, e.invlet, string_format( e.enabled ? "%s | %-7d" : "%s |",
-                       e.prompt, e.moves ) );
+    for( const auto &[i, e] : std::views::enumerate( opts ) ) {
+        menu.addentry( static_cast<int>( i ), e.enabled, e.invlet,
+                       string_format( e.enabled ? "%s | %-7d" : "%s |",
+                                      e.prompt, e.moves ) );
     }
 
     menu.query();

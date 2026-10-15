@@ -3235,12 +3235,12 @@ int bandolier_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) c
 
     std::vector<std::function<void()>> actions;
 
-    menu.addentry( -1, it.contents.empty() || it.contents.front().charges < capacity,
+    menu.addentry( 0, it.contents.empty() || it.contents.front().charges < capacity,
                    'r', _( "Store ammo in %s" ), it.type_name() );
 
     actions.emplace_back( [&] { reload( p, it ); } );
 
-    menu.addentry( -1, !it.contents.empty(), 'u', _( "Unload %s" ), it.type_name() );
+    menu.addentry( 1, !it.contents.empty(), 'u', _( "Unload %s" ), it.type_name() );
 
     actions.emplace_back( [&] {
 

@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <ranges>
 
 static const itype_id fuel_type_battery("battery");
 
@@ -386,10 +387,10 @@ void vehicle::turrets_set_targeting() {
         menu.fselected = sel;
         menu.w_y_setup = 2;
 
-        for (auto& p : turrets) {
+        for (const auto& [i, p] : std::views::enumerate(turrets)) {
             menu.addentry(
-                -1, has_part(bub_part_location(*p), "TURRET_CONTROLS"), MENU_AUTOASSIGN, "%s [%s]",
-                p->name(),
+                static_cast<int>(i), has_part(bub_part_location(*p), "TURRET_CONTROLS"),
+                MENU_AUTOASSIGN, "%s [%s]", p->name(),
                 p->enabled ? _("auto -> manual")
                 : has_part(bub_part_location(*p), "TURRET_CONTROLS")
                     ? _("manual -> auto")
