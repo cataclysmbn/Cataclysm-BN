@@ -1,0 +1,754 @@
+{
+  "valid": [
+    {
+      "name": "diary screen without pages",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:8",
+        "role": "dialog",
+        "title": "John Smith's Diary",
+        "root": {
+          "id": "diary:panes",
+          "kind": "split",
+          "relation": "peers",
+          "active": "diary:pages",
+          "children": [
+            {
+              "id": "diary:pages",
+              "kind": "panel",
+              "title": "pages: 0",
+              "child": {
+                "id": "diary:pages:list",
+                "kind": "list",
+                "affordances": [
+                  "diary:page"
+                ],
+                "columns": [],
+                "rows": [],
+                "total": 0,
+                "selection": "single",
+                "activate": "diary:page"
+              }
+            },
+            {
+              "id": "diary:changes",
+              "kind": "panel",
+              "title": "",
+              "child": {
+                "id": "diary:changes:text",
+                "kind": "text",
+                "markup": ""
+              }
+            },
+            {
+              "id": "diary:text",
+              "kind": "panel",
+              "title": "",
+              "child": {
+                "id": "diary:page:text",
+                "kind": "text",
+                "markup": ""
+              }
+            },
+            {
+              "id": "diary:info",
+              "kind": "panel",
+              "title": "Info",
+              "child": {
+                "id": "diary:info:text",
+                "kind": "text",
+                "markup": ""
+              }
+            }
+          ]
+        },
+        "affordances": [
+          {
+            "id": "diary:page",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "diary:pages:list"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Pan left",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Pan right",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "NEW_PAGE",
+            "label": "Add new page",
+            "keys": [
+              "n"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DELETE PAGE",
+            "label": "Delete page",
+            "keys": [
+              "d"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "EXPORT_DIARY",
+            "label": "Export diary to .txt",
+            "keys": [
+              "e"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "diary:pages:list"
+        },
+        "context": "DIARY"
+      }
+    },
+    {
+      "name": "diary screen with two pages",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:8",
+        "role": "dialog",
+        "title": "John Smith's Diary",
+        "root": {
+          "id": "diary:panes",
+          "kind": "split",
+          "relation": "peers",
+          "active": "diary:pages",
+          "children": [
+            {
+              "id": "diary:pages",
+              "kind": "panel",
+              "title": "pages: 2",
+              "child": {
+                "id": "diary:pages:list",
+                "kind": "list",
+                "affordances": [
+                  "diary:page"
+                ],
+                "columns": [],
+                "rows": [
+                  {
+                    "id": "page:1",
+                    "label": "Year 1, Spring, day 1 12:05:00PM",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": []
+                  },
+                  {
+                    "id": "page:2",
+                    "label": "Year 1, Spring, day 1 12:05:00PM",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": true,
+                    "columns": []
+                  }
+                ],
+                "total": 2,
+                "selection": "single",
+                "activate": "diary:page"
+              }
+            },
+            {
+              "id": "diary:changes",
+              "kind": "panel",
+              "title": "",
+              "child": {
+                "id": "diary:changes:text",
+                "kind": "text",
+                "markup": "Entry: 2/2\nYear 1, Spring,\nDay 1 12:05:00PM\n00:00:00 since last entry\nLocation: 50, 50\n\n"
+              }
+            },
+            {
+              "id": "diary:text",
+              "kind": "panel",
+              "title": "",
+              "child": {
+                "id": "diary:page:text",
+                "kind": "text",
+                "markup": ""
+              }
+            },
+            {
+              "id": "diary:info",
+              "kind": "panel",
+              "title": "Info",
+              "child": {
+                "id": "diary:info:text",
+                "kind": "text",
+                "markup": ""
+              }
+            }
+          ]
+        },
+        "affordances": [
+          {
+            "id": "diary:page",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "diary:pages:list"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Pan left",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Pan right",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "NEW_PAGE",
+            "label": "Add new page",
+            "keys": [
+              "n"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DELETE PAGE",
+            "label": "Delete page",
+            "keys": [
+              "d"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "EXPORT_DIARY",
+            "label": "Export diary to .txt",
+            "keys": [
+              "e"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "diary:pages:list",
+          "row_id": "page:2"
+        },
+        "context": "DIARY"
+      }
+    },
+    {
+      "name": "page affordance of the diary",
+      "def": "affordance",
+      "value": {
+        "id": "diary:page",
+        "label": "Select",
+        "keys": [],
+        "enabled": true,
+        "args": {
+          "row": {
+            "component_id": "diary:pages:list"
+          }
+        },
+        "expect": "boundary"
+      }
+    },
+    {
+      "name": "page the diary does not hold refused, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:1",
+          "revision": "10"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "diary:page",
+          "args": {
+            "row": "page:0"
+          }
+        }
+      }
+    },
+    {
+      "name": "page the diary does not hold refused, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "page the diary does not hold refused, rejected",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "rejected",
+        "error": "invalid_arguments",
+        "error_text": "That needs other details."
+      }
+    },
+    {
+      "name": "page picked, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:1",
+          "revision": "10"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "diary:page",
+          "args": {
+            "row": "page:1"
+          }
+        }
+      }
+    },
+    {
+      "name": "page picked, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "page picked, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "page picked, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "page picked, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "14",
+          "revision": "11"
+        }
+      }
+    },
+    {
+      "name": "text editor screen",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:9",
+        "role": "dialog",
+        "title": "Text",
+        "root": {
+          "id": "editor:form",
+          "kind": "form",
+          "affordances": [
+            "editor:set"
+          ],
+          "fields": [
+            {
+              "id": "editor:text",
+              "label": "Text",
+              "value": "",
+              "type": "text",
+              "multiline": true,
+              "cursor": 0
+            }
+          ]
+        },
+        "affordances": [
+          {
+            "id": "editor:set",
+            "label": "Text",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {
+                "field_id": "editor:text"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "TEXT.QUIT",
+            "label": "Cancel text input",
+            "keys": [
+              "ESC"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.CONFIRM",
+            "label": "Confirm text input",
+            "keys": [
+              "CTRL+S",
+              "CTRL+Y"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.LEFT",
+            "label": "Move cursor left",
+            "keys": [
+              "LEFT"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.RIGHT",
+            "label": "Move cursor right",
+            "keys": [
+              "RIGHT"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.UP",
+            "label": "Move cursor up",
+            "keys": [
+              "UP"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.DOWN",
+            "label": "Move cursor down",
+            "keys": [
+              "DOWN"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.CLEAR",
+            "label": "Clear text",
+            "keys": [
+              "CTRL+U"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.BACKSPACE",
+            "label": "Remove previous character",
+            "keys": [
+              "BACKSPACE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.HOME",
+            "label": "Move cursor to start",
+            "keys": [
+              "HOME"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.END",
+            "label": "Move cursor to end",
+            "keys": [
+              "END"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.PAGE_UP",
+            "label": "Move cursor to previous page",
+            "keys": [
+              "PPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.PAGE_DOWN",
+            "label": "Move cursor to next page",
+            "keys": [
+              "NPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.DELETE",
+            "label": "Remove current character",
+            "keys": [
+              "DELETE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.INPUT_FROM_FILE",
+            "label": "Input text from file",
+            "keys": [
+              "F2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "F1"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "context": "STRING_EDITOR"
+      }
+    },
+    {
+      "name": "text set, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:2",
+          "revision": "12"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "editor:set",
+          "args": {
+            "text": "Found a rifle.\nSafe here."
+          }
+        }
+      }
+    },
+    {
+      "name": "text set, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "text set, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "text set, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "text set, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "16",
+          "revision": "13"
+        }
+      }
+    }
+  ],
+  "invalid": []
+}

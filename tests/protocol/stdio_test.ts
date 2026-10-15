@@ -3389,6 +3389,66 @@ Deno.test({
 })
 
 Deno.test({
+  name: "stdio: 0.2 invoke: the diary names its pages by serial and its editor takes a whole text",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      const session = await enterTutorial(client)
+      await session.acknowledge(() => session.mirror.interaction.interaction === null)
+      const until = async (context: string) => {
+        for (let n = 0; n < 200 && top(session).context !== context; n++) {
+          session.handle(await session.client.note())
+          await session.pay()
+        }
+        assertEquals(top(session).context, context)
+      }
+      const done = async (affordance: string, args?: Value) =>
+        assertEquals(
+          (await invokeTop(session, affordance, "screen", args)).stages.at(-1),
+          "completed",
+        )
+
+      assertEquals(
+        (await session.submit({ kind: "action", action_id: "diary" })).stages.at(-1),
+        "completed",
+      )
+      await until("DIARY")
+      await done("NEW_PAGE")
+      await done("NEW_PAGE")
+      const pages = findComponent(top(session).root, "diary:pages:list").rows
+      assertEquals(pages.length, 2)
+      assert(pages[0].id !== pages[1].id, "pages of the same turn have different ids")
+      for (const row of pages) assert(!row.id.includes(row.label), "an id carries no text")
+
+      // A page the diary does not hold is refused before anything runs.
+      const unknown = await invokeTop(session, "diary:page", "boundary", { row: "page:0" })
+      assertEquals([unknown.stages.at(-1) ?? "rejected", unknown.error], [
+        "rejected",
+        "invalid_arguments",
+      ])
+
+      await done("CONFIRM")
+      await until("STRING_EDITOR")
+      const bare = await invokeTop(session, "editor:set", "boundary", {})
+      assertEquals(bare.error, "invalid_arguments")
+      const set = await invokeTop(session, "editor:set", "boundary", { text: "Safe here.\nCold." })
+      assertEquals(set.stages.at(-1), "completed")
+      const field = findComponent(top(session).root, "editor:form").fields[0]
+      assertEquals([field.value, field.cursor, field.multiline], ["Safe here.\nCold.", 16, true])
+      await done("TEXT.CONFIRM")
+      await until("DIARY")
+      assertEquals(findComponent(top(session).root, "diary:page:text").markup, "Safe here.\nCold.")
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
+Deno.test({
   name: "stdio: the tutorial loads and plays with automatic compute when data/shaders is missing",
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {

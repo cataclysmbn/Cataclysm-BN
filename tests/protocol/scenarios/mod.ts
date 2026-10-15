@@ -3,6 +3,7 @@ import { character } from "./character.ts"
 import { aim } from "./aim.ts"
 import { armor } from "./armor.ts"
 import { construction, crafting } from "./crafting.ts"
+import { diary } from "./diary.ts"
 import type { Scenario } from "./driver.ts"
 import { handshake } from "./handshake.ts"
 import { generic } from "./generic.ts"
@@ -47,4 +48,5 @@ export const scenarios: Scenario[] = [
   armor,
   overmap,
   npctalk,
+  diary,
 ]
