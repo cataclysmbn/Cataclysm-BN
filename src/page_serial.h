@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <string>
 
 struct diary_page;
@@ -15,6 +16,9 @@ auto diary_page_serial( const diary_page &page ) -> std::uint64_t;
 
 /// The row id of one diary page: `page:<serial>`.
 auto diary_page_row_id( const diary_page &page ) -> std::string;
+
+/// The serial a page already holds; unlike `diary_page_serial` it gives none.
+auto find_diary_page_serial( const diary_page &page ) -> std::optional<std::uint64_t>;
 
 /// Drops the serial of a page that is being deleted.
 auto forget_diary_page_serial( const diary_page *page ) -> void;

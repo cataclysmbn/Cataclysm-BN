@@ -3,6 +3,7 @@
 #include "client_interaction.h"
 #include "item_serial.h"
 #include "json.h"
+#include "replay/row_locator.h"
 #include "rng.h"
 
 #include <algorithm>
@@ -569,6 +570,10 @@ auto record_input_event(const input_event& event, const input_boundary_metadata&
     if (!is_recording()) { return; }
     if (!current.started) { throw std::runtime_error("Replay recording has not been started"); }
     const auto type = event_type_name(event.type);
+    // Rows of items name them by session serials, which a playback does not share; the recording
+    // names where they are.
+    const auto interaction =
+        event.interaction ? std::optional(locate_row_ids(*event.interaction)) : std::nullopt;
     auto json = JsonOut(current.recording);
     json.start_object();
     json.member("kind", "input");
@@ -585,27 +590,24 @@ auto record_input_event(const input_event& event, const input_boundary_metadata&
     json.member("edit", event.edit);
     if (!event.action.empty()) { json.member("action", event.action); }
     json.member("edit_refresh", event.edit_refresh);
-    if (event.interaction) {
+    if (interaction) {
         json.member("interaction");
         json.start_object();
-        json.member("operation",
-                    game_client::interaction_operation_name(event.interaction->operation));
-        json.member("schema_id", event.interaction->schema_id);
-        json.member("target_id", event.interaction->target_id);
-        json.member("value", event.interaction->value);
-        if (event.interaction->submit) { json.member("submit", *event.interaction->submit); }
-        if (event.interaction->count) { json.member("count", *event.interaction->count); }
-        if (event.interaction->position) {
+        json.member("operation", game_client::interaction_operation_name(interaction->operation));
+        json.member("schema_id", interaction->schema_id);
+        json.member("target_id", interaction->target_id);
+        json.member("value", interaction->value);
+        if (interaction->submit) { json.member("submit", *interaction->submit); }
+        if (interaction->count) { json.member("count", *interaction->count); }
+        if (interaction->position) {
             json.member("position");
             json.start_object();
-            json.member("x", event.interaction->position->x);
-            json.member("y", event.interaction->position->y);
-            json.member("z", event.interaction->position->z);
+            json.member("x", interaction->position->x);
+            json.member("y", interaction->position->y);
+            json.member("z", interaction->position->z);
             json.end_object();
         }
-        if (event.interaction->arguments) {
-            write_invoke_arguments(json, *event.interaction->arguments);
-        }
+        if (interaction->arguments) { write_invoke_arguments(json, *interaction->arguments); }
         json.end_object();
     }
 #if defined(__ANDROID__)
@@ -641,6 +643,7 @@ auto next_input_event(const input_boundary_metadata& expected_boundary)
             current.next->boundary, expected_boundary, current.events + 1));
     }
     auto result = std::move(current.next->event);
+    if (result.interaction) { result.interaction = resolve_row_ids(*result.interaction); }
     current.next.reset();
     ++current.events;
     return result;

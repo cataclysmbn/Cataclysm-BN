@@ -91,6 +91,11 @@ class diary
         void deserialize( JsonIn &jsin );
         void serialize( JsonOut &jsout );
 
+        /*the page at a place in the diary, or null*/
+        const diary_page *page_at( size_t index ) const;
+        /*how many pages the diary has*/
+        size_t page_count() const;
+
     private:
         /*uses string_popup_window to edit the text on a page. Is not optimal,
         because it's just one line*/

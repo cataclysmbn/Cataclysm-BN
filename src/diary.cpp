@@ -60,6 +60,16 @@ int diary::set_opened_page( int page_number )
 }
 
 
+const diary_page *diary::page_at( size_t index ) const
+{
+    return index < pages.size() ? pages[index].get() : nullptr;
+}
+
+size_t diary::page_count() const
+{
+    return pages.size();
+}
+
 diary_page *diary::get_page_ptr( int offset )
 {
     if( !pages.empty() && opened_page + offset >= 0 ) {

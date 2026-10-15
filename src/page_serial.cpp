@@ -17,6 +17,12 @@ auto diary_page_serial( const diary_page &page ) -> std::uint64_t
 
 auto diary_page_row_id( const diary_page &page ) -> std::string { return "page:" + std::to_string( diary_page_serial( page ) ); }
 
+auto find_diary_page_serial( const diary_page &page ) -> std::optional<std::uint64_t>
+{
+    const auto found = serials.find( &page );
+    return found == serials.end() ? std::nullopt : std::optional( found->second );
+}
+
 auto forget_diary_page_serial( const diary_page *const page ) -> void { serials.erase( page ); }
 
 auto reset_diary_page_serials() -> void
