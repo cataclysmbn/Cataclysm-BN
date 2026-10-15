@@ -12,6 +12,7 @@ import { look } from "./look.ts"
 import { map } from "./map.ts"
 import { newgame } from "./newgame.ts"
 import { overmap } from "./overmap.ts"
+import { npctalk } from "./npctalk.ts"
 import { pickup } from "./pickup.ts"
 import { autopickup, colors, distractions, safemode } from "./rules.ts"
 import { keybindings, options } from "./settings.ts"
@@ -45,4 +46,5 @@ export const scenarios: Scenario[] = [
   safemode,
   armor,
   overmap,
+  npctalk,
 ]

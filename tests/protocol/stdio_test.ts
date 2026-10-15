@@ -3310,6 +3310,85 @@ Deno.test({
 })
 
 Deno.test({
+  name:
+    "stdio: 0.2 invoke: the NPC talk window names its responses and refuses rows it does not hold",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      const session = await enterTutorial(client)
+      await session.acknowledge(() => session.mirror.interaction.interaction === null)
+      const run = async (operation: Value) =>
+        assertEquals((await session.submit(operation)).stages.at(-1), "completed")
+      const until = async (context: string) => {
+        for (let n = 0; n < 200 && top(session).context !== context; n++) {
+          session.handle(await session.client.note())
+          await session.pay()
+        }
+        assertEquals(top(session).context, context)
+      }
+
+      // The shopkeeper the debug menu places beside the avatar is the one to talk to.
+      await run({ kind: "action", action_id: "debug" })
+      await session.choose("Spawning…")
+      await session.choose("Trade with a spawned shopkeeper")
+      await until("NPC_TRADE")
+      assertEquals((await invokeTop(session, "trade:cancel", "screen")).stages.at(-1), "completed")
+      await run({ kind: "action", action_id: "chat" })
+      const entries = (function find(component: Value): Value | undefined {
+        return component.kind === "list"
+          ? component
+          : (component.children ?? (component.child ? [component.child] : [])).map(find).find(
+            Boolean,
+          )
+      })(top(session).root)
+      const talk = entries?.rows.find((row: Value) => row.label.startsWith("Talk to"))
+      assert(entries && talk, "the chat menu offers a talk")
+      assertEquals(
+        (await invokeTop(session, entries.activate, "boundary", { row: talk.id })).stages.at(-1),
+        "completed",
+      )
+      await until("DIALOGUE_CHOOSE_RESPONSE")
+
+      const responses = findComponent(top(session).root, "talk:responses")
+      assert(responses.rows.length > 0, "responses to pick")
+      for (const row of responses.rows) {
+        assert(!row.id.includes(row.label), "an id carries no text")
+      }
+
+      // A response or a special key the window does not hold is refused before anything runs.
+      for (
+        const [affordance, row] of [
+          ["talk:respond", "nothing:0"],
+          ["talk:respond", "special:yell"],
+          ["talk:special:run", responses.rows[0].id],
+        ]
+      ) {
+        const unknown = await invokeTop(session, affordance, "boundary", { row })
+        assertEquals([unknown.stages.at(-1) ?? "rejected", unknown.error], [
+          "rejected",
+          "invalid_arguments",
+        ])
+      }
+      const history = findComponent(top(session).root, "talk:history:text").markup
+      const asked = await invokeTop(session, "talk:special:run", "boundary", {
+        row: "special:size_up",
+      })
+      assertEquals(asked.stages.at(-1), "completed", JSON.stringify(asked))
+      assert(
+        findComponent(top(session).root, "talk:history:text").markup.length > history.length,
+        "what was said joins the history",
+      )
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
+Deno.test({
   name: "stdio: the tutorial loads and plays with automatic compute when data/shaders is missing",
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {

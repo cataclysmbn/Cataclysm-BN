@@ -1,0 +1,429 @@
+{
+  "valid": [
+    {
+      "name": "NPC talk screen",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:12",
+        "role": "dialog",
+        "title": "Denver Tolbert, Marloss Voice",
+        "root": {
+          "id": "talk:panes",
+          "kind": "split",
+          "relation": "peers",
+          "active": "talk:replies",
+          "children": [
+            {
+              "id": "talk:history",
+              "kind": "panel",
+              "title": "Dialogue:",
+              "child": {
+                "id": "talk:history:text",
+                "kind": "text",
+                "markup": "<color_c_light_green>Denver Tolbert, Marloss Voice</color>: \"Look for the bonds which define you, and act in accord.\""
+              }
+            },
+            {
+              "id": "talk:replies",
+              "kind": "panel",
+              "title": "Your response:",
+              "child": {
+                "id": "talk:replies:parts",
+                "kind": "split",
+                "relation": "peers",
+                "children": [
+                  {
+                    "id": "talk:responses",
+                    "kind": "list",
+                    "affordances": [
+                      "talk:respond"
+                    ],
+                    "columns": [],
+                    "rows": [
+                      {
+                        "id": "TALK_MARLOSS_VOICE:1",
+                        "label": "This place is dangerous, what are you doing here?",
+                        "description": "",
+                        "denial": "",
+                        "hotkey": "a",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_white"
+                      },
+                      {
+                        "id": "TALK_MARLOSS_VOICE:2",
+                        "label": "Who are you?",
+                        "description": "",
+                        "denial": "",
+                        "hotkey": "b",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_white"
+                      },
+                      {
+                        "id": "TALK_MARLOSS_VOICE:3",
+                        "label": "I gotta go.",
+                        "description": "",
+                        "denial": "",
+                        "hotkey": "c",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_white"
+                      }
+                    ],
+                    "total": 3,
+                    "selection": "single",
+                    "activate": "talk:respond"
+                  },
+                  {
+                    "id": "talk:special",
+                    "kind": "list",
+                    "affordances": [
+                      "talk:special:run"
+                    ],
+                    "columns": [],
+                    "rows": [
+                      {
+                        "id": "special:look_at",
+                        "label": "Look at",
+                        "description": "",
+                        "denial": "",
+                        "hotkey": "L",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "special:size_up",
+                        "label": "Size up stats",
+                        "description": "",
+                        "denial": "",
+                        "hotkey": "S",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "special:yell",
+                        "label": "Yell",
+                        "description": "",
+                        "denial": "",
+                        "hotkey": "Y",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "special:opinion",
+                        "label": "Check opinion",
+                        "description": "",
+                        "denial": "",
+                        "hotkey": "O",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": []
+                      }
+                    ],
+                    "total": 4,
+                    "selection": "single",
+                    "activate": "talk:special:run"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "affordances": [
+          {
+            "id": "talk:respond",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "talk:responses"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "talk:special:run",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "talk:special"
+              }
+            },
+            "expect": "boundary"
+          }
+        ],
+        "focus": {
+          "component_id": "talk:responses",
+          "row_id": "TALK_MARLOSS_VOICE:1"
+        },
+        "context": "DIALOGUE_CHOOSE_RESPONSE"
+      }
+    },
+    {
+      "name": "respond affordance of the NPC talk screen",
+      "def": "affordance",
+      "value": {
+        "id": "talk:respond",
+        "label": "Select",
+        "keys": [],
+        "enabled": true,
+        "args": {
+          "row": {
+            "component_id": "talk:responses"
+          }
+        },
+        "expect": "boundary"
+      }
+    },
+    {
+      "name": "a response the window does not hold refused, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:1",
+          "revision": "13"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "talk:respond",
+          "args": {
+            "row": "nothing:0"
+          }
+        }
+      }
+    },
+    {
+      "name": "a response the window does not hold refused, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "a response the window does not hold refused, rejected",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "rejected",
+        "error": "invalid_arguments",
+        "error_text": "That needs other details."
+      }
+    },
+    {
+      "name": "a special key named as a response refused, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:1",
+          "revision": "13"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "talk:respond",
+          "args": {
+            "row": "special:yell"
+          }
+        }
+      }
+    },
+    {
+      "name": "a special key named as a response refused, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "a special key named as a response refused, rejected",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "rejected",
+        "error": "invalid_arguments",
+        "error_text": "That needs other details."
+      }
+    },
+    {
+      "name": "a response named as a special key refused, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:1",
+          "revision": "13"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "talk:special:run",
+          "args": {
+            "row": "TALK_MARLOSS_VOICE:1"
+          }
+        }
+      }
+    },
+    {
+      "name": "a response named as a special key refused, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "a response named as a special key refused, rejected",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "rejected",
+        "error": "invalid_arguments",
+        "error_text": "That needs other details."
+      }
+    },
+    {
+      "name": "special key picked, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:1",
+          "revision": "13"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "talk:special:run",
+          "args": {
+            "row": "special:size_up"
+          }
+        }
+      }
+    },
+    {
+      "name": "special key picked, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "special key picked, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "special key picked, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "special key picked, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "17",
+          "revision": "14"
+        }
+      }
+    },
+    {
+      "name": "response picked, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:2",
+          "revision": "14"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "talk:respond",
+          "args": {
+            "row": "TALK_SIZE_UP:0"
+          }
+        }
+      }
+    },
+    {
+      "name": "response picked, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:5",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "response picked, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:5",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "response picked, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:5",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "response picked, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:5",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "18",
+          "revision": "15"
+        }
+      }
+    }
+  ],
+  "invalid": []
+}
