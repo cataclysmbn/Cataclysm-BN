@@ -135,6 +135,10 @@ auto read_operation( const json &value ) -> command_operation
         return travel_operation{ .target = read_position( value.at( "pos" ) ),
                                  .button = kind == "travel" ? "left" : "right" };
     }
+    if( kind == "tile_action" ) {
+        members( value, {"kind", "action_id", "pos"} );
+        return tile_operation{ .action_id = id( value, "action_id" ), .target = read_position( value.at( "pos" ) ) };
+    }
     if( kind == "pickup" || kind == "drop" ) {
         members( value, {"kind", "item_id", "count"} );
         return item_operation{ .drop = kind == "drop", .item_id = id( value, "item_id" ),
@@ -420,7 +424,11 @@ auto serialize_description( const tile_description &value ) -> std::string
     using ordered = nlohmann::ordered_json;
     auto parts = ordered::array();
     for( const auto &part : value.parts ) { parts.push_back( to_json( part ) ); }
-    return ordered{{"parts", std::move( parts )}}.dump();
+    auto actions = ordered::array();
+    for( const auto &action : value.actions ) {
+        actions.push_back( {{"id", action.id}, {"label", action.label}, {"keys", action.keys}} );
+    }
+    return ordered{{"parts", std::move( parts )}, {"actions", std::move( actions )}}.dump();
 }
 auto serialize_receipt( const receipt &value ) -> std::expected<std::string, error>
 {

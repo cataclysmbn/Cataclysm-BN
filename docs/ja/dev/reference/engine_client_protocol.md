@@ -99,7 +99,7 @@ affordance に合わない形式は `invalid_arguments` である。
 
 ## コマンド
 
-`operation.kind` は `choose`、`fill`、`set_count`、`set_target`、`cancel`(意味ベースのメニュー)、`action`(移動キーなど登録済みの行動)、または `travel`(マップのクリック)のいずれかです。
+`operation.kind` は `choose`、`fill`、`set_count`、`set_target`、`cancel`(意味ベースのメニュー)、`action`(移動キーなど登録済みの行動)、`travel`(マップのクリック)、または `tile_action`(マップのマスに対する行動、後述)のいずれかです。
 
 ```json
 { "kind": "choose", "choice_id": "tab:new_game" }
@@ -115,6 +115,8 @@ affordance に合わない形式は `invalid_arguments` である。
 クリックや雑用がマスとアイテムに何をするかも、エンジンが決めます。アバターの隣にある、開けられる閉じたドアへの左 `travel` は、ルートのクリックではなくそのドアへの移動(ネイティブの移動がドアを開ける)になります。`pickup` と `drop` は `{ "kind": "pickup" | "drop", "item_id", "count" }` を取ります。`item_id` は `avatar.ground`(pickup)または `avatar.inventory`(drop)の行の `id`、`count` はその行から取る量をネイティブの単位(釘のようなチャージ式アイテムはチャージ数、それ以外はアイテムの個数)で表し、エンジンはメニューで印を付けて確定したときと同じネイティブの拾う・落とす行動を開始します。行 ID はそのスタックが同じである間は変わらず、行がなくなったか `count` に足りない場合、コマンドは `validation_failed` で拒否されます。失敗したコマンドは、ローカライズされた理由を `error_text`(コマンド結果と `bn.command`)または `message`(JSON-RPC エラーの `data`)で伝えます。エンジンが知っている場合は `error` より具体的です(マップウィンドウ外への移動、スタックを超える個数など)。ターゲットのインタラクション(`context` が `TARGET`)は `target.distance`(`distance_metric` による `source` から `current` までの距離。垂直方向を含む)を持ち、画面が射程と準備状態を報告する場合は `target.status_text`(ローカライズされた射程と状態の行)も持ちます。どのキーでも進み、キーが割り当てられていない画面(キー待ちのポップアップ、コンピューター端末のプロンプト)は、選ぶべき選択肢を `interaction.any_key_choice_id` で示します。
 
 `context` は同じマスへの右クリック(SEC_SELECT)です。ネイティブでは隣のマスを調べる、隣のドアを閉じる、足元のアイテムを拾う、見えているモンスターを撃つ、あるいは計画中のルートをまず取り消します。`bn.world.describe` はターミナルウィンドウ内のマスにホバーしたときにネイティブのマウスビューが表示するテキストを返します(範囲外は `validation_failed`)。何も選択も計画もしません。`bn.world.cells` は 1 つの階層の範囲(`min` と `max` を含み、`dim` と `z` が同じで最大 `limits.cells_per_query` マス)でアバターが知っている内容を返します。セルはスナップショットが持つものと同一で、`forgotten` は範囲内のロード済み領域(coverage)で何も分かっていないマスです。反転した範囲や複数階層にまたがる範囲は `validation_failed`、大きすぎる範囲は `resource_limit`、別の `epoch` は `stale_epoch` です。メニューでのホイール 1 ステップは登録済みアクション `SCROLL_UP` または `SCROLL_DOWN` で、エンジンがネイティブのカーソルを 3 行動かします。
+
+`tile_action` は、`bn.world.describe` がマスに対して列挙する `actions` の一つを `action_id` と `pos` で指定し、そのマスでネイティブのアクションが行うことを行います。一覧には今できることだけが、メニューの順に、ネイティブの `label` とプレイヤーの `keys`(`attack`、`talk`、`travel` にはなし)とともに入ります。`attack`(アバターの隣にいる、味方でない見えている生き物)、`fire`(見えているモンスター、遠距離武器を装備中)、`talk`(見えているキャラクター)、`open`・`close`・`pickup`・`examine`(アバターのマスとその周囲8マスで、ネイティブのアクションが行えるもの)、`travel`(アバターが知っているマス。ルートの計画と歩行開始を1つのコマンドで行う)、`look`(常に。そのマスでルック表示を開く)です。そのマスが今列挙していないアクションは `validation_failed` です。クライアントはこの一覧をマスの右クリックメニューとして表示します。
 
 ステージは `received`、`validated`、`executing`、`completed`、または `rejected`、または `interrupted` で、`interrupted` の `error` が理由を示します(ワールドが入れ替わると `stale_epoch`、ゲームが入力を拒否すると `validation_failed`、それ以外は `not_ready`)。`completed` は入力が再び待たれていることを意味します。待機などの行動は、終わるか、ゲームが何かを尋ねる(ポップアップや中断)まで先に実行されます。その `at` はその境界の終点です。そのため、入力が開くプロンプト(テキスト欄、数量)は、それを運ぶイベントが先に届くので(`bn.resync` の後は、続くスナップショットが運びます) `completed` の到着時には状態に含まれています。そのときプロンプトが無ければ、プロンプトは開かれなかったということです。同時に実行できるコマンドは 1 つです(`command_busy`)。 待機などの行動の実行中もリクエストには応答します。`bn.interrupt` はネイティブの中断キーを押し、行動は Tiles と同様に中止するか尋ね、その質問が次の境界になります。行動中でなければ `not_ready` で失敗します。
 

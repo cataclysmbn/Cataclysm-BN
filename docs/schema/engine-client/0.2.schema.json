@@ -4733,10 +4733,18 @@
           "items": {
             "$ref": "#/$defs/tile_part"
           }
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/tile_action"
+          },
+          "description": "What the avatar can do with the square now. Only the actions that apply are listed: `attack` and `talk` for a creature beside or in view, `fire` at a seen monster with a ranged weapon, `open`, `close`, `pickup` and `examine` for an adjacent square, `travel` for a square the avatar knows, and always `look`."
         }
       },
       "required": [
-        "parts"
+        "parts",
+        "actions"
       ],
       "additionalProperties": false
     },
@@ -5370,6 +5378,28 @@
             "pos"
           ],
           "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "tile_action"
+            },
+            "action_id": {
+              "$ref": "#/$defs/opaque_id",
+              "description": "The `id` of a `tile_action` the square's describe lists."
+            },
+            "pos": {
+              "$ref": "#/$defs/pos"
+            }
+          },
+          "required": [
+            "kind",
+            "action_id",
+            "pos"
+          ],
+          "additionalProperties": false,
+          "description": "Takes a described action on a map square, as its native action does. An action the square does not offer now is `validation_failed`."
         },
         {
           "$ref": "#/$defs/invoke"
@@ -6257,6 +6287,32 @@
       ],
       "additionalProperties": false,
       "description": "The creatures the native compass panel lists toward one direction."
+    },
+    "tile_action": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/opaque_id",
+          "description": "The native action's id (`examine`, `open`, `close`, `pickup`, `fire`, `look`), or `travel`, `attack` or `talk`."
+        },
+        "label": {
+          "$ref": "#/$defs/text"
+        },
+        "keys": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The player's bindings of the native action; empty for an action that has none."
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "keys"
+      ],
+      "additionalProperties": false,
+      "description": "Something the avatar can do with a square now, in the order a menu lists it. Run it with the `tile_action` operation."
     }
   }
 }

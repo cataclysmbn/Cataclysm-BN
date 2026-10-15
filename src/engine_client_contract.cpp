@@ -69,6 +69,7 @@ auto validate_shape( const command_request &request ) -> bool
         if( const auto item = std::get_if<item_operation>( &request.operation ) ) {
             return valid_id( item->item_id ) && item->count > 0 && item->count <= maximum_safe_integer;
         }
+        if( const auto tile = std::get_if<tile_operation>( &request.operation ) ) { return valid_id( tile->action_id ); }
         const auto action = std::get_if<registered_action>( &request.operation );
         return action == nullptr || valid_id( action->id );
     }
@@ -319,7 +320,7 @@ auto describe_tile( const describe_request &request, const std::string &epoch )
     const auto target = to_bubble( request.target, current_bubble_frame() );
     const auto at = target ? tripoint_bub_ms( target->x, target->y, target->z ) : tripoint_bub_ms();
     if( !target || !g->click_cell_of( at ) ) { return std::unexpected( error::validation_failed ); }
-    return tile_description{ .parts = tile_parts( at ) };
+    return tile_description{ .parts = tile_parts( at ), .actions = tile_actions( at ) };
 }
 
 /// What a view without a structured interaction shows: the text of the composed screen, so a client
@@ -352,6 +353,18 @@ std::optional<game_client::interaction_snapshot>
     };
 }
 
+auto key_names( const std::vector<input_event> &bindings ) -> std::vector<std::string>
+{
+    return bindings
+    | std::views::filter( []( const auto & event ) {
+        return event.type == input_event_t::keyboard && event.sequence.size() == 1;
+    } )
+    | std::views::transform( []( const auto & event ) {
+        return inp_mngr.get_keyname( event.sequence.front(), event.type, true );
+    } )
+    | std::ranges::to<std::vector>();
+}
+
 auto capture_boundary( const capture_options &options ) -> std::expected<boundary_state, error>
 {
     if( options.epoch.empty() ) { return std::unexpected( error::resource_limit ); }
@@ -361,14 +374,7 @@ auto capture_boundary( const capture_options &options ) -> std::expected<boundar
     result.epoch = options.epoch;
     result.frame = current_bubble_frame();
     for( const auto &entry : game_client::available_input_actions() ) {
-        auto keys = entry.bindings
-        | std::views::filter( []( const auto & event ) {
-            return event.type == input_event_t::keyboard && event.sequence.size() == 1;
-        } )
-        | std::views::transform( []( const auto & event ) {
-            return inp_mngr.get_keyname( event.sequence.front(), event.type, true );
-        } )
-        | std::ranges::to<std::vector>();
+        auto keys = key_names( entry.bindings );
         result.actions.push_back( {.id = entry.id, .name = entry.name, .keys = std::move( keys )} );
     }
     const auto open_screens = [&]() { return std::make_shared<const std::vector<screen_view>>( interaction_stack( result ) ); };
@@ -806,6 +812,18 @@ auto command_lifecycle::validate( const clock_point &at, const boundary_state &c
                            _( "There are not that many of that item here to pick up." ) );
         }
         resolved = item_operation_event( *item );
+    } else if( const auto tile = std::get_if<tile_operation>( &operation ) ) {
+        if( !permissions.accepts_registered_actions ||
+            game_client::active_input_context().category != "DEFAULTMODE" ||
+            get_avatar().is_dead_state() ) { return reject( error::not_ready ); }
+        const auto event = tile_operation_event( *tile );
+        const auto command = event ? tile_operation_of( *event ) : std::nullopt;
+        if( !command ) { return reject( error::validation_failed, _( "That square is outside the map window the engine can resolve." ) ); }
+        const auto offered = tile_actions( command->at );
+        if( !std::ranges::contains( offered, tile->action_id, &tile_action::id ) ) {
+            return reject( error::validation_failed, _( "That cannot be done on this square now." ) );
+        }
+        resolved = *event;
     } else if( const auto screen = std::get_if<invoke_operation>( &operation ) ) {
         // An affordance the screen runs itself reaches its loop as a recorded input.
         if( !permissions.accepts_interaction_commands ) { return reject( error::not_ready ); }

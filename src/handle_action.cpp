@@ -690,12 +690,14 @@ inline static void pldrive( point_rel_veh d )
     return pldrive( tripoint_rel_veh( d, 0 ) );
 }
 
-static void open()
+/// Opens what is at `target`, else at the square the player is asked for.
+static void open( const std::optional<tripoint_bub_ms> &target )
 {
     player &u = g->u;
-    const std::optional<tripoint_bub_ms> openp_ = choose_adjacent_highlight( _( "Open where?" ),
-            pgettext( "no door, gate, curtain, etc.", "There is nothing that can be opened nearby." ),
-            ACTION_OPEN, false );
+    const std::optional<tripoint_bub_ms> openp_ = target ? target : choose_adjacent_highlight(
+                _( "Open where?" ),
+                pgettext( "no door, gate, curtain, etc.", "There is nothing that can be opened nearby." ),
+                ACTION_OPEN, false );
 
     if( !openp_ ) {
         return;
@@ -1995,6 +1997,37 @@ bool game::handle_action()
         return true;
     }
 
+    // An action a client chose from the context menu of a map square, as the native action on that square.
+    if( const auto tile = engine_client::tile_operation_of( ctxt.get_raw_input() );
+        tile && !u.is_dead_state() ) {
+        user_action_counter += 1;
+        u.clear_destination();
+        destination_preview.clear();
+        mouse_target = tile->at;
+        if( tile->action_id == "talk" ) {
+            if( auto *const who = critter_at<npc>( tile->at ) ) {
+                who->talk_to_u();
+            }
+            return false;
+        }
+        if( tile->action_id == "look" ) {
+            auto center = tile->at;
+            look_around( true, center, tile->at, false, false, false );
+            return false;
+        }
+        if( tile->action_id == "travel" ) {
+            // As two left clicks: the first plans the route, the second starts walking it.
+            try_get_left_click_action( act, tile->at );
+            if( !try_get_left_click_action( act, tile->at ) ) {
+                return false;
+            }
+        } else if( tile->action_id == "attack" ) {
+            act = get_movement_action_from_delta( tile->at - u.bub_pos(), iso_rotate::yes );
+        } else {
+            act = look_up_action( tile->action_id );
+        }
+    }
+
     if( act == ACTION_NULL ) {
         ZoneScopedN( "handle_action_resolve_action" );
         act = look_up_action( action );
@@ -2431,10 +2464,10 @@ bool game::handle_action()
                         add_msg( m_info, _( "You can't open things while you're riding." ) );
                         break;
                     } else {
-                        open();
+                        open( mouse_target );
                     }
                 } else {
-                    open();
+                    open( mouse_target );
                 }
                 break;
 

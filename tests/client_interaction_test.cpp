@@ -31,6 +31,7 @@
 #    include "faction.h"
 #    include "game.h"
 #    include "game_session.h"
+#    include "gamemode.h"
 #    include "input.h"
 #    include "inventory_ui.h"
 #    include "item.h"
@@ -3830,9 +3831,24 @@ struct handle_action_member {
 template <typename Tag, typename Tag::type Member> struct native_test_member {
     friend auto native_member(Tag /*tag*/) -> typename Tag::type { return Member; }
 };
+struct mode_member {
+    using type = std::unique_ptr<special_game> game::*;
+    friend auto native_member(mode_member) -> type;
+};
 template struct native_test_member<handle_action_member, &game::handle_action>;
+template struct native_test_member<mode_member, &game::gamemode>;
 
-auto handle_action() -> bool { return (g.get()->*native_member(handle_action_member{}))(); }
+auto handle_action() -> bool {
+    // The native loop has a game mode by the time it reads input; the one made here goes with the
+    // call.
+    auto& mode = g.get()->*native_member(mode_member{});
+    const auto made = !mode;
+    if (made) { mode = std::make_unique<special_game>(); }
+    const auto restore = on_out_of_scope([&] {
+        if (made) { mode.reset(); }
+    });
+    return (g.get()->*native_member(handle_action_member{}))();
+}
 
 } // namespace
 
@@ -3926,4 +3942,221 @@ TEST_CASE(
     CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
     replay::finish();
 }
+namespace {
+
+auto tile_ids(const tripoint_bub_ms& at) -> std::vector<std::string> {
+    return engine_client::tile_actions(at) | std::views::transform(&engine_client::tile_action::id)
+         | std::ranges::to<std::vector>();
+}
+
+auto offers(const tripoint_bub_ms& at, const std::string& id) -> bool {
+    return std::ranges::contains(tile_ids(at), id);
+}
+
+/// As the controller delivers a command: the session validates the operation at the native
+/// boundary, then hands the game what it validated.
+auto deliver(const engine_client::command_operation& operation)
+    -> std::expected<input_event, engine_client::error> {
+    auto& session = engine_client::process_session();
+    REQUIRE(session.publish_boundary());
+    const auto current = session.current();
+    REQUIRE(current);
+    REQUIRE(session.submit({
+        .epoch = session.epoch(),
+        .expect = {.revision = current->at.revision, .boundary_id = current->value.interaction.id},
+        .operation = operation,
+    }));
+    const auto native = session.prepare_input(game_client::memory::screen_size());
+    if (!native) { return std::unexpected(native.error()); }
+    const auto event =
+        game_client::resolve_input_command(*native, game_client::memory::screen_size());
+    REQUIRE(event);
+    return *event;
+}
+
+auto absolute(const tripoint_bub_ms& at) -> engine_client::position {
+    return engine_client::world::position_at(at);
+}
+
+} // namespace
+
+TEST_CASE(
+    "a square offers the actions the avatar can take on it now",
+    "[client][interaction][mcp][engine_client_contract][tile_action]") {
+    const auto guard = interaction_test_guard{};
+    const auto fixture = pickup_fixture_guard(false);
+    auto& here = get_map();
+    const auto east = pickup_test_pos + tripoint_east;
+    const auto far_away = pickup_test_pos + tripoint(6, 0, 0);
+
+    SECTION("a closed door opens, an open one closes, and neither works from afar") {
+        REQUIRE(here.ter_set(east, ter_id("t_door_c")));
+        CHECK(offers(east, "open"));
+        CHECK_FALSE(offers(east, "close"));
+        REQUIRE(here.ter_set(east, ter_id("t_door_o")));
+        CHECK(offers(east, "close"));
+        CHECK_FALSE(offers(east, "open"));
+        REQUIRE(here.ter_set(far_away, ter_id("t_door_c")));
+        CHECK_FALSE(offers(far_away, "open"));
+    }
+    SECTION("items are picked up underfoot and beside, not from afar") {
+        here.add_item(pickup_test_pos, item::spawn("test_1kg_cube"));
+        here.add_item(east, item::spawn("test_1kg_cube"));
+        here.add_item(far_away, item::spawn("test_1kg_cube"));
+        CHECK(offers(pickup_test_pos, "pickup"));
+        CHECK(offers(east, "pickup"));
+        CHECK_FALSE(offers(far_away, "pickup"));
+    }
+    SECTION(
+        "every square can be looked at; walking is offered for any square but the avatar's own") {
+        set_time(calendar::turn_zero + 12_hours);
+        here.build_map_cache(0, true);
+        CHECK(offers(far_away, "look"));
+        CHECK(offers(pickup_test_pos + tripoint(3, 0, 0), "travel"));
+        CHECK(offers(pickup_test_pos, "look"));
+        CHECK_FALSE(offers(pickup_test_pos, "travel"));
+        CHECK_FALSE(offers(far_away, "open"));
+        CHECK_FALSE(offers(far_away, "close"));
+        CHECK_FALSE(offers(far_away, "attack"));
+    }
+    SECTION("a monster beside the avatar is attacked, and shot at only with a gun") {
+        here.build_map_cache(0, true);
+        spawn_test_monster("mon_zombie", east);
+        here.build_map_cache(0, true);
+        CHECK(offers(east, "attack"));
+        CHECK_FALSE(offers(east, "fire"));
+        get_avatar().wield(item::spawn("glock_19", calendar::start_of_cataclysm, 0));
+        CHECK(offers(east, "fire"));
+        CHECK_FALSE(offers(pickup_test_pos, "attack"));
+    }
+    SECTION("a driver is offered no step and no route, as the native mouse steers nothing") {
+        set_time(calendar::turn_zero + 12_hours);
+        here.build_map_cache(0, true);
+        spawn_test_monster("mon_zombie", east);
+        here.build_map_cache(0, true);
+        auto& you = get_avatar();
+        const auto driving = on_out_of_scope([&] { you.controlling_vehicle = false; });
+        you.controlling_vehicle = true;
+        CHECK_FALSE(offers(east, "attack"));
+        CHECK_FALSE(offers(pickup_test_pos + tripoint(3, 0, 0), "travel"));
+        CHECK(offers(east, "look"));
+    }
+    SECTION("a person is talked to only within the range the native chat lists") {
+        set_time(calendar::turn_zero + 12_hours);
+        const auto near = pickup_test_pos + tripoint(SEEX * 2, 0, 0);
+        const auto far = pickup_test_pos + tripoint(0, SEEX * 2 + 1, 0);
+        spawn_npc(near, "test_talker");
+        spawn_npc(far, "test_talker");
+        here.build_map_cache(0, true);
+        REQUIRE(get_avatar().sees(far));
+        CHECK(offers(near, "talk"));
+        CHECK_FALSE(offers(far, "talk"));
+    }
+    SECTION("each action carries the native label and the player's keys") {
+        const auto actions = engine_client::tile_actions(east);
+        const auto look = std::ranges::find(actions, "look", &engine_client::tile_action::id);
+        REQUIRE(look != actions.end());
+        CHECK_FALSE(look->label.empty());
+        CHECK(std::ranges::contains(look->keys, ";"));
+        const auto travel = std::ranges::find(actions, "travel", &engine_client::tile_action::id);
+        REQUIRE(travel != actions.end());
+        CHECK_FALSE(travel->label.empty());
+        CHECK(travel->keys.empty());
+    }
+}
+
+TEST_CASE(
+    "a tile action runs the native action on its square and replays",
+    "[client][interaction][mcp][engine_client_contract][tile_action][replay]") {
+    const auto guard = interaction_test_guard{};
+    static auto counter = std::atomic_uint64_t{0};
+    const auto directory =
+        std::filesystem::path(PATH_INFO::user_dir())
+        / ("tile-action-replay-" + std::to_string(counter.fetch_add(1)));
+    REQUIRE(std::filesystem::create_directory(directory));
+    const auto running = game_session::running();
+    const auto cleanup = on_out_of_scope([&] {
+        replay::stop();
+        std::filesystem::remove_all(directory);
+        game_client::memory::set_input_provider({});
+        clear_pickup_fixture_state();
+        game_session::set_running(running);
+    });
+    const auto animations = override_option("ANIMATIONS", "false");
+    const auto realtime = override_option("TURN_DURATION", "0");
+    const auto path = directory / "input.jsonl";
+    const auto east = pickup_test_pos + tripoint_east;
+    const auto setup = [&] {
+        clear_pickup_fixture_state();
+        auto& you = get_avatar();
+        you.setpos(map_local_to_abs(get_map(), pickup_test_pos));
+        you.set_moves(1000);
+        REQUIRE(get_map().ter_set(east, ter_id("t_door_o")));
+        game_session::set_running(true);
+        engine_client::process_session().replace_world();
+    };
+    const auto check_closed = [&] {
+        CHECK(get_map().ter(east) == ter_id("t_door_c"));
+        CHECK(get_avatar().moves < 1000);
+    };
+
+    setup();
+    replay::configure_recording(path.string(), {.rng_seed = 424242});
+    replay::start();
+    auto reads = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        REQUIRE(reads++ == 0);
+        const auto event = deliver(
+            engine_client::tile_operation{.action_id = "close", .target = absolute(east)});
+        REQUIRE(event);
+        return *event;
+    });
+    handle_action();
+    check_closed();
+    replay::finish();
+    REQUIRE(reads == 1);
+
+    setup();
+    game_client::memory::set_input_provider([](const int /*timeout*/) -> input_event {
+        throw std::runtime_error("playback must not read live input");
+    });
+    replay::configure_playback(path.string(), {.rng_seed = 424242});
+    replay::start();
+    handle_action();
+    check_closed();
+    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
+    replay::finish();
+}
+
+TEST_CASE(
+    "a tile action the square does not offer is rejected before anything runs",
+    "[client][interaction][mcp][engine_client_contract][tile_action]") {
+    const auto guard = interaction_test_guard{};
+    const auto fixture = pickup_fixture_guard(false);
+    const auto running = game_session::running();
+    const auto cleanup = on_out_of_scope([&] { game_session::set_running(running); });
+    game_session::set_running(true);
+    engine_client::process_session().replace_world();
+    const auto east = pickup_test_pos + tripoint_east;
+    const auto moves = get_avatar().moves;
+    const auto cleanup_input = on_out_of_scope([&] {
+        game_client::memory::set_input_provider({});
+    });
+    // The native loop is what makes the map's input context active while it reads.
+    auto errors = std::vector<engine_client::error>{};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        for (const auto& at : {east, pickup_test_pos + tripoint(400, 0, 0)}) {
+            const auto event = deliver(engine_client::tile_operation{
+                .action_id = at == east ? "close" : "look", .target = absolute(at)});
+            INFO(at.x() - pickup_test_pos.x());
+            REQUIRE_FALSE(event);
+            errors.push_back(event.error());
+        }
+        return input_event{};
+    });
+    handle_action();
+    CHECK(errors == std::vector(2, engine_client::error::validation_failed));
+    CHECK(get_avatar().moves == moves);
+}
+
 #endif // CATA_MCP

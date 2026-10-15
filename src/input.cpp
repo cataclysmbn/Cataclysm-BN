@@ -946,8 +946,9 @@ const std::string &input_context::handle_input( const int timeout )
                                         inp_mngr.get_timeout() );
             next_action = inp_mngr.get_input_event();
         }
-        // The map view carries out a client's pickup or drop itself (game::handle_action); it has no widget.
-        if( category == "DEFAULTMODE" && engine_client::item_operation_of( next_action ) ) {
+        // The map view carries out a client's pickup, drop or square action itself (game::handle_action); it has no widget.
+        if( category == "DEFAULTMODE" && ( engine_client::item_operation_of( next_action ) ||
+                                           engine_client::tile_operation_of( next_action ) ) ) {
             result = &ANY_INPUT;
             break;
         }

@@ -99,7 +99,7 @@ affordance와 맞지 않는 형식은 `invalid_arguments`다.
 
 ## 명령
 
-`operation.kind`는 `choose`, `fill`, `set_count`, `set_target`, `cancel`(의미 기반 메뉴) `action`(이동 키 같은 등록된 행동) 또는 `travel`(맵 클릭) 중 하나입니다.
+`operation.kind`는 `choose`, `fill`, `set_count`, `set_target`, `cancel`(의미 기반 메뉴) `action`(이동 키 같은 등록된 행동) `travel`(맵 클릭) 또는 `tile_action`(맵 칸에 대한 행동, 아래 참조) 중 하나입니다.
 
 ```json
 { "kind": "choose", "choice_id": "tab:new_game" }
@@ -115,6 +115,8 @@ affordance와 맞지 않는 형식은 `invalid_arguments`다.
 클릭이나 잡무가 칸과 아이템에 무엇을 하는지도 엔진이 정합니다. 아바타 옆의 열 수 있는 닫힌 문에 대한 왼쪽 `travel`은 경로 클릭이 아니라 그 문으로의 이동(네이티브 이동이 문을 엶)입니다. `pickup`과 `drop`은 `{ "kind": "pickup" | "drop", "item_id", "count" }`를 받습니다. `item_id`는 `avatar.ground`(pickup) 또는 `avatar.inventory`(drop) 행의 `id`, `count`는 그 행에서 가져갈 양을 네이티브 단위(못처럼 충전량으로 세는 아이템은 충전량, 그 밖에는 아이템 개수)로 나타내며, 엔진은 메뉴에서 표시하고 확정했을 때와 같은 네이티브 줍기·버리기 활동을 시작합니다. 행 ID는 그 더미가 그대로인 동안 유지되고, 행이 사라졌거나 `count`보다 적게 남았으면 명령은 `validation_failed`로 거부됩니다. 실패한 명령은 현지화된 이유를 `error_text`(명령 결과와 `bn.command`) 또는 `message`(JSON-RPC 오류의 `data`)로 전합니다. 엔진이 아는 경우 `error`보다 구체적입니다(지도 창 밖으로의 이동, 더미보다 많은 개수 등). 대상 지정 상호작용(`context`가 `TARGET`)은 `target.distance`(`distance_metric`에 따른 `source`에서 `current`까지의 거리, 수직 축 포함)를 담고, 화면이 사거리와 준비 상태를 알려 주는 경우 `target.status_text`(현지화된 사거리와 상태 줄)도 담습니다. 아무 키로나 넘어가고 키가 지정되지 않은 화면(아무 키 팝업, 컴퓨터 단말 프롬프트)은 고를 선택지를 `interaction.any_key_choice_id`로 알려 줍니다.
 
 `context`는 같은 칸에 대한 오른쪽 클릭(SEC_SELECT)입니다. 네이티브에서는 인접한 칸을 조사하거나, 인접한 문을 닫거나, 발밑 아이템을 줍거나, 보이는 몬스터를 쏘거나, 계획된 경로를 먼저 취소합니다. `bn.world.describe`는 터미널 창 안의 칸에 마우스를 올렸을 때 네이티브 마우스 뷰가 출력하는 텍스트를 돌려줍니다(범위 밖은 `validation_failed`). 아무것도 선택하거나 계획하지 않습니다. `bn.world.cells`는 한 층의 상자(`min`과 `max` 포함, `dim`과 `z`가 같고 최대 `limits.cells_per_query`칸) 안에서 아바타가 아는 것을 돌려줍니다. 셀은 스냅샷이 가진 그대로이며, `forgotten`은 상자 안의 로드된 범위(coverage) 안에서 아무것도 알려지지 않은 칸입니다. 뒤집힌 상자나 여러 층에 걸친 상자는 `validation_failed`, 너무 큰 상자는 `resource_limit`, 다른 `epoch`은 `stale_epoch`입니다. 메뉴의 휠 한 단계는 등록된 행동 `SCROLL_UP` 또는 `SCROLL_DOWN`이며 엔진이 네이티브 커서를 세 행 옮깁니다.
+
+`tile_action`은 `bn.world.describe`가 칸에 대해 나열하는 `actions` 중 하나를 `action_id`와 `pos`로 지정해, 그 칸에서 네이티브 액션이 하는 일을 합니다. 목록에는 지금 할 수 있는 것만 메뉴 순서대로, 네이티브 `label`과 플레이어의 `keys`(`attack`, `talk`, `travel`은 없음)와 함께 담깁니다. `attack`(아바타 옆에 있는 보이는 비우호 생물), `fire`(보이는 몬스터, 원거리 무기를 든 경우), `talk`(보이는 캐릭터), `open`, `close`, `pickup`, `examine`(아바타의 칸과 주변 8칸에서 네이티브 액션이 할 일을 찾는 경우), `travel`(아바타가 아는 칸, 경로 계획과 걷기 시작을 한 명령으로 함), `look`(항상, 그 칸에서 둘러보기를 엶)입니다. 그 칸이 지금 나열하지 않은 액션은 `validation_failed`입니다. 클라이언트는 이 목록을 칸의 오른쪽 클릭 메뉴로 보여 줍니다.
 
 단계는 `received`, `validated`, `executing`, `completed`이며, 또는 `rejected`, 또는 `interrupted`이며, `interrupted`의 `error`가 이유를 알려 줍니다(월드가 교체되면 `stale_epoch`, 게임이 입력을 거부하면 `validation_failed`, 그 외에는 `not_ready`). `completed`는 입력이 다시 대기 중이라는 뜻입니다. 대기 같은 활동은 끝나거나 게임이 무언가를 물을 때(팝업, 중단)까지 먼저 실행됩니다. 그 `at`은 해당 경계의 끝 지점입니다. 따라서 입력이 여는 프롬프트(텍스트 칸, 수량)는 그것을 담은 이벤트가 먼저 오므로(`bn.resync` 뒤에는 이어지는 스냅샷이 담습니다) `completed`가 도착할 때 이미 상태에 있습니다. 그때 프롬프트가 없으면 프롬프트는 열리지 않은 것입니다. 한 번에 하나의 명령만 진행할 수 있습니다(`command_busy`). 대기 같은 활동이 실행되는 동안에도 요청에는 응답합니다. `bn.interrupt`는 네이티브 중단 키를 눌러 활동이 Tiles처럼 중지할지 묻게 하며, 그 질문이 다음 경계가 됩니다. 활동 중이 아니면 `not_ready`로 실패합니다.
 

@@ -117,6 +117,8 @@ struct capture_options {
     std::string epoch = {};
     readiness ready = {};
 };
+/// The portable names of the single keyboard keys among `bindings`.
+auto key_names( const std::vector<input_event> &bindings ) -> std::vector<std::string>;
 /// Only call at a stable native input boundary. Reads choices `[0, 200)`, fewer when the
 /// value would exceed maximum_inline_bytes; `choice_total` always states the full count.
 /// This does not publish anything.
@@ -148,10 +150,20 @@ struct describe_request {
     std::string boundary_id = {};
     position target;
 };
-/// What the native mouse view prints for a square, as the facts it prints.
+/// Something the avatar can do with a square now. The id is the native action's, or `travel`, `attack`
+/// or `talk`; the label and keys are the native action's own where it has one.
+struct tile_action {
+    std::string id = {};
+    std::string label = {};
+    std::vector<std::string> keys = {};
+};
+/// What the native mouse view prints for a square, as the facts it prints, and what the avatar can do there.
 struct tile_description {
     std::vector<tile_part> parts = {};
+    std::vector<tile_action> actions = {};
 };
+/// The actions of `tile_action` the avatar can take on `at` now, in the order a menu lists them.
+auto tile_actions( const tripoint_bub_ms &at ) -> std::vector<tile_action>;
 /// Passive read of the hovered square's native description; nothing is selected or planned.
 /// Rejected with `validation_failed` outside the terrain window or on another level.
 auto describe_tile( const describe_request &request, const std::string &epoch )
@@ -190,8 +202,8 @@ struct item_operation {
     std::string item_id = {};
     std::uint64_t count = 0;
 };
-/// The input that wakes the native read for an item operation; the session hands the game
-/// `item_operation_event` in its place.
+/// The input that wakes the native read for an item or tile operation; the session hands the game
+/// `item_operation_event` or `tile_operation_event` in its place.
 auto item_operation_input() -> game_client::input_command;
 /// The input the map view reads for an item operation and carries out (`game::handle_action`); replay
 /// records and plays it back like any other input.
@@ -202,6 +214,20 @@ auto item_operation_of( const input_event &event ) -> std::optional<item_operati
 auto item_operation_stack( const item_operation &operation ) -> std::optional<world::item_stack>;
 /// Starts the native pickup or drop activity for `operation`; false when its row is gone or holds less.
 auto run_item_operation( const item_operation &operation ) -> bool;
+/// Takes one of the `tile_actions` of an absolute map square, as the native action on that square does.
+struct tile_operation {
+    std::string action_id = {};
+    position target;
+};
+/// The input the map view reads for a tile operation and carries out (`game::handle_action`); replay records
+/// and plays it back like any other input. Nullopt when the square is outside the terrain window.
+auto tile_operation_event( const tile_operation &operation ) -> std::optional<input_event>;
+/// The tile operation `event` carries: its action id and the square in the bubble.
+struct tile_command {
+    std::string action_id = {};
+    tripoint_bub_ms at;
+};
+auto tile_operation_of( const input_event &event ) -> std::optional<tile_command>;
 struct invoke_row {
     std::string id = {};
     std::optional<std::uint64_t> count = std::nullopt;
@@ -236,7 +262,7 @@ struct expectation {
 enum class expect_scope { screen, boundary };
 auto scope_name( expect_scope scope ) -> std::string;
 using command_operation = std::variant<semantic_operation, registered_action, travel_operation,
-      item_operation, invoke_operation>;
+      item_operation, tile_operation, invoke_operation>;
 struct command_request {
     std::string epoch = {};
     expectation expect = {};

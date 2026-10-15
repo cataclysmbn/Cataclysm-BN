@@ -1,6 +1,7 @@
 #include "catch/catch.hpp"
 #include "engine_client_wire.h"
 
+#include <nlohmann/json.hpp>
 #include <string>
 
 namespace {
@@ -146,6 +147,36 @@ TEST_CASE("command operations", "[engine_client_wire]") {
         REQUIRE(left);
         CHECK(std::get<travel_operation>(left->operation).button == "left");
         CHECK_FALSE(decode_command_request(command(R"({"kind":"context"})", "null")));
+    }
+    SECTION("a tile action names an action id and one absolute square") {
+        const auto decoded = decode_command_request(command(
+            R"({"kind":"tile_action","action_id":"examine","pos":{"dim":"","x":2,"y":3,"z":0}})",
+            "null"));
+        REQUIRE(decoded);
+        const auto* tile = std::get_if<tile_operation>(&decoded->operation);
+        REQUIRE(tile);
+        CHECK(tile->action_id == "examine");
+        CHECK(tile->target == position{.dim = "", .x = 2, .y = 3, .z = 0});
+        CHECK_FALSE(decode_command_request(
+            command(R"({"kind":"tile_action","pos":{"dim":"","x":2,"y":3,"z":0}})", "null")));
+        CHECK_FALSE(decode_command_request(
+            command(R"({"kind":"tile_action","action_id":"look"})", "null")));
+        CHECK_FALSE(decode_command_request(
+            command(R"({"kind":"tile_action","action_id":"","pos":{"dim":"","x":2,"y":3,"z":0}})",
+                    "null")));
+        CHECK_FALSE(decode_command_request(command(
+            R"({"kind":"tile_action","action_id":"look","pos":{"dim":"","x":2,"y":3,"z":0},"count":1})",
+            "null")));
+    }
+    SECTION("a description lists the parts and the actions of the square") {
+        const auto text = serialize_description(
+            {.parts = {{.kind = "terrain", .text = "floor"}},
+             .actions = {{.id = "look", .label = "Look Around", .keys = {";"}}}});
+        const auto json = nlohmann::json::parse(text);
+        CHECK(json["parts"].size() == 1);
+        REQUIRE(json["actions"].size() == 1);
+        CHECK(json["actions"][0]
+              == nlohmann::json{{"id", "look"}, {"label", "Look Around"}, {"keys", {";"}}});
     }
     SECTION("describe takes an epoch, a boundary and one square") {
         const auto decoded = decode_describe_request(
