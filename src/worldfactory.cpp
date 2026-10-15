@@ -76,6 +76,14 @@ constexpr auto worldgen_select_id = "worldgen:tab";
 /// The tabs a client jumped over, still to be stepped through, one per tab function call.
 auto pending_world_steps = 0;
 
+/// Holds the steps queued by a jump for the lifetime of one world creation: none survive its end, however it ends.
+struct world_jump_scope {
+    world_jump_scope() { pending_world_steps = 0; }
+    world_jump_scope( const world_jump_scope & ) = delete;
+    auto operator=( const world_jump_scope & ) -> world_jump_scope & = delete; // *NOPAD*
+    ~world_jump_scope() { pending_world_steps = 0; }
+};
+
 auto pending_world_step() -> int
 {
     const auto step = pending_world_steps < 0 ? -1 : pending_world_steps > 0 ? 1 : 0;
@@ -209,6 +217,7 @@ WORLDINFO *worldfactory::make_new_world( bool show_prompt, const std::string &wo
         } );
 
         const size_t numtabs = tabs.size();
+        const auto jumps = world_jump_scope{};
         while( static_cast<size_t>( curtab ) < numtabs ) {
             ui_manager::redraw();
             curtab += tabs[curtab]( wf_win, retworld.get(), []() -> bool {

@@ -212,6 +212,22 @@ enum struct tab_direction {
     QUIT
 };
 
+namespace
+{
+
+/// Tabs left to step over after the player chose a tab other than the next or previous one.
+auto pending_tab_steps = 0;
+
+/// Holds the steps queued by a jump for the lifetime of one character creation: none survive its end, however it ends.
+struct tab_jump_scope {
+    tab_jump_scope() { pending_tab_steps = 0; }
+    tab_jump_scope( const tab_jump_scope & ) = delete;
+    auto operator=( const tab_jump_scope & ) -> tab_jump_scope & = delete; // *NOPAD*
+    ~tab_jump_scope() { pending_tab_steps = 0; }
+};
+
+} // namespace
+
 tab_direction set_points( avatar &u, points_left &points );
 tab_direction set_stats( avatar &u, points_left &points );
 tab_direction set_traits( avatar &u, points_left &points );
@@ -727,6 +743,7 @@ bool avatar::create( character_type type, const std::string &tempname )
     set_body();
     const bool allow_reroll = true;
     tab_direction result = tab_direction::QUIT;
+    const auto jumps = tab_jump_scope{};
     do {
         if( !interactive ) {
             // no window is created because "Play now"  does not require any configuration
@@ -978,9 +995,6 @@ auto character_tab_captions( const profession_id &prof ) -> std::vector<std::str
     return character_tabs( prof ) | std::views::transform( &newchar_tab::caption ) |
            std::ranges::to<std::vector>();
 }
-
-/// Tabs left to step over after the player chose a tab other than the next or previous one.
-auto pending_tab_steps = 0;
 
 /// The next queued step of such a jump, or NONE when the tab is where the player wants to be.
 auto pending_tab() -> tab_direction
