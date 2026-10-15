@@ -145,7 +145,7 @@ TEST_CASE("the registered CONFIRM accepts and QUIT leaves", "[engine_client_comp
     const auto view = top_of(state);
     CHECK(affordance(view, "CONFIRM").role == "confirm");
     CHECK(affordance(view, "QUIT").role == "cancel");
-    CHECK(affordance(view, "UP").role.empty());
+    CHECK(affordance(view, "UP").role == "navigate");
 }
 
 TEST_CASE("a screen publishes each role once", "[engine_client_component]") {
@@ -1219,4 +1219,27 @@ TEST_CASE(
     CHECK((*inventory)["enabled"] == true);
     CHECK((*inventory)["icon"] == "inventory");
     CHECK_FALSE(wire(boundary(menu()))["stack"].back().contains("shortcuts"));
+}
+
+TEST_CASE(
+    "cursor, paging and tab actions of a screen only navigate, and the keybindings menu is its help",
+    "[engine_client_component][roles]") {
+    auto state = boundary(menu());
+    state.actions = {
+        {.id = "UP", .name = "Pan up", .keys = {"k"}},
+        {.id = "PAGE_DOWN", .name = "Fast scroll down", .keys = {"NPAGE"}},
+        {.id = "NEXT_TAB", .name = "Go to next tab", .keys = {"TAB"}},
+        {.id = "HELP_KEYBINDINGS", .name = "Display keybindings menu", .keys = {"?"}},
+        {.id = "FILTER", .name = "Filter", .keys = {"f"}},
+    };
+    const auto view = top_of(state);
+    CHECK(affordance(view, "UP").role == "navigate");
+    CHECK(affordance(view, "PAGE_DOWN").role == "navigate");
+    CHECK(affordance(view, "NEXT_TAB").role == "navigate");
+    CHECK(affordance(view, "HELP_KEYBINDINGS").role == "help");
+    CHECK(affordance(view, "FILTER").role.empty());
+    // On the map the same key is a step.
+    auto map = map_only();
+    map.actions = state.actions;
+    CHECK(affordance(top_of(map), "UP").role.empty());
 }

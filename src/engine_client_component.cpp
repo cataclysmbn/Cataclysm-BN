@@ -172,12 +172,20 @@ auto native_affordances( build &b ) -> void
     }
 }
 
-/// The role a registered action plays on every screen that has it: CONFIRM accepts, QUIT leaves, and any key
-/// acknowledges where a screen names that key.
-auto registered_role( const std::string &id ) -> std::string
+/// The role a registered action plays on every screen that has it: CONFIRM accepts, QUIT leaves, any key
+/// acknowledges where a screen names that key, the cursor, paging, tab and scroll actions only navigate, and
+/// the keybindings menu is the help. On the map the cursor keys are steps, which navigate nothing.
+auto registered_role( const std::string &id, const bool map ) -> std::string
 {
+    constexpr auto navigation = std::array{
+        "UP", "DOWN", "LEFT", "RIGHT", "LEFTUP", "LEFTDOWN", "RIGHTUP", "RIGHTDOWN", "PAGE_UP", "PAGE_DOWN",
+        "HOME", "END", "NEXT_TAB", "PREV_TAB", "NEXT_CATEGORY_TAB", "PREV_CATEGORY_TAB", "SCROLL_UP",
+        "SCROLL_DOWN", "MOUSE_MOVE", "TEXT.LEFT", "TEXT.RIGHT", "TEXT.UP", "TEXT.DOWN", "TEXT.HOME", "TEXT.END",
+        "TEXT.PAGE_UP", "TEXT.PAGE_DOWN"
+    };
     return id == "CONFIRM" ? "confirm" : id == "QUIT" ? "cancel" : id == "ANY_INPUT" ? "any_key" :
-           std::string{};
+           id == "HELP_KEYBINDINGS" ? "help" : !map &&
+           std::ranges::contains( navigation, id ) ? "navigate" : std::string{};
 }
 
 /// Whether the action is a button: only one native names, since the name of an unnamed action is its id.
@@ -198,7 +206,7 @@ auto registered_affordances( const boundary_state &state,
 {
     return state.actions | std::views::filter( offered ) | std::views::transform( [&](
     const auto & entry ) {
-        return affordance{ .id = entry.id, .label = entry.name, .keys = entry.keys, .role = registered_role( entry.id ), .target = entry.id,
+        return affordance{ .id = entry.id, .label = entry.name, .keys = entry.keys, .role = registered_role( entry.id, map ), .target = entry.id,
                            .holdable = map && is_step( entry.id ) };
     } ) | std::ranges::to<std::vector>();
 }
