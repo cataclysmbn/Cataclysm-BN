@@ -9,6 +9,7 @@
 | achievements.json          | 업적                                            |
 | anatomy.json               | 플레이어 신체 부위 목록(편집하지 말 것)         |
 | ascii_arts.json            | 아이템 설명에 사용하는 ASCII 아트               |
+| client_shortcuts.json      | 클라이언트가 지도 옆에 보여 주는 단축 버튼      |
 | bionics.json               | 바이오닉(바이오닉 효과는 포함하지 않음)         |
 | body_parts.json            | anatomy.json의 확장(편집하지 말 것)             |
 | clothing_mods.json         | 의류 개조 정의                                  |

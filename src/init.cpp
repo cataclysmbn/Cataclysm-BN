@@ -16,6 +16,7 @@
 #include "clothing_mod.h"
 #include "client_display.h"
 #include "client_render_hooks.h"
+#include "client_shortcut.h"
 #include "clzones.h"
 #include "construction.h"
 #include "construction_category.h"
@@ -311,6 +312,7 @@ void DynamicDataLoader::initialize()
     add( "scent_type", &scent_type::load_scent_type );
     add( "disease_type", &disease_type::load_disease_type );
     add( "ascii_art", &ascii_art::load_ascii_art );
+    add( "client_shortcut", &client_shortcuts::load );
 
     // json/colors.json would be listed here, but it's loaded before the others (see init_colors())
     // Non Static Function Access
@@ -603,6 +605,7 @@ void DynamicDataLoader::unload_data()
     body_part_type::reset();
     charge_removal_blacklist::reset();
     clear_techniques_and_martial_arts();
+    client_shortcuts::reset();
     clothing_mods::reset();
     construction_categories::reset();
     construction_groups::reset();
