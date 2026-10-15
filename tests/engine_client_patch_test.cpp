@@ -313,6 +313,46 @@ TEST_CASE(
     CHECK(watched.authority.oracle_mismatches().empty());
 }
 
+namespace {
+/// The patches a session asked for that continued the last one and still named every cell.
+auto exhaustive_continuations = 0;
+auto counting_patch(const ec::snapshot& previous, const bool consecutive) -> ec::world_patch {
+    auto patch = ec::world::capture_patch(previous, consecutive);
+    if (consecutive && patch.exhaustive) { ++exhaustive_continuations; }
+    return patch;
+}
+} // namespace
+
+TEST_CASE(
+    "a patch publication equals the full capture across a shift of the map",
+    "[engine_client_patch][map_shift]") {
+    make_open_ground(12);
+    auto& here = get_map();
+    auto& you = get_avatar();
+    auto watched = watched_session{};
+    watched.authority.set_world_capture(&ec::world::capture_world, &counting_patch);
+    exhaustive_continuations = 0;
+    auto shifts = 0;
+    const auto walk = [&](const tripoint& step, const int count) {
+        for (const auto i : std::views::iota(0, count)) {
+            static_cast<void>(i);
+            const auto origin = here.get_abs_sub();
+            static_cast<void>(g->place_player(you.bub_pos() + step));
+            shifts += here.get_abs_sub() != origin ? 1 : 0;
+            watched.publish();
+        }
+    };
+    walk(tripoint_east, 30);
+    walk(tripoint_west, 30);
+    walk(tripoint(1, 1, 0), 30);
+    walk(tripoint(-1, -1, 0), 30);
+    walk(tripoint_north, 30);
+    walk(tripoint_south, 30);
+    CHECK(shifts >= 2);
+    CHECK(exhaustive_continuations == 0);
+    CHECK(watched.authority.oracle_mismatches().empty());
+}
+
 TEST_CASE(
     "a patch over open ground names only the squares that changed",
     "[engine_client_patch][open_ground]") {
