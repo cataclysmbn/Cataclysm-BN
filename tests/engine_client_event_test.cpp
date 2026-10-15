@@ -564,6 +564,38 @@ TEST_CASE("a published event carries its own wire form", "[engine_client_event]"
     CHECK(message->wire() == serialize_events({.epoch = "epoch:wire", .events = {*message}}));
 }
 
+TEST_CASE("a batch holds every event as it was sealed", "[engine_client_event]") {
+    using ordered = nlohmann::ordered_json;
+    const auto epoch = std::string("epoch:\"batch\"");
+    auto stream = stream_of(world_of({visible_cell(1)}), epoch);
+    auto boundary = world_of({visible_cell(1), visible_cell(2)});
+    boundary.interaction = menu("boundary:2");
+    boundary.interaction.stack = std::make_shared<const std::vector<screen_view>>(
+        std::vector<screen_view>{{.screen_id = "screen:a", .title = "A"}});
+    const auto cells = publish(stream, boundary);
+    const auto message = stream.publish_message(
+        {.message = {.id = 1, .text = "Hi", .kind = "neutral", .label = "Hi"}});
+    REQUIRE(message);
+    const auto sealed = std::vector{cells, *message};
+    // The same events as no stream sealed them: the batch serializes them itself.
+    const auto loose =
+        sealed
+        | std::views::transform([](const auto& event) { return public_event{event.value()}; })
+        | std::ranges::to<std::vector>();
+    CHECK_FALSE(cells.element().empty());
+    CHECK(loose.front().element().empty());
+
+    auto expected = ordered{{"epoch", epoch}, {"events", ordered::array()}};
+    for (const auto& event : loose) {
+        const auto own = serialize_events({.epoch = epoch, .events = {event}});
+        expected["events"].push_back(ordered::parse(own)["events"][0]);
+    }
+    CHECK(serialize_events({.epoch = epoch, .events = loose}) == expected.dump());
+    CHECK(serialize_events({.epoch = epoch, .events = sealed}) == expected.dump());
+    CHECK(serialize_events({.epoch = epoch, .events = {}})
+          == R"({"epoch":"epoch:\"batch\"","events":[]})");
+}
+
 TEST_CASE(
     "a compass and a sidebar layout are published whole and kept while they do not change",
     "[engine_client_event]") {

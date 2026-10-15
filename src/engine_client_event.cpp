@@ -291,6 +291,12 @@ auto remember( std::vector<message_value> &log, const message_value &line ) -> v
 public_event::public_event( event_value value ) : value_( std::move( value ) ) {}
 auto public_event::value() const -> const event_value & { return value_; } // *NOPAD*
 auto public_event::wire() const -> const std::string & { return wire_; } // *NOPAD*
+auto public_event::element() const -> std::string_view
+{
+    // The wire is the event inside `{"epoch":...,"events":[` and `]}`.
+    return wire_.empty() ? std::string_view{} :
+           std::string_view( wire_ ).substr( element_at_, wire_.size() - element_at_ - 2 );
+}
 
 event_stream::event_stream( snapshot initial ) : current_( std::move( initial ) ) {}
 auto event_stream::create( std::string epoch,
@@ -310,6 +316,9 @@ auto public_event::seal( const std::string &epoch ) -> bool
 {
     ZoneScopedN( "engine_client_serialize_event" );
     wire_ = serialize_events( {.epoch = epoch, .events = {*this}} );
+    // A quote inside the epoch is escaped, so the first `,"events":[` is the key's.
+    constexpr auto events_key = std::string_view( R"(,"events":[)" );
+    element_at_ = wire_.find( events_key ) + events_key.size();
     return wire_.size() <= maximum_event_bytes;
 }
 auto public_event::sealed( event_value value,

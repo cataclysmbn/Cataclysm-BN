@@ -719,18 +719,12 @@ auto server::queue_push() -> void
     };
     auto batch = event_batch{};
     auto batch_bytes = std::size_t{0};
-    /// The params of the batch's first event when the event's own wire is not what this connection reads.
+    /// The params of the batch's first event, which are the whole batch's while it holds no other.
     auto first_params = std::string{};
     const auto flush_batch = [&]() {
         if( batch.events.empty() ) { return; }
         const auto through = batch.events.back().value().sequence;
-        if( batch.events.size() == 1 && !first_params.empty() ) {
-            notify( "bn.events", first_params, through );
-        } else if( batch.events.size() == 1 && !batch.events.front().wire().empty() ) {
-            notify( "bn.events", batch.events.front().wire(), through );
-        } else {
-            notify( "bn.events", serialize_events( batch ), through );
-        }
+        notify( "bn.events", batch.events.size() == 1 ? first_params : serialize_events( batch ), through );
         batch.events.clear();
         first_params.clear();
         batch_bytes = 0;
@@ -747,11 +741,9 @@ auto server::queue_push() -> void
                 marked.emplace( std::move( value ) );
             }
             const auto &event = marked ? *marked : pushed->event;
-            const auto &wire = event.wire();
-            // The stack of a boundary is read when it is sent, so such an event is serialized again.
-            auto params = event.value().delta.interaction || wire.empty() ?
-                          serialize_events( {.epoch = pushed->epoch, .events = {event}} ) : std::string{};
-            const auto bytes = params.empty() ? wire.size() : params.size();
+            // Cheap for an event the stream sealed: its serialized value is taken as it is.
+            auto params = serialize_events( {.epoch = pushed->epoch, .events = {event}} );
+            const auto bytes = params.size();
             if( batch.epoch != pushed->epoch || batch_bytes + bytes > maximum_inline_bytes ) { flush_batch(); }
             batch.epoch = pushed->epoch;
             if( batch.events.empty() ) { first_params = std::move( params ); }

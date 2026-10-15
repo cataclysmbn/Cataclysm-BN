@@ -877,9 +877,17 @@ auto serialize_cells( const cells_page &page ) -> std::string
 }
 auto serialize_events( const event_batch &batch ) -> std::string
 {
-    auto events = json::array();
-    for( const auto &event : batch.events ) { events.push_back( to_json( event.value() ) ); }
-    return json{{"epoch", batch.epoch}, {"events", std::move( events )}}.dump();
+    // A sealed event goes in as the stream serialized it; one that no stream sealed, or whose boundary has no
+    // captured stack and so shows the screens open now, is serialized now.
+    auto result = R"({"epoch":)" + json( batch.epoch ).dump() + R"(,"events":[)";
+    for( const auto &event : batch.events ) {
+        if( &event != &batch.events.front() ) { result += ','; }
+        const auto &interaction = event.value().delta.interaction;
+        const auto reads_live = interaction && !interaction->stack;
+        if( const auto sealed = event.element(); !sealed.empty() && !reads_live ) { result += sealed; }
+        else { result += to_json( event.value() ).dump(); }
+    }
+    return result + "]}";
 }
 auto serialize_snapshot( const snapshot &value ) -> std::expected<snapshot_wire, error>
 {

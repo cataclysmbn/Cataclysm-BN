@@ -8,6 +8,7 @@
 #include <expected>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace engine_client
@@ -104,6 +105,8 @@ class public_event
         /// The event as the sole event of its own `bn.events` params, serialized once when it was
         /// published; empty for an event that never went through a stream.
         auto wire() const -> const std::string &; // *NOPAD*
+        /// The event's own value inside `wire`, which a batch of several events takes as it is; empty with it.
+        auto element() const -> std::string_view;
         /// The event of `value` as the stream of `epoch` would seal it; none when it would not fit a frame.
         static auto sealed( event_value value, const std::string &epoch ) -> std::optional<public_event>;
     private:
@@ -113,6 +116,8 @@ class public_event
         auto seal( const std::string &epoch ) -> bool;
         event_value value_;
         std::string wire_;
+        /// Where the event's value begins in `wire_`.
+        std::size_t element_at_ = 0;
 };
 struct event_batch {
     std::string epoch = {};
