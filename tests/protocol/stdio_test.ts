@@ -1561,6 +1561,48 @@ Deno.test({
   },
 })
 
+Deno.test({
+  name:
+    "stdio: the auto notes manager says why it lists no map extra, switches the option and refuses rows it does not hold",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      const session = await enterTutorial(client)
+      await session.acknowledge(() => session.mirror.interaction.interaction === null)
+      await session.submit({ kind: "action", action_id: "wait" })
+      await session.choose("5 minutes")
+      await session.acknowledge(() => session.mirror.interaction.interaction === null)
+      const opened = await session.submit({ kind: "action", action_id: "open_autonotes" })
+      assertEquals(opened.stages.at(-1), "completed")
+      assertEquals(top(session).context, "AUTO_NOTES")
+      assertEquals(listRows(session, "autonote:extras"), [])
+      assert(findComponent(top(session).root, "autonote:notice"), "the screen says why it is empty")
+      const stat = () => findComponent(top(session).root, "autonote:status").stats[0]
+      const before = stat().value
+      assertEquals(
+        (await invokeOn(session, "SWITCH_AUTO_NOTE_OPTION")).stages.at(-1),
+        "completed",
+      )
+      assertEquals(stat().value, before === "True" ? "False" : "True")
+      // With nothing discovered there is no row to pick or toggle, and a row of no list is refused by name.
+      const offered = top(session).affordances.map((entry: Value) => entry.id)
+      assert(!offered.includes("autonote:select") && !offered.includes("autonote:toggle"))
+      assertEquals(
+        (await invokeOn(session, "autonote:toggle", { row: "extra:mx_crater" })).error,
+        "unknown_affordance",
+      )
+      assertEquals((await invokeOn(session, "QUIT")).stages.at(-1), "completed")
+      await session.acknowledge(() => top(session).role === "map")
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
 /** The distraction rows, in the order of the list. */
 const distractionRows = (session: Session) => listRows(session, "distractions:items")
 const distractionRow = (session: Session, id: string) =>

@@ -11,7 +11,7 @@ import { assert, assertEquals } from "@std/assert"
 import { Engine, type Scenario, type Value } from "./driver.ts"
 import { walk } from "./inventory.ts"
 
-const part = (engine: Engine, id: string) =>
+export const part = (engine: Engine, id: string) =>
   walk(engine.top().root).find((entry) => entry.id === id)
 
 /** Settings from the main menu: the tab, then the entry. */
@@ -110,7 +110,7 @@ export const colors: Scenario = {
 }
 
 /** The tutorial avatar on the map, with its first lessons out of the way. */
-const intoTheTutorial = async (engine: Engine) => {
+export const intoTheTutorial = async (engine: Engine) => {
   await engine.toMainMenu()
   await engine.enterTutorial()
   await engine.submit({ kind: "action", action_id: "wait" })
@@ -119,7 +119,7 @@ const intoTheTutorial = async (engine: Engine) => {
 }
 
 /** Opens the manager the `action` of the map names. */
-const openManager = async (engine: Engine, action: string, context: string) => {
+export const openManager = async (engine: Engine, action: string, context: string) => {
   assertEquals(
     (await engine.submit({ kind: "action", action_id: action })).stages.at(-1),
     "completed",
@@ -135,10 +135,10 @@ const typeText = async (engine: Engine, text: string) => {
 }
 
 /** The ids of the rows of the list `id` on top, in order. */
-const ids = (engine: Engine, id: string) => part(engine, id).rows.map((row: Value) => row.id)
+export const ids = (engine: Engine, id: string) => part(engine, id).rows.map((row: Value) => row.id)
 
 /** Leaves the manager on top and answers the question to save its changes Yes. */
-const leave = async (engine: Engine) => {
+export const leave = async (engine: Engine) => {
   assertEquals((await engine.invoke("QUIT")).stages.at(-1), "completed")
   assertEquals((await engine.choose("option:0")).stages.at(-1), "completed")
   await engine.acknowledge(() => engine.top().role === "map")

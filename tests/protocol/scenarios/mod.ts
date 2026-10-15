@@ -2,6 +2,7 @@
 import { character } from "./character.ts"
 import { aim } from "./aim.ts"
 import { armor } from "./armor.ts"
+import { autonote } from "./autonote.ts"
 import { construction, crafting } from "./crafting.ts"
 import { diary } from "./diary.ts"
 import type { Scenario } from "./driver.ts"
@@ -49,4 +50,5 @@ export const scenarios: Scenario[] = [
   overmap,
   npctalk,
   diary,
+  autonote,
 ]
