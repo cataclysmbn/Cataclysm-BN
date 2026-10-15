@@ -90,7 +90,7 @@
                       "header": true
                     },
                     {
-                      "id": "trade-item:b1d9f357579cad1e",
+                      "id": "item:1",
                       "label": "marloss berry (3)",
                       "description": "Origin: 'Bright Nights'\n--\nMaterial: Fruit Matter\nVolume: 0.188 L  Weight: 0.53 kg\nOwner: Marloss Evangelists\nCategory: FOOD\n--\nThis looks like a blueberry the size of your fist, but pinkish in color.  It has a strong but delicious aroma, but is clearly either mutated or of alien origin.\n--\nNutrition will vary with available ingredients.\nCalories (kcal): 347  Quench: 20\nEnjoyability: 30\nPortions: 3\nOther contents: Fruit (1%)\n--\nThrow damage: Bash: 2\nThrow range: 24\nMoves per throw: 60\nStamina cost: 83\n--\n* This item is not repairable.\n--\n* This item conducts electricity.\n* This comestible can be eaten even on full stomach.\n--\nPrice: $0.00\n--\nYou know of nothing you could craft with it.\n",
                       "denial": "",
@@ -146,7 +146,7 @@
                       "header": true
                     },
                     {
-                      "id": "trade-item:1fdd97fa8aef81e4",
+                      "id": "item:2",
                       "label": "Mycenacean Hymns (unread)",
                       "description": "",
                       "denial": "",
@@ -215,7 +215,7 @@
                       "header": true
                     },
                     {
-                      "id": "trade-item:89549e35f2d3b804",
+                      "id": "item:3",
                       "label": "Marloss seed (3)",
                       "description": "",
                       "denial": "",
@@ -271,7 +271,7 @@
                       "header": true
                     },
                     {
-                      "id": "trade-item:1711144ef27b0aae",
+                      "id": "item:4",
                       "label": "long stick (1)",
                       "description": "",
                       "denial": "",
@@ -562,7 +562,7 @@
         ],
         "focus": {
           "component_id": "list:npc",
-          "row_id": "trade-item:b1d9f357579cad1e"
+          "row_id": "item:1"
         },
         "context": "NPC_TRADE"
       }
@@ -580,7 +580,7 @@
           "kind": "invoke",
           "affordance_id": "trade:set_count",
           "args": {
-            "row": "trade-item:b1d9f357579cad1e",
+            "row": "item:1",
             "count": 1
           }
         }
