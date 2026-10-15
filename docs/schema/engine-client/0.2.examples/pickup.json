@@ -15,17 +15,15 @@
           "stats": [
             {
               "key": "weight",
-              "label": "Weight",
+              "label": "Weight (kg):",
               "value": "0.0",
-              "max": "45.0",
-              "unit": "kg"
+              "max": "45.0"
             },
             {
               "key": "volume",
-              "label": "Volume",
+              "label": "Volume (L):",
               "value": "0.00",
-              "max": "0.00",
-              "unit": "L"
+              "max": "0.00"
             }
           ],
           "child": {

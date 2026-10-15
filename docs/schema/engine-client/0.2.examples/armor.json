@@ -128,7 +128,7 @@
                       ],
                       "rows": [
                         {
-                          "id": "item:2",
+                          "id": "item:1",
                           "label": "|| t-shirt",
                           "description": "",
                           "denial": "",
@@ -169,7 +169,7 @@
                           }
                         },
                         {
-                          "id": "item:3",
+                          "id": "item:2",
                           "label": "|| jeans",
                           "description": "",
                           "denial": "",
@@ -210,7 +210,7 @@
                           }
                         },
                         {
-                          "id": "item:4",
+                          "id": "item:3",
                           "label": "|| hoodie",
                           "description": "",
                           "denial": "",
@@ -274,22 +274,22 @@
                       "stats": [
                         {
                           "key": "coverage",
-                          "label": "Coverage",
+                          "label": "Coverage:",
                           "value": "50"
                         },
                         {
                           "key": "encumbrance",
-                          "label": "Encumbrance",
+                          "label": "Encumbrance:",
                           "value": "0"
                         },
                         {
                           "key": "warmth",
-                          "label": "Warmth",
+                          "label": "Warmth:",
                           "value": "5"
                         },
                         {
                           "key": "storage",
-                          "label": "Storage (L)",
+                          "label": "Storage (L):",
                           "value": "0.00"
                         }
                       ]
@@ -301,32 +301,32 @@
                       "stats": [
                         {
                           "key": "bash",
-                          "label": "Bash",
+                          "label": "Bash:",
                           "value": "1"
                         },
                         {
                           "key": "cut",
-                          "label": "Cut",
+                          "label": "Cut:",
                           "value": "1"
                         },
                         {
                           "key": "ballistic",
-                          "label": "Ballistic",
+                          "label": "Ballistic:",
                           "value": "1"
                         },
                         {
                           "key": "acid",
-                          "label": "Acid",
+                          "label": "Acid:",
                           "value": "0"
                         },
                         {
                           "key": "fire",
-                          "label": "Fire",
+                          "label": "Fire:",
                           "value": "0"
                         },
                         {
                           "key": "environmental",
-                          "label": "Environmental",
+                          "label": "Environmental:",
                           "value": "0"
                         }
                       ]
@@ -633,7 +633,7 @@
                       "header": true
                     },
                     {
-                      "id": "layer:part:torso:item:2",
+                      "id": "layer:part:torso:item:1",
                       "label": "|| t-shirt",
                       "description": "",
                       "denial": "",
@@ -650,7 +650,7 @@
                       "color": "c_light_gray"
                     },
                     {
-                      "id": "layer:part:torso:item:4",
+                      "id": "layer:part:torso:item:3",
                       "label": "|| hoodie",
                       "description": "",
                       "denial": "",
@@ -715,7 +715,7 @@
                       "header": true
                     },
                     {
-                      "id": "layer:part:arm_l:item:2",
+                      "id": "layer:part:arm_l:item:1",
                       "label": "|| t-shirt",
                       "description": "",
                       "denial": "",
@@ -732,7 +732,7 @@
                       "color": "c_light_gray"
                     },
                     {
-                      "id": "layer:part:arm_l:item:4",
+                      "id": "layer:part:arm_l:item:3",
                       "label": "|| hoodie",
                       "description": "",
                       "denial": "",
@@ -773,7 +773,7 @@
                       "header": true
                     },
                     {
-                      "id": "layer:part:leg_l:item:3",
+                      "id": "layer:part:leg_l:item:2",
                       "label": "|| jeans",
                       "description": "",
                       "denial": "",
@@ -1008,7 +1008,7 @@
         ],
         "focus": {
           "component_id": "armor:worn:rows",
-          "row_id": "item:2"
+          "row_id": "item:1"
         },
         "context": "SORT_ARMOR"
       }
@@ -1026,7 +1026,7 @@
           "kind": "invoke",
           "affordance_id": "armor:pick",
           "args": {
-            "row": "item:3"
+            "row": "item:2"
           }
         }
       }
@@ -1277,22 +1277,22 @@
                 "stats": [
                   {
                     "key": "bash",
-                    "label": "Bash",
+                    "label": "Bash:",
                     "value": "4"
                   },
                   {
                     "key": "cut",
-                    "label": "Cut",
+                    "label": "Cut:",
                     "value": "4"
                   },
                   {
                     "key": "stab",
-                    "label": "Stab",
+                    "label": "Stab:",
                     "value": "3"
                   },
                   {
                     "key": "ballistic",
-                    "label": "Ballistic",
+                    "label": "Ballistic:",
                     "value": "4"
                   }
                 ],
@@ -1319,7 +1319,7 @@
                       ],
                       "rows": [
                         {
-                          "id": "item:2",
+                          "id": "item:1",
                           "label": "|| t-shirt",
                           "description": "",
                           "denial": "",
@@ -1360,7 +1360,7 @@
                           }
                         },
                         {
-                          "id": "item:4",
+                          "id": "item:3",
                           "label": "|| hoodie",
                           "description": "",
                           "denial": "",
@@ -1424,22 +1424,22 @@
                       "stats": [
                         {
                           "key": "coverage",
-                          "label": "Coverage",
+                          "label": "Coverage:",
                           "value": "90"
                         },
                         {
                           "key": "encumbrance",
-                          "label": "Encumbrance",
+                          "label": "Encumbrance:",
                           "value": "0"
                         },
                         {
                           "key": "warmth",
-                          "label": "Warmth",
+                          "label": "Warmth:",
                           "value": "5"
                         },
                         {
                           "key": "storage",
-                          "label": "Storage (L)",
+                          "label": "Storage (L):",
                           "value": "0.00"
                         }
                       ]
@@ -1451,32 +1451,32 @@
                       "stats": [
                         {
                           "key": "bash",
-                          "label": "Bash",
+                          "label": "Bash:",
                           "value": "1"
                         },
                         {
                           "key": "cut",
-                          "label": "Cut",
+                          "label": "Cut:",
                           "value": "1"
                         },
                         {
                           "key": "ballistic",
-                          "label": "Ballistic",
+                          "label": "Ballistic:",
                           "value": "1"
                         },
                         {
                           "key": "acid",
-                          "label": "Acid",
+                          "label": "Acid:",
                           "value": "0"
                         },
                         {
                           "key": "fire",
-                          "label": "Fire",
+                          "label": "Fire:",
                           "value": "0"
                         },
                         {
                           "key": "environmental",
-                          "label": "Environmental",
+                          "label": "Environmental:",
                           "value": "0"
                         }
                       ]
@@ -1783,7 +1783,7 @@
                       "header": true
                     },
                     {
-                      "id": "layer:part:torso:item:2",
+                      "id": "layer:part:torso:item:1",
                       "label": "|| t-shirt",
                       "description": "",
                       "denial": "",
@@ -1800,7 +1800,7 @@
                       "color": "c_light_gray"
                     },
                     {
-                      "id": "layer:part:torso:item:4",
+                      "id": "layer:part:torso:item:3",
                       "label": "|| hoodie",
                       "description": "",
                       "denial": "",
@@ -1865,7 +1865,7 @@
                       "header": true
                     },
                     {
-                      "id": "layer:part:arm_l:item:2",
+                      "id": "layer:part:arm_l:item:1",
                       "label": "|| t-shirt",
                       "description": "",
                       "denial": "",
@@ -1882,7 +1882,7 @@
                       "color": "c_light_gray"
                     },
                     {
-                      "id": "layer:part:arm_l:item:4",
+                      "id": "layer:part:arm_l:item:3",
                       "label": "|| hoodie",
                       "description": "",
                       "denial": "",
@@ -1923,7 +1923,7 @@
                       "header": true
                     },
                     {
-                      "id": "layer:part:leg_l:item:3",
+                      "id": "layer:part:leg_l:item:2",
                       "label": "|| jeans",
                       "description": "",
                       "denial": "",
@@ -2158,7 +2158,7 @@
         ],
         "focus": {
           "component_id": "armor:worn:rows",
-          "row_id": "item:2"
+          "row_id": "item:1"
         },
         "context": "SORT_ARMOR"
       }

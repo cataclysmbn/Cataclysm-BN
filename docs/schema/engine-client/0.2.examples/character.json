@@ -1190,7 +1190,7 @@
                 "stats": [
                   {
                     "key": "power",
-                    "label": "Bionic Power",
+                    "label": "Bionic Power:",
                     "value": "0",
                     "max": "0"
                   }
@@ -1232,13 +1232,13 @@
                 "stats": [
                   {
                     "key": "base_move_cost",
-                    "label": "Base Move Cost",
+                    "label": "Base Move Cost:",
                     "value": "100",
                     "tone": "good"
                   },
                   {
                     "key": "current_speed",
-                    "label": "Current Speed",
+                    "label": "Current Speed:",
                     "value": "110",
                     "tone": "good"
                   },
@@ -1619,7 +1619,7 @@
               "stats": [
                 {
                   "key": "power",
-                  "label": "Bionic Power",
+                  "label": "Bionic Power:",
                   "value": "0",
                   "max": "100",
                   "unit": "J"
@@ -1714,73 +1714,73 @@
               "stats": [
                 {
                   "key": "slot:head",
-                  "label": "Head",
+                  "label": "Head:",
                   "value": "0",
                   "max": "18"
                 },
                 {
                   "key": "slot:eyes",
-                  "label": "Eyes",
+                  "label": "Eyes:",
                   "value": "1",
                   "max": "4"
                 },
                 {
                   "key": "slot:mouth",
-                  "label": "Mouth",
+                  "label": "Mouth:",
                   "value": "0",
                   "max": "4"
                 },
                 {
                   "key": "slot:torso",
-                  "label": "Torso",
+                  "label": "Torso:",
                   "value": "0",
                   "max": "80"
                 },
                 {
                   "key": "slot:arm_l",
-                  "label": "L. Arm",
+                  "label": "L. Arm:",
                   "value": "0",
                   "max": "20"
                 },
                 {
                   "key": "slot:hand_l",
-                  "label": "L. Hand",
+                  "label": "L. Hand:",
                   "value": "0",
                   "max": "5"
                 },
                 {
                   "key": "slot:arm_r",
-                  "label": "R. Arm",
+                  "label": "R. Arm:",
                   "value": "0",
                   "max": "20"
                 },
                 {
                   "key": "slot:hand_r",
-                  "label": "R. Hand",
+                  "label": "R. Hand:",
                   "value": "0",
                   "max": "5"
                 },
                 {
                   "key": "slot:leg_l",
-                  "label": "L. Leg",
+                  "label": "L. Leg:",
                   "value": "0",
                   "max": "30"
                 },
                 {
                   "key": "slot:foot_l",
-                  "label": "L. Foot",
+                  "label": "L. Foot:",
                   "value": "0",
                   "max": "7"
                 },
                 {
                   "key": "slot:leg_r",
-                  "label": "R. Leg",
+                  "label": "R. Leg:",
                   "value": "0",
                   "max": "30"
                 },
                 {
                   "key": "slot:foot_r",
-                  "label": "R. Foot",
+                  "label": "R. Foot:",
                   "value": "0",
                   "max": "7"
                 }
@@ -2247,7 +2247,7 @@
             {
               "id": "mutations:passive",
               "kind": "panel",
-              "title": "Passive",
+              "title": "Passive:",
               "child": {
                 "id": "mutations:passive:rows",
                 "kind": "list",
@@ -2376,7 +2376,7 @@
             {
               "id": "mutations:active",
               "kind": "panel",
-              "title": "Active",
+              "title": "Active:",
               "child": {
                 "id": "mutations:active:rows",
                 "kind": "list",

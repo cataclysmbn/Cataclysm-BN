@@ -752,12 +752,12 @@
               "stats": [
                 {
                   "key": "level",
-                  "label": "Total morale",
+                  "label": "Total morale:",
                   "value": "-"
                 },
                 {
                   "key": "focus",
-                  "label": "Focus trends towards",
+                  "label": "Focus trends towards:",
                   "value": "100"
                 }
               ]

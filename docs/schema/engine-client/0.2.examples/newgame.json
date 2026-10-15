@@ -2446,22 +2446,22 @@
                   "stats": [
                     {
                       "key": "professions",
-                      "label": "Professions",
+                      "label": "Professions:",
                       "value": "All, default:\nSurvivor"
                     },
                     {
                       "key": "location",
-                      "label": "Scenario Location",
+                      "label": "Scenario Location:",
                       "value": "Evac Shelter (2 locations, 6 variants)"
                     },
                     {
                       "key": "vehicle",
-                      "label": "Scenario Vehicle",
+                      "label": "Scenario Vehicle:",
                       "value": ""
                     },
                     {
                       "key": "flags",
-                      "label": "Scenario Flags",
+                      "label": "Scenario Flags:",
                       "value": ""
                     }
                   ]
@@ -4420,7 +4420,7 @@
                   "rows": [
                     {
                       "id": "stat:str",
-                      "label": "Strength",
+                      "label": "Strength:",
                       "description": "",
                       "denial": "",
                       "enabled": true,
@@ -4436,7 +4436,7 @@
                     },
                     {
                       "id": "stat:dex",
-                      "label": "Dexterity",
+                      "label": "Dexterity:",
                       "description": "",
                       "denial": "",
                       "enabled": true,
@@ -4452,7 +4452,7 @@
                     },
                     {
                       "id": "stat:int",
-                      "label": "Intelligence",
+                      "label": "Intelligence:",
                       "description": "",
                       "denial": "",
                       "enabled": true,
@@ -4468,7 +4468,7 @@
                     },
                     {
                       "id": "stat:per",
-                      "label": "Perception",
+                      "label": "Perception:",
                       "description": "",
                       "denial": "",
                       "enabled": true,
@@ -10550,7 +10550,7 @@
                   "rows": [
                     {
                       "id": "name",
-                      "label": "Name",
+                      "label": "Name:",
                       "description": "",
                       "denial": "",
                       "enabled": true,
@@ -10566,7 +10566,7 @@
                     },
                     {
                       "id": "height",
-                      "label": "Height",
+                      "label": "Height:",
                       "description": "",
                       "denial": "",
                       "enabled": true,
@@ -10582,7 +10582,7 @@
                     },
                     {
                       "id": "age",
-                      "label": "Age",
+                      "label": "Age:",
                       "description": "",
                       "denial": "",
                       "enabled": true,
@@ -10598,7 +10598,7 @@
                     },
                     {
                       "id": "gender",
-                      "label": "Gender",
+                      "label": "Gender:",
                       "description": "",
                       "denial": "",
                       "enabled": true,
@@ -10614,7 +10614,7 @@
                     },
                     {
                       "id": "location",
-                      "label": "Starting location",
+                      "label": "Starting location:",
                       "description": "",
                       "denial": "",
                       "enabled": true,
@@ -10640,89 +10640,89 @@
                   "stats": [
                     {
                       "key": "str",
-                      "label": "Strength",
+                      "label": "Strength:",
                       "value": "8"
                     },
                     {
                       "key": "dex",
-                      "label": "Dexterity",
+                      "label": "Dexterity:",
                       "value": "8"
                     },
                     {
                       "key": "int",
-                      "label": "Intelligence",
+                      "label": "Intelligence:",
                       "value": "8"
                     },
                     {
                       "key": "per",
-                      "label": "Perception",
+                      "label": "Perception:",
                       "value": "8"
                     },
                     {
                       "key": "traits",
-                      "label": "Traits",
+                      "label": "Traits:",
                       "value": "<color_c_yellow>Eye color: red</color>\n<color_c_yellow>Hair color: light brown</color>\n<color_c_yellow>Hair style: medium-length</color>\n<color_c_yellow>Pale Skin</color>"
                     },
                     {
                       "key": "bionics",
-                      "label": "Bionics",
+                      "label": "Bionics:",
                       "value": "None!",
                       "tone": "bad"
                     },
                     {
                       "key": "spells",
-                      "label": "Spells",
+                      "label": "Spells:",
                       "value": "None!",
                       "tone": "bad"
                     },
                     {
                       "key": "skills",
-                      "label": "Skills",
+                      "label": "Skills:",
                       "value": "None!",
                       "tone": "bad"
                     },
                     {
                       "key": "vehicle",
-                      "label": "Vehicle",
+                      "label": "Vehicle:",
                       "value": "None!",
                       "tone": "bad"
                     },
                     {
                       "key": "companions",
-                      "label": "Companions",
+                      "label": "Companions:",
                       "value": "None!",
                       "tone": "bad"
                     },
                     {
                       "key": "cash",
-                      "label": "Cash",
+                      "label": "Cash:",
                       "value": "Random!"
                     },
                     {
                       "key": "pets",
-                      "label": "Pets",
+                      "label": "Pets:",
                       "value": "None!",
                       "tone": "bad"
                     },
                     {
                       "key": "addictions",
-                      "label": "Addictions",
+                      "label": "Addictions:",
                       "value": "None!",
                       "tone": "bad"
                     },
                     {
                       "key": "items",
-                      "label": "Items",
+                      "label": "Items:",
                       "value": "<color_c_yellow>Wielded: </color>\n<color_c_light_red>None!</color>\n<color_c_yellow>Worn: </color>\n<color_c_light_green>|| </color>boxer shorts\n<color_c_light_green>|| </color>pair of socks\n<color_c_light_green>|| </color>jeans\n<color_c_light_green>|| </color>long-sleeved shirt\n<color_c_light_green>|| </color>pair of sneakers\n<color_c_light_green>|| </color>messenger bag\n<color_c_light_green>|| </color>wrist watch\n<color_c_yellow>Inventory: </color>\nlighter<color_c_green> (25/25)</color>\npocket knife\nclean water (plastic bottle) (2/2)\nsmartphone<color_c_light_green> (160/200)</color>"
                     },
                     {
                       "key": "scenario",
-                      "label": "Scenario",
+                      "label": "Scenario:",
                       "value": "Evacuee"
                     },
                     {
                       "key": "profession",
-                      "label": "Profession",
+                      "label": "Profession:",
                       "value": "Survivor"
                     }
                   ]

@@ -158,7 +158,7 @@
           },
           {
             "id": "construct:search",
-            "label": "Search",
+            "label": "Search:",
             "keys": [],
             "enabled": true,
             "args": {
