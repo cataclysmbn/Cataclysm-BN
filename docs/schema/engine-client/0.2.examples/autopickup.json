@@ -1,0 +1,1796 @@
+{
+  "valid": [
+    {
+      "name": "auto pickup manager without rules",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:8",
+        "role": "screen",
+        "title": " AUTO PICKUP MANAGER ",
+        "root": {
+          "id": "autopickup:tabs",
+          "kind": "tabs",
+          "affordances": [
+            "autopickup:tab"
+          ],
+          "tabs": [
+            {
+              "id": "global",
+              "label": "[<Global>]",
+              "selected": true,
+              "enabled": true
+            },
+            {
+              "id": "character",
+              "label": "[<Character>]",
+              "selected": false,
+              "enabled": true
+            }
+          ],
+          "select": "autopickup:tab",
+          "child": {
+            "id": "autopickup:body",
+            "kind": "split",
+            "relation": "detail",
+            "active": "autopickup:rules",
+            "children": [
+              {
+                "id": "autopickup:rules",
+                "kind": "list",
+                "affordances": [
+                  "autopickup:edit",
+                  "autopickup:select",
+                  "autopickup:mode"
+                ],
+                "columns": [],
+                "rows": [],
+                "total": 0,
+                "selection": "single",
+                "activate": "autopickup:edit"
+              },
+              {
+                "id": "autopickup:details",
+                "kind": "panel",
+                "title": "",
+                "stats": [
+                  {
+                    "key": "enabled",
+                    "label": "Auto pickup enabled:",
+                    "value": "False",
+                    "tone": "bad"
+                  }
+                ],
+                "child": {
+                  "id": "autopickup:help",
+                  "kind": "text",
+                  "markup": "* is used as a Wildcard.  A few Examples:\n\nwooden arrow    matches the itemname exactly\nwooden ar*      matches items beginning with wood ar\n*rrow           matches items ending with rrow\n*avy fle*fi*arrow     multiple * are allowed\nheAVY*woOD*arrOW      case insensitive search\n\nPickup using:\nc:food          matches item in category food\nm:kevlar        matches items made of Kevlar\nM:copper        matches items made purely of copper\nq:drilling      matches items with drilling qualites\nk:fabrication   matches books that teach fabrication\nb:c:food;*meat* matches conditions c:food and *meat*"
+                }
+              }
+            ]
+          }
+        },
+        "affordances": [
+          {
+            "id": "autopickup:select",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "role": "select",
+            "args": {
+              "row": {
+                "component_id": "autopickup:rules"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "autopickup:edit",
+            "label": "Rules",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "autopickup:rules"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "autopickup:mode",
+            "label": "I/E",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "autopickup:rules"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "autopickup:tab",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "autopickup:tabs"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Pan left",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Pan right",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "NEXT_TAB",
+            "label": "Go to next tab",
+            "keys": [
+              "TAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PREV_TAB",
+            "label": "Go to prev tab",
+            "keys": [
+              "BACKTAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ADD_RULE",
+            "label": "Add rule",
+            "keys": [
+              "a",
+              "A"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "REMOVE_RULE",
+            "label": "Remove rule",
+            "keys": [
+              "r",
+              "R"
+            ],
+            "enabled": false,
+            "expect": "screen"
+          },
+          {
+            "id": "COPY_RULE",
+            "label": "Copy rule",
+            "keys": [
+              "c",
+              "C"
+            ],
+            "enabled": false,
+            "expect": "screen"
+          },
+          {
+            "id": "ENABLE_RULE",
+            "label": "Enable rule",
+            "keys": [
+              "e",
+              "E"
+            ],
+            "enabled": false,
+            "expect": "screen"
+          },
+          {
+            "id": "DISABLE_RULE",
+            "label": "Disable rule",
+            "keys": [
+              "d",
+              "D"
+            ],
+            "enabled": false,
+            "expect": "screen"
+          },
+          {
+            "id": "MOVE_RULE_UP",
+            "label": "Move rule up",
+            "keys": [
+              "+"
+            ],
+            "enabled": false,
+            "expect": "screen"
+          },
+          {
+            "id": "MOVE_RULE_DOWN",
+            "label": "Move rule down",
+            "keys": [
+              "-"
+            ],
+            "enabled": false,
+            "expect": "screen"
+          },
+          {
+            "id": "TEST_RULE",
+            "label": "Test rule",
+            "keys": [
+              "t",
+              "T"
+            ],
+            "enabled": false,
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SWAP_RULE_GLOBAL_CHAR",
+            "label": "Move rule global <-> character",
+            "keys": [
+              "m",
+              "M"
+            ],
+            "enabled": false,
+            "expect": "screen"
+          },
+          {
+            "id": "SWITCH_AUTO_PICKUP_OPTION",
+            "label": "Enable auto pickup option",
+            "keys": [
+              "s",
+              "S"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "autopickup:rules"
+        },
+        "context": "AUTO_PICKUP"
+      }
+    },
+    {
+      "name": "rule added, its text asked for, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "screen_id": "screen:8"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "ADD_RULE"
+        }
+      }
+    },
+    {
+      "name": "rule added, its text asked for, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "rule added, its text asked for, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "rule added, its text asked for, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "rule added, its text asked for, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "12",
+          "revision": "9"
+        }
+      }
+    },
+    {
+      "name": "rule text entered, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:1",
+          "revision": "9"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "bn:submit:form:field",
+          "args": {
+            "text": "sledge hammer"
+          }
+        }
+      }
+    },
+    {
+      "name": "rule text entered, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "rule text entered, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "rule text entered, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "rule text entered, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "13",
+          "revision": "10"
+        }
+      }
+    },
+    {
+      "name": "auto pickup manager with two rules",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:8",
+        "role": "screen",
+        "title": " AUTO PICKUP MANAGER ",
+        "root": {
+          "id": "autopickup:tabs",
+          "kind": "tabs",
+          "affordances": [
+            "autopickup:tab"
+          ],
+          "tabs": [
+            {
+              "id": "global",
+              "label": "[<Global>]",
+              "selected": true,
+              "enabled": true
+            },
+            {
+              "id": "character",
+              "label": "[<Character>]",
+              "selected": false,
+              "enabled": true
+            }
+          ],
+          "select": "autopickup:tab",
+          "child": {
+            "id": "autopickup:body",
+            "kind": "split",
+            "relation": "detail",
+            "active": "autopickup:rules",
+            "children": [
+              {
+                "id": "autopickup:rules",
+                "kind": "list",
+                "affordances": [
+                  "autopickup:edit",
+                  "autopickup:select",
+                  "autopickup:mode"
+                ],
+                "columns": [
+                  {
+                    "key": "i_e",
+                    "label": "I/E"
+                  },
+                  {
+                    "key": "active",
+                    "label": "Active"
+                  }
+                ],
+                "rows": [
+                  {
+                    "id": "rule:1",
+                    "label": "sledge hammer",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "i_e",
+                        "label": "I/E",
+                        "value": "Include"
+                      },
+                      {
+                        "key": "active",
+                        "label": "Active",
+                        "value": "True"
+                      }
+                    ],
+                    "color": "c_white"
+                  },
+                  {
+                    "id": "rule:2",
+                    "label": "*axe*",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": true,
+                    "columns": [
+                      {
+                        "key": "i_e",
+                        "label": "I/E",
+                        "value": "Include"
+                      },
+                      {
+                        "key": "active",
+                        "label": "Active",
+                        "value": "True"
+                      }
+                    ],
+                    "color": "c_white"
+                  }
+                ],
+                "total": 2,
+                "selection": "single",
+                "activate": "autopickup:edit"
+              },
+              {
+                "id": "autopickup:details",
+                "kind": "panel",
+                "title": "",
+                "stats": [
+                  {
+                    "key": "enabled",
+                    "label": "Auto pickup enabled:",
+                    "value": "False",
+                    "tone": "bad"
+                  }
+                ],
+                "child": {
+                  "id": "autopickup:help",
+                  "kind": "text",
+                  "markup": "* is used as a Wildcard.  A few Examples:\n\nwooden arrow    matches the itemname exactly\nwooden ar*      matches items beginning with wood ar\n*rrow           matches items ending with rrow\n*avy fle*fi*arrow     multiple * are allowed\nheAVY*woOD*arrOW      case insensitive search\n\nPickup using:\nc:food          matches item in category food\nm:kevlar        matches items made of Kevlar\nM:copper        matches items made purely of copper\nq:drilling      matches items with drilling qualites\nk:fabrication   matches books that teach fabrication\nb:c:food;*meat* matches conditions c:food and *meat*"
+                }
+              }
+            ]
+          }
+        },
+        "affordances": [
+          {
+            "id": "autopickup:select",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "role": "select",
+            "args": {
+              "row": {
+                "component_id": "autopickup:rules"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "autopickup:edit",
+            "label": "Rules",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "autopickup:rules"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "autopickup:mode",
+            "label": "I/E",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "autopickup:rules"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "autopickup:tab",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "autopickup:tabs"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Pan left",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Pan right",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "NEXT_TAB",
+            "label": "Go to next tab",
+            "keys": [
+              "TAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PREV_TAB",
+            "label": "Go to prev tab",
+            "keys": [
+              "BACKTAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ADD_RULE",
+            "label": "Add rule",
+            "keys": [
+              "a",
+              "A"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "REMOVE_RULE",
+            "label": "Remove rule",
+            "keys": [
+              "r",
+              "R"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "COPY_RULE",
+            "label": "Copy rule",
+            "keys": [
+              "c",
+              "C"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ENABLE_RULE",
+            "label": "Enable rule",
+            "keys": [
+              "e",
+              "E"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DISABLE_RULE",
+            "label": "Disable rule",
+            "keys": [
+              "d",
+              "D"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "MOVE_RULE_UP",
+            "label": "Move rule up",
+            "keys": [
+              "+"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "MOVE_RULE_DOWN",
+            "label": "Move rule down",
+            "keys": [
+              "-"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEST_RULE",
+            "label": "Test rule",
+            "keys": [
+              "t",
+              "T"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SWAP_RULE_GLOBAL_CHAR",
+            "label": "Move rule global <-> character",
+            "keys": [
+              "m",
+              "M"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SWITCH_AUTO_PICKUP_OPTION",
+            "label": "Enable auto pickup option",
+            "keys": [
+              "s",
+              "S"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "autopickup:rules",
+          "row_id": "rule:2"
+        },
+        "context": "AUTO_PICKUP"
+      }
+    },
+    {
+      "name": "rule picked in the list, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:2",
+          "revision": "12"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "autopickup:select",
+          "args": {
+            "row": "rule:1"
+          }
+        }
+      }
+    },
+    {
+      "name": "rule picked in the list, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "rule picked in the list, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "rule picked in the list, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "rule picked in the list, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "16",
+          "revision": "13"
+        }
+      }
+    },
+    {
+      "name": "rule switched between include and exclude, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:3",
+          "revision": "13"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "autopickup:mode",
+          "args": {
+            "row": "rule:1"
+          }
+        }
+      }
+    },
+    {
+      "name": "rule switched between include and exclude, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "rule switched between include and exclude, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "rule switched between include and exclude, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "rule switched between include and exclude, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "17",
+          "revision": "14"
+        }
+      }
+    },
+    {
+      "name": "rule text asked for again, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:4",
+          "revision": "14"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "autopickup:edit",
+          "args": {
+            "row": "rule:2"
+          }
+        }
+      }
+    },
+    {
+      "name": "rule text asked for again, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:5",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "rule text asked for again, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:5",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "rule text asked for again, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:5",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "rule text asked for again, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:5",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "18",
+          "revision": "15"
+        }
+      }
+    },
+    {
+      "name": "rule moved up, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "screen_id": "screen:8"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "MOVE_RULE_DOWN"
+        }
+      }
+    },
+    {
+      "name": "rule moved up, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:6",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "rule moved up, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:6",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "rule moved up, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:6",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "rule moved up, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:6",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "20",
+          "revision": "17"
+        }
+      }
+    },
+    {
+      "name": "rule copied, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "screen_id": "screen:8"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "COPY_RULE"
+        }
+      }
+    },
+    {
+      "name": "rule copied, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:7",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "rule copied, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:7",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "rule copied, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:7",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "rule copied, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:7",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "21",
+          "revision": "18"
+        }
+      }
+    },
+    {
+      "name": "items that an auto pickup rule matches",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:12",
+        "role": "dialog",
+        "title": "1 item matches: sledge hammer",
+        "root": {
+          "id": "autopickup_test:body",
+          "kind": "split",
+          "relation": "detail",
+          "active": "autopickup_test:matches",
+          "children": [
+            {
+              "id": "autopickup_test:matches",
+              "kind": "list",
+              "columns": [],
+              "rows": [
+                {
+                  "id": "item:hammer_sledge",
+                  "label": "sledge hammer",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": true,
+                  "columns": []
+                }
+              ],
+              "total": 1,
+              "selection": "single"
+            },
+            {
+              "id": "autopickup_test:note",
+              "kind": "text",
+              "markup": "Won't display content or suffix matches",
+              "tone": "bad"
+            }
+          ]
+        },
+        "affordances": [
+          {
+            "id": "autopickup_test:select",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "role": "select",
+            "args": {
+              "row": {
+                "component_id": "autopickup_test:matches"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "autopickup_test:matches",
+          "row_id": "item:hammer_sledge"
+        },
+        "context": "AUTO_PICKUP_TEST"
+      }
+    },
+    {
+      "name": "match that the list does not hold, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:5",
+          "revision": "21"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "autopickup_test:select",
+          "args": {
+            "row": "rule:1"
+          }
+        }
+      }
+    },
+    {
+      "name": "match that the list does not hold, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:8",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "match that the list does not hold, rejected",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:8",
+        "stage": "rejected",
+        "error": "invalid_arguments",
+        "error_text": "That needs other details."
+      }
+    },
+    {
+      "name": "rule that the list does not hold, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:6",
+          "revision": "22"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "autopickup:select",
+          "args": {
+            "row": "rule:0"
+          }
+        }
+      }
+    },
+    {
+      "name": "rule that the list does not hold, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:9",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "rule that the list does not hold, rejected",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:9",
+        "stage": "rejected",
+        "error": "invalid_arguments",
+        "error_text": "That needs other details."
+      }
+    },
+    {
+      "name": "page that the tabs do not hold, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:6",
+          "revision": "22"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "autopickup:tab",
+          "args": {
+            "row": "middle"
+          }
+        }
+      }
+    },
+    {
+      "name": "page that the tabs do not hold, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:10",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "page that the tabs do not hold, rejected",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:10",
+        "stage": "rejected",
+        "error": "invalid_arguments",
+        "error_text": "That needs other details."
+      }
+    },
+    {
+      "name": "rule swapped to the other page, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "screen_id": "screen:8"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "SWAP_RULE_GLOBAL_CHAR"
+        }
+      }
+    },
+    {
+      "name": "rule swapped to the other page, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:11",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "rule swapped to the other page, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:11",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "rule swapped to the other page, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:11",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "rule swapped to the other page, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:11",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "26",
+          "revision": "23"
+        }
+      }
+    },
+    {
+      "name": "auto pickup manager on the character page",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:8",
+        "role": "screen",
+        "title": " AUTO PICKUP MANAGER ",
+        "root": {
+          "id": "autopickup:tabs",
+          "kind": "tabs",
+          "affordances": [
+            "autopickup:tab"
+          ],
+          "tabs": [
+            {
+              "id": "global",
+              "label": "[<Global>]",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "character",
+              "label": "[<Character>]",
+              "selected": true,
+              "enabled": true
+            }
+          ],
+          "select": "autopickup:tab",
+          "child": {
+            "id": "autopickup:body",
+            "kind": "split",
+            "relation": "detail",
+            "active": "autopickup:rules",
+            "children": [
+              {
+                "id": "autopickup:rules",
+                "kind": "list",
+                "affordances": [
+                  "autopickup:edit",
+                  "autopickup:select",
+                  "autopickup:mode"
+                ],
+                "columns": [
+                  {
+                    "key": "i_e",
+                    "label": "I/E"
+                  },
+                  {
+                    "key": "active",
+                    "label": "Active"
+                  }
+                ],
+                "rows": [
+                  {
+                    "id": "rule:4",
+                    "label": "sledge hammer",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": true,
+                    "columns": [
+                      {
+                        "key": "i_e",
+                        "label": "I/E",
+                        "value": "Exclude"
+                      },
+                      {
+                        "key": "active",
+                        "label": "Active",
+                        "value": "True"
+                      }
+                    ],
+                    "color": "c_white"
+                  }
+                ],
+                "total": 1,
+                "selection": "single",
+                "activate": "autopickup:edit"
+              },
+              {
+                "id": "autopickup:details",
+                "kind": "panel",
+                "title": "",
+                "stats": [
+                  {
+                    "key": "enabled",
+                    "label": "Auto pickup enabled:",
+                    "value": "False",
+                    "tone": "bad"
+                  }
+                ],
+                "child": {
+                  "id": "autopickup:help",
+                  "kind": "text",
+                  "markup": "* is used as a Wildcard.  A few Examples:\n\nwooden arrow    matches the itemname exactly\nwooden ar*      matches items beginning with wood ar\n*rrow           matches items ending with rrow\n*avy fle*fi*arrow     multiple * are allowed\nheAVY*woOD*arrOW      case insensitive search\n\nPickup using:\nc:food          matches item in category food\nm:kevlar        matches items made of Kevlar\nM:copper        matches items made purely of copper\nq:drilling      matches items with drilling qualites\nk:fabrication   matches books that teach fabrication\nb:c:food;*meat* matches conditions c:food and *meat*"
+                }
+              }
+            ]
+          }
+        },
+        "affordances": [
+          {
+            "id": "autopickup:select",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "role": "select",
+            "args": {
+              "row": {
+                "component_id": "autopickup:rules"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "autopickup:edit",
+            "label": "Rules",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "autopickup:rules"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "autopickup:mode",
+            "label": "I/E",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "autopickup:rules"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "autopickup:tab",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "autopickup:tabs"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Pan left",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Pan right",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "NEXT_TAB",
+            "label": "Go to next tab",
+            "keys": [
+              "TAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PREV_TAB",
+            "label": "Go to prev tab",
+            "keys": [
+              "BACKTAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ADD_RULE",
+            "label": "Add rule",
+            "keys": [
+              "a",
+              "A"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "REMOVE_RULE",
+            "label": "Remove rule",
+            "keys": [
+              "r",
+              "R"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "COPY_RULE",
+            "label": "Copy rule",
+            "keys": [
+              "c",
+              "C"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ENABLE_RULE",
+            "label": "Enable rule",
+            "keys": [
+              "e",
+              "E"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DISABLE_RULE",
+            "label": "Disable rule",
+            "keys": [
+              "d",
+              "D"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "MOVE_RULE_UP",
+            "label": "Move rule up",
+            "keys": [
+              "+"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "MOVE_RULE_DOWN",
+            "label": "Move rule down",
+            "keys": [
+              "-"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEST_RULE",
+            "label": "Test rule",
+            "keys": [
+              "t",
+              "T"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SWAP_RULE_GLOBAL_CHAR",
+            "label": "Move rule global <-> character",
+            "keys": [
+              "m",
+              "M"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SWITCH_AUTO_PICKUP_OPTION",
+            "label": "Enable auto pickup option",
+            "keys": [
+              "s",
+              "S"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "autopickup:rules",
+          "row_id": "rule:4"
+        },
+        "context": "AUTO_PICKUP"
+      }
+    },
+    {
+      "name": "page picked by its token, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:7",
+          "revision": "23"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "autopickup:tab",
+          "args": {
+            "row": "global"
+          }
+        }
+      }
+    },
+    {
+      "name": "page picked by its token, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:12",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "page picked by its token, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:12",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "page picked by its token, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:12",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "page picked by its token, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:12",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "27",
+          "revision": "24"
+        }
+      }
+    }
+  ],
+  "invalid": []
+}

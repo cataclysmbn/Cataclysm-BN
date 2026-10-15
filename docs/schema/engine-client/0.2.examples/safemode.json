@@ -1,0 +1,1913 @@
+{
+  "valid": [
+    {
+      "name": "safe mode manager without rules",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:8",
+        "role": "screen",
+        "title": " SAFE MODE MANAGER ",
+        "root": {
+          "id": "safemode:tabs",
+          "kind": "tabs",
+          "affordances": [
+            "safemode:tab"
+          ],
+          "tabs": [
+            {
+              "id": "global",
+              "label": "Global",
+              "selected": true,
+              "enabled": true
+            },
+            {
+              "id": "character",
+              "label": "Character",
+              "selected": false,
+              "enabled": true
+            }
+          ],
+          "select": "safemode:tab",
+          "child": {
+            "id": "safemode:body",
+            "kind": "split",
+            "relation": "detail",
+            "active": "safemode:rules",
+            "children": [
+              {
+                "id": "safemode:rules",
+                "kind": "list",
+                "affordances": [
+                  "safemode:edit",
+                  "safemode:select",
+                  "safemode:attitude",
+                  "safemode:dist",
+                  "safemode:list",
+                  "safemode:category"
+                ],
+                "columns": [],
+                "rows": [],
+                "total": 0,
+                "selection": "single",
+                "activate": "safemode:edit"
+              },
+              {
+                "id": "safemode:notice",
+                "kind": "text",
+                "markup": "Safe Mode manager currently inactive.\nDefault rules are used.  Add a rule to activate.\nPress ~ to add a default ruleset to get started."
+              },
+              {
+                "id": "safemode:details",
+                "kind": "panel",
+                "title": "",
+                "stats": [
+                  {
+                    "key": "enabled",
+                    "label": "Safe Mode enabled:",
+                    "value": "True",
+                    "tone": "good"
+                  }
+                ],
+                "child": {
+                  "id": "safemode:help",
+                  "kind": "text",
+                  "markup": "* is used as a Wildcard.  A few Examples:\n\nhuman          matches every NPC\nzombie         matches the monster name exactly\nacidic zo*     matches monsters beginning with 'acidic zo'\n*mbie          matches monsters ending with 'mbie'\n*cid*zo*ie     multiple * are allowed\nAcI*zO*iE      case insensitive search"
+                }
+              }
+            ]
+          }
+        },
+        "affordances": [
+          {
+            "id": "safemode:select",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "role": "select",
+            "args": {
+              "row": {
+                "component_id": "safemode:rules"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "safemode:tab",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "safemode:tabs"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "safemode:edit",
+            "label": "Rules",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "safemode:rules"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "safemode:attitude",
+            "label": "Attitude",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "safemode:rules"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "safemode:dist",
+            "label": "Dist",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "safemode:rules"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "safemode:list",
+            "label": "B/W",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "safemode:rules"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "safemode:category",
+            "label": "Cat",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "safemode:rules"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Pan left",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Pan right",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "NEXT_TAB",
+            "label": "Go to next tab",
+            "keys": [
+              "TAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PREV_TAB",
+            "label": "Go to prev tab",
+            "keys": [
+              "BACKTAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ADD_DEFAULT_RULESET",
+            "label": "Add default ruleset",
+            "keys": [
+              "~"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ADD_RULE",
+            "label": "Add rule",
+            "keys": [
+              "a",
+              "A"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "REMOVE_RULE",
+            "label": "Remove rule",
+            "keys": [
+              "r",
+              "R"
+            ],
+            "enabled": false,
+            "expect": "screen"
+          },
+          {
+            "id": "COPY_RULE",
+            "label": "Copy rule",
+            "keys": [
+              "c",
+              "C"
+            ],
+            "enabled": false,
+            "expect": "screen"
+          },
+          {
+            "id": "ENABLE_RULE",
+            "label": "Enable rule",
+            "keys": [
+              "e",
+              "E"
+            ],
+            "enabled": false,
+            "expect": "screen"
+          },
+          {
+            "id": "DISABLE_RULE",
+            "label": "Disable rule",
+            "keys": [
+              "d",
+              "D"
+            ],
+            "enabled": false,
+            "expect": "screen"
+          },
+          {
+            "id": "MOVE_RULE_UP",
+            "label": "Move rule up",
+            "keys": [
+              "+"
+            ],
+            "enabled": false,
+            "expect": "screen"
+          },
+          {
+            "id": "MOVE_RULE_DOWN",
+            "label": "Move rule down",
+            "keys": [
+              "-"
+            ],
+            "enabled": false,
+            "expect": "screen"
+          },
+          {
+            "id": "TEST_RULE",
+            "label": "Test rule",
+            "keys": [
+              "t",
+              "T"
+            ],
+            "enabled": false,
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SWITCH_SAFEMODE_OPTION",
+            "label": "Enable safemode option",
+            "keys": [
+              "s",
+              "S"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SWAP_RULE_GLOBAL_CHAR",
+            "label": "Move rule global <-> character",
+            "keys": [
+              "m",
+              "M"
+            ],
+            "enabled": false,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "safemode:rules"
+        },
+        "context": "SAFEMODE"
+      }
+    },
+    {
+      "name": "safe mode rule added, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "screen_id": "screen:8"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "ADD_RULE"
+        }
+      }
+    },
+    {
+      "name": "safe mode rule added, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "safe mode rule added, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "safe mode rule added, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "safe mode rule added, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "12",
+          "revision": "9"
+        }
+      }
+    },
+    {
+      "name": "rule text asked for, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:1",
+          "revision": "9"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "safemode:edit",
+          "args": {
+            "row": "rule:1"
+          }
+        }
+      }
+    },
+    {
+      "name": "rule text asked for, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "rule text asked for, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "rule text asked for, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "rule text asked for, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "13",
+          "revision": "10"
+        }
+      }
+    },
+    {
+      "name": "safe mode manager with a rule",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:8",
+        "role": "screen",
+        "title": " SAFE MODE MANAGER ",
+        "root": {
+          "id": "safemode:tabs",
+          "kind": "tabs",
+          "affordances": [
+            "safemode:tab"
+          ],
+          "tabs": [
+            {
+              "id": "global",
+              "label": "Global",
+              "selected": true,
+              "enabled": true
+            },
+            {
+              "id": "character",
+              "label": "Character",
+              "selected": false,
+              "enabled": true
+            }
+          ],
+          "select": "safemode:tab",
+          "child": {
+            "id": "safemode:body",
+            "kind": "split",
+            "relation": "detail",
+            "active": "safemode:rules",
+            "children": [
+              {
+                "id": "safemode:rules",
+                "kind": "list",
+                "affordances": [
+                  "safemode:edit",
+                  "safemode:select",
+                  "safemode:attitude",
+                  "safemode:dist",
+                  "safemode:list",
+                  "safemode:category"
+                ],
+                "columns": [
+                  {
+                    "key": "attitude",
+                    "label": "Attitude"
+                  },
+                  {
+                    "key": "dist",
+                    "label": "Dist"
+                  },
+                  {
+                    "key": "whitelist",
+                    "label": "B/W"
+                  },
+                  {
+                    "key": "category",
+                    "label": "Cat"
+                  },
+                  {
+                    "key": "active",
+                    "label": "Active"
+                  }
+                ],
+                "rows": [
+                  {
+                    "id": "rule:1",
+                    "label": "zombie",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": true,
+                    "columns": [
+                      {
+                        "key": "attitude",
+                        "label": "Attitude",
+                        "value": "Hostile"
+                      },
+                      {
+                        "key": "dist",
+                        "label": "Dist",
+                        "value": "0"
+                      },
+                      {
+                        "key": "whitelist",
+                        "label": "B/W",
+                        "value": "Blacklist"
+                      },
+                      {
+                        "key": "category",
+                        "label": "Cat",
+                        "value": "Hostile"
+                      },
+                      {
+                        "key": "active",
+                        "label": "Active",
+                        "value": "True"
+                      }
+                    ],
+                    "color": "c_white"
+                  }
+                ],
+                "total": 1,
+                "selection": "single",
+                "activate": "safemode:edit"
+              },
+              {
+                "id": "safemode:details",
+                "kind": "panel",
+                "title": "",
+                "stats": [
+                  {
+                    "key": "enabled",
+                    "label": "Safe Mode enabled:",
+                    "value": "True",
+                    "tone": "good"
+                  }
+                ],
+                "child": {
+                  "id": "safemode:help",
+                  "kind": "text",
+                  "markup": "* is used as a Wildcard.  A few Examples:\n\nhuman          matches every NPC\nzombie         matches the monster name exactly\nacidic zo*     matches monsters beginning with 'acidic zo'\n*mbie          matches monsters ending with 'mbie'\n*cid*zo*ie     multiple * are allowed\nAcI*zO*iE      case insensitive search"
+                }
+              }
+            ]
+          }
+        },
+        "affordances": [
+          {
+            "id": "safemode:select",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "role": "select",
+            "args": {
+              "row": {
+                "component_id": "safemode:rules"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "safemode:tab",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "safemode:tabs"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "safemode:edit",
+            "label": "Rules",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "safemode:rules"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "safemode:attitude",
+            "label": "Attitude",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "safemode:rules"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "safemode:dist",
+            "label": "Dist",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "safemode:rules"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "safemode:list",
+            "label": "B/W",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "safemode:rules"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "safemode:category",
+            "label": "Cat",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "safemode:rules"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Pan left",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Pan right",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "NEXT_TAB",
+            "label": "Go to next tab",
+            "keys": [
+              "TAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PREV_TAB",
+            "label": "Go to prev tab",
+            "keys": [
+              "BACKTAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ADD_DEFAULT_RULESET",
+            "label": "Add default ruleset",
+            "keys": [
+              "~"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ADD_RULE",
+            "label": "Add rule",
+            "keys": [
+              "a",
+              "A"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "REMOVE_RULE",
+            "label": "Remove rule",
+            "keys": [
+              "r",
+              "R"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "COPY_RULE",
+            "label": "Copy rule",
+            "keys": [
+              "c",
+              "C"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ENABLE_RULE",
+            "label": "Enable rule",
+            "keys": [
+              "e",
+              "E"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DISABLE_RULE",
+            "label": "Disable rule",
+            "keys": [
+              "d",
+              "D"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "MOVE_RULE_UP",
+            "label": "Move rule up",
+            "keys": [
+              "+"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "MOVE_RULE_DOWN",
+            "label": "Move rule down",
+            "keys": [
+              "-"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEST_RULE",
+            "label": "Test rule",
+            "keys": [
+              "t",
+              "T"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SWITCH_SAFEMODE_OPTION",
+            "label": "Enable safemode option",
+            "keys": [
+              "s",
+              "S"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SWAP_RULE_GLOBAL_CHAR",
+            "label": "Move rule global <-> character",
+            "keys": [
+              "m",
+              "M"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "safemode:rules",
+          "row_id": "rule:1"
+        },
+        "context": "SAFEMODE"
+      }
+    },
+    {
+      "name": "attitude of a rule moved on, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:2",
+          "revision": "11"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "safemode:attitude",
+          "args": {
+            "row": "rule:1"
+          }
+        }
+      }
+    },
+    {
+      "name": "attitude of a rule moved on, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "attitude of a rule moved on, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "attitude of a rule moved on, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "attitude of a rule moved on, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "15",
+          "revision": "12"
+        }
+      }
+    },
+    {
+      "name": "rule switched between monsters and sounds, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:3",
+          "revision": "12"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "safemode:category",
+          "args": {
+            "row": "rule:1"
+          }
+        }
+      }
+    },
+    {
+      "name": "rule switched between monsters and sounds, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "rule switched between monsters and sounds, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "rule switched between monsters and sounds, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "rule switched between monsters and sounds, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "16",
+          "revision": "13"
+        }
+      }
+    },
+    {
+      "name": "rule switched between blacklist and whitelist, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:4",
+          "revision": "13"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "safemode:list",
+          "args": {
+            "row": "rule:1"
+          }
+        }
+      }
+    },
+    {
+      "name": "rule switched between blacklist and whitelist, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:5",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "rule switched between blacklist and whitelist, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:5",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "rule switched between blacklist and whitelist, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:5",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "rule switched between blacklist and whitelist, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:5",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "17",
+          "revision": "14"
+        }
+      }
+    },
+    {
+      "name": "safe mode manager with the default ruleset",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:8",
+        "role": "screen",
+        "title": " SAFE MODE MANAGER ",
+        "root": {
+          "id": "safemode:tabs",
+          "kind": "tabs",
+          "affordances": [
+            "safemode:tab"
+          ],
+          "tabs": [
+            {
+              "id": "global",
+              "label": "Global",
+              "selected": true,
+              "enabled": true
+            },
+            {
+              "id": "character",
+              "label": "Character",
+              "selected": false,
+              "enabled": true
+            }
+          ],
+          "select": "safemode:tab",
+          "child": {
+            "id": "safemode:body",
+            "kind": "split",
+            "relation": "detail",
+            "active": "safemode:rules",
+            "children": [
+              {
+                "id": "safemode:rules",
+                "kind": "list",
+                "affordances": [
+                  "safemode:edit",
+                  "safemode:select",
+                  "safemode:attitude",
+                  "safemode:dist",
+                  "safemode:list",
+                  "safemode:category"
+                ],
+                "columns": [
+                  {
+                    "key": "attitude",
+                    "label": "Attitude"
+                  },
+                  {
+                    "key": "dist",
+                    "label": "Dist"
+                  },
+                  {
+                    "key": "whitelist",
+                    "label": "B/W"
+                  },
+                  {
+                    "key": "category",
+                    "label": "Cat"
+                  },
+                  {
+                    "key": "active",
+                    "label": "Active"
+                  }
+                ],
+                "rows": [
+                  {
+                    "id": "rule:1",
+                    "label": "zombie",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "attitude",
+                        "label": "Attitude",
+                        "value": "---"
+                      },
+                      {
+                        "key": "dist",
+                        "label": "Dist",
+                        "value": "0"
+                      },
+                      {
+                        "key": "whitelist",
+                        "label": "B/W",
+                        "value": "Whitelist"
+                      },
+                      {
+                        "key": "category",
+                        "label": "Cat",
+                        "value": "Sound"
+                      },
+                      {
+                        "key": "active",
+                        "label": "Active",
+                        "value": "True"
+                      }
+                    ],
+                    "color": "c_white"
+                  },
+                  {
+                    "id": "rule:2",
+                    "label": "*",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "attitude",
+                        "label": "Attitude",
+                        "value": "Hostile"
+                      },
+                      {
+                        "key": "dist",
+                        "label": "Dist",
+                        "value": "0"
+                      },
+                      {
+                        "key": "whitelist",
+                        "label": "B/W",
+                        "value": "Blacklist"
+                      },
+                      {
+                        "key": "category",
+                        "label": "Cat",
+                        "value": "Hostile"
+                      },
+                      {
+                        "key": "active",
+                        "label": "Active",
+                        "value": "True"
+                      }
+                    ],
+                    "color": "c_white"
+                  },
+                  {
+                    "id": "rule:3",
+                    "label": "*",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": true,
+                    "columns": [
+                      {
+                        "key": "attitude",
+                        "label": "Attitude",
+                        "value": "---"
+                      },
+                      {
+                        "key": "dist",
+                        "label": "Dist",
+                        "value": "5"
+                      },
+                      {
+                        "key": "whitelist",
+                        "label": "B/W",
+                        "value": "Whitelist"
+                      },
+                      {
+                        "key": "category",
+                        "label": "Cat",
+                        "value": "Sound"
+                      },
+                      {
+                        "key": "active",
+                        "label": "Active",
+                        "value": "True"
+                      }
+                    ],
+                    "color": "c_white"
+                  }
+                ],
+                "total": 3,
+                "selection": "single",
+                "activate": "safemode:edit"
+              },
+              {
+                "id": "safemode:details",
+                "kind": "panel",
+                "title": "",
+                "stats": [
+                  {
+                    "key": "enabled",
+                    "label": "Safe Mode enabled:",
+                    "value": "True",
+                    "tone": "good"
+                  }
+                ],
+                "child": {
+                  "id": "safemode:help",
+                  "kind": "text",
+                  "markup": "* is used as a Wildcard.  A few Examples:\n\nfootsteps      matches the sound name exactly\na loud ba*     matches sounds beginning with 'a loud ba'\n*losion!       matches sounds ending with 'losion!'\na *oud*ba*     multiple * are allowed\n*LoU*bA*       case insensitive search"
+                }
+              }
+            ]
+          }
+        },
+        "affordances": [
+          {
+            "id": "safemode:select",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "role": "select",
+            "args": {
+              "row": {
+                "component_id": "safemode:rules"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "safemode:tab",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "safemode:tabs"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "safemode:edit",
+            "label": "Rules",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "safemode:rules"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "safemode:attitude",
+            "label": "Attitude",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "safemode:rules"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "safemode:dist",
+            "label": "Dist",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "safemode:rules"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "safemode:list",
+            "label": "B/W",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "safemode:rules"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "safemode:category",
+            "label": "Cat",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "safemode:rules"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Pan left",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Pan right",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "NEXT_TAB",
+            "label": "Go to next tab",
+            "keys": [
+              "TAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PREV_TAB",
+            "label": "Go to prev tab",
+            "keys": [
+              "BACKTAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ADD_DEFAULT_RULESET",
+            "label": "Add default ruleset",
+            "keys": [
+              "~"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ADD_RULE",
+            "label": "Add rule",
+            "keys": [
+              "a",
+              "A"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "REMOVE_RULE",
+            "label": "Remove rule",
+            "keys": [
+              "r",
+              "R"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "COPY_RULE",
+            "label": "Copy rule",
+            "keys": [
+              "c",
+              "C"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ENABLE_RULE",
+            "label": "Enable rule",
+            "keys": [
+              "e",
+              "E"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DISABLE_RULE",
+            "label": "Disable rule",
+            "keys": [
+              "d",
+              "D"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "MOVE_RULE_UP",
+            "label": "Move rule up",
+            "keys": [
+              "+"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "MOVE_RULE_DOWN",
+            "label": "Move rule down",
+            "keys": [
+              "-"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEST_RULE",
+            "label": "Test rule",
+            "keys": [
+              "t",
+              "T"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SWITCH_SAFEMODE_OPTION",
+            "label": "Enable safemode option",
+            "keys": [
+              "s",
+              "S"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SWAP_RULE_GLOBAL_CHAR",
+            "label": "Move rule global <-> character",
+            "keys": [
+              "m",
+              "M"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "safemode:rules",
+          "row_id": "rule:3"
+        },
+        "context": "SAFEMODE"
+      }
+    },
+    {
+      "name": "safe mode rule copied, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "screen_id": "screen:8"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "COPY_RULE"
+        }
+      }
+    },
+    {
+      "name": "safe mode rule copied, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:6",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "safe mode rule copied, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:6",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "safe mode rule copied, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:6",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "safe mode rule copied, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:6",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "19",
+          "revision": "16"
+        }
+      }
+    },
+    {
+      "name": "monsters that a safe mode rule matches",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:10",
+        "role": "dialog",
+        "title": "2 monsters match: zombie",
+        "root": {
+          "id": "safemode_test:body",
+          "kind": "split",
+          "relation": "detail",
+          "active": "safemode_test:matches",
+          "children": [
+            {
+              "id": "safemode_test:matches",
+              "kind": "list",
+              "columns": [],
+              "rows": [
+                {
+                  "id": "monster:mon_zombie",
+                  "label": "zombie",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": true,
+                  "columns": []
+                },
+                {
+                  "id": "monster:mon_zombie_resort_staff",
+                  "label": "zombie",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                }
+              ],
+              "total": 2,
+              "selection": "single"
+            },
+            {
+              "id": "safemode_test:note",
+              "kind": "text",
+              "markup": "Lists monsters regardless of their attitude.",
+              "tone": "bad"
+            }
+          ]
+        },
+        "affordances": [
+          {
+            "id": "safemode_test:select",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "role": "select",
+            "args": {
+              "row": {
+                "component_id": "safemode_test:matches"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "safemode_test:matches",
+          "row_id": "monster:mon_zombie"
+        },
+        "context": "SAFEMODE_TEST"
+      }
+    },
+    {
+      "name": "safe mode match that the list does not hold, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:5",
+          "revision": "20"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "safemode_test:select",
+          "args": {
+            "row": "rule:1"
+          }
+        }
+      }
+    },
+    {
+      "name": "safe mode match that the list does not hold, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:7",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "safe mode match that the list does not hold, rejected",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:7",
+        "stage": "rejected",
+        "error": "invalid_arguments",
+        "error_text": "That needs other details."
+      }
+    },
+    {
+      "name": "safe mode rule that the list does not hold, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:6",
+          "revision": "21"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "safemode:attitude",
+          "args": {
+            "row": "rule:0"
+          }
+        }
+      }
+    },
+    {
+      "name": "safe mode rule that the list does not hold, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:8",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "safe mode rule that the list does not hold, rejected",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:8",
+        "stage": "rejected",
+        "error": "invalid_arguments",
+        "error_text": "That needs other details."
+      }
+    },
+    {
+      "name": "safe mode page picked by its token, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:6",
+          "revision": "21"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "safemode:tab",
+          "args": {
+            "row": "character"
+          }
+        }
+      }
+    },
+    {
+      "name": "safe mode page picked by its token, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:9",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "safe mode page picked by its token, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:9",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "safe mode page picked by its token, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:9",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "safe mode page picked by its token, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:9",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "25",
+          "revision": "22"
+        }
+      }
+    }
+  ],
+  "invalid": []
+}
