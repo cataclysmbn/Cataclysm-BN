@@ -387,7 +387,8 @@ trial 성공/실패에 따라 서로 다른 결과를 지정할 수 있습니다
 로드 순서대로 0부터 센 값이며, 조건 충족 여부와 무관합니다.
 다른 모드가 주제를 확장하는 경우 응답을 재정렬하거나 끼워 넣어도 이름이 바뀌지 않도록 `"id"`를 지정하세요.
 `"id"`는 주제 안에서 유일해야 합니다. repeat response의 이름은
-`<해당 id, 없으면 <topic id>:repeat:<주제의 repeat_responses 안 index>>:<item id>`입니다.
+`<해당 id, 없으면 <topic id>:repeat:<주제의 repeat_responses 안 index>>:<대상>`입니다. 대상은
+`"for_item"`이면 아이템 id, `"for_category"`이면 그 아이템의 세션 행 id(`item:<serial>`)입니다.
 
 선택적 bool 키 `"switch"`, `"default"`의 기본값은 false입니다.
 `"switch": true`, `"default": false`, 조건 유효를 만족하는 응답 중 첫 번째만 표시되고,

@@ -30,6 +30,7 @@
 #include "item.h"
 #include "item_category.h"
 #include "item_contents.h"
+#include "item_serial.h"
 #include "itype.h"
 #include "json.h"
 #include "line.h"
@@ -3769,16 +3770,9 @@ bool json_talk_topic::gen_responses( dialogue &d ) const
             actor = dynamic_cast<player *>( d.beta );
         }
         std::function<bool( const item & )> filter = return_true<item>;
-        // Responses about equal items are equal: the later ones are told apart by how many came before.
-        std::vector<itype_id> offered;
-        const auto about = [&offered]( const itype_id & item_id ) {
-            offered.push_back( item_id );
-            const auto earlier = std::ranges::count( offered, item_id ) - 1;
-            return earlier == 0 ? item_id.str() : string_format( "%s:%d", item_id.str(), earlier + 1 );
-        };
         for( const itype_id &item_id : repeat.for_item ) {
             if( actor->charges_of( item_id ) > 0 || actor->has_amount( item_id, 1 ) ) {
-                switch_done |= repeat.response.gen_repeat_response( d, item_id, about( item_id ), switch_done );
+                switch_done |= repeat.response.gen_repeat_response( d, item_id, item_id.str(), switch_done );
             }
         }
         for( const item_category_id &category_id : repeat.for_category ) {
@@ -3791,8 +3785,8 @@ bool json_talk_topic::gen_responses( dialogue &d ) const
                 return it.type && it.type->category_force == category_id;
             } );
             for( const auto &it : items_with ) {
-                switch_done |= repeat.response.gen_repeat_response( d, it->typeId(), about( it->typeId() ),
-                               switch_done );
+                switch_done |= repeat.response.gen_repeat_response( d, it->typeId(),
+                               game_client::item_row_id( *it ), switch_done );
             }
         }
     }

@@ -396,7 +396,8 @@ shown. Without it, the response is named `<topic id>:<index>`, where the index c
 the topic's `"responses"` arrays in load order, from 0, whether or not their conditions hold. Give a
 response an `"id"` when the topic is extended by other mods, so that reordering or inserting
 responses does not rename it. An `"id"` must be unique in its topic. A repeat response is named
-`<its id, or <topic id>:repeat:<index in the topic's repeat_responses>>:<item id>`.
+`<its id, or <topic id>:repeat:<index in the topic's repeat_responses>>:<what it is about>`: the item
+id for `"for_item"`, and the item's session row id (`item:<serial>`) for `"for_category"`.
 
 The optional boolean keys "switch" and "default" are false by default. Only the first response with
 `"switch": true`, `"default": false`, and a valid condition will be displayed, and no other

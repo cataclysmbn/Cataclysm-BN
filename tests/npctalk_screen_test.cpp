@@ -4,6 +4,7 @@
 #    include "client_memory.h"
 #    include "dialogue_helpers.h"
 #    include "engine_client_component.h"
+#    include "item_serial.h"
 #    include "locale_fixture.h"
 #    include "locale_scope.h"
 #    include "mission.h"
@@ -181,14 +182,21 @@ TEST_CASE(
     const auto before = response_ids(fixture, identity_topic);
     CHECK(has_id(before, identity_topic + ":repeat:0:tshirt"));
     CHECK(has_id(before, identity_topic + ":repeat:0:jeans"));
-    CHECK(has_id(before, identity_topic + ":repeat:1:tshirt"));
-    CHECK(has_id(before, identity_topic + ":repeat:1:jeans"));
-    // A second shirt is a second response about the same thing, named apart without a place in the
-    // list.
+    const auto item_response = [&](const item& it) {
+        return identity_topic + ":repeat:1:" + game_client::item_row_id(it);
+    };
+    const auto worn_before = you.worn | std::ranges::to<std::vector<const item*>>();
+    for (const auto* it : worn_before) { CHECK(has_id(before, item_response(*it))); }
+    // A second shirt is a second response about another item, named by that item, not a place in
+    // the list.
     you.wear_item(item::spawn("tshirt"), false);
     const auto after = response_ids(fixture, identity_topic);
     CHECK(after.size() == before.size() + 1);
-    CHECK(has_id(after, identity_topic + ":repeat:1:tshirt:2"));
+    for (const auto* it : you.worn) {
+        if (std::ranges::find(worn_before, it) == worn_before.end()) {
+            CHECK(has_id(after, item_response(*it)));
+        }
+    }
     CHECK(std::set(after.begin(), after.end()).size() == after.size());
     for (const auto& id : before) { CHECK(has_id(after, id)); }
 }
