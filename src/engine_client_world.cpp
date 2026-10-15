@@ -25,6 +25,7 @@
 #include "effect.h"
 #include "engine_client_event.h"
 #include "item.h"
+#include "item_serial.h"
 #include "tileray.h"
 #include "units_angle.h"
 #include "itype.h"
@@ -851,15 +852,12 @@ auto stack_entry( const std::vector<item *> &items,
              .slot = slot, .durability = std::move( durability ), .label = stack_label( items, slot ) };
 }
 
-/// Gives each row an id from its slot and kind; equal rows are told apart by their order. No text goes in,
-/// so a client reading the rows in another language names the same row.
+/// Gives each row the id of its items (`game_client::stack_row_id`), which follows them when rows reorder.
 auto identified( std::vector<item_stack> rows ) -> std::vector<item_stack>
 {
-    auto seen = std::map<std::vector<std::string>, std::size_t> {};
     for( auto &stack : rows ) {
-        auto identity = std::vector<std::string> { stack.row.slot.value_or( "ground" ), stack.row.appearance.id.value_or( "" ) };
-        identity.push_back( std::to_string( seen[identity]++ ) );
-        stack.row.id = game_client::opaque_interaction_id( "item", identity );
+        stack.row.id = game_client::stack_row_id( stack.items |
+                       std::ranges::to<std::vector<const item *>>() );
     }
     return rows;
 }
