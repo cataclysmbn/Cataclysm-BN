@@ -1,0 +1,619 @@
+{
+  "valid": [
+    {
+      "name": "auto notes manager before any discovery",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:8",
+        "role": "screen",
+        "title": " AUTO NOTES MANAGER ",
+        "root": {
+          "id": "autonote:body",
+          "kind": "split",
+          "relation": "detail",
+          "active": "autonote:extras",
+          "children": [
+            {
+              "id": "autonote:extras",
+              "kind": "list",
+              "columns": [],
+              "rows": [],
+              "total": 0,
+              "selection": "single"
+            },
+            {
+              "id": "autonote:status",
+              "kind": "panel",
+              "title": "",
+              "stats": [
+                {
+                  "key": "enabled",
+                  "label": "Auto notes enabled:",
+                  "value": "True",
+                  "tone": "good"
+                }
+              ]
+            },
+            {
+              "id": "autonote:notice",
+              "kind": "text",
+              "markup": "Discover more special encounters to populate this list"
+            }
+          ]
+        },
+        "affordances": [
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "SWITCH_AUTO_NOTE_OPTION",
+            "label": "Toggle auto notes option",
+            "keys": [
+              "s",
+              "S"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "autonote:extras"
+        },
+        "context": "AUTO_NOTES"
+      }
+    },
+    {
+      "name": "auto notes option switched, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "screen_id": "screen:8"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "SWITCH_AUTO_NOTE_OPTION"
+        }
+      }
+    },
+    {
+      "name": "auto notes option switched, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "auto notes option switched, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "auto notes option switched, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "auto notes option switched, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "12",
+          "revision": "9"
+        }
+      }
+    },
+    {
+      "name": "auto notes manager with three discovered map extras",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:21",
+        "role": "screen",
+        "title": " AUTO NOTES MANAGER ",
+        "root": {
+          "id": "autonote:body",
+          "kind": "split",
+          "relation": "detail",
+          "active": "autonote:extras",
+          "children": [
+            {
+              "id": "autonote:extras",
+              "kind": "list",
+              "affordances": [
+                "autonote:toggle",
+                "autonote:select"
+              ],
+              "columns": [
+                {
+                  "key": "symbol",
+                  "label": "Symbol"
+                },
+                {
+                  "key": "enabled",
+                  "label": "Enabled"
+                }
+              ],
+              "rows": [
+                {
+                  "id": "extra:mx_crater",
+                  "label": "Crater",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "symbol",
+                      "label": "Symbol",
+                      "value": "o",
+                      "color": "c_red"
+                    },
+                    {
+                      "key": "enabled",
+                      "label": "Enabled",
+                      "value": "yes",
+                      "color": "c_green"
+                    }
+                  ],
+                  "toggled": true
+                },
+                {
+                  "id": "extra:mx_collegekids",
+                  "label": "Lost Campers",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "symbol",
+                      "label": "Symbol",
+                      "value": "c",
+                      "color": "c_light_red"
+                    },
+                    {
+                      "key": "enabled",
+                      "label": "Enabled",
+                      "value": "no",
+                      "color": "c_red"
+                    }
+                  ],
+                  "toggled": false
+                },
+                {
+                  "id": "extra:mx_helicopter",
+                  "label": "Helicopter Crash",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": true,
+                  "columns": [
+                    {
+                      "key": "symbol",
+                      "label": "Symbol",
+                      "value": "X",
+                      "color": "c_light_blue"
+                    },
+                    {
+                      "key": "enabled",
+                      "label": "Enabled",
+                      "value": "yes",
+                      "color": "c_green"
+                    }
+                  ],
+                  "toggled": true
+                }
+              ],
+              "total": 3,
+              "selection": "single",
+              "activate": "autonote:toggle"
+            },
+            {
+              "id": "autonote:status",
+              "kind": "panel",
+              "title": "",
+              "stats": [
+                {
+                  "key": "enabled",
+                  "label": "Auto notes enabled:",
+                  "value": "True",
+                  "tone": "good"
+                }
+              ]
+            }
+          ]
+        },
+        "affordances": [
+          {
+            "id": "autonote:select",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "role": "select",
+            "args": {
+              "row": {
+                "component_id": "autonote:extras"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "autonote:toggle",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "autonote:extras"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "SWITCH_AUTO_NOTE_OPTION",
+            "label": "Toggle auto notes option",
+            "keys": [
+              "s",
+              "S"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Pan left",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Pan right",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          },
+          {
+            "id": "ENABLE_MAPEXTRA_NOTE",
+            "label": "Enable auto note for map extra",
+            "keys": [
+              "e",
+              "E"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DISABLE_MAPEXTRA_NOTE",
+            "label": "Disable auto note for map extra",
+            "keys": [
+              "d",
+              "D"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "autonote:extras",
+          "row_id": "extra:mx_helicopter"
+        },
+        "context": "AUTO_NOTES"
+      }
+    },
+    {
+      "name": "map extra picked in the list, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:1",
+          "revision": "29"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "autonote:select",
+          "args": {
+            "row": "extra:mx_collegekids"
+          }
+        }
+      }
+    },
+    {
+      "name": "map extra picked in the list, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "map extra picked in the list, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "map extra picked in the list, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "map extra picked in the list, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "33",
+          "revision": "30"
+        }
+      }
+    },
+    {
+      "name": "map extra note switched, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:2",
+          "revision": "30"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "autonote:toggle",
+          "args": {
+            "row": "extra:mx_collegekids"
+          }
+        }
+      }
+    },
+    {
+      "name": "map extra note switched, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "map extra note switched, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "map extra note switched, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "map extra note switched, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "34",
+          "revision": "31"
+        }
+      }
+    },
+    {
+      "name": "map extra note enabled at the cursor, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "screen_id": "screen:21"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "ENABLE_MAPEXTRA_NOTE"
+        }
+      }
+    },
+    {
+      "name": "map extra note enabled at the cursor, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "map extra note enabled at the cursor, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "map extra note enabled at the cursor, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "map extra note enabled at the cursor, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "35",
+          "revision": "32"
+        }
+      }
+    },
+    {
+      "name": "map extra that the list does not hold, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:3",
+          "revision": "33"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "autonote:toggle",
+          "args": {
+            "row": "extra:0"
+          }
+        }
+      }
+    },
+    {
+      "name": "map extra that the list does not hold, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:5",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "map extra that the list does not hold, rejected",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:5",
+        "stage": "rejected",
+        "error": "invalid_arguments",
+        "error_text": "That needs other details."
+      }
+    }
+  ],
+  "invalid": []
+}
