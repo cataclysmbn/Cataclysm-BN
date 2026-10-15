@@ -253,7 +253,7 @@ TEST_CASE(
                 added = available.front().id;
                 CHECK(available.front().id.starts_with("mod:"));
                 stage = 2;
-                return invoke("worldgen:mods:add", {.row = added});
+                return invoke("bn:activate:worldgen:mods:add", {.row = added});
             }
             case 2: {
                 const auto& active = rows_of(screen, active_rows);
@@ -379,7 +379,7 @@ TEST_CASE(
                     "worldgen:mods:remove", {.row = "active:" + active_before.front().str()});
             }
             case 1:
-                // The first pick only marks the active mod; it stays active.
+                // Selecting only moves the cursor to the active mod; it stays active.
                 CHECK(rows_of(screen, active_rows).size() == active_before.size());
                 CHECK(screen.focus_component == active_rows);
                 CHECK(screen.focus_row == "active:" + active_before.front().str());

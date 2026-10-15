@@ -1354,14 +1354,12 @@ int worldfactory::show_modselection_window( const catacurses::window &win,
             } else if( call->affordance_id == "worldgen:mods:add" ) {
                 active_header = 0;
                 cursel[0] = index_in( all_tabs[iCurrentTab].mods, 4 );
-                return std::string( "CONFIRM" );
+                return std::string( call->activates ? "CONFIRM" : "" );
             } else {
-                // The first choice marks the mod for the move actions, the second deactivates it.
-                const auto index = index_in( active_mod_order, 7 );
-                const auto marked = active_header == 1 && cursel[1] == index;
+                // Selecting marks the mod for the move actions, activating deactivates it.
                 active_header = 1;
-                cursel[1] = index;
-                return std::string( marked ? "CONFIRM" : "" );
+                cursel[1] = index_in( active_mod_order, 7 );
+                return std::string( call->activates ? "CONFIRM" : "" );
             }
             return std::string();
         }

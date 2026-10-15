@@ -199,7 +199,7 @@ void help::display_help()
                         .markup = _( "Please press one of the following for help on that topic:\n"
                                      "Press ESC to return to the game." ) } },
                 ec::list( { .id = "help:topics", .rows = std::move( rows ), .selection = "single", .activate = open_topic_id } ) ) } ),
-            .affordances = { ec::invoke_affordance( { .id = open_topic_id, .label = ctxt.get_action_name( "CONFIRM" ), .args = { .row = ec::row_shape{ .component_id = "help:topics" } }, .role = "select" } ) },
+            .affordances = { ec::invoke_affordance( { .id = open_topic_id, .label = ctxt.get_action_name( "CONFIRM" ), .args = { .row = ec::row_shape{ .component_id = "help:topics" } } } ) },
         };
     }
                                                 } );

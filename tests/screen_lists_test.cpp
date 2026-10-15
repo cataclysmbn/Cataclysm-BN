@@ -126,7 +126,7 @@ TEST_CASE(
                     return invoke_event(top, "missions:tab", {.row = "active"});
                 }
                 case 2:
-                    return invoke_event(top, "missions:select", {.row = row_id});
+                    return invoke_event(top, "bn:activate:missions:select", {.row = row_id});
                 default:
                     FAIL("unexpected extra screen " << top.context);
             }

@@ -130,6 +130,10 @@ auto invoke(const std::string& affordance, client::interaction_arguments args = 
     return event;
 }
 
+/// The affordance that runs a row of the list whose `select` affordance `select` only moves the
+/// cursor to.
+auto activation_of(const std::string& select) -> std::string { return "bn:activate:" + select; }
+
 /// Cancels a nested native popup, which only the 0.1 snapshot describes.
 auto cancel(const client::interaction_snapshot& snapshot) -> input_event {
     return resolve(
@@ -306,11 +310,11 @@ TEST_CASE(
             CHECK(rows(screen).front().id == id("bio_flashlight"));
             // A bionic of the other tab is not a row of this one.
             CHECK(
-                ec::resolve_invoke(
-                    state, {.affordance_id = "bionics:pick", .args = {.row = id("bio_carbon")}})
+                ec::resolve_invoke(state, {.affordance_id = activation_of("bionics:pick"),
+                                           .args = {.row = id("bio_carbon")}})
                     .error()
                 == ec::error::invalid_arguments);
-            return invoke("bionics:pick", {.row = id("bio_flashlight")});
+            return invoke(activation_of("bionics:pick"), {.row = id("bio_flashlight")});
         }
         CHECK(you.has_active_bionic(bionic_id("bio_flashlight")));
         CHECK(you.get_power_level() == power - cost);
@@ -350,7 +354,7 @@ TEST_CASE(
             CHECK(rows(screen).front().denial.empty() == !disabled);
             CHECK(denial_of(screen, "CONFIRM") == rows(screen).front().denial);
             Messages::clear_messages();
-            return invoke("bionics:pick", {.row = id(target)});
+            return invoke(activation_of("bionics:pick"), {.row = id(target)});
         }
         CHECK_FALSE(you.has_active_bionic(bionic_id(target)));
         CHECK(you.get_power_level() == power);
@@ -402,14 +406,14 @@ TEST_CASE(
                 REQUIRE(rows(screen).size() == 2);
                 CHECK_FALSE(row_of(screen, id("bio_carbon")).enabled);
                 CHECK_FALSE(row_of(screen, id("bio_carbon")).denial.empty());
-                return invoke("bionics:pick", {.row = id("bio_carbon")});
+                return invoke(activation_of("bionics:pick"), {.row = id("bio_carbon")});
             case 3:
                 return action("TOGGLE_EXAMINE");
             case 4:
                 CHECK(row_of(screen, id("bio_carbon")).enabled);
                 CHECK(row_of(screen, id("bio_carbon")).denial.empty());
                 CHECK(denial_of(screen, "CONFIRM").empty());
-                return invoke("bionics:pick", {.row = id("bio_carbon")});
+                return invoke(activation_of("bionics:pick"), {.row = id("bio_carbon")});
             default:
                 return action("QUIT");
         }
@@ -634,7 +638,7 @@ TEST_CASE(
                 return action("REASSIGN");
             case 1:
             case 11:
-                return invoke("bionics:pick", {.row = id("bio_flashlight")});
+                return invoke(activation_of("bionics:pick"), {.row = id("bio_flashlight")});
             default:
                 return action("QUIT");
         }
@@ -723,7 +727,7 @@ TEST_CASE(
             case 0:
                 CHECK(activations == 0);
                 CHECK(deactivations == 0);
-                return invoke("bionics:pick", {.row = id(fixture_id.str())});
+                return invoke(activation_of("bionics:pick"), {.row = id(fixture_id.str())});
             case 1:
                 CHECK(activations == 1);
                 CHECK(deactivations == 0);

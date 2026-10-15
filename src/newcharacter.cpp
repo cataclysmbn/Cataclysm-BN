@@ -1250,7 +1250,9 @@ auto newchar_read( input_context &ctxt, const newchar_read_options &options ) ->
     if( picked->affordance_id == select_tab_id ) {
         result.jump = newchar_jump( *picked->args.row, options.tab, options.prof );
     } else {
-        result.action = options.on_row( *picked->args.row );
+        // A pick only moves the cursor to the row; activating it also runs what Enter does there.
+        const auto action = options.on_row( *picked->args.row );
+        result.action = picked->activates ? action : std::string{};
     }
     return result;
 }

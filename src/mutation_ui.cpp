@@ -524,6 +524,9 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
             } else {
                 continue;
             }
+            if( !picked->activates ) {
+                continue;
+            }
             action = "CONFIRM";
         }
         const input_event evt = ctxt.get_raw_input();

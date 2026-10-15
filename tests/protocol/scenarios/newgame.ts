@@ -76,7 +76,7 @@ export const newgame: Scenario = {
       }
 
       // The overview names the character through the popup of its name row.
-      const field = await engine.invoke("newchar:overview:pick", { row: "name" })
+      const field = await engine.invoke("bn:activate:newchar:overview:pick", { row: "name" })
       completed(field)
       rec.command("name row picked on the overview", field)
       completed(await engine.invoke("bn:submit:form:field", { text: "Ada" }))

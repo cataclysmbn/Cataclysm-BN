@@ -89,6 +89,10 @@ auto act(const std::string& action) -> input_event {
     return *result;
 }
 
+/// The affordance that runs a row of the list whose `select` affordance `select` only moves the
+/// cursor to.
+auto activation_of(const std::string& select) -> std::string { return "bn:activate:" + select; }
+
 /// The invoke a client sends for an affordance the screen's loop runs.
 auto invoke(const std::string& affordance, game_client::interaction_arguments args = {})
     -> input_event {
@@ -203,7 +207,7 @@ TEST_CASE(
             }
             case 1:
                 CHECK(text_of(screen, "mutations:help").find("Examining") != std::string::npos);
-                return invoke("mutations:pick:active", {.row = active_id});
+                return invoke(activation_of("mutations:pick:active"), {.row = active_id});
             case 2:
                 // Examining only moves the cursor to the mutation and describes it.
                 CHECK(screen.focus_row == active_id);
@@ -212,7 +216,7 @@ TEST_CASE(
                 return act("TOGGLE_EXAMINE");
             case 3:
                 CHECK(you.my_mutations[trait_id("test_preview_active_trait")].powered);
-                return invoke("mutations:pick:active", {.row = active_id});
+                return invoke(activation_of("mutations:pick:active"), {.row = active_id});
             default:
                 FAIL("the mutation screen outlived its confirm");
                 return act("QUIT");
@@ -292,7 +296,7 @@ TEST_CASE(
             case 0:
                 return act(reassign ? "REASSIGN" : "TOGGLE_SPRITE");
             case 1:
-                return invoke("mutations:pick:passive", {.row = passive_id});
+                return invoke(activation_of("mutations:pick:passive"), {.row = passive_id});
             case 2:
                 if (reassign) {
                     CHECK(row_of(screen, "passive", passive_id).hotkey == "q");

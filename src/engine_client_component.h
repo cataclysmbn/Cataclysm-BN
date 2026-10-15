@@ -319,6 +319,8 @@ auto invoke_affordance( invoke_options options ) -> affordance;
 /// The affordance a client invoked in the input read that just returned, with its arguments.
 struct invoked_affordance {
     std::string affordance_id = {};
+    /// The invoke runs the row, like Enter on it; false for a `select` that only moves the cursor to it.
+    bool activates = false;
     game_client::interaction_arguments args = {};
 };
 auto invoked( const input_event &event ) -> std::optional<invoked_affordance>;

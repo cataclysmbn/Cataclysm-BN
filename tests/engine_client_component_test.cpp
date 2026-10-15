@@ -1027,3 +1027,72 @@ TEST_CASE("only a step of the map may be held", "[engine_client_component][held_
     // The same action on a list is a key press, not a walk.
     CHECK_FALSE(holdable_on_wire(boundary(menu()), "UP"));
 }
+
+namespace {
+auto invoke_of(const std::string& affordance_id, const std::string& row_id) -> input_event {
+    auto event = input_event{};
+    event.type = input_event_t::keyboard;
+    event.interaction = client::interaction_event{
+        .operation = client::interaction_operation::invoke,
+        .target_id = affordance_id,
+        .arguments = client::interaction_arguments{.row = row_id}};
+    return event;
+}
+/// A screen of its own with one list; `pick` is the affordance the list activates and `role` its
+/// role.
+auto picking_screen(const std::string& role, const std::string& activate, const std::string& label)
+    -> ec::screen_view {
+    const auto context = input_context("TEST_PICK");
+    const auto scope = ec::screen_scope(
+        context, {.view = [&](const auto&) {
+            return ec::screen_view{
+                .root = ec::list(
+                    {.id = "list:rows",
+                     .rows = {{.id = "r:1"}, {.id = "r:2"}},
+                     .activate = activate}),
+                .affordances = {ec::invoke_affordance(
+                    {.id = "t:pick",
+                     .label = label,
+                     .args = {.row = ec::row_shape{.component_id = "list:rows"}},
+                     .role = role})}};
+        }});
+    const auto input = client::input_context_scope(context, "TEST_PICK");
+    auto state = map_only();
+    state.actions.push_back({.id = "CONFIRM", .name = "Confirm Choice", .keys = {"ENTER"}});
+    return top_of(state);
+}
+} // namespace
+
+TEST_CASE(
+    "a select affordance only moves the cursor and the list's activate runs the row",
+    "[engine_client_component]") {
+    const auto screen = picking_screen("select", "t:pick", "Select");
+    const auto& rows = body<ec::list_body>(find(screen, "list:rows"));
+    CHECK(affordance(screen, "t:pick").role == "select");
+    REQUIRE_FALSE(rows.activate.empty());
+    CHECK(rows.activate != "t:pick");
+    const auto& activate = affordance(screen, rows.activate);
+    CHECK(activate.role.empty());
+    CHECK(activate.label == "Confirm Choice");
+    CHECK(activate.args.row->component_id == "list:rows");
+    const auto selected = ec::invoked(invoke_of("t:pick", "r:2"));
+    REQUIRE(selected);
+    CHECK(selected->affordance_id == "t:pick");
+    CHECK_FALSE(selected->activates);
+    const auto activated = ec::invoked(invoke_of(rows.activate, "r:2"));
+    REQUIRE(activated);
+    CHECK(activated->affordance_id == "t:pick");
+    CHECK(activated->activates);
+    CHECK(activated->args.row == "r:2");
+}
+
+TEST_CASE(
+    "an activate that is no select affordance stays as the screen made it",
+    "[engine_client_component]") {
+    const auto screen = picking_screen("", "t:pick", "Select");
+    CHECK(body<ec::list_body>(find(screen, "list:rows")).activate == "t:pick");
+    const auto invoke = ec::invoked(invoke_of("t:pick", "r:1"));
+    REQUIRE(invoke);
+    CHECK(invoke->affordance_id == "t:pick");
+    CHECK_FALSE(invoke->activates);
+}

@@ -112,7 +112,9 @@ export const character: Scenario = {
       rec.command("bionics tab picked", passive)
       const passiveRows = part(engine.top(), "bionics:list").rows
       assert(passiveRows.length > 0, "a passive bionic")
-      const pickedBionic = await engine.invoke("bionics:pick", { row: passiveRows[0].id })
+      const pickedBionic = await engine.invoke("bn:activate:bionics:pick", {
+        row: passiveRows[0].id,
+      })
       assertEquals(pickedBionic.stages.at(-1), "completed")
       rec.command("bionic picked", pickedBionic)
       // A bionic that is always on says so in a popup, which is closed.
@@ -128,7 +130,7 @@ export const character: Scenario = {
       // Reassigning a letter asks for a key in a screen of its own.
       assertEquals((await engine.invoke("REASSIGN")).stages.at(-1), "completed")
       assertEquals(
-        (await engine.invoke("bionics:pick", { row: passiveRows[0].id })).stages.at(-1),
+        (await engine.invoke("bn:activate:bionics:pick", { row: passiveRows[0].id })).stages.at(-1),
         "completed",
       )
       const letter = engine.top()
@@ -163,7 +165,9 @@ export const character: Scenario = {
       const passiveTraits = part(mutations, "mutations:passive:rows").rows
       const activeTraits = part(mutations, "mutations:active:rows").rows
       assert(passiveTraits.length > 0 && activeTraits.length > 0, "a trait of each kind")
-      const traitPick = await engine.invoke("mutations:pick:active", { row: activeTraits[0].id })
+      const traitPick = await engine.invoke("bn:activate:mutations:pick:active", {
+        row: activeTraits[0].id,
+      })
       assertEquals(traitPick.stages.at(-1), "completed")
       rec.command("mutation picked", traitPick)
       await toMap(engine)

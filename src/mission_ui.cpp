@@ -263,7 +263,7 @@ void game::list_missions()
         }
         ui_manager::redraw();
         auto action = ctxt.handle_input();
-        // A client picked a tab or a mission: a mission picked on the active tab is confirmed.
+        // A client picked a tab or a mission: a mission activated on the active tab is confirmed.
         if( const auto picked = ec::invoked( ctxt.get_raw_input() ); picked && picked->args.row ) {
             if( picked->affordance_id == select_tab_id ) {
                 if( const auto found = std::ranges::find( tab_ids, *picked->args.row ); found != tab_ids.end() ) {
@@ -274,7 +274,7 @@ void game::list_missions()
                 const auto found = std::ranges::find_if( umissions, [&]( const mission * miss ) { return mission_row_id( *miss ) == *picked->args.row; } );
                 if( found != umissions.end() ) {
                     selection = found - umissions.begin();
-                    action = tab == tab_mode::TAB_ACTIVE ? "CONFIRM" : "";
+                    action = picked->activates && tab == tab_mode::TAB_ACTIVE ? "CONFIRM" : "";
                 }
             }
         }

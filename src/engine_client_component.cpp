@@ -41,6 +41,10 @@ auto mint_serial() -> std::uint64_t
 /// Generated affordance ids hold a `:`, which no registered action id does.
 auto choose_id( const std::string &component_id ) -> std::string { return "bn:choose:" + component_id; }
 
+/// A list's `select` affordance only moves the cursor; the affordance that runs the row has this prefix
+/// before the select's id, which `invoked` takes off again.
+constexpr auto activate_prefix = std::string_view { "bn:activate:" };
+
 /// The native name of the first of the actions `ids` that has one: the context's own, else the input
 /// manager's default. Empty when native names none: never a word the adapter made up.
 auto native_label( const boundary_state &state, const std::vector<std::string> &ids ) -> std::string
@@ -307,15 +311,38 @@ auto slots_of( const boundary_state &state ) -> std::vector<slot>
 
 auto clear_affordances( component &value ) -> void;
 
+/// A list that activates through a `select` affordance gets an affordance of its own that runs the row,
+/// so the select only moves the cursor. `label` is the native name of CONFIRM.
+auto separate_activation( component &value, std::vector<affordance> &affordances,
+                          const std::string &label ) -> void
+{
+    if( auto *const body = std::get_if<list_body>( &value.body ); body != nullptr &&
+        !body->activate.empty() ) {
+        const auto selecting = std::ranges::find_if( affordances, [&]( const affordance & entry ) {
+            return entry.id == body->activate && entry.role == "select";
+        } );
+        if( selecting != affordances.end() ) {
+            auto activating = *selecting;
+            activating.id = std::string{ activate_prefix } + activating.id;
+            activating.role.clear();
+            activating.label = label.empty() ? activating.label : label;
+            value.affordances.push_back( std::exchange( body->activate, activating.id ) );
+            if( !std::ranges::contains( affordances, activating.id, &affordance::id ) ) { affordances.push_back( std::move( activating ) ); }
+        }
+    }
+    for( auto &child : value.children ) { separate_activation( child, affordances, label ); }
+}
+
 /// The content of an entry. Only the top screen reads the 0.1 interaction, for it belongs to the view
 /// that is reading input now, and only the top has affordances.
 auto screen_of( const boundary_state &state, const slot &entry, const bool top ) -> screen_view
 {
     auto result = screen_view{};
     auto described = true;
+    const auto provided = entry.view != nullptr && *entry.view;
     if( entry.map ) {
         result = map_view( state );
-    } else if( entry.view != nullptr && *entry.view ) {
+    } else if( provided ) {
         result = ( *entry.view )( state );
     } else if( top && state.interaction && generic( *state.interaction ) ) {
         result = generic_view( state );
@@ -329,6 +356,9 @@ auto screen_of( const boundary_state &state, const slot &entry, const bool top )
         result.affordances.clear();
         if( result.root ) { clear_affordances( *result.root ); }
     } else if( described ) {
+        if( provided && result.root ) {
+            separate_activation( *result.root, result.affordances, native_label( state, { "CONFIRM" } ) );
+        }
         // The registered actions of the context follow the screen's own affordances.
         auto registered = registered_affordances( state, entry.map );
         for( const auto &[id, reason] : result.denials ) {
@@ -482,7 +512,9 @@ auto invoked( const input_event &event ) -> std::optional<invoked_affordance>
     const auto &semantic = event.interaction;
     if( !semantic || semantic->operation != game_client::interaction_operation::invoke ||
         !semantic->arguments ) { return std::nullopt; }
-    return invoked_affordance{ .affordance_id = semantic->target_id, .args = *semantic->arguments };
+    const auto activates = semantic->target_id.starts_with( activate_prefix );
+    return invoked_affordance{ .affordance_id = semantic->target_id.substr( activates ? activate_prefix.size() : 0 ),
+                               .activates = activates, .args = *semantic->arguments };
 }
 
 screen_scope::screen_scope( const input_context &context, screen_options options ) :

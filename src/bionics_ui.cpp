@@ -1059,6 +1059,9 @@ void show_bionics_ui( Character &who )
             }
             cursor = std::distance( current_bionic_list->begin(), found );
             scroll_position = clamp( cursor - half_list_view_location, 0, max_scroll_position );
+            if( !picked->activates ) {
+                continue;
+            }
             action = "CONFIRM";
         }
         const int ch = ctxt.get_raw_input().get_first_input();

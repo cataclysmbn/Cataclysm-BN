@@ -109,7 +109,9 @@ auto invoke(const std::string& affordance, game_client::interaction_arguments ar
 auto go_to(const std::string& tab) -> input_event { return invoke("newchar:tab", {.row = tab}); }
 auto pick(const std::string& tab, const std::string& row, const std::string& page = {})
     -> input_event {
-    return invoke("newchar:" + tab + (page.empty() ? "" : ":" + page) + ":pick", {.row = row});
+    // The affordance that runs the row; the `:pick` select only moves the cursor to it.
+    return invoke(
+        "bn:activate:newchar:" + tab + (page.empty() ? "" : ":" + page) + ":pick", {.row = row});
 }
 
 auto part(const ec::screen_view& screen, const std::string& id) -> const ec::component& {
