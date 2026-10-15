@@ -974,8 +974,10 @@ TEST_CASE(
     const auto& panel = screen["root"];
     CHECK(panel["subtitle"] == "Item hotkeys assigned: 1/52");
     REQUIRE(panel.contains("stats"));
-    CHECK(panel["stats"][0]["unit"] == weight_units());
-    CHECK(panel["stats"][1]["unit"] == volume_units_abbr());
+    CHECK(panel["stats"][0]["label"].get<std::string>()
+          == string_format("Weight (%s):", weight_units()));
+    CHECK(panel["stats"][1]["label"].get<std::string>()
+          == string_format("Volume (%s):", volume_units_abbr()));
     CHECK_FALSE(panel["stats"][0]["max"].get<std::string>().empty());
     // The cursor is on an item, not on a category heading.
     auto lists = std::vector<nlohmann::json>{};

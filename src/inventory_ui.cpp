@@ -2175,10 +2175,10 @@ auto inventory_selector::interaction_view() const -> ec::screen_view
     }
     auto stats = std::vector<ec::panel_stat> {};
     if( const auto totals = display_stats ? header_totals( get_raw_stats() ) : std::nullopt ) {
-        stats.push_back( { .key = "weight", .label = _( "Weight" ), .value = totals->weight, .max = totals->weight_max,
-                           .unit = totals->weight_unit, .tone = totals->over_weight ? "bad" : "" } );
-        stats.push_back( { .key = "volume", .label = _( "Volume" ), .value = totals->volume, .max = totals->volume_max,
-                           .unit = totals->volume_unit, .tone = totals->over_volume ? "bad" : "" } );
+        stats.push_back( { .key = "weight", .label = string_format( _( "Weight (%s):" ), totals->weight_unit ), .value = totals->weight,
+                           .max = totals->weight_max, .tone = totals->over_weight ? "bad" : "" } );
+        stats.push_back( { .key = "volume", .label = string_format( _( "Volume (%s):" ), totals->volume_unit ), .value = totals->volume,
+                           .max = totals->volume_max, .tone = totals->over_volume ? "bad" : "" } );
     }
     auto content = panels.empty() ? ec::component{ .id = "text:empty", .body = ec::text_body{ .markup = _( "Your inventory is empty." ) } } :
                    ec::split( { .id = "split:columns", .active = active_key.empty() ? std::string{} : "panel:" + active_key,

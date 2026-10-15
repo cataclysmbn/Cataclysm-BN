@@ -106,13 +106,13 @@ auto carry_stats( const pickup::screen_options &opts ) -> std::vector<ec::panel_
     const auto volume_capacity = g->u.volume_capacity();
     return {
         {
-            .key = "weight", .label = _( "Weight" ), .value = weight_text( opts.weight_predict ),
-            .max = weight_text( weight_capacity ), .unit = weight_units(),
+            .key = "weight", .label = string_format( _( "Weight (%s):" ), weight_units() ), .value = weight_text( opts.weight_predict ),
+            .max = weight_text( weight_capacity ),
             .tone = opts.weight_predict > weight_capacity ? "bad" : ""
         },
         {
-            .key = "volume", .label = _( "Volume" ), .value = format_volume( opts.volume_predict ),
-            .max = format_volume( volume_capacity ), .unit = volume_units_abbr(),
+            .key = "volume", .label = string_format( _( "Volume (%s):" ), volume_units_abbr() ), .value = format_volume( opts.volume_predict ),
+            .max = format_volume( volume_capacity ),
             .tone = opts.volume_predict > volume_capacity ? "bad" : ""
         },
     };

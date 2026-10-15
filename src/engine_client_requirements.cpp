@@ -94,9 +94,7 @@ auto group_rows( const std::string &kind, const std::vector<std::vector<T>> &gro
 
 auto caption( std::string native ) -> std::string
 {
-    auto result = trim( std::move( native ) );
-    if( result.ends_with( ':' ) ) { result.pop_back(); }
-    return result;
+    return trim( std::move( native ) );
 }
 
 auto skill_requirements( const skill_view_options &options ) -> std::optional<component>

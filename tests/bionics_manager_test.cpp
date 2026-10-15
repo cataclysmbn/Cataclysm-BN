@@ -809,7 +809,7 @@ TEST_CASE(
         }
         for (const auto& stat : body<ec::panel_body>(part(screen, "bionics:status")).stats) {
             CHECK(stat.value.find("<color") == std::string::npos);
-            CHECK(stat.label.find(':') == std::string::npos);
+            CHECK(stat.label.ends_with(':'));
         }
         return action("QUIT");
     });

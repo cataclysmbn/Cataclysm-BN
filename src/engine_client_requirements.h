@@ -17,7 +17,7 @@ class item;
 namespace engine_client
 {
 
-/// A native caption as a label: without its trailing colon and spaces.
+/// A native caption as a label: the native text, colon included, without the spaces around it.
 auto caption( std::string native ) -> std::string;
 
 /// One factor of a crafting or construction speed, as a multiplier of the base time.

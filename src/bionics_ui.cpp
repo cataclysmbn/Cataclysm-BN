@@ -726,7 +726,7 @@ auto slot_stats( const bionics_model &model ) -> std::vector<ec::panel_stat>
     using namespace std::views;
     return model.who.get_all_body_parts() | transform( [&]( const bodypart_id & bp ) {
         const auto total = model.who.get_total_bionics_slots( bp );
-        return ec::panel_stat{ .key = "slot:" + bp.id().str(), .label = body_part_name_as_heading( bp->token, 1 ),
+        return ec::panel_stat{ .key = "slot:" + bp.id().str(), .label = string_format( "%s:", body_part_name_as_heading( bp->token, 1 ) ),
                                .value = std::to_string( total - model.who.get_free_bionics_slots( bp ) ), .max = std::to_string( total ) };
     } ) | std::ranges::to<std::vector>();
 }

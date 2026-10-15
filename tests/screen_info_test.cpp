@@ -180,7 +180,7 @@ TEST_CASE(
                    const auto& stats = body<ec::panel_body>(part(top, "morale:totals")).stats;
                    REQUIRE(stats.size() == 4);
                    CHECK(stats[0].key == "level");
-                   CHECK(stats[0].label == "Total morale");
+                   CHECK(stats[0].label == "Total morale:");
                    CHECK(stats[0].value == "+10");
                    CHECK(stats[0].tone == "good");
                    CHECK(stats[1].key == "pain");
@@ -190,7 +190,7 @@ TEST_CASE(
                    CHECK(stats[2].value == "3");
                    CHECK(stats[2].tone == "bad");
                    CHECK(stats[3].key == "focus");
-                   CHECK(stats[3].label == "Focus trends towards");
+                   CHECK(stats[3].label == "Focus trends towards:");
                    CHECK(stats[3].value == "77");
                    CHECK(stats[3].tone.empty());
                    CHECK(find(top, "QUIT") != nullptr);
