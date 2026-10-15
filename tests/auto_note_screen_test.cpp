@@ -263,6 +263,11 @@ TEST_CASE(
                 CHECK(affordance(screen, "ENABLE_MAPEXTRA_NOTE").enabled);
                 CHECK(affordance(screen, "DISABLE_MAPEXTRA_NOTE").enabled);
                 CHECK(affordance(screen, "QUIT").role == "cancel");
+                // An action native names none for is no button.
+                CHECK_FALSE(has_affordance(screen, "CHANGE_MAPEXTRA_CHARACTER"));
+                CHECK(std::ranges::none_of(screen.affordances, [](const ec::affordance& entry) {
+                    return entry.label == entry.id;
+                }));
                 // Rows are named by identity; position, an unknown extra and a missing argument
                 // are refused.
                 CHECK(refused(state, "autonote:select", {.row = "extra:0"}));
