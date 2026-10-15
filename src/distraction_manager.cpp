@@ -215,7 +215,7 @@ void distraction_manager_gui::show()
                         .markup = _( distraction_desc.at( cur_distraction ).second.c_str() ) } } ) } ),
             .affordances = {
                 ec::invoke_affordance( { .id = distractions_select, .label = _( "Select" ), .args = row_arg, .role = "select" } ),
-                ec::invoke_affordance( { .id = distractions_toggle, .label = ctx.get_action_name( "CONFIRM" ), .args = row_arg } ),
+                ec::invoke_affordance( { .id = distractions_toggle, .label = ctx.get_action_name( "CONFIRM" ), .args = row_arg, .covers = "CONFIRM" } ),
             },
             .focus_component = distractions_items, .focus_row = row_id_of( cur_distraction ) };
     };

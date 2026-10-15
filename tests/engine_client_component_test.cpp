@@ -1040,8 +1040,13 @@ auto invoke_of(const std::string& affordance_id, const std::string& row_id) -> i
 }
 /// A screen of its own with one list; `pick` is the affordance the list activates and `role` its
 /// role.
-auto picking_screen(const std::string& role, const std::string& activate, const std::string& label)
-    -> ec::screen_view {
+struct picking_options {
+    std::string role = {};
+    std::string activate = {};
+    std::string covers = {};
+    std::string denial = {};
+};
+auto picking_screen(const picking_options& options) -> ec::screen_view {
     const auto context = input_context("TEST_PICK");
     const auto scope = ec::screen_scope(
         context, {.view = [&](const auto&) {
@@ -1049,12 +1054,17 @@ auto picking_screen(const std::string& role, const std::string& activate, const 
                 .root = ec::list(
                     {.id = "list:rows",
                      .rows = {{.id = "r:1"}, {.id = "r:2"}},
-                     .activate = activate}),
+                     .activate = options.activate}),
                 .affordances = {ec::invoke_affordance(
                     {.id = "t:pick",
-                     .label = label,
+                     .label = "Confirm Choice",
                      .args = {.row = ec::row_shape{.component_id = "list:rows"}},
-                     .role = role})}};
+                     .role = options.role,
+                     .covers = options.covers})},
+                .denials =
+                    options.denial.empty()
+                        ? std::vector<ec::denial>{}
+                        : std::vector<ec::denial>{{.id = "CONFIRM", .reason = options.denial}}};
         }});
     const auto input = client::input_context_scope(context, "TEST_PICK");
     auto state = map_only();
@@ -1066,7 +1076,7 @@ auto picking_screen(const std::string& role, const std::string& activate, const 
 TEST_CASE(
     "a select affordance only moves the cursor and the list's activate runs the row",
     "[engine_client_component]") {
-    const auto screen = picking_screen("select", "t:pick", "Select");
+    const auto screen = picking_screen({.role = "select", .activate = "t:pick"});
     const auto& rows = body<ec::list_body>(find(screen, "list:rows"));
     CHECK(affordance(screen, "t:pick").role == "select");
     REQUIRE_FALSE(rows.activate.empty());
@@ -1089,10 +1099,35 @@ TEST_CASE(
 TEST_CASE(
     "an activate that is no select affordance stays as the screen made it",
     "[engine_client_component]") {
-    const auto screen = picking_screen("", "t:pick", "Select");
+    const auto screen = picking_screen({.activate = "t:pick"});
     CHECK(body<ec::list_body>(find(screen, "list:rows")).activate == "t:pick");
     const auto invoke = ec::invoked(invoke_of("t:pick", "r:1"));
     REQUIRE(invoke);
     CHECK(invoke->affordance_id == "t:pick");
     CHECK_FALSE(invoke->activates);
+}
+
+TEST_CASE(
+    "a registered action an affordance of the screen covers is not offered beside it",
+    "[engine_client_component]") {
+    const auto own = picking_screen({.activate = "t:pick", .covers = "CONFIRM"});
+    CHECK(std::ranges::find(own.affordances, "CONFIRM", &ec::affordance::id)
+          == own.affordances.end());
+    // Two actions with the same label are two actions: only what an affordance declares it covers
+    // is dropped.
+    const auto alike = picking_screen({.activate = "t:pick"});
+    CHECK(affordance(alike, "t:pick").label == affordance(alike, "CONFIRM").label);
+    CHECK(affordance(alike, "CONFIRM").role == "confirm");
+    // A denial keeps the registered action, which is where it is shown.
+    const auto denied = picking_screen(
+        {.activate = "t:pick", .covers = "CONFIRM", .denial = "No."});
+    CHECK_FALSE(affordance(denied, "CONFIRM").enabled);
+    const auto none = picking_screen({});
+    CHECK(affordance(none, "CONFIRM").role == "confirm");
+    // The generic list has its own activate and keeps the registered action beside it.
+    auto state = boundary(menu());
+    state.actions.push_back({.id = "CONFIRM", .name = "Confirm Choice", .keys = {"ENTER"}});
+    const auto generic = top_of(state);
+    CHECK(affordance(generic, "CONFIRM").role == "confirm");
+    CHECK_FALSE(body<ec::list_body>(find(generic, "list:choices")).activate.empty());
 }

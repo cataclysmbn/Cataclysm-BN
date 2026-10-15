@@ -806,7 +806,7 @@ bool main_menu::opening_screen()
                 .affordances = { ec::invoke_affordance( { .id = tab_id, .label = ctxt.get_action_name( "CONFIRM" ), .args = { .row = ec::row_shape{ .component_id = tabs_id } } } ) },
             };
             if( listed ) {
-                result.affordances.push_back( ec::invoke_affordance( { .id = entry_id, .label = ctxt.get_action_name( "CONFIRM" ), .args = { .row = ec::row_shape{ .component_id = entries_id } } } ) );
+                result.affordances.push_back( ec::invoke_affordance( { .id = entry_id, .label = ctxt.get_action_name( "CONFIRM" ), .args = { .row = ec::row_shape{ .component_id = entries_id } }, .covers = "CONFIRM" } ) );
                 result.focus_component = entries_id;
                 result.focus_row = sel2 >= 0 &&
                                    static_cast<std::size_t>( sel2 ) < entries.size() ? entries[sel2].id : std::string{};

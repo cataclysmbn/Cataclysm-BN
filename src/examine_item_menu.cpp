@@ -90,7 +90,7 @@ auto examine_view( const examine_model &model ) -> ec::screen_view
             ec::list( { .id = action_rows_id, .rows = std::move( rows ), .selection = "single", .activate = run_action_id } ) ) } ),
         .affordances = {
             ec::invoke_affordance( { .id = select_action_id, .label = _( "Select" ), .args = { .row = ec::row_shape{ .component_id = action_rows_id } }, .role = "select" } ),
-            ec::invoke_affordance( { .id = run_action_id, .label = model.ctxt.get_action_name( "CONFIRM" ), .args = { .row = ec::row_shape{ .component_id = action_rows_id } } } ),
+            ec::invoke_affordance( { .id = run_action_id, .label = model.ctxt.get_action_name( "CONFIRM" ), .args = { .row = ec::row_shape{ .component_id = action_rows_id } }, .covers = "CONFIRM" } ),
         },
         .focus_component = action_rows_id,
         .focus_row = focus < model.actions.size() ? model.actions[focus].action : std::string{},

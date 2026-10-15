@@ -1639,10 +1639,17 @@ Deno.test({
       assertEquals(distractionRow(session, target.id).toggled, false)
       assertEquals(distractionRow(session, target.id).columns[0].value, "Disabled")
       assertEquals(distractionRow(session, rows[0].id).toggled, true)
-      // The registered action of the screen switches it back, and then off again.
-      assertEquals((await invokeOn(session, "CONFIRM")).stages.at(-1), "completed")
+      // The screen offers no registered confirm beside its toggle, which switches it back, and then off again.
+      assert(!top(session).affordances.some((entry: Value) => entry.id === "CONFIRM"))
+      assertEquals(
+        (await invokeOn(session, "distractions:toggle", { row: target.id })).stages.at(-1),
+        "completed",
+      )
       assertEquals(distractionRow(session, target.id).toggled, true)
-      assertEquals((await invokeOn(session, "CONFIRM")).stages.at(-1), "completed")
+      assertEquals(
+        (await invokeOn(session, "distractions:toggle", { row: target.id })).stages.at(-1),
+        "completed",
+      )
       // Leaving saves at once, with no question.
       assertEquals((await invokeOn(session, "QUIT")).stages.at(-1), "completed")
       await session.acknowledge(inMainMenu(session))

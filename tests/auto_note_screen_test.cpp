@@ -257,8 +257,10 @@ TEST_CASE(
                 CHECK(stat[0].value == "True");
                 CHECK(stat[0].tone == "good");
                 CHECK(affordance(screen, "autonote:select").role == "select");
-                CHECK(affordance(screen, "autonote:toggle").label
-                      == affordance(screen, "CONFIRM").label);
+                CHECK_FALSE(affordance(screen, "autonote:toggle").label.empty());
+                CHECK(std::ranges::none_of(screen.affordances, [](const auto& entry) {
+                    return entry.id == "CONFIRM";
+                }));
                 CHECK(affordance(screen, "SWITCH_AUTO_NOTE_OPTION").enabled);
                 CHECK(affordance(screen, "ENABLE_MAPEXTRA_NOTE").enabled);
                 CHECK(affordance(screen, "DISABLE_MAPEXTRA_NOTE").enabled);

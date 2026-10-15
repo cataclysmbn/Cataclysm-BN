@@ -357,8 +357,10 @@ TEST_CASE(
                 CHECK(screen.focus_component == "distractions:items");
                 CHECK(screen.focus_row == first_distraction);
                 CHECK(affordance(screen, "distractions:select").role == "select");
-                CHECK(affordance(screen, "distractions:toggle").label
-                      == affordance(screen, "CONFIRM").label);
+                CHECK_FALSE(affordance(screen, "distractions:toggle").label.empty());
+                CHECK(std::ranges::none_of(screen.affordances, [](const auto& entry) {
+                    return entry.id == "CONFIRM";
+                }));
                 CHECK(affordance(screen, "QUIT").role == "cancel");
                 CHECK(affordance(screen, "HELP_KEYBINDINGS").enabled);
                 // Rows are named by identity; an unknown one, or none, is refused.

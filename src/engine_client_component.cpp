@@ -325,6 +325,7 @@ auto separate_activation( component &value, std::vector<affordance> &affordances
             auto activating = *selecting;
             activating.id = std::string{ activate_prefix } + activating.id;
             activating.role.clear();
+            activating.covers = "CONFIRM";
             activating.label = label.empty() ? activating.label : label;
             value.affordances.push_back( std::exchange( body->activate, activating.id ) );
             if( !std::ranges::contains( affordances, activating.id, &affordance::id ) ) { affordances.push_back( std::move( activating ) ); }
@@ -361,6 +362,11 @@ auto screen_of( const boundary_state &state, const slot &entry, const bool top )
         }
         // The registered actions of the context follow the screen's own affordances.
         auto registered = registered_affordances( state, entry.map );
+        // A registered action that an affordance of the screen performs is not offered a second time, unless it has a denial.
+        std::erase_if( registered, [&]( const affordance & offered_action ) {
+            return std::ranges::contains( result.affordances, offered_action.id, &affordance::covers ) &&
+                   !std::ranges::contains( result.denials, offered_action.id, &denial::id );
+        } );
         for( const auto &[id, reason] : result.denials ) {
             const auto found = std::ranges::find( registered, id, &affordance::id );
             if( found != registered.end() ) { found->enabled = false; found->denial = reason; }
@@ -503,7 +509,7 @@ auto invoke_affordance( invoke_options options ) -> affordance
     return {
         .id = std::move( options.id ), .label = std::move( options.label ), .keys = std::move( options.keys ),
         .enabled = options.enabled, .denial = std::move( options.denial ), .role = std::move( options.role ),
-        .args = std::move( options.args ), .runs = invoke_kind::screen,
+        .args = std::move( options.args ), .runs = invoke_kind::screen, .covers = std::move( options.covers ),
     };
 }
 

@@ -497,6 +497,10 @@ TEST_CASE(
         REQUIRE(screen.context == "INVENTORY_ITEM");
         CHECK(screen.title.find("t-shirt") != std::string::npos);
         CHECK(screen.focus_component == "examine:actions");
+        // The run affordance of the list is the confirm; no registered one repeats it.
+        CHECK(std::ranges::none_of(screen.affordances, [](const auto& entry) {
+            return entry.id == "CONFIRM";
+        }));
         CHECK(text_of(screen, "examine:info").find("Coverage") != std::string::npos);
         if (step == 1) {
             // Selecting only moves the cursor: nothing ran, and the menu is still open.

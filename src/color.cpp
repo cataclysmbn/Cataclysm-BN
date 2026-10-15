@@ -960,7 +960,7 @@ return column == 1 ? std::string{ _( "Normal" ) } :
                         .child = ec::split( { .id = "colors:facts", .children = std::move( facts ) } ) } ) ) } ) } ),
             .affordances = {
                 ec::invoke_affordance( { .id = colors_select, .label = _( "Select" ), .args = row_arg, .role = "select" } ),
-                ec::invoke_affordance( { .id = colors_activate, .label = ctxt.get_action_name( "CONFIRM" ), .args = row_arg } ),
+                ec::invoke_affordance( { .id = colors_activate, .label = ctxt.get_action_name( "CONFIRM" ), .args = row_arg, .covers = "CONFIRM" } ),
                 ec::invoke_affordance( {
                     .id = colors_set, .label = custom_label( iCurrentCol ), .args = {
                         .row = ec::row_shape{ .component_id = colors_editor }, .text = ec::text_shape{}

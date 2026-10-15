@@ -4069,7 +4069,7 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
         const auto row_arg = ec::arg_shape{ .row = ec::row_shape{ .component_id = options_items } };
         auto affordances = std::vector<ec::affordance> {
             ec::invoke_affordance( { .id = options_select, .label = _( "Select" ), .args = row_arg, .role = "select" } ),
-            ec::invoke_affordance( { .id = options_activate, .label = ctxt.get_action_name( "CONFIRM" ), .args = row_arg } ),
+            ec::invoke_affordance( { .id = options_activate, .label = ctxt.get_action_name( "CONFIRM" ), .args = row_arg, .covers = "CONFIRM" } ),
             ec::invoke_affordance( {
                 .id = options_set, .label = _( "Value" ), .args = {
                     .row = ec::row_shape{ .component_id = options_editor }, .text = ec::text_shape{}

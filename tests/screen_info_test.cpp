@@ -95,8 +95,10 @@ TEST_CASE(
                     CHECK(body<ec::list_body>(part(top, "help:topics")).activate == "help:topic");
                     const auto* const open = find(top, "help:topic");
                     REQUIRE(open != nullptr);
-                    REQUIRE(find(top, "CONFIRM") != nullptr);
-                    CHECK(open->label == find(top, "CONFIRM")->label);
+                    // The topic's own button is the confirm: the registered one is not offered
+                    // beside it.
+                    CHECK_FALSE(open->label.empty());
+                    CHECK(find(top, "CONFIRM") == nullptr);
                     CHECK(refuses("help:topic", {.row = "topic:999"}));
                     return invoke_event(top, "help:topic", {.row = "topic:1"});
                 }

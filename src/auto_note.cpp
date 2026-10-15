@@ -381,7 +381,7 @@ void auto_note_manager_gui::show()
             parts.front().affordances.push_back( extra_select );
             const auto row_arg = ec::arg_shape{ .row = ec::row_shape{ .component_id = extras_list } };
             affordances.push_back( ec::invoke_affordance( { .id = extra_select, .label = _( "Select" ), .args = row_arg, .role = "select" } ) );
-            affordances.push_back( ec::invoke_affordance( { .id = extra_toggle, .label = ctx.get_action_name( "CONFIRM" ), .args = row_arg } ) );
+            affordances.push_back( ec::invoke_affordance( { .id = extra_toggle, .label = ctx.get_action_name( "CONFIRM" ), .args = row_arg, .covers = "CONFIRM" } ) );
         }
         return {
             .title = manager_title(),

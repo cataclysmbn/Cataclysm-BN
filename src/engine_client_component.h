@@ -76,6 +76,9 @@ struct affordance {
     std::string role = {};
     arg_shape args = {};
     invoke_kind runs = invoke_kind::action;
+    /// The registered action this affordance performs on the screen, which is then not offered beside it
+    /// unless it carries a denial; empty for none. Not on the wire.
+    std::string covers = {};
     /// The registered action of `action`; the choice of a `choose` without `args.row`.
     std::string target = {};
     /// The client may hold the key down with `bn.hold`, and the engine takes one step of it per input prompt
@@ -312,6 +315,8 @@ struct invoke_options {
     bool enabled = true;
     std::string denial = {};
     std::string role = {};
+    /// The registered action it performs: see `affordance::covers`.
+    std::string covers = {};
 };
 /// An affordance the screen runs itself: its loop reads the invoke with `invoked`.
 auto invoke_affordance( invoke_options options ) -> affordance;
