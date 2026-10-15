@@ -13,7 +13,7 @@
           "revision": "0"
         },
         "schema": {
-          "engine": "sha256:cb245ceae1022455",
+          "engine": "sha256:5db00f185e81f7b4",
           "client": "sha256:0000000000000000"
         }
       }
@@ -29,7 +29,7 @@
           "name": "contract-gen",
           "version": "1"
         },
-        "schema": "sha256:cb245ceae1022455",
+        "schema": "sha256:5db00f185e81f7b4",
         "capabilities": {
           "viewport": {
             "cols": 40,
@@ -58,7 +58,7 @@
           "cells_per_query": 4096,
           "screen_queue": 8
         },
-        "schema": "sha256:cb245ceae1022455",
+        "schema": "sha256:5db00f185e81f7b4",
         "locale": "en_US",
         "engine_locale": "en_US",
         "role": "controller"
@@ -381,6 +381,7 @@
                     "NUMPAD_8"
                   ],
                   "enabled": true,
+                  "role": "navigate",
                   "expect": "screen"
                 },
                 {
@@ -393,6 +394,7 @@
                     "NUMPAD_2"
                   ],
                   "enabled": true,
+                  "role": "navigate",
                   "expect": "screen"
                 },
                 {
@@ -405,6 +407,7 @@
                     "NUMPAD_4"
                   ],
                   "enabled": true,
+                  "role": "navigate",
                   "expect": "screen"
                 },
                 {
@@ -417,6 +420,7 @@
                     "NUMPAD_6"
                   ],
                   "enabled": true,
+                  "role": "navigate",
                   "expect": "screen"
                 },
                 {
@@ -426,6 +430,7 @@
                     "TAB"
                   ],
                   "enabled": true,
+                  "role": "navigate",
                   "expect": "screen"
                 },
                 {
@@ -435,6 +440,7 @@
                     "BACKTAB"
                   ],
                   "enabled": true,
+                  "role": "navigate",
                   "expect": "screen"
                 },
                 {
@@ -444,6 +450,7 @@
                     "PPAGE"
                   ],
                   "enabled": true,
+                  "role": "navigate",
                   "expect": "screen"
                 },
                 {
@@ -453,6 +460,7 @@
                     "NPAGE"
                   ],
                   "enabled": true,
+                  "role": "navigate",
                   "expect": "screen"
                 },
                 {
@@ -792,6 +800,7 @@
                   "NUMPAD_8"
                 ],
                 "enabled": true,
+                "role": "navigate",
                 "expect": "screen"
               },
               {
@@ -804,6 +813,7 @@
                   "NUMPAD_2"
                 ],
                 "enabled": true,
+                "role": "navigate",
                 "expect": "screen"
               },
               {
@@ -816,6 +826,7 @@
                   "NUMPAD_4"
                 ],
                 "enabled": true,
+                "role": "navigate",
                 "expect": "screen"
               },
               {
@@ -828,6 +839,7 @@
                   "NUMPAD_6"
                 ],
                 "enabled": true,
+                "role": "navigate",
                 "expect": "screen"
               },
               {
@@ -837,6 +849,7 @@
                   "TAB"
                 ],
                 "enabled": true,
+                "role": "navigate",
                 "expect": "screen"
               },
               {
@@ -846,6 +859,7 @@
                   "BACKTAB"
                 ],
                 "enabled": true,
+                "role": "navigate",
                 "expect": "screen"
               },
               {
@@ -855,6 +869,7 @@
                   "PPAGE"
                 ],
                 "enabled": true,
+                "role": "navigate",
                 "expect": "screen"
               },
               {
@@ -864,6 +879,7 @@
                   "NPAGE"
                 ],
                 "enabled": true,
+                "role": "navigate",
                 "expect": "screen"
               },
               {
@@ -1085,6 +1101,7 @@
               "NUMPAD_8"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1097,6 +1114,7 @@
               "NUMPAD_2"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1109,6 +1127,7 @@
               "NUMPAD_4"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1121,6 +1140,7 @@
               "NUMPAD_6"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1130,6 +1150,7 @@
               "TAB"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1139,6 +1160,7 @@
               "BACKTAB"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1148,6 +1170,7 @@
               "PPAGE"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1157,6 +1180,7 @@
               "NPAGE"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1256,7 +1280,7 @@
           "cells_per_query": 4096,
           "screen_queue": 8
         },
-        "schema": "sha256:cb245ceae1022455",
+        "schema": "sha256:5db00f185e81f7b4",
         "locale": "en_US",
         "engine_locale": "en_US"
       },

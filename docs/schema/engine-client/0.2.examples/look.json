@@ -131,6 +131,7 @@
               "NUMPAD_8"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -143,6 +144,7 @@
               "NUMPAD_2"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -155,6 +157,7 @@
               "NUMPAD_4"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -167,6 +170,7 @@
               "NUMPAD_6"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -178,6 +182,7 @@
               "NUMPAD_7"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -189,6 +194,7 @@
               "NUMPAD_1"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -200,6 +206,7 @@
               "NUMPAD_9"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -211,6 +218,7 @@
               "NUMPAD_3"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -281,6 +289,7 @@
             "label": "Mouse Move",
             "keys": [],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -322,6 +331,7 @@
               "?"
             ],
             "enabled": true,
+            "role": "help",
             "expect": "screen"
           },
           {

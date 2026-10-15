@@ -129,6 +129,7 @@
               "NUMPAD_8"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -141,6 +142,7 @@
               "NUMPAD_2"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -150,6 +152,7 @@
               "PPAGE"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -159,6 +162,7 @@
               "NPAGE"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -202,6 +206,7 @@
               "?"
             ],
             "enabled": true,
+            "role": "help",
             "expect": "screen"
           },
           {
@@ -565,6 +570,7 @@
               "NUMPAD_8"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -577,6 +583,7 @@
               "NUMPAD_2"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -589,6 +596,7 @@
               "NUMPAD_4"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -601,6 +609,7 @@
               "NUMPAD_6"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -764,6 +773,7 @@
               "NUMPAD_8"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -776,6 +786,7 @@
               "NUMPAD_2"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -808,6 +819,7 @@
               "?"
             ],
             "enabled": true,
+            "role": "help",
             "expect": "screen"
           }
         ],
@@ -890,6 +902,7 @@
               "NUMPAD_8"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -902,6 +915,7 @@
               "NUMPAD_2"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -914,6 +928,7 @@
               "NUMPAD_4"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -926,6 +941,7 @@
               "NUMPAD_6"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -958,6 +974,7 @@
               "?"
             ],
             "enabled": true,
+            "role": "help",
             "expect": "screen"
           }
         ],
@@ -1105,6 +1122,7 @@
               "NUMPAD_8"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1117,6 +1135,7 @@
               "NUMPAD_2"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1129,6 +1148,7 @@
               "NUMPAD_4"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1141,6 +1161,7 @@
               "NUMPAD_6"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1153,6 +1174,7 @@
               "NUMPAD_8"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1165,6 +1187,7 @@
               "NUMPAD_2"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1174,6 +1197,7 @@
               "TAB"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1183,6 +1207,7 @@
               "BACKTAB"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1226,6 +1251,7 @@
               "?"
             ],
             "enabled": true,
+            "role": "help",
             "expect": "screen"
           }
         ],
@@ -1354,6 +1380,7 @@
               "NUMPAD_8"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1366,6 +1393,7 @@
               "NUMPAD_2"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1378,6 +1406,7 @@
               "NUMPAD_4"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1390,6 +1419,7 @@
               "NUMPAD_6"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1399,6 +1429,7 @@
               "PPAGE"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1408,6 +1439,7 @@
               "NPAGE"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1430,6 +1462,7 @@
               "BACKTAB"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1439,6 +1472,7 @@
               "TAB"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1448,6 +1482,7 @@
               "?"
             ],
             "enabled": true,
+            "role": "help",
             "expect": "screen"
           }
         ],

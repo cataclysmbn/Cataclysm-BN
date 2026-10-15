@@ -71,6 +71,7 @@
               "?"
             ],
             "enabled": true,
+            "role": "help",
             "expect": "screen"
           },
           {
@@ -83,6 +84,7 @@
               "NUMPAD_4"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -95,6 +97,7 @@
               "NUMPAD_6"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -341,6 +344,7 @@
               "NUMPAD_8"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -351,6 +355,7 @@
               "NUMPAD_2"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -360,6 +365,7 @@
               "PPAGE"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -369,6 +375,7 @@
               "NPAGE"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -376,6 +383,7 @@
             "label": "Go to first entry",
             "keys": [],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -383,6 +391,7 @@
             "label": "Go to last entry",
             "keys": [],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -390,6 +399,7 @@
             "label": "Scroll up",
             "keys": [],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -397,6 +407,7 @@
             "label": "Scroll down",
             "keys": [],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -441,6 +452,7 @@
               "?"
             ],
             "enabled": true,
+            "role": "help",
             "expect": "screen"
           }
         ],
@@ -620,6 +632,7 @@
               "LEFT"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -629,6 +642,7 @@
               "RIGHT"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -675,6 +689,7 @@
               "HOME"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -684,6 +699,7 @@
               "END"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -711,6 +727,7 @@
               "?"
             ],
             "enabled": true,
+            "role": "help",
             "expect": "screen"
           },
           {
@@ -721,6 +738,7 @@
               "NUMPAD_8"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -731,6 +749,7 @@
               "NUMPAD_2"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -740,6 +759,7 @@
               "PPAGE"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -749,6 +769,7 @@
               "NPAGE"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -756,6 +777,7 @@
             "label": "Go to first entry",
             "keys": [],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -763,6 +785,7 @@
             "label": "Go to last entry",
             "keys": [],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -770,6 +793,7 @@
             "label": "Scroll up",
             "keys": [],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -777,6 +801,7 @@
             "label": "Scroll down",
             "keys": [],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           }
         ],
@@ -937,6 +962,7 @@
               "LEFT"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -946,6 +972,7 @@
               "RIGHT"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -992,6 +1019,7 @@
               "HOME"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1001,6 +1029,7 @@
               "END"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1028,6 +1057,7 @@
               "?"
             ],
             "enabled": true,
+            "role": "help",
             "expect": "screen"
           },
           {
@@ -1038,6 +1068,7 @@
               "NUMPAD_8"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1048,6 +1079,7 @@
               "NUMPAD_2"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1057,6 +1089,7 @@
               "PPAGE"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1066,6 +1099,7 @@
               "NPAGE"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1073,6 +1107,7 @@
             "label": "Go to first entry",
             "keys": [],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1080,6 +1115,7 @@
             "label": "Go to last entry",
             "keys": [],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1087,6 +1123,7 @@
             "label": "Scroll up",
             "keys": [],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1094,6 +1131,7 @@
             "label": "Scroll down",
             "keys": [],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           }
         ],
@@ -1738,6 +1776,7 @@
               "NUMPAD_8"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1748,6 +1787,7 @@
               "NUMPAD_2"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1757,6 +1797,7 @@
               "PPAGE"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1766,6 +1807,7 @@
               "NPAGE"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1773,6 +1815,7 @@
             "label": "Go to first entry",
             "keys": [],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1780,6 +1823,7 @@
             "label": "Go to last entry",
             "keys": [],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1787,6 +1831,7 @@
             "label": "Scroll up",
             "keys": [],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1794,6 +1839,7 @@
             "label": "Scroll down",
             "keys": [],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -1838,6 +1884,7 @@
               "?"
             ],
             "enabled": true,
+            "role": "help",
             "expect": "screen"
           }
         ],

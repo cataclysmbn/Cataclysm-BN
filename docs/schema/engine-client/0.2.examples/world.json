@@ -1577,6 +1577,27 @@
             "text": "zombie",
             "detail": "This is a zombie."
           }
+        ],
+        "actions": [
+          {
+            "id": "fire",
+            "label": "Fire Wielded Item",
+            "keys": [
+              "f"
+            ]
+          },
+          {
+            "id": "travel",
+            "label": "Travel here",
+            "keys": []
+          },
+          {
+            "id": "look",
+            "label": "Look Around",
+            "keys": [
+              ";"
+            ]
+          }
         ]
       }
     },

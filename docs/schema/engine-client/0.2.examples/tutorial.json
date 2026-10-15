@@ -1965,6 +1965,7 @@
                   "?"
                 ],
                 "enabled": true,
+                "role": "help",
                 "expect": "screen"
               },
               {
@@ -2254,6 +2255,147 @@
                 "keys": [],
                 "enabled": true,
                 "expect": "screen"
+              }
+            ],
+            "shortcuts": [
+              {
+                "affordance_id": "inventory",
+                "label": "Open Inventory",
+                "keys": [
+                  "i"
+                ],
+                "icon": "inventory",
+                "enabled": true,
+                "glyph": "🎒"
+              },
+              {
+                "affordance_id": "player_data",
+                "label": "View Player Info",
+                "keys": [
+                  "@"
+                ],
+                "icon": "character",
+                "enabled": true,
+                "glyph": "👤"
+              },
+              {
+                "affordance_id": "craft",
+                "label": "Craft Items",
+                "keys": [
+                  "&"
+                ],
+                "icon": "crafting",
+                "enabled": true,
+                "glyph": "🔨"
+              },
+              {
+                "affordance_id": "construct",
+                "label": "Construct Terrain",
+                "keys": [
+                  "*"
+                ],
+                "icon": "construction",
+                "enabled": true,
+                "glyph": "🏠"
+              },
+              {
+                "affordance_id": "map",
+                "label": "View Map",
+                "keys": [
+                  "m"
+                ],
+                "icon": "map",
+                "enabled": true,
+                "glyph": "🗺"
+              },
+              {
+                "affordance_id": "look",
+                "label": "Look Around",
+                "keys": [
+                  ";",
+                  "x"
+                ],
+                "icon": "look",
+                "enabled": true,
+                "glyph": "🔍"
+              },
+              {
+                "affordance_id": "wait",
+                "label": "Wait for Several Minutes",
+                "keys": [
+                  "|"
+                ],
+                "icon": "wait",
+                "enabled": true,
+                "glyph": "⌛"
+              },
+              {
+                "affordance_id": "sleep",
+                "label": "Sleep",
+                "keys": [
+                  "$"
+                ],
+                "icon": "sleep",
+                "enabled": true,
+                "glyph": "💤"
+              },
+              {
+                "affordance_id": "pickup",
+                "label": "Pick up items from one nearby tile",
+                "keys": [
+                  "g"
+                ],
+                "icon": "pickup",
+                "enabled": true,
+                "glyph": "✋"
+              },
+              {
+                "affordance_id": "wield",
+                "label": "Wield",
+                "keys": [
+                  "w"
+                ],
+                "icon": "wield",
+                "enabled": true,
+                "glyph": "⚔"
+              },
+              {
+                "affordance_id": "wear",
+                "label": "Wear Item",
+                "keys": [
+                  "W"
+                ],
+                "icon": "wear",
+                "enabled": true,
+                "glyph": "👕"
+              },
+              {
+                "affordance_id": "main_menu",
+                "label": "Main Menu",
+                "keys": [
+                  "ESC"
+                ],
+                "icon": "menu",
+                "enabled": true,
+                "glyph": "☰"
+              },
+              {
+                "affordance_id": "open_options",
+                "label": "Options",
+                "keys": [],
+                "icon": "options",
+                "enabled": true,
+                "glyph": "⚙"
+              },
+              {
+                "affordance_id": "HELP_KEYBINDINGS",
+                "label": "Display keybindings menu",
+                "keys": [
+                  "?"
+                ],
+                "icon": "help",
+                "enabled": true,
+                "glyph": "❓"
               }
             ]
           }
@@ -3249,6 +3391,7 @@
               "?"
             ],
             "enabled": true,
+            "role": "help",
             "expect": "screen"
           },
           {
@@ -3538,6 +3681,147 @@
             "keys": [],
             "enabled": true,
             "expect": "screen"
+          }
+        ],
+        "shortcuts": [
+          {
+            "affordance_id": "inventory",
+            "label": "Open Inventory",
+            "keys": [
+              "i"
+            ],
+            "icon": "inventory",
+            "enabled": true,
+            "glyph": "🎒"
+          },
+          {
+            "affordance_id": "player_data",
+            "label": "View Player Info",
+            "keys": [
+              "@"
+            ],
+            "icon": "character",
+            "enabled": true,
+            "glyph": "👤"
+          },
+          {
+            "affordance_id": "craft",
+            "label": "Craft Items",
+            "keys": [
+              "&"
+            ],
+            "icon": "crafting",
+            "enabled": true,
+            "glyph": "🔨"
+          },
+          {
+            "affordance_id": "construct",
+            "label": "Construct Terrain",
+            "keys": [
+              "*"
+            ],
+            "icon": "construction",
+            "enabled": true,
+            "glyph": "🏠"
+          },
+          {
+            "affordance_id": "map",
+            "label": "View Map",
+            "keys": [
+              "m"
+            ],
+            "icon": "map",
+            "enabled": true,
+            "glyph": "🗺"
+          },
+          {
+            "affordance_id": "look",
+            "label": "Look Around",
+            "keys": [
+              ";",
+              "x"
+            ],
+            "icon": "look",
+            "enabled": true,
+            "glyph": "🔍"
+          },
+          {
+            "affordance_id": "wait",
+            "label": "Wait for Several Minutes",
+            "keys": [
+              "|"
+            ],
+            "icon": "wait",
+            "enabled": true,
+            "glyph": "⌛"
+          },
+          {
+            "affordance_id": "sleep",
+            "label": "Sleep",
+            "keys": [
+              "$"
+            ],
+            "icon": "sleep",
+            "enabled": true,
+            "glyph": "💤"
+          },
+          {
+            "affordance_id": "pickup",
+            "label": "Pick up items from one nearby tile",
+            "keys": [
+              "g"
+            ],
+            "icon": "pickup",
+            "enabled": true,
+            "glyph": "✋"
+          },
+          {
+            "affordance_id": "wield",
+            "label": "Wield",
+            "keys": [
+              "w"
+            ],
+            "icon": "wield",
+            "enabled": true,
+            "glyph": "⚔"
+          },
+          {
+            "affordance_id": "wear",
+            "label": "Wear Item",
+            "keys": [
+              "W"
+            ],
+            "icon": "wear",
+            "enabled": true,
+            "glyph": "👕"
+          },
+          {
+            "affordance_id": "main_menu",
+            "label": "Main Menu",
+            "keys": [
+              "ESC"
+            ],
+            "icon": "menu",
+            "enabled": true,
+            "glyph": "☰"
+          },
+          {
+            "affordance_id": "open_options",
+            "label": "Options",
+            "keys": [],
+            "icon": "options",
+            "enabled": true,
+            "glyph": "⚙"
+          },
+          {
+            "affordance_id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "icon": "help",
+            "enabled": true,
+            "glyph": "❓"
           }
         ]
       }
@@ -5947,6 +6231,7 @@
                       "?"
                     ],
                     "enabled": true,
+                    "role": "help",
                     "expect": "screen"
                   },
                   {
@@ -6237,6 +6522,147 @@
                     "enabled": true,
                     "expect": "screen"
                   }
+                ],
+                "shortcuts": [
+                  {
+                    "affordance_id": "inventory",
+                    "label": "Open Inventory",
+                    "keys": [
+                      "i"
+                    ],
+                    "icon": "inventory",
+                    "enabled": true,
+                    "glyph": "🎒"
+                  },
+                  {
+                    "affordance_id": "player_data",
+                    "label": "View Player Info",
+                    "keys": [
+                      "@"
+                    ],
+                    "icon": "character",
+                    "enabled": true,
+                    "glyph": "👤"
+                  },
+                  {
+                    "affordance_id": "craft",
+                    "label": "Craft Items",
+                    "keys": [
+                      "&"
+                    ],
+                    "icon": "crafting",
+                    "enabled": true,
+                    "glyph": "🔨"
+                  },
+                  {
+                    "affordance_id": "construct",
+                    "label": "Construct Terrain",
+                    "keys": [
+                      "*"
+                    ],
+                    "icon": "construction",
+                    "enabled": true,
+                    "glyph": "🏠"
+                  },
+                  {
+                    "affordance_id": "map",
+                    "label": "View Map",
+                    "keys": [
+                      "m"
+                    ],
+                    "icon": "map",
+                    "enabled": true,
+                    "glyph": "🗺"
+                  },
+                  {
+                    "affordance_id": "look",
+                    "label": "Look Around",
+                    "keys": [
+                      ";",
+                      "x"
+                    ],
+                    "icon": "look",
+                    "enabled": true,
+                    "glyph": "🔍"
+                  },
+                  {
+                    "affordance_id": "wait",
+                    "label": "Wait for Several Minutes",
+                    "keys": [
+                      "|"
+                    ],
+                    "icon": "wait",
+                    "enabled": true,
+                    "glyph": "⌛"
+                  },
+                  {
+                    "affordance_id": "sleep",
+                    "label": "Sleep",
+                    "keys": [
+                      "$"
+                    ],
+                    "icon": "sleep",
+                    "enabled": true,
+                    "glyph": "💤"
+                  },
+                  {
+                    "affordance_id": "pickup",
+                    "label": "Pick up items from one nearby tile",
+                    "keys": [
+                      "g"
+                    ],
+                    "icon": "pickup",
+                    "enabled": true,
+                    "glyph": "✋"
+                  },
+                  {
+                    "affordance_id": "wield",
+                    "label": "Wield",
+                    "keys": [
+                      "w"
+                    ],
+                    "icon": "wield",
+                    "enabled": true,
+                    "glyph": "⚔"
+                  },
+                  {
+                    "affordance_id": "wear",
+                    "label": "Wear Item",
+                    "keys": [
+                      "W"
+                    ],
+                    "icon": "wear",
+                    "enabled": true,
+                    "glyph": "👕"
+                  },
+                  {
+                    "affordance_id": "main_menu",
+                    "label": "Main Menu",
+                    "keys": [
+                      "ESC"
+                    ],
+                    "icon": "menu",
+                    "enabled": true,
+                    "glyph": "☰"
+                  },
+                  {
+                    "affordance_id": "open_options",
+                    "label": "Options",
+                    "keys": [],
+                    "icon": "options",
+                    "enabled": true,
+                    "glyph": "⚙"
+                  },
+                  {
+                    "affordance_id": "HELP_KEYBINDINGS",
+                    "label": "Display keybindings menu",
+                    "keys": [
+                      "?"
+                    ],
+                    "icon": "help",
+                    "enabled": true,
+                    "glyph": "❓"
+                  }
                 ]
               }
             ]
@@ -6515,7 +6941,148 @@
               "kind": "map",
               "mode": "world"
             },
-            "affordances": []
+            "affordances": [],
+            "shortcuts": [
+              {
+                "affordance_id": "inventory",
+                "label": "Open Inventory",
+                "keys": [
+                  "i"
+                ],
+                "icon": "inventory",
+                "enabled": false,
+                "glyph": "🎒"
+              },
+              {
+                "affordance_id": "player_data",
+                "label": "View Player Info",
+                "keys": [
+                  "@"
+                ],
+                "icon": "character",
+                "enabled": false,
+                "glyph": "👤"
+              },
+              {
+                "affordance_id": "craft",
+                "label": "Craft Items",
+                "keys": [
+                  "&"
+                ],
+                "icon": "crafting",
+                "enabled": false,
+                "glyph": "🔨"
+              },
+              {
+                "affordance_id": "construct",
+                "label": "Construct Terrain",
+                "keys": [
+                  "*"
+                ],
+                "icon": "construction",
+                "enabled": false,
+                "glyph": "🏠"
+              },
+              {
+                "affordance_id": "map",
+                "label": "View Map",
+                "keys": [
+                  "m"
+                ],
+                "icon": "map",
+                "enabled": false,
+                "glyph": "🗺"
+              },
+              {
+                "affordance_id": "look",
+                "label": "Look Around",
+                "keys": [
+                  ";",
+                  "x"
+                ],
+                "icon": "look",
+                "enabled": false,
+                "glyph": "🔍"
+              },
+              {
+                "affordance_id": "wait",
+                "label": "Wait for Several Minutes",
+                "keys": [
+                  "|"
+                ],
+                "icon": "wait",
+                "enabled": false,
+                "glyph": "⌛"
+              },
+              {
+                "affordance_id": "sleep",
+                "label": "Sleep",
+                "keys": [
+                  "$"
+                ],
+                "icon": "sleep",
+                "enabled": false,
+                "glyph": "💤"
+              },
+              {
+                "affordance_id": "pickup",
+                "label": "Pick up items from one nearby tile",
+                "keys": [
+                  "g"
+                ],
+                "icon": "pickup",
+                "enabled": false,
+                "glyph": "✋"
+              },
+              {
+                "affordance_id": "wield",
+                "label": "Wield",
+                "keys": [
+                  "w"
+                ],
+                "icon": "wield",
+                "enabled": false,
+                "glyph": "⚔"
+              },
+              {
+                "affordance_id": "wear",
+                "label": "Wear Item",
+                "keys": [
+                  "W"
+                ],
+                "icon": "wear",
+                "enabled": false,
+                "glyph": "👕"
+              },
+              {
+                "affordance_id": "main_menu",
+                "label": "Main Menu",
+                "keys": [
+                  "ESC"
+                ],
+                "icon": "menu",
+                "enabled": false,
+                "glyph": "☰"
+              },
+              {
+                "affordance_id": "open_options",
+                "label": "Options",
+                "keys": [],
+                "icon": "options",
+                "enabled": false,
+                "glyph": "⚙"
+              },
+              {
+                "affordance_id": "HELP_KEYBINDINGS",
+                "label": "Display keybindings menu",
+                "keys": [
+                  "?"
+                ],
+                "icon": "help",
+                "enabled": false,
+                "glyph": "❓"
+              }
+            ]
           },
           {
             "screen_id": "screen:8",
@@ -6719,6 +7286,7 @@
                   "NUMPAD_8"
                 ],
                 "enabled": true,
+                "role": "navigate",
                 "expect": "screen"
               },
               {
@@ -6729,6 +7297,7 @@
                   "NUMPAD_2"
                 ],
                 "enabled": true,
+                "role": "navigate",
                 "expect": "screen"
               },
               {
@@ -6738,6 +7307,7 @@
                   "PPAGE"
                 ],
                 "enabled": true,
+                "role": "navigate",
                 "expect": "screen"
               },
               {
@@ -6747,6 +7317,7 @@
                   "NPAGE"
                 ],
                 "enabled": true,
+                "role": "navigate",
                 "expect": "screen"
               },
               {
@@ -6754,6 +7325,7 @@
                 "label": "Go to first entry",
                 "keys": [],
                 "enabled": true,
+                "role": "navigate",
                 "expect": "screen"
               },
               {
@@ -6761,6 +7333,7 @@
                 "label": "Go to last entry",
                 "keys": [],
                 "enabled": true,
+                "role": "navigate",
                 "expect": "screen"
               },
               {
@@ -6768,6 +7341,7 @@
                 "label": "Scroll up",
                 "keys": [],
                 "enabled": true,
+                "role": "navigate",
                 "expect": "screen"
               },
               {
@@ -6775,6 +7349,7 @@
                 "label": "Scroll down",
                 "keys": [],
                 "enabled": true,
+                "role": "navigate",
                 "expect": "screen"
               },
               {
@@ -6819,6 +7394,7 @@
                   "?"
                 ],
                 "enabled": true,
+                "role": "help",
                 "expect": "screen"
               }
             ],
@@ -7036,6 +7612,7 @@
               "NUMPAD_8"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -7046,6 +7623,7 @@
               "NUMPAD_2"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -7055,6 +7633,7 @@
               "PPAGE"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -7064,6 +7643,7 @@
               "NPAGE"
             ],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -7071,6 +7651,7 @@
             "label": "Go to first entry",
             "keys": [],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -7078,6 +7659,7 @@
             "label": "Go to last entry",
             "keys": [],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -7085,6 +7667,7 @@
             "label": "Scroll up",
             "keys": [],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -7092,6 +7675,7 @@
             "label": "Scroll down",
             "keys": [],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {
@@ -7136,6 +7720,7 @@
               "?"
             ],
             "enabled": true,
+            "role": "help",
             "expect": "screen"
           }
         ],
@@ -7263,7 +7848,148 @@
             "bn:context"
           ],
           "mode": "world"
-        }
+        },
+        "shortcuts": [
+          {
+            "affordance_id": "inventory",
+            "label": "Open Inventory",
+            "keys": [
+              "i"
+            ],
+            "icon": "inventory",
+            "enabled": true,
+            "glyph": "🎒"
+          },
+          {
+            "affordance_id": "player_data",
+            "label": "View Player Info",
+            "keys": [
+              "@"
+            ],
+            "icon": "character",
+            "enabled": true,
+            "glyph": "👤"
+          },
+          {
+            "affordance_id": "craft",
+            "label": "Craft Items",
+            "keys": [
+              "&"
+            ],
+            "icon": "crafting",
+            "enabled": true,
+            "glyph": "🔨"
+          },
+          {
+            "affordance_id": "construct",
+            "label": "Construct Terrain",
+            "keys": [
+              "*"
+            ],
+            "icon": "construction",
+            "enabled": true,
+            "glyph": "🏠"
+          },
+          {
+            "affordance_id": "map",
+            "label": "View Map",
+            "keys": [
+              "m"
+            ],
+            "icon": "map",
+            "enabled": true,
+            "glyph": "🗺"
+          },
+          {
+            "affordance_id": "look",
+            "label": "Look Around",
+            "keys": [
+              ";",
+              "x"
+            ],
+            "icon": "look",
+            "enabled": true,
+            "glyph": "🔍"
+          },
+          {
+            "affordance_id": "wait",
+            "label": "Wait for Several Minutes",
+            "keys": [
+              "|"
+            ],
+            "icon": "wait",
+            "enabled": true,
+            "glyph": "⌛"
+          },
+          {
+            "affordance_id": "sleep",
+            "label": "Sleep",
+            "keys": [
+              "$"
+            ],
+            "icon": "sleep",
+            "enabled": true,
+            "glyph": "💤"
+          },
+          {
+            "affordance_id": "pickup",
+            "label": "Pick up items from one nearby tile",
+            "keys": [
+              "g"
+            ],
+            "icon": "pickup",
+            "enabled": true,
+            "glyph": "✋"
+          },
+          {
+            "affordance_id": "wield",
+            "label": "Wield",
+            "keys": [
+              "w"
+            ],
+            "icon": "wield",
+            "enabled": true,
+            "glyph": "⚔"
+          },
+          {
+            "affordance_id": "wear",
+            "label": "Wear Item",
+            "keys": [
+              "W"
+            ],
+            "icon": "wear",
+            "enabled": true,
+            "glyph": "👕"
+          },
+          {
+            "affordance_id": "main_menu",
+            "label": "Main Menu",
+            "keys": [
+              "ESC"
+            ],
+            "icon": "menu",
+            "enabled": true,
+            "glyph": "☰"
+          },
+          {
+            "affordance_id": "open_options",
+            "label": "Options",
+            "keys": [],
+            "icon": "options",
+            "enabled": true,
+            "glyph": "⚙"
+          },
+          {
+            "affordance_id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "icon": "help",
+            "enabled": true,
+            "glyph": "❓"
+          }
+        ]
       },
       "why": "a screen lists what it offers, empty or not"
     },
