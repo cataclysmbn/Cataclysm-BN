@@ -3202,8 +3202,16 @@
           "$ref": "#/$defs/counter"
         },
         "text": {
-          "type": "string",
-          "minLength": 1
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "$ref": "#/$defs/localised_string"
+            }
+          ],
+          "description": "The line without the repeat suffix. A LocalisedString for a line the engine makes from a translatable format: the client renders it from the engine's catalogues in the connection's locale, and `lang` is absent."
         },
         "kind": {
           "enum": [
@@ -3225,9 +3233,16 @@
           "maximum": 9007199254740991
         },
         "label": {
-          "type": "string",
-          "minLength": 1,
-          "description": "The line as the native log prints it: text, followed by the translated repeat suffix from a count of 2."
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "$ref": "#/$defs/localised_string"
+            }
+          ],
+          "description": "The line as the native log prints it: text, followed by the translated repeat suffix from a count of 2. For a LocalisedString text, the text itself, or from a count of 2 the message `%s x %d` with the text and the count as arguments."
         },
         "lang": {
           "type": "string",

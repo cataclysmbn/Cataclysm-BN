@@ -4,6 +4,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -26,17 +27,24 @@ struct fake_line {
     std::string text;
     game_message_type type = m_neutral;
     int count = 1;
+    std::optional<localised_text> localised;
 };
 auto fake_log = std::vector<fake_line>{};
 auto fake_serial = std::uint64_t{0};
 
-auto fake_add(std::string text, const game_message_type type) -> void {
+auto fake_add(
+    std::string text, const game_message_type type,
+    std::optional<localised_text> localised = std::nullopt) -> void {
     if (text.empty()) { return; }
     if (!fake_log.empty() && fake_log.back().text == text && fake_log.back().type == type) {
         ++fake_log.back().count;
         return;
     }
-    fake_log.push_back({.serial = ++fake_serial, .text = std::move(text), .type = type});
+    fake_log.push_back(
+        {.serial = ++fake_serial,
+         .text = std::move(text),
+         .type = type,
+         .localised = std::move(localised)});
 }
 } // namespace
 
@@ -47,6 +55,10 @@ void Messages::add_msg(std::string text) { fake_add(std::move(text), m_neutral);
 void Messages::add_msg(const game_message_params& params, std::string text) {
     fake_add(std::move(text), params.type);
 }
+void Messages::add_msg(
+    const game_message_params& params, std::string text, std::optional<localised_text> localised) {
+    fake_add(std::move(text), params.type, std::move(localised));
+}
 void Messages::clear_messages() { fake_log.clear(); }
 void Messages::deactivate() {}
 auto Messages::feed_since(const feed_cursor& after) -> std::vector<feed_entry> {
@@ -54,7 +66,11 @@ auto Messages::feed_since(const feed_cursor& after) -> std::vector<feed_entry> {
     for (const auto& line : fake_log) {
         if (line.serial > after.id || (line.serial == after.id && line.count > after.count)) {
             result.push_back(
-                {.id = line.serial, .text = line.text, .type = line.type, .count = line.count});
+                {.id = line.serial,
+                 .text = line.text,
+                 .type = line.type,
+                 .count = line.count,
+                 .localised = line.localised});
         }
     }
     return result;

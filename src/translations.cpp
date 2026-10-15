@@ -468,6 +468,15 @@ bool translation::empty() const
     return data().raw.empty();
 }
 
+auto translation::key() const -> std::optional<catalogue_key>
+{
+    const auto &input = data();
+    if( !input.needs_translation || input.raw.empty() || input.plural ) {
+        return std::nullopt;
+    }
+    return catalogue_key{ .msgid = input.raw, .context = input.context };
+}
+
 bool translation::translated_lt( const translation &that ) const
 {
     return localized_compare( translated(), that.translated() );

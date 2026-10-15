@@ -110,11 +110,18 @@ auto to_message( const Messages::feed_entry &entry ) -> message_value
     auto label = entry.count > 1 ?
                  //~ Message %s on the message log was repeated %d times, e.g. "You hear a whack! x 12"
                  string_format( _( "%s x %d" ), text, entry.count ) : text;
+    auto localised = entry.localised;
+    if( localised ) {
+        for( auto &value : localised->args ) {
+            if( auto *name = std::get_if<std::string>( &value ) ) { *name = remove_color_tags( *name ); }
+        }
+    }
     return {
         .id = entry.id, .text = std::move( text ),
         .kind = kind == msg_type_and_names().end() ? "neutral" : kind->second,
         .color = get_all_colors().get_name( msgtype_to_color( entry.type ) ),
-        .count = static_cast<counter>( entry.count ), .label = std::move( label )
+        .count = static_cast<counter>( entry.count ), .label = std::move( label ),
+        .localised = std::move( localised )
     };
 }
 } // namespace

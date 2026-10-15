@@ -733,12 +733,32 @@ auto to_json( const changes &delta ) -> json
     }
     return result;
 }
+auto to_json( const localised_text &value ) -> json
+{
+    auto result = json{{"key", value.key}};
+    if( value.ctx ) { result["ctx"] = *value.ctx; }
+    if( value.plural ) { result["plural"] = *value.plural; }
+    if( !value.args.empty() ) {
+        result["args"] = value.args | std::views::transform( []( const auto & arg ) {
+            return std::visit( []( const auto & held ) { return json( held ); }, arg );
+        } ) | std::ranges::to<std::vector>();
+    }
+    return result;
+}
+/// A converted line is a LocalisedString; its repeat suffix is the native `%s x %d` message around it.
 /// `lang` only for a line that is not in the locale of the connection reading it.
 auto to_json( const message_value &line ) -> json
 {
     auto result = json{{"id", std::to_string( line.id )}, {"text", line.text}, {"kind", line.kind},
         {"color", line.color}, {"count", line.count}, {"label", line.label}};
-    if( !line.lang.empty() ) { result["lang"] = line.lang; }
+    if( line.localised ) {
+        const auto text = to_json( *line.localised );
+        result["text"] = text;
+result["label"] = line.count > 1 ? json{{"key", "%s x %d"}, {"args", {text, line.count}}} :
+        text;
+    } else if( !line.lang.empty() ) {
+        result["lang"] = line.lang;
+    }
     return result;
 }
 auto to_json( const event_value &value ) -> json

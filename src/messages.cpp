@@ -54,13 +54,17 @@ struct game_message : public JsonDeserializer, public JsonSerializer {
     // hide the message, because at some point it was in cooldown period.
     bool cooldown_hidden = false;
     game_message_type type  = m_neutral;
+    /// The untranslated format and values the message was made from; not saved, so a loaded line has none.
+    std::optional<localised_text> localised;
 
     game_message() = default;
-    game_message( std::string &&msg, game_message_type const t ) :
+    game_message( std::string &&msg, game_message_type const t,
+                  std::optional<localised_text> &&source = std::nullopt ) :
         message( std::move( msg ) ),
         timestamp_in_turns( calendar::turn ),
         timestamp_in_user_actions( g->get_user_action_counter() ),
-        type( t ) {
+        type( t ),
+        localised( std::move( source ) ) {
     }
 
     const time_point &turn() const {
@@ -175,12 +179,14 @@ class messages_impl
             add_msg_string( std::move( msg ), m_neutral, gmf_none );
         }
 
-        void add_msg_string( std::string &&msg, const game_message_params &params ) {
-            add_msg_string( std::move( msg ), params.type, params.flags );
+        void add_msg_string( std::string &&msg, const game_message_params &params,
+                             std::optional<localised_text> &&source = std::nullopt ) {
+            add_msg_string( std::move( msg ), params.type, params.flags, std::move( source ) );
         }
 
         void add_msg_string( std::string &&msg, game_message_type const type,
-                             const game_message_flags flags ) {
+                             const game_message_flags flags,
+                             std::optional<localised_text> &&source = std::nullopt ) {
             if( msg.empty() || !active ) {
                 return;
             }
@@ -193,7 +199,7 @@ class messages_impl
                 DebugLog( DL::Info, DC::DebugModeMsg ) << msg;
             }
 
-            game_message m = game_message( std::move( msg ), type );
+            game_message m = game_message( std::move( msg ), type, std::move( source ) );
 
             refresh_cooldown( m, flags );
             hide_message_in_cooldown( m );
@@ -381,7 +387,8 @@ auto Messages::feed_since( const feed_cursor &after ) -> std::vector<feed_entry>
                ( m.serial > after.id || ( m.serial == after.id && m.count > after.count ) );
     };
     const auto entry = []( const game_message & m ) {
-        return feed_entry{ .id = m.serial, .text = m.message, .type = m.type, .count = m.count };
+        return feed_entry{ .id = m.serial, .text = m.message, .type = m.type, .count = m.count,
+                           .localised = m.localised };
     };
     return player_messages.messages | filter( unseen ) | transform( entry ) |
            std::ranges::to<std::vector>();
@@ -395,6 +402,12 @@ void Messages::add_msg( std::string msg )
 void Messages::add_msg( const game_message_params &params, std::string msg )
 {
     player_messages.add_msg_string( std::move( msg ), params );
+}
+
+void Messages::add_msg( const game_message_params &params, std::string msg,
+                        std::optional<localised_text> localised )
+{
+    player_messages.add_msg_string( std::move( msg ), params, std::move( localised ) );
 }
 
 void Messages::clear_messages()

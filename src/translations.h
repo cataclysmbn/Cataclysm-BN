@@ -149,6 +149,12 @@ class JsonIn;
 /**
  * Class for storing translation context and raw string for deferred translation
  **/
+/// What a gettext catalogue is searched by.
+struct catalogue_key {
+    std::string msgid;
+    std::optional<std::string> context;
+};
+
 class translation
 {
     public:
@@ -232,6 +238,9 @@ class translation
          * is or whether translation is needed.
          **/
         bool empty() const;
+
+        /// The msgid and context to look up; nullopt for a string that needs no translation or has a plural form.
+        auto key() const -> std::optional<catalogue_key>;
 
         /**
          * Compare translations by their translated strings (singular form).

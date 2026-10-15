@@ -338,6 +338,22 @@ TEST_CASE(
         CHECK(worded.front()["data"]["lang"] == json(get_language().id));
         CHECK(worded.front()["data"]["text"] == "Second line.");
     }
+    SECTION("a converted line is the same LocalisedString for both readers and has no lang") {
+        controller.output.str("");
+        spectator.output.str("");
+        add_msg(to_translation("The %s dies!"), std::string{"zombie"});
+        REQUIRE(authority.publish_boundary());
+        controller.flush();
+        spectator.flush();
+        const auto expected = json::parse(R"({"key":"The %s dies!","args":["zombie"]})");
+        for (const auto* reader : {&controller, &spectator}) {
+            const auto events = reader->events();
+            REQUIRE(events.size() == 1);
+            CHECK(events.front()["data"]["text"] == expected);
+            CHECK(events.front()["data"]["label"] == expected);
+            CHECK_FALSE(events.front()["data"].contains("lang"));
+        }
+    }
     SECTION("an event carries the screen and avatar of its connection's language") {
         controller.output.str("");
         spectator.output.str("");

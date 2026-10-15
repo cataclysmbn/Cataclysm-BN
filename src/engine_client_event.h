@@ -3,6 +3,7 @@
 #include "engine_client_contract.h"
 #include "engine_client_presentation.h"
 #include "loading_ui_client.h"
+#include "localised_text.h"
 
 #include <expected>
 #include <optional>
@@ -77,6 +78,9 @@ struct message_value {
     std::string label = {};
     /// Set on the copy a connection reads of a line that is not in its own locale: the BN language id the line is in.
     std::string lang = {};
+    /// The untranslated format and values of a converted site: `text` and `label` then go out as LocalisedStrings
+    /// the client renders in its own language, and `lang` is never set.
+    std::optional<localised_text> localised = std::nullopt;
 };
 struct event_value {
     counter sequence = 0;

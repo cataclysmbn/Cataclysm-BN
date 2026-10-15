@@ -2067,9 +2067,93 @@
         "label": "You open the door.",
         "lang": "en"
       }
+    },
+    {
+      "name": "message line made from a translatable format",
+      "def": "data_message_logged",
+      "value": {
+        "id": "9",
+        "text": {
+          "key": "The %s dies!",
+          "args": [
+            "zombie"
+          ]
+        },
+        "kind": "good",
+        "color": "c_light_green",
+        "count": 1,
+        "label": {
+          "key": "The %s dies!",
+          "args": [
+            "zombie"
+          ]
+        }
+      }
+    },
+    {
+      "name": "repeated message line made from a translatable format",
+      "def": "data_message_logged",
+      "value": {
+        "id": "9",
+        "text": {
+          "key": "The %s dies!",
+          "args": [
+            "zombie"
+          ]
+        },
+        "kind": "good",
+        "color": "c_light_green",
+        "count": 2,
+        "label": {
+          "key": "%s x %d",
+          "args": [
+            {
+              "key": "The %s dies!",
+              "args": [
+                "zombie"
+              ]
+            },
+            2
+          ]
+        }
+      }
     }
   ],
   "invalid": [
+    {
+      "name": "message line text that is a number",
+      "def": "data_message_logged",
+      "why": "text is a string or a LocalisedString",
+      "value": {
+        "id": "9",
+        "text": 5,
+        "kind": "good",
+        "color": "c_light_green",
+        "count": 1,
+        "label": "5"
+      }
+    },
+    {
+      "name": "message line from a translatable format that says its language",
+      "def": "data_message_logged",
+      "why": "a LocalisedString has no language member; the client words it",
+      "value": {
+        "id": "9",
+        "text": {
+          "key": "The %s dies!",
+          "lang": "en"
+        },
+        "kind": "good",
+        "color": "c_light_green",
+        "count": 1,
+        "label": {
+          "key": "The %s dies!",
+          "args": [
+            "zombie"
+          ]
+        }
+      }
+    },
     {
       "name": "position without a dimension",
       "def": "pos",
