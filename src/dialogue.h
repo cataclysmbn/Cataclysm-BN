@@ -188,6 +188,11 @@ struct talk_effect_t {
  */
 struct talk_response {
     /**
+     * The response's name on the engine-client screen: a data name, never its text or its place in
+     * the shown list. A JSON response has its explicit "id" or "<topic id>:<index in the topic's data>".
+     */
+    std::string id;
+    /**
      * What the player character says (literally). Should already be translated and will be
      * displayed.
      */
@@ -261,62 +266,71 @@ struct dialogue {
 
     private:
         /**
-         * Add a simple response that switches the topic to the new one. If first == true, force
+         * Add a simple response named `id` (a fixed name of the place that adds it, or of what it is
+         * about) that switches the topic to the new one. If first == true, force
          * this topic to the front of the responses.
          */
-        talk_response &add_response( const std::string &text, const std::string &r,
+        talk_response &add_response( const std::string &id, const std::string &text,
+                                     const std::string &r,
                                      bool first = false );
         /**
          * Add a response with the result TALK_DONE.
          */
-        talk_response &add_response_done( const std::string &text );
+        talk_response &add_response_done( const std::string &id, const std::string &text );
         /**
          * Add a response with the result TALK_NONE.
          */
-        talk_response &add_response_none( const std::string &text );
+        talk_response &add_response_none( const std::string &id, const std::string &text );
         /**
          * Add a simple response that switches the topic to the new one and executes the given
          * action. The response always succeeds. Consequence is based on function used.
          */
-        talk_response &add_response( const std::string &text, const std::string &r,
+        talk_response &add_response( const std::string &id, const std::string &text,
+                                     const std::string &r,
                                      dialogue_fun_ptr effect_success, bool first = false );
 
         /**
          * Add a simple response that switches the topic to the new one and executes the given
          * action. The response always succeeds. Consequence must be explicitly specified.
          */
-        talk_response &add_response( const std::string &text, const std::string &r,
+        talk_response &add_response( const std::string &id, const std::string &text,
+                                     const std::string &r,
                                      std::function<void( npc & )> effect_success,
                                      dialogue_consequence consequence, bool first = false );
         /**
          * Add a simple response that switches the topic to the new one and sets the currently
          * talked about mission to the given one. The mission pointer must be valid.
          */
-        talk_response &add_response( const std::string &text, const std::string &r, mission *miss,
+        talk_response &add_response( const std::string &id, const std::string &text,
+                                     const std::string &r, mission *miss,
                                      bool first = false );
         /**
          * Add a simple response that switches the topic to the new one and sets the currently
          * talked about skill to the given one.
          */
-        talk_response &add_response( const std::string &text, const std::string &r, const skill_id &skill,
+        talk_response &add_response( const std::string &id, const std::string &text,
+                                     const std::string &r, const skill_id &skill,
                                      bool first = false );
         /**
         * Add a simple response that switches the topic to the new one and sets the currently
         * talked about magic spell to the given one.
         */
-        talk_response &add_response( const std::string &text, const std::string &r,
+        talk_response &add_response( const std::string &id, const std::string &text,
+                                     const std::string &r,
                                      const spell_id &sp, bool first = false );
         /**
          * Add a simple response that switches the topic to the new one and sets the currently
          * talked about martial art style to the given one.
          */
-        talk_response &add_response( const std::string &text, const std::string &r,
+        talk_response &add_response( const std::string &id, const std::string &text,
+                                     const std::string &r,
                                      const martialart &style, bool first = false );
         /**
          * Add a simple response that switches the topic to the new one and sets the currently
          * talked about item type to the given one.
          */
-        talk_response &add_response( const std::string &text, const std::string &r,
+        talk_response &add_response( const std::string &id, const std::string &text,
+                                     const std::string &r,
                                      const itype_id &item_type, bool first = false );
 };
 
@@ -365,11 +379,17 @@ class json_talk_response
         json_talk_response() = default;
         json_talk_response( const JsonObject &jo );
 
+        /** Names the response `fallback` unless the data named it. */
+        auto name_by( const std::string &fallback ) -> void;
+        auto id() const -> const std::string & { return actual_response.id; } // *NOPAD*
+
         /**
          * Callback from @ref json_talk_topic::gen_responses, see there.
          */
         bool gen_responses( dialogue &d, bool switch_done ) const;
-        bool gen_repeat_response( dialogue &d, const itype_id &item_id, bool switch_done ) const;
+        /** `about` names the item the response is about, apart from the others of its entry. */
+        bool gen_repeat_response( dialogue &d, const itype_id &item_id, const std::string &about,
+                                  bool switch_done ) const;
 };
 
 /**
@@ -415,10 +435,11 @@ class json_talk_topic
         /**
          * Load data from json.
          * This will append responses (not change existing ones).
+         * Responses are named after `topic_id` and their place in the topic's data.
          * It will override dynamic_line and replace_built_in_responses if those entries
          * exist in the input, otherwise they will not be changed at all.
          */
-        void load( const JsonObject &jo );
+        void load( const JsonObject &jo, const std::string &topic_id );
 
         std::string get_dynamic_line( const dialogue &d ) const;
         std::vector<json_dynamic_line_effect> get_speaker_effects() const;

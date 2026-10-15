@@ -390,6 +390,14 @@ The short format is equivalent to (an unconditional switching of the topic, `eff
 }
 ```
 
+The optional string key `"id"` names the response for clients of the dialogue (the engine-client
+protocol): the name never changes with the response's text, its translation or the other responses
+shown. Without it, the response is named `<topic id>:<index>`, where the index counts the entries of
+the topic's `"responses"` arrays in load order, from 0, whether or not their conditions hold. Give a
+response an `"id"` when the topic is extended by other mods, so that reordering or inserting
+responses does not rename it. An `"id"` must be unique in its topic. A repeat response is named
+`<its id, or <topic id>:repeat:<index in the topic's repeat_responses>>:<item id>`.
+
 The optional boolean keys "switch" and "default" are false by default. Only the first response with
 `"switch": true`, `"default": false`, and a valid condition will be displayed, and no other
 responses with `"switch": true` will be displayed. If no responses with `"switch": true` and

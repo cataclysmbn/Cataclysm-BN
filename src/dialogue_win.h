@@ -31,6 +31,8 @@ class dialogue_window
         void refresh_response_display();
         /** Adds message to history. It must be already translated. */
         void add_to_history( const std::string &msg );
+        /** The exchanged words so far, as they were added. */
+        auto history_lines() const -> const std::vector<std::string> & { return history; } // *NOPAD*
 
     private:
         catacurses::window d_win;

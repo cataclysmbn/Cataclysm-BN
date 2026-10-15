@@ -312,7 +312,8 @@ TEST_CASE(
             std::string,
             std::string>{{"look_at", "L"}, {"size_up", "S"}, {"yell", "Y"}, {"opinion", "O"}};
         game_client::memory::set_input_provider([&](const int /*timeout*/) {
-            const auto& list = rows(top(), special_id);
+            const auto screen = top();
+            const auto& list = rows(screen, special_id);
             CHECK(ids_of(list)
                   == std::vector<std::string>{
                       "special:look_at", "special:size_up", "special:yell", "special:opinion"});
