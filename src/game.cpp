@@ -9942,9 +9942,9 @@ look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
             action = ctxt.handle_input();
         }
         ( void ) zone_blink; // kept for callback signature
-        // The screen's move only names squares inside its bounds and range; anything else was refused.
+        // The screen's move only names squares inside its bounds; anything else was refused. Like the native
+        // mouse it moves the cursor, not the view.
         if( const auto moved = target_screen::moved_to( ctxt.get_raw_input() ) ) {
-            center += *moved - lp;
             lp = *moved;
             continue;
         }
