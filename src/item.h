@@ -583,7 +583,7 @@ class item : public location_visitable<item>, public game_object<item>
          * @param loc Location of ammo to be reloaded
          * @param qty caps reloading to this (or fewer) units
          */
-        bool reload( Character &who, item &loc, int qty );
+        bool reload( Character &who, item &loc, int qty, bool store_container_as_item = false );
 
         template<typename Archive>
         void io( Archive & );
@@ -627,6 +627,9 @@ class item : public location_visitable<item>, public game_object<item>
          * @param integral if true return effective volume if this item was integrated into another
          */
         units::volume volume( bool integral = false ) const;
+
+        /** Volume this item occupies when stored in another container. */
+        auto volume_for_storage() const -> units::volume;
 
         /**
          * Simplified, faster volume check for when processing time is important and exact volume is not.

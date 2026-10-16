@@ -88,6 +88,10 @@ auto query_menu(const player& who, item& base, std::vector<item_reload_option> o
             : _("Reload %s"),
         base.tname());
 
+    const auto stores_container_as_item = [](const item_reload_option& option) {
+        return option.store_container_as_item;
+    };
+
     // Construct item names.
     auto names = std::vector<std::string>{};
     std::ranges::
@@ -114,8 +118,10 @@ auto query_menu(const player& who, item& base, std::vector<item_reload_option> o
             }
             if (option.ammo->is_container()
                 || (option.ammo->is_ammo_container() && who.is_worn(*option.ammo))) {
+                if (stores_container_as_item(option)) { return option.ammo->display_name(); }
                 // Worn ammunition containers are named by their contents; location is updated
                 // below.
+                if (option.ammo->is_container_empty()) { return option.ammo->display_name(); }
                 return option.ammo->contents.front().display_name();
             }
             return ammo_color(
@@ -127,7 +133,8 @@ auto query_menu(const player& who, item& base, std::vector<item_reload_option> o
     auto locations = std::vector<std::string>{};
     std::ranges::
         transform(options, std::back_inserter(locations), [&](const item_reload_option& option) {
-            const auto is_ammo_container = option.ammo->is_ammo_container();
+            const auto is_ammo_container =
+                option.ammo->is_ammo_container() && !stores_container_as_item(option);
             if (is_ammo_container || option.ammo->is_container()) {
                 if (is_ammo_container && who.is_worn(*option.ammo)) {
                     return option.ammo->type_name();
@@ -168,7 +175,8 @@ auto query_menu(const player& who, item& base, std::vector<item_reload_option> o
         const auto& selected = options[index];
         auto row = string_format("%s| %s |", names[index], locations[index]);
         row += string_format(
-            (selected.ammo->is_ammo() || selected.ammo->is_ammo_container())
+            ((selected.ammo->is_ammo() && !stores_container_as_item(selected))
+             || (selected.ammo->is_ammo_container() && !stores_container_as_item(selected)))
                 ? " %-7d |"
                 : "         |",
             selected.qty());
@@ -176,7 +184,7 @@ auto query_menu(const player& who, item& base, std::vector<item_reload_option> o
 
         if (base.is_gun() || base.is_magazine()) {
             const auto* ammo =
-                selected.ammo->is_ammo_container()
+                (selected.ammo->is_ammo_container() && !stores_container_as_item(selected))
                     ? selected.ammo->contents.front().ammo_data()
                     : selected.ammo->ammo_data();
             if (ammo) {
@@ -219,7 +227,7 @@ auto query_menu(const player& who, item& base, std::vector<item_reload_option> o
 
     for (auto index = 0; index < static_cast<int>(options.size()); ++index) {
         const auto& ammo =
-            options[index].ammo->is_ammo_container()
+            (options[index].ammo->is_ammo_container() && !stores_container_as_item(options[index]))
                 ? options[index].ammo->contents.front()
                 : *options[index].ammo;
         // If the ammo is in the player's possession, use its inventory letter or that of the
@@ -258,7 +266,9 @@ auto query_menu(const player& who, item& base, std::vector<item_reload_option> o
 
     const auto* selected = options[menu.ret].ammo;
     uistate.lastreload[ammotype(base.ammo_default().str())] =
-        selected->is_ammo_container() ? selected->contents.front().typeId() : selected->typeId();
+        selected->is_ammo_container() && !options[menu.ret].store_container_as_item
+            ? selected->contents.front().typeId()
+            : selected->typeId();
     return options[menu.ret];
 }
 
