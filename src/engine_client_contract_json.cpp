@@ -52,6 +52,7 @@ auto to_json( const look &value ) -> json
     if( value.rotation && *value.rotation != 0 ) { result["rotation"] = *value.rotation; }
     if( value.facing ) { result["facing"] = *value.facing; }
     if( value.stack ) { result["stack"] = *value.stack; }
+    if( value.wall ) { result["wall"] = true; }
     if( value.mutation ) {
         result["mutation"] = {{"id", value.mutation->id}, {"types", value.mutation->types},
             {"flags", value.mutation->flags}

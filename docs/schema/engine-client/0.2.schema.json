@@ -272,6 +272,10 @@
           "minimum": 2,
           "description": "Items on the square when there are several, on the displayed (last) item; the native view highlights such a stack."
         },
+        "wall": {
+          "const": true,
+          "description": "Set on terrain the game data flags as a wall (WALL); absent otherwise."
+        },
         "tint": {
           "type": "object",
           "properties": {
@@ -420,6 +424,10 @@
           "type": "integer",
           "minimum": 2,
           "description": "Items on the square when there are several, on the displayed (last) item; the native view highlights such a stack."
+        },
+        "wall": {
+          "const": true,
+          "description": "Set on terrain the game data flags as a wall (WALL); absent otherwise."
         },
         "tint": {
           "type": "object",
