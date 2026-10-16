@@ -6558,7 +6558,7 @@
       "properties": {
         "id": {
           "$ref": "#/$defs/opaque_id",
-          "description": "The native action's id (`examine`, `open`, `close`, `pickup`, `fire`, `look`), or `travel`, `attack` or `talk`."
+          "description": "The native action's id (`examine`, `open`, `close`, `pickup`, `control_vehicle`, `fire`, `look`), or `travel`, `attack` or `talk`."
         },
         "label": {
           "$ref": "#/$defs/text"
