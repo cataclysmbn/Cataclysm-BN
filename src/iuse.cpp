@@ -7890,9 +7890,6 @@ int iuse::radiocaron( player *p, item *it, bool t, const tripoint_bub_ms &pos )
     return it->type->charges_to_use();
 }
 
-/**
- * Send radio signal from player.
- */
 static void emit_radio_signal( player &p, const flag_id &signal )
 {
     const auto visitor = [&]( item & it, const tripoint_bub_ms & loc ) -> VisitResponse {
@@ -7908,7 +7905,7 @@ static void emit_radio_signal( player &p, const flag_id &signal )
             sounds::sound( se );
             bool invoke_proc = it.has_flag( flag_RADIO_INVOKE_PROC );
             // Invoke to transform item
-            it.type->invoke( p, it, loc );
+            it.type->invoke( &p, it, loc );
             if( invoke_proc ) {
                 // Cause invocation of transformed item on next turn processing
                 it.ammo_unset();
@@ -8108,10 +8105,57 @@ static bool hackveh( player &p, item &it, vehicle &veh )
     return success;
 }
 
+static bool vehicle_all_parts_rc_compatible( const vehicle &veh )
+{
+    static const std::string rcflag = "RC_COMPATIBLE";
+    for( const vpart_reference &vp : veh.get_all_parts() ) {
+        if( vp.part().removed ) {
+            continue;
+        }
+        if( !vp.info().has_flag( rcflag ) ) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool has_remote_controls_small( const vehicle &veh )
+{
+    return !veh.get_avail_parts( "REMOTE_CONTROLS_SMALL" ).empty() &&
+           vehicle_all_parts_rc_compatible( veh );
+}
+
+static bool has_remote_controls_large( const vehicle &veh )
+{
+    return !veh.get_avail_parts( "REMOTE_CONTROLS" ).empty();
+}
+
+static bool has_remote_controls( const vehicle &veh, bool advanced )
+{
+    if( has_remote_controls_large( veh ) || has_remote_controls_small( veh ) ) {
+        return true;
+    }
+    return !advanced && !veh.get_avail_parts( "CTRL_ELECTRONIC" ).empty();
+}
+
+static std::optional<tripoint_bub_ms> remote_controls_pos( vehicle &veh )
+{
+    const auto large_controls = veh.get_avail_parts( "REMOTE_CONTROLS" );
+    if( !large_controls.empty() ) {
+        return large_controls.begin()->pos();
+    }
+    if( !has_remote_controls_small( veh ) ) {
+        return std::nullopt;
+    }
+    const auto small_controls = veh.get_avail_parts( "REMOTE_CONTROLS_SMALL" );
+    if( !small_controls.empty() ) {
+        return small_controls.begin()->pos();
+    }
+    return std::nullopt;
+}
+
 static vehicle *pickveh( const tripoint_bub_ms &center, bool advanced )
 {
-    static const std::string ctrl = "CTRL_ELECTRONIC";
-    static const std::string advctrl = "REMOTE_CONTROLS";
     uilist pmenu;
     pmenu.title = _( "Select vehicle to access" );
     std::vector< vehicle * > vehs;
@@ -8120,8 +8164,7 @@ static vehicle *pickveh( const tripoint_bub_ms &center, bool advanced )
         auto &v = veh.v;
         if( g->m.inbounds( v->bub_ms_location() ) &&
             v->fuel_left( itype_battery, true ) > 0 &&
-            ( !v->get_avail_parts( advctrl ).empty() ||
-              ( !advanced && !v->get_avail_parts( ctrl ).empty() ) ) ) {
+            has_remote_controls( *v, advanced ) ) {
             vehs.push_back( v );
         }
     }
@@ -8225,11 +8268,14 @@ int iuse::remoteveh( player *p, item *it, bool t, const tripoint_bub_ms &pos )
             }
         }
     } else if( choice == 1 ) {
-        // Revert to original behavior if we can't find remote controls.
-        if( rctrl_parts.empty() ) {
-            veh->use_controls( tripoint_bub_ms( pos ) );
+        std::optional<tripoint_bub_ms> controls_pos = remote_controls_pos( *veh );
+        if( controls_pos ) {
+            veh->use_controls( *controls_pos );
+        } else if( !empty( veh->get_avail_parts( "CTRL_ELECTRONIC" ) ) ) {
+            veh->use_controls( pos );
         } else {
-            veh->use_controls( tripoint_bub_ms( rctrl_parts.begin()->pos() ) );
+            p->add_msg_if_player( m_bad, _( "This vehicle cannot be controlled remotely." ) );
+            return 0;
         }
     }
 
