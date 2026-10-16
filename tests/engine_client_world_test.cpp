@@ -233,6 +233,7 @@ TEST_CASE(
         CHECK(state.view->min.x == state.avatar->at.x - 7);
         CHECK(state.view->min.y == state.avatar->at.y - 4);
         CHECK(state.view->max.x - state.view->min.x == 14);
+        CHECK(state.view->max.y - state.view->min.y == 8);
     };
     SECTION("a step without a draw") {
         centered();

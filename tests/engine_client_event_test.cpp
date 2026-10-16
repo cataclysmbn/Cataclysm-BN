@@ -431,7 +431,14 @@ TEST_CASE(
         CHECK(event.wire().size() <= maximum_frame_bytes / 2);
         CHECK(event.value().command == "c:1");
     }
-    CHECK(published->back().value().sequence == receiver.at.sequence + published->size());
+    auto at = receiver.at;
+    for (const auto& event : *published) {
+        CHECK(event.value().sequence == at.sequence + 1);
+        CHECK(event.value().revision == at.revision + 1);
+        at = {.epoch = at.epoch,
+              .sequence = event.value().sequence,
+              .revision = event.value().revision};
+    }
     REQUIRE(apply_batch(receiver, {.epoch = "epoch:a", .events = *published}));
     CHECK(same_state(receiver.value, stream.current().value));
 
@@ -444,6 +451,7 @@ TEST_CASE(
     REQUIRE_FALSE(too_large);
     CHECK(too_large.error() == error::resource_limit);
     CHECK(stream.current().at == before);
+    CHECK(same_state(stream.current().value, many));
 }
 
 TEST_CASE(
