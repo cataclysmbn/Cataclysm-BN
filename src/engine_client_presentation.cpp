@@ -398,15 +398,12 @@ auto record_channel_sound( const channel_sound_options &options ) -> void
 auto record_channel_stop( const sfx::channel channel, const int fade_ms ) -> void
 {
     auto &channels = playing().channels;
-    const auto stop = [&]( const sfx::channel stopped ) {
-        push_sound( "sound.channel", { .channel = io::enum_to_string( stopped ), .fade_ms = fade_ms } );
-    };
     if( channel == sfx::channel::any ) {
-        std::ranges::for_each( channels | std::views::keys, stop );
         channels.clear();
-    } else if( channels.erase( channel ) != 0 ) {
-        stop( channel );
+    } else if( channels.erase( channel ) == 0 ) {
+        return;
     }
+    push_sound( "sound.channel", { .channel = io::enum_to_string( channel ), .fade_ms = fade_ms } );
 }
 
 auto record_channel_change( const channel_change_options &options ) -> void
@@ -414,7 +411,7 @@ auto record_channel_change( const channel_change_options &options ) -> void
     const auto found = playing().channels.find( options.channel );
     if( found == playing().channels.end() ) { return; }
     auto changed = found->second;
-    changed.volume = options.volume.value_or( changed.volume );
+    if( options.volume ) { changed.gain = options.volume; }
     if( options.angle ) { changed.angle = degrees_of( options.angle ); }
     changed.fade_ms = 0;
     if( changed == found->second ) { return; }

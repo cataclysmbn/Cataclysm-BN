@@ -145,7 +145,9 @@ TEST_CASE(
     sfx::set_channel_3d_position(day, 90_degrees);
     const auto changed = cues("sound.channel");
     REQUIRE(changed.size() == 2);
-    CHECK(changed[0].volume == 30);
+    // The change sets the gain itself, as the native one does, past the volume option and the pack.
+    CHECK(changed[0].gain == 30);
+    CHECK(changed[0].volume == 64);
     CHECK(changed[0].id == "environment");
     CHECK(changed[1].angle == 90);
     CHECK(changed[1].fade_ms == 0);
@@ -176,11 +178,12 @@ TEST_CASE(
     REQUIRE(started.size() == 2);
     CHECK(started[1].loops == 0);
     CHECK_FALSE(presentation::channel_playing(radio));
-    // Stopping every channel stops it too.
+    // Stopping every channel stops it and the sound effects too, in one cue.
     sfx::fade_audio_channel(sfx::channel::any, 300);
     const auto stopped = cues("sound.channel");
     REQUIRE(stopped.size() == 1);
-    CHECK(stopped[0].channel == "radio");
+    CHECK(stopped[0].channel == "any");
+    CHECK(stopped[0].fade_ms == 300);
 }
 
 TEST_CASE(

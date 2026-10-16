@@ -41,6 +41,9 @@ struct sound_cue {
     /// In mixer units, 128 the full gain, with the native volume option applied; the sound pack's own volume
     /// of the effect or playlist entry scales it as the native player does.
     int volume = 0;
+    /// `sound.channel`: the gain a volume change set, in mixer units, with neither the volume option nor the sound
+    /// pack's volume applied, as the native player's change does.
+    std::optional<int> gain = std::nullopt;
     /// Clockwise degrees from straight ahead the native mixer places the sound at; none for no direction.
     std::optional<int> angle = std::nullopt;
     /// `sound.played`: false when the native player skips the sound while the same one still plays.
@@ -227,14 +230,14 @@ struct channel_sound_options {
 };
 /// `sound.channel`: a reserved channel starts a sound, unless it plays one that repeats until it stops.
 auto record_channel_sound( const channel_sound_options &options ) -> void;
-/// `sound.channel` without a sound for a channel that plays one; `any` stops every channel.
+/// `sound.channel` without a sound for a channel that plays one; `any` stops every channel and sound effect.
 auto record_channel_stop( sfx::channel channel, int fade_ms ) -> void;
 struct channel_change_options {
     sfx::channel channel;
     std::optional<int> volume = std::nullopt;
     std::optional<units::angle> angle = std::nullopt;
 };
-/// `sound.channel` again with the new mixer volume or direction of what a channel plays.
+/// `sound.channel` again with the new mixer gain or direction of what a channel plays.
 auto record_channel_change( const channel_change_options &options ) -> void;
 /// Whether a channel plays a sound that repeats until it stops: what the native player answers without audio.
 auto channel_playing( sfx::channel channel ) -> bool;

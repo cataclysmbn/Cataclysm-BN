@@ -845,6 +845,7 @@ auto to_json( const event_value &value ) -> json
                 data.update( {{"id", fact.sound->id}, {"variant", fact.sound->variant}, {"volume", fact.sound->volume},
                     {"loops", fact.sound->loops}} );
                 if( fact.sound->angle ) { data["angle"] = *fact.sound->angle; }
+                if( fact.sound->gain ) { data["gain"] = *fact.sound->gain; }
             }
         } else if( value.type == "music.changed" ) {
             if( !fact.sound->playlist.empty() ) {

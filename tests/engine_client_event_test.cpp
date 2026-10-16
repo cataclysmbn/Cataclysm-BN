@@ -761,6 +761,16 @@ TEST_CASE("sound cues are published as the sound pack names them", "[engine_clie
               .fade_ms = 1000})
         == nlohmann::json::parse(
             R"({"channel":"daytime_outdoors_env","id":"environment","variant":"daytime","volume":100,"loops":-1,"fade_ms":1000})"));
+    // A volume change names the gain it sets.
+    CHECK(
+        data("sound.channel",
+             {.id = "engine_working_internal",
+              .variant = "combustion",
+              .channel = "interior_engine_sound",
+              .volume = 100,
+              .gain = 40})
+        == nlohmann::json::parse(
+            R"({"channel":"interior_engine_sound","id":"engine_working_internal","variant":"combustion","volume":100,"gain":40,"loops":-1,"fade_ms":0})"));
     // A channel that stops names no sound.
     CHECK(data("sound.channel", {.channel = "radio", .fade_ms = 300})
           == nlohmann::json::parse(R"({"channel":"radio","fade_ms":300})"));

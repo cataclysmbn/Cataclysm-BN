@@ -3799,6 +3799,11 @@
           "minimum": 0,
           "description": "Mixer volume with the native volume option applied, 128 the full gain. The sound pack's own `volume` of the effect or playlist entry (0-100) scales it, as the native player does."
         },
+        "gain": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The mixer gain a volume change set, 128 full, in place of `volume` with neither the volume option nor the sound pack's `volume` applied, as the native player's change does."
+        },
         "angle": {
           "type": "integer",
           "description": "Clockwise degrees from straight ahead where the native mixer places the sound (90 is to the right). Absent: no direction."
@@ -3811,7 +3816,7 @@
         "fade_ms": {
           "type": "integer",
           "minimum": 0,
-          "description": "How long the sound fades in when it starts, or out when it stops. A channel that already plays this `id` and `variant` keeps playing it at the new `volume` and `angle`; one that still plays a sound that does not repeat until it stops ignores a new start, as the native player does."
+          "description": "How long the sound fades in when it starts, or out when it stops. A channel that already plays this `id` and `variant` keeps playing it at the new `gain` and `angle`; one that still plays a sound that does not repeat until it stops ignores a new start, as the native player does."
         }
       },
       "required": [
@@ -3862,9 +3867,10 @@
         "player_activities",
         "exterior_engine_sound",
         "interior_engine_sound",
-        "radio"
+        "radio",
+        "any"
       ],
-      "description": "A reserved channel of the native player, which plays one sound at a time."
+      "description": "A reserved channel of the native player, which plays one sound at a time. `any` only stops: every channel and sound effect."
     },
     "hello_params": {
       "type": "object",
