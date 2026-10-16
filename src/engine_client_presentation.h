@@ -5,6 +5,7 @@
 #include "engine_client_state.h"
 #include "enums.h"
 #include "type_id.h"
+#include "units_angle.h"
 
 #include <cstdint>
 #include <map>
@@ -14,6 +15,10 @@
 
 class Creature;
 class item;
+namespace sfx
+{
+enum class channel : int;
+} // namespace sfx
 
 namespace engine_client
 {
@@ -24,12 +29,35 @@ struct text_segment {
     std::string color = {};
     auto operator<=>( const text_segment & ) const = default; // *NOPAD*
 };
+/// What the native sound player (src/sdlsound.cpp) is asked to play, for a client to play from the sound pack.
+struct sound_cue {
+    /// The `sound_effect` id and variant of the sound pack; empty where a channel stops.
+    std::string id = {};
+    std::string variant = {};
+    /// `sound.channel`: the reserved channel.
+    std::string channel = {};
+    /// `music.changed`: the playlist; empty where the music stops.
+    std::string playlist = {};
+    /// In mixer units, 128 the full gain, with the native volume option applied; the sound pack's own volume
+    /// of the effect or playlist entry scales it as the native player does.
+    int volume = 0;
+    /// Clockwise degrees from straight ahead the native mixer places the sound at; none for no direction.
+    std::optional<int> angle = std::nullopt;
+    /// `sound.played`: false when the native player skips the sound while the same one still plays.
+    bool stacks = true;
+    /// `sound.channel`: how long the sound fades in when it starts, or out when it stops.
+    int fade_ms = 0;
+    /// `sound.channel`: how often the sound repeats after the first time; -1 until the channel stops.
+    int loops = -1;
+    auto operator<=>( const sound_cue & ) const = default; // *NOPAD*
+};
 /// One native animation fact: what the Tiles and curses renderers would draw, before any renderer.
 /// Transient: it changes no state.
 struct presentation_value {
     /// `projectile.moved`, `projectile.hit`, `explosion.started`, `explosion.blast`, `explosion.shrapnel`, `explosion.ended`,
     /// `combat_text.shown`, `item.activated`, `item.thrown`, `item.landed`, `entity.damaged`,
-    /// `terrain.changed`, `furniture.changed`, `field.changed`, `sound.heard`, `entity.moved` or `entity.gone`.
+    /// `terrain.changed`, `furniture.changed`, `field.changed`, `sound.heard`, `entity.moved`, `entity.gone`,
+    /// `sound.played`, `sound.channel` or `music.changed`.
     std::string type = {};
     /// Opaque ID of the projectile or explosion; empty for combat text. An `item.landed` of an item
     /// no attack launched has none.
@@ -77,6 +105,8 @@ struct presentation_value {
     std::string kind = {};
     /// How long the native animation holds this fact, from the ANIMATION_DELAY option.
     std::uint64_t duration_ms = 0;
+    /// `sound.played`, `sound.channel` and `music.changed`.
+    std::optional<sound_cue> sound = std::nullopt;
     auto operator<=>( const presentation_value & ) const = default; // *NOPAD*
 };
 
@@ -174,6 +204,41 @@ struct sound_options {
 };
 /// A sound reached the avatar, past its hearing, sleep and deafness.
 auto record_sound( const sound_options &options ) -> void;
+/// The native sound player's calls (src/sdlsound.cpp), told whether or not this process plays audio. Like the
+/// native player, nothing is played while the SOUND_ENABLED option is off or at a volume of 0.
+struct sound_effect_options {
+    const std::string &id;
+    const std::string &variant;
+    /// The volume of the native call, 0-100.
+    int volume = 0;
+    std::optional<units::angle> angle = std::nullopt;
+    bool stacks = true;
+};
+/// `sound.played`: one sound effect.
+auto record_sound_effect( const sound_effect_options &options ) -> void;
+struct channel_sound_options {
+    sfx::channel channel;
+    const std::string &id;
+    const std::string &variant;
+    int volume = 0;
+    int fade_in_ms = 0;
+    int loops = -1;
+};
+/// `sound.channel`: a reserved channel starts a sound, unless it plays one that repeats until it stops.
+auto record_channel_sound( const channel_sound_options &options ) -> void;
+/// `sound.channel` without a sound for a channel that plays one; `any` stops every channel.
+auto record_channel_stop( sfx::channel channel, int fade_ms ) -> void;
+struct channel_change_options {
+    sfx::channel channel;
+    std::optional<int> volume = std::nullopt;
+    std::optional<units::angle> angle = std::nullopt;
+};
+/// `sound.channel` again with the new mixer volume or direction of what a channel plays.
+auto record_channel_change( const channel_change_options &options ) -> void;
+/// Whether a channel plays a sound that repeats until it stops: what the native player answers without audio.
+auto channel_playing( sfx::channel channel ) -> bool;
+/// `music.changed`: the playlist the native player plays now, empty when it stops.
+auto record_music( const std::string &playlist ) -> void;
 struct move_options {
     const Creature &mover;
     tripoint_bub_ms from;

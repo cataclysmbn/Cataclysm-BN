@@ -229,6 +229,11 @@ TEST_CASE("serialized values", "[engine_client_wire]") {
              .role = "spectator"}};
     const auto hello = serialize_hello(reply);
     CHECK(contains(hello, R"("display":{"tiles":false,"tileset":"MSX"})"));
+    // Sound off names no pack.
+    CHECK_FALSE(contains(hello, R"("sound")"));
+    auto sounding = reply;
+    sounding.engine.soundpack = "/bn/data/sound/Basic";
+    CHECK(contains(serialize_hello(sounding), R"("sound":{"soundpack":"/bn/data/sound/Basic"})"));
     CHECK(contains(hello, R"("version":"0.2")"));
     CHECK(contains(
         hello,

@@ -103,6 +103,9 @@ struct engine_info {
     /// The `USE_TILES` and `TILES` options: how the native client would draw the map.
     bool use_tiles = true;
     std::string tileset = {};
+    /// The folder of the sound pack the SOUNDPACKS option chose, from which the native client plays its sounds;
+    /// empty while the SOUND_ENABLED option is off.
+    std::string soundpack = {};
     /// The BN language id the engine's text is in.
     std::string locale = {};
 };

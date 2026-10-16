@@ -18,6 +18,7 @@
 #include "options.h"
 #include "output.h"
 #include "profile.h"
+#include "sounds.h"
 #include "translations.h"
 #include "world.h"
 #include "worldfactory.h"
@@ -539,12 +540,23 @@ auto session::post( push_item item, const locale_items &variants ) -> void
     else { inbox->items.push_back( std::move( item ) ); }
 }
 
+namespace
+{
+/// The folder the native client loads the sound pack from, while sound is on.
+auto soundpack_folder() -> std::string
+{
+    const auto found = SOUNDPACKS.find( get_option<std::string>( "SOUNDPACKS" ) );
+    return sounds::sound_enabled && found != SOUNDPACKS.end() ? found->second : std::string{};
+}
+} // namespace
+
 auto describe_engine() -> engine_info
 {
     auto result = engine_info{
         .build = getVersionString(),
         .use_tiles = get_option<bool>( "USE_TILES" ),
         .tileset = get_option<std::string>( "TILES" ),
+        .soundpack = soundpack_folder(),
         .locale = get_language().id,
     };
     if( world_generator && world_generator->active_world && world_generator->active_world->info ) {

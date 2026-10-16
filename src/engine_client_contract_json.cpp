@@ -834,6 +834,22 @@ auto to_json( const event_value &value ) -> json
             }
             if( fact.scroll ) { data["scroll"] = {{"x", fact.scroll->x}, {"y", fact.scroll->y}}; }
             if( !fact.kind.empty() ) { data["kind"] = fact.kind; }
+        } else if( value.type == "sound.played" ) {
+            data = {{"id", fact.sound->id}, {"variant", fact.sound->variant}, {"volume", fact.sound->volume},
+                {"stacks", fact.sound->stacks}
+            };
+            if( fact.sound->angle ) { data["angle"] = *fact.sound->angle; }
+        } else if( value.type == "sound.channel" ) {
+            data = {{"channel", fact.sound->channel}, {"fade_ms", fact.sound->fade_ms}};
+            if( !fact.sound->id.empty() ) {
+                data.update( {{"id", fact.sound->id}, {"variant", fact.sound->variant}, {"volume", fact.sound->volume},
+                    {"loops", fact.sound->loops}} );
+                if( fact.sound->angle ) { data["angle"] = *fact.sound->angle; }
+            }
+        } else if( value.type == "music.changed" ) {
+            if( !fact.sound->playlist.empty() ) {
+                data = {{"playlist", fact.sound->playlist}, {"volume", fact.sound->volume}};
+            }
         }
         result["data"] = std::move( data );
         if( fact.duration_ms != 0 ) { result["display"] = {{"duration_ms", fact.duration_ms}}; }

@@ -16,6 +16,7 @@
 
 #include "cached_options.h"
 #include "debug.h"
+#include "engine_client_presentation.h"
 #include "init.h"
 #include "json.h"
 #include "messages.h"
@@ -85,6 +86,28 @@ static constexpr const char *TAG_TIME_OF_DAY = "cbn.time_of_day";
 static constexpr const char *TAG_WEATHER    = "cbn.weather";
 static constexpr const char *TAG_CONTEXT    = "cbn.context_themes";
 static constexpr const char *TAG_FATIGUE    = "cbn.fatigue";
+
+namespace
+{
+/// The reserved channels a group fades together.
+auto group_channels( const sfx::group group ) -> std::vector<sfx::channel>
+{
+    using ch = sfx::channel;
+    switch( group ) {
+        case sfx::group::time_of_day:
+            return { ch::daytime_outdoors_env, ch::nighttime_outdoors_env };
+        case sfx::group::weather:
+            return { ch::underground_env, ch::indoors_env, ch::indoors_rain_env, ch::outdoors_snow_env,
+                     ch::outdoors_flurry_env, ch::outdoors_thunderstorm_env, ch::outdoors_rain_env,
+                     ch::outdoors_drizzle_env, ch::outdoor_blizzard };
+        case sfx::group::context_themes:
+            return { ch::danger_extreme_theme, ch::danger_high_theme, ch::danger_medium_theme, ch::danger_low_theme };
+        case sfx::group::fatigue:
+            return { ch::stamina_75, ch::stamina_50, ch::stamina_35 };
+    }
+    return {};
+}
+} // namespace
 
 static auto sfx_group_to_tag( const sfx::group group ) -> const char *
 {
@@ -205,8 +228,6 @@ auto init_sound() -> bool
 
     // ── String-tag grouping ──────────────────────────────────────────────────
 
-    using ch = sfx::channel;
-
     // All SFX (everything except music) — used by fade_audio_channel(any)
     for( int i = 0; i < MAX_CHANNEL_COUNT; ++i ) {
         MIX_TagTrack( channel_tracks[i], TAG_ALL_SFX );
@@ -215,31 +236,12 @@ auto init_sound() -> bool
         MIX_TagTrack( t, TAG_ALL_SFX );
     }
 
-    // Mirrors original: Mix_GroupChannels(daytime_outdoors_env, nighttime_outdoors_env, time_of_day)
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::daytime_outdoors_env )],   TAG_TIME_OF_DAY );
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::nighttime_outdoors_env )], TAG_TIME_OF_DAY );
-
-    // Mirrors original: Mix_GroupChannels(underground_env, outdoor_blizzard, weather)
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::underground_env )],           TAG_WEATHER );
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::indoors_env )],               TAG_WEATHER );
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::indoors_rain_env )],          TAG_WEATHER );
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::outdoors_snow_env )],         TAG_WEATHER );
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::outdoors_flurry_env )],       TAG_WEATHER );
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::outdoors_thunderstorm_env )], TAG_WEATHER );
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::outdoors_rain_env )],         TAG_WEATHER );
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::outdoors_drizzle_env )],      TAG_WEATHER );
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::outdoor_blizzard )],          TAG_WEATHER );
-
-    // Mirrors original: Mix_GroupChannels(danger_extreme_theme, danger_low_theme, context_themes)
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::danger_extreme_theme )], TAG_CONTEXT );
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::danger_high_theme )],    TAG_CONTEXT );
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::danger_medium_theme )],  TAG_CONTEXT );
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::danger_low_theme )],     TAG_CONTEXT );
-
-    // Mirrors original: Mix_GroupChannels(stamina_75, stamina_35, fatigue)
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::stamina_75 )], TAG_FATIGUE );
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::stamina_50 )], TAG_FATIGUE );
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::stamina_35 )], TAG_FATIGUE );
+    // Mirrors original: Mix_GroupChannels of time_of_day, weather, context_themes and fatigue
+    for( const auto group : { sfx::group::time_of_day, sfx::group::weather, sfx::group::context_themes, sfx::group::fatigue } ) {
+        for( const auto channel : group_channels( group ) ) {
+            MIX_TagTrack( channel_tracks[static_cast<int>( channel )], sfx_group_to_tag( group ) );
+        }
+    }
 
     DebugLog( DL::Info, DC::Main ) << "SDL3_mixer initialized successfully";
     sound_init_success = true;
@@ -366,6 +368,7 @@ void musicFinished()
 
 auto play_music( const std::string &playlist ) -> void
 {
+    engine_client::presentation::record_music( playlist );
     const auto iter = playlists.find( playlist );
     if( iter == playlists.end() ) {
         return;
@@ -396,6 +399,7 @@ auto play_music( const std::string &playlist ) -> void
 
 auto stop_music() -> void
 {
+    engine_client::presentation::record_music( {} );
     if( test_mode ) {
         return;
     }
@@ -580,6 +584,7 @@ bool valid_last_time_played( MIX_Audio *audio, const int res_id, const std::stri
 auto sfx::play_variant_sound( const std::string &id, const std::string &variant,
                               const int volume, const bool stacks ) -> void
 {
+    engine_client::presentation::record_sound_effect( { .id = id, .variant = variant, .volume = volume, .stacks = stacks } );
     if( test_mode ) {
         return;
     }
@@ -625,6 +630,8 @@ auto sfx::play_variant_sound( const std::string &id, const std::string &variant,
                               const units::angle angle,
                               double /*pitch_min*/, double /*pitch_max*/, const bool stacks ) -> void
 {
+    engine_client::presentation::record_sound_effect( { .id = id, .variant = variant, .volume = volume, .angle = angle,
+            .stacks = stacks } );
     if( test_mode ) {
         return;
     }
@@ -670,6 +677,8 @@ auto sfx::play_ambient_variant_sound( const std::string &id, const std::string &
                                       const int fade_in_duration,
                                       double /*pitch*/, const int loops ) -> void
 {
+    engine_client::presentation::record_channel_sound( { .channel = channel, .id = id, .variant = variant, .volume = volume,
+            .fade_in_ms = fade_in_duration, .loops = loops } );
     if( test_mode ) {
         return;
     }
@@ -735,6 +744,9 @@ auto sfx::play_ambient_variant_sound( const std::string &id, const std::string &
 
 auto sfx::fade_audio_group( const group group, const int duration ) -> void
 {
+    for( const auto channel : group_channels( group ) ) {
+        engine_client::presentation::record_channel_stop( channel, duration );
+    }
     if( test_mode ) {
         return;
     }
@@ -746,6 +758,7 @@ auto sfx::fade_audio_group( const group group, const int duration ) -> void
 
 auto sfx::fade_audio_channel( const channel channel, const int duration ) -> void
 {
+    engine_client::presentation::record_channel_stop( channel, duration );
     if( test_mode ) {
         return;
     }
@@ -764,6 +777,10 @@ auto sfx::is_channel_playing( const channel channel ) -> bool
     if( test_mode ) {
         return false;
     }
+    // Without audio the channels play what the published facts told them to.
+    if( !sound_init_success ) {
+        return engine_client::presentation::channel_playing( channel );
+    }
     if( channel == channel::any ) {
         return false;
     }
@@ -773,6 +790,7 @@ auto sfx::is_channel_playing( const channel channel ) -> bool
 
 auto sfx::stop_sound_effect_fade( const channel channel, const int duration ) -> void
 {
+    engine_client::presentation::record_channel_stop( channel, duration );
     if( test_mode ) {
         return;
     }
@@ -788,6 +806,9 @@ auto sfx::stop_sound_effect_fade( const channel channel, const int duration ) ->
 
 auto sfx::stop_sound_effect_timed( const channel channel, const int time ) -> void
 {
+    if( channel != channel::any ) {
+        engine_client::presentation::record_channel_stop( channel, time );
+    }
     if( test_mode ) {
         return;
     }
@@ -803,6 +824,7 @@ auto sfx::stop_sound_effect_timed( const channel channel, const int time ) -> vo
 
 auto sfx::set_channel_volume( const channel channel, const int volume ) -> int
 {
+    engine_client::presentation::record_channel_change( { .channel = channel, .volume = volume } );
     if( test_mode ) {
         return 0;
     }
@@ -825,6 +847,7 @@ auto sfx::set_channel_volume( const channel channel, const int volume ) -> int
 auto sfx::set_channel_3d_position( const channel channel, const units::angle angle,
                                    int /*distance*/ ) -> void
 {
+    engine_client::presentation::record_channel_change( { .channel = channel, .angle = angle } );
     if( !sound_init_success || channel == channel::any ) {
         return;
     }

@@ -1,6 +1,7 @@
 #include "engine_client_presentation.h"
 
 #include <algorithm>
+#include <cmath>
 #include <map>
 #include <set>
 #include <ranges>
@@ -16,6 +17,8 @@
 #include "messages.h"
 #include "output.h"
 #include "options.h"
+#include "sounds.h"
+#include "enum_conversions.h"
 
 namespace engine_client::presentation
 {
@@ -332,6 +335,97 @@ auto record_sound( const sound_options &options ) -> void
             .logged = options.logged,
             .from = named ? std::optional( world::heading_of( direction_from( you.bub_pos(), options.origin ) ) ) : std::nullopt,
             .distance = static_cast<std::uint64_t>( rl_dist( you.bub_pos(), options.origin ) ) } );
+}
+
+namespace
+{
+/// What the facts told each channel and the music to play: the player of a process without audio.
+struct playing_state {
+    std::map<sfx::channel, sound_cue> channels = {};
+    std::optional<sound_cue> music = std::nullopt;
+};
+auto playing() -> playing_state & // *NOPAD*
+{
+    static auto value = playing_state{};
+    return value;
+}
+/// The native volume of a call scaled by its volume option, as the native player does before the pack's volume.
+auto mixer_volume( const int volume, const char *option ) -> int
+{
+    return volume * get_option<int>( option ) / 100;
+}
+auto degrees_of( const std::optional<units::angle> &angle ) -> std::optional<int>
+{
+    return angle ? std::optional( static_cast<int>( std::lround( to_degrees(
+                                      *angle ) ) ) ) : std::nullopt;
+}
+auto push_sound( const std::string &type, sound_cue cue ) -> void
+{
+    if( state().collecting ) { push( { .type = type, .sound = std::move( cue ) } ); }
+}
+} // namespace
+
+auto record_sound_effect( const sound_effect_options &options ) -> void
+{
+    if( !sounds::sound_enabled || options.volume <= 0 ) { return; }
+    push_sound( "sound.played", { .id = options.id, .variant = options.variant,
+                                  .volume = mixer_volume( options.volume, "SOUND_EFFECT_VOLUME" ),
+                                  .angle = degrees_of( options.angle ), .stacks = options.stacks
+                                } );
+}
+
+auto record_channel_sound( const channel_sound_options &options ) -> void
+{
+    if( !sounds::sound_enabled || options.volume <= 0 || options.channel == sfx::channel::any ||
+        channel_playing( options.channel ) ) { return; }
+    auto cue = sound_cue{ .id = options.id, .variant = options.variant, .channel = io::enum_to_string( options.channel ),
+                          .volume = mixer_volume( options.volume, "AMBIENT_SOUND_VOLUME" ),
+                          .fade_ms = options.fade_in_ms, .loops = options.loops };
+    playing().channels[options.channel] = cue;
+    push_sound( "sound.channel", std::move( cue ) );
+}
+
+auto record_channel_stop( const sfx::channel channel, const int fade_ms ) -> void
+{
+    auto &channels = playing().channels;
+    const auto stop = [&]( const sfx::channel stopped ) {
+        push_sound( "sound.channel", { .channel = io::enum_to_string( stopped ), .fade_ms = fade_ms } );
+    };
+    if( channel == sfx::channel::any ) {
+        std::ranges::for_each( channels | std::views::keys, stop );
+        channels.clear();
+    } else if( channels.erase( channel ) != 0 ) {
+        stop( channel );
+    }
+}
+
+auto record_channel_change( const channel_change_options &options ) -> void
+{
+    const auto found = playing().channels.find( options.channel );
+    if( found == playing().channels.end() ) { return; }
+    auto changed = found->second;
+    changed.volume = options.volume.value_or( changed.volume );
+    if( options.angle ) { changed.angle = degrees_of( options.angle ); }
+    changed.fade_ms = 0;
+    if( changed == found->second ) { return; }
+    found->second = changed;
+    push_sound( "sound.channel", std::move( changed ) );
+}
+
+auto channel_playing( const sfx::channel channel ) -> bool
+{
+    const auto found = playing().channels.find( channel );
+    return found != playing().channels.end() && found->second.loops < 0;
+}
+
+auto record_music( const std::string &playlist ) -> void
+{
+    auto &music = playing().music;
+    auto next = playlist.empty() || !sounds::sound_enabled ? std::optional<sound_cue> {} :
+                std::optional( sound_cue{ .playlist = playlist, .volume = mixer_volume( 100, "MUSIC_VOLUME" ) } );
+    if( next == music ) { return; }
+    music = next;
+    push_sound( "music.changed", next.value_or( sound_cue{} ) );
 }
 
 auto record_move( const move_options &options ) -> void

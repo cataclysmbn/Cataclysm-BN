@@ -2710,7 +2710,10 @@
             "terrain.changed",
             "furniture.changed",
             "field.changed",
-            "combat_text.shown"
+            "combat_text.shown",
+            "sound.played",
+            "sound.channel",
+            "music.changed"
           ]
         },
         "cause": {
@@ -3207,6 +3210,72 @@
               "data"
             ]
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "sound.played"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/data_sound_played"
+              }
+            },
+            "required": [
+              "data"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "sound.channel"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/data_sound_channel"
+              }
+            },
+            "required": [
+              "data"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "music.changed"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/data_music_changed"
+              }
+            },
+            "required": [
+              "data"
+            ]
+          }
         }
       ]
     },
@@ -3678,6 +3747,125 @@
       "additionalProperties": false,
       "description": "Floating text at a square, as the native scrolling combat text: one or two colored segments."
     },
+    "data_sound_played": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The `id` of the sound pack's `sound_effect`."
+        },
+        "variant": {
+          "type": "string",
+          "description": "Its `variant`. A pack without that variant plays the effect's `default` variant, as the native player does."
+        },
+        "volume": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Mixer volume with the native volume option applied, 128 the full gain. The sound pack's own `volume` of the effect or playlist entry (0-100) scales it, as the native player does."
+        },
+        "angle": {
+          "type": "integer",
+          "description": "Clockwise degrees from straight ahead where the native mixer places the sound (90 is to the right). Absent: no direction."
+        },
+        "stacks": {
+          "type": "boolean",
+          "description": "False: skip the sound while the same `id` and `variant` still plays, as the native player does."
+        }
+      },
+      "required": [
+        "id",
+        "variant",
+        "volume",
+        "stacks"
+      ],
+      "additionalProperties": false
+    },
+    "data_sound_channel": {
+      "type": "object",
+      "properties": {
+        "channel": {
+          "$ref": "#/$defs/sound_channel"
+        },
+        "id": {
+          "type": "string",
+          "description": "What the channel plays now; absent: the channel stops."
+        },
+        "variant": {
+          "type": "string",
+          "description": "Its `variant`. A pack without that variant plays the effect's `default` variant, as the native player does."
+        },
+        "volume": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Mixer volume with the native volume option applied, 128 the full gain. The sound pack's own `volume` of the effect or playlist entry (0-100) scales it, as the native player does."
+        },
+        "angle": {
+          "type": "integer",
+          "description": "Clockwise degrees from straight ahead where the native mixer places the sound (90 is to the right). Absent: no direction."
+        },
+        "loops": {
+          "type": "integer",
+          "minimum": -1,
+          "description": "How often the sound repeats after the first time; -1 until the channel stops."
+        },
+        "fade_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How long the sound fades in when it starts, or out when it stops. A channel that already plays this `id` and `variant` keeps playing it at the new `volume` and `angle`; one that still plays a sound that does not repeat until it stops ignores a new start, as the native player does."
+        }
+      },
+      "required": [
+        "channel",
+        "fade_ms"
+      ],
+      "additionalProperties": false
+    },
+    "data_music_changed": {
+      "type": "object",
+      "properties": {
+        "playlist": {
+          "type": "string",
+          "description": "The sound pack's `playlist` played now, in its order or shuffled as it says; absent: the music stops."
+        },
+        "volume": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Mixer volume with the native volume option applied, 128 the full gain. The sound pack's own `volume` of the effect or playlist entry (0-100) scales it, as the native player does."
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "sound_channel": {
+      "enum": [
+        "daytime_outdoors_env",
+        "nighttime_outdoors_env",
+        "underground_env",
+        "indoors_env",
+        "indoors_rain_env",
+        "outdoors_snow_env",
+        "outdoors_flurry_env",
+        "outdoors_thunderstorm_env",
+        "outdoors_rain_env",
+        "outdoors_drizzle_env",
+        "outdoor_blizzard",
+        "deafness_tone",
+        "danger_extreme_theme",
+        "danger_high_theme",
+        "danger_medium_theme",
+        "danger_low_theme",
+        "stamina_75",
+        "stamina_50",
+        "stamina_35",
+        "idle_chainsaw",
+        "chainsaw_theme",
+        "player_activities",
+        "exterior_engine_sound",
+        "interior_engine_sound",
+        "radio"
+      ],
+      "description": "A reserved channel of the native player, which plays one sound at a time."
+    },
     "hello_params": {
       "type": "object",
       "properties": {
@@ -3886,6 +4074,19 @@
               "required": [
                 "tiles",
                 "tileset"
+              ],
+              "additionalProperties": false
+            },
+            "sound": {
+              "type": "object",
+              "properties": {
+                "soundpack": {
+                  "type": "string",
+                  "description": "The folder of the sound pack the SOUNDPACKS option chose, which the native client plays its sounds and music from. Absent while the SOUND_ENABLED option is off."
+                }
+              },
+              "required": [
+                "soundpack"
               ],
               "additionalProperties": false
             }

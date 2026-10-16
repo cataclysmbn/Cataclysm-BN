@@ -1112,6 +1112,59 @@ Deno.test({
   },
 })
 
+Deno.test({
+  name: "stdio: the native sound player's calls reach the client as sound cues",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      const hello = await client.result("bn.hello", {
+        versions: ["0.2"],
+        schema: schemaHash,
+        client: { name: "stdio-test", version: "1" },
+      })
+      // Sound is on by default, so the hello names the folder of the default pack.
+      assert(
+        /data\/sound\/Basic\/?$/.test(hello.engine.sound.soundpack),
+        hello.engine.sound.soundpack,
+      )
+      const session = await enterTutorial(client)
+      for (let step = 0; step < 6; step++) {
+        while (session.mirror.interaction.interaction) {
+          const prompt = session.mirror.interaction.interaction
+          await session.submit({ kind: "choose", choice_id: prompt.choices[0].id })
+        }
+        const at = session.mirror.avatar.at
+        const dir = at.x === 1202 && at.y < 1214 ? "DOWN" : "RIGHT"
+        assertEquals(
+          (await session.submit({ kind: "action", action_id: dir })).stages.at(-1),
+          "completed",
+        )
+      }
+      const cues = session.told.filter((event) =>
+        event.type.startsWith("sound.") && event.type !== "sound.heard"
+      )
+      // Walking plays footsteps, and the ambience of where the avatar is starts on a channel.
+      assert(
+        cues.some((cue) => cue.type === "sound.played" && cue.data.id === "plmove"),
+        JSON.stringify(cues),
+      )
+      const ambience = cues.filter((cue) =>
+        cue.type === "sound.channel" && cue.data.id === "environment"
+      )
+      assert(ambience.length > 0, JSON.stringify(cues))
+      // A channel that plays a sound until it stops is not told to start it again every turn.
+      const starts = new Set(ambience.map((cue) => `${cue.data.channel} ${cue.data.variant}`))
+      assertEquals(ambience.length, starts.size, JSON.stringify(ambience))
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
 /** Main menu to the Settings tab entry `id`, at the first menu boundary. */
 async function openSetting(session: Session, id: string) {
   await session.acknowledge(() => atMainMenu(session.mirror))

@@ -406,6 +406,7 @@ auto serialize_hello( const hello_reply &reply ) -> std::string
                 {"cells_per_query", cells_per_query}
             }
         }};
+    if( !engine.soundpack.empty() ) { result["engine"]["sound"] = {{"soundpack", engine.soundpack}}; }
     result["limits"]["screen_queue"] = maximum_queued_commands;
     if( delivery ) {
         result["delivery"] = {{"credits", delivery->credits}, {"held_frames", maximum_held_frames},

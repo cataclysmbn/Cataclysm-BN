@@ -738,3 +738,33 @@ TEST_CASE("a heard sound is published with its direction and distance", "[engine
     CHECK(seen["events"][0]["data"]["distance"] == 3);
     CHECK_FALSE(seen["events"][0]["data"].contains("direction"));
 }
+
+TEST_CASE("sound cues are published as the sound pack names them", "[engine_client_event]") {
+    auto stream = stream_of(world_of({}));
+    const auto data = [&](const std::string& type, sound_cue cue) {
+        const auto published = stream.publish_presentation(
+            {.fact = {.type = type, .sound = std::move(cue)}});
+        REQUIRE(published);
+        return nlohmann::json::parse(
+            serialize_events({.epoch = "epoch:a", .events = {*published}}))["events"][0]["data"];
+    };
+    CHECK(
+        data("sound.played", {.id = "fire_gun", .variant = "glock_19", .volume = 90, .angle = 270})
+        == nlohmann::json::parse(
+            R"({"id":"fire_gun","variant":"glock_19","volume":90,"angle":270,"stacks":true})"));
+    CHECK(
+        data("sound.channel",
+             {.id = "environment",
+              .variant = "daytime",
+              .channel = "daytime_outdoors_env",
+              .volume = 100,
+              .fade_ms = 1000})
+        == nlohmann::json::parse(
+            R"({"channel":"daytime_outdoors_env","id":"environment","variant":"daytime","volume":100,"loops":-1,"fade_ms":1000})"));
+    // A channel that stops names no sound.
+    CHECK(data("sound.channel", {.channel = "radio", .fade_ms = 300})
+          == nlohmann::json::parse(R"({"channel":"radio","fade_ms":300})"));
+    CHECK(data("music.changed", {.playlist = "title", .volume = 100})
+          == nlohmann::json::parse(R"({"playlist":"title","volume":100})"));
+    CHECK(data("music.changed", {}) == nlohmann::json::object());
+}
