@@ -1,9 +1,10 @@
 #include "engine_client_session.h"
 
 #include <algorithm>
-#include <iterator>
 #include <cstdlib>
 #include <fstream>
+#include <iostream>
+#include <iterator>
 #include <ranges>
 #include <stdexcept>
 #include <utility>
@@ -177,9 +178,9 @@ auto session::check_oracle( const state_value &before,
                                    .world = world_capture_ ? world_capture_() : world_state{} };
     const auto expected = diff( before, full );
     // A change published as several events is the first one's with the cells of the others.
-    auto actual = changes{};
-    for( const auto &event : events ) {
-        if( &event == &events.front() ) { actual = event.value().delta; continue; }
+    auto actual = events.empty() ? changes{} :
+                  events.front().value().delta;
+    for( const auto &event : events | std::views::drop( 1 ) ) {
         std::ranges::copy( event.value().delta.cells, std::back_inserter( actual.cells ) );
     }
     auto differs = std::string{};

@@ -1,9 +1,10 @@
 #include "engine_client_event.h"
 
 #include <algorithm>
-#include <iterator>
 #include <cstdint>
+#include <iterator>
 #include <limits>
+#include <ranges>
 #include <set>
 #include <type_traits>
 #include <utility>
@@ -355,12 +356,12 @@ auto event_stream::issue( changes delta, std::optional<std::string> command,
     }
     // A delta too large for one event goes out as two, the latter half of its cells after the rest, so a
     // receiver applies the change without a snapshot.
-    auto &whole = event.value_.delta;
+    auto whole = std::move( event.value_.delta );
     if( whole.cells.size() < 2 ) { return std::unexpected( error::resource_limit ); }
-    const auto half = whole.cells.begin() + static_cast<std::ptrdiff_t>( whole.cells.size() / 2 );
-    auto rest = changes{ .cells = std::vector<cell>( std::make_move_iterator( half ),
-                                  std::make_move_iterator( whole.cells.end() ) ) };
-    whole.cells.erase( half, whole.cells.end() );
+    const auto half = whole.cells.size() / 2;
+    auto rest = changes{ .cells = whole.cells | std::views::drop( half ) | std::views::as_rvalue |
+                                  std::ranges::to<std::vector>() };
+    whole.cells.resize( half );
     const auto at = current_.at;
     auto events = issue( std::move( whole ), command, cause );
     auto after = events ? issue( std::move( rest ), std::move( command ), cause ) : events;
@@ -428,7 +429,6 @@ std::expected<std::vector<public_event>, error>
     world.cells = std::move( cells );
     current_.value.interaction = std::move( request.interaction );
     return events;
-
 }
 
 auto event_stream::publish_message( message_request request ) -> std::expected<public_event, error>
