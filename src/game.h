@@ -1082,6 +1082,9 @@ class game : public submap_load_listener
         auto get_destination_preview() const -> const std::vector<tripoint_bub_ms>& { // *NOPAD*
             return destination_preview;
         }
+        /// The square the terrain window is centered on: the one the last draw centered it on while looking around,
+        /// else where the next draw will center it, since the avatar moves and the map shifts between draws.
+        auto terrain_view_center() const -> point_bub_ms;
         /// The squares of the current level the terrain window shows, so a click can select them.
         auto click_window() const -> std::optional<half_open_rectangle<point_bub_ms>>;
         /// The terrain window cell whose click selects `target`; nullopt when it is not shown.

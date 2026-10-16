@@ -75,7 +75,7 @@ auto input_context::get_coordinates(const catacurses::window& capture_win)
     const auto win_bounds = half_open_rectangle<point>(win_min, win_min + view_size);
     if (!win_bounds.contains(coordinate)) { return std::nullopt; }
     auto view_offset = point_bub_ms{};
-    if (capture_window == g->w_terrain) { view_offset = g->ter_view_p.xy(); }
+    if (capture_window == g->w_terrain) { view_offset = g->terrain_view_center(); }
     const auto screen_position = coordinate - win_min;
     const auto p = view_offset + screen_position - view_size / 2;
     return tripoint_bub_ms(p, g->get_levz());

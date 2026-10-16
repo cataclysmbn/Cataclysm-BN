@@ -4172,7 +4172,7 @@ auto game_client::tiles::project_input_coordinates( const point coordinate,
     }
     auto view_offset = point_bub_ms{};
     if( capture_window == g->w_terrain ) {
-        view_offset = g->ter_view_p.xy();
+        view_offset = g->terrain_view_center();
     }
     const auto screen_pos = coordinate - win_min;
     if( tile_iso && use_tiles ) {
