@@ -3287,6 +3287,28 @@ TEST_CASE(
     CHECK(cursor == tripoint_bub_ms(you.bub_pos().x() + 1, you.bub_pos().y(), you.bub_pos().z()));
 }
 TEST_CASE(
+    "look around moves only its cursor to a pointed square, as the native mouse does",
+    "[client][interaction][look][mcp]") {
+    clear_map();
+    auto& you = get_avatar();
+    clear_character(you, false);
+    const auto guard = interaction_test_guard{};
+    const auto pointed = you.bub_pos() + tripoint(3, 2, 0);
+    auto reads = 0;
+    auto cursor = tripoint_bub_ms{};
+    auto offset = tripoint_rel_ms{};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        cursor = bubble_at(cursor_target()["current"]);
+        offset = you.view_offset;
+        return reads++ == 0 ? move_cursor(pointed) : resolve_action("QUIT");
+    });
+    auto center = you.bub_pos();
+    g->look_around(false, center, center, false, false, false);
+    REQUIRE(reads == 2);
+    CHECK(cursor == pointed);
+    CHECK(offset == tripoint_rel_ms());
+}
+TEST_CASE(
     "look around tells what is on the cursor square fact by fact, wherever it moves",
     "[client][interaction][look][mcp]") {
     clear_map();
