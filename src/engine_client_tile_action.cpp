@@ -50,7 +50,10 @@ auto tile_actions( const tripoint_bub_ms &at ) -> std::vector<tile_action>
     const auto walks = !you.controlling_vehicle;
     auto result = std::vector<tile_action> {};
     const auto native = [&]( const action_id act ) { result.push_back( native_action( context, act ) ); };
-    if( walks && seen_monster && near && !self && monster->attitude_to( you ) != A_FRIENDLY ) {
+    // As moving into it attacks: a monster that is not friendly, a person that is hostile.
+    const auto foe = ( seen_monster && monster->attitude_to( you ) != A_FRIENDLY ) ||
+                     ( person != nullptr && you.sees( *person ) && person->is_enemy() );
+    if( walks && foe && near && !self ) {
         result.push_back( { .id = "attack", .label = _( "Attack" ) } );
     }
     if( seen_monster && you.primary_weapon().is_gun() ) { native( ACTION_FIRE ); }
