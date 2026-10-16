@@ -200,7 +200,8 @@ TEST_CASE("generic memory client projects offset coordinate input", "[client][mc
     const auto restore_view = restore_on_out_of_scope<tripoint_bub_ms>(g->ter_view_p);
     const auto capture = catacurses::newwin(2, 4, point(2, 1));
     g->w_terrain = capture;
-    g->ter_view_p = tripoint_bub_ms(10, 20, 0);
+    const auto me = get_avatar().bub_pos();
+    g->ter_view_p = me;
 
     auto context = input_context("MCP_COORDINATE_TEST");
     context.register_action("ANY_INPUT");
@@ -213,8 +214,7 @@ TEST_CASE("generic memory client projects offset coordinate input", "[client][mc
     CHECK(context.handle_input() == "ANY_INPUT");
     const auto projected = context.get_coordinates(capture);
     REQUIRE(projected.has_value());
-    CHECK(projected->x() == 10);
-    CHECK(projected->y() == 20);
+    CHECK(projected->xy() == me.xy());
     CHECK(g->w_terrain == capture);
 }
 
@@ -223,6 +223,7 @@ TEST_CASE(
     "[client][mcp][input][engine_client_contract]") {
     auto guard = memory_screen_guard{};
     REQUIRE(g != nullptr);
+    clear_all_state();
     TERMX = 8;
     TERMY = 4;
     game_client::memory::resize(TERMX, TERMY);
@@ -230,18 +231,21 @@ TEST_CASE(
     const auto restore_view = restore_on_out_of_scope<tripoint_bub_ms>(g->ter_view_p);
     const auto capture = catacurses::newwin(2, 4, point(2, 1));
     g->w_terrain = capture;
-    g->ter_view_p = tripoint_bub_ms(10, 20, 0);
+    auto& you = get_avatar();
+    const auto me = you.bub_pos();
+    g->ter_view_p = me;
     const auto frame = engine_client::current_bubble_frame();
     const auto target = [&](const int x, const int y, const int z = 0) {
+        const auto at = you.bub_pos();
         return engine_client::travel_operation{
-            .target = {.dim = frame.dim, .x = frame.x + x, .y = frame.y + y, .z = z}};
+            .target =
+                {.dim = frame.dim, .x = frame.x + at.x() + x, .y = frame.y + at.y() + y, .z = z}};
     };
-
-    SECTION("the click projects back to the same bubble square") {
+    const auto clicks_project_back = [&]() {
         auto context = input_context("MCP_TRAVEL_TEST");
         context.register_action("ANY_INPUT");
         context.register_action("COORDINATE");
-        for (const auto& square : {point(8, 19), point(9, 20), point(10, 19), point(11, 20)}) {
+        for (const auto& square : {point(-2, -1), point(-1, 0), point(0, -1), point(1, 0)}) {
             const auto click = engine_client::travel_click(target(square.x, square.y));
             REQUIRE(click);
             const auto resolved = game_client::resolve_input_command(*click, point(8, 4));
@@ -252,18 +256,25 @@ TEST_CASE(
             CHECK(context.handle_input() == "ANY_INPUT");
             const auto projected = context.get_coordinates(capture);
             REQUIRE(projected);
-            CHECK(projected->xy() == tripoint_bub_ms(square.x, square.y, 0).xy());
+            CHECK(projected->xy() == you.bub_pos().xy() + point_rel_ms(square));
         }
+    };
+
+    SECTION("the click projects back to the same bubble square") { clicks_project_back(); }
+    SECTION("the click projects back to the same square after a step without a draw") {
+        you.setpos(me + tripoint_east);
+        clicks_project_back();
+        you.setpos(me);
     }
     SECTION("a square outside the terrain window has no click") {
-        CHECK_FALSE(engine_client::travel_click(target(7, 20)));
-        CHECK_FALSE(engine_client::travel_click(target(12, 20)));
-        CHECK_FALSE(engine_client::travel_click(target(10, 18)));
-        CHECK_FALSE(engine_client::travel_click(target(10, 21)));
+        CHECK_FALSE(engine_client::travel_click(target(-3, 0)));
+        CHECK_FALSE(engine_client::travel_click(target(2, 0)));
+        CHECK_FALSE(engine_client::travel_click(target(0, -2)));
+        CHECK_FALSE(engine_client::travel_click(target(0, 1)));
     }
     SECTION("another level or dimension has no click") {
-        CHECK_FALSE(engine_client::travel_click(target(10, 20, 1)));
-        auto elsewhere = target(10, 20);
+        CHECK_FALSE(engine_client::travel_click(target(0, 0, 1)));
+        auto elsewhere = target(0, 0);
         elsewhere.target.dim = frame.dim + "_elsewhere";
         CHECK_FALSE(engine_client::travel_click(elsewhere));
     }
@@ -365,10 +376,11 @@ TEST_CASE(
     const auto restore_terrain = restore_on_out_of_scope<catacurses::window>(g->w_terrain);
     const auto restore_view = restore_on_out_of_scope<tripoint_bub_ms>(g->ter_view_p);
     g->w_terrain = catacurses::newwin(2, 4, point(2, 1));
-    g->ter_view_p = tripoint_bub_ms(10, 20, 0);
+    const auto me = get_avatar().bub_pos();
+    g->ter_view_p = me;
     const auto frame = engine_client::current_bubble_frame();
     const auto click = engine_client::travel_click(
-        {.target = {.dim = frame.dim, .x = frame.x + 9, .y = frame.y + 20, .z = 0},
+        {.target = {.dim = frame.dim, .x = frame.x + me.x() - 1, .y = frame.y + me.y(), .z = me.z()},
          .button = "right"});
     REQUIRE(click);
     const auto resolved = game_client::resolve_input_command(*click, point(8, 4));
