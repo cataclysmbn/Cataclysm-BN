@@ -1,3 +1,4 @@
+local artifact_compass = require("./artifact_compass")
 local voltmeter = require("lua/iuse/voltmeter")
 local sonar = require("lua/iuse/sonar")
 local slimepit = require("lua/mapgen/slimepit")
@@ -18,6 +19,8 @@ local mod = game.mod_runtime[game.current_mod]
 local storage = game.mod_storage[game.current_mod]
 
 mod.voltmeter = voltmeter
+mod.artifact_compass = artifact_compass
+mod.on_artifact_compass_tick = artifact_compass.on_every_x
 mod.slimepit = slimepit
 mod.lab = lab
 mod.artifact_analyzer = artifact_analyzer

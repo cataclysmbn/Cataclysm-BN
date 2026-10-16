@@ -1088,5 +1088,10 @@
     "type": "item_action",
     "id": "paint_stuff_cfg",
     "name": { "str": "Configure Painter" }
+  },
+  {
+    "type": "item_action",
+    "id": "ARTIFACT_COMPASS",
+    "name": { "str": "Toggle artifact compass" }
   }
 ]
