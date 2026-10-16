@@ -183,6 +183,31 @@ TEST_CASE(
     CHECK(stopped[0].channel == "radio");
 }
 
+TEST_CASE(
+    "a new listener hears the channels and the music that already play",
+    "[engine_client_sound_cue]") {
+    if (!sound_supported()) { return; }
+    const auto room = sound_scene{};
+    constexpr auto day = sfx::channel::daytime_outdoors_env;
+    // The title music starts before the first client listens.
+    presentation::collect(false);
+    play_music("title");
+    sfx::play_ambient_variant_sound("environment", "daytime", 100, day, 1000);
+    CHECK(presentation::channel_playing(day));
+    presentation::collect(true);
+    const auto told = presentation::take();
+    REQUIRE(told.size() == 2);
+    CHECK(told[0].type == "sound.channel");
+    CHECK(told[0].sound->id == "environment");
+    CHECK(told[1].type == "music.changed");
+    CHECK(told[1].sound->playlist == "title");
+    // A listener that leaves forgets what it was told.
+    presentation::collect(false);
+    CHECK_FALSE(presentation::channel_playing(day));
+    presentation::collect(true);
+    CHECK(presentation::take().empty());
+}
+
 TEST_CASE("the music publishes its playlist when it changes", "[engine_client_sound_cue]") {
     if (!sound_supported()) { return; }
     const auto room = sound_scene{};

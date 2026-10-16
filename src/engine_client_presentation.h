@@ -121,6 +121,7 @@ namespace engine_client::presentation
 /// state delta of the boundary carries what the rest changed.
 constexpr auto maximum_ambient_facts = std::size_t { 256 };
 
+/// Starting to collect tells the channels and the music that already play; stopping forgets them.
 auto collect( bool on ) -> void;
 /// Whether a client is listening: the cheap test before work done only for a client.
 auto collecting() -> bool;

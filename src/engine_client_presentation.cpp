@@ -105,15 +105,53 @@ auto path_of( const std::vector<tripoint_bub_ms> &points ) -> std::vector<positi
 
 } // namespace
 
+namespace
+{
+/// What the facts told each channel and the music to play: the player of a process without audio.
+struct playing_state {
+    std::map<sfx::channel, sound_cue> channels = {};
+    std::optional<sound_cue> music = std::nullopt;
+};
+auto playing() -> playing_state & // *NOPAD*
+{
+    static auto value = playing_state{};
+    return value;
+}
+/// The native volume of a call scaled by its volume option, as the native player does before the pack's volume.
+auto mixer_volume( const int volume, const char *option ) -> int
+{
+    return volume * get_option<int>( option ) / 100;
+}
+auto degrees_of( const std::optional<units::angle> &angle ) -> std::optional<int>
+{
+    return angle ? std::optional( static_cast<int>( std::lround( to_degrees(
+                                      *angle ) ) ) ) : std::nullopt;
+}
+auto push_sound( const std::string &type, sound_cue cue ) -> void
+{
+    if( state().collecting ) { push( { .type = type, .sound = std::move( cue ) } ); }
+}
+/// A new listener hears the channels and the music that play already.
+auto tell_playing() -> void
+{
+    std::ranges::for_each( playing().channels | std::views::values, []( const auto & cue ) { push_sound( "sound.channel", cue ); } );
+    if( playing().music ) { push_sound( "music.changed", *playing().music ); }
+}
+auto forget_playing() -> void { playing() = {}; }
+} // namespace
+
 auto collecting() -> bool { return state().collecting; }
 
 auto collect( const bool on ) -> void
 {
     auto &feed = state();
     feed.collecting = on;
-    if( !on ) {
+    if( on ) {
+        tell_playing();
+    } else {
         feed.pending.clear();
         feed.known.clear();
+        forget_playing();
     }
 }
 
@@ -336,34 +374,6 @@ auto record_sound( const sound_options &options ) -> void
             .from = named ? std::optional( world::heading_of( direction_from( you.bub_pos(), options.origin ) ) ) : std::nullopt,
             .distance = static_cast<std::uint64_t>( rl_dist( you.bub_pos(), options.origin ) ) } );
 }
-
-namespace
-{
-/// What the facts told each channel and the music to play: the player of a process without audio.
-struct playing_state {
-    std::map<sfx::channel, sound_cue> channels = {};
-    std::optional<sound_cue> music = std::nullopt;
-};
-auto playing() -> playing_state & // *NOPAD*
-{
-    static auto value = playing_state{};
-    return value;
-}
-/// The native volume of a call scaled by its volume option, as the native player does before the pack's volume.
-auto mixer_volume( const int volume, const char *option ) -> int
-{
-    return volume * get_option<int>( option ) / 100;
-}
-auto degrees_of( const std::optional<units::angle> &angle ) -> std::optional<int>
-{
-    return angle ? std::optional( static_cast<int>( std::lround( to_degrees(
-                                      *angle ) ) ) ) : std::nullopt;
-}
-auto push_sound( const std::string &type, sound_cue cue ) -> void
-{
-    if( state().collecting ) { push( { .type = type, .sound = std::move( cue ) } ); }
-}
-} // namespace
 
 auto record_sound_effect( const sound_effect_options &options ) -> void
 {
