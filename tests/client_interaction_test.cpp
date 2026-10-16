@@ -3930,6 +3930,8 @@ TEST_CASE(
         return *event;
     });
     handle_action();
+    // As the game loop goes on: an aim, for one, runs as an activity.
+    if (auto& you = get_avatar(); you.activity) { you.activity->do_turn(you); }
     check_dropped();
     replay::finish();
     REQUIRE(reads == 1);
@@ -4004,8 +4006,8 @@ auto logged(const std::string& text) -> bool {
     return std::ranges::contains(Messages::feed_since({}), text, &Messages::feed_entry::text);
 }
 
-/// Runs one turn in which the client takes the tile action `id` on `at`; `then` answers every later
-/// read, numbered from 1.
+/// Runs one turn in which the client takes the tile action `id` on `at`, with the activity it
+/// starts; `then` answers every later read, numbered from 1.
 auto run_tile_action(
     const std::string& id, const tripoint_bub_ms& at,
     const std::function<auto(int)->input_event>& then) -> void {
@@ -4025,6 +4027,8 @@ auto run_tile_action(
         return *event;
     });
     handle_action();
+    // As the game loop goes on: an aim, for one, runs as the activity the action started.
+    if (auto& you = get_avatar(); you.activity) { you.activity->do_turn(you); }
 }
 
 } // namespace
