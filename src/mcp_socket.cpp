@@ -37,6 +37,9 @@ using native_socket = decltype( socket( 0, 0, 0 ) );
 constexpr auto invalid_handle = handle { -1 };
 /// How long shutdown waits for a reader to take the output still pending.
 constexpr auto final_drain = std::chrono::seconds( 2 );
+/// The longest a flush of the controller's frame waits for its reader to take it before the rest is left
+/// for later.
+constexpr auto controller_wait = std::chrono::milliseconds( 10 );
 
 #if defined(_WIN32)
 using poll_entry = WSAPOLLFD;
@@ -119,6 +122,13 @@ auto wait_for( std::vector<poll_entry> &entries, const int wait_ms ) -> int
 auto start_sockets() -> bool { return true; }
 #endif
 
+/// Whether `fd` can take more output within `wait`.
+auto writable_within( const handle fd, const std::chrono::milliseconds wait ) -> bool
+{
+    auto entries = std::vector{ poll_entry{ .fd = static_cast<decltype( poll_entry::fd )>( fd ), .events = POLLOUT, .revents = 0 } };
+    return wait_for( entries, static_cast<int>( wait.count() ) ) > 0;
+}
+
 auto open_stream() -> handle
 {
     if( !start_sockets() ) { return invalid_handle; }
@@ -193,20 +203,31 @@ class input_buffer final : public std::streambuf
         bool ended_ = false;
 };
 
-/// Writes a socket without waiting: what the socket does not take stays here, up to a bound. A
+struct output_options {
+    handle fd;
+    bool pipe;
+    /// The most unsent bytes before the stream fails.
+    std::size_t bound;
+    /// The longest a flush waits for the reader to take what is left; zero never waits.
+    std::chrono::milliseconds wait;
+};
+
+/// Writes a socket without blocking: what the socket does not take stays here, up to a bound. A
 /// write that leaves more than the bound unsent, or one after the socket failed, fails the stream,
-/// so the connection ends.
+/// so the connection ends. A flush waits at most `wait` while the reader takes the rest; a reader
+/// that took nothing meanwhile is not waited for again until it takes some.
 class output_buffer final : public std::streambuf
 {
     public:
-        output_buffer( const handle fd, const bool pipe, const std::size_t bound ) :
-            fd_( fd ), pipe_( pipe ), bound_( bound ) {}
+        explicit output_buffer( const output_options &options ) :
+            fd_( options.fd ), pipe_( options.pipe ), bound_( options.bound ), wait_( options.wait ) {}
 
         auto drain() -> void {
             while( !broken_ && sent_ < pending_.size() ) {
                 const auto wrote = transmit( fd_, pending_.data() + sent_, pending_.size() - sent_, pipe_ );
                 if( wrote > 0 ) {
                     sent_ += static_cast<std::size_t>( wrote );
+                    stalled_ = false;
                     continue;
                 }
                 broken_ = !would_block();
@@ -241,6 +262,18 @@ class output_buffer final : public std::streambuf
         }
         auto sync() -> int override {
             drain();
+            // A frame larger than the pipe or socket buffer reaches a reader that takes it now, not with
+            // the next frame, which the game may compute for a long while; a slow reader holds the game no
+            // longer than `wait_` per flush.
+            const auto until = std::chrono::steady_clock::now() + wait_;
+            while( !stalled_ && pending() > 0 ) {
+                const auto rest = std::chrono::ceil<std::chrono::milliseconds>( until -
+                                  std::chrono::steady_clock::now() );
+                if( rest.count() <= 0 ) { break; }
+                const auto left = pending();
+                if( writable_within( fd_, rest ) ) { drain(); }
+                stalled_ = pending() == left;
+            }
             return broken_ ? -1 : 0;
         }
 
@@ -248,10 +281,12 @@ class output_buffer final : public std::streambuf
         handle fd_;
         bool pipe_;
         std::size_t bound_;
+        std::chrono::milliseconds wait_;
         std::string pending_;
         std::size_t sent_ = 0;
         bool broken_ = false;
         bool behind_ = false;
+        bool stalled_ = false;
 };
 
 #if defined(_WIN32)
@@ -324,8 +359,9 @@ struct socket_hub::connection {
                 const socket_options &options ) :
         fd( opened.in ), out_fd( opened.out ), controller( opened.controller ),
         input( opened.in, opened.pipe, server::default_max_frame_bytes ),
-        buffered( opened.out, opened.pipe, options.output_bound ),
-        protocol( std::make_unique<server>( host, server::options{ .spectator = !opened.controller } ) ) {}
+        buffered( { .fd = opened.out, .pipe = opened.pipe, .bound = options.output_bound,
+                    .wait = opened.controller ? controller_wait : std::chrono::milliseconds::zero() } ),
+    protocol( std::make_unique<server>( host, server::options{ .spectator = !opened.controller } ) ) {}
     ~connection() {
         // Stdio's input is the process's own stdin; only its output descriptor is ours to close.
         if( out_fd != fd ) { close_handle( out_fd ); }

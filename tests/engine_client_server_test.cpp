@@ -2215,6 +2215,35 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "a stdio client that reads nothing holds up one frame for a moment, not every frame",
+    "[engine_client_socket]") {
+    auto rig = hub_rig{{}, true};
+    const auto leader = rig.hub->controller();
+    REQUIRE(leader);
+    const auto frame =
+        R"({"jsonrpc":"2.0","method":"bn.events","params":")" + std::string(16 * 1024, 'x')
+        + R"("})";
+    const auto flush_time = [&] {
+        const auto began = std::chrono::steady_clock::now();
+        leader->out << frame << '\n' << std::flush;
+        return std::chrono::steady_clock::now() - began;
+    };
+    const auto first = flush_time();
+    CHECK(first >= std::chrono::milliseconds(5));
+    CHECK(first < std::chrono::seconds(1));
+    CHECK(flush_time() < std::chrono::milliseconds(5));
+    // Once the client reads, both frames arrive whole and in order, and the next one is waited for
+    // again.
+    auto received = std::string{};
+    for (auto round = 0; round < 200 && count_of(received, "\n") < 2; ++round) {
+        rig.hub->service(20);
+        received += rig.client_receive();
+    }
+    CHECK(received == frame + "\n" + frame + "\n");
+    CHECK(flush_time() >= std::chrono::milliseconds(5));
+}
+
+TEST_CASE(
     "stdio requests are read while the client leaves the engine's output unread",
     "[engine_client_socket]") {
     auto rig = hub_rig{{}, true};

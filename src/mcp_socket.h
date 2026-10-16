@@ -39,9 +39,11 @@ struct socket_options {
 /// passes the bound is dropped as a socket is. Stdio has no next controller, so that ends the
 /// session; the caller keeps the game, since the client did not choose to leave.
 ///
-/// Sockets never block the game: output goes to a bounded per-connection buffer written without
-/// waiting, and a connection that lets it fill up is dropped. The controller's input is the only
-/// read the game waits for, as with stdio; while it waits, the others are served.
+/// Sockets never hold the game: output goes to a bounded per-connection buffer written without
+/// blocking, and a connection that lets it fill up is dropped. A spectator's frame never waits; the
+/// controller's waits at most 10 ms for its reader to take it, so a frame larger than the pipe or
+/// socket buffer reaches a reading client at once and not with the next one. The controller's input
+/// is the only read the game waits for, as with stdio; while it waits, the others are served.
 class socket_hub
 {
     public:

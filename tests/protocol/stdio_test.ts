@@ -2899,8 +2899,9 @@ Deno.test({
         const ids = floodCells(session, 4)
         client.readDelayMs = delay
         const started = performance.now()
-        // The engine does not wait for a reader, so one slower than the wait publishes runs out of
-        // credits and is resynced; no resync drops a command's stages, so the wait's end is pushed.
+        // The engine waits at most 10 ms per frame for a reader, so one slower than the wait
+        // publishes runs out of credits and is resynced; no resync drops a command's stages, so
+        // the wait's end is pushed.
         await endWait(session, id)
         client.readDelayMs = 0
         await client.repliesUntil(ids.length)
