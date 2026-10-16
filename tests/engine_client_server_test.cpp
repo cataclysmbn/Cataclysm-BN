@@ -16,6 +16,7 @@
 
 #    include <algorithm>
 #    include <array>
+#    include <atomic>
 #    include <chrono>
 #    include <filesystem>
 #    include <fstream>
@@ -2182,6 +2183,35 @@ TEST_CASE(
     CHECK(index_of(received, R"("id":1)") < index_of(received, R"("id":2)"));
     // The pipe the client handed over is not switched to non-blocking for whoever shares it.
     CHECK((fcntl(rig.from_engine[1], F_GETFL) & O_NONBLOCK) == 0);
+}
+
+TEST_CASE(
+    "a stdio frame larger than the pipe reaches a reading client when it is flushed",
+    "[engine_client_socket]") {
+    auto rig = hub_rig{{}, true};
+    const auto leader = rig.hub->controller();
+    REQUIRE(leader);
+    // The client reads as it does, on its own thread; the game computes its next step meanwhile and
+    // serves the hub only at its next frame.
+    auto received = std::string{};
+    auto reading = std::atomic<bool>{false};
+    auto reader = std::thread([&] {
+        reading = true;
+        const auto until = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+        while (!received.ends_with("\n") && std::chrono::steady_clock::now() < until) {
+            received += rig.client_receive();
+        }
+    });
+    while (!reading) { std::this_thread::yield(); }
+    // Four times the pipe, so a flush that writes only what the pipe takes leaves most of it.
+    const auto frame =
+        R"({"jsonrpc":"2.0","method":"bn.events","params":")" + std::string(16 * 1024, 'x')
+        + R"("})";
+    leader->out << frame << '\n' << std::flush;
+    const auto flushed = std::chrono::steady_clock::now();
+    reader.join();
+    CHECK(received == frame + "\n");
+    CHECK(std::chrono::steady_clock::now() - flushed < std::chrono::milliseconds(100));
 }
 
 TEST_CASE(
