@@ -40,6 +40,8 @@
 #    include "magic/magic_teleporter_list.h"
 #    include "map/map.h"
 #    include "map_helpers.h"
+#    include "message_feed.h"
+#    include "messages.h"
 #    include "monster.h"
 #    include "npc.h"
 #    include "options.h"
@@ -63,6 +65,7 @@
 #    include "ui.h"
 #    include "uistate.h"
 #    include "units_utility.h"
+#    include "vehicle/vehicle.h"
 
 #    include <atomic>
 #    include <filesystem>
@@ -3978,6 +3981,52 @@ auto absolute(const tripoint_bub_ms& at) -> engine_client::position {
     return engine_client::world::position_at(at);
 }
 
+struct vehicle_parts {
+    bool controls = false;
+    bool horn = false;
+};
+
+/// A one-square vehicle on `at` with the given parts on its frame.
+auto place_vehicle(const tripoint_bub_ms& at, const vehicle_parts& parts) -> void {
+    auto& here = get_map();
+    auto* const veh = here.add_vehicle(vproto_id("none"), at, 0_degrees, 0, 0);
+    REQUIRE(veh != nullptr);
+    const auto install = [&](const char* part) {
+        REQUIRE(veh->install_part(tripoint_mnt_veh::zero(), vpart_id(part), true) >= 0);
+    };
+    install("frame_vertical");
+    if (parts.controls) { install("controls"); }
+    if (parts.horn) { install("horn_car"); }
+    here.add_vehicle_to_cache(veh);
+}
+
+auto logged(const std::string& text) -> bool {
+    return std::ranges::contains(Messages::feed_since({}), text, &Messages::feed_entry::text);
+}
+
+/// Runs one turn in which the client takes the tile action `id` on `at`; `then` answers every later
+/// read, numbered from 1.
+auto run_tile_action(
+    const std::string& id, const tripoint_bub_ms& at,
+    const std::function<auto(int)->input_event>& then) -> void {
+    const auto running = game_session::running();
+    const auto cleanup = on_out_of_scope([&] {
+        game_client::memory::set_input_provider({});
+        game_session::set_running(running);
+    });
+    game_session::set_running(true);
+    engine_client::process_session().replace_world();
+    auto reads = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        if (reads++ > 0) { return then(reads - 1); }
+        const auto event = deliver(
+            engine_client::tile_operation{.action_id = id, .target = absolute(at)});
+        REQUIRE(event);
+        return *event;
+    });
+    handle_action();
+}
+
 } // namespace
 
 TEST_CASE(
@@ -4051,6 +4100,30 @@ TEST_CASE(
         REQUIRE(get_avatar().sees(far));
         CHECK(offers(near, "talk"));
         CHECK_FALSE(offers(far, "talk"));
+    }
+    SECTION(
+        "a hostile person beside the avatar is attacked as moving into it does; a peaceful one is "
+        "not") {
+        set_time(calendar::turn_zero + 12_hours);
+        const auto west = pickup_test_pos + tripoint_west;
+        auto& foe = spawn_npc(east, "test_talker");
+        foe.set_attitude(NPCATT_KILL);
+        spawn_npc(west, "test_talker").set_attitude(NPCATT_NULL);
+        here.build_map_cache(0, true);
+        REQUIRE(foe.is_enemy());
+        CHECK(offers(east, "attack"));
+        CHECK_FALSE(offers(west, "attack"));
+    }
+    SECTION("vehicle controls are used on their square beside or under the avatar, not from afar") {
+        const auto north = pickup_test_pos + tripoint_north;
+        place_vehicle(east, {.controls = true});
+        place_vehicle(north, {.controls = false});
+        place_vehicle(pickup_test_pos + tripoint(3, 0, 0), {.controls = true});
+        place_vehicle(pickup_test_pos, {.controls = true});
+        CHECK(offers(east, "control_vehicle"));
+        CHECK(offers(pickup_test_pos, "control_vehicle"));
+        CHECK_FALSE(offers(north, "control_vehicle"));
+        CHECK_FALSE(offers(pickup_test_pos + tripoint(3, 0, 0), "control_vehicle"));
     }
     SECTION("each action carries the native label and the player's keys") {
         const auto actions = engine_client::tile_actions(east);
@@ -4157,6 +4230,72 @@ TEST_CASE(
     handle_action();
     CHECK(errors == std::vector(2, engine_client::error::validation_failed));
     CHECK(get_avatar().moves == moves);
+}
+
+TEST_CASE(
+    "talking on a square refuses an avatar without a face as the native chat does",
+    "[client][interaction][mcp][engine_client_contract][tile_action]") {
+    const auto guard = interaction_test_guard{};
+    const auto fixture = pickup_fixture_guard(false);
+    set_time(calendar::turn_zero + 12_hours);
+    const auto east = pickup_test_pos + tripoint_east;
+    auto& talker = spawn_npc(east, "test_talker");
+    get_avatar().set_mutation(trait_id("PROF_FOODP"));
+    get_map().build_map_cache(0, true);
+    REQUIRE(offers(east, "talk"));
+    const auto moves = talker.moves;
+    run_tile_action("talk", east, [](const int read) -> input_event {
+        FAIL("a dialogue opened and read input " << read);
+        return {};
+    });
+    CHECK(logged("You can't speak without your face!"));
+    CHECK(talker.moves == moves);
+}
+
+TEST_CASE(
+    "firing on a square starts the aim on the creature there, not the closest one",
+    "[client][interaction][mcp][engine_client_contract][tile_action]") {
+    const auto guard = interaction_test_guard{};
+    const auto fixture = pickup_fixture_guard(false);
+    set_time(calendar::turn_zero + 12_hours);
+    const auto chosen = pickup_test_pos + tripoint(3, 0, 0);
+    auto& here = get_map();
+    here.build_map_cache(0, true);
+    spawn_test_monster("mon_zombie", pickup_test_pos + tripoint_east);
+    spawn_test_monster("mon_zombie", chosen);
+    arm_character(get_avatar(), "glock_19");
+    here.build_map_cache(0, true);
+    REQUIRE(offers(chosen, "fire"));
+    auto aimed = std::optional<tripoint_bub_ms>{};
+    run_tile_action("fire", chosen, [&](const int read) {
+        REQUIRE(read == 1);
+        aimed = bubble_at(cursor_target()["current"]);
+        return resolve_action("QUIT");
+    });
+    CHECK(aimed == chosen);
+}
+
+TEST_CASE(
+    "vehicle controls on a square are used there without asking which controls",
+    "[client][interaction][mcp][engine_client_contract][tile_action]") {
+    const auto guard = interaction_test_guard{};
+    const auto fixture = pickup_fixture_guard(false);
+    const auto east = pickup_test_pos + tripoint_east;
+    place_vehicle(pickup_test_pos + tripoint_west, {.controls = true});
+    place_vehicle(east, {.controls = true, .horn = true});
+    get_map().build_map_cache(0, true);
+    auto labels = std::vector<std::string>{};
+    run_tile_action("control_vehicle", east, [&](const int read) {
+        REQUIRE(read == 1);
+        const auto snapshot = game_client::current_interaction();
+        std::ranges::transform(
+            snapshot.choices, std::back_inserter(labels), &game_client::interaction_choice::label);
+        return resolve_action("QUIT");
+    });
+    INFO(labels.size());
+    CHECK(std::ranges::any_of(labels, [](const auto& label) {
+        return label.contains("Honk horn");
+    }));
 }
 
 #endif // CATA_MCP
