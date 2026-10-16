@@ -4023,7 +4023,8 @@
                 "glyph": "┌",
                 "color": "c_light_gray",
                 "name": "plastered wooden wall",
-                "subtile": "corner"
+                "subtile": "corner",
+                "wall": true
               },
               "light": 1
             },
@@ -4040,7 +4041,8 @@
                 "glyph": "│",
                 "color": "c_light_gray",
                 "name": "plastered wooden wall",
-                "subtile": "edge"
+                "subtile": "edge",
+                "wall": true
               },
               "light": 1
             },
@@ -4059,7 +4061,8 @@
                   "color": "c_light_gray",
                   "name": "plastered wooden wall",
                   "subtile": "end_piece",
-                  "rotation": 2
+                  "rotation": 2,
+                  "wall": true
                 }
               }
             },
@@ -4077,7 +4080,8 @@
                 "color": "c_light_gray",
                 "name": "plastered wooden wall",
                 "subtile": "edge",
-                "rotation": 1
+                "rotation": 1,
+                "wall": true
               },
               "light": 1
             },
@@ -4149,7 +4153,8 @@
                 "color": "c_light_gray",
                 "name": "plastered wooden wall",
                 "subtile": "edge",
-                "rotation": 1
+                "rotation": 1,
+                "wall": true
               },
               "light": 1
             },
@@ -4219,7 +4224,8 @@
                 "color": "c_light_gray",
                 "name": "plastered wooden wall",
                 "subtile": "edge",
-                "rotation": 1
+                "rotation": 1,
+                "wall": true
               },
               "light": 1
             },
@@ -4290,7 +4296,8 @@
                 "color": "c_light_gray",
                 "name": "plastered wooden wall",
                 "subtile": "end_piece",
-                "rotation": 3
+                "rotation": 3,
+                "wall": true
               },
               "light": 1
             },
@@ -4470,7 +4477,8 @@
                 "color": "c_light_gray",
                 "name": "plastered wooden wall",
                 "subtile": "end_piece",
-                "rotation": 1
+                "rotation": 1,
+                "wall": true
               },
               "light": 4
             },
@@ -4576,7 +4584,8 @@
                 "color": "c_light_gray",
                 "name": "plastered wooden wall",
                 "subtile": "edge",
-                "rotation": 1
+                "rotation": 1,
+                "wall": true
               },
               "light": 4
             },
@@ -4594,7 +4603,8 @@
                 "color": "c_light_gray",
                 "name": "plastered wooden wall",
                 "subtile": "end_piece",
-                "rotation": 3
+                "rotation": 3,
+                "wall": true
               },
               "light": 1
             },
@@ -4705,7 +4715,8 @@
                   "color": "c_light_gray",
                   "name": "plastered wooden wall",
                   "subtile": "end_piece",
-                  "rotation": 3
+                  "rotation": 3,
+                  "wall": true
                 }
               }
             },
@@ -4870,7 +4881,8 @@
                 "glyph": "│",
                 "color": "c_light_gray",
                 "name": "plastered wooden wall",
-                "subtile": "end_piece"
+                "subtile": "end_piece",
+                "wall": true
               },
               "light": 4
             },
@@ -4887,7 +4899,8 @@
                 "glyph": "│",
                 "color": "c_light_gray",
                 "name": "plastered wooden wall",
-                "subtile": "edge"
+                "subtile": "edge",
+                "wall": true
               },
               "light": 4
             },
@@ -4905,7 +4918,8 @@
                 "color": "c_light_gray",
                 "name": "plastered wooden wall",
                 "subtile": "end_piece",
-                "rotation": 2
+                "rotation": 2,
+                "wall": true
               },
               "light": 4
             }
