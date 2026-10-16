@@ -204,6 +204,9 @@ TEST_CASE(
     CHECK(told[0].sound->id == "environment");
     CHECK(told[1].type == "music.changed");
     CHECK(told[1].sound->playlist == "title");
+    // A new stream of the same listener goes on from the facts it was told.
+    presentation::collect(true);
+    CHECK(presentation::take().empty());
     // A listener that leaves forgets what it was told.
     presentation::collect(false);
     CHECK_FALSE(presentation::channel_playing(day));

@@ -145,10 +145,11 @@ auto collecting() -> bool { return state().collecting; }
 auto collect( const bool on ) -> void
 {
     auto &feed = state();
+    const auto starts = on && !feed.collecting;
     feed.collecting = on;
-    if( on ) {
+    if( starts ) {
         tell_playing();
-    } else {
+    } else if( !on ) {
         feed.pending.clear();
         feed.known.clear();
         forget_playing();
