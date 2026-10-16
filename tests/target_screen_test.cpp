@@ -225,7 +225,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "the target move is refused outside the cursor's bounds and range",
+    "the target move is refused outside the cursor's bounds, not its range",
     "[target_screen][engine_client_component]") {
     auto ctxt = input_context{"TARGET"};
     auto range = 10;
@@ -242,10 +242,11 @@ TEST_CASE(
              .args = {
                  .pos = ec::position{.dim = std::move(dim), .x = x + 100, .y = y + 200, .z = z}}});
     };
-    // The range is measured from the source, which is at (60, 60).
+    // Past the range, which is measured from the source at (60, 60), the screen holds the cursor at
+    // its end.
     CHECK(move(70, 60));
-    CHECK(move(71, 60).error() == ec::error::invalid_arguments);
-    CHECK(move(60, 49).error() == ec::error::invalid_arguments);
+    CHECK(move(71, 60));
+    CHECK(move(60, 49));
     range = 500;
     CHECK(move(0, 60));
     CHECK(move(131, 60));
