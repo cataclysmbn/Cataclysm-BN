@@ -742,12 +742,15 @@ auto server::queue_push() -> void
             }
             const auto &event = marked ? *marked : pushed->event;
             // Cheap for an event the stream sealed: its serialized value is taken as it is.
-            auto params = serialize_events( {.epoch = pushed->epoch, .events = {event}} );
+            // The event is copied once: an initializer list would copy it twice.
+            auto single = event_batch{ .epoch = pushed->epoch };
+            single.events.push_back( event );
+            auto params = serialize_events( single );
             const auto bytes = params.size();
             if( batch.epoch != pushed->epoch || batch_bytes + bytes > maximum_inline_bytes ) { flush_batch(); }
             batch.epoch = pushed->epoch;
             if( batch.events.empty() ) { first_params = std::move( params ); }
-            batch.events.push_back( event );
+            batch.events.push_back( std::move( single.events.front() ) );
             batch_bytes += bytes;
             continue;
         }
