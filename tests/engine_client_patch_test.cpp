@@ -655,6 +655,34 @@ TEST_CASE(
     every_skipped_is_bare();
 }
 
+TEST_CASE(
+    "a change too large for one event reaches a reader as several events and no resync",
+    "[engine_client_patch]") {
+    make_open_ground(0);
+    auto watched = watched_session{};
+    watched.publish();
+    auto reader = watched.authority.open_push();
+    auto receiver = watched.authority.current();
+    REQUIRE(receiver);
+    // Noon after midnight: the whole open ground comes into sight at once.
+    calendar::turn = calendar::turn_zero + 12_hours;
+    g->reset_light_level();
+    watched.publish();
+    auto events = std::vector<ec::public_event>{};
+    for (const auto& item : reader.take()) {
+        CHECK_FALSE(std::holds_alternative<ec::resync_notice>(item));
+        if (const auto* pushed = std::get_if<ec::event_push>(&item)) {
+            events.push_back(pushed->event);
+        }
+    }
+    CHECK(events.size() > 1);
+    REQUIRE(ec::apply_batch(*receiver, {.epoch = watched.authority.epoch(), .events = events}));
+    const auto now = watched.authority.current();
+    REQUIRE(now);
+    CHECK(receiver->value.world.cells.size() > 3000);
+    CHECK(ec::same_state(receiver->value, now->value));
+}
+
 /// Milliseconds a publication costs with a full capture and with a patch, for an avatar who has
 /// memorized `squares` squares: `cata_test-mcp "[.engine_client_patch_cost]"` prints them.
 TEST_CASE("the cost of a publication by squares memorized", "[.engine_client_patch_cost]") {
