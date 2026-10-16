@@ -4127,6 +4127,23 @@ TEST_CASE(
         CHECK_FALSE(offers(north, "control_vehicle"));
         CHECK_FALSE(offers(pickup_test_pos + tripoint(3, 0, 0), "control_vehicle"));
     }
+    SECTION("controls beside the avatar are not offered while the native control first takes or "
+            "drives the avatar's own vehicle") {
+        auto& you = get_avatar();
+        place_vehicle(east, {.controls = true});
+        place_vehicle(pickup_test_pos, {.controls = true});
+        const auto seated = on_out_of_scope([&] {
+            you.in_vehicle = false;
+            you.controlling_vehicle = false;
+        });
+        you.in_vehicle = true;
+        CHECK_FALSE(offers(east, "control_vehicle"));
+        you.in_vehicle = false;
+        you.controlling_vehicle = true;
+        CHECK_FALSE(offers(east, "control_vehicle"));
+        you.controlling_vehicle = false;
+        CHECK(offers(east, "control_vehicle"));
+    }
     SECTION("each action carries the native label and the player's keys") {
         const auto actions = engine_client::tile_actions(east);
         const auto look = std::ranges::find(actions, "look", &engine_client::tile_action::id);
