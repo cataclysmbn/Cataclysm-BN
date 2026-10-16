@@ -1025,7 +1025,7 @@
         "stage": "completed",
         "at": {
           "epoch": "epoch-1",
-          "sequence": "3",
+          "sequence": "4",
           "revision": "3"
         }
       }
@@ -1354,7 +1354,7 @@
         "stage": "completed",
         "at": {
           "epoch": "epoch-1",
-          "sequence": "5",
+          "sequence": "6",
           "revision": "5"
         }
       }
@@ -4763,7 +4763,7 @@
         "stage": "completed",
         "at": {
           "epoch": "epoch-1",
-          "sequence": "11",
+          "sequence": "12",
           "revision": "11"
         }
       }
@@ -11141,7 +11141,7 @@
         "stage": "completed",
         "at": {
           "epoch": "epoch-1",
-          "sequence": "15",
+          "sequence": "16",
           "revision": "15"
         }
       }

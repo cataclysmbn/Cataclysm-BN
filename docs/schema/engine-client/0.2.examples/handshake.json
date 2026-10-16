@@ -13,7 +13,7 @@
           "revision": "0"
         },
         "schema": {
-          "engine": "sha256:1f383666d3502838",
+          "engine": "sha256:bbf27a1efb9e5799",
           "client": "sha256:0000000000000000"
         }
       }
@@ -29,7 +29,7 @@
           "name": "contract-gen",
           "version": "1"
         },
-        "schema": "sha256:1f383666d3502838",
+        "schema": "sha256:bbf27a1efb9e5799",
         "capabilities": {
           "viewport": {
             "cols": 40,
@@ -50,6 +50,9 @@
           "display": {
             "tiles": true,
             "tileset": "UNDEAD_PEOPLE_BASE"
+          },
+          "sound": {
+            "soundpack": "data/sound/Basic"
           }
         },
         "limits": {
@@ -58,7 +61,7 @@
           "cells_per_query": 4096,
           "screen_queue": 8
         },
-        "schema": "sha256:1f383666d3502838",
+        "schema": "sha256:bbf27a1efb9e5799",
         "locale": "en_US",
         "engine_locale": "en_US",
         "role": "controller"
@@ -1272,6 +1275,9 @@
           "display": {
             "tiles": true,
             "tileset": "UNDEAD_PEOPLE_BASE"
+          },
+          "sound": {
+            "soundpack": "data/sound/Basic"
           }
         },
         "limits": {
@@ -1280,7 +1286,7 @@
           "cells_per_query": 4096,
           "screen_queue": 8
         },
-        "schema": "sha256:1f383666d3502838",
+        "schema": "sha256:bbf27a1efb9e5799",
         "locale": "en_US",
         "engine_locale": "en_US"
       },

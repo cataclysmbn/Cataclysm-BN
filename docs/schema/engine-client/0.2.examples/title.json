@@ -407,7 +407,7 @@
         "stage": "completed",
         "at": {
           "epoch": "epoch-1",
-          "sequence": "1",
+          "sequence": "3",
           "revision": "1"
         }
       }

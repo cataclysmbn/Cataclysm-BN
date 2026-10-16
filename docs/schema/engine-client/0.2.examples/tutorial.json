@@ -14,7 +14,7 @@
       "value": {
         "epoch": "epoch-1",
         "reason": "world_replaced",
-        "lost_after": "1"
+        "lost_after": "2"
       }
     },
     {
@@ -3964,8 +3964,26 @@
         "stage": "completed",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "12",
+          "sequence": "17",
           "revision": "8"
+        }
+      }
+    },
+    {
+      "name": "sound.played event after a move",
+      "def": "event",
+      "value": {
+        "sequence": "14",
+        "revision": "7",
+        "type": "sound.played",
+        "command": "command:3",
+        "changes": {},
+        "data": {
+          "id": "plmove",
+          "variant": "walk_barefoot",
+          "volume": 100,
+          "stacks": false,
+          "angle": 0
         }
       }
     },
@@ -3973,7 +3991,7 @@
       "name": "sound.heard event after a move",
       "def": "event",
       "value": {
-        "sequence": "11",
+        "sequence": "16",
         "revision": "7",
         "type": "sound.heard",
         "command": "command:3",
@@ -3990,7 +4008,7 @@
       "name": "cells.seen event after a move",
       "def": "event",
       "value": {
-        "sequence": "12",
+        "sequence": "17",
         "revision": "8",
         "type": "cells.seen",
         "command": "command:3",
@@ -7807,7 +7825,7 @@
         "stage": "completed",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "14",
+          "sequence": "19",
           "revision": "10"
         }
       }

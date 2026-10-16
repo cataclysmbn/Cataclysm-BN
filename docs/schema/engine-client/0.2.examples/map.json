@@ -61,7 +61,7 @@
         "stage": "completed",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "12",
+          "sequence": "17",
           "revision": "8"
         }
       }
@@ -116,7 +116,7 @@
         "stage": "completed",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "20",
+          "sequence": "29",
           "revision": "12"
         }
       }
@@ -171,7 +171,7 @@
         "stage": "completed",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "21",
+          "sequence": "30",
           "revision": "13"
         }
       }
@@ -254,7 +254,7 @@
         "message": "That needs other details.",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "26",
+          "sequence": "37",
           "revision": "17"
         }
       }
@@ -267,7 +267,7 @@
         "message": "That screen has closed.",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "26",
+          "sequence": "37",
           "revision": "17"
         }
       }

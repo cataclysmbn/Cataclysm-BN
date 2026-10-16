@@ -132,7 +132,7 @@
         "stage": "completed",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "12",
+          "sequence": "15",
           "revision": "9"
         }
       }
@@ -453,7 +453,7 @@
         "stage": "completed",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "33",
+          "sequence": "36",
           "revision": "30"
         }
       }
@@ -512,7 +512,7 @@
         "stage": "completed",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "34",
+          "sequence": "37",
           "revision": "31"
         }
       }
@@ -567,7 +567,7 @@
         "stage": "completed",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "35",
+          "sequence": "38",
           "revision": "32"
         }
       }

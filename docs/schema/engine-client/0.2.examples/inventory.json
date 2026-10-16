@@ -441,7 +441,7 @@
         "stage": "completed",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "23",
+          "sequence": "26",
           "revision": "19"
         }
       }
@@ -501,7 +501,7 @@
         "stage": "completed",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "24",
+          "sequence": "27",
           "revision": "20"
         }
       }
@@ -611,7 +611,7 @@
         "stage": "completed",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "25",
+          "sequence": "28",
           "revision": "21"
         }
       }

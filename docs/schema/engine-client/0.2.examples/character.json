@@ -1571,7 +1571,7 @@
         "stage": "completed",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "12",
+          "sequence": "15",
           "revision": "9"
         }
       }
@@ -1668,7 +1668,7 @@
         "stage": "completed",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "13",
+          "sequence": "16",
           "revision": "10"
         }
       }
@@ -2111,7 +2111,7 @@
         "stage": "completed",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "39",
+          "sequence": "42",
           "revision": "33"
         }
       }
@@ -2170,7 +2170,7 @@
         "stage": "completed",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "40",
+          "sequence": "43",
           "revision": "34"
         }
       }
@@ -2773,7 +2773,7 @@
         "stage": "completed",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "62",
+          "sequence": "65",
           "revision": "53"
         }
       }
@@ -3893,7 +3893,7 @@
         "stage": "completed",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "167",
+          "sequence": "170",
           "revision": "60"
         }
       }

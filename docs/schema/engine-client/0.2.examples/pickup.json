@@ -389,7 +389,7 @@
         "stage": "completed",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "20",
+          "sequence": "23",
           "revision": "17"
         }
       }
@@ -468,7 +468,7 @@
         "stage": "completed",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "21",
+          "sequence": "24",
           "revision": "18"
         }
       }
@@ -561,7 +561,7 @@
         "stage": "completed",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "23",
+          "sequence": "26",
           "revision": "19"
         }
       }

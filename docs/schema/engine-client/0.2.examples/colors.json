@@ -3365,7 +3365,7 @@
         "stage": "completed",
         "at": {
           "epoch": "epoch-1",
-          "sequence": "3",
+          "sequence": "5",
           "revision": "3"
         }
       }
@@ -3424,7 +3424,7 @@
         "stage": "completed",
         "at": {
           "epoch": "epoch-1",
-          "sequence": "4",
+          "sequence": "6",
           "revision": "4"
         }
       }
@@ -3484,7 +3484,7 @@
         "stage": "completed",
         "at": {
           "epoch": "epoch-1",
-          "sequence": "5",
+          "sequence": "7",
           "revision": "5"
         }
       }
