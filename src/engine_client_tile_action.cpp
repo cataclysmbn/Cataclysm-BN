@@ -57,7 +57,7 @@ auto tile_actions( const tripoint_bub_ms &at ) -> std::vector<tile_action>
         result.push_back( { .id = "attack", .label = _( "Attack" ) } );
     }
     if( seen_monster && you.primary_weapon().is_gun() ) { native( ACTION_FIRE ); }
-    if( person != nullptr && !self && can_chat_with( you, *person ) ) {
+    if( person != nullptr && !self && you.sees( *person ) && can_chat_with( you, *person ) ) {
         result.push_back( { .id = "talk", .label = _( "Talk" ) } );
     }
     if( near && !self && can_interact_at( ACTION_OPEN, at ) ) { native( ACTION_OPEN ); }
