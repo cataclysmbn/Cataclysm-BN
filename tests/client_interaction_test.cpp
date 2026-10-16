@@ -3930,8 +3930,6 @@ TEST_CASE(
         return *event;
     });
     handle_action();
-    // As the game loop goes on: an aim, for one, runs as an activity.
-    if (auto& you = get_avatar(); you.activity) { you.activity->do_turn(you); }
     check_dropped();
     replay::finish();
     REQUIRE(reads == 1);
