@@ -942,6 +942,9 @@ class game : public submap_load_listener
         void reset_item_list_state( const catacurses::window &window, int height, bool bRadiusSort );
 
         game::vmenu_ret list_monsters( const std::vector<Creature *> &monster_list );
+        /// Aims the next shot at @p target from scratch, as firing at it from the creature list does;
+        /// false when it is beyond the range of the wielded gun.
+        auto choose_fire_target( const Creature &target ) -> bool;
 
         /** Check for dangerous stuff at dest_loc, return false if the player decides
         not to step there */
@@ -950,7 +953,8 @@ class game : public submap_load_listener
         bool grabbed_veh_move( const tripoint_rel_ms &dp );
         auto grabbed_furn_move( const tripoint_rel_ms &dp ) -> bool;
 
-        void control_vehicle(); // Use vehicle controls  '^'
+        /// Uses vehicle controls  '^'; @p where picks the adjacent controls the native prompt would ask for.
+        auto control_vehicle( const std::optional<tripoint_bub_ms> &where = std::nullopt ) -> void;
         void examine( const tripoint_bub_ms &p ); // Examine nearby terrain  'e'
         void examine();
 
