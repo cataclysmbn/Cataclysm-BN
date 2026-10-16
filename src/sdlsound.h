@@ -19,5 +19,7 @@ void play_music( const std::string &playlist );
 void stop_music();
 void update_volumes();
 void load_soundset();
+/// The folder `load_soundset` loaded the sound pack from; empty before.
+auto soundpack_path() -> std::string;
 
 

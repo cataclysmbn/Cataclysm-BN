@@ -606,6 +606,8 @@ auto run_game( int argc, char *argv[] ) -> int
         atexit( shutdown_sound );
         load_soundset();
     }
+    // The mcp client plays no audio, but the pack decides which variants the game asks its clients for.
+    if( !test_mode && selected_client == game_client::client_kind::mcp ) { load_soundset(); }
     if( needs_compute ) { client_platform::initialize_compute(); }
 
     if( !replay_record_path.empty() ) {

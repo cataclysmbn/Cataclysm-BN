@@ -482,9 +482,6 @@ static auto add_sfx_path( const std::string &path ) -> int
 
 auto sfx::load_sound_effects( const JsonObject &jsobj ) -> void
 {
-    if( !sound_init_success ) {
-        return;
-    }
     const id_and_variant key( jsobj.get_string( "id" ), jsobj.get_string( "variant", "default" ) );
     const int volume = jsobj.get_int( "volume", 100 );
     auto &effects = sfx_resources.sound_effects[key];
@@ -499,9 +496,6 @@ auto sfx::load_sound_effects( const JsonObject &jsobj ) -> void
 
 auto sfx::load_sound_effect_preload( const JsonObject &jsobj ) -> void
 {
-    if( !sound_init_success ) {
-        return;
-    }
     for( JsonObject aobj : jsobj.get_array( "preload" ) ) {
         const id_and_variant preload_key( aobj.get_string( "id" ),
                                           aobj.get_string( "variant", "default" ) );
@@ -511,9 +505,6 @@ auto sfx::load_sound_effect_preload( const JsonObject &jsobj ) -> void
 
 auto sfx::load_playlist( const JsonObject &jsobj ) -> void
 {
-    if( !sound_init_success ) {
-        return;
-    }
     for( JsonObject playlist : jsobj.get_array( "playlists" ) ) {
         const std::string playlist_id = playlist.get_string( "id" );
         music_playlist playlist_to_load;
@@ -874,6 +865,8 @@ auto sfx::get_channel_volume( const channel channel ) -> int
     return static_cast<int>( MIX_GetTrackGain( track ) * 128.0f );
 }
 
+auto soundpack_path() -> std::string { return current_soundpack_path; }
+
 // ── Soundset loading ──────────────────────────────────────────────────────────
 
 auto load_soundset() -> void
@@ -909,6 +902,10 @@ auto load_soundset() -> void
         dbg( DL::Error ) << "failed to load sounds: " << err.what();
     }
 
+    // Without audio the index alone names the sounds a pack has, for the variants the game picks.
+    if( !sound_init_success ) {
+        sfx_preload.clear();
+    }
     for( const id_and_variant &preload : sfx_preload ) {
         const auto &[id, variant] = preload;
 

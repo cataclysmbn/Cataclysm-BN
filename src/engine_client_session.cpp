@@ -18,6 +18,7 @@
 #include "options.h"
 #include "output.h"
 #include "profile.h"
+#include "sdlsound.h"
 #include "sounds.h"
 #include "translations.h"
 #include "world.h"
@@ -542,12 +543,8 @@ auto session::post( push_item item, const locale_items &variants ) -> void
 
 namespace
 {
-/// The folder the native client loads the sound pack from, while sound is on.
-auto soundpack_folder() -> std::string
-{
-    const auto found = SOUNDPACKS.find( get_option<std::string>( "SOUNDPACKS" ) );
-    return sounds::sound_enabled && found != SOUNDPACKS.end() ? found->second : std::string{};
-}
+/// The folder the sound pack was loaded from, while sound is on.
+auto soundpack_folder() -> std::string { return sounds::sound_enabled ? soundpack_path() : std::string{}; }
 } // namespace
 
 auto describe_engine() -> engine_info

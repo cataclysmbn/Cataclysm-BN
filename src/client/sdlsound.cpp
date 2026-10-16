@@ -41,4 +41,6 @@ auto update_volumes() -> void {}
 
 auto load_soundset() -> void {}
 
+auto soundpack_path() -> std::string { return {}; }
+
 #endif // !SDL_SOUND
