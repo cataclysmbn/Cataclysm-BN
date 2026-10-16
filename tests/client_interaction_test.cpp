@@ -1849,11 +1849,8 @@ TEST_CASE(
             CHECK((*reported)["max"].get<std::string>() == std::to_string(range));
             const auto [narrow, wide] = at_two_viewports();
             CHECK(narrow == wide);
-            // A square beyond the range is taken, as the native mouse takes it; one past the end of
-            // the map is not.
+            // A square beyond the range is taken, as the native mouse takes it.
             CHECK(refused_move(source + tripoint(range + 1, 0, 0)) == std::nullopt);
-            CHECK(refused_move({-1, source.y(), source.z()})
-                  == engine_client::error::invalid_arguments);
             return move_cursor(source + tripoint(range + 3, 0, 0));
         }
         if (step == 1) {

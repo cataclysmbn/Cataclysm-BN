@@ -533,7 +533,7 @@ auto matches_shape( const screen_view &view, const arg_shape &shape, const invok
         const auto *const body = found ? std::get_if<map_body>( &found->body ) : nullptr;
         const auto at = to_bubble( *args.pos, frame );
         if( body == nullptr || !body->target || !at ||
-            !game_client::target_contains( *body->target, *at ) ) { return false; }
+            !game_client::target_bounds_contain( *body->target, *at ) ) { return false; }
     }
     return true;
 }

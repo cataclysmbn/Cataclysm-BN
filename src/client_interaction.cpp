@@ -720,13 +720,13 @@ auto target_distance( const interaction_target &target, const interaction_positi
            : static_cast<int>( std::max( {std::abs( dx ), std::abs( dy ), std::abs( dz )} ) );
 }
 
-auto target_contains( const interaction_target &target, const interaction_position &to ) -> bool
+auto target_bounds_contain( const interaction_target &target,
+                            const interaction_position &to ) -> bool
 {
     const auto above = [&]( const interaction_position & low ) { return to.x < low.x || to.y < low.y || to.z < low.z; };
     const auto below = [&]( const interaction_position & high ) { return to.x > high.x || to.y > high.y || to.z > high.z; };
     return !( target.minimum_position && above( *target.minimum_position ) ) &&
-           !( target.maximum_position && below( *target.maximum_position ) ) &&
-           target_distance( target, to ) <= target.range;
+           !( target.maximum_position && below( *target.maximum_position ) );
 }
 
 auto opaque_interaction_id( const std::string &prefix, const std::vector<std::string> &identity )

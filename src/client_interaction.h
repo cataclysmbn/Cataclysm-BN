@@ -350,8 +350,10 @@ auto interaction_kind_name( interaction_kind kind ) -> std::string;
 /// How far `to` is from the target source by the screen's metric, as the game measures range:
 /// rounded Euclidean for `trig`, Chebyshev otherwise.
 auto target_distance( const interaction_target &target, const interaction_position &to ) -> int;
-/// Whether the cursor may be put on `to`: inside the coordinate bounds and the range from the source.
-auto target_contains( const interaction_target &target, const interaction_position &to ) -> bool;
+/// Whether the cursor may be sent to `to`: inside the coordinate bounds. Past the range the screen holds the
+/// cursor at the range's end, as it does for the native mouse.
+auto target_bounds_contain( const interaction_target &target,
+                            const interaction_position &to ) -> bool;
 
 auto opaque_interaction_id( const std::string &prefix, const std::vector<std::string> &identity )
 -> std::string;
