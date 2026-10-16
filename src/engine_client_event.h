@@ -164,13 +164,14 @@ class event_stream
         /// Puts lines the game wrote before this stream existed into its log: a snapshot carries them,
         /// and they take no sequence, since no subscriber can have missed an event.
         auto seed_log( std::vector<message_value> lines ) -> void;
-        /// Nothing is published when the decision is withheld or the state did not change.
+        /// Nothing is published when the decision is withheld or the state did not change; a change too
+        /// large for one event is published as several, in order, each naming some of its cells.
         /// `resync_required`: the state drops a coverage, avatar or environment, which no event
         /// can express; the caller rebases and tells subscribers to start over.
-        auto publish( publish_request request ) -> std::expected<std::optional<public_event>, error>;
+        auto publish( publish_request request ) -> std::expected<std::vector<public_event>, error>;
         /// Publishes the state a patch over the current one stands for, with the event, errors and
         /// effects `publish` of that state would give, at a cost of what the patch names and changes.
-        auto publish( patch_request request ) -> std::expected<std::optional<public_event>, error>;
+        auto publish( patch_request request ) -> std::expected<std::vector<public_event>, error>;
         /// A transient event: consumes a sequence, never a revision. resource_limit when it cannot fit a frame.
         auto publish_message( message_request request ) -> std::expected<public_event, error>;
         /// A transient animation fact: consumes a sequence, never a revision.
@@ -180,10 +181,10 @@ class event_stream
         auto rebase( state_value next ) -> std::expected<void, error>;
     private:
         explicit event_stream( snapshot initial );
-        /// The event of a delta, with its sequence and revision taken; none when the delta is empty. The
-        /// caller then adopts the state the delta leads to.
+        /// The events of a delta, with their sequences and revisions taken; none when the delta is empty, and
+        /// more than one when it does not fit one. The caller then adopts the state the delta leads to.
         auto issue( changes delta, std::optional<std::string> command,
-                    std::optional<counter> cause ) -> std::expected<std::optional<public_event>, error>;
+                    std::optional<counter> cause ) -> std::expected<std::vector<public_event>, error>;
         snapshot current_;
 };
 

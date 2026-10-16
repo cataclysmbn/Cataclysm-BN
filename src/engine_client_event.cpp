@@ -1,6 +1,7 @@
 #include "engine_client_event.h"
 
 #include <algorithm>
+#include <iterator>
 #include <cstdint>
 #include <limits>
 #include <set>
@@ -330,9 +331,9 @@ auto public_event::sealed( event_value value,
 }
 
 auto event_stream::issue( changes delta, std::optional<std::string> command,
-                          std::optional<counter> cause ) -> std::expected<std::optional<public_event>, error>
+                          std::optional<counter> cause ) -> std::expected<std::vector<public_event>, error>
 {
-    if( delta.empty() ) { return std::nullopt; }
+    if( delta.empty() ) { return std::vector<public_event> {}; }
     if( current_.at.revision == std::numeric_limits<counter>::max() ||
         current_.at.sequence == std::numeric_limits<counter>::max() ) {
         return std::unexpected( error::resource_limit );
@@ -343,20 +344,38 @@ auto event_stream::issue( changes delta, std::optional<std::string> command,
             .revision = current_.at.revision + 1,
             .type = std::move( type ),
             .cause = cause,
-            .command = std::move( command ),
+            .command = command,
             .delta = std::move( delta ),
         }};
     if( !valid_event( event.value() ) ) { return std::unexpected( error::validation_failed ); }
-    if( !event.seal( current_.at.epoch ) ) { return std::unexpected( error::resource_limit ); }
-    current_.at.sequence = event.value().sequence;
-    current_.at.revision = event.value().revision;
-    return event;
+    if( event.seal( current_.at.epoch ) ) {
+        current_.at.sequence = event.value().sequence;
+        current_.at.revision = event.value().revision;
+        return std::vector{ std::move( event ) };
+    }
+    // A delta too large for one event goes out as two, the latter half of its cells after the rest, so a
+    // receiver applies the change without a snapshot.
+    auto &whole = event.value_.delta;
+    if( whole.cells.size() < 2 ) { return std::unexpected( error::resource_limit ); }
+    const auto half = whole.cells.begin() + static_cast<std::ptrdiff_t>( whole.cells.size() / 2 );
+    auto rest = changes{ .cells = std::vector<cell>( std::make_move_iterator( half ),
+                                  std::make_move_iterator( whole.cells.end() ) ) };
+    whole.cells.erase( half, whole.cells.end() );
+    const auto at = current_.at;
+    auto events = issue( std::move( whole ), command, cause );
+    auto after = events ? issue( std::move( rest ), std::move( command ), cause ) : events;
+    if( !after ) {
+        current_.at = at;
+        return after;
+    }
+    std::ranges::move( *after, std::back_inserter( *events ) );
+    return events;
 }
 
 auto event_stream::publish( publish_request request ) ->
-std::expected<std::optional<public_event>, error>
+std::expected<std::vector<public_event>, error>
 {
-    if( request.decision == disclosure::withheld ) { return std::nullopt; }
+    if( request.decision == disclosure::withheld ) { return std::vector<public_event> {}; }
     {
         ZoneScopedN( "engine_client_validate_state" );
         if( const auto valid = validate_state( request.next ); !valid ) { return std::unexpected( valid.error() ); }
@@ -369,13 +388,13 @@ std::expected<std::optional<public_event>, error>
         ZoneScopedN( "engine_client_diff" );
         return diff( current_.value, request.next );
     }();
-    auto event = issue( std::move( delta ), std::move( request.command ), request.cause );
-    if( event && *event ) { current_.value = std::move( request.next ); }
-    return event;
+    auto events = issue( std::move( delta ), std::move( request.command ), request.cause );
+    if( events && !events->empty() ) { current_.value = std::move( request.next ); }
+    return events;
 }
 
 auto event_stream::publish( patch_request request ) ->
-std::expected<std::optional<public_event>, error>
+std::expected<std::vector<public_event>, error>
 {
     auto &patch = request.patch;
     {
@@ -391,22 +410,25 @@ std::expected<std::optional<public_event>, error>
         ZoneScopedN( "engine_client_diff" );
         return diff( current_.value, request.interaction, patch );
     }();
-    auto event = issue( std::move( delta ), std::move( request.command ), std::nullopt );
-    if( !event || !*event ) { return event; }
-    const auto &changed = ( *event )->value().delta;
+    auto events = issue( std::move( delta ), std::move( request.command ), std::nullopt );
+    if( !events || events->empty() ) { return events; }
     auto &world = current_.value.world;
     auto cells = std::move( world.cells );
     if( patch.exhaustive ) {
         cells = std::move( patch.cells );
     } else {
-        if( changed.coverage ) { erase_where( cells, [&]( const auto & entry ) { return !inside( *changed.coverage, entry.first ); } ); }
-        for( const auto &at : changed.forgotten ) { cells.erase( at ); }
-        for( const auto &entry : changed.cells ) { cells.insert_or_assign( entry.at, std::move( patch.cells.at( entry.at ) ) ); }
+        for( const auto &event : *events ) {
+            const auto &changed = event.value().delta;
+            if( changed.coverage ) { erase_where( cells, [&]( const auto & entry ) { return !inside( *changed.coverage, entry.first ); } ); }
+            for( const auto &at : changed.forgotten ) { cells.erase( at ); }
+            for( const auto &entry : changed.cells ) { cells.insert_or_assign( entry.at, std::move( patch.cells.at( entry.at ) ) ); }
+        }
     }
     world = std::move( patch.world );
     world.cells = std::move( cells );
     current_.value.interaction = std::move( request.interaction );
-    return event;
+    return events;
+
 }
 
 auto event_stream::publish_message( message_request request ) -> std::expected<public_event, error>

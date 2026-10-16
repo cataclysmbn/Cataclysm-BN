@@ -157,7 +157,7 @@ class session final : public command_authority
         auto worded_variants( const public_event &event ) -> locale_items;
         auto capture() const -> std::expected<state_value, error>;
         auto capture_interaction() const -> std::expected<boundary_state, error>;
-        auto check_oracle( const state_value &before, const std::optional<public_event> &event ) -> void;
+        auto check_oracle( const state_value &before, const std::vector<public_event> &events ) -> void;
         auto restart_epoch( std::string_view reason ) -> void;
         auto refresh_result() -> void;
         auto publish_presentation( const std::optional<std::string> &command ) -> void;

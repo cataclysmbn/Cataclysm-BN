@@ -58,8 +58,8 @@ auto stream_of(const state_value& initial, const std::string& epoch = "epoch:a")
 auto publish(event_stream& stream, state_value next) -> public_event {
     const auto published = stream.publish({.next = std::move(next)});
     REQUIRE(published);
-    REQUIRE(*published);
-    return **published;
+    REQUIRE(published->size() == 1);
+    return published->front();
 }
 } // namespace
 
@@ -195,11 +195,11 @@ TEST_CASE("withheld and unchanged candidates consume nothing", "[engine_client_e
     const auto withheld = stream.publish(
         {.decision = disclosure::withheld, .next = world_of({visible_cell(1), visible_cell(2)})});
     REQUIRE(withheld);
-    CHECK_FALSE(*withheld);
+    CHECK(withheld->empty());
     CHECK(stream.current().at == clock_point{"epoch:a", 0, 0});
     const auto unchanged = stream.publish({.next = world_of({visible_cell(1)})});
     REQUIRE(unchanged);
-    CHECK_FALSE(*unchanged);
+    CHECK(unchanged->empty());
     CHECK(stream.current().at.sequence == 0);
     const auto next = publish(stream, world_of({visible_cell(1), visible_cell(2)}));
     CHECK(next.value().sequence == 1);
@@ -215,9 +215,9 @@ TEST_CASE("cause and command identify earlier published work", "[engine_client_e
     const auto caused = stream.publish(
         {.next = world_of({visible_cell(2)}), .command = "c:1", .cause = first.value().sequence});
     REQUIRE(caused);
-    REQUIRE(*caused);
-    CHECK((*caused)->value().cause == 1);
-    CHECK((*caused)->value().command == "c:1");
+    REQUIRE(caused->size() == 1);
+    CHECK(caused->front().value().cause == 1);
+    CHECK(caused->front().value().command == "c:1");
 }
 
 TEST_CASE("rebase adopts a state and advances only the revision", "[engine_client_event]") {
@@ -406,6 +406,44 @@ TEST_CASE(
     next.interaction.stack = std::make_shared<const std::vector<screen_view>>(
         std::vector<screen_view>{{.screen_id = "screen:a", .title = "small"}});
     CHECK(stream.publish({.next = next}));
+}
+
+TEST_CASE(
+    "a change too large for one event is split by its cells, and a cell too large for any is a "
+    "resource limit",
+    "[engine_client_event]") {
+    const auto heavy = [](const int x, const int items) {
+        auto result = visible_cell(x);
+        result.items = std::vector<
+            look>(items, look{.kind = "item", .id = "rock", .glyph = "*", .color = "gray"});
+        return result;
+    };
+    auto first = world_of({});
+    first.world.coverage = area(0, 100);
+    auto stream = stream_of(first);
+    auto receiver = stream.current();
+    auto many = first;
+    for (const auto x : std::views::iota(1, 41)) { many.world.cells[pos(x)] = heavy(x, 1000); }
+    const auto published = stream.publish({.next = many, .command = "c:1"});
+    REQUIRE(published);
+    REQUIRE(published->size() > 1);
+    for (const auto& event : *published) {
+        CHECK(event.wire().size() <= maximum_frame_bytes / 2);
+        CHECK(event.value().command == "c:1");
+    }
+    CHECK(published->back().value().sequence == receiver.at.sequence + published->size());
+    REQUIRE(apply_batch(receiver, {.epoch = "epoch:a", .events = *published}));
+    CHECK(same_state(receiver.value, stream.current().value));
+
+    // The cells that fit are not published without the one that does not.
+    const auto before = stream.current().at;
+    auto huge = many;
+    huge.world.cells[pos(41)] = heavy(41, 20000);
+    huge.world.cells[pos(1)] = heavy(1, 1);
+    const auto too_large = stream.publish({.next = huge});
+    REQUIRE_FALSE(too_large);
+    CHECK(too_large.error() == error::resource_limit);
+    CHECK(stream.current().at == before);
 }
 
 TEST_CASE(

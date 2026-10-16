@@ -1,6 +1,7 @@
 #include "engine_client_session.h"
 
 #include <algorithm>
+#include <iterator>
 #include <cstdlib>
 #include <fstream>
 #include <ranges>
@@ -169,13 +170,18 @@ auto session::capture() const -> std::expected<state_value, error>
 }
 
 auto session::check_oracle( const state_value &before,
-                            const std::optional<public_event> &event ) -> void
+                            const std::vector<public_event> &events ) -> void
 {
     const auto &now = stream_->current().value;
     const auto full = state_value{ .interaction = now.interaction,
                                    .world = world_capture_ ? world_capture_() : world_state{} };
     const auto expected = diff( before, full );
-    const auto actual = event ? event->value().delta : changes{};
+    // A change published as several events is the first one's with the cells of the others.
+    auto actual = changes{};
+    for( const auto &event : events ) {
+        if( &event == &events.front() ) { actual = event.value().delta; continue; }
+        std::ranges::copy( event.value().delta.cells, std::back_inserter( actual.cells ) );
+    }
     auto differs = std::string{};
     const auto note = [&]( const char *section, const bool same ) { if( !same ) { differs += std::string( " " ) + section; } };
     note( "coverage", actual.coverage == expected.coverage );
@@ -238,7 +244,7 @@ auto session::publish_boundary( const bool settles ) -> std::expected<void, erro
     publish_presentation( command );
     auto before = oracle_ && patch ? std::optional( stream_->current().value ) : std::nullopt;
     auto candidate = std::optional<state_value> {};
-    auto published = std::expected<std::optional<public_event>, error> {};
+    auto published = std::expected<std::vector<public_event>, error> {};
     if( patch ) {
         ZoneScopedN( "engine_client_stream_publish" );
         published = stream_->publish( patch_request{ .interaction = *interaction, .patch = std::move( *patch ),
@@ -253,11 +259,11 @@ auto session::publish_boundary( const bool settles ) -> std::expected<void, erro
         published = stream_->publish( publish_request{ .next = *candidate, .command = command } );
     }
     if( published ) {
-        if( *published ) { post( event_push{ .epoch = epoch_, .event = **published }, worded_variants( **published ) ); }
+        for( const auto &event : *published ) { post( event_push{ .epoch = epoch_, .event = event }, worded_variants( event ) ); }
         if( before && patch_consecutive_ ) { check_oracle( *before, *published ); }
     } else if( published.error() == error::resource_limit ||
                published.error() == error::resync_required ) {
-        // The change does not fit one event or cannot be expressed: adopt the state and make
+        // A change no events can carry, or one that cannot be expressed: adopt the state and make
         // subscribers start over.
         post( resync_notice{ .epoch = epoch_,
                              .reason = published.error() == error::resource_limit ? "overflow" : "state_removed",
