@@ -64,6 +64,7 @@ auto tile_actions( const tripoint_bub_ms &at ) -> std::vector<tile_action>
     if( near && !self && can_interact_at( ACTION_CLOSE, at ) ) { native( ACTION_CLOSE ); }
     if( near && can_interact_at( ACTION_PICKUP, at ) ) { native( ACTION_PICKUP ); }
     if( near && can_interact_at( ACTION_EXAMINE, at ) ) { native( ACTION_EXAMINE ); }
+    if( near && can_interact_at( ACTION_CONTROL_VEHICLE, at ) ) { native( ACTION_CONTROL_VEHICLE ); }
     if( walks && !self && avatar_knows_travel_destination( you, at ) ) {
         result.push_back( { .id = "travel", .label = _( "Travel here" ) } );
     }

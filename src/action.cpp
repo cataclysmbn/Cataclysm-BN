@@ -882,6 +882,8 @@ bool can_interact_at( action_id action, const tripoint_bub_ms &p )
         case ACTION_PICKUP_ALL:
         case ACTION_PICKUP_FEET:
             return can_pickup_at( p );
+        case ACTION_CONTROL_VEHICLE:
+            return here.veh_at( p ).part_with_feature( "CONTROLS", true ).has_value();
         default:
             return false;
     }
