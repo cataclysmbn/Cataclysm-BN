@@ -428,14 +428,29 @@ static bool handle_emote( player &u, efftype_id effect, int emote_choice )
     return true;
 }
 
+auto can_chat_with( const Character &you, const npc &guy ) -> bool
+{
+    // TODO: Get rid of the z-level check when z-level vision gets "better"
+    return you.bub_pos().z() == guy.bub_pos().z() && you.sees( guy.bub_pos() ) &&
+           rl_dist( you.bub_pos(), guy.bub_pos() ) <= SEEX * 2;
+}
+
+auto refuse_faceless_speech( Character &you ) -> bool
+{
+    if( !you.has_trait( trait_PROF_FOODP ) || you.is_wearing( itype_id( "foodperson_mask" ) ) ||
+        you.is_wearing( itype_id( "foodperson_mask_on" ) ) ) {
+        return false;
+    }
+    you.add_msg_if_player( m_warning, _( "You can't speak without your face!" ) );
+    return true;
+}
+
 void game::chat()
 {
     int volume = u.get_shout_volume();
 
     const std::vector<npc *> available = get_npcs_if( [&]( const npc & guy ) {
-        // TODO: Get rid of the z-level check when z-level vision gets "better"
-        return u.bub_pos().z() == guy.bub_pos().z() && u.sees( guy.bub_pos() ) &&
-               rl_dist( u.bub_pos(), guy.bub_pos() ) <= SEEX * 2;
+        return can_chat_with( u, guy );
     } );
     const int available_count = available.size();
     const std::vector<npc *> followers = get_npcs_if( [&]( const npc & guy ) {
@@ -448,9 +463,7 @@ void game::chat()
     } );
     const int guard_count = guards.size();
 
-    if( u.has_trait( trait_PROF_FOODP ) && !( u.is_wearing( itype_id( "foodperson_mask" ) ) ||
-            u.is_wearing( itype_id( "foodperson_mask_on" ) ) ) ) {
-        u.add_msg_if_player( m_warning, _( "You can't speak without your face!" ) );
+    if( refuse_faceless_speech( u ) ) {
         return;
     }
     std::vector<vehicle *> animal_vehicles;

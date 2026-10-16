@@ -6,12 +6,12 @@
 #include "creature.h"
 #include "enums.h"
 #include "game.h"
-#include "game_constants.h"
 #include "input.h"
 #include "line.h"
 #include "map/map.h"
 #include "monster.h"
 #include "npc.h"
+#include "npctalk.h"
 #include "point.h"
 #include "translations.h"
 #include "travel/travel_destination.h"
@@ -48,15 +48,13 @@ auto tile_actions( const tripoint_bub_ms &at ) -> std::vector<tile_action>
     const auto seen_monster = monster != nullptr && you.sees( *monster );
     // As the native mouse, steps and routes do not steer a vehicle the avatar drives.
     const auto walks = !you.controlling_vehicle;
-    // As `game::chat` lists the people the avatar can talk to.
-    const auto in_earshot = at.z() == you.bub_pos().z() && rl_dist( at, you.bub_pos() ) <= SEEX * 2;
     auto result = std::vector<tile_action> {};
     const auto native = [&]( const action_id act ) { result.push_back( native_action( context, act ) ); };
     if( walks && seen_monster && near && !self && monster->attitude_to( you ) != A_FRIENDLY ) {
         result.push_back( { .id = "attack", .label = _( "Attack" ) } );
     }
     if( seen_monster && you.primary_weapon().is_gun() ) { native( ACTION_FIRE ); }
-    if( person != nullptr && !self && in_earshot && you.sees( *person ) ) {
+    if( person != nullptr && !self && can_chat_with( you, *person ) ) {
         result.push_back( { .id = "talk", .label = _( "Talk" ) } );
     }
     if( near && !self && can_interact_at( ACTION_OPEN, at ) ) { native( ACTION_OPEN ); }
