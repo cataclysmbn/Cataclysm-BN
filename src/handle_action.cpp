@@ -2024,6 +2024,12 @@ bool game::handle_action()
             }
         } else if( tile->action_id == "attack" ) {
             act = get_movement_action_from_delta( tile->at - u.bub_pos(), iso_rotate::yes );
+        } else if( tile->action_id == "fire" ) {
+            // As firing at a creature chosen from the creature list.
+            if( const auto *const target = critter_at<Creature>( tile->at ) ) {
+                choose_fire_target( *target );
+            }
+            act = ACTION_FIRE;
         } else {
             act = look_up_action( tile->action_id );
         }
