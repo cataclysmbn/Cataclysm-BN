@@ -5686,6 +5686,7 @@ int iuse::toolmod_attach( player *p, item *it, bool, const tripoint_bub_ms & )
 
         // can only attach to unmodified tools that use compatible ammo
         return e.is_tool() && e.toolmods().empty() && !e.magazine_current() &&
+               !( e.has_flag( flag_NO_RELOAD ) && !it->type->mod->magazine_adaptor.empty() ) &&
                std::any_of( it->type->mod->acceptable_ammo.begin(),
         it->type->mod->acceptable_ammo.end(), [&]( const ammotype & at ) {
             return e.ammo_types( false ).count( at );
