@@ -3577,7 +3577,7 @@
   {
     "type": "mutation",
     "id": "PRED2",
-    "name": { "str": "Hunter" },
+    "name": { "str": "Hunter", "ctxt": "Mutation name" },
     "points": 3,
     "description": "Your brain has a lot more in common with a predatory animal than a human, making it easier to control misplaced reactions to the death of your prey.  Additionally, combat skills, which you use to hunt, are easier to learn and maintain.",
     "social_modifiers": { "intimidate": 3 },

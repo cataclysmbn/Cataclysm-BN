@@ -2477,7 +2477,7 @@ tab_direction set_profession( avatar &u, points_left &points,
             if( sorted_profs[cur_id]->vehicle() ) {
                 buffer += colorize( _( "Vehicle:" ), c_light_blue ) + "\n";
                 vproto_id veh_id = sorted_profs[cur_id]->vehicle();
-                buffer += veh_id->name + "\n";
+                buffer += _( veh_id->name ) + "\n";
             }
             // Profession spells
             if( !sorted_profs[cur_id]->spells().empty() ) {
@@ -3357,7 +3357,7 @@ tab_direction set_scenario( avatar &u, points_left &points,
             mvwprintz( w_vehicle, point_zero, COL_HEADER, _( "Scenario Vehicle:" ) );
             wprintz( w_vehicle, c_light_gray, ( "\n" ) );
             if( sorted_scens[cur_id]->vehicle() ) {
-                wprintz( w_vehicle, c_light_gray, sorted_scens[cur_id]->vehicle()->name );
+                wprintz( w_vehicle, c_light_gray, _( sorted_scens[cur_id]->vehicle()->name ) );
             }
 
             mvwprintz( w_flags, point_zero, COL_HEADER, _( "Scenario Flags:" ) );
@@ -3527,7 +3527,7 @@ static void draw_height( const catacurses::window &w_height, const avatar &you,
     werase( w_height );
     mvwprintz( w_height, point_zero, highlight ? h_light_gray : c_light_gray, _( "Height:" ) );
     unsigned height_pos = 1 + utf8_width( _( "Height:" ) );
-    mvwprintz( w_height, point( height_pos, 0 ), c_white, string_format( "%d cm",
+    mvwprintz( w_height, point( height_pos, 0 ), c_white, string_format( _( "%d cm" ),
                you.base_height() ) );
     wnoutrefresh( w_height );
 }
@@ -3956,12 +3956,12 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
         }
         if( scen_veh ) {
             trim_and_print( w_misc, point( 0, misc_point ), getmaxx( w_misc ) - 1,
-                            c_white, "\t" + scen_veh->name );
+                            c_white, "\t" + _( scen_veh->name ) );
             misc_point++;
         }
         if( prof_veh ) {
             trim_and_print( w_misc, point( 0, misc_point ), getmaxx( w_misc ) - 1,
-                            c_white, "\t" + prof_veh->name );
+                            c_white, "\t" + _( prof_veh->name ) );
             misc_point++;
         }
         std::vector<npc_class_id> npcs = you.prof->npcs();

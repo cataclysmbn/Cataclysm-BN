@@ -2,7 +2,7 @@
   {
     "type": "tool_quality",
     "id": "CUT",
-    "name": { "str": "cutting" },
+    "name": { "str": "cutting", "ctxt": "tool quality name" },
     "usages": [ [ 1, [ "inscribe", "cauterize" ] ] ],
     "salvagable_materials": [
       "acidchitin",
@@ -27,7 +27,7 @@
   {
     "type": "tool_quality",
     "id": "CUT_FINE",
-    "name": { "str": "fine cutting" },
+    "name": { "str": "fine cutting", "ctxt": "tool quality name" },
     "usages": [ [ 1, [ "inscribe", "cauterize", "enzlave" ] ] ],
     "salvagable_materials": [
       "acidchitin",
@@ -53,69 +53,69 @@
   {
     "type": "tool_quality",
     "id": "GLARE",
-    "name": { "str": "glare protection" }
+    "name": { "str": "glare protection", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "SHEAR",
-    "name": { "str": "shearing" }
+    "name": { "str": "shearing", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "CHURN",
-    "name": { "str": "churn" }
+    "name": { "str": "churn", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "LEATHER_AWL",
-    "name": { "str": "awl" }
+    "name": { "str": "awl", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "SEW_CURVED",
-    "name": { "str": "curved needle" }
+    "name": { "str": "curved needle", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "ANESTHESIA",
-    "name": { "str": "anesthesia" }
+    "name": { "str": "anesthesia", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "FISHING",
-    "name": { "str": "fishing" }
+    "name": { "str": "fishing", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "SMOOTH",
-    "name": { "str": "smoothing" }
+    "name": { "str": "smoothing", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "WELD",
-    "name": { "str": "welding" }
+    "name": { "str": "welding", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "HAMMER",
-    "name": { "str": "hammering" },
+    "name": { "str": "hammering", "ctxt": "tool quality name" },
     "salvagable_materials": [ "copper", "glass", "gold", "lead", "platinum", "silver", "tin", "zinc" ]
   },
   {
     "type": "tool_quality",
     "id": "HAMMER_FINE",
-    "name": { "str": "fine hammering" }
+    "name": { "str": "fine hammering", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "SAW_W",
-    "name": { "str": "wood sawing" },
+    "name": { "str": "wood sawing", "ctxt": "tool quality name" },
     "usages": [ [ 2, [ "LUMBER", "saw_stock" ] ] ]
   },
   {
     "type": "tool_quality",
     "id": "SAW_M",
-    "name": { "str": "metal sawing" },
+    "name": { "str": "metal sawing", "ctxt": "tool quality name" },
     "usages": [ [ 2, [ "HACKSAW", "saw_barrel" ] ] ],
     "salvagable_materials": [
       "aluminum",
@@ -137,60 +137,60 @@
     "type": "tool_quality",
     "id": "SAW_M_FINE",
     "copy-from": "SAW_M",
-    "name": { "str": "fine metal sawing" },
+    "name": { "str": "fine metal sawing", "ctxt": "tool quality name" },
     "extend": { "salvagable_materials": [ "hardsteel", "superalloy" ] }
   },
   {
     "type": "tool_quality",
     "id": "COOK",
-    "name": { "str": "food cooking" }
+    "name": { "str": "food cooking", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "BOIL",
-    "name": { "str": "boiling" }
+    "name": { "str": "boiling", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "CONTAIN",
-    "name": { "str": "containing" }
+    "name": { "str": "containing", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "CHEM",
-    "name": { "str": "chemical making" }
+    "name": { "str": "chemical making", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "SMOKE_PIPE",
-    "name": { "str": "smoking" }
+    "name": { "str": "smoking", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "DISTILL",
-    "name": { "str": "distilling" }
+    "name": { "str": "distilling", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "AXE",
-    "name": { "str": "tree cutting" },
+    "name": { "str": "tree cutting", "ctxt": "tool quality name" },
     "usages": [ [ 1, [ "CHOP_TREE", "CHOP_LOGS" ] ], [ 2, [ "LUMBER" ] ] ]
   },
   {
     "type": "tool_quality",
     "id": "DIG",
-    "name": { "str": "digging" },
+    "name": { "str": "digging", "ctxt": "tool quality name" },
     "usages": [ [ 1, [ "MAKEMOUND", "DIG", "FILL_PIT", "DIG_CHANNEL", "flowerpot_collect" ] ], [ 2, [ "CLEAR_RUBBLE" ] ] ]
   },
   {
     "type": "tool_quality",
     "id": "WRENCH",
-    "name": { "str": "bolt turning" }
+    "name": { "str": "bolt turning", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "WRENCH_FINE",
-    "name": { "str": "fine bolt turning" }
+    "name": { "str": "fine bolt turning", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
@@ -201,75 +201,75 @@
   {
     "type": "tool_quality",
     "id": "SCREW_FINE",
-    "name": { "str": "fine screw driving" }
+    "name": { "str": "fine screw driving", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "BUTCHER",
-    "name": { "str": "butchering" }
+    "name": { "str": "butchering", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "DRILL",
-    "name": { "str": "drilling" }
+    "name": { "str": "drilling", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "PRY",
-    "name": { "str": "prying" }
+    "name": { "str": "prying", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "LIFT",
-    "name": { "str": "lifting" }
+    "name": { "str": "lifting", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "JACK",
-    "name": { "str": "jacking" }
+    "name": { "str": "jacking", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "SELF_JACK",
-    "name": { "str": "self jacking" }
+    "name": { "str": "self jacking", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "HOSE",
-    "name": { "str": "siphoning" },
+    "name": { "str": "siphoning", "ctxt": "tool quality name" },
     "usages": [ [ 1, [ "SIPHON" ] ] ]
   },
   {
     "type": "tool_quality",
     "id": "CHISEL",
-    "name": { "str": "chiseling" }
+    "name": { "str": "chiseling", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "SEW",
-    "name": { "str": "sewing" },
+    "name": { "str": "sewing", "ctxt": "tool quality name" },
     "crafting_speed_bonus_per_level": 1.1,
     "crafting_speed_level_offset": 2
   },
   {
     "type": "tool_quality",
     "id": "KNIT",
-    "name": { "str": "knitting" }
+    "name": { "str": "knitting", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "PULL",
-    "name": { "str": "bullet pulling" }
+    "name": { "str": "bullet pulling", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "ANVIL",
-    "name": { "str": "anvil" }
+    "name": { "str": "anvil", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "ANALYSIS",
-    "name": { "str": "analysis" },
+    "name": { "str": "analysis", "ctxt": "tool quality name" },
     "//": "A category meant to include various ways of identifying that the chemical you have is the chemical you want.",
     "//2": "analysis 1 is very basic stuff, eg. melting point determination or spectrophotometry.",
     "//3": "analysis 2 and 3 imply increasing degrees of precision."
@@ -277,130 +277,130 @@
   {
     "type": "tool_quality",
     "id": "CONCENTRATE",
-    "name": { "str": "concentration" },
+    "name": { "str": "concentration", "ctxt": "tool quality name" },
     "//": "Meant to represent a wide range of chemical functions to increase the concentration of a substance without changing state or solvent.",
     "//2": "Good examples might be rotary evaporation or centrifugation"
   },
   {
     "type": "tool_quality",
     "id": "SEPARATE",
-    "name": { "str": "separation" },
+    "name": { "str": "separation", "ctxt": "tool quality name" },
     "//": "This is to represent separating things that aren't separated by distillation or chromatography.",
     "//2": "Good example: a separation funnel which separates hydrophilic/phobic chemicals."
   },
   {
     "type": "tool_quality",
     "id": "FINE_DISTILL",
-    "name": { "str": "fine distillation" },
+    "name": { "str": "fine distillation", "ctxt": "tool quality name" },
     "//": "Fine distillation is about precisely separating specific components.",
     "//2": "This is in contrast to high level normal distillation which is more about high output."
   },
   {
     "type": "tool_quality",
     "id": "CHROMATOGRAPHY",
-    "name": { "str": "chromatography" },
+    "name": { "str": "chromatography", "ctxt": "tool quality name" },
     "//": "Think of this as 'fine separating'. Chromatography represents a number of precise separation techniques",
     "//2": "useful in both analysis and purification."
   },
   {
     "type": "tool_quality",
     "id": "GRIND",
-    "name": { "str": "grinding" }
+    "name": { "str": "grinding", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "REAM",
-    "name": { "str": "reaming" }
+    "name": { "str": "reaming", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "FILE",
-    "name": { "str": "filing" }
+    "name": { "str": "filing", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "VISE",
-    "name": { "str": "clamping" }
+    "name": { "str": "clamping", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "PRESSURIZATION",
-    "name": { "str": "pressurizing" }
+    "name": { "str": "pressurizing", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "LOCKPICK",
-    "name": { "str": "lockpicking" },
+    "name": { "str": "lockpicking", "ctxt": "tool quality name" },
     "usages": [ [ 1, [ "PICK_LOCK" ] ] ]
   },
   {
     "type": "tool_quality",
     "id": "EXTRACT",
-    "name": { "str": "extraction" }
+    "name": { "str": "extraction", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "FILTER",
-    "name": { "str": "filtration" }
+    "name": { "str": "filtration", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "SANDING",
-    "name": { "str": "sanding" }
+    "name": { "str": "sanding", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "HV_INSULATION",
-    "name": { "str": "high voltage insulation" }
+    "name": { "str": "high voltage insulation", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "VOLT_MEASURE",
-    "name": { "str": "voltage measurement" }
+    "name": { "str": "voltage measurement", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "PULL_FINE",
-    "name": { "str": "fine pulling" }
+    "name": { "str": "fine pulling", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "CUT_M",
-    "name": { "str": "metal cutting" }
+    "name": { "str": "metal cutting", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "GRIP_HOT",
-    "name": { "str": "hot gripping" }
+    "name": { "str": "hot gripping", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "CONTAIN_HOT",
-    "name": { "str": "hot containing" }
+    "name": { "str": "hot containing", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "SWAGING",
-    "name": { "str": "swaging" }
+    "name": { "str": "swaging", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "GLASSBLOWING",
-    "name": { "str": "glassblowing" }
+    "name": { "str": "glassblowing", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "CASING_FORMING",
-    "name": { "str": "casing forming" }
+    "name": { "str": "casing forming", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "CASING_PRESSING",
-    "name": { "str": "ammunition reloading" }
+    "name": { "str": "ammunition reloading", "ctxt": "tool quality name" }
   },
   {
     "type": "tool_quality",
     "id": "SLEEP_AID",
-    "name": { "str": "sleep aid" }
+    "name": { "str": "sleep aid", "ctxt": "tool quality name" }
   }
 ]

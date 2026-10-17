@@ -1317,7 +1317,7 @@
     "id": "tool_small_improvised_fragmentation_device_act",
     "type": "TOOL",
     "category": "weapons",
-    "name": { "str": "small improvised frag device" },
+    "name": { "str": "active small improvised frag device" },
     "looks_like": "tool_black_powder_charge_act",
     "description": "This is a home-made explosive device, consisting of a large plastic jug filled with stable explosives and scrap metal, whose fuse has been lit, its final countdown starting.",
     "weight": "6500 g",

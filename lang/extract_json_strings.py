@@ -129,6 +129,11 @@ ignorable = {
     "vehicle_placement",
     "WORLD_OPTION",
     "sound_effect",
+    "OPTION_SPACE",
+    "base_weather",
+    "weather_pattern",
+    "vehicle_color_palette",
+    "mapgen_color_palette",
 }
 
 # these objects can have their strings automatically extracted.
@@ -193,6 +198,9 @@ automatically_convertible = {
     "help",
     "weather_type",
     "world_type"
+    "enchantment_flag",
+    "named_color",
+    "nested_category",
 }
 
 # for these objects a plural form is needed
@@ -524,6 +532,12 @@ def extract_mapgen(state, item):
                     writestr(state, v.get("access_denied"),
                              comment="Computer access denied warning")
 
+def extract_map_feature_description(state, item):
+    for feature in item.get("features", []):
+        if "text" in feature:
+            writestr(state, feature["text"],
+                     comment="Map feature description shown in tile info")
+
 
 def extract_monster_attack(state, item):
     if "hit_dmg_u" in item:
@@ -705,6 +719,10 @@ def extract_mutation(state, item):
         if found is not None:
             writestr(state, found, comment=f"Description for {item_name_or_id}")
 
+    found = item.get("apperance_description")
+    if found is not None:
+        writestr(state, found,
+                 comment=f"Appearance description for {item_name_or_id}")
     if "attacks" in item:
         attacks = item.get("attacks")
         if type(attacks) is list:
@@ -826,20 +844,64 @@ def extract_json_flag(state, item):
 
 
 def extract_snippet(state, item):
-    text = item["text"];
+    text = item["text"]
     if type(text) is not list:
-        text = [text];
+        text = [text]
     for snip in text:
         if type(snip) is str:
             writestr(state, snip)
-        else:
+        elif "text" in snip:
             writestr(state, snip["text"])
+        else:
+            writestr(state, snip)
 
 
 def extract_weapon_category(state, item):
     name = item["name"]
     comment = "weapon category name"
     writestr(state, name, comment=comment)
+    
+def extract_enchantment_condition(state, item):
+    writestr(state, item.get("condition_info"),
+             comment=f"Description of enchantment condition '{item.get('id')}'")
+
+def extract_enchantment_value(state, item):
+    writestr(state, item.get("desc"),
+             comment=f"Description of enchantment value '{item.get('id')}'")
+
+def extract_enchantment_vision(state, item):
+    vision_id = item.get("id")
+    writestr(state, item.get("desc"),
+             comment=f"Description of enchantment vision '{vision_id}'")
+    vision_desc = item.get("vision_desc")
+    if isinstance(vision_desc, dict):
+        writestr(state, vision_desc.get("description"),
+                 comment=f"Message shown when sensing creatures with enchantment vision '{vision_id}'")
+
+def extract_option(state, item):
+    name = item.get("name")
+    writestr(state, item.get("menu_text"),
+             comment=f"Menu text of option '{name}'")
+    writestr(state, item.get("tooltip"),
+             comment=f"Tooltip of option '{name}'")
+    for entry in item.get("items", []):
+        if type(entry) is dict and "label" in entry:
+            writestr(state, entry["label"],
+                     comment=f"Value label of option '{name}'")
+
+def extract_option_group(state, item):
+    group_id = item.get("id")
+    writestr(state, item.get("title"),
+             comment=f"Title of option group '{group_id}'")
+    writestr(state, item.get("desc"),
+             comment=f"Description of option group '{group_id}'")
+    
+def extract_nested_category(state, item):
+    nested_name = item.get("nested_name")
+    writestr(state, nested_name, comment="Nested crafting category name")
+    if "description" in item:
+        writestr(state, item["description"],
+                 comment=f"Name for nested category '{nested_name}'")
 
 
 # these objects need to have their strings specially extracted
@@ -875,6 +937,12 @@ extract_specials = {
     "trap": extract_trap,
     "vehicle_spawn": extract_vehspawn,
     "weapon_category": extract_weapon_category,
+    "OPTION": extract_option,
+    "OPTION_GROUP": extract_option_group,    
+    "map_feature_description": extract_map_feature_description,
+    "enchantment_condition": extract_enchantment_condition,
+    "enchantment_value": extract_enchantment_value,
+    "enchantment_vision": extract_enchantment_vision,    
 }
 
 
@@ -986,6 +1054,8 @@ use_action_msgs = {
     "lacks_fuel_message",
     "failure_message",
     "descriptions",
+    "player_descriptions",
+    "npc_descriptions",    
     "use_message",
     "noise_message",
     "bury_question",

@@ -2477,7 +2477,7 @@ act_progress_message craft_activity_actor::get_progress_message(
     mults_desc += string_format( " - %s: %s\n", _( "Total" ),
                                  colorize( std::to_string( total_pct ) + '%', total_col ) );
     mults_desc += fmt_spd( act.speed.player_speed, _( "Speed" ) );
-    mults_desc += fmt_spd( act.speed.light, _( "Light" ) );
+    mults_desc += fmt_spd( act.speed.light, pgettext( "crafting speed multiplier", "Light" ) );
     mults_desc += fmt_spd( act.speed.bench_factor, _( "Workbench" ) );
     mults_desc += fmt_spd( act.speed.morale, _( "Morale" ) );
     mults_desc += fmt_spd( act.speed.tools, _( "Tools" ) );

@@ -462,7 +462,7 @@
       {
         "id": "mma_buff_stone_dragon_onmove1",
         "name": "Cracked Stone",
-        "description": "Moving too much will negate the effects of Surefoot Stance.  Stay still to avoid shattering your stance!\n\nEnables \"Shattered Stone\" buff.\nLasts 1 turn.",
+        "description": "Moving too much will negate the effects of Stonefoot Stance.  Stay still to avoid shattering your stance!\n\nEnables \"Shattered Stone\" buff.\nLasts 1 turn.",
         "melee_allowed": true,
         "unarmed_allowed": true,
         "buff_duration": 1
@@ -470,7 +470,7 @@
       {
         "id": "mma_buff_stone_dragon_onmove2",
         "name": "Stattered Stone",
-        "description": "You are unable to maintain your Surefoot Stance and must stop moving for a short time to regain its benefits.\n\n-10% damage, -2 bash, cut, and stab armor.\nLasts 4 turn.",
+        "description": "You are unable to maintain your Stonefoot Stance and must stop moving for a short time to regain its benefits.\n\n-10% damage, -2 bash, cut, and stab armor.\nLasts 4 turn.",
         "melee_allowed": true,
         "unarmed_allowed": true,
         "req_buffs": [ "mma_buff_stone_dragon_onmove1" ],

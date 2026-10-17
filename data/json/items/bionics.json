@@ -457,7 +457,7 @@
     "id": "bio_tattoo_led",
     "copy-from": "bionic_general",
     "type": "BIONIC_ITEM",
-    "name": { "str": "LED Tattoo" },
+    "name": { "str": "LED Tattoo CBM" },
     "looks_like": "bio_int_enhancer",
     "description": "An LED display implanted beneath the epidermis that can display patterns or pictures through the skin.  When active it glows dimly, providing a very small amount of light.",
     "price": "200 USD",

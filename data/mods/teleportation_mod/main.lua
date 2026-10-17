@@ -356,8 +356,9 @@ mod.pick_teleporter = function(who, eidx, pos)
     if i == mod.count_table(mod.station_list) then
       if j == 1 then
         gapi.add_msg(
-          locale.gettext(
-            "No stations with enough charge. The required charge is " .. tostring(distance) .. " energy units."
+          string.format(
+            locale.gettext("No stations with enough charge. The required charge is %s energy units."),
+            tostring(distance)
           )
         )
         return 0
