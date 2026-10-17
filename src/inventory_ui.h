@@ -3,6 +3,7 @@
 #include <cassert>
 #include <climits>
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <limits>
 #include <memory>
@@ -719,8 +720,8 @@ class inventory_selector
         std::vector<char> all_bound_keys( ) const;
 };
 
-inventory_selector::stat display_stat( const std::string &caption, int cur_value, int max_value,
-                                       const std::function<std::string( int )> &disp_func );
+inventory_selector::stat display_stat( const std::string &caption, std::int64_t cur_value,
+                                       std::int64_t max_value, const std::function<std::string( std::int64_t )> &disp_func );
 
 class inventory_pick_selector : public inventory_selector
 {

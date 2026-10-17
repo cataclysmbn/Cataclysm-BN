@@ -1690,8 +1690,8 @@ void inventory_selector::draw_header( const catacurses::window &w ) const
     }
 }
 
-inventory_selector::stat display_stat( const std::string &caption, int cur_value, int max_value,
-                                       const std::function<std::string( int )> &disp_func )
+inventory_selector::stat display_stat( const std::string &caption, std::int64_t cur_value,
+                                       std::int64_t max_value, const std::function<std::string( std::int64_t )> &disp_func )
 {
     const nc_color color = cur_value > max_value ? c_red : c_light_gray;
     return {{
@@ -1708,16 +1708,16 @@ inventory_selector::stats inventory_selector::get_weight_and_volume_stats(
     return {
         {
             display_stat( string_format( _( "Weight (%s):" ), weight_units() ),
-                          to_gram( weight_carried ),
-                          to_gram( weight_capacity ), []( int w )
+                          to_milligram( weight_carried ),
+                          to_milligram( weight_capacity ), []( std::int64_t w )
             {
-                return string_format( "%.1f", round_up( convert_weight( units::from_gram( w ) ), 1 ) );
+                return string_format( "%.1f", round_up( convert_weight( units::from_milligram( w ) ), 1 ) );
             } ),
             display_stat( string_format( _( "Volume (%s):" ), volume_units_abbr() ),
                           units::to_milliliter( volume_carried ),
-                          units::to_milliliter( volume_capacity ), []( int v )
+                          units::to_milliliter( volume_capacity ), []( std::int64_t v )
             {
-                return format_volume( units::from_milliliter( v ) );
+                return format_volume( units::from_milliliter( static_cast<int>( v ) ) );
             } )
         }
     };
