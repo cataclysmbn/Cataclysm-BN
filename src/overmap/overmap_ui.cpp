@@ -2570,7 +2570,7 @@ static auto display(const tripoint_abs_omt& orig, const draw_data_t& data = draw
     });
 
     const auto screen = ec::screen_scope(
-        ictxt,
+        ictxt, "overmap",
         {
             .role = "screen",
             .view =

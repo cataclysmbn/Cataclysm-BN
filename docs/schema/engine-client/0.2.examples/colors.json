@@ -6,6 +6,7 @@
       "value": {
         "screen_id": "screen:2",
         "role": "screen",
+        "kind": "colors",
         "title": " COLOR MANAGER ",
         "root": {
           "id": "colors:columns",
@@ -3495,6 +3496,7 @@
       "value": {
         "screen_id": "screen:2",
         "role": "screen",
+        "kind": "colors",
         "title": " COLOR MANAGER ",
         "root": {
           "id": "colors:columns",

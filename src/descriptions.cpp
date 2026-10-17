@@ -168,7 +168,7 @@ void game::extended_description( const tripoint_bub_ms &p )
     } );
 
     // The target being described is the panel's title, under the name of the action that picked it.
-    const auto screen = ec::screen_scope( ctxt, { .view = [&]( const ec::boundary_state & )
+    const auto screen = ec::screen_scope( ctxt, "extended_description", { .view = [&]( const ec::boundary_state & )
     {
         const auto target = cur_target == description_target::creature ? "CREATURE" :
                             cur_target == description_target::furniture ? "FURNITURE" : "TERRAIN";
@@ -177,7 +177,7 @@ void game::extended_description( const tripoint_bub_ms &p )
             .root = ec::panel( { .id = "description", .title = ctxt.get_action_name( target ), .child = ec::component{ .id = "description:text", .body = ec::text_body{ .markup = colorize( describe(), c_light_gray ) } } } ),
         };
     }
-                                                } );
+                                                                        } );
 
     do {
         ui_manager::redraw();

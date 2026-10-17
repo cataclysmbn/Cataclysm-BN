@@ -6,6 +6,7 @@
       "value": {
         "screen_id": "screen:9",
         "role": "dialog",
+        "kind": "popup",
         "root": {
           "id": "split:root",
           "kind": "split",
@@ -200,6 +201,7 @@
       "value": {
         "screen_id": "screen:10",
         "role": "dialog",
+        "kind": "uilist",
         "root": {
           "id": "split:root",
           "kind": "split",
@@ -469,6 +471,7 @@
       "value": {
         "screen_id": "screen:11",
         "role": "dialog",
+        "kind": "text_input",
         "root": {
           "id": "split:root",
           "kind": "split",
@@ -876,6 +879,7 @@
       "value": {
         "screen_id": "screen:12",
         "role": "dialog",
+        "kind": "text_input",
         "root": {
           "id": "split:root",
           "kind": "split",
@@ -1202,6 +1206,7 @@
       "value": {
         "screen_id": "screen:13",
         "role": "dialog",
+        "kind": "uilist",
         "root": {
           "id": "split:root",
           "kind": "split",

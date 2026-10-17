@@ -176,7 +176,7 @@ void help::display_help()
     namespace ec = engine_client;
     constexpr auto open_topic_id = "help:topic";
     const auto topic_row_id = []( const int order ) { return "topic:" + std::to_string( order ); };
-    const auto screen = ec::screen_scope( ctxt, { .view = [&]( const ec::boundary_state & )
+    const auto screen = ec::screen_scope( ctxt, "help", { .view = [&]( const ec::boundary_state & )
     {
         using namespace std::views;
         auto rows = help_texts | transform( [&]( const auto & entry ) {
@@ -202,7 +202,7 @@ void help::display_help()
             .affordances = { ec::invoke_affordance( { .id = open_topic_id, .label = ctxt.get_action_name( "CONFIRM" ), .args = { .row = ec::row_shape{ .component_id = "help:topics" } }, .covers = "CONFIRM" } ) },
         };
     }
-                                                } );
+                                                        } );
 
     do {
         ui_manager::redraw();

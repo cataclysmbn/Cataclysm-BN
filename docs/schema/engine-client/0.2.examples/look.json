@@ -6,6 +6,7 @@
       "value": {
         "screen_id": "screen:8",
         "role": "dialog",
+        "kind": "look",
         "title": "Look Around",
         "root": {
           "id": "target",

@@ -25,6 +25,7 @@ using game_client::interaction_snapshot;
 struct live_screen {
     std::uint64_t serial = 0;
     const input_context *context = nullptr;
+    std::string kind = {};
     std::string role = {};
     view_provider view = {};
 };
@@ -313,6 +314,7 @@ auto shortcuts_of( const boundary_state &state, const bool top ) -> std::vector<
 /// One entry of the stack before its content is read.
 struct slot {
     std::string id = {};
+    std::string kind = {};
     std::string role = {};
     std::string context = {};
     const view_provider *view = nullptr;
@@ -322,9 +324,9 @@ struct slot {
 auto slots_of( const boundary_state &state ) -> std::vector<slot>
 {
     auto result = std::vector<slot> {};
-    if( state.ready.game_ready ) { result.push_back( { .id = "screen:map:" + state.epoch, .role = "map", .map = true } ); }
+    if( state.ready.game_ready ) { result.push_back( { .id = "screen:map:" + state.epoch, .kind = "map", .role = "map", .map = true } ); }
     for( const auto &screen : live_screens() ) {
-        result.push_back( { .id = "screen:" + std::to_string( screen.serial ), .role = screen.role,
+        result.push_back( { .id = "screen:" + std::to_string( screen.serial ), .kind = screen.kind, .role = screen.role,
                             .context = screen.context->category_name(), .view = &screen.view } );
     }
     // A view that reads input without a scope lives for one read: its id is new on every boundary, so a
@@ -382,6 +384,7 @@ auto screen_of( const boundary_state &state, const slot &entry, const bool top )
         described = false;
     }
     result.screen_id = entry.id;
+    result.kind = entry.kind;
     result.role = entry.role;
     result.context = entry.context;
     if( entry.map ) { result.shortcuts = shortcuts_of( state, top ); }
@@ -555,10 +558,11 @@ auto invoked( const input_event &event ) -> std::optional<invoked_affordance>
                                .activates = activates, .args = *semantic->arguments };
 }
 
-screen_scope::screen_scope( const input_context &context, screen_options options ) :
+screen_scope::screen_scope( const input_context &context, std::string kind,
+                            screen_options options ) :
     serial_( mint_serial() )
 {
-    live_screens().push_back( { .serial = serial_, .context = &context, .role = std::move( options.role ),
+    live_screens().push_back( { .serial = serial_, .context = &context, .kind = std::move( kind ), .role = std::move( options.role ),
                                 .view = std::move( options.view ) } );
 }
 

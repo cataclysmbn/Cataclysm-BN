@@ -2198,7 +2198,7 @@ auto inventory_selector::interaction_view() const -> ec::screen_view
 
 auto inventory_selector::open_screen() -> ec::screen_scope
 {
-    return ec::screen_scope( ctxt, {
+    return ec::screen_scope( ctxt, "inventory", {
         .role = "screen",
         .view = [this]( const ec::boundary_state & ) { return interaction_view(); },
     } );

@@ -6,6 +6,7 @@
       "value": {
         "screen_id": "screen:8",
         "role": "screen",
+        "kind": "advanced_inventory",
         "title": "Advanced inventory",
         "root": {
           "id": "aim:panes",

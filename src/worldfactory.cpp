@@ -829,7 +829,7 @@ void worldfactory::show_active_world_mods( const std::vector<mod_id> &world_mods
         wnoutrefresh( w_mods );
     } );
 
-    const auto screen = ec::screen_scope( ctxt, { .role = "screen", .view = [&]( const ec::boundary_state & )
+    const auto screen = ec::screen_scope( ctxt, "world_mods", { .role = "screen", .view = [&]( const ec::boundary_state & )
     {
         const auto title = trim( _( " ACTIVE WORLD MODS " ) );
         auto parts = ec::children_of( ec::panel( { .id = "worldgen:active_mods", .title = title,
@@ -847,7 +847,7 @@ void worldfactory::show_active_world_mods( const std::vector<mod_id> &world_mods
             .focus_row = world_mods.empty() ? std::string() : "mod:" + world_mods[cursor].str(),
         } );
     }
-                                                } );
+                                                              } );
 
     while( true ) {
         ui_manager::redraw();
@@ -1256,7 +1256,7 @@ int worldfactory::show_modselection_window( const catacurses::window &win,
         fpopup.reset();
     };
 
-    const auto screen = ec::screen_scope( ctxt, { .role = "screen", .view = [&]( const ec::boundary_state & )
+    const auto screen = ec::screen_scope( ctxt, "world_creation", { .role = "screen", .view = [&]( const ec::boundary_state & )
     {
         const auto &categories = get_mod_list_tabs();
         const auto &current_tab = all_tabs[iCurrentTab];
@@ -1312,7 +1312,7 @@ int worldfactory::show_modselection_window( const catacurses::window &win,
             .focus_row = line < focused.size() ? ( active_header == 0 ? "mod:" : "active:" ) + focused[line].str() : std::string(),
         } );
     }
-                                                } );
+                                                                  } );
 
     int tab_output = 0;
     while( tab_output == 0 ) {
@@ -1578,7 +1578,7 @@ int worldfactory::show_worldgen_tab_confirm( const catacurses::window &win, WORL
         }
     } );
 
-    const auto screen = ec::screen_scope( ctxt, { .role = "screen", .view = [&]( const ec::boundary_state & )
+    const auto screen = ec::screen_scope( ctxt, "world_creation", { .role = "screen", .view = [&]( const ec::boundary_state & )
     {
         const auto v2 = world->world_save_format == save_format::V2_COMPRESSED_SQLITE3;
         auto notes = std::vector<ec::panel_stat> {
@@ -1610,7 +1610,7 @@ int worldfactory::show_worldgen_tab_confirm( const catacurses::window &win, WORL
             .focus_component = "worldgen:confirm:name", .focus_row = "name",
         } );
     }
-                                                } );
+                                                                  } );
 
     do {
         ui_manager::redraw();

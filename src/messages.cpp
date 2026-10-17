@@ -876,7 +876,7 @@ void Messages::dialog::run()
         show();
     } );
 
-    const auto screen = engine_client::screen_scope( ctxt, { .view = [this]( const engine_client::boundary_state & ) { return view(); } } );
+    const auto screen = engine_client::screen_scope( ctxt, "messages", { .view = [this]( const engine_client::boundary_state & ) { return view(); } } );
 
     while( !errored && !canceled ) {
         ui_manager::redraw();

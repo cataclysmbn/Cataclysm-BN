@@ -3452,7 +3452,7 @@ target_handler::trajectory target_ui::run()
         }
     }
 
-    const auto screen = engine_client::screen_scope( ctxt, {
+    const auto screen = engine_client::screen_scope( ctxt, "target", {
         .view = [this]( const engine_client::boundary_state & ) { return screen_view(); },
     } );
     // Event loop!

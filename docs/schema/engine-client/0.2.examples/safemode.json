@@ -6,6 +6,7 @@
       "value": {
         "screen_id": "screen:8",
         "role": "screen",
+        "kind": "safemode",
         "title": " SAFE MODE MANAGER ",
         "root": {
           "id": "safemode:tabs",
@@ -502,6 +503,7 @@
       "value": {
         "screen_id": "screen:8",
         "role": "screen",
+        "kind": "safemode",
         "title": " SAFE MODE MANAGER ",
         "root": {
           "id": "safemode:tabs",
@@ -1116,6 +1118,7 @@
       "value": {
         "screen_id": "screen:8",
         "role": "screen",
+        "kind": "safemode",
         "title": " SAFE MODE MANAGER ",
         "root": {
           "id": "safemode:tabs",
@@ -1682,6 +1685,7 @@
       "value": {
         "screen_id": "screen:10",
         "role": "dialog",
+        "kind": "safemode_test",
         "title": "2 monsters match: zombie",
         "root": {
           "id": "safemode_test:body",

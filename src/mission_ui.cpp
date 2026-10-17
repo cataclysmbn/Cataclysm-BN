@@ -171,7 +171,7 @@ void game::list_missions()
     constexpr auto select_mission_id = "missions:select";
     const auto tab_ids = std::array<std::string, 3> { "active", "completed", "failed" };
     const auto mission_row_id = []( const mission & miss ) { return "mission:" + std::to_string( miss.get_id() ); };
-    const auto screen = ec::screen_scope( ctxt, { .view = [&]( const ec::boundary_state & )
+    const auto screen = ec::screen_scope( ctxt, "missions", { .view = [&]( const ec::boundary_state & )
     {
         const auto tab_names = std::array<std::string, 3> { _( "ACTIVE MISSIONS" ),
                    _( "COMPLETED MISSIONS" ), _( "FAILED MISSIONS" )
@@ -234,7 +234,7 @@ void game::list_missions()
             .focus_row = selection < umissions.size() ? mission_row_id( *umissions[selection] ) : "",
         };
     }
-                                                } );
+                                                            } );
 
     while( true ) {
         umissions.clear();

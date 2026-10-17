@@ -1526,7 +1526,7 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
         }
     } );
 
-    const auto screen = ec::screen_scope( ctxt, {
+    const auto screen = ec::screen_scope( ctxt, "crafting", {
         .role = "screen",
         .view = [&]( const auto & /*state*/ )
         {

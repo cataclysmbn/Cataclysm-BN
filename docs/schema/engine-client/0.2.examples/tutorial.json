@@ -982,6 +982,7 @@
           {
             "screen_id": "screen:map:epoch-2",
             "role": "map",
+            "kind": "map",
             "root": {
               "id": "map:world",
               "kind": "map",
@@ -2408,6 +2409,7 @@
       "value": {
         "screen_id": "screen:map:epoch-2",
         "role": "map",
+        "kind": "map",
         "root": {
           "id": "map:world",
           "kind": "map",
@@ -5280,6 +5282,7 @@
               {
                 "screen_id": "screen:map:epoch-2",
                 "role": "map",
+                "kind": "map",
                 "root": {
                   "id": "map:world",
                   "kind": "map",
@@ -6968,6 +6971,7 @@
           {
             "screen_id": "screen:map:epoch-2",
             "role": "map",
+            "kind": "map",
             "root": {
               "id": "map:world",
               "kind": "map",
@@ -7119,6 +7123,7 @@
           {
             "screen_id": "screen:8",
             "role": "dialog",
+            "kind": "uilist",
             "root": {
               "id": "split:root",
               "kind": "split",
@@ -7445,6 +7450,7 @@
       "value": {
         "screen_id": "screen:8",
         "role": "dialog",
+        "kind": "uilist",
         "root": {
           "id": "split:root",
           "kind": "split",
@@ -7872,6 +7878,7 @@
       "value": {
         "screen_id": "screen:map:epoch-2",
         "role": "map",
+        "kind": "map",
         "root": {
           "id": "map:world",
           "kind": "map",

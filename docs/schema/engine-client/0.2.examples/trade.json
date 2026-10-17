@@ -6,6 +6,7 @@
       "value": {
         "screen_id": "screen:10",
         "role": "screen",
+        "kind": "trade",
         "title": "Trading with Denver Tolbert, Marloss Voice",
         "root": {
           "id": "trade:head",

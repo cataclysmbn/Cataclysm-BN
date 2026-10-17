@@ -484,7 +484,7 @@ std::optional<tripoint_bub_ms> editmap::edit()
 
         ui_manager::redraw();
 
-        const auto screen = engine_client::screen_scope( ctxt, {
+        const auto screen = engine_client::screen_scope( ctxt, "editmap", {
             .view = [&]( const engine_client::boundary_state & )
             {
                 return editmap_view( *this, ctxt, { .title = _( "Map editor" ), .status = "editmap" } );
@@ -1713,7 +1713,7 @@ int editmap::select_shape( shapetype shape, int mode )
         }
         do_ui_invalidation();
         ui_manager::redraw();
-        const auto screen = engine_client::screen_scope( ctxt, {
+        const auto screen = engine_client::screen_scope( ctxt, "editmap_shape", {
             .view = [&]( const engine_client::boundary_state & )
             {
                 return editmap_view( *this, ctxt, {
@@ -2097,7 +2097,7 @@ void editmap::mapgen_retarget()
         do_ui_invalidation();
 
         ui_manager::redraw();
-        const auto screen = engine_client::screen_scope( ctxt, {
+        const auto screen = engine_client::screen_scope( ctxt, "editmap_mapgen", {
             .view = [&]( const engine_client::boundary_state & )
             {
                 return editmap_view( *this, ctxt, {

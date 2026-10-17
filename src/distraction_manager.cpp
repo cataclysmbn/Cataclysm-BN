@@ -219,7 +219,7 @@ void distraction_manager_gui::show()
             },
             .focus_component = distractions_items, .focus_row = row_id_of( cur_distraction ) };
     };
-    const auto screen = ec::screen_scope( ctx, { .role = "screen", .view = [&]( const auto & /*state*/ ) { return distractions_view(); } } );
+    const auto screen = ec::screen_scope( ctx, "distraction_manager", { .role = "screen", .view = [&]( const auto & /*state*/ ) { return distractions_view(); } } );
 
     while( true ) {
         ui_manager::redraw();

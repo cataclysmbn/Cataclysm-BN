@@ -6,6 +6,7 @@
       "value": {
         "screen_id": "screen:14",
         "role": "dialog",
+        "kind": "pickup",
         "title": "Pick up",
         "root": {
           "id": "pickup",

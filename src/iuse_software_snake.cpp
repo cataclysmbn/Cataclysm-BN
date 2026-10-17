@@ -129,11 +129,11 @@ int snake_game::start_game()
     ctxt.register_action( "HELP_KEYBINDINGS" );
 
     auto playing = true;
-    const auto screen = engine_client::screen_scope( ctxt, { .view = [&]( const engine_client::boundary_state & )
+    const auto screen = engine_client::screen_scope( ctxt, "snake", { .view = [&]( const engine_client::boundary_state & )
     {
         return iuse_software::canvas_screen( { .title = _( "S N A K E" ), .layers = { w_snake }, .refresh_ms = playing ? iGameSpeed : 0 } );
     }
-                                                           } );
+                                                                    } );
 
     ui.on_redraw( [&]( const ui_adaptor & ) {
         werase( w_snake );

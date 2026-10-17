@@ -170,7 +170,7 @@ TEST_CASE("a screen publishes each role once", "[engine_client_component]") {
     SECTION("a provider's own cancel and confirm keep the role over the registered ones") {
         const auto context = input_context("TEST_ROLES");
         const auto scope = ec::screen_scope(
-            context, {.view = [](const auto&) {
+            context, "test", {.view = [](const auto&) {
                 return ec::screen_view{
                     .root = ec::panel({.id = "panel:one"}),
                     .affordances =
@@ -309,12 +309,13 @@ TEST_CASE(
         REQUIRE(before.size() == 1);
         CHECK(before[0].screen_id == "screen:map:epoch:test");
         CHECK(before[0].role == "map");
+        CHECK(before[0].kind == "map");
         CHECK(body<ec::map_body>(*before[0].root).mode == "world");
     }
     auto first_id = std::string{};
     {
         const auto scope = ec::screen_scope(
-            context,
+            context, "own",
             {.role = "screen", .view = [](const auto&) {
                  return ec::screen_view{
                      .title = "Own",
@@ -329,15 +330,18 @@ TEST_CASE(
         CHECK(stack[0].affordances.empty());
         CHECK(stack[1].role == "screen");
         CHECK(stack[1].title == "Own");
+        CHECK(stack[1].kind == "own");
         CHECK(stack[1].context == "TEST_SCOPE");
         CHECK(affordance(stack[1], "own:go").runs == ec::invoke_kind::screen);
         CHECK(ec::top_screen(state).screen_id == stack[1].screen_id);
         first_id = stack[1].screen_id;
     }
     // Reopened: a new screen, so a key meant for the first never lands on it.
-    const auto reopened = ec::screen_scope(context);
+    const auto reopened = ec::screen_scope(context, "own");
     const auto input = client::input_context_scope(context, "TEST_SCOPE");
     CHECK(ec::top_screen(state).screen_id != first_id);
+    // The same screen still: a client keeps what it remembers of the first.
+    CHECK(ec::top_screen(state).kind == "own");
 }
 
 TEST_CASE(
@@ -352,6 +356,8 @@ TEST_CASE(
     CHECK(stack[0].root->affordances.empty());
     CHECK(stack[1].screen_id == "screen:read:boundary:test");
     CHECK(stack[1].role == "dialog");
+    // Nothing names it, so a client remembers nothing of it.
+    CHECK(stack[1].kind.empty());
     state.id = "boundary:next";
     CHECK(ec::top_screen(state).screen_id == "screen:read:boundary:next");
     // The map's id is fixed for the epoch.
@@ -446,7 +452,7 @@ TEST_CASE("every 0.1 operation is an invoke", "[engine_client_component]") {
     SECTION("set_count, offered by a screen's own view") {
         const auto context = input_context("TEST_COUNT");
         const auto scope = ec::screen_scope(
-            context, {.view = [](const auto&) {
+            context, "test", {.view = [](const auto&) {
                 return ec::screen_view{
                     .root = ec::list(
                         {.id = "list:own", .rows = {{.id = "item:1", .label = "rock"}}}),
@@ -495,7 +501,7 @@ TEST_CASE(
     "[engine_client_component]") {
     const auto context = input_context("TEST_OWN");
     const auto scope = ec::screen_scope(
-        context,
+        context, "test",
         {.role = "screen", .view = [](const auto&) {
              return ec::screen_view{
                  .root = ec::list({.id = "list:own", .rows = {{.id = "row:1", .label = "One"}}}),
@@ -653,7 +659,7 @@ TEST_CASE(
     }
     const auto context = input_context("TEST_LONG");
     const auto scope = ec::screen_scope(
-        context, {.view = [&](const auto&) {
+        context, "test", {.view = [&](const auto&) {
             return ec::screen_view{
                 .root = ec::list({.id = "list:long", .rows = rows, .activate = "own:pick"}),
                 .affordances = {ec::invoke_affordance(
@@ -914,7 +920,7 @@ TEST_CASE(
     // A screen of its own with one affordance per container, each naming rows of that container.
     const auto context = input_context("TEST_ROWS");
     const auto scope = ec::screen_scope(
-        context, {.view = [&](const auto&) {
+        context, "test", {.view = [&](const auto&) {
             const auto naming = [](const std::string& id, const std::string& component_id) {
                 return ec::affordance{
                     .id = id,
@@ -980,7 +986,7 @@ TEST_CASE(
     "[engine_client_component]") {
     const auto context = input_context("TEST_DENIAL");
     const auto scope = ec::screen_scope(
-        context, {.view = [](const auto&) {
+        context, "test", {.view = [](const auto&) {
             return ec::screen_view{
                 .root = ec::panel({.id = "panel:one"}),
                 .denials = {{.id = "REPAIR", .reason = "Nothing is damaged."}, {.id = "UNBOUND"}}};
@@ -1050,7 +1056,7 @@ struct picking_options {
 auto picking_screen(const picking_options& options) -> ec::screen_view {
     const auto context = input_context("TEST_PICK");
     const auto scope = ec::screen_scope(
-        context, {.view = [&](const auto&) {
+        context, "test", {.view = [&](const auto&) {
             return ec::screen_view{
                 .root = ec::list(
                     {.id = "list:rows",

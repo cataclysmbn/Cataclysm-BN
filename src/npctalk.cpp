@@ -2298,7 +2298,7 @@ auto dialogue::opt( dialogue_window &d_win, const std::string &npc_name,
     // The lines are evaluated once, here: observing them must not parse tags, generate responses, run
     // speaker effects or roll a trial again.
     const auto model = talk_model{ .npc_name = npc_name, .window = d_win, .responses = responses, .lines = response_lines, .selected = selected_response };
-    const auto screen = ec::screen_scope( ctxt, { .view = [&]( const ec::boundary_state & /*state*/ ) { return talk_view( model ); } } );
+    const auto screen = ec::screen_scope( ctxt, "talk", { .view = [&]( const ec::boundary_state & /*state*/ ) { return talk_view( model ); } } );
 
     ui_adaptor ui;
     ui.on_screen_resize( [&]( ui_adaptor & ui ) {

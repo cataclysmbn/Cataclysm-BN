@@ -1729,7 +1729,7 @@ void advanced_inventory::display()
     // Open while the screen is: the move-all pass that reopens it reads no input.
     auto screen = std::optional<ec::screen_scope> {};
     if( !is_processing() ) {
-        screen.emplace( ctxt, ec::screen_options{ .role = "screen", .view = [this, &ctxt]( const ec::boundary_state & )
+        screen.emplace( ctxt, "advanced_inventory", ec::screen_options{ .role = "screen", .view = [this, &ctxt]( const ec::boundary_state & )
         {
             return aim_view( ctxt );
         } } );

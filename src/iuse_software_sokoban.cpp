@@ -242,11 +242,11 @@ int sokoban_game::start_game()
     ctxt.register_action( "UNDO" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
 
-    const auto screen = engine_client::screen_scope( ctxt, { .view = [&]( const engine_client::boundary_state & )
+    const auto screen = engine_client::screen_scope( ctxt, "sokoban", { .view = [&]( const engine_client::boundary_state & )
     {
         return iuse_software::canvas_screen( { .title = _( "Sokoban" ), .layers = { w_sokoban } } );
     }
-                                                           } );
+                                                                      } );
 
     ui.on_redraw( [&]( const ui_adaptor & ) {
         werase( w_sokoban );

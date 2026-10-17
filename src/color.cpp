@@ -970,7 +970,7 @@ return column == 1 ? std::string{ _( "Normal" ) } :
             },
             .focus_component = colors_items, .focus_row = focus };
     };
-    const auto screen = ec::screen_scope( ctxt, { .role = "screen", .view = [&]( const auto & /*state*/ ) { return colors_view(); } } );
+    const auto screen = ec::screen_scope( ctxt, "colors", { .role = "screen", .view = [&]( const auto & /*state*/ ) { return colors_view(); } } );
 
     while( true ) {
         ui_manager::redraw();

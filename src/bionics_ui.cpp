@@ -800,7 +800,7 @@ auto reassign_bionic_letter( const bionic &bio ) -> int
     ctxt.register_action( "ANY_INPUT" );
     ctxt.register_action( "COORDINATE" );
     ctxt.register_action( "QUIT" );
-    const auto screen = ec::screen_scope( ctxt, { .view = [&]( const ec::boundary_state & )
+    const auto screen = ec::screen_scope( ctxt, "bionic_letter", { .view = [&]( const ec::boundary_state & )
     {
         return ec::screen_view{
             .title = bio.id->name.translated(),
@@ -823,7 +823,7 @@ auto reassign_bionic_letter( const bionic &bio ) -> int
             .focus_component = letter_id,
         };
     }
-                                                } );
+                                                                 } );
     for( ;; ) {
         ui_manager::redraw();
         const auto action = ctxt.handle_input();
@@ -1024,7 +1024,7 @@ void show_bionics_ui( Character &who )
     } );
 
     const auto model = bionics_model{ .who = who, .active = active, .passive = passive, .tab = tab_mode, .mode = menu_mode, .cursor = cursor, .ctxt = ctxt };
-    const auto screen = ec::screen_scope( ctxt, { .view = [&]( const ec::boundary_state & ) { return bionics_view( model ); } } );
+    const auto screen = ec::screen_scope( ctxt, "bionics", { .view = [&]( const ec::boundary_state & ) { return bionics_view( model ); } } );
     for( ;; ) {
         ui_manager::redraw();
 

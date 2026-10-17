@@ -353,6 +353,8 @@ struct shortcut {
 /// come from the screen's scope; `root` is absent for a screen that has no components yet.
 struct screen_view {
     std::string screen_id = {};
+    /// What screen this is, the same at every opening and in every language; empty for a read without a scope.
+    std::string kind = {};
     /// `map`, `screen` or `dialog`.
     std::string role = "dialog";
     std::string context = {};
@@ -381,11 +383,11 @@ struct screen_options {
 
 /// Alive for as long as the screen is open, not only while it reads input. Scopes nest as screens do,
 /// and the live ones make up the interaction stack. Its serial names the screen: new when the screen
-/// is reopened.
+/// is reopened. `kind` names what screen it is, such as `crafting`, and stays the same at every opening.
 class screen_scope
 {
     public:
-        screen_scope( const input_context &context, screen_options options = {} );
+        screen_scope( const input_context &context, std::string kind, screen_options options = {} );
         ~screen_scope();
         screen_scope( const screen_scope & ) = delete;
         auto operator=( const screen_scope & ) -> screen_scope & = delete; // *NOPAD*

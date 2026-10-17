@@ -6,6 +6,7 @@
       "value": {
         "screen_id": "screen:2",
         "role": "dialog",
+        "kind": "keybindings",
         "title": "Keybindings",
         "root": {
           "id": "keybindings:window",
@@ -3101,6 +3102,7 @@
       "value": {
         "screen_id": "screen:2",
         "role": "dialog",
+        "kind": "keybindings",
         "title": "Keybindings",
         "root": {
           "id": "keybindings:window",

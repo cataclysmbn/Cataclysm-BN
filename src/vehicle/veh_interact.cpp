@@ -588,7 +588,7 @@ void veh_interact::do_main_loop() {
     shared_ptr_fast<ui_adaptor> current_ui = create_or_get_ui_adaptor();
 
     const auto screen = engine_client::screen_scope(
-        main_context,
+        main_context, "vehicle_interact",
         {
             .view = [this](const engine_client::boundary_state&) { return screen_of(); },
         });

@@ -139,7 +139,7 @@ void show_scores_ui( const achievements_tracker &achievements, stats_tracker &st
     namespace ec = engine_client;
     constexpr auto select_tab_id = "scores:tab";
     const auto tab_ids = std::array<std::string, 3> { "achievements", "scores", "kills" };
-    const auto screen = ec::screen_scope( ctxt, { .view = [&]( const ec::boundary_state & )
+    const auto screen = ec::screen_scope( ctxt, "scores", { .view = [&]( const ec::boundary_state & )
     {
         auto entries = std::vector<ec::tab_entry> {};
         for( const auto &[mode, name] : tabs ) {
@@ -154,7 +154,7 @@ void show_scores_ui( const achievements_tracker &achievements, stats_tracker &st
             .affordances = { ec::invoke_affordance( { .id = select_tab_id, .label = _( "Category" ), .args = { .row = ec::row_shape{ .component_id = "scores:tabs" } } } ) },
         };
     }
-                                                } );
+                                                          } );
 
     while( true ) {
         if( new_tab ) {
@@ -229,14 +229,14 @@ void show_kills( kill_tracker &kills )
         view.draw( c_white );
     } );
 
-    const auto screen = engine_client::screen_scope( ctxt, { .view = [&]( const engine_client::boundary_state & )
+    const auto screen = engine_client::screen_scope( ctxt, "kills", { .view = [&]( const engine_client::boundary_state & )
     {
         return engine_client::screen_view{
             .title = _( "Kills" ),
             .root = engine_client::component{ .id = "kills:text", .body = engine_client::text_body{ .markup = kills.get_kills_text() } },
         };
     }
-                                                           } );
+                                                                    } );
 
     while( true ) {
         ui_manager::redraw();

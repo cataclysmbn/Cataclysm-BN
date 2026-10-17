@@ -6,6 +6,7 @@
       "value": {
         "screen_id": "screen:2",
         "role": "screen",
+        "kind": "options",
         "title": "Options",
         "root": {
           "id": "options:pages",
@@ -1009,6 +1010,7 @@
       "value": {
         "screen_id": "screen:2",
         "role": "screen",
+        "kind": "options",
         "title": "Options",
         "root": {
           "id": "options:pages",
@@ -2211,6 +2213,7 @@
       "value": {
         "screen_id": "screen:2",
         "role": "screen",
+        "kind": "options",
         "title": "Options",
         "root": {
           "id": "options:pages",

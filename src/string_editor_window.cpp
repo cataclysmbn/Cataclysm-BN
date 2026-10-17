@@ -631,11 +631,11 @@ std::pair<bool, std::string> string_editor_window::query_string()
 
     const auto stop_text_input = on_out_of_scope( []() { game_client::presentation().stop_text_input(); } );
 
-    const auto screen = ec::screen_scope( *ctxt, { .view = [this]( const ec::boundary_state & /*state*/ )
+    const auto screen = ec::screen_scope( *ctxt, "text_editor", { .view = [this]( const ec::boundary_state & /*state*/ )
     {
         return editor_view( _utext.str(), _position );
     }
-                                                 } );
+                                                                } );
 
     int ch = 0;
     do {

@@ -52,7 +52,7 @@ The engine serves `"0.2"` only, on every transport. A hello that does not list `
 - `schema`: `sha256:` and the first 16 hex digits of the SHA-256 of the raw bytes of [`0.2.schema.json`](../../../schema/engine-client/0.2.schema.json). A different hash fails with `negotiation_failed`, `action: "hello"` and `error.data.schema = {engine, client}`. The engine takes its hash from the schema file when CMake configures.
 - optional `locale` and `capabilities` (`tiles`, `tint_ids`, `viewport`, `delivery`; the members may also stand loose in the hello, but not both forms). The result adds `schema`, `locale` (the language of the connection's text), `engine_locale` and `role`. Until the engine localizes per connection, `locale` is the engine's.
 
-Every interaction boundary (snapshot header and events) carries `stack`, next to `interaction`. The stack is the open screens, outermost first; only the last has affordances. `bn.interaction.choices` with `component_id` reads that list of the top screen (`rows`, `total`).
+Every interaction boundary (snapshot header and events) carries `stack`, next to `interaction`. The stack is the open screens, outermost first; only the last has affordances. A screen's `kind` names what screen it is (`map`, `crafting`, `uilist`, ...), the same at every opening and in every language, so a client keys what it keeps per screen, such as a window's place, on it; a screen without `kind` is one the engine does not name yet. `bn.interaction.choices` with `component_id` reads that list of the top screen (`rows`, `total`).
 
 `bn.command.submit` takes `operation: {kind: "invoke", affordance_id, args?}`. Its `expect` is the affordance's `expect` scope:
 

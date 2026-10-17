@@ -925,7 +925,7 @@ auto pick_up_from_items( const pick_up_from_items_options &opts ) -> void
                 .hotkeys = ctxt.get_available_single_char_hotkeys( all_pickup_chars ), .ctxt = ctxt,
             };
         };
-        const auto screen = ec::screen_scope( ctxt, {
+        const auto screen = ec::screen_scope( ctxt, "pickup", {
             .view = [&]( const ec::boundary_state & ) { return pickup::screen_of( screen_state() ); },
         } );
         do {

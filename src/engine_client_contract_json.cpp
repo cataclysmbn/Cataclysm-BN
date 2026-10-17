@@ -677,6 +677,7 @@ auto to_json( const component &value, const bubble_frame &frame ) -> json
 auto to_json( const screen_view &view, const bubble_frame &frame ) -> json
 {
     auto result = json{{"screen_id", view.screen_id}, {"role", view.role}};
+    if( !view.kind.empty() ) { result["kind"] = view.kind; }
     if( !view.title.empty() ) { result["title"] = view.title; }
     result["root"] = view.root ? to_json( *view.root, frame ) : json( nullptr );
     result["affordances"] = json::array();

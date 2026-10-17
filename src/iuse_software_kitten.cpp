@@ -425,12 +425,12 @@ void robot_finds_kitten::process_input()
     ctxt.register_action( "ANY_INPUT", to_translation( "Press any key" ) );
     const auto final_frame = end_animation_frame + 1 == num_end_animation_frames;
     const auto animating = current_ui_state == ui_state::end_animation && !final_frame;
-    const auto screen = engine_client::screen_scope( ctxt, { .view = [&]( const engine_client::boundary_state & )
+    const auto screen = engine_client::screen_scope( ctxt, "robot_finds_kitten", { .view = [&]( const engine_client::boundary_state & )
     {
         return iuse_software::canvas_screen( { .title = _( "robotfindskitten v22July2008" ), .layers = { bkatwin, w },
                                                .refresh_ms = animating ? end_animation_frame_ms : 0 } );
     }
-                                                           } );
+                                                                                 } );
 
     switch( current_ui_state ) {
         case ui_state::instructions: {

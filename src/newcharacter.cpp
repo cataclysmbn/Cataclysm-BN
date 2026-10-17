@@ -1415,7 +1415,7 @@ tab_direction set_points( avatar &u, points_left &points )
     } );
 
     const auto row_id = []( const point_limit_tuple & opt ) { return "points:" + point_limit_id( std::get<0>( opt ) ); };
-    const auto screen = ec::screen_scope( ctxt, { .role = "screen", .view = [&]( const ec::boundary_state & )
+    const auto screen = ec::screen_scope( ctxt, "new_character", { .role = "screen", .view = [&]( const ec::boundary_state & )
     {
         auto rows = std::vector<ec::row> {};
         for( const auto &opt : opts ) {
@@ -1429,7 +1429,7 @@ tab_direction set_points( avatar &u, points_left &points )
             .focus_component = "newchar:points:rows", .focus_row = row_id( opts[highlighted] ),
         } );
     }
-                                                } );
+                                                                 } );
 
     do {
         if( highlighted < 0 ) {
@@ -1632,7 +1632,7 @@ tab_direction set_stats( avatar &u, points_left &points )
         wnoutrefresh( w_description );
     } );
 
-    const auto screen = ec::screen_scope( ctxt, { .role = "screen", .view = [&]( const ec::boundary_state & )
+    const auto screen = ec::screen_scope( ctxt, "new_character", { .role = "screen", .view = [&]( const ec::boundary_state & )
     {
         struct stat_row {
             const char *id;
@@ -1662,7 +1662,7 @@ tab_direction set_stats( avatar &u, points_left &points )
             .focus_component = "newchar:stats:rows", .focus_row = std::string( "stat:" ) + focus.id,
         } );
     }
-                                                } );
+                                                                 } );
 
     do {
         ui_manager::redraw();
@@ -2024,7 +2024,7 @@ tab_direction set_traits( avatar &u, points_left &points )
         }
     } );
 
-    const auto screen = ec::screen_scope( ctxt, { .role = "screen", .view = [&]( const ec::boundary_state & )
+    const auto screen = ec::screen_scope( ctxt, "new_character", { .role = "screen", .view = [&]( const ec::boundary_state & )
     {
         auto pages = std::array<std::vector<ec::row>, 3> {};
         for( auto page = 0; page < used_pages; ++page ) {
@@ -2048,7 +2048,7 @@ tab_direction set_traits( avatar &u, points_left &points )
             .cost = line < focus.size() ? starter_cost( focus[line].id->name(), focus[line].id->points ) : std::string(),
         } );
     }
-                                                } );
+                                                                 } );
 
     do {
         ui_manager::redraw();
@@ -2501,7 +2501,7 @@ tab_direction set_bionics( avatar &u, points_left &points )
         }
     } );
 
-    const auto screen = ec::screen_scope( ctxt, { .role = "screen", .view = [&]( const ec::boundary_state & )
+    const auto screen = ec::screen_scope( ctxt, "new_character", { .role = "screen", .view = [&]( const ec::boundary_state & )
     {
         auto pages = std::array<std::vector<ec::row>, 3> {};
         for( auto page = 0; page < used_pages; ++page ) {
@@ -2525,7 +2525,7 @@ tab_direction set_bionics( avatar &u, points_left &points )
             .cost = line < focus.size() ? starter_cost( focus[line].id->name.translated(), focus[line].id->points ) : std::string(),
         } );
     }
-                                                } );
+                                                                 } );
 
     do {
         ui_manager::redraw();
@@ -3139,7 +3139,7 @@ tab_direction set_profession( avatar &u, points_left &points,
         }
     } );
 
-    const auto screen = ec::screen_scope( ctxt, { .role = "screen", .view = [&]( const ec::boundary_state & )
+    const auto screen = ec::screen_scope( ctxt, "new_character", { .role = "screen", .view = [&]( const ec::boundary_state & )
     {
         auto rows = std::vector<ec::row> {};
         for( const auto &id : sorted_profs ) {
@@ -3172,7 +3172,7 @@ tab_direction set_profession( avatar &u, points_left &points,
             .focus_component = "newchar:profession:list:rows", .focus_row = std::move( focus ),
         } );
     }
-                                                } );
+                                                                 } );
 
     do {
         if( recalc_profs ) {
@@ -3448,7 +3448,7 @@ tab_direction set_skills( avatar &u, points_left &points )
         wnoutrefresh( w_description );
     } );
 
-    const auto screen = ec::screen_scope( ctxt, { .role = "screen", .view = [&]( const ec::boundary_state & )
+    const auto screen = ec::screen_scope( ctxt, "new_character", { .role = "screen", .view = [&]( const ec::boundary_state & )
     {
         auto rows = std::vector<ec::row> {};
         auto category = skill_displayType_id::NULL_ID();
@@ -3478,7 +3478,7 @@ tab_direction set_skills( avatar &u, points_left &points )
             .focus_component = "newchar:skills:rows", .focus_row = "skill:" + currentSkill->ident().str(),
         } );
     }
-                                                } );
+                                                                 } );
 
     do {
         ui_manager::redraw();
@@ -3707,7 +3707,7 @@ tab_direction set_magic( avatar &u, points_left &points )
         wnoutrefresh( w_description );
     } );
 
-    const auto screen = ec::screen_scope( ctxt, { .role = "screen", .view = [&]( const ec::boundary_state & )
+    const auto screen = ec::screen_scope( ctxt, "new_character", { .role = "screen", .view = [&]( const ec::boundary_state & )
     {
         auto rows = std::vector<ec::row> {};
         auto spell_class = trait_id::NULL_ID();
@@ -3737,7 +3737,7 @@ tab_direction set_magic( avatar &u, points_left &points )
             .focus_component = "newchar:magic:rows", .focus_row = "spell:" + current_spell.str(),
         } );
     }
-                                                } );
+                                                                 } );
 
     do {
         ui_manager::redraw();
@@ -4083,7 +4083,7 @@ tab_direction set_scenario( avatar &u, points_left &points,
         wnoutrefresh( w_flags );
     } );
 
-    const auto screen = ec::screen_scope( ctxt, { .role = "screen", .view = [&]( const ec::boundary_state & )
+    const auto screen = ec::screen_scope( ctxt, "new_character", { .role = "screen", .view = [&]( const ec::boundary_state & )
     {
         auto rows = std::vector<ec::row> {};
         for( const auto *scen : sorted_scens ) {
@@ -4128,7 +4128,7 @@ tab_direction set_scenario( avatar &u, points_left &points,
             .focus_component = "newchar:scenario:list:rows", .focus_row = std::move( focus ),
         } );
     }
-                                                } );
+                                                                 } );
 
     do {
         if( recalc_scens ) {
@@ -4832,7 +4832,7 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
     int min_allowed_height = 145;
     int max_allowed_height = 200;
 
-    const auto screen = ec::screen_scope( ctxt, { .role = "screen", .view = [&]( const ec::boundary_state & )
+    const auto screen = ec::screen_scope( ctxt, "new_character", { .role = "screen", .view = [&]( const ec::boundary_state & )
     {
         const auto none = colorize( _( "None!" ), c_light_red );
         const auto section = [&]( const std::string & id, const std::string & title,
@@ -4961,7 +4961,7 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
             .focus_row = current_selector == char_creation::HEIGHT ? "height" : current_selector == char_creation::AGE ? "age" : "name",
         } );
     }
-                                                } );
+                                                                 } );
 
     do {
         const auto [new_min_age, new_max_age] = profession_age_bounds( *you.prof );

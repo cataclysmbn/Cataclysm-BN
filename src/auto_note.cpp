@@ -390,7 +390,7 @@ void auto_note_manager_gui::show()
 .focus_component = extras_list, .focus_row = emptyMode ? std::string{} :
             row_id_of( displayCache[currentLine] ) };
     };
-    const auto screen = ec::screen_scope( ctx, { .role = "screen", .view = [&]( const auto & /*state*/ ) { return extras_view(); } } );
+    const auto screen = ec::screen_scope( ctx, "auto_notes", { .role = "screen", .view = [&]( const auto & /*state*/ ) { return extras_view(); } } );
 
     while( true ) {
         ui_manager::redraw();

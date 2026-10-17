@@ -2521,6 +2521,10 @@
           "$ref": "#/$defs/opaque_id",
           "description": "One native screen instance: stable while it stays open, new when it is reopened. The map's id is fixed for the epoch."
         },
+        "kind": {
+          "type": "string",
+          "description": "What screen this is, such as `map` or `crafting`: the same at every opening and in every language. A client keys what it keeps per screen, such as a window's place, on it. Absent where the engine does not name the screen."
+        },
         "role": {
           "enum": [
             "map",

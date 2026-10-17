@@ -620,7 +620,7 @@ TEST_CASE("a list of the top screen is paged by component", "[engine_client_serv
 TEST_CASE("an invoke runs an affordance of the top screen", "[engine_client_server]") {
     auto boundary = input_boundary{};
     auto screen = std::optional<screen_scope>{};
-    screen.emplace(boundary.context);
+    screen.emplace(boundary.context, "test");
     auto test = fixture{};
     REQUIRE(test.authority.publish_boundary());
     const auto screen_id = top_screen(*test.authority.boundary()).screen_id;
@@ -674,7 +674,7 @@ TEST_CASE("an invoke runs an affordance of the top screen", "[engine_client_serv
 TEST_CASE("screen-scoped invokes queue behind the running command", "[engine_client_server]") {
     auto boundary = input_boundary{};
     auto screen = std::optional<screen_scope>{};
-    screen.emplace(boundary.context);
+    screen.emplace(boundary.context, "test");
     auto test = fixture{};
     REQUIRE(test.authority.publish_boundary());
     const auto screen_id = top_screen(*test.authority.boundary()).screen_id;
@@ -722,7 +722,7 @@ TEST_CASE("screen-scoped invokes queue behind the running command", "[engine_cli
         test.run_native_input();
         // The first key closed the popup; another screen is on top now.
         screen.reset();
-        screen.emplace(boundary.context);
+        screen.emplace(boundary.context, "test");
         CHECK_FALSE(test.pump(""));
         const auto out = test.output.str();
         CHECK(count_of(out, R"("stage":"completed")") == 1);
@@ -872,7 +872,7 @@ TEST_CASE("another screen on top ends the walk", "[engine_client_server][held_wa
     // A confirmation popup opens over the map: the walk does not go on under it.
     auto popup = input_context{"YESNO"};
     const auto popup_input = game_client::input_context_scope{popup, "YESNO"};
-    const auto popup_screen = screen_scope{popup};
+    const auto popup_screen = screen_scope{popup, "test"};
     game_client::begin_input_boundary();
     CHECK_FALSE(walk.prompt());
     CHECK(walk.test.queued.empty());

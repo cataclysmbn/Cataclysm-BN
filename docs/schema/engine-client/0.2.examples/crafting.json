@@ -6,6 +6,7 @@
       "value": {
         "screen_id": "screen:8",
         "role": "screen",
+        "kind": "crafting",
         "title": "Crafting",
         "root": {
           "id": "crafting:tabs",

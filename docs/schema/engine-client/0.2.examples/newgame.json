@@ -6,6 +6,7 @@
       "value": {
         "screen_id": "screen:2",
         "role": "screen",
+        "kind": "world_creation",
         "title": "World creation",
         "root": {
           "id": "worldgen:tabs",
@@ -1036,6 +1037,7 @@
       "value": {
         "screen_id": "screen:4",
         "role": "screen",
+        "kind": "world_creation",
         "title": "World creation",
         "root": {
           "id": "worldgen:tabs",
@@ -1365,6 +1367,7 @@
       "value": {
         "screen_id": "screen:6",
         "role": "screen",
+        "kind": "new_character",
         "title": "Character creation",
         "root": {
           "id": "newchar:tabs",
@@ -1691,6 +1694,7 @@
       "value": {
         "screen_id": "screen:7",
         "role": "screen",
+        "kind": "new_character",
         "title": "Character creation",
         "root": {
           "id": "newchar:tabs",
@@ -2689,6 +2693,7 @@
       "value": {
         "screen_id": "screen:8",
         "role": "screen",
+        "kind": "new_character",
         "title": "Character creation",
         "root": {
           "id": "newchar:tabs",
@@ -4393,6 +4398,7 @@
       "value": {
         "screen_id": "screen:9",
         "role": "screen",
+        "kind": "new_character",
         "title": "Character creation",
         "root": {
           "id": "newchar:tabs",
@@ -4774,6 +4780,7 @@
       "value": {
         "screen_id": "screen:10",
         "role": "screen",
+        "kind": "new_character",
         "title": "Character creation",
         "root": {
           "id": "newchar:tabs",
@@ -8474,6 +8481,7 @@
       "value": {
         "screen_id": "screen:11",
         "role": "screen",
+        "kind": "new_character",
         "title": "Character creation",
         "root": {
           "id": "newchar:tabs",
@@ -9575,6 +9583,7 @@
       "value": {
         "screen_id": "screen:12",
         "role": "screen",
+        "kind": "new_character",
         "title": "Character creation",
         "root": {
           "id": "newchar:tabs",
@@ -10624,6 +10633,7 @@
       "value": {
         "screen_id": "screen:13",
         "role": "screen",
+        "kind": "new_character",
         "title": "Character creation",
         "root": {
           "id": "newchar:tabs",

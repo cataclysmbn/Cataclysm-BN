@@ -388,7 +388,7 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
     _confirmed = false;
     // A drawing-only call reads no input, so it is no screen of its own; nor is a field inside another screen.
     auto screen = std::optional<engine_client::screen_scope> {};
-    if( !draw_only && !shares_screen ) { screen.emplace( *ctxt ); }
+    if( !draw_only && !shares_screen ) { screen.emplace( *ctxt, "text_input" ); }
     do {
         if( _position < 0 ) {
             _position = 0;

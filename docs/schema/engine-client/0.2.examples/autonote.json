@@ -6,6 +6,7 @@
       "value": {
         "screen_id": "screen:8",
         "role": "screen",
+        "kind": "auto_notes",
         "title": " AUTO NOTES MANAGER ",
         "root": {
           "id": "autonote:body",
@@ -143,6 +144,7 @@
       "value": {
         "screen_id": "screen:21",
         "role": "screen",
+        "kind": "auto_notes",
         "title": " AUTO NOTES MANAGER ",
         "root": {
           "id": "autonote:body",

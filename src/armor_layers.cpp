@@ -993,7 +993,7 @@ void show_armor_layers_ui( Character &who )
     } );
 
     const auto model = armor_model{ .who = who, .parts = armor_cat, .tab = tabindex, .listed = tmp_worn, .cursor = leftListIndex, .grabbed = selected };
-    const auto screen = ec::screen_scope( ctxt, { .view = [&]( const ec::boundary_state & /*state*/ ) { return armor_view( model ); } } );
+    const auto screen = ec::screen_scope( ctxt, "armor_layers", { .view = [&]( const ec::boundary_state & /*state*/ ) { return armor_view( model ); } } );
 
     avatar &you = get_avatar();
     bool exit = false;

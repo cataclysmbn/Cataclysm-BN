@@ -342,7 +342,7 @@ query_popup::result query_popup::query_once()
 
     auto ctxt = input_context( category );
     register_input_actions( ctxt );
-    const auto screen = engine_client::screen_scope( ctxt );
+    const auto screen = engine_client::screen_scope( ctxt, "popup" );
 
     result res;
     // Assign outside construction of `res` to ensure execution order

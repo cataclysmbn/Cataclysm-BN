@@ -915,13 +915,13 @@ auto trading_window::show_item_data( size_t index, bool target_is_theirs ) -> in
     ctxt.register_action( "CONFIRM" );
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
-    const auto screen = ec::screen_scope( ctxt, { .view = [&]( const auto & )
+    const auto screen = ec::screen_scope( ctxt, "trade_item_info", { .view = [&]( const auto & )
     {
         return ec::screen_view{
             .title = itm.tname(),
             .root = ec::component{ .id = "text:info", .body = ec::text_body{ .markup = info_text } } };
     }
-                                                } );
+                                                                   } );
 
     auto result = info_popup_result::none;
     auto exit = false;
@@ -1074,11 +1074,11 @@ auto trading_window::perform_trade( npc &np, npc_trading::deal_kind deal ) -> bo
 
     auto ctxt = input_context( "NPC_TRADE" );
     register_trade_actions( ctxt, true );
-    const auto screen = ec::screen_scope( ctxt, { .role = "screen", .view = [&]( const auto & )
+    const auto screen = ec::screen_scope( ctxt, "trade", { .role = "screen", .view = [&]( const auto & )
     {
         return view( np, ctxt );
     }
-                                                } );
+                                                         } );
 
     auto ui = ui_adaptor{};
     ui.on_screen_resize( [this]( ui_adaptor & ui ) {

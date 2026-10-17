@@ -13,7 +13,7 @@
           "revision": "0"
         },
         "schema": {
-          "engine": "sha256:1a010af95c31aa7a",
+          "engine": "sha256:464609781832d48d",
           "client": "sha256:0000000000000000"
         }
       }
@@ -29,7 +29,7 @@
           "name": "contract-gen",
           "version": "1"
         },
-        "schema": "sha256:1a010af95c31aa7a",
+        "schema": "sha256:464609781832d48d",
         "capabilities": {
           "viewport": {
             "cols": 40,
@@ -61,7 +61,7 @@
           "cells_per_query": 4096,
           "screen_queue": 8
         },
-        "schema": "sha256:1a010af95c31aa7a",
+        "schema": "sha256:464609781832d48d",
         "locale": "en_US",
         "engine_locale": "en_US",
         "role": "controller"
@@ -194,6 +194,7 @@
             {
               "screen_id": "screen:1",
               "role": "screen",
+              "kind": "main_menu",
               "title": "Cataclysm: Bright Nights",
               "root": {
                 "id": "menu",
@@ -613,6 +614,7 @@
           {
             "screen_id": "screen:1",
             "role": "screen",
+            "kind": "main_menu",
             "title": "Cataclysm: Bright Nights",
             "root": {
               "id": "menu",
@@ -914,6 +916,7 @@
       "value": {
         "screen_id": "screen:1",
         "role": "screen",
+        "kind": "main_menu",
         "title": "Cataclysm: Bright Nights",
         "root": {
           "id": "menu",
@@ -1286,7 +1289,7 @@
           "cells_per_query": 4096,
           "screen_queue": 8
         },
-        "schema": "sha256:1a010af95c31aa7a",
+        "schema": "sha256:464609781832d48d",
         "locale": "en_US",
         "engine_locale": "en_US"
       },

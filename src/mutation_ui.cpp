@@ -499,7 +499,7 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
     } );
 
     const auto model = mutations_model{ .who = who, .passive = passive, .active = active, .tab = tab_mode, .mode = menu_mode, .cursor = cursor, .examined = examine_id, .ctxt = ctxt };
-    const auto screen = ec::screen_scope( ctxt, { .view = [&]( const ec::boundary_state & ) { return mutations_view( model ); } } );
+    const auto screen = ec::screen_scope( ctxt, "mutations", { .view = [&]( const ec::boundary_state & ) { return mutations_view( model ); } } );
 
     mutations_ui_result ret;
     bool exit = false;

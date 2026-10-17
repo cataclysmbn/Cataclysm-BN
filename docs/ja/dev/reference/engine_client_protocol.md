@@ -52,7 +52,7 @@ title: エンジン/クライアントプロトコル 0.2
 - `schema`: `sha256:` と、[`0.2.schema.json`](../../../schema/engine-client/0.2.schema.json) の生バイトの SHA-256 の先頭 16 桁の 16 進数。ハッシュが異なると `negotiation_failed`、`action: "hello"`、`error.data.schema = {engine, client}` で失敗する。エンジンは CMake の構成時にスキーマファイルからハッシュを得る。
 - 任意の `locale` と `capabilities`（`tiles`、`tint_ids`、`viewport`、`delivery`。個別メンバーとして送っても受け付けるが両方の形式は併用できない）。結果には `schema`、`locale`（接続のテキストの言語）、`engine_locale`、`role` が加わる。エンジンが接続ごとにローカライズするまで、`locale` はエンジンの言語である。
 
-すべてのインタラクション境界（スナップショットのヘッダーとイベント）は `interaction` と並んで `stack` を持つ。スタックは開いている画面を外側から並べたもので、最後の画面だけが affordance を持つ。`component_id` 付きの `bn.interaction.choices` は最上位画面のその一覧（`rows`、`total`）を読む。
+すべてのインタラクション境界（スナップショットのヘッダーとイベント）は `interaction` と並んで `stack` を持つ。スタックは開いている画面を外側から並べたもので、最後の画面だけが affordance を持つ。画面の `kind` はどの画面か（`map`、`crafting`、`uilist` など）を表し、開くたびに、どの言語でも同じなので、クライアントはウィンドウの位置のように画面ごとに覚えるものをこの値で区別する。`kind` のない画面は、エンジンがまだ名前を付けていない画面である。`component_id` 付きの `bn.interaction.choices` は最上位画面のその一覧（`rows`、`total`）を読む。
 
 `bn.command.submit` は `operation: {kind: "invoke", affordance_id, args?}` を受け取る。`expect` は affordance の `expect` の範囲に従う。
 

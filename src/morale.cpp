@@ -859,7 +859,7 @@ void player_morale::display( int focus_eq, int pain_penalty, int fatigue_cap )
     ctxt.register_action( "HELP_KEYBINDINGS" );
 
     namespace ec = engine_client;
-    const auto screen = ec::screen_scope( ctxt, { .view = [&]( const ec::boundary_state & )
+    const auto screen = ec::screen_scope( ctxt, "morale", { .view = [&]( const ec::boundary_state & )
     {
         const auto [positive, negative] = sorted_points();
         const auto tone_name = []( const int effect ) {
@@ -908,7 +908,7 @@ void player_morale::display( int focus_eq, int pain_penalty, int fatigue_cap )
             .root = ec::split( { .id = "morale:root", .children = std::move( parts ) } ),
         };
     }
-                                                } );
+                                                          } );
 
     std::string action;
     do {

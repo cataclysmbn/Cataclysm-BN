@@ -1588,7 +1588,7 @@ bool computer_session::query_any()
 {
     input_context ctxt( "COMPUTER_TERMINAL" );
     ctxt.register_action( "ANY_INPUT", to_translation( "Press any key" ) );
-    const auto screen = ec::screen_scope( ctxt, { .view = [&]( const ec::boundary_state & ) { return terminal_screen( comp.name, lines ); } } );
+    const auto screen = ec::screen_scope( ctxt, "computer", { .view = [&]( const ec::boundary_state & ) { return terminal_screen( comp.name, lines ); } } );
     ui_manager::redraw();
     ctxt.handle_input();
     return true;
@@ -1616,7 +1616,7 @@ computer_session::ynq computer_session::query_ynq( const std::string &text, Args
                          ctxt.describe_key_and_name( "NO", allow_key ),
                          ctxt.describe_key_and_name( "QUIT", allow_key ) );
 
-    const auto screen = ec::screen_scope( ctxt, { .view = [&]( const ec::boundary_state & ) { return terminal_screen( comp.name, lines ); } } );
+    const auto screen = ec::screen_scope( ctxt, "computer", { .view = [&]( const ec::boundary_state & ) { return terminal_screen( comp.name, lines ); } } );
     do {
         ui_manager::redraw();
         const std::string action = ctxt.handle_input();

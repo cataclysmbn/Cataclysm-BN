@@ -412,7 +412,7 @@ bool run(
     } );
 
     const auto model = examine_model{ .itm = itm, .ctxt = ctxt, .actions = actions, .selected = selected_action };
-    const auto screen = ec::screen_scope( ctxt, { .view = [&]( const ec::boundary_state & /*state*/ ) { return examine_view( model ); } } );
+    const auto screen = ec::screen_scope( ctxt, "examine_item", { .view = [&]( const ec::boundary_state & /*state*/ ) { return examine_view( model ); } } );
 
     bool exit = false;
     bool ret_val = true;

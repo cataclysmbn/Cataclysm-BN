@@ -6,6 +6,7 @@
       "value": {
         "screen_id": "screen:8",
         "role": "screen",
+        "kind": "auto_pickup",
         "title": " AUTO PICKUP MANAGER ",
         "root": {
           "id": "autopickup:tabs",
@@ -449,6 +450,7 @@
       "value": {
         "screen_id": "screen:8",
         "role": "screen",
+        "kind": "auto_pickup",
         "title": " AUTO PICKUP MANAGER ",
         "root": {
           "id": "autopickup:tabs",
@@ -1120,6 +1122,7 @@
       "value": {
         "screen_id": "screen:12",
         "role": "dialog",
+        "kind": "auto_pickup_test",
         "title": "1 item matches: sledge hammer",
         "root": {
           "id": "autopickup_test:body",
@@ -1400,6 +1403,7 @@
       "value": {
         "screen_id": "screen:8",
         "role": "screen",
+        "kind": "auto_pickup",
         "title": " AUTO PICKUP MANAGER ",
         "root": {
           "id": "autopickup:tabs",

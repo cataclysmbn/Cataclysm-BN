@@ -776,7 +776,7 @@ bool main_menu::opening_screen()
     };
 
     // The title art over the tabs, and under them the selected tab's text or entries.
-    const auto screen = ec::screen_scope( ctxt, {
+    const auto screen = ec::screen_scope( ctxt, "main_menu", {
         .role = "screen",
         .view = [this, &submenu_entries]( const ec::boundary_state & )
         {

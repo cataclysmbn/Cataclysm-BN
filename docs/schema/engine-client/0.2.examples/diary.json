@@ -6,6 +6,7 @@
       "value": {
         "screen_id": "screen:8",
         "role": "dialog",
+        "kind": "diary",
         "title": "John Smith's Diary",
         "root": {
           "id": "diary:panes",
@@ -200,6 +201,7 @@
       "value": {
         "screen_id": "screen:8",
         "role": "dialog",
+        "kind": "diary",
         "title": "John Smith's Diary",
         "root": {
           "id": "diary:panes",
@@ -529,6 +531,7 @@
       "value": {
         "screen_id": "screen:9",
         "role": "dialog",
+        "kind": "text_editor",
         "title": "Text",
         "root": {
           "id": "editor:form",

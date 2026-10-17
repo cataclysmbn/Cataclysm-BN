@@ -6,6 +6,7 @@
       "value": {
         "screen_id": "screen:30",
         "role": "dialog",
+        "kind": "armor_layers",
         "title": "Sort Armor",
         "root": {
           "id": "armor:tabs",
@@ -1195,6 +1196,7 @@
       "value": {
         "screen_id": "screen:30",
         "role": "dialog",
+        "kind": "armor_layers",
         "title": "Sort Armor",
         "root": {
           "id": "armor:tabs",
@@ -2302,6 +2304,7 @@
       "value": {
         "screen_id": "screen:32",
         "role": "dialog",
+        "kind": "examine_item",
         "title": "|| hoodie",
         "root": {
           "id": "examine:panes",

@@ -951,7 +951,7 @@ void faction_manager::display() const
                             .child = ec::component{ .id = "factions:facts",
                                     .body = ec::text_body{ .markup = join( lines, "\n" ) } } } );
     };
-    const auto screen = ec::screen_scope( ctxt, { .view = [&]( const ec::boundary_state & )
+    const auto screen = ec::screen_scope( ctxt, "factions", { .view = [&]( const ec::boundary_state & )
     {
         const auto tab_names = std::array<std::string, 4> { _( "YOUR FOLLOWERS" ), _( "OTHER FACTIONS" ),
                    _( "LORE" ), _( "CREATURES" )
@@ -1004,7 +1004,7 @@ void faction_manager::display() const
             .focus_row = focus_row,
         };
     }
-                                                } );
+                                                            } );
 
     while( true ) {
         // create a list of NPCs, visible and the ones on overmapbuffer

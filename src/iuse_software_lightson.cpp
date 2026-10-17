@@ -150,11 +150,11 @@ int lightson_game::start_game()
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
 
-    const auto screen = engine_client::screen_scope( ctxt, { .view = [&]( const engine_client::boundary_state & )
+    const auto screen = engine_client::screen_scope( ctxt, "lights_on", { .view = [&]( const engine_client::boundary_state & )
     {
         return iuse_software::canvas_screen( { .title = _( "Lights on!" ), .layers = { w_border, w } } );
     }
-                                                           } );
+                                                                        } );
 
     ui.on_redraw( [&]( const ui_adaptor & ) {
         std::vector<std::string> shortcuts;

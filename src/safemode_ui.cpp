@@ -432,7 +432,7 @@ const auto shown = no_character ? std::vector<rules_class> {} :
 .focus_component = safemode_rules, .focus_row = shown.empty() ? std::string{} :
             row_id_of( shown[line] ) };
     };
-    const auto screen = ec::screen_scope( ctxt, { .role = "screen", .view = [&]( const auto & /*state*/ ) { return rules_view(); } } );
+    const auto screen = ec::screen_scope( ctxt, "safemode", { .role = "screen", .view = [&]( const auto & /*state*/ ) { return rules_view(); } } );
 
     while( true ) {
         auto &current_tab = ( tab == GLOBAL_TAB ) ? global_rules : character_rules;
@@ -781,7 +781,7 @@ void safemode::test_pattern( const int tab_in, const int row_in )
 .focus_component = test_matches, .focus_row = creature_list.empty() ? std::string{} :
             creature_list[line].id };
     };
-    const auto screen = ec::screen_scope( ctxt, { .role = "dialog", .view = [&]( const auto & /*state*/ ) { return matches_view(); } } );
+    const auto screen = ec::screen_scope( ctxt, "safemode_test", { .role = "dialog", .view = [&]( const auto & /*state*/ ) { return matches_view(); } } );
 
     while( true ) {
         ui_manager::redraw();

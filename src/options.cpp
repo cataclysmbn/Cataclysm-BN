@@ -4107,7 +4107,7 @@ std::string{ _( "Current world" ) } :
                  .affordances = std::move( affordances ), .focus_component = options_items,
                  .focus_row = is_selectable( cursor ) ? row_id_of( cursor ) : std::string{} };
     };
-    const auto screen = ec::screen_scope( ctxt, { .role = "screen", .view = [&]( const auto & /*state*/ ) { return options_view(); } } );
+    const auto screen = ec::screen_scope( ctxt, "options", { .role = "screen", .view = [&]( const auto & /*state*/ ) { return options_view(); } } );
 
     while( true ) {
         ui_manager::redraw();

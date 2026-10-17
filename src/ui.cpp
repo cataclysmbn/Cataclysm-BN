@@ -1064,7 +1064,7 @@ void uilist::query( bool loop, int timeout )
     ret = UILIST_WAIT_INPUT;
 
     input_context ctxt = create_main_input_context();
-    const auto screen = engine_client::screen_scope( ctxt );
+    const auto screen = engine_client::screen_scope( ctxt, "uilist" );
 
     shared_ptr_fast<ui_adaptor> ui = create_or_get_ui_adaptor();
 

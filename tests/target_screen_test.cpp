@@ -230,7 +230,7 @@ TEST_CASE(
     auto ctxt = input_context{"TARGET"};
     auto range = 10;
     const auto screen = ec::screen_scope(
-        ctxt, {.view = [&](const ec::boundary_state&) {
+        ctxt, "test", {.view = [&](const ec::boundary_state&) {
             return target_screen::screen_of(options_of(ctxt, range));
         }});
     const auto state = boundary();
@@ -265,7 +265,7 @@ TEST_CASE(
     "the target move is refused without a square", "[target_screen][engine_client_component]") {
     auto ctxt = input_context{"TARGET"};
     const auto screen = ec::screen_scope(
-        ctxt, {.view = [&](const ec::boundary_state&) {
+        ctxt, "test", {.view = [&](const ec::boundary_state&) {
             return target_screen::screen_of(options_of(ctxt));
         }});
     const auto state = boundary();

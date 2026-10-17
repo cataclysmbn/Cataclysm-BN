@@ -6,6 +6,7 @@
       "value": {
         "screen_id": "screen:12",
         "role": "dialog",
+        "kind": "talk",
         "title": "Denver Tolbert, Marloss Voice",
         "root": {
           "id": "talk:panes",

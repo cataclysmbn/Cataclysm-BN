@@ -6,6 +6,7 @@
       "value": {
         "screen_id": "screen:2",
         "role": "screen",
+        "kind": "overmap",
         "title": "Overmap",
         "root": {
           "id": "overmap",
@@ -12451,6 +12452,7 @@
       "value": {
         "screen_id": "screen:2",
         "role": "screen",
+        "kind": "overmap",
         "title": "Overmap",
         "root": {
           "id": "overmap",

@@ -2190,7 +2190,7 @@ void character_display::disp_info( Character &ch )
         } );
     } );
 
-    const auto screen = ec::screen_scope( ctxt, { .view = [&]( const ec::boundary_state & ) { return sheet_view( model ); } } );
+    const auto screen = ec::screen_scope( ctxt, "character_sheet", { .view = [&]( const ec::boundary_state & ) { return sheet_view( model ); } } );
 
     bool done = false;
 

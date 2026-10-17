@@ -414,14 +414,14 @@ void scrollable_text( const std::function<catacurses::window()> &init_window,
         wnoutrefresh( w );
     } );
 
-    const auto screen = engine_client::screen_scope( ctxt, { .view = [&]( const engine_client::boundary_state & )
+    const auto screen = engine_client::screen_scope( ctxt, "scrollable_text", { .view = [&]( const engine_client::boundary_state & )
     {
         return engine_client::screen_view{
             .title = title,
             .root = engine_client::component{ .id = "text:body", .body = engine_client::text_body{ .markup = text } },
         };
     }
-                                                           } );
+                                                                              } );
 
     std::string action;
     do {

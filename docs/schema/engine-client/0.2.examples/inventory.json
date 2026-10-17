@@ -6,6 +6,7 @@
       "value": {
         "screen_id": "screen:15",
         "role": "screen",
+        "kind": "inventory",
         "title": "Multidrop",
         "root": {
           "id": "inventory",

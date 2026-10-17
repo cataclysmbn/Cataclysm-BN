@@ -6,6 +6,7 @@
       "value": {
         "screen_id": "screen:2",
         "role": "screen",
+        "kind": "distraction_manager",
         "title": "Distractions manager",
         "root": {
           "id": "distractions:body",
@@ -416,6 +417,7 @@
       "value": {
         "screen_id": "screen:2",
         "role": "screen",
+        "kind": "distraction_manager",
         "title": "Distractions manager",
         "root": {
           "id": "distractions:body",

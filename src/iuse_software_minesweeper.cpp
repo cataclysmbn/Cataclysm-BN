@@ -177,11 +177,11 @@ int minesweeper_game::start_game()
 
     bool started = false;
     bool boom = false;
-    const auto screen = engine_client::screen_scope( ctxt, { .view = [&]( const engine_client::boundary_state & )
+    const auto screen = engine_client::screen_scope( ctxt, "minesweeper", { .view = [&]( const engine_client::boundary_state & )
     {
         return iuse_software::canvas_screen( { .title = _( "Minesweeper" ), .layers = { w_minesweeper_border, w_minesweeper } } );
     }
-                                                           } );
+                                                                          } );
 
     ui.on_redraw( [&]( const ui_adaptor & ) {
         werase( w_minesweeper_border );

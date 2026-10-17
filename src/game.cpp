@@ -9883,7 +9883,7 @@ look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
     };
     const auto minimum = tripoint_bub_ms( 0, 0, -OVERMAP_DEPTH );
     const auto maximum = tripoint_bub_ms( g_mapsize_x - 1, g_mapsize_y - 1, OVERMAP_HEIGHT );
-    const auto look_screen = engine_client::screen_scope( ctxt, {
+    const auto look_screen = engine_client::screen_scope( ctxt, "look", {
         .view = [&]( const engine_client::boundary_state & )
         {
             return target_screen::screen_of( {

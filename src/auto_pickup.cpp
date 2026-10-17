@@ -341,7 +341,7 @@ void user_interface::show()
 .focus_component = pickup_rules, .focus_row = rules.empty() ? std::string{} :
             row_id_of( rules[iLine] ) };
     };
-    const auto screen = ec::screen_scope( ctxt, { .role = "screen", .view = [&]( const auto & /*state*/ ) { return rules_view(); } } );
+    const auto screen = ec::screen_scope( ctxt, "auto_pickup", { .role = "screen", .view = [&]( const auto & /*state*/ ) { return rules_view(); } } );
 
     while( true ) {
         rule_list &cur_rules = tabs[iTab].new_rules;
@@ -668,7 +668,7 @@ void rule::test_pattern() const
 .focus_component = test_matches, .focus_row = vMatchingItems.empty() ? std::string{} :
             vMatchingItems[iLine].id };
     };
-    const auto screen = ec::screen_scope( ctxt, { .role = "dialog", .view = [&]( const auto & /*state*/ ) { return matches_view(); } } );
+    const auto screen = ec::screen_scope( ctxt, "auto_pickup_test", { .role = "dialog", .view = [&]( const auto & /*state*/ ) { return matches_view(); } } );
 
     while( true ) {
         ui_manager::redraw();

@@ -6,6 +6,7 @@
       "value": {
         "screen_id": "screen:1",
         "role": "screen",
+        "kind": "main_menu",
         "title": "Cataclysm: Bright Nights",
         "root": {
           "id": "menu",
@@ -418,6 +419,7 @@
       "value": {
         "screen_id": "screen:1",
         "role": "screen",
+        "kind": "main_menu",
         "title": "Cataclysm: Bright Nights",
         "root": {
           "id": "menu",

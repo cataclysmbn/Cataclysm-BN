@@ -1049,7 +1049,7 @@ std::optional<construction_id> construction_menu( const bool blueprint )
     const nc_color color_stage = c_light_gray;
     ui_adaptor ui;
 
-    const auto screen = ec::screen_scope( ctxt, {
+    const auto screen = ec::screen_scope( ctxt, "construction", {
         .role = "screen",
         .view = [&]( const auto & /*state*/ )
         {

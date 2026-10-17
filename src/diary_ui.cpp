@@ -369,7 +369,7 @@ void diary::show_diary_ui( diary *c_diary )
 
     // A const read of the diary as the loop below keeps it: the pages, the opened page and the window the
     // cursor is in.
-    const auto screen = ec::screen_scope( ctxt, { .view = [&]( const ec::boundary_state & /*state*/ )
+    const auto screen = ec::screen_scope( ctxt, "diary", { .view = [&]( const ec::boundary_state & /*state*/ )
     {
         auto model = diary_model{ .owner = c_diary->owner };
         const auto labels = c_diary->get_pages_list();
@@ -401,7 +401,7 @@ void diary::show_diary_ui( diary *c_diary )
         }
         return diary_view( std::move( model ) );
     }
-                                                } );
+                                                         } );
 
     while( true ) {
 

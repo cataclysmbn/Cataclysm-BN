@@ -1356,7 +1356,7 @@ action_id input_context::display_menu( const bool permit_execute_action )
         };
     };
     spopup.shares_screen = true;
-    const auto screen = ec::screen_scope( ctxt, { .view = [&]( const auto & /*state*/ ) { return keybindings_view(); } } );
+    const auto screen = ec::screen_scope( ctxt, "keybindings", { .view = [&]( const auto & /*state*/ ) { return keybindings_view(); } } );
 
     // do not switch IME mode now, but restore previous mode on return
     ime_sentry sentry( ime_sentry::keep );

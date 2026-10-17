@@ -6,6 +6,7 @@
       "value": {
         "screen_id": "screen:8",
         "role": "dialog",
+        "kind": "messages",
         "title": "Messages",
         "root": {
           "id": "messages",
@@ -257,6 +258,7 @@
       "value": {
         "screen_id": "screen:9",
         "role": "dialog",
+        "kind": "help",
         "title": " HELP ",
         "root": {
           "id": "help:root",
@@ -732,6 +734,7 @@
       "value": {
         "screen_id": "screen:11",
         "role": "dialog",
+        "kind": "morale",
         "title": "Morale",
         "root": {
           "id": "morale:root",
@@ -832,6 +835,7 @@
       "value": {
         "screen_id": "screen:12",
         "role": "dialog",
+        "kind": "missions",
         "title": "Missions",
         "root": {
           "id": "missions:tabs",
@@ -1046,6 +1050,7 @@
       "value": {
         "screen_id": "screen:13",
         "role": "dialog",
+        "kind": "factions",
         "title": "Factions",
         "root": {
           "id": "factions:tabs",
@@ -1323,6 +1328,7 @@
       "value": {
         "screen_id": "screen:14",
         "role": "dialog",
+        "kind": "scores",
         "title": "Scores",
         "root": {
           "id": "scores:tabs",

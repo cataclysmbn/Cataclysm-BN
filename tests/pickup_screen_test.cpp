@@ -108,7 +108,7 @@ auto boundary() -> ec::boundary_state {
 /// The screen on top of the published stack while the pickup screen is open.
 auto published(const ground& list) -> json {
     const auto screen = ec::screen_scope(
-        list.ctxt,
+        list.ctxt, "test",
         {.view = [&](const ec::boundary_state&) { return pickup::screen_of(list.options()); }});
     // Each open scope has its own serial; the screen is compared by what it shows.
     auto top = json::parse(ec::serialize_interaction_boundary(boundary()))["stack"].back();
@@ -283,7 +283,7 @@ TEST_CASE(
     // refused.
     const auto ids = pickup::choice_ids(list.options());
     const auto screen = ec::screen_scope(
-        list.ctxt,
+        list.ctxt, "test",
         {.view = [&](const ec::boundary_state&) { return pickup::screen_of(list.options()); }});
     const auto state = boundary();
     const auto marked = ec::

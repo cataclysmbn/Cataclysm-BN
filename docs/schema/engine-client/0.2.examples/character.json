@@ -6,6 +6,7 @@
       "value": {
         "screen_id": "screen:8",
         "role": "dialog",
+        "kind": "character_sheet",
         "title": "John Smith | Male",
         "root": {
           "id": "character:tabs",
@@ -1679,6 +1680,7 @@
       "value": {
         "screen_id": "screen:25",
         "role": "dialog",
+        "kind": "bionics",
         "title": " BIONICS ",
         "root": {
           "id": "bionics:panes",
@@ -2219,6 +2221,7 @@
       "value": {
         "screen_id": "screen:27",
         "role": "dialog",
+        "kind": "bionic_letter",
         "title": "Power Storage",
         "root": {
           "id": "bionics:letter:panes",
@@ -2323,6 +2326,7 @@
       "value": {
         "screen_id": "screen:37",
         "role": "dialog",
+        "kind": "mutations",
         "title": " MUTATIONS ",
         "root": {
           "id": "mutations:panes",
@@ -2784,6 +2788,7 @@
       "value": {
         "screen_id": "screen:42",
         "role": "dialog",
+        "kind": "uilist",
         "title": "Choose a Spell",
         "root": {
           "id": "list:choices",
@@ -3904,6 +3909,7 @@
       "value": {
         "screen_id": "screen:42",
         "role": "dialog",
+        "kind": "uilist",
         "title": "Choose a Spell",
         "root": {
           "id": "list:choices",
