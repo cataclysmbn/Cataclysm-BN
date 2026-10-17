@@ -1016,6 +1016,66 @@ TEST_CASE(
 }
 
 namespace {
+/// The objects under `value` that the player could pick but that are off: no `selectable: false`
+/// row.
+auto off_on_wire(const nlohmann::json& value, std::vector<nlohmann::json>& found) -> void {
+    if (value.is_object() && value.value("enabled", true) == false
+        && value.value("selectable", true)) {
+        found.push_back(value);
+    }
+    if (value.is_structured()) {
+        for (const auto& member : value) { off_on_wire(member, found); }
+    }
+}
+} // namespace
+
+TEST_CASE(
+    "everything off that the player can pick carries a reason on the wire",
+    "[engine_client_component]") {
+    const auto context = input_context("TEST_OFF");
+    const auto scope = ec::screen_scope(
+        context, "test", {.view = [](const auto&) {
+            const auto rows = ec::list(
+                {.id = "list:rows",
+                 .rows =
+                     {{.id = "row:on"},
+                      {.id = "row:off", .enabled = false},
+                      {.id = "row:full", .denial = "No room.", .enabled = false},
+                      {.id = "heading", .enabled = false, .selectable = false, .header = true}}});
+            const auto grid = ec::component{
+                .id = "grid:cells",
+                .body = ec::grid_body{
+                    .cols = 2,
+                    .rows = 1,
+                    .cells = {{.at = {0, 0}, .id = "cell:on"},
+                              {.at = {1, 0}, .id = "cell:off", .enabled = false}}}};
+            return ec::screen_view{
+                .root = ec::split(
+                    {.id = "split:root",
+                     .children = ec::children_of(
+                         ec::tabs({.id = "tabs:page",
+                                   .tabs = {{.id = "tab:on"}, {.id = "tab:off", .enabled = false}},
+                                   .child = rows}),
+                         grid)}),
+                .affordances = {ec::invoke_affordance({.id = "own:off", .enabled = false})}};
+        }});
+    const auto input = client::input_context_scope(context, "TEST_OFF");
+    auto found = std::vector<nlohmann::json>{};
+    off_on_wire(wire(map_only())["stack"].back(), found);
+
+    // The off affordance, row, row with its own reason, tab and cell; the heading is not picked.
+    REQUIRE(found.size() == 5);
+    for (const auto& each : found) {
+        INFO(each.dump());
+        REQUIRE(each.contains("denial"));
+        CHECK_FALSE(each["denial"].get<std::string>().empty());
+    }
+    CHECK(
+        std::ranges::count_if(found, [](const auto& each) { return each["denial"] == "No room."; })
+        == 1);
+}
+
+namespace {
 auto holdable_on_wire(const ec::boundary_state& state, const std::string& id) -> bool {
     const auto json = wire(state);
     const auto& affordances = json["stack"].back()["affordances"];
