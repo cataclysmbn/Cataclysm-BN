@@ -243,7 +243,9 @@ TEST_CASE("serialized values", "[engine_client_wire]") {
     CHECK(contains(hello, R"("cells_per_part":512)"));
     const auto encoded = serialize_receipt({.epoch = "epoch:a", .command_id = "c:1"});
     REQUIRE(encoded);
-    CHECK(*encoded == R"({"epoch":"epoch:a","command_id":"c:1","stage":"received"})");
+    CHECK(
+        *encoded
+        == R"({"epoch":"epoch:a","command_id":"c:1","stage":"received","stage_text":"Received."})");
     CHECK_FALSE(serialize_receipt({.epoch = "", .command_id = "c:1"}));
     const auto failure = serialize_application_error(
         {.kind = error::stale_revision,

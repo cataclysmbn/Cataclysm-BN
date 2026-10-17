@@ -230,6 +230,8 @@ class Session {
   mirror!: Mirror
   /** Stages seen per command id. */
   stages = new Map<string, string[]>()
+  /** The engine's words for each stage seen, per command id. */
+  stageTexts = new Map<string, string[]>()
   /** The error of each command that ended in one. */
   errors = new Map<string, string>()
   eventTypes: string[] = []
@@ -304,6 +306,9 @@ class Session {
       const stages = this.stages.get(params.command_id) ?? ["received"]
       stages.push(params.stage)
       this.stages.set(params.command_id, stages)
+      const texts = this.stageTexts.get(params.command_id) ?? []
+      texts.push(params.stage_text)
+      this.stageTexts.set(params.command_id, texts)
       if (params.error) this.errors.set(params.command_id, params.error)
     } else if (method === "bn.loading") {
       this.loading.push({ ...params, receivedAt: note.receivedAt })
@@ -348,12 +353,13 @@ class Session {
     if (response.error) return { error: response.error, stages: [] as string[] }
     const id = response.result.command_id
     this.stages.set(id, ["received"])
+    this.stageTexts.set(id, [response.result.stage_text])
     const heartbeats = this.progress
     while (true) {
       const stages = this.stages.get(id)!
       const last = stages.at(-1)
       if (["completed", "rejected", "interrupted"].includes(last!)) {
-        return { id, stages, error: undefined }
+        return { id, stages, stageTexts: this.stageTexts.get(id)!, error: undefined }
       }
       this.handle(await this.client.note())
       await this.pay()
@@ -665,6 +671,7 @@ Deno.test({
         command_id: stale.id,
       })
       assertEquals([rejected.stage, rejected.error], ["rejected", "stale_revision"])
+      assertEquals(rejected.stage_text, "Refused.", "the engine words the stage")
 
       // Waypoint travel: the first click publishes the engine's own route, the second walks it.
       await session.acknowledge(() => session.mirror.interaction.interaction === null)
@@ -695,6 +702,7 @@ Deno.test({
           )
         }
         assertEquals(plan.stages, ["received", "validated", "executing", "completed"])
+        assertEquals(plan.stageTexts, ["Received.", "Accepted.", "Under way.", "Done."])
         if (session.mirror.route.length >= 2) {
           aim = candidate
           break
