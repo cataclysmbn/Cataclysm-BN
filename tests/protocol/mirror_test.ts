@@ -46,15 +46,15 @@ Deno.test("changes that do not fit leave the mirror untouched", () => {
   assertEquals(mirror.state(), before)
 })
 
-Deno.test("a route change replaces the planned route and an empty one clears it", () => {
+Deno.test("a route change replaces the planned route and its line, and an empty one clears both", () => {
   const mirror = fresh()
   assertEquals(mirror.state().route, [])
-  mirror.applyEvents("e", [event(1, { route: [pos(2), pos(3)] })])
-  assertEquals(mirror.state().route, [pos(2), pos(3)])
-  mirror.applyEvents("e", [event(2, { route: [pos(4)] })])
-  assertEquals(mirror.state().route, [pos(4)])
+  mirror.applyEvents("e", [event(1, { route: [pos(2), pos(3)], route_text: "two" })])
+  assertEquals([mirror.state().route, mirror.state().route_text], [[pos(2), pos(3)], "two"])
+  mirror.applyEvents("e", [event(2, { route: [pos(4)], route_text: "one" })])
+  assertEquals([mirror.state().route, mirror.state().route_text], [[pos(4)], "one"])
   mirror.applyEvents("e", [event(3, { route: [] })])
-  assertEquals(mirror.state().route, [])
+  assertEquals([mirror.state().route, mirror.state().route_text], [[], null])
 })
 
 Deno.test("a view change replaces the clickable view whole", () => {

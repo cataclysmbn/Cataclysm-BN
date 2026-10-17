@@ -709,11 +709,17 @@ Deno.test({
       assertEquals(session.mirror.route.at(-1), aim, "the route ends at the clicked square")
       assertEquals(session.mirror.avatar.at, here, "the first click does not move")
       const planned = session.mirror.route.length
+      assertEquals(
+        session.mirror.routeText,
+        `Route of ${planned} squares; select its end again to go.`,
+        "the engine words the planned route",
+      )
 
       const eventsBefore = session.eventTypes.length
       const walk = await session.submit({ kind: "travel", pos: aim })
       assertEquals(walk.stages.at(-1), "completed")
       assertEquals(session.mirror.route, [], "confirming clears the plan")
+      assertEquals(session.mirror.routeText, undefined, "and its line")
       const walkEvents = session.eventTypes.length - eventsBefore
       assert(walkEvents >= planned, `events per step: ${walkEvents} for ${planned} squares`)
       // Arrived (or stopped where the engine stopped, never past the destination).

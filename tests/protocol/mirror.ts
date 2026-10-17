@@ -29,6 +29,8 @@ export class Mirror {
   environment?: Value
   /** The planned, unconfirmed auto-move route; empty when nothing is planned. */
   route: Pos[] = []
+  /** The engine's localized line for `route`; absent when nothing is planned. */
+  routeText?: string
   /** The native message log in order; a repeat replaces the line with the same id. */
   messages: { id: string; text: string; kind: string; color: string; count: number }[] = []
   cells = new Map<string, Value>()
@@ -43,6 +45,7 @@ export class Mirror {
     mirror.avatar = header.avatar
     mirror.environment = header.environment
     mirror.route = header.route ?? []
+    mirror.routeText = header.route_text
     mirror.messages = header.messages ?? []
     for (const entity of header.entities) mirror.entities.set(entity.id, entity)
     assertEquals(parts.length, header.parts, "every announced part arrives")
@@ -65,6 +68,7 @@ export class Mirror {
     copy.avatar = structuredClone(this.avatar)
     copy.environment = structuredClone(this.environment)
     copy.route = structuredClone(this.route)
+    copy.routeText = this.routeText
     copy.messages = structuredClone(this.messages)
     copy.cells = structuredClone(this.cells)
     copy.entities = structuredClone(this.entities)
@@ -133,7 +137,10 @@ export class Mirror {
       this.avatar = next
     }
     if (changes.environment) this.environment = changes.environment
-    if (changes.route) this.route = changes.route
+    if (changes.route) {
+      this.route = changes.route
+      this.routeText = changes.route_text
+    }
     if (changes.interaction) {
       // The engine leaves out `actions` when the new boundary keeps the previous ones.
       const actions = changes.interaction.actions ?? this.interaction.actions
@@ -152,6 +159,7 @@ export class Mirror {
       avatar: this.avatar ?? null,
       environment: this.environment ?? null,
       route: this.route,
+      route_text: this.routeText ?? null,
       messages: this.messages,
       cells: sorted(this.cells),
       entities: sorted(this.entities),
