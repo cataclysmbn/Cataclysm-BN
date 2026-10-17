@@ -279,15 +279,7 @@ static void WinCreate()
     }
 #endif
     // Initialize framebuffer caches
-    terminal_framebuffer.resize( TERMINAL_HEIGHT );
-    for( int i = 0; i < TERMINAL_HEIGHT; i++ ) {
-        terminal_framebuffer[i].chars.assign( TERMINAL_WIDTH, cursecell( "" ) );
-    }
-
-    oversized_framebuffer.resize( TERMINAL_HEIGHT );
-    for( int i = 0; i < TERMINAL_HEIGHT; i++ ) {
-        oversized_framebuffer[i].chars.assign( TERMINAL_WIDTH, cursecell( "" ) );
-    }
+    reinitialize_framebuffer();
 
     format = SDL_GetWindowPixelFormat( ::window.get() );
     throwErrorIf( format == SDL_PIXELFORMAT_UNKNOWN, "SDL_GetWindowPixelFormat failed" );
@@ -566,11 +558,14 @@ void reinitialize_framebuffer( const bool force_invalidate )
     static int prev_height = -1;
     static int prev_width = -1;
     //Re-initialize the framebuffer with new values.
-    const int new_height = std::max( { TERMY, OVERMAP_WINDOW_HEIGHT, TERRAIN_WINDOW_HEIGHT } );
-    const int new_width = std::max( { TERMX, OVERMAP_WINDOW_WIDTH, TERRAIN_WINDOW_WIDTH } );
+    const auto map_height = std::max( OVERMAP_WINDOW_HEIGHT, TERRAIN_WINDOW_HEIGHT );
+    const auto map_width = std::max( OVERMAP_WINDOW_WIDTH, TERRAIN_WINDOW_WIDTH );
+    const auto new_height = std::max( { TERMINAL_HEIGHT, TERMY, map_height } );
+    const auto new_width = std::max( { TERMINAL_WIDTH, TERMX, map_width } );
     if( new_height != prev_height || new_width != prev_width ) {
         prev_height = new_height;
         prev_width = new_width;
+        need_invalidate_framebuffers = false;
         oversized_framebuffer.resize( new_height );
         for( int i = 0; i < new_height; i++ ) {
             oversized_framebuffer[i].chars.assign( new_width, cursecell( "" ) );
