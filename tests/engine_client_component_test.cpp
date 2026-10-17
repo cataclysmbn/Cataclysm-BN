@@ -406,6 +406,18 @@ TEST_CASE("the wire carries the stack beside the 0.1 interaction", "[engine_clie
     CHECK(json["stack"][0]["root"]["kind"] == "map");
 }
 
+TEST_CASE(
+    "the map names the avatar's item lists and the verb that moves a row out of each",
+    "[engine_client_component]") {
+    const auto expected = nlohmann::json::parse(R"([
+        {"id": "avatar.ground", "label": "Ground", "verb": "Pick up"},
+        {"id": "avatar.inventory", "label": "Inventory", "verb": "Drop"}
+    ])");
+    CHECK(wire(map_only())["stack"][0]["root"]["item_lists"] == expected);
+    // A covered map still names them.
+    CHECK(wire(boundary(menu()))["stack"][0]["root"]["item_lists"] == expected);
+}
+
 TEST_CASE("every 0.1 operation is an invoke", "[engine_client_component]") {
     const auto state = boundary(menu());
     SECTION("choose") {
