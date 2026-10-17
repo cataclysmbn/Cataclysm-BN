@@ -895,7 +895,8 @@ auto serialize_rows( const rows_page &page ) -> std::string
 }
 auto serialize_command_result( const command_result &value ) -> std::string
 {
-    auto result = json{{"epoch", value.epoch}, {"command_id", value.command_id}, {"stage", stage_name( value.stage )}};
+    auto result = json{{"epoch", value.epoch}, {"command_id", value.command_id}, {"stage", stage_name( value.stage )},
+        {"stage_text", stage_text( value.stage )}};
     if( value.failure ) {
         result["error"] = error_name( *value.failure );
         result["error_text"] = value.message.empty() ? error_text( *value.failure ) : value.message;

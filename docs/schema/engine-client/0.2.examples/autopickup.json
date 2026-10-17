@@ -358,7 +358,8 @@
       "value": {
         "epoch": "epoch-2",
         "command_id": "command:1",
-        "stage": "received"
+        "stage": "received",
+        "stage_text": "Received."
       }
     },
     {
@@ -367,7 +368,8 @@
       "value": {
         "epoch": "epoch-2",
         "command_id": "command:1",
-        "stage": "validated"
+        "stage": "validated",
+        "stage_text": "Accepted."
       }
     },
     {
@@ -376,7 +378,8 @@
       "value": {
         "epoch": "epoch-2",
         "command_id": "command:1",
-        "stage": "executing"
+        "stage": "executing",
+        "stage_text": "Under way."
       }
     },
     {
@@ -386,6 +389,7 @@
         "epoch": "epoch-2",
         "command_id": "command:1",
         "stage": "completed",
+        "stage_text": "Done.",
         "at": {
           "epoch": "epoch-2",
           "sequence": "15",
@@ -417,7 +421,8 @@
       "value": {
         "epoch": "epoch-2",
         "command_id": "command:2",
-        "stage": "received"
+        "stage": "received",
+        "stage_text": "Received."
       }
     },
     {
@@ -426,7 +431,8 @@
       "value": {
         "epoch": "epoch-2",
         "command_id": "command:2",
-        "stage": "validated"
+        "stage": "validated",
+        "stage_text": "Accepted."
       }
     },
     {
@@ -435,7 +441,8 @@
       "value": {
         "epoch": "epoch-2",
         "command_id": "command:2",
-        "stage": "executing"
+        "stage": "executing",
+        "stage_text": "Under way."
       }
     },
     {
@@ -445,6 +452,7 @@
         "epoch": "epoch-2",
         "command_id": "command:2",
         "stage": "completed",
+        "stage_text": "Done.",
         "at": {
           "epoch": "epoch-2",
           "sequence": "16",
@@ -861,7 +869,8 @@
       "value": {
         "epoch": "epoch-2",
         "command_id": "command:3",
-        "stage": "received"
+        "stage": "received",
+        "stage_text": "Received."
       }
     },
     {
@@ -870,7 +879,8 @@
       "value": {
         "epoch": "epoch-2",
         "command_id": "command:3",
-        "stage": "validated"
+        "stage": "validated",
+        "stage_text": "Accepted."
       }
     },
     {
@@ -879,7 +889,8 @@
       "value": {
         "epoch": "epoch-2",
         "command_id": "command:3",
-        "stage": "executing"
+        "stage": "executing",
+        "stage_text": "Under way."
       }
     },
     {
@@ -889,6 +900,7 @@
         "epoch": "epoch-2",
         "command_id": "command:3",
         "stage": "completed",
+        "stage_text": "Done.",
         "at": {
           "epoch": "epoch-2",
           "sequence": "19",
@@ -920,7 +932,8 @@
       "value": {
         "epoch": "epoch-2",
         "command_id": "command:4",
-        "stage": "received"
+        "stage": "received",
+        "stage_text": "Received."
       }
     },
     {
@@ -929,7 +942,8 @@
       "value": {
         "epoch": "epoch-2",
         "command_id": "command:4",
-        "stage": "validated"
+        "stage": "validated",
+        "stage_text": "Accepted."
       }
     },
     {
@@ -938,7 +952,8 @@
       "value": {
         "epoch": "epoch-2",
         "command_id": "command:4",
-        "stage": "executing"
+        "stage": "executing",
+        "stage_text": "Under way."
       }
     },
     {
@@ -948,6 +963,7 @@
         "epoch": "epoch-2",
         "command_id": "command:4",
         "stage": "completed",
+        "stage_text": "Done.",
         "at": {
           "epoch": "epoch-2",
           "sequence": "20",
@@ -979,7 +995,8 @@
       "value": {
         "epoch": "epoch-2",
         "command_id": "command:5",
-        "stage": "received"
+        "stage": "received",
+        "stage_text": "Received."
       }
     },
     {
@@ -988,7 +1005,8 @@
       "value": {
         "epoch": "epoch-2",
         "command_id": "command:5",
-        "stage": "validated"
+        "stage": "validated",
+        "stage_text": "Accepted."
       }
     },
     {
@@ -997,7 +1015,8 @@
       "value": {
         "epoch": "epoch-2",
         "command_id": "command:5",
-        "stage": "executing"
+        "stage": "executing",
+        "stage_text": "Under way."
       }
     },
     {
@@ -1007,6 +1026,7 @@
         "epoch": "epoch-2",
         "command_id": "command:5",
         "stage": "completed",
+        "stage_text": "Done.",
         "at": {
           "epoch": "epoch-2",
           "sequence": "21",
@@ -1034,7 +1054,8 @@
       "value": {
         "epoch": "epoch-2",
         "command_id": "command:6",
-        "stage": "received"
+        "stage": "received",
+        "stage_text": "Received."
       }
     },
     {
@@ -1043,7 +1064,8 @@
       "value": {
         "epoch": "epoch-2",
         "command_id": "command:6",
-        "stage": "validated"
+        "stage": "validated",
+        "stage_text": "Accepted."
       }
     },
     {
@@ -1052,7 +1074,8 @@
       "value": {
         "epoch": "epoch-2",
         "command_id": "command:6",
-        "stage": "executing"
+        "stage": "executing",
+        "stage_text": "Under way."
       }
     },
     {
@@ -1062,6 +1085,7 @@
         "epoch": "epoch-2",
         "command_id": "command:6",
         "stage": "completed",
+        "stage_text": "Done.",
         "at": {
           "epoch": "epoch-2",
           "sequence": "23",
@@ -1089,7 +1113,8 @@
       "value": {
         "epoch": "epoch-2",
         "command_id": "command:7",
-        "stage": "received"
+        "stage": "received",
+        "stage_text": "Received."
       }
     },
     {
@@ -1098,7 +1123,8 @@
       "value": {
         "epoch": "epoch-2",
         "command_id": "command:7",
-        "stage": "validated"
+        "stage": "validated",
+        "stage_text": "Accepted."
       }
     },
     {
@@ -1107,7 +1133,8 @@
       "value": {
         "epoch": "epoch-2",
         "command_id": "command:7",
-        "stage": "executing"
+        "stage": "executing",
+        "stage_text": "Under way."
       }
     },
     {
@@ -1117,6 +1144,7 @@
         "epoch": "epoch-2",
         "command_id": "command:7",
         "stage": "completed",
+        "stage_text": "Done.",
         "at": {
           "epoch": "epoch-2",
           "sequence": "24",
@@ -1260,7 +1288,8 @@
       "value": {
         "epoch": "epoch-2",
         "command_id": "command:8",
-        "stage": "received"
+        "stage": "received",
+        "stage_text": "Received."
       }
     },
     {
@@ -1270,6 +1299,7 @@
         "epoch": "epoch-2",
         "command_id": "command:8",
         "stage": "rejected",
+        "stage_text": "Refused.",
         "error": "invalid_arguments",
         "error_text": "That needs other details."
       }
@@ -1298,7 +1328,8 @@
       "value": {
         "epoch": "epoch-2",
         "command_id": "command:9",
-        "stage": "received"
+        "stage": "received",
+        "stage_text": "Received."
       }
     },
     {
@@ -1308,6 +1339,7 @@
         "epoch": "epoch-2",
         "command_id": "command:9",
         "stage": "rejected",
+        "stage_text": "Refused.",
         "error": "invalid_arguments",
         "error_text": "That needs other details."
       }
@@ -1336,7 +1368,8 @@
       "value": {
         "epoch": "epoch-2",
         "command_id": "command:10",
-        "stage": "received"
+        "stage": "received",
+        "stage_text": "Received."
       }
     },
     {
@@ -1346,6 +1379,7 @@
         "epoch": "epoch-2",
         "command_id": "command:10",
         "stage": "rejected",
+        "stage_text": "Refused.",
         "error": "invalid_arguments",
         "error_text": "That needs other details."
       }
@@ -1370,7 +1404,8 @@
       "value": {
         "epoch": "epoch-2",
         "command_id": "command:11",
-        "stage": "received"
+        "stage": "received",
+        "stage_text": "Received."
       }
     },
     {
@@ -1379,7 +1414,8 @@
       "value": {
         "epoch": "epoch-2",
         "command_id": "command:11",
-        "stage": "validated"
+        "stage": "validated",
+        "stage_text": "Accepted."
       }
     },
     {
@@ -1388,7 +1424,8 @@
       "value": {
         "epoch": "epoch-2",
         "command_id": "command:11",
-        "stage": "executing"
+        "stage": "executing",
+        "stage_text": "Under way."
       }
     },
     {
@@ -1398,6 +1435,7 @@
         "epoch": "epoch-2",
         "command_id": "command:11",
         "stage": "completed",
+        "stage_text": "Done.",
         "at": {
           "epoch": "epoch-2",
           "sequence": "29",
@@ -1792,7 +1830,8 @@
       "value": {
         "epoch": "epoch-2",
         "command_id": "command:12",
-        "stage": "received"
+        "stage": "received",
+        "stage_text": "Received."
       }
     },
     {
@@ -1801,7 +1840,8 @@
       "value": {
         "epoch": "epoch-2",
         "command_id": "command:12",
-        "stage": "validated"
+        "stage": "validated",
+        "stage_text": "Accepted."
       }
     },
     {
@@ -1810,7 +1850,8 @@
       "value": {
         "epoch": "epoch-2",
         "command_id": "command:12",
-        "stage": "executing"
+        "stage": "executing",
+        "stage_text": "Under way."
       }
     },
     {
@@ -1820,6 +1861,7 @@
         "epoch": "epoch-2",
         "command_id": "command:12",
         "stage": "completed",
+        "stage_text": "Done.",
         "at": {
           "epoch": "epoch-2",
           "sequence": "30",

@@ -13,7 +13,7 @@
           "revision": "0"
         },
         "schema": {
-          "engine": "sha256:6abebbd174062586",
+          "engine": "sha256:3724a1ab6d7583c9",
           "client": "sha256:0000000000000000"
         }
       }
@@ -29,7 +29,7 @@
           "name": "contract-gen",
           "version": "1"
         },
-        "schema": "sha256:6abebbd174062586",
+        "schema": "sha256:3724a1ab6d7583c9",
         "capabilities": {
           "viewport": {
             "cols": 40,
@@ -61,7 +61,7 @@
           "cells_per_query": 4096,
           "screen_queue": 8
         },
-        "schema": "sha256:6abebbd174062586",
+        "schema": "sha256:3724a1ab6d7583c9",
         "locale": "en_US",
         "engine_locale": "en_US",
         "role": "controller"
@@ -1230,7 +1230,8 @@
       "value": {
         "epoch": "epoch-1",
         "command_id": "command:1",
-        "stage": "received"
+        "stage": "received",
+        "stage_text": "Received."
       }
     },
     {
@@ -1240,6 +1241,7 @@
         "epoch": "epoch-1",
         "command_id": "command:1",
         "stage": "rejected",
+        "stage_text": "Refused.",
         "error": "unknown_affordance",
         "error_text": "That is not possible on this screen."
       }
@@ -1289,7 +1291,7 @@
           "cells_per_query": 4096,
           "screen_queue": 8
         },
-        "schema": "sha256:6abebbd174062586",
+        "schema": "sha256:3724a1ab6d7583c9",
         "locale": "en_US",
         "engine_locale": "en_US"
       },

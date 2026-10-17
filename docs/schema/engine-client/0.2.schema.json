@@ -4581,12 +4581,17 @@
         },
         "stage": {
           "const": "received"
+        },
+        "stage_text": {
+          "type": "string",
+          "description": "The localized words for stage, such as `Under way.`; stage stays the id to act on."
         }
       },
       "required": [
         "epoch",
         "command_id",
-        "stage"
+        "stage",
+        "stage_text"
       ],
       "additionalProperties": false
     },
@@ -4638,6 +4643,10 @@
             "interrupted"
           ]
         },
+        "stage_text": {
+          "type": "string",
+          "description": "The localized words for stage, such as `Under way.`; stage stays the id to act on."
+        },
         "error": {
           "$ref": "#/$defs/command_error"
         },
@@ -4652,7 +4661,8 @@
       "required": [
         "epoch",
         "command_id",
-        "stage"
+        "stage",
+        "stage_text"
       ],
       "additionalProperties": false
     },
@@ -4727,6 +4737,10 @@
             "interrupted"
           ]
         },
+        "stage_text": {
+          "type": "string",
+          "description": "The localized words for stage, such as `Under way.`; stage stays the id to act on."
+        },
         "error": {
           "$ref": "#/$defs/command_error"
         },
@@ -4741,7 +4755,8 @@
       "required": [
         "epoch",
         "command_id",
-        "stage"
+        "stage",
+        "stage_text"
       ],
       "additionalProperties": false
     },

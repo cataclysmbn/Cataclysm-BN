@@ -437,7 +437,7 @@ auto serialize_receipt( const receipt &value ) -> std::expected<std::string, err
         return std::unexpected( error::validation_failed );
     }
     return nlohmann::ordered_json{{"epoch", value.epoch}, {"command_id", value.command_id},
-        {"stage", "received"}}.dump();
+        {"stage", "received"}, {"stage_text", stage_text( command_stage::received )}}.dump();
 }
 auto serialize_application_error( const application_error &value ) ->
 std::expected<std::string, error>

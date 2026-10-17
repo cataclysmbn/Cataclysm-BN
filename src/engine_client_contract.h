@@ -277,6 +277,8 @@ auto resolve_invoke( const boundary_state &state, const invoke_operation &invoke
 -> std::expected<command_operation, error>;
 enum class command_stage { received, validated, executing, rejected, completed, interrupted };
 auto stage_name( command_stage stage ) -> std::string;
+/// The player's words for `stage`, localized.
+auto stage_text( command_stage stage ) -> std::string;
 struct command_result {
     std::string epoch = {};
     std::string command_id = {};

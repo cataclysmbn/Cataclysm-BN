@@ -7,6 +7,7 @@
         "epoch": "epoch:e7f3",
         "command_id": "c:7",
         "stage": "rejected",
+        "stage_text": "Refused.",
         "error": "invalid_arguments"
       }
     },
@@ -327,6 +328,7 @@
         "epoch": "epoch:e7f3",
         "command_id": "c:8",
         "stage": "rejected",
+        "stage_text": "Refused.",
         "error": "stale_screen"
       }
     },

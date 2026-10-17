@@ -192,6 +192,30 @@ auto stage_name( const command_stage stage ) -> std::string
     }
     return "interrupted";
 }
+auto stage_text( const command_stage stage ) -> std::string
+{
+    switch( stage ) {
+        case command_stage::received:
+            //~ A command's stage: the game has it.
+            return _( "Received." );
+        case command_stage::validated:
+            //~ A command's stage: the game will carry it out.
+            return _( "Accepted." );
+        case command_stage::executing:
+            //~ A command's stage: the game is carrying it out.
+            return _( "Under way." );
+        case command_stage::rejected:
+            //~ A command's stage: the game did not carry it out.
+            return _( "Refused." );
+        case command_stage::completed:
+            //~ A command's stage: the game carried it out.
+            return _( "Done." );
+        case command_stage::interrupted:
+            //~ A command's stage: the game stopped it before it was done.
+            return _( "Interrupted." );
+    }
+    return _( "Interrupted." );
+}
 auto new_session_epoch() -> std::expected<std::string, error>
 {
     try {
