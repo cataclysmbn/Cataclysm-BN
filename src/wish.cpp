@@ -10,6 +10,7 @@
 #include "game.h"
 #include "input.h"
 #include "item.h"
+#include "item_category.h"
 #include "item_factory.h"
 #include "itype.h"
 #include "map/map.h"
@@ -642,8 +643,13 @@ class wish_item_callback: public uilist_callback
         std::string msg;
         std::string flag;
         const std::vector<const itype *> &standard_itype_ids;
-        wish_item_callback( const std::vector<const itype *> &ids ) :
-            incontainer( false ), has_flag( false ), spawn_everything( false ), standard_itype_ids( ids ) {
+        // Labels of the item category pages, the first one being the page that
+        // holds every item.
+        const std::vector<std::string> &category_tabs;
+        wish_item_callback( const std::vector<const itype *> &ids,
+                            const std::vector<std::string> &tabs ) :
+            incontainer( false ), has_flag( false ), spawn_everything( false ),
+            standard_itype_ids( ids ), category_tabs( tabs ) {
         }
 
         void select( uilist *menu ) override {
@@ -718,7 +724,40 @@ class wish_item_callback: public uilist_callback
             return false;
         }
 
+        // The menu reserves the lines above the list for the tab bar, which has
+        // to be drawn here because the callback is refreshed after the menu.
+        // draw_tabs() scrolls the bar with the width of the tabs and the index of
+        // the current one, which is not enough for the many pages of this menu,
+        // so the labels that fit around the current page are picked here and only
+        // those are handed to it.
+        void draw_category_tabs( uilist *menu ) {
+            if( category_tabs.size() < 2 ) {
+                return;
+            }
+            const int list_width = menu->w_width - menu->pad_right;
+            // The tab bar overdraws the reserved line, so blank it first to keep
+            // its text from showing up in the gaps between the tabs.
+            mvwhline( menu->window, point( 1, 1 ), ' ', std::max( 0, list_width - 2 ) );
+            // Keep the rightmost tab clear of the item info panel.
+            const int max_tab_width = list_width - 3;
+            const auto current = std::min( menu->get_current_category(),
+                                           category_tabs.size() - 1 );
+            const auto range =
+                debug_menu::wish_item_tab_range( category_tabs, current, max_tab_width );
+            const auto visible = std::vector<std::string>( category_tabs.begin() + range.first,
+                                 category_tabs.begin() + range.last + 1 );
+            draw_tabs( menu->window, visible, current - range.first, max_tab_width );
+            // Point at the pages that did not fit into the bar.
+            if( range.first > 0 ) {
+                mvwputch( menu->window, point( 0, 1 ), c_light_gray, '<' );
+            }
+            if( range.last + 1 < category_tabs.size() ) {
+                mvwputch( menu->window, point( max_tab_width, 1 ), c_light_gray, '>' );
+            }
+        }
+
         void refresh( uilist *menu ) override {
+            draw_category_tabs( menu );
             const int starty = 3;
             const int startx = menu->w_width - menu->pad_right;
             const std::string padding( menu->pad_right, ' ' );
@@ -773,6 +812,68 @@ class wish_item_callback: public uilist_callback
         }
 };
 
+auto debug_menu::wish_item_categories(
+    const std::vector<const itype *> &items ) -> std::vector<item_category_id>
+{
+    std::vector<item_category_id> ret;
+    for( const itype *type : items ) {
+        const item_category_id &category = type->category_force;
+        if( !category.is_valid() || category.is_empty() ) {
+            continue;
+        }
+        if( std::ranges::find( ret, category ) == ret.end() ) {
+            ret.push_back( category );
+        }
+    }
+    // Order the pages the way the item category list does instead of by the
+    // number of items behind them.
+    std::ranges::sort( ret, []( const item_category_id & lhs, const item_category_id & rhs ) {
+        return *lhs < *rhs;
+    } );
+    return ret;
+}
+
+auto debug_menu::wish_item_pages(
+    const std::vector<const itype *> &items,
+    const std::vector<item_category_id> &categories ) -> std::vector<std::size_t>
+{
+    std::vector<std::size_t> ret;
+    ret.reserve( items.size() );
+    for( const itype *type : items ) {
+        const auto found = std::ranges::find( categories, type->category_force );
+        ret.push_back( found == categories.end() ? 0 :
+                       static_cast<std::size_t>( found - categories.begin() ) + 1 );
+    }
+    return ret;
+}
+
+auto debug_menu::wish_item_tab_range( const std::vector<std::string> &tabs, std::size_t current,
+                                      int max_tab_width ) -> debug_menu::wish_item_tab_bounds
+{
+    if( tabs.empty() ) {
+        return {};
+    }
+    current = std::min( current, tabs.size() - 1 );
+    // draw_tabs() puts the first label at column 2 and gives every label its own
+    // width plus room for its frame and the selection markers.
+    const auto budget = std::max( 0, max_tab_width - 2 );
+    const auto tab_width = []( const std::string & text ) {
+        return utf8_width( text ) + 3;
+    };
+    auto first = current;
+    auto used = tab_width( tabs[current] );
+    while( first > 0 && used + tab_width( tabs[first - 1] ) <= budget ) {
+        used += tab_width( tabs[first - 1] );
+        first--;
+    }
+    auto last = current;
+    while( last + 1 < tabs.size() && used + tab_width( tabs[last + 1] ) <= budget ) {
+        used += tab_width( tabs[last + 1] );
+        last++;
+    }
+    return { .first = first, .last = last };
+}
+
 void debug_menu::wishitem( Character *who )
 {
     wishitem( who, tripoint_bub_ms( -1, -1, -1 ) );
@@ -800,6 +901,22 @@ void debug_menu::wishitem( Character *who, const tripoint_bub_ms &pos )
         return pair.second;
     } );
 
+    // Category pages of the spawn menu.  The first one holds every item, each of
+    // the following ones only the items of one category.
+    const auto categories = wish_item_categories( itypes );
+    std::vector<std::string> category_tabs;
+    category_tabs.reserve( categories.size() + 1 );
+    category_tabs.emplace_back( _( "ALL" ) );
+    for( const item_category_id &category : categories ) {
+        category_tabs.emplace_back( category->name() );
+    }
+    // Page each entry of the list belongs to; entries of item types without a
+    // category only show up in the first page.
+    const auto entry_page = wish_item_pages( itypes, categories );
+    const auto page_filter = [&entry_page]( const uilist_entry & entry, std::size_t page ) {
+        return page == 0 || entry_page[static_cast<std::size_t>( entry.retval )] == page;
+    };
+
     int prev_amount = 1;
     int amount = 1;
     uilist wmenu;
@@ -811,7 +928,18 @@ void debug_menu::wishitem( Character *who, const tripoint_bub_ms &pos )
         return std::max( TERMX / 2, TERMX - 50 );
     };
     wmenu.selected = uistate.wishitem_selected;
-    wish_item_callback cb( itypes );
+    // Reserve a line above the list, which the callback covers with the category
+    // tab bar.
+    wmenu.text = "\n";
+    // Page switching is handled in the loop below, where the category filter can
+    // be updated between queries.
+    wmenu.additional_actions.emplace_back( "NEXT_TAB", to_translation( "Next item category" ) );
+    wmenu.additional_actions.emplace_back( "PREV_TAB", to_translation( "Previous item category" ) );
+    wmenu.allow_additional = true;
+    if( category_tabs.size() > 1 ) {
+        wmenu.set_categories( category_tabs, page_filter );
+    }
+    wish_item_callback cb( itypes, category_tabs );
     wmenu.callback = &cb;
 
     for( size_t i = 0; i < opts.size(); i++ ) {
@@ -823,10 +951,24 @@ void debug_menu::wishitem( Character *who, const tripoint_bub_ms &pos )
         entry_extra_text.color = ity.color();
         entry_extra_text.left = 1;
     }
-    do {
+    while( true ) {
         wmenu.query();
+        if( wmenu.ret == UILIST_ADDITIONAL ) {
+            // TAB and SHIFT+TAB page through the item categories.  LEFT and RIGHT
+            // are handled by the menu itself.
+            const std::size_t page_count = category_tabs.size();
+            const std::size_t page = wmenu.get_current_category();
+            const std::size_t next_page = wmenu.ret_act == "PREV_TAB" ?
+                                          ( page == 0 ? page_count - 1 : page - 1 ) :
+                                          ( page + 1 ) % page_count;
+            wmenu.set_categories( category_tabs, page_filter, next_page );
+            continue;
+        }
         if( cb.spawn_everything && wmenu.ret != UILIST_CANCEL ) {
             wmenu.ret = opts.size() - 1;
+        }
+        if( wmenu.ret < 0 ) {
+            break;
         }
         bool did_amount_prompt = false;
         while( wmenu.ret >= 0 ) {
@@ -918,7 +1060,10 @@ void debug_menu::wishitem( Character *who, const tripoint_bub_ms &pos )
                 break;
             }
         }
-    } while( wmenu.ret >= 0 );
+        if( wmenu.ret < 0 ) {
+            break;
+        }
+    }
 }
 
 /*
