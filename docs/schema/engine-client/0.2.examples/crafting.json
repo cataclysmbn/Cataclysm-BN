@@ -89,19 +89,22 @@
                 "id": "CSC_*_FAVORITE",
                 "label": "FAVORITE",
                 "selected": true,
-                "enabled": false
+                "enabled": false,
+                "denial": "Not available now."
               },
               {
                 "id": "CSC_*_RECENT",
                 "label": "RECENT",
                 "selected": false,
-                "enabled": false
+                "enabled": false,
+                "denial": "Not available now."
               },
               {
                 "id": "CSC_*_HIDDEN",
                 "label": "HIDDEN",
                 "selected": false,
-                "enabled": false
+                "enabled": false,
+                "denial": "Not available now."
               }
             ],
             "select": "craft:subtab",

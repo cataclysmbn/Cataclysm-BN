@@ -141,6 +141,7 @@ struct tab_entry {
     std::string label = {};
     bool selected = false;
     bool enabled = true;
+    std::string denial = {};
     /// Something in the tab is new to the player.
     bool unread = false;
 };

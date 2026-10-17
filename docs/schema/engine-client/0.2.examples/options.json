@@ -2972,6 +2972,7 @@
             "label": "Value",
             "keys": [],
             "enabled": false,
+            "denial": "Not available now.",
             "args": {
               "row": {
                 "component_id": "options:editor"

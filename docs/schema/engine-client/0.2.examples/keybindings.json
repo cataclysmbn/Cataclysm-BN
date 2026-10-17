@@ -2776,6 +2776,7 @@
             "label": "Select",
             "keys": [],
             "enabled": false,
+            "denial": "Not available now.",
             "args": {
               "row": {
                 "component_id": "keybindings:actions"
@@ -2974,6 +2975,7 @@
         "label": "Select",
         "keys": [],
         "enabled": false,
+        "denial": "Not available now.",
         "args": {
           "row": {
             "component_id": "keybindings:actions"
@@ -3208,6 +3210,7 @@
             "label": "Filter",
             "keys": [],
             "enabled": false,
+            "denial": "Not available now.",
             "args": {
               "text": {}
             },

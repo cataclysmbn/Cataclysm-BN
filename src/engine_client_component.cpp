@@ -343,6 +343,8 @@ auto slots_of( const boundary_state &state ) -> std::vector<slot>
 }
 
 auto clear_affordances( component &value ) -> void;
+auto give_reason( bool enabled, std::string &denial ) -> void;
+auto give_reasons( component &value ) -> void;
 
 /// A list that activates through a `select` affordance gets an affordance of its own that runs the row,
 /// so the select only moves the cursor. `label` is the native name of CONFIRM.
@@ -412,6 +414,8 @@ auto screen_of( const boundary_state &state, const slot &entry, const bool top )
         }
         std::ranges::move( registered, std::back_inserter( result.affordances ) );
     }
+    for( auto &offered : result.affordances ) { give_reason( offered.enabled, offered.denial ); }
+    if( result.root ) { give_reasons( *result.root ); }
     return result;
 }
 
@@ -423,6 +427,28 @@ auto clear_affordances( component &value ) -> void
     if( auto *const body = std::get_if<tabs_body>( &value.body ) ) { body->select.clear(); }
     if( auto *const body = std::get_if<form_body>( &value.body ) ) { body->submit.clear(); }
     for( auto &child : value.children ) { clear_affordances( child ); }
+}
+
+/// Says why the player cannot pick something that is off, where the screen gave no reason of its own.
+auto give_reason( const bool enabled, std::string &denial ) -> void
+{
+    if( !enabled && denial.empty() ) { denial = _( "Not available now." ); }
+}
+
+/// Every row, tab and cell under `value` that is off and could be picked says why; a row that cannot be
+/// picked, such as a heading, needs no reason.
+auto give_reasons( component &value ) -> void
+{
+    if( auto *const body = std::get_if<list_body>( &value.body ) ) {
+        for( auto &entry : body->rows | std::views::filter( &row::selectable ) ) { give_reason( entry.enabled, entry.denial ); }
+    }
+    if( auto *const body = std::get_if<tabs_body>( &value.body ) ) {
+        for( auto &tab : body->tabs ) { give_reason( tab.enabled, tab.denial ); }
+    }
+    if( auto *const body = std::get_if<grid_body>( &value.body ) ) {
+        for( auto &cell : body->cells ) { give_reason( cell.enabled, cell.denial ); }
+    }
+    for( auto &child : value.children ) { give_reasons( child ); }
 }
 
 auto collect_rows( const component &value, std::vector<std::string> &into ) -> bool

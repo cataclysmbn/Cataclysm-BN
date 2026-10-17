@@ -233,6 +233,7 @@
               "R"
             ],
             "enabled": false,
+            "denial": "Not available now.",
             "expect": "screen"
           },
           {
@@ -243,6 +244,7 @@
               "C"
             ],
             "enabled": false,
+            "denial": "Not available now.",
             "expect": "screen"
           },
           {
@@ -253,6 +255,7 @@
               "E"
             ],
             "enabled": false,
+            "denial": "Not available now.",
             "expect": "screen"
           },
           {
@@ -263,6 +266,7 @@
               "D"
             ],
             "enabled": false,
+            "denial": "Not available now.",
             "expect": "screen"
           },
           {
@@ -272,6 +276,7 @@
               "+"
             ],
             "enabled": false,
+            "denial": "Not available now.",
             "expect": "screen"
           },
           {
@@ -281,6 +286,7 @@
               "-"
             ],
             "enabled": false,
+            "denial": "Not available now.",
             "expect": "screen"
           },
           {
@@ -291,6 +297,7 @@
               "T"
             ],
             "enabled": false,
+            "denial": "Not available now.",
             "expect": "screen"
           },
           {
@@ -311,6 +318,7 @@
               "M"
             ],
             "enabled": false,
+            "denial": "Not available now.",
             "expect": "screen"
           },
           {

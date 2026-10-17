@@ -5084,7 +5084,8 @@
           "$ref": "#/$defs/text"
         },
         "denial": {
-          "$ref": "#/$defs/text"
+          "$ref": "#/$defs/text",
+          "description": "Why it is off, in the player's language: the screen's own reason, else that it is not available now. Present on every row; not empty on a row that is off and `selectable`."
         },
         "hotkey": {
           "type": "string",
@@ -5208,14 +5209,41 @@
                 "type": "boolean"
               },
               "denial": {
-                "type": "string"
+                "type": "string",
+                "description": "Why it is off, in the player's language: the screen's own reason, else that it is not available now. Present whenever it is off."
               }
             },
             "required": [
               "id",
               "enabled"
             ],
-            "additionalProperties": false
+            "additionalProperties": false,
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "enabled": {
+                      "const": false
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "denial": {
+                      "not": {
+                        "const": ""
+                      }
+                    }
+                  },
+                  "required": [
+                    "denial"
+                  ]
+                }
+              }
+            ]
           }
         },
         "look": {
@@ -5234,7 +5262,37 @@
         "columns"
       ],
       "additionalProperties": false,
-      "description": "One row of a `list`. `id` is what an affordance's `row`/`rows` argument names. `enabled`/`denial` say whether the list's affordances apply to it."
+      "description": "One row of a `list`. `id` is what an affordance's `row`/`rows` argument names. `enabled`/`denial` say whether the list's affordances apply to it.",
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "const": false
+              },
+              "selectable": {
+                "const": true
+              }
+            },
+            "required": [
+              "enabled",
+              "selectable"
+            ]
+          },
+          "then": {
+            "properties": {
+              "denial": {
+                "not": {
+                  "const": ""
+                }
+              }
+            },
+            "required": [
+              "denial"
+            ]
+          }
+        }
+      ]
     },
     "arg_shape": {
       "type": "object",
@@ -5353,7 +5411,7 @@
         },
         "denial": {
           "$ref": "#/$defs/text",
-          "description": "Localized reason when disabled."
+          "description": "Why it is off, in the player's language: the screen's own reason, else that it is not available now. Present whenever it is off."
         },
         "role": {
           "enum": [
@@ -5389,7 +5447,33 @@
         "expect"
       ],
       "additionalProperties": false,
-      "description": "Something the player can do now, invoked by `id` with an `invoke` operation. Ids are opaque."
+      "description": "Something the player can do now, invoked by `id` with an `invoke` operation. Ids are opaque.",
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "const": false
+              }
+            },
+            "required": [
+              "enabled"
+            ]
+          },
+          "then": {
+            "properties": {
+              "denial": {
+                "not": {
+                  "const": ""
+                }
+              }
+            },
+            "required": [
+              "denial"
+            ]
+          }
+        }
+      ]
     },
     "invoke_args": {
       "type": "object",
@@ -5815,6 +5899,10 @@
               "enabled": {
                 "type": "boolean"
               },
+              "denial": {
+                "$ref": "#/$defs/text",
+                "description": "Why it is off, in the player's language: the screen's own reason, else that it is not available now. Present whenever it is off."
+              },
               "unread": {
                 "type": "boolean",
                 "description": "Something in the tab is new to the player."
@@ -5826,7 +5914,33 @@
               "selected",
               "enabled"
             ],
-            "additionalProperties": false
+            "additionalProperties": false,
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "enabled": {
+                      "const": false
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "denial": {
+                      "not": {
+                        "const": ""
+                      }
+                    }
+                  },
+                  "required": [
+                    "denial"
+                  ]
+                }
+              }
+            ]
           }
         },
         "select": {
@@ -6218,7 +6332,8 @@
                 "type": "boolean"
               },
               "denial": {
-                "$ref": "#/$defs/text"
+                "$ref": "#/$defs/text",
+                "description": "Why it is off, in the player's language: the screen's own reason, else that it is not available now. Present whenever it is off."
               },
               "selected": {
                 "type": "boolean"
@@ -6229,7 +6344,33 @@
               "y",
               "enabled"
             ],
-            "additionalProperties": false
+            "additionalProperties": false,
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "enabled": {
+                      "const": false
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "denial": {
+                      "not": {
+                        "const": ""
+                      }
+                    }
+                  },
+                  "required": [
+                    "denial"
+                  ]
+                }
+              }
+            ]
           }
         }
       },
