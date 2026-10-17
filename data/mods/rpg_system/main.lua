@@ -178,19 +178,21 @@ local function get_core_stats(character)
   local core_int = character:get_int_base() + get_char_value(character, "rpg_assigned_int", 0)
   local core_per = character:get_per_base() + get_char_value(character, "rpg_assigned_per", 0)
   for _, mutation_id in ipairs(STAT_BONUS_IDS) do
-    local mutation = MUTATIONS[mutation_id:str()]
-    if not mutation then
-      goto continue_stat_bonus
-    end
-    local bonuses = mutation.stat_bonuses
-    if not bonuses then
-      goto continue_stat_bonus
-    end
+    if character:has_trait(mutation_id) then
+      local mutation = MUTATIONS[mutation_id:str()]
+      if not mutation then
+        goto continue_stat_bonus
+      end
+      local bonuses = mutation.stat_bonuses
+      if not bonuses then
+        goto continue_stat_bonus
+      end
 
-    if bonuses.str then core_str = core_str + (math.floor(level * bonuses.str * level_scaling)) end
-    if bonuses.dex then core_dex = core_dex + (math.floor(level * bonuses.dex * level_scaling)) end
-    if bonuses.int then core_int = core_int + (math.floor(level * bonuses.int * level_scaling)) end
-    if bonuses.per then core_per = core_per + (math.floor(level * bonuses.per * level_scaling)) end
+      if bonuses.str then core_str = core_str + (math.floor(level * bonuses.str * level_scaling)) end
+      if bonuses.dex then core_dex = core_dex + (math.floor(level * bonuses.dex * level_scaling)) end
+      if bonuses.int then core_int = core_int + (math.floor(level * bonuses.int * level_scaling)) end
+      if bonuses.per then core_per = core_per + (math.floor(level * bonuses.per * level_scaling)) end
+    end
     ::continue_stat_bonus::
   end
   return { str = core_str, dex = core_dex, int = core_int, per = core_per }
