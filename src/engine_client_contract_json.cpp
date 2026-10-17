@@ -661,6 +661,9 @@ auto body_json( const map_body &body, const bubble_frame &frame ) -> json
                                         bubble_frame{ .omt = true } : frame );
     }
     if( body.overmap ) { result["overmap"] = overmap_json( *body.overmap ); }
+    for( const auto &list : body.item_lists ) {
+        result["item_lists"].push_back( {{"id", list.id}, {"label", list.label}, {"verb", list.verb}} );
+    }
     return result;
 }
 auto body_json( const game_client::interaction_canvas &body,

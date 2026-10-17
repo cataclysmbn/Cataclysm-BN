@@ -227,11 +227,21 @@ struct grid_body {
     std::vector<grid_cell> cells = {};
 };
 /// Positions stay bubble-relative here, as natively; they become absolute on the wire.
+/// A list of the avatar's items the map shows beside it.
+struct item_list {
+    /// The avatar member that holds the rows, such as `avatar.ground`.
+    std::string id = {};
+    /// The heading, localized.
+    std::string label = {};
+    /// What moving a row out of the list does, localized.
+    std::string verb = {};
+};
 struct map_body {
     /// `world` or `overmap`.
     std::string mode = "world";
     std::optional<game_client::interaction_target> target = std::nullopt;
     std::optional<game_client::interaction_overmap> overmap = std::nullopt;
+    std::vector<item_list> item_lists = {};
 };
 using component_body =
     std::variant<list_body, tabs_body, split_body, panel_body, form_body, text_body, grid_body,

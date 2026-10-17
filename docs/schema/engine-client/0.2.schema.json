@@ -6441,6 +6441,36 @@
         },
         "overmap": {
           "$ref": "#/$defs/overmap"
+        },
+        "item_lists": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "enum": [
+                  "avatar.ground",
+                  "avatar.inventory"
+                ],
+                "description": "The avatar member that holds the rows."
+              },
+              "label": {
+                "$ref": "#/$defs/text",
+                "description": "The list's heading, localized."
+              },
+              "verb": {
+                "$ref": "#/$defs/text",
+                "description": "What moving a row out of the list does (`pickup` from the ground, `drop` from the inventory), localized."
+              }
+            },
+            "required": [
+              "id",
+              "label",
+              "verb"
+            ],
+            "additionalProperties": false
+          },
+          "description": "The avatar's item lists the world map shows beside it, in order, also while the map is covered. Absent on other maps."
         }
       },
       "required": [

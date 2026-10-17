@@ -265,7 +265,14 @@ auto map_view( const boundary_state &state ) -> screen_view
 {
     auto result = screen_view{
         .role = "map",
-        .root = component{ .id = "map:world", .affordances = { "bn:travel", "bn:context" }, .body = map_body{} },
+        .root = component{
+            .id = "map:world", .affordances = { "bn:travel", "bn:context" },
+            .body = map_body{
+                .item_lists = {
+                    { .id = ground_rows, .label = _( "Ground" ), .verb = _( "Pick up" ) },
+                    { .id = inventory_rows, .label = _( "Inventory" ), .verb = _( "Drop" ) },
+                } },
+        },
         .affordances = {
             {
                 .id = "bn:travel", .label = native_label( state, { "SELECT" } ), .args = { .pos = pos_shape{} },

@@ -990,7 +990,19 @@
                 "bn:travel",
                 "bn:context"
               ],
-              "mode": "world"
+              "mode": "world",
+              "item_lists": [
+                {
+                  "id": "avatar.ground",
+                  "label": "Ground",
+                  "verb": "Pick up"
+                },
+                {
+                  "id": "avatar.inventory",
+                  "label": "Inventory",
+                  "verb": "Drop"
+                }
+              ]
             },
             "affordances": [
               {
@@ -2417,7 +2429,19 @@
             "bn:travel",
             "bn:context"
           ],
-          "mode": "world"
+          "mode": "world",
+          "item_lists": [
+            {
+              "id": "avatar.ground",
+              "label": "Ground",
+              "verb": "Pick up"
+            },
+            {
+              "id": "avatar.inventory",
+              "label": "Inventory",
+              "verb": "Drop"
+            }
+          ]
         },
         "affordances": [
           {
@@ -5298,7 +5322,19 @@
                     "bn:travel",
                     "bn:context"
                   ],
-                  "mode": "world"
+                  "mode": "world",
+                  "item_lists": [
+                    {
+                      "id": "avatar.ground",
+                      "label": "Ground",
+                      "verb": "Pick up"
+                    },
+                    {
+                      "id": "avatar.inventory",
+                      "label": "Inventory",
+                      "verb": "Drop"
+                    }
+                  ]
                 },
                 "affordances": [
                   {
@@ -6983,7 +7019,19 @@
             "root": {
               "id": "map:world",
               "kind": "map",
-              "mode": "world"
+              "mode": "world",
+              "item_lists": [
+                {
+                  "id": "avatar.ground",
+                  "label": "Ground",
+                  "verb": "Pick up"
+                },
+                {
+                  "id": "avatar.inventory",
+                  "label": "Inventory",
+                  "verb": "Drop"
+                }
+              ]
             },
             "affordances": [],
             "shortcuts": [
@@ -7900,7 +7948,19 @@
             "bn:travel",
             "bn:context"
           ],
-          "mode": "world"
+          "mode": "world",
+          "item_lists": [
+            {
+              "id": "avatar.ground",
+              "label": "Ground",
+              "verb": "Pick up"
+            },
+            {
+              "id": "avatar.inventory",
+              "label": "Inventory",
+              "verb": "Drop"
+            }
+          ]
         },
         "shortcuts": [
           {
