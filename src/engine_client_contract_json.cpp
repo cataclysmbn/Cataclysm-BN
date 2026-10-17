@@ -1,6 +1,8 @@
 #include "engine_client_component.h"
 #include "engine_client_contract.h"
 #include "engine_client_event.h"
+#include "string_formatter.h"
+#include "translations.h"
 
 #include <nlohmann/json.hpp>
 #include <ranges>
@@ -93,6 +95,14 @@ auto to_array( const Values &values ) -> json
     auto result = json::array();
     for( const auto &value : values ) { result.push_back( to_json( value ) ); }
     return result;
+}
+/// The localized line for a planned map route, which the engine walks when its end is selected again.
+auto route_text( const std::vector<position> &route ) -> std::string
+{
+    const auto steps = static_cast<int>( route.size() );
+    //~ The planned map travel route; %d is its length in squares.
+    return string_format( vgettext( "Route of %d square; select its end again to go.",
+                                    "Route of %d squares; select its end again to go.", steps ), steps );
 }
 auto layer_array( const std::vector<look> &values, const std::string_view layer_kind ) -> json
 {
@@ -738,7 +748,10 @@ auto to_json( const changes &delta ) -> json
         }
     }
     if( delta.environment ) { result["environment"] = to_json( *delta.environment ); }
-    if( delta.route ) { result["route"] = to_array( *delta.route ); }
+    if( delta.route ) {
+        result["route"] = to_array( *delta.route );
+        if( !delta.route->empty() ) { result["route_text"] = route_text( *delta.route ); }
+    }
     if( delta.interaction ) {
         result["interaction"] = to_stacked_json( *delta.interaction );
         if( delta.actions_unchanged ) { result["interaction"].erase( "actions" ); }
@@ -938,7 +951,10 @@ auto serialize_snapshot( const snapshot &value ) -> std::expected<snapshot_wire,
     header["interaction"] = to_stacked_json( value.value.interaction );
     if( world.avatar ) { header["avatar"] = to_json( *world.avatar ); }
     if( world.environment ) { header["environment"] = to_json( *world.environment ); }
-    if( !world.route.empty() ) { header["route"] = to_array( world.route ); }
+    if( !world.route.empty() ) {
+        header["route"] = to_array( world.route );
+        header["route_text"] = route_text( world.route );
+    }
     header["entities"] = json::array();
     for( const auto &entry : world.entities ) { header["entities"].push_back( to_json( entry.second ) ); }
     if( !value.log.empty() ) {

@@ -2659,6 +2659,9 @@
         "route": {
           "$ref": "#/$defs/route"
         },
+        "route_text": {
+          "$ref": "#/$defs/route_text"
+        },
         "interaction": {
           "$ref": "#/$defs/interaction_update"
         }
@@ -4287,6 +4290,9 @@
         "route": {
           "$ref": "#/$defs/route"
         },
+        "route_text": {
+          "$ref": "#/$defs/route_text"
+        },
         "entities": {
           "type": "array",
           "items": {
@@ -4909,6 +4915,10 @@
         "$ref": "#/$defs/pos"
       },
       "description": "The native auto-move route a map click planned and not yet confirmed: the squares to walk, nearest first, ending at the clicked square. Empty or absent when nothing is planned."
+    },
+    "route_text": {
+      "type": "string",
+      "description": "The localized line for a non-empty `route`, such as `Route of 3 squares; select its end again to go.`; it comes with every non-empty `route` and is absent when nothing is planned."
     },
     "viewport": {
       "type": "object",

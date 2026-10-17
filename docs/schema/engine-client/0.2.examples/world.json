@@ -1023,7 +1023,8 @@
                   "y": 4,
                   "z": 0
                 }
-              ]
+              ],
+              "route_text": "Route of 3 squares; select its end again to go."
             }
           },
           {
