@@ -392,6 +392,10 @@ async function playEveryOperation(session: Session) {
   await run({ kind: "context", pos: { ...standing, x: standing.x + 4 } })
   await run({ kind: "context", pos: standing })
   await session.clear()
+  // An action the square lists: the look view, always offered, left by its own cancel.
+  await run({ kind: "tile_action", action_id: "look", pos: standing })
+  await run({ kind: "invoke", affordance_id: "QUIT" })
+  await session.clear()
 
   // A grenade through the debug menu: choose, fill and cancel; then drop it and pick it up.
   await run({ kind: "action", action_id: "debug" })
