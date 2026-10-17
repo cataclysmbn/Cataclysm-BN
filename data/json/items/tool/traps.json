@@ -255,6 +255,27 @@
     }
   },
   {
+    "id": "hunting_snare",
+    "type": "GENERIC",
+    "category": "deployables",
+    "name": { "str": "hunting snare" },
+    "description": "A noose of cord tied to a bent stick trigger, meant for small game.  Set it on natural ground, then examine it to set bait.  Animals drawn by the bait may get caught while you are away; they keep clear of it while you are close.",
+    "weight": "150 g",
+    "volume": "250 ml",
+    "price": "1 USD",
+    "price_postapoc": "50 cent",
+    "material": [ "cotton", "wood" ],
+    "symbol": ";",
+    "color": "brown",
+    "use_action": {
+      "type": "place_trap",
+      "trap": "tr_hunting_snare",
+      "moves": 300,
+      "practice": 3,
+      "done_message": "You set the hunting snare."
+    }
+  },
+  {
     "id": "tripwire",
     "type": "GENERIC",
     "category": "deployables",
@@ -322,5 +343,22 @@
     },
     "flags": [ "HURT_WHEN_WIELDED", "TRADER_AVOID" ],
     "to_hit": -1
+  },
+  {
+    "id": "debug_hunting_trap",
+    "copy-from": "beartrap",
+    "type": "GENERIC",
+    "name": { "str": "debug hunting trap" },
+    "description": "Debug only.  A bear trap that catches any prey almost instantly once you are more than 6 tiles away.",
+    "weight": "100 g",
+    "color": "pink",
+    "use_action": {
+      "type": "place_trap",
+      "allow_underwater": true,
+      "trap": "tr_debug_hunting",
+      "moves": 100,
+      "practice": 0,
+      "done_message": "You set the debug hunting trap."
+    }
   }
 ]

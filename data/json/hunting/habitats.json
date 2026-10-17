@@ -1,0 +1,30 @@
+[
+  {
+    "type": "hunting_habitat",
+    "id": "forest",
+    "land_use_codes": [ "forest", "brushland" ],
+    "prey_group": "GROUP_HUNTING_FOREST",
+    "catch_rate": 0.5
+  },
+  {
+    "type": "hunting_habitat",
+    "id": "wetland",
+    "land_use_codes": [ "wetland", "wetland_forest", "wetland_saltwater", "cranberry_bog" ],
+    "prey_group": "GROUP_HUNTING_WETLAND",
+    "catch_rate": 0.45
+  },
+  {
+    "type": "hunting_habitat",
+    "id": "field",
+    "land_use_codes": [ "open_land", "cropland", "pasture", "orchard", "nursery", "powerline_utility", "golf_course", "cemetery" ],
+    "prey_group": "GROUP_HUNTING_FIELD",
+    "catch_rate": 0.35
+  },
+  {
+    "type": "hunting_habitat",
+    "id": "rural",
+    "land_use_codes": [ "residential_very_low", "residential_low" ],
+    "prey_group": "GROUP_HUNTING_RURAL",
+    "catch_rate": 0.15
+  }
+]

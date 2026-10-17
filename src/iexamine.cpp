@@ -111,6 +111,7 @@
 #include "timed_event.h"
 #include "translations.h"
 #include "trap.h"
+#include "trap_hunting.h"
 #include "ui.h"
 #include "ui_manager.h"
 #include "uistate.h"
@@ -4767,6 +4768,110 @@ void iexamine::recycle_compactor( player &, const tripoint_bub_ms &examp )
     }
 }
 
+namespace
+{
+
+const auto skill_traps_hunting = skill_id( "traps" );
+
+auto set_hunting_bait( avatar &you, const tripoint_bub_ms &examp ) -> void
+{
+    auto &here = get_map();
+    const auto site = trap_hunting::evaluate_site( here, examp );
+    if( !site ) {
+        add_msg( m_info, site.error() );
+        return;
+    }
+    auto *const chosen = game_menus::inv::titled_filter_menu( []( const item & it ) {
+        return hunting_bait::for_item( it.typeId() ).has_value() && !it.rotten();
+    }, you, _( "Use what as bait?" ), _( "You have nothing to use as bait." ) );
+    if( chosen == nullptr ) {
+        return;
+    }
+    auto bait = chosen->count_by_charges() ? you.reduce_charges( chosen, 1 ) : chosen->detach();
+    const auto bait_name = bait->tname();
+    trap_hunting::mark_as_bait( *bait, {
+        .pos = map_local_to_abs( here, examp ),
+        .placed_at = calendar::turn,
+        .trapper_skill = you.get_skill_level( skill_traps_hunting ),
+        .cover = site->cover,
+    } );
+    you.moves -= to_moves<int>( 30_seconds );
+    you.practice( skill_traps_hunting, 2 );
+    auto leftover = here.add_item_or_charges( examp, std::move( bait ), false );
+    if( leftover ) {
+        trap_hunting::release_bait( *leftover );
+        you.i_add_or_drop( std::move( leftover ) );
+        add_msg( m_info, _( "There is no room left to set the bait." ) );
+        return;
+    }
+    add_msg( _( "You set the %s as bait." ), bait_name );
+}
+
+auto take_hunting_bait( player &p, const tripoint_bub_ms &examp, item &bait ) -> void
+{
+    auto taken = get_map().i_rem( examp, &bait );
+    trap_hunting::release_bait( *taken );
+    p.add_msg_if_player( _( "You take back the %s." ), taken->tname() );
+    p.moves -= to_moves<int>( 10_seconds );
+    p.i_add_or_drop( std::move( taken ) );
+}
+
+auto examine_hunting_trap( player &p, const tripoint_bub_ms &examp, const trap &tr ) -> void
+{
+    auto &here = get_map();
+    // Settle the time since the last periodic check before showing the bait state.
+    const auto caught = trap_hunting::resolve( {
+        .buffer = here.get_mapbuffer(),
+        .pos = map_local_to_abs( here, examp ),
+        .now = calendar::turn,
+        .presence = trap_hunting::presence_factor( rl_dist( p.bub_pos(), examp ) ),
+        .lookup_mode = mapbuffer_lookup_mode::resident_only,
+    } );
+    if( caught ) {
+        add_msg( m_good, _( "A %1$s has been caught in the %2$s." ), caught->obj().nname(), tr.name() );
+        if( !here.tr_at( examp ).hunting ) {
+            // The catch sprang the trap, so there is nothing left to bait or disarm.
+            return;
+        }
+    }
+    auto *const bait = trap_hunting::find_bait( here, examp );
+    const auto takes_down = tr.get_difficulty() == 0 && tr.get_avoidance() == 0;
+
+    enum hunting_choice : int { set_bait, take_bait, disarm };
+    auto menu = uilist{};
+    menu.text = bait != nullptr
+                ? string_format( _( "There is a %1$s here, baited with %2$s." ), tr.name(), bait->tname() )
+                : string_format(
+                    _( "There is an unbaited %s here.  No animal is foolish enough to wander into an empty trap." ),
+                    tr.name() );
+    if( bait != nullptr ) {
+        menu.addentry( take_bait, true, 'b', _( "Take back the bait" ) );
+    } else {
+        menu.addentry( set_bait, true, 'b', _( "Set bait" ) );
+    }
+    menu.addentry( disarm, true, 'd', takes_down ? _( "Take down the trap" ) : _( "Disarm the trap" ) );
+    menu.query();
+
+    switch( menu.ret ) {
+        case set_bait:
+            set_hunting_bait( get_avatar(), examp );
+            break;
+        case take_bait:
+            take_hunting_bait( p, examp, *bait );
+            break;
+        case disarm:
+            if( bait != nullptr ) {
+                take_hunting_bait( p, examp, *bait );
+            }
+            here.disarm_trap( examp );
+            break;
+        default:
+            break;
+    }
+}
+
+} // namespace
+
 void iexamine::trap( player &p, const tripoint_bub_ms &examp )
 {
     map &here = get_map();
@@ -4776,6 +4881,10 @@ void iexamine::trap( player &p, const tripoint_bub_ms &examp )
     }
     const int possible = tr.get_difficulty();
     bool seen = tr.can_see( examp, p );
+    if( seen && tr.hunting && !here.partial_con_at( examp ) ) {
+        examine_hunting_trap( p, examp, tr );
+        return;
+    }
     if( tr.loadid == tr_unfinished_construction || here.partial_con_at( tripoint_bub_ms( examp ) ) ) {
         partial_con *pc = here.partial_con_at( tripoint_bub_ms( examp ) );
         if( pc ) {

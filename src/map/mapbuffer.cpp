@@ -44,6 +44,7 @@
 #include "thread_pool.h"
 #include "translations.h"
 #include "trap.h"
+#include "trap_hunting.h"
 #include "ui_manager.h"
 #include "units_mass.h"
 #include "vehicle/veh_type.h"
@@ -2041,6 +2042,9 @@ auto mapbuffer::set_trap(
 
     tile->sm->set_trap(tile->local, trap);
     sync_active_trap_change_side_tables(p, tile->local, old_id, trap);
+    if (old_id.obj().hunting || trap.obj().hunting) {
+        trap_hunting::release_bait_at(*this, p, options.mode);
+    }
     return true;
 }
 
@@ -3541,6 +3545,16 @@ auto mapbuffer::actualize_submap(const tripoint_abs_sm& pos) -> void {
         };
         // Elapsed has two modes depending on when it is done
         // It starts with anything that occurs while actively simulated
+
+        // Before rot handling, so bait that spoiled while away still had its fresh time counted.
+        if (trap_at_tile(*tmpsub, p).hunting) {
+            trap_hunting::resolve({
+                .buffer = *this,
+                .pos = abs_pos,
+                .now = calendar::turn,
+                .lookup_mode = mapbuffer_lookup_mode::resident_only,
+            });
+        }
 
         auto& items = tmpsub->get_items(p);
         if (!items.empty()) {
