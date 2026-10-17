@@ -7,6 +7,7 @@
 #include "item_category.h"
 #include "output.h"
 #include "player_helpers.h"
+#include "type_id.h"
 
 #if defined(CATA_MCP)
 #    include "locale_fixture.h"
@@ -146,6 +147,26 @@ TEST_CASE(
     auto ids = std::set<std::string>{};
     for (const auto& row : rows) { ids.insert(row.id); }
     CHECK(ids.size() == rows.size());
+}
+
+TEST_CASE(
+    "the inventory selector's weight limit stays positive for a character with debug storage",
+    "[inventory][engine_client_component]") {
+    clear_avatar();
+    auto& dummy = get_avatar();
+    dummy.set_mutation(trait_id("DEBUG_STORAGE"));
+    auto rock = item::spawn("rock");
+    auto selector = plain_selector(dummy);
+    selector.add_item(selector.own_inv_column, rock.get());
+
+    const auto view = selector.interaction_view();
+    REQUIRE(view.root);
+    const auto& stats = body<ec::panel_body>(*view.root).stats;
+    const auto weight = std::ranges::find(stats, "weight", &ec::panel_stat::key);
+    REQUIRE(weight != stats.end());
+    CHECK(weight->max.front() != '-');
+    CHECK(std::stod(weight->max) > 1e9);
+    CHECK(weight->tone.empty());
 }
 
 TEST_CASE(
