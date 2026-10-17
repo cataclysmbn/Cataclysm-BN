@@ -1107,9 +1107,9 @@ class read_inventory_preset final: public inventory_selector_preset
 
         /** Splits books into groups: Unknown, CanTrainSkill, CanNotTrainSkillAnymore, ForFun.
         * 1. Unknown sorted by default algorithm.
-        * 2. CanTrainSkill grouped by skill and sorted by time to read
+        * 2. CanTrainSkill grouped by skill and sorted by level, then by time to read
         *    because player probably wants to level up certain skill faster.
-        * 3. CanNotTrainSkillAnymore grouped by skill.
+        * 3. CanNotTrainSkillAnymore grouped by skill and sorted by level.
         * 4. ForFun sorted to make most fun books first.
         */
         bool sort_compare( const inventory_entry &lhs, const inventory_entry &rhs ) const override {
@@ -1144,10 +1144,12 @@ class read_inventory_preset final: public inventory_selector_preset
                     bool can_still_learn = false;
                     bool is_learnable_already = true;
                     int time_to_levelup = 0;
+                    int level = 0;
                     int fun = 0;
 
                     book_info( const islot_book &book, const player &p ):
                         time_to_levelup( book.time ),
+                        level( book.level ),
                         fun( book.fun ),
                         book( book ) {
                         if( book.martial_art ) {
@@ -1199,18 +1201,20 @@ class read_inventory_preset final: public inventory_selector_preset
                 const auto a = std::make_tuple(
                                    skill_a,
                                    info_a.is_learnable_already ? 0 : 1,
+                                   info_a.level,
                                    info_a.time_to_levelup
                                );
                 const auto b = std::make_tuple(
                                    skill_b,
                                    info_b.is_learnable_already ? 0 : 1,
+                                   info_b.level,
                                    info_b.time_to_levelup
                                );
                 return ( a == b ) ? base_sort : ( a < b );
             }
 
             if( skill_a == skill_b ) {
-                return base_sort;
+                return ( info_a.level == info_b.level ) ? base_sort : info_a.level < info_b.level;
             }
             return skill_a < skill_b;
         }
