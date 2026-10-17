@@ -921,7 +921,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
             }
 
             if( blink && uistate.overmap_highlighted_omts.contains( omp ) ) {
-                if( tile_iso ) {
+                if( is_iso() ) {
                     const tile_search_params tile {"highlight", C_NONE, empty_string, 0, 0};
                     draw_from_id_string( tile, omp.reinterpret_as<tripoint_bub_ms>(), std::nullopt, std::nullopt,
                                          lit_level::LIT, false, 0, false );

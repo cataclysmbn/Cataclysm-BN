@@ -372,6 +372,7 @@ class tileset
         int tile_width;
         int tile_height;
         int zlevel_height = 0;
+        bool iso = false;
         float prevent_occlusion_min_dist = 0.0f;
         float prevent_occlusion_max_dist = 0.0f;
 
@@ -440,6 +441,7 @@ class tileset
         auto get_zlevel_height() const -> int {
             return zlevel_height;
         }
+        auto is_iso() const -> bool { return iso; }
         auto get_prevent_occlusion_min_dist() const -> float {
             return prevent_occlusion_min_dist;
         }
@@ -1082,6 +1084,8 @@ class cata_tiles
         int get_tile_width() const {
             return tile_width;
         }
+        /// Whether this context's own tileset is isometric.
+        auto is_iso() const -> bool { return tileset_ptr && tileset_ptr->is_iso(); }
         float get_tile_ratiox() const {
             return tile_ratiox;
         }

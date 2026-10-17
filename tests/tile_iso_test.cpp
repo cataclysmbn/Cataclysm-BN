@@ -27,6 +27,8 @@ TEST_CASE("an_overmap_tileset_leaves_the_map_tilesets_iso_mode", "[tiles][iso]")
     overmap_tilecontext->load_tileset(
         "ASCIITiles", no_mods, /*precheck=*/false, /*force=*/true, /*pump_events=*/false);
     CHECK(tile_iso);
+    CHECK(tilecontext->is_iso());
+    CHECK_FALSE(overmap_tilecontext->is_iso());
 }
 
 #endif // TILES
