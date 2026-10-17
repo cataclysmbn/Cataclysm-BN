@@ -1,0 +1,16 @@
+[
+  {
+    "type": "character_resource",
+    "id": "radiation",
+    "drain_resource": "RAD",
+    "item_info": "* This tool <bad>causes irradiation</bad> to power itself.",
+    "need_info": "You shouldn't see this"
+  },
+  {
+    "type": "character_resource",
+    "id": "ups",
+    "drain_flag": "IS_UPS",
+    "item_info": "*  This tool drains charges from a <info>universal power supply</info>",
+    "need_info": "universal power supply"
+  }
+]

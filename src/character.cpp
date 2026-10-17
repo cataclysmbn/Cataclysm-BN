@@ -19,6 +19,7 @@
 #include "character_encumbrance.h"
 #include "character_functions.h"
 #include "character_martial_arts.h"
+#include "character_resource.h"
 #include "character_stat.h"
 #include "clothing_utils.h"
 #include "clzones.h"
@@ -8870,6 +8871,10 @@ bool Character::has_enough_charges( const item &it, bool show_msg ) const
             it.ammo_sufficient() ) {
             return true;
         }
+        if( it.uses_external_resource() &&
+            it.has_external_resource( *this, it.ammo_required() ) ) {
+            return true;
+        }
 
         if( show_msg ) {
             if( it.has_flag( flag_USE_UPS ) ) {
@@ -8888,6 +8893,11 @@ bool Character::has_enough_charges( const item &it, bool show_msg ) const
         }
         return false;
     }
+
+    if( it.uses_external_resource() && it.has_external_resource( *this, it.ammo_required() ) ) {
+        return true;
+    }
+
     if( it.has_flag( flag_USE_UPS ) ) {
         if( has_charges( itype_UPS, it.ammo_required() ) || it.ammo_sufficient() ) {
             return true;
@@ -8956,6 +8966,11 @@ bool Character::consume_charges( item &used, int qty )
         }
     }
 
+    if( used.uses_external_resource() &&
+        used.consume_external_resource( *this, used.ammo_required() ) ) {
+        return false;
+    }
+
     // USE_UPS may occur on base items and is added by the UPS tool mod
     // If an item has the flag, then it should not be consumed on use.
     if( used.has_flag( flag_USE_UPS ) ) {
@@ -8966,7 +8981,7 @@ bool Character::consume_charges( item &used, int qty )
         } else {
             use_charges( itype_UPS, qty );
         }
-    } else {
+    } else if( !used.consume_external_resource( *this, qty ) ) {
         used.ammo_consume( std::min( qty, used.ammo_remaining() ), bub_pos() );
     }
     return false;
@@ -11514,8 +11529,10 @@ std::vector<detached_ptr<item>> Character::use_charges( const itype_id &what, in
 
 
     bool has_tool_with_UPS = false;
+    std::vector<character_resource_id> external_resources;
     const auto p = bub_pos();
-    remove_items_with( [&qty, filter, &has_tool_with_UPS, &what, &res, &p]( detached_ptr<item> &&e ) {
+    remove_items_with( [&qty, filter, &has_tool_with_UPS, &what, &res, &p,
+          &external_resources]( detached_ptr<item> &&e ) {
         if( qty == 0 ) {
             // found sufficient charges
             return VisitResponse::ABORT;
@@ -11525,6 +11542,9 @@ std::vector<detached_ptr<item>> Character::use_charges( const itype_id &what, in
         }
         if( e->typeId() == what && e->has_flag( flag_USE_UPS ) ) {
             has_tool_with_UPS = true;
+        }
+        if( e->uses_external_resource() ) {
+            external_resources.push_back( e->type->resource_drained );
         }
         if( e->is_tool() ) {
             if( e->typeId() == what ) {
@@ -11569,6 +11589,11 @@ std::vector<detached_ptr<item>> Character::use_charges( const itype_id &what, in
         std::vector<detached_ptr<item>> found = use_charges( itype_UPS, qty );
         res.insert( res.end(), std::make_move_iterator( found.begin() ),
                     std::make_move_iterator( found.end() ) );
+    }
+    for( const auto &resource : external_resources ) {
+        if( resource->drain_charges( *this, qty ) ) {
+            return res;
+        }
     }
 
     return res;

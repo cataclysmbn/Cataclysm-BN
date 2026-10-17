@@ -1982,7 +1982,6 @@ void Item_factory::load( islot_gun &slot, const JsonObject &jo, const std::strin
     assign( jo, "barrel_volume", slot.barrel_volume, strict, 0_ml );
     assign( jo, "built_in_mods", slot.built_in_mods, strict );
     assign( jo, "default_mods", slot.default_mods, strict );
-    assign( jo, "ups_charges", slot.ups_charges, strict, 0 );
     assign( jo, "blackpowder_tolerance", slot.blackpowder_tolerance, strict, 0 );
     assign( jo, "min_cycle_recoil", slot.min_cycle_recoil, strict, 0 );
     assign( jo, "ammo_effects", slot.ammo_effects, strict );
@@ -1990,6 +1989,19 @@ void Item_factory::load( islot_gun &slot, const JsonObject &jo, const std::strin
     assign( jo, "speed", slot.speed );
     assign( jo, "aimedcritbonus", slot.aimedcritbonus );
     assign( jo, "aimedcritmaxbonus", slot.aimedcritmaxbonus );
+    if( jo.has_member( "ups_charges" ) ) {
+        // TODO: Actually use this.
+        // jo.show_warning( "Obsolete field ups_charges used, repace with `resources_used` and the `ups` resource" );
+        slot.resources_used[character_resource_id( "ups" )] = jo.get_int( "ups_charges" );
+    }
+    if( jo.has_member( "resource_charges" ) ) {
+        slot.resources_used.clear();
+        for( JsonObject obj : jo.get_array( "resource_charges" ) ) {
+            character_resource_id id( obj.get_string( "id" ) );
+            int charges = jo.get_int( "charges" );
+            slot.resources_used[id] = charges;
+        }
+    }
     if( jo.has_array( "valid_mod_locations" ) ) {
         slot.valid_mod_locations.clear();
         for( JsonArray curr : jo.get_array( "valid_mod_locations" ) ) {
@@ -2861,6 +2873,7 @@ void Item_factory::load_basic_info( const JsonObject &jo, itype &def, const std:
         def.explosion = load_explosion_data( je );
     }
 
+    assign( jo, "drained_resource", def.resource_drained );
     assign( jo, "flags", def.item_tags );
     assign( jo, "faults", def.faults );
 

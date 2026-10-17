@@ -1858,8 +1858,7 @@ ret_val<bool> firestarter_actor::can_use( const Character &p, const item &it, bo
         return ret_val<bool>::make_failure( _( "You can't do that while underwater." ) );
     }
 
-    if( !( it.has_flag( flag_USE_UPS ) && p.has_charges( itype_UPS, it.ammo_required() ) ) &&
-        ( it.ammo_remaining() < it.ammo_required() ) ) {
+    if( !it.units_remaining( p ) < it.ammo_required() ) {
         return ret_val<bool>::make_failure( _( "This tool doesn't have enough charges." ) );
     }
 
@@ -5088,12 +5087,8 @@ int gps_device_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) 
     params.existing_only  = false;
     params.search_layers  = omt_find_above_ground_layer;
     params.explored       = false;
-    if( it.has_flag( flag_USE_UPS ) ) {
-        params.max_results = static_cast<size_t>( 1 + p.charges_of( itype_UPS ) /
-                             additional_charges_per_tile );
-    } else {
-        params.max_results = static_cast<size_t>( 1 + it.ammo_remaining() / additional_charges_per_tile );
-    }
+    params.max_results = static_cast<size_t>( 1 + it.units_remaining( p ) /
+                         additional_charges_per_tile );
     params.popup          = make_shared_fast<throbber_popup>( _( "Searching…" ) );
 
     const auto places = get_overmapbuffer( p.get_dimension() ).find_all( center, params );
@@ -5113,15 +5108,9 @@ int gps_device_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) 
         unique_names.insert( name );
         charges_built_up += additional_charges_per_tile;
     }
-    if( it.has_flag( flag_USE_UPS ) ) {
-        if( !p.has_charges( itype_UPS, charges_built_up ) ) {
-            p.add_msg_if_player( m_info, _( "Requires %.1f charges, but only %d remaining." ),
-                                 charges_built_up, p.charges_of( itype_UPS ) - 1 );
-            return 1;
-        }
-    } else if( 1 + it.ammo_remaining() < charges_built_up ) {
+    if( it.units_remaining( p ) < charges_built_up ) {
         p.add_msg_if_player( m_info, _( "Requires %.1f charges, but only %d remaining." ),
-                             charges_built_up, it.ammo_remaining() - 1 );
+                             charges_built_up, it.units_remaining( p ) );
         return 1;
     }
 
