@@ -33,6 +33,7 @@
 #include "units_energy.h"
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <iterator>
 #include <map>
@@ -41,6 +42,7 @@
 #include <ranges>
 #include <set>
 #include <string>
+#include <string_view>
 #include <vector>
 
 class wish_mutate_callback: public uilist_callback
@@ -53,8 +55,8 @@ class wish_mutate_callback: public uilist_callback
         bool started = false;
         std::vector<trait_id> vTraits;
         std::map<trait_id, bool> pTraits;
-        // Traits by mutation category
-        std::unordered_map<mutation_category_id, std::set<mutation_branch>> category_mutations;
+        // Labels of the category pages shown in the tab bar
+        std::vector<std::string> category_tabs;
         Character *p;
 
         nc_color mcolor( const trait_id &m ) {
@@ -87,57 +89,47 @@ class wish_mutate_callback: public uilist_callback
                 entry.extratxt.txt = p->has_base_trait( vTraits[ entnum ] ) ? "T" : "";
                 return true;
             }
-            if( input == 'c' || input == 'C' ) {
-                // Building menu with mutation category entries (first entry - 'ALL' for cancell purposes)
-                uilist category_menu;
-                // We'll keep vector of values to map it later from user input
-                std::vector<std::pair<const string_id<mutation_category_trait>, std::set<mutation_branch>>*>
-                        entries;
-                int c = 0;
-                auto ch = '0';
-                category_menu.addentry( c, true, ch, "ALL" );
-                for( auto &it : category_mutations ) {
-                    c++;
-                    ch++;
-                    category_menu.addentry( c, true, ch, it.first.str() );
-                    entries.push_back( &it );
-                }
-                // Waiting for user input
-                category_menu.query();
-                int ret = category_menu.ret;
-                if( ret < 0 ) {
-                    return true;
-                }
-                if( ret == 0 ) {
-                    // If 'ALL' chosen - clearing filter
-                    menu->clear_filter();
-                    return true;
-                }
-                ret -= 1;
-                // Extracting selected option & filtering traits on category presence
-                const auto entry = entries[ret];
-                auto predicate = [&]( const int idx ) {
-                    return entry->second.contains( *vTraits[idx] );
-                };
-                menu->filterpredicate( predicate );
-                return true;
-            }
             return false;
         }
 
+        // The menu has room for the part of the tab bar around the current page only
+        // and it reserves a line above the list for its own category line, which the
+        // labels are drawn into.  Picking the labels that fit is cheaper than keeping
+        // the bar in sync with the filter, so only those are handed to draw_tabs().
+        void draw_category_tabs( uilist *menu ) {
+            if( category_tabs.size() < 2 ) {
+                return;
+            }
+            const int list_width = menu->w_width - menu->pad_right;
+            // The tab bar overdraws the reserved line, so blank it first to keep
+            // its text from showing up in the gaps between the tabs.
+            mvwhline( menu->window, point( 1, 1 ), ' ', std::max( 0, list_width - 2 ) );
+            // Keep the rightmost tab clear of the mutation info panel.
+            const int max_tab_width = list_width - 3;
+            const auto current = std::min( menu->get_current_category(),
+                                           category_tabs.size() - 1 );
+            const auto range =
+                debug_menu::wish_mutation_tab_range( category_tabs, current, max_tab_width );
+            const auto visible = std::vector<std::string>( category_tabs.begin() + range.first,
+                                 category_tabs.begin() + range.last + 1 );
+            draw_tabs( menu->window, visible, current - range.first, max_tab_width );
+            // Point at the pages that did not fit into the bar.
+            if( range.first > 0 ) {
+                mvwputch( menu->window, point( 0, 1 ), c_light_gray, '<' );
+            }
+            if( range.last + 1 < category_tabs.size() ) {
+                mvwputch( menu->window, point( max_tab_width, 1 ), c_light_gray, '>' );
+            }
+        }
+
         void refresh( uilist *menu ) override {
+            draw_category_tabs( menu );
             // If it is our first time in menu - collect some data to map with uilist entry later
             if( !started ) {
                 started = true;
                 for( auto &traits_iter : mutation_branch::get_all() ) {
                     vTraits.push_back( traits_iter.id );
                     pTraits[traits_iter.id] = p->has_trait( traits_iter.id );
-                    for( auto &category : traits_iter.category ) {
-                        if( !category_mutations.contains( category ) ) {
-                            category_mutations[category] = std::set<mutation_branch>();
-                        }
-                        category_mutations[category].insert( traits_iter );
-                    }
                 }
             }
 
@@ -265,8 +257,11 @@ class wish_mutate_callback: public uilist_callback
             mvwprintz( menu->window, point( startx, menu->w_height - 3 ), c_green, msg );
             msg.clear();
             input_context ctxt( menu->input_category );
+            ctxt.register_action( "NEXT_TAB" );
+            ctxt.register_action( "PREV_TAB" );
             mvwprintw( menu->window, point( startx, menu->w_height - 2 ),
-                       _( "[%s] find, [%s] quit, [t] toggle base trait, [c] mutation categories menu" ),
+                       _( "[%s]/[%s] category, [%s] find, [%s] quit, [t] toggle base trait" ),
+                       ctxt.get_desc( "NEXT_TAB" ), ctxt.get_desc( "PREV_TAB" ),
                        ctxt.get_desc( "FILTER" ), ctxt.get_desc( "QUIT" ) );
 
             wnoutrefresh( menu->window );
@@ -275,10 +270,207 @@ class wish_mutate_callback: public uilist_callback
         ~wish_mutate_callback() override = default;
 };
 
+namespace
+{
+
+// Mutation type of the NPC background stories.  They get the NPC page instead of a
+// page of their own.
+const std::string npc_background_type = "BACKGROUND_SURVIVAL_STORY";
+// Id prefixes of the mutations that only exist for NPCs: the NPC traits, the NPC
+// background stories and the NPC experience traits.  Mutations that mods add in
+// these families are grouped with them.
+const std::array<std::string_view, 3> npc_mutation_prefixes = { "NPC_", "BGSS_", "Exp_" };
+
+/// Whether a mutation only exists for NPCs and belongs to the NPC page.
+auto is_npc_mutation( const trait_id &mutation ) -> bool
+{
+    for( const std::string_view prefix : npc_mutation_prefixes ) {
+        if( mutation.str().starts_with( prefix ) ) {
+            return true;
+        }
+    }
+    return mutation->types.contains( npc_background_type );
+}
+
+// Mutations that only exist for debugging.  The game marks them with
+// "debug": true, and the core data names them DEBUG_*; mutations that mods mark or
+// name the same way are grouped with them.
+const std::string debug_mutation_prefix = "DEBUG_";
+
+/// Whether a mutation only exists for debugging and belongs to the debug page.
+auto is_debug_mutation( const mutation_branch &mutation ) -> bool
+{
+    return mutation.debug || mutation.id.str().starts_with( debug_mutation_prefix );
+}
+
+} // namespace
+
+auto debug_menu::wish_mutation_groups() -> wish_mutation_group_list
+{
+    // A threshold mutation unlocks the mutations of a category without naming it,
+    // so the categories of a mutation are the ones it names plus the ones it is the
+    // threshold of.  A category that the data never defines keeps the mutations
+    // that it groups, so that they are not shown as the ones without a category.
+    const auto &category_traits = mutation_category_trait::get_all();
+    wish_mutation_group_list ret;
+    for( const mutation_branch &branch : mutation_branch::get_all() ) {
+        wish_mutation_group group;
+        group.categories = branch.category;
+        for( const auto &[category_id, category] : category_traits ) {
+            const bool threshold = std::ranges::find( category.threshold_muts, branch.id )
+                                   != category.threshold_muts.end();
+            const bool known = std::ranges::find( group.categories, category_id )
+                               != group.categories.end();
+            if( threshold && !known ) {
+                group.categories.push_back( category_id );
+            }
+        }
+        for( const std::string &type : branch.types ) {
+            // The NPC background stories are shown on the NPC page instead.
+            if( type != npc_background_type ) {
+                group.types.push_back( type );
+            }
+        }
+        group.npc = is_npc_mutation( branch.id );
+        group.debug = is_debug_mutation( branch );
+        ret.push_back( group );
+    }
+    return ret;
+}
+
+auto debug_menu::wish_mutation_categories(
+    const wish_mutation_group_list &groups ) -> std::vector<mutation_category_id>
+{
+    std::vector<mutation_category_id> ret;
+    for( const wish_mutation_group &group : groups ) {
+        for( const mutation_category_id &category : group.categories ) {
+            if( std::ranges::find( ret, category ) == ret.end() ) {
+                ret.push_back( category );
+            }
+        }
+    }
+    // Order the pages by id instead of by the number of mutations behind them.
+    std::ranges::sort( ret, []( const mutation_category_id & lhs, const mutation_category_id & rhs ) {
+        return lhs.str() < rhs.str();
+    } );
+    return ret;
+}
+
+auto debug_menu::wish_mutation_types(
+    const wish_mutation_group_list &groups ) -> std::vector<std::string>
+{
+    std::vector<std::string> ret;
+    for( const wish_mutation_group &group : groups ) {
+        for( const std::string &type : group.types ) {
+            if( std::ranges::find( ret, type ) == ret.end() ) {
+                ret.push_back( type );
+            }
+        }
+    }
+    // Order the pages by id, like the category pages.
+    std::ranges::sort( ret );
+    return ret;
+}
+
+auto debug_menu::wish_mutation_category_label( const mutation_category_id &category ) -> std::string
+{
+    // The data can group mutations under a category that it never defines, and
+    // get_category() trusts the id it is given, so the id is used as the label of
+    // such a page instead of its name.
+    return mutation_category_is_valid( category )
+           ? mutation_category_trait::get_category( category ).name()
+           : to_translation( category.str() ).translated();
+}
+
+auto debug_menu::wish_mutation_type_label( const std::string &type ) -> std::string
+{
+    // Mutation types have no name of their own, so the game shows the id for the
+    // ones it has no display name for, and the id is translated when the
+    // translation has an entry for it.
+    return to_translation( mutation_type_display_name( type ) ).translated();
+}
+
+auto debug_menu::wish_mutation_pages( const wish_mutation_group_list &groups,
+                                      const std::vector<mutation_category_id> &categories,
+                                      const std::vector<std::string> &types ) -> wish_mutation_page_list
+{
+    // The first page holds every mutation, the second one the mutations that have
+    // no page of their own, then follow one page per mutation type, the NPC page,
+    // one page per mutation category and the debug page last.
+    constexpr std::size_t all_page = 0;
+    constexpr std::size_t generic_page = 1;
+    constexpr std::size_t type_page = 2;
+    const auto npc_page = type_page + types.size();
+    const auto category_page = npc_page + 1;
+    const auto debug_page = category_page + categories.size();
+    wish_mutation_page_list ret;
+    ret.reserve( groups.size() );
+    for( const wish_mutation_group &group : groups ) {
+        std::vector<std::size_t> pages = { all_page };
+        for( const std::string &type : group.types ) {
+            const auto found = std::ranges::find( types, type );
+            if( found != types.end() ) {
+                pages.push_back( type_page + static_cast<std::size_t>( found - types.begin() ) );
+            }
+        }
+        if( group.npc ) {
+            pages.push_back( npc_page );
+        }
+        if( group.debug ) {
+            pages.push_back( debug_page );
+        }
+        for( const mutation_category_id &category : group.categories ) {
+            const auto found = std::ranges::find( categories, category );
+            if( found != categories.end() ) {
+                pages.push_back( category_page +
+                                 static_cast<std::size_t>( found - categories.begin() ) );
+            }
+        }
+        // A mutation with a page of its own is not repeated on the generic page.
+        if( pages.size() == 1 ) {
+            pages.push_back( generic_page );
+        }
+        std::ranges::sort( pages );
+        pages.erase( std::unique( pages.begin(), pages.end() ), pages.end() );
+        ret.push_back( pages );
+    }
+    return ret;
+}
+
+auto debug_menu::wish_mutation_tab_range( const std::vector<std::string> &tabs, std::size_t current,
+        int max_tab_width ) -> wish_mutation_tab_bounds
+{
+    if( tabs.empty() ) {
+        return {};
+    }
+    current = std::min( current, tabs.size() - 1 );
+    // draw_tabs() puts the first label at column 2 and gives every label its own
+    // width plus room for its frame and the selection markers.
+    const auto budget = std::max( 0, max_tab_width - 2 );
+    const auto tab_width = []( const std::string & text ) {
+        return utf8_width( text ) + 3;
+    };
+    auto first = current;
+    auto used = tab_width( tabs[current] );
+    while( first > 0 && used + tab_width( tabs[first - 1] ) <= budget ) {
+        used += tab_width( tabs[first - 1] );
+        first--;
+    }
+    auto last = current;
+    while( last + 1 < tabs.size() && used + tab_width( tabs[last + 1] ) <= budget ) {
+        used += tab_width( tabs[last + 1] );
+        last++;
+    }
+    return { .first = first, .last = last };
+}
+
 void debug_menu::wishmutate( Character *who )
 {
     uilist wmenu;
     int c = 0;
+    // The groups follow the order of the entries added below, as both come from
+    // mutation_branch::get_all().
+    const auto groups = wish_mutation_groups();
 
     for( auto &traits_iter : mutation_branch::get_all() ) {
         wmenu.addentry( -1, true, -2, traits_iter.name() );
@@ -295,6 +487,30 @@ void debug_menu::wishmutate( Character *who )
         }
         c++;
     }
+    // Pages of the mutation menu.  The first one holds every mutation, the second
+    // one the mutations with no page of their own, then follow the mutation types,
+    // the NPC page, the mutation categories and the debug page last.
+    const auto categories = wish_mutation_categories( groups );
+    const auto types = wish_mutation_types( groups );
+    std::vector<std::string> category_tabs;
+    category_tabs.reserve( categories.size() + types.size() + 4 );
+    category_tabs.emplace_back( _( "ALL" ) );
+    category_tabs.emplace_back( _( "GENERIC" ) );
+    for( const std::string &type : types ) {
+        category_tabs.emplace_back( wish_mutation_type_label( type ) );
+    }
+    category_tabs.emplace_back( _( "NPC" ) );
+    for( const mutation_category_id &category : categories ) {
+        category_tabs.emplace_back( wish_mutation_category_label( category ) );
+    }
+    category_tabs.emplace_back( _( "DEBUG" ) );
+    // Pages each entry belongs to; a mutation with several types or categories is
+    // listed on each of them.
+    const auto entry_pages = wish_mutation_pages( groups, categories, types );
+    const auto page_filter = [&entry_pages]( const uilist_entry & entry, std::size_t page ) {
+        const std::vector<std::size_t> &pages = entry_pages[static_cast<std::size_t>( entry.retval )];
+        return std::ranges::find( pages, page ) != pages.end();
+    };
     wmenu.w_x_setup = 0;
     wmenu.w_width_setup = []() -> int {
         return TERMX;
@@ -303,63 +519,87 @@ void debug_menu::wishmutate( Character *who )
         return TERMX - 40;
     };
     wmenu.selected = uistate.wishmutate_selected;
+    // Reserve a line above the list, which the callback covers with the category
+    // tab bar.
+    wmenu.text = "\n";
+    // Page switching is handled in the loop below, where the category filter can
+    // be updated between queries.
+    wmenu.additional_actions.emplace_back( "NEXT_TAB", to_translation( "Next mutation category" ) );
+    wmenu.additional_actions.emplace_back( "PREV_TAB", to_translation( "Previous mutation category" ) );
+    wmenu.allow_additional = true;
+    if( category_tabs.size() > 1 ) {
+        wmenu.set_categories( category_tabs, page_filter );
+    }
     wish_mutate_callback cb;
     cb.p = who;
+    cb.category_tabs = category_tabs;
     wmenu.callback = &cb;
-    do {
+    while( true ) {
         wmenu.query();
-        if( wmenu.ret >= 0 ) {
-            int rc = 0;
-            const trait_id mstr = cb.vTraits[ wmenu.ret ];
-            const auto &mdata = mstr.obj();
-            const bool threshold = mdata.threshold;
-            const bool profession = mdata.profession;
-            // Manual override for the threshold-gaining
-            if( threshold || profession ) {
-                if( who->has_trait( mstr ) ) {
-                    do {
-                        who->remove_mutation( mstr );
-                        rc++;
-                    } while( who->has_trait( mstr ) && rc < 10 );
-                } else {
-                    do {
-                        who->set_mutation( mstr );
-                        rc++;
-                    } while( !who->has_trait( mstr ) && rc < 10 );
-                }
-            } else if( who->has_trait( mstr ) ) {
+        if( wmenu.ret == UILIST_ADDITIONAL ) {
+            // TAB and SHIFT+TAB page through the mutation categories.  LEFT and
+            // RIGHT are handled by the menu itself.
+            const std::size_t page_count = category_tabs.size();
+            const std::size_t page = wmenu.get_current_category();
+            const std::size_t next_page = wmenu.ret_act == "PREV_TAB" ?
+                                          ( page == 0 ? page_count - 1 : page - 1 ) :
+                                          ( page + 1 ) % page_count;
+            wmenu.set_categories( category_tabs, page_filter, next_page );
+            continue;
+        }
+        if( wmenu.ret < 0 ) {
+            break;
+        }
+        int rc = 0;
+        const trait_id mstr = cb.vTraits[ wmenu.ret ];
+        const auto &mdata = mstr.obj();
+        const bool threshold = mdata.threshold;
+        const bool profession = mdata.profession;
+        // Manual override for the threshold-gaining
+        if( threshold || profession ) {
+            if( who->has_trait( mstr ) ) {
                 do {
                     who->remove_mutation( mstr );
                     rc++;
                 } while( who->has_trait( mstr ) && rc < 10 );
             } else {
                 do {
-                    who->mutate_towards( mstr );
+                    who->set_mutation( mstr );
                     rc++;
                 } while( !who->has_trait( mstr ) && rc < 10 );
             }
-            cb.msg = string_format( _( "%s Mutation changes: %d" ), mstr.c_str(), rc );
-            uistate.wishmutate_selected = wmenu.selected;
-            if( rc != 0 ) {
-                for( size_t i = 0; i < cb.vTraits.size(); i++ ) {
-                    uilist_entry &entry = wmenu.entries[ i ];
-                    entry.extratxt.txt.clear();
-                    if( who->has_trait( cb.vTraits[ i ] ) ) {
-                        entry.text_color = c_green;
-                        entry.override_hilite_color = true;
-                        cb.pTraits[ cb.vTraits[ i ] ] = true;
-                        if( who->has_base_trait( cb.vTraits[ i ] ) ) {
-                            entry.extratxt.txt = "T";
-                        }
-                    } else {
-                        entry.text_color = wmenu.text_color;
-                        entry.override_hilite_color = false;
-                        cb.pTraits[ cb.vTraits[ i ] ] = false;
+        } else if( who->has_trait( mstr ) ) {
+            do {
+                who->remove_mutation( mstr );
+                rc++;
+            } while( who->has_trait( mstr ) && rc < 10 );
+        } else {
+            do {
+                who->mutate_towards( mstr );
+                rc++;
+            } while( !who->has_trait( mstr ) && rc < 10 );
+        }
+        cb.msg = string_format( _( "%s Mutation changes: %d" ), mstr.c_str(), rc );
+        uistate.wishmutate_selected = wmenu.selected;
+        if( rc != 0 ) {
+            for( size_t i = 0; i < cb.vTraits.size(); i++ ) {
+                uilist_entry &entry = wmenu.entries[ i ];
+                entry.extratxt.txt.clear();
+                if( who->has_trait( cb.vTraits[ i ] ) ) {
+                    entry.text_color = c_green;
+                    entry.override_hilite_color = true;
+                    cb.pTraits[ cb.vTraits[ i ] ] = true;
+                    if( who->has_base_trait( cb.vTraits[ i ] ) ) {
+                        entry.extratxt.txt = "T";
                     }
+                } else {
+                    entry.text_color = wmenu.text_color;
+                    entry.override_hilite_color = false;
+                    cb.pTraits[ cb.vTraits[ i ] ] = false;
                 }
             }
         }
-    } while( wmenu.ret >= 0 );
+    }
 }
 
 void debug_menu::wishbionics( Character &c )
