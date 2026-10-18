@@ -1823,3 +1823,29 @@ TEST_CASE(
     CHECK_FALSE(cells[1]["terrain"].contains("wall"));
     CHECK(cells[2]["memory"]["terrain"].value("wall", false));
 }
+
+TEST_CASE(
+    "world capture raises closed doors and windows in a wall's line and leaves open doors flat",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& here = get_map();
+    const auto door = setup.start + tripoint(2, -1, 0);
+    const auto window = setup.start + tripoint(2, 1, 0);
+    const auto open_door = setup.start + tripoint(2, -2, 0);
+    here.ter_set(door, ter_id("t_door_c"));
+    here.ter_set(window, ter_id("t_window"));
+    here.ter_set(open_door, ter_id("t_door_o"));
+    here.build_map_cache(0);
+    map_perception::acquire();
+    const auto state = ec::world::capture_world();
+    const auto wall_of = [&](const tripoint_bub_ms& p) {
+        const auto* cell = find_cell(state, at(p));
+        REQUIRE(cell != nullptr);
+        REQUIRE(cell->terrain);
+        return cell->terrain->wall;
+    };
+    CHECK(wall_of(door));
+    CHECK(wall_of(window));
+    CHECK_FALSE(wall_of(open_door));
+    CHECK_FALSE(wall_of(setup.start));
+}
