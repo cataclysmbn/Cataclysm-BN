@@ -485,4 +485,18 @@ TEST_CASE(
     CHECK(line.localised->key == "You pull the pin on the %s.");
 }
 
+TEST_CASE(
+    "a line with a context carries it in its LocalisedString",
+    "[engine_client_localised][messages]") {
+    seen_zombie();
+    auto& you = get_avatar();
+    auto die = item::spawn("vaccine_shot");
+    Messages::clear_messages();
+    iuse::rpgdie(&you, &*die, false, you.bub_pos());
+    const auto line = Messages::feed_since({}).front();
+    REQUIRE(line.localised);
+    CHECK(line.localised->key == "You roll a %1$d on your %2$d sided %3$s");
+    CHECK(line.localised->ctx == "dice");
+}
+
 #endif // CATA_MCP
