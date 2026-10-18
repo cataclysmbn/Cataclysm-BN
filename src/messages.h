@@ -56,7 +56,7 @@ inline void add_msg( const char *const msg, Args &&... args )
 template<typename ...Args>
 inline void add_msg( const translation &msg, Args &&... args )
 {
-    return Messages::add_msg( m_neutral, string_format( msg, args... ),
+    return Messages::add_msg( m_neutral, string_format( msg, localised::shown( args )... ),
                               localised::from_format( msg, args... ) );
 }
 
@@ -83,7 +83,7 @@ inline void add_msg( const game_message_params &params, const translation &msg, 
     if( params.type == m_debug && !debug_mode ) {
         return;
     }
-    return Messages::add_msg( params, string_format( msg, args... ),
+    return Messages::add_msg( params, string_format( msg, localised::shown( args )... ),
                               localised::from_format( msg, args... ) );
 }
 

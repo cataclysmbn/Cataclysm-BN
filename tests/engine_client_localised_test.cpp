@@ -88,26 +88,45 @@ TEST_CASE(
         CHECK(newest_line().localised->ctx == "noun");
         CHECK(newest_line().localised->key == "Fire");
     }
-    SECTION("a value a client cannot render keeps the line a plain string") {
+    SECTION(
+        "a translatable value is a nested LocalisedString and a character keeps the line a string") {
         add_msg(to_translation("Count %s"), to_translation("three"));
         // A character is not a number either.
         add_msg(to_translation("Letter %c"), 'x');
         const auto lines = Messages::feed_since({});
         REQUIRE(lines.size() == 2);
         CHECK(lines.front().text == "Count three");
-        CHECK_FALSE(lines.front().localised);
+        CHECK(lines.front().localised
+              == localised_text{
+                  .key = "Count %s", .args = {localised::nested(localised_text{.key = "three"})}});
         CHECK(lines.back().text == "Letter x");
         CHECK_FALSE(lines.back().localised);
     }
     SECTION(
-        "a string that needs no translation, a plural form and an already rendered line have no key") {
+        "a name reads in the engine language in its form for the count and carries both msgids") {
+        add_msg(to_translation("Two %s"), localised::name_of(pl_translation("rat", "rats"), 2));
+        const auto line = newest_line();
+        CHECK(line.text == "Two rats");
+        CHECK(
+            line.localised
+            == localised_text{
+                .key = "Two %s",
+                .args = {localised::nested(
+                    localised_text{.key = "rat", .plural = 2.0, .plural_key = "rats"})}});
+    }
+    SECTION("a string that needs no translation and an already rendered line have no key") {
         add_msg(no_translation("Plain"));
-        add_msg(pl_translation("%d rat", "%d rats"), 2);
         Messages::add_msg("Already rendered 1");
         const auto lines = Messages::feed_since({});
-        REQUIRE(lines.size() == 3);
+        REQUIRE(lines.size() == 2);
         for (const auto& line : lines) { CHECK_FALSE(line.localised); }
         CHECK(lines.front().text == "Plain");
+    }
+    SECTION("a plural format reads in its singular form, as the native log shows it") {
+        add_msg(pl_translation("%d rat", "%d rats"), 2);
+        CHECK(newest_line().text == "2 rat");
+        CHECK(
+            newest_line().localised == localised_text{.key = "%d rat", .args = {std::int64_t{2}}});
     }
     SECTION("a debug line follows the debug mode, as every other overload does") {
         add_msg(m_debug, to_translation("Hidden %d"), 1);
@@ -152,6 +171,12 @@ TEST_CASE(
         CHECK(line["text"] == "Plain 5.");
         CHECK(line["label"] == "Plain 5.");
     }
+    SECTION("a name is a nested LocalisedString with its count and its plural msgid") {
+        add_msg(to_translation("Two %s"), localised::name_of(pl_translation("rat", "rats"), 2));
+        CHECK(published_line()["text"]
+              == json::parse(
+                  R"({"key":"Two %s","args":[{"key":"rat","plural":2.0,"plural_key":"rats"}]})"));
+    }
     SECTION("the plural count and the context are members of the LocalisedString") {
         Messages::add_msg(
             m_neutral, "2 rats",
@@ -181,12 +206,24 @@ TEST_CASE(
             lines[0].localised
             == localised_text{
                 .key = "The %s disappears.",
-                .ctx = std::nullopt,
-                .plural = std::nullopt,
-                .args = {std::string{"zombie"}}});
+                .args = {localised::nested(
+                    localised_text{.key = "zombie", .plural = 1.0, .plural_key = "zombies"})}});
         CHECK(lines[1].localised->key == "The %s melts away.");
         CHECK(lines[2].localised->key == "The %s disintegrates!");
         for (const auto& line : lines) { CHECK(line.type == m_good); }
+    }
+    SECTION("a monster with a name of its own joins its kind and that name") {
+        zombie.unique_name = "Bob";
+        mdeath::disappear(zombie);
+        const auto line = newest_line();
+        CHECK(line.text == "The zombie: Bob disappears.");
+        REQUIRE(line.localised);
+        const auto kind = localised_text{.key = "zombie", .plural = 1.0, .plural_key = "zombies"};
+        CHECK(
+            line.localised->args
+            == std::vector<localised_text::arg>{localised::nested(localised_text{
+                .key = "",
+                .args = {localised::nested(kind), std::string{": "}, std::string{"Bob"}}})});
     }
     SECTION("in a translated engine language the text is translated and the key stays the msgid") {
         const auto fixture = korean_catalogue{{{"The %s disappears.", "%s-ko disappears."}}};

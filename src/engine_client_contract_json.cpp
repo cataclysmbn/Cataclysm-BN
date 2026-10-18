@@ -772,9 +772,16 @@ auto to_json( const localised_text &value ) -> json
     auto result = json{{"key", value.key}};
     if( value.ctx ) { result["ctx"] = *value.ctx; }
     if( value.plural ) { result["plural"] = *value.plural; }
+    if( value.plural_key ) { result["plural_key"] = *value.plural_key; }
     if( !value.args.empty() ) {
         result["args"] = value.args | std::views::transform( []( const auto & arg ) {
-            return std::visit( []( const auto & held ) { return json( held ); }, arg );
+            return std::visit( []( const auto & held ) {
+                if constexpr( std::is_same_v<std::remove_cvref_t<decltype( held )>, std::vector<localised_text>> ) {
+                    return to_json( held.front() );
+                } else {
+                    return json( held );
+                }
+            }, arg );
         } ) | std::ranges::to<std::vector>();
     }
     return result;
