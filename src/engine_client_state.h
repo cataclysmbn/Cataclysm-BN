@@ -88,7 +88,8 @@ struct look {
     std::vector<std::string> tint_keys = {};
     /// The tint an item's own variables ask for, over what the tileset's tints give.
     std::optional<look_tint_vars> tint_vars = std::nullopt;
-    /// Terrain the data flags as a wall (`WALL`), which a view drawn from above can raise.
+    /// Terrain that stands as a wall, which a view drawn from above can raise: `WALL`, or joined to walls
+    /// (`CONNECT_TO_WALL`) and not `FLAT`, as a closed door or a window.
     bool wall = false;
     auto operator<=>( const look & ) const = default; // *NOPAD*
 };

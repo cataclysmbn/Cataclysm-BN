@@ -278,7 +278,7 @@
         },
         "wall": {
           "const": true,
-          "description": "Set on terrain the game data flags as a wall (WALL); absent otherwise."
+          "description": "Set on terrain that stands as a wall: the game data flags it WALL, or it joins walls (CONNECT_TO_WALL) and is not FLAT, as a closed door or a window; absent otherwise."
         },
         "tint": {
           "type": "object",
@@ -431,7 +431,7 @@
         },
         "wall": {
           "const": true,
-          "description": "Set on terrain the game data flags as a wall (WALL); absent otherwise."
+          "description": "Set on terrain that stands as a wall: the game data flags it WALL, or it joins walls (CONNECT_TO_WALL) and is not FLAT, as a closed door or a window; absent otherwise."
         },
         "tint": {
           "type": "object",

@@ -4548,7 +4548,8 @@
                 "color": "c_brown",
                 "name": "closed wood door",
                 "subtile": "end_piece",
-                "rotation": 1
+                "rotation": 1,
+                "wall": true
               },
               "light": 1
             },

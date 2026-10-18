@@ -224,7 +224,8 @@ auto terrain_look( const ter_id &id, const int symbol, const map_perception::ori
     result.name = id->name();
     result.looks_like = looks_like_chain<ter_str_id>( id->looks_like );
     result.tint_keys = tint_keys_of( id->get_flags(), id.id().str() );
-    result.wall = id->has_flag( TFLAG_WALL );
+    result.wall = id->has_flag( TFLAG_WALL ) || ( id->has_flag( TFLAG_CONNECT_TO_WALL ) &&
+                  !id->has_flag( TFLAG_FLAT ) );
     if( vars != nullptr ) { result.tint_vars = tint_vars_of( *vars ); }
     return with_shape( std::move( result ), shape );
 }
