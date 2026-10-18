@@ -472,4 +472,17 @@ TEST_CASE("a format with no values reads as written", "[engine_client_localised]
     CHECK(newest_line().text == "You reeled in %s.");
 }
 
+TEST_CASE(
+    "a line worded by the game data carries its format as a LocalisedString",
+    "[engine_client_localised][messages]") {
+    seen_zombie();
+    auto& you = get_avatar();
+    auto& grenade = you.i_add(item::spawn("gasbomb"));
+    Messages::clear_messages();
+    you.invoke_item(&grenade);
+    const auto line = newest_line();
+    REQUIRE(line.localised);
+    CHECK(line.localised->key == "You pull the pin on the %s.");
+}
+
 #endif // CATA_MCP
