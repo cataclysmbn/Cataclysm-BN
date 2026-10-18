@@ -16,6 +16,7 @@
 #include "iuse_actor.h"
 #include "json.h"
 #include "line.h"
+#include "localised_names.h"
 #include "map/field_type.h"
 #include "map/map.h"
 #include "map/utils/map_functions.h"
@@ -167,7 +168,7 @@ bool leap_actor::call( monster &z ) const
     z.setpos( chosen );
     seen |= g->u.sees( z ); // ... or we can see them land
     if( seen ) {
-        add_msg( _( "The %s leaps!" ), z.name() );
+        add_msg( to_translation( "The %s leaps!" ), localised::name_of( z ) );
     }
 
     return true;
@@ -818,7 +819,7 @@ bool gun_actor::try_target( monster &z, Creature &target ) const
             target.add_effect( effect_laserlocked, 5_turns );
             target.add_effect( effect_was_laserlocked, 5_turns );
             target.add_msg_if_player( m_warning,
-                                      _( "You're not sure why you've got a laser dot on you…" ) );
+                                      to_translation( "You're not sure why you've got a laser dot on you…" ) );
         }
 
         z.moves -= targeting_cost;

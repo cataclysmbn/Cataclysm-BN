@@ -1333,8 +1333,8 @@ bool Character::handle_melee_wear( item &shield, float wear_multiplier )
     auto str = shield.tname(); // save name before we apply damage
 
     if( !shield.inc_damage() ) {
-        add_msg_player_or_npc( m_bad, _( "Your %s is damaged by the force of the blow!" ),
-                               _( "<npcname>'s %s is damaged by the force of the blow!" ),
+        add_msg_player_or_npc( m_bad, to_translation( "Your %s is damaged by the force of the blow!" ),
+                               to_translation( "<npcname>'s %s is damaged by the force of the blow!" ),
                                str );
         return false;
     }
@@ -1354,15 +1354,15 @@ bool Character::handle_melee_wear( item &shield, float wear_multiplier )
 
     // Breakdown fragile weapons into components
     if( shield.has_flag( flag_FRAGILE_MELEE ) && !shield.get_components().empty() ) {
-        add_msg_player_or_npc( m_bad, _( "Your %s breaks apart!" ),
-                               _( "<npcname>'s %s breaks apart!" ),
+        add_msg_player_or_npc( m_bad, to_translation( "Your %s breaks apart!" ),
+                               to_translation( "<npcname>'s %s breaks apart!" ),
                                str );
 
         for( detached_ptr<item> &comp : shield.remove_components() ) {
             int break_chance = comp->typeId() == weak_comp ? 2 : 8;
 
             if( one_in( break_chance ) ) {
-                add_msg_if_player( m_bad, _( "The %s is destroyed!" ), comp->tname() );
+                add_msg_if_player( m_bad, to_translation( "The %s is destroyed!" ), comp->tname() );
                 continue;
             }
 
@@ -1373,8 +1373,8 @@ bool Character::handle_melee_wear( item &shield, float wear_multiplier )
             }
         }
     } else {
-        add_msg_player_or_npc( m_bad, _( "Your %s is destroyed by the blow!" ),
-                               _( "<npcname>'s %s is destroyed by the blow!" ),
+        add_msg_player_or_npc( m_bad, to_translation( "Your %s is destroyed by the blow!" ),
+                               to_translation( "<npcname>'s %s is destroyed by the blow!" ),
                                str );
     }
 
@@ -1525,12 +1525,12 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
         auto mons = mounted_creature.get();
         if( mons->has_flag( MF_RIDEABLE_MECH ) ) {
             if( !mons->check_mech_powered() ) {
-                add_msg( m_bad, _( "The %s has dead batteries and will not move its arms." ),
+                add_msg( m_bad, to_translation( "The %s has dead batteries and will not move its arms." ),
                          mons->get_name() );
                 return;
             }
             if( mons->type->has_special_attack( "SMASH" ) && one_in( 3 ) ) {
-                add_msg( m_info, _( "The %s hisses as its hydraulic arm pumps forward!" ),
+                add_msg( m_info, to_translation( "The %s hisses as its hydraulic arm pumps forward!" ),
                          mons->get_name() );
                 mattack::smash_specific( mons, &t );
             } else {
@@ -1557,7 +1557,7 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
     const bool attack_hit = !lua_force_miss && hit_spread >= 0;
 
     if( cur_weapon.attack_cost() > attack_cost( cur_weapon ) * 20 ) {
-        add_msg( m_bad, _( "This weapon is too unwieldy to attack with!" ) );
+        add_msg( m_bad, to_translation( "This weapon is too unwieldy to attack with!" ) );
         return;
     }
 
@@ -1584,19 +1584,19 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
                 ma_technique tec = martial_arts_data->get_miss_recovery_tec( cur_weapon );
                 add_msg( _( tec.avatar_message ), t.disp_name() );
             } else if( stumble_pen >= 60 ) {
-                add_msg( m_bad, _( "You miss and stumble with the momentum." ) );
+                add_msg( m_bad, to_translation( "You miss and stumble with the momentum." ) );
             } else if( stumble_pen >= 10 ) {
-                add_msg( _( "You swing wildly and miss." ) );
+                add_msg( to_translation( "You swing wildly and miss." ) );
             } else {
-                add_msg( _( "You miss." ) );
+                add_msg( to_translation( "You miss." ) );
             }
         } else if( g->u.sees( *this ) ) {
             if( stumble_pen >= 60 ) {
-                add_msg( _( "%s misses and stumbles with the momentum." ), name );
+                add_msg( to_translation( "%s misses and stumbles with the momentum." ), name );
             } else if( stumble_pen >= 10 ) {
-                add_msg( _( "%s swings wildly and misses." ), name );
+                add_msg( to_translation( "%s swings wildly and misses." ), name );
             } else {
-                add_msg( _( "%s misses." ), name );
+                add_msg( to_translation( "%s misses." ), name );
             }
         }
 
@@ -1710,10 +1710,10 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
                 ( ( cur_weapon.is_null() || !use_weapon ) && ( dealt_dam.type_damage( DT_CUT ) > 0 ||
                         dealt_dam.type_damage( DT_STAB ) > 0 ) ) ) {
                 if( has_trait( trait_POISONOUS ) ) {
-                    add_msg_if_player( m_good, _( "You poison %s!" ), t.disp_name() );
+                    add_msg_if_player( m_good, to_translation( "You poison %s!" ), t.disp_name() );
                     t.add_effect( effect_poison, 6_turns );
                 } else if( has_trait( trait_POISONOUS2 ) ) {
-                    add_msg_if_player( m_good, _( "You inject your venom into %s!" ),
+                    add_msg_if_player( m_good, to_translation( "You inject your venom into %s!" ),
                                        t.disp_name() );
                     t.add_effect( effect_badpoison, 6_turns );
                 }
@@ -1760,8 +1760,8 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
                 std::string message = melee_message( technique, *this, dealt_dam );
                 player_hit_message( this, message, t, dam, critical_hit );
             } else {
-                add_msg_player_or_npc( m_good, _( "You hit something." ),
-                                       _( "<npcname> hits something." ) );
+                add_msg_player_or_npc( m_good, to_translation( "You hit something." ),
+                                       to_translation( "<npcname> hits something." ) );
             }
 
             if( !specialmsg.empty() ) {
@@ -1887,7 +1887,7 @@ void Character::reach_attack( const tripoint_bub_ms &p )
     }
 
     if( critter == nullptr ) {
-        add_msg_if_player( _( "You swing at the air." ) );
+        add_msg_if_player( to_translation( "You swing at the air." ) );
         if( martial_arts_data->has_miss_recovery_tec( primary_weapon() ) ) {
             move_cost /= 3; // "Probing" is faster than a regular miss
         }
@@ -2717,8 +2717,8 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
             if( p->is_player() ) {
                 add_msg_if_npc( m_bad, _( "<npcname> disarms you and takes your weapon!" ) );
             } else {
-                add_msg_player_or_npc( m_good, _( "You disarm %s and take their weapon!" ),
-                                       _( "<npcname> disarms %s and takes their weapon!" ),
+                add_msg_player_or_npc( m_good, to_translation( "You disarm %s and take their weapon!" ),
+                                       to_translation( "<npcname> disarms %s and takes their weapon!" ),
                                        p->name );
             }
 
@@ -2727,8 +2727,8 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
             if( p->is_player() ) {
                 add_msg_if_npc( m_warning, _( "<npcname> tries to disarms you but fails!" ) );
             } else {
-                add_msg_player_or_npc( m_bad, _( "You fail to disarm %s!" ),
-                                       _( "<npcname> fails to disarms %s!" ),
+                add_msg_player_or_npc( m_bad, to_translation( "You fail to disarm %s!" ),
+                                       to_translation( "<npcname> fails to disarms %s!" ),
                                        p->name );
             }
         }
@@ -2741,16 +2741,16 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
             if( p->is_player() ) {
                 add_msg_if_npc( m_bad, _( "<npcname> disarms you!" ) );
             } else {
-                add_msg_player_or_npc( m_good, _( "You disarm %s!" ),
-                                       _( "<npcname> disarms %s!" ),
+                add_msg_player_or_npc( m_good, to_translation( "You disarm %s!" ),
+                                       to_translation( "<npcname> disarms %s!" ),
                                        p->name );
             }
         } else {
             if( p->is_player() ) {
                 add_msg_if_npc( m_warning, _( "<npcname> tries to disarms you but fails!" ) );
             } else {
-                add_msg_player_or_npc( m_bad, _( "You fail to disarm %s!" ),
-                                       _( "<npcname> fails to disarms %s!" ),
+                add_msg_player_or_npc( m_bad, to_translation( "You fail to disarm %s!" ),
+                                       to_translation( "<npcname> fails to disarms %s!" ),
                                        p->name );
             }
         }
@@ -2763,13 +2763,13 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
                  get_skill_level( skill_melee ) ) >= m->type->melee_skill ) {
 
             m->drop_monster_weapon();
-            add_msg_player_or_npc( m_good, _( "You disarm %s!" ),
-                                   _( "<npcname> disarms %s!" ),
+            add_msg_player_or_npc( m_good, to_translation( "You disarm %s!" ),
+                                   to_translation( "<npcname> disarms %s!" ),
                                    m->disp_name() );
             t.add_effect( effect_monster_disarmed, 1_turns );
         } else {
-            add_msg_player_or_npc( m_bad, _( "You fail to disarm %s!" ),
-                                   _( "<npcname> fails to disarms %s!" ),
+            add_msg_player_or_npc( m_bad, to_translation( "You fail to disarm %s!" ),
+                                   to_translation( "<npcname> fails to disarms %s!" ),
                                    m->disp_name() );
         }
 
@@ -3101,9 +3101,10 @@ bool Character::block_hit( Creature *source, bodypart_id &bp_hit, damage_instanc
 
     if( tec != tec_none && !is_dead_state() ) {
         if( get_stamina() < get_stamina_max() / 3 ) {
-            add_msg( m_bad, _( "You try to counterattack but you are too exhausted!" ) );
+            add_msg( m_bad, to_translation( "You try to counterattack but you are too exhausted!" ) );
         } else if( primary_weapon().can_shatter() ) {
-            add_msg( m_bad, _( "The item you are wielding is too fragile to counterattack with!" ) );
+            add_msg( m_bad,
+                     to_translation( "The item you are wielding is too fragile to counterattack with!" ) );
         } else {
             melee_attack( *source, false, &tec );
         }
@@ -3217,7 +3218,7 @@ std::string Character::melee_special_effects( Creature &t, damage_instance &d, i
 
     //Hurting the wielder from poorly-chosen weapons
     if( weap.has_flag( flag_HURT_WHEN_WIELDED ) && x_in_y( 2, 3 ) ) {
-        add_msg_if_player( m_bad, _( "The %s cuts your hand!" ), weap.tname() );
+        add_msg_if_player( m_bad, to_translation( "The %s cuts your hand!" ), weap.tname() );
         deal_damage( nullptr, bodypart_id( "hand_r" ), damage_instance::physical( 0,
                      weap.damage_melee( DT_CUT ), 0 ) );
         if( weap.is_two_handed( *this ) ) { // Hurt left hand too, if it was big
@@ -3234,8 +3235,8 @@ std::string Character::melee_special_effects( Creature &t, damage_instance &d, i
         if( is_player() ) {
             dump += string_format( _( "Your %s shatters!" ), weap.tname() ) + "\n";
         } else {
-            add_msg_player_or_npc( m_bad, _( "Your %s shatters!" ),
-                                   _( "<npcname>'s %s shatters!" ),
+            add_msg_player_or_npc( m_bad, to_translation( "Your %s shatters!" ),
+                                   to_translation( "<npcname>'s %s shatters!" ),
                                    weap.tname() );
         }
 
@@ -3732,7 +3733,7 @@ void avatar_funcs::try_disarm_npc( avatar &you, npc &target )
     // roll your melee and target's dodge skills to check if grab/smash attack succeeds
     int hitspread = target.deal_melee_attack( &you, you.hit_roll( it, melee::default_attack( it ) ) );
     if( hitspread < 0 ) {
-        add_msg( _( "You lunge for the %s, but miss!" ), it.tname() );
+        add_msg( to_translation( "You lunge for the %s, but miss!" ), it.tname() );
         you.mod_moves( -100 - stumble( you,
                                        you.primary_weapon() ) - you.attack_cost( you.primary_weapon() ) );
         target.on_attacked( you );
@@ -3746,19 +3747,20 @@ void avatar_funcs::try_disarm_npc( avatar &you, npc &target )
 
         if( my_roll >= their_roll ) {
             //~ %s: weapon name
-            add_msg( _( "You grab at %s and pull with all your force!" ), it.tname() );
+            add_msg( to_translation( "You grab at %s and pull with all your force!" ), it.tname() );
             //~ %1$s: weapon name, %2$s: NPC name
-            add_msg( _( "You forcefully take %1$s from %2$s!" ), it.tname(), target.name );
+            add_msg( to_translation( "You forcefully take %1$s from %2$s!" ), it.tname(), target.name );
             // wield() will deduce our moves, consider to deduce more/less moves for balance
             you.wield( it.detach( ) );
         } else if( my_roll >= their_roll / 2 ) {
-            add_msg( _( "You grab at %s and pull with all your force, but it drops nearby!" ),
+            add_msg( to_translation( "You grab at %s and pull with all your force, but it drops nearby!" ),
                      it.tname() );
             const tripoint_bub_ms tp = target.bub_pos() + tripoint_rel_ms( rng( -1, 1 ), rng( -1, 1 ), 0 );
             g->m.add_item_or_charges( tp, it.detach( ) );
             you.mod_moves( -100 );
         } else {
-            add_msg( _( "You grab at %s and pull with all your force, but in vain!" ), it.tname() );
+            add_msg( to_translation( "You grab at %s and pull with all your force, but in vain!" ),
+                     it.tname() );
             you.mod_moves( -100 );
         }
 
@@ -3769,12 +3771,12 @@ void avatar_funcs::try_disarm_npc( avatar &you, npc &target )
     // Make their weapon fall on floor if we've rolled enough.
     you.mod_moves( -100 - you.attack_cost( you.primary_weapon() ) );
     if( my_roll >= their_roll ) {
-        add_msg( _( "You smash %s with all your might forcing their %s to drop down nearby!" ),
+        add_msg( to_translation( "You smash %s with all your might forcing their %s to drop down nearby!" ),
                  target.name, it.tname() );
         const tripoint_bub_ms tp = target.bub_pos() + tripoint_rel_ms( rng( -1, 1 ), rng( -1, 1 ), 0 );
         g->m.add_item_or_charges( tp, it.detach( ) );
     } else {
-        add_msg( _( "You smash %s with all your might but %s remains in their hands!" ),
+        add_msg( to_translation( "You smash %s with all your might but %s remains in their hands!" ),
                  target.name, it.tname() );
     }
 
@@ -3784,7 +3786,7 @@ void avatar_funcs::try_disarm_npc( avatar &you, npc &target )
 void avatar_funcs::try_steal_from_npc( avatar &you, npc &target )
 {
     if( target.is_enemy() ) {
-        add_msg( _( "%s is hostile!" ), target.name );
+        add_msg( to_translation( "%s is hostile!" ), target.name );
         return;
     }
 
@@ -3813,14 +3815,14 @@ void avatar_funcs::try_steal_from_npc( avatar &you, npc &target )
 
     item *it = loc;
     if( my_roll >= their_roll ) {
-        add_msg( _( "You sneakily steal %1$s from %2$s!" ),
+        add_msg( to_translation( "You sneakily steal %1$s from %2$s!" ),
                  it->tname(), target.name );
         you.i_add( it->detach( ) );
     } else if( my_roll >= their_roll / 2 ) {
-        add_msg( _( "You failed to steal %1$s from %2$s, but did not attract attention." ),
+        add_msg( to_translation( "You failed to steal %1$s from %2$s, but did not attract attention." ),
                  it->tname(), target.name );
     } else {
-        add_msg( _( "You failed to steal %1$s from %2$s." ),
+        add_msg( to_translation( "You failed to steal %1$s from %2$s." ),
                  it->tname(), target.name );
         target.on_attacked( you );
     }

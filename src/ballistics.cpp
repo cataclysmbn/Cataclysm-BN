@@ -106,7 +106,7 @@ void drop_or_embed_projectile( dealt_projectile_attack &attack )
     if( proj.has_effect( ammo_effect_SHATTER_SELF ) ) {
         // Drop the contents, not the thrown item
         if( g->u.sees( pt ) ) {
-            add_msg( _( "The %s shatters!" ), drop_item.tname() );
+            add_msg( to_translation( "The %s shatters!" ), drop_item.tname() );
         }
 
         // copies the drop item to spill the contents
@@ -128,7 +128,7 @@ void drop_or_embed_projectile( dealt_projectile_attack &attack )
     if( proj.has_effect( ammo_effect_BURST ) ) {
         // Drop the contents, not the thrown item
         if( g->u.sees( pt ) ) {
-            add_msg( _( "The %s bursts!" ), drop_item.tname() );
+            add_msg( to_translation( "The %s bursts!" ), drop_item.tname() );
         }
 
         // copies the drop item to spill the contents
@@ -163,7 +163,7 @@ void drop_or_embed_projectile( dealt_projectile_attack &attack )
     if( embed ) {
         mon->add_item( std::move( drop ) );
         if( g->u.sees( *mon ) ) {
-            add_msg( _( "The %1$s embeds in %2$s!" ), drop_item.tname(), mon->disp_name() );
+            add_msg( to_translation( "The %1$s embeds in %2$s!" ), drop_item.tname(), mon->disp_name() );
         }
     } else {
         bool do_drop = true;
@@ -724,7 +724,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
         } );
         if( mon_ptr ) {
             Creature &z = *mon_ptr;
-            add_msg( _( "The attack bounced to %s!" ), z.get_name() );
+            add_msg( to_translation( "The attack bounced to %s!" ), z.get_name() );
             z.add_effect( effect_bounced, 1_turns );
             projectile_attack( proj, tp, z.bub_pos(), dispersion, origin, source_weapon, in_veh );
             // Take the volume of a bio lightening impact at 70dB

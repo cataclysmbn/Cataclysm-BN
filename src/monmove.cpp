@@ -18,6 +18,7 @@
 #include "init.h"
 #include "int_id.h"
 #include "line.h"
+#include "localised_names.h"
 #include "make_static.h"
 #include "map/field.h"
 #include "map/field_type.h"
@@ -1090,7 +1091,7 @@ bool monster::die_if_drowning( const tripoint_bub_ms &at_pos, const int chance )
     if( is_aquatic_danger( at_pos ) && one_in( chance ) ) {
         die( nullptr );
         if( g->u.sees( at_pos ) ) {
-            add_msg( _( "The %s drowns!" ), name() );
+            add_msg( to_translation( "The %s drowns!" ), name() );
         }
         return true;
     }
@@ -1495,7 +1496,7 @@ void monster::execute_action( const monster_action_t &action )
         ( !has_effect( effect_mon_mitosis ) || hp < type->hp * 3 ) ) {
         ZoneScopedN( "mon_execute_consume_items" );
         if( g->u.sees( *this ) ) {
-            add_msg( _( "The %s flows around the objects on the floor and they are quickly dissolved!" ),
+            add_msg( to_translation( "The %s flows around the objects on the floor and they are quickly dissolved!" ),
                      name() );
         }
         static const auto volume_per_hp = 250_ml;
@@ -1514,7 +1515,7 @@ void monster::execute_action( const monster_action_t &action )
                     spawn->add_effect( effect_mon_mitosis, 1_minutes );
                     spawn->make_ally( *this );
                     if( g->u.sees( *this ) ) {
-                        add_msg( _( "The %s splits in two!" ), name() );
+                        add_msg( to_translation( "The %s splits in two!" ), name() );
                     }
                 }
             }
@@ -1850,7 +1851,7 @@ void monster::execute_action( const monster_action_t &action )
     if( has_effect( effect_led_by_leash ) ) {
         if( rl_dist( bub_pos(), g->u.bub_pos() ) > 8 ) {
             remove_effect( effect_led_by_leash );
-            add_msg( m_info, _( "You lose hold of a leash." ) );
+            add_msg( m_info, to_translation( "You lose hold of a leash." ) );
         }
     }
 }
@@ -1917,14 +1918,16 @@ void monster::nursebot_operate( player *dragged_foe )
         !has_effect( effect_operating ) ) {
         if( dragged_foe->has_effect( effect_grabbed ) && !has_effect( effect_countdown ) &&
             ( g->critter_at( goal ) == nullptr || g->critter_at( goal ) == dragged_foe ) ) {
-            add_msg( m_bad, _( "The %1$s slowly but firmly puts %2$s down onto the autodoc couch." ), name(),
+            add_msg( m_bad,
+                     to_translation( "The %1$s slowly but firmly puts %2$s down onto the autodoc couch." ), name(),
                      dragged_foe->disp_name() );
 
             dragged_foe->setpos( goal );
 
             // There's still time to get away
             add_effect( effect_countdown, 2_turns );
-            add_msg( m_bad, _( "The %s produces a syringe full of some translucent liquid." ), name() );
+            add_msg( m_bad, to_translation( "The %s produces a syringe full of some translucent liquid." ),
+                     name() );
         } else if( g->critter_at( goal ) != nullptr && has_effect( effect_dragging ) ) {
             sound_event se;
             se.origin = bub_pos();
@@ -2467,7 +2470,7 @@ bool monster::move_to( const tripoint_bub_ms &p, bool force, bool step_on_critte
                 moves -= 100;
                 force = true;
                 if( g->u.sees( *this ) ) {
-                    add_msg( _( "The %1$s flies over the %2$s." ), name(),
+                    add_msg( to_translation( "The %1$s flies over the %2$s." ), name(),
                              g->m.has_flag_furn( "CLIMBABLE", p ) ? g->m.furnname( p ) :
                              g->m.tername( p ) );
                 }
@@ -2475,7 +2478,7 @@ bool monster::move_to( const tripoint_bub_ms &p, bool force, bool step_on_critte
                 moves -= 150;
                 force = true;
                 if( g->u.sees( *this ) ) {
-                    add_msg( _( "The %1$s climbs over the %2$s." ), name(),
+                    add_msg( to_translation( "The %1$s climbs over the %2$s." ), name(),
                              g->m.has_flag_furn( "CLIMBABLE", p ) ? g->m.furnname( p ) :
                              g->m.tername( p ) );
                 }
@@ -2780,7 +2783,7 @@ bool monster::push_to( const tripoint_bub_ms &p, const int boost, const size_t d
     critter->add_effect( effect_stunned, rng( 0_turns, 2_turns ) );
     // Only print the message when near player or it can get spammy
     if( rl_dist( g->u.bub_pos(), bub_pos() ) < 4 && g->u.sees( *critter ) ) {
-        add_msg( m_warning, _( "%1$s tramples %2$s" ),
+        add_msg( m_warning, to_translation( "%1$s tramples %2$s" ),
                  disp_name( false, true ), critter->disp_name() );
     }
 
@@ -2869,7 +2872,7 @@ void monster::knock_back_to( const tripoint_bub_ms &to )
         z->check_dead_state();
 
         if( u_see ) {
-            add_msg( _( "The %1$s bounces off a %2$s!" ), name(), z->name() );
+            add_msg( to_translation( "The %1$s bounces off a %2$s!" ), name(), localised::name_of( *z ) );
         }
 
         return;
@@ -2881,7 +2884,7 @@ void monster::knock_back_to( const tripoint_bub_ms &to )
         p->deal_damage( this, bodypart_id( "torso" ), damage_instance( DT_BASH,
                         static_cast<float>( type->size ) ) );
         if( u_see ) {
-            add_msg( _( "The %1$s bounces off %2$s!" ), name(), p->name );
+            add_msg( to_translation( "The %1$s bounces off %2$s!" ), name(), p->name );
         }
 
         p->check_dead_state();
@@ -2894,7 +2897,7 @@ void monster::knock_back_to( const tripoint_bub_ms &to )
     if( !die_if_drowning( to ) && has_flag( MF_AQUATIC ) ) {
         die( nullptr );
         if( u_see ) {
-            add_msg( _( "The %s flops around and dies!" ), name() );
+            add_msg( to_translation( "The %s flops around and dies!" ), name() );
         }
     }
 
@@ -2904,7 +2907,7 @@ void monster::knock_back_to( const tripoint_bub_ms &to )
         apply_damage( nullptr, bodypart_id( "torso" ), static_cast<float>( type->size ) );
         add_effect( effect_stunned, 2_turns );
         if( u_see ) {
-            add_msg( _( "The %1$s bounces off a %2$s." ), name(),
+            add_msg( to_translation( "The %1$s bounces off a %2$s." ), name(),
                      g->m.obstacle_name( to ) );
         }
 
@@ -3041,7 +3044,7 @@ void monster::shove_vehicle( const tripoint_bub_ms &remote_destination,
             if( shove_velocity > 0 ) {
                 if( g->u.sees( bub_pos() ) ) {
                     //~ %1$s - monster name, %2$s - vehicle name
-                    g->u.add_msg_if_player( m_bad, _( "%1$s shoves %2$s out of their way!" ),
+                    g->u.add_msg_if_player( m_bad, to_translation( "%1$s shoves %2$s out of their way!" ),
                                             disp_name( false, true ), veh.disp_name() );
                 }
                 int shove_moves = shove_veh_mass_moves_factor * veh_mass / 10_kilogram;

@@ -30,6 +30,7 @@
 #include "itype.h"
 #include "json.h"
 #include "line.h"
+#include "localised_names.h"
 #include "map/field_type.h"
 #include "map/map.h"
 #include "map/mapdata.h"
@@ -856,7 +857,7 @@ void ExplosionProcess::blast_tile( const tripoint_bub_ms position, const int rl_
 
                 if( critter->is_player() ) {
                     player *player_ptr = critter->as_player();
-                    player_ptr->add_msg_if_player( m_bad, _( "You're caught in the explosion!" ) );
+                    player_ptr->add_msg_if_player( m_bad, to_translation( "You're caught in the explosion!" ) );
 
                     struct blastable_part {
                         bodypart_id bp;
@@ -1252,11 +1253,11 @@ void ExplosionProcess::move_entity( const tripoint_bub_ms position,
                     if( get_avatar().sees( *hit_creature ) ) {
                         if( dealt_damage > 0 ) {
                             //~ %1$s: entity dealing damage, %2$s: target creature name, %3$d: damage value
-                            add_msg( _( "%1$s flies and hits %2$s for %3$d damage!" ),
+                            add_msg( to_translation( "%1$s flies and hits %2$s for %3$d damage!" ),
                                      target->tname(), hit_creature->disp_name(), dealt_damage );
                         } else {
                             //~ %1$s: entity dealing damage, %2$s: target creature name
-                            add_msg( _( "%1$s flies and hits %2$s but deals no damage." ),
+                            add_msg( to_translation( "%1$s flies and hits %2$s but deals no damage." ),
                                      target->tname(), hit_creature->disp_name() );
                         }
                     }
@@ -1267,7 +1268,7 @@ void ExplosionProcess::move_entity( const tripoint_bub_ms position,
 
                     if( bash_result.did_bash && bash_result.success && get_avatar().sees( new_position ) ) {
                         //~ %1$s: item name
-                        add_msg( _( "%1$s flies and smashes into something!" ), target->tname() );
+                        add_msg( to_translation( "%1$s flies and smashes into something!" ), target->tname() );
                     }
                     if( bash_result.did_bash ) { to_next(); }
                 }
@@ -1707,7 +1708,7 @@ static std::map<const Creature *, int> legacy_blast( const tripoint_bub_ms &p, c
         }
 
         // Print messages for all NPCs
-        pl->add_msg_if_player( m_bad, _( "You're caught in the explosion!" ) );
+        pl->add_msg_if_player( m_bad, to_translation( "You're caught in the explosion!" ) );
 
         struct blastable_part {
             bodypart_id bp;
@@ -1826,14 +1827,14 @@ void explosion_funcs::regular( const queued_explosion &qe )
                                              string_format( _( "taking %d damage" ), pr.second ) :
                                              _( "but takes no damage" );
             if( critter->is_player() ) {
-                add_msg( _( "You are hit by %s, %s." ),
+                add_msg( to_translation( "You are hit by %s, %s." ),
                          cause_description, damage_description );
             } else if( critter->is_npc() ) {
                 critter->add_msg_if_npc(
                     _( "<npcname> is hit by %s, %s." ),
                     cause_description, damage_description );
             } else {
-                add_msg( _( "%s is hit by %s, %s." ),
+                add_msg( to_translation( "%s is hit by %s, %s." ),
                          critter->disp_name( false, true ), cause_description, damage_description );
             }
 
@@ -1946,7 +1947,7 @@ void explosion_funcs::shockwave( const queued_explosion &qe )
             continue;
         }
         if( rl_dist( critter.bub_pos(), p ) <= sw.radius ) {
-            add_msg( _( "%s is caught in the shockwave!" ), critter.name() );
+            add_msg( to_translation( "%s is caught in the shockwave!" ), localised::name_of( critter ) );
             g->knockback( p, critter.bub_pos(), sw.force, sw.stun, sw.dam_mult, qe.source );
         }
     }
@@ -1956,14 +1957,14 @@ void explosion_funcs::shockwave( const queued_explosion &qe )
             continue;
         }
         if( rl_dist( guy.bub_pos(), p ) <= sw.radius ) {
-            add_msg( _( "%s is caught in the shockwave!" ), guy.name );
+            add_msg( to_translation( "%s is caught in the shockwave!" ), guy.name );
             g->knockback( p, guy.bub_pos(), sw.force, sw.stun, sw.dam_mult, qe.source );
         }
     }
     if( rl_dist( g->u.bub_pos(), p ) <= sw.radius && sw.affects_player &&
         ( !g->u.has_trait( trait_LEG_TENT_BRACE ) || g->u.footwear_factor() == 1 ||
           ( g->u.footwear_factor() == .5 && one_in( 2 ) ) ) ) {
-        add_msg( m_bad, _( "You're caught in the shockwave!" ) );
+        add_msg( m_bad, to_translation( "You're caught in the shockwave!" ) );
         g->knockback( p, g->u.bub_pos(), sw.force, sw.stun, sw.dam_mult, qe.source );
     }
 }
@@ -1975,8 +1976,8 @@ void scrambler_blast( const tripoint_bub_ms &p )
         if( critter.has_flag( MF_ELECTRONIC ) ) {
             critter.make_friendly();
         }
-        add_msg( m_warning, _( "The %s sparks and begins searching for a target!" ),
-                 critter.name() );
+        add_msg( m_warning, to_translation( "The %s sparks and begins searching for a target!" ),
+                 localised::name_of( critter ) );
     }
 }
 
@@ -2000,7 +2001,7 @@ void emp_blast( const tripoint_bub_ms &p )
 
     if( console ) {
         if( sight ) {
-            add_msg( _( "The %s is rendered non-functional!" ), here.tername( p ) );
+            add_msg( to_translation( "The %s is rendered non-functional!" ), here.tername( p ) );
         }
         here.ter_set( p, t_console_broken );
         return;
@@ -2010,13 +2011,13 @@ void emp_blast( const tripoint_bub_ms &p )
         const int rn = rng( 1, 100 );
         if( rn > 92 || rn < 40 ) {
             if( sight ) {
-                add_msg( _( "The card reader is rendered non-functional." ) );
+                add_msg( to_translation( "The card reader is rendered non-functional." ) );
             }
             here.ter_set( p, t_card_reader_broken );
         }
         if( rn > 80 ) {
             if( sight ) {
-                add_msg( _( "The nearby doors slide open!" ) );
+                add_msg( to_translation( "The nearby doors slide open!" ) );
             }
             using namespace std::views;
             for( const int i : iota( -3, 4 ) ) {
@@ -2030,7 +2031,7 @@ void emp_blast( const tripoint_bub_ms &p )
         }
         if( rn >= 40 && rn <= 80 ) {
             if( sight ) {
-                add_msg( _( "Nothing happens." ) );
+                add_msg( to_translation( "Nothing happens." ) );
             }
         }
     }
@@ -2053,7 +2054,8 @@ void emp_blast( const tripoint_bub_ms &p )
             }
             if( !mon_item_id.is_empty() && deact_chance != 0 && one_in( deact_chance ) ) {
                 if( sight ) {
-                    add_msg( _( "The %s beeps erratically and deactivates!" ), critter.name() );
+                    add_msg( to_translation( "The %s beeps erratically and deactivates!" ),
+                             localised::name_of( critter ) );
                 }
                 here.add_item_or_charges( p, critter.to_item() );
                 for( auto &ammodef : critter.ammo ) {
@@ -2064,7 +2066,7 @@ void emp_blast( const tripoint_bub_ms &p )
                 g->remove_zombie( critter );
             } else {
                 if( sight ) {
-                    add_msg( _( "The EMP blast fries the %s!" ), critter.name() );
+                    add_msg( to_translation( "The EMP blast fries the %s!" ), localised::name_of( critter ) );
                 }
                 int dam = dice( 10, 10 );
                 critter.apply_damage( nullptr, bodypart_id( "torso" ), dam );
@@ -2076,27 +2078,29 @@ void emp_blast( const tripoint_bub_ms &p )
         } else if( critter.has_flag( MF_ELECTRIC_FIELD ) ) {
             if( !critter.has_effect( effect_emp ) ) {
                 if( sight ) {
-                    add_msg( m_good, _( "The %s's electrical field momentarily goes out!" ), critter.name() );
+                    add_msg( m_good, to_translation( "The %s's electrical field momentarily goes out!" ),
+                             localised::name_of( critter ) );
                 }
                 critter.add_effect( effect_emp, 3_minutes );
             } else if( critter.has_effect( effect_emp ) ) {
                 int dam = dice( 3, 5 );
                 if( sight ) {
-                    add_msg( m_good, _( "The %s's disabled electrical field reverses polarity!" ),
-                             critter.name() );
-                    add_msg( m_good, _( "It takes %d damage." ), dam );
+                    add_msg( m_good, to_translation( "The %s's disabled electrical field reverses polarity!" ),
+                             localised::name_of( critter ) );
+                    add_msg( m_good, to_translation( "It takes %d damage." ), dam );
                 }
                 critter.add_effect( effect_emp, 1_minutes );
                 critter.apply_damage( nullptr, bodypart_id( "torso" ), dam );
                 critter.check_dead_state();
             }
         } else if( sight ) {
-            add_msg( _( "The %s is unaffected by the EMP blast." ), critter.name() );
+            add_msg( to_translation( "The %s is unaffected by the EMP blast." ),
+                     localised::name_of( critter ) );
         }
     }
     if( u.bub_pos() == p ) {
         if( u.get_power_level() > 0_kJ ) {
-            add_msg( m_bad, _( "The EMP blast drains your power." ) );
+            add_msg( m_bad, to_translation( "The EMP blast drains your power." ) );
             int max_drain = ( u.get_power_level() > 1000_kJ ? 1000 : units::to_kilojoule(
                                   u.get_power_level() ) );
             u.mod_power_level( units::from_kilojoule( -rng( 1 + max_drain / 3, max_drain ) ) );
@@ -2108,7 +2112,7 @@ void emp_blast( const tripoint_bub_ms &p )
             cuffs.unset_flag( flag_NO_UNWIELD );
             cuffs.charges = 0;
             cuffs.deactivate();
-            add_msg( m_good, _( "The %s on your wrists spark briefly, then release your hands!" ),
+            add_msg( m_good, to_translation( "The %s on your wrists spark briefly, then release your hands!" ),
                      cuffs.tname() );
         }
     }

@@ -770,7 +770,7 @@ void print_dmg_msg( Creature &target, Creature *source, const dealt_damage_insta
 
     if( dealt_dam.total_damage() == 0 ) {
         //~ 1$ - monster name, 2$ - character's bodypart or monster's skin/armor
-        add_msg( _( "The shot reflects off %1$s %2$s!" ), target.disp_name( true ),
+        add_msg( to_translation( "The shot reflects off %1$s %2$s!" ), target.disp_name( true ),
                  ( target.is_monster() || !dealt_dam.bp_hit ) ?
                  target.skin_name() :
                  dealt_dam.bp_hit->accusative.translated() );
@@ -778,11 +778,11 @@ void print_dmg_msg( Creature &target, Creature *source, const dealt_damage_insta
         if( dealt_dam.bp_hit ) {
             //monster hits player ranged
             //~ Hit message. 1$s is bodypart name in accusative. 2$d is damage value.
-            target.add_msg_if_player( m_bad, _( "You were hit in the %1$s for %2$d damage." ),
+            target.add_msg_if_player( m_bad, to_translation( "You were hit in the %1$s for %2$d damage." ),
                                       body_part_name_accusative( dealt_dam.bp_hit ),
                                       dealt_dam.total_damage() );
         } else {
-            target.add_msg_if_player( m_bad, _( "You were hit for a total of %d damage." ),
+            target.add_msg_if_player( m_bad, to_translation( "You were hit for a total of %d damage." ),
                                       dealt_dam.total_damage() );
         }
     } else if( source != nullptr ) {
@@ -804,11 +804,11 @@ void print_dmg_msg( Creature &target, Creature *source, const dealt_damage_insta
             }
 
             //~ %1$s: creature name, %2$d: damage value
-            add_msg( m_good, _( "You hit %1$s for %2$d damage." ),
+            add_msg( m_good, to_translation( "You hit %1$s for %2$d damage." ),
                      target.disp_name(), dealt_dam.total_damage() );
         } else {
             //~ 1$ - shooter, 2$ - target
-            add_msg( _( "%1$s shoots %2$s." ),
+            add_msg( to_translation( "%1$s shoots %2$s." ),
                      source->disp_name(), target.disp_name() );
         }
     }
@@ -922,14 +922,14 @@ void Creature::deal_projectile_attack( Creature *source, item *source_weapon,
         if( source != nullptr && g->u.sees( *source ) ) {
             add_msg_player_or_npc(
                 m_warning,
-                _( "You avoid %s projectile!" ),
-                _( "<npcname> avoids %s projectile." ),
+                to_translation( "You avoid %s projectile!" ),
+                to_translation( "<npcname> avoids %s projectile." ),
                 source->disp_name( true ) );
         } else {
             add_msg_player_or_npc(
                 m_warning,
-                _( "You avoid an incoming projectile!" ),
-                _( "<npcname> avoids an incoming projectile." ) );
+                to_translation( "You avoid an incoming projectile!" ),
+                to_translation( "<npcname> avoids an incoming projectile." ) );
         }
         return;
     }
@@ -1158,7 +1158,8 @@ void Creature::deal_projectile_attack( Creature *source, item *source_weapon,
         // Take an extra 10 damage and 5 arpen off per target, regardless of damage ratio.
         elem.amount = std::max( 0.0f, ( elem.amount * damage_ratio ) - 10 );
         elem.res_pen = std::max( 0.0f, ( elem.res_pen * damage_ratio ) - 5 );
-        add_msg( m_debug, _( "Projectile damage is now %s, arpen is now %s" ), elem.amount, elem.res_pen );
+        add_msg( m_debug, to_translation( "Projectile damage is now %s, arpen is now %s" ), elem.amount,
+                 elem.res_pen );
     }
     // If we ate all available damage doing that, prevent it from trying to hit anyone else downrange.
     if( proj.impact.total_damage() <= 0 ) {
@@ -1222,7 +1223,7 @@ void Creature::deal_projectile_attack( Creature *source, item *source_weapon,
     const int paralysis_strength = proj.has_effect( ammo_effect_PARALYZEPOISON )
                                    ? total_damage - env_resist : 0;
     if( paralysis_strength > 0 ) {
-        add_msg_if_player( m_bad, _( "You feel poison coursing through your body!" ) );
+        add_msg_if_player( m_bad, to_translation( "You feel poison coursing through your body!" ) );
         add_effect( effect_paralyzepoison, 5_minutes );
     }
 
@@ -1231,11 +1232,12 @@ void Creature::deal_projectile_attack( Creature *source, item *source_weapon,
 
     if( venom_strength > 0 ) {
         if( targetted_crit_allowed && goodhit < accuracy_critical ) {
-            add_msg_if_player( m_bad, _( "You feel venom flood your body, wracking you with pain…" ) );
+            add_msg_if_player( m_bad,
+                               to_translation( "You feel venom flood your body, wracking you with pain…" ) );
             add_effect( effect_poison, 5_minutes );
             add_effect( effect_badpoison, 5_minutes );
         } else {
-            add_msg_if_player( m_bad, _( "You're envenomed!" ) );
+            add_msg_if_player( m_bad, to_translation( "You're envenomed!" ) );
             add_effect( effect_poison, 5_minutes );
         }
     }
@@ -1330,7 +1332,7 @@ void Creature::deal_damage_handle_type( const damage_unit &du, bodypart_id bp, i
         if( has_flag( MF_VOLATILE ) && one_in( chances ) ) {
             add_effect( effect_onfire, rng( 1_turns, 3_turns ), bp.id() );
             if( get_avatar().sees( *this ) ) {
-                add_msg( m_warning, _( "The %s goes up in flames!" ), get_name() );
+                add_msg( m_warning, to_translation( "The %s goes up in flames!" ), get_name() );
             }
             adjusted_damage *= 10;
         }
