@@ -102,6 +102,20 @@ TEST_CASE("a gunshot publishes the native gun sound", "[engine_client_sound_cue]
 }
 
 TEST_CASE(
+    "every step publishes its footstep however fast the steps come", "[engine_client_sound_cue]") {
+    if (!sound_supported()) { return; }
+    const auto room = sound_scene{};
+    test_mode = false;
+    sfx::do_footstep();
+    sfx::do_footstep();
+    test_mode = true;
+    const auto played = cues("sound.played");
+    REQUIRE(played.size() == 2);
+    CHECK(played[1].id == "plmove");
+    CHECK(played[1].variant == "walk_barefoot");
+}
+
+TEST_CASE(
     "sound effect volume follows the native option and silence", "[engine_client_sound_cue]") {
     if (!sound_supported()) { return; }
     const auto room = sound_scene{};
