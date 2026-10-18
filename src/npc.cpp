@@ -1099,13 +1099,14 @@ void npc::finish_read( item *it )
                 return;
             }
             if( display_messages ) {
-                add_msg( m_good, _( "%s increases their %s level." ), disp_name(), skill_name );
+                add_msg( m_good, to_translation( "%s increases their %s level." ), disp_name(), skill_name );
             }
             continuous = true;
         } else {
             continuous = true;
             if( display_messages ) {
-                add_msg( m_info, _( "%s learns a little about %s!" ), disp_name(), skill.obj().name() );
+                add_msg( m_info, to_translation( "%s learns a little about %s!" ), disp_name(),
+                         skill.obj().name() );
             }
         }
 
@@ -1113,12 +1114,14 @@ void npc::finish_read( item *it )
             ( ( has_trait( trait_SCHIZOPHRENIC ) ||
                 has_artifact_with( AEP_SCHIZO ) ) && one_in( 25 ) ) ) {
             if( display_messages ) {
-                add_msg( m_info, _( "%s can no longer learn from %s." ), disp_name(), book.type_name() );
+                add_msg( m_info, to_translation( "%s can no longer learn from %s." ), disp_name(),
+                         book.type_name() );
             }
         }
     } else if( skill ) {
         if( display_messages ) {
-            add_msg( m_info, _( "%s can no longer learn from %s." ), disp_name(), book.type_name() );
+            add_msg( m_info, to_translation( "%s can no longer learn from %s." ), disp_name(),
+                     book.type_name() );
         }
     }
 
@@ -1172,7 +1175,7 @@ void npc::do_npc_read()
         }
         if( can_read( *loc, fail_reasons ) ) {
             if( g->u.sees( bub_pos() ) ) {
-                add_msg( m_info, _( "%s starts reading." ), disp_name() );
+                add_msg( m_info, to_translation( "%s starts reading." ), disp_name() );
             }
             start_read( *loc, pl );
         } else {
@@ -1181,7 +1184,7 @@ void npc::do_npc_read()
             }
         }
     } else {
-        add_msg( _( "Never mind." ) );
+        add_msg( to_translation( "Never mind." ) );
     }
 }
 
@@ -1224,7 +1227,7 @@ void npc::do_npc_craft( const std::optional<tripoint> & )
         }
 
         if( found.empty() ) {
-            add_msg( m_info, _( "No in-progress crafts within reach." ) );
+            add_msg( m_info, to_translation( "No in-progress crafts within reach." ) );
             return;
         }
 
@@ -1247,7 +1250,7 @@ void npc::do_npc_craft( const std::optional<tripoint> & )
                 can_pick_weight( *sel.it, false ) ) {
                 detached_ptr<item> det = here.i_rem( target_pos, sel.it );
                 if( det ) {
-                    add_msg( _( "%1$s picks up the %2$s." ), name, det->tname() );
+                    add_msg( to_translation( "%1$s picks up the %2$s." ), name, det->tname() );
                     target = &i_add( std::move( det ) );
                     target_pos = bub_pos();
                 }
@@ -1575,7 +1578,8 @@ void npc::mutiny()
     }
     const bool seen = g->u.sees( bub_pos() );
     if( seen ) {
-        add_msg( m_bad, _( "%s is tired of your incompetent leadership and abuse!" ), disp_name() );
+        add_msg( m_bad, to_translation( "%s is tired of your incompetent leadership and abuse!" ),
+                 disp_name() );
     }
     // NPCs leaving your faction due to mistreatment further reduce their opinion of you
     if( my_fac->likes_u < -10 ) {
@@ -1792,11 +1796,11 @@ void npc::say( const std::string &line, const sounds::sound_t spriority ) const
 
     std::string sound = string_format( _( "%1$s saying \"%2$s\"" ), name, formatted_line );
     if( g->u.sees( *this ) && g->u.is_deaf() ) {
-        add_msg( m_warning, _( "%1$s says something but you can't hear it!" ), name );
+        add_msg( m_warning, to_translation( "%1$s says something but you can't hear it!" ), name );
     }
     // Hallucinations don't make noise when they speak
     if( is_hallucination() ) {
-        add_msg( _( "%1$s saying \"%2$s\"" ), name, formatted_line );
+        add_msg( to_translation( "%1$s saying \"%2$s\"" ), name, formatted_line );
         return;
     }
     // Sound happens even if we can't hear it
@@ -2824,13 +2828,13 @@ void npc::die( Creature *nkiller )
 
     if( is_hallucination() ) {
         if( g->u.sees( *this ) ) {
-            add_msg( _( "%s disappears." ), name.c_str() );
+            add_msg( to_translation( "%s disappears." ), name.c_str() );
         }
         return;
     }
 
     if( g->u.sees( *this ) ) {
-        add_msg( _( "%s dies!" ), name );
+        add_msg( to_translation( "%s dies!" ), name );
     }
 
     if( Character *ch = dynamic_cast<Character *>( get_killer() ) ) {
@@ -2858,7 +2862,7 @@ void npc::die( Creature *nkiller )
 
     if( get_killer() == &g->u && g->u.has_trait( trait_PROF_FERAL ) ) {
         if( !g->u.has_effect( effect_feral_killed_recently ) ) {
-            g->u.add_msg_if_player( m_good, _( "The voices in your head quiet down a bit." ) );
+            g->u.add_msg_if_player( m_good, to_translation( "The voices in your head quiet down a bit." ) );
         }
         g->u.add_effect( effect_feral_killed_recently, 7_days );
     }
