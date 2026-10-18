@@ -1322,11 +1322,12 @@ void character_martial_arts::martialart_use_message( const Character &owner ) co
     if( ma.force_unarmed || ma.weapon_valid( owner.primary_weapon() ) ) {
         owner.add_msg_if_player( m_info, _( ma.get_initiate_avatar_message() ) );
     } else if( ma.strictly_melee && !owner.is_armed() ) {
-        owner.add_msg_if_player( m_bad, _( "%s cannot be used unarmed." ), ma.name );
+        owner.add_msg_if_player( m_bad, to_translation( "%s cannot be used unarmed." ), ma.name );
     } else if( ma.strictly_unarmed && owner.is_armed() ) {
-        owner.add_msg_if_player( m_bad, _( "%s cannot be used with weapons." ), ma.name );
+        owner.add_msg_if_player( m_bad, to_translation( "%s cannot be used with weapons." ), ma.name );
     } else {
-        owner.add_msg_if_player( m_bad, _( "The %1$s is not a valid %2$s weapon." ), owner.primary_weapon()
+        owner.add_msg_if_player( m_bad, to_translation( "The %1$s is not a valid %2$s weapon." ),
+                                 owner.primary_weapon()
                                  .tname( 1, false ), ma.name );
     }
 }

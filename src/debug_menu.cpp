@@ -430,7 +430,8 @@ void teleport_short()
     }
     g->place_player( *where );
     const auto new_pos = g->u.bub_pos();
-    add_msg( _( "You teleport to point (%d,%d,%d)." ), new_pos.x(), new_pos.y(), new_pos.z() );
+    add_msg( to_translation( "You teleport to point (%d,%d,%d)." ), new_pos.x(), new_pos.y(),
+             new_pos.z() );
 }
 
 void teleport_long()
@@ -440,7 +441,7 @@ void teleport_long()
         return;
     }
     g->place_player_overmap( where );
-    add_msg( _( "You teleport to submap %s." ), where.to_string() );
+    add_msg( to_translation( "You teleport to submap %s." ), where.to_string() );
 }
 
 void teleport_overmap( bool specific_coordinates )
@@ -473,7 +474,7 @@ void teleport_overmap( bool specific_coordinates )
     g->place_player_overmap( where );
 
     const tripoint_abs_om new_pos = project_to<coords::om>( g->u.abs_omt_pos() );
-    add_msg( _( "You teleport to overmap %s." ), new_pos.to_string() );
+    add_msg( to_translation( "You teleport to overmap %s." ), new_pos.to_string() );
 }
 
 static void teleport_to_overmap_special()
@@ -503,7 +504,7 @@ static void teleport_to_overmap_special()
     t.reveal_radius = 3;
 
     g->place_player_overmap( mission_util::get_om_terrain_pos( t ) );
-    add_msg( _( "You teleport to submap %s." ), target_id );
+    add_msg( to_translation( "You teleport to submap %s." ), target_id );
 }
 
 void spawn_nested_mapgen()
@@ -841,7 +842,7 @@ void character_edit_menu( Character &c )
                 if( value >= 0 && value <= p.get_stamina_max() ) {
                     p.set_stamina( value );
                 } else {
-                    add_msg( m_bad, _( "Target stamina value out of bounds!" ) );
+                    add_msg( m_bad, to_translation( "Target stamina value out of bounds!" ) );
                 }
             }
             break;
@@ -1148,14 +1149,14 @@ void character_edit_menu( Character &c )
         }
         break;
         case edit_character::learn_ma:
-            add_msg( m_info, _( "Martial arts debug." ) );
-            add_msg( _( "Your eyes blink rapidly as knowledge floods your brain." ) );
+            add_msg( m_info, to_translation( "Martial arts debug." ) );
+            add_msg( to_translation( "Your eyes blink rapidly as knowledge floods your brain." ) );
             for( auto &style : all_martialart_types() ) {
                 if( style != matype_id( "style_none" ) ) {
                     c.martial_arts_data->add_martialart( style );
                 }
             }
-            add_msg( m_good, _( "You now know a lot more than just 10 styles of kung fu." ) );
+            add_msg( m_good, to_translation( "You now know a lot more than just 10 styles of kung fu." ) );
             break;
 
         case edit_character::effects:
@@ -1163,34 +1164,35 @@ void character_edit_menu( Character &c )
             break;
 
         case edit_character::unlock_recipes: {
-            add_msg( m_info, _( "Recipe debug." ) );
-            add_msg( _( "Your eyes blink rapidly as knowledge floods your brain." ) );
+            add_msg( m_info, to_translation( "Recipe debug." ) );
+            add_msg( to_translation( "Your eyes blink rapidly as knowledge floods your brain." ) );
             for( const auto &e : recipe_dict ) {
                 p.learn_recipe( &e.second );
             }
-            add_msg( m_good, _( "You know how to craft that now." ) );
+            add_msg( m_good, to_translation( "You know how to craft that now." ) );
         }
         break;
         case edit_character::forget_items:
-            add_msg( m_info, _( "Item debug." ) );
+            add_msg( m_info, to_translation( "Item debug." ) );
             uistate.read_items.clear();
-            add_msg( m_bad, _( "You don't know about any items anymore." ) );
+            add_msg( m_bad, to_translation( "You don't know about any items anymore." ) );
             break;
         case edit_character::learn_spells:
             if( spell_type::get_all().empty() ) {
-                add_msg( m_bad, _( "There are no spells to learn.  You must install a mod that adds some." ) );
+                add_msg( m_bad,
+                         to_translation( "There are no spells to learn.  You must install a mod that adds some." ) );
             } else {
                 for( const spell_type &learn : spell_type::get_all() ) {
                     c.magic->learn_spell( &learn, g->u, true );
                 }
                 add_msg( m_good,
-                         _( "You have become an Archwizardpriest!  What will you do with your newfound power?" ) );
+                         to_translation( "You have become an Archwizardpriest!  What will you do with your newfound power?" ) );
             }
             break;
         case edit_character::level_spells: {
             std::vector<spell *> spells = c.magic->get_spells();
             if( spells.empty() ) {
-                add_msg( m_bad, _( "Try learning some spells first." ) );
+                add_msg( m_bad, to_translation( "Try learning some spells first." ) );
                 return;
             }
             std::vector<uilist_entry> uiles;
@@ -1225,7 +1227,8 @@ void character_edit_menu( Character &c )
                 spells[action]->gain_level();
                 cur_level = spells[action]->get_level();
             }
-            add_msg( m_good, _( "%s is now level %d!" ), spells[action]->name(), spells[action]->get_level() );
+            add_msg( m_good, to_translation( "%s is now level %d!" ), spells[action]->name(),
+                     spells[action]->get_level() );
             break;
         }
         case UILIST_CANCEL:
@@ -1358,27 +1361,27 @@ static bool remove_from_vec( std::vector<mission *> &vec, mission *m )
 void mission_debug::remove_mission( mission &m )
 {
     if( remove_from_vec( g->u.active_missions, &m ) ) {
-        add_msg( _( "Removing from active_missions" ) );
+        add_msg( to_translation( "Removing from active_missions" ) );
     }
     if( remove_from_vec( g->u.completed_missions, &m ) ) {
-        add_msg( _( "Removing from completed_missions" ) );
+        add_msg( to_translation( "Removing from completed_missions" ) );
     }
     if( remove_from_vec( g->u.failed_missions, &m ) ) {
-        add_msg( _( "Removing from failed_missions" ) );
+        add_msg( to_translation( "Removing from failed_missions" ) );
     }
 
     if( g->u.active_mission == &m ) {
         g->u.active_mission = nullptr;
-        add_msg( _( "Unsetting active mission" ) );
+        add_msg( to_translation( "Unsetting active mission" ) );
     }
 
     const auto giver = g->find_npc( m.npc_id );
     if( giver != nullptr ) {
         if( remove_from_vec( giver->chatbin.missions_assigned, &m ) ) {
-            add_msg( _( "Removing from %s missions_assigned" ), giver->name );
+            add_msg( to_translation( "Removing from %s missions_assigned" ), giver->name );
         }
         if( remove_from_vec( giver->chatbin.missions, &m ) ) {
-            add_msg( _( "Removing from %s missions" ), giver->name );
+            add_msg( to_translation( "Removing from %s missions" ), giver->name );
         }
     }
 }
@@ -1539,7 +1542,7 @@ void debug()
                     }
                 }
             }
-            add_msg( m_good, _( "Current overmap revealed." ) );
+            add_msg( m_good, to_translation( "Current overmap revealed." ) );
         }
         break;
 
@@ -1616,16 +1619,17 @@ void debug()
                 g->num_creatures() );
             for( const npc &guy : g->all_npcs() ) {
                 auto t = guy.abs_sm_pos();
-                add_msg( m_info, _( "%s: map ( %d:%d ) pos ( %d:%d )" ), guy.name, t.x(),
+                add_msg( m_info, to_translation( "%s: map ( %d:%d ) pos ( %d:%d )" ), guy.name, t.x(),
                          t.y(), guy.bub_pos().x(), guy.bub_pos().y() );
             }
 
-            add_msg( m_info, _( "(you: %d:%d)" ), u.bub_pos().x(), u.bub_pos().y() );
-            add_msg( m_info, _( "Thirst: %d, kCal: %d / %d" ), u.get_thirst(), u.get_stored_kcal(),
+            add_msg( m_info, to_translation( "(you: %d:%d)" ), u.bub_pos().x(), u.bub_pos().y() );
+            add_msg( m_info, to_translation( "Thirst: %d, kCal: %d / %d" ), u.get_thirst(), u.get_stored_kcal(),
                      u.max_stored_kcal() );
-            add_msg( m_info, _( "Body Mass Index: %.0f\nBasal Metabolic Rate: %i" ), u.bmi(), u.bmr() );
+            add_msg( m_info, to_translation( "Body Mass Index: %.0f\nBasal Metabolic Rate: %i" ), u.bmi(),
+                     u.bmr() );
             if( get_option<bool>( "STATS_THROUGH_KILLS" ) ) {
-                add_msg( m_info, _( "Kill xp: %d" ), u.kill_xp() );
+                add_msg( m_info, to_translation( "Kill xp: %d" ), u.kill_xp() );
             }
             g->invalidate_main_ui_adaptor();
             g->disp_NPCs();
@@ -1686,7 +1690,7 @@ void debug()
         break;
         case DEBUG_KILL_NPCS:
             for( npc &guy : g->all_npcs() ) {
-                add_msg( _( "%s's head implodes!" ), guy.name );
+                add_msg( to_translation( "%s's head implodes!" ), guy.name );
                 guy.set_part_hp_cur( bodypart_id( "head" ), 0 );
             }
             break;
@@ -2263,7 +2267,7 @@ void debug()
         case DEBUG_VEHICLE_BATTERY_CHARGE: {
             optional_vpart_position v_part_pos = g->m.veh_at( u.bub_pos() );
             if( !v_part_pos ) {
-                add_msg( m_bad, _( "There's no vehicle there." ) );
+                add_msg( m_bad, to_translation( "There's no vehicle there." ) );
                 break;
             }
 
@@ -2286,7 +2290,7 @@ void debug()
         case DEBUG_VEHICLE_EXPORT_JSON: {
             const optional_vpart_position v_part_pos = g->m.veh_at( u.bub_pos() );
             if( !v_part_pos ) {
-                add_msg( m_bad, _( "There's no vehicle there." ) );
+                add_msg( m_bad, to_translation( "There's no vehicle there." ) );
                 break;
             }
             const vehicle &veh = v_part_pos->vehicle();

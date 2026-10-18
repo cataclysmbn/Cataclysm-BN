@@ -1077,7 +1077,7 @@ void defense_game::caravan()
             }
         }
         if( dropped_some ) {
-            add_msg( _( "You drop some items." ) );
+            add_msg( to_translation( "You drop some items." ) );
         }
     }
 }
@@ -1298,7 +1298,7 @@ void defense_game::spawn_wave()
             }
         }
         if( valid.empty() ) {
-            add_msg( m_info, _( "Welcome to Wave %d!" ), current_wave );
+            add_msg( m_info, to_translation( "Welcome to Wave %d!" ), current_wave );
             add_msg( m_info, "********" );
             return;
         }
@@ -1320,7 +1320,7 @@ void defense_game::spawn_wave()
         diff -= type.difficulty;
         spawn_wave_monster( type.id );
     }
-    add_msg( m_info, _( "Welcome to Wave %d!" ), current_wave );
+    add_msg( m_info, to_translation( "Welcome to Wave %d!" ), current_wave );
     add_msg( m_info, "********" );
 }
 

@@ -27,5 +27,5 @@ void mission_end::deposit_box( mission *miss )
         itemName = "m4a1";
     }
     g->u.i_add( item::spawn( itemName, calendar::start_of_cataclysm ) );
-    add_msg( m_good, _( "%s gave you an item from the deposit box." ), p->name );
+    add_msg( m_good, to_translation( "%s gave you an item from the deposit box." ), p->name );
 }

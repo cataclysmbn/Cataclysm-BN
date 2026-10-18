@@ -36,9 +36,12 @@ auto remove_migo_nerve_cage_terrain(mapbuffer& buffer, const tripoint_abs_ms& p)
 auto finish_migo_nerve_cage_removal(
     const tripoint_bub_ms& p, const bool spawn_damaged, const bool open) -> void {
     if (open) {
-        add_msg(m_good, _("The nerve cluster collapses in on itself, and the nearby cages open!"));
+        add_msg(
+            m_good,
+            to_translation("The nerve cluster collapses in on itself, and the nearby cages open!"));
     } else {
-        add_msg(_("The nerve cluster collapses in on itself, to no discernible effect."));
+        add_msg(
+            to_translation("The nerve cluster collapses in on itself, to no discernible effect."));
     }
     sound_event se;
     se.origin = p;
@@ -54,7 +57,8 @@ auto finish_migo_nerve_cage_removal(
     spawn->mod_moves(-300);
     if (get_player_character().sees(p)) {
         add_msg(m_bad,
-                _("Something stirs and clambers out of the ruined mass of flesh and nerves!"));
+                to_translation(
+                    "Something stirs and clambers out of the ruined mass of flesh and nerves!"));
     }
 }
 

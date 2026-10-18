@@ -97,12 +97,12 @@ auto teleporter_list::place_avatar_overmap(Character& you, const tripoint_abs_om
 void teleporter_list::translocate(const std::set<tripoint_bub_ms>& targets) {
     if (known_teleporters.empty()) {
         // we can't go somewhere if we don't know how to get there!
-        add_msg(m_bad, _("No translocator target known."));
+        add_msg(m_bad, to_translation("No translocator target known."));
         return;
     }
     std::optional<tripoint_abs_omt> omt_dest = choose_teleport_location();
     if (!omt_dest) {
-        add_msg(_("Teleport canceled."));
+        add_msg(to_translation("Teleport canceled."));
         return;
     }
 
@@ -113,13 +113,13 @@ void teleporter_list::translocate(const std::set<tripoint_bub_ms>& targets) {
         if (you && you->is_avatar()) {
             valid_targets = true;
             if (!place_avatar_overmap(*you, *omt_dest)) {
-                add_msg(_("Failed to teleport.  Teleporter obstructed or destroyed."));
+                add_msg(to_translation("Failed to teleport.  Teleporter obstructed or destroyed."));
                 deactivate_teleporter(*omt_dest, pt);
             }
         }
     }
 
-    if (!valid_targets) { add_msg(_("No valid targets to teleport.")); }
+    if (!valid_targets) { add_msg(to_translation("No valid targets to teleport.")); }
 }
 
 auto teleporter_list::knows_translocator(const tripoint_abs_omt& omt_pos) const -> bool {

@@ -1551,7 +1551,7 @@ auto map::move_vehicle(vehicle& veh, const tripoint_rel_ms& dp, const tileray& f
         veh.do_towing_move();
         // veh.do_towing_move() may cancel towing, so we need to recheck is_towing here
         if (veh.is_towing() && veh.tow_data.get_towed()->tow_cable_too_far()) {
-            add_msg(m_info, _("A towing cable snaps off of %s."),
+            add_msg(m_info, to_translation("A towing cable snaps off of %s."),
                     veh.tow_data.get_towed()->disp_name());
             veh.tow_data.get_towed()->invalidate_towing(true);
         }
@@ -1580,7 +1580,7 @@ auto map::vehicle_vehicle_collision(
     //  parts are damaged/broken on both sides,
     //  remaining times are normalized
     const veh_collision& c = collisions[0];
-    add_msg(m_bad, _("The %1$s's %2$s collides with %3$s's %4$s."), veh.name,
+    add_msg(m_bad, to_translation("The %1$s's %2$s collides with %3$s's %4$s."), veh.name,
             veh.part_info(c.part).name(), veh2.name, veh2.part_info(c.target_part).name());
 
     const bool vertical = veh.abs_sm_pos.z() != veh2.abs_sm_pos.z();
@@ -2310,7 +2310,7 @@ auto map::move_furn(
             for (auto& it : src_contents) { i_at(to).insert(std::move(it)); }
             for (auto& it : dst_contents) { i_at(from).insert(std::move(it)); }
         } else {
-            add_msg(_("Stuff spills from the %s!"), moving_furn.obj().name());
+            add_msg(to_translation("Stuff spills from the %s!"), moving_furn.obj().name());
         }
     }
 
@@ -2324,7 +2324,7 @@ static auto release_avatar_grabbed_furniture_if_destroyed(
     avatar& you = get_avatar();
     if (you.get_grab_type() == OBJECT_FURNITURE && you.bub_pos() + you.grab_point == p
         && !new_furniture.obj().is_movable()) {
-        add_msg(_("The %s you were grabbing is destroyed!"), old_furniture.name());
+        add_msg(to_translation("The %s you were grabbing is destroyed!"), old_furniture.name());
         you.grab(OBJECT_NONE);
     }
 }
@@ -2893,7 +2893,8 @@ void map::drop_furniture(const tripoint_bub_ms& p) {
         }
 
         critter->add_msg_player_or_npc(
-            m_bad, _("Falling %s hits you!"), _("Falling %s hits <npcname>"), furn_name);
+            m_bad, to_translation("Falling %s hits you!"),
+            to_translation("Falling %s hits <npcname>"), furn_name);
         // TODO: A chance to dodge/uncanny dodge
         player* pl = dynamic_cast<player*>(critter);
         monster* mon = dynamic_cast<monster*>(critter);
@@ -3695,15 +3696,17 @@ void map::smash_items(
 
     // Let the player know that the item was damaged if they can see it.
     if (items_destroyed > 1 && g->u.sees(p)) {
-        add_msg(m_bad, _("The %s destroys several items!"), cause_message);
+        add_msg(m_bad, to_translation("The %s destroys several items!"), cause_message);
     } else if (items_destroyed == 1 && items_damaged == 1 && g->u.sees(p)) {
         //~ %1$s: the cause of destruction, %2$s: destroyed item name
-        add_msg(m_bad, _("The %1$s destroys the %2$s!"), cause_message, damaged_item_name);
+        add_msg(m_bad, to_translation("The %1$s destroys the %2$s!"), cause_message,
+                damaged_item_name);
     } else if (items_damaged > 1 && g->u.sees(p)) {
-        add_msg(m_bad, _("The %s damages several items."), cause_message);
+        add_msg(m_bad, to_translation("The %s damages several items."), cause_message);
     } else if (items_damaged == 1 && g->u.sees(p)) {
         //~ %1$s: the cause of damage, %2$s: damaged item name
-        add_msg(m_bad, _("The %1$s damages the %2$s."), cause_message, damaged_item_name);
+        add_msg(m_bad, to_translation("The %1$s damages the %2$s."), cause_message,
+                damaged_item_name);
     }
 
     for (detached_ptr<item>& it : contents) { add_item_or_charges(p, std::move(it)); }
@@ -4158,11 +4161,13 @@ auto map::bash_ter_furn(const tripoint_bub_ms& p, const bash_params& params) -> 
         if (has_flag(TFLAG_UNSTABLE, above) && character != nullptr
             && character->stability_roll() < params.strength) {
             character->add_msg_if_player(
-                m_warning, _("You feel the ground beneath you shake from the impact!"));
+                m_warning,
+                to_translation("You feel the ground beneath you shake from the impact!"));
 
             if (character->stability_roll() < rng(1, params.strength) && one_in(10)) {
                 character->add_msg_player_or_npc(
-                    m_bad, _("You lose your balance!"), _("<npcname> loses their balance!"));
+                    m_bad, to_translation("You lose your balance!"),
+                    to_translation("<npcname> loses their balance!"));
 
                 g->fling_creature(character, rng_float(0_degrees, 360_degrees), 10);
             }
@@ -4350,8 +4355,8 @@ void map::crush(const tripoint_bub_ms& p) {
         if (!player_inside) { // If there's a player at p and he's not in a covered vehicle...
             // This is the roof coming down on top of us, no chance to dodge
             crushed_player->add_msg_player_or_npc(
-                m_bad, _("You are crushed by the falling debris!"),
-                _("<npcname> is crushed by the falling debris!"));
+                m_bad, to_translation("You are crushed by the falling debris!"),
+                to_translation("<npcname> is crushed by the falling debris!"));
             // TODO: Make this depend on the ceiling material
             const int dam = rng(0, 40);
             // Torso and head take the brunt of the blow
@@ -4457,7 +4462,9 @@ void map::shoot(
         } else if (proj.has_effect(ammo_effect_NO_PENETRATE_OBSTACLES)) {
             // We shot something with a flamethrower or other non-penetrating weapon.
             // Try to bash the obstacle and stop the shot.
-            if (get_avatar().sees(p)) { add_msg(_("The shot strikes the %s!"), furnname(p)); }
+            if (get_avatar().sees(p)) {
+                add_msg(to_translation("The shot strikes the %s!"), furnname(p));
+            }
             if (phys) { bash(p, dam, false); }
             dam = 0;
         } else if (rfi.reduction_laser && proj.has_effect(ammo_effect_LASER)) {
@@ -4475,11 +4482,12 @@ void map::shoot(
             // job
             if (get_avatar().sees(p)) {
                 if (dam <= 0) {
-                    add_msg(_("The shot is stopped by the %s!"), furnname(p));
+                    add_msg(to_translation("The shot is stopped by the %s!"), furnname(p));
                     // Only bother mentioning it punched through if it had any resistance, so zip
                     // through canvas with no message.
                 } else if (rfi.reduction.min > 0) {
-                    add_msg(_("The shot hits the %s and punches through!"), furnname(p));
+                    add_msg(to_translation("The shot hits the %s and punches through!"),
+                            furnname(p));
                 }
             }
             add_msg(m_debug, "%s: damage: %.0f -> %.0f, arpen: %.0f -> %.0f", furn.name(),
@@ -4507,7 +4515,9 @@ void map::shoot(
         } else if (proj.has_effect(ammo_effect_NO_PENETRATE_OBSTACLES)) {
             // We shot something with a flamethrower or other non-penetrating weapon.
             // Try to bash the obstacle if it was a thrown rock or the like, then stop the shot.
-            if (get_avatar().sees(p)) { add_msg(_("The shot strikes the %s!"), tername(p)); }
+            if (get_avatar().sees(p)) {
+                add_msg(to_translation("The shot strikes the %s!"), tername(p));
+            }
             if (phys) { bash(p, dam, false); }
             dam = 0;
         } else if (ri.reduction_laser && proj.has_effect(ammo_effect_LASER)) {
@@ -4524,11 +4534,12 @@ void map::shoot(
             // job
             if (get_avatar().sees(p)) {
                 if (dam <= 0) {
-                    add_msg(_("The shot is stopped by the %s!"), tername(p));
+                    add_msg(to_translation("The shot is stopped by the %s!"), tername(p));
                     // Only bother mentioning it punched through if it had any resistance, so zip
                     // through canvas with no message.
                 } else if (ri.reduction.min > 0) {
-                    add_msg(_("The shot hits the %s and punches through!"), tername(p));
+                    add_msg(to_translation("The shot hits the %s and punches through!"),
+                            tername(p));
                 }
             }
             add_msg(m_debug, "%s: damage: %.0f -> %.0f, arpen: %.0f -> %.0f", ter.name(),
@@ -4618,7 +4629,7 @@ auto map::hit_with_acid(const tripoint_bub_ms& p) -> bool {
     } else if (t == t_door_bar_c || t == t_door_bar_o || t == t_door_bar_locked || t == t_bars
                || t == t_reb_cage) {
         ter_set(p, t_floor);
-        add_msg(m_warning, _("The metal bars melt!"));
+        add_msg(m_warning, to_translation("The metal bars melt!"));
     } else if (t == t_door_b) {
         if (one_in(4)) {
             ter_set(p, t_door_frame);
@@ -4685,7 +4696,8 @@ struct can_open_while_mounted {
             if (u->is_mounted()) {
                 auto mon = u->mounted_creature.get();
                 if (!mon->has_flag(MF_MOUNTABLE_DOORS)) {
-                    u->add_msg_if_player(m_info, _("You can't open things while you're riding."));
+                    u->add_msg_if_player(
+                        m_info, to_translation("You can't open things while you're riding."));
                     return false;
                 }
             }
@@ -4789,12 +4801,12 @@ auto map::can_open_door_veh(
                 std::visit([](auto&& v) { return static_cast<const Creature*>(v); }, who);
             if (inside) {
                 you->add_msg_if_player(
-                    _("The %1$s's %2$s can only be opened from outside."), vp->vehicle().name,
-                    vp->vehicle().part_info(vp->part_index()).name());
+                    to_translation("The %1$s's %2$s can only be opened from outside."),
+                    vp->vehicle().name, vp->vehicle().part_info(vp->part_index()).name());
             } else {
                 you->add_msg_if_player(
-                    _("The %1$s's %2$s can only be opened from inside."), vp->vehicle().name,
-                    vp->vehicle().part_info(vp->part_index()).name());
+                    to_translation("The %1$s's %2$s can only be opened from inside."),
+                    vp->vehicle().name, vp->vehicle().part_info(vp->part_index()).name());
             }
         }
         return false;
@@ -4837,7 +4849,7 @@ auto map::open_door_veh(
         const auto you = std::visit([](auto&& v) { return static_cast<const Creature*>(v); }, who);
         const auto dpart = veh.next_part_to_open(vp->part_index(), !inside);
         you->add_msg_if_player(
-            _("The %1$s's %2$s is locked."), veh.name, veh.part_info(dpart).name());
+            to_translation("The %1$s's %2$s is locked."), veh.name, veh.part_info(dpart).name());
 
         return false;
     }
@@ -6015,7 +6027,7 @@ void map::disarm_trap(const tripoint_bub_ms& p) {
     // Some traps are not actual traps. Skip the rolls, different message and give the option to
     // grab it right away.
     if (tr.get_avoidance() == 0 && tr.get_difficulty() == 0) {
-        add_msg(_("The %s is taken down."), tr.name());
+        add_msg(to_translation("The %s is taken down."), tr.name());
         tr.on_disarmed(*this, p);
         return;
     }
@@ -6027,7 +6039,7 @@ void map::disarm_trap(const tripoint_bub_ms& p) {
     ///\EFFECT_TRAPS increases chance of disarming trap
     while ((rng(5, 20) < g->u.per_cur || rng(1, 20) < g->u.dex_cur) && roll < 50) { roll++; }
     if (roll >= diff) {
-        add_msg(_("You disarm the trap!"));
+        add_msg(to_translation("You disarm the trap!"));
         const int morale_buff = tr.get_avoidance() * 0.4 + tr.get_difficulty() + rng(0, 4);
         g->u.rem_morale(MORALE_FAILURE);
         g->u.add_morale(MORALE_ACCOMPLISHMENT, morale_buff, 40);
@@ -6036,13 +6048,13 @@ void map::disarm_trap(const tripoint_bub_ms& p) {
             g->u.practice(skill_traps, tReward);
         }
     } else if (roll >= diff * .8) {
-        add_msg(_("You fail to disarm the trap."));
+        add_msg(to_translation("You fail to disarm the trap."));
         const int morale_debuff = -rng(6, 18);
         g->u.rem_morale(MORALE_ACCOMPLISHMENT);
         g->u.add_morale(MORALE_FAILURE, morale_debuff, -40);
         if (diff > 1.25 * tSkillLevel) { g->u.practice(skill_traps, tReward / 2); }
     } else {
-        add_msg(m_bad, _("You fail to disarm the trap, and you set it off!"));
+        add_msg(m_bad, to_translation("You fail to disarm the trap, and you set it off!"));
         const int morale_debuff = -rng(12, 24);
         g->u.rem_morale(MORALE_ACCOMPLISHMENT);
         g->u.add_morale(MORALE_FAILURE, morale_debuff, -40);

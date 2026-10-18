@@ -2096,7 +2096,7 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
                     }
                     if( target != nullptr ) {
                         target->make_craft( rec->ident(), bs, target->bub_pos() );
-                        add_msg( m_good, _( "%s starts crafting %s." ),
+                        add_msg( m_good, to_translation( "%s starts crafting %s." ),
                                  target->get_name(), rec->result_name() );
                         chosen = nullptr;
                         done = true;

@@ -60,12 +60,12 @@ static void reveal_target( mission *miss, const std::string &omter_id )
     const tripoint_abs_omt destination = reveal_destination( omter_id, omb );
     if( destination != overmap::invalid_tripoint ) {
         const oter_id oter = omb.ter( destination );
-        add_msg( _( "%s has marked the only %s known to them on your map." ), p->name,
+        add_msg( to_translation( "%s has marked the only %s known to them on your map." ), p->name,
                  oter->get_name() );
         miss->set_target( destination );
         if( one_in( 3 ) &&
             mission_util::reveal_road( g->u.abs_omt_pos(), destination, omb ) ) {
-            add_msg( _( "%s also marks the road that leads to it…" ), p->name );
+            add_msg( to_translation( "%s also marks the road that leads to it…" ), p->name );
         }
     }
 }

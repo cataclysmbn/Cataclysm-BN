@@ -587,7 +587,7 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
                                 if( trans && !trans->msg_transform.empty() ) {
                                     who.add_msg_if_player( m_neutral, trans->msg_transform );
                                 } else {
-                                    who.add_msg_if_player( m_neutral, _( "You stop using your %s." ), mut_data.name() );
+                                    who.add_msg_if_player( m_neutral, to_translation( "You stop using your %s." ), mut_data.name() );
                                 }
                                 ret.cmd = mutations_ui_cmd::deactivate;
                                 ret.mut = *mut_id;
@@ -596,7 +596,7 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
                                 if( trans && !trans->msg_transform.empty() ) {
                                     who.add_msg_if_player( m_neutral, trans->msg_transform );
                                 } else {
-                                    who.add_msg_if_player( m_neutral, _( "You activate your %s." ), mut_data.name() );
+                                    who.add_msg_if_player( m_neutral, to_translation( "You activate your %s." ), mut_data.name() );
                                 }
                                 ret.cmd = mutations_ui_cmd::activate;
                                 ret.mut = *mut_id;
@@ -754,7 +754,7 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
                         case mutation_menu_mode::activating: {
                             if( mut_data.activated ) {
                                 if( who.my_mutations[mut_id].powered ) {
-                                    who.add_msg_if_player( m_neutral, _( "You stop using your %s." ), mut_data.name() );
+                                    who.add_msg_if_player( m_neutral, to_translation( "You stop using your %s." ), mut_data.name() );
 
                                     who.deactivate_mutation( mut_id );
                                     // Action done, leave screen
@@ -762,7 +762,7 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
                                 } else if( ( !mut_data.hunger || who.get_kcal_percent() >= 0.8f ) &&
                                            ( !mut_data.thirst || who.get_thirst() <= 400 ) &&
                                            ( !mut_data.fatigue || who.get_fatigue() <= 400 ) ) {
-                                    who.add_msg_if_player( m_neutral, _( "You activate your %s." ), mut_data.name() );
+                                    who.add_msg_if_player( m_neutral, to_translation( "You activate your %s." ), mut_data.name() );
 
                                     who.activate_mutation( mut_id );
                                     // Action done, leave screen

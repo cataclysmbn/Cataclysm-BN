@@ -999,7 +999,7 @@ bool advanced_inventory::move_all_items( bool nested_call )
             }
 
             if( filtered_any_bucket ) {
-                add_msg( m_info, _( "Skipping filled buckets to avoid spilling their contents." ) );
+                add_msg( m_info, to_translation( "Skipping filled buckets to avoid spilling their contents." ) );
             }
 
             if( dpane.get_area() == AIM_INVENTORY ) {

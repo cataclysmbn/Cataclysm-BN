@@ -39,7 +39,7 @@ bool teleport::teleport( Creature &critter, int min_distance, int max_distance, 
     //The teleportee is dimensionally anchored so nothing happens
     if( p && ( p->worn_with_flag( json_flag_DIMENSIONAL_ANCHOR ) ||
                p->has_effect_with_flag( json_flag_DIMENSIONAL_ANCHOR ) ) ) {
-        p->add_msg_if_player( m_warning, _( "You feel a strange, inwards force." ) );
+        p->add_msg_if_player( m_warning, to_translation( "You feel a strange, inwards force." ) );
         return false;
     }
     do {
@@ -53,14 +53,14 @@ bool teleport::teleport( Creature &critter, int min_distance, int max_distance, 
     if( here.impassable( new_pos ) ) {
         if( safe ) {
             if( c_is_u ) {
-                add_msg( m_bad, _( "You cannot teleport safely." ) );
+                add_msg( m_bad, to_translation( "You cannot teleport safely." ) );
             }
             return false;
         }
         critter.apply_damage( nullptr, bodypart_id( "torso" ), 9999 );
         if( c_is_u ) {
             g->events().send<event_type::teleports_into_wall>( p->getID(), here.obstacle_name( new_pos ) );
-            add_msg( m_bad, _( "You die after teleporting into a solid." ) );
+            add_msg( m_bad, to_translation( "You die after teleporting into a solid." ) );
         }
         critter.check_dead_state();
 
@@ -70,28 +70,28 @@ bool teleport::teleport( Creature &critter, int min_distance, int max_distance, 
         player *const poor_player = dynamic_cast<player *>( poor_soul );
         if( safe ) {
             if( c_is_u ) {
-                add_msg( m_bad, _( "You cannot teleport safely." ) );
+                add_msg( m_bad, to_translation( "You cannot teleport safely." ) );
             }
             return false;
         } else if( poor_player && ( poor_player->worn_with_flag( json_flag_DIMENSIONAL_ANCHOR ) ||
                                     poor_player->has_effect_with_flag( json_flag_DIMENSIONAL_ANCHOR ) ) ) {
-            poor_player->add_msg_if_player( m_warning, _( "You feel disjointed." ) );
+            poor_player->add_msg_if_player( m_warning, to_translation( "You feel disjointed." ) );
             return false;
         } else {
             const bool poor_soul_is_u = ( poor_soul->is_avatar() );
             if( poor_soul_is_u ) {
-                add_msg( m_bad, _( "…" ) );
-                add_msg( m_bad, _( "You explode into thousands of fragments." ) );
+                add_msg( m_bad, to_translation( "…" ) );
+                add_msg( m_bad, to_translation( "You explode into thousands of fragments." ) );
             }
             if( p ) {
                 p->add_msg_player_or_npc( m_warning,
-                                          _( "You teleport into %s, and they explode into thousands of fragments." ),
-                                          _( "<npcname> teleports into %s, and they explode into thousands of fragments." ),
+                                          to_translation( "You teleport into %s, and they explode into thousands of fragments." ),
+                                          to_translation( "<npcname> teleports into %s, and they explode into thousands of fragments." ),
                                           poor_soul->disp_name() );
                 g->events().send<event_type::telefrags_creature>( p->getID(), poor_soul->get_name() );
             } else {
                 if( g->u.sees( *poor_soul ) ) {
-                    add_msg( m_good, _( "%1$s teleports into %2$s, killing them!" ),
+                    add_msg( m_good, to_translation( "%1$s teleports into %2$s, killing them!" ),
                              critter.disp_name(), poor_soul->disp_name() );
                 }
             }

@@ -255,16 +255,17 @@ void map::player_in_field(player& u) {
 
                 if (on_ground && total_damage > 0) {
                     u.add_msg_player_or_npc(
-                        m_bad, _("The acid burns your body!"),
-                        _("The acid burns <npcname>s body!"));
+                        m_bad, to_translation("The acid burns your body!"),
+                        to_translation("The acid burns <npcname>s body!"));
                 } else if (total_damage > 0) {
                     u.add_msg_player_or_npc(
-                        m_bad, _("The acid burns your legs and feet!"),
-                        _("The acid burns <npcname>s legs and feet!"));
+                        m_bad, to_translation("The acid burns your legs and feet!"),
+                        to_translation("The acid burns <npcname>s legs and feet!"));
                 } else if (on_ground) {
-                    u.add_msg_if_player(m_warning, _("You're lying in a pool of acid"));
+                    u.add_msg_if_player(m_warning, to_translation("You're lying in a pool of acid"));
                 } else {
-                    u.add_msg_if_player(m_warning, _("You're standing in a pool of acid"));
+                    u.add_msg_if_player(
+                        m_warning, to_translation("You're standing in a pool of acid"));
                 }
 
                 u.check_dead_state();
@@ -281,7 +282,8 @@ void map::player_in_field(player& u) {
             // Sludge is on the ground, but you are above the ground when boarded on a vehicle
             if (!u.in_vehicle) {
                 u.add_msg_if_player(
-                    m_bad, _("The sludge is thick and sticky.  You struggle to pull free."));
+                    m_bad,
+                    to_translation("The sludge is thick and sticky.  You struggle to pull free."));
                 u.moves -= cur.get_field_intensity() * 300;
                 cur.set_field_intensity(0);
             }
@@ -410,8 +412,8 @@ void map::player_in_field(player& u) {
                 // Heatsink or suit stops fire.
                 if (!u.has_active_bionic(bio_heatsink) && !u.is_wearing(itype_rm13_armor_on)) {
                     u.add_msg_player_or_npc(
-                        m_bad, _("You're torched by flames!"),
-                        _("<npcname> is torched by flames!"));
+                        m_bad, to_translation("You're torched by flames!"),
+                        to_translation("<npcname> is torched by flames!"));
                     u.deal_damage(
                         nullptr, bodypart_id("leg_l"), damage_instance(DT_HEAT, rng(2, 6)));
                     u.deal_damage(
@@ -421,8 +423,8 @@ void map::player_in_field(player& u) {
                     u.check_dead_state();
                 } else {
                     u.add_msg_player_or_npc(
-                        _("These flames do not burn you."),
-                        _("Those flames do not burn <npcname>."));
+                        to_translation("These flames do not burn you."),
+                        to_translation("Those flames do not burn <npcname>."));
                 }
             }
         }
@@ -441,16 +443,18 @@ void map::player_in_field(player& u) {
                 if (total_damage > 0) {
                     if (u.has_trait(trait_ELECTRORECEPTORS)) {
                         u.add_msg_player_or_npc(
-                            m_bad, _("You're painfully electrocuted!"), _("<npcname> is shocked!"));
+                            m_bad, to_translation("You're painfully electrocuted!"),
+                            to_translation("<npcname> is shocked!"));
                         u.mod_pain(total_damage / 2);
                     } else {
                         u.add_msg_player_or_npc(
-                            m_bad, _("You're shocked!"), _("<npcname> is shocked!"));
+                            m_bad, to_translation("You're shocked!"),
+                            to_translation("<npcname> is shocked!"));
                     }
                 } else {
                     u.add_msg_player_or_npc(
-                        _("The electric cloud doesn't affect you."),
-                        _("The electric cloud doesn't seem to affect <npcname>."));
+                        to_translation("The electric cloud doesn't affect you."),
+                        to_translation("The electric cloud doesn't seem to affect <npcname>."));
                 }
             }
         }
@@ -460,7 +464,7 @@ void map::player_in_field(player& u) {
             if (!u.in_vehicle) {
                 // Teleports you... somewhere.
                 if (rng(0, 2) < cur.get_field_intensity() && u.is_player()) {
-                    add_msg(m_bad, _("You're violently teleported!"));
+                    add_msg(m_bad, to_translation("You're violently teleported!"));
                     u.hurtall(cur.get_field_intensity(), nullptr);
                     teleport::teleport(u);
                 }
@@ -487,7 +491,7 @@ void map::player_in_field(player& u) {
                          || (sum_cover < 100 && x_in_y(100 - sum_cover, 100)))
                         && u.add_env_effect(effect_stung, bp.id(), intensity, 9_minutes)) {
                         u.add_msg_if_player(
-                            m_bad, _("The bees sting you in %s!"),
+                            m_bad, to_translation("The bees sting you in %s!"),
                             body_part_name_accusative(bp->token));
                     }
                 }
@@ -498,12 +502,13 @@ void map::player_in_field(player& u) {
             if (u.has_trait(trait_M_SKIN2) || u.has_trait(trait_M_SKIN3)
                 || cur.get_field_intensity() == 1) {
                 u.add_msg_player_or_npc(
-                    m_bad, _("The incendiary burns you!"), _("The incendiary burns <npcname>!"));
+                    m_bad, to_translation("The incendiary burns you!"),
+                    to_translation("The incendiary burns <npcname>!"));
                 u.hurtall(rng(1, 3), nullptr);
             } else {
                 u.add_msg_player_or_npc(
-                    m_bad, _("The incendiary melts into your skin!"),
-                    _("The incendiary melts into <npcname>s skin!"));
+                    m_bad, to_translation("The incendiary melts into your skin!"),
+                    to_translation("The incendiary melts into <npcname>s skin!"));
                 u.add_effect(effect_onfire, 8_turns, body_part_torso);
                 u.hurtall(rng(2, 6), nullptr);
             }
@@ -526,11 +531,13 @@ void map::player_in_field(player& u) {
                         inhaled |= u.add_env_effect(
                             effect_badpoison, body_part_mouth, 5, intensity * 10_seconds);
                         u.hurtall(rng(intensity, intensity * 2), nullptr);
-                        u.add_msg_if_player(m_bad, _("The %s burns your skin."), cur.name());
+                        u.add_msg_if_player(
+                            m_bad, to_translation("The %s burns your skin."), cur.name());
                     }
 
                     if (inhaled) {
-                        u.add_msg_if_player(m_bad, _("The %s makes you feel sick."), cur.name());
+                        u.add_msg_if_player(
+                            m_bad, to_translation("The %s makes you feel sick."), cur.name());
                     }
                 }
             }

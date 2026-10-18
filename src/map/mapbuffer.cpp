@@ -265,12 +265,12 @@ auto rotten_item_spawn(const actualize_tile_options& options, const item& source
     }
 
     if (source.is_seed()) {
-        add_msg(m_warning, _("Something has crawled out of the %s plants!"),
+        add_msg(m_warning, to_translation("Something has crawled out of the %s plants!"),
                 source.get_plant_name());
         return;
     }
 
-    add_msg(m_warning, _("Something has crawled out of the %s!"), source.tname());
+    add_msg(m_warning, to_translation("Something has crawled out of the %s!"), source.tname());
 }
 
 auto remove_rotten_items(const actualize_tile_options& options, location_vector<item>& items)

@@ -258,7 +258,7 @@ auto query_menu(const player& who, item& base, std::vector<item_reload_option> o
     menu.callback = &callback;
     menu.query();
     if (menu.ret < 0 || static_cast<size_t>(menu.ret) >= options.size()) {
-        who.add_msg_if_player(m_info, _("Never mind."));
+        who.add_msg_if_player(m_info, to_translation("Never mind."));
         return item_reload_option();
     }
 
@@ -278,16 +278,17 @@ auto present(const player& who, item& base, reload_selection::selection_result r
             return query_menu(who, base, std::move(result.options));
 
         case reload_selection::selection_outcome::empty_supplied:
-            who.add_msg_if_player(m_info, _("Never mind."));
+            who.add_msg_if_player(m_info, to_translation("Never mind."));
             break;
 
         case reload_selection::selection_outcome::missing_magazine:
             who.add_msg_if_player(
-                m_info, _("You need a compatible magazine to reload the %s!"), base.tname());
+                m_info, to_translation("You need a compatible magazine to reload the %s!"),
+                base.tname());
             break;
 
         case reload_selection::selection_outcome::nothing_to_reload:
-            who.add_msg_if_player(m_info, _("Nothing to reload!"));
+            who.add_msg_if_player(m_info, to_translation("Nothing to reload!"));
             break;
 
         case reload_selection::selection_outcome::missing_ammunition: {
@@ -305,7 +306,8 @@ auto present(const player& who, item& base, reload_selection::selection_result r
                     enumeration_conjunction::none);
             }
             who.add_msg_if_player(
-                m_info, _("You don't have any %s to reload your %s!"), name, base.tname());
+                m_info, to_translation("You don't have any %s to reload your %s!"), name,
+                base.tname());
             break;
         }
     }

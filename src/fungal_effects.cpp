@@ -9,6 +9,7 @@
 #include "game.h"
 #include "item.h"
 #include "item_stack.h"
+#include "localised_names.h"
 #include "map/field_type.h"
 #include "map/map.h"
 #include "map/mapdata.h"
@@ -70,7 +71,7 @@ void fungal_effects::fungalize( const tripoint_bub_ms &p, Creature *origin, doub
         monster &critter = *mon_ptr;
         if( gm.u.sees( p ) &&
             !critter.type->in_species( FUNGUS ) ) {
-            add_msg( _( "The %s is covered in tiny spores!" ), critter.name() );
+            add_msg( to_translation( "The %s is covered in tiny spores!" ), localised::name_of( critter ) );
         }
         if( !critter.make_fungus() ) {
             // Don't insta-kill non-fungables. Jabberwocks, for example
@@ -85,7 +86,7 @@ void fungal_effects::fungalize( const tripoint_bub_ms &p, Creature *origin, doub
         if( pl.has_trait( trait_TAIL_CATTLE ) &&
             one_in( 20 - pl.dex_cur - pl.get_skill_level( skill_melee ) ) ) {
             pl.add_msg_if_player(
-                _( "The spores land on you, but you quickly swat them off with your tail!" ) );
+                to_translation( "The spores land on you, but you quickly swat them off with your tail!" ) );
             return;
         }
         // Spores hit the player--is there any hope?
@@ -103,7 +104,7 @@ void fungal_effects::fungalize( const tripoint_bub_ms &p, Creature *origin, doub
         hit |= one_in( 4 ) &&
                pl.add_env_effect( effect_spores, body_part_leg_r, 3, 9_minutes, body_part_leg_r );
         if( hit ) {
-            add_msg( m_warning, _( "You're covered in tiny spores!" ) );
+            add_msg( m_warning, to_translation( "You're covered in tiny spores!" ) );
         }
     } else if( static_cast<int>( gm.num_creatures() ) < fungal_opt.spore_creatures_threshold &&
                x_in_y( spore_chance, 1.0 ) ) { // Spawn a spore
@@ -196,7 +197,7 @@ void fungal_effects::spread_fungus_one_tile( const tripoint_bub_ms &p, const int
                 if( x_in_y( growth * 10, 800 ) ) { // young trees are vulnerable
                     m.ter_set( p, t_fungus );
                     if( gm.place_critter_at( mon_fungal_blossom, p ) && gm.u.sees( p ) ) {
-                        add_msg( m_warning, _( "The young tree blooms forth into a fungal blossom!" ) );
+                        add_msg( m_warning, to_translation( "The young tree blooms forth into a fungal blossom!" ) );
                     }
                 } else if( x_in_y( growth * 10, 400 ) ) {
                     m.ter_set( p, t_marloss_tree );
@@ -212,7 +213,7 @@ void fungal_effects::spread_fungus_one_tile( const tripoint_bub_ms &p, const int
                 if( x_in_y( growth * 10, 100 ) ) {
                     m.ter_set( p, t_fungus );
                     if( gm.place_critter_at( mon_fungal_blossom, p ) && gm.u.sees( p ) ) {
-                        add_msg( m_warning, _( "The tree blooms forth into a fungal blossom!" ) );
+                        add_msg( m_warning, to_translation( "The tree blooms forth into a fungal blossom!" ) );
                     }
                 } else if( x_in_y( growth * 10, 600 ) ) {
                     m.ter_set( p, t_marloss_tree );

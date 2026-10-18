@@ -1603,9 +1603,9 @@ void known_magic::learn_spell(const spell_type* sp, Character& guy, bool force) 
     }
     if (force || can_learn_spell(guy, sp->id)) {
         spellbook.emplace(sp->id, temp_spell);
-        guy.add_msg_if_player(m_good, _("You learned %s!"), sp->name);
+        guy.add_msg_if_player(m_good, to_translation("You learned %s!"), sp->name);
     } else {
-        guy.add_msg_if_player(m_bad, _("You can't learn this spell."));
+        guy.add_msg_if_player(m_bad, to_translation("You can't learn this spell."));
     }
 }
 
@@ -1616,7 +1616,7 @@ void known_magic::forget_spell(const spell_id& sp) {
         debugmsg("Can't forget a spell you don't know!");
         return;
     }
-    add_msg(m_bad, _("All knowledge of %s leaves you."), sp->name);
+    add_msg(m_bad, to_translation("All knowledge of %s leaves you."), sp->name);
     spellbook.erase(sp);
     if (last_cast_spell_id && *last_cast_spell_id == sp) { last_cast_spell_id.reset(); }
 }
@@ -2706,10 +2706,12 @@ void spell_events::notify(const cata::event& e) {
                 if (slvl >= learn_at_level && !g->u.magic->knows_spell(learn_spell_id)) {
                     g->u.magic->learn_spell(learn_spell_id, g->u);
                     spell_type spell_learned = spell_factory.obj(spell_id(learn_spell_id));
-                    add_msg(_("Your experience and knowledge in creating and manipulating magical "
-                              "energies to cast %s have opened your eyes to new possibilities, you "
-                              "can now cast %s."),
-                            spell_cast.name, spell_learned.name);
+                    add_msg(
+                        to_translation(
+                            "Your experience and knowledge in creating and manipulating magical "
+                            "energies to cast %s have opened your eyes to new possibilities, you "
+                            "can now cast %s."),
+                        spell_cast.name, spell_learned.name);
                 }
             }
             break;

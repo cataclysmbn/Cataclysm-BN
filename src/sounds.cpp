@@ -2696,7 +2696,7 @@ void sounds::process_sound_markers( Character *who )
                         who->add_effect( effect_deaf, std::min( 4_minutes,
                                                                 time_duration::from_turns( mdBspl_to_dBspl( deafening_vol ) - 130 ) ) );
                         if( !who->has_trait( trait_id( "NOPAIN" ) ) ) {
-                            who->add_msg_if_player( m_bad, _( "Your eardrums suddenly ache!" ) );
+                            who->add_msg_if_player( m_bad, to_translation( "Your eardrums suddenly ache!" ) );
                             if( who->get_pain() < 10 ) {
 
                                 who->mod_pain( rng( 0, 2 ) );
@@ -2735,7 +2735,7 @@ void sounds::process_sound_markers( Character *who )
 
                 if( rng( wake_up_vol / 2, wake_up_vol ) <= db_vol && !who->has_effect( effect_narcosis ) ) {
                     who->wake_up();
-                    who->add_msg_if_player( m_warning, _( "Something is making noise." ) );
+                    who->add_msg_if_player( m_warning, to_translation( "Something is making noise." ) );
                 } else {
                     continue;
                 }
@@ -2792,14 +2792,14 @@ void sounds::process_sound_markers( Character *who )
                 const bool trying_to_sleep = who->in_sleep_state();
                 if( who->get_effect( effect_alarm_clock ).get_duration() == 1_turns ) {
                     if( slept_through ) {
-                        add_msg( _( "Your alarm clock finally wakes you up." ) );
+                        add_msg( to_translation( "Your alarm clock finally wakes you up." ) );
                     } else if( !trying_to_sleep ) {
-                        add_msg( _( "Your alarm clock wakes you up." ) );
+                        add_msg( to_translation( "Your alarm clock wakes you up." ) );
                     } else {
-                        add_msg( _( "Your alarm clock goes off and you haven't slept a wink." ) );
+                        add_msg( to_translation( "Your alarm clock goes off and you haven't slept a wink." ) );
                         who->activity->set_to_null();
                     }
-                    add_msg( _( "You turn off your alarm-clock." ) );
+                    add_msg( to_translation( "You turn off your alarm-clock." ) );
                     who->get_effect( effect_alarm_clock ).set_duration( 0_turns );
                 }
             }
