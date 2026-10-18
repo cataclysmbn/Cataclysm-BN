@@ -444,7 +444,7 @@ std::expected<std::string, error>
 {
     const auto action = action_name( value.action );
     // error is a contiguous closed enum; reject invalid native enum casts.
-    if( !action || value.kind < error::negotiation_failed || value.kind > error::stale_screen ||
+    if( !action || value.kind < error::negotiation_failed || value.kind > error::unavailable_locale ||
         ( value.at && !valid_id( value.at->epoch ) ) ) {
         return std::unexpected( error::validation_failed );
     }

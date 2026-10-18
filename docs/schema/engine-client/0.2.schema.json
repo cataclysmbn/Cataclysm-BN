@@ -3952,7 +3952,7 @@
         },
         "locale": {
           "type": "string",
-          "description": "BN language id, such as `ko_KR`. Default: the engine's.",
+          "description": "BN language id, such as `ko_KR`. Default: the engine's. One without a catalogue fails with `unavailable_locale`.",
           "minLength": 1
         },
         "capabilities": {
@@ -4882,7 +4882,8 @@
             "read_only",
             "invalid_arguments",
             "unknown_affordance",
-            "stale_screen"
+            "stale_screen",
+            "unavailable_locale"
           ]
         },
         "action": {

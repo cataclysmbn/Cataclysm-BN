@@ -50,7 +50,7 @@ title: 엔진/클라이언트 프로토콜 0.2
 엔진은 모든 전송 방식에서 `"0.2"`만 제공한다. `"0.2"`를 나열하지 않은 hello는 `negotiation_failed`, `action: "hello"`로 실패한다. hello는 다음을 담아야 한다.
 
 - `schema`: `sha256:`과 [`0.2.schema.json`](../../../schema/engine-client/0.2.schema.json) 원본 바이트의 SHA-256 앞 16자리 16진수. 해시가 다르면 `negotiation_failed`, `action: "hello"`, `error.data.schema = {engine, client}`로 실패한다. 엔진은 CMake 구성 시 스키마 파일에서 해시를 얻는다.
-- 선택 항목 `locale`, `capabilities`(`tiles`, `tint_ids`, `viewport`, `delivery`; 개별 멤버로 보내도 받지만 두 형식을 함께 쓸 수 없다). 결과에는 `schema`, `locale`(연결의 텍스트 언어), `engine_locale`, `role`이 추가된다. 엔진이 연결별로 현지화하기 전까지 `locale`은 엔진의 언어다.
+- 선택 항목 `locale`, `capabilities`(`tiles`, `tint_ids`, `viewport`, `delivery`; 개별 멤버로 보내도 받지만 두 형식을 함께 쓸 수 없다). 결과에는 `schema`, `locale`(연결의 텍스트 언어), `engine_locale`, `role`이 추가된다. 엔진에 카탈로그가 없는 `locale`은 `unavailable_locale`, `action: "hello"`로 실패한다.
 
 모든 상호작용 경계(스냅샷 헤더와 이벤트)는 `interaction` 옆에 `stack`을 담는다. 스택은 열린 화면을 바깥쪽부터 나열하며 마지막 화면만 affordance를 가진다. 화면의 `kind`는 어떤 화면인지(`map`, `crafting`, `uilist`, ...)를 나타내며, 열 때마다 그리고 어느 언어에서나 같으므로 클라이언트는 창의 위치처럼 화면마다 기억하는 것을 이 값으로 구분한다. `kind`가 없는 화면은 엔진이 아직 이름을 붙이지 않은 화면이다. `component_id`가 있는 `bn.interaction.choices`는 맨 위 화면의 해당 목록(`rows`, `total`)을 읽는다.
 

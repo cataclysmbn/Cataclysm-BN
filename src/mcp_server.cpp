@@ -800,6 +800,7 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         auto data = application_error{ .kind = reason, .at = session_.at(), .schemas = std::move( schemas ) };
         switch( reason ) {
             case error::negotiation_failed:
+            case error::unavailable_locale:
                 data.action = required_action::hello;
                 break;
             case error::stale_epoch:
@@ -836,7 +837,7 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
             return fail( error::negotiation_failed, schema_hashes{ .engine = engine_schema_hash, .client = *decoded->schema } );
         }
         // The language is the connection's own to ask for, and the engine must be able to word it.
-        if( decoded->locale && !localization::locale_available( *decoded->locale ) ) { return fail( error::negotiation_failed ); }
+        if( decoded->locale && !localization::locale_available( *decoded->locale ) ) { return fail( error::unavailable_locale ); }
         // A legacy batch still waiting for native delivery cannot transfer authority mid-flight.
         if( !options_.spectator && ( pending_response_ || ( host_.has_input && host_.has_input() ) ) ) {
             return fail( error::command_busy );

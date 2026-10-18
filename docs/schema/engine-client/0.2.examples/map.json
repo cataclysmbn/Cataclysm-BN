@@ -268,7 +268,7 @@
         "message": "That needs other details.",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "36",
+          "sequence": "37",
           "revision": "17"
         }
       }
@@ -281,7 +281,7 @@
         "message": "That screen has closed.",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "36",
+          "sequence": "37",
           "revision": "17"
         }
       }

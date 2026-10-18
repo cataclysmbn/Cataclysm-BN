@@ -266,7 +266,8 @@ TEST_CASE("serialized values", "[engine_client_wire]") {
         R"("schema":{"engine":"sha256:aaaaaaaaaaaaaaaa","client":"sha256:bbbbbbbbbbbbbbbb"})"));
     // The 0.2 errors are application errors too.
     for (const auto kind :
-         {error::invalid_arguments, error::unknown_affordance, error::stale_screen}) {
+         {error::invalid_arguments, error::unknown_affordance, error::stale_screen,
+          error::unavailable_locale}) {
         CHECK(serialize_application_error({.kind = kind}));
     }
     const auto bare = serialize_application_error({.kind = error::command_busy});

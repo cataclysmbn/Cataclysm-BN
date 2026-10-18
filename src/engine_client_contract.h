@@ -55,6 +55,8 @@ enum class error {
     unknown_affordance,
     /// 0.2: a command expecting a screen found another on top of the stack.
     stale_screen,
+    /// 0.2: a hello asks for a language the engine has no catalogue for.
+    unavailable_locale,
 };
 auto error_name( error value ) -> std::string;
 /// The error in words for a player, localized.
