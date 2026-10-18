@@ -132,7 +132,7 @@ auto run_game( int argc, char *argv[] ) -> int
         const char *section_default = nullptr;
         const char *section_map_sharing = "Map sharing";
         const char *section_user_directory = "User directories";
-        const std::array<arg_handler, 22> first_pass_arguments = {
+        const std::array<arg_handler, 23> first_pass_arguments = {
             {   {
                     "--client", "tiles|curses|mcp|imgui", "Select the runtime client backend",
                     section_default,
@@ -149,6 +149,14 @@ auto run_game( int argc, char *argv[] ) -> int
                         seed = static_cast<unsigned int>( djb2_hash( hash_input ) );
                         seed_explicit = true;
                         return 1;
+                    }
+                },
+                {
+                    "--no-holiday", nullptr,
+                    "Shows the title screen without the holiday of the system date", section_default,
+                    []( int /*num_args*/, const char ** /*params*/ ) -> int {
+                        main_menu::ignore_holidays() = true;
+                        return 0;
                     }
                 },
                 {

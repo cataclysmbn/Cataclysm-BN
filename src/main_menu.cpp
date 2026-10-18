@@ -466,7 +466,7 @@ auto main_menu::ignore_holidays() -> bool & // *NOPAD*
 
 auto main_menu::holiday_at( const std::time_t time ) -> holiday
 {
-    return ::get_holiday_from_time( time, true );
+    return ignore_holidays() ? holiday::none : ::get_holiday_from_time( time, true );
 }
 
 holiday main_menu::get_holiday_from_time()

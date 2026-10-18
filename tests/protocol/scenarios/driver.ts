@@ -109,6 +109,8 @@ export class Engine {
         "--client=mcp",
         "--seed",
         seed,
+        // The title art follows the holidays of the system date.
+        "--no-holiday",
         "--userdir",
         `${profile}/`,
         "--configdir",
