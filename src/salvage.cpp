@@ -234,7 +234,7 @@ void complete_salvage( Character &who, item &cut, tripoint_abs_ms pos )
         int amount = std::floor( salvagable_percent * salvaged.second );
         if( amount > 0 ) {
             // Time based on number of components.
-            add_msg( m_good, vgettext( "Salvaged %1$i %2$s.", "Salvaged %1$i %2$s.", amount ),
+            add_msg( m_good, localised::counted{ .format = pl_translation( "Salvaged %1$i %2$s.", "Salvaged %1$i %2$s." ), .count = amount },
                      amount, salvaged.first->nname( amount ) );
             // Done this way so that items with charges > 1 or no support for charges work correctly
             here.spawn_item( pos_here, salvaged.first, amount, 1 );

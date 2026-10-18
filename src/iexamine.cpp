@@ -3071,9 +3071,8 @@ void iexamine::kiln_full( player &, const tripoint_bub_ms &examp )
         int hours = to_hours<int>( time_left );
         int minutes = to_minutes<int>( time_left ) + 1;
         if( minutes > 60 ) {
-            add_msg( vgettext( "It will finish burning in about %d hour.",
-                               "It will finish burning in about %d hours.",
-                               hours ), hours );
+            add_msg( localised::counted{ .format = pl_translation( "It will finish burning in about %d hour.", "It will finish burning in about %d hours." ), .count = hours },
+                     hours );
         } else if( minutes > 30 ) {
             add_msg( _( "It will finish burning in less than an hour." ) );
         } else {
@@ -3199,9 +3198,8 @@ void iexamine::arcfurnace_full( player &, const tripoint_bub_ms &examp )
         int hours = to_hours<int>( time_left );
         int minutes = to_minutes<int>( time_left ) + 1;
         if( minutes > 60 ) {
-            add_msg( vgettext( "It will finish burning in about %d hour.",
-                               "It will finish burning in about %d hours.",
-                               hours ), hours );
+            add_msg( localised::counted{ .format = pl_translation( "It will finish burning in about %d hour.", "It will finish burning in about %d hours." ), .count = hours },
+                     hours );
         } else if( minutes > 30 ) {
             add_msg( _( "It will finish burning in less than an hour." ) );
         } else {
@@ -3563,9 +3561,8 @@ void iexamine::fvat_full( player &p, const tripoint_bub_ms &examp )
             if( hours < 1 ) {
                 add_msg( _( "It will finish brewing in less than an hour." ) );
             } else {
-                add_msg( vgettext( "It will finish brewing in about %d hour.",
-                                   "It will finish brewing in about %d hours.",
-                                   hours ), hours );
+                add_msg( localised::counted{ .format = pl_translation( "It will finish brewing in about %d hour.", "It will finish brewing in about %d hours." ), .count = hours },
+                         hours );
             }
             return;
         }

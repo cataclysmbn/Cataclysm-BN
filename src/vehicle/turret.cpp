@@ -540,15 +540,20 @@ auto vehicle::automatic_fire_turret(vehicle_part& pt) -> int {
                 if (u_see && u_hear) {
                     add_msg(
                         m_warning,
-                        vgettext("%s points in your direction and emits an IFF warning beep.",
-                                 "%s points in your direction and emits %d annoyed sounding beeps.",
-                                 boo_hoo),
+                        localised::counted{
+                            .format = pl_translation(
+                                "%s points in your direction and emits an IFF warning beep.",
+                                "%s points in your direction and emits %d annoyed sounding beeps."),
+                            .count = boo_hoo},
                         cpu->name, boo_hoo);
                 } else if (u_hear) {
-                    add_msg(m_warning,
-                            vgettext("You hear a warning beep.",
-                                     "You hear %d annoyed sounding beeps.", boo_hoo),
-                            boo_hoo);
+                    add_msg(
+                        m_warning,
+                        localised::counted{
+                            .format = pl_translation(
+                                "You hear a warning beep.", "You hear %d annoyed sounding beeps."),
+                            .count = boo_hoo},
+                        boo_hoo);
                 } else if (u_see) {
                     add_msg(m_warning, _("%s points in your direction."), cpu->name);
                 }

@@ -905,8 +905,7 @@ static void skim_book_msg( const item &book, avatar &u )
         add_msg( m_info, _( "A training session with this book takes %s" ),
                  to_string( time_duration::from_minutes( reading->time ) ) );
     } else {
-        add_msg( m_info, vgettext( "A chapter of this book takes %d minute to read.",
-                                   "A chapter of this book takes %d minutes to read.", reading->time ),
+        add_msg( m_info, localised::counted{ .format = pl_translation( "A chapter of this book takes %d minute to read.", "A chapter of this book takes %d minutes to read." ), .count = reading->time },
                  reading->time );
     }
 

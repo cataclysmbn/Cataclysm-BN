@@ -808,10 +808,9 @@ void Character::suffer_from_asthma( const int current_stim )
             if( charges == 0 ) {
                 add_msg_if_player( m_bad, _( "You use your last inhaler charge." ) );
             } else {
-                add_msg_if_player( m_info, vgettext( "You use your inhaler, "
-                                                     "only %d charge left.",
-                                                     "You use your inhaler, "
-                                                     "only %d charges left.", charges ),
+                add_msg_if_player( m_info, localised::counted{ .format = pl_translation( "You use your inhaler, "
+                                   "only %d charge left.", "You use your inhaler, "
+                                   "only %d charges left." ), .count = charges },
                                    charges );
             }
             add_effect( effect_took_antiasthmatic, rng( 1_hours, 2_hours ) );
@@ -823,10 +822,9 @@ void Character::suffer_from_asthma( const int current_stim )
                 add_msg_if_player( m_bad, _( "You breathe in last bit of oxygen "
                                              "from the tank." ) );
             } else {
-                add_msg_if_player( m_info, vgettext( "You take a deep breath from your oxygen "
-                                                     "tank, only %d charge left.",
-                                                     "You take a deep breath from your oxygen "
-                                                     "tank, only %d charges left.", charges ),
+                add_msg_if_player( m_info, localised::counted{ .format = pl_translation( "You take a deep breath from your oxygen "
+                                   "tank, only %d charge left.", "You take a deep breath from your oxygen "
+                                   "tank, only %d charges left." ), .count = charges },
                                    charges );
             }
         }

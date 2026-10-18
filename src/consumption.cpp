@@ -1470,25 +1470,15 @@ bool Character::feed_furnace_with( item &it )
                                                 units::to_kilojoule( get_max_power_level() - get_power_level() ) );
         if( it.count_by_charges() ) {
             add_msg_player_or_npc( m_info,
-                                   vgettext( "You digest %d %s and recharge %d point of energy.",
-                                             "You digest %d %s and recharge %d points of energy.",
-                                             profitable_energy
-                                           ),
-                                   vgettext( "<npcname> digests %d %s and recharges %d point of energy.",
-                                             "<npcname> digests %d %s and recharges %d points of energy.",
-                                             profitable_energy
-                                           ), consumed_charges, it.tname(), profitable_energy
+                                   localised::counted{ .format = pl_translation( "You digest %d %s and recharge %d point of energy.", "You digest %d %s and recharge %d points of energy." ), .count = profitable_energy },
+                                   localised::counted{ .format = pl_translation( "<npcname> digests %d %s and recharges %d point of energy.", "<npcname> digests %d %s and recharges %d points of energy." ), .count = profitable_energy },
+                                   consumed_charges, it.tname(), profitable_energy
                                  );
         } else {
             add_msg_player_or_npc( m_info,
-                                   vgettext( "You digest your %s and recharge %d point of energy.",
-                                             "You digest your %s and recharge %d points of energy.",
-                                             profitable_energy
-                                           ),
-                                   vgettext( "<npcname> digests a %s and recharges %d point of energy.",
-                                             "<npcname> digests a %s and recharges %d points of energy.",
-                                             profitable_energy
-                                           ), it.tname(), profitable_energy
+                                   localised::counted{ .format = pl_translation( "You digest your %s and recharge %d point of energy.", "You digest your %s and recharge %d points of energy." ), .count = profitable_energy },
+                                   localised::counted{ .format = pl_translation( "<npcname> digests a %s and recharges %d point of energy.", "<npcname> digests a %s and recharges %d points of energy." ), .count = profitable_energy },
+                                   it.tname(), profitable_energy
                                  );
         }
         mod_power_level( units::from_kilojoule( profitable_energy ) );
@@ -1527,11 +1517,12 @@ bool Character::fuel_bionic_with( item &it )
     update_fuel_storage( it.typeId() );
     add_msg_player_or_npc( m_info,
                            //~ %1$i: charge number, %2$s: item name, %3$s: bionics name
-                           vgettext( "You load %1$i charge of %2$s in your %3$s.",
-                                     "You load %1$i charges of %2$s in your %3$s.", loadable ),
+                           localised::counted{ .format = pl_translation( "You load %1$i charge of %2$s in your %3$s.",
+                                   "You load %1$i charges of %2$s in your %3$s." ), .count = loadable },
                            //~ %1$i: charge number, %2$s: item name, %3$s: bionics name
-                           vgettext( "<npcname> load %1$i charge of %2$s in their %3$s.",
-                                     "<npcname> load %1$i charges of %2$s in their %3$s.", loadable ), loadable, it.tname(), bio->name );
+                           localised::counted{ .format = pl_translation( "<npcname> load %1$i charge of %2$s in their %3$s.",
+                                   "<npcname> load %1$i charges of %2$s in their %3$s." ), .count = loadable }, loadable, it.tname(),
+                           bio->name );
     mod_moves( -250 );
     return true;
 }

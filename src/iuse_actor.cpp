@@ -1367,8 +1367,7 @@ int place_monster_iuse::use( player &p, item &it, bool, const tripoint_bub_ms &p
                 ammo_item.charges = std::min( available, remaining_capacity );
                 p.use_charges( compatible_ammo_id, ammo_item.charges );
                 //~ First %s is the ammo item (with plural form and count included), second is the monster name
-                p.add_msg_if_player( vgettext( "You load %1$d x %2$s round into the %3$s.",
-                                               "You load %1$d x %2$s rounds into the %3$s.", ammo_item.charges ),
+                p.add_msg_if_player( localised::counted{ .format = pl_translation( "You load %1$d x %2$s round into the %3$s.", "You load %1$d x %2$s rounds into the %3$s." ), .count = ammo_item.charges },
                                      ammo_item.charges, ammo_item.type_name( ammo_item.charges ),
                                      newmon.name() );
                 newmon.ammo[compatible_ammo_id] = ammo_item.charges;
@@ -7932,9 +7931,7 @@ auto iuse_paint_stuff_do_paint( player &who, item &it,
                 const auto need = static_cast<int>( std::ceil( charges_used + iter_cost ) );
                 const auto rem = static_cast<int>( it.ammo_remaining() - std::ceil( charges_used ) );
                 who.add_msg_if_player( m_info,
-                                       vgettext( "Your %s has %d charge but needs %d.",
-                                                 "Your %s has %d charges but needs %d.",
-                                                 rem ),
+                                       localised::counted{ .format = pl_translation( "Your %s has %d charge but needs %d.", "Your %s has %d charges but needs %d." ), .count = rem },
                                        it.tname(), rem, need );
                 ammo_exhausted = true;
                 break;

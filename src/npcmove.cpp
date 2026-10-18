@@ -3651,7 +3651,8 @@ void npc::drop_items( units::mass drop_weight, units::volume drop_volume, int mi
     // Finally, describe the action if u can see it
     if( get_player_character().sees( *this ) ) {
         if( num_items_dropped >= 3 ) {
-            add_msg( vgettext( "%s drops %d item.", "%s drops %d items.", num_items_dropped ), name,
+            add_msg( localised::counted{ .format = pl_translation( "%s drops %d item.", "%s drops %d items." ), .count = num_items_dropped },
+                     name,
                      num_items_dropped );
         } else {
             add_msg( _( "%1$s drops a %2$s." ), name, item_name );

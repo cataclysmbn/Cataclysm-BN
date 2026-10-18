@@ -344,8 +344,7 @@ auto reload_monster_weapons( avatar &you, monster &z ) -> void
     } else {
         you.use_amount( selected_ammo, reload_amount );
     }
-    add_msg( vgettext( "You load %1$d x %2$s round into the %3$s.",
-                       "You load %1$d x %2$s rounds into the %3$s.", reload_amount ),
+    add_msg( localised::counted{ .format = pl_translation( "You load %1$d x %2$s round into the %3$s.", "You load %1$d x %2$s rounds into the %3$s." ), .count = reload_amount },
              reload_amount, selected_ammo->nname( reload_amount ), z.get_name() );
     you.moves -= 100;
 }
@@ -417,8 +416,7 @@ auto unload_monster_weapons( avatar &you, monster &z ) -> void
     if( unloaded_amount != loaded_ammo_iter->amount ) {
         return;
     }
-    add_msg( vgettext( "You unload %1$d x %2$s round from the %3$s.",
-                       "You unload %1$d x %2$s rounds from the %3$s.", loaded_ammo_iter->amount ),
+    add_msg( localised::counted{ .format = pl_translation( "You unload %1$d x %2$s round from the %3$s.", "You unload %1$d x %2$s rounds from the %3$s." ), .count = loaded_ammo_iter->amount },
              loaded_ammo_iter->amount, selected_ammo->nname( loaded_ammo_iter->amount ),
              z.get_name() );
     you.moves -= 100;

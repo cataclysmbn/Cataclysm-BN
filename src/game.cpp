@@ -6578,9 +6578,7 @@ void game::knockback( std::vector<tripoint_bub_ms> &traj, int stun, int dam_mult
 
         if( stun > 0 ) {
             u.add_effect( effect_stunned, 1_turns * stun );
-            add_msg( m_bad, vgettext( "You were stunned for %d turn!",
-                                      "You were stunned for %d turns!",
-                                      stun ),
+            add_msg( m_bad, localised::counted{ .format = pl_translation( "You were stunned for %d turn!", "You were stunned for %d turns!" ), .count = stun },
                      stun );
         }
         for( size_t i = 1; i < traj.size(); i++ ) {
@@ -6590,14 +6588,10 @@ void game::knockback( std::vector<tripoint_bub_ms> &traj, int stun, int dam_mult
                 force_remaining = traj.size() - i;
                 if( stun != 0 ) {
                     if( u.has_effect( effect_stunned ) ) {
-                        add_msg( m_bad, vgettext( "You were stunned AGAIN for %d turn!",
-                                                  "You were stunned AGAIN for %d turns!",
-                                                  force_remaining ),
+                        add_msg( m_bad, localised::counted{ .format = pl_translation( "You were stunned AGAIN for %d turn!", "You were stunned AGAIN for %d turns!" ), .count = static_cast<int>( force_remaining ) },
                                  force_remaining );
                     } else {
-                        add_msg( m_bad, vgettext( "You were stunned for %d turn!",
-                                                  "You were stunned for %d turns!",
-                                                  force_remaining ),
+                        add_msg( m_bad, localised::counted{ .format = pl_translation( "You were stunned for %d turn!", "You were stunned for %d turns!" ), .count = static_cast<int>( force_remaining ) },
                                  force_remaining );
                     }
                     u.add_effect( effect_stunned, 1_turns * force_remaining );
@@ -6623,14 +6617,10 @@ void game::knockback( std::vector<tripoint_bub_ms> &traj, int stun, int dam_mult
                 force_remaining = traj.size() - i;
                 if( stun != 0 ) {
                     if( u.has_effect( effect_stunned ) ) {
-                        add_msg( m_bad, vgettext( "You were stunned AGAIN for %d turn!",
-                                                  "You were stunned AGAIN for %d turns!",
-                                                  force_remaining ),
+                        add_msg( m_bad, localised::counted{ .format = pl_translation( "You were stunned AGAIN for %d turn!", "You were stunned AGAIN for %d turns!" ), .count = static_cast<int>( force_remaining ) },
                                  force_remaining );
                     } else {
-                        add_msg( m_bad, vgettext( "You were stunned for %d turn!",
-                                                  "You were stunned for %d turns!",
-                                                  force_remaining ),
+                        add_msg( m_bad, localised::counted{ .format = pl_translation( "You were stunned for %d turn!", "You were stunned for %d turns!" ), .count = static_cast<int>( force_remaining ) },
                                  force_remaining );
                     }
                     u.add_effect( effect_stunned, 1_turns * force_remaining );
@@ -13199,9 +13189,7 @@ auto game::place_player( const tripoint_bub_ms &dest_loc ) -> point_rel_sm
                 } else if( names.size() == 3 ) {
                     add_msg( _( "You see here %s, %s, and %s." ), names[0], names[1], names[2] );
                 } else if( and_the_rest < 7 ) {
-                    add_msg( vgettext( "You see here %s, %s and %d more item.",
-                                       "You see here %s, %s and %d more items.",
-                                       and_the_rest ),
+                    add_msg( localised::counted{ .format = pl_translation( "You see here %s, %s and %d more item.", "You see here %s, %s and %d more items." ), .count = and_the_rest },
                              names[0], names[1], and_the_rest );
                 } else {
                     add_msg( _( "You see here %s and many more items." ), names[0] );

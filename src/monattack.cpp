@@ -4177,9 +4177,7 @@ bool mattack::flamethrower( monster *z )
             // Because that stupid oaf was in the way!
             const int boo_hoo = res.error();
             if( boo_hoo > 0 && g->u.sees( *z ) ) {
-                add_msg( m_warning, vgettext( "Pointed in your direction, the %s emits an IFF warning beep.",
-                                              "Pointed in your direction, the %s emits %d annoyed sounding beeps.",
-                                              boo_hoo ),
+                add_msg( m_warning, localised::counted{ .format = pl_translation( "Pointed in your direction, the %s emits an IFF warning beep.", "Pointed in your direction, the %s emits %d annoyed sounding beeps." ), .count = boo_hoo },
                          z->name(), boo_hoo );
             }
             // Did reset before refactor, changed to match other turret behaviors
@@ -4355,9 +4353,7 @@ bool mattack::chickenbot( monster *z )
         if( !res ) {
             const int boo_hoo = res.error();
             if( boo_hoo > 0 && g->u.sees( *z ) ) { // because that stupid oaf was in the way!
-                add_msg( m_warning, vgettext( "Pointed in your direction, the %s emits an IFF warning beep.",
-                                              "Pointed in your direction, the %s emits %d annoyed sounding beeps.",
-                                              boo_hoo ),
+                add_msg( m_warning, localised::counted{ .format = pl_translation( "Pointed in your direction, the %s emits an IFF warning beep.", "Pointed in your direction, the %s emits %d annoyed sounding beeps." ), .count = boo_hoo },
                          z->name(), boo_hoo );
             }
             return false;
@@ -4441,9 +4437,7 @@ bool mattack::multi_robot( monster *z )
         if( !res ) {
             const int boo_hoo = res.error();
             if( boo_hoo > 0 && g->u.sees( *z ) ) { // because that stupid oaf was in the way!
-                add_msg( m_warning, vgettext( "Pointed in your direction, the %s emits an IFF warning beep.",
-                                              "Pointed in your direction, the %s emits %d annoyed sounding beeps.",
-                                              boo_hoo ),
+                add_msg( m_warning, localised::counted{ .format = pl_translation( "Pointed in your direction, the %s emits an IFF warning beep.", "Pointed in your direction, the %s emits %d annoyed sounding beeps." ), .count = boo_hoo },
                          z->name(), boo_hoo );
             }
             return false;

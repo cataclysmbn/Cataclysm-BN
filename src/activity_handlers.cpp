@@ -2075,10 +2075,8 @@ void activity_handlers::pulp_do_turn( player_activity *act, player *p )
         return;
     }
     // TODO: Factor in how long it took to do the smashing.
-    p->add_msg_player_or_npc( vgettext( "The corpse is thoroughly pulped.",
-                                        "The corpses are thoroughly pulped.", num_corpses ),
-                              vgettext( "<npcname> finished pulping the corpse.",
-                                        "<npcname> finished pulping the corpses.", num_corpses ) );
+    p->add_msg_player_or_npc( localised::counted{ .format = pl_translation( "The corpse is thoroughly pulped.", "The corpses are thoroughly pulped." ), .count = num_corpses },
+                              localised::counted{ .format = pl_translation( "<npcname> finished pulping the corpse.", "<npcname> finished pulping the corpses." ), .count = num_corpses } );
 }
 
 void activity_handlers::pulp_finish( player_activity *act, player *p )
@@ -2498,19 +2496,19 @@ void activity_handlers::start_engines_finish( player_activity *act, player *p )
         //Some non-muscle engines tried to start
         if( non_muscle_attempted == non_muscle_started ) {
             //All of the non-muscle engines started
-            add_msg( vgettext( "The %s's engine starts up.",
-                               "The %s's engines start up.", non_muscle_started ), veh->name );
+            add_msg( localised::counted{ .format = pl_translation( "The %s's engine starts up.", "The %s's engines start up." ), .count = non_muscle_started },
+                     veh->name );
         } else if( non_muscle_started > 0 ) {
             //Only some of the non-muscle engines started
-            add_msg( vgettext( "One of the %s's engines start up.",
-                               "Some of the %s's engines start up.", non_muscle_started ), veh->name );
+            add_msg( localised::counted{ .format = pl_translation( "One of the %s's engines start up.", "Some of the %s's engines start up." ), .count = non_muscle_started },
+                     veh->name );
         } else if( non_combustion_started > 0 ) {
             //Non-combustions "engines" started
             add_msg( _( "The %s is ready for movement." ), veh->name );
         } else {
             //All of the non-muscle engines failed
-            add_msg( m_bad, vgettext( "The %s's engine fails to start.",
-                                      "The %s's engines fail to start.", non_muscle_attempted ), veh->name );
+            add_msg( m_bad, localised::counted{ .format = pl_translation( "The %s's engine fails to start.", "The %s's engines fail to start." ), .count = non_muscle_attempted },
+                     veh->name );
         }
     }
 

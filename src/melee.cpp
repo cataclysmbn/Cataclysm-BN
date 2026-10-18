@@ -2800,7 +2800,8 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
             melee_attack( *c, false );
         }
 
-        t.add_msg_if_player( m_good, vgettext( "%d enemy hit!", "%d enemies hit!", count_hit ), count_hit );
+        t.add_msg_if_player( m_good, localised::counted{ .format = pl_translation( "%d enemy hit!", "%d enemies hit!" ), .count = count_hit },
+                             count_hit );
         // Extra attacks are free of charge (otherwise AoE attacks would SUCK)
         moves = temp_moves;
         set_stamina( temp_stamina );

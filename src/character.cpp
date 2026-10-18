@@ -8944,15 +8944,11 @@ bool Character::has_enough_charges( const item &it, bool show_msg ) const
         if( show_msg ) {
             if( it.has_flag( flag_USE_UPS ) ) {
                 add_msg_if_player( m_info,
-                                   vgettext( "Your %s needs %d charge, from some UPS or a Bionic Power Interface.",
-                                             "Your %s needs %d charges, from some UPS or a Bionic Power Interface.",
-                                             it.ammo_required() ),
+                                   localised::counted{ .format = pl_translation( "Your %s needs %d charge, from some UPS or a Bionic Power Interface.", "Your %s needs %d charges, from some UPS or a Bionic Power Interface." ), .count = it.ammo_required() },
                                    it.tname(), it.ammo_required() );
             } else {
                 add_msg_if_player( m_info,
-                                   vgettext( "Your %s needs %d charge, from a Bionic Power Interface.",
-                                             "Your %s needs %d charges, from a Bionic Power Interface.",
-                                             it.ammo_required() ),
+                                   localised::counted{ .format = pl_translation( "Your %s needs %d charge, from a Bionic Power Interface.", "Your %s needs %d charges, from a Bionic Power Interface." ), .count = it.ammo_required() },
                                    it.tname(), it.ammo_required() );
             }
         }
@@ -8964,18 +8960,14 @@ bool Character::has_enough_charges( const item &it, bool show_msg ) const
         }
         if( show_msg ) {
             add_msg_if_player( m_info,
-                               vgettext( "Your %s needs %d charge from some UPS.",
-                                         "Your %s needs %d charges from some UPS.",
-                                         it.ammo_required() ),
+                               localised::counted{ .format = pl_translation( "Your %s needs %d charge from some UPS.", "Your %s needs %d charges from some UPS." ), .count = it.ammo_required() },
                                it.tname(), it.ammo_required() );
         }
         return false;
     } else if( !it.ammo_sufficient() ) {
         if( show_msg ) {
             add_msg_if_player( m_info,
-                               vgettext( "Your %s has %d charge but needs %d.",
-                                         "Your %s has %d charges but needs %d.",
-                                         it.ammo_remaining() ),
+                               localised::counted{ .format = pl_translation( "Your %s has %d charge but needs %d.", "Your %s has %d charges but needs %d." ), .count = it.ammo_remaining() },
                                it.tname(), it.ammo_remaining(), it.ammo_required() );
         }
         return false;

@@ -1253,7 +1253,7 @@ bool trapfunc::ledge( const tripoint_bub_ms &p, Creature *c, item * )
         if( character_funcs::can_fly( *pl->as_character() ) ) {
             return false;
         } else {
-            add_msg( m_bad, vgettext( "You fall down %d story!", "You fall down %d stories!", height ),
+            add_msg( m_bad, localised::counted{ .format = pl_translation( "You fall down %d story!", "You fall down %d stories!" ), .count = height },
                      height );
             g->vertical_move( -height, true );
         }

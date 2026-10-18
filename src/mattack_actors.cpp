@@ -765,9 +765,8 @@ bool gun_actor::call( monster &z ) const
             return attempt_shoot( res.value().get().bub_pos(), &res.value().get() );
         }
         if( const int hostiles = res.error(); hostiles > 0 && g->u.sees( z ) ) {
-            add_msg( m_warning, vgettext( "Pointed in your direction, the %s emits an IFF warning beep.",
-                                          "Pointed in your direction, the %s emits %d annoyed sounding beeps.",
-                                          hostiles ), z.name(), hostiles );
+            add_msg( m_warning, localised::counted{ .format = pl_translation( "Pointed in your direction, the %s emits an IFF warning beep.", "Pointed in your direction, the %s emits %d annoyed sounding beeps." ), .count = hostiles },
+                     z.name(), hostiles );
         }
         return false;
     }
