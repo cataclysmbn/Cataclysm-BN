@@ -122,6 +122,106 @@
             "expect": "boundary"
           },
           {
+            "id": "inventory:digit:0",
+            "label": "0",
+            "keys": [
+              "0"
+            ],
+            "enabled": true,
+            "role": "digit",
+            "expect": "screen"
+          },
+          {
+            "id": "inventory:digit:1",
+            "label": "1",
+            "keys": [
+              "1"
+            ],
+            "enabled": true,
+            "role": "digit",
+            "expect": "screen"
+          },
+          {
+            "id": "inventory:digit:2",
+            "label": "2",
+            "keys": [
+              "2"
+            ],
+            "enabled": true,
+            "role": "digit",
+            "expect": "screen"
+          },
+          {
+            "id": "inventory:digit:3",
+            "label": "3",
+            "keys": [
+              "3"
+            ],
+            "enabled": true,
+            "role": "digit",
+            "expect": "screen"
+          },
+          {
+            "id": "inventory:digit:4",
+            "label": "4",
+            "keys": [
+              "4"
+            ],
+            "enabled": true,
+            "role": "digit",
+            "expect": "screen"
+          },
+          {
+            "id": "inventory:digit:5",
+            "label": "5",
+            "keys": [
+              "5"
+            ],
+            "enabled": true,
+            "role": "digit",
+            "expect": "screen"
+          },
+          {
+            "id": "inventory:digit:6",
+            "label": "6",
+            "keys": [
+              "6"
+            ],
+            "enabled": true,
+            "role": "digit",
+            "expect": "screen"
+          },
+          {
+            "id": "inventory:digit:7",
+            "label": "7",
+            "keys": [
+              "7"
+            ],
+            "enabled": true,
+            "role": "digit",
+            "expect": "screen"
+          },
+          {
+            "id": "inventory:digit:8",
+            "label": "8",
+            "keys": [
+              "8"
+            ],
+            "enabled": true,
+            "role": "digit",
+            "expect": "screen"
+          },
+          {
+            "id": "inventory:digit:9",
+            "label": "9",
+            "keys": [
+              "9"
+            ],
+            "enabled": true,
+            "role": "digit",
+            "expect": "screen"
+          },
+          {
             "id": "DOWN",
             "label": "Next item",
             "keys": [

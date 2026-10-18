@@ -2061,6 +2061,7 @@ namespace ec = engine_client;
 auto list_id( const std::string &column_key ) -> std::string { return "list:" + column_key; }
 auto choose_id( const std::string &column_key ) -> std::string { return list_id( column_key ) + ":choose"; }
 auto count_id( const std::string &column_key ) -> std::string { return list_id( column_key ) + ":count"; }
+constexpr auto digit_prefix = std::string_view { "inventory:digit:" };
 } // namespace
 
 auto inventory_selector::interaction_rows() const -> std::vector<interaction_row>
@@ -2173,6 +2174,15 @@ auto inventory_selector::interaction_view() const -> ec::screen_view
         }
         panels.push_back( ec::panel( { .id = "panel:" + key, .child = std::move( items ) } ) );
     }
+    // A counting list reads a typed digit as its count, before any action bound to the key.
+    if( supports_semantic_count() ) {
+        for( const auto digit : std::views::iota( 0, 10 ) ) {
+            const auto key = std::to_string( digit );
+            affordances.push_back( ec::invoke_affordance( {
+                .id = std::string{ digit_prefix } + key, .label = key, .keys = { key }, .role = "digit"
+            } ) );
+        }
+    }
     auto stats = std::vector<ec::panel_stat> {};
     if( const auto totals = display_stats ? header_totals( get_raw_stats() ) : std::nullopt ) {
         stats.push_back( { .key = "weight", .label = string_format( _( "Weight (%s):" ), totals->weight_unit ), .value = totals->weight,
@@ -2213,6 +2223,13 @@ inventory_input inventory_selector::get_input()
     res.entry = find_entry_by_invlet( res.ch );
 
     if( const auto invoked = engine_client::invoked( event ) ) {
+        // A digit of the count, as the native list reads the key.
+        if( invoked->affordance_id.starts_with( digit_prefix ) ) {
+            res.action.clear();
+            res.ch = invoked->affordance_id.back();
+            res.entry = nullptr;
+            return res;
+        }
         // A row of the published screen, chosen or given a count.
         res.entry = nullptr;
         const auto rows = interaction_rows();
