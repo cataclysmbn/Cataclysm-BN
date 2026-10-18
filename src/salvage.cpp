@@ -218,7 +218,7 @@ void complete_salvage( Character &who, item &cut, tripoint_abs_ms pos )
         salvagable_percent *= component_success_chance;
     }
 
-    add_msg( m_info, _( "You try to salvage materials from the %s." ), cut.tname() );
+    add_msg( m_info, to_translation( "You try to salvage materials from the %s." ), cut.tname() );
 
     // Clean up before removing the item.
     remove_ammo( cut, who );
@@ -239,7 +239,7 @@ void complete_salvage( Character &who, item &cut, tripoint_abs_ms pos )
             // Done this way so that items with charges > 1 or no support for charges work correctly
             here.spawn_item( pos_here, salvaged.first, amount, 1 );
         } else {
-            add_msg( m_bad, _( "Could not salvage a %s." ), salvaged.first->nname( 1 ) );
+            add_msg( m_bad, to_translation( "Could not salvage a %s." ), salvaged.first->nname( 1 ) );
         }
 
     }
@@ -333,7 +333,7 @@ bool prompt_salvage_single( Character &who, item &target )
     msg += "\n";
     msg += _( "Really salvage?\n" );
     if( !query_yn( msg ) ) {
-        add_msg( _( "Never mind." ) );
+        add_msg( to_translation( "Never mind." ) );
         return false;
     }
 
@@ -432,12 +432,12 @@ void salvage_activity_actor::start( player_activity &act, Character &who )
                         // If we skipped everything, cancel or we'll crash.
                         if( targets.empty() ) {
                             act.set_to_null();
-                            add_msg( _( "Never mind." ) );
+                            add_msg( to_translation( "Never mind." ) );
                         }
                         break;
                     case salvage::q_result::abort:
                         act.set_to_null();
-                        add_msg( _( "Never mind." ) );
+                        add_msg( to_translation( "Never mind." ) );
                         break;
                     default:
                         break;
@@ -500,7 +500,7 @@ void salvage_activity_actor::finish( player_activity &act, Character & )
     if( !progress.complete() ) {
         debugmsg( "salvage_activity_actor call finish function while able to start new salvage" );
     }
-    add_msg( _( "You finish salvaging." ) );
+    add_msg( to_translation( "You finish salvaging." ) );
     act.set_to_null();
 }
 

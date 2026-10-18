@@ -113,17 +113,17 @@ static const std::string flag_UNCRAFT_LIQUIDS_CONTAINED( "UNCRAFT_LIQUIDS_CONTAI
 static bool crafting_allowed( const Character &who, const recipe &rec )
 {
     if( morale_crafting_speed_multiplier( who, rec ) <= 0.0f ) {
-        add_msg( m_info, _( "Your morale is too low to craft such a difficult thing…" ) );
+        add_msg( m_info, to_translation( "Your morale is too low to craft such a difficult thing…" ) );
         return false;
     }
 
     if( lighting_crafting_speed_multiplier( who, rec ) <= 0.0f ) {
-        add_msg( m_info, _( "You can't see to craft!" ) );
+        add_msg( m_info, to_translation( "You can't see to craft!" ) );
         return false;
     }
 
     if( rec.category == "CC_BUILDING" ) {
-        add_msg( m_info, _( "Overmap terrain building recipes are not implemented yet!" ) );
+        add_msg( m_info, to_translation( "Overmap terrain building recipes are not implemented yet!" ) );
         return false;
     }
     return true;
@@ -336,42 +336,43 @@ float crafting_speed_multiplier( const Character &who, const item &craft,
     total_multi += who.bonus_from_enchantments( total_multi, enchantment_value_id( "CRAFTING_SPEED" ) );
     if( light_multi <= 0.0f ) {
         who.add_msg_player_or_npc( m_bad,
-                                   _( "You can no longer see well enough to keep crafting." ),
-                                   _( "<npcname> can no longer see well enough to keep crafting." ) );
+                                   to_translation( "You can no longer see well enough to keep crafting." ),
+                                   to_translation( "<npcname> can no longer see well enough to keep crafting." ) );
         return 0.0f;
     }
     if( bench_multi <= 0.1f || ( bench_multi <= 0.33f && total_multi <= 0.2f ) ) {
         who.add_msg_player_or_npc( m_bad,
-                                   _( "The %s is too large and/or heavy to work on.  You may want to"
-                                      " use a workbench or a smaller batch size" ),
-                                   _( "The %s is too large and/or heavy for <npcname> to work on.  They may need"
-                                      " a workbench or a smaller batch size" ),
+                                   to_translation( "The %s is too large and/or heavy to work on.  You may want to"
+                                           " use a workbench or a smaller batch size" ),
+                                   to_translation( "The %s is too large and/or heavy for <npcname> to work on.  They may need"
+                                           " a workbench or a smaller batch size" ),
                                    craft.tname() );
         return 0.0f;
     }
     if( morale_multi <= 0.2f || ( morale_multi <= 0.33f && total_multi <= 0.2f ) ) {
         who.add_msg_player_or_npc( m_bad,
-                                   _( "Your morale is too low to continue crafting." ),
-                                   _( "<npcname>'s morale is too low to continue crafting." ) );
+                                   to_translation( "Your morale is too low to continue crafting." ),
+                                   to_translation( "<npcname>'s morale is too low to continue crafting." ) );
         return 0.0f;
     }
 
     // If we're working below 20% speed, just suggest giving up
     if( action_time_scale::once_every_this_tick( 1_hours ) && total_multi <= 0.2f ) {
-        who.add_msg_if_player( m_bad, _( "You are too frustrated to continue and should just give up." ) );
+        who.add_msg_if_player( m_bad,
+                               to_translation( "You are too frustrated to continue and should just give up." ) );
     }
 
     if( action_time_scale::once_every_this_tick( 1_hours ) && total_multi < 0.75f ) {
         if( light_multi <= 0.5f ) {
-            who.add_msg_if_player( m_bad, _( "You can't see well and are working slowly." ) );
+            who.add_msg_if_player( m_bad, to_translation( "You can't see well and are working slowly." ) );
         }
         if( bench_multi <= 0.5f ) {
             who.add_msg_if_player( m_bad,
-                                   _( "The %s is to large and/or heavy to work on comfortably.  You are"
-                                      " working slowly." ), craft.tname() );
+                                   to_translation( "The %s is to large and/or heavy to work on comfortably.  You are"
+                                                   " working slowly." ), craft.tname() );
         }
         if( morale_multi <= 0.5f ) {
-            who.add_msg_if_player( m_bad, _( "You can't focus and are working slowly." ) );
+            who.add_msg_if_player( m_bad, to_translation( "You can't focus and are working slowly." ) );
         }
     }
 
@@ -911,17 +912,17 @@ void Character::craft_skill_gain( const item &craft, const int &multiplier )
                 helper->practice( making.skill_used, roll_remainder( base_practice / 2.0 ),
                                   skill_cap );
                 if( batch_size > 1 && one_in( 3 ) ) {
-                    add_msg( m_info, _( "%s assists with crafting…" ), helper->name );
+                    add_msg( m_info, to_translation( "%s assists with crafting…" ), helper->name );
                 }
                 if( batch_size == 1 && one_in( 3 ) ) {
-                    add_msg( m_info, _( "%s could assist you with a batch…" ), helper->name );
+                    add_msg( m_info, to_translation( "%s could assist you with a batch…" ), helper->name );
                 }
                 // NPCs around you understand the skill used better
             } else {
                 helper->practice( making.skill_used, roll_remainder( base_practice / 10.0 ),
                                   skill_cap );
                 if( one_in( 3 ) ) {
-                    add_msg( m_info, _( "%s watches you craft…" ), helper->name );
+                    add_msg( m_info, to_translation( "%s watches you craft…" ), helper->name );
                 }
             }
         }
@@ -950,7 +951,7 @@ double Character::crafting_success_roll( const recipe &making ) const
             get_skill_level( making.skill_used ) ) {
             // NPC assistance is worth half a skill level
             skill_dice += 2;
-            add_msg_if_player( m_info, _( "%s helps with crafting…" ), np->name );
+            add_msg_if_player( m_info, to_translation( "%s helps with crafting…" ), np->name );
             break;
         }
     }
@@ -1034,8 +1035,8 @@ static void destroy_random_component( item &craft, const Character &crafter )
 
     detached_ptr<item> destroyed = random_entry_detached( craft.get_components() );
 
-    crafter.add_msg_player_or_npc( _( "You mess up and destroy the %s." ),
-                                   _( "<npcname> messes up and destroys the %s" ), destroyed->tname() );
+    crafter.add_msg_player_or_npc( to_translation( "You mess up and destroy the %s." ),
+                                   to_translation( "<npcname> messes up and destroys the %s" ), destroyed->tname() );
 }
 
 bool item::handle_craft_failure( Character &crafter )
@@ -1070,8 +1071,8 @@ bool item::handle_craft_failure( Character &crafter )
     const double percent_progress_loss = rng_exponential( 0.25, 0.35 ) *
                                          ( 1.0 - std::min( success_roll, 1.0 ) );
     const int progess_loss = item_counter * percent_progress_loss;
-    crafter.add_msg_player_or_npc( _( "You mess up and lose %d%% progress." ),
-                                   _( "<npcname> messes up and loses %d%% progress." ), progess_loss / 100000 );
+    crafter.add_msg_player_or_npc( to_translation( "You mess up and lose %d%% progress." ),
+                                   to_translation( "<npcname> messes up and loses %d%% progress." ), progess_loss / 100000 );
     item_counter = clamp( item_counter - progess_loss, 0, 10000000 );
 
     set_next_failure_point( crafter );
@@ -1184,9 +1185,10 @@ void complete_craft( Character &who, item &craft )
             first = false;
             // TODO: reconsider recipe memorization
             if( who.knows_recipe( &making ) ) {
-                who.add_msg_if_player( _( "You craft %s from memory." ), making.result_name() );
+                who.add_msg_if_player( to_translation( "You craft %s from memory." ), making.result_name() );
             } else {
-                who.add_msg_if_player( _( "You craft %s using a book as a reference." ), making.result_name() );
+                who.add_msg_if_player( to_translation( "You craft %s using a book as a reference." ),
+                                       making.result_name() );
                 // If we made it, but we don't know it,
                 // we're making it from a book and have a chance to learn it.
                 // Base expected time to learn is 1000*(difficulty^4)/skill/int moves.
@@ -1203,7 +1205,7 @@ void complete_craft( Character &who, item &craft )
                 const double time_to_learn = 1000 * 8 * std::pow( difficulty, 4 ) / learning_speed;
                 if( x_in_y( making.time, time_to_learn ) ) {
                     who.learn_recipe( &making );
-                    who.add_msg_if_player( m_good, _( "You memorized the recipe for %s!" ),
+                    who.add_msg_if_player( m_good, to_translation( "You memorized the recipe for %s!" ),
                                            making.result_name() );
                 }
             }
@@ -1395,7 +1397,7 @@ bool Character::can_continue_craft( item &craft )
             comp_selection<item_comp> is = select_item_component( it, batch_size, map_inv, true, filter );
             if( is.use_from == usage_from::cancel ) {
                 cancel_activity();
-                add_msg( _( "You stop crafting." ) );
+                add_msg( to_translation( "You stop crafting." ) );
                 return false;
             }
             item_selections.push_back( is );
@@ -2018,8 +2020,8 @@ bool Character::craft_consume_tools( item &craft, int mulitplier, bool start_cra
                 case usage_from::player:
                     if( !has_charges( type, count ) ) {
                         add_msg_player_or_npc(
-                            _( "You have insufficient %s charges and can't continue crafting" ),
-                            _( "<npcname> has insufficient %s charges and can't continue crafting" ),
+                            to_translation( "You have insufficient %s charges and can't continue crafting" ),
+                            to_translation( "<npcname> has insufficient %s charges and can't continue crafting" ),
                             item::nname( type ) );
                         craft.set_tools_to_continue( false );
                         return false;
@@ -2028,8 +2030,8 @@ bool Character::craft_consume_tools( item &craft, int mulitplier, bool start_cra
                 case usage_from::map:
                     if( !map_inv.has_charges( type, count ) ) {
                         add_msg_player_or_npc(
-                            _( "You have insufficient %s charges and can't continue crafting" ),
-                            _( "<npcname> has insufficient %s charges and can't continue crafting" ),
+                            to_translation( "You have insufficient %s charges and can't continue crafting" ),
+                            to_translation( "<npcname> has insufficient %s charges and can't continue crafting" ),
                             item::nname( type ) );
                         craft.set_tools_to_continue( false );
                         return false;
@@ -2043,8 +2045,8 @@ bool Character::craft_consume_tools( item &craft, int mulitplier, bool start_cra
             }
         } else if( !has_amount( type, 1 ) && !map_inv.has_tools( type, 1 ) ) {
             add_msg_player_or_npc(
-                _( "You no longer have a %s and can't continue crafting" ),
-                _( "<npcname> no longer has a %s and can't continue crafting" ),
+                to_translation( "You no longer have a %s and can't continue crafting" ),
+                to_translation( "<npcname> no longer has a %s and can't continue crafting" ),
                 item::nname( type ) );
             craft.set_tools_to_continue( false );
             return false;
@@ -2217,7 +2219,7 @@ static disass_prompt_result prompt_disassemble_in_seq( avatar &you, const item &
         msg += "\n";
         msg += _( "Really disassemble?\n" );
         if( !query_yn( msg ) ) {
-            add_msg( _( "Never mind." ) );
+            add_msg( to_translation( "Never mind." ) );
             return res;
         }
     }
@@ -2246,7 +2248,7 @@ static disass_prompt_result prompt_disassemble_in_seq( avatar &you, const item &
             int result = num_batches;
             popup_input.title( title ).description( descr ).edit( result );
             if( popup_input.canceled() || result <= 0 ) {
-                add_msg( _( "Never mind." ) );
+                add_msg( to_translation( "Never mind." ) );
                 return res;
             }
             res.batches = std::min( result, num_batches );
@@ -2260,7 +2262,7 @@ static disass_prompt_result prompt_disassemble_in_seq( avatar &you, const item &
 static bool prompt_disassemble_single( avatar &you, item *target, bool interactive )
 {
     if( !target ) {
-        add_msg( _( "Never mind." ) );
+        add_msg( to_translation( "Never mind." ) );
         return false;
     }
 
@@ -2337,7 +2339,7 @@ void crafting::complete_disassemble( Character &who, const iuse_location &target
     item &dis_item = org_item;
     float component_success_chance = std::min( std::pow( 0.8, dis_item.damage_level( 4 ) ), 1.0 );
 
-    add_msg( _( "You disassemble the %s into its components." ), dis_item.tname() );
+    add_msg( to_translation( "You disassemble the %s into its components." ), dis_item.tname() );
     // Remove any batteries, ammo and mods first
     remove_ammo( dis_item, who );
     remove_radio_mod( dis_item, *who.as_player() );
@@ -2418,14 +2420,14 @@ void crafting::complete_disassemble( Character &who, const iuse_location &target
     for( detached_ptr<item> &newit : components.clear() ) {
         const bool comp_success = ( dice( skill_dice, skill_sides ) > dice( diff_dice,  diff_sides ) );
         if( dis.difficulty != 0 && !comp_success ) {
-            add_msg( m_bad, _( "You fail to recover %s." ), newit->tname() );
+            add_msg( m_bad, to_translation( "You fail to recover %s." ), newit->tname() );
             continue;
         }
         const bool dmg_success = component_success_chance > rng_float( 0, 1 );
         if( !dmg_success ) {
             // Show reason for failure (damaged item, tname contains the damage adjective)
             //~ %1s - material, %2$s - disassembled item
-            add_msg( m_bad, _( "You fail to recover %1$s from the %2$s." ), newit->tname(),
+            add_msg( m_bad, to_translation( "You fail to recover %1$s from the %2$s." ), newit->tname(),
                      dis_item.tname() );
             continue;
         }
@@ -2458,14 +2460,16 @@ void crafting::complete_disassemble( Character &who, const iuse_location &target
             if( x_in_y( skill_bonus, 4.0 ) ) {
                 // TODO: change to forward an id or a reference
                 who.learn_recipe( &*dis.ident() );
-                add_msg( m_good, _( "You learned a recipe for %s from disassembling it!" ),
+                add_msg( m_good, to_translation( "You learned a recipe for %s from disassembling it!" ),
                          dis_item.tname() );
             } else {
-                add_msg( m_info, _( "You might be able to learn a recipe for %s if you disassemble another." ),
+                add_msg( m_info,
+                         to_translation( "You might be able to learn a recipe for %s if you disassemble another." ),
                          dis_item.tname() );
             }
         } else {
-            add_msg( m_info, _( "If you had better skills, you might learn a recipe next time." ) );
+            add_msg( m_info,
+                     to_translation( "If you had better skills, you might learn a recipe next time." ) );
         }
     }
 }
