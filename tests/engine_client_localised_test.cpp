@@ -7,6 +7,8 @@
 #    include "catch/catch.hpp"
 #    include "engine_client_event.h"
 #    include "engine_client_session.h"
+#    include "explosion.h"
+#    include "explosion_queue.h"
 #    include "game.h"
 #    include "iexamine.h"
 #    include "item.h"
@@ -22,6 +24,7 @@
 #    include "monexamine.h"
 #    include "monster.h"
 #    include "npc.h"
+#    include "npctalk.h"
 #    include "player_activity.h"
 #    include "player_helpers.h"
 #    include "state_helpers.h"
@@ -417,6 +420,50 @@ TEST_CASE(
     const auto line = newest_line();
     CHECK(line.text == "You tie your zombie.");
     CHECK(line.localised == localised_text{.key = "You tie your %s.", .args = {"zombie"}});
+}
+
+TEST_CASE(
+    "a combat line carries its format as a LocalisedString",
+    "[engine_client_localised][messages]") {
+    auto& zombie = seen_zombie();
+    Messages::clear_messages();
+    explosion_handler::
+        shockwave(zombie.bub_pos() + tripoint_east, {.radius = 1}, "explosion", nullptr);
+    explosion_handler::get_explosion_queue().execute();
+    const auto lines = Messages::feed_since({});
+    const auto line = std::ranges::
+        find(lines, std::string{"zombie is caught in the shockwave!"}, &Messages::feed_entry::text);
+    REQUIRE(line != lines.end());
+    CHECK(
+        line->localised
+        == localised_text{
+            .key = "%s is caught in the shockwave!",
+            .args = {localised::nested(
+                localised_text{.key = "zombie", .plural = 1.0, .plural_key = "zombies"})}});
+}
+
+TEST_CASE(
+    "an NPC's line carries its format as a LocalisedString",
+    "[engine_client_localised][messages]") {
+    seen_zombie();
+    auto& other = spawn_npc(tripoint_bub_ms{61, 60, 0}, "test_talker");
+    Messages::clear_messages();
+    talk_function::stranger_neutral(other);
+    CHECK(newest_line().localised
+          == localised_text{.key = "%s feels less threatened by you.", .args = {other.name}});
+}
+
+TEST_CASE(
+    "a mutation's line carries its format as a LocalisedString",
+    "[engine_client_localised][messages]") {
+    seen_zombie();
+    auto& you = get_avatar();
+    const auto web = trait_id("WEB_WEAVER");
+    you.set_mutation(web);
+    Messages::clear_messages();
+    you.activate_mutation(web);
+    CHECK(newest_line().localised
+          == localised_text{.key = "You start spinning web with your spinnerets!"});
 }
 
 #endif // CATA_MCP
