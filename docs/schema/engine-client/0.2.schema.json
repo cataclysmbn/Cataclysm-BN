@@ -89,7 +89,7 @@
           "$ref": "#/$defs/localised_string"
         }
       ],
-      "description": "Player-facing text: a string, already localized for the connection, or a LocalisedString for the client to render from the engine's catalogues. 0.2 engines send strings only."
+      "description": "Player-facing text: a string, already localized for the connection, or a LocalisedString for the client to render from the engine's catalogues."
     },
     "localised_string": {
       "type": "object",
@@ -105,6 +105,10 @@
         "plural": {
           "type": "number",
           "description": "The count that selects the plural form."
+        },
+        "plural_key": {
+          "type": "string",
+          "description": "The msgid of the plural form: what a key no catalogue translates reads as for a `plural` other than one."
         },
         "args": {
           "type": "array",

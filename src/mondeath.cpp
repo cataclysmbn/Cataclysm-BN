@@ -18,6 +18,7 @@
 #include "iuse_actor.h"
 #include "kill_tracker.h"
 #include "line.h"
+#include "localised_names.h"
 #include "make_static.h"
 #include "map/field_type.h"
 #include "map/map.h"
@@ -107,7 +108,7 @@ void mdeath::normal( monster &z )
 
     if( g->u.sees( z ) ) {
         //Currently it is possible to get multiple messages that a monster died.
-        add_msg( m_good, to_translation( "The %s dies!" ), z.name() );
+        add_msg( m_good, to_translation( "The %s dies!" ), localised::name_of( z ) );
     }
 
     const int max_hp = std::max( z.get_hp_max(), 1 );
@@ -275,9 +276,9 @@ void mdeath::acid( monster &z )
     if( g->u.sees( z ) ) {
         if( z.type->dies.size() ==
             1 ) { //If this death function is the only function. The corpse gets dissolved.
-            add_msg( m_mixed, to_translation( "The %s's body dissolves into acid." ), z.name() );
+            add_msg( m_mixed, to_translation( "The %s's body dissolves into acid." ), localised::name_of( z ) );
         } else {
-            add_msg( m_warning, to_translation( "The %s's body leaks acid." ), z.name() );
+            add_msg( m_warning, to_translation( "The %s's body leaks acid." ), localised::name_of( z ) );
         }
     }
     g->m.add_field( z.bub_pos(), fd_acid, 3 );
@@ -441,7 +442,7 @@ void mdeath::fungus( monster &z )
 void mdeath::disintegrate( monster &z )
 {
     if( g->u.sees( z ) ) {
-        add_msg( m_good, to_translation( "The %s disintegrates!" ), z.name() );
+        add_msg( m_good, to_translation( "The %s disintegrates!" ), localised::name_of( z ) );
     }
 }
 
@@ -449,9 +450,10 @@ void mdeath::worm( monster &z )
 {
     if( g->u.sees( z ) ) {
         if( z.type->dies.size() == 1 ) {
-            add_msg( m_good, to_translation( "The %s splits in two!" ), z.name() );
+            add_msg( m_good, to_translation( "The %s splits in two!" ), localised::name_of( z ) );
         } else {
-            add_msg( m_warning, to_translation( "Two worms crawl out of the %s's corpse." ), z.name() );
+            add_msg( m_warning, to_translation( "Two worms crawl out of the %s's corpse." ),
+                     localised::name_of( z ) );
         }
     }
 
@@ -464,7 +466,7 @@ void mdeath::worm( monster &z )
 void mdeath::disappear( monster &z )
 {
     if( g->u.sees( z ) ) {
-        add_msg( m_good, to_translation( "The %s disappears." ), z.name() );
+        add_msg( m_good, to_translation( "The %s disappears." ), localised::name_of( z ) );
     }
 }
 
@@ -499,7 +501,7 @@ void mdeath::guilt( monster &z )
         if( kill_count == maxKills ) {
             //~ Message after killing a lot of monsters which would normally affect the morale negatively. %s is the monster name, it will be pluralized with a number of 100.
             add_msg( m_good, to_translation( "After killing so many bloody %s you no longer care "
-                                             "about their deaths anymore." ), z.name( maxKills ) );
+                                             "about their deaths anymore." ), localised::name_of( z, maxKills ) );
         }
         return;
 
@@ -544,13 +546,13 @@ void mdeath::blobsplit( monster &z )
     if( z.get_speed() <= 0 ) {
         if( g->u.sees( z ) ) {
             // TODO: Add vermin-tagged tiny versions of the splattered blob  :)
-            add_msg( m_good, to_translation( "The %s splatters apart." ), z.name() );
+            add_msg( m_good, to_translation( "The %s splatters apart." ), localised::name_of( z ) );
         }
         return;
     }
     if( g->u.sees( z ) ) {
         if( z.type->dies.size() == 1 ) {
-            add_msg( m_good, to_translation( "The %s splits in two!" ), z.name() );
+            add_msg( m_good, to_translation( "The %s splits in two!" ), localised::name_of( z ) );
         } else {
             add_msg( m_bad, to_translation( "Two small blobs slither out of the corpse." ) );
         }
@@ -592,7 +594,7 @@ void mdeath::jackson( monster &z )
 void mdeath::melt( monster &z )
 {
     if( g->u.sees( z ) ) {
-        add_msg( m_good, to_translation( "The %s melts away." ), z.name() );
+        add_msg( m_good, to_translation( "The %s melts away." ), localised::name_of( z ) );
     }
 }
 
@@ -759,9 +761,9 @@ void mdeath::broken( monster &z )
 
     // TODO: make mdeath::splatter work for robots
     if( ( broken_mon_ref.damage() >= broken_mon_ref.max_damage() ) && g->u.sees( z.bub_pos() ) ) {
-        add_msg( m_good, to_translation( "The %s is destroyed!" ), z.name() );
+        add_msg( m_good, to_translation( "The %s is destroyed!" ), localised::name_of( z ) );
     } else if( g->u.sees( z.bub_pos() ) ) {
-        add_msg( m_good, to_translation( "The %s collapses!" ), z.name() );
+        add_msg( m_good, to_translation( "The %s collapses!" ), localised::name_of( z ) );
     }
 }
 
@@ -781,7 +783,7 @@ void mdeath::darkman( monster &z )
 {
     g->u.remove_effect( effect_darkness );
     if( g->u.sees( z ) ) {
-        add_msg( m_good, to_translation( "The %s melts away." ), z.name() );
+        add_msg( m_good, to_translation( "The %s melts away." ), localised::name_of( z ) );
     }
 }
 
@@ -822,7 +824,7 @@ void mdeath::fungalburst( monster &z )
     // If the fungus died from anti-fungal poison, don't pouf
     if( g->m.get_field_intensity( z.bub_pos(), fd_fungicidal_gas ) ) {
         if( g->u.sees( z ) ) {
-            add_msg( m_good, to_translation( "The %s inflates and melts away." ), z.name() );
+            add_msg( m_good, to_translation( "The %s inflates and melts away." ), localised::name_of( z ) );
         }
         return;
     }
@@ -865,7 +867,7 @@ void mdeath::jabberwock( monster &z )
 
 void mdeath::gameover( monster &z )
 {
-    add_msg( m_bad, to_translation( "The %s was destroyed!  GAME OVER!" ), z.name() );
+    add_msg( m_bad, to_translation( "The %s was destroyed!  GAME OVER!" ), localised::name_of( z ) );
     g->u.set_part_hp_cur( bodypart_id( "torso" ), 0 );
 }
 
@@ -930,11 +932,11 @@ void mdeath::detonate( monster &z )
             add_msg( m_info,
                      //~ %s is the possessive form of the monster's name
                      to_translation( "The %s's hands fly to its pockets, but there's nothing left in them." ),
-                     z.name() );
+                     localised::name_of( z ) );
         } else {
             //~ %s is the possessive form of the monster's name
             add_msg( m_bad, to_translation( "The %s's hands fly to its remaining pockets, opening them!" ),
-                     z.name() );
+                     localised::name_of( z ) );
         }
     }
     // HACK, used to stop them from having ammo on respawn
@@ -956,7 +958,7 @@ void mdeath::broken_ammo( monster &z )
     if( g->u.sees( z.bub_pos() ) ) {
         //~ %s is the possessive form of the monster's name
         add_msg( m_info, to_translation( "The %s's interior compartment sizzles with destructive energy." ),
-                 z.name() );
+                 localised::name_of( z ) );
     }
     mdeath::broken( z );
 }
@@ -1088,7 +1090,8 @@ void mdeath::conflagration( monster &z )
         }
     } else if( one_in( 2 ) ) {
         g->m.propagate_field( z.bub_pos(), fd_fire, 1, 3 );
-        add_msg( m_bad, to_translation( "The %s bursts into flames as it dies!" ), z.name() );
+        add_msg( m_bad, to_translation( "The %s bursts into flames as it dies!" ),
+                 localised::name_of( z ) );
     } else {
         add_msg( m_good, to_translation( "The flames sputter and die out." ) );
     }

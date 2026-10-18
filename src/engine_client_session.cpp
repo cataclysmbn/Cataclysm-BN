@@ -106,6 +106,14 @@ auto session::interrupt( const error reason ) -> void
 
 namespace
 {
+/// `message` and the messages nested in it without the native color tags.
+auto strip_color_tags( localised_text &message ) -> void
+{
+    for( auto &value : message.args ) {
+        if( auto *text = std::get_if<std::string>( &value ) ) { *text = remove_color_tags( *text ); }
+        if( auto *nested = std::get_if<std::vector<localised_text>>( &value ) ) { std::ranges::for_each( *nested, strip_color_tags ); }
+    }
+}
 auto to_message( const Messages::feed_entry &entry ) -> message_value
 {
     const auto kind = std::ranges::find( msg_type_and_names(), entry.type,
@@ -115,11 +123,7 @@ auto to_message( const Messages::feed_entry &entry ) -> message_value
                  //~ Message %s on the message log was repeated %d times, e.g. "You hear a whack! x 12"
                  string_format( _( "%s x %d" ), text, entry.count ) : text;
     auto localised = entry.localised;
-    if( localised ) {
-        for( auto &value : localised->args ) {
-            if( auto *name = std::get_if<std::string>( &value ) ) { *name = remove_color_tags( *name ); }
-        }
-    }
+    if( localised ) { strip_color_tags( *localised ); }
     return {
         .id = entry.id, .text = std::move( text ),
         .kind = kind == msg_type_and_names().end() ? "neutral" : kind->second,

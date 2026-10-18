@@ -35,6 +35,17 @@ namespace localised
 /// `text` as the value of a placeholder.
 inline auto nested( localised_text text ) -> localised_text::arg { return std::vector{ std::move( text ) }; }
 
+/// `text` with the msgids it is looked up by and the count that picks its form; nullopt when it needs no translation.
+inline auto of( const translation &text, const int count = 1 ) -> std::optional<localised_text>
+{
+    const auto key = text.key();
+    if( !key ) { return std::nullopt; }
+    return localised_text{ .key = key->msgid, .ctx = key->context,
+                           .plural = key->msgid_plural ? std::optional{ static_cast<double>( count ) } :
+                                     std::nullopt,
+                           .plural_key = key->msgid_plural };
+}
+
 /// A value of a message that is a name: shown in the engine's language, worded by a client from its catalogue.
 struct name {
     std::string shown;
@@ -44,7 +55,7 @@ struct name {
 /// `text` in its form for `count`.
 inline auto name_of( const translation &text, const int count = 1 ) -> name
 {
-    return { .shown = text.translated( count ), .text = std::nullopt };
+    return { .shown = text.translated( count ), .text = of( text, count ) };
 }
 
 /// What the native rendering of a message prints for `value`.
@@ -66,6 +77,9 @@ auto to_arg( const T &value ) -> std::optional<localised_text::arg>
         return static_cast<double>( value );
     } else if constexpr( std::is_convertible_v<const plain &, std::string_view> ) {
         return std::string( std::string_view( value ) );
+    } else if constexpr( std::is_same_v<plain, translation> ) {
+        const auto text = of( value );
+        return text ? nested( *text ) : localised_text::arg{ value.translated() };
     } else if constexpr( std::is_same_v<plain, name> ) {
         return value.text ? nested( *value.text ) : localised_text::arg{ value.shown };
     } else {

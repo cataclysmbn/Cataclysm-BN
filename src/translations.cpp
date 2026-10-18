@@ -471,10 +471,10 @@ bool translation::empty() const
 auto translation::key() const -> std::optional<catalogue_key>
 {
     const auto &input = data();
-    if( !input.needs_translation || input.raw.empty() || input.plural ) {
+    if( !input.needs_translation || input.raw.empty() ) {
         return std::nullopt;
     }
-    return catalogue_key{ .msgid = input.raw, .context = input.context };
+    return catalogue_key{ .msgid = input.raw, .context = input.context, .msgid_plural = input.plural };
 }
 
 bool translation::translated_lt( const translation &that ) const

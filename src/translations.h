@@ -153,6 +153,8 @@ class JsonIn;
 struct catalogue_key {
     std::string msgid;
     std::optional<std::string> context;
+    /// The msgid of the plural form, for a string that has one.
+    std::optional<std::string> msgid_plural;
 };
 
 class translation
@@ -239,7 +241,7 @@ class translation
          **/
         bool empty() const;
 
-        /// The msgid and context to look up; nullopt for a string that needs no translation or has a plural form.
+        /// The msgids and context to look up; nullopt for a string that needs no translation.
         auto key() const -> std::optional<catalogue_key>;
 
         /**
