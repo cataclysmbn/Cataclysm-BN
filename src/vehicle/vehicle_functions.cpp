@@ -61,8 +61,8 @@ auto check_reload_timing(
                     current_turn);
 
             if (get_avatar().sees(veh.bub_ms_location())) {
-                add_msg(_("The %1$s's autoloader begins reloading %2$s into %3$s."), veh.name,
-                        ammo_item.tname(), turret_name);
+                add_msg(to_translation("The %1$s's autoloader begins reloading %2$s into %3$s."),
+                        veh.name, ammo_item.tname(), turret_name);
                 sfx::play_variant_sound(
                     "reload", "start", sfx::get_heard_volume(veh.bub_ms_location(), 85));
             }
@@ -130,8 +130,8 @@ void perform_reload(
 
     // Feedback
     if (get_avatar().sees(veh.bub_ms_location())) {
-        add_msg(_("The %1$s's autoloader reloaded %2$s into %3$s."), veh.name, item_name,
-                turret_name);
+        add_msg(to_translation("The %1$s's autoloader reloaded %2$s into %3$s."), veh.name,
+                item_name, turret_name);
         sfx::play_variant_sound("reload", "end", sfx::get_heard_volume(veh.bub_ms_location(), 85));
     }
 }

@@ -1759,7 +1759,7 @@ void veh_interact::do_repair() {
             sel_vpart_info = &vp;
             const std::vector<npc*> helpers = character_funcs::get_crafting_helpers(you, 3);
             for (const npc* np : helpers) {
-                add_msg(m_info, _("%s helps with this task…"), np->name);
+                add_msg(m_info, to_translation("%s helps with this task…"), np->name);
             }
             sel_cmd = 'r';
             break;
@@ -2518,7 +2518,7 @@ void veh_interact::do_remove() {
             }
             const std::vector<npc*> helpers = character_funcs::get_crafting_helpers(you, 3);
             for (const npc* np : helpers) {
-                add_msg(m_info, _("%s helps with this task…"), np->name);
+                add_msg(m_info, to_translation("%s helps with this task…"), np->name);
             }
             sel_cmd = 'o';
             break;
@@ -3602,7 +3602,7 @@ void act_vehicle_siphon(vehicle* veh) {
         }
     }
     if (!has_liquid) {
-        add_msg(m_info, _("The vehicle has no liquid fuel left to siphon."));
+        add_msg(m_info, to_translation("The vehicle has no liquid fuel left to siphon."));
         return;
     }
 
@@ -3629,7 +3629,7 @@ void act_vehicle_unload_fuel(vehicle* veh) {
         fuels.push_back(e.first);
     }
     if (fuels.empty()) {
-        add_msg(m_info, _("The vehicle has no solid fuel left to remove."));
+        add_msg(m_info, to_translation("The vehicle has no solid fuel left to remove."));
         return;
     }
     itype_id fuel;
@@ -3644,7 +3644,7 @@ void act_vehicle_unload_fuel(vehicle* veh) {
         }
         smenu.query();
         if (smenu.ret < 0 || static_cast<size_t>(smenu.ret) >= fuels.size()) {
-            add_msg(m_info, _("Never mind."));
+            add_msg(m_info, to_translation("Never mind."));
             return;
         }
         fuel = fuels[smenu.ret];
@@ -3655,16 +3655,18 @@ void act_vehicle_unload_fuel(vehicle* veh) {
     int qty = veh->fuel_left(fuel);
     if (fuel == itype_plut_cell) {
         if (qty / PLUTONIUM_CHARGES == 0) {
-            add_msg(m_info, _("The vehicle has no fully charged plutonium cells."));
+            add_msg(m_info, to_translation("The vehicle has no fully charged plutonium cells."));
             return;
         }
         detached_ptr<item> plutonium = item::spawn(fuel, calendar::turn, qty / PLUTONIUM_CHARGES);
-        add_msg(m_info, _("You unload %s from the vehicle."), plutonium->display_name());
+        add_msg(m_info, to_translation("You unload %s from the vehicle."),
+                plutonium->display_name());
         veh->drain(fuel, qty - (qty % PLUTONIUM_CHARGES));
         you.i_add_or_drop(std::move(plutonium));
     } else {
         detached_ptr<item> solid_fuel = item::spawn(fuel, calendar::turn, qty);
-        add_msg(m_info, _("You unload %s from the vehicle."), solid_fuel->display_name());
+        add_msg(m_info, to_translation("You unload %s from the vehicle."),
+                solid_fuel->display_name());
         veh->drain(fuel, qty);
         you.i_add_or_drop(std::move(solid_fuel));
     }
@@ -3729,7 +3731,8 @@ void veh_interact::complete_vehicle(Character& who) {
             const auto using_debug_hammerspace = who.has_trait(trait_DEBUG_HS);
             if (!using_debug_hammerspace
                 && !reqs.can_make_with_inventory(inv, is_crafting_component)) {
-                add_msg(m_info, _("You don't meet the requirements to install the %s."),
+                add_msg(m_info,
+                        to_translation("You don't meet the requirements to install the %s."),
                         vpinfo.name());
                 break;
             }
@@ -3748,7 +3751,8 @@ void veh_interact::complete_vehicle(Character& who) {
             }
             if (!base) {
                 if (!using_debug_hammerspace) {
-                    add_msg(m_info, _("Could not find base part in requirements for %s."),
+                    add_msg(m_info,
+                            to_translation("Could not find base part in requirements for %s."),
                             vpinfo.name());
                     break;
                 } else {
@@ -3809,8 +3813,8 @@ void veh_interact::complete_vehicle(Character& who) {
             if (vpinfo.has_flag(VPFLAG_BOARDABLE) && pl) { here.board_vehicle(vehp, pl); }
 
             who.add_msg_if_player(
-                m_good, _("You install a %1$s into the %2$s."), veh->part(partnum).name(),
-                veh->name);
+                m_good, to_translation("You install a %1$s into the %2$s."),
+                veh->part(partnum).name(), veh->name);
 
             for (const auto& sk : vpinfo.install_skills) {
                 who.practice(sk.first, veh_utils::calc_xp_gain(vpinfo, sk.first, who));
@@ -3841,15 +3845,17 @@ void veh_interact::complete_vehicle(Character& who) {
                 if (pt.ammo_remaining() != pt.ammo_capacity()) {
                     //~ 1$s vehicle name, 2$s tank name
                     who.add_msg_if_player(
-                        m_good, _("You refill the %1$s's %2$s."), veh->name, pt.name());
+                        m_good, to_translation("You refill the %1$s's %2$s."), veh->name,
+                        pt.name());
                 } else {
                     //~ 1$s vehicle name, 2$s tank name
                     who.add_msg_if_player(
-                        m_good, _("You completely refill the %1$s's %2$s."), veh->name, pt.name());
+                        m_good, to_translation("You completely refill the %1$s's %2$s."), veh->name,
+                        pt.name());
                 }
 
                 if (!src->contents.empty()) {
-                    who.add_msg_if_player(m_good, _("There's some left over!"));
+                    who.add_msg_if_player(m_good, to_translation("There's some left over!"));
                 }
 
             } else if (pt.is_fuel_store()) {
@@ -3858,7 +3864,7 @@ void veh_interact::complete_vehicle(Character& who) {
 
                 //~ 1$s vehicle name, 2$s reactor name
                 who.add_msg_if_player(
-                    m_good, _("You refuel the %1$s's %2$s."), veh->name, pt.name());
+                    m_good, to_translation("You refuel the %1$s's %2$s."), veh->name, pt.name());
 
             } else {
                 debugmsg("vehicle part is not reloadable");
@@ -3875,14 +3881,14 @@ void veh_interact::complete_vehicle(Character& who) {
                 vehicle_part = veh->get_next_shifted_index(vehicle_part, who);
                 if (vehicle_part == -1) {
                     who.add_msg_if_player(
-                        m_info, _("The %s has already been removed by someone else."),
+                        m_info, to_translation("The %s has already been removed by someone else."),
                         vpinfo.name());
                     return;
                 }
             }
             const auto reqs = vpinfo.removal_requirements();
             if (!reqs.can_make_with_inventory(inv, is_crafting_component)) {
-                add_msg(m_info, _("You don't meet the requirements to remove the %s."),
+                add_msg(m_info, to_translation("You don't meet the requirements to remove the %s."),
                         vpinfo.name());
                 break;
             }
@@ -3922,12 +3928,12 @@ void veh_interact::complete_vehicle(Character& who) {
 
             if (broken) {
                 who.add_msg_if_player(
-                    _("You remove the broken %1$s from the %2$s."), veh->part(vehicle_part).name(),
-                    veh->name);
+                    to_translation("You remove the broken %1$s from the %2$s."),
+                    veh->part(vehicle_part).name(), veh->name);
             } else {
                 who.add_msg_if_player(
-                    _("You remove the %1$s from the %2$s."), veh->part(vehicle_part).name(),
-                    veh->name);
+                    to_translation("You remove the %1$s from the %2$s."),
+                    veh->part(vehicle_part).name(), veh->name);
             }
 
             if (!broken) {
@@ -3945,7 +3951,7 @@ void veh_interact::complete_vehicle(Character& who) {
             }
 
             if (veh->part_count() < 2) {
-                who.add_msg_if_player(_("You completely dismantle the %s."), veh->name);
+                who.add_msg_if_player(to_translation("You completely dismantle the %s."), veh->name);
                 who.activity->set_to_null();
                 here.destroy_vehicle(veh);
                 here.reset_vehicle_cache();

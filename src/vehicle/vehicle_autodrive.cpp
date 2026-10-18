@@ -1075,7 +1075,8 @@ auto vehicle::get_debug_overlay_data() const
 auto vehicle::do_autodrive(Character& driver) -> autodrive_result {
     if (!is_autodriving) { return autodrive_result::abort; }
     if (!player_in_control(driver) || skidding) {
-        driver.add_msg_if_player(m_warning, _("You lose control as the vehicle starts skidding."));
+        driver.add_msg_if_player(
+            m_warning, to_translation("You lose control as the vehicle starts skidding."));
         stop_autodriving(false);
         return autodrive_result::abort;
     }
@@ -1100,7 +1101,7 @@ auto vehicle::do_autodrive(Character& driver) -> autodrive_result {
     std::optional<navigation_step> next_step = active_autodrive_controller->compute_next_step();
     if (!next_step) {
         // message handles pathfinding failure either due to obstacles or inability to see
-        driver.add_msg_if_player(_("Can't see a path forward."));
+        driver.add_msg_if_player(to_translation("Can't see a path forward."));
         stop_autodriving(false);
         return autodrive_result::abort;
     }
@@ -1121,11 +1122,12 @@ auto vehicle::do_autodrive(Character& driver) -> autodrive_result {
     switch (active_autodrive_controller->check_collision_zone(next_step->steering_dir)) {
         case collision_check_result::no_visibility:
             driver.add_msg_if_player(
-                m_warning, _("You can't see anything in front of your vehicle!"));
+                m_warning, to_translation("You can't see anything in front of your vehicle!"));
             stop_autodriving();
             return autodrive_result::abort;
         case collision_check_result::close_obstacle:
-            driver.add_msg_if_player(m_warning, _("You're about to crash into something!"));
+            driver.add_msg_if_player(
+                m_warning, to_translation("You're about to crash into something!"));
             stop_autodriving(false);
             return autodrive_result::abort;
         case collision_check_result::slow_down:

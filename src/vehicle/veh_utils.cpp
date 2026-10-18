@@ -110,7 +110,7 @@ auto repair_part(vehicle& veh, vehicle_part& pt, Character& who_c) -> bool {
     map_inv.form_from_map(who.bub_pos(), PICKUP_RANGE, &who_c, false, !who.is_npc());
     if (!reqs.can_make_with_inventory(inv, is_crafting_component)) {
         who.add_msg_if_player(
-            m_info, _("You don't meet the requirements to repair the %s."), pt.name());
+            m_info, to_translation("You don't meet the requirements to repair the %s."), pt.name());
         return false;
     }
 

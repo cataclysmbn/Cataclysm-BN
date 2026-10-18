@@ -266,7 +266,7 @@ void vehicle::turrets_aim_and_fire_single(avatar& you) {
 
     // Select one
     if (options.empty()) {
-        add_msg(m_warning, _("None of the turrets are ready to fire."));
+        add_msg(m_warning, to_translation("None of the turrets are ready to fire."));
         return;
     }
     const int idx = uilist(_("Aim which turret?"), option_names);
@@ -287,17 +287,20 @@ auto vehicle::turrets_aim_and_fire_mult(
         if (show_msg) {
             switch (turret_filter) {
                 case turret_filter_types::BOTH:
-                    add_msg(m_warning, _("Can't aim turrets: all turrets are offline."));
+                    add_msg(m_warning,
+                            to_translation("Can't aim turrets: all turrets are offline."));
                     break;
                 case turret_filter_types::MANUAL:
                     add_msg(
                         m_warning,
-                        _("Can't aim turrets: all turrets are offline or set to automatic targeting mode."));
+                        to_translation(
+                            "Can't aim turrets: all turrets are offline or set to automatic targeting mode."));
                     break;
                 case turret_filter_types::AUTOMATIC:
                     add_msg(
                         m_warning,
-                        _("Can't aim turrets: all turrets are offline or set to manual targeting mode."));
+                        to_translation(
+                            "Can't aim turrets: all turrets are offline or set to manual targeting mode."));
             }
         }
         return false;
@@ -474,7 +477,7 @@ auto vehicle::get_targeting_npc(const vehicle_part& pt) -> std::unique_ptr<npc> 
             cpu->set_mutation(trait_LASER_GUIDED);
             discharge_battery(1);
         } else {
-            add_msg(m_warning, _("Insufficient power, laser targeting not engaged."));
+            add_msg(m_warning, to_translation("Insufficient power, laser targeting not engaged."));
         }
     }
     // Assume vehicle turrets are friendly to the player.
@@ -555,7 +558,7 @@ auto vehicle::automatic_fire_turret(vehicle_part& pt) -> int {
                             .count = boo_hoo},
                         boo_hoo);
                 } else if (u_see) {
-                    add_msg(m_warning, _("%s points in your direction."), cpu->name);
+                    add_msg(m_warning, to_translation("%s points in your direction."), cpu->name);
                 }
             }
             return shots;
@@ -579,7 +582,7 @@ auto vehicle::automatic_fire_turret(vehicle_part& pt) -> int {
     shots = gun.fire(*cpu, targ);
 
     if (shots && u_see && !g->u.sees(abs_to_bub(targ))) {
-        add_msg(_("The %1$s fires its %2$s!"), name, pt.name());
+        add_msg(to_translation("The %1$s fires its %2$s!"), name, pt.name());
     }
 
     return shots;
