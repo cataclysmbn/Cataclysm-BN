@@ -6,6 +6,9 @@
 #    include "engine_client_event.h"
 #    include "engine_client_session.h"
 #    include "game.h"
+#    include "iexamine.h"
+#    include "item.h"
+#    include "iuse.h"
 #    include "locale_fixture.h"
 #    include "locale_scope.h"
 #    include "map_helpers.h"
@@ -19,6 +22,7 @@
 #    include "player_helpers.h"
 #    include "state_helpers.h"
 #    include "translations.h"
+#    include "trap.h"
 
 #    include <nlohmann/json.hpp>
 #    include <string>
@@ -328,6 +332,46 @@ TEST_CASE(
             .key = "The %s begins shrieking!",
             .args = {localised::nested(
                 localised_text{.key = "zombie", .plural = 1.0, .plural_key = "zombies"})}});
+}
+
+TEST_CASE(
+    "a trap's line carries its format as a LocalisedString",
+    "[engine_client_localised][messages]") {
+    seen_zombie();
+    Messages::clear_messages();
+    auto& you = get_avatar();
+    REQUIRE(trapfunc::bubble(you.bub_pos(), &you, nullptr));
+    CHECK(Messages::feed_since({}).front().localised
+          == localised_text{.key = "You step on some bubble wrap!"});
+}
+
+TEST_CASE(
+    "the lines of using and examining things carry their formats as LocalisedStrings",
+    "[engine_client_localised][messages]") {
+    seen_zombie();
+    Messages::clear_messages();
+    auto& you = get_avatar();
+    auto shot = item::spawn("vaccine_shot");
+    iuse::vaccine(&you, &*shot, false, you.bub_pos());
+    CHECK(newest_line().localised == localised_text{.key = "You feel tough."});
+    iexamine::none(you, you.bub_pos());
+    const auto line = newest_line();
+    CHECK(line.text == "That is a wooden floor.");
+    CHECK(line.localised == localised_text{.key = "That is a %s.", .args = {"wooden floor"}});
+}
+
+TEST_CASE(
+    "a character's line carries its format as a LocalisedString",
+    "[engine_client_localised][messages]") {
+    seen_zombie();
+    auto& you = get_avatar();
+    REQUIRE(!you.wear_item(item::spawn("tshirt"), false));
+    Messages::clear_messages();
+    REQUIRE(you.takeoff(*you.worn.front()));
+    const auto line = newest_line();
+    REQUIRE(line.localised);
+    CHECK(line.localised->key == "You take off your %s.");
+    CHECK(line.localised->args.size() == 1);
 }
 
 #endif // CATA_MCP
