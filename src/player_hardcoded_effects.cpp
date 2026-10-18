@@ -142,10 +142,10 @@ static void eff_fun_fungus( player &u, effect &it )
                 u.cough( true );
             }
             if( one_in( 600 ) ) {
-                u.add_msg_if_player( m_warning, _( "You feel nauseous." ) );
+                u.add_msg_if_player( m_warning, to_translation( "You feel nauseous." ) );
             }
             if( action_time_scale::once_every_this_tick( 10_minutes ) ) {
-                u.add_msg_if_player( m_warning, _( "You smell and taste mushrooms." ) );
+                u.add_msg_if_player( m_warning, to_translation( "You smell and taste mushrooms." ) );
             }
             it.mod_duration( 1_turns );
             if( dur > 1_hours ) {
@@ -155,14 +155,14 @@ static void eff_fun_fungus( player &u, effect &it )
         case 2:
             // Five hours of worse symptoms
             if( one_in( 3600 + bonus * 18 ) ) {
-                u.add_msg_if_player( m_bad,  _( "You spasm suddenly!" ) );
+                u.add_msg_if_player( m_bad,  to_translation( "You spasm suddenly!" ) );
                 u.moves -= 100;
                 u.apply_damage( nullptr, bodypart_id( "torso" ), 5 );
             }
             if( x_in_y( character_effects::vomit_mod( u ), ( 4800 + bonus * 24 ) ) ||
                 one_in( 12000 + bonus * 60 ) ) {
-                u.add_msg_player_or_npc( m_bad, _( "You vomit a thick, gray goop." ),
-                                         _( "<npcname> vomits a thick, gray goop." ) );
+                u.add_msg_player_or_npc( m_bad, to_translation( "You vomit a thick, gray goop." ),
+                                         to_translation( "<npcname> vomits a thick, gray goop." ) );
 
                 const int awfulness = rng( 0, 10 );
                 u.moves = -200;
@@ -202,7 +202,7 @@ static void eff_fun_rat( player &u, effect &it )
             u.vomit();
             it.mod_duration( -1_minutes );
         } else {
-            u.add_msg_if_player( m_bad, _( "You feel nauseous!" ) );
+            u.add_msg_if_player( m_bad, to_translation( "You feel nauseous!" ) );
             it.mod_duration( 3_turns );
         }
     }
@@ -214,8 +214,8 @@ static void eff_fun_bleed( player &u, effect &it )
     // QuikClot or bandages per the recipe.)
     const int intense = it.get_intensity();
     if( one_in( 36 / intense ) && u.activity->id() != ACT_FIRSTAID ) {
-        u.add_msg_player_or_npc( m_bad, _( "You lose some blood." ),
-                                 _( "<npcname> loses some blood." ) );
+        u.add_msg_player_or_npc( m_bad, to_translation( "You lose some blood." ),
+                                 to_translation( "<npcname> loses some blood." ) );
         // Prolonged hemorrhage is a significant risk for developing anemia
         u.vitamin_mod( vitamin_iron, rng( -1, -4 ) );
         u.mod_pain( 1 );
@@ -241,22 +241,22 @@ static void eff_fun_hallu( player &u, effect &it )
     const int dur = to_turns<int>( remaining );
     // Baseline
     if( dur == noticeTime ) {
-        u.add_msg_if_player( m_warning, _( "You feel a little strange." ) );
+        u.add_msg_if_player( m_warning, to_translation( "You feel a little strange." ) );
     } else if( dur == comeupTime ) {
         // Coming up
         if( one_in( 2 ) ) {
-            u.add_msg_if_player( m_warning, _( "The world takes on a dreamlike quality." ) );
+            u.add_msg_if_player( m_warning, to_translation( "The world takes on a dreamlike quality." ) );
         } else if( one_in( 3 ) ) {
-            u.add_msg_if_player( m_warning, _( "You have a sudden nostalgic feeling." ) );
+            u.add_msg_if_player( m_warning, to_translation( "You have a sudden nostalgic feeling." ) );
         } else if( one_in( 5 ) ) {
-            u.add_msg_if_player( m_warning, _( "Everything around you is starting to breathe." ) );
+            u.add_msg_if_player( m_warning, to_translation( "Everything around you is starting to breathe." ) );
         } else {
-            u.add_msg_if_player( m_warning, _( "Something feels very, very wrong." ) );
+            u.add_msg_if_player( m_warning, to_translation( "Something feels very, very wrong." ) );
         }
     } else if( dur > peakTime && dur < comeupTime ) {
         if( u.stomach.get_calories() > 0 &&
             ( one_in( 1200 ) || x_in_y( character_effects::vomit_mod( u ), 300 ) ) ) {
-            u.add_msg_if_player( m_bad, _( "You feel sick to your stomach." ) );
+            u.add_msg_if_player( m_bad, to_translation( "You feel sick to your stomach." ) );
             u.mod_stored_kcal( 20 );
             if( one_in( 6 ) ) {
                 u.vomit();
@@ -289,7 +289,7 @@ static void eff_fun_hallu( player &u, effect &it )
         }
     } else if( dur == peakTime ) {
         // Visuals start
-        u.add_msg_if_player( m_bad, _( "Fractal patterns dance across your vision." ) );
+        u.add_msg_if_player( m_bad, to_translation( "Fractal patterns dance across your vision." ) );
         u.add_effect( effect_visuals, time_duration::from_turns( peakTime - comedownTime ) );
     } else if( dur > comedownTime && dur < peakTime ) {
         // Full symptoms
@@ -303,9 +303,9 @@ static void eff_fun_hallu( player &u, effect &it )
         }
     } else if( dur == comedownTime ) {
         if( one_in( 42 ) ) {
-            u.add_msg_if_player( _( "Everything looks SO boring now." ) );
+            u.add_msg_if_player( to_translation( "Everything looks SO boring now." ) );
         } else {
-            u.add_msg_if_player( _( "Things are returning to normal." ) );
+            u.add_msg_if_player( to_translation( "Things are returning to normal." ) );
         }
     }
 }
@@ -423,7 +423,7 @@ static void eff_fun_hot( player &u, effect &it )
             u.vomit();
         }
         if( !u.has_effect( effect_sleep ) && one_in( 2400 ) ) {
-            u.add_msg_if_player( m_bad, _( "The heat is making you see things." ) );
+            u.add_msg_if_player( m_bad, to_translation( "The heat is making you see things." ) );
         }
     }
 }
@@ -547,8 +547,8 @@ void Character::hardcoded_effects( effect &it )
             apply_damage( nullptr, convert_bp( bp ).id(), rng( 2, 4 ) * num_insects );
             // Figure out where they may be placed
             add_msg_player_or_npc( m_bad,
-                                   _( "Your flesh crawls; insects tear through the flesh and begin to emerge!" ),
-                                   _( "Insects begin to emerge from <npcname>'s skin!" ) );
+                                   to_translation( "Your flesh crawls; insects tear through the flesh and begin to emerge!" ),
+                                   to_translation( "Insects begin to emerge from <npcname>'s skin!" ) );
             for( ; num_insects > 0; num_insects-- ) {
                 if( monster *const grub = g->place_critter_around( mon_dermatik_larva, bub_pos(), 1 ) ) {
                     if( one_in( 3 ) ) {
@@ -573,11 +573,13 @@ void Character::hardcoded_effects( effect &it )
         if( x_in_y( intense, 600 + 300 * get_int() ) && !has_effect( effect_narcosis ) ) {
             if( !is_npc() ) {
                 //~ %s is bodypart in accusative.
-                add_msg( m_warning, _( "You start scratching your %s!" ), body_part_name_accusative( bp ) );
+                add_msg( m_warning, to_translation( "You start scratching your %s!" ),
+                         body_part_name_accusative( bp ) );
                 g->u.cancel_activity();
             } else if( g->u.sees( bub_pos() ) ) {
                 //~ 1$s is NPC name, 2$s is bodypart in accusative.
-                add_msg( _( "%1$s starts scratching their %2$s!" ), name, body_part_name_accusative( bp ) );
+                add_msg( to_translation( "%1$s starts scratching their %2$s!" ), name,
+                         body_part_name_accusative( bp ) );
             }
             moves -= 150;
             apply_damage( nullptr, convert_bp( bp ).id(), 1 );
@@ -617,7 +619,7 @@ void Character::hardcoded_effects( effect &it )
         if( intense > 6 ) {
             if( one_in( 7200 - ( intense * 450 ) ) ) {
                 add_msg_if_player( m_bad,
-                                   _( "You feel something reaching out to you, before reality around you frays!" ) );
+                                   to_translation( "You feel something reaching out to you, before reality around you frays!" ) );
                 if( has_psy_protection( *this, 10 ) ) {
                     // Transfers half of remaining duration of nether attention, tinfoil only sometimes helps
                     add_effect( effect_teleglow, ( dur / 2 ), bodypart_str_id::NULL_ID(), ( intense / 2 ) );
@@ -629,7 +631,8 @@ void Character::hardcoded_effects( effect &it )
             }
             if( one_in( 8000 - ( intense * 500 ) ) && one_in( 2 ) ) {
                 if( !is_npc() ) {
-                    add_msg( m_bad, _( "You pass out from the strain of something bearing down on your mind." ) );
+                    add_msg( m_bad,
+                             to_translation( "You pass out from the strain of something bearing down on your mind." ) );
                 }
                 fall_asleep( 2_hours );
                 if( one_in( 10 ) ) {
@@ -642,9 +645,11 @@ void Character::hardcoded_effects( effect &it )
         if( intense > 4 ) {
             if( one_in( 6000 - ( intense * 375 ) ) ) {
                 if( has_psy_protection( *this, 4 ) ) {
-                    add_msg_if_player( m_bad, _( "You feel something probing your mind, but it is rebuffed!" ) );
+                    add_msg_if_player( m_bad,
+                                       to_translation( "You feel something probing your mind, but it is rebuffed!" ) );
                 } else {
-                    add_msg_if_player( m_bad, _( "A terrifying image in the back of your mind paralyzes you." ) );
+                    add_msg_if_player( m_bad,
+                                       to_translation( "A terrifying image in the back of your mind paralyzes you." ) );
                     add_effect( effect_fearparalyze, 5_turns );
                     moves -= 4 * get_speed();
                 }
@@ -655,9 +660,10 @@ void Character::hardcoded_effects( effect &it )
             }
             if( one_turn_in( 1200_minutes - ( intense * 90_minutes ) ) ) {
                 if( has_psy_protection( *this, 4 ) ) {
-                    add_msg_if_player( m_bad, _( "You feel a buzzing in the back of your mind, but it passes." ) );
+                    add_msg_if_player( m_bad,
+                                       to_translation( "You feel a buzzing in the back of your mind, but it passes." ) );
                 } else {
-                    add_msg_if_player( m_bad, _( "You feel something scream in the back of your mind!" ) );
+                    add_msg_if_player( m_bad, to_translation( "You feel something scream in the back of your mind!" ) );
                     add_effect( effect_dazed, rng( 1_minutes, 2_minutes ) );
                 }
                 it.mod_duration( -10_minutes * intense );
@@ -668,7 +674,7 @@ void Character::hardcoded_effects( effect &it )
         }
         if( intense > 2 ) {
             if( one_turn_in( 1200_minutes - ( intense * 90_minutes ) ) ) {
-                add_msg_if_player( m_bad, _( "Your vision is filled with bright lights…" ) );
+                add_msg_if_player( m_bad, to_translation( "Your vision is filled with bright lights…" ) );
                 add_effect( effect_blind, rng( 1_minutes, 2_minutes ) );
                 it.mod_duration( -10_minutes * intense );
                 if( one_in( 4 ) ) {
@@ -676,18 +682,18 @@ void Character::hardcoded_effects( effect &it )
                 }
             }
             if( one_in( 5000 ) && !has_effect( effect_nausea ) ) {
-                add_msg_if_player( m_bad, _( "A wave of nausea passes over you." ) );
+                add_msg_if_player( m_bad, to_translation( "A wave of nausea passes over you." ) );
                 add_effect( effect_nausea, 5_minutes );
             }
         }
         if( one_in( 5000 ) && !has_effect( effect_hallu ) ) {
-            add_msg_if_player( m_bad, _( "Shifting shapes dance on the edge of your vision." ) );
+            add_msg_if_player( m_bad, to_translation( "Shifting shapes dance on the edge of your vision." ) );
             add_effect( effect_hallu, 4_hours );
             it.mod_duration( -10_minutes * intense );
         }
         if( one_turn_in( 40_minutes ) ) {
             if( has_psy_protection( *this, 4 ) ) {
-                add_msg_if_player( m_bad, _( "You feel weird for a moment, but it passes." ) );
+                add_msg_if_player( m_bad, to_translation( "You feel weird for a moment, but it passes." ) );
             } else {
                 // Less morale drop and faster decay than Psychosis negative messages, but more frequent
                 const translation snip = SNIPPET.random_from_category( "nether_attention_watching" ).value_or(
@@ -707,7 +713,7 @@ void Character::hardcoded_effects( effect &it )
         if( intense > 6 ) {
             if( one_in( 6000 - ( intense * 250 ) ) ) {
                 if( !is_npc() ) {
-                    add_msg( _( "Glowing lights surround you, and you teleport." ) );
+                    add_msg( to_translation( "Glowing lights surround you, and you teleport." ) );
                 }
                 teleport::teleport( *this );
                 g->events().send<event_type::teleglow_teleports>( getID() );
@@ -720,11 +726,11 @@ void Character::hardcoded_effects( effect &it )
                 it.mod_duration( -20_minutes * intense );
             }
             if( one_in( 7200 - ( intense * 250 ) ) ) {
-                add_msg_if_player( m_bad, _( "You are beset with a vision of a prowling beast." ) );
+                add_msg_if_player( m_bad, to_translation( "You are beset with a vision of a prowling beast." ) );
                 for( const tripoint_bub_ms &dest : g->m.points_in_radius( bub_pos(), 6 ) ) {
                     if( g->m.is_cornerfloor( dest ) ) {
                         g->m.add_field( dest, fd_tindalos_rift, 3 );
-                        add_msg_if_player( m_info, _( "Your surroundings are permeated with a foul scent." ) );
+                        add_msg_if_player( m_info, to_translation( "Your surroundings are permeated with a foul scent." ) );
                         break;
                     }
                 }
@@ -760,14 +766,14 @@ void Character::hardcoded_effects( effect &it )
                     if( g->u.sees( dest ) ) {
                         g->cancel_activity_or_ignore_query( distraction_type::hostile_spotted_far,
                                                             _( "A monster appears nearby!" ) );
-                        add_msg( m_warning, _( "A portal opens nearby, and a monster crawls through!" ) );
+                        add_msg( m_warning, to_translation( "A portal opens nearby, and a monster crawls through!" ) );
                     }
                     it.mod_duration( -10_minutes * intense );
                     it.mod_intensity( -1 );
                 }
             }
             if( one_in( 21000 - ( intense * 1125 ) ) ) {
-                add_msg_if_player( m_bad, _( "You shudder suddenly." ) );
+                add_msg_if_player( m_bad, to_translation( "You shudder suddenly." ) );
                 mutate();
                 it.mod_duration( -10_minutes * intense );
                 if( one_in( 2 ) ) {
@@ -779,16 +785,17 @@ void Character::hardcoded_effects( effect &it )
             if( one_in( 10000 ) ) {
                 if( !has_trait( trait_M_IMMUNE ) ) {
                     add_effect( effect_fungus, 1_turns, bodypart_str_id::NULL_ID() );
-                    add_msg_if_player( m_bad, _( "You smell mold, and your skin itches." ) );
+                    add_msg_if_player( m_bad, to_translation( "You smell mold, and your skin itches." ) );
                 } else {
-                    add_msg_if_player( m_info, _( "We have many colonists awaiting passage." ) );
+                    add_msg_if_player( m_info, to_translation( "We have many colonists awaiting passage." ) );
                 }
                 // Set ourselves up for removal
                 it.set_duration( 0_turns );
             }
             if( one_in( 5000 ) ) {
                 // Like with the glow anomaly trap, but lower max and bypasses radsuits
-                add_msg_if_player( m_bad, _( "A blue flash of radiation permeates your vision briefly!" ) );
+                add_msg_if_player( m_bad,
+                                   to_translation( "A blue flash of radiation permeates your vision briefly!" ) );
                 irradiate( rng( 10, 20 ), true );
                 it.mod_duration( -10_minutes * intense );
                 if( one_in( 4 ) ) {
@@ -797,12 +804,13 @@ void Character::hardcoded_effects( effect &it )
             }
         }
         if( one_in( 4000 ) ) {
-            add_msg_if_player( m_bad, _( "You're suddenly covered in ectoplasm." ) );
+            add_msg_if_player( m_bad, to_translation( "You're suddenly covered in ectoplasm." ) );
             add_effect( effect_boomered, 10_minutes );
             it.mod_duration( -10_minutes * intense );
         }
         if( one_in( 5000 ) ) {
-            add_msg_if_player( m_bad, _( "A strange sound reverberates around the edges of reality." ) );
+            add_msg_if_player( m_bad,
+                               to_translation( "A strange sound reverberates around the edges of reality." ) );
             // Comparable to the humming anomaly trap, with a narrower range
             int volume = rng( 40, 125 );
             std::string sfx;
@@ -825,26 +833,26 @@ void Character::hardcoded_effects( effect &it )
         }
     } else if( id == effect_asthma ) {
         if( has_effect( effect_adrenaline ) || has_effect( effect_datura ) ) {
-            add_msg_if_player( m_good, _( "Your asthma attack stops." ) );
+            add_msg_if_player( m_good, to_translation( "Your asthma attack stops." ) );
             it.set_duration( 0_turns );
         } else if( dur > 2_hours ) {
-            add_msg_if_player( m_bad, _( "Your asthma overcomes you.\nYou asphyxiate." ) );
+            add_msg_if_player( m_bad, to_translation( "Your asthma overcomes you.\nYou asphyxiate." ) );
             g->events().send<event_type::dies_from_asthma_attack>( getID() );
             hurtall( 500, nullptr );
         } else if( dur > 70_minutes ) {
             if( one_in( 120 ) ) {
-                add_msg_if_player( m_bad, _( "You wheeze and gasp for air." ) );
+                add_msg_if_player( m_bad, to_translation( "You wheeze and gasp for air." ) );
             }
         }
     } else if( id == effect_brainworms ) {
         if( one_in( 1536 ) ) {
-            add_msg_if_player( m_bad, _( "Your head aches faintly." ) );
+            add_msg_if_player( m_bad, to_translation( "Your head aches faintly." ) );
         }
         if( one_in( 6144 ) ) {
             mod_healthy_mod( -10, -100 );
             apply_damage( nullptr, bodypart_id( "head" ), rng( 0, 1 ) );
             if( !has_effect( effect_visuals ) ) {
-                add_msg_if_player( m_bad, _( "Your vision is getting fuzzy." ) );
+                add_msg_if_player( m_bad, to_translation( "Your vision is getting fuzzy." ) );
                 add_effect( effect_visuals, rng( 1_minutes, 60_minutes ) );
             }
         }
@@ -852,21 +860,21 @@ void Character::hardcoded_effects( effect &it )
             mod_healthy_mod( -10, -100 );
             apply_damage( nullptr, bodypart_id( "head" ), rng( 1, 2 ) );
             if( !is_blind() && !sleeping ) {
-                add_msg_if_player( m_bad, _( "Your vision goes black!" ) );
+                add_msg_if_player( m_bad, to_translation( "Your vision goes black!" ) );
                 add_effect( effect_blind, rng( 5_turns, 20_turns ) );
             }
         }
     } else if( id == effect_tapeworm ) {
         if( one_in( 3072 ) ) {
-            add_msg_if_player( m_bad, _( "Your bowels ache." ) );
+            add_msg_if_player( m_bad, to_translation( "Your bowels ache." ) );
         }
     } else if( id == effect_bloodworms ) {
         if( one_in( 3072 ) ) {
-            add_msg_if_player( m_bad, _( "Your veins itch." ) );
+            add_msg_if_player( m_bad, to_translation( "Your veins itch." ) );
         }
     } else if( id == effect_paincysts ) {
         if( one_in( 3072 ) ) {
-            add_msg_if_player( m_bad, _( "Your muscles feel like they're knotted and tired." ) );
+            add_msg_if_player( m_bad, to_translation( "Your muscles feel like they're knotted and tired." ) );
         }
     } else if( id == effect_datura ) {
         if( dur > 100_minutes && focus_pool >= 1 && one_in( 24 ) ) {
@@ -888,8 +896,8 @@ void Character::hardcoded_effects( effect &it )
             mod_pain( rng( -3, -24 ) );
             if( dur > 800_minutes && one_in( 16 ) ) {
                 add_msg_if_player( m_bad,
-                                   _( "You're experiencing loss of basic motor skills and blurred vision.  Your mind recoils in horror, unable to communicate with your spinal column." ) );
-                add_msg_if_player( m_bad, _( "You stagger and fall!" ) );
+                                   to_translation( "You're experiencing loss of basic motor skills and blurred vision.  Your mind recoils in horror, unable to communicate with your spinal column." ) );
+                add_msg_if_player( m_bad, to_translation( "You stagger and fall!" ) );
                 add_effect( effect_downed, rng( 1_turns, 4_turns ), bodypart_str_id::NULL_ID(), 0, true );
                 if( one_in( 8 ) || x_in_y( character_effects::vomit_mod( *this ), 10 ) ) {
                     vomit();
@@ -904,23 +912,24 @@ void Character::hardcoded_effects( effect &it )
             mod_pain( rng( -8, -40 ) );
         }
         if( dur > 1200_minutes && one_in( 1536 ) ) {
-            add_msg_if_player( m_bad, _( "There's some kind of big machine in the sky." ) );
+            add_msg_if_player( m_bad, to_translation( "There's some kind of big machine in the sky." ) );
             add_effect( effect_visuals, rng( 8_minutes, 40_minutes ) );
             if( one_in( 32 ) ) {
-                add_msg_if_player( m_bad, _( "It's some kind of electric snake, coming right at you!" ) );
+                add_msg_if_player( m_bad,
+                                   to_translation( "It's some kind of electric snake, coming right at you!" ) );
                 mod_pain( rng( 4, 40 ) );
                 vomit();
             }
         }
         if( dur > 1400_minutes && one_in( 768 ) ) {
             add_msg_if_player( m_bad,
-                               _( "Order us some golf shoes, otherwise we'll never get out of this place alive." ) );
+                               to_translation( "Order us some golf shoes, otherwise we'll never get out of this place alive." ) );
             add_effect( effect_visuals, rng( 40_minutes, 200_minutes ) );
             if( one_in( 8 ) ) {
                 add_msg_if_player( m_bad,
-                                   _( "The possibility of physical and mental collapse is now very real." ) );
+                                   to_translation( "The possibility of physical and mental collapse is now very real." ) );
                 if( one_in( 2 ) || x_in_y( character_effects::vomit_mod( *this ), 10 ) ) {
-                    add_msg_if_player( m_bad, _( "No one should be asked to handle this trip." ) );
+                    add_msg_if_player( m_bad, to_translation( "No one should be asked to handle this trip." ) );
                     vomit();
                     mod_pain( rng( 8, 40 ) );
                 }
@@ -930,10 +939,10 @@ void Character::hardcoded_effects( effect &it )
         if( dur > 1800_minutes && one_in( 300 * 512 ) ) {
             if( !has_trait( trait_NOPAIN ) ) {
                 add_msg_if_player( m_bad,
-                                   _( "Your heart spasms painfully and stops, dragging you back to reality as you die." ) );
+                                   to_translation( "Your heart spasms painfully and stops, dragging you back to reality as you die." ) );
             } else {
                 add_msg_if_player(
-                    _( "You dissolve into beautiful paroxysms of energy.  Life fades from your nebulae and you are no more." ) );
+                    to_translation( "You dissolve into beautiful paroxysms of energy.  Life fades from your nebulae and you are no more." ) );
             }
             g->events().send<event_type::dies_from_drug_overdose>( getID(), id );
             set_part_hp_cur( bodypart_id( "torso" ), 0 );
@@ -997,7 +1006,7 @@ void Character::hardcoded_effects( effect &it )
 
             if( x_in_y( recover_factor, 648000 ) ) {
                 //~ %s is bodypart name.
-                add_msg_if_player( m_good, _( "Your %s wound begins to feel better!" ),
+                add_msg_if_player( m_good, to_translation( "Your %s wound begins to feel better!" ),
                                    body_part_name( bp ) );
                 // Set ourselves up for removal
                 it.set_duration( 0_turns );
@@ -1050,7 +1059,7 @@ void Character::hardcoded_effects( effect &it )
 
             if( x_in_y( recover_factor, 5184000 ) ) {
                 //~ %s is bodypart name.
-                add_msg_if_player( m_good, _( "Your %s wound begins to feel better!" ),
+                add_msg_if_player( m_good, to_translation( "Your %s wound begins to feel better!" ),
                                    body_part_name( bp ) );
                 add_effect( effect_recover, 4 * dur );
                 // Set ourselves up for removal
@@ -1069,7 +1078,7 @@ void Character::hardcoded_effects( effect &it )
                     it.mod_duration( 1_turns );
                 }
             } else if( dur > 1_days ) {
-                add_msg_if_player( m_bad, _( "You succumb to the infection." ) );
+                add_msg_if_player( m_bad, to_translation( "You succumb to the infection." ) );
                 g->events().send<event_type::dies_of_infection>( getID() );
                 hurtall( 500, nullptr );
             } else {
@@ -1084,7 +1093,7 @@ void Character::hardcoded_effects( effect &it )
             it.set_duration( 0_turns );
         }
         if( dur == 1_turns && !sleeping ) {
-            add_msg_if_player( _( "You try to sleep, but can't…" ) );
+            add_msg_if_player( to_translation( "You try to sleep, but can't…" ) );
         }
     } else if( id == effect_sleep ) {
         set_moves( 0 );
@@ -1128,10 +1137,10 @@ void Character::hardcoded_effects( effect &it )
             }
             set_fatigue( 0 );
             if( get_sleep_deprivation() < sleep_deprivation_levels::harmless ) {
-                add_msg_if_player( m_good, _( "You feel well rested." ) );
+                add_msg_if_player( m_good, to_translation( "You feel well rested." ) );
             } else {
                 add_msg_if_player( m_warning,
-                                   _( "You feel physically rested, but you haven't been able to catch up on your missed sleep yet." ) );
+                                   to_translation( "You feel physically rested, but you haven't been able to catch up on your missed sleep yet." ) );
             }
             it.set_duration( 0_seconds );
         }
@@ -1178,7 +1187,7 @@ void Character::hardcoded_effects( effect &it )
                     // So you can too sleep through noon
                     if( ( tirednessVal * 1.25 ) < g->m.ambient_light_at( bub_pos() ) && ( get_fatigue() < 10 ||
                             one_in( get_fatigue() / 2 ) ) ) {
-                        add_msg_if_player( _( "It's too bright to sleep." ) );
+                        add_msg_if_player( to_translation( "It's too bright to sleep." ) );
                         // Set ourselves up for removal
                         it.set_duration( 0_turns );
                         woke_up = true;
@@ -1187,14 +1196,14 @@ void Character::hardcoded_effects( effect &it )
                 } else if( has_trait( trait_HIBERNATE ) ) {
                     if( ( tirednessVal * 5 ) < g->m.ambient_light_at( bub_pos() ) && ( get_fatigue() < 10 ||
                             one_in( get_fatigue() / 2 ) ) ) {
-                        add_msg_if_player( _( "It's too bright to sleep." ) );
+                        add_msg_if_player( to_translation( "It's too bright to sleep." ) );
                         // Set ourselves up for removal
                         it.set_duration( 0_turns );
                         woke_up = true;
                     }
                 } else if( tirednessVal < g->m.ambient_light_at( bub_pos() ) && ( get_fatigue() < 10 ||
                            one_in( get_fatigue() / 2 ) ) ) {
-                    add_msg_if_player( _( "It's too bright to sleep." ) );
+                    add_msg_if_player( to_translation( "It's too bright to sleep." ) );
                     // Set ourselves up for removal
                     it.set_duration( 0_turns );
                     woke_up = true;
@@ -1202,7 +1211,7 @@ void Character::hardcoded_effects( effect &it )
             } else if( has_enchantment_flag( ench_flag_SLEEP_SIGHT ) ) {
                 Creature *hostile_critter = g->is_hostile_very_close();
                 if( hostile_critter != nullptr ) {
-                    add_msg_if_player( _( "You see %s approaching!" ),
+                    add_msg_if_player( to_translation( "You see %s approaching!" ),
                                        hostile_critter->disp_name() );
                     it.set_duration( 0_turns );
                     woke_up = true;
@@ -1218,11 +1227,11 @@ void Character::hardcoded_effects( effect &it )
                 const auto temp_cur = units::to_legacy_bodypart_temp( pr.second.get_temp_cur() );
                 if( temp_cur < units::to_legacy_bodypart_temp( BODYTEMP_VERY_COLD ) - get_fatigue() / 2 ) {
                     if( one_in( 30000 ) ) {
-                        add_msg_if_player( _( "You toss and turn trying to keep warm." ) );
+                        add_msg_if_player( to_translation( "You toss and turn trying to keep warm." ) );
                     }
                     if( temp_cur < units::to_legacy_bodypart_temp( BODYTEMP_FREEZING ) - get_fatigue() / 2 ||
                         one_in( temp_cur * 6 + 30000 ) ) {
-                        add_msg_if_player( m_bad, _( "It's too cold to sleep." ) );
+                        add_msg_if_player( m_bad, to_translation( "It's too cold to sleep." ) );
                         // Set ourselves up for removal
                         it.set_duration( 0_turns );
                         woke_up = true;
@@ -1230,11 +1239,11 @@ void Character::hardcoded_effects( effect &it )
                     }
                 } else if( temp_cur > units::to_legacy_bodypart_temp( BODYTEMP_VERY_HOT ) + get_fatigue() / 2 ) {
                     if( one_in( 30000 ) ) {
-                        add_msg_if_player( _( "You toss and turn in the heat." ) );
+                        add_msg_if_player( to_translation( "You toss and turn in the heat." ) );
                     }
                     if( temp_cur > units::to_legacy_bodypart_temp( BODYTEMP_SCORCHING ) + get_fatigue() / 2 ||
                         one_in( 90000 - temp_cur ) ) {
-                        add_msg_if_player( m_bad, _( "It's too hot to sleep." ) );
+                        add_msg_if_player( m_bad, to_translation( "It's too hot to sleep." ) );
                         // Set ourselves up for removal
                         it.set_duration( 0_turns );
                         woke_up = true;
@@ -1278,16 +1287,17 @@ void Character::hardcoded_effects( effect &it )
             if( has_enchantment_flag( ench_flag_INTERNAL_ALARMCLOCK ) ) {
                 if( dur == 1_turns ) {
                     if( !asleep ) {
-                        add_msg_if_player( _( "Your internal chronometer went off and you haven't slept a wink." ) );
+                        add_msg_if_player(
+                            to_translation( "Your internal chronometer went off and you haven't slept a wink." ) );
                         activity->set_to_null();
                     } else {
                         // Secure the flag before wake_up() clears the effect
                         bool slept_through = has_effect( effect_slept_through_alarm );
                         wake_up();
                         if( slept_through ) {
-                            add_msg_if_player( _( "Your internal chronometer finally wakes you up." ) );
+                            add_msg_if_player( to_translation( "Your internal chronometer finally wakes you up." ) );
                         } else {
-                            add_msg_if_player( _( "Your internal chronometer wakes you up." ) );
+                            add_msg_if_player( to_translation( "Your internal chronometer wakes you up." ) );
                         }
                     }
                 }
@@ -1323,7 +1333,7 @@ void Character::hardcoded_effects( effect &it )
                     sounds::sound( se );
                     const std::string alarm = _( "Your alarm is going off." );
                     g->cancel_activity_or_ignore_query( distraction_type::alert, alarm );
-                    add_msg( _( "Your alarm went off." ) );
+                    add_msg( to_translation( "Your alarm went off." ) );
                 }
             }
         }

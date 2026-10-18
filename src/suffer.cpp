@@ -194,13 +194,13 @@ void Character::suffer_water_damage( const mutation_branch &mdata )
         const int dmg = mdata.weakness_to_water * wetness_percentage;
         if( dmg > 0 ) {
             apply_damage( nullptr, elem.first, dmg );
-            add_msg_player_or_npc( m_bad, _( "Your %s is damaged by the water." ),
-                                   _( "<npcname>'s %s is damaged by the water." ),
+            add_msg_player_or_npc( m_bad, to_translation( "Your %s is damaged by the water." ),
+                                   to_translation( "<npcname>'s %s is damaged by the water." ),
                                    body_part_name( elem.first ) );
         } else if( dmg < 0 && elem.second.is_at_max_hp() ) {
             heal( elem.first, std::abs( dmg ) );
-            add_msg_player_or_npc( m_good, _( "Your %s is healed by the water." ),
-                                   _( "<npcname>'s %s is healed by the water." ),
+            add_msg_player_or_npc( m_good, to_translation( "Your %s is healed by the water." ),
+                                   to_translation( "<npcname>'s %s is healed by the water." ),
                                    body_part_name( elem.first ) );
         }
     }
@@ -223,7 +223,7 @@ void Character::suffer_mutation_power( const mutation_branch &mdata, char_trait_
             mod_stored_nutr( mdata.cost );
             if( bmi() < character_weight_category::underweight ) {
                 add_msg_if_player( m_warning,
-                                   _( "You're too malnourished to keep your %s going." ),
+                                   to_translation( "You're too malnourished to keep your %s going." ),
                                    mdata.name() );
                 tdata.powered = false;
             }
@@ -233,7 +233,7 @@ void Character::suffer_mutation_power( const mutation_branch &mdata, char_trait_
             // Well into Dehydrated
             if( get_thirst() >= thirst_levels::dehydrated ) {
                 add_msg_if_player( m_warning,
-                                   _( "You're too dehydrated to keep your %s going." ),
+                                   to_translation( "You're too dehydrated to keep your %s going." ),
                                    mdata.name() );
                 tdata.powered = false;
             }
@@ -243,7 +243,7 @@ void Character::suffer_mutation_power( const mutation_branch &mdata, char_trait_
             // Exhausted
             if( get_fatigue() >= fatigue_levels::exhausted ) {
                 add_msg_if_player( m_warning,
-                                   _( "You're too exhausted to keep your %s going." ),
+                                   to_translation( "You're too exhausted to keep your %s going." ),
                                    mdata.name() );
                 tdata.powered = false;
             }
@@ -272,7 +272,7 @@ void Character::suffer_while_underwater()
             oxygen += 5;
             mod_power_level( -bio_gills->power_trigger );
         } else {
-            add_msg_if_player( m_bad, _( "You're drowning!" ) );
+            add_msg_if_player( m_bad, to_translation( "You're drowning!" ) );
             // NPCs are not currently programmed to avoid or get out of deep water,
             // so disable drowning damage for them.
             // https://github.com/cataclysmbn/Cataclysm-BN/issues/3266
@@ -344,12 +344,12 @@ auto suffer_while_grabbed( Character &you ) -> void
     }
 
     if( you.oxygen <= 5 ) {
-        you.add_msg_if_player( m_bad, _( "You're being crushed!" ) );
+        you.add_msg_if_player( m_bad, to_translation( "You're being crushed!" ) );
         you.apply_damage( nullptr, bodypart_id( "torso" ), rng( 1, 4 ) );
     } else if( you.oxygen <= 15 ) {
-        you.add_msg_if_player( m_bad, _( "You're being crushed!" ) );
+        you.add_msg_if_player( m_bad, to_translation( "You're being crushed!" ) );
     } else if( you.oxygen <= 25 ) {
-        you.add_msg_if_player( m_bad, _( "You're having difficulty breathing!" ) );
+        you.add_msg_if_player( m_bad, to_translation( "You're having difficulty breathing!" ) );
     }
 }
 
@@ -417,8 +417,8 @@ void Character::suffer_while_awake( const int current_stim )
         !has_effect( effect_took_antinarcoleptic ) ) {
         if( one_turn_in( 8_hours ) ) {
             add_msg_player_or_npc( m_bad,
-                                   _( "You're suddenly overcome with the urge to sleep and you pass out." ),
-                                   _( "<npcname>'s suddenly passes out." ) );
+                                   to_translation( "You're suddenly overcome with the urge to sleep and you pass out." ),
+                                   to_translation( "<npcname>'s suddenly passes out." ) );
             fall_asleep( 20_minutes );
         }
     }
@@ -490,37 +490,37 @@ void Character::suffer_from_chemimbalance()
 {
     ZoneScoped;
     if( one_turn_in( 6_hours ) && !has_trait( trait_NOPAIN ) ) {
-        add_msg_if_player( m_bad, _( "You suddenly feel sharp pain for no reason." ) );
+        add_msg_if_player( m_bad, to_translation( "You suddenly feel sharp pain for no reason." ) );
         mod_pain( 3 * rng( 1, 3 ) );
     }
     if( one_turn_in( 6_hours ) ) {
         int pkilladd = 5 * rng( -1, 2 );
         if( pkilladd > 0 ) {
-            add_msg_if_player( m_bad, _( "You suddenly feel numb." ) );
+            add_msg_if_player( m_bad, to_translation( "You suddenly feel numb." ) );
         } else if( ( pkilladd < 0 ) && ( !( has_trait( trait_NOPAIN ) ) ) ) {
-            add_msg_if_player( m_bad, _( "You suddenly ache." ) );
+            add_msg_if_player( m_bad, to_translation( "You suddenly ache." ) );
         }
         mod_painkiller( pkilladd );
     }
     if( one_turn_in( 6_hours ) && !has_effect( effect_sleep ) ) {
-        add_msg_if_player( m_bad, _( "You feel dizzy for a moment." ) );
+        add_msg_if_player( m_bad, to_translation( "You feel dizzy for a moment." ) );
         moves -= rng( 10, 30 );
     }
     if( one_turn_in( 6_hours ) ) {
         int hungadd = 5 * rng( -1, 3 );
         if( hungadd > 0 ) {
-            add_msg_if_player( m_bad, _( "You suddenly feel hungry." ) );
+            add_msg_if_player( m_bad, to_translation( "You suddenly feel hungry." ) );
         } else {
-            add_msg_if_player( m_good, _( "You suddenly feel a little full." ) );
+            add_msg_if_player( m_good, to_translation( "You suddenly feel a little full." ) );
         }
         mod_stored_kcal( -10 * hungadd );
     }
     if( one_turn_in( 6_hours ) ) {
-        add_msg_if_player( m_bad, _( "You suddenly feel thirsty." ) );
+        add_msg_if_player( m_bad, to_translation( "You suddenly feel thirsty." ) );
         mod_thirst( 5 * rng( 1, 3 ) );
     }
     if( one_turn_in( 6_hours ) ) {
-        add_msg_if_player( m_good, _( "You feel fatigued all of a sudden." ) );
+        add_msg_if_player( m_good, to_translation( "You feel fatigued all of a sudden." ) );
         mod_fatigue( 10 * rng( 2, 4 ) );
     }
     if( one_turn_in( 8_hours ) ) {
@@ -532,19 +532,19 @@ void Character::suffer_from_chemimbalance()
     }
     if( one_turn_in( 6_hours ) ) {
         if( one_in( 3 ) ) {
-            add_msg_if_player( m_bad, _( "You suddenly feel very cold." ) );
+            add_msg_if_player( m_bad, to_translation( "You suddenly feel very cold." ) );
             set_bodytemp( *this, BODYTEMP_VERY_COLD );
         } else {
-            add_msg_if_player( m_bad, _( "You suddenly feel cold." ) );
+            add_msg_if_player( m_bad, to_translation( "You suddenly feel cold." ) );
             set_bodytemp( *this, BODYTEMP_COLD );
         }
     }
     if( one_turn_in( 6_hours ) ) {
         if( one_in( 3 ) ) {
-            add_msg_if_player( m_bad, _( "You suddenly feel very hot." ) );
+            add_msg_if_player( m_bad, to_translation( "You suddenly feel very hot." ) );
             set_bodytemp( *this, BODYTEMP_VERY_HOT );
         } else {
-            add_msg_if_player( m_bad, _( "You suddenly feel hot." ) );
+            add_msg_if_player( m_bad, to_translation( "You suddenly feel hot." ) );
             set_bodytemp( *this, BODYTEMP_HOT );
         }
     }
@@ -586,7 +586,7 @@ void Character::suffer_from_schizophrenia()
     }
     // Numbness
     if( one_turn_in( 4_hours ) ) {
-        add_msg_if_player( m_bad, _( "You suddenly feel so numb…" ) );
+        add_msg_if_player( m_bad, to_translation( "You suddenly feel so numb…" ) );
         mod_painkiller( 25 );
         return;
     }
@@ -602,8 +602,8 @@ void Character::suffer_from_schizophrenia()
     }
     // Shaking
     if( !has_effect( effect_valium ) && one_turn_in( 4_hours ) ) {
-        add_msg_player_or_npc( m_bad, _( "You start to shake uncontrollably." ),
-                               _( "<npcname> starts to shake uncontrollably." ) );
+        add_msg_player_or_npc( m_bad, to_translation( "You start to shake uncontrollably." ),
+                               to_translation( "<npcname> starts to shake uncontrollably." ) );
         add_effect( effect_shakes, rng( 2_minutes, 5_minutes ) );
         return;
     }
@@ -614,7 +614,7 @@ void Character::suffer_from_schizophrenia()
     }
     // Focus debuff
     if( one_turn_in( 8_hours ) ) {
-        add_msg_if_player( m_bad, _( "You find it hard to focus all of a sudden." ) );
+        add_msg_if_player( m_bad, to_translation( "You find it hard to focus all of a sudden." ) );
         focus_pool -= rng( 20, 40 );
         return;
     }
@@ -622,7 +622,7 @@ void Character::suffer_from_schizophrenia()
     if( one_turn_in( 4_hours ) ) {
         const translation snip = SNIPPET.random_from_category( "schizo_self_talk" ).value_or(
                                      translation() );
-        add_msg( _( "%1$s says: \"%2$s\"" ), name, snip );
+        add_msg( to_translation( "%1$s says: \"%2$s\"" ), name, snip );
         return;
     }
 
@@ -643,7 +643,7 @@ void Character::suffer_from_schizophrenia()
         if( !followers.empty() ) {
             who_gets_angry = random_entry_ref( followers )->name;
         }
-        add_msg_if_player( m_bad, _( "%1$s gets angry!" ), who_gets_angry );
+        add_msg_if_player( m_bad, to_translation( "%1$s gets angry!" ), who_gets_angry );
         return;
     }
 
@@ -654,7 +654,7 @@ void Character::suffer_from_schizophrenia()
                 mon_zombie, mon_zombie_fat, mon_zombie_fireman, mon_zombie_cop, mon_zombie_soldier
             }
         };
-        add_msg_if_player( _( "%s dies!" ), random_entry_ref( monsters )->nname() );
+        add_msg_if_player( to_translation( "%s dies!" ), random_entry_ref( monsters )->nname() );
         return;
     }
 
@@ -673,14 +673,15 @@ void Character::suffer_from_schizophrenia()
                 translation() ).translated() );
         parse_tags( i_talk, *this, *this );
 
-        add_msg_if_player( _( "%1$s says: \"%2$s\"" ), i_name, i_talk );
+        add_msg_if_player( to_translation( "%1$s says: \"%2$s\"" ), i_name, i_talk );
         return;
     }
 
     // Skill raise
     if( one_turn_in( 12_hours ) ) {
         skill_id raised_skill = Skill::random_skill();
-        add_msg_if_player( m_good, _( "You increase %1$s to level %2$d." ), raised_skill.obj().name(),
+        add_msg_if_player( m_good, to_translation( "You increase %1$s to level %2$d." ),
+                           raised_skill.obj().name(),
                            get_skill_level( raised_skill ) + 1 );
         return;
     }
@@ -724,7 +725,7 @@ void Character::suffer_from_schizophrenia()
             does_talk = true;
         }
         if( does_talk ) {
-            add_msg_if_player( _( "%1$s says: \"%2$s\"" ), i_name_w, i_talk_w );
+            add_msg_if_player( to_translation( "%1$s says: \"%2$s\"" ), i_name_w, i_talk_w );
             return;
         }
     }
@@ -766,28 +767,28 @@ void Character::suffer_from_asthma( const int current_stim )
         // check if character has an oxygenator first
         if( oxygenator ) {
             mod_power_level( -bio_gills->power_trigger / 8 );
-            add_msg_if_player( m_info, _( "You use your Oxygenator to clear it up, "
-                                          "then go back to sleep." ) );
+            add_msg_if_player( m_info, to_translation( "You use your Oxygenator to clear it up, "
+                               "then go back to sleep." ) );
         } else if( auto_use ) {
             if( use_charges_if_avail( itype_inhaler, 1 ) ) {
-                add_msg_if_player( m_info, _( "You use your inhaler and go back to sleep." ) );
+                add_msg_if_player( m_info, to_translation( "You use your inhaler and go back to sleep." ) );
                 add_effect( effect_took_antiasthmatic, rng( 1_hours, 2_hours ) );
             } else if( use_charges_if_avail( itype_oxygen_tank, 1 ) ||
                        use_charges_if_avail( itype_smoxygen_tank, 1 ) ) {
-                add_msg_if_player( m_info, _( "You take a deep breath from your oxygen tank "
-                                              "and go back to sleep." ) );
+                add_msg_if_player( m_info, to_translation( "You take a deep breath from your oxygen tank "
+                                   "and go back to sleep." ) );
             }
         } else if( nearby_use ) {
             // create new variable to resolve a reference issue
             int amount = 1;
             map &here = get_map();
             if( !here.use_charges( g->u.bub_pos(), 2, itype_inhaler, amount ).empty() ) {
-                add_msg_if_player( m_info, _( "You use your inhaler and go back to sleep." ) );
+                add_msg_if_player( m_info, to_translation( "You use your inhaler and go back to sleep." ) );
                 add_effect( effect_took_antiasthmatic, rng( 1_hours, 2_hours ) );
             } else if( !here.use_charges( g->u.bub_pos(), 2, itype_oxygen_tank, amount ).empty() ||
                        !here.use_charges( g->u.bub_pos(), 2, itype_smoxygen_tank, amount ).empty() ) {
-                add_msg_if_player( m_info, _( "You take a deep breath from your oxygen tank "
-                                              "and go back to sleep." ) );
+                add_msg_if_player( m_info, to_translation( "You take a deep breath from your oxygen tank "
+                                   "and go back to sleep." ) );
             }
         } else {
             add_effect( effect_asthma, rng( 5_minutes, 20_minutes ) );
@@ -806,7 +807,7 @@ void Character::suffer_from_asthma( const int current_stim )
             moves -= 40;
             charges = charges_of( itype_inhaler );
             if( charges == 0 ) {
-                add_msg_if_player( m_bad, _( "You use your last inhaler charge." ) );
+                add_msg_if_player( m_bad, to_translation( "You use your last inhaler charge." ) );
             } else {
                 add_msg_if_player( m_info, localised::counted{ .format = pl_translation( "You use your inhaler, "
                                    "only %d charge left.", "You use your inhaler, "
@@ -819,8 +820,8 @@ void Character::suffer_from_asthma( const int current_stim )
             moves -= 500; // synched with use action
             charges = charges_of( itype_oxygen_tank ) + charges_of( itype_smoxygen_tank );
             if( charges == 0 ) {
-                add_msg_if_player( m_bad, _( "You breathe in last bit of oxygen "
-                                             "from the tank." ) );
+                add_msg_if_player( m_bad, to_translation( "You breathe in last bit of oxygen "
+                                   "from the tank." ) );
             } else {
                 add_msg_if_player( m_info, localised::counted{ .format = pl_translation( "You take a deep breath from your oxygen "
                                    "tank, only %d charge left.", "You take a deep breath from your oxygen "
@@ -853,17 +854,17 @@ void Character::suffer_feral_kill_withdrawl()
                 // Feel ill, overcome with nausea if awake.  Additional chance of unexplained bleeding.
                 mod_healthy_mod( -50, -500 );
                 if( !in_sleep_state() ) {
-                    add_msg_if_player( m_bad, _( "You feel as if your insides are rotting away." ) );
+                    add_msg_if_player( m_bad, to_translation( "You feel as if your insides are rotting away." ) );
                     vomit();
                     if( one_in( 3 ) ) {
-                        add_msg_if_player( m_bad, _( "Blood starts leaking from your eyes and nose." ) );
+                        add_msg_if_player( m_bad, to_translation( "Blood starts leaking from your eyes and nose." ) );
                         add_effect( effect_bleed, 10_minutes, body_part_head );
                         add_effect( effect_blind, rng( 1_seconds, 30_seconds ) );
                     }
                 } else {
-                    add_msg_if_player( m_bad, _( "You feel a bit queasy in your sleep." ) );
+                    add_msg_if_player( m_bad, to_translation( "You feel a bit queasy in your sleep." ) );
                     if( one_in( 3 ) ) {
-                        add_msg_if_player( m_bad, _( "You wake up bloody for some reason." ) );
+                        add_msg_if_player( m_bad, to_translation( "You wake up bloody for some reason." ) );
                         wake_up();
                         add_effect( effect_bleed, 10_minutes, body_part_head );
                         add_effect( effect_blind, rng( 1_seconds, 30_seconds ) );
@@ -875,28 +876,31 @@ void Character::suffer_feral_kill_withdrawl()
                 mod_fatigue( rng( 5, 10 ) );
                 set_stamina( get_stamina() * 1 / ( rng( 3, 8 ) ) );
                 if( !in_sleep_state() ) {
-                    add_msg_if_player( m_bad, _( "Your head aches as a wave of exhaustion passes through you." ) );
+                    add_msg_if_player( m_bad,
+                                       to_translation( "Your head aches as a wave of exhaustion passes through you." ) );
                     mod_pain( rng( 10, 25 ) );
                 } else {
-                    add_msg_if_player( m_bad, _( "You stir restlessly in your sleep." ) );
+                    add_msg_if_player( m_bad, to_translation( "You stir restlessly in your sleep." ) );
                 }
                 break;
             case 3:
                 // Adrenaline rush plus side effects from panic. Chance it will wake you up anyway.
                 if( !in_sleep_state() ) {
-                    add_msg_if_player( m_bad, _( "A pang of terror stirs your fight-or-flight response!" ) );
+                    add_msg_if_player( m_bad,
+                                       to_translation( "A pang of terror stirs your fight-or-flight response!" ) );
                     add_effect( effect_adrenaline, rng( 3_minutes, 5_minutes ) );
                     mod_stim( rng( 5, 10 ) );
                     add_morale( MORALE_FEELING_BAD, -5, -25, 10_minutes, 3_minutes, true );
                 } else {
                     if( !one_in( 4 ) ) {
-                        add_msg_if_player( m_bad, _( "You jolt awake in a panic attack!" ) );
+                        add_msg_if_player( m_bad, to_translation( "You jolt awake in a panic attack!" ) );
                         wake_up();
                         add_effect( effect_adrenaline, rng( 1_minutes, 2_minutes ) );
                         mod_stim( rng( 5, 10 ) );
                         add_morale( MORALE_FEELING_BAD, -5, -25, 10_minutes, 3_minutes, true );
                     } else {
-                        add_msg_if_player( m_bad, _( "You have a vivid nightmare that almost wakes you up." ) );
+                        add_msg_if_player( m_bad,
+                                           to_translation( "You have a vivid nightmare that almost wakes you up." ) );
                     }
                 }
                 break;
@@ -906,12 +910,12 @@ void Character::suffer_feral_kill_withdrawl()
                             false, true );
                 if( !in_sleep_state() ) {
                     add_msg_if_player( m_bad,
-                                       _( "You feel like something is judging you from afar, leaving your head spinning." ) );
+                                       to_translation( "You feel like something is judging you from afar, leaving your head spinning." ) );
                     add_effect( effect_shakes, 5_minutes );
                     add_effect( effect_stunned, rng( 1_turns, 10_turns ) );
                 } else {
                     add_msg_if_player( m_bad,
-                                       _( "You have a vivid nightmare about being deemed unworthy by a higher power." ) );
+                                       to_translation( "You have a vivid nightmare about being deemed unworthy by a higher power." ) );
                 }
                 break;
         }
@@ -1041,7 +1045,7 @@ void Character::suffer_from_sunburn()
     if( !has_enchantment_flag( ench_flag_ANTIGLARE ) &&
         !( wearing_something_on( bodypart_id( "eyes" ) ) &&
            ( worn_with_flag( flag_SUN_GLASSES ) || worn_with_flag( flag_BLIND ) ) ) ) {
-        add_msg_if_player( m_bad, _( "%s your eyes." ), sunlight_effect );
+        add_msg_if_player( m_bad, to_translation( "%s your eyes." ), sunlight_effect );
         // Pain (1/60) or loss of focus (59/60)
         if( one_turn_in( 1_minutes ) ) {
             mod_pain( 1 );
@@ -1100,9 +1104,9 @@ void Character::suffer_from_sunburn()
     // Get singular or plural body part name; append "and other body parts" if appropriate
     std::string bp_name = body_part_name( most_exposed_bp, count_limbs );
     if( count_affected_bp == count_limbs ) {
-        add_msg_if_player( m_bad, _( "%s your %s." ), sunlight_effect, bp_name );
+        add_msg_if_player( m_bad, to_translation( "%s your %s." ), sunlight_effect, bp_name );
     } else {
-        add_msg_if_player( m_bad, _( "%s your %s and other body parts." ), sunlight_effect,
+        add_msg_if_player( m_bad, to_translation( "%s your %s and other body parts." ), sunlight_effect,
                            bp_name );
     }
 
@@ -1156,7 +1160,7 @@ void Character::suffer_from_other_mutations()
     ZoneScoped;
     map &here = get_map();
     if( has_trait( trait_SHARKTEETH ) && one_turn_in( 24_hours ) ) {
-        add_msg_if_player( m_neutral, _( "You shed a tooth!" ) );
+        add_msg_if_player( m_neutral, to_translation( "You shed a tooth!" ) );
         here.spawn_item( bub_pos(), "bone", 1 );
     }
 
@@ -1222,17 +1226,17 @@ void Character::suffer_from_other_mutations()
     // and visuals about once every 30 min.
     if( has_trait( trait_PER_SLIME ) ) {
         if( one_turn_in( 1_hours ) && !has_effect( effect_deaf ) ) {
-            add_msg_if_player( m_bad, _( "Suddenly, you can't hear anything!" ) );
+            add_msg_if_player( m_bad, to_translation( "Suddenly, you can't hear anything!" ) );
             add_effect( effect_deaf, rng( 20_minutes, 60_minutes ) );
         }
         if( one_turn_in( 1_hours ) && !( has_effect( effect_blind ) ) ) {
-            add_msg_if_player( m_bad, _( "Suddenly, your eyes stop working!" ) );
+            add_msg_if_player( m_bad, to_translation( "Suddenly, your eyes stop working!" ) );
             add_effect( effect_blind, rng( 2_minutes, 6_minutes ) );
         }
         // Yes, you can be blind and hallucinate at the same time.
         // Your post-human biology is truly remarkable.
         if( one_turn_in( 30_minutes ) && !( has_effect( effect_visuals ) ) ) {
-            add_msg_if_player( m_bad, _( "Your visual centers must be acting up…" ) );
+            add_msg_if_player( m_bad, to_translation( "Your visual centers must be acting up…" ) );
             add_effect( effect_visuals, rng( 36_minutes, 72_minutes ) );
         }
     }
@@ -1325,8 +1329,8 @@ void Character::suffer_from_radiation()
     if( radiation_increasing && action_time_scale::once_every_this_tick( 3_minutes ) &&
         has_bionic( bio_geiger ) ) {
         add_msg_if_player( m_warning,
-                           _( "You feel an anomalous sensation coming from "
-                              "your radiation sensors." ) );
+                           to_translation( "You feel an anomalous sensation coming from "
+                                           "your radiation sensors." ) );
     }
 
     if( action_time_scale::once_every_this_tick( 15_minutes ) ) {
@@ -1381,8 +1385,8 @@ void Character::suffer_from_radiation()
         const auto current_fuel_stock = get_value_as_int( itype_plut_cell.str() ).value_or( 0 );
         if( current_fuel_stock <= 0 ) {
             add_msg_player_or_npc( m_info,
-                                   _( "Your %s runs out of fuel and turn off." ),
-                                   _( "<npcname>'s %s runs out of fuel and turn off." ),
+                                   to_translation( "Your %s runs out of fuel and turn off." ),
+                                   to_translation( "<npcname>'s %s runs out of fuel and turn off." ),
                                    bio_reactoroverride->name );
             deactivate_bionic( get_bionic_state( bio_reactoroverride ), true );
             return;
@@ -1403,7 +1407,7 @@ void Character::suffer_from_bad_bionics()
     if( has_bionic( bio_dis_shock ) && get_power_level() > bio_dis_shock->power_trigger &&
         one_turn_in( 2_hours ) &&
         !has_effect( effect_narcosis ) ) {
-        add_msg_if_player( m_bad, _( "You suffer a painful electrical discharge!" ) );
+        add_msg_if_player( m_bad, to_translation( "You suffer a painful electrical discharge!" ) );
         mod_pain( 1 );
         moves -= 150;
         mod_power_level( -bio_dis_shock->power_trigger );
@@ -1415,19 +1419,19 @@ void Character::suffer_from_bad_bionics()
                 weapon.charges = 1;
             }
 
-            add_msg_if_player( m_good, _( "The %s seems to be affected by the discharge." ),
+            add_msg_if_player( m_good, to_translation( "The %s seems to be affected by the discharge." ),
                                weapon.tname() );
         }
         sfx::play_variant_sound( "bionics", "elec_discharge", 100 );
     }
     if( has_bionic( bio_dis_acid ) && one_turn_in( 150_minutes ) ) {
-        add_msg_if_player( m_bad, _( "You suffer a burning acidic discharge!" ) );
+        add_msg_if_player( m_bad, to_translation( "You suffer a burning acidic discharge!" ) );
         hurtall( 1, nullptr );
         sfx::play_variant_sound( "bionics", "acid_discharge", 100 );
         sfx::do_player_death_hurt( g->u, false );
     }
     if( has_bionic( bio_drain ) && get_power_level() > 24_kJ && one_turn_in( 1_hours ) ) {
-        add_msg_if_player( m_bad, _( "Your batteries discharge slightly." ) );
+        add_msg_if_player( m_bad, to_translation( "Your batteries discharge slightly." ) );
         mod_power_level( -25_kJ );
         sfx::play_variant_sound( "bionics", "elec_crackle_low", 100 );
     }
@@ -1435,10 +1439,10 @@ void Character::suffer_from_bad_bionics()
         !has_effect( effect_narcosis ) ) {
         // TODO: NPCs with said bionic
         if( !is_deaf() ) {
-            add_msg( m_bad, _( "A bionic emits a crackle of noise!" ) );
+            add_msg( m_bad, to_translation( "A bionic emits a crackle of noise!" ) );
             sfx::play_variant_sound( "bionics", "elec_blast", 100 );
         } else {
-            add_msg_if_player( m_bad, _( "You feel your faulty bionic shuddering." ) );
+            add_msg_if_player( m_bad, to_translation( "You feel your faulty bionic shuddering." ) );
             sfx::play_variant_sound( "bionics", "elec_blast_muffled", 100 );
         }
         sound_event se;
@@ -1459,15 +1463,15 @@ void Character::suffer_from_bad_bionics()
     if( has_bionic( bio_trip ) && one_turn_in( 50_minutes ) &&
         !has_effect( effect_visuals ) &&
         !has_effect( effect_narcosis ) && !in_sleep_state() ) {
-        add_msg_if_player( m_bad, _( "Your vision pixelates!" ) );
+        add_msg_if_player( m_bad, to_translation( "Your vision pixelates!" ) );
         add_effect( effect_visuals, 10_minutes );
         sfx::play_variant_sound( "bionics", "pixelated", 100 );
     }
     if( has_bionic( bio_spasm ) && one_turn_in( 5_hours ) && !has_effect( effect_downed ) &&
         !has_effect( effect_narcosis ) ) {
         add_msg_player_or_npc( m_warning,
-                               _( "Your malfunctioning bionic causes you to spasm and fall to the floor!" ),
-                               _( "<npcname> spasms and falls to the floor!" ) );
+                               to_translation( "Your malfunctioning bionic causes you to spasm and fall to the floor!" ),
+                               to_translation( "<npcname> spasms and falls to the floor!" ) );
         mod_pain( 1 );
         add_effect( effect_stunned, 1_turns );
         add_effect( effect_downed, 10_turns, bodypart_str_id::NULL_ID(), 0 );
@@ -1475,7 +1479,8 @@ void Character::suffer_from_bad_bionics()
     }
     if( has_bionic( bio_shakes ) && get_power_level() > bio_shakes->power_trigger &&
         one_turn_in( 2_hours ) ) {
-        add_msg_if_player( m_bad, _( "Your bionics short-circuit, causing you to tremble and shiver." ) );
+        add_msg_if_player( m_bad,
+                           to_translation( "Your bionics short-circuit, causing you to tremble and shiver." ) );
         mod_power_level( -bio_shakes->power_trigger );
         add_effect( effect_shakes, 5_minutes );
         sfx::play_variant_sound( "bionics", "elec_crackle_med", 100 );
@@ -1488,12 +1493,12 @@ void Character::suffer_from_bad_bionics()
     }
     if( has_bionic( bio_itchy ) && one_turn_in( 50_minutes ) && !has_effect( effect_formication ) &&
         !has_effect( effect_narcosis ) ) {
-        add_msg_if_player( m_bad, _( "Your malfunctioning bionic itches!" ) );
+        add_msg_if_player( m_bad, to_translation( "Your malfunctioning bionic itches!" ) );
         add_effect( effect_formication, 10_minutes, random_body_part( true ) );
     }
     if( has_bionic( bio_glowy ) && !has_effect( effect_glowy_led ) && one_turn_in( 50_minutes ) &&
         get_power_level() > bio_glowy->power_trigger ) {
-        add_msg_if_player( m_bad, _( "Your malfunctioning bionic starts to glow!" ) );
+        add_msg_if_player( m_bad, to_translation( "Your malfunctioning bionic starts to glow!" ) );
         add_effect( effect_glowy_led, 5_minutes );
         mod_power_level( -bio_glowy->power_trigger );
     }
@@ -1528,22 +1533,22 @@ void Character::suffer_from_stimulants( const int current_stim )
     // Stim +250 kills
     if( current_stim > 210 ) {
         if( one_turn_in( 2_minutes ) && !has_effect( effect_downed ) ) {
-            add_msg_if_player( m_bad, _( "Your muscles spasm!" ) );
+            add_msg_if_player( m_bad, to_translation( "Your muscles spasm!" ) );
             if( !has_effect( effect_downed ) ) {
-                add_msg_if_player( m_bad, _( "You fall to the ground!" ) );
+                add_msg_if_player( m_bad, to_translation( "You fall to the ground!" ) );
                 add_effect( effect_downed, rng( 6_turns, 20_turns ) );
             }
         }
     }
     if( current_stim > 110 ) {
         if( !has_effect( effect_shakes ) && action_time_scale::once_every_this_tick( 10_minutes ) ) {
-            add_msg_if_player( _( "You shake uncontrollably." ) );
+            add_msg_if_player( to_translation( "You shake uncontrollably." ) );
             add_effect( effect_shakes, 15_minutes + 1_turns );
         }
     }
     if( current_stim > 75 ) {
         if( action_time_scale::once_every_this_tick( 5_minutes ) && !has_effect( effect_nausea ) ) {
-            add_msg_if_player( _( "You feel nauseous…" ) );
+            add_msg_if_player( to_translation( "You feel nauseous…" ) );
             add_effect( effect_nausea, 5_minutes );
         }
     }
@@ -1551,7 +1556,7 @@ void Character::suffer_from_stimulants( const int current_stim )
     //stim -200 or painkillers 240 kills
     if( current_stim < -160 || get_painkiller() > 200 ) {
         if( one_turn_in( 3_minutes ) && !in_sleep_state() ) {
-            add_msg_if_player( m_bad, _( "You black out!" ) );
+            add_msg_if_player( m_bad, to_translation( "You black out!" ) );
             const time_duration dur = rng( 30_minutes, 60_minutes );
             add_effect( effect_downed, dur );
             fall_asleep( dur );
@@ -1559,7 +1564,7 @@ void Character::suffer_from_stimulants( const int current_stim )
     }
     if( current_stim < -60 || get_painkiller() > 130 ) {
         if( action_time_scale::once_every_this_tick( 10_minutes ) ) {
-            add_msg_if_player( m_warning, _( "You feel tired…" ) );
+            add_msg_if_player( m_warning, to_translation( "You feel tired…" ) );
             mod_fatigue( rng( 1, 2 ) );
         }
     }
@@ -1577,20 +1582,20 @@ void Character::suffer_without_sleep( const int sleep_deprivation )
             switch( dice( 1, 4 ) ) {
                 default:
                 case 1:
-                    add_msg_player_or_npc( m_warning, _( "You tiredly rub your eyes." ),
-                                           _( "<npcname> tiredly rubs their eyes." ) );
+                    add_msg_player_or_npc( m_warning, to_translation( "You tiredly rub your eyes." ),
+                                           to_translation( "<npcname> tiredly rubs their eyes." ) );
                     break;
                 case 2:
-                    add_msg_player_or_npc( m_warning, _( "You let out a small yawn." ),
-                                           _( "<npcname> lets out a small yawn." ) );
+                    add_msg_player_or_npc( m_warning, to_translation( "You let out a small yawn." ),
+                                           to_translation( "<npcname> lets out a small yawn." ) );
                     break;
                 case 3:
-                    add_msg_player_or_npc( m_warning, _( "You stretch your back." ),
-                                           _( "<npcname> stretches their back." ) );
+                    add_msg_player_or_npc( m_warning, to_translation( "You stretch your back." ),
+                                           to_translation( "<npcname> stretches their back." ) );
                     break;
                 case 4:
-                    add_msg_player_or_npc( m_warning, _( "You feel mentally tired." ),
-                                           _( "<npcname> lets out a huge yawn." ) );
+                    add_msg_player_or_npc( m_warning, to_translation( "You feel mentally tired." ),
+                                           to_translation( "<npcname> lets out a huge yawn." ) );
                     break;
             }
         }
@@ -1598,55 +1603,57 @@ void Character::suffer_without_sleep( const int sleep_deprivation )
     // Minor discomfort
     if( sleep_deprivation >= sleep_deprivation_levels::minor ) {
         if( one_turn_in( 75_minutes ) ) {
-            add_msg_if_player( m_warning, _( "You feel lightheaded for a moment." ) );
+            add_msg_if_player( m_warning, to_translation( "You feel lightheaded for a moment." ) );
             moves -= 10;
         }
         if( one_turn_in( 100_minutes ) ) {
-            add_msg_if_player( m_warning, _( "Your muscles spasm uncomfortably." ) );
+            add_msg_if_player( m_warning, to_translation( "Your muscles spasm uncomfortably." ) );
             mod_pain( 2 );
         }
         if( !has_effect( effect_visuals ) && one_turn_in( 150_minutes ) ) {
-            add_msg_if_player( m_warning, _( "Your vision blurs a little." ) );
+            add_msg_if_player( m_warning, to_translation( "Your vision blurs a little." ) );
             add_effect( effect_visuals, rng( 1_minutes, 5_minutes ) );
         }
     }
     // Slight disability
     if( sleep_deprivation >= sleep_deprivation_levels::serious ) {
         if( one_turn_in( 75_minutes ) ) {
-            add_msg_if_player( m_bad, _( "Your mind lapses into unawareness briefly." ) );
+            add_msg_if_player( m_bad, to_translation( "Your mind lapses into unawareness briefly." ) );
             moves -= rng( 20, 80 );
         }
         if( one_turn_in( 125_minutes ) ) {
-            add_msg_if_player( m_bad, _( "Your muscles ache in stressfully unpredictable ways." ) );
+            add_msg_if_player( m_bad,
+                               to_translation( "Your muscles ache in stressfully unpredictable ways." ) );
             mod_pain( rng( 2, 10 ) );
         }
         if( one_turn_in( 5_hours ) ) {
-            add_msg_if_player( m_bad, _( "You have a distractingly painful headache." ) );
+            add_msg_if_player( m_bad, to_translation( "You have a distractingly painful headache." ) );
             mod_pain( rng( 10, 25 ) );
         }
     }
     // Major disability, high chance of passing out also relevant
     if( sleep_deprivation >= sleep_deprivation_levels::major ) {
         if( !has_effect( effect_nausea ) && one_turn_in( 500_minutes ) ) {
-            add_msg_if_player( m_bad, _( "You feel heartburn and an acid taste in your mouth." ) );
+            add_msg_if_player( m_bad, to_translation( "You feel heartburn and an acid taste in your mouth." ) );
             mod_pain( 5 );
             add_effect( effect_nausea, rng( 5_minutes, 30_minutes ) );
         }
         if( one_turn_in( 5_hours ) ) {
-            add_msg_if_player( m_bad, _( "Your mind is so tired that you feel you can't trust "
-                                         "your eyes anymore." ) );
+            add_msg_if_player( m_bad, to_translation( "Your mind is so tired that you feel you can't trust "
+                               "your eyes anymore." ) );
             add_effect( effect_hallu, rng( 5_minutes, 60_minutes ) );
         }
         if( !has_effect( effect_shakes ) && one_turn_in( 425_minutes ) ) {
-            add_msg_if_player( m_bad, _( "Your muscles spasm uncontrollably, and you have "
-                                         "trouble keeping your balance." ) );
+            add_msg_if_player( m_bad, to_translation( "Your muscles spasm uncontrollably, and you have "
+                               "trouble keeping your balance." ) );
             add_effect( effect_shakes, 15_minutes );
         } else if( has_effect( effect_shakes ) && one_turn_in( 75_seconds ) ) {
             moves -= 10;
-            add_msg_player_or_npc( m_warning, _( "Your shaking legs make you stumble." ),
-                                   _( "<npcname> stumbles." ) );
+            add_msg_player_or_npc( m_warning, to_translation( "Your shaking legs make you stumble." ),
+                                   to_translation( "<npcname> stumbles." ) );
             if( !has_effect( effect_downed ) && one_in( 10 ) ) {
-                add_msg_player_or_npc( m_bad, _( "You fall over!" ), _( "<npcname> falls over!" ) );
+                add_msg_player_or_npc( m_bad, to_translation( "You fall over!" ),
+                                       to_translation( "<npcname> falls over!" ) );
                 add_effect( effect_downed, rng( 3_turns, 10_turns ) );
             }
         }
@@ -1833,7 +1840,7 @@ bool Character::irradiate( float rads, bool bypass )
                 continue;
             }
 
-            add_msg_if_player( m_warning, _( "Your radiation badge changes from %1$s to %2$s!" ),
+            add_msg_if_player( m_warning, to_translation( "Your radiation badge changes from %1$s to %2$s!" ),
                                col_before, col_after );
         }
 
@@ -1889,7 +1896,7 @@ void Character::sound_hallu()
         i_sound = std::make_pair( std::get<1>( desc[r_int] ), std::get<2>( desc[r_int] ) );
     }
 
-    add_msg( m_warning, _( "From the %1$s you hear %2$s" ), i_dir, i_desc );
+    add_msg( m_warning, to_translation( "From the %1$s you hear %2$s" ), i_dir, i_desc );
     sfx::play_variant_sound( i_sound.first, i_sound.second, rng( 20, 80 ), false );
 }
 
@@ -1931,12 +1938,12 @@ void Character::drench( int saturation, const body_part_set &flags, bool ignore_
     if( torso.get_wetness() >= torso.get_drench_capacity() / 2.0 &&
         has_effect( effect_masked_scent ) &&
         get_value( "waterproof_scent" ).empty() ) {
-        add_msg_if_player( m_info, _( "The water wash away the scent." ) );
+        add_msg_if_player( m_info, to_translation( "The water wash away the scent." ) );
         restore_scent();
     }
 
     if( is_weak_to_water() ) {
-        add_msg_if_player( m_bad, _( "You feel the water burning your skin." ) );
+        add_msg_if_player( m_bad, to_translation( "You feel the water burning your skin." ) );
     }
 
     // Remove onfire effect

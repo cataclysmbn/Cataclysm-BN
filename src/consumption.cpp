@@ -968,7 +968,8 @@ bool Character::eat( item &food, bool force )
     if( has_effect( effect_bloated ) &&
         ( food_kcal > 0 || quench > 0 ) &&
         !food.has_flag( flag_NO_BLOAT ) ) {
-        add_msg_if_player( _( "You force yourself to vomit to make space for %s." ), food.tname() );
+        add_msg_if_player( to_translation( "You force yourself to vomit to make space for %s." ),
+                           food.tname() );
         vomit();
     }
 
@@ -999,9 +1000,9 @@ bool Character::eat( item &food, bool force )
 
     if( spoiled ) {
         if( !has_enchantment_flag( ench_flag_EAT_ROTTEN_MORALE ) ) {
-            add_msg_if_player( m_bad, _( "Ick, this %s doesn't taste so good…" ), food.tname() );
+            add_msg_if_player( m_bad, to_translation( "Ick, this %s doesn't taste so good…" ), food.tname() );
         } else {
-            add_msg_if_player( m_good, _( "Mmm, this %s tastes delicious…" ), food.tname() );
+            add_msg_if_player( m_good, to_translation( "Mmm, this %s tastes delicious…" ), food.tname() );
         }
         if( !has_enchantment_flag( ench_flag_EAT_ROTTEN ) &&
             !has_enchantment_flag( ench_flag_FOOD_POISON_IMMUNE ) ) {
@@ -1060,13 +1061,16 @@ bool Character::eat( item &food, bool force )
     }
 
     if( amorphous ) {
-        add_msg_player_or_npc( _( "You assimilate your %s." ), _( "<npcname> assimilates a %s." ),
+        add_msg_player_or_npc( to_translation( "You assimilate your %s." ),
+                               to_translation( "<npcname> assimilates a %s." ),
                                food.tname() );
     } else if( drinkable ) {
-        add_msg_player_or_npc( _( "You drink your %s." ), _( "<npcname> drinks a %s." ),
+        add_msg_player_or_npc( to_translation( "You drink your %s." ),
+                               to_translation( "<npcname> drinks a %s." ),
                                food.tname() );
     } else if( chew ) {
-        add_msg_player_or_npc( _( "You eat your %s." ), _( "<npcname> eats a %s." ),
+        add_msg_player_or_npc( to_translation( "You eat your %s." ),
+                               to_translation( "<npcname> eats a %s." ),
                                food.tname() );
     }
 
@@ -1203,8 +1207,8 @@ void Character::modify_morale( item &food, int nutr, const consume_overrides &ov
                                         get_map().has_nearby_fire( bub_pos(), PICKUP_RANGE ) );
         if( heater && heater->consume( *this ) ) {
             add_msg_player_or_npc( m_good,
-                                   _( "You heat up your %1$s using the %2$s." ),
-                                   _( "<npcname> heats up their %1$s using the %2$s." ),
+                                   to_translation( "You heat up your %1$s using the %2$s." ),
+                                   to_translation( "<npcname> heats up their %1$s using the %2$s." ),
                                    food.tname(), heater->it.tname() );
             morale_time += 2_hours;
             food_morale( MORALE_FOOD_HOT );
@@ -1213,11 +1217,11 @@ void Character::modify_morale( item &food, int nutr, const consume_overrides &ov
         const auto temp = rot::temp::for_location( get_map(), food );
 
         if( temp == temperature_flag::TEMP_FREEZER ) {
-            add_msg_if_player( m_good, _( "This stuff is icy!" ), food.tname() );
+            add_msg_if_player( m_good, to_translation( "This stuff is icy!" ), food.tname() );
             morale_time += 2_hours;
             food_morale( MORALE_FOOD_VERY_COLD );
         } else if( temp == temperature_flag::TEMP_FRIDGE || temp == temperature_flag::TEMP_ROOT_CELLAR ) {
-            add_msg_if_player( m_good, _( "This stuff is cold!" ), food.tname() );
+            add_msg_if_player( m_good, to_translation( "This stuff is cold!" ), food.tname() );
             morale_time += 1_hours;
             food_morale( MORALE_FOOD_COLD );
         }
@@ -1261,12 +1265,12 @@ void Character::modify_morale( item &food, int nutr, const consume_overrides &ov
         const bool psycho = has_trait( trait_PSYCHOPATH );
         const bool sapiovore = has_trait( trait_SAPIOVORE );
         if( cannibal ) {
-            add_msg_if_player( m_good, _( "You indulge your shameful hunger." ) );
+            add_msg_if_player( m_good, to_translation( "You indulge your shameful hunger." ) );
             add_morale( MORALE_CANNIBAL, 20, 200 );
         } else if( psycho || sapiovore ) {
             // Nothing - doesn't care enough to print a message
         } else {
-            add_msg_if_player( m_bad, _( "You feel horrible for eating a person." ) );
+            add_msg_if_player( m_bad, to_translation( "You feel horrible for eating a person." ) );
             add_morale( MORALE_CANNIBAL, -60, -400, 60_minutes, 30_minutes );
         }
     }
@@ -1275,26 +1279,27 @@ void Character::modify_morale( item &food, int nutr, const consume_overrides &ov
     if( !food.has_flag( flag_NO_INGEST ) ) {
         const auto allergy = allergy_type( food );
         if( allergy != MORALE_NULL ) {
-            add_msg_if_player( m_bad, _( "Yuck!  How can anybody eat this stuff?" ) );
+            add_msg_if_player( m_bad, to_translation( "Yuck!  How can anybody eat this stuff?" ) );
             add_morale( allergy, -75, -400, 30_minutes, 24_minutes );
         }
         if( food.has_flag( flag_ALLERGEN_JUNK ) ) {
             if( has_trait( trait_PROJUNK ) ) {
-                add_msg_if_player( m_good, _( "Mmm, junk food." ) );
+                add_msg_if_player( m_good, to_translation( "Mmm, junk food." ) );
                 add_morale( MORALE_SWEETTOOTH, 5, 30, 30_minutes, 24_minutes );
             }
             if( has_trait( trait_PROJUNK2 ) ) {
                 if( !one_in( 100 ) ) {
-                    add_msg_if_player( m_good, _( "When life's got you down, there's always sugar." ) );
+                    add_msg_if_player( m_good, to_translation( "When life's got you down, there's always sugar." ) );
                 } else {
-                    add_msg_if_player( m_good, _( "They may do what they must… you've already won." ) );
+                    add_msg_if_player( m_good, to_translation( "They may do what they must… you've already won." ) );
                 }
                 add_morale( MORALE_SWEETTOOTH, 10, 50, 1_hours, 50_minutes );
             }
             // Carnivores CAN eat junk food, but they won't like it much.
             // Pizza-scraping happens in consume_effects.
             if( has_trait( trait_CARNIVORE ) && !food.has_flag( flag_CARNIVORE_OK ) ) {
-                add_msg_if_player( m_bad, _( "Your stomach begins gurgling and you feel bloated and ill." ) );
+                add_msg_if_player( m_bad,
+                                   to_translation( "Your stomach begins gurgling and you feel bloated and ill." ) );
                 add_morale( MORALE_NO_DIGEST, -25, -125, 30_minutes, 24_minutes );
             }
         }
@@ -1303,7 +1308,8 @@ void Character::modify_morale( item &food, int nutr, const consume_overrides &ov
                       food.has_flag( flag_USE_EAT_VERB );
     if( !food.rotten() && chew && has_enchantment_flag( ench_flag_ONLY_EAT_ROTTEN ) ) {
         // It's OK to *drink* things that haven't rotted.  Alternative is to ban water.  D:
-        add_msg_if_player( m_bad, _( "Your stomach begins gurgling and you feel bloated and ill." ) );
+        add_msg_if_player( m_bad,
+                           to_translation( "Your stomach begins gurgling and you feel bloated and ill." ) );
         add_morale( MORALE_NO_DIGEST, -75, -400, 30_minutes, 24_minutes );
     }
     if( food.has_flag( flag_URSINE_HONEY ) && ( !crossed_threshold() ||
@@ -1314,9 +1320,10 @@ void Character::modify_morale( item &food, int nutr, const consume_overrides &ov
                         std::min( mutation_category_level[mutation_category_URSINE] / 8, 20 ) :
                         mutation_category_level[mutation_category_URSINE] / 12;
         if( honey_fun < 10 ) {
-            add_msg_if_player( m_good, _( "You find the sweet taste of honey surprisingly palatable." ) );
+            add_msg_if_player( m_good,
+                               to_translation( "You find the sweet taste of honey surprisingly palatable." ) );
         } else {
-            add_msg_if_player( m_good, _( "You feast upon the sweet honey." ) );
+            add_msg_if_player( m_good, to_translation( "You feast upon the sweet honey." ) );
         }
         add_morale( MORALE_HONEY, honey_fun, 100 );
     }
@@ -1372,7 +1379,7 @@ bool Character::consume_effects( item &food, const consume_overrides &overrides 
     if( !is_npc() && has_trait( trait_SLIMESPAWNER ) &&
         max_stored_kcal() < get_stored_kcal() + 4000 && get_thirst() < thirst_levels::slaked ) {
         add_msg_if_player( m_mixed,
-                           _( "You feel as though you're going to split open!  In a good way?" ) );
+                           to_translation( "You feel as though you're going to split open!  In a good way?" ) );
         mod_pain( 5 );
         int numslime = 1;
         for( int i = 0; i < numslime; i++ ) {
@@ -1384,7 +1391,7 @@ bool Character::consume_effects( item &food, const consume_overrides &overrides 
         mod_thirst( 40 );
         //~ slimespawns have *small voices* which may be the Nice equivalent
         //~ of the Rat King's ALL CAPS invective.  Probably shared-brain telepathy.
-        add_msg_if_player( m_good, _( "hey, you look like me!  let's work together!" ) );
+        add_msg_if_player( m_good, to_translation( "hey, you look like me!  let's work together!" ) );
     }
 
     // Set up food for ingestion
@@ -1457,13 +1464,13 @@ bool Character::feed_furnace_with( item &it )
 
     if( energy == 0 ) {
         add_msg_player_or_npc( m_info,
-                               _( "You digest your %s, but fail to acquire energy from it." ),
-                               _( "<npcname> digests their %s for energy, but fails to acquire energy from it." ),
+                               to_translation( "You digest your %s, but fail to acquire energy from it." ),
+                               to_translation( "<npcname> digests their %s for energy, but fails to acquire energy from it." ),
                                it.tname() );
     } else if( is_max_power() ) {
         add_msg_player_or_npc(
-            _( "You digest your %s, but you're fully powered already, so the energy is wasted." ),
-            _( "<npcname> digests a %s for energy, they're fully powered already, so the energy is wasted." ),
+            to_translation( "You digest your %s, but you're fully powered already, so the energy is wasted." ),
+            to_translation( "<npcname> digests a %s for energy, they're fully powered already, so the energy is wasted." ),
             it.tname() );
     } else {
         const int profitable_energy = std::min( energy,
@@ -1654,13 +1661,13 @@ detached_ptr<item> Character::consume_item( detached_ptr<item> &&target )
         return detached_ptr<item>();
     }
     if( is_underwater() && !has_trait( trait_WATERSLEEP ) ) {
-        add_msg_if_player( m_info, _( "You can't do that while underwater." ) );
+        add_msg_if_player( m_info, to_translation( "You can't do that while underwater." ) );
         return std::move( target );
     }
 
     item &comest = get_consumable_from( *target );
     if( comest.is_null() || target->is_craft() ) {
-        add_msg_if_player( m_info, _( "You can't eat your %s." ), target->tname() );
+        add_msg_if_player( m_info, to_translation( "You can't eat your %s." ), target->tname() );
         if( is_npc() ) {
             debugmsg( "%s tried to eat a %s", name, target->tname() );
         }
@@ -1692,11 +1699,11 @@ detached_ptr<item> Character::consume_item( detached_ptr<item> &&target )
 void Character::consume( item &target )
 {
     if( target.is_null() ) {
-        add_msg_if_player( m_info, _( "You do not have that item." ) );
+        add_msg_if_player( m_info, to_translation( "You do not have that item." ) );
         return;
     }
     if( is_underwater() && !has_trait( trait_WATERSLEEP ) ) {
-        add_msg_if_player( m_info, _( "You can't do that while underwater." ) );
+        add_msg_if_player( m_info, to_translation( "You can't do that while underwater." ) );
         return;
     }
 
@@ -1704,7 +1711,7 @@ void Character::consume( item &target )
     const auto old_invlet = target.invlet;
 
     if( comest.is_null() || target.is_craft() ) {
-        add_msg_if_player( m_info, _( "You can't eat your %s." ), target.tname() );
+        add_msg_if_player( m_info, to_translation( "You can't eat your %s." ), target.tname() );
         if( is_npc() ) {
             debugmsg( "%s tried to eat a %s", name, target.tname() );
         }
@@ -1758,9 +1765,10 @@ void Character::consume( item &target )
 
     if( consumed ) {
         if( was_in_container && wielding ) {
-            add_msg_if_player( _( "You are now wielding an empty %s." ), primary_weapon().tname() );
+            add_msg_if_player( to_translation( "You are now wielding an empty %s." ),
+                               primary_weapon().tname() );
         } else if( was_in_container && worn ) {
-            add_msg_if_player( _( "You are now wearing an empty %s." ), target.tname() );
+            add_msg_if_player( to_translation( "You are now wearing an empty %s." ), target.tname() );
         } else if( was_in_container && !is_npc() ) {
             bool drop_it = false;
             if( get_option<std::string>( "DROP_EMPTY" ) == "no" ) {
@@ -1771,12 +1779,12 @@ void Character::consume( item &target )
                 drop_it = true;
             }
             if( drop_it ) {
-                add_msg( _( "You drop the empty %s." ), target.tname() );
+                add_msg( to_translation( "You drop the empty %s." ), target.tname() );
                 put_into_vehicle_or_drop( *this, item_drop_reason::deliberate, target.detach() );
             } else {
                 int quantity = inv.const_stack( inv.position_by_item( &target ) ).size();
                 char letter = target.invlet ? target.invlet : ' ';
-                add_msg( m_info, _( "%c - %d empty %s" ), letter, quantity, target.tname( quantity ) );
+                add_msg( m_info, to_translation( "%c - %d empty %s" ), letter, quantity, target.tname( quantity ) );
             }
         }
     } else if( inv_item ) {
@@ -1807,7 +1815,8 @@ bool Character::consume_med( item &target )
                 has_amount( tool_type, 1 ) &&
                 has_charges( tool_type, req_tool->tool->charges_per_use )
             ) ) {
-            add_msg_if_player( m_info, _( "You need a %s to consume that!" ), req_tool->nname( 1 ) );
+            add_msg_if_player( m_info, to_translation( "You need a %s to consume that!" ),
+                               req_tool->nname( 1 ) );
             return false;
         }
         use_charges( tool_type, req_tool->tool->charges_per_use );

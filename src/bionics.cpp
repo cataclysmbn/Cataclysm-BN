@@ -41,6 +41,7 @@
 #include "itype.h"
 #include "json.h"
 #include "line.h"
+#include "localised_names.h"
 #include "magic/magic.h"
 #include "make_static.h"
 #include "map/field_type.h"
@@ -650,7 +651,7 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
 {
     const bool mounted = is_mounted();
     if( bio.incapacitated_time > 0_turns ) {
-        add_msg_if_player( m_info, _( "Your %s is shorting out and can't be activated." ),
+        add_msg_if_player( m_info, to_translation( "Your %s is shorting out and can't be activated." ),
                            bio.info().name );
         return false;
     }
@@ -662,7 +663,7 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
             return false;
         }
         if( !enough_power_for( bio.id ) ) {
-            add_msg_if_player( m_info, _( "You don't have the power to activate your %s." ),
+            add_msg_if_player( m_info, to_translation( "You don't have the power to activate your %s." ),
                                bio.info().name );
             return false;
         }
@@ -696,7 +697,7 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
 
     auto add_msg_activate = [&]() {
         if( !eff_only && !bio.is_auto_start_keep_full() ) {
-            add_msg_if_player( m_info, _( "You activate your %s." ), bio.info().name );
+            add_msg_if_player( m_info, to_translation( "You activate your %s." ), bio.info().name );
         } else if( get_player_character().sees( bub_pos() ) ) {
             add_msg_if_npc( m_info, _( "%s activates their %s." ), disp_name(),
                             bio.info().name );
@@ -724,7 +725,8 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
                                            bio.info().power_activate );
     } else if( bio.info().has_flag( flag_BIONIC_WEAPON ) ) {
         if( primary_weapon().has_flag( flag_NO_UNWIELD ) ) {
-            add_msg_if_player( m_info, _( "Deactivate your %s first!" ), primary_weapon().tname() );
+            add_msg_if_player( m_info, to_translation( "Deactivate your %s first!" ),
+                               primary_weapon().tname() );
             refund_power();
             bio.powered = false;
             return false;
@@ -752,7 +754,7 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         for( bionic &bio : get_bionic_collection() ) {
             if( bio.id == bio_earplugs ) {
                 bio.powered = false;
-                add_msg_if_player( m_info, _( "Your %s automatically turn off." ),
+                add_msg_if_player( m_info, to_translation( "Your %s automatically turn off." ),
                                    bio.info().name );
             }
         }
@@ -761,7 +763,7 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         for( bionic &bio : get_bionic_collection() ) {
             if( bio.id == bio_ears ) {
                 bio.powered = false;
-                add_msg_if_player( m_info, _( "Your %s automatically turns off." ),
+                add_msg_if_player( m_info, to_translation( "Your %s automatically turns off." ),
                                    bio.info().name );
             }
         }
@@ -774,12 +776,13 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         int water_available = std::lround( humidity * 3.0 / 100.0 );
         if( water_available == 0 ) {
             bio.powered = false;
-            add_msg_if_player( m_bad, _( "There is not enough humidity in the air for your %s to function." ),
+            add_msg_if_player( m_bad,
+                               to_translation( "There is not enough humidity in the air for your %s to function." ),
                                bio.info().name );
             return false;
         } else if( water_available == 1 ) {
             add_msg_if_player( m_mixed,
-                               _( "Your %s issues a low humidity warning.  Efficiency will be reduced." ),
+                               to_translation( "Your %s issues a low humidity warning.  Efficiency will be reduced." ),
                                bio.info().name );
         }
     } else if( bio.id == bio_cqb ) {
@@ -787,7 +790,7 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         const avatar *you = as_avatar();
         if( you && !martial_arts_data->pick_style( *you ) ) {
             bio.powered = false;
-            add_msg_if_player( m_info, _( "You change your mind and turn it off." ) );
+            add_msg_if_player( m_info, to_translation( "You change your mind and turn it off." ) );
             return false;
         }
     } else if( bio.id == bio_resonator ) {
@@ -816,16 +819,17 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
     } else if( bio.id == bio_time_freeze ) {
         if( mounted ) {
             refund_power();
-            add_msg_if_player( m_info, _( "You cannot activate %s while mounted." ), bio.info().name );
+            add_msg_if_player( m_info, to_translation( "You cannot activate %s while mounted." ),
+                               bio.info().name );
             return false;
         }
         add_msg_activate();
 
         mod_moves( units::to_kilojoule( get_power_level() ) );
         set_power_level( 0_kJ );
-        add_msg_if_player( m_good, _( "Your speed suddenly increases!" ) );
+        add_msg_if_player( m_good, to_translation( "Your speed suddenly increases!" ) );
         if( one_in( 3 ) ) {
-            add_msg_if_player( m_bad, _( "Your muscles tear with the strain." ) );
+            add_msg_if_player( m_bad, to_translation( "Your muscles tear with the strain." ) );
             apply_damage( nullptr, bodypart_id( "arm_l" ), rng( 5, 10 ) );
             apply_damage( nullptr, bodypart_id( "arm_r" ), rng( 5, 10 ) );
             apply_damage( nullptr, bodypart_id( "leg_l" ), rng( 7, 12 ) );
@@ -838,7 +842,8 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
     } else if( bio.id == bio_teleport ) {
         if( mounted ) {
             refund_power();
-            add_msg_if_player( m_info, _( "You cannot activate %s while mounted." ), bio.info().name );
+            add_msg_if_player( m_info, to_translation( "You cannot activate %s while mounted." ),
+                               bio.info().name );
             return false;
         }
         add_msg_activate();
@@ -873,10 +878,11 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         mod_moves( -100 );
     } else if( bio.id == bio_torsionratchet ) {
         add_msg_activate();
-        add_msg_if_player( m_info, _( "Your torsion ratchet locks onto your joints." ) );
+        add_msg_if_player( m_info, to_translation( "Your torsion ratchet locks onto your joints." ) );
     } else if( bio.id == bio_jointservo ) {
         add_msg_activate();
-        add_msg_if_player( m_info, _( "You can now run faster, assisted by joint servomotors." ) );
+        add_msg_if_player( m_info,
+                           to_translation( "You can now run faster, assisted by joint servomotors." ) );
     } else if( bio.id == bio_lighter ) {
         const std::optional<tripoint_bub_ms> pnt = choose_adjacent( _( "Start a fire where?" ) );
         if( pnt && here.is_flammable( *pnt ) ) {
@@ -885,21 +891,22 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
             if( has_trait( trait_PYROMANIA ) ) {
                 add_morale( MORALE_PYROMANIA_STARTFIRE, 5, 10, 3_hours, 2_hours );
                 rem_morale( MORALE_PYROMANIA_NOFIRE );
-                add_msg_if_player( m_good, _( "You happily light a fire." ) );
+                add_msg_if_player( m_good, to_translation( "You happily light a fire." ) );
             }
             mod_moves( -100 );
         } else {
             refund_power();
-            add_msg_if_player( m_info, _( "There's nothing to light there." ) );
+            add_msg_if_player( m_info, to_translation( "There's nothing to light there." ) );
             return false;
         }
     } else if( bio.id == bio_geiger ) {
         add_msg_activate();
-        add_msg_if_player( m_info, _( "Your radiation level: %d" ), get_rad() );
+        add_msg_if_player( m_info, to_translation( "Your radiation level: %d" ), get_rad() );
     } else if( bio.id == bio_adrenaline ) {
         add_msg_activate();
         if( has_effect( effect_adrenaline ) ) {
-            add_msg_if_player( m_bad, _( "Safeguards kick in, and the bionic refuses to activate!" ) );
+            add_msg_if_player( m_bad,
+                               to_translation( "Safeguards kick in, and the bionic refuses to activate!" ) );
             refund_power();
             return false;
         } else {
@@ -917,7 +924,8 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         }
     } else if( bio.id == bio_hydraulics ) {
         add_msg_activate();
-        add_msg_if_player( m_good, _( "Your muscles hiss as hydraulic strength fills them!" ) );
+        add_msg_if_player( m_good,
+                           to_translation( "Your muscles hiss as hydraulic strength fills them!" ) );
         //~ Sound of hissing hydraulic muscle! (not quite as loud as a car horn)
         sound_event se;
         se.origin = bub_pos();
@@ -956,7 +964,7 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
             }
         }
         if( no_target ) {
-            add_msg_if_player( m_bad, _( "There is no suitable corpse on this tile." ) );
+            add_msg_if_player( m_bad, to_translation( "There is no suitable corpse on this tile." ) );
         }
         if( !extracted ) {
             refund_power();
@@ -1041,7 +1049,7 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         sw.dam_mult = 8;
         // affects_player is always false, so assuming the player is always the source of this
         explosion_handler::shockwave( bub_pos(), sw, "explosion", &get_player_character() );
-        add_msg_if_player( m_neutral, _( "You unleash a powerful shockwave!" ) );
+        add_msg_if_player( m_neutral, to_translation( "You unleash a powerful shockwave!" ) );
         mod_moves( -100 );
     } else if( bio.id == bio_infolink ) {
         const weather_manager &weather = get_weather();
@@ -1057,23 +1065,24 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         /* windpower defined in internal velocity units (=.01 mph) */
         double windpower = 100.0f * get_local_windpower( weather.windspeed + vehwindspeed,
                            cur_om_ter, abs_pos(), weather.winddirection, g->is_sheltered( bub_pos() ) );
-        add_msg_if_player( m_info, _( "Temperature: %s." ), print_temperature( player_local_temp ) );
-        add_msg_if_player( m_info, _( "Relative Humidity: %s." ),
+        add_msg_if_player( m_info, to_translation( "Temperature: %s." ),
+                           print_temperature( player_local_temp ) );
+        add_msg_if_player( m_info, to_translation( "Relative Humidity: %s." ),
                            print_humidity(
                                get_local_humidity( weatherPoint.humidity, weather.weather_id,
                                        g->is_sheltered( g->u.bub_pos() ) ) ) );
-        add_msg_if_player( m_info, _( "Pressure: %s." ),
+        add_msg_if_player( m_info, to_translation( "Pressure: %s." ),
                            print_pressure( static_cast<int>( weatherPoint.pressure ) ) );
-        add_msg_if_player( m_info, _( "Wind Speed: %.1f %s." ),
+        add_msg_if_player( m_info, to_translation( "Wind Speed: %.1f %s." ),
                            convert_velocity( static_cast<int>( windpower ), VU_WIND ),
                            velocity_units( VU_WIND ) );
-        add_msg_if_player( m_info, _( "Feels Like: %s." ),
+        add_msg_if_player( m_info, to_translation( "Feels Like: %s." ),
                            print_temperature(
                                get_local_windchill( units::to_fahrenheit( weatherPoint.temperature ),
                                        weatherPoint.humidity,
                                        windpower / 100 ) + units::to_fahrenheit( player_local_temp ) ) );
         std::string dirstring = get_dirstring( weather.winddirection );
-        add_msg_if_player( m_info, _( "Wind Direction: From the %s." ), dirstring );
+        add_msg_if_player( m_info, to_translation( "Wind Direction: From the %s." ), dirstring );
     } else if( bio.id == bio_remote ) {
         add_msg_activate();
         int choice = uilist( _( "Perform which function:" ), {
@@ -1102,7 +1111,7 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         bool success = false;
         if( !has_cable ) {
             add_msg_if_player( m_info,
-                               _( "You need a jumper cable connected to a power source to drain power from it." ) );
+                               to_translation( "You need a jumper cable connected to a power source to drain power from it." ) );
         } else {
             for( item *cable : cables ) {
                 auto data = cable_connection_data::make_data( cable );
@@ -1116,19 +1125,19 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
                             case state_solar_pack:
                             case state_UPS:
                                 add_msg_if_player( m_info,
-                                                   _( "You have a cable plugged to a portable power source, but you need to plug it in to the CBM." ) );
+                                                   to_translation( "You have a cable plugged to a portable power source, but you need to plug it in to the CBM." ) );
                                 break;
                             case state_vehicle:
                                 add_msg_if_player( m_info,
-                                                   _( "You have a cable plugged to a vehicle, but you need to plug it in to the CBM." ) );
+                                                   to_translation( "You have a cable plugged to a vehicle, but you need to plug it in to the CBM." ) );
                                 break;
                             case state_grid:
                                 add_msg_if_player( m_info,
-                                                   _( "You have a cable plugged to a grid, but you need to plug it in to the CBM." ) );
+                                                   to_translation( "You have a cable plugged to a grid, but you need to plug it in to the CBM." ) );
                                 break;
                             case state_self:
                                 add_msg_if_player( m_info,
-                                                   _( "Cable is plugged-in to the CBM but it has to be also connected to the power source." ) );
+                                                   to_translation( "Cable is plugged-in to the CBM but it has to be also connected to the power source." ) );
                                 break;
                             case state_none:
                                 free_cable = true;
@@ -1141,19 +1150,19 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
                         switch( data->con1.state ) {
                             case state_grid:
                                 add_msg_if_player( m_info,
-                                                   _( "You are plugged to the grid.  It will charge you if it has some juice in it." ) );
+                                                   to_translation( "You are plugged to the grid.  It will charge you if it has some juice in it." ) );
                                 break;
                             case state_solar_pack:
                                 add_msg_if_player( m_info,
-                                                   _( "You are plugged to a solar pack.  It will charge you if it's unfolded and in sunlight." ) );
+                                                   to_translation( "You are plugged to a solar pack.  It will charge you if it's unfolded and in sunlight." ) );
                                 break;
                             case state_UPS:
                                 add_msg_if_player( m_info,
-                                                   _( "You are plugged to a UPS.  It will charge you if it has some juice in it." ) );
+                                                   to_translation( "You are plugged to a UPS.  It will charge you if it has some juice in it." ) );
                                 break;
                             case state_vehicle:
                                 add_msg_if_player( m_info,
-                                                   _( "You are plugged to the vehicle.  It will charge you if it has some juice in it." ) );
+                                                   to_translation( "You are plugged to the vehicle.  It will charge you if it has some juice in it." ) );
                                 break;
                             case state_self:
                             case state_none:
@@ -1164,19 +1173,19 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
                         break;
                     case state_grid:
                         add_msg_if_player( m_info,
-                                           _( "You are plugged to the grid.  It will charge you if it has some juice in it." ) );
+                                           to_translation( "You are plugged to the grid.  It will charge you if it has some juice in it." ) );
                         break;
                     case state_solar_pack:
                         add_msg_if_player( m_info,
-                                           _( "You are plugged to a solar pack.  It will charge you if it's unfolded and in sunlight." ) );
+                                           to_translation( "You are plugged to a solar pack.  It will charge you if it's unfolded and in sunlight." ) );
                         break;
                     case state_UPS:
                         add_msg_if_player( m_info,
-                                           _( "You are plugged to a UPS.  It will charge you if it has some juice in it." ) );
+                                           to_translation( "You are plugged to a UPS.  It will charge you if it has some juice in it." ) );
                         break;
                     case state_vehicle:
                         add_msg_if_player( m_info,
-                                           _( "You are plugged to the vehicle.  It will charge you if it has some juice in it." ) );
+                                           to_translation( "You are plugged to the vehicle.  It will charge you if it has some juice in it." ) );
                         break;
                     default:
                         debugmsg( "Unexpected cable state %s", data->con2.state );
@@ -1189,7 +1198,7 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         if( !success ) {
             if( free_cable ) {
                 add_msg_if_player( m_info,
-                                   _( "You have at least one free cable in your inventory that you could use to plug yourself in." ) );
+                                   to_translation( "You have at least one free cable in your inventory that you could use to plug yourself in." ) );
             }
             refund_power();
             bio.powered = false;
@@ -1204,7 +1213,7 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
                 g->phasing_move( *pnt );
             } else {
                 refund_power();
-                add_msg_if_player( m_info, _( "There's nothing to phase through there." ) );
+                add_msg_if_player( m_info, to_translation( "There's nothing to phase through there." ) );
                 return false;
             }
         } else {
@@ -1243,7 +1252,7 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
 bool Character::deactivate_bionic( bionic &bio, bool eff_only )
 {
     if( bio.incapacitated_time > 0_turns ) {
-        add_msg_if_player( m_info, _( "Your %s is shorting out and can't be deactivated." ),
+        add_msg_if_player( m_info, to_translation( "Your %s is shorting out and can't be deactivated." ),
                            bio.info().name );
         return false;
     }
@@ -1261,19 +1270,19 @@ bool Character::deactivate_bionic( bionic &bio, bool eff_only )
         if( !bio.info().has_flag( flag_BIONIC_TOGGLED ) ) {
             // It's a fire-and-forget bionic, we can't turn it off but have to wait for
             //it to run out of charge
-            add_msg_if_player( m_info, _( "You can't deactivate your %s manually!" ),
+            add_msg_if_player( m_info, to_translation( "You can't deactivate your %s manually!" ),
                                bio.info().name );
             return false;
         }
         if( get_power_level() < bio.info().power_deactivate ) {
-            add_msg_if_player( m_info, _( "You don't have the power to deactivate your %s." ),
+            add_msg_if_player( m_info, to_translation( "You don't have the power to deactivate your %s." ),
                                bio.info().name );
             return false;
         }
 
         // All checks green, get the deactivation cost and print the message.
         mod_power_level( -bio.info().power_deactivate );
-        add_msg_if_player( m_neutral, _( "You deactivate your %s." ), bio.info().name );
+        add_msg_if_player( m_neutral, to_translation( "You deactivate your %s." ), bio.info().name );
     }
 
     // Deactivation is outwidth of the !eff_only block, as involuntary or voluntary it still needs to turn off.
@@ -1282,7 +1291,7 @@ bool Character::deactivate_bionic( bionic &bio, bool eff_only )
     // Deactivation effects go here
     if( bio.info().has_flag( flag_BIONIC_WEAPON ) ) {
         if( primary_weapon().typeId() == bio.info().fake_item ) {
-            add_msg_if_player( _( "You withdraw your %s." ), primary_weapon().tname() );
+            add_msg_if_player( to_translation( "You withdraw your %s." ), primary_weapon().tname() );
             if( g->u.sees( bub_pos() ) ) {
                 add_msg_if_npc( m_info, _( "<npcname> withdraws their %s." ), primary_weapon().tname() );
             }
@@ -1360,8 +1369,8 @@ bool Character::burn_fuel( bionic &bio, bool start )
             // TODO: check for available fuel in remote source
         } else if( !start ) {
             add_msg_player_or_npc( m_info,
-                                   _( "Your %s runs out of fuel and turn off." ),
-                                   _( "<npcname>'s %s runs out of fuel and turn off." ),
+                                   to_translation( "Your %s runs out of fuel and turn off." ),
+                                   to_translation( "<npcname>'s %s runs out of fuel and turn off." ),
                                    bio.info().name );
             deactivate_bionic( bio, true );
             return false;
@@ -1369,8 +1378,8 @@ bool Character::burn_fuel( bionic &bio, bool start )
     }
 
     if( start && fuel_available.empty() ) {
-        add_msg_player_or_npc( m_bad, _( "Your %s does not have enough fuel to start." ),
-                               _( "<npcname>'s %s does not have enough fuel to start." ),
+        add_msg_player_or_npc( m_bad, to_translation( "Your %s does not have enough fuel to start." ),
+                               to_translation( "<npcname>'s %s does not have enough fuel to start." ),
                                bio.info().name );
         deactivate_bionic( bio );
         return false;
@@ -1400,16 +1409,17 @@ bool Character::burn_fuel( bionic &bio, bool start )
                 > get_max_power_level() ) {
                 if( !bio.is_auto_start_keep_full() ) {
                     if( is_metabolism_powered ) {
-                        add_msg_player_or_npc( m_info, _( "Your %s turns off to not waste calories." ),
-                                               _( "<npcname>'s %s turns off to not waste calories." ),
+                        add_msg_player_or_npc( m_info, to_translation( "Your %s turns off to not waste calories." ),
+                                               to_translation( "<npcname>'s %s turns off to not waste calories." ),
                                                bio.info().name );
                     } else if( is_perpetual_fuel ) {
-                        add_msg_player_or_npc( m_info, _( "Your %s turns off after filling your power banks." ),
-                                               _( "<npcname>'s %s turns off after filling their power banks." ),
+                        add_msg_player_or_npc( m_info,
+                                               to_translation( "Your %s turns off after filling your power banks." ),
+                                               to_translation( "<npcname>'s %s turns off after filling their power banks." ),
                                                bio.info().name );
                     } else {
-                        add_msg_player_or_npc( m_info, _( "Your %s turns off to not waste fuel." ),
-                                               _( "<npcname>'s %s turns off to not waste fuel." ),
+                        add_msg_player_or_npc( m_info, to_translation( "Your %s turns off to not waste fuel." ),
+                                               to_translation( "<npcname>'s %s turns off to not waste fuel." ),
                                                bio.info().name );
                     }
                 }
@@ -1471,14 +1481,14 @@ bool Character::burn_fuel( bionic &bio, bool start )
 
                     if( is_metabolism_powered ) {
                         add_msg_player_or_npc( m_info,
-                                               _( "Stored calories are below the safe threshold, your %s shuts down to preserve your health." ),
-                                               _( "Stored calories are below the safe threshold, <npcname>'s %s shuts down to preserve their health." ),
+                                               to_translation( "Stored calories are below the safe threshold, your %s shuts down to preserve your health." ),
+                                               to_translation( "Stored calories are below the safe threshold, <npcname>'s %s shuts down to preserve their health." ),
                                                bio.info().name );
                     } else {
                         remove_value( fuel.str() );
                         add_msg_player_or_npc( m_info,
-                                               _( "Your %s runs out of fuel and turn off." ),
-                                               _( "<npcname>'s %s runs out of fuel and turn off." ),
+                                               to_translation( "Your %s runs out of fuel and turn off." ),
+                                               to_translation( "<npcname>'s %s runs out of fuel and turn off." ),
                                                bio.info().name );
                     }
                     deactivate_bionic( bio, true );
@@ -1569,7 +1579,7 @@ itype_id Character::find_remote_fuel( bool look_only )
                 if( !nonchar.point_valid() ) {
                     if( !look_only ) {
                         debugmsg( "Cable_data was not properly initialized or cable map points were not set" );
-                        add_msg_if_player( m_bad, _( "You notice the cable has come loose!" ) );
+                        add_msg_if_player( m_bad, to_translation( "You notice the cable has come loose!" ) );
                         cable->reset_cable( this );
                     }
                     continue;
@@ -1588,7 +1598,7 @@ itype_id Character::find_remote_fuel( bool look_only )
                 if( !nonchar.point_valid() ) {
                     if( !look_only ) {
                         debugmsg( "Cable_data was not properly initialized or cable map points were not set" );
-                        add_msg_if_player( m_bad, _( "You notice the cable has come loose!" ) );
+                        add_msg_if_player( m_bad, to_translation( "You notice the cable has come loose!" ) );
                         cable->reset_cable( this );
                     }
                     continue;
@@ -1789,8 +1799,9 @@ void Character::process_bionic( bionic &bio )
             g->u.activate_bionic( bio );
         } else if( get_power_level() <= start_threshold * get_max_power_level() &&
                    action_time_scale::once_every_this_tick( 1_hours ) ) {
-            add_msg_player_or_npc( m_bad, _( "Your %s does not have enough fuel to use Auto Start." ),
-                                   _( "<npcname>'s %s does not have enough fuel to use Auto Start." ),
+            add_msg_player_or_npc( m_bad,
+                                   to_translation( "Your %s does not have enough fuel to use Auto Start." ),
+                                   to_translation( "<npcname>'s %s does not have enough fuel to use Auto Start." ),
                                    bio.info().name );
         }
     }
@@ -1820,7 +1831,7 @@ void Character::process_bionic( bionic &bio )
                 bool recharged = attempt_recharge( *this, bio, cost, discharge_factor, discharge_rate );
                 if( !recharged ) {
                     // No power to recharge, so deactivate
-                    add_msg_if_player( m_neutral, _( "Your %s powers down." ), bio.info().name );
+                    add_msg_if_player( m_neutral, to_translation( "Your %s powers down." ), bio.info().name );
                     // This purposely bypasses the deactivation cost
                     deactivate_bionic( bio, true );
                     return;
@@ -1836,7 +1847,7 @@ void Character::process_bionic( bionic &bio )
     if( bio.id == bio_remote ) {
         if( g->remoteveh() == nullptr && get_value( "remote_controlling" ).empty() ) {
             bio.powered = false;
-            add_msg_if_player( m_warning, _( "Your %s has lost connection and is turning off." ),
+            add_msg_if_player( m_warning, to_translation( "Your %s has lost connection and is turning off." ),
                                bio.info().name );
         }
     } else if( bio.id == bio_hydraulics ) {
@@ -1863,7 +1874,8 @@ void Character::process_bionic( bionic &bio )
         };
         if( get_stored_kcal() < threshold_kcal ) {
             bio.powered = false;
-            add_msg_if_player( m_warning, _( "Your %s shut down to conserve calories." ), bio.info().name );
+            add_msg_if_player( m_warning, to_translation( "Your %s shut down to conserve calories." ),
+                               bio.info().name );
             deactivate_bionic( bio );
             return;
         }
@@ -1934,7 +1946,7 @@ void Character::process_bionic( bionic &bio )
     } else if( bio.id == bio_gills ) {
         if( has_effect( effect_asthma ) ) {
             add_msg_if_player( m_good,
-                               _( "You feel your throat open up and air filling your lungs!" ) );
+                               to_translation( "You feel your throat open up and air filling your lungs!" ) );
             remove_effect( effect_asthma );
         }
     } else if( bio.id == bio_evap ) {
@@ -1950,12 +1962,12 @@ void Character::process_bionic( bionic &bio )
             // At 16% relative humidity or less, the bionic will give up
             if( water_available == 0 ) {
                 add_msg_if_player( m_bad,
-                                   _( "There is not enough humidity in the air for your %s to function." ),
+                                   to_translation( "There is not enough humidity in the air for your %s to function." ),
                                    bio.info().name );
                 deactivate_bionic( bio );
             } else if( water_available == 1 ) {
                 add_msg_if_player( m_mixed,
-                                   _( "Your %s issues a low humidity warning.  Efficiency is reduced." ),
+                                   to_translation( "Your %s issues a low humidity warning.  Efficiency is reduced." ),
                                    bio.info().name );
             }
 
@@ -1964,7 +1976,7 @@ void Character::process_bionic( bionic &bio )
 
         if( get_thirst() <= thirst_levels::hydrated ) {
             add_msg_if_player( m_good,
-                               _( "You are properly hydrated.  Your %s chirps happily." ),
+                               to_translation( "You are properly hydrated.  Your %s chirps happily." ),
                                bio.info().name );
             deactivate_bionic( bio );
         }
@@ -1988,7 +2000,8 @@ void Character::process_bionic( bionic &bio )
                 bio.energy_stored += get_power_level();
             }
             if( bio.energy_stored == 150_kJ ) {
-                add_msg_if_player( m_good, _( "Your %s quietens to a satisfied thrum." ), bio.info().name );
+                add_msg_if_player( m_good, to_translation( "Your %s quietens to a satisfied thrum." ),
+                                   bio.info().name );
             }
         } else if( bio.energy_stored > 150_kJ ) {
             bio.energy_stored = 150_kJ;
@@ -2025,7 +2038,7 @@ void Character::process_bionic( bionic &bio )
                 mod_power_level( -enrg );
             } else {
                 add_msg_if_player( m_bad,
-                                   _( "Your %s doesn't have enough power for the %s" ),
+                                   to_translation( "Your %s doesn't have enough power for the %s" ),
                                    bio.info().name, corpse->display_name().c_str() );
                 if( get_power_level() < bio.info().power_trigger ) {
                     break;
@@ -2040,14 +2053,14 @@ void Character::process_bionic( bionic &bio )
                 auto bionics_string = enumerate_as_string( cbms.begin(), cbms.end(),
                 []( const auto entry ) { return entry->type_name(); }, enumeration_conjunction::none );
                 //~ %1 is corpse name, %2 is direction, %3 is bionic name
-                add_msg_if_player( m_good, _( "A %1$s located %2$s contains %3$s." ),
+                add_msg_if_player( m_good, to_translation( "A %1$s located %2$s contains %3$s." ),
                                    corpse->display_name().c_str(),
                                    direction_name( direction_from( bub_pos(), pt ) ).c_str(),
                                    bionics_string.c_str()
                                  );
             }
             if( get_power_level() < bio.info().power_trigger ) {
-                add_msg_if_player( m_bad, _( "Your %s doesn't have enough power and shuts down." ),
+                add_msg_if_player( m_bad, to_translation( "Your %s doesn't have enough power and shuts down." ),
                                    bio.info().name );
                 deactivate_bionic( bio, true );
                 break;
@@ -2058,7 +2071,8 @@ void Character::process_bionic( bionic &bio )
             const units::energy trigger_cost = bio.info().power_trigger;
 
             if( get_rad() > 0 && bio.energy_stored >= trigger_cost ) {
-                add_msg_if_player( m_good, _( "Your %s completed a scrubbing cycle." ), bio.info().name );
+                add_msg_if_player( m_good, to_translation( "Your %s completed a scrubbing cycle." ),
+                                   bio.info().name );
 
                 mod_rad( std::max( -10, -get_rad() ) );
                 mod_power_level( -trigger_cost );
@@ -2082,11 +2096,11 @@ void Character::bionics_uninstall_failure( int difficulty, int success, float ad
     const int fail_type = std::min( 5, failure_level );
 
     if( fail_type <= 1 ) {
-        add_msg( m_neutral, _( "The removal fails without incident." ) );
+        add_msg( m_neutral, to_translation( "The removal fails without incident." ) );
         return;
     }
 
-    add_msg( m_neutral, _( "The removal is a failure." ) );
+    add_msg( m_neutral, to_translation( "The removal is a failure." ) );
     std::set<body_part> bp_hurt;
     switch( fail_type ) {
         case 2:
@@ -2122,24 +2136,26 @@ void Character::bionics_uninstall_failure( monster &installer, Character &patien
 
     if( u_see || patient.is_player() ) {
         if( fail_type <= 1 ) {
-            add_msg( m_neutral, _( "The removal fails without incident." ) );
+            add_msg( m_neutral, to_translation( "The removal fails without incident." ) );
             return;
         }
         switch( rng( 1, 5 ) ) {
             case 1:
-                add_msg( m_mixed, _( "The %s flub the operation." ), installer.name() );
+                add_msg( m_mixed, to_translation( "The %s flub the operation." ), localised::name_of( installer ) );
                 break;
             case 2:
-                add_msg( m_mixed, _( "The %s messes up the operation." ), installer.name() );
+                add_msg( m_mixed, to_translation( "The %s messes up the operation." ),
+                         localised::name_of( installer ) );
                 break;
             case 3:
-                add_msg( m_mixed, _( "The operation fails." ) );
+                add_msg( m_mixed, to_translation( "The operation fails." ) );
                 break;
             case 4:
-                add_msg( m_mixed, _( "The operation is a failure." ) );
+                add_msg( m_mixed, to_translation( "The operation is a failure." ) );
                 break;
             case 5:
-                add_msg( m_mixed, _( "The %s screws up the operation." ), installer.name() );
+                add_msg( m_mixed, to_translation( "The %s screws up the operation." ),
+                         localised::name_of( installer ) );
                 break;
         }
     }
@@ -2388,9 +2404,10 @@ void Character::perform_uninstall( bionic_id bid, int difficulty, int success,
         g->events().send<event_type::removes_cbm>( getID(), bid );
 
         // until bionics can be flagged as non-removable
-        add_msg_player_or_npc( m_neutral, _( "Your parts are jiggled back into their familiar places." ),
-                               _( "<npcname>'s parts are jiggled back into their familiar places." ) );
-        add_msg( m_good, _( "Successfully removed %s." ), bid.obj().name );
+        add_msg_player_or_npc( m_neutral,
+                               to_translation( "Your parts are jiggled back into their familiar places." ),
+                               to_translation( "<npcname>'s parts are jiggled back into their familiar places." ) );
+        add_msg( m_good, to_translation( "Successfully removed %s." ), bid.obj().name );
         remove_bionic( bid );
 
         if( const auto *lcb = bid.obj().lua_callbacks ) {
@@ -2425,7 +2442,8 @@ bool Character::uninstall_bionic( const bionic &target_cbm, monster &installer, 
 {
     if( installer.ammo[itype_anesthetic] <= 0 ) {
         if( g->u.sees( installer ) ) {
-            add_msg( _( "The %s's anesthesia kit looks empty." ), installer.name() );
+            add_msg( to_translation( "The %s's anesthesia kit looks empty." ),
+                     localised::name_of( installer ) );
         }
         return false;
     }
@@ -2443,11 +2461,11 @@ bool Character::uninstall_bionic( const bionic &target_cbm, monster &installer, 
 
     if( patient.is_player() ) {
         add_msg( m_bad,
-                 _( "You feel a tiny pricking sensation in your right arm, and lose all sensation before abruptly blacking out." ) );
+                 to_translation( "You feel a tiny pricking sensation in your right arm, and lose all sensation before abruptly blacking out." ) );
     } else if( g->u.sees( installer ) ) {
         add_msg( m_bad,
-                 _( "The %1$s gently inserts a syringe into %2$s's arm and starts injecting something while holding them down." ),
-                 installer.name(), patient.disp_name() );
+                 to_translation( "The %1$s gently inserts a syringe into %2$s's arm and starts injecting something while holding them down." ),
+                 localised::name_of( installer ), patient.disp_name() );
     }
 
     installer.ammo[itype_anesthetic] -= 1;
@@ -2456,21 +2474,21 @@ bool Character::uninstall_bionic( const bionic &target_cbm, monster &installer, 
     patient.add_effect( effect_sleep, duration );
 
     if( patient.is_player() ) {
-        add_msg( _( "You fall asleep and %1$s starts operating." ), installer.disp_name() );
+        add_msg( to_translation( "You fall asleep and %1$s starts operating." ), installer.disp_name() );
     } else if( g->u.sees( patient ) ) {
-        add_msg( _( "%1$s falls asleep and %2$s starts operating." ), patient.disp_name(),
+        add_msg( to_translation( "%1$s falls asleep and %2$s starts operating." ), patient.disp_name(),
                  installer.disp_name() );
     }
 
     if( success > 0 ) {
 
         if( patient.is_player() ) {
-            add_msg( m_neutral, _( "Your parts are jiggled back into their familiar places." ) );
-            add_msg( m_mixed, _( "Successfully removed %s." ), target_cbm.info().name );
+            add_msg( m_neutral, to_translation( "Your parts are jiggled back into their familiar places." ) );
+            add_msg( m_mixed, to_translation( "Successfully removed %s." ), target_cbm.info().name );
         } else if( patient.is_npc() && g->u.sees( patient ) ) {
-            add_msg( m_neutral, _( "%s's parts are jiggled back into their familiar places." ),
+            add_msg( m_neutral, to_translation( "%s's parts are jiggled back into their familiar places." ),
                      patient.disp_name() );
-            add_msg( m_mixed, _( "Successfully removed %s." ), target_cbm.info().name );
+            add_msg( m_mixed, to_translation( "Successfully removed %s." ), target_cbm.info().name );
         }
 
         // remove power bank provided by bionic
@@ -2683,11 +2701,11 @@ void Character::perform_install( bionic_id bid, bionic_id upbid, int difficulty,
     if( upbid != bionic_id( "" ) ) {
         remove_bionic( upbid );
         //~ %1$s - name of the bionic to be upgraded (inferior), %2$s - name of the upgraded bionic (superior).
-        add_msg( m_good, _( "Upgraded %1$s to %2$s." ),
+        add_msg( m_good, to_translation( "Upgraded %1$s to %2$s." ),
                  upbid.obj().name, bid.obj().name );
     } else {
         //~ %s - name of the bionic.
-        add_msg( m_good, _( "Installed %s." ), bid.obj().name );
+        add_msg( m_good, to_translation( "Installed %s." ), bid.obj().name );
     }
 
     add_bionic( bid );
@@ -2738,17 +2756,19 @@ void Character::do_damage_for_bionic_failure( int min_damage, int max_damage )
         int hp = get_hp( bp );
         if( damage >= hp && ( bp == bodypart_str_id( "head" ) || bp == bodypart_str_id( "torso" ) ) ) {
             add_effect( effect_infected, 1_hours, bp.id() );
-            add_msg_player_or_npc( m_bad, _( "Your %s is infected." ), _( "<npcname>'s %s is infected." ),
+            add_msg_player_or_npc( m_bad, to_translation( "Your %s is infected." ),
+                                   to_translation( "<npcname>'s %s is infected." ),
                                    body_part_name_accusative( bp ) );
             damage = hp * 0.8f;
         }
         apply_damage( this, bp, damage, true );
         if( damage > 15 )
-            add_msg_player_or_npc( m_bad, _( "Your %s is severely damaged." ),
-                                   _( "<npcname>'s %s is severely damaged." ),
+            add_msg_player_or_npc( m_bad, to_translation( "Your %s is severely damaged." ),
+                                   to_translation( "<npcname>'s %s is severely damaged." ),
                                    body_part_name_accusative( bp ) );
         else
-            add_msg_player_or_npc( m_bad, _( "Your %s is damaged." ), _( "<npcname>'s %s is damaged." ),
+            add_msg_player_or_npc( m_bad, to_translation( "Your %s is damaged." ),
+                                   to_translation( "<npcname>'s %s is damaged." ),
                                    body_part_name_accusative( bp ) );
 
     }
@@ -2771,7 +2791,7 @@ void Character::bionics_install_failure( const std::string &installer,
 
     if( installer != "NOT_MED" ) {
         //~"Complications" is USian medical-speak for "unintended damage from a medical procedure".
-        add_msg( m_neutral, _( "%s training helps to minimize the complications." ),
+        add_msg( m_neutral, to_translation( "%s training helps to minimize the complications." ),
                  installer );
         // In addition to the bonus, medical residents know enough OR protocol to avoid botching.
         // Take MD and be immune to faulty bionics.
@@ -2801,7 +2821,7 @@ void Character::bionics_install_failure( const std::string &installer,
             if( valid.empty() ) {
                 if( has_max_power() ) {
                     units::energy old_power = get_max_power_level();
-                    add_msg( m_bad, _( "%s lose power capacity!" ), disp_name() );
+                    add_msg( m_bad, to_translation( "%s lose power capacity!" ), disp_name() );
                     set_max_power_level( units::from_kilojoule( rng( 0,
                                          units::to_kilojoule( get_max_power_level() ) - 25 ) ) );
                     if( get_max_power_level() < units::from_kilojoule( 0 ) ) {
@@ -2823,7 +2843,7 @@ void Character::bionics_install_failure( const std::string &installer,
                 add_bionic( id );
                 g->events().send<event_type::installs_faulty_cbm>( getID(), id );
                 add_msg( m_bad,
-                         _( "Complication in installation caused a malfunction - %s.  Uninstall it to clear the malfunction." ),
+                         to_translation( "Complication in installation caused a malfunction - %s.  Uninstall it to clear the malfunction." ),
                          id.obj().name );
             }
         }
@@ -2925,7 +2945,7 @@ void Character::add_bionic( const bionic_id &b )
     const units::energy pow_up = b->capacity;
     mod_max_power_level( pow_up );
     if( pow_up != 0_J ) {
-        add_msg_if_player( m_good, _( "Increased storage capacity by %i." ),
+        add_msg_if_player( m_good, to_translation( "Increased storage capacity by %i." ),
                            units::to_kilojoule( pow_up ) );
     }
 
@@ -3204,31 +3224,31 @@ void Character::introduce_into_anesthesia( const time_duration &duration, Charac
 {
     if( installer.has_trait( trait_DEBUG_BIONICS ) ) {
         installer.add_msg_if_player( m_info,
-                                     _( "You tell the pain to bug off and proceed with the operation." ) );
+                                     to_translation( "You tell the pain to bug off and proceed with the operation." ) );
         return;
     }
     installer.add_msg_player_or_npc( m_info,
-                                     _( "You set up the operation step-by-step, configuring the Autodoc to manipulate a CBM." ),
-                                     _( "<npcname> sets up the operation, configuring the Autodoc to manipulate a CBM." ) );
+                                     to_translation( "You set up the operation step-by-step, configuring the Autodoc to manipulate a CBM." ),
+                                     to_translation( "<npcname> sets up the operation, configuring the Autodoc to manipulate a CBM." ) );
     if( needs_anesthesia ) {
         add_msg_player_or_npc( m_info,
-                               _( "You settle into position, sliding your right wrist into the couch's strap." ),
-                               _( "<npcname> settles into position, sliding their wrist into the couch's strap." ) );
+                               to_translation( "You settle into position, sliding your right wrist into the couch's strap." ),
+                               to_translation( "<npcname> settles into position, sliding their wrist into the couch's strap." ) );
 
         //post-threshold medical mutants do not fear operations.
         if( has_trait( trait_THRESH_MEDICAL ) ) {
             add_msg_if_player( m_mixed,
-                               _( "You feel excited as the operation starts." ) );
+                               to_translation( "You feel excited as the operation starts." ) );
         }
 
         add_msg_if_player( m_mixed,
-                           _( "You feel a tiny pricking sensation in your right arm, and lose all sensation before abruptly blacking out." ) );
+                           to_translation( "You feel a tiny pricking sensation in your right arm, and lose all sensation before abruptly blacking out." ) );
 
         //Pain junkies feel sorry about missed pain from operation.
         if( has_trait( trait_MASOCHIST ) || has_trait( trait_MASOCHIST_MED ) ||
             has_trait( trait_CENOBITE ) ) {
             add_msg_if_player( m_mixed,
-                               _( "As your consciousness slips away, you feel regret that you won't be able to enjoy the operation." ) );
+                               to_translation( "As your consciousness slips away, you feel regret that you won't be able to enjoy the operation." ) );
         }
 
         //post-threshold medical mutants with Deadened don't need anesthesia due to their inability to feel pain
@@ -3236,10 +3256,10 @@ void Character::introduce_into_anesthesia( const time_duration &duration, Charac
         //post-threshold medical mutants do not fear operations.
         if( has_trait( trait_THRESH_MEDICAL ) ) {
             add_msg_if_player( m_mixed,
-                               _( "You feel excited as the Autodoc slices painlessly into you.  You enjoy the sight of scalpels slicing you apart." ) );
+                               to_translation( "You feel excited as the Autodoc slices painlessly into you.  You enjoy the sight of scalpels slicing you apart." ) );
         } else {
             add_msg_if_player( m_mixed,
-                               _( "You stay very, very still, intently staring off into space, as the Autodoc slices painlessly into you." ) );
+                               to_translation( "You stay very, very still, intently staring off into space, as the Autodoc slices painlessly into you." ) );
         }
     }
 
