@@ -115,9 +115,18 @@ auto from_format( const translation &format,
     return result;
 }
 
+/// `format` with the values of `values`, its plural form picked by its count, which goes along.
 template<typename ...Args>
-auto from_format( const counted &/*format*/,
-                  const Args &... /*values*/ ) -> std::optional<localised_text> { return std::nullopt; }
+auto from_format( const counted &format, const Args &... values ) -> std::optional<localised_text>
+{
+    auto result = from_format( format.format, values... );
+    const auto forms = of( format.format, format.count );
+    if( result && forms ) {
+        result->plural = forms->plural;
+        result->plural_key = forms->plural_key;
+    }
+    return result;
+}
 
 /// The native rendering of a message made from `format`.
 template<typename ...Args>
