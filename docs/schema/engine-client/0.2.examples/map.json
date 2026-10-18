@@ -124,7 +124,7 @@
         "stage_text": "Done.",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "29",
+          "sequence": "33",
           "revision": "12"
         }
       }
@@ -183,7 +183,7 @@
         "stage_text": "Done.",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "30",
+          "sequence": "34",
           "revision": "13"
         }
       }
@@ -258,7 +258,7 @@
         "message": "That needs other details.",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "33",
+          "sequence": "37",
           "revision": "16"
         }
       }
@@ -271,7 +271,7 @@
         "message": "That screen has closed.",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "33",
+          "sequence": "37",
           "revision": "16"
         }
       }

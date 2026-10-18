@@ -3857,6 +3857,11 @@
         "stacks": {
           "type": "boolean",
           "description": "False: skip the sound while the same `id` and `variant` still plays, as the native player does."
+        },
+        "wait_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Play the sound only once this many milliseconds passed since the last sound with a `wait_ms` played, and start the wait again when it plays, as the native player paces footsteps and gunshots. Absent: no wait."
         }
       },
       "required": [

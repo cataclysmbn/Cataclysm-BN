@@ -34,6 +34,7 @@
 #include "profile.h"
 #include "rng.h"
 #include "safemode_ui.h"
+#include "sdlsound.h"
 #include "sound_attenuation.h"
 #include "string_formatter.h"
 #include "string_id.h"
@@ -81,9 +82,6 @@ int prev_hostiles = 0;
 int previous_speed = 0;
 int previous_gear = 0;
 bool audio_muted = false;
-auto start_sfx_timestamp = std::chrono::high_resolution_clock::now();
-auto end_sfx_timestamp = std::chrono::high_resolution_clock::now();
-auto sfx_time = end_sfx_timestamp - start_sfx_timestamp;
 activity_id act;
 std::pair<std::string, std::string> engine_external_id_and_variant;
 static const itype_id fuel_type_muscle("muscle");
@@ -443,9 +441,6 @@ void sfx::generate_gun_sound(
     const tripoint_bub_ms& source, const item& firing, const short& origin_vol) {
     if (test_mode) { return; }
 
-    end_sfx_timestamp = std::chrono::high_resolution_clock::now();
-    sfx_time = end_sfx_timestamp - start_sfx_timestamp;
-    if (std::chrono::duration_cast<std::chrono::milliseconds>(sfx_time).count() < 80) { return; }
     int heard_volume = get_heard_volume(source, origin_vol);
     heard_volume = std::max(heard_volume, 10);
 
@@ -473,8 +468,13 @@ void sfx::generate_gun_sound(
         }
     }
 
-    play_variant_sound(selected_sound, weapon_id.str(), heard_volume, angle, 0.8, 1.2, true);
-    start_sfx_timestamp = std::chrono::high_resolution_clock::now();
+    play_paced_sound(
+        {.id = selected_sound,
+         .variant = weapon_id.str(),
+         .volume = heard_volume,
+         .angle = angle,
+         .stacks = true,
+         .wait_ms = 80});
 }
 
 void sfx::generate_melee_sound(
@@ -720,154 +720,149 @@ void sfx::remove_hearing_loss() {
 void sfx::do_footstep() {
     if (test_mode) { return; }
 
-    end_sfx_timestamp = std::chrono::high_resolution_clock::now();
-    sfx_time = end_sfx_timestamp - start_sfx_timestamp;
-    if (std::chrono::duration_cast<std::chrono::milliseconds>(sfx_time).count() > 400) {
-        const avatar& player_character = get_avatar();
-        // Take footsteps at 60dB.
-        int heard_volume = sfx::get_heard_volume(player_character.bub_pos(), 60);
-        const auto terrain = get_map().ter(player_character.bub_pos()).id();
-        static const std::set<ter_str_id> grass = {
-            ter_str_id("t_grass"),
-            ter_str_id("t_shrub"),
-            ter_str_id("t_shrub_peanut"),
-            ter_str_id("t_shrub_peanut_harvested"),
-            ter_str_id("t_shrub_blueberry"),
-            ter_str_id("t_shrub_blueberry_harvested"),
-            ter_str_id("t_shrub_strawberry"),
-            ter_str_id("t_shrub_strawberry_harvested"),
-            ter_str_id("t_shrub_blackberry"),
-            ter_str_id("t_shrub_blackberry_harvested"),
-            ter_str_id("t_shrub_huckleberry"),
-            ter_str_id("t_shrub_huckleberry_harvested"),
-            ter_str_id("t_shrub_raspberry"),
-            ter_str_id("t_shrub_raspberry_harvested"),
-            ter_str_id("t_shrub_grape"),
-            ter_str_id("t_shrub_grape_harvested"),
-            ter_str_id("t_shrub_rose"),
-            ter_str_id("t_shrub_rose_harvested"),
-            ter_str_id("t_shrub_hydrangea"),
-            ter_str_id("t_shrub_hydrangea_harvested"),
-            ter_str_id("t_shrub_lilac"),
-            ter_str_id("t_shrub_lilac_harvested"),
-            ter_str_id("t_underbrush"),
-            ter_str_id("t_underbrush_harvested_spring"),
-            ter_str_id("t_underbrush_harvested_summer"),
-            ter_str_id("t_underbrush_harvested_autumn"),
-            ter_str_id("t_underbrush_harvested_winter"),
-            ter_str_id("t_moss"),
-            ter_str_id("t_moss_underground"),
-            ter_str_id("t_grass_white"),
-            ter_str_id("t_grass_long"),
-            ter_str_id("t_grass_tall"),
-            ter_str_id("t_grass_dead"),
-            ter_str_id("t_grass_golf"),
-            ter_str_id("t_golf_hole"),
-            ter_str_id("t_trunk"),
-            ter_str_id("t_stump"),
-        };
-        static const std::set<ter_str_id> dirt = {
-            ter_str_id("t_dirt"),
-            ter_str_id("t_dirtmound"),
-            ter_str_id("t_dirtmoundfloor"),
-            ter_str_id("t_sand"),
-            ter_str_id("t_clay"),
-            ter_str_id("t_dirtfloor"),
-            ter_str_id("t_palisade_gate_o"),
-            ter_str_id("t_sandbox"),
-            ter_str_id("t_claymound"),
-            ter_str_id("t_sandmound"),
-            ter_str_id("t_rootcellar"),
-            ter_str_id("t_railroad_rubble"),
-            ter_str_id("t_railroad_track"),
-            ter_str_id("t_railroad_track_h"),
-            ter_str_id("t_railroad_track_v"),
-            ter_str_id("t_railroad_track_d"),
-            ter_str_id("t_railroad_track_d1"),
-            ter_str_id("t_railroad_track_d2"),
-            ter_str_id("t_railroad_tie"),
-            ter_str_id("t_railroad_tie_d"),
-            ter_str_id("t_railroad_tie_d"),
-            ter_str_id("t_railroad_tie_h"),
-            ter_str_id("t_railroad_tie_v"),
-            ter_str_id("t_railroad_tie_d"),
-            ter_str_id("t_railroad_track_on_tie"),
-            ter_str_id("t_railroad_track_h_on_tie"),
-            ter_str_id("t_railroad_track_v_on_tie"),
-            ter_str_id("t_railroad_track_d_on_tie"),
-            ter_str_id("t_railroad_tie"),
-            ter_str_id("t_railroad_tie_h"),
-            ter_str_id("t_railroad_tie_v"),
-            ter_str_id("t_railroad_tie_d1"),
-            ter_str_id("t_railroad_tie_d2"),
-        };
-        static const std::set<ter_str_id> metal = {
-            ter_str_id("t_ov_smreb_cage"),   ter_str_id("t_metal_floor"),
-            ter_str_id("t_grate"),           ter_str_id("t_bridge"),
-            ter_str_id("t_elevator"),        ter_str_id("t_guardrail_bg_dp"),
-            ter_str_id("t_slide"),           ter_str_id("t_conveyor"),
-            ter_str_id("t_machinery_light"), ter_str_id("t_machinery_heavy"),
-            ter_str_id("t_machinery_old"),   ter_str_id("t_machinery_electronic"),
-        };
-        static const std::set<ter_str_id> water = {
-            ter_str_id("t_water_moving_sh"), ter_str_id("t_water_moving_dp"),
-            ter_str_id("t_water_sh"),        ter_str_id("t_water_dp"),
-            ter_str_id("t_swater_sh"),       ter_str_id("t_swater_dp"),
-            ter_str_id("t_water_pool"),      ter_str_id("t_sewage"),
-        };
-        static const std::set<ter_str_id> chain_fence = {
-            ter_str_id("t_chainfence"),
-        };
+    const avatar& player_character = get_avatar();
+    // Take footsteps at 60dB.
+    int heard_volume = sfx::get_heard_volume(player_character.bub_pos(), 60);
+    const auto terrain = get_map().ter(player_character.bub_pos()).id();
+    static const std::set<ter_str_id> grass = {
+        ter_str_id("t_grass"),
+        ter_str_id("t_shrub"),
+        ter_str_id("t_shrub_peanut"),
+        ter_str_id("t_shrub_peanut_harvested"),
+        ter_str_id("t_shrub_blueberry"),
+        ter_str_id("t_shrub_blueberry_harvested"),
+        ter_str_id("t_shrub_strawberry"),
+        ter_str_id("t_shrub_strawberry_harvested"),
+        ter_str_id("t_shrub_blackberry"),
+        ter_str_id("t_shrub_blackberry_harvested"),
+        ter_str_id("t_shrub_huckleberry"),
+        ter_str_id("t_shrub_huckleberry_harvested"),
+        ter_str_id("t_shrub_raspberry"),
+        ter_str_id("t_shrub_raspberry_harvested"),
+        ter_str_id("t_shrub_grape"),
+        ter_str_id("t_shrub_grape_harvested"),
+        ter_str_id("t_shrub_rose"),
+        ter_str_id("t_shrub_rose_harvested"),
+        ter_str_id("t_shrub_hydrangea"),
+        ter_str_id("t_shrub_hydrangea_harvested"),
+        ter_str_id("t_shrub_lilac"),
+        ter_str_id("t_shrub_lilac_harvested"),
+        ter_str_id("t_underbrush"),
+        ter_str_id("t_underbrush_harvested_spring"),
+        ter_str_id("t_underbrush_harvested_summer"),
+        ter_str_id("t_underbrush_harvested_autumn"),
+        ter_str_id("t_underbrush_harvested_winter"),
+        ter_str_id("t_moss"),
+        ter_str_id("t_moss_underground"),
+        ter_str_id("t_grass_white"),
+        ter_str_id("t_grass_long"),
+        ter_str_id("t_grass_tall"),
+        ter_str_id("t_grass_dead"),
+        ter_str_id("t_grass_golf"),
+        ter_str_id("t_golf_hole"),
+        ter_str_id("t_trunk"),
+        ter_str_id("t_stump"),
+    };
+    static const std::set<ter_str_id> dirt = {
+        ter_str_id("t_dirt"),
+        ter_str_id("t_dirtmound"),
+        ter_str_id("t_dirtmoundfloor"),
+        ter_str_id("t_sand"),
+        ter_str_id("t_clay"),
+        ter_str_id("t_dirtfloor"),
+        ter_str_id("t_palisade_gate_o"),
+        ter_str_id("t_sandbox"),
+        ter_str_id("t_claymound"),
+        ter_str_id("t_sandmound"),
+        ter_str_id("t_rootcellar"),
+        ter_str_id("t_railroad_rubble"),
+        ter_str_id("t_railroad_track"),
+        ter_str_id("t_railroad_track_h"),
+        ter_str_id("t_railroad_track_v"),
+        ter_str_id("t_railroad_track_d"),
+        ter_str_id("t_railroad_track_d1"),
+        ter_str_id("t_railroad_track_d2"),
+        ter_str_id("t_railroad_tie"),
+        ter_str_id("t_railroad_tie_d"),
+        ter_str_id("t_railroad_tie_d"),
+        ter_str_id("t_railroad_tie_h"),
+        ter_str_id("t_railroad_tie_v"),
+        ter_str_id("t_railroad_tie_d"),
+        ter_str_id("t_railroad_track_on_tie"),
+        ter_str_id("t_railroad_track_h_on_tie"),
+        ter_str_id("t_railroad_track_v_on_tie"),
+        ter_str_id("t_railroad_track_d_on_tie"),
+        ter_str_id("t_railroad_tie"),
+        ter_str_id("t_railroad_tie_h"),
+        ter_str_id("t_railroad_tie_v"),
+        ter_str_id("t_railroad_tie_d1"),
+        ter_str_id("t_railroad_tie_d2"),
+    };
+    static const std::set<ter_str_id> metal = {
+        ter_str_id("t_ov_smreb_cage"),   ter_str_id("t_metal_floor"),
+        ter_str_id("t_grate"),           ter_str_id("t_bridge"),
+        ter_str_id("t_elevator"),        ter_str_id("t_guardrail_bg_dp"),
+        ter_str_id("t_slide"),           ter_str_id("t_conveyor"),
+        ter_str_id("t_machinery_light"), ter_str_id("t_machinery_heavy"),
+        ter_str_id("t_machinery_old"),   ter_str_id("t_machinery_electronic"),
+    };
+    static const std::set<ter_str_id> water = {
+        ter_str_id("t_water_moving_sh"), ter_str_id("t_water_moving_dp"), ter_str_id("t_water_sh"),
+        ter_str_id("t_water_dp"),        ter_str_id("t_swater_sh"),       ter_str_id("t_swater_dp"),
+        ter_str_id("t_water_pool"),      ter_str_id("t_sewage"),
+    };
+    static const std::set<ter_str_id> chain_fence = {
+        ter_str_id("t_chainfence"),
+    };
 
-        const auto play_plmove_sound_variant = [&](const std::string& variant) {
-            play_variant_sound("plmove", variant, heard_volume, 0_degrees, 0.8, 1.2);
-            start_sfx_timestamp = std::chrono::high_resolution_clock::now();
-        };
+    const auto play_plmove_sound_variant = [&](const std::string& variant) {
+        play_paced_sound(
+            {.id = "plmove", .variant = variant, .volume = heard_volume, .wait_ms = 400});
+    };
 
-        auto veh_displayed_part = g->m.veh_at(g->u.bub_pos()).part_displayed();
+    auto veh_displayed_part = g->m.veh_at(g->u.bub_pos()).part_displayed();
 
-        if (!veh_displayed_part && (water.contains(terrain))) {
-            play_plmove_sound_variant("walk_water");
-            return;
-        }
-        if (!g->u.wearing_something_on(bodypart_id(bp_foot_l))) {
-            play_plmove_sound_variant("walk_barefoot");
-            return;
-        }
-        if (veh_displayed_part) {
-            const std::string& part_id = veh_displayed_part->part().info().get_id().str();
-            if (has_variant_sound("plmove", part_id)) {
-                play_plmove_sound_variant(part_id);
-            } else if (veh_displayed_part->has_feature(VPFLAG_AISLE)) {
-                play_plmove_sound_variant("walk_tarmac");
-            } else {
-                play_plmove_sound_variant("clear_obstacle");
-            }
-            return;
-        }
-        if (sfx::has_variant_sound("plmove", terrain.str())) {
-            play_plmove_sound_variant(terrain.str());
-            return;
-        }
-        if (grass.contains(terrain)) {
-            play_plmove_sound_variant("walk_grass");
-            return;
-        }
-        if (dirt.contains(terrain)) {
-            play_plmove_sound_variant("walk_dirt");
-            return;
-        }
-        if (metal.contains(terrain)) {
-            play_plmove_sound_variant("walk_metal");
-            return;
-        }
-        if (chain_fence.contains(terrain)) {
-            play_plmove_sound_variant("clear_obstacle");
-            return;
-        }
-
-        play_plmove_sound_variant("walk_tarmac");
+    if (!veh_displayed_part && (water.contains(terrain))) {
+        play_plmove_sound_variant("walk_water");
+        return;
     }
+    if (!g->u.wearing_something_on(bodypart_id(bp_foot_l))) {
+        play_plmove_sound_variant("walk_barefoot");
+        return;
+    }
+    if (veh_displayed_part) {
+        const std::string& part_id = veh_displayed_part->part().info().get_id().str();
+        if (has_variant_sound("plmove", part_id)) {
+            play_plmove_sound_variant(part_id);
+        } else if (veh_displayed_part->has_feature(VPFLAG_AISLE)) {
+            play_plmove_sound_variant("walk_tarmac");
+        } else {
+            play_plmove_sound_variant("clear_obstacle");
+        }
+        return;
+    }
+    if (sfx::has_variant_sound("plmove", terrain.str())) {
+        play_plmove_sound_variant(terrain.str());
+        return;
+    }
+    if (grass.contains(terrain)) {
+        play_plmove_sound_variant("walk_grass");
+        return;
+    }
+    if (dirt.contains(terrain)) {
+        play_plmove_sound_variant("walk_dirt");
+        return;
+    }
+    if (metal.contains(terrain)) {
+        play_plmove_sound_variant("walk_metal");
+        return;
+    }
+    if (chain_fence.contains(terrain)) {
+        play_plmove_sound_variant("clear_obstacle");
+        return;
+    }
+
+    play_plmove_sound_variant("walk_tarmac");
 }
 
 void sfx::do_obstacle(const std::string& obst) {
@@ -879,15 +874,13 @@ void sfx::do_obstacle(const std::string& obst) {
         "t_water_sh",  "t_water_dp",  "t_water_moving_sh", "t_water_moving_dp",
         "t_swater_sh", "t_swater_dp", "t_water_pool",      "t_sewage",
     };
-    if (sfx::has_variant_sound("plmove", obst)) {
-        play_variant_sound("plmove", obst, heard_volume, 0_degrees, 0.8, 1.2);
-    } else if (water.contains(obst)) {
-        play_variant_sound("plmove", "walk_water", heard_volume, 0_degrees, 0.8, 1.2);
-    } else {
-        play_variant_sound("plmove", "clear_obstacle", heard_volume, 0_degrees, 0.8, 1.2);
-    }
-    // prevent footsteps from triggering
-    start_sfx_timestamp = std::chrono::high_resolution_clock::now();
+    // An obstacle's sound delays the next footstep.
+    const auto variant =
+        sfx::has_variant_sound("plmove", obst) ? obst
+        : water.contains(obst)
+            ? std::string("walk_water")
+            : std::string("clear_obstacle");
+    play_paced_sound({.id = "plmove", .variant = variant, .volume = heard_volume});
 }
 
 void sfx::play_activity_sound(const std::string& id, const std::string& variant, int volume) {

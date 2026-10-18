@@ -1159,11 +1159,9 @@ Deno.test({
       const cues = session.told.filter((event) =>
         event.type.startsWith("sound.") && event.type !== "sound.heard"
       )
-      // Walking plays footsteps, and the ambience of where the avatar is starts on a channel.
-      assert(
-        cues.some((cue) => cue.type === "sound.played" && cue.data.id === "plmove"),
-        JSON.stringify(cues),
-      )
+      // Every step plays a footstep however fast it comes, and the ambience of where the avatar is starts on a channel.
+      const steps = cues.filter((cue) => cue.type === "sound.played" && cue.data.id === "plmove")
+      assertEquals(steps.map((cue) => cue.data.wait_ms), Array(6).fill(400), JSON.stringify(cues))
       const ambience = cues.filter((cue) =>
         cue.type === "sound.channel" && cue.data.id === "environment"
       )

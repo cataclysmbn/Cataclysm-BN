@@ -871,6 +871,7 @@ auto to_json( const event_value &value ) -> json
                 {"stacks", fact.sound->stacks}
             };
             if( fact.sound->angle ) { data["angle"] = *fact.sound->angle; }
+            if( fact.sound->wait_ms ) { data["wait_ms"] = *fact.sound->wait_ms; }
         } else if( value.type == "sound.channel" ) {
             data = {{"channel", fact.sound->channel}, {"fade_ms", fact.sound->fade_ms}};
             if( !fact.sound->id.empty() ) {

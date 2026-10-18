@@ -617,12 +617,23 @@ auto sfx::play_variant_sound( const std::string &id, const std::string &variant,
     }
 }
 
-auto sfx::play_variant_sound( const std::string &id, const std::string &variant, const int volume,
-                              const units::angle angle,
-                              double /*pitch_min*/, double /*pitch_max*/, const bool stacks ) -> void
+namespace
 {
-    engine_client::presentation::record_sound_effect( { .id = id, .variant = variant, .volume = volume, .angle = angle,
-            .stacks = stacks } );
+
+struct effect_call {
+    const std::string &id;
+    const std::string &variant;
+    int volume = 0;
+    units::angle angle;
+    bool stacks = false;
+};
+
+/// When the native player last played a paced sound.
+auto paced_at = std::chrono::steady_clock::time_point {};
+
+auto play_effect( const effect_call &call ) -> void
+{
+    const auto &[id, variant, volume, angle, stacks] = call;
     if( test_mode ) {
         return;
     }
@@ -661,6 +672,30 @@ auto sfx::play_variant_sound( const std::string &id, const std::string &variant,
         dbg( DL::Debug ) << "Failed to play sound effect { id: " << id
                          << ", variant: " << variant << " }: " << SDL_GetError();
     }
+}
+
+} // namespace
+
+auto sfx::play_variant_sound( const std::string &id, const std::string &variant, const int volume,
+                              const units::angle angle,
+                              double /*pitch_min*/, double /*pitch_max*/, const bool stacks ) -> void
+{
+    engine_client::presentation::record_sound_effect( { .id = id, .variant = variant, .volume = volume, .angle = angle,
+            .stacks = stacks } );
+    play_effect( { .id = id, .variant = variant, .volume = volume, .angle = angle, .stacks = stacks } );
+}
+
+auto sfx::play_paced_sound( const paced_sound_options &options ) -> void
+{
+    engine_client::presentation::record_sound_effect( { .id = options.id, .variant = options.variant,
+            .volume = options.volume, .angle = options.angle, .stacks = options.stacks, .wait_ms = options.wait_ms } );
+    const auto now = std::chrono::steady_clock::now();
+    if( test_mode || now - paced_at < std::chrono::milliseconds( options.wait_ms ) ) {
+        return;
+    }
+    paced_at = now;
+    play_effect( { .id = options.id, .variant = options.variant, .volume = options.volume, .angle = options.angle,
+                   .stacks = options.stacks } );
 }
 
 auto sfx::play_ambient_variant_sound( const std::string &id, const std::string &variant,

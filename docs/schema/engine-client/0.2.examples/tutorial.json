@@ -4017,7 +4017,8 @@
           "variant": "walk_barefoot",
           "volume": 100,
           "stacks": false,
-          "angle": 0
+          "angle": 0,
+          "wait_ms": 400
         }
       }
     },

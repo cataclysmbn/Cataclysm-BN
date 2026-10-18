@@ -99,6 +99,7 @@ TEST_CASE("a gunshot publishes the native gun sound", "[engine_client_sound_cue]
     CHECK(played[0].variant == "glock_19");
     CHECK(played[0].angle == 0);
     CHECK(played[0].stacks);
+    CHECK(played[0].wait_ms == 80);
 }
 
 TEST_CASE(
@@ -113,6 +114,7 @@ TEST_CASE(
     REQUIRE(played.size() == 2);
     CHECK(played[1].id == "plmove");
     CHECK(played[1].variant == "walk_barefoot");
+    CHECK(played[1].wait_ms == 400);
 }
 
 TEST_CASE(

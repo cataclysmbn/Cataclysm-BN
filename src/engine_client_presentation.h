@@ -48,6 +48,9 @@ struct sound_cue {
     std::optional<int> angle = std::nullopt;
     /// `sound.played`: false when the native player skips the sound while the same one still plays.
     bool stacks = true;
+    /// `sound.played`: the native player plays the sound only once this long passed since it last played one with
+    /// a wait, and playing it starts the wait again; none for a sound without one.
+    std::optional<int> wait_ms = std::nullopt;
     /// `sound.channel`: how long the sound fades in when it starts, or out when it stops.
     int fade_ms = 0;
     /// `sound.channel`: how often the sound repeats after the first time; -1 until the channel stops.
@@ -218,6 +221,7 @@ struct sound_effect_options {
     int volume = 0;
     std::optional<units::angle> angle = std::nullopt;
     bool stacks = true;
+    std::optional<int> wait_ms = std::nullopt;
 };
 /// `sound.played`: one sound effect.
 auto record_sound_effect( const sound_effect_options &options ) -> void;

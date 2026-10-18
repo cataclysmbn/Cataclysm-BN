@@ -381,7 +381,8 @@ auto record_sound_effect( const sound_effect_options &options ) -> void
     if( !sounds::sound_enabled || options.volume <= 0 ) { return; }
     push_sound( "sound.played", { .id = options.id, .variant = options.variant,
                                   .volume = mixer_volume( options.volume, "SOUND_EFFECT_VOLUME" ),
-                                  .angle = degrees_of( options.angle ), .stacks = options.stacks
+                                  .angle = degrees_of( options.angle ), .stacks = options.stacks,
+                                  .wait_ms = options.wait_ms
                                 } );
 }
 
