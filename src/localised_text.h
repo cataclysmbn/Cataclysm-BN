@@ -128,16 +128,25 @@ auto from_format( const counted &format, const Args &... values ) -> std::option
     return result;
 }
 
-/// The native rendering of a message made from `format`.
+/// The native rendering of a message made from `format`; a format with no values reads as written, as the
+/// plain string message does.
 template<typename ...Args>
 auto render( const translation &format, const Args &... values ) -> std::string
 {
-    return string_format( format.translated(), shown( values )... );
+    if constexpr( sizeof...( Args ) == 0 ) {
+        return format.translated();
+    } else {
+        return string_format( format.translated(), shown( values )... );
+    }
 }
 template<typename ...Args>
 auto render( const counted &format, const Args &... values ) -> std::string
 {
-    return string_format( format.format.translated( format.count ), shown( values )... );
+    if constexpr( sizeof...( Args ) == 0 ) {
+        return format.format.translated( format.count );
+    } else {
+        return string_format( format.format.translated( format.count ), shown( values )... );
+    }
 }
 
 } // namespace localised
