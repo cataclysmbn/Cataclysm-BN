@@ -458,9 +458,20 @@ std::vector<std::string> main_menu::load_file( const std::string &path,
     return result;
 }
 
+auto main_menu::ignore_holidays() -> bool & // *NOPAD*
+{
+    static auto ignore = false;
+    return ignore;
+}
+
+auto main_menu::holiday_at( const std::time_t time ) -> holiday
+{
+    return ::get_holiday_from_time( time, true );
+}
+
 holiday main_menu::get_holiday_from_time()
 {
-    return ::get_holiday_from_time( 0, true );
+    return holiday_at( 0 );
 }
 
 void main_menu::init_windows()

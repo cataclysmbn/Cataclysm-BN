@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <ctime>
 #include <string>
 #include <vector>
 
@@ -16,6 +17,10 @@ class main_menu
         friend class sound_on_move_uilist_callback;
     public:
         main_menu() : ctxt( "MAIN_MENU" ) { }
+        /// Whether the title screen leaves out the holiday of the system date, for runs that must not depend on it.
+        static auto ignore_holidays() -> bool &; // *NOPAD*
+        /// The holiday the title screen shows at `time`; 0 is now.
+        static auto holiday_at( std::time_t time ) -> holiday;
         // Shows the main menu and returns whether a game was started or not
         bool opening_screen();
 
