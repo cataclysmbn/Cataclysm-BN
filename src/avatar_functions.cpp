@@ -68,20 +68,21 @@ void try_to_sleep( avatar &you, const time_duration &dur )
               ter_at_pos == t_dirtmound || ter_at_pos == t_pit_shallow ||
               ter_at_pos == t_grass ) && !vp &&
             furn_at_pos == f_null ) {
-            you.add_msg_if_player( m_good, _( "You relax as your roots embrace the soil." ) );
+            you.add_msg_if_player( m_good, to_translation( "You relax as your roots embrace the soil." ) );
         } else if( vp ) {
-            you.add_msg_if_player( m_bad, _( "It's impossible to sleep in this wheeled pot!" ) );
+            you.add_msg_if_player( m_bad, to_translation( "It's impossible to sleep in this wheeled pot!" ) );
         } else if( furn_at_pos != f_null ) {
             you.add_msg_if_player( m_bad,
-                                   _( "The humans' furniture blocks your roots.  You can't get comfortable." ) );
+                                   to_translation( "The humans' furniture blocks your roots.  You can't get comfortable." ) );
         } else { // Floor problems
-            you.add_msg_if_player( m_bad, _( "Your roots scrabble ineffectively at the unyielding surface." ) );
+            you.add_msg_if_player( m_bad,
+                                   to_translation( "Your roots scrabble ineffectively at the unyielding surface." ) );
         }
     } else if( you.has_trait( trait_M_SKIN3 ) ) {
         fungaloid_cosplay = true;
         if( here.has_flag_ter_or_furn( "FUNGUS", you.bub_pos() ) ) {
             you.add_msg_if_player( m_good,
-                                   _( "Our fibers meld with the ground beneath us.  The gills on our neck begin to seed the air with spores as our awareness fades." ) );
+                                   to_translation( "Our fibers meld with the ground beneath us.  The gills on our neck begin to seed the air with spores as our awareness fades." ) );
         }
     }
     if( you.has_trait( trait_WEB_WALKER ) ) {
@@ -98,22 +99,22 @@ void try_to_sleep( avatar &you, const time_duration &dur )
             // At this point, it's kinda weird, but surprisingly comfy...
             if( web >= 3 ) {
                 you.add_msg_if_player( m_good,
-                                       _( "These thick webs support your weight, and are strangely comfortable�" ) );
+                                       to_translation( "These thick webs support your weight, and are strangely comfortable�" ) );
                 websleeping = true;
             } else if( web > 0 ) {
                 you.add_msg_if_player( m_info,
-                                       _( "You try to sleep, but the webs get in the way.  You brush them aside." ) );
+                                       to_translation( "You try to sleep, but the webs get in the way.  You brush them aside." ) );
                 here.remove_field( you.bub_pos(), fd_web );
             }
         } else {
             // Here, you're just not comfortable outside a nice thick web.
             if( web >= 3 ) {
-                you.add_msg_if_player( m_good, _( "You relax into your web." ) );
+                you.add_msg_if_player( m_good, to_translation( "You relax into your web." ) );
                 websleeping = true;
             } else {
                 you.add_msg_if_player( m_bad,
-                                       _( "You try to sleep, but you feel exposed and your spinnerets keep twitching." ) );
-                you.add_msg_if_player( m_info, _( "Maybe a nice thick web would help you sleep." ) );
+                                       to_translation( "You try to sleep, but you feel exposed and your spinnerets keep twitching." ) );
+                you.add_msg_if_player( m_info, to_translation( "Maybe a nice thick web would help you sleep." ) );
             }
         }
     }
@@ -124,10 +125,11 @@ void try_to_sleep( avatar &you, const time_duration &dur )
     if( you.has_trait( trait_WATERSLEEP ) ) {
         if( you.is_underwater() ) {
             you.add_msg_if_player( m_good,
-                                   _( "You lay beneath the waves' embrace, gazing up through the water's surface�" ) );
+                                   to_translation( "You lay beneath the waves' embrace, gazing up through the water's surface�" ) );
             watersleep = true;
         } else if( here.has_flag_ter( "SWIMMABLE", you.bub_pos() ) ) {
-            you.add_msg_if_player( m_good, _( "You settle into the water and begin to drowse�" ) );
+            you.add_msg_if_player( m_good,
+                                   to_translation( "You settle into the water and begin to drowse�" ) );
             watersleep = true;
         }
     }
@@ -138,7 +140,7 @@ void try_to_sleep( avatar &you, const time_duration &dur )
                          in_shell || websleeping || watersleep ||
                          vp.part_with_feature( "SEAT", true ) ||
                          vp.part_with_feature( "BED", true ) ) ) {
-        you.add_msg_if_player( m_good, _( "This is a comfortable place to sleep." ) );
+        you.add_msg_if_player( m_good, to_translation( "This is a comfortable place to sleep." ) );
     } else if( !plantsleep && !fungaloid_cosplay && !watersleep ) {
         if( !vp && ter_at_pos != t_floor ) {
             you.add_msg_if_player( ter_at_pos.obj().movecost <= 2 ?
@@ -160,14 +162,16 @@ void try_to_sleep( avatar &you, const time_duration &dur )
             }
         }
     }
-    you.add_msg_if_player( _( "You start trying to fall asleep." ) );
+    you.add_msg_if_player( to_translation( "You start trying to fall asleep." ) );
     if( you.has_active_bionic( bio_soporific ) ) {
         you.bio_soporific_powered_at_last_sleep_check = you.has_power();
         if( you.bio_soporific_powered_at_last_sleep_check ) {
             // The actual bonus is applied in sleep_spot( p ).
-            you.add_msg_if_player( m_good, _( "Your soporific inducer starts working its magic." ) );
+            you.add_msg_if_player( m_good,
+                                   to_translation( "Your soporific inducer starts working its magic." ) );
         } else {
-            you.add_msg_if_player( m_bad, _( "Your soporific inducer doesn't have enough power to operate." ) );
+            you.add_msg_if_player( m_bad,
+                                   to_translation( "Your soporific inducer doesn't have enough power to operate." ) );
         }
     }
     you.assign_activity( activity_id( "ACT_TRY_SLEEP" ), to_moves<int>( dur ) );
@@ -186,7 +190,7 @@ void mend_item( avatar &you, item &obj, bool interactive )
                                f.obj().name() ) );
         }
         if( opts.empty() ) {
-            add_msg( m_info, _( "The %s doesn't have any faults to toggle." ), obj.tname() );
+            add_msg( m_info, to_translation( "The %s doesn't have any faults to toggle." ), obj.tname() );
             return;
         }
         menu.query();
@@ -231,7 +235,7 @@ void mend_item( avatar &you, item &obj, bool interactive )
 
     if( mending_options.empty() ) {
         if( interactive ) {
-            add_msg( m_info, _( "The %s doesn't have any faults to mend." ), obj.tname() );
+            add_msg( m_info, to_translation( "The %s doesn't have any faults to mend." ), obj.tname() );
             if( obj.damage() > 0 ) {
                 const std::set<itype_id> &rep = obj.repaired_with();
                 if( !rep.empty() ) {
@@ -240,8 +244,8 @@ void mend_item( avatar &you, item &obj, bool interactive )
                         return item::nname( e );
                     }, enumeration_conjunction::or_ );
 
-                    add_msg( m_info, _( "It is damaged, and could be repaired with %s.  "
-                                        "%s to use one of those items." ),
+                    add_msg( m_info, to_translation( "It is damaged, and could be repaired with %s.  "
+                                                     "%s to use one of those items." ),
                              repair_options, press_x( ACTION_USE ) );
                 }
             }
@@ -311,7 +315,7 @@ void mend_item( avatar &you, item &obj, bool interactive )
         }
         menu.query();
         if( menu.ret < 0 ) {
-            add_msg( _( "Never mind." ) );
+            add_msg( to_translation( "Never mind." ) );
             return;
         }
         sel = menu.ret;
@@ -321,7 +325,8 @@ void mend_item( avatar &you, item &obj, bool interactive )
         const mending_option &opt = mending_options[sel];
         if( !opt.doable ) {
             if( interactive ) {
-                add_msg( m_info, _( "You are currently unable to mend the %s this way." ), obj.tname() );
+                add_msg( m_info, to_translation( "You are currently unable to mend the %s this way." ),
+                         obj.tname() );
             }
             return;
         }
@@ -449,7 +454,7 @@ void gunmod_add( avatar &you, item &gun, item &mod )
         requery = false;
         prompt.query();
         if( prompt.ret < 0 ) {
-            you.add_msg_if_player( _( "Never mind." ) );
+            you.add_msg_if_player( to_translation( "Never mind." ) );
             return; // player canceled installation
         }
         actions[ prompt.ret ]();
@@ -565,7 +570,7 @@ void toolmod_add( avatar &you, item &tool, item &mod )
     if( !query_yn( _( "Permanently install your %1$s in your %2$s?" ),
                    colorize( mod.tname(), mod.color_in_inventory() ),
                    colorize( tool.tname(), tool.color_in_inventory() ) ) ) {
-        you.add_msg_if_player( _( "Never mind." ) );
+        you.add_msg_if_player( to_translation( "Never mind." ) );
         return; // player canceled installation
     }
 
@@ -582,7 +587,7 @@ static bool is_pet_food( const item &itm )
 void use_item( avatar &you, item &used )
 {
     if( used.is_null() ) {
-        add_msg( m_info, _( "You do not have that item." ) );
+        add_msg( m_info, to_translation( "You do not have that item." ) );
         return;
     }
 
@@ -590,7 +595,7 @@ void use_item( avatar &you, item &used )
 
     if( used.is_tool() ) {
         if( !used.type->has_use() ) {
-            add_msg( _( "You can't do anything interesting with your %s." ), used.tname() );
+            add_msg( to_translation( "You can't do anything interesting with your %s." ), used.tname() );
             return;
         }
         if( used.has_flag( flag_TEMPORARY_ITEM ) ) {
@@ -623,7 +628,7 @@ void use_item( avatar &you, item &used )
             add_msg( m_info, need_splint.str() );
         }
     } else {
-        add_msg( m_info, _( "You can't do anything interesting with your %s." ),
+        add_msg( m_info, to_translation( "You can't do anything interesting with your %s." ),
                  used.tname() );
     }
     you.recalculate_enchantment_cache();
@@ -645,7 +650,7 @@ static detached_ptr<item> add_or_drop_with_msg( avatar &you, detached_ptr<item> 
     } else if( !you.can_pick_weight( *it, !get_option<bool>( "DANGEROUS_PICKUPS" ) ) ) {
         put_into_vehicle_or_drop( you, item_drop_reason::too_heavy, std::move( it ) );
     } else {
-        add_msg( _( "You put the %s in your inventory." ), it->tname() );
+        add_msg( to_translation( "You put the %s in your inventory." ), it->tname() );
         add_msg( m_info, "%c - %s", it->invlet == 0 ? ' ' : it->invlet, it->tname() );
         you.i_add( std::move( it ) );
     }
@@ -662,11 +667,11 @@ bool unload_item( avatar &you, item &loc )
     // Unload a container consuming moves per item successfully removed
     if( it.is_container() || it.is_bandolier() || it.type->can_use( "holster" ) ) {
         if( it.contents.empty() ) {
-            add_msg( m_info, _( "The %s is already empty!" ), it.tname() );
+            add_msg( m_info, to_translation( "The %s is already empty!" ), it.tname() );
             return false;
         }
         if( !it.can_unload_liquid() ) {
-            add_msg( m_info, _( "The liquid can't be unloaded in its current state!" ) );
+            add_msg( m_info, to_translation( "The liquid can't be unloaded in its current state!" ) );
             return false;
         }
 
@@ -725,24 +730,24 @@ bool unload_item( avatar &you, item &loc )
 
     // Next check for any reasons why the item cannot be unloaded
     if( target->ammo_types().empty() || target->ammo_capacity() <= 0 ) {
-        add_msg( m_info, _( "You can't unload a %s!" ), target->tname() );
+        add_msg( m_info, to_translation( "You can't unload a %s!" ), target->tname() );
         return false;
     }
 
     if( target->has_flag( flag_NO_UNLOAD ) ) {
         if( target->has_flag( flag_RECHARGE ) || target->has_flag( flag_USE_UPS ) ) {
-            add_msg( m_info, _( "You can't unload a rechargeable %s!" ), target->tname() );
+            add_msg( m_info, to_translation( "You can't unload a rechargeable %s!" ), target->tname() );
         } else {
-            add_msg( m_info, _( "You can't unload a %s!" ), target->tname() );
+            add_msg( m_info, to_translation( "You can't unload a %s!" ), target->tname() );
         }
         return false;
     }
 
     if( !target->magazine_current() && target->ammo_remaining() <= 0 && target->casings_count() <= 0 ) {
         if( target->is_tool() ) {
-            add_msg( m_info, _( "Your %s isn't charged." ), target->tname() );
+            add_msg( m_info, to_translation( "Your %s isn't charged." ), target->tname() );
         } else {
-            add_msg( m_info, _( "Your %s isn't loaded." ), target->tname() );
+            add_msg( m_info, to_translation( "Your %s isn't loaded." ), target->tname() );
         }
         return false;
     }
@@ -768,9 +773,9 @@ bool unload_item( avatar &you, item &loc )
                 detached_ptr<item> link = item::spawn( *it.type->magazine->linkage, calendar::turn, qty );
                 add_or_drop_with_msg( you, std::move( link ), true );
             }
-            add_msg( _( "You disassemble your %s." ), it.tname() );
+            add_msg( to_translation( "You disassemble your %s." ), it.tname() );
         } else {
-            add_msg( _( "You unload your %s." ), it.tname() );
+            add_msg( to_translation( "You unload your %s." ), it.tname() );
         }
 
         you.mod_moves( -std::min( 200, mv ) );
@@ -800,9 +805,9 @@ bool unload_item( avatar &you, item &loc )
         if( target->ammo_current() == itype_plut_cell ) {
             qty = target->ammo_remaining() / PLUTONIUM_CHARGES;
             if( qty > 0 ) {
-                add_msg( _( "You recover %i unused plutonium." ), qty );
+                add_msg( to_translation( "You recover %i unused plutonium." ), qty );
             } else {
-                add_msg( m_info, _( "You can't remove partially depleted plutonium!" ) );
+                add_msg( m_info, to_translation( "You can't remove partially depleted plutonium!" ) );
                 return false;
             }
         }
@@ -846,7 +851,7 @@ bool unload_item( avatar &you, item &loc )
         target->type->invoke( you, *target, you.bub_pos() );
     }
 
-    add_msg( _( "You unload your %s." ), target->tname() );
+    add_msg( to_translation( "You unload your %s." ), target->tname() );
     return true;
 
 }

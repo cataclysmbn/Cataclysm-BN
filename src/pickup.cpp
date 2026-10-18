@@ -360,10 +360,10 @@ static auto pick_one_up( const pick_one_up_options &opts ) -> bool
 
                     picked_up = !newloc;
                     if( u.primary_weapon().invlet ) {
-                        add_msg( m_info, _( "Wielding %c - %s" ), u.primary_weapon().invlet,
+                        add_msg( m_info, to_translation( "Wielding %c - %s" ), u.primary_weapon().invlet,
                                  u.primary_weapon().display_name() );
                     } else {
-                        add_msg( m_info, _( "Wielding - %s" ), u.primary_weapon().display_name() );
+                        add_msg( m_info, to_translation( "Wielding - %s" ), u.primary_weapon().display_name() );
                     }
                 } else {
                     add_msg( m_neutral, "%s", wield_check.c_str() );
@@ -474,13 +474,13 @@ bool do_pickup( std::vector<pick_drop_selection> &targets, bool autopickup )
     }
 
     if( got_water ) {
-        add_msg( m_info, _( "You can't pick up a liquid!" ) );
+        add_msg( m_info, to_translation( "You can't pick up a liquid!" ) );
     }
     if( weight_was_okay && u.weight_carried() > u.weight_capacity() ) {
-        add_msg( m_bad, _( "You're overburdened!" ) );
+        add_msg( m_bad, to_translation( "You're overburdened!" ) );
     }
     if( volume_was_okay && u.volume_carried() > u.volume_capacity() ) {
-        add_msg( m_bad, _( "You struggle to carry such a large volume!" ) );
+        add_msg( m_bad, to_translation( "You struggle to carry such a large volume!" ) );
     }
 
     return !problem;
@@ -1049,7 +1049,7 @@ auto pick_up_from_items( const pick_up_from_items_options &opts ) -> void
                             show_pickup_message( direct_map_pickup );
                         }
                         if( direct_got_water ) {
-                            add_msg( m_info, _( "You can't pick up a liquid!" ) );
+                            add_msg( m_info, to_translation( "You can't pick up a liquid!" ) );
                         }
                         if( handled ) {
                             g->reenter_fullscreen();
@@ -1218,7 +1218,7 @@ auto pick_up_from_items( const pick_up_from_items_options &opts ) -> void
             }
         }
         if( action != "CONFIRM" || !item_selected ) {
-            add_msg( _( "Never mind." ) );
+            add_msg( to_translation( "Never mind." ) );
             g->reenter_fullscreen();
             return;
         }
@@ -1412,7 +1412,7 @@ auto pickup::pick_up_all_nearby() -> void
 {
     const auto nearby = nearby_items_for_pickup( g->u.bub_pos() );
     if( nearby.items.empty() ) {
-        add_msg( _( "There is nothing to pick up nearby." ) );
+        add_msg( to_translation( "There is nothing to pick up nearby." ) );
         return;
     }
 
@@ -1433,10 +1433,10 @@ void show_pickup_message( const pickup_map &mapPickup )
 {
     for( auto &entry : mapPickup ) {
         if( entry.second.first->invlet != 0 ) {
-            add_msg( _( "You pick up: %d %s [%c]" ), entry.second.second,
+            add_msg( to_translation( "You pick up: %d %s [%c]" ), entry.second.second,
                      entry.second.first->display_name( entry.second.second ), entry.second.first->invlet );
         } else {
-            add_msg( _( "You pick up: %d %s" ), entry.second.second,
+            add_msg( to_translation( "You pick up: %d %s" ), entry.second.second,
                      entry.second.first->display_name( entry.second.second ) );
         }
     }
@@ -1508,8 +1508,8 @@ detached_ptr<item> pickup::handle_spillable_contents( Character &c, detached_ptr
         // rest of the contents
         if( it->is_bucket_nonempty() ) {
             c.add_msg_player_or_npc(
-                _( "To avoid spilling its contents, you set your %1$s on the %2$s." ),
-                _( "To avoid spilling its contents, <npcname> sets their %1$s on the %2$s." ),
+                to_translation( "To avoid spilling its contents, you set your %1$s on the %2$s." ),
+                to_translation( "To avoid spilling its contents, <npcname> sets their %1$s on the %2$s." ),
                 it->display_name(), m.name( c.bub_pos() )
             );
             m.add_item_or_charges( c.bub_pos(), std::move( it ) );

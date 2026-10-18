@@ -104,7 +104,7 @@ void siphon( Character &ch, vehicle &veh, const itype_id &desired_liquid )
     }
     auto qty = veh.fuel_left( desired_liquid );
     if( qty <= 0 ) {
-        ch.add_msg_if_player( m_bad, _( "There is not enough %s left to siphon it." ),
+        ch.add_msg_if_player( m_bad, to_translation( "There is not enough %s left to siphon it." ),
                               item::nname( desired_liquid ) );
         return;
     }
@@ -442,7 +442,8 @@ int rate_sleep_spot( const Character &who, const tripoint_bub_ms &p )
     const int current_stim = who.get_stim();
     const comfort_response_t comfort_info = base_comfort_value( who, p );
     for( item *comfort_item : comfort_info.aid ) {
-        who.add_msg_if_player( m_info, _( "You use your %s for comfort." ), comfort_item->tname() );
+        who.add_msg_if_player( m_info, to_translation( "You use your %s for comfort." ),
+                               comfort_item->tname() );
     }
 
     int sleepy = static_cast<int>( comfort_info.level );
@@ -507,9 +508,9 @@ bool roll_can_sleep( Character &who )
 
     if( who.has_active_bionic( bio_soporific ) ) {
         if( who.bio_soporific_powered_at_last_sleep_check && !who.has_power() ) {
-            who.add_msg_if_player( m_bad, _( "Your soporific inducer runs out of power!" ) );
+            who.add_msg_if_player( m_bad, to_translation( "Your soporific inducer runs out of power!" ) );
         } else if( !who.bio_soporific_powered_at_last_sleep_check && who.has_power() ) {
-            who.add_msg_if_player( m_good, _( "Your soporific inducer starts back up." ) );
+            who.add_msg_if_player( m_good, to_translation( "Your soporific inducer starts back up." ) );
         }
         who.bio_soporific_powered_at_last_sleep_check = who.has_power();
     }
@@ -576,31 +577,31 @@ void add_pain_msg( const Character &who, int val, const bodypart_str_id &bp )
     }
     if( !bp ) {
         if( val > 20 ) {
-            who.add_msg_if_player( _( "Your body is wracked with excruciating pain!" ) );
+            who.add_msg_if_player( to_translation( "Your body is wracked with excruciating pain!" ) );
         } else if( val > 10 ) {
-            who.add_msg_if_player( _( "Your body is wracked with terrible pain!" ) );
+            who.add_msg_if_player( to_translation( "Your body is wracked with terrible pain!" ) );
         } else if( val > 5 ) {
-            who.add_msg_if_player( _( "Your body is wracked with pain!" ) );
+            who.add_msg_if_player( to_translation( "Your body is wracked with pain!" ) );
         } else if( val > 1 ) {
-            who.add_msg_if_player( _( "Your body pains you!" ) );
+            who.add_msg_if_player( to_translation( "Your body pains you!" ) );
         } else {
-            who.add_msg_if_player( _( "Your body aches." ) );
+            who.add_msg_if_player( to_translation( "Your body aches." ) );
         }
     } else {
         if( val > 20 ) {
-            who.add_msg_if_player( _( "Your %s is wracked with excruciating pain!" ),
+            who.add_msg_if_player( to_translation( "Your %s is wracked with excruciating pain!" ),
                                    body_part_name_accusative( bp.id() ) );
         } else if( val > 10 ) {
-            who.add_msg_if_player( _( "Your %s is wracked with terrible pain!" ),
+            who.add_msg_if_player( to_translation( "Your %s is wracked with terrible pain!" ),
                                    body_part_name_accusative( bp.id() ) );
         } else if( val > 5 ) {
-            who.add_msg_if_player( _( "Your %s is wracked with pain!" ),
+            who.add_msg_if_player( to_translation( "Your %s is wracked with pain!" ),
                                    body_part_name_accusative( bp.id() ) );
         } else if( val > 1 ) {
-            who.add_msg_if_player( _( "Your %s pains you!" ),
+            who.add_msg_if_player( to_translation( "Your %s pains you!" ),
                                    body_part_name_accusative( bp.id() ) );
         } else {
-            who.add_msg_if_player( _( "Your %s aches." ),
+            who.add_msg_if_player( to_translation( "Your %s aches." ),
                                    body_part_name_accusative( bp.id() ) );
         }
     }
@@ -722,26 +723,26 @@ bool try_uncanny_dodge( Character &who )
     // If successful, dodge for free. If we already burned bonus dodges this turn then get_dodge fails and we're overwhelmed.
     if( x_in_y( who.get_dodge(), 10 ) ) {
         if( is_u ) {
-            add_msg( m_good, _( "Time seems to slow down and you effortlessly dodge!" ) );
+            add_msg( m_good, to_translation( "Time seems to slow down and you effortlessly dodge!" ) );
         } else if( seen ) {
-            add_msg( m_good, _( "%s effortlessly dodges… so fast!" ), who.disp_name() );
+            add_msg( m_good, to_translation( "%s effortlessly dodges… so fast!" ), who.disp_name() );
         }
         return true;
         // Didn't get a free dodge, burn dodges_left instead. If this zeros them out and there's still more attacks coming this turn the next shot will hit.
     } else if( who.dodges_left > 0 ) {
         if( is_u ) {
-            add_msg( m_mixed, _( "Time seems to slow down and you instinctively dodge!" ) );
+            add_msg( m_mixed, to_translation( "Time seems to slow down and you instinctively dodge!" ) );
         } else if( seen ) {
-            add_msg( m_mixed, _( "%s dodges… so fast!" ), who.disp_name() );
+            add_msg( m_mixed, to_translation( "%s dodges… so fast!" ), who.disp_name() );
         }
         who.dodges_left--;
         return true;
         // No dodges left, catch those hands.
     } else {
         if( is_u ) {
-            add_msg( m_bad, _( "You try to dodge but fail!" ) );
+            add_msg( m_bad, to_translation( "You try to dodge but fail!" ) );
         } else if( seen ) {
-            add_msg( m_bad, _( "%s tries to dodge but fails!" ), who.disp_name() );
+            add_msg( m_bad, to_translation( "%s tries to dodge but fails!" ), who.disp_name() );
         }
         return false;
     }
@@ -1057,7 +1058,7 @@ void show_skill_capped_notice( const Character &who, const skill_id &id )
     std::string skill_name = skill.name();
     int curLevel = level.level();
 
-    add_msg( m_info, _( "This task is too simple to train your %s beyond %d." ),
+    add_msg( m_info, to_translation( "This task is too simple to train your %s beyond %d." ),
              skill_name, curLevel );
 }
 

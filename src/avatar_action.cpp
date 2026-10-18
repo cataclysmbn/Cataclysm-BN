@@ -29,6 +29,7 @@
 #include "itype.h"
 #include "iuse_actor.h"
 #include "line.h"
+#include "localised_names.h"
 #include "map/map.h"
 #include "map/mapdata.h"
 #include "map_iterator.h"
@@ -87,7 +88,7 @@ auto try_shove_grabbed_vehicle( avatar &you ) -> bool
 
     auto grabbed_vehicle_target = vehicle_grab_target_at( get_map(), you.bub_pos() + you.grab_point );
     if( !grabbed_vehicle_target ) {
-        add_msg( m_info, _( "No vehicle at grabbed point." ) );
+        add_msg( m_info, to_translation( "No vehicle at grabbed point." ) );
         you.grab( OBJECT_NONE );
         return true;
     }
@@ -103,9 +104,10 @@ auto try_shove_grabbed_vehicle( avatar &you ) -> bool
     const auto shove_strength_req = vehicle_throw::strength_requirement( veh );
     if( effective_shove_strength < shove_strength_req ) {
         if( shove_strength >= shove_strength_req ) {
-            add_msg( m_bad, _( "You're too small to get enough leverage to shove the %s." ), veh.name );
+            add_msg( m_bad, to_translation( "You're too small to get enough leverage to shove the %s." ),
+                     veh.name );
         } else {
-            add_msg( m_bad, _( "You lack the strength to shove the %s." ), veh.name );
+            add_msg( m_bad, to_translation( "You lack the strength to shove the %s." ), veh.name );
         }
         you.mod_moves( -100 );
         return true;
@@ -120,11 +122,11 @@ auto try_shove_grabbed_vehicle( avatar &you ) -> bool
     if( ranges::any_of( trajectory, [&]( const tripoint_bub_ms & target_pos ) {
     return target_pos.z() != grabbed_part_pos.z();
     } ) ) {
-        add_msg( m_info, _( "You can't shove the %s vertically." ), veh.name );
+        add_msg( m_info, to_translation( "You can't shove the %s vertically." ), veh.name );
         return true;
     }
     if( ranges::find( trajectory, you.bub_pos() ) != trajectory.end() ) {
-        add_msg( m_info, _( "You can only shove the %s away from yourself." ), veh.name );
+        add_msg( m_info, to_translation( "You can only shove the %s away from yourself." ), veh.name );
         return true;
     }
 
@@ -165,7 +167,7 @@ auto try_shove_grabbed_vehicle( avatar &you ) -> bool
     if( !moved ) {
         veh.vertical_velocity = 0;
         veh.stop();
-        add_msg( m_info, _( "The %s won't budge." ), veh.name );
+        add_msg( m_info, to_translation( "The %s won't budge." ), veh.name );
         you.mod_moves( -100 );
         return true;
     }
@@ -173,7 +175,7 @@ auto try_shove_grabbed_vehicle( avatar &you ) -> bool
     veh.vertical_velocity = 0;
     veh.stop();
 
-    add_msg( _( "You shove the %s away from you." ), veh.name );
+    add_msg( to_translation( "You shove the %s away from you." ), veh.name );
     you.mod_moves( -100 - 25 * std::max( 0, shove_range - 1 ) );
     you.mod_stamina( -100 - 25 * std::max( 0, shove_range - 1 ) );
     you.grab( OBJECT_NONE );
@@ -296,10 +298,11 @@ auto throw_grabbed_creature( avatar &you ) -> bool
     const auto throw_strength = character_funcs::get_lift_strength( you );
     if( !creature_throw::can_throw_grabbed_creature_size( avatar_size, throw_strength, target_size ) ) {
         if( target_size_value > avatar_size_value ) {
-            add_msg( m_info, _( "You can't throw %s; %s is too large." ), target->disp_name(),
+            add_msg( m_info, to_translation( "You can't throw %s; %s is too large." ), target->disp_name(),
                      target->disp_name() );
         } else {
-            add_msg( m_info, _( "You can't muster the strength to throw %s." ), target->disp_name() );
+            add_msg( m_info, to_translation( "You can't muster the strength to throw %s." ),
+                     target->disp_name() );
         }
         return true;
     }
@@ -317,11 +320,12 @@ auto throw_grabbed_creature( avatar &you ) -> bool
 
     const auto range = static_cast<int>( throwforce / 10.0f );
     if( range < 1 ) {
-        add_msg( m_info, _( "You can't muster the strength to throw %s." ), target->disp_name() );
+        add_msg( m_info, to_translation( "You can't muster the strength to throw %s." ),
+                 target->disp_name() );
         return true;
     }
     if( you.get_stamina() < you.get_stamina_max() / 10 ) {
-        add_msg( m_info, _( "You're too exhausted to throw %s." ), target->disp_name() );
+        add_msg( m_info, to_translation( "You're too exhausted to throw %s." ), target->disp_name() );
         return true;
     }
 
@@ -367,7 +371,8 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
     ZoneScopedN( "avatar_action_move" );
     if( ( !g->check_safe_mode_allowed() ) || you.has_active_mutation( trait_SHELL2 ) ) {
         if( you.has_active_mutation( trait_SHELL2 ) ) {
-            add_msg( m_warning, _( "You can't move while in your shell.  Deactivate it to go mobile." ) );
+            add_msg( m_warning,
+                     to_translation( "You can't move while in your shell.  Deactivate it to go mobile." ) );
         }
         return false;
     }
@@ -513,7 +518,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
             }
         }
         if( newdist > curdist ) {
-            add_msg( m_info, _( "You cannot pull yourself away from the faultline…" ) );
+            add_msg( m_info, to_translation( "You cannot pull yourself away from the faultline…" ) );
             return false;
         }
     }
@@ -536,7 +541,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
     }
 
     if( m.obstructed_by_vehicle_rotation( you.bub_pos(), dest_loc ) ) {
-        add_msg( _( "You can't walk through that vehicle's wall." ) );
+        add_msg( to_translation( "You can't walk through that vehicle's wall." ) );
         return false;
     }
 
@@ -548,18 +553,18 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
         if( critter.friendly == 0 &&
             !critter.has_effect( effect_pet ) && att != MATT_FRIEND ) {
             if( you.is_auto_moving() ) {
-                add_msg( m_warning, _( "Monster in the way.  Auto-move canceled." ) );
-                add_msg( m_info, _( "Move into the monster to attack." ) );
+                add_msg( m_warning, to_translation( "Monster in the way.  Auto-move canceled." ) );
+                add_msg( m_info, to_translation( "Move into the monster to attack." ) );
                 you.clear_destination();
                 return false;
             } else {
             }
             if( you.has_effect( effect_relax_gas ) ) {
                 if( one_in( 8 ) ) {
-                    add_msg( m_good, _( "Your willpower asserts itself, and so do you!" ) );
+                    add_msg( m_good, to_translation( "Your willpower asserts itself, and so do you!" ) );
                 } else {
                     you.moves -= rng( 2, 8 ) * 10;
-                    add_msg( m_bad, _( "You're too pacified to strike anything…" ) );
+                    add_msg( m_bad, to_translation( "You're too pacified to strike anything…" ) );
                     return false;
                 }
             }
@@ -579,7 +584,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
             return false;
         } else if( critter.has_flag( MF_IMMOBILE ) || critter.has_effect( effect_harnessed ) ||
                    critter.has_effect( effect_ridden ) ) {
-            add_msg( m_info, _( "You can't displace your %s." ), critter.name() );
+            add_msg( m_info, to_translation( "You can't displace your %s." ), localised::name_of( critter ) );
             return false;
         }
         // Successful displacing is handled (much) later
@@ -588,8 +593,8 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
     if( npc *const np_ = g->critter_at<npc>( dest_loc ) ) {
         npc &np = *np_;
         if( you.is_auto_moving() ) {
-            add_msg( _( "NPC in the way, Auto-move canceled." ) );
-            add_msg( m_info, _( "Move into the NPC to interact or attack." ) );
+            add_msg( to_translation( "NPC in the way, Auto-move canceled." ) );
+            add_msg( m_info, to_translation( "Move into the NPC to interact or attack." ) );
             you.clear_destination();
             return false;
         }
@@ -625,10 +630,10 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
             }
             return false;
         } else if( dst_veh != src_veh ) {
-            add_msg( m_info, _( "There is another vehicle in the way." ) );
+            add_msg( m_info, to_translation( "There is another vehicle in the way." ) );
             return false;
         } else if( !vp_dst.part_with_feature( "BOARDABLE", true ) ) {
-            add_msg( m_info, _( "That part of the vehicle is currently unsafe." ) );
+            add_msg( m_info, to_translation( "That part of the vehicle is currently unsafe." ) );
             return false;
         }
     }
@@ -653,14 +658,15 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
         if( is_riding ) {
             auto mon = you.mounted_creature.get();
             if( !mon->swims() || mon->get_size() < you.get_size() + 2 ) {
-                add_msg( m_warning, _( "The %s cannot swim while it is carrying you!" ), mon->get_name() );
+                add_msg( m_warning, to_translation( "The %s cannot swim while it is carrying you!" ),
+                         mon->get_name() );
                 return false;
             }
         }
         if( ( fromSwimmable && fromDeepWater && !fromBoat ) || query_yn( _( "Dive into the water?" ) ) ) {
             if( ( !fromDeepWater || fromBoat ) && you.swim_speed() < 500 ) {
-                add_msg( _( "You start swimming." ) );
-                add_msg( m_info, _( "%s to dive underwater." ),
+                add_msg( to_translation( "You start swimming." ) );
+                add_msg( m_info, to_translation( "%s to dive underwater." ),
                          press_x( ACTION_MOVE_DOWN ) );
             }
             avatar_action::swim( get_map(), get_avatar(), dest_loc );
@@ -677,7 +683,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
                 return false;
             }
 
-            add_msg( _( "You open the %1$s's %2$s." ), dst_veh->name,
+            add_msg( to_translation( "You open the %1$s's %2$s." ), dst_veh->name,
                      dst_veh->part_info( door_part ).name() );
             you.moves -= 100;
             // if auto-move is on, continue moving next turn
@@ -746,7 +752,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
     const bool waste_moves = ( you.is_blind() && you.clairvoyance() < 1 ) ||
                              you.has_effect( effect_stunned );
     if( waste_moves || dest_loc.z() != you.bub_pos().z() ) {
-        add_msg( _( "You bump into the %s!" ), m.obstacle_name( dest_loc ) );
+        add_msg( to_translation( "You bump into the %s!" ), m.obstacle_name( dest_loc ) );
         // Only lose movement if we're blind
         if( waste_moves ) {
             you.moves -= 100;
@@ -773,9 +779,9 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
     } else if( m.ter( dest_loc ) == t_door_locked || m.ter( dest_loc ) == t_door_locked_peep ||
                m.ter( dest_loc ) == t_door_locked_alarm || m.ter( dest_loc ) == t_door_locked_interior ) {
         // Don't drain move points for learning something you could learn just by looking
-        add_msg( _( "That door is locked!" ) );
+        add_msg( to_translation( "That door is locked!" ) );
     } else if( m.ter( dest_loc ) == t_door_bar_locked ) {
-        add_msg( _( "You rattle the bars but the door is locked!" ) );
+        add_msg( to_translation( "You rattle the bars but the door is locked!" ) );
     }
     return false;
 }
@@ -819,7 +825,7 @@ bool avatar_action::ramp_move( avatar &you, map &m, const tripoint_bub_ms &dest_
 
     const tripoint_bub_ms above_u( you.bub_pos().x(), you.bub_pos().y(), you.bub_pos().z() + 1 );
     if( m.has_floor_or_support( above_u ) ) {
-        add_msg( m_warning, _( "You can't climb here - there's a ceiling above." ) );
+        add_msg( m_warning, to_translation( "You can't climb here - there's a ceiling above." ) );
         return false;
     }
 
@@ -841,7 +847,7 @@ void avatar_action::swim( map &m, avatar &you, const tripoint_bub_ms &p )
         return;
     }
     if( you.has_effect( effect_onfire ) ) {
-        add_msg( _( "The water puts out the flames!" ) );
+        add_msg( to_translation( "The water puts out the flames!" ) );
         you.remove_effect( effect_onfire );
         if( you.is_mounted() ) {
             monster *mon = you.mounted_creature.get();
@@ -851,7 +857,7 @@ void avatar_action::swim( map &m, avatar &you, const tripoint_bub_ms &p )
         }
     }
     if( you.has_effect( effect_glowing ) ) {
-        add_msg( _( "The water washes off the glowing goo!" ) );
+        add_msg( to_translation( "The water washes off the glowing goo!" ) );
         you.remove_effect( effect_glowing );
     }
     if( m.has_flag( TFLAG_WATER_CUBE, p ) && !you.is_underwater() ) {
@@ -867,7 +873,7 @@ void avatar_action::swim( map &m, avatar &you, const tripoint_bub_ms &p )
             !( you.shoe_type_count( itype_swim_fins ) == 2 ||
                ( you.shoe_type_count( itype_swim_fins ) == 1 && one_in( 2 ) ) ||
                you.has_trait_flag( trait_flag_MUTATION_SWIM ) ) ) {
-            add_msg( m_bad, _( "You sink like a rock!" ) );
+            add_msg( m_bad, to_translation( "You sink like a rock!" ) );
             you.set_underwater( true );
             ///\EFFECT_STR increases breath-holding capacity while sinking
             you.oxygen = 30 + 2 * you.str_cur;
@@ -885,7 +891,7 @@ void avatar_action::swim( map &m, avatar &you, const tripoint_bub_ms &p )
         m.unboard_vehicle( you.bub_pos() );
     }
     if( you.is_mounted() && m.veh_at( you.bub_pos() ).part_with_feature( VPFLAG_BOARDABLE, true ) ) {
-        add_msg( m_warning, _( "You cannot board a vehicle while mounted." ) );
+        add_msg( m_warning, to_translation( "You cannot board a vehicle while mounted." ) );
         return;
     }
     if( const auto vp = m.veh_at( p ).part_with_feature( VPFLAG_BOARDABLE, true ) ) {
@@ -894,7 +900,7 @@ void avatar_action::swim( map &m, avatar &you, const tripoint_bub_ms &p )
         }
     }
     if( m.has_flag_ter_or_furn( TFLAG_HIDE_PLACE, p ) && you.get_size() <= creature_size::medium ) {
-        add_msg( m_good, _( "You are hiding in the %s." ), m.name( p ) );
+        add_msg( m_good, to_translation( "You are hiding in the %s." ), m.name( p ) );
     }
     you.setpos( p );
 
@@ -947,7 +953,7 @@ static auto attack_best_hostile( avatar &you, map &m ) -> void
         return !dynamic_cast<const npc *>( c )->is_enemy();
     } ), critters.end() );
     if( critters.empty() ) {
-        add_msg( m_info, _( "No hostile creature in reach.  Waiting a turn." ) );
+        add_msg( m_info, to_translation( "No hostile creature in reach.  Waiting a turn." ) );
         if( g->check_safe_mode_allowed() ) {
             character_funcs::do_pause( you );
         }
@@ -1017,22 +1023,22 @@ bool avatar_action::can_fire_weapon( avatar &you, const map &m, const item &weap
     }
 
     if( you.has_trait( trait_BRAWLER ) ) {
-        add_msg( m_good, _( "You refuse to use this ranged weapon." ) );
+        add_msg( m_good, to_translation( "You refuse to use this ranged weapon." ) );
         return false;
     } else if( you.has_trait( trait_GUNSHY ) && weapon.is_firearm() ) {
-        add_msg( m_good, _( "You refuse to use this gun." ) );
+        add_msg( m_good, to_translation( "You refuse to use this gun." ) );
         return false;
     } else if( you.has_trait( trait_GUNNUT ) && !weapon.is_firearm() ) {
-        add_msg( m_bad, _( "You refuse to use this primitive weapon." ) );
+        add_msg( m_bad, to_translation( "You refuse to use this primitive weapon." ) );
         return false;
     }
 
     if( you.has_effect( effect_relax_gas ) ) {
         if( one_in( 5 ) ) {
-            add_msg( m_good, _( "Your eyes steel, and you raise your weapon!" ) );
+            add_msg( m_good, to_translation( "Your eyes steel, and you raise your weapon!" ) );
         } else {
             you.moves -= rng( 2, 5 ) * 10;
-            add_msg( m_bad, _( "You can't fire your weapon, it's too heavy…" ) );
+            add_msg( m_bad, to_translation( "You can't fire your weapon, it's too heavy…" ) );
             return false;
         }
     }
@@ -1057,22 +1063,22 @@ bool avatar_action::can_fire_weapon( avatar &you, const map &m, const item &weap
 bool avatar_action::will_fire_turret( avatar &you, const turret_data &turret )
 {
     if( you.has_trait( trait_BRAWLER ) ) {
-        add_msg( m_bad, _( "You refuse to use this ranged weapon." ) );
+        add_msg( m_bad, to_translation( "You refuse to use this ranged weapon." ) );
         return false;
     } else if( you.has_trait( trait_GUNSHY ) && turret.base().is_firearm() ) {
-        add_msg( m_bad, _( "You refuse to use this gun turret." ) );
+        add_msg( m_bad, to_translation( "You refuse to use this gun turret." ) );
         return false;
     } else if( you.has_trait( trait_GUNNUT ) && !turret.base().is_firearm() ) {
-        add_msg( m_bad, _( "You refuse to use this primitive turret." ) );
+        add_msg( m_bad, to_translation( "You refuse to use this primitive turret." ) );
         return false;
     }
 
     if( you.has_effect( effect_relax_gas ) ) {
         if( one_in( 5 ) ) {
-            add_msg( m_good, _( "Your eyes steel, and you aim your weapon!" ) );
+            add_msg( m_good, to_translation( "Your eyes steel, and you aim your weapon!" ) );
         } else {
             you.moves -= rng( 2, 5 ) * 10;
-            add_msg( m_bad, _( "You are too pacified to aim the turret…" ) );
+            add_msg( m_bad, to_translation( "You are too pacified to aim the turret…" ) );
             return false;
         }
     }
@@ -1093,11 +1099,11 @@ bool avatar_action::can_fire_turret( avatar &you, const map &m, const turret_dat
 
     switch( turret.query() ) {
         case turret_data::status::no_ammo:
-            add_msg( m_bad, _( "The %s is out of ammo." ), turret.name() );
+            add_msg( m_bad, to_translation( "The %s is out of ammo." ), turret.name() );
             return false;
 
         case turret_data::status::no_power:
-            add_msg( m_bad, _( "The %s is not powered." ), turret.name() );
+            add_msg( m_bad, to_translation( "The %s is not powered." ), turret.name() );
             return false;
 
         case turret_data::status::ready:
@@ -1128,7 +1134,7 @@ void avatar_action::fire_wielded_weapon( avatar &you )
     item &weapon = you.primary_weapon();
     if( weapon.is_gunmod() ) {
         add_msg( m_info,
-                 _( "The %s must be attached to a gun, it can not be fired separately." ),
+                 to_translation( "The %s must be attached to a gun, it can not be fired separately." ),
                  weapon.tname() );
         return;
     } else if( !weapon.is_gun() ) {
@@ -1136,7 +1142,8 @@ void avatar_action::fire_wielded_weapon( avatar &you )
     } else if( weapon.ammo_data() && weapon.type->gun &&
                !weapon.ammo_types().contains( weapon.ammo_data()->ammo->type ) ) {
         std::string ammoname = weapon.ammo_current()->nname( 1 );
-        add_msg( m_info, _( "The %s can't be fired while loaded with incompatible ammunition %s" ),
+        add_msg( m_info,
+                 to_translation( "The %s can't be fired while loaded with incompatible ammunition %s" ),
                  weapon.tname(), ammoname );
         return;
     }
@@ -1186,7 +1193,7 @@ void avatar_action::mend( avatar &you, item *loc )
         if( you.is_armed() ) {
             loc = &you.primary_weapon();
         } else {
-            add_msg( m_info, _( "You're not wielding anything." ) );
+            add_msg( m_info, to_translation( "You're not wielding anything." ) );
             return;
         }
     }
@@ -1204,12 +1211,13 @@ bool avatar_action::eat_here( avatar &you )
         item &food = *item::spawn_temporary( itype_underbrush, calendar::turn, 1 );
         if( you.get_stored_kcal() > you.max_stored_kcal() -
             food.get_comestible()->default_nutrition.kcal ) {
-            add_msg( _( "You're too full to eat the leaves from the %s." ), here.ter( you.bub_pos() )->name() );
+            add_msg( to_translation( "You're too full to eat the leaves from the %s." ),
+                     here.ter( you.bub_pos() )->name() );
             return true;
         } else {
             you.moves -= 400;
             here.ter_set( you.bub_pos(), t_grass );
-            add_msg( _( "You eat the underbrush." ) );
+            add_msg( to_translation( "You eat the underbrush." ) );
             you.eat( food );
             return true;
         }
@@ -1219,11 +1227,11 @@ bool avatar_action::eat_here( avatar &you )
         item &food = *item::spawn_temporary( itype_grass, calendar::turn, 1 );
         if( you.get_stored_kcal() > you.max_stored_kcal() -
             food.get_comestible()->default_nutrition.kcal ) {
-            add_msg( _( "You're too full to graze." ) );
+            add_msg( to_translation( "You're too full to graze." ) );
             return true;
         } else {
             you.moves -= 400;
-            add_msg( _( "You eat the grass." ) );
+            add_msg( to_translation( "You eat the grass." ) );
             you.eat( food );
             if( here.ter( you.bub_pos() ) == t_grass_tall ) {
                 here.ter_set( you.bub_pos(), t_grass_long );
@@ -1237,13 +1245,13 @@ bool avatar_action::eat_here( avatar &you )
     }
     if( you.has_active_mutation( trait_GRAZER ) ) {
         if( here.ter( you.bub_pos() ) == t_grass_golf ) {
-            add_msg( _( "This grass is too short to graze." ) );
+            add_msg( to_translation( "This grass is too short to graze." ) );
             return true;
         } else if( here.ter( you.bub_pos() ) == t_grass_dead ) {
-            add_msg( _( "This grass is dead and too mangled for you to graze." ) );
+            add_msg( to_translation( "This grass is dead and too mangled for you to graze." ) );
             return true;
         } else if( here.ter( you.bub_pos() ) == t_grass_white ) {
-            add_msg( _( "This grass is tainted with paint and thus inedible." ) );
+            add_msg( to_translation( "This grass is tainted with paint and thus inedible." ) );
             return true;
         }
     }
@@ -1260,7 +1268,7 @@ void avatar_action::eat( avatar &you, item *loc )
 {
     if( !loc ) {
         you.cancel_activity();
-        add_msg( _( "Never mind." ) );
+        add_msg( to_translation( "Never mind." ) );
         return;
     }
     if( loc->where() == item_location_type::character ) {
@@ -1272,7 +1280,7 @@ void avatar_action::eat( avatar &you, item *loc )
             return you.consume_item( std::move( it ) );
         } );
         if( !loc->is_food_container() && !you.can_consume_as_is( *loc ) ) {
-            add_msg( _( "You leave the empty %s." ), loc->tname() );
+            add_msg( to_translation( "You leave the empty %s." ), loc->tname() );
         }
     }
     if( g->u.get_value( "THIEF_MODE_KEEP" ) != "YES" ) {
@@ -1284,14 +1292,14 @@ void avatar_action::plthrow( avatar &you, item *loc,
                              const std::optional<tripoint_bub_ms> &blind_throw_from_pos )
 {
     if( you.has_active_mutation( trait_SHELL2 ) ) {
-        add_msg( m_info, _( "You can't effectively throw while you're in your shell." ) );
+        add_msg( m_info, to_translation( "You can't effectively throw while you're in your shell." ) );
         return;
     }
     if( you.is_mounted() ) {
         monster *mons = get_player_character().mounted_creature.get();
         if( mons->has_flag( MF_RIDEABLE_MECH ) ) {
             if( !mons->check_mech_powered() ) {
-                add_msg( m_bad, _( "Your %s refuses to move as its batteries have been drained." ),
+                add_msg( m_bad, to_translation( "Your %s refuses to move as its batteries have been drained." ),
                          mons->get_name() );
                 return;
             }
@@ -1312,31 +1320,31 @@ void avatar_action::plthrow( avatar &you, item *loc,
     }
 
     if( !loc ) {
-        add_msg( _( "Never mind." ) );
+        add_msg( to_translation( "Never mind." ) );
         return;
     }
 
     int range = you.throw_range( *loc );
     if( range < 0 ) {
-        add_msg( m_info, _( "You don't have that item." ) );
+        add_msg( m_info, to_translation( "You don't have that item." ) );
         return;
     } else if( range == 0 ) {
-        add_msg( m_info, _( "That is too heavy to throw." ) );
+        add_msg( m_info, to_translation( "That is too heavy to throw." ) );
         return;
     }
 
     if( you.is_wielding( *loc ) && loc->has_flag( flag_NO_UNWIELD ) ) {
         // pos == -1 is the weapon, NO_UNWIELD is used for bio_claws_weapon
-        add_msg( m_info, _( "That's part of your body, you can't throw that!" ) );
+        add_msg( m_info, to_translation( "That's part of your body, you can't throw that!" ) );
         return;
     }
 
     if( you.has_effect( effect_relax_gas ) ) {
         if( one_in( 5 ) ) {
-            add_msg( m_good, _( "You concentrate mightily, and your body obeys!" ) );
+            add_msg( m_good, to_translation( "You concentrate mightily, and your body obeys!" ) );
         } else {
             you.moves -= rng( 2, 5 ) * 10;
-            add_msg( m_bad, _( "You can't muster up the effort to throw anything…" ) );
+            add_msg( m_bad, to_translation( "You can't muster up the effort to throw anything…" ) );
             return;
         }
     }
@@ -1358,7 +1366,8 @@ void avatar_action::plthrow( avatar &you, item *loc,
     if( !you.is_wielding( *loc ) &&
         ( you.get_working_arm_count() < required_arms ) ) {
         if( !you.wield( *loc ) ) {
-            add_msg( m_info, _( "You do not have enough free hands to throw %s without wielding it." ),
+            add_msg( m_info,
+                     to_translation( "You do not have enough free hands to throw %s without wielding it." ),
                      loc->tname() );
             return;
         }
@@ -1375,7 +1384,7 @@ void avatar_action::use_item( avatar &you, item *loc )
         loc = game_menus::inv::use( you );
 
         if( !loc ) {
-            add_msg( _( "Never mind." ) );
+            add_msg( to_translation( "Never mind." ) );
             return;
         }
 
@@ -1403,7 +1412,7 @@ void avatar_action::wield()
     if( loc ) {
         wield( *loc );
     } else {
-        add_msg( _( "Never mind." ) );
+        add_msg( to_translation( "Never mind." ) );
     }
 }
 
@@ -1559,22 +1568,22 @@ void avatar_action::reload( item &loc, bool prompt, bool empty )
     if( !can_reload_item_or_mods( u, *it ) ) {
         if( ( it->is_ammo_container() || it->is_magazine() ) && it->ammo_remaining() > 0 &&
             it->ammo_remaining() == it->ammo_capacity() ) {
-            add_msg( m_info, _( "The %s is already fully loaded!" ), it->tname() );
+            add_msg( m_info, to_translation( "The %s is already fully loaded!" ), it->tname() );
             return;
         }
         if( it->is_ammo_belt() ) {
             const auto &linkage = it->type->magazine->linkage;
             if( linkage && !u.has_charges( *linkage, 1 ) ) {
-                add_msg( m_info, _( "You need at least one %s to reload the %s!" ),
+                add_msg( m_info, to_translation( "You need at least one %s to reload the %s!" ),
                          item::nname( *linkage, 1 ), it->tname() );
                 return;
             }
         }
         if( it->is_container() && it->is_container_full() ) {
-            add_msg( m_info, _( "The %s is already full!" ), it->tname() );
+            add_msg( m_info, to_translation( "The %s is already full!" ), it->tname() );
             return;
         }
-        add_msg( m_info, _( "You can't reload a %s!" ), it->tname() );
+        add_msg( m_info, to_translation( "You can't reload a %s!" ), it->tname() );
         return;
     }
 
@@ -1592,7 +1601,7 @@ void avatar_action::reload( item &loc, bool prompt, bool empty )
             item *loc = game_menus::inv::holster( u, *it );
 
             if( !loc ) {
-                u.add_msg_if_player( _( "Never mind." ) );
+                u.add_msg_if_player( to_translation( "Never mind." ) );
                 return;
             }
             ptr->store( u, *it, loc->detach() );
@@ -1617,7 +1626,7 @@ void avatar_action::reload( item &loc, bool prompt, bool empty )
     if( opt ) {
         int moves = opt.moves();
         if( it->get_var( "dirt", 0 ) > 7800 ) {
-            add_msg( m_warning, _( "You struggle to reload the fouled %s." ), it->tname() );
+            add_msg( m_warning, to_translation( "You struggle to reload the fouled %s." ), it->tname() );
             moves += 2500;
         }
 
@@ -1638,7 +1647,7 @@ void avatar_action::reload_item()
     } );
 
     if( !item_loc ) {
-        add_msg( _( "Never mind." ) );
+        add_msg( to_translation( "Never mind." ) );
         return;
     }
 
@@ -1655,7 +1664,7 @@ void avatar_action::reload_wielded( bool prompt )
         }
     }
 
-    add_msg( _( "You aren't holding something you can reload." ) );
+    add_msg( to_translation( "You aren't holding something you can reload." ) );
 }
 
 void avatar_action::reload_weapon( bool try_everything )
@@ -1736,7 +1745,7 @@ void avatar_action::unload( avatar &you )
     }, _( "Unload item" ), 1, _( "You have nothing to unload." ) );
 
     if( !loc ) {
-        add_msg( _( "Never mind." ) );
+        add_msg( to_translation( "Never mind." ) );
         return;
     }
     avatar_funcs::unload_item( you, *loc );
@@ -1768,6 +1777,6 @@ void avatar_action::unload_all( avatar &you, bool inv )
     }
 
     if( !unloaded ) {
-        add_msg( _( "You have nothing to unload." ) );
+        add_msg( to_translation( "You have nothing to unload." ) );
     }
 }

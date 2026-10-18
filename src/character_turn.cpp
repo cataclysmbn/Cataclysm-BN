@@ -232,7 +232,7 @@ void Character::process_turn()
             i.incapacitated_time -= action_time_scale::calendar_duration_this_tick();
             if( i.incapacitated_time <= 0_turns ) {
                 i.incapacitated_time = 0_turns;
-                add_msg_if_player( m_bad, _( "Your %s bionic comes back online." ), i.info().name );
+                add_msg_if_player( m_bad, to_translation( "Your %s bionic comes back online." ), i.info().name );
             }
         }
     }
@@ -352,7 +352,7 @@ void Character::process_turn()
 
         if( !martial_arts_data->has_martialart( ma ) && can_autolearn_martial_art( *this, ma ) ) {
             martial_arts_data->add_martialart( ma );
-            add_msg_if_player( m_info, _( "You have learned a new style: %s!" ), ma.obj().name );
+            add_msg_if_player( m_info, to_translation( "You have learned a new style: %s!" ), ma.obj().name );
         }
     }
 
@@ -576,16 +576,16 @@ void Character::process_one_effect( effect &it, bool is_new )
         if( is_new || it.activated( calendar::turn, "HURT", val, reduced, mod ) ) {
             if( !bp ) {
                 if( val > 5 ) {
-                    add_msg_if_player( _( "Your %s HURTS!" ), body_part_name_accusative( bp_torso ) );
+                    add_msg_if_player( to_translation( "Your %s HURTS!" ), body_part_name_accusative( bp_torso ) );
                 } else if( val > 0 ) {
-                    add_msg_if_player( _( "Your %s hurts!" ), body_part_name_accusative( bp_torso ) );
+                    add_msg_if_player( to_translation( "Your %s hurts!" ), body_part_name_accusative( bp_torso ) );
                 }
                 apply_damage( nullptr, bodypart_id( "torso" ), val, true );
             } else {
                 if( val > 5 ) {
-                    add_msg_if_player( _( "Your %s HURTS!" ), body_part_name_accusative( bp ) );
+                    add_msg_if_player( to_translation( "Your %s HURTS!" ), body_part_name_accusative( bp ) );
                 } else if( val > 0 ) {
-                    add_msg_if_player( _( "Your %s hurts!" ), body_part_name_accusative( bp ) );
+                    add_msg_if_player( to_translation( "Your %s hurts!" ), body_part_name_accusative( bp ) );
                 }
                 apply_damage( nullptr, bp.id(), val, true );
             }
@@ -598,7 +598,7 @@ void Character::process_one_effect( effect &it, bool is_new )
         mod = 1;
         if( ( is_new || it.activated( calendar::turn, "SLEEP", val, reduced, mod ) ) &&
             !has_effect( efftype_id( "sleep" ) ) ) {
-            add_msg_if_player( _( "You pass out!" ) );
+            add_msg_if_player( to_translation( "You pass out!" ) );
             fall_asleep( time_duration::from_turns( val ) );
         }
     }
@@ -668,7 +668,8 @@ void Character::process_effects_internal()
     if( has_trait( trait_THRESH_MYCUS ) && has_effect( effect_fungus ) ) {
         vomit();
         remove_effect( effect_fungus );
-        add_msg_if_player( m_bad, _( "We have mistakenly colonized a local guide!  Purging now." ) );
+        add_msg_if_player( m_bad,
+                           to_translation( "We have mistakenly colonized a local guide!  Purging now." ) );
     }
     if( has_trait( trait_PARAIMMUNE ) && ( has_effect( effect_dermatik ) ||
                                            has_effect( effect_tapeworm ) ||
@@ -680,7 +681,7 @@ void Character::process_effects_internal()
         remove_effect( effect_bloodworms );
         remove_effect( effect_brainworms );
         remove_effect( effect_paincysts );
-        add_msg_if_player( m_good, _( "Something writhes and inside of you as it dies." ) );
+        add_msg_if_player( m_good, to_translation( "Something writhes and inside of you as it dies." ) );
     }
     if( has_trait( trait_ACIDBLOOD ) && ( has_effect( effect_dermatik ) ||
                                           has_effect( effect_bloodworms ) ||
@@ -691,7 +692,7 @@ void Character::process_effects_internal()
     }
     if( has_trait( trait_EATHEALTH ) && has_effect( effect_tapeworm ) ) {
         remove_effect( effect_tapeworm );
-        add_msg_if_player( m_good, _( "Your bowels gurgle as something inside them dies." ) );
+        add_msg_if_player( m_good, to_translation( "Your bowels gurgle as something inside them dies." ) );
     }
 
     //Human only effects
@@ -1229,12 +1230,12 @@ void do_pause( Character &who )
         if( total_left > 3_turns && !who.is_dangerous_fields( here.field_at( who.bub_pos() ) ) ) {
             who.add_effect( effect_downed, 2_turns, bodypart_str_id::NULL_ID(), 0, true );
             who.add_msg_player_or_npc( m_warning,
-                                       _( "You roll on the ground, trying to smother the fire!" ),
-                                       _( "<npcname> rolls on the ground!" ) );
+                                       to_translation( "You roll on the ground, trying to smother the fire!" ),
+                                       to_translation( "<npcname> rolls on the ground!" ) );
         } else if( total_removed > 0_turns ) {
             who.add_msg_player_or_npc( m_warning,
-                                       _( "You attempt to put out the fire on you!" ),
-                                       _( "<npcname> attempts to put out the fire on them!" ) );
+                                       to_translation( "You attempt to put out the fire on you!" ),
+                                       to_translation( "<npcname> attempts to put out the fire on them!" ) );
         }
     } else if( who.has_effect( effect_bleed ) ) {
         // Try to staunch bleeding if we're not busy being set on fire.
@@ -1255,8 +1256,8 @@ void do_pause( Character &who )
 
         if( total_removed > 0_turns ) {
             who.add_msg_player_or_npc( m_warning,
-                                       _( "You put pressure on your bleeding wounds." ),
-                                       _( "<npcname> puts pressure on their bleeding wounds." ) );
+                                       to_translation( "You put pressure on your bleeding wounds." ),
+                                       to_translation( "<npcname> puts pressure on their bleeding wounds." ) );
             who.practice( skill_firstaid, 1, 2 );
         }
     }
@@ -1310,7 +1311,8 @@ void search_surroundings( Character &who )
             ( tr.loadid == tr_beartrap_buried ||
               tr.loadid == tr_landmine_buried || tr.loadid == tr_sinkhole ) ) {
             const std::string direction = direction_name( direction_from( who.bub_pos(), tp ) );
-            who.add_msg_if_player( m_warning, _( "Your ground sonar detected a %1$s to the %2$s!" ),
+            who.add_msg_if_player( m_warning,
+                                   to_translation( "Your ground sonar detected a %1$s to the %2$s!" ),
                                    tr.name(), direction );
             who.add_known_trap( tp, tr );
         }
@@ -1327,7 +1329,7 @@ void search_surroundings( Character &who )
                 // Only bug player about traps that aren't trivial to spot.
                 const std::string direction = direction_name(
                                                   direction_from( who.bub_pos(), tp ) );
-                who.add_msg_if_player( _( "You've spotted a %1$s to the %2$s!" ),
+                who.add_msg_if_player( to_translation( "You've spotted a %1$s to the %2$s!" ),
                                        tr.name(), direction );
                 // Get a bit of experience for spotting traps.
                 who.practice( skill_traps, tr.get_visibility() );
