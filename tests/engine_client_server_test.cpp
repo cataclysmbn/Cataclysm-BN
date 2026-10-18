@@ -407,7 +407,8 @@ TEST_CASE(
         "4");
     CHECK_FALSE(test.pump(hello + subscribe + stale + other));
     CHECK(test.queued.empty());
-    CHECK(contains(test.output.str(), R"("stage":"rejected","error":"stale_revision")"));
+    CHECK(contains(test.output.str(),
+                   R"("stage":"rejected","stage_text":"Refused.","error":"stale_revision")"));
     CHECK(contains(test.output.str(), R"("kind":"stale_epoch")"));
 }
 
@@ -455,7 +456,8 @@ TEST_CASE(
         subscribe
         + test.submit_text(R"({"kind":"choose","choice_id":"choice:yes"})", test.schema())));
     const auto out = test.output.str();
-    const auto interrupted = index_of(out, R"("stage":"interrupted","error":"stale_epoch")");
+    const auto interrupted =
+        index_of(out, R"("stage":"interrupted","stage_text":"Interrupted.","error":"stale_epoch")");
     const auto resync = index_of(out, R"("method":"bn.resync")");
     REQUIRE(interrupted != std::string::npos);
     REQUIRE(resync != std::string::npos);
@@ -645,7 +647,8 @@ TEST_CASE("an invoke runs an affordance of the top screen", "[engine_client_serv
     SECTION("a screen that is not on top is stale_screen and delivers nothing") {
         CHECK_FALSE(test.pump(hello + subscribe + invoke("3", R"({"screen_id":"screen:closed"})")));
         CHECK(test.queued.empty());
-        CHECK(contains(test.output.str(), R"("stage":"rejected","error":"stale_screen")"));
+        CHECK(contains(test.output.str(),
+                       R"("stage":"rejected","stage_text":"Refused.","error":"stale_screen")"));
     }
     SECTION("an affordance the screen does not offer is unknown_affordance") {
         CHECK_FALSE(test.pump(
@@ -656,7 +659,9 @@ TEST_CASE("an invoke runs an affordance of the top screen", "[engine_client_serv
                       + R"("},"operation":{"kind":"invoke","affordance_id":"bn:nothing"}})",
                   "3")));
         CHECK(test.queued.empty());
-        CHECK(contains(test.output.str(), R"("stage":"rejected","error":"unknown_affordance")"));
+        CHECK(
+            contains(test.output.str(),
+                     R"("stage":"rejected","stage_text":"Refused.","error":"unknown_affordance")"));
     }
     SECTION("a boundary expectation for an affordance that expects a screen is invalid_arguments") {
         const auto current = test.authority.current();
@@ -667,7 +672,9 @@ TEST_CASE("an invoke runs an affordance of the top screen", "[engine_client_serv
                      R"({"boundary_id":")" + current->value.interaction.id + R"(","revision":")"
                          + std::to_string(current->at.revision) + R"("})")));
         CHECK(test.queued.empty());
-        CHECK(contains(test.output.str(), R"("stage":"rejected","error":"invalid_arguments")"));
+        CHECK(
+            contains(test.output.str(),
+                     R"("stage":"rejected","stage_text":"Refused.","error":"invalid_arguments")"));
     }
 }
 
@@ -726,7 +733,8 @@ TEST_CASE("screen-scoped invokes queue behind the running command", "[engine_cli
         CHECK_FALSE(test.pump(""));
         const auto out = test.output.str();
         CHECK(count_of(out, R"("stage":"completed")") == 1);
-        CHECK(count_of(out, R"("stage":"rejected","error":"stale_screen")") == 2);
+        CHECK(count_of(out, R"("stage":"rejected","stage_text":"Refused.","error":"stale_screen")")
+              == 2);
         CHECK(test.queued.empty());
     }
     SECTION("a world replacement interrupts what waits") {
@@ -736,7 +744,9 @@ TEST_CASE("screen-scoped invokes queue behind the running command", "[engine_cli
         test.authority.replace_world();
         test.next_boundary();
         CHECK_FALSE(test.pump(""));
-        CHECK(count_of(test.output.str(), R"("stage":"interrupted","error":"stale_epoch")") == 3);
+        CHECK(count_of(test.output.str(),
+                       R"("stage":"interrupted","stage_text":"Interrupted.","error":"stale_epoch")")
+              == 3);
     }
 }
 
@@ -1096,7 +1106,8 @@ TEST_CASE("shutdown flushes the stage changes it caused", "[engine_client_server
     REQUIRE(test.server.finish(test.output));
     const auto out = test.output.str();
     const auto executing = index_of(out, R"("stage":"executing")");
-    const auto interrupted = index_of(out, R"("stage":"interrupted","error":"not_ready")");
+    const auto interrupted =
+        index_of(out, R"("stage":"interrupted","stage_text":"Interrupted.","error":"not_ready")");
     REQUIRE(executing != std::string::npos);
     REQUIRE(interrupted != std::string::npos);
     CHECK(executing < interrupted);
