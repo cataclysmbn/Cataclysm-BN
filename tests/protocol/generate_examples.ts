@@ -15,6 +15,7 @@ import { fileURLToPath } from "node:url"
 import { Ajv2020 } from "npm:ajv@8.17.1/dist/2020.js"
 import { type Example, Recorder } from "./scenarios/driver.ts"
 import { scenarios } from "./scenarios/mod.ts"
+import { firstDifferences } from "./first_differences.ts"
 
 const root = new URL("../../docs/schema/engine-client/", import.meta.url)
 const examplesDir = new URL("0.2.examples/", root)
@@ -120,6 +121,7 @@ for (const [name, text] of generated) {
   if (current === text) continue
   drifted.push(name)
   if (!check) await Deno.writeTextFile(file(name), text)
+  else console.error(`${name}:\n${firstDifferences(current ?? "", text)}`)
 }
 if (check && drifted.length > 0) {
   console.error(
