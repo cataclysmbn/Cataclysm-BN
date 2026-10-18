@@ -251,16 +251,6 @@
       }
     },
     {
-      "name": "hold, result",
-      "def": "empty_params",
-      "value": {}
-    },
-    {
-      "name": "release, result",
-      "def": "empty_params",
-      "value": {}
-    },
-    {
       "name": "hold of an affordance that is not a step",
       "def": "application_error",
       "value": {
@@ -268,8 +258,8 @@
         "message": "That needs other details.",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "36",
-          "revision": "17"
+          "sequence": "33",
+          "revision": "16"
         }
       }
     },
@@ -281,10 +271,20 @@
         "message": "That screen has closed.",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "36",
-          "revision": "17"
+          "sequence": "33",
+          "revision": "16"
         }
       }
+    },
+    {
+      "name": "hold, result",
+      "def": "empty_params",
+      "value": {}
+    },
+    {
+      "name": "release, result",
+      "def": "empty_params",
+      "value": {}
     }
   ],
   "invalid": [

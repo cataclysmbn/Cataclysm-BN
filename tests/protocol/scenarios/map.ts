@@ -66,8 +66,6 @@ export const map: Scenario = {
       }
       rec.accept("a step of the map the player can hold", "affordance", arrow)
       rec.accept("hold of the east step", "hold_params", hold)
-      rec.accept("hold, result", "empty_params", await engine.result("bn.hold", hold))
-      rec.accept("release, result", "empty_params", await engine.result("bn.release", {}))
       const wait = engine.top().affordances.find((entry: Value) => entry.id === "wait")
       assert(wait && !wait.holdable, "an action that is not a step cannot be held")
       const refused = await engine.request("bn.hold", { ...hold, affordance_id: wait.id })
@@ -80,6 +78,9 @@ export const map: Scenario = {
       const gone = await engine.request("bn.hold", { ...hold, screen_id: "screen:closed" })
       assertEquals(gone.error.data.kind, "stale_screen")
       rec.accept("hold aimed at a screen that is not on top", "application_error", gone.error.data)
+      // How many steps a hold takes runs by the clock, so the examples that carry a sequence come first.
+      rec.accept("hold, result", "empty_params", await engine.result("bn.hold", hold))
+      rec.accept("release, result", "empty_params", await engine.result("bn.release", {}))
       rec.reject(
         "hold without the affordance",
         "hold_params",
