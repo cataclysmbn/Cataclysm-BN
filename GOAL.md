@@ -52,14 +52,28 @@ The existing replay smoke compares the complete avatar `.sav`. Wider saved-world
 
 The measured tutorial RPC baseline is approximately 1,716 state queries/s and 628 screen queries/s. At 200 queries/s, each endpoint completed 1,000 calls within 5 ms; worst endpoint p99 was 2.36 ms. Reuse this as a scoped observation baseline when evaluating subsequent changes. Event bursts, rendering, and heavy gameplay require their own measurements.
 
+## Status (2026-10-18)
+
+Checked boxes below have evidence in the current tree; package board and validation detail: `progress.md`.
+
+| Package        | State                                                                                                                                                                                                                                       |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| M1 contract    | Protocol 0.2 schema, `docs/en/dev/reference/engine_client_protocol.md` (one clock, stale rejection, coordinates, knowledge states), presentation events (projectile, explosion, sound). Open: null/recording sinks, observer-purity tests   |
+| M4 delivery    | Credits, `max_hz`, held-frame bounds, `bn.resync`, non-blocking stdio and Unix socket with spectators, activity frames before completion (`tests/protocol/socket_test.ts`). Open: partial-write, stalled-reader and shutdown tests as a set |
+| M5 conformance | Deno consumer (`tests/protocol/stdio_test.ts`, `mirror_test.ts`) rebuilds state from snapshot + events. Open: reconnect recovery and comparison with an engine-side recording                                                               |
+| M0/M2, M3      | Explosion clock ported; grenade/projectile events published. Open: RNG/state equality across presentation modes, native Tiles/Curses adaptation                                                                                             |
+| M6             | `tests/protocol/determinism_test.ts` compares per-turn hashes across client conditions; latency measurements per fix. Open: recorded budgets, full acceptance matrix                                                                        |
+| P1, P2         | Not worked since 2026-10-10 (purity fixes reverted for suite OOM)                                                                                                                                                                           |
+| P3             | Most screens semantic; Rust clients (`~/repo/cata/bn-client-egui`) play through the protocol; user-reported client UI items in `out/lanes/checklist.md`. Open: raw-key screens, debug screens, per-slice cross-client replay                |
+
 ## Work packages
 
 Packages are resumable units, not calendar-day promises. Complete each gate before accepting the package; independent packages can proceed in parallel.
 
 ### P0 — Recover the current work and assign ownership
 
-- [ ] Read this file, `AGENTS.md`, current source, and the latest relevant handoffs.
-- [ ] Verify branches, worktrees, partial changes, exact run IDs, and remaining processes.
+- [x] Read this file, `AGENTS.md`, current source, and the latest relevant handoffs.
+- [x] Verify branches, worktrees, partial changes, exact run IDs, and remaining processes.
 - [ ] Give each lane an owner, exclusive source boundary, validation gate, and durable handoff location.
 - [ ] Resume the existing observation and clock sessions with the supporting-file and diagnostic decisions needed to unblock them.
 - [ ] Enumerate remaining custom UI screens and their current semantic/fallback coverage.
@@ -103,8 +117,8 @@ Compatibility decision already approved: logical time plus insertion ordinal is 
 
 ### M1 — Implement the shared event and external interface contract
 
-- [ ] Define the smallest complete command, observation, and event schemas needed for the first end-to-end slice.
-- [ ] Specify negotiation, readiness, stale-request rejection, epochs, sequences, revisions, coordinates, asset references, and visibility transitions.
+- [x] Define the smallest complete command, observation, and event schemas needed for the first end-to-end slice.
+- [x] Specify negotiation, readiness, stale-request rejection, epochs, sequences, revisions, coordinates, asset references, and visibility transitions.
 - [ ] Add value-only events, a null sink, and a recording sink.
 - [ ] Capture results while source objects are valid and visibility is known.
 - [ ] Test ownership/lifetime, hidden-state filtering, ordering, malformed data, and observer purity.
@@ -122,18 +136,18 @@ Compatibility decision already approved: logical time plus insertion ordinal is 
 
 ### M4 — Implement bounded asynchronous delivery
 
-- [ ] Implement negotiated batching, flush boundaries, owned queues, and a single output owner.
-- [ ] Deliver intermediate events before action completion.
-- [ ] Implement credits/backpressure, safe yielding, readiness, and independent transport control.
-- [ ] Implement disconnect, reconnect, retained-history checks, and explicit resynchronization.
+- [x] Implement negotiated batching, flush boundaries, owned queues, and a single output owner.
+- [x] Deliver intermediate events before action completion.
+- [x] Implement credits/backpressure, safe yielding, readiness, and independent transport control.
+- [x] Implement disconnect, reconnect, retained-history checks, and explicit resynchronization.
 - [ ] Test resource bounds, partial writes, malformed frames, stalled readers, shutdown, and command re-entry protection.
 
 **Gate:** Real IPC streams during long actions without per-frame round trips; required ordering, memory bounds, responsiveness, and safe recovery hold.
 
 ### M5 — Demonstrate language-neutral conformance
 
-- [ ] Exercise the public interface from a non-C++ test consumer using the repository's existing test tooling where practical.
-- [ ] Reconstruct visible state from an initial snapshot and subsequent event batches.
+- [x] Exercise the public interface from a non-C++ test consumer using the repository's existing test tooling where practical.
+- [x] Reconstruct visible state from an initial snapshot and subsequent event batches.
 - [ ] Verify sequence/revision rules, selection commands, readiness, errors, and reconnect recovery.
 - [ ] Compare reconstructed state and ordered events against an engine-side recording consumer.
 
