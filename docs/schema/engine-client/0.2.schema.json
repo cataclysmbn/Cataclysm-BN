@@ -3323,6 +3323,10 @@
           "minimum": 1,
           "maximum": 9007199254740991
         },
+        "turn": {
+          "$ref": "#/$defs/counter",
+          "description": "The game turn the line was logged on, or last repeated on: lines of one turn share it, so a client can set the turns apart."
+        },
         "label": {
           "oneOf": [
             {
@@ -3346,6 +3350,7 @@
         "kind",
         "color",
         "count",
+        "turn",
         "label"
       ],
       "additionalProperties": false,

@@ -1437,6 +1437,7 @@
               "kind": "neutral",
               "color": "c_white",
               "count": 1,
+              "turn": "3600",
               "label": "You open the door."
             }
           },
@@ -1452,6 +1453,7 @@
               "kind": "neutral",
               "color": "c_white",
               "count": 2,
+              "turn": "3600",
               "label": "You open the door. x 2"
             }
           }
@@ -2122,6 +2124,7 @@
         "kind": "neutral",
         "color": "c_white",
         "count": 1,
+        "turn": "3600",
         "label": "You open the door.",
         "lang": "en"
       }
@@ -2140,6 +2143,7 @@
         "kind": "good",
         "color": "c_light_green",
         "count": 1,
+        "turn": "3600",
         "label": {
           "key": "The %s dies!",
           "args": [
@@ -2162,6 +2166,7 @@
         "kind": "good",
         "color": "c_light_green",
         "count": 2,
+        "turn": "3600",
         "label": {
           "key": "%s x %d",
           "args": [
@@ -2188,6 +2193,7 @@
         "kind": "good",
         "color": "c_light_green",
         "count": 1,
+        "turn": "3600",
         "label": "5"
       }
     },
@@ -2204,6 +2210,7 @@
         "kind": "good",
         "color": "c_light_green",
         "count": 1,
+        "turn": "3600",
         "label": {
           "key": "The %s dies!",
           "args": [
@@ -2525,6 +2532,7 @@
               "kind": "neutral",
               "color": "c_white",
               "count": 0,
+              "turn": "3600",
               "label": "You open the door."
             }
           }

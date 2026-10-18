@@ -314,6 +314,7 @@
             "kind": "neutral",
             "color": "c_white",
             "count": 1,
+            "turn": "3600",
             "label": "You have survived the initial wave of panic."
           },
           {
@@ -322,6 +323,7 @@
             "kind": "neutral",
             "color": "c_white",
             "count": 2,
+            "turn": "3600",
             "label": "You open the door. x 2"
           }
         ],
@@ -1011,6 +1013,7 @@
             "kind": "neutral",
             "color": "c_white",
             "count": 1,
+            "turn": "3600",
             "label": ""
           }
         ],

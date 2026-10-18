@@ -778,7 +778,8 @@ auto to_json( const localised_text &value ) -> json
 auto to_json( const message_value &line ) -> json
 {
     auto result = json{{"id", std::to_string( line.id )}, {"text", line.text}, {"kind", line.kind},
-        {"color", line.color}, {"count", line.count}, {"label", line.label}};
+        {"color", line.color}, {"count", line.count}, {"turn", std::to_string( line.turn )},
+        {"label", line.label}};
     if( line.localised ) {
         const auto text = to_json( *line.localised );
         result["text"] = text;

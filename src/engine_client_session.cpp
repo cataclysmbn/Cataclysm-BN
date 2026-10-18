@@ -124,7 +124,8 @@ auto to_message( const Messages::feed_entry &entry ) -> message_value
         .id = entry.id, .text = std::move( text ),
         .kind = kind == msg_type_and_names().end() ? "neutral" : kind->second,
         .color = get_all_colors().get_name( msgtype_to_color( entry.type ) ),
-        .count = static_cast<counter>( entry.count ), .label = std::move( label ),
+        .count = static_cast<counter>( entry.count ), .turn = static_cast<counter>( entry.turn ),
+        .label = std::move( label ),
         .localised = std::move( localised )
     };
 }

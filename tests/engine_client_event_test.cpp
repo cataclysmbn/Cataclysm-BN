@@ -579,7 +579,7 @@ TEST_CASE("message lines take sequences in order and never a revision", "[engine
         nlohmann::json::parse(
             serialize_events({.epoch = "epoch:a", .events = {*repeat}}))["events"][0]["data"]
         == nlohmann::json::parse(
-            R"({"id":"7","text":"You open the door.","kind":"neutral","color":"c_white","count":2,"label":"You open the door. x 2"})"));
+            R"({"id":"7","text":"You open the door.","kind":"neutral","color":"c_white","count":2,"turn":"0","label":"You open the door. x 2"})"));
 }
 
 TEST_CASE(

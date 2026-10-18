@@ -75,6 +75,8 @@ struct message_value {
     /// Native color name of the type for a new message.
     std::string color = {};
     counter count = 1;
+    /// The game turn the line was logged on, or last repeated on.
+    counter turn = 0;
     /// The line the way the native log prints it: `text`, with the native repeat suffix from `count` 2 on.
     std::string label = {};
     /// Set on the copy a connection reads of a line that is not in its own locale: the BN language id the line is in.

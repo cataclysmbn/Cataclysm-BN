@@ -388,7 +388,7 @@ auto Messages::feed_since( const feed_cursor &after ) -> std::vector<feed_entry>
     };
     const auto entry = []( const game_message & m ) {
         return feed_entry{ .id = m.serial, .text = m.message, .type = m.type, .count = m.count,
-                           .localised = m.localised };
+                           .turn = to_turn<int>( m.turn() ), .localised = m.localised };
     };
     return player_messages.messages | filter( unseen ) | transform( entry ) |
            std::ranges::to<std::vector>();

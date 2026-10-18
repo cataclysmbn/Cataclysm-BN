@@ -1,3 +1,4 @@
+#include "calendar.h"
 #include "enums.h"
 #include "message_feed.h"
 #include "messages.h"
@@ -27,6 +28,7 @@ struct fake_line {
     std::string text;
     game_message_type type = m_neutral;
     int count = 1;
+    int turn = 0;
     std::optional<localised_text> localised;
 };
 auto fake_log = std::vector<fake_line>{};
@@ -36,14 +38,17 @@ auto fake_add(
     std::string text, const game_message_type type,
     std::optional<localised_text> localised = std::nullopt) -> void {
     if (text.empty()) { return; }
+    const auto turn = to_turn<int>(calendar::turn);
     if (!fake_log.empty() && fake_log.back().text == text && fake_log.back().type == type) {
         ++fake_log.back().count;
+        fake_log.back().turn = turn;
         return;
     }
     fake_log.push_back(
         {.serial = ++fake_serial,
          .text = std::move(text),
          .type = type,
+         .turn = turn,
          .localised = std::move(localised)});
 }
 } // namespace
@@ -70,6 +75,7 @@ auto Messages::feed_since(const feed_cursor& after) -> std::vector<feed_entry> {
                  .text = line.text,
                  .type = line.type,
                  .count = line.count,
+                 .turn = line.turn,
                  .localised = line.localised});
         }
     }

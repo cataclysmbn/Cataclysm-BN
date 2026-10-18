@@ -22,6 +22,8 @@ struct feed_entry {
     std::string text;
     game_message_type type = m_neutral;
     int count = 1;
+    /// The game turn the message was logged on, or last repeated on.
+    int turn = 0;
     /// What a client renders in its own language, for a line made from a translatable format.
     std::optional<localised_text> localised;
 };
