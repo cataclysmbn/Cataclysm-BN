@@ -466,4 +466,10 @@ TEST_CASE(
           == localised_text{.key = "You start spinning web with your spinnerets!"});
 }
 
+TEST_CASE("a format with no values reads as written", "[engine_client_localised][messages]") {
+    Messages::clear_messages();
+    add_msg(to_translation("You reeled in %s."));
+    CHECK(newest_line().text == "You reeled in %s.");
+}
+
 #endif // CATA_MCP
