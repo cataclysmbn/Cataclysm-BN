@@ -865,6 +865,83 @@ TEST_CASE(
     REQUIRE(dropped.size() == 1);
     CHECK(dropped.front().count == 3);
 }
+namespace {
+/// The key as a client presses it: the first enabled affordance of the screen on top that binds it,
+/// a digit.
+auto press_digit(const std::string& key) -> input_event {
+    const auto affordances = top_screen()["affordances"];
+    const auto bound = std::find_if(affordances.begin(), affordances.end(), [&](const auto& entry) {
+        const auto& keys = entry["keys"];
+        return entry["enabled"] == true && std::find(keys.begin(), keys.end(), key) != keys.end();
+    });
+    REQUIRE(bound != affordances.end());
+    CHECK((*bound)["role"] == "digit");
+    return invoke((*bound)["id"].get<std::string>());
+}
+} // namespace
+TEST_CASE(
+    "real inventory multiselect counts the digits typed before the mark as the native list does",
+    "[client][interaction][inventory][mcp]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    const auto guard = interaction_test_guard{};
+    auto& you = get_avatar();
+    you.i_add(item::spawn("test_platinum_bit", calendar::turn, 7));
+    auto selector = inventory_iuse_selector(you, "Use");
+    selector.add_character_items(you);
+    auto reads = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) -> input_event {
+        switch (reads++) {
+            case 0:
+                return press_digit("0");
+            case 1:
+                return press_digit("6");
+            case 2:
+                return resolve_action("RIGHT");
+            default:
+                break;
+        }
+        CHECK(selector_rows().front()["selected_count"] == 6);
+        return resolve_action("CONFIRM");
+    });
+
+    const auto used = selector.execute();
+    REQUIRE(used.size() == 1);
+    CHECK(used.front().count == 6);
+}
+TEST_CASE(
+    "real drop list opens its count prompt with the digit typed as the native list does",
+    "[client][interaction][inventory][mcp]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    const auto guard = interaction_test_guard{};
+    auto& you = get_avatar();
+    you.i_add(item::spawn("test_platinum_bit", calendar::turn, 7));
+    auto selector = inventory_drop_selector(you);
+    selector.add_character_items(you);
+    auto reads = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) -> input_event {
+        if (reads++ == 0) { return press_digit("6"); }
+        if (reads == 2) {
+            const auto snapshot = game_client::current_interaction();
+            REQUIRE(snapshot.field);
+            CHECK(snapshot.field->value == "6");
+            return resolve({
+                .input_id = snapshot.input_id,
+                .operation = game_client::interaction_operation::fill,
+                .target_id = snapshot.field->id,
+                .value = "3",
+                .submit = true,
+            });
+        }
+        CHECK(selector_rows().front()["selected_count"] == 3);
+        return resolve_action("CONFIRM");
+    });
+
+    const auto dropped = selector.execute();
+    REQUIRE(dropped.size() == 1);
+    CHECK(dropped.front().count == 3);
+}
 TEST_CASE(
     "inventory selection and navigation highlights remain independent",
     "[client][interaction][inventory][mcp]") {
