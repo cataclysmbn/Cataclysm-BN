@@ -1,7 +1,9 @@
 #if defined(CATA_MCP)
 
+#    include "activity_actor_definitions.h"
 #    include "activity_handlers.h"
 #    include "avatar.h"
+#    include "avatar_functions.h"
 #    include "catch/catch.hpp"
 #    include "engine_client_event.h"
 #    include "engine_client_session.h"
@@ -17,12 +19,15 @@
 #    include "messages.h"
 #    include "monattack.h"
 #    include "mondeath.h"
+#    include "monexamine.h"
 #    include "monster.h"
 #    include "npc.h"
+#    include "player_activity.h"
 #    include "player_helpers.h"
 #    include "state_helpers.h"
 #    include "translations.h"
 #    include "trap.h"
+#    include "vehicle/vehicle.h"
 
 #    include <nlohmann/json.hpp>
 #    include <string>
@@ -372,6 +377,46 @@ TEST_CASE(
     REQUIRE(line.localised);
     CHECK(line.localised->key == "You take off your %s.");
     CHECK(line.localised->args.size() == 1);
+}
+
+TEST_CASE(
+    "an action's line carries its format as a LocalisedString",
+    "[engine_client_localised][messages]") {
+    seen_zombie();
+    Messages::clear_messages();
+    avatar_funcs::try_to_sleep(get_avatar());
+    CHECK(newest_line().localised == localised_text{.key = "You start trying to fall asleep."});
+}
+
+TEST_CASE(
+    "an activity's line carries its format as a LocalisedString",
+    "[engine_client_localised][messages]") {
+    seen_zombie();
+    Messages::clear_messages();
+    auto act = player_activity{};
+    autodrive_activity_actor{}.canceled(act, get_avatar());
+    CHECK(newest_line().localised == localised_text{.key = "Auto-drive canceled."});
+}
+
+TEST_CASE(
+    "a vehicle's line carries its format as a LocalisedString",
+    "[engine_client_localised][messages]") {
+    seen_zombie();
+    REQUIRE(get_map()
+                .add_vehicle(vproto_id("bicycle"), get_avatar().bub_pos(), 0_degrees, 0, 0, false));
+    Messages::clear_messages();
+    handbrake();
+    CHECK(newest_line().localised == localised_text{.key = "You pull a handbrake."});
+}
+
+TEST_CASE(
+    "a pet's line carries its format as a LocalisedString", "[engine_client_localised][messages]") {
+    auto& zombie = seen_zombie();
+    Messages::clear_messages();
+    monexamine::tie_pet(zombie);
+    const auto line = newest_line();
+    CHECK(line.text == "You tie your zombie.");
+    CHECK(line.localised == localised_text{.key = "You tie your %s.", .args = {"zombie"}});
 }
 
 #endif // CATA_MCP
