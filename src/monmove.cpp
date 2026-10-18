@@ -2536,13 +2536,13 @@ bool monster::move_to( const tripoint_bub_ms &p, bool force, bool step_on_critte
             // Use more dramatic messages for swimming monsters
             //~ Message when a monster emerges from water
             //~ %1$s: monster name, %2$s: leaps/emerges, %3$s: terrain name
-            add_msg( m_warning, pgettext( "monster movement", "A %1$s %2$s from the %3$s!" ), name(),
+            add_msg( m_warning, to_translation( "monster movement", "A %1$s %2$s from the %3$s!" ), name(),
                      swims() || has_flag( MF_AQUATIC ) ? _( "leaps" ) : _( "emerges" ),
                      g->m.tername( bub_pos() ) );
         } else if( !was_water && will_be_water && g->u.sees( destination ) ) {
             //~ Message when a monster enters water
             //~ %1$s: monster name, %2$s: dives/sinks, %3$s: terrain name
-            add_msg( m_warning, pgettext( "monster movement", "A %1$s %2$s into the %3$s!" ), name(),
+            add_msg( m_warning, to_translation( "monster movement", "A %1$s %2$s into the %3$s!" ), name(),
                      swims() || has_flag( MF_AQUATIC ) ? _( "dives" ) : _( "sinks" ),
                      g->m.tername( destination ) );
         }

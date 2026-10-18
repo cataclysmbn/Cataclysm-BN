@@ -770,16 +770,17 @@ static void set_item_map_or_vehicle( const Character &who, const tripoint_bub_ms
         newit = vp->vehicle().add_item( vp->part_index(), std::move( newit ) );
         if( !newit ) {
             who.add_msg_player_or_npc(
-                pgettext( "item, furniture", "You put the %1$s on the %2$s." ),
-                pgettext( "item, furniture", "<npcname> puts the %1$s on the %2$s." ),
+                to_translation( "item, furniture", "You put the %1$s on the %2$s." ),
+                to_translation( "item, furniture", "<npcname> puts the %1$s on the %2$s." ),
                 obj.tname(), vp->part().name() );
             return;
         }
 
         // Couldn't add the in progress craft to the target part, so drop it to the map.
         who.add_msg_player_or_npc(
-            pgettext( "furniture, item", "Not enough space on the %s. You drop the %s on the ground." ),
-            pgettext( "furniture, item", "Not enough space on the %s. <npcname> drops the %s on the ground." ),
+            to_translation( "furniture, item", "Not enough space on the %s. You drop the %s on the ground." ),
+            to_translation( "furniture, item",
+                            "Not enough space on the %s. <npcname> drops the %s on the ground." ),
             vp->part().name(), newit->tname() );
 
         return set_item_map( loc, std::move( newit ) );
@@ -788,13 +789,13 @@ static void set_item_map_or_vehicle( const Character &who, const tripoint_bub_ms
         if( here.has_furn( loc ) ) {
             const furn_t &workbench = *here.furn( loc );
             who.add_msg_player_or_npc(
-                pgettext( "item, furniture", "You put the %1$s on the %2$s." ),
-                pgettext( "item, furniture", "<npcname> puts the %1$s on the %2$s." ),
+                to_translation( "item, furniture", "You put the %1$s on the %2$s." ),
+                to_translation( "item, furniture", "<npcname> puts the %1$s on the %2$s." ),
                 newit->tname(), workbench.name() );
         } else {
             who.add_msg_player_or_npc(
-                pgettext( "item", "You put the %s on the ground." ),
-                pgettext( "item", "<npcname> puts the %s on the ground." ),
+                to_translation( "item", "You put the %s on the ground." ),
+                to_translation( "item", "<npcname> puts the %s on the ground." ),
                 newit->tname() );
         }
         return set_item_map( loc, std::move( newit ) );
@@ -843,8 +844,8 @@ item *Character::start_craft( craft_command &command, const tripoint_bub_ms & )
             abs_to_bub( bench.position ),
             bench.type == bench_type::hands );
     if( best_found_bench.second < 1.0f ) {
-        add_msg_if_player( m_info, pgettext( "in progress craft",
-                                             "You can't hold %s in your hands and there is no good work surface nearby." ), craft->tname() );
+        add_msg_if_player( m_info, to_translation( "in progress craft",
+                           "You can't hold %s in your hands and there is no good work surface nearby." ), craft->tname() );
     }
 
     // Regardless of whether a workbench exists or not,
@@ -867,8 +868,8 @@ item *Character::start_craft( craft_command &command, const tripoint_bub_ms & )
     assign_activity( std::move( craft_activity ) );
 
     add_msg_player_or_npc(
-        pgettext( "in progress craft", "You start working on the %s." ),
-        pgettext( "in progress craft", "<npcname> starts working on the %s." ),
+        to_translation( "in progress craft", "You start working on the %s." ),
+        to_translation( "in progress craft", "<npcname> starts working on the %s." ),
         craft_in_world->tname() );
     return craft_in_world;
 }

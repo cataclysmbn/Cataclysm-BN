@@ -2778,7 +2778,7 @@ detached_ptr<item> Character::i_add_to_container( detached_ptr<item> &&it, const
         if( contained_ammo.charges < container.ammo_capacity() ) {
             const int diff = container.ammo_capacity() - contained_ammo.charges;
             //~ %1$s: item name, %2$s: container name
-            add_msg( pgettext( "container", "You put the %1$s in your %2$s." ), it->tname(),
+            add_msg( to_translation( "container", "You put the %1$s in your %2$s." ), it->tname(),
                      container.tname() );
             if( diff >= it->charges ) {
                 contained_ammo.merge_charges( std::move( it ) );

@@ -1366,14 +1366,14 @@ bool monexamine::add_armor( monster &z )
     item &armor = *loc;
     units::mass max_weight = z.weight_capacity() - z.get_carried_weight();
     if( max_weight <= armor.weight() ) {
-        add_msg( pgettext( "pet armor", "Your %1$s is too heavy for your %2$s." ), armor.tname( 1 ),
+        add_msg( to_translation( "pet armor", "Your %1$s is too heavy for your %2$s." ), armor.tname( 1 ),
                  pet_name );
         return true;
     }
 
     armor.set_var( "pet_armor", "true" );
     z.set_armor_item( loc->detach() );
-    add_msg( pgettext( "pet armor", "You put the %1$s on your %2$s." ), armor.display_name(),
+    add_msg( to_translation( "pet armor", "You put the %1$s on your %2$s." ), armor.display_name(),
              pet_name );
     // TODO: armoring a horse takes a lot longer than 2 seconds. This should be a long action.
     get_avatar().moves -= 200;
@@ -1391,7 +1391,7 @@ void monexamine::remove_armor( monster &z )
     std::string pet_name = z.get_name();
     if( item *armor = z.get_armor_item() ) {
         get_map().add_item_or_charges( z.bub_pos(), z.remove_armor_item() );
-        add_msg( pgettext( "pet armor", "You remove the %1$s from %2$s." ), armor->display_name(),
+        add_msg( to_translation( "pet armor", "You remove the %1$s from %2$s." ), armor->display_name(),
                  pet_name );
         // TODO: removing armor from a horse takes a lot longer than 2 seconds. This should be a long action.
         get_avatar().moves -= 200;

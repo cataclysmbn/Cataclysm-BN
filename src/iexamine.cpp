@@ -7011,7 +7011,7 @@ static void mill_activate( player &p, const tripoint_bub_ms &examp )
     }
     if( food_volume > sm_rack::MAX_FOOD_VOLUME_MILLING ) {
         add_msg( to_translation( "This mill is overloaded with products, and the millstone can't turn.  Remove some and try again." ) );
-        add_msg( pgettext( "volume units", "You think that you can load about %s %s in it." ),
+        add_msg( to_translation( "volume units", "You think that you can load about %s %s in it." ),
                  format_volume( sm_rack::MAX_FOOD_VOLUME_MILLING ), volume_units_long() );
         return;
     }
@@ -7661,7 +7661,7 @@ static void mill_load_food( player &p, const tripoint_bub_ms &examp,
                                             is_non_rotten_crafting_component );
     for( detached_ptr<item> &m : moved ) {
         p.mod_moves( -p.item_handling_cost( *m ) );
-        add_msg( m_info, pgettext( "item amount and name", "You carefully place %s %s in the mill." ),
+        add_msg( m_info, to_translation( "item amount and name", "You carefully place %s %s in the mill." ),
                  amount, item::nname( m->typeId(), amount ) );
 
         here.add_item( examp, std::move( m ) );

@@ -4032,7 +4032,7 @@ int iuse::rpgdie( player *you, item *die, bool, const tripoint_bub_ms & )
     }
     const int roll = rng( 1, num_sides );
     //~ %1$d: roll number, %2$d: side number of a die, %3$s: die item name
-    you->add_msg_if_player( pgettext( "dice", "You roll a %1$d on your %2$d sided %3$s" ), roll,
+    you->add_msg_if_player( to_translation( "dice", "You roll a %1$d on your %2$d sided %3$s" ), roll,
                             num_sides, die->tname() );
     if( roll == num_sides ) {
         add_msg( m_good, to_translation( "Critical!" ) );
@@ -9092,8 +9092,8 @@ int iuse::craft( player *p, item *it, bool, const tripoint_bub_ms & )
 
     bench_location best_bench = find_best_bench( *p, *it );
     p->add_msg_player_or_npc(
-        pgettext( "in progress craft", "You start working on the %s." ),
-        pgettext( "in progress craft", "<npcname> starts working on the %s." ), craft_name );
+        to_translation( "in progress craft", "You start working on the %s." ),
+        to_translation( "in progress craft", "<npcname> starts working on the %s." ), craft_name );
 
     {
         const recipe &rec = it->get_making();
