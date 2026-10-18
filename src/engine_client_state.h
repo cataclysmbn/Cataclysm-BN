@@ -141,6 +141,12 @@ struct heading {
     std::string name = {};
     auto operator<=>( const heading & ) const = default; // *NOPAD*
 };
+/// A hurt creature's health in the fifths and color of the native look-around bar.
+struct entity_health {
+    int fifths = 0;
+    std::string color = {};
+    auto operator<=>( const entity_health & ) const = default; // *NOPAD*
+};
 /// `sensed` entities carry only id, position and sense.
 struct entity {
     std::string id = {};
@@ -156,6 +162,8 @@ struct entity {
     /// it: the native view marks monsters and NPCs with it.
     std::optional<std::string> attitude = std::nullopt;
     bool aware = false;
+    /// None at full health.
+    std::optional<entity_health> health = std::nullopt;
     std::vector<std::string> statuses = {};
     std::optional<std::string> sense = std::nullopt;
     auto operator<=>( const entity & ) const = default; // *NOPAD*

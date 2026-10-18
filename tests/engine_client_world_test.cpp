@@ -1117,6 +1117,25 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "world capture gives a hurt creature's health as the native look-around bar shows it",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& zombie = spawn_test_monster("mon_zombie", setup.start + tripoint(-3, 1, 0));
+    map_perception::acquire();
+    CHECK_FALSE(ec::world::capture_world().entities.begin()->second.health);
+
+    zombie.set_hp(zombie.get_hp_max() * 2 / 5);
+    const auto state = ec::world::capture_world();
+    REQUIRE(state.entities.size() == 1);
+    const auto& health = state.entities.begin()->second.health;
+    REQUIRE(health);
+    CHECK(health->fifths == 2);
+    CHECK(health->color
+          == get_all_colors().get_name(
+              get_hp_bar(zombie.get_hp(), zombie.get_hp_max(), true).second));
+}
+
+TEST_CASE(
     "world capture lists a character's overlays with the tileset ids to try in the native order",
     "[engine_client_world]") {
     const auto setup = make_scene();
