@@ -296,6 +296,7 @@ auto get_loading_image_cache( loading_image_cache &cache,
         return nullptr;
     }
 
+    SDL_SetTextureScaleMode( cache.texture.get(), SDL_SCALEMODE_LINEAR );
     return &cache;
 }
 
@@ -385,7 +386,7 @@ struct sdl_render_state_guard {
             SDL_GetRenderClipRect( renderer.get(), &*clip_rect );
         }
         SDL_SetRenderClipRect( renderer.get(), nullptr );
-        SDL_SetRenderLogicalPresentation( renderer.get(), 0, 0, present );
+        SDL_SetRenderLogicalPresentation( renderer.get(), 0, 0, SDL_LOGICAL_PRESENTATION_DISABLED );
         SDL_SetRenderScale( renderer.get(), 1.0f, 1.0f );
         SDL_SetRenderViewport( renderer.get(), nullptr );
     }
@@ -394,7 +395,7 @@ struct sdl_render_state_guard {
         if( logical_size.x > 0 && logical_size.y > 0 ) {
             SDL_SetRenderLogicalPresentation( renderer.get(), logical_size.x, logical_size.y, present );
         } else {
-            SDL_SetRenderLogicalPresentation( renderer.get(), 0, 0, present );
+            SDL_SetRenderLogicalPresentation( renderer.get(), 0, 0, SDL_LOGICAL_PRESENTATION_DISABLED );
             SDL_SetRenderScale( renderer.get(), scale_x, scale_y );
             SDL_SetRenderViewport( renderer.get(), &viewport );
         }
