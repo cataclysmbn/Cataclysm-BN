@@ -17,6 +17,7 @@
 #include "client_memory.h"
 #include "game_constants.h"
 #include "language.h"
+#include "catalogue_files.h"
 #include "locale_scope.h"
 #include "overmap/overmap_ui.h"
 #include <ranges>
@@ -915,6 +916,8 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         }
         if( !current ) { return fail( current.error() ); }
         if( foreign_locale() ) { for( auto &line : current->log ) { line.lang = get_language().id; } }
+        current->catalogues = localization::catalogue_files( locale_.empty() ? get_language().id :
+                              locale_ );
         const auto wire = serialize_snapshot( *current );
         if( !wire ) { return fail( wire.error() ); }
         // The parts follow the response frame, before any event after `current->at`.

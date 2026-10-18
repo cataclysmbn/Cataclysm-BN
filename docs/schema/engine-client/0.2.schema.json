@@ -4387,6 +4387,13 @@
           "maxItems": 100,
           "description": "The newest message log lines, oldest first, as `message.logged` events carry them. Omitted when the log is empty. Applying the stream's `message.logged` events to this list (a repeat replaces the line with the same id; keep the newest 100) gives the list a later subscribe returns."
         },
+        "catalogues": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The gettext catalogue files (paths on the engine's machine) the connection's LocalisedStrings are worded from, in lookup order: the base game's, then the active mods'. An earlier file's entry wins unless only a later one has plural forms. Omitted for a language with none, such as English."
+        },
         "parts": {
           "type": "integer",
           "minimum": 0,

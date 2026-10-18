@@ -1,6 +1,7 @@
 #include "language.h"
 
 #include <algorithm>
+#include <filesystem>
 #include <fstream>
 #include <map>
 #include <sstream>
@@ -21,6 +22,7 @@
 #include "cached_options.h"
 #include "cata_libintl.h"
 #include "catacharset.h"
+#include "catalogue_files.h"
 #include "debug.h"
 #include "filesystem.h"
 #include "fstream_utils.h"
@@ -490,52 +492,64 @@ static void set_library( catalogue_collection collection )
     invalidate_translations();
 }
 
-static void add_cat_if_exists( catalogue_collection &list, const std::string &lang_id,
-                               const std::string &path_start, const std::string &path_end )
+/// The first catalogue of `lang_id` between `path_start` and `path_end` that exists, the language with its dialect first.
+static auto existing_catalogue( const std::string &lang_id, const std::string &path_start,
+                                const std::string &path_end ) -> std::optional<std::string>
 {
-    std::vector<std::string> opts = get_lang_path_substring( lang_id );
-    for( const std::string &s : opts ) {
-        std::string path = path_start + s + path_end;
-        if( !file_exist( path ) ) {
-            continue;
+    const auto opts = get_lang_path_substring( lang_id );
+    const auto found = std::ranges::find_if( opts, [&]( const std::string & s ) { return file_exist( path_start + s + path_end ); } );
+    return found == opts.end() ? std::nullopt : std::optional{ path_start + *found + path_end };
+}
+
+static auto base_catalogue( const std::string &lang_id ) -> std::optional<std::string>
+{
+    // TODO: split source code strings from data strings
+    //       and load data translations from separate file(s)
+    return existing_catalogue( lang_id, PATH_INFO::base_path() + "lang/mo/",
+                               "/LC_MESSAGES/cataclysm-bn.mo" );
+}
+
+static auto mod_catalogue( const std::string &lang_id,
+                           const std::string &mod_path ) -> std::optional<std::string>
+{
+    return existing_catalogue( lang_id, mod_path + "/lang/", ".mo" );
+}
+
+static void add_cat_if_exists( catalogue_collection &list, const std::optional<std::string> &path )
+{
+    if( !path ) {
+        return;
+    }
+    try {
+        auto buffer = std::stringstream{};
+        auto file = std::move( cata_ifstream().mode( cata_ios_mode::binary ).open( *path ) );
+        if( !file.is_open() ) { throw std::runtime_error( "failed to open file" ); }
+        buffer << file->rdbuf();
+        if( file.fail() ) { throw std::runtime_error( "failed to read file" ); }
+        auto bytes = buffer.str();
+        auto hash = localization::content_hash{};
+        if( list.track_identity ) {
+            hash.add( "mo-buffer-v1" );
+            hash.add( bytes );
+            localization::record_catalogue_hash( bytes.size() );
         }
-        try {
-            auto buffer = std::stringstream{};
-            auto file = std::move( cata_ifstream().mode( cata_ios_mode::binary ).open( path ) );
-            if( !file.is_open() ) { throw std::runtime_error( "failed to open file" ); }
-            buffer << file->rdbuf();
-            if( file.fail() ) { throw std::runtime_error( "failed to read file" ); }
-            auto bytes = buffer.str();
-            auto hash = localization::content_hash{};
-            if( list.track_identity ) {
-                hash.add( "mo-buffer-v1" );
-                hash.add( bytes );
-                localization::record_catalogue_hash( bytes.size() );
-            }
-            auto catalogue = trans_catalogue::load_from_memory( std::move( bytes ) );
-            list.catalogues.push_back( std::move( catalogue ) );
-            if( list.track_identity ) { list.identity.add( std::to_string( hash.value() ) ); }
-        } catch( const std::runtime_error &err ) {
-            debugmsg( "Failed to load translation catalogue '%s': %s", path, err.what() );
-        }
-        break;
+        auto catalogue = trans_catalogue::load_from_memory( std::move( bytes ) );
+        list.catalogues.push_back( std::move( catalogue ) );
+        if( list.track_identity ) { list.identity.add( std::to_string( hash.value() ) ); }
+    } catch( const std::runtime_error &err ) {
+        debugmsg( "Failed to load translation catalogue '%s': %s", *path, err.what() );
     }
 }
 
 static void add_mod_catalogue_if_exists( catalogue_collection &list,
         const std::string &lang_id, const std::string &mod_path )
 {
-    add_cat_if_exists( list, lang_id, mod_path + "/lang/", ".mo" );
+    add_cat_if_exists( list, mod_catalogue( lang_id, mod_path ) );
 }
 
 static void add_base_catalogue( catalogue_collection &list, const std::string &lang_id )
 {
-    // TODO: split source code strings from data strings
-    //       and load data translations from separate file(s)
-    add_cat_if_exists( list, lang_id,
-                       PATH_INFO::base_path() + "lang/mo/",
-                       "/LC_MESSAGES/cataclysm-bn.mo"
-                     );
+    add_cat_if_exists( list, base_catalogue( lang_id ) );
 }
 
 static bool add_mod_catalogues( catalogue_collection &list, const std::string &lang_id )
@@ -639,6 +653,20 @@ auto load_locale( const std::string &lang_id ) -> locale_snapshot
     l10n_data::add_mod_catalogues( list, lang_id );
     return l10n_data::loaded_locales.emplace( lang_id,
             l10n_data::publication_of( std::move( list ) ) ).first->second;
+}
+
+auto catalogue_files( const std::string &lang_id ) -> std::vector<std::string>
+{
+    // Absolute, since a reader does not share the game's working directory.
+    const auto absolute = []( const std::string & path ) { return std::filesystem::absolute( path ).string(); };
+    auto result = std::vector<std::string> {};
+    if( const auto base = l10n_data::base_catalogue( lang_id ) ) { result.push_back( absolute( *base ) ); }
+    if( world_generator && world_generator->active_world ) {
+        for( const mod_id &mod : world_generator->active_world->info->active_mod_order ) {
+            if( const auto path = l10n_data::mod_catalogue( lang_id, mod->path ) ) { result.push_back( absolute( *path ) ); }
+        }
+    }
+    return result;
 }
 
 locale_scope::locale_scope( const std::string &lang_id )

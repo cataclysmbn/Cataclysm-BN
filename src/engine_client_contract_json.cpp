@@ -979,6 +979,7 @@ auto serialize_snapshot( const snapshot &value ) -> std::expected<snapshot_wire,
         header["messages"] = json::array();
         for( const auto &line : value.log ) { header["messages"].push_back( to_json( line ) ); }
     }
+    if( !value.catalogues.empty() ) { header["catalogues"] = value.catalogues; }
     header["parts"] = result.parts.size();
     result.header = header.dump();
     if( result.header.size() > maximum_inline_bytes ) { return std::unexpected( error::resource_limit ); }
