@@ -12,6 +12,7 @@
 #    include "map_perception.h"
 #    include "message_feed.h"
 #    include "messages.h"
+#    include "monattack.h"
 #    include "mondeath.h"
 #    include "monster.h"
 #    include "npc.h"
@@ -310,6 +311,23 @@ TEST_CASE(
     CHECK(line.localised->plural_key
           == "There's no room in your inventory for the %s, so you drop them.");
     CHECK(line.localised->args.size() == 1);
+}
+
+TEST_CASE(
+    "a monster's attack line carries its format and the monster's name as a LocalisedString",
+    "[engine_client_localised][messages]") {
+    auto& zombie = seen_zombie();
+    Messages::clear_messages();
+    zombie.set_dest(get_avatar().bub_pos());
+    REQUIRE(mattack::shriek_alert(&zombie));
+    const auto line = newest_line();
+    CHECK(line.text == "The zombie begins shrieking!");
+    CHECK(
+        line.localised
+        == localised_text{
+            .key = "The %s begins shrieking!",
+            .args = {localised::nested(
+                localised_text{.key = "zombie", .plural = 1.0, .plural_key = "zombies"})}});
 }
 
 #endif // CATA_MCP
