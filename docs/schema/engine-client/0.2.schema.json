@@ -517,6 +517,26 @@
           "maximum": 9007199254740991,
           "description": "Native lit_level of a visible square: 0 dark, 1 low, 2 bright only, 3 lit, 4 bright. Low light draws darkened."
         },
+        "glow": {
+          "type": "object",
+          "properties": {
+            "color": {
+              "type": "string",
+              "pattern": "^#[0-9a-f]{6}$"
+            },
+            "strength": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 255
+            }
+          },
+          "required": [
+            "color",
+            "strength"
+          ],
+          "additionalProperties": false,
+          "description": "Colored light on a visible square, as the native tiles view tints it (option COLORED_LIGHTING): the light's color from game data (`light_color`) and its strength, twice its light level. Absent without colored light, on open air, and through night vision or environmental goggles or under water. The native view adds the color, times each sprite's own, over the sprites of a square drawn plainly or in low light."
+        },
         "below": {
           "type": "integer",
           "minimum": 1,

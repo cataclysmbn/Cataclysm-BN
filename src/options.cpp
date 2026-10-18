@@ -4459,7 +4459,9 @@ void options_manager::cache_to_globals()
     display_object_ids = ::get_option<bool>( "SHOW_IDS" );
     trigdist = ::get_option<bool>( "CIRCLEDIST" );
     use_tiles = game_client::has_tiles() && ::get_option<bool>( "USE_TILES" );
-    colored_lighting = use_tiles && ::get_option<bool>( "COLORED_LIGHTING" );
+    // A protocol client draws tiles from the published map, colored light included.
+    colored_lighting = ( use_tiles || game_client::has_protocol_client() ) &&
+                       ::get_option<bool>( "COLORED_LIGHTING" );
     use_tiles_overmap = use_tiles && ::get_option<bool>( "USE_TILES_OVERMAP" );
     use_pinyin_search = ::get_option<bool>( "USE_PINYIN_SEARCH" );
     log_from_top = ::get_option<std::string>( "LOG_FLOW" ) == "new_top";

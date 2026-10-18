@@ -12,6 +12,7 @@
 #include <utility>
 
 #include "avatar.h"
+#include "cached_options.h"
 #include "calendar.h"
 #include "catacharset.h"
 #include "color.h"
@@ -410,6 +411,23 @@ auto ter_vars_at( const map &here, const tripoint_bub_ms &p ) -> const data_vars
     return sm == nullptr ? nullptr : &sm->get_ter_vars( offset );
 }
 
+/// The colored light the native tiles view tints a square in sight with (`colored_light_tint_for_tile`):
+/// none without colored lighting, on open air, or through night vision or environmental goggles or water.
+auto glow_at( map &here, const tripoint_bub_ms &p, const avatar &you ) -> std::optional<light_glow>
+{
+    const auto &cache = here.access_cache( p.z() );
+    if( !colored_lighting || !cache.colored_light_cache_active || here.ter( p ) == t_open_air ) {
+        return std::nullopt;
+    }
+    const auto packed = cache.colored_light_cache[cache.idx( p.x(), p.y() )];
+    const auto strength = static_cast<int>( packed >> 24 );
+    const auto rgb = packed & 0x00ffffffu;
+    if( strength == 0 || rgb == 0 ) { return std::nullopt; }
+    const auto vision = you.get_vision_modes();
+    if( vision[NV_GOGGLES] || vision[ENV_GOGGLES] || you.is_underwater() ) { return std::nullopt; }
+    return light_glow{ .color = string_format( "#%06x", rgb ), .strength = strength };
+}
+
 /// Fill the facts of a currently visible cell that is not bare. False when it is plain terrain the engine never memorizes.
 auto fill_visible( map &here, const tripoint_bub_ms &p, const avatar &you,
                    const map_perception::sight &view, cell &out ) -> bool
@@ -481,6 +499,7 @@ auto fill_visible( map &here, const tripoint_bub_ms &p, const avatar &you,
                                 shapes.terrain, ter_vars_at( here, p ) );
     const auto &cache = here.access_cache( p.z() );
     out.light = static_cast<int>( cache.visibility_cache[cache.idx( p.x(), p.y() )] );
+    out.glow = glow_at( here, p, you );
     return true;
 }
 
@@ -517,7 +536,7 @@ constexpr auto plain_mark = std::uint64_t { 1 } << 63;
 
 /// What the cell of a visible square that holds nothing but its terrain is a function of, packed, or none
 /// when something else is on the square (furniture, a field, a trap, an item, a vehicle, variables of the
-/// terrain), which a cell is then built for every time. Such a cell is built from the terrain, the shape the
+/// terrain, colored light), which a cell is then built for every time. Such a cell is built from the terrain, the shape the
 /// squares around it the avatar knows give it (and its symbol, for a wall), its light, what the native view
 /// draws below it, and the season (symbol and color); the language and the tints of the looks are
 /// the capture's, not the square's. So two captures that find the same key at a square would build the same
@@ -528,7 +547,8 @@ auto plain_key( map &here, const tripoint_bub_ms &p, const avatar &you,
     const auto tile = here.maptile_at( p );
     const auto *const vars = ter_vars_at( here, p );
     if( tile.get_furn() != f_null || !tile.get_trap_t().is_null() || tile.get_item_count() != 0 ||
-        tile.get_field().field_count() != 0 || here.veh_at( p ) || ( vars != nullptr && !vars->empty() ) ) {
+        tile.get_field().field_count() != 0 || here.veh_at( p ) || ( vars != nullptr && !vars->empty() ) ||
+        glow_at( here, p, you ) ) {
         return 0;
     }
     const auto shape = map_perception::terrain_orientation( here, p, view );

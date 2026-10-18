@@ -47,7 +47,7 @@ auto valid_cell( const cell &value ) -> bool
 {
     const auto live = value.terrain || value.furniture || !value.fields.empty() ||
                       !value.traps.empty() ||
-                      !value.items.empty() || value.vehicle || value.light || value.reviving ||
+                      !value.items.empty() || value.vehicle || value.light || value.glow || value.reviving ||
                       value.cargo;
     switch( value.known ) {
         case knowledge::remembered:
