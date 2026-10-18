@@ -814,8 +814,7 @@ public:
     auto part_flag(int p, const std::string& f) const -> bool;
     auto part_flag(int p, vpart_bitflags f) const -> bool;
 
-    // Translate mount coordinates "p" using current pivot direction and anchor and return tile
-    // coordinates
+    /// Nominal yaw transform: preserves local z and excludes terrain deformation.
     auto coord_translate(const tripoint_mnt_veh& p) const -> tripoint_rel_ms;
 
     // Translate mount coordinates "p" into tile coordinates "q" using given pivot direction and
@@ -1281,8 +1280,8 @@ public:
     }
 
     void set_pivot(const tripoint_mnt_veh& pivot, bool refresh = true) {
-        pivot_cache = pivot;
-        pivot_anchor[0] = pivot;
+        pivot_cache = tripoint_mnt_veh(pivot.xy(), 0);
+        pivot_anchor[0] = pivot_cache;
         if (refresh) { refresh_position(); }
     }
 
@@ -1385,7 +1384,7 @@ public:
     // damage all parts (like shake from strong collision), range from dmg1 to dmg2
     void damage_all(int dmg1, int dmg2, damage_type type, const tripoint_mnt_veh& impact);
 
-    // Shifts the coordinates of all parts and moves the vehicle in the opposite direction.
+    /// Rebase local XY without changing physical positions; the delta's z is ignored.
     void shift_parts(const tripoint_rel_veh& delta);
     auto shift_if_needed() -> bool;
 

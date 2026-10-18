@@ -1039,6 +1039,7 @@ auto mapbuffer::index_vehicle_footprint_unlocked(vehicle& veh) -> void {
         if (vpr.part().removed) { continue; }
 
         const auto pos = veh.abs_part_location(vpr.part());
+        if (pos.z() < -OVERMAP_DEPTH || pos.z() > OVERMAP_HEIGHT) { continue; }
         vehicle_footprint_by_location_[pos].push_back(vehicle_footprint_entry{
             .veh = &veh,
             .part_index = vpr.part_index(),

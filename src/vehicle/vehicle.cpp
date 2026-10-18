@@ -3501,6 +3501,7 @@ auto vehicle::rotate_to_world(
     tripoint result;
     result.x = relative.x();
     result.y = relative.y() + static_cast<int>(skew);
+    result.z = p.z();
 
     if (rotation_info[increment].swapXY) { std::swap(result.x, result.y); }
     if (rotation_info[increment].flipH) { result.x = -result.x; }
@@ -3521,7 +3522,7 @@ auto vehicle::rotate_to_local(
 
     float skew = std::trunc(result.x * rotation_info[increment].gradient);
     result.y -= static_cast<int>(skew);
-    result += pivot.raw();
+    result += pivot.xy().raw();
 
     return tripoint_mnt_veh(result);
 }
@@ -3553,7 +3554,7 @@ void vehicle::precalc_mounts(int idir, units::angle dir, const tripoint_mnt_veh&
             p.precalc[idir] = q->second;
         }
     }
-    pivot_anchor[idir] = pivot;
+    pivot_anchor[idir] = tripoint_mnt_veh(pivot.xy(), 0);
     pivot_rotation[idir] = dir;
 }
 
@@ -3712,7 +3713,8 @@ auto vehicle::pivot_displacement() const -> tripoint_rel_ms {
     // the vehicle.
 
     // rotate the old pivot point around the new pivot point with the old rotation angle
-    return rotate_to_world(pivot_rotation[0], pivot_anchor[1], pivot_anchor[0]);
+    return tripoint_rel_ms(
+        rotate_to_world(pivot_rotation[0], pivot_anchor[1], pivot_anchor[0]).xy(), 0);
 }
 
 auto vehicle::fuel_left(const itype_id& ftype, bool recurse) const -> int {
@@ -4933,8 +4935,8 @@ auto vehicle::handle_potential_theft(avatar& you, bool check_only, bool prompt) 
 }
 
 auto vehicle::balanced_wheel_config() const -> bool {
-    auto min = tripoint_mnt_veh(tripoint_max);
-    auto max = tripoint_mnt_veh(tripoint_min);
+    auto min = point_mnt_veh(point_max);
+    auto max = point_mnt_veh(point_min);
     // find the bounding box of the wheels
     for (auto& w : wheelcache) {
         const auto& pt = parts[w].mount;
@@ -4942,13 +4944,11 @@ auto vehicle::balanced_wheel_config() const -> bool {
         min.y() = std::min(min.y(), pt.y());
         max.x() = std::max(max.x(), pt.x());
         max.y() = std::max(max.y(), pt.y());
-        min.z() = std::min(min.z(), pt.z());
-        max.z() = std::max(max.z(), pt.z());
     }
 
     // Check center of mass inside support of wheels (roughly)
-    const inclusive_cuboid<tripoint_mnt_veh> support(min, max);
-    return support.contains(local_center_of_mass());
+    const auto support = inclusive_rectangle<point_mnt_veh>(min, max);
+    return support.contains(local_center_of_mass().xy());
 }
 
 auto vehicle::valid_wheel_config() const -> bool {
@@ -6262,7 +6262,7 @@ void vehicle::refresh_pivot() const {
 
     if (wheelcache.empty() || !valid_wheel_config()) {
         // No usable wheels, use CoM (dragging)
-        pivot_cache = local_center_of_mass();
+        pivot_cache = tripoint_mnt_veh(local_center_of_mass().xy(), 0);
         return;
     }
 
@@ -6348,10 +6348,11 @@ void vehicle::refresh_pivot() const {
     if (xc_denominator < 0.1 || yc_denominator < 0.1) {
         debugmsg("vehicle::refresh_pivot had a bad weight: xc=%.3f/%.3f yc=%.3f/%.3f", xc_numerator,
                  xc_denominator, yc_numerator, yc_denominator);
-        pivot_cache = local_center_of_mass();
+        pivot_cache = tripoint_mnt_veh(local_center_of_mass().xy(), 0);
     } else {
         pivot_cache.x() = std::round(xc_numerator / xc_denominator);
         pivot_cache.y() = std::round(yc_numerator / yc_denominator);
+        pivot_cache.z() = 0;
     }
 }
 
@@ -6862,28 +6863,25 @@ void vehicle::damage_all(int dmg1, int dmg2, damage_type type, const tripoint_mn
     }
 }
 
-/**
- * Shifts all parts of the vehicle by the given amounts, and then shifts the
- * vehicle itself in the opposite direction. The end result is that the vehicle
- * appears to have not moved. Useful for re-zeroing a vehicle to ensure that a
- * (0, 0) part is always present.
- * @param delta How much to shift along each axis
- */
+/// Rebase local XY and both yaw anchors without changing deck heights or world placement.
 void vehicle::shift_parts(const tripoint_rel_veh& delta) {
-    for (auto& elem : parts) { elem.mount -= delta; }
+    const auto horizontal_delta = tripoint_rel_veh(delta.xy(), 0);
+    for (auto& elem : parts) { elem.mount -= horizontal_delta; }
 
     decltype(labels) new_labels;
-    for (auto& l : labels) { new_labels.insert(label(l - delta, l.text)); }
+    for (auto& l : labels) { new_labels.insert(label(l - horizontal_delta, l.text)); }
     labels = new_labels;
 
     decltype(loot_zones) new_zones;
-    for (auto const& z : loot_zones) { new_zones.emplace(z.first - delta, z.second); }
+    for (auto const& z : loot_zones) { new_zones.emplace(z.first - horizontal_delta, z.second); }
     loot_zones = new_zones;
 
-    pivot_anchor[0] -= delta;
+    for (auto& anchor : pivot_anchor) {
+        anchor = tripoint_mnt_veh(anchor.xy() - horizontal_delta.xy(), 0);
+    }
     refresh();
     // Need to also update the map after this
-    g->m.reset_vehicle_cache();
+    if (attached) { g->m.reset_vehicle_cache(); }
 }
 
 /**
@@ -6892,8 +6890,9 @@ void vehicle::shift_parts(const tripoint_rel_veh& delta) {
  * @return bool true if the shift was needed.
  */
 auto vehicle::shift_if_needed() -> bool {
-    std::vector<int> vehicle_origin = parts_at_relative(tripoint_mnt_veh::zero(), true);
-    if (!vehicle_origin.empty() && !parts[vehicle_origin[0]].removed) {
+    if (std::ranges::any_of(parts, [](const auto& part) {
+            return !part.removed && part.mount.xy() == point_mnt_veh::zero();
+        })) {
         // Shifting is not needed.
         return false;
     }

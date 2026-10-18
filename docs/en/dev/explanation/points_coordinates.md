@@ -29,10 +29,9 @@ Three origins for map square coordinates are common:
 - **Bubble** coordinates, which are relative to the corner of the current "reality bubble", or `map`
   roughly centered on the avatar. In local map square coordinates, `x` and `y` values will both fall
   in the range `[0, MAPSIZE_X)`.
-- **Vehicle** coordinates, which are relative to the pivot point of the current vehicle, and
-  rotate with it. This origin is special because it requires that you use the `mount_to_*` and
-  `*_to_mount` functions for them to work correctly, as all other coordinate spaces do not require
-  you to account for rotation like vehicles do.
+- **Vehicle** coordinates are local mounts that rotate with the vehicle. Use the `mount_to_*` and
+  `*_to_mount` functions for nominal yaw transforms, or `abs_part_location` / `bub_part_location`
+  for an installed part's physical position, including terrain deformation.
 
 There is a **vehicle** scale (veh), however this is only used for the mount functions and is currently
 the same as map square coordinates. It only serves to make it harder to make mistakes with vehicle
@@ -60,32 +59,45 @@ of its containing overmap, and so typically take `x` and `y` values in the range
 
 ## Vertical coordinates
 
-Although `x` and `y` coordinates work at all these various scales, `z` coordinates are consistent
-across all contexts. They lie in the range [-`OVERMAP_DEPTH`,`OVERMAP_HEIGHT`].
+Although `x` and `y` coordinates change with scale, world `z` coordinates use the same levels
+across map-square, submap, and overmap scales. World positions lie in the range
+[-`OVERMAP_DEPTH`,`OVERMAP_HEIGHT`]. Vehicle mount z is instead a signed local offset.
 
 ## Vehicle coordinates
 
-Each vehicle has its own origin point, which will be at a particular part of the vehicle (e.g. it
-might be at the driver's seat). The origin can move if the vehicle is damaged and all the vehicle
-parts at that location are destroyed.
+Each vehicle has a world reference position and a horizontal steering pivot expressed in local
+mount coordinates. Neither must coincide with an installed part. Replacing a destroyed local
+origin column rebases mount XY and the steering anchors together; it does not change deck heights
+or move the surviving parts in the world.
 
-Vehicles use two systems of coordinates relative to their origin:
-
-- **vehicle / mount** coordinates provide a location for vehicle parts that does not change as the
-  vehicle moves. It is the map square of that part, relative to the vehicle origin, when the vehicle
-  is facing due east.
-
-- **map square** is the map square, relative to the origin, but accounting for the vehicle's current
-  facing.
+- **Vehicle / mount** coordinates (`tripoint_mnt_veh`) describe permanent local geometry. Local X
+  is forward/backward, Y is left/right, and Z identifies height relative to the vehicle's vertical
+  datum. The mounts do not change merely because the vehicle moves or turns.
+- **Relative map-square** coordinates describe offsets from the vehicle's world reference after
+  applying the current yaw and horizontal pivot. Steering does not rotate or subtract local z.
 
 Vehicle facing is implemented via a combination of rotations (by quarter turns) and shearing to
 interpolate between quarter turns. The logic to convert between vehicle mount and map square
 coordinates is complicated and handled by the `vehicle::abs_to_mount()` and
 `vehicle::mount_to_bubble()` families of functions.
 
-Currently, vehicle mount coordinates do not have a z-level component, but vehicle map square
-coordinates do. The z coordinate is relative to the vehicle origin. This is likely to change, as
-we migrate to typed tripoints.
+The nominal `mount_to_*` and `*_to_mount` transforms preserve local z and are inverses, but do not
+include ramp deformation. Installed parts also have a terrain-induced `z_terrain` offset:
+
+```text
+physical_world_z = vehicle_origin_z + mount.z() + z_terrain[0]
+```
+
+Use `abs_part_location` or `bub_part_location` when an actual installed part is available. On a
+ramp, applying a nominal inverse to that physical position does not generally recover the mount.
+Read the installed part's mount instead. Parts in the same rotated XY column share a terrain
+offset, so terrain deformation does not change their local deck separation.
+
+`precalc[0]` and `precalc[1]` remain XY offsets for current and proposed placement. The corresponding
+terrain offsets are stored separately; they must not be confused with permanent local mount z or
+with part drawing `z_order`. The saved `mount_dz` is local geometry, while `z_offset` is terrain
+placement. Three-dimensional coordinates alone do not establish full multi-deck gameplay support;
+see the [implementation plan](../design/multi_z_vehicles.md).
 
 ## Point types
 

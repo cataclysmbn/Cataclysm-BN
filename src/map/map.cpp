@@ -821,6 +821,7 @@ void map::add_vehicle_to_cache(vehicle* veh) {
     for (const vpart_reference& vpr : veh->get_all_parts()) {
         if (vpr.part().removed) { continue; }
         const auto p = abs_to_map_local(*this, veh->abs_part_location(vpr.part()));
+        if (!inbounds_z(p.z())) { continue; }
         int part = veh->part_with_feature(vpr.part_index(), VPFLAG_LADDER, true);
         if (part != -1) {
             // NOTE: This cache may need to be submapfied at some point
@@ -855,6 +856,7 @@ void map::clear_vehicle_point_from_cache(vehicle* veh, const tripoint_bub_ms& pt
         debugmsg("Tried to clear null vehicle from cache");
         return;
     }
+    if (!inbounds_z(pt.z())) { return; }
 
     level_cache& ch = get_cache(pt.z());
     set_vehicle_cache_dirty(pt.z());
@@ -1700,6 +1702,7 @@ auto map::vehicle_vehicle_collision(
 
     epicenter2.x() /= coll_parts_cnt;
     epicenter2.y() /= coll_parts_cnt;
+    epicenter2.z() /= coll_parts_cnt;
 
     if (dmg2_part > 100) {
         // Shake vehicle because of collision

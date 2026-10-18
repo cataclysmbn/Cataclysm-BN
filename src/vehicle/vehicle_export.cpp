@@ -9,19 +9,23 @@
 #include "vpart_range.h"
 
 #include <algorithm>
+#include <ranges>
 
 namespace {
 
 using refs = std::vector<const vehicle_part*>;
 
 auto grouped_refs(const class vehicle& v) -> std::vector<refs> {
-    std::vector<refs> part_group;
-    std::set<tripoint_mnt_veh> locations_checked;
+    using namespace std::views;
+    auto part_group = std::vector<refs>{};
+    auto locations_checked = std::set<tripoint_mnt_veh>{};
     for (const auto& p : v.get_all_parts()) {
-        if (locations_checked.contains(p.mount())) { continue; }
+        if (p.part().removed || locations_checked.contains(p.mount())) { continue; }
         locations_checked.insert(p.mount());
-        auto parts = v.get_parts_at(v.mount_to_bubble(p.mount()), "", part_status_flag::any);
-        part_group.emplace_back(parts);
+        part_group.push_back(
+            v.parts_at_relative(p.mount(), false)
+            | transform([&v](const auto index) { return &v.cpart(index); })
+            | std::ranges::to<refs>());
     }
     return part_group;
 }
@@ -89,6 +93,7 @@ auto json_export::vehicle(JsonOut& json, const class vehicle& v) -> void {
         json.start_object(true);
         json.member("x", pos.x());
         json.member("y", pos.y());
+        if (pos.z() != 0) { json.member("z", pos.z()); }
         json_parts_write(json, parts);
         json.end_object();
     }

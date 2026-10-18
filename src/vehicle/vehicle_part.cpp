@@ -95,6 +95,7 @@ void vehicle_part::copy_static_from(const vehicle_part& source) {
     carry_names = source.carry_names;
     mount = source.mount;
     precalc = source.precalc;
+    z_terrain = source.z_terrain;
     blood = source.blood;
     inside = source.inside;
     removed = source.removed;
