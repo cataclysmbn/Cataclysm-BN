@@ -305,6 +305,14 @@ struct compass_direction {
     std::vector<compass_creature> creatures = {};
     auto operator<=>( const compass_direction & ) const = default; // *NOPAD*
 };
+/// What the avatar is busy with over turns, as the native wait popup names it: the activity's id and verb and,
+/// when it is of a set length, the thousandths of it done.
+struct activity_value {
+    std::string id = {};
+    std::string name = {};
+    std::optional<int> done = std::nullopt;
+    auto operator<=>( const activity_value & ) const = default; // *NOPAD*
+};
 struct avatar_value {
     std::string id = {};
     position at;
@@ -321,6 +329,7 @@ struct avatar_value {
     std::vector<compass_direction> compass = {};
     /// The stacks on the avatar's own square, which a pickup chooses from.
     std::vector<inventory_entry> ground = {};
+    std::optional<activity_value> activity = std::nullopt;
     auto operator<=>( const avatar_value & ) const = default; // *NOPAD*
 };
 /// A file of the game data that adds sprites to the tilesets its `compatibility` names.

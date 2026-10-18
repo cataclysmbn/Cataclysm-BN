@@ -1,4 +1,5 @@
 #include "action.h"
+#include "activity_type.h"
 #include "avatar.h"
 #include "calendar.h"
 #include "cata_utility.h"
@@ -989,6 +990,31 @@ TEST_CASE(
     REQUIRE(cell != nullptr);
     REQUIRE(cell->memory);
     CHECK(cell->memory->terrain.name == ter_id("t_floor")->name());
+}
+
+TEST_CASE(
+    "world capture names the avatar's activity and how much of it is done",
+    "[engine_client_world]") {
+    make_scene();
+    auto& you = get_avatar();
+    CHECK_FALSE(ec::world::capture_world().avatar->activity);
+
+    you.assign_activity(activity_id("ACT_WAIT"), 1000);
+    you.activity->moves_left = 250;
+    const auto state = ec::world::capture_world();
+    const auto& activity = state.avatar->activity;
+    REQUIRE(activity);
+    CHECK(activity->id == "ACT_WAIT");
+    CHECK(activity->name == activity_id("ACT_WAIT")->verb().translated());
+    CHECK(activity->done == 750);
+
+    // An activity of no set length counts nothing done.
+    you.cancel_activity();
+    you.assign_activity(activity_id("ACT_WAIT"));
+    const auto endless = ec::world::capture_world();
+    REQUIRE(endless.avatar->activity);
+    CHECK_FALSE(endless.avatar->activity->done);
+    you.cancel_activity();
 }
 
 TEST_CASE(
