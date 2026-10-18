@@ -7,7 +7,7 @@
         "screen_id": "screen:10",
         "role": "screen",
         "kind": "trade",
-        "title": "Trading with Denver Tolbert, Marloss Voice",
+        "title": "Trading with Daniel Arevalo, Marloss Voice",
         "root": {
           "id": "trade:head",
           "kind": "panel",
@@ -29,25 +29,25 @@
                 "id": "trade:balance",
                 "kind": "text",
                 "markup": "Credit $0.00",
-                "tone": "good"
+                "tone": "bad"
               },
               {
                 "id": "pane:npc",
                 "kind": "panel",
-                "title": "Inventory: Denver Tolbert, Marloss Voice",
+                "title": "Inventory: Daniel Arevalo, Marloss Voice",
                 "stats": [
                   {
                     "key": "weight",
                     "label": "weight",
-                    "value": "9.27",
-                    "max": "53.00",
+                    "value": "9.42",
+                    "max": "66.15",
                     "unit": "kg",
                     "tone": "good"
                   },
                   {
                     "key": "volume",
                     "label": "vol",
-                    "value": "0.97",
+                    "value": "0.95",
                     "max": "12.50",
                     "unit": "L",
                     "tone": "good"
@@ -174,7 +174,7 @@
                         {
                           "key": "price",
                           "label": "unit price",
-                          "value": "$1.30",
+                          "value": "$1.15",
                           "color": "c_light_red"
                         }
                       ],
@@ -217,7 +217,7 @@
                     },
                     {
                       "id": "item:4",
-                      "label": "Marloss seed (3)",
+                      "label": "Marloss seed (1)",
                       "description": "",
                       "denial": "",
                       "hotkey": "c",
@@ -228,17 +228,17 @@
                         {
                           "key": "qty",
                           "label": "amt",
-                          "value": "3"
+                          "value": ""
                         },
                         {
                           "key": "weight",
                           "label": "weight",
-                          "value": "0.53"
+                          "value": "0.18"
                         },
                         {
                           "key": "vol",
                           "label": "vol",
-                          "value": "0.03"
+                          "value": "0.01"
                         },
                         {
                           "key": "price",
@@ -251,7 +251,7 @@
                       },
                       "selected_count": 0,
                       "minimum_count": 0,
-                      "max": 3,
+                      "max": 1,
                       "look": {
                         "kind": "item",
                         "id": "marloss_seed",

@@ -38,8 +38,8 @@
             "rows": [
               {
                 "id": "item:1",
-                "label": "lighter (2/25)",
-                "description": "Origin: 'Bright Nights'\n--\nMaterial: Aluminum, Plastic\nVolume: 0.025 L  Weight: 0.01 kg\nOwner: Your Followers\nCategory: COOKING TOOLS\n--\nThis is a disposable plastic lighter.  A lighter must be carried to use various drugs, like cigarettes, or to light things like Molotov cocktails.  You can also use a lighter to light nearby items on fire.\n--\nThrow range: 8\nMoves per throw: 56\nStamina cost: 50\n--\nAmmunition: butane\n--\nCharges: 2\nMaximum 25 charges of butane.\n--\nRepair using advanced 3D printer, 3D printer, charcoal forge, Grid 3D Printer, Advanced Grid 3D Printer, grid forge, grid soldering iron, grid welder, electric forge, alcohol-fueled soldering iron, electric soldering iron, integrated toolset, arc welder, or makeshift arc welder.\n* This item can be reinforced.\n--\nDisassembly takes about 6 seconds and might yield: 1 pilot light and plastic scrap (1).\n--\n* This item conducts electricity.\n* This item can start fire.\n--\nPrice: $0.11  Barter value: $0.14\n--\nYou know of nothing you could craft with it.\n",
+                "label": "lighter (23/25)",
+                "description": "Origin: 'Bright Nights'\n--\nMaterial: Aluminum, Plastic\nVolume: 0.025 L  Weight: 0.01 kg\nOwner: Your Followers\nCategory: COOKING TOOLS\n--\nThis is a disposable plastic lighter.  A lighter must be carried to use various drugs, like cigarettes, or to light things like Molotov cocktails.  You can also use a lighter to light nearby items on fire.\n--\nThrow range: 8\nMoves per throw: 56\nStamina cost: 50\n--\nAmmunition: butane\n--\nCharges: 23\nMaximum 25 charges of butane.\n--\nRepair using advanced 3D printer, 3D printer, charcoal forge, Grid 3D Printer, Advanced Grid 3D Printer, grid forge, grid soldering iron, grid welder, electric forge, alcohol-fueled soldering iron, electric soldering iron, integrated toolset, arc welder, or makeshift arc welder.\n* This item can be reinforced.\n--\nDisassembly takes about 6 seconds and might yield: 1 pilot light and plastic scrap (1).\n--\n* This item conducts electricity.\n* This item can start fire.\n--\nPrice: $0.28  Barter value: $0.56\n--\nYou know of nothing you could craft with it.\n",
                 "denial": "",
                 "hotkey": "a",
                 "enabled": true,
@@ -47,7 +47,7 @@
                 "selected": false,
                 "columns": [],
                 "color": "c_light_gray",
-                "markup": "lighter<color_c_red> (2/25)</color>",
+                "markup": "lighter<color_c_light_green> (23/25)</color>",
                 "mark": {
                   "glyph": "-"
                 },
@@ -295,8 +295,8 @@
       "def": "row",
       "value": {
         "id": "item:1",
-        "label": "lighter (2/25)",
-        "description": "Origin: 'Bright Nights'\n--\nMaterial: Aluminum, Plastic\nVolume: 0.025 L  Weight: 0.01 kg\nOwner: Your Followers\nCategory: COOKING TOOLS\n--\nThis is a disposable plastic lighter.  A lighter must be carried to use various drugs, like cigarettes, or to light things like Molotov cocktails.  You can also use a lighter to light nearby items on fire.\n--\nThrow range: 8\nMoves per throw: 56\nStamina cost: 50\n--\nAmmunition: butane\n--\nCharges: 2\nMaximum 25 charges of butane.\n--\nRepair using advanced 3D printer, 3D printer, charcoal forge, Grid 3D Printer, Advanced Grid 3D Printer, grid forge, grid soldering iron, grid welder, electric forge, alcohol-fueled soldering iron, electric soldering iron, integrated toolset, arc welder, or makeshift arc welder.\n* This item can be reinforced.\n--\nDisassembly takes about 6 seconds and might yield: 1 pilot light and plastic scrap (1).\n--\n* This item conducts electricity.\n* This item can start fire.\n--\nPrice: $0.11  Barter value: $0.14\n--\nYou know of nothing you could craft with it.\n",
+        "label": "lighter (23/25)",
+        "description": "Origin: 'Bright Nights'\n--\nMaterial: Aluminum, Plastic\nVolume: 0.025 L  Weight: 0.01 kg\nOwner: Your Followers\nCategory: COOKING TOOLS\n--\nThis is a disposable plastic lighter.  A lighter must be carried to use various drugs, like cigarettes, or to light things like Molotov cocktails.  You can also use a lighter to light nearby items on fire.\n--\nThrow range: 8\nMoves per throw: 56\nStamina cost: 50\n--\nAmmunition: butane\n--\nCharges: 23\nMaximum 25 charges of butane.\n--\nRepair using advanced 3D printer, 3D printer, charcoal forge, Grid 3D Printer, Advanced Grid 3D Printer, grid forge, grid soldering iron, grid welder, electric forge, alcohol-fueled soldering iron, electric soldering iron, integrated toolset, arc welder, or makeshift arc welder.\n* This item can be reinforced.\n--\nDisassembly takes about 6 seconds and might yield: 1 pilot light and plastic scrap (1).\n--\n* This item conducts electricity.\n* This item can start fire.\n--\nPrice: $0.28  Barter value: $0.56\n--\nYou know of nothing you could craft with it.\n",
         "denial": "",
         "hotkey": "a",
         "enabled": true,
@@ -304,7 +304,7 @@
         "selected": false,
         "columns": [],
         "color": "c_light_gray",
-        "markup": "lighter<color_c_red> (2/25)</color>",
+        "markup": "lighter<color_c_light_green> (23/25)</color>",
         "mark": {
           "glyph": "-"
         },

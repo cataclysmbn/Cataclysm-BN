@@ -7,7 +7,7 @@
         "screen_id": "screen:12",
         "role": "dialog",
         "kind": "talk",
-        "title": "Denver Tolbert, Marloss Voice",
+        "title": "Daniel Arevalo, Marloss Voice",
         "root": {
           "id": "talk:panes",
           "kind": "split",
@@ -21,7 +21,7 @@
               "child": {
                 "id": "talk:history:text",
                 "kind": "text",
-                "markup": "<color_c_light_green>Denver Tolbert, Marloss Voice</color>: \"Look for the bonds which define you, and act in accord.\""
+                "markup": "<color_c_light_green>Daniel Arevalo, Marloss Voice</color>: \"May the earth flourish beneath our paths.\""
               }
             },
             {

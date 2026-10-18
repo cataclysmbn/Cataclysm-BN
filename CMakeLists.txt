@@ -111,6 +111,9 @@ if (NOT CMAKE_BUILD_TYPE AND NOT _is_multi_config)
 endif ()
 
 add_definitions(-DCMAKE)
+# A seed plays the same game with every libstdc++: version 16 changed std::generate_canonical, and with it every
+# random float, unless this keeps the earlier definition.
+add_definitions(-D_GLIBCXX_USE_OLD_GENERATE_CANONICAL)
 
 include(GetGitRevisionDescription)
 git_describe(GIT_VERSION --tags --always --match "[0-9A-Z]*.[0-9A-Z]*")
