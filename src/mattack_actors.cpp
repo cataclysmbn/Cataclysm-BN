@@ -789,7 +789,7 @@ bool gun_actor::try_target( monster &z, Creature &target ) const
 {
     if( require_sunlight && !g->is_in_sunlight( z.bub_pos() ) ) {
         if( one_in( 3 ) && g->u.sees( z ) ) {
-            add_msg( _( failure_msg ), z.name() );
+            add_msg( to_translation( failure_msg ), z.name() );
         }
         return false;
     }
@@ -888,7 +888,7 @@ void gun_actor::shoot( monster &z, const tripoint_bub_ms &target, const gun_mode
     tmp.i_add( item::spawn( "UPS_off", calendar::turn, 1000 ) );
 
     if( g->u.sees( z ) ) {
-        add_msg( m_warning, _( description ), z.name(), tmp.primary_weapon().tname() );
+        add_msg( m_warning, to_translation( description ), z.name(), tmp.primary_weapon().tname() );
     }
 
     z.ammo[ammo] -= ranged::fire_gun( tmp, target, qty );

@@ -2407,16 +2407,16 @@ void activity_handlers::hand_crank_do_turn( player_activity *act, player *p )
             hand_crank_item.ammo_set( ammo_type, next_charges );
             if( next_charges >= capacity ) {
                 act->moves_left = 0;
-                add_msg( m_info, _( fully_charged_message ) );
+                add_msg( m_info, to_translation( fully_charged_message ) );
             }
         } else {
             act->moves_left = 0;
-            add_msg( m_info, _( fully_charged_message ) );
+            add_msg( m_info, to_translation( fully_charged_message ) );
         }
     }
     if( p->get_fatigue() >= fatigue_levels::dead_tired ) {
         act->moves_left = 0;
-        add_msg( m_info, _( exhausted_message ) );
+        add_msg( m_info, to_translation( exhausted_message ) );
     }
 
 }

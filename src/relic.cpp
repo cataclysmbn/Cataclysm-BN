@@ -509,7 +509,7 @@ bool process_recharge_entry( item &itm, const relic_recharge &rech, Character *c
     }
     if( rech.message ) {
         if( carrier ) {
-            carrier->add_msg_if_player( _( *rech.message ) );
+            carrier->add_msg_if_player( to_translation( *rech.message ) );
         }
     }
     return true;

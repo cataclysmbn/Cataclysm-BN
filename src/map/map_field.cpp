@@ -360,7 +360,7 @@ void map::player_in_field(player& u) {
                         u.add_msg_player_or_npc(
                             m_bad, _(player_burn_msg[msg_num]), _(npc_burn_msg[msg_num]));
                     } else {
-                        u.add_msg_if_player(m_warning, _(player_warn_msg[msg_num]));
+                        u.add_msg_if_player(m_warning, to_translation(player_warn_msg[msg_num]));
                     }
                     u.check_dead_state();
                 }

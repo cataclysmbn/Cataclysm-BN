@@ -1145,7 +1145,7 @@ void iexamine::toggle_lights( player &/*p*/, const tripoint_bub_ms &examp )
     map &here = get_map();
     const auto flag = here.has_flag_furn( "L_OFF", examp ) ? "L_OFF" : "L_ON";
 
-    add_msg( _( here.furn( examp ).obj().message ) );
+    add_msg( to_translation( here.furn( examp ).obj().message ) );
 
     for( const auto &light_loc : here.find_furnitures_with_flag_in_omt( examp, flag ) ) {
         here.furn_set( light_loc, here.get_furn_transforms_into( light_loc ) );
@@ -1980,7 +1980,7 @@ void iexamine::transform( player &p, const tripoint_bub_ms &pos )
                 return;
             case 1: {
                 if( !message.empty() ) {
-                    add_msg( _( message ) );
+                    add_msg( to_translation( message ) );
                 }
                 if( g->m.has_furn( pos ) ) {
                     g->m.furn_set( pos, g->m.get_furn_transforms_into( pos ) );
@@ -2006,7 +2006,7 @@ void iexamine::transform( player &p, const tripoint_bub_ms &pos )
         }
     } else {
         if( !message.empty() ) {
-            add_msg( _( message ) );
+            add_msg( to_translation( message ) );
         }
         if( g->m.has_furn( pos ) ) {
             g->m.furn_set( pos, g->m.get_furn_transforms_into( pos ) );

@@ -1575,7 +1575,7 @@ int iuse::petfood( player *p, item *it, bool, const tripoint_bub_ms & )
         if( petfood.feed.empty() ) {
             p->add_msg_if_player( to_translation( "The %1$s is your pet now!" ), mon.get_name() );
         } else {
-            p->add_msg_if_player( _( petfood.feed ), mon.get_name() );
+            p->add_msg_if_player( to_translation( petfood.feed ), mon.get_name() );
         }
 
         mon.make_pet( *p->as_character() );

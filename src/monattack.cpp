@@ -1511,7 +1511,7 @@ bool mattack::science( monster *const z ) // I said SCIENCE again!
 
             // if the player can see it, else forget about it
             if( g->u.sees( *z ) ) {
-                add_msg( m_warning, _( m_flavor[i] ), z->name() );
+                add_msg( m_warning, to_translation( m_flavor[i] ), z->name() );
             }
         }
         break;
@@ -3011,7 +3011,8 @@ bool mattack::grab( monster *z )
             thrown_by_judo( z );
         } else if( pl->has_grab_break_tec() ) {
             ma_technique tech = pl->martial_arts_data->get_grab_break_tec( cur_weapon );
-            target->add_msg_player_or_npc( m_info, _( tech.avatar_message ), _( tech.npc_message ), z->name() );
+            target->add_msg_player_or_npc( m_info, to_translation( tech.avatar_message ),
+                                           to_translation( tech.npc_message ), z->name() );
         } else {
             target->add_msg_player_or_npc( m_info,
                                            to_translation( "The %s tries to grab you, but you break its grab!" ),

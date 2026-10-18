@@ -587,7 +587,7 @@ int countdown_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &po
     }
 
     if( p.sees( pos ) && !message.empty() ) {
-        p.add_msg_if_player( m_neutral, _( message ), it.tname() );
+        p.add_msg_if_player( m_neutral, to_translation( message ), it.tname() );
     }
 
     it.activate();
@@ -720,7 +720,7 @@ int explosion_iuse::use( player &p, item &it, bool t, const tripoint_bub_ms &pos
                                      to_translation( "You've already set the %s's timer you might want to get away from it." ),
                                      it.tname() );
             } else {
-                p.add_msg_if_player( m_info, _( no_deactivate_msg ), it.tname() );
+                p.add_msg_if_player( m_info, to_translation( no_deactivate_msg ), it.tname() );
             }
         }
         return 0;
@@ -837,7 +837,7 @@ int unfold_vehicle_iuse::use( player &p, item &it, bool, const tripoint_bub_ms &
         veh->tags.insert( std::string( "convertible:" ) + it.typeId().str() );
     }
     if( !unfold_msg.empty() ) {
-        p.add_msg_if_player( _( unfold_msg ), it.tname() );
+        p.add_msg_if_player( to_translation( unfold_msg ), it.tname() );
     }
     p.moves -= moves;
     // Restore HP of parts if we stashed them previously.
@@ -1026,7 +1026,7 @@ int consume_drug_iuse::use( player &p, item &it, bool, const tripoint_bub_ms & )
     }
 
     // Output message.
-    p.add_msg_if_player( _( activation_message ), it.type_name( 1 ) );
+    p.add_msg_if_player( to_translation( activation_message ), it.type_name( 1 ) );
 
     if( smoking_duration ) {
         detached_ptr<item> cig;
@@ -1159,7 +1159,7 @@ int delayed_transform_iuse::time_to_do( const item &it ) const
 int delayed_transform_iuse::use( player &p, item &it, bool t, const tripoint_bub_ms &pos ) const
 {
     if( time_to_do( it ) > 0 ) {
-        p.add_msg_if_player( m_info, _( not_ready_msg ) );
+        p.add_msg_if_player( m_info, to_translation( not_ready_msg ) );
         return 0;
     }
     return iuse_transform::use( p, it, t, pos );
@@ -2435,7 +2435,7 @@ int fireweapon_off_actor::use( player &p, item &it, bool t, const tripoint_bub_m
     }
 
     if( it.charges <= 0 ) {
-        p.add_msg_if_player( _( lacks_fuel_message ) );
+        p.add_msg_if_player( to_translation( lacks_fuel_message ) );
         return 0;
     }
 
@@ -2453,7 +2453,7 @@ int fireweapon_off_actor::use( player &p, item &it, bool t, const tripoint_bub_m
             se.monfaction = p.get_faction()->mon_faction;
             sounds::sound( se );
         }
-        p.add_msg_if_player( _( success_message ) );
+        p.add_msg_if_player( to_translation( success_message ) );
         if( p.is_npc() && get_player_character().sees( p ) ) {
             add_msg( m_info, to_translation( "%s activates their %s." ), p.disp_name(),
                      it.display_name() );
@@ -2461,7 +2461,7 @@ int fireweapon_off_actor::use( player &p, item &it, bool t, const tripoint_bub_m
         it.convert( target_id );
         it.activate();
     } else if( !failure_message.empty() ) {
-        p.add_msg_if_player( m_bad, _( failure_message ) );
+        p.add_msg_if_player( m_bad, to_translation( failure_message ) );
     }
 
     return it.type->charges_to_use();
@@ -2504,15 +2504,15 @@ int fireweapon_on_actor::use( player &p, item &it, bool t, const tripoint_bub_ms
 {
     bool extinguish = true;
     if( it.charges == 0 ) {
-        p.add_msg_if_player( m_bad, _( charges_extinguish_message ) );
+        p.add_msg_if_player( m_bad, to_translation( charges_extinguish_message ) );
         // Revert when it runs out of charges is handled in process_tool.
         extinguish = false;
     } else if( p.is_underwater() ) {
-        p.add_msg_if_player( m_bad, _( water_extinguish_message ) );
+        p.add_msg_if_player( m_bad, to_translation( water_extinguish_message ) );
     } else if( auto_extinguish_chance > 0 && one_in( auto_extinguish_chance ) ) {
-        p.add_msg_if_player( m_bad, _( auto_extinguish_message ) );
+        p.add_msg_if_player( m_bad, to_translation( auto_extinguish_message ) );
     } else if( !t ) {
-        p.add_msg_if_player( _( voluntary_extinguish_message ) );
+        p.add_msg_if_player( to_translation( voluntary_extinguish_message ) );
     } else {
         extinguish = false;
     }
@@ -2538,7 +2538,7 @@ int fireweapon_on_actor::use( player &p, item &it, bool t, const tripoint_bub_ms
             se.monfaction = p.get_faction()->mon_faction;
             sounds::sound( se );
         }
-        p.add_msg_if_player( _( noise_message ) );
+        p.add_msg_if_player( to_translation( noise_message ) );
     }
 
     return it.type->charges_to_use();
@@ -2566,7 +2566,7 @@ int manualnoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &
         return 0;
     }
     if( it.type->charges_to_use() != 0 && it.charges < it.type->charges_to_use() ) {
-        p.add_msg_if_player( _( no_charges_message ) );
+        p.add_msg_if_player( to_translation( no_charges_message ) );
         return 0;
     }
     {
@@ -2585,7 +2585,7 @@ int manualnoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &
             se.monfaction = p.get_faction()->mon_faction;
             sounds::sound( se );
         }
-        p.add_msg_if_player( _( use_message ) );
+        p.add_msg_if_player( to_translation( use_message ) );
     }
     return it.type->charges_to_use();
 }
@@ -4516,7 +4516,7 @@ int place_trap_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) 
     }
     const auto &data = bury ? buried_data : unburied_data;
 
-    p.add_msg_if_player( m_info, _( data.done_message ), distance_to_trap_center );
+    p.add_msg_if_player( m_info, to_translation( data.done_message ), distance_to_trap_center );
     p.practice( skill_id( "traps" ), data.practice );
     p.mod_moves( -data.moves );
 
@@ -6353,20 +6353,20 @@ auto hand_crank_actor::use( player &p, item &it, bool, const tripoint_bub_ms & )
         return 0;
     }
     if( p.is_underwater() ) {
-        p.add_msg_if_player( m_info, _( underwater_message ) );
+        p.add_msg_if_player( m_info, to_translation( underwater_message ) );
         return 0;
     }
     if( p.get_fatigue() >= fatigue_levels::dead_tired ) {
-        p.add_msg_if_player( m_info, _( exhausted_message ) );
+        p.add_msg_if_player( m_info, to_translation( exhausted_message ) );
         return 0;
     }
     auto *magazine = it.magazine_current();
     if( !magazine || !magazine->has_flag( flag_RECHARGE ) ) {
-        p.add_msg_if_player( m_info, _( need_battery_message ) );
+        p.add_msg_if_player( m_info, to_translation( need_battery_message ) );
         return 0;
     }
     if( it.ammo_capacity() > it.ammo_remaining() ) {
-        p.add_msg_if_player( _( start_message ), it.tname(), magazine->tname() );
+        p.add_msg_if_player( to_translation( start_message ), it.tname(), magazine->tname() );
         auto resolved_charge_interval = charge_interval;
         if( resolved_charge_interval <= 0_turns ) {
             resolved_charge_interval = 144_seconds;
@@ -6384,7 +6384,7 @@ auto hand_crank_actor::use( player &p, item &it, bool, const tripoint_bub_ms & )
         p.activity->values = { interval_turns, safe_charge_amount, fatigue_per_interval };
         p.activity->str_values = { ammo_type.str(), fully_charged_message, exhausted_message };
     } else {
-        p.add_msg_if_player( _( already_charged_message ), it.tname(), magazine->tname() );
+        p.add_msg_if_player( to_translation( already_charged_message ), it.tname(), magazine->tname() );
     }
     return 0;
 }

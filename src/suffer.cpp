@@ -754,8 +754,8 @@ void Character::suffer_from_asthma( const int current_stim )
         auto_use = false;
     }
 
-    add_msg_player_or_npc( m_bad, _( "You have an asthma attack!" ),
-                           "<npcname> starts wheezing and coughing." );
+    add_msg_player_or_npc( m_bad, to_translation( "You have an asthma attack!" ),
+                           to_translation( "<npcname> starts wheezing and coughing." ) );
 
     if( in_sleep_state() && !has_effect( effect_narcosis ) ) {
         inventory map_inv;

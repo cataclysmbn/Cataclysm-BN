@@ -678,7 +678,7 @@ bool item::revert( Character *ch, bool alert )
         return false;
     }
     if( ch && alert && !tooldata->revert_msg.empty() ) {
-        ch->add_msg_if_player( m_info, _( tooldata->revert_msg ), tname() );
+        ch->add_msg_if_player( m_info, to_translation( tooldata->revert_msg ), tname() );
     }
     convert( *tooldata->revert_to );
     if( ch ) {

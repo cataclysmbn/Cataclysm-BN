@@ -1582,7 +1582,7 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
 
             if( can_miss_recovery( cur_weapon ) ) {
                 ma_technique tec = martial_arts_data->get_miss_recovery_tec( cur_weapon );
-                add_msg( _( tec.avatar_message ), t.disp_name() );
+                add_msg( to_translation( tec.avatar_message ), t.disp_name() );
             } else if( stumble_pen >= 60 ) {
                 add_msg( m_bad, to_translation( "You miss and stumble with the momentum." ) );
             } else if( stumble_pen >= 10 ) {
