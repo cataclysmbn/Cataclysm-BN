@@ -793,6 +793,30 @@
       ],
       "additionalProperties": false
     },
+    "activity": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "done": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "additionalProperties": false,
+      "description": "What the avatar is busy with over turns, as the native wait popup names it: the activity type id, its localized verb (\"crafting\", \"reading\") and, for one of a set length, the thousandths of its work done. Absent when the avatar is not busy or its activity has no verb; an avatar update without it means none."
+    },
     "avatar": {
       "type": "object",
       "properties": {
@@ -852,6 +876,9 @@
         },
         "sidebar": {
           "$ref": "#/$defs/sidebar"
+        },
+        "activity": {
+          "$ref": "#/$defs/activity"
         },
         "compass": {
           "type": "array",
@@ -948,6 +975,9 @@
         },
         "sidebar": {
           "$ref": "#/$defs/sidebar"
+        },
+        "activity": {
+          "$ref": "#/$defs/activity"
         },
         "compass": {
           "type": "array",

@@ -256,6 +256,10 @@ auto to_json( const avatar_value &value ) -> json
     if( !value.inventory.empty() ) { result["inventory"] = to_array( value.inventory ); }
     if( !value.compass.empty() ) { result["compass"] = to_array( value.compass ); }
     if( !value.ground.empty() ) { result["ground"] = to_array( value.ground ); }
+    if( value.activity ) {
+        result["activity"] = {{"id", value.activity->id}, {"name", value.activity->name}};
+        if( value.activity->done ) { result["activity"]["done"] = *value.activity->done; }
+    }
     return result;
 }
 auto to_json( const environment_value &value ) -> json

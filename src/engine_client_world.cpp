@@ -43,6 +43,7 @@
 #include "monster.h"
 #include "npc.h"
 #include "output.h"
+#include "player_activity.h"
 #include "panels_snapshot.h"
 #include "panels_utility.h"
 #include "profile.h"
@@ -921,6 +922,20 @@ auto capture_compass( const avatar &you ) -> std::vector<compass_direction>
     ranges::to<std::vector>();
 }
 
+/// What the avatar is busy with, as the native wait popup names it; none for an activity it does not name.
+auto capture_activity( const avatar &you ) -> std::optional<activity_value>
+{
+    const auto &act = you.activity;
+    if( !act || act->get_verb().empty() ) { return std::nullopt; }
+    auto result = activity_value{ .id = act->id().str(), .name = act->get_verb().translated() };
+    const auto total = act->get_moves_total();
+    if( total > 0 && total != calendar::INDEFINITELY_LONG ) {
+        const auto left = static_cast<long long>( act->get_moves_left() );
+        result.done = static_cast<int>( std::clamp( 1000 - 1000 * left / total, 0LL, 1000LL ) );
+    }
+    return result;
+}
+
 auto capture_avatar( map &here, const avatar &you,
                      const std::string &dimension ) -> avatar_value
 {
@@ -937,7 +952,8 @@ auto capture_avatar( map &here, const avatar &you,
             { "moves", _( "Moves" ), std::to_string( you.get_moves() ) },
             { "pain", _( "Pain" ), std::to_string( you.get_pain() ) }
         },
-        .sidebar = sidebar_snapshot( you ), .compass = capture_compass( you ) };
+        .sidebar = sidebar_snapshot( you ), .compass = capture_compass( you ),
+        .activity = capture_activity( you ) };
     const auto stacks = item_stacks( here, you );
     result.inventory = stacks.inventory | std::views::transform( &item_stack::row ) |
                        std::ranges::to<std::vector>();
