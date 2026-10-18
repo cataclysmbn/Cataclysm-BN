@@ -13,6 +13,7 @@
 #include "anatomy.h"
 #include "bodypart.h"
 #include "coordinates.h"
+#include "localised_text.h"
 #include "pimpl.h"
 #include "string_formatter.h"
 #include "translations.h"
@@ -785,8 +786,6 @@ class Creature
         virtual void add_msg_if_player( const std::string &/*msg*/ ) const {}
         virtual void add_msg_if_player( const game_message_params &/*params*/,
                                         const std::string &/*msg*/ ) const {}
-        void add_msg_if_player( const translation &/*msg*/ ) const;
-        void add_msg_if_player( const game_message_params &/*params*/, const translation &/*msg*/ ) const;
         template<typename ...Args>
         void add_msg_if_player( const char *const msg, Args &&... args ) const {
             return add_msg_if_player( string_format( msg, std::forward<Args>( args )... ) );
@@ -795,9 +794,9 @@ class Creature
         void add_msg_if_player( const std::string &msg, Args &&... args ) const {
             return add_msg_if_player( string_format( msg, std::forward<Args>( args )... ) );
         }
-        template<typename ...Args>
-        void add_msg_if_player( const translation &msg, Args &&... args ) const {
-            return add_msg_if_player( string_format( msg, std::forward<Args>( args )... ) );
+        template<localised::message_format Format, typename ...Args>
+        void add_msg_if_player( const Format &msg, Args &&... args ) const {
+            return add_msg_if_player( localised::render( msg, args... ) );
         }
         template<typename ...Args>
         void add_msg_if_player( const game_message_params &params, const char *const msg,
@@ -815,13 +814,13 @@ class Creature
             }
             return add_msg_if_player( params, string_format( msg, std::forward<Args>( args )... ) );
         }
-        template<typename ...Args>
-        void add_msg_if_player( const game_message_params &params, const translation &msg,
+        template<localised::message_format Format, typename ...Args>
+        void add_msg_if_player( const game_message_params &params, const Format &msg,
                                 Args &&... args ) const {
             if( params.type == m_debug && !debug_mode ) {
                 return;
             }
-            return add_msg_if_player( params, string_format( msg, std::forward<Args>( args )... ) );
+            return add_msg_if_player( params, localised::render( msg, args... ) );
         }
 
         virtual void add_msg_if_npc( const std::string &/*msg*/ ) const {}
@@ -871,11 +870,6 @@ class Creature
         virtual void add_msg_player_or_npc( const game_message_params &/*params*/,
                                             const std::string &/*player_msg*/,
                                             const std::string &/*npc_msg*/ ) const {}
-        void add_msg_player_or_npc( const translation &/*player_msg*/,
-                                    const translation &/*npc_msg*/ ) const;
-        void add_msg_player_or_npc( const game_message_params &/*params*/,
-                                    const translation &/*player_msg*/,
-                                    const translation &/*npc_msg*/ ) const;
         template<typename ...Args>
         void add_msg_player_or_npc( const char *const player_msg, const char *const npc_msg,
                                     Args &&... args ) const {
@@ -888,11 +882,11 @@ class Creature
             return add_msg_player_or_npc( string_format( player_msg, std::forward<Args>( args )... ),
                                           string_format( npc_msg, std::forward<Args>( args )... ) );
         }
-        template<typename ...Args>
-        void add_msg_player_or_npc( const translation &player_msg, const translation &npc_msg,
+        template<localised::message_format PlayerFormat, localised::message_format NpcFormat, typename ...Args>
+        void add_msg_player_or_npc( const PlayerFormat &player_msg, const NpcFormat &npc_msg,
                                     Args &&... args ) const {
-            return add_msg_player_or_npc( string_format( player_msg, std::forward<Args>( args )... ),
-                                          string_format( npc_msg, std::forward<Args>( args )... ) );
+            return add_msg_player_or_npc( localised::render( player_msg, args... ),
+                                          localised::render( npc_msg, args... ) );
         }
         template<typename ...Args>
         void add_msg_player_or_npc( const game_message_params &params, const char *const player_msg,
@@ -912,14 +906,14 @@ class Creature
             return add_msg_player_or_npc( params, string_format( player_msg, std::forward<Args>( args )... ),
                                           string_format( npc_msg, std::forward<Args>( args )... ) );
         }
-        template<typename ...Args>
-        void add_msg_player_or_npc( const game_message_params &params, const translation &player_msg,
-                                    const translation &npc_msg, Args &&... args ) const {
+        template<localised::message_format PlayerFormat, localised::message_format NpcFormat, typename ...Args>
+        void add_msg_player_or_npc( const game_message_params &params, const PlayerFormat &player_msg,
+                                    const NpcFormat &npc_msg, Args &&... args ) const {
             if( params.type == m_debug && !debug_mode ) {
                 return;
             }
-            return add_msg_player_or_npc( params, string_format( player_msg, std::forward<Args>( args )... ),
-                                          string_format( npc_msg, std::forward<Args>( args )... ) );
+            return add_msg_player_or_npc( params, localised::render( player_msg, args... ),
+                                          localised::render( npc_msg, args... ) );
         }
 
         virtual void add_msg_player_or_say( const std::string &/*player_msg*/,

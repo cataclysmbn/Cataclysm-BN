@@ -53,10 +53,10 @@ inline void add_msg( const char *const msg, Args &&... args )
 {
     return add_msg( string_format( msg, std::forward<Args>( args )... ) );
 }
-template<typename ...Args>
-inline void add_msg( const translation &msg, Args &&... args )
+template<localised::message_format Format, typename ...Args>
+inline void add_msg( const Format &msg, Args &&... args )
 {
-    return Messages::add_msg( m_neutral, string_format( msg, localised::shown( args )... ),
+    return Messages::add_msg( m_neutral, localised::render( msg, args... ),
                               localised::from_format( msg, args... ) );
 }
 
@@ -77,13 +77,13 @@ inline void add_msg( const game_message_params &params, const char *const msg, A
     }
     return add_msg( params, string_format( msg, std::forward<Args>( args )... ) );
 }
-template<typename ...Args>
-inline void add_msg( const game_message_params &params, const translation &msg, Args &&... args )
+template<localised::message_format Format, typename ...Args>
+inline void add_msg( const game_message_params &params, const Format &msg, Args &&... args )
 {
     if( params.type == m_debug && !debug_mode ) {
         return;
     }
-    return Messages::add_msg( params, string_format( msg, localised::shown( args )... ),
+    return Messages::add_msg( params, localised::render( msg, args... ),
                               localised::from_format( msg, args... ) );
 }
 

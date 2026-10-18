@@ -10,6 +10,7 @@
 #include <variant>
 #include <vector>
 
+#include "string_formatter.h"
 #include "translations.h"
 
 /// A message the way a client can render it from the engine's catalogues: the untranslated format and
@@ -58,6 +59,17 @@ inline auto name_of( const translation &text, const int count = 1 ) -> name
     return { .shown = text.translated( count ), .text = of( text, count ) };
 }
 
+/// A format with a plural form and the count that picks the form it is shown in, as `vgettext` picks it.
+struct counted {
+    translation format;
+    int count = 1;
+};
+
+/// A format a message is made from that a client can word too.
+template<typename T>
+concept message_format = std::is_same_v<std::remove_cvref_t<T>, translation> ||
+                         std::is_same_v<std::remove_cvref_t<T>, counted>;
+
 /// What the native rendering of a message prints for `value`.
 template<typename T>
 auto shown( const T &value ) -> const T & { return value; } // *NOPAD*
@@ -101,6 +113,22 @@ auto from_format( const translation &format,
     auto result = localised_text{ .key = key->msgid, .ctx = key->context };
     std::ranges::transform( converted, std::back_inserter( result.args ), []( const auto & value ) { return *value; } );
     return result;
+}
+
+template<typename ...Args>
+auto from_format( const counted &/*format*/,
+                  const Args &... /*values*/ ) -> std::optional<localised_text> { return std::nullopt; }
+
+/// The native rendering of a message made from `format`.
+template<typename ...Args>
+auto render( const translation &format, const Args &... values ) -> std::string
+{
+    return string_format( format.translated(), shown( values )... );
+}
+template<typename ...Args>
+auto render( const counted &format, const Args &... values ) -> std::string
+{
+    return string_format( format.format.translated( format.count ), shown( values )... );
 }
 
 } // namespace localised

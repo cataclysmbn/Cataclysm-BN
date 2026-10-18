@@ -13,6 +13,8 @@
 #    include "messages.h"
 #    include "mondeath.h"
 #    include "monster.h"
+#    include "npc.h"
+#    include "player_helpers.h"
 #    include "state_helpers.h"
 #    include "translations.h"
 
@@ -235,6 +237,58 @@ TEST_CASE(
         CHECK(line.text == "zombie-ko disappears.");
         REQUIRE(line.localised);
         CHECK(line.localised->key == "The %s disappears.");
+    }
+}
+
+TEST_CASE(
+    "the avatar's own lines carry their format and a plural format its count, and an NPC's do not",
+    "[engine_client_localised][messages]") {
+    clear_all_state();
+    build_test_map(ter_id("t_floor"));
+    auto& you = get_avatar();
+    you.setpos(tripoint_bub_ms{60, 60, 0});
+    Messages::clear_messages();
+
+    SECTION(
+        "a plural format reads in its form for the count and carries both msgids and the count") {
+        add_msg(
+            m_info,
+            localised::counted{
+                .format = pl_translation("You drop %d item.", "You drop %d items."), .count = 3},
+            3);
+        const auto line = newest_line();
+        CHECK(line.text == "You drop 3 items.");
+        CHECK(line.type == m_info);
+        CHECK(
+            line.localised
+            == localised_text{
+                .key = "You drop %d item.",
+                .plural = 3.0,
+                .plural_key = "You drop %d items.",
+                .args = {std::int64_t{3}}});
+    }
+    SECTION("the avatar's line and its line of a pair") {
+        you.add_msg_if_player(m_good, to_translation("You see %s."), std::string{"a rat"});
+        CHECK(newest_line().text == "You see a rat.");
+        CHECK(newest_line().type == m_good);
+        CHECK(newest_line().localised
+              == localised_text{.key = "You see %s.", .args = {std::string{"a rat"}}});
+        you.add_msg_if_player(
+            localised::counted{.format = pl_translation("%d rat", "%d rats"), .count = 2}, 2);
+        CHECK(newest_line().text == "2 rats");
+        REQUIRE(newest_line().localised);
+        CHECK(newest_line().localised->plural == 2.0);
+        you.add_msg_player_or_npc(to_translation("You fall."), to_translation("<npcname> falls."));
+        CHECK(newest_line().text == "You fall.");
+        CHECK(newest_line().localised == localised_text{.key = "You fall."});
+    }
+    SECTION("an NPC's line and its line of a pair do not reach the log as the avatar's") {
+        auto& other = spawn_npc(tripoint_bub_ms{61, 60, 0}, "test_talker");
+        other.add_msg_if_player(to_translation("You see %s."), std::string{"a rat"});
+        // The NPC's own line of the pair goes to the global log, which unit tests keep quiet.
+        other
+            .add_msg_player_or_npc(to_translation("You fall."), to_translation("<npcname> falls."));
+        CHECK(Messages::feed_since({}).empty());
     }
 }
 
