@@ -679,6 +679,26 @@
           "const": true,
           "description": "Present when the creature is aware of the avatar (its overlay says it sees the player)."
         },
+        "health": {
+          "type": "object",
+          "description": "Present when the creature is hurt: the native look-around health bar, in fifths filled and its native color name.",
+          "properties": {
+            "fifths": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 5
+            },
+            "color": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "fifths",
+            "color"
+          ],
+          "additionalProperties": false
+        },
         "traits": {
           "type": "object",
           "description": "The ids of the character's mutations by mutation type (hair_color, skin_tone, ...): the colors a tileset tints its mutation overlays with.",
@@ -716,6 +736,7 @@
               "overlays": false,
               "attitude": false,
               "aware": false,
+              "health": false,
               "traits": false
             }
           }

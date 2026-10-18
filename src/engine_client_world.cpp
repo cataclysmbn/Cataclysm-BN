@@ -778,6 +778,16 @@ auto traits_of( const Creature &critter ) -> std::map<std::string, std::vector<s
 }
 
 /// The creatures a snapshot discloses: the monsters and NPCs the avatar sees.
+/// A hurt creature's health in the fifths and color of the native look-around bar; none at full health.
+auto health_of( const Creature &critter ) -> std::optional<entity_health>
+{
+    const auto hp = critter.get_hp();
+    const auto max = critter.get_hp_max();
+    if( max <= 0 || hp >= max ) { return std::nullopt; }
+    const auto bar = get_hp_bar( hp, max, critter.is_monster() );
+    return entity_health{ .fifths = std::clamp( 5 * hp / max, 0, 5 ), .color = color_of( bar.second ) };
+}
+
 auto disclosed_creatures( const avatar &you ) -> std::vector<const Creature *>
 {
     const auto all = g->get_creatures_if( []( const Creature & ) { return true; } );
@@ -814,7 +824,8 @@ auto capture_entities( const map &here, const avatar &you, const std::string &di
             .overlays = overlays_of( *critter ),
             .traits = traits_of( *critter ),
             .attitude = Creature::attitude_raw_string( critter->attitude_to( you ) ),
-            .aware = critter->sees( you ) && !you.has_trait( trait_INATTENTIVE ) } );
+            .aware = critter->sees( you ) && !you.has_trait( trait_INATTENTIVE ),
+            .health = health_of( *critter ) } );
     }
     return entities;
 }

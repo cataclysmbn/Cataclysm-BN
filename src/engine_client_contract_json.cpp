@@ -157,6 +157,7 @@ auto to_json( const entity &value ) -> json
     if( !value.traits.empty() ) { result["traits"] = value.traits; }
     if( value.attitude ) { result["attitude"] = *value.attitude; }
     if( value.aware ) { result["aware"] = true; }
+    if( value.health ) { result["health"] = json{{"fifths", value.health->fifths}, {"color", value.health->color}}; }
     if( !value.statuses.empty() ) { result["statuses"] = value.statuses; }
     if( value.sense ) { result["sense"] = *value.sense; }
     return result;
