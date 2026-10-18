@@ -100,6 +100,13 @@ struct field_entry {
     auto operator<=>( const field_entry & ) const = default; // *NOPAD*
 };
 enum class knowledge { remembered, visible, sensed };
+/// The colored light reaching a square, as the native tiles view tints it: the light's game-data color as
+/// `#rrggbb` and its strength, twice its light level, from 1 to 255.
+struct light_glow {
+    std::string color = {};
+    int strength = 0;
+    auto operator<=>( const light_glow & ) const = default; // *NOPAD*
+};
 /// The two layers the avatar memorized for a cell.
 struct memory_layers {
     look terrain;
@@ -120,6 +127,7 @@ struct cell {
     std::vector<look> items = {};
     std::optional<look> vehicle = std::nullopt;
     std::optional<int> light = std::nullopt;
+    std::optional<light_glow> glow = std::nullopt;
     /// A square in sight on the avatar's level that the native view looks through: how many levels down
     /// the square is that it draws here. Bare open air has nothing else.
     std::optional<int> below = std::nullopt;

@@ -992,6 +992,47 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "world capture publishes the colored light a protocol client's square is tinted with",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& here = get_map();
+    calendar::turn = calendar::turn_zero + 1_days;
+    g->reset_light_level();
+    const auto fire = setup.start + tripoint_west;
+    here.add_field(fire, field_type_id("fd_fire"), 1);
+    const auto capture = [&](const std::string& enabled) {
+        auto state = [&] {
+            const auto option = override_option("COLORED_LIGHTING", enabled);
+            get_options().save();
+            here.invalidate_lightmap_caches();
+            map_perception::acquire();
+            return ec::world::capture_world();
+        }();
+        get_options().save();
+        return state;
+    };
+
+    // The protocol backend lights the map in color as the tiles view does.
+    const auto state = capture("true");
+    const auto* cell = find_cell(state, at(fire));
+    REQUIRE(cell != nullptr);
+    REQUIRE(cell->glow);
+    CHECK(cell->glow->color == "#ffd08a");
+    CHECK(cell->glow->strength > 0);
+    CHECK(cell->glow->strength <= 255);
+    cell = find_cell(state, at(setup.start));
+    REQUIRE(cell != nullptr);
+    REQUIRE(cell->glow);
+    CHECK(cell->glow->color == "#ffd08a");
+
+    // The option off, nothing is tinted.
+    const auto plain = capture("false");
+    cell = find_cell(plain, at(fire));
+    REQUIRE(cell != nullptr);
+    CHECK_FALSE(cell->glow);
+}
+
+TEST_CASE(
     "world capture lists the uppermost item last and names a corpse by its monster",
     "[engine_client_world]") {
     const auto setup = make_scene();
