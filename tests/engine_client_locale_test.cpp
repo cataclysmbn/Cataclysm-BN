@@ -22,13 +22,18 @@
 #    include "map_perception.h"
 #    include "mcp_server.h"
 #    include "messages.h"
+#    include "mod_manager.h"
 #    include "options_helpers.h"
+#    include "path_info.h"
 #    include "state_helpers.h"
 #    include "translations.h"
 #    include "weather/weather.h"
+#    include "worldfactory.h"
 
 #    include <algorithm>
 #    include <chrono>
+#    include <filesystem>
+#    include <fstream>
 #    include <iostream>
 #    include <nlohmann/json.hpp>
 #    include <ranges>
@@ -337,6 +342,39 @@ TEST_CASE(
         CHECK_FALSE(base.front()["data"].contains("lang"));
         CHECK(worded.front()["data"]["lang"] == json(get_language().id));
         CHECK(worded.front()["data"]["text"] == "Second line.");
+    }
+    SECTION(
+        "the snapshot names the catalogues of the connection's language, the game's then the mods'") {
+        REQUIRE(std::ranges::contains(
+            world_generator->active_world->info->active_mod_order, mod_id{"test_data"}));
+        auto& mod = const_cast<MOD_INFORMATION&>(mod_id{"test_data"}.obj());
+        const auto old_path = mod.path;
+        const auto restore = on_out_of_scope([&]() { mod.path = old_path; });
+        mod.path = (fixture.directory / "mod").string();
+        // The game runs from its own directory with a relative base path; a reader runs elsewhere.
+        PATH_INFO::init_base_path(std::filesystem::relative(fixture.directory).string());
+        const auto base = on_out_of_scope([&]() {
+            PATH_INFO::init_base_path(fixture.directory.string());
+        });
+        // The language without its dialect, as the game looks a mod's catalogue up.
+        const auto mod_catalogue = fixture.directory / "mod/lang/ko.mo";
+        std::filesystem::create_directories(mod_catalogue.parent_path());
+        auto output = std::ofstream{mod_catalogue, std::ios::binary};
+        const auto bytes = catalogue({{"Yes", "Yes-mod"}});
+        output.write(bytes.data(), static_cast<std::streamsize>(bytes.size()));
+        output.close();
+        controller.send(rpc("bn.subscribe", "{}", "3"));
+        spectator.send(rpc("bn.subscribe", "{}", "3"));
+        CHECK_FALSE(controller.result(3).contains("catalogues"));
+        const auto catalogues = spectator.result(3)["catalogues"];
+        REQUIRE(catalogues.size() == 2);
+        for (const auto& path : catalogues) {
+            CHECK(std::filesystem::path{path.get<std::string>()}.is_absolute());
+        }
+        CHECK(std::filesystem::equivalent(
+            catalogues[0].get<std::string>(),
+            fixture.directory / "lang/mo" / korean / "LC_MESSAGES/cataclysm-bn.mo"));
+        CHECK(std::filesystem::equivalent(catalogues[1].get<std::string>(), mod_catalogue));
     }
     SECTION("a converted line is the same LocalisedString for both readers and has no lang") {
         controller.output.str("");
