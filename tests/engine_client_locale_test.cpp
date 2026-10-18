@@ -392,7 +392,8 @@ TEST_CASE(
         spectator.send(hello(locale));
         const auto out = spectator.output.str();
         INFO(out);
-        CHECK(out.find(R"("kind":"negotiation_failed")") != std::string::npos);
+        CHECK(out.find(R"("kind":"unavailable_locale","message":")") != std::string::npos);
+        CHECK(out.find(R"("action":"hello")") != std::string::npos);
         CHECK(out.find(R"("version":"0.2")") == std::string::npos);
     }
     // The refusal negotiates nothing, and the same connection may say hello again.
