@@ -1,5 +1,6 @@
 #if defined(CATA_MCP)
 
+#    include "activity_handlers.h"
 #    include "avatar.h"
 #    include "catch/catch.hpp"
 #    include "engine_client_event.h"
@@ -290,6 +291,25 @@ TEST_CASE(
             .add_msg_player_or_npc(to_translation("You fall."), to_translation("<npcname> falls."));
         CHECK(Messages::feed_since({}).empty());
     }
+}
+
+TEST_CASE(
+    "a native plural line carries its format, its plural msgid and its count",
+    "[engine_client_localised][messages]") {
+    clear_all_state();
+    build_test_map(ter_id("t_floor"));
+    auto& you = get_avatar();
+    you.setpos(tripoint_bub_ms{60, 60, 0});
+    Messages::clear_messages();
+    drop_on_map(you, item_drop_reason::too_large,
+                item::spawn("test_platinum_bit", calendar::turn, 2), you.bub_pos());
+    const auto line = newest_line();
+    REQUIRE(line.localised);
+    CHECK(line.localised->key == "There's no room in your inventory for the %s, so you drop it.");
+    CHECK(line.localised->plural == 2.0);
+    CHECK(line.localised->plural_key
+          == "There's no room in your inventory for the %s, so you drop them.");
+    CHECK(line.localised->args.size() == 1);
 }
 
 #endif // CATA_MCP
