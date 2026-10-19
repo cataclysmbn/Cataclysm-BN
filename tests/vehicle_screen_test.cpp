@@ -237,6 +237,8 @@ TEST_CASE(
                 // The main screen: the vehicle's figures, the grid around the cursor, the parts on
                 // it.
                 CHECK(screen.title == fixture.veh->name);
+                // The vehicle screen covers the map natively, so it is a screen, not a dialog.
+                CHECK(screen.role == "screen");
                 CHECK(body<ec::panel_body>(part(screen, "vehicle:overview")).title
                       == fixture.veh->name);
                 REQUIRE(stat_of(screen, "owner") != nullptr);
