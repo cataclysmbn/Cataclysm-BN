@@ -91,7 +91,8 @@ TEST_CASE(
                     const auto& rows = rows_of(screen, "zones:rows");
                     REQUIRE(rows.size() == 2);
                     // A row is named by its zone, not by its place in the list.
-                    CHECK_FALSE(rows[0].id.ends_with("0"));
+                    CHECK(rows[0].id.starts_with("zone:LOOT_UNSORTED:"));
+                    CHECK(rows[1].id.starts_with("zone:LOOT_FOOD:"));
                     first = rows[0].id;
                     second = rows[1].id;
                     CHECK(rows[1].label == "far pile");
