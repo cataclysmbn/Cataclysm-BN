@@ -104,6 +104,8 @@ TEST_CASE("the native look panel prints an npc as it always did", "[native_info]
     const auto square = fixed_square{};
     auto& talker = spawn_npc(square.at + tripoint_east, "test_talker");
     talker.name = "Test Npc";
+    // The npc class rolls its traits at random; a visible one would add a line.
+    talker.clear_mutations();
     talker.remove_worn_items_with([](auto&&) { return detached_ptr<item>(); });
     talker.wield(item::spawn("knife_combat"));
     talker.wear_item(item::spawn("jeans"), false);
