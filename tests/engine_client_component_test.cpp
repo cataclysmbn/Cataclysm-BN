@@ -170,14 +170,14 @@ TEST_CASE("a screen publishes each role once", "[engine_client_component]") {
     state.actions.push_back({.id = "CONFIRM", .name = "Confirm", .keys = {"RETURN"}});
     state.actions.push_back({.id = "QUIT", .name = "Quit", .keys = {"ESC"}});
     state.actions.push_back({.id = "ANY_INPUT", .name = "Press any key", .keys = {}});
-    SECTION("the generic screen's own cancel keeps the role over the registered QUIT") {
+    SECTION("the generic screen's own cancel stands for the registered QUIT, with its keys") {
         auto generic = boundary(menu());
         generic.actions = state.actions;
         const auto view = top_of(generic);
         CHECK(holders(view, "cancel") == std::vector<std::string>{"bn:cancel"});
         CHECK(holders(view, "confirm") == std::vector<std::string>{"CONFIRM"});
-        CHECK(affordance(view, "QUIT").role.empty());
-        CHECK(affordance(view, "QUIT").enabled);
+        CHECK_FALSE(std::ranges::contains(view.affordances, "QUIT", &ec::affordance::id));
+        CHECK(affordance(view, "bn:cancel").keys == std::vector<std::string>{"ESC"});
     }
     SECTION("a provider's own cancel and confirm keep the role over the registered ones") {
         const auto context = input_context("TEST_ROLES");
