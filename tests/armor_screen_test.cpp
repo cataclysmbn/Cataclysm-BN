@@ -219,6 +219,9 @@ TEST_CASE(
                 CHECK(column_of(jeans, "hidden") == "No");
                 CHECK_FALSE(column_of(jeans, "storage").empty());
                 CHECK(jeans.look.has_value());
+                // The native screen has no Enter on an item, so a client is offered none.
+                CHECK_FALSE(std::ranges::contains(
+                    screen.affordances, "bn:activate:armor:pick", &ec::affordance::id));
                 CHECK(
                     ec::resolve_invoke(
                         state, {.affordance_id = "armor:pick", .args = {.row = "worn:none:0"}})
