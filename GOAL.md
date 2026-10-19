@@ -52,19 +52,19 @@ The existing replay smoke compares the complete avatar `.sav`. Wider saved-world
 
 The measured tutorial RPC baseline is approximately 1,716 state queries/s and 628 screen queries/s. At 200 queries/s, each endpoint completed 1,000 calls within 5 ms; worst endpoint p99 was 2.36 ms. Reuse this as a scoped observation baseline when evaluating subsequent changes. Event bursts, rendering, and heavy gameplay require their own measurements.
 
-## Status (2026-10-18)
+## Status (2026-10-19)
 
 Checked boxes below have evidence in the current tree; package board and validation detail: `progress.md`.
 
-| Package        | State                                                                                                                                                                                                                                       |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| M1 contract    | Protocol 0.2 schema, `docs/en/dev/reference/engine_client_protocol.md` (one clock, stale rejection, coordinates, knowledge states), presentation events (projectile, explosion, sound). Open: null/recording sinks, observer-purity tests   |
-| M4 delivery    | Credits, `max_hz`, held-frame bounds, `bn.resync`, non-blocking stdio and Unix socket with spectators, activity frames before completion (`tests/protocol/socket_test.ts`). Open: partial-write, stalled-reader and shutdown tests as a set |
-| M5 conformance | Deno consumer (`tests/protocol/stdio_test.ts`, `mirror_test.ts`) rebuilds state from snapshot + events. Open: reconnect recovery and comparison with an engine-side recording                                                               |
-| M0/M2, M3      | Explosion clock ported; grenade/projectile events published. Open: RNG/state equality across presentation modes, native Tiles/Curses adaptation                                                                                             |
-| M6             | `tests/protocol/determinism_test.ts` compares per-turn hashes across client conditions; latency measurements per fix. Open: recorded budgets, full acceptance matrix                                                                        |
-| P1, P2         | Not worked since 2026-10-10 (purity fixes reverted for suite OOM)                                                                                                                                                                           |
-| P3             | Most screens semantic; Rust clients (`~/repo/cata/bn-client-egui`) play through the protocol; user-reported client UI items in `out/lanes/checklist.md`. Open: raw-key screens, debug screens, per-slice cross-client replay                |
+| Package        | State                                                                                                                                                                                                                                                                                         |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| M1 contract    | Protocol 0.2 schema and docs; value-only `presentation_value` facts, null sink `presentation::collect(false)`, recording sink `collect(true)`+`take()`, contract recording `--contract-record`; facts outlive their creature, out-of-sight facts are withheld, listening leaves RNG untouched |
+| M4 delivery    | Credits, `max_hz`, held-frame bounds, `bn.resync`, stdio and Unix socket with spectators; real-IPC tests for frame limits, split frames, malformed frames, stalled readers, shutdown, `command_busy`; requests answered every activity step                                                   |
+| M5 conformance | Deno consumer rebuilds state; every 0.2 error kind reached over IPC; reconnect via socket; client stream equals `--contract-record` recording                                                                                                                                                 |
+| M0/M2, M3      | Explosion clock ported; grenade/projectile events published. Open: RNG/state equality across presentation modes, native Tiles/Curses adaptation                                                                                                                                               |
+| M6             | `determinism_test.ts` per-turn hashes; `BN_MEASURE` stdio measurement (wall, CPU, RSS, bytes, first effect, control p50/p95/p99) per consumer. Open: idle-machine baseline, recorded budgets, native presentation and acceptance matrix                                                       |
+| P1, P2         | Not worked since 2026-10-10 (purity fixes reverted for suite OOM)                                                                                                                                                                                                                             |
+| P3             | Most screens semantic; Rust clients play through the protocol. world picker moved to a screen; 12 fallback contexts left in `out/lanes/screen-inventory-2026-10-19.md`. Open: those screens, per-slice cross-client replay                                                                    |
 
 ## Work packages
 
@@ -76,7 +76,7 @@ Packages are resumable units, not calendar-day promises. Complete each gate befo
 - [x] Verify branches, worktrees, partial changes, exact run IDs, and remaining processes.
 - [ ] Give each lane an owner, exclusive source boundary, validation gate, and durable handoff location.
 - [ ] Resume the existing observation and clock sessions with the supporting-file and diagnostic decisions needed to unblock them.
-- [ ] Enumerate remaining custom UI screens and their current semantic/fallback coverage.
+- [x] Enumerate remaining custom UI screens and their current semantic/fallback coverage.
 
 **Gate:** Every pending requirement has an owner or an explicit dependency, and existing WIP/evidence is preserved.
 
@@ -119,9 +119,9 @@ Compatibility decision already approved: logical time plus insertion ordinal is 
 
 - [x] Define the smallest complete command, observation, and event schemas needed for the first end-to-end slice.
 - [x] Specify negotiation, readiness, stale-request rejection, epochs, sequences, revisions, coordinates, asset references, and visibility transitions.
-- [ ] Add value-only events, a null sink, and a recording sink.
-- [ ] Capture results while source objects are valid and visibility is known.
-- [ ] Test ownership/lifetime, hidden-state filtering, ordering, malformed data, and observer purity.
+- [x] Add value-only events, a null sink, and a recording sink.
+- [x] Capture results while source objects are valid and visibility is known.
+- [x] Test ownership/lifetime, hidden-state filtering, ordering, malformed data, and observer purity.
 
 **Gate:** A reviewed, versioned contract has executable tests and owned payloads; passive capture preserves game results.
 
@@ -140,7 +140,7 @@ Compatibility decision already approved: logical time plus insertion ordinal is 
 - [x] Deliver intermediate events before action completion.
 - [x] Implement credits/backpressure, safe yielding, readiness, and independent transport control.
 - [x] Implement disconnect, reconnect, retained-history checks, and explicit resynchronization.
-- [ ] Test resource bounds, partial writes, malformed frames, stalled readers, shutdown, and command re-entry protection.
+- [x] Test resource bounds, partial writes, malformed frames, stalled readers, shutdown, and command re-entry protection.
 
 **Gate:** Real IPC streams during long actions without per-frame round trips; required ordering, memory bounds, responsiveness, and safe recovery hold.
 
@@ -148,8 +148,8 @@ Compatibility decision already approved: logical time plus insertion ordinal is 
 
 - [x] Exercise the public interface from a non-C++ test consumer using the repository's existing test tooling where practical.
 - [x] Reconstruct visible state from an initial snapshot and subsequent event batches.
-- [ ] Verify sequence/revision rules, selection commands, readiness, errors, and reconnect recovery.
-- [ ] Compare reconstructed state and ordered events against an engine-side recording consumer.
+- [x] Verify sequence/revision rules, selection commands, readiness, errors, and reconnect recovery.
+- [x] Compare reconstructed state and ordered events against an engine-side recording consumer.
 
 **Gate:** Cross-process behavior proves the published contract is sufficient independently of internal C++ APIs.
 
@@ -240,3 +240,10 @@ Relevant existing protections and context: [deferred EMP drains](https://github.
 - [ ] Representative performance and resource bounds meet the recorded budgets.
 - [ ] Existing client behavior, remaining UI coverage, relevant regressions, and independent review pass.
 - [ ] Accepted changes are integrated, documentation is current, and the final evidence identifies the delivered source.
+
+---
+
+btw added low priority objective
+
+- [ ] 1st person mode
+- [ ] Map editor and vehicle editor in egui client
