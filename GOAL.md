@@ -247,3 +247,4 @@ btw added low priority objective
 
 - [ ] 1st person mode
 - [x] Map editor and vehicle editor in egui client
+- [ ] Several windows open at once, as in Project Zomboid: the game keeps taking keys under windows that only read (the egui map window does; character, inventory and other read-only screens remain)
