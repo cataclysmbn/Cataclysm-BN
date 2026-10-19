@@ -5,7 +5,7 @@
  * their end; what a scenario records is the engine's own bytes, never a hand-written value.
  */
 import { assert, assertEquals } from "@std/assert"
-import { atMainMenu, Mirror } from "../mirror.ts"
+import { atMainMenu, Mirror, standsFor } from "../mirror.ts"
 
 // deno-lint-ignore no-explicit-any
 export type Value = any
@@ -292,7 +292,12 @@ export class Engine {
    */
   invoke(affordance: string, args?: Value, scope?: "screen" | "boundary") {
     const top = this.top()
-    const found = top.affordances.find((entry: Value) => entry.id === affordance)
+    // A screen's own cancel or confirm stands for the registered QUIT or CONFIRM, which it then does not offer.
+    const found = top.affordances.find((entry: Value) => entry.id === affordance) ??
+      top.affordances.find((entry: Value) =>
+        standsFor[affordance] && entry.role === standsFor[affordance]
+      )
+    affordance = found?.id ?? affordance
     const kind = scope ?? found?.expect ?? "screen"
     const expect = kind === "screen" ? { screen_id: top.screen_id } : {
       boundary_id: this.mirror.interaction.boundary_id,

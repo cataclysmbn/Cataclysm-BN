@@ -192,6 +192,9 @@ export function itemRows(screen: Value): { id: string; label: string; activate: 
   )
 }
 
+/** The role of the screen's own affordance that stands for a registered action it then does not offer. */
+export const standsFor: Record<string, string> = { QUIT: "cancel", CONFIRM: "confirm" }
+
 /** Whether the title screen is the top of the stack: the main menu publishes components, not a choice list. */
 export const atMainMenu = (mirror: Mirror): boolean =>
   mirror.interaction.stack.at(-1)?.context === "MAIN_MENU"

@@ -8,7 +8,7 @@
  */
 import { assert, assertEquals, assertNotEquals } from "@std/assert"
 import { Ajv2020 } from "npm:ajv@8.17.1/dist/2020.js"
-import { atMainMenu, itemRows, Mirror, stackPick } from "./mirror.ts"
+import { atMainMenu, itemRows, Mirror, stackPick, standsFor } from "./mirror.ts"
 
 // deno-lint-ignore no-explicit-any
 type Value = any
@@ -1267,14 +1267,18 @@ const shown = (session: Session): Value[] => session.mirror.interaction.interact
 const setTo = (session: Session, id: string, value: string) =>
   session.submit({ kind: "fill", field_id: id, value, submit: true })
 
-/** Invokes an affordance of the top screen, with the expectation its scope asks for, and follows it to its end. */
-const invokeOn = (session: Session, affordance: string, args?: Value) =>
-  invokeTop(
-    session,
-    affordance,
-    top(session).affordances.find((entry: Value) => entry.id === affordance)?.expect ?? "screen",
-    args,
-  )
+/**
+ * Invokes an affordance of the top screen, or the screen's own cancel or confirm for QUIT or CONFIRM, with the
+ * expectation its scope asks for, and follows it to its end.
+ */
+const invokeOn = (session: Session, affordance: string, args?: Value) => {
+  const affordances = top(session).affordances
+  const found = affordances.find((entry: Value) => entry.id === affordance) ??
+    affordances.find((entry: Value) =>
+      standsFor[affordance] && entry.role === standsFor[affordance]
+    )
+  return invokeTop(session, found?.id ?? affordance, found?.expect ?? "screen", args)
+}
 
 /** Leave a settings screen the way Escape does and answer its save prompt. */
 async function leaveAndSave(session: Session, done: () => boolean) {
