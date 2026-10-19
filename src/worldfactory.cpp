@@ -668,8 +668,12 @@ std::string worldfactory::pick_random_name()
 
 std::string worldfactory::get_next_valid_worldname()
 {
-    std::string worldname = Name::get( nameIsWorldName );
-
+    // A world named like an existing one would write into its folder and load its saves.
+    const auto base = Name::get( nameIsWorldName );
+    auto worldname = base;
+    for( auto copy = 2; has_world( worldname ); ++copy ) {
+        worldname = string_format( "%s %d", base, copy );
+    }
     return worldname;
 }
 
