@@ -122,4 +122,34 @@ TEST_CASE(
     CHECK(you.cash < 1000000);
 }
 
+TEST_CASE(
+    "a caravan names each of its goods by a row of its own in every category",
+    "[defense_caravan_screen][engine_client_component]") {
+    clear_all_state();
+    const auto guard = screen_guard{};
+    auto mode = defense_game{};
+    auto categories = std::vector<std::string>{};
+    auto visited = std::size_t{0};
+    open_stack(
+        [&] { mode.caravan(); },
+        [&](const snapshot_t& /*snapshot*/, const ec::screen_view& screen) {
+            if (screen.context == "YESNO") { return run_action("YES"); }
+            if (categories.empty()) {
+                categories =
+                    body<ec::tabs_body>(part(screen, "caravan:tabs")).tabs
+                    | std::views::transform(&ec::tab_entry::id) | std::ranges::to<std::vector>();
+            } else {
+                const auto& rows = rows_of(screen);
+                const auto ids =
+                    rows | std::views::transform(&ec::row::id) | std::ranges::to<std::set>();
+                INFO(selected_tab(screen));
+                CHECK(ids.size() == rows.size());
+                ++visited;
+            }
+            if (visited == categories.size()) { return run_action("QUIT"); }
+            return invoke_event(screen, "caravan:tab", {.row = categories[visited]});
+        });
+    CHECK(visited == 8);
+}
+
 #endif // CATA_MCP

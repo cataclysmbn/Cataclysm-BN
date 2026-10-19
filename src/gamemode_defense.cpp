@@ -8,6 +8,7 @@
 #include "cursesdef.h"
 #include "debug.h"
 #include "engine_client_component.h"
+#include "engine_client_world.h"
 #include "game.h"
 #include "game_constants.h"
 #include "input.h"
@@ -37,11 +38,14 @@
 #include "ui_manager.h"
 #include "weather/weather.h"
 
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <ostream>
+#include <ranges>
 #include <set>
 
 static const skill_id skill_barter( "barter" );
@@ -971,11 +975,91 @@ void defense_game::caravan()
     ctxt.register_action( "HELP" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
 
+    namespace ec = engine_client;
+    /// The categories in the order of `caravan_category`.
+    constexpr auto category_ids = std::array{
+        "caravan:cart", "caravan:melee", "caravan:ranged", "caravan:ammunition", "caravan:components",
+        "caravan:food", "caravan:clothes", "caravan:tools",
+    };
+    static_assert( category_ids.size() == NUM_CARAVAN_CATEGORIES );
+    const auto row_id = []( const itype_id & id ) { return "caravan:item:" + id.str(); };
+    const auto screen = ec::screen_scope( ctxt, "caravan", { .role = "screen", .view = [&]( const ec::boundary_state & )
+    {
+        using namespace std::views;
+        const auto &shown = items[category_selected];
+        const auto row_of = [&]( const auto & entry ) {
+            const auto &[id, count] = entry;
+            const auto price = caravan_price( g->u, item::spawn_temporary( id,
+                                              calendar::start_of_cataclysm )->price( false ) * count );
+            const auto price_color = count > 0 ? ec::world::color_name( price > g->u.cash ? c_red : c_green ) :
+                                     std::string{};
+            return ec::row{ .id = row_id( id ), .label = item::nname( id, count ), .columns = {
+                    { .key = "count", .label = _( "Count" ), .value = std::to_string( count ), .color = {} },
+                    { .key = "price", .label = _( "Price" ), .value = count > 0 ? format_money( price ) : std::string{}, .color = price_color }
+                } };
+        };
+        const auto selected = item_selected < static_cast<int>( shown.size() ) ? std::optional{ shown[item_selected] } :
+                              std::nullopt;
+        const auto info = selected ? item::spawn_temporary( *selected,
+                          calendar::start_of_cataclysm )->info_string( iteminfo_query::no_text ) : std::string{};
+        return ec::screen_view{
+            .root = ec::tabs( {
+                .id = "caravan:tabs",
+                .tabs = category_ids | enumerate | transform( [&]( const auto & entry )
+                {
+                    const auto &[index, id] = entry;
+                    return ec::tab_entry{ .id = id, .label = caravan_category_name( static_cast<caravan_category>( index ) ), .selected = index == category_selected };
+                } ) | std::ranges::to<std::vector>(),
+                .select = "caravan:tab",
+                .child = ec::split( {
+                    .id = "caravan:body", .relation = "detail", .active = "caravan:rows", .children = ec::children_of(
+                    ec::panel( {
+                        .id = "caravan:items",
+                        .stats = {
+                            { .key = "cash", .label = _( "Your Cash:" ), .value = format_money( g->u.cash ) },
+                            { .key = "total", .label = _( "Total price:" ), .value = format_money( total_price ) },
+                            { .key = "left", .label = _( "Cash left:" ), .value = format_money( g->u.cash - total_price ), .tone = total_price > g->u.cash ? "bad" : "good" },
+                        },
+                        .child = ec::list( {
+                            .id = "caravan:rows", .rows = zip( shown, item_count[category_selected] ) | transform( row_of ) | std::ranges::to<std::vector>(),
+                            .selection = "single", .activate = "caravan:pick" } ) } ),
+                    ec::panel( {
+                        .id = "caravan:item", .title = selected ? item::nname( *selected ) : std::string{},
+                        .child = ec::component{ .id = "caravan:details", .body = ec::text_body{ .markup = info } } } ) ) } ) } ),
+            .affordances = {
+                ec::invoke_affordance( { .id = "caravan:pick", .label = _( "Select" ), .args = { .row = ec::row_shape{ .component_id = "caravan:rows" } }, .role = "select" } ),
+                ec::invoke_affordance( { .id = "caravan:tab", .label = _( "Select" ), .args = { .row = ec::row_shape{ .component_id = "caravan:tabs" } } } ),
+            },
+            .focus_component = current_window == 0 ? "caravan:tabs" : "caravan:rows",
+.focus_row = current_window == 0 ? std::string{ category_ids[category_selected] } :
+            selected ? row_id( *selected ) : std::string{},
+        };
+    }
+                                                           } );
+
     bool done = false;
     bool cancel = false;
     while( !done ) {
         ui_manager::redraw();
         const std::string action = ctxt.handle_input();
+        // A client picks a tab or an item; the native windows move their selection there.
+        if( const auto call = ec::invoked( ctxt.get_raw_input() ); call && call->args.row ) {
+            const auto &row = *call->args.row;
+            const auto &shown = items[category_selected];
+            if( call->affordance_id == "caravan:tab" ) {
+                if( const auto found = std::ranges::find( category_ids, row ); found != category_ids.end() ) {
+                    category_selected = static_cast<int>( found - category_ids.begin() );
+                    current_window = 0;
+                    offset = 0;
+                    item_selected = 0;
+                }
+            } else if( const auto found = std::ranges::find( shown, row, row_id ); found != shown.end() ) {
+                item_selected = static_cast<int>( found - shown.begin() );
+                current_window = 1;
+                offset = std::clamp( offset, std::max( 0, item_selected - 12 ), item_selected );
+            }
+            continue;
+        }
         if( action == "HELP" ) {
             popup_top( _( "CARAVAN:\n"
                           "Start by selecting a category using your favorite up/down keys.\n"
@@ -1206,12 +1290,17 @@ std::vector<itype_id> caravan_items( caravan_category cat )
 
     std::vector<detached_ptr<item>> item_list = item_group::items_from( item_group_id( group_id ) );
 
+    // Each type is offered once: a client names the row by its type.
+    const auto add = [&]( const itype_id & id ) {
+        if( std::ranges::find( ret, id ) == ret.end() ) {
+            ret.emplace_back( id );
+        }
+    };
     for( auto &it : item_list ) {
-        itype_id item_type = it->typeId();
-        ret.emplace_back( item_type );
+        add( it->typeId() );
         // Add the default magazine types for each gun.
         if( it->is_gun() && !it->magazine_integral() ) {
-            ret.emplace_back( it->magazine_default() );
+            add( it->magazine_default() );
         }
     }
     return ret;
