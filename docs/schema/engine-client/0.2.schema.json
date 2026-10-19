@@ -284,6 +284,16 @@
           "const": true,
           "description": "Set on terrain that stands as a wall: the game data flags it WALL, or it joins walls (CONNECT_TO_WALL) and is not FLAT, as a closed door or a window; absent otherwise."
         },
+        "window": {
+          "const": true,
+          "description": "Set on terrain the game data flags WINDOW; absent otherwise."
+        },
+        "coverage": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Of terrain and furniture: the game data's coverage, the percent of a person behind it that it covers; absent for none."
+        },
         "tint": {
           "type": "object",
           "properties": {
@@ -436,6 +446,16 @@
         "wall": {
           "const": true,
           "description": "Set on terrain that stands as a wall: the game data flags it WALL, or it joins walls (CONNECT_TO_WALL) and is not FLAT, as a closed door or a window; absent otherwise."
+        },
+        "window": {
+          "const": true,
+          "description": "Set on terrain the game data flags WINDOW; absent otherwise."
+        },
+        "coverage": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Of terrain and furniture: the game data's coverage, the percent of a person behind it that it covers; absent for none."
         },
         "tint": {
           "type": "object",
