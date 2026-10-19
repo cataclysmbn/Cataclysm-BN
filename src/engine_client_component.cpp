@@ -182,7 +182,7 @@ auto registered_role( const std::string &id, const bool map ) -> std::string
         "UP", "DOWN", "LEFT", "RIGHT", "LEFTUP", "LEFTDOWN", "RIGHTUP", "RIGHTDOWN", "PAGE_UP", "PAGE_DOWN",
         "HOME", "END", "NEXT_TAB", "PREV_TAB", "NEXT_CATEGORY_TAB", "PREV_CATEGORY_TAB", "SCROLL_UP",
         "SCROLL_DOWN", "MOUSE_MOVE", "TEXT.LEFT", "TEXT.RIGHT", "TEXT.UP", "TEXT.DOWN", "TEXT.HOME", "TEXT.END",
-        "TEXT.PAGE_UP", "TEXT.PAGE_DOWN"
+        "TEXT.PAGE_UP", "TEXT.PAGE_DOWN", "LEFT_WIDE", "RIGHT_WIDE", "UP_WIDE", "DOWN_WIDE"
     };
     return id == "CONFIRM" ? "confirm" : id == "QUIT" ? "cancel" : id == "ANY_INPUT" ? "any_key" :
            id == "HELP_KEYBINDINGS" ? "help" : !map &&
