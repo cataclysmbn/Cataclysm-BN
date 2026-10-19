@@ -5816,8 +5816,8 @@ void game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
     // they are guaranteed to run on the following turn.
     // -----------------------------------------------------------------------
     // Build eligible list paired with pre-computed distances so each monster's
-    // distance is calculated exactly once.  The pair is (dist, monster*) so
-    // the default comparator orders by distance first.
+    // distance is calculated exactly once; order_by_distance keeps the listed
+    // order among monsters at one distance.
     std::vector<std::pair<int, monster *>> eligible;
     if( activity_skip_ai && cache != nullptr ) {
         ZoneScopedN( "monmove_build_eligible" );
@@ -5876,15 +5876,11 @@ void game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
         // this turn; next_turn is NOT advanced for them so they are highest-
         // priority next turn (no starvation).
         //
-        // nth_element is O(M) average — it partitions the N closest to the front
-        // without fully ordering them, which is all we need for the budget cut.
         // Only pay the ordering cost when the budget actually fires.
         if( effective_budget > 0 &&
             static_cast<int>( eligible.size() ) > effective_budget ) {
             ZoneScopedN( "monmove_apply_budget" );
-            std::nth_element( eligible.begin(),
-                              eligible.begin() + effective_budget,
-                              eligible.end() );
+            order_by_distance( eligible );
             // Drain moves for budget-cut monsters to prevent accumulation.
             // Without this, a monster deferred for N turns accumulates N turns
             // of moves from process_turn(), then bursts through N actions when
