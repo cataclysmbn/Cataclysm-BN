@@ -734,7 +734,7 @@ TEST_CASE(
                 placed = stat("place").value;
                 CHECK_FALSE(placed.empty());
                 CHECK(stat("place").label == "Place overmap terrain:");
-                CHECK_FALSE(stat("rotation").value.empty());
+                CHECK(stat("rotation").label.starts_with("Rotation: "));
                 CHECK(stat("warning").tone == "bad");
                 return act("QUIT");
             }
