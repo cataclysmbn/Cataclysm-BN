@@ -289,6 +289,31 @@ auto wait_for_controller() -> void
     session.sockets->service( 1000 );
 }
 
+/// Answers the requests that already wait while an activity runs, which reaches no input boundary.
+auto serve_waiting_requests() -> void
+{
+    auto &session = state();
+    // The heartbeat tells the client the activity is alive.
+    static auto last_beat = std::chrono::steady_clock::time_point{};
+    const auto now = std::chrono::steady_clock::now();
+    if( now - last_beat >= heartbeat_interval ) {
+        last_beat = now;
+        if( session.sockets ) {
+            session.sockets->heartbeat();
+        } else if( session.transport ) {
+            session.transport->heartbeat( *session.output );
+        }
+    }
+    // A socket's controller may leave mid-activity: the activity runs on, and the game waits
+    // for a controller at its next input boundary.
+    if( session.sockets ) { session.sockets->service( 0 ); }
+    while( session.events.empty() && controller() && controller_ready() ) {
+        const auto leader = controller();
+        if( leader->protocol.poll_input( leader->in, leader->out, std::cerr ) ) { continue; }
+        lose_controller( "input ended while an activity was running" );
+    }
+}
+
 auto provide_input( const int timeout_ms ) -> input_event
 {
     auto &session = state();
@@ -312,25 +337,7 @@ auto provide_input( const int timeout_ms ) -> input_event
         // awaited: the command stays open and the activity continues to its end. Requests that
         // are already waiting are served, so the client can interrupt it.
         if( timeout_ms == 0 ) {
-            // A long activity reaches no input boundary; the heartbeat tells the client it is alive.
-            static auto last_beat = std::chrono::steady_clock::time_point{};
-            const auto now = std::chrono::steady_clock::now();
-            if( now - last_beat >= heartbeat_interval ) {
-                last_beat = now;
-                if( session.sockets ) {
-                    session.sockets->heartbeat();
-                } else if( session.transport ) {
-                    session.transport->heartbeat( *session.output );
-                }
-            }
-            // A socket's controller may leave mid-activity: the activity runs on, and the game waits
-            // for a controller at its next input boundary.
-            if( session.sockets ) { session.sockets->service( 0 ); }
-            while( session.events.empty() && controller() && controller_ready() ) {
-                const auto leader = controller();
-                if( leader->protocol.poll_input( leader->in, leader->out, std::cerr ) ) { continue; }
-                lose_controller( "input ended while an activity was running" );
-            }
+            serve_waiting_requests();
             if( !session.events.empty() ) {
                 continue;
             }
@@ -489,6 +496,9 @@ auto publish_step() -> void
 
 auto publish_activity() -> void
 {
+    // The native game reads keys only ten times a second during an activity; a client's requests
+    // are answered after every step of it.
+    serve_waiting_requests();
     if( const auto leader = controller() ) {
         static_cast<void>( leader->protocol.publish_activity( leader->out ) );
     }
