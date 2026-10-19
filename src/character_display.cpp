@@ -1661,7 +1661,9 @@ auto handle_player_display_action( const display_action_options &opts ) -> bool
             invalidate_tab( curtab );
             ui_info.invalidate_ui();
         }
-        return false;
+        // Enter on a row is the native Enter on it.
+        if( !target || !picked->activates ) { return false; }
+        action = "CONFIRM";
     }
     auto done = false;
 

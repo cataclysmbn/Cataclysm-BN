@@ -892,8 +892,11 @@ void worldfactory::show_active_world_mods( const std::vector<mod_id> &world_mods
         const auto action = [&]() {
             const auto action = ctxt.handle_input();
             if( const auto call = ec::invoked( ctxt.get_raw_input() ); call && call->args.row ) {
-                cursor = static_cast<int>( std::ranges::find( world_mods, call->args.row->substr( 4 ),
-                                           &mod_id::str ) - world_mods.begin() );
+                const auto found = std::ranges::find( world_mods, call->args.row->substr( 4 ), &mod_id::str );
+                if( found == world_mods.end() ) { return std::string{}; }
+                cursor = static_cast<int>( found - world_mods.begin() );
+                // Enter on a row closes the list, as the native key does.
+                return std::string( call->activates ? "CONFIRM" : "" );
             }
             return action;
         }

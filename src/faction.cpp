@@ -1006,6 +1006,7 @@ void faction_manager::display() const
     }
                                                             } );
 
+    auto activated = false;
     while( true ) {
         // create a list of NPCs, visible and the ones on overmapbuffer
         followers.clear();
@@ -1062,9 +1063,12 @@ void faction_manager::display() const
         }
 
         ui_manager::redraw();
-        const auto action = ctxt.handle_input();
+        // A row a client activated is confirmed once the loop has read the follower under the cursor.
+        const auto activating = std::exchange( activated, false );
+        const auto action = activating ? std::string( "CONFIRM" ) : ctxt.handle_input();
         // A client picked a tab or a row: the cursor moves there.
-        if( const auto picked = ec::invoked( ctxt.get_raw_input() ); picked && picked->args.row ) {
+        if( const auto picked = activating ? std::nullopt : ec::invoked( ctxt.get_raw_input() );
+            picked && picked->args.row ) {
             if( picked->affordance_id == select_tab_id ) {
                 if( const auto found = std::ranges::find( tab_ids, *picked->args.row ); found != tab_ids.end() ) {
                     tab = static_cast<tab_mode>( found - tab_ids.begin() );
@@ -1075,6 +1079,7 @@ void faction_manager::display() const
                 if( const auto found = std::ranges::find( rows, *picked->args.row, &ec::row::id );
                     found != rows.end() ) {
                     selection = found - rows.begin();
+                    activated = picked->activates;
                 }
             }
             continue;
