@@ -1812,6 +1812,8 @@ static void create_note(const tripoint_abs_omt& curs) {
     }
 }
 
+namespace ec = engine_client;
+
 // if false, search yielded no results
 static auto search(const ui_adaptor& om_ui, tripoint_abs_omt& curs, const tripoint_abs_omt& orig)
     -> bool {
@@ -1926,6 +1928,29 @@ static auto search(const ui_adaptor& om_ui, tripoint_abs_omt& curs, const tripoi
         draw_border(w_search);
         wnoutrefresh(w_search);
     });
+
+    const auto screen = ec::screen_scope(
+        ctxt, "overmap_search",
+        {
+            .view =
+                [&](const ec::boundary_state&) {
+                    const auto at = tripoint_abs_omt(locations[i], orig.z());
+                    auto stats = std::vector<ec::panel_stat>{
+                        {.key = "search", .label = _("Search:"), .value = term},
+                        {.key = "result",
+                         .label = locations.size() == 1 ? _("Result:") : _("Results:"),
+                         .value = std::to_string(i + 1),
+                         .max = std::to_string(locations.size())},
+                        {.key = "direction",
+                         .label = _("Direction:"),
+                         .value = string_format(
+                             "%d %s", static_cast<int>(trig_dist(orig, at)),
+                             trim(direction_name_short(direction_from(orig, at))))},
+                    };
+                    return ec::screen_view{
+                        .root = ec::panel({.id = "overmap:search", .stats = std::move(stats)})};
+                },
+        });
 
     std::string action;
     do {
@@ -2177,8 +2202,6 @@ static auto get_overmap_path_to(const tripoint_abs_omt dest, bool driving)
         return ACTIVE_OVERMAP_BUFFER.get_travel_path(start_omt_pos, dest, params);
     }
 }
-
-namespace ec = engine_client;
 
 /// The squares around the cursor that the screen publishes: more than a terminal shows, so that a
 /// client of any size crops its own view.
