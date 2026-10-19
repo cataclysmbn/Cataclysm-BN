@@ -8,6 +8,7 @@
 #include "map_helpers.h"
 #include "name.h"
 #include "player_helpers.h"
+#include "sounds.h"
 #include "weather/weather.h"
 
 namespace {
@@ -51,6 +52,7 @@ auto clear_states(const enum_bitset<test_state>& states) -> void {
         g->release_active_load_regions();
         submap_loader.flush_prev_desired();
         clear_map();
+        sounds::reset_sounds();
     } else {
         if (normalized_states.test(state::npc)) { clear_npcs(); }
         if (normalized_states.test(state::creature)) { clear_creatures(); }
