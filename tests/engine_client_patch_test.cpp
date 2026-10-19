@@ -552,6 +552,32 @@ TEST_CASE("a patch that does not continue the last one names every cell", "[engi
     CHECK(ec::world::capture_patch(other, true).exhaustive);
 }
 
+TEST_CASE(
+    "a patch publication equals the full capture as the view looks a level down and back",
+    "[engine_client_patch]") {
+    const auto start = make_room();
+    auto& here = get_map();
+    const auto restore_offset = restore_on_out_of_scope<tripoint_rel_ms>(get_avatar().view_offset);
+    // A platform a level up over the room, ringed by open air.
+    for (const auto y : std::views::iota(-8, 9)) {
+        for (const auto x : std::views::iota(-8, 9)) {
+            const auto platform = std::abs(x) <= 1 && std::abs(y) <= 1;
+            here.ter_set(start + tripoint(x, y, 1), ter_id(platform ? "t_floor" : "t_open_air"));
+        }
+    }
+    get_avatar().setpos(start + tripoint_above);
+    auto watched = watched_session{};
+    get_avatar().view_offset.z() = -1;
+    watched.publish();
+    get_avatar().view_offset.z() = 0;
+    watched.publish();
+    for (const auto y : std::views::iota(-8, 9)) {
+        for (const auto x : std::views::iota(-8, 9)) {
+            here.ter_set(start + tripoint(x, y, 1), ter_id("t_open_air"));
+        }
+    }
+}
+
 TEST_CASE("open air publishes a cell only while something is in it", "[engine_client_patch]") {
     const auto start = make_room();
     auto& here = get_map();

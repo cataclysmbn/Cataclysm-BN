@@ -374,6 +374,10 @@ auto bare_unmemorized( const map &here, const tripoint_bub_ms &p, const avatar &
     std::ranges::none_of( here.field_at( p ), []( const auto & field ) { return field.second.is_field_alive(); } );
 }
 
+/// The level the native view draws: the avatar's, moved by the look cursor or another cursor that changed level, as
+/// `cata_tiles::draw` draws from its center.
+auto shown_level( const avatar &you ) -> int { return you.bub_pos().z() + you.view_offset.z(); }
+
 /// How many levels down the native view draws a square in sight that it looks through, as the level loop of
 /// `cata_tiles::draw` decides: it looks down to the first square with a floor, or a remembered one with
 /// something on it, and draws that square when it is in sight, remembered or a vehicle under open air in
@@ -557,7 +561,7 @@ auto plain_key( map &here, const tripoint_bub_ms &p, const avatar &you,
         return 0;
     }
     const auto shape = map_perception::terrain_orientation( here, p, view );
-    const auto below = p.z() == you.bub_pos().z() ? drawn_depth( here, p, you ) : std::nullopt;
+    const auto below = p.z() == shown_level( you ) ? drawn_depth( here, p, you ) : std::nullopt;
     const auto &cache = here.access_cache( p.z() );
     auto key = plain_mark;
     const auto put = [&]( const auto value, const int shift ) { key |= static_cast<std::uint64_t>( value ) << shift; };
@@ -575,8 +579,8 @@ auto visible_cell( map &here, const tripoint_bub_ms &p, const avatar &you,
                    const map_perception::sight &view, const std::string &dimension ) -> std::optional<cell>
 {
     ++cells_built;
-    // A square on the avatar's level without a floor shows what the native view draws through it.
-    const auto below = p.z() == you.bub_pos().z() ? drawn_depth( here, p, you ) : std::nullopt;
+    // A square on the shown level without a floor shows what the native view draws through it.
+    const auto below = p.z() == shown_level( you ) ? drawn_depth( here, p, you ) : std::nullopt;
     // Bare open air elsewhere, or showing nothing, is unknown, and most of what the avatar sees outdoors:
     // it must not cost a cell.
     const auto bare = bare_unmemorized( here, p, you );
@@ -617,11 +621,11 @@ auto vehicle_squares( map &here ) -> std::set<tripoint_bub_ms>
 }
 
 /// `bare_submap` for the squares of one capture, asked once per run of squares in a submap. Squares on the
-/// avatar's level are never bare here: one without a floor shows what the native view draws below it.
+/// shown level are never bare here: one without a floor shows what the native view draws below it.
 class bare_scan
 {
     public:
-        bare_scan( map &here, const avatar &you ) : here_( here ), level_( you.bub_pos().z() ),
+        bare_scan( map &here, const avatar &you ) : here_( here ), level_( shown_level( you ) ),
             vehicles_( vehicle_submaps( here ) ) {}
         auto operator()( const tripoint_bub_ms &p ) -> bool {
             if( p.z() == level_ ) { return false; }
@@ -1091,9 +1095,10 @@ auto capture_sections( map &here, const avatar &you, const std::string &dimensio
         .entities = capture_entities( here, you, dimension ),
         .avatar = capture_avatar( here, you, dimension ),
         .environment = capture_environment() };
-    // The terrain window moves with the view, not the world: its squares are where a click lands.
+    // The terrain window moves with the view, not the world: its squares are where a click lands, on the level
+    // the native view draws.
     if( const auto window = g->click_window() ) {
-        const auto z = g->get_levz();
+        const auto z = shown_level( you );
         state.view = bounds{
             .min = position_of( here, tripoint_bub_ms( window->p_min.x(), window->p_min.y(), z ), dimension ),
             .max = position_of( here, tripoint_bub_ms( window->p_max.x() - 1, window->p_max.y() - 1, z ),
