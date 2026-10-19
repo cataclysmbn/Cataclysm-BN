@@ -666,6 +666,10 @@ TEST_CASE(
             CHECK(snapshot.choices.front().description == "ANY_INPUT");
             CHECK(snapshot.choices.front().label == "Press any key");
             CHECK(snapshot.any_key_choice_id == snapshot.choices.front().id);
+            // The key the player presses is the field's; the message is said once, by the popup.
+            REQUIRE(snapshot.field.has_value());
+            CHECK(snapshot.field->type == "key");
+            CHECK(snapshot.field->label.empty());
             return resolve({
                 .input_id = snapshot.input_id,
                 .operation = game_client::interaction_operation::choose,
