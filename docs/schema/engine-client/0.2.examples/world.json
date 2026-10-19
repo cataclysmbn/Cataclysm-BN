@@ -1780,6 +1780,21 @@
       }
     },
     {
+      "def": "cell",
+      "name": "cell whose furniture has tint keys and variables",
+      "value": {
+        "at": { "dim": "", "x": 1, "y": 2, "z": 0 },
+        "known": "visible",
+        "furniture": {
+          "id": "f_chair",
+          "glyph": "#",
+          "color": "brown",
+          "tint_keys": ["f_chair"],
+          "tint_vars": { "fg": { "color": "#102030" } }
+        }
+      }
+    },
+    {
       "def": "look",
       "name": "look of terrain with tint variables",
       "value": {
