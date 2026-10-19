@@ -63,6 +63,19 @@ TEST_CASE("sound_filter_key_distinguishes_noise_fear", "[sound]") {
     CHECK(filter_keys.size() == 2);
 }
 
+TEST_CASE("a cleared test state hears no sound of the test before", "[sound]") {
+    clear_all_state();
+    sounds::sound(
+        {.volume = 50,
+         .origin = tripoint_bub_ms(60, 60, 0),
+         .category = sounds::sound_t::movement,
+         .description = "gasping"});
+    clear_all_state();
+    auto& here = get_map();
+    here.batch_flood_fill_sounds();
+    CHECK(here.m_sound_cache.sound_instances.empty());
+}
+
 TEST_CASE("queued_sounds_outside_resized_map_are_discarded", "[sound][resize]") {
     auto& here = get_map();
     const auto old_size = here.getmapsize();
