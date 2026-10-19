@@ -741,7 +741,9 @@ void input_context::register_action( const std::string &action_descriptor,
         handling_coordinate_input = true;
     }
 
-    registered_actions.push_back( action_descriptor );
+    if( !std::ranges::contains( registered_actions, action_descriptor ) ) {
+        registered_actions.push_back( action_descriptor );
+    }
     if( !name.empty() ) {
         action_name_overrides[action_descriptor] = name;
     }
