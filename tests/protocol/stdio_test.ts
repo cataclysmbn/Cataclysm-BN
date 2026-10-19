@@ -47,6 +47,8 @@ class Client {
   replies: Value[] = []
   /** Pause after every chunk read, to drain the pipe slowly. */
   readDelayMs = 0
+  /** Bytes read from the engine's stdout. */
+  bytes = 0
 
   constructor(
     binary: string,
@@ -82,6 +84,7 @@ class Client {
         timer = setTimeout(() => this.#process.kill("SIGKILL"), stall)
         const part = await this.#reader.read()
         assert(!part.done, "engine closed stdout")
+        this.bytes += part.value.byteLength
         this.#buffer += this.#decoder.decode(part.value, { stream: true })
         if (this.readDelayMs) await new Promise((resolve) => setTimeout(resolve, this.readDelayMs))
       }
@@ -215,6 +218,10 @@ class Client {
     await this.#writer.close()
     const status = await this.#process.status
     assert(status.success, `engine exit ${JSON.stringify(status)}`)
+  }
+
+  get pid() {
+    return this.#process.pid
   }
 
   kill() {
@@ -3883,5 +3890,146 @@ Deno.test({
       client.kill()
       await Deno.remove(profile, { recursive: true })
     }
+  },
+})
+
+/** CPU time in milliseconds and peak resident memory in KiB of a running process; Deno reads `/proc` only with every permission, `cat` with --allow-run. */
+const usage = async (pid: number) => {
+  const output = await new Deno.Command("cat", {
+    args: [`/proc/${pid}/stat`, `/proc/${pid}/status`],
+  })
+    .output()
+  const text = new TextDecoder().decode(output.stdout)
+  const stat = text.split(") ")[1].split(" ")
+  // utime and stime, fields 14 and 15 of proc(5), in clock ticks of 10 ms.
+  const cpuMs = (Number(stat[11]) + Number(stat[12])) * 10
+  const peakRssKiB = Number(text.match(/^VmHWM:\s+(\d+)/m)![1])
+  return { cpuMs, peakRssKiB }
+}
+
+const percentile = (sorted: number[], p: number) =>
+  sorted.length ? sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * p))] : null
+
+Deno.test({
+  name: "stdio: measure a 6 hour wait for each kind of consumer",
+  ignore: !Deno.env.get("BN_BINARY") || !Deno.env.get("BN_MEASURE"),
+  async fn() {
+    const binary = Deno.env.get("BN_BINARY")!
+    const runs = Number(Deno.env.get("BN_MEASURE_RUNS") ?? "1")
+    const results: Value[] = []
+    for (let run = 0; run < runs; run++) {
+      for (const mode of ["unsubscribed", "mirror", "slow", "stalled"]) {
+        const profile = await makeProfile()
+        const client = new Client(binary, profile)
+        try {
+          const session = await enterTutorial(client, { delivery: { credits: 256 } })
+          await settle(session)
+          const choice = await waitChoice(session, "6 hours")
+          const turn = BigInt(session.mirror.environment.turn)
+          if (mode === "unsubscribed") await client.result("bn.unsubscribe", {})
+          if (mode === "slow") client.readDelayMs = 5
+          if (mode === "stalled") session.window = 0
+          const epoch = session.mirror.at.epoch
+          const before = await usage(client.pid)
+          const marks = {
+            bytes: client.bytes,
+            frames: session.frames.length,
+            events: session.received.length,
+          }
+          const started = performance.now()
+          const id = await beginWait(session, choice)
+          let firstEffect: number | null = null
+          let handleMs = 0
+          const rtts: number[] = []
+          let sampled = started
+          /** Reads the command's outcome; the round trip is the control latency the client sees. */
+          const control = async () => {
+            const sent = performance.now()
+            const result = await client.result("bn.command.result", { epoch, command_id: id })
+            rtts.push(performance.now() - sent)
+            sampled = performance.now()
+            return result.stage as string
+          }
+          const terminal = (stage: string | undefined) =>
+            ["completed", "rejected", "interrupted"].includes(stage!)
+          if (mode === "unsubscribed" || mode === "stalled") {
+            // Nothing is read but the answers: the engine runs the wait at its own pace.
+            while (!terminal(await control())) {
+              client.notes.length = 0
+              await new Promise((resolve) => setTimeout(resolve, 100))
+            }
+          } else {
+            while (!terminal(session.stages.get(id)!.at(-1))) {
+              if (performance.now() - sampled >= 100) await control()
+              const note = await client.note()
+              const at = performance.now()
+              session.handle(note)
+              if (note.method === "bn.resync") await session.resubscribe()
+              handleMs += performance.now() - at
+              if (firstEffect === null && note.method === "bn.events") firstEffect = at - started
+              await session.pay()
+            }
+          }
+          const wallMs = performance.now() - started
+          const after = await usage(client.pid)
+          client.notes.length = 0
+          session.mirror = await session.subscribe()
+          const turns = BigInt(session.mirror.environment.turn) - turn
+          assert(turns >= 6n * hour, `the wait passed ${turns} turns`)
+          const sorted = rtts.toSorted((a, b) => a - b)
+          results.push({
+            mode,
+            run,
+            wall_ms: Math.round(wallMs),
+            first_effect_ms: firstEffect === null ? null : Math.round(firstEffect),
+            engine_cpu_ms: after.cpuMs - before.cpuMs,
+            engine_peak_rss_kib: after.peakRssKiB,
+            bytes: client.bytes - marks.bytes,
+            frames: session.frames.length - marks.frames,
+            events: session.received.length - marks.events,
+            turns: Number(turns),
+            resyncs: session.resyncs.length,
+            client_handle_ms: Math.round(handleMs),
+            control_ms: {
+              n: sorted.length,
+              p50: percentile(sorted, 0.5),
+              p95: percentile(sorted, 0.95),
+              p99: percentile(sorted, 0.99),
+              max: sorted.at(-1) ?? null,
+            },
+          })
+          console.log(JSON.stringify(results.at(-1)))
+          await client.close()
+        } finally {
+          client.kill()
+          await Deno.remove(profile, { recursive: true })
+        }
+      }
+    }
+    const text = async (cmd: string, args: string[]) =>
+      new TextDecoder().decode((await new Deno.Command(cmd, { args }).output()).stdout).trim()
+    const cpuinfo = await text("cat", ["/proc/cpuinfo"])
+    const meminfo = await text("cat", ["/proc/meminfo"])
+    await Deno.writeTextFile(
+      Deno.env.get("BN_MEASURE")!,
+      JSON.stringify(
+        {
+          date: new Date().toISOString(),
+          revision: await text("git", ["rev-parse", "HEAD"]),
+          dirty: (await text("git", ["status", "--short", "--untracked-files=no"])).length > 0,
+          binary,
+          binary_mtime: (await Deno.stat(binary)).mtime?.toISOString(),
+          seed: "protocol-stdio-1",
+          workload: "tutorial, 5 minute settle wait, then a 6 hour wait",
+          cpu: cpuinfo.match(/^model name\s*:\s*(.+)$/m)?.[1],
+          cores: navigator.hardwareConcurrency,
+          mem_total_kib: Number(meminfo.match(/^MemTotal:\s+(\d+)/m)![1]),
+          kernel: await text("uname", ["-r"]),
+          results,
+        },
+        null,
+        2,
+      ) + "\n",
+    )
   },
 })
