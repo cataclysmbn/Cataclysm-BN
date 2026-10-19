@@ -61,7 +61,8 @@ TEST_CASE(
                 case 1: {
                     CHECK(screen.focus_row == "defense:spiders");
                     before = *row_of(screen, "defense:spiders").toggled;
-                    return run_action("CONFIRM");
+                    return invoke_event(
+                        screen, "bn:activate:defense:pick", {.row = "defense:spiders"});
                 }
                 case 2:
                     CHECK(row_of(screen, "defense:spiders").toggled == std::optional{!before});

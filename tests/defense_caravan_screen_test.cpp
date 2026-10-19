@@ -108,7 +108,7 @@ TEST_CASE(
                     const auto& rows = rows_of(screen);
                     REQUIRE(rows.size() == 1);
                     CHECK(rows.front().id == bought);
-                    return run_action("CONFIRM");
+                    return invoke_event(screen, "bn:activate:caravan:pick", {.row = bought});
                 }
                 case 5:
                     REQUIRE(screen.context == "YESNO");

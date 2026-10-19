@@ -155,4 +155,33 @@ TEST_CASE(
     zone_manager::reset_manager();
 }
 
+TEST_CASE(
+    "a zone a client activates opens its native edit menu as Enter does",
+    "[zones_screen][engine_client_component]") {
+    auto& zones = fresh_zones();
+    auto& you = get_avatar();
+    zones.add("test pile", zone_type_id("LOOT_UNSORTED"), you.get_faction()->id, false, true,
+              you.abs_pos(), you.abs_pos());
+    const auto guard = screen_guard{};
+    auto stage = 0;
+    auto edited = false;
+    open_stack(
+        [] { g->zones_manager(); },
+        [&](const snapshot_t& snapshot, const ec::screen_view& screen) {
+            if (const auto answer = declined(snapshot)) { return *answer; }
+            if (snapshot.message == "What do you want to change:") {
+                edited = true;
+                return run_action("QUIT");
+            }
+            if (stage++ == 0) {
+                const auto& rows = rows_of(screen, "zones:rows");
+                REQUIRE(rows.size() == 1);
+                return invoke_event(screen, "bn:activate:zones:pick", {.row = rows.front().id});
+            }
+            return run_action("QUIT");
+        });
+    CHECK(edited);
+    zone_manager::reset_manager();
+}
+
 #endif // CATA_MCP

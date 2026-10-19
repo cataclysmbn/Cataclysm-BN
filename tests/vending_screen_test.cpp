@@ -68,37 +68,38 @@ TEST_CASE(
     const auto guard = screen_guard{};
     auto step = 0;
     auto bought = std::string{};
-    open_stack([&] { iexamine::vending(you, machine_at); },
-               [&](const snapshot_t& /*snapshot*/, const ec::screen_view& screen) {
-                   switch (step++) {
-                       case 0: {
-                           CHECK(screen.kind == "vending");
-                           const auto& rows = rows_of(screen);
-                           CHECK((rows | std::views::transform(&ec::row::id)
-                                  | std::ranges::to<std::vector>())
-                                 == stocked);
-                           CHECK(screen.focus_row == stocked.front());
-                           CHECK(money_of(screen) == "Money left: $1000.00");
-                           CHECK_FALSE(
-                               body<ec::text_body>(part(screen, "vending:details")).markup.empty());
-                           bought = rows.back().label;
-                           return invoke_event(screen, "vending:pick", {.row = stocked.back()});
-                       }
-                       case 1:
-                           CHECK(screen.focus_row == stocked.back());
-                           return run_action("CONFIRM");
-                       case 2: {
-                           const auto& rows = rows_of(screen);
-                           REQUIRE(rows.size() == 1);
-                           CHECK(rows.front().id == stocked.front());
-                           CHECK(money_of(screen) != "Money left: $1000.00");
-                           return run_action("QUIT");
-                       }
-                       default:
-                           FAIL("the vending machine outlived its quit");
-                           return run_action("QUIT");
-                   }
-               });
+    open_stack(
+        [&] { iexamine::vending(you, machine_at); },
+        [&](const snapshot_t& /*snapshot*/, const ec::screen_view& screen) {
+            switch (step++) {
+                case 0: {
+                    CHECK(screen.kind == "vending");
+                    const auto& rows = rows_of(screen);
+                    CHECK((rows | std::views::transform(&ec::row::id)
+                           | std::ranges::to<std::vector>())
+                          == stocked);
+                    CHECK(screen.focus_row == stocked.front());
+                    CHECK(money_of(screen) == "Money left: $1000.00");
+                    CHECK_FALSE(
+                        body<ec::text_body>(part(screen, "vending:details")).markup.empty());
+                    bought = rows.back().label;
+                    return invoke_event(screen, "vending:pick", {.row = stocked.back()});
+                }
+                case 1:
+                    CHECK(screen.focus_row == stocked.back());
+                    return invoke_event(screen, "bn:activate:vending:pick", {.row = stocked.back()});
+                case 2: {
+                    const auto& rows = rows_of(screen);
+                    REQUIRE(rows.size() == 1);
+                    CHECK(rows.front().id == stocked.front());
+                    CHECK(money_of(screen) != "Money left: $1000.00");
+                    return run_action("QUIT");
+                }
+                default:
+                    FAIL("the vending machine outlived its quit");
+                    return run_action("QUIT");
+            }
+        });
     CHECK(step == 3);
     CHECK(here.i_at(machine_at).size() == 1);
     CHECK(bought.ends_with(item::spawn_temporary("bandages")->tname()));

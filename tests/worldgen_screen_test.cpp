@@ -477,7 +477,8 @@ TEST_CASE(
             }
             case 1:
                 CHECK(screen.focus_row == "world:Bea");
-                return act("CONFIRM");
+                // Enter on the row, as a client sends it.
+                return invoke("bn:activate:world_pick:pick", {.row = "world:Bea"});
             default:
                 FAIL("unexpected extra screen");
                 return act("QUIT");

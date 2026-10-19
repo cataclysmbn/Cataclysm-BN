@@ -60,4 +60,32 @@ TEST_CASE(
     CHECK(chosen == -1);
 }
 
+TEST_CASE(
+    "an enchantment a client activates is chosen as Enter chooses it natively",
+    "[enchanter_screen][engine_client_component]") {
+    clear_all_state();
+    auto& you = get_avatar();
+    auto knife = item::spawn("knife_combat");
+    const auto options = furn_str_id("f_cvdmachine")->enchanter;
+    REQUIRE(options.size() == 1);
+    const auto guard = screen_guard{};
+    auto step = 0;
+    auto refused = false;
+    open_stack([&] { enchanter::enchantment_selector_menu(options, you, *knife); },
+               [&](const snapshot_t& snapshot, const ec::screen_view& screen) {
+                   // Without the materials the native choice refuses with a popup.
+                   if (snapshot.message.contains("insufficient items")) {
+                       refused = true;
+                       REQUIRE_FALSE(snapshot.choices.empty());
+                       return choose(snapshot, snapshot.choices.front().id);
+                   }
+                   if (step++ == 0) {
+                       return invoke_event(
+                           screen, "bn:activate:enchanter:pick", {.row = "enchant:CVD_DIAMOND"});
+                   }
+                   return run_action("QUIT");
+               });
+    CHECK(refused);
+}
+
 #endif // CATA_MCP
