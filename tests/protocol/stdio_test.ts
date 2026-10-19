@@ -91,7 +91,9 @@ class Client {
     const end = this.#buffer.indexOf("\n")
     const line = this.#buffer.slice(0, end)
     this.#buffer = this.#buffer.slice(end + 1)
-    return { ...JSON.parse(line), receivedAt: performance.now() }
+    const message = JSON.parse(line)
+    // A batch is answered by one array of responses.
+    return Array.isArray(message) ? message : { ...message, receivedAt: performance.now() }
   }
 
   /** Next frame that is not the response to a raw frame. */
@@ -127,6 +129,10 @@ class Client {
     while (this.replies.length < count) {
       // Not `#next`, which keeps reading past a reply until a notification comes: none may follow.
       const message = await this.#line()
+      if (Array.isArray(message)) {
+        this.replies.push(...message)
+        continue
+      }
       if (message.method === undefined && this.rawIds.has(JSON.stringify(message.id))) {
         this.replies.push(message)
         continue
@@ -2901,6 +2907,57 @@ Deno.test({
   },
 })
 
+Deno.test({
+  name:
+    "stdio: a batch of ten keys split across two writes queues nine and refuses the tenth as busy",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      const session = await enterTutorial(client)
+      await settle(session)
+      const top = session.mirror.interaction.stack.at(-1)
+      const ids = Array.from({ length: 10 }, (_, n) => `key-${n}`)
+      const text = JSON.stringify(ids.map((id, n) => ({
+        jsonrpc: "2.0",
+        id,
+        method: "bn.command.submit",
+        params: {
+          epoch: session.mirror.at.epoch,
+          expect: { screen_id: top.screen_id },
+          operation: { kind: "invoke", affordance_id: n % 2 ? "LEFT" : "RIGHT" },
+        },
+      }))) + "\n"
+      // The frame stops mid-way long enough for the engine to read the half and wait for the rest.
+      const cut = Math.floor(text.length / 2)
+      client.raw(text.slice(0, cut), ids)
+      await new Promise((resolve) => setTimeout(resolve, 500))
+      client.raw(text.slice(cut))
+      await client.repliesUntil(ids.length)
+      const reply = (id: string) => client.replies.find((entry) => entry.id === id)
+      const accepted = ids.filter((id) => reply(id).result?.command_id)
+      assertEquals(accepted, ids.slice(0, 9))
+      assertEquals(reply("key-9").error.data.kind, "command_busy")
+      for (const id of accepted) session.stages.set(reply(id).result.command_id, ["received"])
+      for (let note = client.notes.shift(); note; note = client.notes.shift()) session.handle(note)
+      const done = () =>
+        accepted.every((id) =>
+          ["completed", "rejected", "interrupted"].includes(
+            session.stages.get(reply(id).result.command_id)!.at(-1)!,
+          )
+        )
+      while (!done()) session.handle(await client.note())
+      // The queue ran each key once and in order: the stream it built equals a fresh snapshot.
+      assertEquals(session.mirror.state(), (await session.subscribe()).state())
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
 const frameBytes = 1048576
 
 for (const when of ["idle", "during a wait"]) {
@@ -3117,7 +3174,7 @@ for (const when of ["idle", "during a wait"] as const) {
 /** The screen input goes to: the last of the stack a 0.2 boundary carries. */
 const top = (session: Session): Value => session.mirror.interaction.stack.at(-1)
 
-/** Submits `invokes` in one write (the engine reads them one frame at a time, so each runs alone; the queue is covered by the server suite's batch frame), without waiting for any of them, and follows the pushes until each has ended. */
+/** Submits `invokes` in one write (the engine reads them one frame at a time, so each runs alone; the queue is covered by the split batch frame test), without waiting for any of them, and follows the pushes until each has ended. */
 async function burst(
   session: Session,
   invokes: { affordance: string; screen: string; args?: Value }[],
