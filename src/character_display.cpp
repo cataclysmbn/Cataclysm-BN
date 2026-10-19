@@ -1648,9 +1648,10 @@ auto handle_player_display_action( const display_action_options &opts ) -> bool
             for( const auto tab : all_tabs ) {
                 const auto ids = row_ids( opts.model, tab );
                 const auto found = std::ranges::find( ids, *picked->args.row );
+                if( found == ids.end() ) { continue; }
                 const auto selectable = tab != player_display_tab::skills ||
                                         !skillslist[found - ids.begin()].is_header;
-                if( found != ids.end() && selectable ) {
+                if( selectable ) {
                     target = { tab, static_cast<unsigned>( found - ids.begin() ) };
                 }
             }
