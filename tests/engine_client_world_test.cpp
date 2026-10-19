@@ -1849,3 +1849,32 @@ TEST_CASE(
     CHECK_FALSE(wall_of(open_door));
     CHECK_FALSE(wall_of(setup.start));
 }
+
+TEST_CASE(
+    "world capture gives furniture and terrain the coverage of their data and leaves none out",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& here = get_map();
+    const auto table = setup.start + tripoint_west;
+    const auto shrub = setup.start + tripoint(-2, 0, 0);
+    here.furn_set(table, furn_id("f_table"));
+    here.ter_set(shrub, ter_id("t_shrub"));
+    REQUIRE(furn_id("f_table")->coverage > 0);
+    REQUIRE(ter_id("t_shrub")->coverage > 0);
+    REQUIRE(ter_id("t_floor")->coverage == 0);
+    map_perception::acquire();
+    const auto state = ec::world::capture_world();
+    const auto* tabled = find_cell(state, at(table));
+    const auto* shrubbed = find_cell(state, at(shrub));
+    const auto* floor = find_cell(state, at(setup.start));
+    REQUIRE(tabled != nullptr);
+    REQUIRE(shrubbed != nullptr);
+    REQUIRE(floor != nullptr);
+    const auto cells = nlohmann::json::parse(
+        ec::serialize_cells({.cells = {*tabled, *shrubbed, *floor}}))["cells"];
+    REQUIRE(cells.size() == 3);
+    CHECK(cells[0]["furniture"].value("coverage", 0) == furn_id("f_table")->coverage);
+    CHECK(cells[1]["terrain"].value("coverage", 0) == ter_id("t_shrub")->coverage);
+    // No coverage is the default, left out.
+    CHECK_FALSE(cells[2]["terrain"].contains("coverage"));
+}
