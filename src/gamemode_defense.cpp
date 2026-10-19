@@ -564,7 +564,8 @@ void defense_game::setup()
             const auto found = std::ranges::find( options, *call->args.row, row_id );
             if( found == options.end() ) { continue; }
             selection = *found;
-            action = call->activates ? "CONFIRM" : "";
+            if( !call->activates ) { continue; }
+            action = "CONFIRM";
         }
 
         if( action == "START" ) {
