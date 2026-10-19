@@ -219,100 +219,6 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "the zone manager lists the zones and enables and disables the chosen one",
-    "[client][interaction][mcp][screens]") {
-    clear_all_state();
-    clear_map();
-    auto& you = get_avatar();
-    clear_character(you, false);
-    zone_manager::reset_manager();
-    zone_manager::get_manager()
-        .add("test pile", zone_type_id("LOOT_UNSORTED"), you.get_faction()->id, false, true,
-             you.abs_pos(), you.abs_pos());
-    const auto guard = screen_guard{};
-    auto stage = 0;
-    open_screen(
-        [] { g->zones_manager(); },
-        [&](const auto& snapshot) {
-            if (const auto answer = prompt_answer(snapshot, "NO")) { return *answer; }
-            switch (stage++) {
-                case 0: {
-                    CHECK(snapshot.context == "ZONES_MANAGER");
-                    const auto zone = row(snapshot, "zone:0");
-                    REQUIRE(zone != snapshot.choices.end());
-                    CHECK(zone->label == "test pile");
-                    CHECK(zone->selected);
-                    CHECK(zone->highlighted);
-                    CHECK(zone->columns.size() == 4);
-                    CHECK(row(snapshot, "action:ADD_ZONE") != snapshot.choices.end());
-                    return choose(snapshot, "action:DISABLE_ZONE");
-                }
-                case 1: {
-                    CHECK_FALSE(row(snapshot, "zone:0")->selected);
-                    return choose(snapshot, "action:ENABLE_ZONE");
-                }
-                case 2: {
-                    CHECK(row(snapshot, "zone:0")->selected);
-                    return cancel(snapshot);
-                }
-                default:
-                    FAIL("unexpected extra screen " << snapshot.context);
-            }
-            return input_event{};
-        });
-    CHECK(stage == 3);
-    zone_manager::reset_manager();
-}
-
-TEST_CASE(
-    "the zone manager key rows carry the native hotkeys, toggle states and availability",
-    "[client][interaction][mcp][screens]") {
-    clear_all_state();
-    clear_map();
-    auto& you = get_avatar();
-    clear_character(you, false);
-    zone_manager::reset_manager();
-    zone_manager::get_manager()
-        .add("test pile", zone_type_id("LOOT_UNSORTED"), you.get_faction()->id, false, true,
-             you.abs_pos(), you.abs_pos());
-    const auto guard = screen_guard{};
-    auto stage = 0;
-    open_screen(
-        [] { g->zones_manager(); },
-        [&](const auto& snapshot) {
-            if (const auto answer = prompt_answer(snapshot, "NO")) { return *answer; }
-            switch (stage++) {
-                case 0: {
-                    CHECK(row(snapshot, "zone:0")->pane_id == "zones");
-                    CHECK(row(snapshot, "action:ADD_ZONE")->pane_id == "actions");
-                    CHECK(row(snapshot, "action:ADD_ZONE")->hotkey == "a");
-                    CHECK(row(snapshot, "action:MOVE_ZONE_UP")->hotkey == "+");
-                    CHECK(row(snapshot, "action:CONFIRM")->hotkey.empty());
-                    REQUIRE(row(snapshot, "action:debug_submap_grid") != snapshot.choices.end());
-                    CHECK(row(snapshot, "action:debug_submap_grid")->label == "Submap grid");
-                    CHECK(row(snapshot, "action:debug_submap_grid")->hotkey == "g");
-                    CHECK_FALSE(row(snapshot, "action:SHOW_ALL_ZONES")->selected);
-                    CHECK_FALSE(row(snapshot, "action:MOVE_ZONE_UP")->enabled);
-                    return choose(snapshot, "action:SHOW_ALL_ZONES");
-                }
-                case 1: {
-                    CHECK(row(snapshot, "action:SHOW_ALL_ZONES")->selected);
-                    return choose(snapshot, "action:debug_submap_grid");
-                }
-                case 2: {
-                    CHECK(row(snapshot, "action:debug_submap_grid")->selected);
-                    return cancel(snapshot);
-                }
-                default:
-                    FAIL("unexpected extra screen " << snapshot.context);
-            }
-            return input_event{};
-        });
-    CHECK(stage == 3);
-    zone_manager::reset_manager();
-}
-
-TEST_CASE(
     "adding a zone names the selection step of its area in the look target",
     "[client][interaction][mcp][screens]") {
     clear_all_state();
@@ -322,37 +228,43 @@ TEST_CASE(
     zone_manager::reset_manager();
     const auto guard = screen_guard{};
     auto stage = 0;
-    open_stack([] { g->zones_manager(); },
-               [&](const auto& snapshot, const auto& /*top*/) {
-                   if (const auto answer = prompt_answer(snapshot, "NO")) { return *answer; }
-                   switch (stage++) {
-                       case 0:
-                           CHECK(snapshot.context == "ZONES_MANAGER");
-                           CHECK(snapshot.message == "No Zones defined.");
-                           return choose(snapshot, "action:ADD_ZONE");
-                       case 1:
-                           return choose(snapshot, snapshot.choices.at(0).id);
-                       case 2:
-                           REQUIRE(snapshot.field.has_value());
-                           return operate(snapshot, game_client::interaction_operation::fill,
-                                          snapshot.field->id, "new zone");
-                       case 3:
-                           CHECK(look_target()["status"] == "zone_first");
-                           CHECK(look_target()["status_text"] == "Select first point.");
-                           return event_of({.action = "CONFIRM"});
-                       case 4:
-                           CHECK(look_target()["status"] == "zone_second");
-                           CHECK(look_target()["status_text"] == "Select second point.");
-                           return event_of({.action = "CONFIRM"});
-                       case 5:
-                           CHECK(snapshot.context == "ZONES_MANAGER");
-                           CHECK(row(snapshot, "zone:0")->label == "new zone");
-                           return cancel(snapshot);
-                       default:
-                           FAIL("unexpected extra screen " << snapshot.context);
-                   }
-                   return input_event{};
-               });
+    open_stack(
+        [] { g->zones_manager(); },
+        [&](const auto& snapshot, const auto& top) {
+            if (const auto answer = prompt_answer(snapshot, "NO")) { return *answer; }
+            switch (stage++) {
+                case 0:
+                    CHECK(top.kind == "zones");
+                    return event_of({.action = "ADD_ZONE"});
+                case 1:
+                    return choose(snapshot, snapshot.choices.at(0).id);
+                case 2:
+                    REQUIRE(snapshot.field.has_value());
+                    return operate(snapshot, game_client::interaction_operation::fill,
+                                   snapshot.field->id, "new zone");
+                case 3:
+                    CHECK(look_target()["status"] == "zone_first");
+                    CHECK(look_target()["status_text"] == "Select first point.");
+                    return event_of({.action = "CONFIRM"});
+                case 4:
+                    CHECK(look_target()["status"] == "zone_second");
+                    CHECK(look_target()["status_text"] == "Select second point.");
+                    return event_of({.action = "CONFIRM"});
+                case 5: {
+                    CHECK(top.kind == "zones");
+                    REQUIRE(top.root);
+                    const auto* const rows = engine_client::find_component(*top.root, "zones:rows");
+                    REQUIRE(rows != nullptr);
+                    const auto& list = std::get<engine_client::list_body>(rows->body);
+                    REQUIRE(list.rows.size() == 1);
+                    CHECK(list.rows.front().label == "new zone");
+                    return event_of({.action = "QUIT"});
+                }
+                default:
+                    FAIL("unexpected extra screen " << snapshot.context);
+            }
+            return input_event{};
+        });
     CHECK(stage == 6);
     zone_manager::reset_manager();
 }

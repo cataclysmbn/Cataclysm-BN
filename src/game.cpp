@@ -198,6 +198,7 @@
 #include "worldfactory.h"
 
 #include <algorithm>
+#include <array>
 #include <bitset>
 #include <cassert>
 #include <chrono>
@@ -9367,74 +9368,101 @@ void game::zones_manager()
         wnoutrefresh( w_zones );
     } );
 
-    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
-        auto snapshot = game_client::interaction_snapshot{
-            .kind = game_client::interaction_kind::choices,
-            .title = _( "Zones" ),
-            .message = zone_cnt == 0 ? _( "No Zones defined." ) : std::string(),
-            .allow_cancel = true,
-            .panes = {
-                { .id = "zones", .label = _( "Zones" ), .role = "current" },
-                { .id = "options", .label = _( "Options" ), .role = "inactive" },
-                { .id = "actions", .label = _( "Actions" ), .role = "controls" },
-            },
+    // A zone is named by its type and area, and by how many alike precede it.
+    const auto zone_row_id = [&]( const std::size_t index ) {
+        const auto id_of = [&]( const zone_data & zone ) {
+            return "zone:" + zone.get_type().str() + ":" + zone.get_start_point().to_string() + ":" +
+                   zone.get_end_point().to_string();
         };
-        const auto here = u.abs_pos();
-        for( auto i = std::size_t{ 0 }; i < zones.size(); ++i ) {
-            const auto &zone = zones[i].get();
-            auto details = std::string();
-            if( zone.has_options() ) {
-                for( const auto &[name, value] : zone.get_options().get_descriptions() ) {
-                    details += name + ": " + value + "\n";
+        const auto own = id_of( zones[index].get() );
+        const auto alike = std::ranges::count_if( zones | std::views::take( index ), [&](
+        const auto & ref ) {
+            return id_of( ref.get() ) == own;
+        } );
+        return alike == 0 ? own : own + "#" + std::to_string( alike );
+    };
+    static constexpr auto display_actions = std::array{ "SHOW_ALL_ZONES", "TOGGLE_ZONE_OVERLAY", "debug_submap_grid" };
+    const auto zones_screen = engine_client::screen_scope( ctxt, "zones", {
+        .view = [&]( const engine_client::boundary_state & )
+        {
+            namespace ec = engine_client;
+            const auto here = u.abs_pos();
+            const auto zone_row = [&]( const std::size_t i ) {
+                const auto &zone = zones[i].get();
+                const auto center = zone.get_center_point();
+                return ec::row{
+                    .id = zone_row_id( i ), .label = zone.get_name(),
+                    .columns = {
+                        { .key = "type", .label = _( "Type" ), .value = mgr.get_name_from_type( zone.get_type() ) },
+                        { .key = "distance", .label = _( "Distance" ), .value = std::to_string( static_cast<int>( trig_dist( here, center ) ) ) },
+                        { .key = "direction", .label = _( "Direction" ), .value = direction_name_short( direction_from( here, center ) ) },
+                        { .key = "vehicle", .label = _( "Vehicle" ), .value = zone.get_is_vehicle() ? _( "Yes" ) : _( "No" ) },
+                    },
+                    .toggled = zone.get_enabled(),
+                };
+            };
+            const auto toggled = [&]( const std::string & id ) {
+                return ( id == "SHOW_ALL_ZONES" && show_all_zones ) ||
+                       ( id == "TOGGLE_ZONE_OVERLAY" && show_zone_overlay ) ||
+                       ( id == "debug_submap_grid" && ( debug_submap_grid_overlay || zone_submap_grid_overlay ) );
+            };
+            auto list_stats = std::vector<ec::panel_stat> {};
+            if( zone_cnt == 0 ) {
+                list_stats.push_back( { .key = "none", .label = _( "No Zones defined." ) } );
+            }
+            auto parts = std::vector<ec::component> {
+                ec::panel( {
+                    .id = "zones:list", .title = _( "Zones" ), .stats = std::move( list_stats ),
+                    .child = ec::list( {
+                        .id = "zones:rows",
+                        .rows = std::views::iota( std::size_t{ 0 }, zones.size() ) | std::views::transform( zone_row ) | std::ranges::to<std::vector>(),
+                        .selection = "single", .activate = "zones:pick",
+                    } ),
+                } ),
+            };
+            if( zone_cnt > 0 && zones[active_index].get().has_options() ) {
+                const auto descriptions = zones[active_index].get().get_options().get_descriptions();
+                parts.push_back( ec::panel( {
+                    .id = "zones:options", .title = _( "Options" ),
+                    .stats = std::views::iota( std::size_t{ 0 }, descriptions.size() ) | std::views::transform( [&]( const std::size_t i )
+                    {
+                        return ec::panel_stat{ .key = "option:" + std::to_string( i ), .label = remove_color_tags( descriptions[i].first ), .value = remove_color_tags( descriptions[i].second ) };
+                    } ) | std::ranges::to<std::vector>(),
+                } ) );
+            }
+            parts.push_back( ec::list( {
+                .id = "zones:display",
+                .rows = display_actions | std::views::transform( [&]( const std::string & id )
+                {
+                    return ec::row{ .id = id, .label = remove_color_tags( ctxt.get_action_name( id ) ), .hotkey = ctxt.key_bound_to( id ), .toggled = toggled( id ) };
+                } ) | std::ranges::to<std::vector>(),
+                .selection = "single", .activate = "zones:toggle",
+            } ) );
+            auto denials = std::vector<ec::denial> {};
+            if( zone_cnt == 0 ) {
+                for( const auto *id : { "REMOVE_ZONE", "CONFIRM", "SHOW_ZONE_ON_MAP", "ENABLE_ZONE", "DISABLE_ZONE" } ) {
+                    denials.push_back( { .id = id, .reason = _( "No Zones defined." ) } );
                 }
             }
-            const auto center = zone.get_center_point();
-            snapshot.choices.push_back( {
-                .id = "zone:" + std::to_string( i ), .label = zone.get_name(),
-                .description = remove_color_tags( details ), .pane_id = "zones",
-                .selected = zone.get_enabled(), .highlighted = static_cast<int>( i ) == active_index,
-                .columns = {
-                    { .key = "type", .label = _( "Type" ), .value = mgr.get_name_from_type( zone.get_type() ) },
-                    { .key = "distance", .label = _( "Distance" ), .value = std::to_string( static_cast<int>( trig_dist( here, center ) ) ) },
-                    { .key = "direction", .label = _( "Direction" ), .value = direction_name_short( direction_from( here, center ) ) },
-                    { .key = "vehicle", .label = _( "Vehicle" ), .value = zone.get_is_vehicle() ? _( "Yes" ) : _( "No" ) },
-                },
-            } );
-        }
-        if( zone_cnt > 0 && zones[active_index].get().has_options() ) {
-            const auto descriptions = zones[active_index].get().get_options().get_descriptions();
-            for( auto i = std::size_t{ 0 }; i < descriptions.size(); ++i ) {
-                snapshot.choices.push_back( {
-                    .id = "option:" + std::to_string( i ), .label = remove_color_tags( descriptions[i].first ),
-                    .pane_id = "options", .selectable = false,
-                    .columns = { { .key = "value", .label = _( "Value" ), .value = remove_color_tags( descriptions[i].second ) } },
-                } );
+            if( zone_cnt < 2 ) {
+                for( const auto *id : { "MOVE_ZONE_UP", "MOVE_ZONE_DOWN" } ) {
+                    denials.push_back( { .id = id, .reason = _( "There is no other zone to swap with." ) } );
+                }
             }
+            return ec::screen_view{
+                .title = _( "Zones" ),
+                .root = ec::split( { .id = "zones", .children = std::move( parts ) } ),
+                .affordances = {
+                    ec::invoke_affordance( { .id = "zones:pick", .label = _( "Select" ), .args = { .row = ec::row_shape{ .component_id = "zones:rows" } }, .role = "select" } ),
+                    ec::invoke_affordance( { .id = "zones:toggle", .label = _( "Toggle" ), .args = { .row = ec::row_shape{ .component_id = "zones:display" } } } ),
+                },
+                .denials = std::move( denials ),
+                .focus_component = "zones:rows",
+                .focus_row = zone_cnt > 0 ? zone_row_id( active_index ) : std::string{},
+                // Natively the window covers the sidebar beside the map it outlines.
+                .dock = "overlapping",
+            };
         }
-        const auto toggled = [&]( const std::string & id ) {
-            return ( id == "SHOW_ALL_ZONES" && show_all_zones ) ||
-                   ( id == "TOGGLE_ZONE_OVERLAY" && show_zone_overlay ) ||
-                   ( id == "debug_submap_grid" && ( debug_submap_grid_overlay || zone_submap_grid_overlay ) );
-        };
-        const auto needs_zone = [&]( const std::string & id ) {
-            return id == "REMOVE_ZONE" || id == "CONFIRM" || id == "SHOW_ZONE_ON_MAP" ||
-                   id == "ENABLE_ZONE" || id == "DISABLE_ZONE";
-        };
-        for( const auto *id : {
-                 "ADD_ZONE", "REMOVE_ZONE", "CONFIRM", "MOVE_ZONE_UP", "MOVE_ZONE_DOWN",
-                 "SHOW_ZONE_ON_MAP", "ENABLE_ZONE", "DISABLE_ZONE", "SHOW_ALL_ZONES",
-                 "TOGGLE_ZONE_OVERLAY", "debug_submap_grid"
-             } ) {
-            const auto action = std::string( id );
-            const auto moves = action == "MOVE_ZONE_UP" || action == "MOVE_ZONE_DOWN";
-            snapshot.choices.push_back( {
-                .id = "action:" + action, .label = remove_color_tags( ctxt.get_action_name( id ) ),
-                .hotkey = ctxt.key_bound_to( id ), .pane_id = "actions",
-                .enabled = ( !needs_zone( action ) || zone_cnt > 0 ) && ( !moves || zone_cnt > 1 ),
-                .selected = toggled( action ),
-            } );
-        }
-        return snapshot;
     } );
 
     zones_manager_open = true;
@@ -9645,10 +9673,19 @@ void game::zones_manager()
         ui_manager::redraw();
 
         //Wait for input
-        action = game_client::action_of( ctxt, ctxt.handle_input(), [&]( const std::string & id ) {
-            if( id.starts_with( "zone:" ) ) { active_index = std::stoi( id.substr( 5 ) ); }
-            return std::string();
-        } );
+        action = ctxt.handle_input();
+        // A client picks a zone, which the native cursor moves to, or a display toggle, which runs its action.
+        if( const auto call = engine_client::invoked( ctxt.get_raw_input() ); call && call->args.row ) {
+            const auto &row = *call->args.row;
+            action = call->affordance_id == "zones:toggle" &&
+                     std::ranges::contains( display_actions, row ) ? row : std::string{};
+            if( call->affordance_id == "zones:pick" ) {
+                const auto at = std::views::iota( std::size_t{ 0 }, zones.size() );
+                if( const auto found = std::ranges::find( at, row, zone_row_id ); found != at.end() ) {
+                    active_index = static_cast<int>( *found );
+                }
+            }
+        }
     } while( action != "QUIT" );
     zones_manager_open = false;
     ctxt.reset_timeout();
