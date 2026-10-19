@@ -50,6 +50,8 @@
 #include "distribution_grid.h"
 #include "effect.h"
 #include "enums.h"
+#include "engine_client_component.h"
+#include "engine_client_world.h"
 #include "event.h"
 #include "event_bus.h"
 #include "flag.h"
@@ -67,7 +69,9 @@
 #include "inventory.h"
 #include "item.h"
 #include "item_contents.h"
+#include "item_serial.h"
 #include "item_stack.h"
+#include "iteminfo_request.h"
 #include "iuse.h"
 #include "iuse_actor.h"
 #include "line.h"
@@ -991,6 +995,36 @@ void iexamine::vending( player &p, const tripoint_bub_ms &examp )
     }
 
     int cur_pos = 0;
+    namespace ec = engine_client;
+    const auto screen = ec::screen_scope( ctxt, "vending", { .role = "screen", .view = [&]( const ec::boundary_state & )
+    {
+        const auto row_of = [&]( const std::vector<item *> &group ) {
+            const auto count = group.size();
+            return ec::row{ .id = game_client::item_row_id( *group.front() ),
+                            .label = string_format( "%c %s", count < 10 ? static_cast<char>( '0' + count ) : '*', group.front()->tname() ),
+                            .color = ec::world::color_name( group.front()->color_in_inventory( p ) ) };
+        };
+        const auto &current = *item_map[cur_pos].back();
+        const auto info = current.info_string( { .mode = iteminfo_mode::observation } );
+        return ec::screen_view{
+            .root = ec::split( {
+                .id = "vending", .children = ec::children_of(
+                ec::panel( {
+                    .id = "vending:items",
+                    .stats = { { .key = "money", .label = string_format( _( "Money left: %s" ), format_money( money ) ) } },
+                    .child = ec::list( {
+                        .id = "vending:rows", .rows = item_map | std::views::transform( row_of ) | std::ranges::to<std::vector>(),
+                        .selection = "single", .activate = "vending:pick" } ) } ),
+                ec::panel( {
+                    .id = "vending:item",
+                    .title = string_format( "<%s> %s", colorize( current.display_name(), current.color_in_inventory( p ) ), format_money( current.price( false ) ) ),
+                    .child = ec::component{ .id = "vending:details", .body = ec::text_body{ .markup = info } } } ) ) } ),
+            .affordances = { ec::invoke_affordance( { .id = "vending:pick", .label = _( "Select" ), .args = { .row = ec::row_shape{ .component_id = "vending:rows" } }, .role = "select" } ) },
+            .focus_component = "vending:rows",
+            .focus_row = game_client::item_row_id( *item_map[cur_pos].front() ),
+        };
+    }
+                                                           } );
     ui.on_redraw( [&]( const ui_adaptor & ) {
         const int num_items = item_map.size();
         const int page_size = std::min( num_items, list_lines );
@@ -1073,6 +1107,13 @@ void iexamine::vending( player &p, const tripoint_bub_ms &examp )
         auto &cur_item  = cur_items.back();
 
         const std::string &action = ctxt.handle_input();
+        // A client picks a row; the native list moves its cursor there.
+        if( const auto call = ec::invoked( ctxt.get_raw_input() ); call && call->args.row ) {
+            const auto found = std::ranges::find( item_map,
+            *call->args.row, [&]( const std::vector<item *> &group ) { return game_client::item_row_id( *group.front() ); } );
+            cur_pos = static_cast<int>( found - item_map.begin() );
+            continue;
+        }
         if( action == "DOWN" ) {
             cur_pos = ( cur_pos + 1 ) % num_items;
         } else if( action == "UP" ) {
