@@ -1381,8 +1381,9 @@ class game : public submap_load_listener
         bool in_activity_bubble_ = false;
 
         // Avoid paying the fixed-window proof cost every turn when a long activity is
-        // currently ineligible because of nearby simulation state.
-        time_point next_activity_fixed_window_check_ = calendar::turn_zero;
+        // currently ineligible because of nearby simulation state: the turn a check failed,
+        // which defers the next one for a minute of the clock running forward from it.
+        std::optional<time_point> activity_fixed_window_deferred_at_;
         bool activity_fixed_window_force_normal_turn_ = false;
 
         // Consecutive turns each dynamic condition has been continuously met.

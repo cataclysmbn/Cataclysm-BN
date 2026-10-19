@@ -600,7 +600,7 @@ void game::setup( bool load_world_modfiles )
     next_npc_id = character_id( 1 );
     next_mission_id = 1;
     new_game = true;
-    next_activity_fixed_window_check_ = calendar::turn_zero;
+    activity_fixed_window_deferred_at_.reset();
     activity_fixed_window_force_normal_turn_ = false;
     saving_blocked_by_failed_load = false;
     uquit = QUIT_NO;   // We haven't quit the game
@@ -918,7 +918,7 @@ bool game::start_game()
     seed = rng_bits();
     new_game = true;
     saving_blocked_by_failed_load = false;
-    next_activity_fixed_window_check_ = calendar::turn_zero;
+    activity_fixed_window_deferred_at_.reset();
     activity_fixed_window_force_normal_turn_ = false;
     start_calendar();
     get_weather().nextweather = calendar::turn;
@@ -2997,31 +2997,32 @@ auto game::try_activity_fixed_window_skip() -> bool
         }
         return false;
     }
-    if( calendar::turn < next_activity_fixed_window_check_ ) {
+    // A clock set back before the deferral ends it.
+    if( const auto since = activity_fixed_window_deferred_at_;
+        since && *since <= calendar::turn && calendar::turn < *since + 1_minutes ) {
         if( log_activity_skip_state ) {
-            add_msg(
-                string_format( "Before Next Fixed Window Check in %s turns",
-                               ( next_activity_fixed_window_check_ - calendar::turn ) / 1_turns ) );
+            add_msg( string_format( "Before Next Fixed Window Check in %s turns",
+                                    ( *since + 1_minutes - calendar::turn ) / 1_turns ) );
         }
         return false;
     }
     const auto duration = activity_fixed_window_duration();
     if( !can_activity_fixed_window_skip( duration ) ) {
-        next_activity_fixed_window_check_ = calendar::turn + 1_minutes;
+        activity_fixed_window_deferred_at_ = calendar::turn;
         u.in_skip_state = false;
         return false;
     }
     u.in_skip_state = true;
     const auto skipped_turns = execute_activity_fixed_window_skip( duration );
     if( skipped_turns <= 0 ) {
-        next_activity_fixed_window_check_ = calendar::turn + 1_minutes;
+        activity_fixed_window_deferred_at_ = calendar::turn;
         if( log_activity_skip_state ) {
             add_msg( "No Turns Were Skipped" );
         }
         return false;
     }
     TracyPlot( "Activity Fixed Window Skipped Turns", int64_t{ skipped_turns } );
-    next_activity_fixed_window_check_ = calendar::turn;
+    activity_fixed_window_deferred_at_.reset();
     const auto full_window_turns = to_turns<int>( activity_time_cadence::fixed_window() );
     if( skipped_turns >= full_window_turns || get_weather().nextweather <= calendar::turn ) {
         run_activity_cadence_boundary();
