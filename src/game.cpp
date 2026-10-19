@@ -2777,12 +2777,12 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
             autosave();
         }
         perhaps_add_random_npc();
-        if( npcs_dirty || critter_tracker->size() != monster_count ) {
-            activity_fixed_window_force_normal_turn_ = true;
-            if( log_activity_skip_state ) {
-                add_msg( "NPC added, cannot skip time" );
-            }
-            break;
+        // A creature that comes or goes ends the window, but only after this turn: the avatar's
+        // activity and move credit of a turn the window has advanced belong to it.
+        const auto creatures_changed = [&] { return npcs_dirty || critter_tracker->size() != monster_count; };
+        auto end_window = creatures_changed();
+        if( end_window && log_activity_skip_state ) {
+            add_msg( "NPC added, cannot skip time" );
         }
 
         debug_hour_timer.print_time();
@@ -2801,12 +2801,11 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
             }
             break;
         }
-        if( npcs_dirty || critter_tracker->size() != monster_count ) {
-            activity_fixed_window_force_normal_turn_ = true;
+        if( !end_window && creatures_changed() ) {
+            end_window = true;
             if( log_activity_skip_state ) {
                 add_msg( "NPC or monster added, cannot skip time" );
             }
-            break;
         }
         const auto activity_continues = ( u.activity && *u.activity &&
                                           u.activity->id() == starting_activity ) ||
@@ -2823,7 +2822,7 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
         []( const shared_ptr_fast<npc> &guy ) {
             return guy && !guy->is_dead();
         } );
-        if( critter_tracker->size() > 0 || has_active_npcs ) {
+        if( !end_window && ( critter_tracker->size() > 0 || has_active_npcs ) ) {
             if( !activity_skip_sound_skip ) {
                 sounds::process_sounds();
             }
@@ -2834,12 +2833,9 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
             if( critter_tracker->size() > 0 ) {
                 if( !activity_skip_mon_skip ) {
                     monmove( monster_activity_ai_mode::activity_skip, &activity_monsters );
-                    if( critter_tracker->size() != monster_count ) {
-                        activity_fixed_window_force_normal_turn_ = true;
-                        if( log_activity_skip_state ) {
-                            add_msg( "Monster added, cannot skip time" );
-                        }
-                        break;
+                    end_window = critter_tracker->size() != monster_count;
+                    if( end_window && log_activity_skip_state ) {
+                        add_msg( "Monster added, cannot skip time" );
                     }
                 } else {
                     for( const shared_ptr_fast<monster> &mon_ptr : critter_tracker->get_monsters_list() ) {
@@ -2850,15 +2846,12 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
                     }
                 }
             }
-            if( has_active_npcs ) {
+            if( has_active_npcs && !end_window ) {
                 if( !activity_skip_npc_skip ) {
                     npcmove();
-                    if( npcs_dirty || critter_tracker->size() != monster_count ) {
-                        activity_fixed_window_force_normal_turn_ = true;
-                        if( log_activity_skip_state ) {
-                            add_msg( "NPC or monster added, cannot skip time" );
-                        }
-                        break;
+                    end_window = creatures_changed();
+                    if( end_window && log_activity_skip_state ) {
+                        add_msg( "NPC or monster added, cannot skip time" );
                     }
                 } else {
                     for( npc &guy : g->all_npcs() ) {
@@ -2900,7 +2893,9 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
         u.apply_wetness_morale( weather.temperature );
         u.volume = 0;
 
-        if( !activity_continues || ( !u.in_sleep_state() && u.activity->complete() ) ) {
+        const auto finished = !activity_continues || ( !u.in_sleep_state() && u.activity->complete() );
+        activity_fixed_window_force_normal_turn_ = end_window && !finished;
+        if( end_window || finished ) {
             break;
         }
     }
