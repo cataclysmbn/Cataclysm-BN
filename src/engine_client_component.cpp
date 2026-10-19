@@ -401,7 +401,8 @@ auto screen_of( const boundary_state &state, const slot &entry, const bool top )
         result.affordances.clear();
         if( result.root ) { clear_affordances( *result.root ); }
     } else if( described ) {
-        if( provided && result.root ) {
+        // Enter on a row is the native CONFIRM; a screen that registers none has no Enter to offer.
+        if( provided && result.root && std::ranges::contains( state.actions, "CONFIRM", &action::id ) ) {
             separate_activation( *result.root, result.affordances, native_label( state, { "CONFIRM" } ) );
         }
         // The registered actions of the context follow the screen's own affordances.
