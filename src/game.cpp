@@ -4490,6 +4490,42 @@ void game::disp_NPCs()
     ctxt.register_action( "CONFIRM" );
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
+    const auto screen = engine_client::screen_scope( ctxt, "debug_npcs", {
+        .role = "screen",
+        .view = [&]( const engine_client::boundary_state & )
+        {
+            namespace ec = engine_client;
+            const auto at = [&]( const std::string & position ) {
+                return std::vector<game_client::interaction_column> { { .key = "position", .label = _( "Position" ), .value = position } };
+            };
+            const auto npc_row = [&]( const shared_ptr_fast<npc> &guy ) {
+                return ec::row{ .id = "npc:" + std::to_string( guy->getID().get_value() ), .label = guy->name, .columns = at( guy->abs_omt_pos().to_string() ) };
+            };
+            const auto monster_row = [&]( const monster & m ) {
+                const auto pos = m.bub_pos();
+                return ec::row{ .id = "monster:" + pos.to_string(), .label = m.name(), .columns = at( string_format( "%d, %d, %d", pos.x(), pos.y(), pos.z() ) ) };
+            };
+            // The range of living monsters is no standard range.
+            auto monster_rows = std::vector<ec::row> {};
+            for( const monster &m : all_monsters() ) {
+                monster_rows.push_back( monster_row( m ) );
+            }
+            return ec::screen_view{
+                .title = _( "NPCs" ),
+                .root = ec::panel( {
+                    .id = "debug_npcs",
+                    .stats = {
+                        { .key = "overmap", .label = string_format( _( "Your overmap position: %s" ), ppos.to_string() ) },
+                        { .key = "local", .label = string_format( _( "Your local position: %s" ), lpos.to_string() ) },
+                    },
+                    .child = ec::split( {
+                        .id = "debug_npcs:lists", .children = ec::children_of(
+                        ec::list( { .id = "debug_npcs:npcs", .rows = npcs | std::views::take( 20 ) | std::views::transform( npc_row ) | std::ranges::to<std::vector>() } ),
+                        ec::list( { .id = "debug_npcs:monsters", .rows = monster_rows } ) ) } ),
+                } ),
+            };
+        }
+    } );
     bool stop = false;
     while( !stop ) {
         ui_manager::redraw();
