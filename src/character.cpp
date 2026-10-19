@@ -2691,7 +2691,7 @@ detached_ptr<item> Character::wear_item( detached_ptr<item> &&wear,
                                to_wear.tname() );
         }
     } else {
-        add_msg_if_npc( _( "<npcname> puts on their %s." ), to_wear.tname() );
+        add_msg_if_npc( to_translation( "<npcname> puts on their %s." ), to_wear.tname() );
     }
 
     to_wear.on_wear( *this );

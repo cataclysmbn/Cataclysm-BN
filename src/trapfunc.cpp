@@ -1242,7 +1242,7 @@ bool trapfunc::ledge( const tripoint_bub_ms &p, Creature *c, item * )
         return false;
     }
 
-    c->add_msg_if_npc( _( "<npcname> falls down a level!" ) );
+    c->add_msg_if_npc( to_translation( "<npcname> falls down a level!" ) );
     player *pl = dynamic_cast<player *>( c );
     if( pl == nullptr ) {
 
@@ -1434,7 +1434,7 @@ bool trapfunc::shadow( const tripoint_bub_ms &p, Creature *c, item * )
             continue;
         }
         if( monster *const spawned = g->place_critter_at( mon_shadow, monp ) ) {
-            spawned->add_msg_if_npc( m_warning, _( "A shadow forms nearby." ) );
+            spawned->add_msg_if_npc( m_warning, to_translation( "A shadow forms nearby." ) );
             spawned->reset_special_rng( "DISAPPEAR" );
             g->m.remove_trap( p );
             break;
@@ -1530,7 +1530,7 @@ bool trapfunc::snake( const tripoint_bub_ms &p, Creature *, item * )
                 continue;
             }
             if( monster *const spawned = g->place_critter_at( mon_shadow_snake, monp ) ) {
-                spawned->add_msg_if_npc( m_warning, _( "A shadowy snake forms nearby." ) );
+                spawned->add_msg_if_npc( m_warning, to_translation( "A shadowy snake forms nearby." ) );
                 spawned->reset_special_rng( "DISAPPEAR" );
                 g->m.remove_trap( p );
                 break;

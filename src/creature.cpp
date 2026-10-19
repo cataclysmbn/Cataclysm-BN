@@ -2568,16 +2568,6 @@ void Creature::knock_back_from( const tripoint_bub_ms &p )
     knock_back_to( to );
 }
 
-void Creature::add_msg_if_npc( const translation &msg ) const
-{
-    return add_msg_if_npc( msg.translated() );
-}
-
-void Creature::add_msg_if_npc( const game_message_params &params, const translation &msg ) const
-{
-    return add_msg_if_npc( params, msg.translated() );
-}
-
 void Creature::add_msg_player_or_say( const translation &pc, const translation &npc ) const
 {
     return add_msg_player_or_say( pc.translated(), npc.translated() );

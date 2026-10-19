@@ -1831,7 +1831,7 @@ void explosion_funcs::regular( const queued_explosion &qe )
                          cause_description, damage_description );
             } else if( critter->is_npc() ) {
                 critter->add_msg_if_npc(
-                    _( "<npcname> is hit by %s, %s." ),
+                    to_translation( "<npcname> is hit by %s, %s." ),
                     cause_description, damage_description );
             } else {
                 add_msg( to_translation( "%s is hit by %s, %s." ),

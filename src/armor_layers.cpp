@@ -1007,11 +1007,11 @@ void show_armor_layers_ui( Character &who )
         } else {
             // Player is sorting NPC's armor here
             if( rl_dist( you.bub_pos(), who.bub_pos() ) > 1 ) {
-                you.add_msg_if_npc( m_bad, _( "%s is too far to sort armor." ), who.name );
+                you.add_msg_if_npc( m_bad, to_translation( "%s is too far to sort armor." ), who.name );
                 return;
             }
             if( you.attitude_to( you ) != Attitude::A_FRIENDLY ) {
-                you.add_msg_if_npc( m_bad, _( "%s is not friendly!" ), who.name );
+                you.add_msg_if_npc( m_bad, to_translation( "%s is not friendly!" ), who.name );
                 return;
             }
         }

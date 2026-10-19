@@ -123,6 +123,10 @@
             ]
           },
           "description": "Values for the placeholders, in order."
+        },
+        "npcname": {
+          "$ref": "#/$defs/text",
+          "description": "What each `<npcname>` in the worded line stands for, replaced after the placeholders are filled."
         }
       },
       "required": [

@@ -773,17 +773,19 @@ auto to_json( const localised_text &value ) -> json
     if( value.ctx ) { result["ctx"] = *value.ctx; }
     if( value.plural ) { result["plural"] = *value.plural; }
     if( value.plural_key ) { result["plural_key"] = *value.plural_key; }
+    const auto arg_json = []( const localised_text::arg & arg ) {
+        return std::visit( []( const auto & held ) {
+            if constexpr( std::is_same_v<std::remove_cvref_t<decltype( held )>, std::vector<localised_text>> ) {
+                return to_json( held.front() );
+            } else {
+                return json( held );
+            }
+        }, arg );
+    };
     if( !value.args.empty() ) {
-        result["args"] = value.args | std::views::transform( []( const auto & arg ) {
-            return std::visit( []( const auto & held ) {
-                if constexpr( std::is_same_v<std::remove_cvref_t<decltype( held )>, std::vector<localised_text>> ) {
-                    return to_json( held.front() );
-                } else {
-                    return json( held );
-                }
-            }, arg );
-        } ) | std::ranges::to<std::vector>();
+        result["args"] = value.args | std::views::transform( arg_json ) | std::ranges::to<std::vector>();
     }
+    if( value.npcname ) { result["npcname"] = arg_json( *value.npcname ); }
     return result;
 }
 /// A converted line is a LocalisedString; its repeat suffix is the native `%s x %d` message around it.

@@ -699,7 +699,7 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         if( !eff_only && !bio.is_auto_start_keep_full() ) {
             add_msg_if_player( m_info, to_translation( "You activate your %s." ), bio.info().name );
         } else if( get_player_character().sees( bub_pos() ) ) {
-            add_msg_if_npc( m_info, _( "%s activates their %s." ), disp_name(),
+            add_msg_if_npc( m_info, to_translation( "%s activates their %s." ), disp_name(),
                             bio.info().name );
         }
     };
@@ -1293,7 +1293,8 @@ bool Character::deactivate_bionic( bionic &bio, bool eff_only )
         if( primary_weapon().typeId() == bio.info().fake_item ) {
             add_msg_if_player( to_translation( "You withdraw your %s." ), primary_weapon().tname() );
             if( g->u.sees( bub_pos() ) ) {
-                add_msg_if_npc( m_info, _( "<npcname> withdraws their %s." ), primary_weapon().tname() );
+                add_msg_if_npc( m_info, to_translation( "<npcname> withdraws their %s." ),
+                                primary_weapon().tname() );
             }
             bio.ammo_loaded =
                 primary_weapon().ammo_data() != nullptr ? primary_weapon().ammo_data()->get_id() :

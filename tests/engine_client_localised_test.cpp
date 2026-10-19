@@ -299,10 +299,11 @@ TEST_CASE(
     SECTION("an NPC's line and its line of a pair do not reach the log as the avatar's") {
         auto& other = spawn_npc(tripoint_bub_ms{61, 60, 0}, "test_talker");
         other.add_msg_if_player(to_translation("You see %s."), std::string{"a rat"});
-        // The NPC's own line of the pair goes to the global log, which unit tests keep quiet.
         other
             .add_msg_player_or_npc(to_translation("You fall."), to_translation("<npcname> falls."));
-        CHECK(Messages::feed_since({}).empty());
+        const auto lines = Messages::feed_since({});
+        REQUIRE(lines.size() == 1);
+        CHECK(lines.front().text == other.name + " falls.");
     }
 }
 

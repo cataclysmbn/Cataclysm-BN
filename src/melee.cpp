@@ -2715,7 +2715,7 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
                  get_skill_level( skill_melee ) ) >= p->get_skill_level( skill_melee ) ) {
 
             if( p->is_player() ) {
-                add_msg_if_npc( m_bad, _( "<npcname> disarms you and takes your weapon!" ) );
+                add_msg_if_npc( m_bad, to_translation( "<npcname> disarms you and takes your weapon!" ) );
             } else {
                 add_msg_player_or_npc( m_good, to_translation( "You disarm %s and take their weapon!" ),
                                        to_translation( "<npcname> disarms %s and takes their weapon!" ),
@@ -2725,7 +2725,7 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
             wield( p->remove_primary_weapon() );
         } else {
             if( p->is_player() ) {
-                add_msg_if_npc( m_warning, _( "<npcname> tries to disarms you but fails!" ) );
+                add_msg_if_npc( m_warning, to_translation( "<npcname> tries to disarms you but fails!" ) );
             } else {
                 add_msg_player_or_npc( m_bad, to_translation( "You fail to disarm %s!" ),
                                        to_translation( "<npcname> fails to disarms %s!" ),
@@ -2739,7 +2739,7 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
                  get_skill_level( skill_melee ) ) >= p->get_skill_level( skill_melee ) ) {
             g->m.add_item_or_charges( p->bub_pos(), p->remove_primary_weapon() );
             if( p->is_player() ) {
-                add_msg_if_npc( m_bad, _( "<npcname> disarms you!" ) );
+                add_msg_if_npc( m_bad, to_translation( "<npcname> disarms you!" ) );
             } else {
                 add_msg_player_or_npc( m_good, to_translation( "You disarm %s!" ),
                                        to_translation( "<npcname> disarms %s!" ),
@@ -2747,7 +2747,7 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
             }
         } else {
             if( p->is_player() ) {
-                add_msg_if_npc( m_warning, _( "<npcname> tries to disarms you but fails!" ) );
+                add_msg_if_npc( m_warning, to_translation( "<npcname> tries to disarms you but fails!" ) );
             } else {
                 add_msg_player_or_npc( m_bad, to_translation( "You fail to disarm %s!" ),
                                        to_translation( "<npcname> fails to disarms %s!" ),
@@ -3171,7 +3171,7 @@ std::string Character::melee_special_effects( Creature &t, damage_instance &d, i
         if( is_player() ) {
             dump += string_format( _( "You shock %s." ), target ) + "\n";
         } else {
-            add_msg_if_npc( _( "<npcname> shocks %s." ), target );
+            add_msg_if_npc( to_translation( "<npcname> shocks %s." ), target );
         }
     }
 
@@ -3182,7 +3182,7 @@ std::string Character::melee_special_effects( Creature &t, damage_instance &d, i
         if( is_player() ) {
             dump += string_format( _( "You drain %s's body heat." ), target ) + "\n";
         } else {
-            add_msg_if_npc( _( "<npcname> drains %s's body heat!" ), target );
+            add_msg_if_npc( to_translation( "<npcname> drains %s's body heat!" ), target );
         }
     }
 

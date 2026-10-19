@@ -44,6 +44,7 @@
 #include "mattack_actors.h"
 #include "mattack_common.h"
 #include "melee.h"
+#include "localised_names.h"
 #include "messages.h"
 #include "mission.h"
 #include "mod_manager.h"
@@ -4398,6 +4399,28 @@ void monster::add_msg_player_or_npc( const game_message_params &params,
     if( g->u.sees( *this ) ) {
         add_msg( params, replace_with_npc_name( npc_msg ) );
     }
+}
+
+auto monster::add_localised_msg_if_npc( const game_message_params &params, const std::string &msg,
+                                        const std::optional<localised_text> &localised ) const -> void
+{
+    if( g->u.sees( *this ) ) {
+        Messages::add_msg( params, replace_with_npc_name( msg ), localised );
+    }
+}
+
+auto monster::add_localised_msg_player_or_npc( const game_message_params &params,
+        const localised_pair &pair ) const -> void
+{
+    if( g->u.sees( *this ) ) {
+        Messages::add_msg( params, replace_with_npc_name( pair.npc_msg ), pair.npc_localised );
+    }
+}
+
+auto monster::npc_name_arg() const -> localised_text::arg
+{
+    const auto text = localised::from_format( to_translation( "the %s" ), localised::name_of( *this ) );
+    return text ? localised::nested( *text ) : localised_text::arg{ disp_name() };
 }
 
 units::mass monster::get_carried_weight() const

@@ -1337,7 +1337,7 @@ void npc::stow_weapon( )
     if( !detached ) {
         // Wearing the item was successful, remove weapon and post message.
         if( g->u.sees( bub_pos() ) ) {
-            add_msg_if_npc( m_info, _( "<npcname> wears the %s." ), weapon.tname() );
+            add_msg_if_npc( m_info, to_translation( "<npcname> wears the %s." ), weapon.tname() );
         }
         moves -= 15;
         // Weapon cannot be worn or wearing was not successful. Store it in inventory if possible,
@@ -1349,7 +1349,7 @@ void npc::stow_weapon( )
         if( e->can_holster( weapon ) ) {
             if( g->u.sees( bub_pos() ) ) {
                 //~ %1$s: weapon name, %2$s: holster name
-                add_msg_if_npc( m_info, _( "<npcname> puts away the %1$s in the %2$s." ),
+                add_msg_if_npc( m_info, to_translation( "<npcname> puts away the %1$s in the %2$s." ),
                                 weapon.tname(), e->tname() );
             }
 
@@ -1360,13 +1360,13 @@ void npc::stow_weapon( )
     }
     if( volume_carried() + weapon.volume() <= volume_capacity() ) {
         if( g->u.sees( bub_pos() ) ) {
-            add_msg_if_npc( m_info, _( "<npcname> puts away the %s." ), weapon.tname() );
+            add_msg_if_npc( m_info, to_translation( "<npcname> puts away the %s." ), weapon.tname() );
         }
         i_add( std::move( detached ) );
         moves -= 15;
     } else { // No room for weapon, so we drop it
         if( g->u.sees( bub_pos() ) ) {
-            add_msg_if_npc( m_info, _( "<npcname> drops the %s." ), weapon.tname() );
+            add_msg_if_npc( m_info, to_translation( "<npcname> drops the %s." ), weapon.tname() );
         }
         g->m.add_item_or_charges( bub_pos(), std::move( detached ) );
     }
@@ -1388,7 +1388,7 @@ bool npc::wield( item &it )
     set_primary_weapon( it.detach() );
 
     if( g->u.sees( bub_pos() ) ) {
-        add_msg_if_npc( m_info, _( "<npcname> wields a %s." ),  primary_weapon().tname() );
+        add_msg_if_npc( m_info, to_translation( "<npcname> wields a %s." ),  primary_weapon().tname() );
     }
     invalidate_range_cache();
     return true;
@@ -3041,6 +3041,20 @@ void npc::add_msg_player_or_npc( const game_message_params &params,
     }
 }
 
+auto npc::add_localised_msg_if_npc( const game_message_params &params, const std::string &msg,
+                                    const std::optional<localised_text> &localised ) const -> void
+{
+    Messages::add_msg( params, replace_with_npc_name( msg ), localised );
+}
+
+auto npc::add_localised_msg_player_or_npc( const game_message_params &params,
+        const localised_pair &pair ) const -> void
+{
+    if( g->u.sees( *this ) ) {
+        Messages::add_msg( params, replace_with_npc_name( pair.npc_msg ), pair.npc_localised );
+    }
+}
+
 void npc::add_msg_player_or_say( const std::string &/*player_msg*/,
                                  const std::string &npc_speech ) const
 {
@@ -3730,16 +3744,16 @@ void npc::set_attitude( npc_attitude new_attitude )
     if( new_group != old_group && !is_fake() && g->u.sees( *this ) ) {
         switch( new_group ) {
             case attitude_group::hostile:
-                add_msg_if_npc( m_bad, _( "<npcname> gets angry!" ) );
+                add_msg_if_npc( m_bad, to_translation( "<npcname> gets angry!" ) );
                 break;
             case attitude_group::fearful:
-                add_msg_if_npc( m_warning, _( "<npcname> gets scared!" ) );
+                add_msg_if_npc( m_warning, to_translation( "<npcname> gets scared!" ) );
                 break;
             default:
                 if( old_group == attitude_group::hostile ) {
-                    add_msg_if_npc( m_good, _( "<npcname> calms down." ) );
+                    add_msg_if_npc( m_good, to_translation( "<npcname> calms down." ) );
                 } else if( old_group == attitude_group::fearful ) {
-                    add_msg_if_npc( _( "<npcname> is no longer afraid." ) );
+                    add_msg_if_npc( to_translation( "<npcname> is no longer afraid." ) );
                 }
                 break;
         }

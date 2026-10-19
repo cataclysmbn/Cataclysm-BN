@@ -64,8 +64,7 @@ class player : public Character
         void add_localised_msg_if_player( const game_message_params &params, const std::string &msg,
                                           const std::optional<localised_text> &localised ) const override;
         void add_localised_msg_player_or_npc( const game_message_params &params,
-                                              const std::string &player_msg, const std::string &npc_msg,
-                                              const std::optional<localised_text> &player_localised ) const override;
+                                              const localised_pair &pair ) const override;
         using Character::add_msg_player_or_say;
         void add_msg_player_or_say( const std::string &player_msg,
                                     const std::string &npc_speech ) const override;

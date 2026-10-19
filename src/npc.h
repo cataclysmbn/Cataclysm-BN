@@ -1207,6 +1207,10 @@ class npc : public player
                                     const std::string &npc_msg ) const override;
         void add_msg_player_or_npc( const game_message_params &params, const std::string &player_msg,
                                     const std::string &npc_msg ) const override;
+        auto add_localised_msg_if_npc( const game_message_params &params, const std::string &msg,
+                                       const std::optional<localised_text> &localised ) const -> void override;
+        auto add_localised_msg_player_or_npc( const game_message_params &params,
+                                              const localised_pair &pair ) const -> void override;
         using player::add_msg_if_player;
         void add_msg_if_player( const std::string &/*msg*/ ) const override {}
         void add_msg_if_player( const game_message_params &/*type*/,

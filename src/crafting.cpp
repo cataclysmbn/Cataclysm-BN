@@ -430,7 +430,7 @@ bool Character::making_would_work( const recipe_id &id_to_make, int batch_size )
             popup( buffer, PF_NONE );
             return false;
         }
-        add_msg_if_npc( _( "<npcname> can no longer make that craft!" ) );
+        add_msg_if_npc( to_translation( "<npcname> can no longer make that craft!" ) );
         return false;
     }
 
@@ -1369,7 +1369,8 @@ bool Character::can_continue_craft( item &craft )
                 popup( buffer, PF_NONE );
                 return false;
             }
-            add_msg_if_npc( _( "<npcname> don't have the required components to continue crafting!" ) );
+            add_msg_if_npc(
+                to_translation( "<npcname> don't have the required components to continue crafting!" ) );
             return false;
         }
 
@@ -1444,7 +1445,8 @@ bool Character::can_continue_craft( item &craft )
                 popup( buffer, PF_NONE );
                 return false;
             }
-            add_msg_if_npc( _( "<npcname> don't have the necessary tools to continue crafting!" ) );
+            add_msg_if_npc(
+                to_translation( "<npcname> don't have the necessary tools to continue crafting!" ) );
             return false;
         }
 
