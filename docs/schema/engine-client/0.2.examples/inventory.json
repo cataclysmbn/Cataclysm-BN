@@ -397,19 +397,6 @@
             "expect": "screen"
           },
           {
-            "id": "RIGHT",
-            "label": "Mark/unmark selected item",
-            "keys": [
-              "l",
-              "RIGHT",
-              "6",
-              "NUMPAD_6"
-            ],
-            "enabled": true,
-            "role": "navigate",
-            "expect": "screen"
-          },
-          {
             "id": "DROP_NON_FAVORITE",
             "label": "Mark/unmark non-favorite items",
             "keys": [

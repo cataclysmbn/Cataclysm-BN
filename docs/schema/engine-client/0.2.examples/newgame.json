@@ -4491,7 +4491,6 @@
                   "id": "newchar:stats:rows",
                   "kind": "list",
                   "affordances": [
-                    "newchar:stats:pick",
                     "newchar:stats:pick"
                   ],
                   "columns": [
@@ -4568,7 +4567,7 @@
                   ],
                   "total": 4,
                   "selection": "single",
-                  "activate": "bn:activate:newchar:stats:pick"
+                  "activate": "newchar:stats:pick"
                 },
                 {
                   "id": "newchar:stats:details",
@@ -4601,18 +4600,6 @@
             "args": {
               "row": {
                 "component_id": "newchar:tabs"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "bn:activate:newchar:stats:pick",
-            "label": "Confirm Choice",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "newchar:stats:rows"
               }
             },
             "expect": "boundary"
@@ -9686,7 +9673,6 @@
                   "id": "newchar:skills:rows",
                   "kind": "list",
                   "affordances": [
-                    "newchar:skills:pick",
                     "newchar:skills:pick"
                   ],
                   "columns": [
@@ -10464,7 +10450,7 @@
                   ],
                   "total": 32,
                   "selection": "single",
-                  "activate": "bn:activate:newchar:skills:pick"
+                  "activate": "newchar:skills:pick"
                 },
                 {
                   "id": "newchar:skills:details",
@@ -10497,18 +10483,6 @@
             "args": {
               "row": {
                 "component_id": "newchar:tabs"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "bn:activate:newchar:skills:pick",
-            "label": "Confirm Choice",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "newchar:skills:rows"
               }
             },
             "expect": "boundary"

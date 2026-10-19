@@ -115,7 +115,6 @@
                       "id": "armor:worn:rows",
                       "kind": "list",
                       "affordances": [
-                        "armor:pick",
                         "armor:pick"
                       ],
                       "columns": [
@@ -255,7 +254,7 @@
                       ],
                       "total": 3,
                       "selection": "single",
-                      "activate": "bn:activate:armor:pick"
+                      "activate": "armor:pick"
                     }
                   ]
                 }
@@ -838,18 +837,6 @@
             "expect": "boundary"
           },
           {
-            "id": "bn:activate:armor:pick",
-            "label": "Confirm Choice",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "armor:worn:rows"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
             "id": "UP",
             "label": "Pan up",
             "keys": [
@@ -1337,7 +1324,6 @@
                       "id": "armor:worn:rows",
                       "kind": "list",
                       "affordances": [
-                        "armor:pick",
                         "armor:pick"
                       ],
                       "columns": [
@@ -1436,7 +1422,7 @@
                       ],
                       "total": 2,
                       "selection": "single",
-                      "activate": "bn:activate:armor:pick"
+                      "activate": "armor:pick"
                     }
                   ]
                 }
@@ -2011,18 +1997,6 @@
             "keys": [],
             "enabled": true,
             "role": "select",
-            "args": {
-              "row": {
-                "component_id": "armor:worn:rows"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "bn:activate:armor:pick",
-            "label": "Confirm Choice",
-            "keys": [],
-            "enabled": true,
             "args": {
               "row": {
                 "component_id": "armor:worn:rows"

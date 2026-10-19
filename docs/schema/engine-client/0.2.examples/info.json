@@ -1180,32 +1180,6 @@
             "expect": "screen"
           },
           {
-            "id": "UP",
-            "label": "Pan up",
-            "keys": [
-              "k",
-              "8",
-              "UP",
-              "NUMPAD_8"
-            ],
-            "enabled": true,
-            "role": "navigate",
-            "expect": "screen"
-          },
-          {
-            "id": "DOWN",
-            "label": "Pan down",
-            "keys": [
-              "j",
-              "DOWN",
-              "2",
-              "NUMPAD_2"
-            ],
-            "enabled": true,
-            "role": "navigate",
-            "expect": "screen"
-          },
-          {
             "id": "NEXT_TAB",
             "label": "Go to next tab",
             "keys": [

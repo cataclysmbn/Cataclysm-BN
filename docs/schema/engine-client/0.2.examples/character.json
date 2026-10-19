@@ -3675,7 +3675,9 @@
           {
             "id": "bn:cancel",
             "label": "Cancel spell selection",
-            "keys": [],
+            "keys": [
+              "ESC"
+            ],
             "enabled": true,
             "role": "cancel",
             "expect": "screen"
@@ -3774,15 +3776,6 @@
             "keys": [],
             "enabled": true,
             "role": "navigate",
-            "expect": "screen"
-          },
-          {
-            "id": "QUIT",
-            "label": "Cancel spell selection",
-            "keys": [
-              "ESC"
-            ],
-            "enabled": true,
             "expect": "screen"
           },
           {
@@ -4801,7 +4794,9 @@
           {
             "id": "bn:cancel",
             "label": "Cancel spell selection",
-            "keys": [],
+            "keys": [
+              "ESC"
+            ],
             "enabled": true,
             "role": "cancel",
             "expect": "screen"
@@ -4900,15 +4895,6 @@
             "keys": [],
             "enabled": true,
             "role": "navigate",
-            "expect": "screen"
-          },
-          {
-            "id": "QUIT",
-            "label": "Cancel spell selection",
-            "keys": [
-              "ESC"
-            ],
-            "enabled": true,
             "expect": "screen"
           },
           {

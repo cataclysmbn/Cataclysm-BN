@@ -4077,7 +4077,8 @@
                 "color": "c_light_gray",
                 "name": "plastered wooden wall",
                 "subtile": "corner",
-                "wall": true
+                "wall": true,
+                "coverage": 100
               },
               "light": 1
             },
@@ -4095,7 +4096,8 @@
                 "color": "c_light_gray",
                 "name": "plastered wooden wall",
                 "subtile": "edge",
-                "wall": true
+                "wall": true,
+                "coverage": 100
               },
               "light": 1
             },
@@ -4115,7 +4117,8 @@
                   "name": "plastered wooden wall",
                   "subtile": "end_piece",
                   "rotation": 2,
-                  "wall": true
+                  "wall": true,
+                  "coverage": 100
                 }
               }
             },
@@ -4134,7 +4137,8 @@
                 "name": "plastered wooden wall",
                 "subtile": "edge",
                 "rotation": 1,
-                "wall": true
+                "wall": true,
+                "coverage": 100
               },
               "light": 1
             },
@@ -4207,7 +4211,8 @@
                 "name": "plastered wooden wall",
                 "subtile": "edge",
                 "rotation": 1,
-                "wall": true
+                "wall": true,
+                "coverage": 100
               },
               "light": 1
             },
@@ -4278,7 +4283,8 @@
                 "name": "plastered wooden wall",
                 "subtile": "edge",
                 "rotation": 1,
-                "wall": true
+                "wall": true,
+                "coverage": 100
               },
               "light": 1
             },
@@ -4350,7 +4356,8 @@
                 "name": "plastered wooden wall",
                 "subtile": "end_piece",
                 "rotation": 3,
-                "wall": true
+                "wall": true,
+                "coverage": 100
               },
               "light": 1
             },
@@ -4531,7 +4538,8 @@
                 "name": "plastered wooden wall",
                 "subtile": "end_piece",
                 "rotation": 1,
-                "wall": true
+                "wall": true,
+                "coverage": 100
               },
               "light": 4
             },
@@ -4550,7 +4558,8 @@
                 "name": "closed wood door",
                 "subtile": "end_piece",
                 "rotation": 1,
-                "wall": true
+                "wall": true,
+                "coverage": 95
               },
               "light": 1
             },
@@ -4639,7 +4648,8 @@
                 "name": "plastered wooden wall",
                 "subtile": "edge",
                 "rotation": 1,
-                "wall": true
+                "wall": true,
+                "coverage": 100
               },
               "light": 4
             },
@@ -4658,7 +4668,8 @@
                 "name": "plastered wooden wall",
                 "subtile": "end_piece",
                 "rotation": 3,
-                "wall": true
+                "wall": true,
+                "coverage": 100
               },
               "light": 1
             },
@@ -4770,7 +4781,8 @@
                   "name": "plastered wooden wall",
                   "subtile": "end_piece",
                   "rotation": 3,
-                  "wall": true
+                  "wall": true,
+                  "coverage": 100
                 }
               }
             },
@@ -4936,7 +4948,8 @@
                 "color": "c_light_gray",
                 "name": "plastered wooden wall",
                 "subtile": "end_piece",
-                "wall": true
+                "wall": true,
+                "coverage": 100
               },
               "light": 4
             },
@@ -4954,7 +4967,8 @@
                 "color": "c_light_gray",
                 "name": "plastered wooden wall",
                 "subtile": "edge",
-                "wall": true
+                "wall": true,
+                "coverage": 100
               },
               "light": 4
             },
@@ -4973,7 +4987,8 @@
                 "name": "plastered wooden wall",
                 "subtile": "end_piece",
                 "rotation": 2,
-                "wall": true
+                "wall": true,
+                "coverage": 100
               },
               "light": 4
             }
@@ -7368,7 +7383,9 @@
               {
                 "id": "bn:cancel",
                 "label": "Cancel menu",
-                "keys": [],
+                "keys": [
+                  "ESC"
+                ],
                 "enabled": true,
                 "role": "cancel",
                 "expect": "screen"
@@ -7445,15 +7462,6 @@
                 "keys": [],
                 "enabled": true,
                 "role": "navigate",
-                "expect": "screen"
-              },
-              {
-                "id": "QUIT",
-                "label": "Cancel menu",
-                "keys": [
-                  "ESC"
-                ],
-                "enabled": true,
                 "expect": "screen"
               },
               {
@@ -7695,7 +7703,9 @@
           {
             "id": "bn:cancel",
             "label": "Cancel menu",
-            "keys": [],
+            "keys": [
+              "ESC"
+            ],
             "enabled": true,
             "role": "cancel",
             "expect": "screen"
@@ -7775,15 +7785,6 @@
             "expect": "screen"
           },
           {
-            "id": "QUIT",
-            "label": "Cancel menu",
-            "keys": [
-              "ESC"
-            ],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
             "id": "SELECT",
             "label": "Select",
             "keys": [],
@@ -7833,7 +7834,9 @@
       "value": {
         "id": "bn:cancel",
         "label": "Cancel menu",
-        "keys": [],
+        "keys": [
+          "ESC"
+        ],
         "enabled": true,
         "role": "cancel",
         "expect": "screen"
