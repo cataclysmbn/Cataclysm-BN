@@ -6,6 +6,7 @@
 #include "catalua_sol.h"
 #include "character.h"
 #include "cursesdef.h"
+#include "engine_client_component.h"
 #include "flag.h"
 #include "game.h"
 #include "game_inventory.h"
@@ -231,10 +232,60 @@ auto enchantment_selector_menu(std::vector<enchant_info> options, Character& use
         }
         wnoutrefresh(w_info);
     });
+    namespace ec = engine_client;
+    const auto row_id = [](const enchant_info& info) { return "enchant:" + info.id; };
+    const auto screen = ec::screen_scope(
+        ctxt, "enchanter",
+        {.role = "screen", .view = [&](const ec::boundary_state&) {
+             const auto row_of = [&](const enchant_info& info) {
+                 return ec::row{.id = row_id(info), .label = info.name};
+             };
+             // The client wraps the text to its pane, so it comes unfolded.
+             const auto details =
+                 num_options == 0
+                     ? std::string{}
+                     : enchantment_info(options[line], user, 1000, itm)
+                           | std::views::join_with('\n') | std::ranges::to<std::string>();
+             return ec::screen_view{
+                 .title = _("Enchantment Options"),
+                 .root = ec::split(
+                     {.id = "enchanter",
+                      .relation = "detail",
+                      .active = "enchanter:options",
+                      .children = ec::children_of(
+                          ec::list(
+                              {.id = "enchanter:options",
+                               .rows = options | std::views::transform(row_of)
+                                     | std::ranges::to<std::vector>(),
+                               .selection = "single",
+                               .activate = "enchanter:pick"}),
+                          ec::panel(
+                              {.id = "enchanter:info",
+                               .title = _("Enchantment Info"),
+                               .child = ec::component{.id = "enchanter:details",
+                                                      .body = ec::text_body{.markup = details}}}))}),
+                 .affordances = {ec::invoke_affordance(
+                     {.id = "enchanter:pick",
+                      .label = _("Select"),
+                      .args = {.row = ec::row_shape{.component_id = "enchanter:options"}},
+                      .role = "select"})},
+                 .focus_component = "enchanter:options",
+                 .focus_row = num_options == 0 ? std::string{} : row_id(options[line]),
+             };
+         }});
     while (true) {
         ui_manager::redraw();
         const int scroll_info_lines = catacurses::getmaxy(w_info) - 4;
         const std::string action = ctxt.handle_input();
+        // A client picks an enchantment; the native cursor moves there.
+        if (const auto call = ec::invoked(ctxt.get_raw_input()); call && call->args.row) {
+            if (const auto found = std::ranges::find(options, *call->args.row, row_id);
+                found != options.end()) {
+                line = static_cast<int>(found - options.begin());
+                info_scroll = 0;
+            }
+            continue;
+        }
         if (action == "PAGE_UP") {
             info_scroll -= scroll_info_lines;
             if (info_scroll < 0) { info_scroll = info_lines; }
