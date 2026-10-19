@@ -437,4 +437,56 @@ TEST_CASE(
     CHECK(reads == 1);
 }
 
+TEST_CASE(
+    "the world picker lists the worlds and enters the one a client selects",
+    "[worldgen_screen][engine_client_component]") {
+    clear_all_state();
+    const auto guard = screen_guard{};
+    const auto saved_dir = PATH_INFO::savedir();
+    const auto test_dir = saved_dir + "world_picker/";
+    REQUIRE(assure_dir_exist(test_dir));
+    PATH_INFO::set_savedir(test_dir);
+    const auto cleanup = on_out_of_scope([&] {
+        PATH_INFO::set_savedir(saved_dir);
+        CHECK(remove_tree(test_dir));
+    });
+    for (const auto* const name : {"Ada", "Bea"}) {
+        auto info = WORLDINFO{};
+        info.world_name = name;
+        info.active_mod_order = {mod_id("test_data")};
+        REQUIRE(info.save());
+    }
+    auto factory = worldfactory{};
+    factory.init();
+    auto stage = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (stage++) {
+            case 0: {
+                CHECK(screen.title == "WORLD SELECTION");
+                CHECK(note_of(screen, "world_pick:worlds", "hint") == "Pick a world to enter game");
+                const auto& rows = rows_of(screen, "world_pick:rows");
+                CHECK((rows | std::views::transform(&ec::row::id) | std::ranges::to<std::vector>())
+                      == std::vector<std::string>{"world:Ada", "world:Bea"});
+                CHECK(rows.front().label == "Ada (0)");
+                CHECK(screen.focus_row == "world:Ada");
+                CHECK(resolves_to(state, "world_pick:pick", "world:Nobody")
+                      == ec::error::invalid_arguments);
+                return invoke("world_pick:pick", {.row = "world:Bea"});
+            }
+            case 1:
+                CHECK(screen.focus_row == "world:Bea");
+                return act("CONFIRM");
+            default:
+                FAIL("unexpected extra screen");
+                return act("QUIT");
+        }
+    });
+    const auto* const picked = factory.pick_world();
+    CHECK(stage == 2);
+    REQUIRE(picked != nullptr);
+    CHECK(picked->world_name == "Bea");
+}
+
 #endif // CATA_MCP
