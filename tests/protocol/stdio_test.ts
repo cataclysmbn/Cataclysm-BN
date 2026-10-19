@@ -455,7 +455,11 @@ const checkLoading = async (loading: Value[], chosenAt: number) => {
   }
 }
 
-async function makeProfile(options: Record<string, string> = {}): Promise<string> {
+/** A profile with `options` set and the `ignored` distractions switched off, so a long wait in the tutorial's town is not cut short by a curfew broadcast. */
+async function makeProfile(
+  options: Record<string, string> = {},
+  ignored: string[] = ["Noise"],
+): Promise<string> {
   const profile = await Deno.makeTempDir({ prefix: "bn-protocol-" })
   await Deno.mkdir(`${profile}/config`, { recursive: true })
   await Deno.writeTextFile(
@@ -473,6 +477,10 @@ async function makeProfile(options: Record<string, string> = {}): Promise<string
   await Deno.writeTextFile(
     `${profile}/config/preload.json`,
     JSON.stringify({ compute_acceleration: "gpu_software" }),
+  )
+  await Deno.writeTextFile(
+    `${profile}/config/distraction.json`,
+    JSON.stringify(ignored.map((type) => ({ "Distraction Type": type, Bool: true }))),
   )
   return profile
 }
@@ -1677,7 +1685,7 @@ Deno.test({
   name: "stdio: the distraction manager switches a distraction through the wire and it persists",
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
-    const profile = await makeProfile()
+    const profile = await makeProfile({}, [])
     const binary = Deno.env.get("BN_BINARY")!
     let client = new Client(binary, profile)
     try {
