@@ -2083,13 +2083,18 @@ static void place_ter_or_special(
                      .label = terrain ? _("Place overmap terrain:") : _("Place overmap special:"),
                      .value = terrain ? uistate.place_terrain->id.str()
                                       : uistate.place_special->id.str()},
+                    // The native lines, so that they read as translated.
                     {.key = "rotation",
-                     .label = _("Rotation:"),
-                     .value =
-                         can_rotate ? rotation : string_format("%s %s", rotation, _("(fixed)"))},
+                     .label = trim(string_format(
+                         _("Rotation: %s %s"), rotation, can_rotate ? "" : _("(fixed)")))},
                     {.key = "warning",
-                     .label = _("Areas highlighted in red already have map content generated.  "
-                                "Their overmap id will change, but not their contents."),
+                     .label = join(
+                         std::vector<std::string>{
+                             _("Areas highlighted in red"), _("already have map content"),
+                             // NOLINTNEXTLINE(cata-text-style): the native line
+                             _("generated. Their overmap"), _("id will change, but not"),
+                             _("their contents.")},
+                         " "),
                      .tone = "bad"},
                 };
                 return ec::screen_view{
