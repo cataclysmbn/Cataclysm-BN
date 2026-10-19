@@ -123,6 +123,7 @@
 #include "monster.h"
 #include "monster_action.h"
 #include "monster_hallucination.h"
+#include "monster_order.h"
 #include "monster_plan.h"
 #include "monstergenerator.h"
 #include "morale_types.h"
@@ -5831,7 +5832,7 @@ void game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
                                                      critter->bub_pos(), player_pos ), critter );
                 }
             }
-            std::ranges::sort( eligible_order );
+            order_by_distance( eligible_order );
             cache->eligible_order = std::move( eligible_order );
             cache->valid = true;
             use_activity_cache = true;
