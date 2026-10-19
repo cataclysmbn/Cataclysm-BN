@@ -31,6 +31,8 @@
 #include "client_interaction.h"
 #include "client_memory.h"
 #include "client_snapshot.h"
+#include "engine_client_component.h"
+#include "engine_client_contract.h"
 #include "game_ui.h"
 #include "input.h"
 #include "client_backend.h"
@@ -437,7 +439,8 @@ auto publish_screen( const game_client::screen_snapshot &screen ) -> void
 
 auto refresh_wait_ms() -> int
 {
-    return game_client::current_interaction( { .limit = 0 } ).refresh_ms;
+    const auto boundary = engine_client::capture_boundary( { .ready = { .phase = "waiting_for_input" } } );
+    return boundary ? engine_client::top_screen( *boundary ).refresh_ms : 0;
 }
 
 auto start_session() -> void
