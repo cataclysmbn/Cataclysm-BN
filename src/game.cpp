@@ -56,6 +56,7 @@
 #include "engine_client_component.h"
 #include "engine_client_contract.h"
 #include "engine_client_presentation.h"
+#include "engine_client_world.h"
 #include "enums.h"
 #include "event.h"
 #include "event_bus.h"
@@ -4504,7 +4505,7 @@ void game::disp_NPCs()
             };
             const auto monster_row = [&]( const monster & m ) {
                 const auto pos = m.bub_pos();
-                return ec::row{ .id = "monster:" + pos.to_string(), .label = m.name(), .columns = at( string_format( "%d, %d, %d", pos.x(), pos.y(), pos.z() ) ) };
+                return ec::row{ .id = "monster:" + ec::world::entity_id( m ), .label = m.name(), .columns = at( string_format( "%d, %d, %d", pos.x(), pos.y(), pos.z() ) ) };
             };
             // The range of living monsters is no standard range.
             auto monster_rows = std::vector<ec::row> {};
