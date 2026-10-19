@@ -72,7 +72,7 @@ export const vehicle: Scenario = {
       await engine.follow(() => engine.top().context === "VEH_INTERACT")
 
       const screen = engine.top()
-      assertEquals(screen.role, "dialog")
+      assertEquals(screen.role, "screen")
       rec.accept("vehicle screen", "screen", screen)
       const grid = part(screen, "vehicle:grid")
       assert(grid && grid.kind === "grid", "the grid around the cursor")
