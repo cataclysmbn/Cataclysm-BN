@@ -55,6 +55,8 @@ auto to_json( const look &value ) -> json
     if( value.facing ) { result["facing"] = *value.facing; }
     if( value.stack ) { result["stack"] = *value.stack; }
     if( value.wall ) { result["wall"] = true; }
+    // No coverage is the default, left out.
+    if( value.coverage != 0 ) { result["coverage"] = value.coverage; }
     if( value.mutation ) {
         result["mutation"] = {{"id", value.mutation->id}, {"types", value.mutation->types},
             {"flags", value.mutation->flags}
