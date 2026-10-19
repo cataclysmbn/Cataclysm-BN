@@ -5,8 +5,10 @@
 #    include "character_id.h"
 #    include "client_screen_support.h"
 #    include "engine_client_component.h"
+#    include "engine_client_world.h"
 #    include "game.h"
 #    include "map_helpers.h"
+#    include "monster.h"
 #    include "npc.h"
 #    include "player_helpers.h"
 #    include "state_helpers.h"
@@ -41,7 +43,7 @@ TEST_CASE(
     you.setpos(tripoint_bub_ms(60, 60, 0));
     const auto& guy = spawn_npc(you.bub_pos() + tripoint_east, "test_talker");
     const auto guy_row = "npc:" + std::to_string(guy.getID().get_value());
-    spawn_test_monster("mon_zombie", you.bub_pos() + tripoint(0, 3, 0));
+    const auto& zombie = spawn_test_monster("mon_zombie", you.bub_pos() + tripoint(0, 3, 0));
     const auto guard = screen_guard{};
     auto step = 0;
     open_stack([] { g->disp_NPCs(); },
@@ -57,6 +59,8 @@ TEST_CASE(
                        REQUIRE(monsters.size() == 1);
                        CHECK(monsters.front().label == "zombie");
                        CHECK(monsters.front().columns.front().value == "60, 63, 0");
+                       // A monster is named by the creature, not by the square it stands on.
+                       CHECK(monsters.front().id == "monster:" + ec::world::entity_id(zombie));
                    }
                    return run_action("QUIT");
                });
