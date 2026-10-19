@@ -539,10 +539,40 @@ WORLDINFO *worldfactory::pick_world( bool show_prompt, bool empty_only )
     ctxt.register_action( "PREV_TAB" );
     ctxt.register_action( "CONFIRM" );
 
+    const auto screen = ec::screen_scope( ctxt, "world_pick", { .role = "screen", .view = [&]( const ec::boundary_state & )
+    {
+        using namespace std::views;
+        const auto title = trim( _( " WORLD SELECTION " ) );
+        const auto row_of = [&]( const std::string & name ) { return ec::row{ .id = "world:" + name, .label = string_format( "%s (%d)", name, get_world( name )->world_saves.size() ) }; };
+        return worldgen_view( {
+            .id = "world_pick", .title = title,
+            .parts = ec::children_of( ec::panel( {
+                .id = "world_pick:worlds", .title = title,
+                .stats = { note_of( "hint", _( "Pick a world to enter game" ) ) },
+                .child = ec::list( {
+                    .id = "world_pick:rows", .rows = world_names | transform( row_of ) | std::ranges::to<std::vector>(),
+                    .selection = "single", .activate = "world_pick:pick" } ) } ) ),
+            .affordances = { pick_affordance( "world_pick:pick", _( "Select" ), "world_pick:rows" ) },
+            .focus_component = "world_pick:rows",
+            .focus_row = "world:" + world_pages[selpage][sel],
+        } );
+    }
+                                                              } );
+
     while( true ) {
         ui_manager::redraw();
 
         const std::string action = ctxt.handle_input();
+        // A client picks a row of any page; the native list moves its cursor there.
+        if( const auto call = ec::invoked( ctxt.get_raw_input() ); call && call->args.row ) {
+            const auto name = call->args.row->substr( std::string_view{ "world:" }.size() );
+            for( const auto &[page, names] : world_pages ) {
+                if( const auto found = std::ranges::find( names, name ); found != names.end() ) {
+                    selpage = page;
+                    sel = found - names.begin();
+                }
+            }
+        }
 
         if( action == "QUIT" ) {
             break;
