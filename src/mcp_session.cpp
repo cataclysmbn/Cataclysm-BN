@@ -439,8 +439,9 @@ auto publish_screen( const game_client::screen_snapshot &screen ) -> void
 
 auto refresh_wait_ms() -> int
 {
-    const auto boundary = engine_client::capture_boundary( { .ready = { .phase = "waiting_for_input" } } );
-    return boundary ? engine_client::top_screen( *boundary ).refresh_ms : 0;
+    // A screen states its own wait; a screen without a view states it through its native interaction.
+    const auto screen = engine_client::top_screen( { .ready = { .phase = "waiting_for_input" } } ).refresh_ms;
+    return screen > 0 ? screen : game_client::current_interaction( { .limit = 0 } ).refresh_ms;
 }
 
 auto start_session() -> void
