@@ -62,6 +62,8 @@ struct defense_game : public special_game {
         void game_over() override;
         /// The setup screen the mode opens before the game starts.
         void setup();
+        /// The trade screen a caravan opens between waves.
+        void caravan();
 
     private:
         void init_to_style( defense_style new_style );
@@ -72,7 +74,6 @@ struct defense_game : public special_game {
         void init_map();
 
         void spawn_wave();
-        void caravan();
         std::vector<mtype_id> pick_monster_wave();
         void spawn_wave_monster( const mtype_id &type );
 
