@@ -2854,6 +2854,37 @@ const endWait = async (session: Session, id: string) => {
 
 Deno.test({
   name:
+    "stdio: a request during a long wait is answered between two turns, not at the native key poll",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      const session = await enterTutorial(client)
+      await settle(session)
+      const epoch = session.mirror.at.epoch
+      const id = await beginWait(session, await waitChoice(session, "6 hours"))
+      const rtts: number[] = []
+      for (let n = 0; n < 30; n++) {
+        const sent = performance.now()
+        const result = await client.result("bn.command.result", { epoch, command_id: id })
+        rtts.push(performance.now() - sent)
+        assertEquals(result.stage === "completed", false, "the wait ended before the samples")
+      }
+      const median = rtts.toSorted((a, b) => a - b)[15]
+      // The native game reads the keyboard ten times a second during an activity; a turn is far shorter.
+      assert(median < 50, `median answer ${median.toFixed(1)} ms of ${rtts.map(Math.round)}`)
+      await endWait(session, id)
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
+Deno.test({
+  name:
     "stdio: malformed frames and commands sent during a pushing wait get their errors and change nothing",
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
