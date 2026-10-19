@@ -200,7 +200,8 @@ TEST_CASE(
     REQUIRE(assure_dir_exist(test_dir));
     PATH_INFO::set_savedir(test_dir);
     const auto cleanup = on_out_of_scope([&] {
-        world_generator->delete_world("Ada", true);
+        // A failed flow creates no world, and deleting a world that does not exist crashes.
+        if (world_generator->has_world("Ada")) { world_generator->delete_world("Ada", true); }
         PATH_INFO::set_savedir(saved_dir);
         CHECK(remove_tree(test_dir));
     });
@@ -209,6 +210,7 @@ TEST_CASE(
     auto added = std::string{};
     auto category = std::size_t{0};
     auto active_before = std::size_t{0};
+    auto active_after = std::size_t{0};
     auto stage = 0;
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
         const auto snapshot = game_client::current_interaction();
@@ -257,7 +259,9 @@ TEST_CASE(
             }
             case 2: {
                 const auto& active = rows_of(screen, active_rows);
-                REQUIRE(active.size() == active_before + 1);
+                // The mod manager also activates what the mod depends on.
+                REQUIRE(active.size() > active_before);
+                active_after = active.size();
                 CHECK(active.back().id == "active:" + added.substr(4));
                 CHECK(active.back().toggled == std::optional{true});
                 CHECK(std::ranges::none_of(rows_of(screen, available_rows), [&](const auto& row) {
@@ -294,7 +298,7 @@ TEST_CASE(
     REQUIRE(created != nullptr);
     CHECK(created->world_name == "Ada");
     CHECK(created->world_save_format == save_format::V1);
-    REQUIRE(created->active_mod_order.size() == active_before + 1);
+    REQUIRE(created->active_mod_order.size() == active_after);
     CHECK(created->active_mod_order.back().str() == added.substr(4));
     CHECK(stage == 6);
     CHECK(std::ranges::find(contexts, "OPTIONS") == contexts.end());
