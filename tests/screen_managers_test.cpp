@@ -219,6 +219,41 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "a follower a client activates in the faction manager is talked to as Enter does",
+    "[client][interaction][mcp][screens][info_screens][factions_screen]") {
+    clear_all_state();
+    clear_map();
+    auto& you = get_avatar();
+    clear_character(you, false);
+    auto& near = spawn_npc(you.bub_pos() + tripoint_east, "test_talker");
+    near.set_fac(faction_id("your_followers"));
+    near.set_attitude(NPCATT_FOLLOW);
+    const auto guard = screen_guard{};
+    auto talked = false;
+    auto stage = 0;
+    open_stack(
+        [] { g->faction_manager_ptr->display(); },
+        [&](const auto& /*snapshot*/, const auto& top) {
+            namespace ec = engine_client;
+            REQUIRE(top.root);
+            if (top.kind == "talk") {
+                talked = true;
+                const auto* const responses = ec::find_component(*top.root, "talk:responses");
+                REQUIRE(responses != nullptr);
+                const auto& rows = std::get<ec::list_body>(responses->body).rows;
+                const auto leave = std::ranges::find(rows, "Let's go.", &ec::row::label);
+                REQUIRE(leave != rows.end());
+                return invoke_event(top, "talk:respond", {.row = leave->id});
+            }
+            if (stage++ > 0) { return run_action("QUIT"); }
+            return invoke_event(
+                top, "bn:activate:factions:select",
+                {.row = "follower:" + std::to_string(near.getID().get_value())});
+        });
+    CHECK(talked);
+}
+
+TEST_CASE(
     "adding a zone names the selection step of its area in the look target",
     "[client][interaction][mcp][screens]") {
     clear_all_state();

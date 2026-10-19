@@ -681,6 +681,32 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "a skill a client activates on the character sheet toggles its training as Enter does",
+    "[character_info_interaction][engine_client_component]") {
+    const auto guard = character_info_guard{};
+    auto& you = get_avatar();
+    const auto& melee = you.get_skill_level_object(skill_id("melee"));
+    const auto training = melee.isTraining();
+    auto step = 0;
+    client::memory::set_input_provider([&](const int /*timeout*/) {
+        switch (step++) {
+            case 0:
+                return invoke("character:tab", {.row = "skills"});
+            case 1:
+                return invoke("bn:activate:character:focus:skills", {.row = "skill:melee"});
+            case 2:
+                CHECK(melee.isTraining() != training);
+                return action("QUIT");
+            default:
+                FAIL("unexpected native read");
+                return action("QUIT");
+        }
+    });
+    character_display::disp_info(you);
+    CHECK(step == 3);
+}
+
+TEST_CASE(
     "the character sheet offers no stat denial when native restrictions exclude the upgrade",
     "[character_info_interaction][engine_client_component]") {
     const auto guard = character_info_guard{};

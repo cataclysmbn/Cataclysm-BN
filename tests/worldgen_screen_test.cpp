@@ -345,6 +345,27 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "a world mod a client activates closes the active mods list as Enter does",
+    "[worldgen_screen][engine_client_component]") {
+    clear_all_state();
+    REQUIRE(world_generator->active_world != nullptr);
+    const auto mods = world_generator->active_world->info->active_mod_order;
+    REQUIRE_FALSE(mods.empty());
+    const auto guard = screen_guard{};
+    auto stage = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        if (stage++ == 0) {
+            return invoke(
+                "bn:activate:worldgen:active_mods:pick", {.row = "mod:" + mods.back().str()});
+        }
+        FAIL("the list outlived its Enter");
+        return act("QUIT");
+    });
+    world_generator->show_active_world_mods(mods);
+    CHECK(stage == 1);
+}
+
+TEST_CASE(
     "the mod manager of a world marks an active mod before removing it and keeps the list on a refused save",
     "[worldgen_screen][engine_client_component]") {
     clear_all_state();
