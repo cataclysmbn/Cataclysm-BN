@@ -381,6 +381,7 @@ struct CataListener: Catch::TestEventListenerBase {
         TestEventListenerBase::testRunStarting(runInfo);
         baseline = take_global_snapshot();
         start_turn = calendar::turn;
+        start_origin = get_map().get_abs_sub();
     }
 
     void testCaseStarting(Catch::TestCaseInfo const& testInfo) override {
@@ -389,6 +390,9 @@ struct CataListener: Catch::TestEventListenerBase {
         // Game time is harness-owned: every case starts at the same turn, whatever earlier cases
         // did.
         if (calendar::turn != start_turn) { set_time(start_turn); }
+        // So is where the map lies: a case that moved it would run the next at other world
+        // coordinates.
+        if (get_map().get_abs_sub() != start_origin) { get_map().load(start_origin, false); }
         before = take_global_snapshot();
     }
 
@@ -435,6 +439,7 @@ private:
     std::string test_name;
     global_snapshot baseline;
     time_point start_turn;
+    point_abs_sm start_origin;
     std::optional<global_snapshot> before;
 };
 
