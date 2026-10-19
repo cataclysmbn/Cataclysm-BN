@@ -161,8 +161,14 @@ auto native_affordances( build &b ) -> void
 {
     const auto &native = b.native;
     if( native.allow_cancel ) {
-        b.add( { .id = "bn:cancel", .label = native_label( b.state, { "QUIT", "TEXT.QUIT" } ), .role = "cancel",
-                 .runs = invoke_kind::cancel } );
+        // The cancel is the native QUIT: it takes that action's keys and stands in for it.
+        const auto quit = std::ranges::find_if( b.state.actions, []( const action & entry ) {
+            return entry.id == "QUIT" || entry.id == "TEXT.QUIT";
+        } );
+        const auto found = quit != b.state.actions.end();
+        b.add( { .id = "bn:cancel", .label = native_label( b.state, { "QUIT", "TEXT.QUIT" } ),
+                 .keys = found ? quit->keys : std::vector<std::string> {}, .role = "cancel",
+                 .runs = invoke_kind::cancel, .covers = found ? quit->id : std::string{} } );
     }
     if( !native.any_key_choice_id.empty() ) {
         // The screen's own word: the row any key acknowledges.
