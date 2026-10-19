@@ -91,6 +91,8 @@ struct look {
     /// Terrain that stands as a wall, which a view drawn from above can raise: `WALL`, or joined to walls
     /// (`CONNECT_TO_WALL`) and not `FLAT`, as a closed door or a window.
     bool wall = false;
+    /// Terrain the data flags `WINDOW`.
+    bool window = false;
     /// Of terrain and furniture: the data's `coverage`, the percent of a person behind it that it covers.
     int coverage = 0;
     auto operator<=>( const look & ) const = default; // *NOPAD*
