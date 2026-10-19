@@ -306,10 +306,9 @@ game_client::interaction_snapshot // *NOPAD*
         } );
     }
     if( anykey ) {
-        // The key itself cannot travel as a choice: a client names it, as keybinding files do.
-        snapshot.field = game_client::interaction_field{
-            .id = "field:key", .label = remove_color_tags( text ), .type = "key",
-        };
+        // The key itself cannot travel as a choice: a client names it, as keybinding files do. The message
+        // already says what the key is for.
+        snapshot.field = game_client::interaction_field{ .id = "field:key", .type = "key" };
     }
     if( ( anykey || cancel ) && options.empty() ) {
         const auto action = anykey ? "ANY_INPUT" : "QUIT";
