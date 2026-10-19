@@ -64,7 +64,7 @@ Checked boxes below have evidence in the current tree; package board and validat
 | M0/M2, M3      | Explosion clock ported; grenade/projectile events published. Open: RNG/state equality across presentation modes, native Tiles/Curses adaptation                                                                                                                                               |
 | M6             | `determinism_test.ts` per-turn hashes; `BN_MEASURE` stdio measurement (wall, CPU, RSS, bytes, first effect, control p50/p95/p99) per consumer. Open: idle-machine baseline, recorded budgets, native presentation and acceptance matrix                                                       |
 | P1, P2         | Not worked since 2026-10-10 (purity fixes reverted for suite OOM)                                                                                                                                                                                                                             |
-| P3             | Most screens semantic; Rust clients play through the protocol. world picker moved to a screen; 12 fallback contexts left in `out/lanes/screen-inventory-2026-10-19.md`. Open: those screens, per-slice cross-client replay                                                                    |
+| P3             | Most screens semantic; Rust clients play through the protocol. world picker, overmap search and vending machine moved to screens; 10 fallback contexts left in `out/lanes/screen-inventory-2026-10-19.md`. Open: those screens, per-slice cross-client replay                                 |
 
 ## Work packages
 
