@@ -10,8 +10,11 @@
 #    include "game.h"
 #    include "game_session.h"
 #    include "input.h"
+#    include "item.h"
 #    include "json.h"
 #    include "map/map.h"
+#    include "map/mapbuffer.h"
+#    include "map/submap.h"
 #    include "map_helpers.h"
 #    include "map_perception.h"
 #    include "mcp_server.h"
@@ -217,6 +220,21 @@ auto baseline() -> std::string {
     return avatar_save();
 }
 } // namespace
+
+TEST_CASE(
+    "a wait replayed from the same start is identical with a corpse rotting outside the bubble",
+    "[engine_client_delivery]") {
+    const auto start = baseline();
+    auto& buffer = get_map().get_mapbuffer();
+    const auto outside = tripoint_abs_sm(35, 20, 0);
+    REQUIRE(buffer.lookup_submap_in_memory(outside) != nullptr);
+    buffer.add_item(project_to<coords::ms>(outside), item::spawn("corpse_child_calm"));
+    REQUIRE(buffer.get_submaps_with_active_items().contains(outside));
+    const auto absent = wait_for(client_mode::absent, start, 40);
+    const auto again = wait_for(client_mode::absent, start, 40);
+    CHECK(again.state == absent.state);
+    CHECK(again.rng == absent.rng);
+}
 
 TEST_CASE(
     "a waiting avatar is identical with a paying, a stalled and no client",
