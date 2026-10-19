@@ -1102,18 +1102,19 @@ void iexamine::vending( player &p, const tripoint_bub_ms &examp )
 
         const int num_items = item_map.size();
 
-        // Item info
-        auto &cur_items = item_map[static_cast<size_t>( cur_pos )];
-        auto &cur_item  = cur_items.back();
-
-        const std::string &action = ctxt.handle_input();
-        // A client picks a row; the native list moves its cursor there.
+        auto action = ctxt.handle_input();
+        // A client picks a row; the native list moves its cursor there, and Enter on it buys the item.
         if( const auto call = ec::invoked( ctxt.get_raw_input() ); call && call->args.row ) {
             const auto found = std::ranges::find( item_map,
             *call->args.row, [&]( const std::vector<item *> &group ) { return game_client::item_row_id( *group.front() ); } );
+            if( found == item_map.end() ) { continue; }
             cur_pos = static_cast<int>( found - item_map.begin() );
-            continue;
+            action = call->activates ? "CONFIRM" : "";
         }
+
+        // Item info
+        auto &cur_items = item_map[static_cast<size_t>( cur_pos )];
+        auto &cur_item  = cur_items.back();
         if( action == "DOWN" ) {
             cur_pos = ( cur_pos + 1 ) % num_items;
         } else if( action == "UP" ) {

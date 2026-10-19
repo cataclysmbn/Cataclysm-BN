@@ -562,16 +562,19 @@ WORLDINFO *worldfactory::pick_world( bool show_prompt, bool empty_only )
     while( true ) {
         ui_manager::redraw();
 
-        const std::string action = ctxt.handle_input();
-        // A client picks a row of any page; the native list moves its cursor there.
+        auto action = ctxt.handle_input();
+        // A client picks a row of any page; the native list moves its cursor there, and Enter on it enters the world.
         if( const auto call = ec::invoked( ctxt.get_raw_input() ); call && call->args.row ) {
             const auto name = call->args.row->substr( std::string_view{ "world:" }.size() );
+            auto picked = false;
             for( const auto &[page, names] : world_pages ) {
                 if( const auto found = std::ranges::find( names, name ); found != names.end() ) {
                     selpage = page;
                     sel = found - names.begin();
+                    picked = true;
                 }
             }
+            action = picked && call->activates ? "CONFIRM" : "";
         }
 
         if( action == "QUIT" ) {

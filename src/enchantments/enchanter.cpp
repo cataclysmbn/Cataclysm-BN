@@ -276,15 +276,15 @@ auto enchantment_selector_menu(std::vector<enchant_info> options, Character& use
     while (true) {
         ui_manager::redraw();
         const int scroll_info_lines = catacurses::getmaxy(w_info) - 4;
-        const std::string action = ctxt.handle_input();
-        // A client picks an enchantment; the native cursor moves there.
+        auto action = ctxt.handle_input();
+        // A client picks an enchantment; the native cursor moves there, and Enter on it chooses it.
         if (const auto call = ec::invoked(ctxt.get_raw_input()); call && call->args.row) {
-            if (const auto found = std::ranges::find(options, *call->args.row, row_id);
-                found != options.end()) {
-                line = static_cast<int>(found - options.begin());
-                info_scroll = 0;
-            }
-            continue;
+            const auto found = std::ranges::find(options, *call->args.row, row_id);
+            if (found == options.end()) { continue; }
+            line = static_cast<int>(found - options.begin());
+            info_scroll = 0;
+            if (!call->activates) { continue; }
+            action = "CONFIRM";
         }
         if (action == "PAGE_UP") {
             info_scroll -= scroll_info_lines;

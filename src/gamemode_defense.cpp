@@ -557,12 +557,14 @@ void defense_game::setup()
 
     while( true ) {
         ui_manager::redraw();
-        const std::string action = ctxt.handle_input();
-        // A client picks a row; the native list moves its selection there.
+        auto action = ctxt.handle_input();
+        // A client picks a row; the native list moves its selection there, and Enter on it toggles the option.
         if( const auto call = ec::invoked( ctxt.get_raw_input() ); call && call->args.row ) {
-            const auto found = std::ranges::find( option_ids, call->args.row->substr( std::string_view{ "defense:" }.size() ) );
-            selection = static_cast<int>( found - option_ids.begin() ) + 1;
-            continue;
+            const auto options = std::views::iota( 1, static_cast<int>( option_ids.size() ) + 1 );
+            const auto found = std::ranges::find( options, *call->args.row, row_id );
+            if( found == options.end() ) { continue; }
+            selection = *found;
+            action = call->activates ? "CONFIRM" : "";
         }
 
         if( action == "START" ) {
@@ -1041,7 +1043,7 @@ void defense_game::caravan()
     bool cancel = false;
     while( !done ) {
         ui_manager::redraw();
-        const std::string action = ctxt.handle_input();
+        auto action = ctxt.handle_input();
         // A client picks a tab or an item; the native windows move their selection there.
         if( const auto call = ec::invoked( ctxt.get_raw_input() ); call && call->args.row ) {
             const auto &row = *call->args.row;
@@ -1057,8 +1059,10 @@ void defense_game::caravan()
                 item_selected = static_cast<int>( found - shown.begin() );
                 current_window = 1;
                 offset = std::clamp( offset, std::max( 0, item_selected - 12 ), item_selected );
+                // Enter on an item buys the cart, as the native key does in the item window.
+                if( call->activates ) { action = "CONFIRM"; }
             }
-            continue;
+            if( action != "CONFIRM" ) { continue; }
         }
         if( action == "HELP" ) {
             popup_top( _( "CARAVAN:\n"

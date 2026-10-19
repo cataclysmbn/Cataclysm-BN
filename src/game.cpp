@@ -9720,6 +9720,8 @@ void game::zones_manager()
                 const auto at = std::views::iota( std::size_t{ 0 }, zones.size() );
                 if( const auto found = std::ranges::find( at, row, zone_row_id ); found != at.end() ) {
                     active_index = static_cast<int>( *found );
+                    // Enter on a zone opens its edit menu, as the native key does.
+                    action = call->activates ? "CONFIRM" : "";
                 }
             }
         }
