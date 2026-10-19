@@ -590,6 +590,7 @@ void veh_interact::do_main_loop() {
     const auto screen = engine_client::screen_scope(
         main_context, "vehicle_interact",
         {
+            .role = "screen",
             .view = [this](const engine_client::boundary_state&) { return screen_of(); },
         });
 
