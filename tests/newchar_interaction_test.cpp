@@ -353,7 +353,7 @@ TEST_CASE(
                 REQUIRE(skill != all.end());
                 skill_id = skill->id;
                 skill_level_before = column_of(*skill, "level");
-                return pick("skills", skill_id);
+                return invoke("newchar:skills:pick", {.row = skill_id});
             }
             case 4:
                 // Picking a skill moves the cursor to it; raising it is the native action.
@@ -476,7 +476,7 @@ TEST_CASE(
                 CHECK_FALSE(spell.toggled.value_or(false));
                 CHECK_FALSE(spell.description.empty());
                 points_before = points_text(screen);
-                return pick("magic", spell.id);
+                return invoke("newchar:magic:pick", {.row = spell.id});
             }
             case 4:
                 CHECK(screen.focus_row == "spell:test_spell_apprentice");
