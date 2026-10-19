@@ -148,6 +148,18 @@ TEST_CASE("the registered CONFIRM accepts and QUIT leaves", "[engine_client_comp
     CHECK(affordance(view, "UP").role == "navigate");
 }
 
+TEST_CASE("the wide cursor steps only navigate", "[engine_client_component]") {
+    auto state = boundary(menu());
+    for (const auto* id : {"LEFT_WIDE", "RIGHT_WIDE", "UP_WIDE", "DOWN_WIDE"}) {
+        state.actions.push_back({.id = id, .name = std::string{id} + " name", .keys = {}});
+    }
+    const auto view = top_of(state);
+    for (const auto* id : {"LEFT_WIDE", "RIGHT_WIDE", "UP_WIDE", "DOWN_WIDE"}) {
+        INFO(id);
+        CHECK(affordance(view, id).role == "navigate");
+    }
+}
+
 TEST_CASE("a screen publishes each role once", "[engine_client_component]") {
     const auto holders = [](const ec::screen_view& view, const std::string& role) {
         return view.affordances
