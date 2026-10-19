@@ -5,6 +5,7 @@
 #include "json.h"
 #include "options.h"
 #include "path_info.h"
+#include "rng.h"
 #include "world.h"
 #include "worldfactory.h"
 
@@ -160,4 +161,19 @@ TEST_CASE(
         CHECK(loaded.WORLD_OPTIONS.at(name).getValue(true) == original.at(name).getValue(true));
     }
     CHECK_FALSE(loaded.WORLD_OPTIONS.contains("test_hidden_world_option"));
+}
+
+TEST_CASE("a new world is never named after a world that already exists", "[world][worldfactory]") {
+    const auto seed = 11U;
+    rng_set_engine_seed(seed);
+    const auto drawn = world_generator->get_next_valid_worldname();
+    REQUIRE(drawn != world_generator->active_world->info->world_name);
+    rng_set_engine_seed(seed);
+    auto* const made = world_generator->make_new_world(std::vector<mod_id>{});
+    REQUIRE(made != nullptr);
+    const auto name = made->world_name;
+    const auto cleanup = on_out_of_scope([&]() { world_generator->delete_world(name, true); });
+    REQUIRE(name == drawn);
+    rng_set_engine_seed(seed);
+    CHECK(world_generator->get_next_valid_worldname() != name);
 }
