@@ -124,6 +124,13 @@ void clear_map() {
     clear_creatures();
     g->m.clear_traps();
     for (int z = -2; z <= 0; ++z) { clear_items(z); }
+    // A resident submap outside the bubble keeps its active items' processing turns, which a
+    // test that sets the clock back would replay differently.
+    auto& buffer = g->m.get_mapbuffer();
+    const auto active = buffer.get_submaps_with_active_items() | std::ranges::to<std::vector>();
+    for (const auto& sm : active) {
+        for (const auto p : submap_tiles()) { buffer.clear_items(project_combine(sm, p)); }
+    }
     // Reset the distribution grid tracker so that stale grids from a previous
     // test's Catch2 WHEN section do not bleed into the next run.  The tracker
     // is a global singleton; grid_at() rebuilds on demand, so clearing here is safe.
