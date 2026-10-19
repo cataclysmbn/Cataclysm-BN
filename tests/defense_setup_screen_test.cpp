@@ -75,4 +75,34 @@ TEST_CASE(
     CHECK(step == 3);
 }
 
+TEST_CASE(
+    "a client moving onto the defense scenario keeps the options as the native cursor does",
+    "[defense_setup_screen][engine_client_component]") {
+    clear_all_state();
+    const auto guard = screen_guard{};
+    auto mode = defense_game{};
+    auto step = 0;
+    auto before = false;
+    open_stack(
+        [&] { mode.setup(); },
+        [&](const snapshot_t& /*snapshot*/, const ec::screen_view& screen) {
+            switch (step++) {
+                case 0:
+                    before = *row_of(screen, "defense:spiders").toggled;
+                    return invoke_event(
+                        screen, "bn:activate:defense:pick", {.row = "defense:spiders"});
+                case 1:
+                    return invoke_event(screen, "defense:pick", {.row = "defense:scenario"});
+                case 2:
+                    CHECK(screen.focus_row == "defense:scenario");
+                    CHECK(row_of(screen, "defense:spiders").toggled == std::optional{!before});
+                    return run_action("START");
+                default:
+                    FAIL("the setup outlived its start");
+                    return run_action("START");
+            }
+        });
+    CHECK(step == 3);
+}
+
 #endif // CATA_MCP
