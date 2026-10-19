@@ -193,3 +193,33 @@ TEST_CASE(
         });
     }
 }
+
+TEST_CASE(
+    "fixed window activity skip still runs after the clock is set back",
+    "[activity][fixed_window]") {
+    const auto no_autosave = override_option("AUTOSAVE", "false");
+    const auto normal_bubble_size =
+        override_option("REALITY_BUBBLE_SIZE", std::to_string(g_reality_bubble_size));
+    const auto no_mobile_bubble = override_option("ACTIVITY_MOBILE_BUBBLE_SIZE", "0");
+    const auto no_idle_bubble = override_option("ACTIVITY_IDLE_BUBBLE_SIZE", "0");
+    const auto no_underground_bubble = override_option("UNDERGROUND_BUBBLE_SIZE", "0");
+    const auto no_vehicle_bubble = override_option("VEHICLE_BUBBLE_SIZE", "0");
+    const auto no_combat_bubble = override_option("COMBAT_BUBBLE_SIZE", "0");
+    // A blocked window defers the next skip check a minute past its turn.
+    expect_fixed_window_skip_blocked_by([] {
+        g->timed_events.add(TIMED_EVENT_WANTED, calendar::turn + 30_seconds);
+    });
+    const auto duration = 30_seconds;
+    prepare_fixed_window_wait(duration);
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    // The debug menu can set the clock back to before that deferred check.
+    calendar::turn -= 2_hours;
+    get_weather().nextweather = calendar::turn + 10_minutes;
+
+    const auto start_turn = calendar::turn;
+
+    CHECK_FALSE(g->do_turn());
+
+    CHECK(calendar::turn == start_turn + duration);
+    CHECK_FALSE(static_cast<bool>(g->u.activity));
+}
