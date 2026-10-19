@@ -319,8 +319,7 @@ auto provide_input( const int timeout_ms ) -> input_event
     auto &session = state();
     // A screen the engine redraws itself (a timed mini-game) moves on when the client sends nothing
     // within the native wait, as the native input wait would.
-    const auto refreshing = timeout_ms > 0 && game_client::current_interaction( { .limit = 0 } ).refresh_ms
-                            > 0;
+    const auto refreshing = timeout_ms > 0 && refresh_wait_ms() > 0;
     while( !session.stop ) {
         if( !session.events.empty() ) {
             const auto request = std::move( session.events.front() );
@@ -435,6 +434,11 @@ auto publish_screen( const game_client::screen_snapshot &screen ) -> void
 }
 
 } // namespace
+
+auto refresh_wait_ms() -> int
+{
+    return game_client::current_interaction( { .limit = 0 } ).refresh_ms;
+}
 
 auto start_session() -> void
 {

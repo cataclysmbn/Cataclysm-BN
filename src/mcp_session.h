@@ -12,6 +12,9 @@ auto publish_step() -> void;
 /// Publishes what a running activity changed, to a client that negotiated credit delivery.
 auto publish_activity() -> void;
 
+/// How long the screen input goes to waits before it moves on by itself (a timed mini-game), 0 when it
+/// waits for the client.
+auto refresh_wait_ms() -> int;
 /// Requests input providers to stop waiting. The process may call this during orderly shutdown.
 auto request_stop() -> void;
 
