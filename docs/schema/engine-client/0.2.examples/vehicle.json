@@ -5,7 +5,7 @@
       "def": "screen",
       "value": {
         "screen_id": "screen:20",
-        "role": "dialog",
+        "role": "screen",
         "kind": "vehicle_interact",
         "title": "Bicycle",
         "root": {
@@ -601,7 +601,7 @@
       "def": "screen",
       "value": {
         "screen_id": "screen:20",
-        "role": "dialog",
+        "role": "screen",
         "kind": "vehicle_interact",
         "title": "Choose new part to install here:",
         "root": {
