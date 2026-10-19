@@ -7,6 +7,7 @@
 #    include "iuse_software_minesweeper.h"
 #    include "iuse_software_snake.h"
 #    include "iuse_software_sokoban.h"
+#    include "mcp_session.h"
 #    include "state_helpers.h"
 
 #    include <algorithm>
@@ -97,6 +98,23 @@ TEST_CASE(
                    return action("QUIT");
                });
     CHECK(stage == 4);
+}
+
+TEST_CASE(
+    "a timed mini-game's wait moves on by itself for a client that sends nothing",
+    "[client][interaction][mcp][screens][minigames]") {
+    clear_all_state();
+    const auto guard = screen_guard{};
+    auto seen = false;
+    open_stack([&] { snake_game{}.start_game(); },
+               [&](const auto& /*snapshot*/, const auto& top) {
+                   seen = true;
+                   // The session ends the native wait itself, as the native input wait would.
+                   CHECK(top.refresh_ms > 0);
+                   CHECK(bn::mcp::refresh_wait_ms() == top.refresh_ms);
+                   return action("QUIT");
+               });
+    CHECK(seen);
 }
 
 TEST_CASE(
