@@ -43,7 +43,11 @@ auto clear_states(const enum_bitset<test_state>& states) -> void {
         weather.clear_temp_cache();
     }
 
-    if (normalized_states.test(state::avatar)) { clear_avatar(); }
+    if (normalized_states.test(state::avatar)) {
+        clear_avatar();
+        // A wait the case left running keeps its popup over every later screen.
+        g->handle_wait_activity_redraw();
+    }
 
     if (normalized_states.test(state::map)) {
         // Tests load their map directly and hold no load requests; dimension travel leaves the

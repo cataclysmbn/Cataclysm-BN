@@ -1063,7 +1063,6 @@ class game : public submap_load_listener
         auto has_activity_skip_relevant_vehicle() -> bool;
         auto has_activity_skip_active_fire() -> bool;
         auto run_activity_skip_batch_turns( int skipped_turns ) -> void;
-        auto handle_wait_activity_redraw( bool force = false ) -> void;
         auto run_activity_cadence_boundary() -> void;
         void handle_key_blocking_activity(); // Abort reading etc.
         void open_consume_item_menu(); // Custom menu for consuming specific group of items
@@ -1316,6 +1315,8 @@ class game : public submap_load_listener
 
         std::unique_ptr<static_popup> wait_popup;
     public:
+        /// Shows the wait popup while the avatar waits, sleeps or travels, and drops it otherwise.
+        auto handle_wait_activity_redraw( bool force = false ) -> void;
         /** Used to implement mouse "edge scrolling". Returns a
          *  tripoint which is a vector of the resulting "move", i.e.
          *  (0, 0, 0) if the mouse is not at the edge of the screen,
