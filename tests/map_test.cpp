@@ -150,6 +150,16 @@ auto total_field_intensity_in_radius(
 
 } // namespace
 
+TEST_CASE("a test case may leave the map moved", "[map][harness]") {
+    clear_all_state();
+    get_map().load(get_map().get_abs_sub() + point_rel_sm(-5, -5), false);
+    CHECK(get_map().get_abs_sub() != point_abs_sm::zero());
+}
+
+TEST_CASE("the next test case starts with the map where the run started", "[map][harness]") {
+    CHECK(get_map().get_abs_sub() == point_abs_sm::zero());
+}
+
 TEST_CASE("mapgen_water_fixtures_are_already_plumbed", "[mapgen][fluid_grid][regression]") {
     clear_all_state();
     const auto cleanup = on_out_of_scope([] { clear_all_state(); });
