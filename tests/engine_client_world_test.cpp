@@ -1878,3 +1878,30 @@ TEST_CASE(
     // No coverage is the default, left out.
     CHECK_FALSE(cells[2]["terrain"].contains("coverage"));
 }
+
+TEST_CASE(
+    "world capture marks a window as a window and no other wall as one", "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& here = get_map();
+    const auto window = setup.start + tripoint(2, 1, 0);
+    const auto door = setup.start + tripoint(2, -1, 0);
+    here.ter_set(window, ter_id("t_window"));
+    here.ter_set(door, ter_id("t_door_c"));
+    here.build_map_cache(0);
+    map_perception::acquire();
+    const auto state = ec::world::capture_world();
+    const auto* glazed = find_cell(state, at(window));
+    const auto* closed = find_cell(state, at(door));
+    const auto* wall = find_cell(state, at(setup.start + tripoint(2, 0, 0)));
+    REQUIRE(glazed != nullptr);
+    REQUIRE(closed != nullptr);
+    REQUIRE(wall != nullptr);
+    const auto cells = nlohmann::json::parse(
+        ec::serialize_cells({.cells = {*glazed, *closed, *wall}}))["cells"];
+    REQUIRE(cells.size() == 3);
+    // A window still stands in the wall's line, and says it is a window.
+    CHECK(cells[0]["terrain"].value("wall", false));
+    CHECK(cells[0]["terrain"].value("window", false));
+    CHECK_FALSE(cells[1]["terrain"].contains("window"));
+    CHECK_FALSE(cells[2]["terrain"].contains("window"));
+}
