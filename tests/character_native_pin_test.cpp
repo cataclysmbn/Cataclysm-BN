@@ -3,6 +3,7 @@
 #    include "avatar.h"
 #    include "bionics.h"
 #    include "bionics_ui.h"
+#    include "calendar.h"
 #    include "catch/catch.hpp"
 #    include "character_display.h"
 #    include "client_command.h"
@@ -21,6 +22,7 @@
 #    include "newcharacter.h"
 #    include "options_helpers.h"
 #    include "output.h"
+#    include "player_activity.h"
 #    include "state_helpers.h"
 
 #    include <format>
@@ -618,6 +620,33 @@ auto matches(const std::string& name, const std::vector<std::string>& screen) ->
     return screen == recorded().at(name);
 }
 
+/// Walks the mutation list through its tabs, checking each against its pin.
+auto check_native_mutation_list() -> void {
+    const auto guard = screen_guard{};
+    auto& you = get_avatar();
+    you.set_mutation(trait_id("test_preview_trait"));
+    you.set_mutation(trait_id("test_preview_active_trait"));
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto names = std::vector<std::string>{"passive", "examining", "active"};
+        CHECK(matches("mutations:" + names[step], rendered()));
+        switch (step++) {
+            case 0:
+                return act("TOGGLE_EXAMINE");
+            case 1:
+                return act("NEXT_TAB");
+            case 2:
+                return act("QUIT");
+            default:
+                break;
+        }
+        FAIL("unexpected native read");
+        return act("QUIT");
+    });
+    show_mutations_ui(you);
+    CHECK(step == 3);
+}
+
 } // namespace
 
 TEST_CASE(
@@ -669,29 +698,25 @@ TEST_CASE("the native bionics list keeps its text and colors", "[character_nativ
 }
 
 TEST_CASE("the native mutation list keeps its text and colors", "[character_native_pin]") {
-    const auto guard = screen_guard{};
-    auto& you = get_avatar();
-    you.set_mutation(trait_id("test_preview_trait"));
-    you.set_mutation(trait_id("test_preview_active_trait"));
-    auto step = 0;
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto names = std::vector<std::string>{"passive", "examining", "active"};
-        CHECK(matches("mutations:" + names[step], rendered()));
-        switch (step++) {
-            case 0:
-                return act("TOGGLE_EXAMINE");
-            case 1:
-                return act("NEXT_TAB");
-            case 2:
-                return act("QUIT");
-            default:
-                break;
-        }
-        FAIL("unexpected native read");
-        return act("QUIT");
-    });
-    show_mutations_ui(you);
-    CHECK(step == 3);
+    check_native_mutation_list();
+}
+
+TEST_CASE(
+    "a wait left running draws nothing over the native mutation list", "[character_native_pin]") {
+    clear_all_state();
+    const auto no_autosave = override_option("AUTOSAVE", "false");
+    const auto keep_bubble =
+        override_option("REALITY_BUBBLE_SIZE", std::to_string(g_reality_bubble_size));
+    const auto no_mobile = override_option("ACTIVITY_MOBILE_BUBBLE_SIZE", "0");
+    const auto no_idle = override_option("ACTIVITY_IDLE_BUBBLE_SIZE", "0");
+    const auto no_underground = override_option("UNDERGROUND_BUBBLE_SIZE", "0");
+    const auto no_vehicle = override_option("VEHICLE_BUBBLE_SIZE", "0");
+    const auto no_combat = override_option("COMBAT_BUBBLE_SIZE", "0");
+    get_avatar().set_moves(100);
+    get_avatar().assign_activity(activity_id("ACT_WAIT"), to_moves<int>(1_hours), 0);
+    g->do_turn();
+    REQUIRE(get_avatar().activity);
+    check_native_mutation_list();
 }
 
 #endif // CATA_MCP
