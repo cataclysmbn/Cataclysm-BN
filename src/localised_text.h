@@ -20,12 +20,12 @@ struct localised_text {
     using arg = std::variant<std::int64_t, double, std::string, std::vector<localised_text>>;
 
     std::string key;
-    std::optional<std::string> ctx;
+    std::optional<std::string> ctx = std::nullopt;
     /// The count that selects the plural form.
-    std::optional<double> plural;
+    std::optional<double> plural = std::nullopt;
     /// The msgid of the plural form, which a language with no catalogue shows for a count other than one.
-    std::optional<std::string> plural_key;
-    std::vector<arg> args;
+    std::optional<std::string> plural_key = std::nullopt;
+    std::vector<arg> args = {};
 
     auto operator==( const localised_text & ) const -> bool = default; // *NOPAD*
 };

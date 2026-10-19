@@ -499,8 +499,9 @@ auto record_field( const tripoint_bub_ms &at, const field_type_id &field ) -> vo
     auto &feed = state();
     if( !feed.collecting || feed.watching > 0 || feed.ambient >= maximum_ambient_facts ||
         !seen( at ) ) { return; }
-    push_ambient( { .type = "field.changed", .at = world::position_at( at ), .field = field.id().str(),
-                    .amount = static_cast<std::uint64_t>( std::max( 0, get_map().get_field_intensity( at, field ) ) ) } );
+    push_ambient( { .type = "field.changed", .at = world::position_at( at ),
+                    .amount = static_cast<std::uint64_t>( std::max( 0, get_map().get_field_intensity( at, field ) ) ),
+                    .field = field.id().str() } );
 }
 
 namespace
@@ -552,8 +553,8 @@ field_watch::~field_watch()
     };
     const auto tell = [&]( const tripoint_bub_ms & at, const field_type_id & type,
     const int intensity ) {
-        push_ambient( { .type = "field.changed", .at = world::position_at( at ), .field = type.id().str(),
-                        .amount = static_cast<std::uint64_t>( intensity ) } );
+        push_ambient( { .type = "field.changed", .at = world::position_at( at ),
+                        .amount = static_cast<std::uint64_t>( intensity ), .field = type.id().str() } );
     };
     for( const auto &[at, fields] : after ) {
         for( const auto &[type, now] : fields ) {
