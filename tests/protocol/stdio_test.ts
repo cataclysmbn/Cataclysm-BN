@@ -236,6 +236,8 @@ class Session {
   /** The error of each command that ended in one. */
   errors = new Map<string, string>()
   eventTypes: string[] = []
+  /** Every event the connection received, in order. */
+  received: Value[] = []
   /** The events that tell what happened rather than what the avatar knows, whole and in arrival order. */
   told: Value[] = []
   resyncs: Value[] = []
@@ -300,6 +302,7 @@ class Session {
         turns: params.events.flatMap((e: Value) => e.changes?.environment?.turn ?? []),
       })
       for (const event of params.events) {
+        this.received.push({ epoch: params.epoch, ...event })
         this.eventTypes.push(event.type)
         if (!stateEvents.includes(event.type)) this.told.push(event)
       }
@@ -1011,6 +1014,57 @@ Deno.test({
       assertEquals(session.mirror.interaction.interaction, null)
       assert(session.mirror.interaction.actions.some((a: Value) => a.id === "craft"))
       await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
+Deno.test({
+  name:
+    "stdio: the state and events a client rebuilds equal what the engine's own recording consumer saw",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const recording = `${profile}/contract.jsonl`
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile, "null", [
+      "--contract-record",
+      recording,
+    ])
+    try {
+      const session = await enterTutorial(client)
+      await settle(session)
+      for (const action_id of ["RIGHT", "RIGHT", "LEFT"]) {
+        await session.submit({ kind: "action", action_id })
+        await session.acknowledge(() => session.mirror.interaction.interaction === null)
+      }
+      await client.close()
+      const publications = (await Deno.readTextFile(recording)).split("\n").filter((line) => line)
+        .map((line) => JSON.parse(line))
+      const recorded = new Map(
+        publications.flatMap(({ published }) =>
+          published.events.map((event: Value) => [
+            `${published.epoch}/${event.sequence}`,
+            { epoch: published.epoch, ...event },
+          ])
+        ),
+      )
+      // Every event on the wire is the engine's, in the engine's order.
+      assert(session.received.length > 0)
+      for (const event of session.received) {
+        assertEquals(event, recorded.get(`${event.epoch}/${event.sequence}`))
+      }
+      // The engine's state after the last event the client applied is the state the client rebuilt.
+      const { at } = session.mirror
+      const last = publications.findLast(({ published }) =>
+        published.epoch === at.epoch && published.events.at(-1)?.sequence === at.sequence
+      )
+      assert(last, `a publication ending at ${at.epoch}/${at.sequence}`)
+      assertEquals(
+        session.mirror.state(),
+        Mirror.fromSnapshot(last.snapshot.header, last.snapshot.parts).state(),
+      )
     } finally {
       client.kill()
       await Deno.remove(profile, { recursive: true })
