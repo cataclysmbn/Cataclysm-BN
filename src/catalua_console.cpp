@@ -3,6 +3,8 @@
 #include "catalua_log.h"
 #include "catalua_impl.h"
 #include "cursesdef.h"
+#include "engine_client_component.h"
+#include "engine_client_world.h"
 #include "game.h"
 #include "init.h"
 #include "input.h"
@@ -13,6 +15,8 @@
 #include "uistate.h"
 
 #include <algorithm>
+#include <ranges>
+#include <string>
 
 namespace cata
 {
@@ -326,6 +330,34 @@ void show_lua_console_impl()
         }
 
         wnoutrefresh( w_prompt );
+    } );
+
+    const auto screen = engine_client::screen_scope( ctxt, "lua_console", {
+        .role = "screen",
+        .view = [&]( const engine_client::boundary_state & )
+        {
+            namespace ec = engine_client;
+            const auto &entries = get_lua_log_instance().get_entries();
+            const auto line_of = [&]( const lua_log_msg & msg ) {
+                const auto mark = msg.level == LuaLogLevel::Input ? std::string( "> " ) : std::string();
+                return "<color_" + ec::world::color_name( get_log_level_color( msg.level ) ) + ">" + mark + msg.text
+                +
+                "</color>";
+            };
+            // The log keeps its newest entry first; the console reads it oldest first.
+            const auto log = entries | std::views::reverse | std::views::transform(
+                                 line_of ) | std::views::join_with( '\n' ) |
+                             std::ranges::to<std::string>();
+            const auto &input = history_cursor == CURRENT_INPUT ? current_input :
+                                get_input_history()[history_cursor];
+            return ec::screen_view{
+                .title = _( "Lua console" ),
+                .root = ec::split( {
+                    .id = "lua_console", .children = ec::children_of(
+                    ec::component{ .id = "lua_console:log", .body = ec::text_body{ .markup = log, .role = "terminal_output" } },
+                    ec::component{ .id = "lua_console:input", .body = ec::text_body{ .markup = input, .role = "terminal_output" } } ) } ),
+            };
+        }
     } );
 
     bool log_invalidated = true;
