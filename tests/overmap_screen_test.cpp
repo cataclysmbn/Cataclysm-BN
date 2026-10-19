@@ -635,4 +635,63 @@ TEST_CASE(
     CHECK(reads == 1);
 }
 
+TEST_CASE(
+    "the overmap search publishes the result it points at and the cursor follows the next one",
+    "[overmap_screen][engine_client_component]") {
+    const auto world = fixed_world{};
+    const auto guard = screen_guard{};
+    ACTIVE_OVERMAP_BUFFER.add_note(world.center + point(3, 0), "Qzxv near");
+    ACTIVE_OVERMAP_BUFFER.add_note(world.center + point(-6, 0), "Qzxv far");
+    const auto stat_of = [](const ec::screen_view& screen, const std::string& key) {
+        const auto& stats = body<ec::panel_body>(part(screen, "overmap:search")).stats;
+        const auto found = std::ranges::find(stats, key, &ec::panel_stat::key);
+        INFO(key);
+        REQUIRE(found != stats.end());
+        return *found;
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto snapshot = game_client::current_interaction();
+        if (snapshot.field) {
+            auto input = game_client::input_command{};
+            input.interaction = game_client::interaction_command{
+                .input_id = snapshot.input_id,
+                .operation = game_client::interaction_operation::fill,
+                .target_id = snapshot.field->id,
+                .value = "Qzxv",
+                .submit = true};
+            const auto result =
+                game_client::resolve_input_command(input, game_client::memory::screen_size());
+            REQUIRE(result.has_value());
+            return *result;
+        }
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return act("SEARCH");
+            case 1:
+                CHECK(screen.kind == "overmap_search");
+                CHECK(stat_of(screen, "search").value == "Qzxv");
+                CHECK(stat_of(screen, "result").value == "1");
+                CHECK(stat_of(screen, "result").max == "2");
+                CHECK(stat_of(screen, "direction").value == "3 E");
+                return act("NEXT_TAB");
+            case 2:
+                CHECK(stat_of(screen, "result").value == "2");
+                CHECK(stat_of(screen, "direction").value == "6 W");
+                return act("CONFIRM");
+            case 3: {
+                const auto far = world.center + point(-6, 0);
+                CHECK(cursor_of(screen) == interaction_position{far.x(), far.y(), far.z()});
+                return act("QUIT");
+            }
+            default:
+                FAIL("the overmap outlived its quit");
+                return act("QUIT");
+        }
+    });
+    ui::omap::display();
+    CHECK(step == 4);
+}
+
 #endif
