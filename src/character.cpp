@@ -33,6 +33,7 @@
 #include "detached_ptr.h"
 #include "disease.h"
 #include "effect.h"
+#include "engine_client_component.h"
 #include "engine_client_presentation.h"
 #include "enchantments/enchantment.h"
 #include "event.h"
@@ -2488,6 +2489,24 @@ void Character::conduct_blood_analysis() const
     ctxt.register_action( "CONFIRM" );
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
+    namespace ec = engine_client;
+    const auto screen = ec::screen_scope( ctxt, "blood_test", { .view = [&]( const ec::boundary_state & )
+    {
+        auto lines = std::vector<ec::panel_stat> {};
+        for( const auto &[type, by_part] : *effects ) {
+            if( type->get_blood_analysis_description().empty() ) {
+                continue;
+            }
+            lines.push_back( { .key = "effect:" + type.str(), .label = type->get_blood_analysis_description(),
+                               .tone = type->get_rating() == e_good ? "good" : "bad" } );
+        }
+        if( lines.empty() ) {
+            lines.push_back( { .key = "none", .label = _( "No effects." ) } );
+        }
+        const auto title = _( "Blood Test Results" );
+        return ec::screen_view{ .title = title, .root = ec::panel( { .id = "blood_test", .title = title, .stats = std::move( lines ) } ) };
+    }
+                                                              } );
     bool stop = false;
     // Display new messages
     g->invalidate_main_ui_adaptor();
