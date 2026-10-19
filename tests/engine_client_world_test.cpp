@@ -1905,3 +1905,57 @@ TEST_CASE(
     CHECK_FALSE(cells[1]["terrain"].contains("window"));
     CHECK_FALSE(cells[2]["terrain"].contains("window"));
 }
+
+TEST_CASE(
+    "world capture shows the level the view looks at, with what open air on it is drawn from",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& here = get_map();
+    const auto restore_terrain = restore_on_out_of_scope<catacurses::window>(g->w_terrain);
+    const auto restore_offset = restore_on_out_of_scope<tripoint_rel_ms>(get_avatar().view_offset);
+    g->w_terrain = catacurses::newwin(9, 15, point(2, 1));
+    // A platform one level up over the room, ringed by open air.
+    for (const auto y : std::views::iota(-6, 7)) {
+        for (const auto x : std::views::iota(-6, 7)) {
+            const auto platform = std::abs(x) <= 1 && std::abs(y) <= 1;
+            here.ter_set(setup.start + tripoint(x, y, 1),
+                         ter_id(platform ? "t_floor" : "t_open_air"));
+        }
+    }
+    const auto air = setup.start + tripoint(-3, 0, 1);
+    const auto level_of = [](const ec::world_state& state) {
+        REQUIRE(state.view);
+        CHECK(state.view->min.z == state.view->max.z);
+        return state.view->min.z;
+    };
+    SECTION("from the platform, on the avatar's level and a level down") {
+        step_to(setup.start + tripoint_above);
+        REQUIRE(map_perception::visible_at(here, air));
+        const auto own = ec::world::capture_world();
+        CHECK(level_of(own) == air.z());
+        const auto* through = find_cell(own, at(air));
+        REQUIRE(through != nullptr);
+        CHECK(through->below == 1);
+        get_avatar().view_offset.z() = -1;
+        const auto lower = ec::world::capture_world();
+        CHECK(level_of(lower) == setup.start.z());
+        // Open air on the avatar's level is no longer looked through.
+        CHECK(find_cell(lower, at(air)) == nullptr);
+    }
+    SECTION("from the room, a level up as the look cursor moved there") {
+        step_to(setup.start);
+        REQUIRE(map_perception::visible_at(here, air));
+        CHECK(find_cell(ec::world::capture_world(), at(air)) == nullptr);
+        get_avatar().view_offset.z() = 1;
+        const auto upper = ec::world::capture_world();
+        CHECK(level_of(upper) == air.z());
+        const auto* through = find_cell(upper, at(air));
+        REQUIRE(through != nullptr);
+        CHECK(through->below == 1);
+    }
+    for (const auto y : std::views::iota(-6, 7)) {
+        for (const auto x : std::views::iota(-6, 7)) {
+            here.ter_set(setup.start + tripoint(x, y, 1), ter_id("t_open_air"));
+        }
+    }
+}
