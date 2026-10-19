@@ -451,6 +451,26 @@
           },
           "additionalProperties": false,
           "description": "Paint of a vehicle part, or the tint of a field type (both layers alike). A tileset tints the part's background and foreground sprites with it (the native view blends hue and saturation toward it); a missing member is unpainted."
+        },
+        "tint_keys": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The ids a tileset's tints are keyed by for this thing (flags, then the id), kept to the tint_ids the client sent in its hello, in the order the native view tries them."
+        },
+        "tint_vars": {
+          "type": "object",
+          "description": "The tint the own variables of an item, terrain or furniture square (tint_color, tint_blend_mode, ...) ask for, over what the tileset's tints give for the item.",
+          "properties": {
+            "bg": {
+              "$ref": "#/$defs/tint_vars_layer"
+            },
+            "fg": {
+              "$ref": "#/$defs/tint_vars_layer"
+            }
+          },
+          "additionalProperties": false
         }
       },
       "required": [
