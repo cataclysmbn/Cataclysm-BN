@@ -60,11 +60,12 @@ struct defense_game : public special_game {
         void pre_action( action_id &act ) override;
         void post_action( action_id act ) override;
         void game_over() override;
+        /// The setup screen the mode opens before the game starts.
+        void setup();
 
     private:
         void init_to_style( defense_style new_style );
 
-        void setup();
         void refresh_setup( const catacurses::window &w, int selection );
         void init_mtypes();
         void init_constructions();
