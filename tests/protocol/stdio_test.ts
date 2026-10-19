@@ -2909,6 +2909,68 @@ Deno.test({
 
 Deno.test({
   name:
+    "stdio: a locale, schema, command id and legacy key the engine cannot take are refused by name and change nothing",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      const kind = (response: Value) => response.error?.data?.kind
+      const hello = await client.request("bn.hello", {
+        versions: ["0.2"],
+        schema: schemaHash,
+        client: { name: "stdio-test", version: "1" },
+        locale: "xx_NOPE",
+      })
+      assertEquals(kind(hello), "unavailable_locale")
+      // The refused hello left the connection to negotiate again.
+      const session = await enterTutorial(client)
+      await settle(session)
+      await session.submit({ kind: "action", action_id: "wait" })
+      const prompt = session.mirror.interaction.interaction
+      assert(prompt, "the wait menu is open")
+      const clock = { ...session.mirror.at }
+      const stale = await session.submit(
+        { kind: "choose", choice_id: prompt.choices[0].id },
+        { schema_id: `${prompt.schema_id}:gone` },
+      )
+      assertEquals(stale.stages.at(-1), "rejected")
+      assertEquals(session.errors.get(stale.id!), "stale_interaction_schema")
+      assertEquals(session.mirror.at, clock)
+      assertEquals(session.mirror.interaction.interaction.schema_id, prompt.schema_id)
+      const epoch = session.mirror.at.epoch
+      assertEquals(
+        kind(await client.request("bn.command.result", { epoch, command_id: "command:none" })),
+        "unknown_command",
+      )
+      // A legacy MCP key may not reach a game a 0.2 connection drives.
+      const frame = (id: string | undefined, method: string, params: Value) =>
+        JSON.stringify({ jsonrpc: "2.0", id, method, params }) + "\n"
+      client.raw(
+        frame("initialize", "initialize", {
+          protocolVersion: "2025-11-25",
+          capabilities: {},
+          clientInfo: { name: "stdio-test", version: "1" },
+        }) + frame(undefined, "notifications/initialized", {}) +
+          frame("legacy", "tools/call", { name: "bn.press", arguments: { keys: ["a"] } }),
+        ["initialize", "legacy"],
+      )
+      await client.repliesUntil(2)
+      const legacy = client.replies.find((reply) => reply.id === "legacy")
+      assertEquals(kind(legacy), "invalid_lifecycle", JSON.stringify(legacy))
+      for (let note = client.notes.shift(); note; note = client.notes.shift()) session.handle(note)
+      assertEquals(session.mirror.at, clock)
+      assertEquals(session.mirror.state(), (await session.subscribe()).state())
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
+Deno.test({
+  name:
     "stdio: a batch of ten keys split across two writes queues nine and refuses the tenth as busy",
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
