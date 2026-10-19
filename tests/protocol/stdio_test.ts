@@ -55,8 +55,8 @@ class Client {
     extraArgs: string[] = [],
   ) {
     this.#process = new Deno.Command(binary, {
+      // `extraArgs` come last, so a test can start another world with its own `--seed`.
       args: [
-        ...extraArgs,
         "--client=mcp",
         "--seed",
         "protocol-stdio-1",
@@ -64,6 +64,7 @@ class Client {
         `${profile}/`,
         "--configdir",
         `${profile}/config/`,
+        ...extraArgs,
       ],
       stdin: "piped",
       stdout: "piped",
@@ -1643,7 +1644,11 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    // A world whose tutorial starts with no map extra discovered, as the contract examples' does.
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile, "null", [
+      "--seed",
+      "contract-gen-1",
+    ])
     try {
       const session = await enterTutorial(client)
       await session.acknowledge(() => session.mirror.interaction.interaction === null)
