@@ -101,7 +101,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "a timed mini-game's wait moves on by itself for a client that sends nothing",
+    "a timed mini-game's session input wait lasts the screen's refresh",
     "[client][interaction][mcp][screens][minigames]") {
     clear_all_state();
     const auto guard = screen_guard{};

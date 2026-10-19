@@ -61,7 +61,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "an enchantment a client activates is chosen as Enter chooses it natively",
+    "an enchantment a client activates is confirmed as Enter confirms it natively",
     "[enchanter_screen][engine_client_component]") {
     clear_all_state();
     auto& you = get_avatar();
