@@ -458,6 +458,13 @@ std::optional<tripoint_bub_ms> editmap::edit()
     restore_on_out_of_scope<std::string> info_txt_prev( info_txt_curr );
     restore_on_out_of_scope<std::string> info_title_prev( info_title_curr );
 
+    // One screen for the whole session, so a key queued against it is not refused as stale.
+    const auto screen = engine_client::screen_scope( ctxt, "editmap", {
+        .view = [&]( const engine_client::boundary_state & )
+        {
+            return editmap_view( *this, ctxt, { .title = _( "Map editor" ), .status = "editmap" } );
+        },
+    } );
     do {
         if( target_list.empty() ) {
             target_list.push_back( target ); // 'editmap.target_list' always has point 'editmap.target' at least
@@ -484,12 +491,6 @@ std::optional<tripoint_bub_ms> editmap::edit()
 
         ui_manager::redraw();
 
-        const auto screen = engine_client::screen_scope( ctxt, "editmap", {
-            .view = [&]( const engine_client::boundary_state & )
-            {
-                return editmap_view( *this, ctxt, { .title = _( "Map editor" ), .status = "editmap" } );
-            },
-        } );
         action = ctxt.handle_input( get_option<int>( "BLINK_SPEED" ) );
         if( const auto clicked = target_screen::moved_to( ctxt.get_raw_input() ) ) {
             origin += *clicked - target;
@@ -1690,6 +1691,16 @@ int editmap::select_shape( shapetype shape, int mode )
     restore_on_out_of_scope<std::string> info_txt_prev( info_txt_curr );
     restore_on_out_of_scope<std::string> info_title_prev( info_title_curr );
 
+    // One screen for the whole session, so a key queued against it is not refused as stale.
+    const auto screen = engine_client::screen_scope( ctxt, "editmap_shape", {
+        .view = [&]( const engine_client::boundary_state & )
+        {
+            return editmap_view( *this, ctxt, {
+                .title = moveall ? _( "Moving selection" ) : _( "Resizing selection" ),
+                .status = moveall ? "editmap_shape_move" : "editmap_shape_resize",
+            } );
+        },
+    } );
     do {
         if( moveall ) {
             info_txt_curr = string_format( pgettext( "keybinding descriptions", "%s, %s, %s, %s, %s" ),
@@ -1713,15 +1724,6 @@ int editmap::select_shape( shapetype shape, int mode )
         }
         do_ui_invalidation();
         ui_manager::redraw();
-        const auto screen = engine_client::screen_scope( ctxt, "editmap_shape", {
-            .view = [&]( const engine_client::boundary_state & )
-            {
-                return editmap_view( *this, ctxt, {
-                    .title = moveall ? _( "Moving selection" ) : _( "Resizing selection" ),
-                    .status = moveall ? "editmap_shape_move" : "editmap_shape_resize",
-                } );
-            },
-        } );
         action = ctxt.handle_input( get_option<int>( "BLINK_SPEED" ) );
         if( const auto clicked = target_screen::moved_to( ctxt.get_raw_input() ) ) {
             origin += moveall ? *clicked - target : tripoint_rel_ms::zero();
@@ -2089,6 +2091,15 @@ void editmap::mapgen_retarget()
     restore_on_out_of_scope<std::string> info_title_prev( info_title_curr );
 
     blink = true;
+    // One screen for the whole session, so a key queued against it is not refused as stale.
+    const auto screen = engine_client::screen_scope( ctxt, "editmap_mapgen", {
+        .view = [&]( const engine_client::boundary_state & )
+        {
+            return editmap_view( *this, ctxt, {
+                .title = pgettext( "map generator", "Mapgen: Moving target" ), .status = "editmap_retarget",
+            } );
+        },
+    } );
     do {
         info_txt_curr = string_format( pgettext( "keybinding descriptions", "%s, %s" ),
                                        ctxt.describe_key_and_name( "CONFIRM" ),
@@ -2097,14 +2108,6 @@ void editmap::mapgen_retarget()
         do_ui_invalidation();
 
         ui_manager::redraw();
-        const auto screen = engine_client::screen_scope( ctxt, "editmap_mapgen", {
-            .view = [&]( const engine_client::boundary_state & )
-            {
-                return editmap_view( *this, ctxt, {
-                    .title = pgettext( "map generator", "Mapgen: Moving target" ), .status = "editmap_retarget",
-                } );
-            },
-        } );
         action = ctxt.handle_input( get_option<int>( "BLINK_SPEED" ) );
         const auto clicked = target_screen::moved_to( ctxt.get_raw_input() );
         if( !clicked ) {
