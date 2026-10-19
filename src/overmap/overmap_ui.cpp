@@ -2075,6 +2075,29 @@ static void place_ter_or_special(
             wnoutrefresh(w_editor);
         });
 
+        const auto screen = ec::screen_scope(
+            ctxt, "overmap_editor", {.view = [&](const ec::boundary_state&) {
+                const auto& rotation = om_direction::name(uistate.omedit_rotation);
+                auto stats = std::vector<ec::panel_stat>{
+                    {.key = "place",
+                     .label = terrain ? _("Place overmap terrain:") : _("Place overmap special:"),
+                     .value = terrain ? uistate.place_terrain->id.str()
+                                      : uistate.place_special->id.str()},
+                    {.key = "rotation",
+                     .label = _("Rotation:"),
+                     .value =
+                         can_rotate ? rotation : string_format("%s %s", rotation, _("(fixed)"))},
+                    {.key = "warning",
+                     .label = _("Areas highlighted in red already have map content generated.  "
+                                "Their overmap id will change, but not their contents."),
+                     .tone = "bad"},
+                };
+                return ec::screen_view{
+                    .title = terrain ? _("Place overmap terrain:") : _("Place overmap special:"),
+                    .root = ec::panel({.id = "overmap_editor", .stats = std::move(stats)}),
+                };
+            }});
+
         std::string action;
         do {
             om_ui.invalidate_ui();
