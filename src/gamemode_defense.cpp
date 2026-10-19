@@ -7,6 +7,7 @@
 #include "construction.h"
 #include "cursesdef.h"
 #include "debug.h"
+#include "engine_client_component.h"
 #include "game.h"
 #include "game_constants.h"
 #include "input.h"
@@ -36,6 +37,7 @@
 #include "ui_manager.h"
 #include "weather/weather.h"
 
+#include <array>
 #include <cassert>
 #include <cstddef>
 #include <memory>
@@ -501,9 +503,63 @@ void defense_game::setup()
     ctxt.register_action( "START" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
 
+    namespace ec = engine_client;
+    /// The options in the order the native screen selects them, from 1.
+    const auto option_ids = std::array{
+        "scenario", "location", "initial_difficulty", "wave_difficulty", "time_between_waves",
+        "waves_between_caravans", "initial_cash", "cash_per_wave", "cash_increase", "zombies",
+        "specials", "spiders", "triffids", "robots", "subspace", "hunger", "thirst", "sleep",
+        "mercenaries", "allow_save",
+    };
+    const auto row_id = [&]( const int option ) { return std::string{ "defense:" } + option_ids[option - 1]; };
+    const auto screen = ec::screen_scope( ctxt, "defense_setup", { .role = "screen", .view = [&]( const ec::boundary_state & )
+    {
+        const auto valued = [&]( const int option, const std::string & caption, const std::string & value,
+        const std::string & description ) {
+            return ec::row{ .id = row_id( option ), .label = caption, .description = description,
+            .columns = { { .key = "value", .label = caption, .value = value } } };
+        };
+        const auto toggle = [&]( const int option, const std::string & name, const bool on ) {
+            return ec::row{ .id = row_id( option ), .label = name, .toggled = on };
+        };
+        auto rows = std::vector<ec::row> {
+            valued( 1, _( "Scenario:" ), defense_style_name( style ), defense_style_description( style ) ),
+            valued( 2, _( "Location:" ), defense_location_name( location ), defense_location_description( location ) ),
+            valued( 3, _( "Initial Difficulty:" ), std::to_string( initial_difficulty ), _( "The difficulty of the first wave." ) ),
+            valued( 4, _( "Wave Difficulty:" ), std::to_string( wave_difficulty ), _( "The increase of difficulty with each wave." ) ),
+            valued( 5, _( "Time b/w Waves:" ), std::to_string( to_minutes<int>( time_between_waves ) ), _( "The time, in minutes, between waves." ) ),
+            valued( 6, _( "Waves b/w Caravans:" ), std::to_string( waves_between_caravans ), _( "The number of waves in between caravans." ) ),
+            valued( 7, _( "Initial Cash:" ), std::to_string( initial_cash / 100 ), _( "The amount of money the player starts with." ) ),
+            valued( 8, _( "Cash for 1st Wave:" ), std::to_string( cash_per_wave / 100 ), _( "The cash awarded for the first wave." ) ),
+            valued( 9, _( "Cash Increase:" ), std::to_string( cash_increase / 100 ), _( "The increase in the award each wave." ) ),
+            toggle( 10, _( "Zombies" ), zombies ), toggle( 11, _( "Special Zombies" ), specials ),
+            toggle( 12, _( "Spiders" ), spiders ), toggle( 13, _( "Triffids" ), triffids ),
+            toggle( 14, _( "Robots" ), robots ), toggle( 15, _( "Subspace" ), subspace ),
+            toggle( 16, _( "Food" ), hunger ), toggle( 17, _( "Water" ), thirst ), toggle( 18, _( "Sleep" ), sleep ),
+            toggle( 19, _( "Mercenaries" ), mercenaries ), toggle( 20, _( "Allow save" ), allow_save ),
+        };
+        const auto title = _( "DEFENSE MODE" );
+        return ec::screen_view{
+            .title = title,
+            .root = ec::panel( {
+                .id = "defense", .title = title,
+                .child = ec::list( { .id = "defense:rows", .rows = std::move( rows ), .selection = "single", .activate = "defense:pick" } ) } ),
+            .affordances = { ec::invoke_affordance( { .id = "defense:pick", .label = _( "Select" ), .args = { .row = ec::row_shape{ .component_id = "defense:rows" } }, .role = "select" } ) },
+            .focus_component = "defense:rows",
+            .focus_row = row_id( selection ),
+        };
+    }
+                                                                 } );
+
     while( true ) {
         ui_manager::redraw();
         const std::string action = ctxt.handle_input();
+        // A client picks a row; the native list moves its selection there.
+        if( const auto call = ec::invoked( ctxt.get_raw_input() ); call && call->args.row ) {
+            const auto found = std::ranges::find( option_ids, call->args.row->substr( std::string_view{ "defense:" }.size() ) );
+            selection = static_cast<int>( found - option_ids.begin() ) + 1;
+            continue;
+        }
 
         if( action == "START" ) {
             if( !zombies && !specials && !spiders && !triffids && !robots && !subspace ) {
