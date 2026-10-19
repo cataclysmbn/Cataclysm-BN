@@ -32,7 +32,15 @@ export class Mirror {
   /** The engine's localized line for `route`; absent when nothing is planned. */
   routeText?: string
   /** The native message log in order; a repeat replaces the line with the same id. */
-  messages: { id: string; text: string; kind: string; color: string; count: number }[] = []
+  messages: {
+    id: string
+    text: string | Record<string, unknown>
+    label: string | Record<string, unknown>
+    kind: string
+    color: string
+    count: number
+    turn: number
+  }[] = []
   cells = new Map<string, Value>()
   entities = new Map<string, Value>()
 

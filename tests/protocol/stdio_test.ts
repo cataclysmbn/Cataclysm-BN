@@ -1121,7 +1121,10 @@ Deno.test({
       }
       const lines = session.mirror.messages
       assertEquals(lines.length, before + 1, "the repeat replaced its line")
-      assert(lines.at(-1)!.text.startsWith("You can't"), lines.at(-1)!.text)
+      const { text } = lines.at(-1)!
+      // A line made from a format carries the format, which the client words.
+      const format = typeof text === "string" ? text : String(text.key)
+      assert(format.startsWith("You can't"), format)
       assertEquals([lines.at(-1)!.count, lines.at(-1)!.kind], [2, "info"])
       const ids = lines.map((line) => BigInt(line.id))
       assertEquals(ids, [...ids].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)), "log order")
