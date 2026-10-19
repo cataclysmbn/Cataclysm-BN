@@ -694,4 +694,59 @@ TEST_CASE(
     CHECK(step == 4);
 }
 
+TEST_CASE(
+    "the overmap editor publishes what it places and its rotation",
+    "[overmap_screen][engine_client_component]") {
+    const auto world = fixed_world{};
+    const auto guard = screen_guard{};
+    auto step = 0;
+    auto placed = std::string{};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto snapshot = game_client::current_interaction();
+        if (snapshot.context == "UILIST") {
+            // The first terrain the editor offers.
+            const auto first =
+                std::ranges::find_if(snapshot.choices, &game_client::interaction_choice::enabled);
+            REQUIRE(first != snapshot.choices.end());
+            auto input = game_client::input_command{};
+            input.interaction = game_client::interaction_command{
+                .input_id = snapshot.input_id,
+                .operation = game_client::interaction_operation::choose,
+                .target_id = first->id};
+            const auto result =
+                game_client::resolve_input_command(input, game_client::memory::screen_size());
+            REQUIRE(result.has_value());
+            return *result;
+        }
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return act("PLACE_TERRAIN");
+            case 1: {
+                CHECK(screen.kind == "overmap_editor");
+                const auto& stats = body<ec::panel_body>(part(screen, "overmap_editor")).stats;
+                const auto stat = [&](const std::string& key) {
+                    const auto found = std::ranges::find(stats, key, &ec::panel_stat::key);
+                    INFO(key);
+                    REQUIRE(found != stats.end());
+                    return *found;
+                };
+                placed = stat("place").value;
+                CHECK_FALSE(placed.empty());
+                CHECK(stat("place").label == "Place overmap terrain:");
+                CHECK_FALSE(stat("rotation").value.empty());
+                CHECK(stat("warning").tone == "bad");
+                return act("QUIT");
+            }
+            case 2:
+                return act("QUIT");
+            default:
+                FAIL("the overmap outlived its quit");
+                return act("QUIT");
+        }
+    });
+    ui::omap::display_editor();
+    CHECK(step == 3);
+}
+
 #endif
