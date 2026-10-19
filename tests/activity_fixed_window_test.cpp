@@ -205,15 +205,25 @@ TEST_CASE(
     const auto no_underground_bubble = override_option("UNDERGROUND_BUBBLE_SIZE", "0");
     const auto no_vehicle_bubble = override_option("VEHICLE_BUBBLE_SIZE", "0");
     const auto no_combat_bubble = override_option("COMBAT_BUBBLE_SIZE", "0");
-    // A blocked window defers the next skip check a minute past its turn.
-    expect_fixed_window_skip_blocked_by([] {
-        g->timed_events.add(TIMED_EVENT_WANTED, calendar::turn + 30_seconds);
-    });
     const auto duration = 30_seconds;
+    auto earlier = calendar::turn_zero;
+    SECTION("to before a blocked window") {
+        // A blocked window defers the next skip check a minute past its turn.
+        expect_fixed_window_skip_blocked_by([&] {
+            earlier = calendar::turn - 1_hours;
+            g->timed_events.add(TIMED_EVENT_WANTED, calendar::turn + 30_seconds);
+        });
+    }
+    SECTION("into a finished window") {
+        prepare_fixed_window_wait(duration);
+        earlier = calendar::turn;
+        REQUIRE_FALSE(g->do_turn());
+        REQUIRE(calendar::turn == earlier + duration);
+    }
     prepare_fixed_window_wait(duration);
     const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
-    // The debug menu can set the clock back to before that deferred check.
-    calendar::turn -= 2_hours;
+    // The debug menu can set the clock back to before the last check.
+    calendar::turn = earlier;
     get_weather().nextweather = calendar::turn + 10_minutes;
 
     const auto start_turn = calendar::turn;
