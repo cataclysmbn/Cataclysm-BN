@@ -509,6 +509,30 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "a fact outlives the creature it was taken from",
+    "[engine_client_fact][engine_client_creature]") {
+    const auto room = scene{};
+    auto& zombie = spawn_test_monster("mon_zombie", you_at + tripoint_east * 3);
+    scene::refresh();
+    presentation::take();
+    const auto id = engine_client::world::entity_id(zombie);
+    zombie.apply_damage(nullptr, bodypart_id("torso"), 7);
+    zombie.die(nullptr);
+    // The monster object is freed before anyone reads what it did.
+    g->cleanup_dead();
+    REQUIRE(g->critter_at<monster>(you_at + tripoint_east * 3) == nullptr);
+    const auto facts = presentation::take();
+    const auto hurt = of_type(facts, "entity.damaged");
+    const auto gone = of_type(facts, "entity.gone");
+    REQUIRE(hurt.size() == 1);
+    CHECK(hurt[0].entity == id);
+    CHECK(hurt[0].amount == 7);
+    REQUIRE(gone.size() == 1);
+    CHECK(gone[0].entity == id);
+    CHECK(gone[0].kind == "died");
+}
+
+TEST_CASE(
     "a busy turn publishes no more creature moves than the bound",
     "[engine_client_fact][engine_client_creature]") {
     const auto room = scene{};
