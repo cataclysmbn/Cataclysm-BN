@@ -14,7 +14,7 @@
 #include "translations.h"
 
 /// A message the way a client can render it from the engine's catalogues: the untranslated format and
-/// the values of its placeholders, in order. The wire form is `{key, ctx?, plural?, plural_key?, args?}`.
+/// the values of its placeholders, in order. The wire form is `{key, ctx?, plural?, plural_key?, args?, npcname?}`.
 struct localised_text {
     /// A number, a string, or a message of its own: the one element of the vector.
     using arg = std::variant<std::int64_t, double, std::string, std::vector<localised_text>>;
@@ -26,6 +26,8 @@ struct localised_text {
     /// The msgid of the plural form, which a language with no catalogue shows for a count other than one.
     std::optional<std::string> plural_key = std::nullopt;
     std::vector<arg> args = {};
+    /// What a `<npcname>` in the worded line stands for: the creature the line is about.
+    std::optional<arg> npcname = std::nullopt;
 
     auto operator==( const localised_text & ) const -> bool = default; // *NOPAD*
 };

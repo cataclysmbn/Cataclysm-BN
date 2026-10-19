@@ -499,4 +499,38 @@ TEST_CASE(
     CHECK(line.localised->ctx == "dice");
 }
 
+TEST_CASE(
+    "an NPC's own line carries its format and the name its <npcname> stands for",
+    "[engine_client_localised][messages]") {
+    seen_zombie();
+    auto& other = spawn_npc(tripoint_bub_ms{61, 60, 0}, "test_talker");
+    get_map().build_map_cache(0);
+    REQUIRE(get_avatar().sees(other));
+    clear_character(other);
+    Messages::clear_messages();
+    auto cap = item::spawn("hat_ball");
+    const auto name = cap->tname();
+    REQUIRE_FALSE(other.wear_item(std::move(cap)));
+    CHECK(newest_line().text == other.name + " puts on their " + name + ".");
+    CHECK(newest_line().localised
+          == localised_text{
+              .key = "<npcname> puts on their %s.", .args = {name}, .npcname = other.name});
+}
+
+TEST_CASE(
+    "a monster's line names it in a form a client words", "[engine_client_localised][messages]") {
+    auto& zombie = seen_zombie();
+    Messages::clear_messages();
+    zombie.add_msg_player_or_npc(
+        to_translation("You stumble."), to_translation("<npcname> stumbles."));
+    const auto kind = localised_text{.key = "zombie", .plural = 1.0, .plural_key = "zombies"};
+    CHECK(newest_line().text == "the zombie stumbles.");
+    CHECK(
+        newest_line().localised
+        == localised_text{
+            .key = "<npcname> stumbles.",
+            .npcname = localised::nested(
+                localised_text{.key = "the %s", .args = {localised::nested(kind)}})});
+}
+
 #endif // CATA_MCP
