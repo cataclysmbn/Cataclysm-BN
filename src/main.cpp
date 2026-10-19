@@ -115,6 +115,7 @@ auto run_game( int argc, char *argv[] ) -> int
     auto replay_record_path = std::string{};
     auto replay_play_path = std::string{};
     auto state_hash_log_path = std::string{};
+    auto contract_record_path = std::string{};
     bool verifyexit = false;
     bool check_mods = false;
     auto check_mods_mode = init::check_mods_mode::default_mods;
@@ -132,7 +133,7 @@ auto run_game( int argc, char *argv[] ) -> int
         const char *section_default = nullptr;
         const char *section_map_sharing = "Map sharing";
         const char *section_user_directory = "User directories";
-        const std::array<arg_handler, 23> first_pass_arguments = {
+        const std::array<arg_handler, 24> first_pass_arguments = {
             {   {
                     "--client", "tiles|curses|mcp|imgui", "Select the runtime client backend",
                     section_default,
@@ -196,6 +197,16 @@ auto run_game( int argc, char *argv[] ) -> int
                     [&state_hash_log_path]( int num_args, const char **params ) -> int {
                         if( num_args < 1 ) { return -1; }
                         state_hash_log_path = params[0];
+                        return 1;
+                    }
+                },
+                {
+                    "--contract-record", "<jsonl path>",
+                    "Write every publication of the client contract, its events and the snapshot it leaves, to a new file",
+                    section_default,
+                    [&contract_record_path]( int num_args, const char **params ) -> int {
+                        if( num_args < 1 ) { return -1; }
+                        contract_record_path = params[0];
                         return 1;
                     }
                 },
@@ -636,6 +647,7 @@ auto run_game( int argc, char *argv[] ) -> int
     } );
 
     if( !state_hash_log_path.empty() ) { replay::configure_state_hash_log( state_hash_log_path ); }
+    if( !contract_record_path.empty() ) { engine_client::process_session().record_to( contract_record_path ); }
 
     g = std::make_unique<game>();
     // First load and initialize everything that does not

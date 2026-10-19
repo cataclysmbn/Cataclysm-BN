@@ -291,6 +291,7 @@ auto session::publish_boundary( const bool settles ) -> std::expected<void, erro
         }
         refresh_result();
     }
+    record();
     return {};
 }
 
@@ -519,6 +520,25 @@ auto push_reader::take() -> std::vector<push_item> { return std::exchange( inbox
 
 auto push_reader::use_locale( std::string lang_id ) -> void { inbox_->locale = std::move( lang_id ); }
 
+auto session::record_to( const std::string &path ) -> void
+{
+    recording_ = std::make_unique<std::ofstream>( path, std::ios::trunc );
+}
+
+auto session::record() -> void
+{
+    if( !recording_ ) { return; }
+    const auto events = std::exchange( recorded_, {} );
+    const auto now = current();
+    const auto wire = now ? serialize_snapshot( *now ) : std::unexpected( now.error() );
+    if( !wire ) { return; }
+    auto parts = std::string{};
+    for( const auto &part : wire->parts ) { parts += ( parts.empty() ? "" : "," ) + part; }
+    *recording_ << R"({"published":)" << serialize_events( { .epoch = epoch_, .events = events } )
+                << R"(,"snapshot":{"header":)" << wire->header << R"(,"parts":[)" << parts << "]}}\n";
+    recording_->flush();
+}
+
 auto session::open_push() -> push_reader
 {
     auto reader = push_reader{};
@@ -528,6 +548,7 @@ auto session::open_push() -> push_reader
 
 auto session::post( push_item item, const locale_items &variants ) -> void
 {
+    if( const auto *pushed = std::get_if<event_push>( &item ); recording_ && pushed ) { recorded_.push_back( pushed->event ); }
     std::erase_if( readers_, []( const auto & reader ) { return reader.expired(); } );
     // A reader of a language that has a variant gets it; the others get the item.
     const auto variant_for = [&]( const push_reader::inbox & inbox ) -> const push_item * { // *NOPAD*

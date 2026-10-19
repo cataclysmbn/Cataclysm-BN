@@ -4,6 +4,7 @@
 #include "engine_client_wire.h"
 #include "message_feed.h"
 
+#include <fstream>
 #include <map>
 #include <memory>
 #include <optional>
@@ -82,6 +83,10 @@ class session final : public command_authority
         /// process aborts when `BN_CAPTURE_ORACLE` is set). Costs a full capture and diff per publication.
         auto set_oracle( bool on ) -> void;
         auto oracle_mismatches() const -> const std::vector<std::string> &; // *NOPAD*
+        /// Writes every publication to `path` as one JSON line: the events it published and the snapshot it
+        /// left, `{published: {epoch, events}, snapshot: {header, parts}}`. An engine-side consumer that a
+        /// client's reconstruction is compared with; costs a snapshot per publication.
+        auto record_to( const std::string &path ) -> void;
         /// World replacement interrupts the old receipt, queues `resync` and installs a new epoch.
         auto replace_world() -> void;
         /// Capture the live boundary and publish its change as one event. A step inside a running
@@ -121,6 +126,8 @@ class session final : public command_authority
         bool oracle_ = false;
         bool oracle_aborts_ = false;
         std::vector<std::string> oracle_mismatches_;
+        std::unique_ptr<std::ofstream> recording_;
+        std::vector<public_event> recorded_;
         std::unique_ptr<command_lifecycle> lifecycle_;
         std::optional<command_result> active_;
         std::optional<command_result> retired_;
@@ -158,6 +165,8 @@ class session final : public command_authority
         auto capture() const -> std::expected<state_value, error>;
         auto capture_interaction() const -> std::expected<boundary_state, error>;
         auto check_oracle( const state_value &before, const std::vector<public_event> &events ) -> void;
+        /// Writes the events posted since the last publication with the snapshot this one left.
+        auto record() -> void;
         auto restart_epoch( std::string_view reason ) -> void;
         auto refresh_result() -> void;
         auto publish_presentation( const std::optional<std::string> &command ) -> void;

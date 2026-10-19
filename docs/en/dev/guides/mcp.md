@@ -114,3 +114,5 @@ The game pauses at input boundaries while waiting for the agent. When `bn.action
 Saving and quitting use the game's normal actions and confirmation prompts. Disconnecting the MCP host ends the session; it does not replace an explicit in-game save.
 
 Add `--replay-record PATH` when launching the game to record the session. Later, `--client=mcp --replay-play PATH` runs it without a host. Follow the [replay guide](replay.md) to prepare identical initial profiles and run the real-session smoke check.
+
+Add `--contract-record PATH` to write every publication the engine makes, its events and the snapshot it leaves, one JSON line each. A client's reconstruction can be compared with it (`tests/protocol/stdio_test.ts`).
