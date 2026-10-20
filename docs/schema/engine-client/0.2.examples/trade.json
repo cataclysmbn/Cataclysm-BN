@@ -384,7 +384,9 @@
           {
             "id": "trade:filter",
             "label": "Filter",
-            "keys": [],
+            "keys": [
+              "/"
+            ],
             "enabled": true,
             "args": {
               "text": {},
@@ -397,7 +399,9 @@
           {
             "id": "trade:confirm",
             "label": "Confirm Choice",
-            "keys": [],
+            "keys": [
+              "RETURN"
+            ],
             "enabled": true,
             "role": "confirm",
             "expect": "screen"
@@ -405,7 +409,9 @@
           {
             "id": "trade:cancel",
             "label": "Cancel trading",
-            "keys": [],
+            "keys": [
+              "ESC"
+            ],
             "enabled": true,
             "role": "cancel",
             "expect": "screen"
@@ -486,15 +492,6 @@
             "expect": "screen"
           },
           {
-            "id": "FILTER",
-            "label": "Filter",
-            "keys": [
-              "/"
-            ],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
             "id": "RESET_FILTER",
             "label": "Reset filter",
             "keys": [
@@ -535,24 +532,6 @@
             "label": "Toggle item description",
             "keys": [
               "+"
-            ],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "CONFIRM",
-            "label": "Confirm Choice",
-            "keys": [
-              "RETURN"
-            ],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "QUIT",
-            "label": "Cancel trading",
-            "keys": [
-              "ESC"
             ],
             "enabled": true,
             "expect": "screen"

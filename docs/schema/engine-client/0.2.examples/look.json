@@ -265,6 +265,7 @@
             "label": "Select",
             "keys": [],
             "enabled": true,
+            "role": "navigate",
             "expect": "screen"
           },
           {

@@ -468,7 +468,9 @@
           {
             "id": "aim:move",
             "label": "Move an amount of item",
-            "keys": [],
+            "keys": [
+              "m"
+            ],
             "enabled": false,
             "denial": "There are no items to be moved!",
             "args": {
@@ -500,7 +502,10 @@
           {
             "id": "aim:toggle_vehicle",
             "label": "Toggle vehicle",
-            "keys": [],
+            "keys": [
+              "v",
+              "V"
+            ],
             "enabled": true,
             "args": {
               "pane": {
@@ -512,7 +517,11 @@
           {
             "id": "aim:filter",
             "label": "Filter",
-            "keys": [],
+            "keys": [
+              "f",
+              "F",
+              "/"
+            ],
             "enabled": true,
             "args": {
               "text": {},
@@ -525,7 +534,12 @@
           {
             "id": "aim:close",
             "label": "Exit screen",
-            "keys": [],
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
             "enabled": true,
             "role": "cancel",
             "expect": "screen"
@@ -538,18 +552,6 @@
             ],
             "enabled": true,
             "role": "help",
-            "expect": "screen"
-          },
-          {
-            "id": "QUIT",
-            "label": "Exit screen",
-            "keys": [
-              "ESC",
-              "q",
-              "Q",
-              "SPACE"
-            ],
-            "enabled": true,
             "expect": "screen"
           },
           {
@@ -626,27 +628,6 @@
             "expect": "screen"
           },
           {
-            "id": "TOGGLE_VEH",
-            "label": "Toggle vehicle",
-            "keys": [
-              "v",
-              "V"
-            ],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "FILTER",
-            "label": "Filter",
-            "keys": [
-              "f",
-              "F",
-              "/"
-            ],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
             "id": "RESET_FILTER",
             "label": "Reset filter",
             "keys": [
@@ -708,15 +689,6 @@
             "label": "Move a single item",
             "keys": [
               "RETURN"
-            ],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "MOVE_VARIABLE_ITEM",
-            "label": "Move an amount of item",
-            "keys": [
-              "m"
             ],
             "enabled": true,
             "expect": "screen"

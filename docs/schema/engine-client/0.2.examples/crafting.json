@@ -205,7 +205,11 @@
           {
             "id": "craft:search",
             "label": "Filter",
-            "keys": [],
+            "keys": [
+              "f",
+              "F",
+              "/"
+            ],
             "enabled": true,
             "args": {
               "text": {}
@@ -367,17 +371,6 @@
             ],
             "enabled": true,
             "role": "navigate",
-            "expect": "screen"
-          },
-          {
-            "id": "FILTER",
-            "label": "Filter",
-            "keys": [
-              "f",
-              "F",
-              "/"
-            ],
-            "enabled": true,
             "expect": "screen"
           },
           {
