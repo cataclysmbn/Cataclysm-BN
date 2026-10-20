@@ -1403,6 +1403,62 @@ TEST_CASE("mapbuffer_simulated_lookup_uses_load_manager_membership") {
     CHECK(buffer.get_submap(sm_pos) == sm);
 }
 
+TEST_CASE("lazy_border_submaps_are_dated_by_the_turn_that_started_them", "[map][lazy_border]") {
+    clear_all_state();
+
+    auto& buffer = MAPBUFFER;
+    // Far enough out that no case has generated it, near enough to share the test overmap.
+    const auto request_begin = get_map().get_abs_sub() + point_rel_sm(40, 40);
+    const auto request_end = request_begin + point_rel_sm(12, 12);
+    auto omts = std::vector<tripoint_abs_omt>{};
+    for (const auto x : std::views::iota(0, 6)) {
+        for (const auto y : std::views::iota(0, 6)) {
+            for (const auto z : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
+                omts.emplace_back(project_to<coords::omt>(request_begin) + point(x, y), z);
+            }
+        }
+    }
+    const auto cleanup = on_out_of_scope([&]() {
+        submap_loader.drain_lazy_loads();
+        std::ranges::for_each(omts, [&](const auto& omt) { buffer.unload_omt(omt, false); });
+        clear_all_state();
+    });
+    REQUIRE(std::ranges::none_of(omts, [&](const auto& omt) {
+        return buffer.lookup_submap_in_memory(project_to<coords::sm>(omt)) != nullptr;
+    }));
+
+    const auto no_autosave = override_option("AUTOSAVE", "false");
+    const auto normal_bubble_size =
+        override_option("REALITY_BUBBLE_SIZE", std::to_string(g_reality_bubble_size));
+    const auto no_mobile_bubble = override_option("ACTIVITY_MOBILE_BUBBLE_SIZE", "0");
+    const auto no_idle_bubble = override_option("ACTIVITY_IDLE_BUBBLE_SIZE", "0");
+    // The jobs start on the pool in this turn; nothing asks for the border afterwards.
+    const auto started = calendar::turn;
+    const auto lazy_handle = submap_loader.request_load(
+        load_request_source::lazy_border, get_map().get_bound_dimension(), request_begin,
+        request_end);
+    submap_loader.update();
+    submap_loader.release_load(lazy_handle);
+
+    g->new_game = false;
+    get_avatar().set_moves(100);
+    get_avatar().assign_activity(activity_id("ACT_WAIT"), to_moves<int>(30_seconds), 0);
+    CHECK_FALSE(g->do_turn());
+    REQUIRE(calendar::turn > started);
+    submap_loader.drain_lazy_loads();
+
+    const auto generated =
+        omts | std::views::transform([&](const auto& omt) {
+            return buffer.lookup_submap_in_memory(project_to<coords::sm>(omt));
+        })
+        | std::views::filter([](const submap* sm) { return sm != nullptr; })
+        | std::ranges::to<std::vector>();
+    REQUIRE_FALSE(generated.empty());
+    CHECK(std::ranges::all_of(generated, [&](const submap* sm) {
+        return sm->last_touched == started;
+    }));
+}
+
 TEST_CASE("mapbuffer_load_or_generate_lookup_is_explicit") {
     clear_all_state();
 
