@@ -1946,6 +1946,29 @@ TEST_CASE(
         CHECK(cell->vehicle->id != std::optional<std::string>{"roof"});
     }
     CHECK(shown > 0);
+    // From the platform the car lies below the level shown: its roof is drawn, except where a
+    // creature stands, as the native view draws the part and the creature on it.
+    get_avatar().view_offset.z() = 0;
+    const auto roofed = [&] {
+        map_perception::acquire();
+        const auto state = ec::world::capture_world();
+        auto squares = std::vector<tripoint_bub_ms>{};
+        for (const auto& square : car->get_points()) {
+            const auto local = abs_to_map_local(here, square);
+            const auto* cell = find_cell(state, at(local));
+            if (cell != nullptr && cell->vehicle
+                && cell->vehicle->id == std::optional<std::string>{"roof"}) {
+                squares.push_back(local);
+            }
+        }
+        return squares;
+    };
+    const auto from_above = roofed();
+    REQUIRE_FALSE(from_above.empty());
+    spawn_test_monster("mon_zombie", from_above.front());
+    const auto stood_on = roofed();
+    CHECK_FALSE(std::ranges::contains(stood_on, from_above.front()));
+    CHECK(stood_on.size() + 1 == from_above.size());
     here.destroy_vehicle(car);
     for (const auto y : std::views::iota(-8, 9)) {
         for (const auto x : std::views::iota(-8, 9)) {
