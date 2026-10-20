@@ -406,8 +406,14 @@ TEST_CASE(
         CHECK(affordance("aim:move").args.rows->component_id == "aim:pane:left:items");
         CHECK(affordance("aim:close").role == "cancel");
         CHECK(std::ranges::count(top.affordances, "cancel", &ec::affordance::role) == 1);
-        for (const auto* const id : {"aim:set_area", "aim:toggle_vehicle", "aim:filter", "QUIT"}) {
+        for (const auto* const id : {"aim:set_area", "aim:toggle_vehicle", "aim:filter"}) {
             CHECK(affordance(id).enabled);
+        }
+        // The registered actions the screen's own affordances perform are not offered beside them.
+        for (const auto* const id : {"QUIT", "FILTER", "TOGGLE_VEH", "MOVE_VARIABLE_ITEM"}) {
+            CAPTURE(id);
+            CHECK(std::ranges::find(top.affordances, id, &ec::affordance::id)
+                  == top.affordances.end());
         }
         // Looking at the screen changes nothing.
         CHECK(you.amount_of(itype_id("test_1kg_cube")) == 3);

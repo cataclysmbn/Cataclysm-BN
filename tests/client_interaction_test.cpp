@@ -2679,6 +2679,8 @@ TEST_CASE(
                   "craft:hide", "craft:select"}) {
                 CHECK(ids.contains(id));
             }
+            // The search is the registered filter, which is not offered beside it.
+            CHECK_FALSE(ids.contains("FILTER"));
             return craft_search(iron.result_name());
         }
         const auto rows = rows_of(screen, "crafting:recipes");

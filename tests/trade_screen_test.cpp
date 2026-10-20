@@ -321,6 +321,12 @@ TEST_CASE(
         CHECK(ts::affordance(view, "trade:confirm").role == "confirm");
         CHECK(ts::affordance(view, "trade:cancel").role == "cancel");
         CHECK(ec::scope_of(ts::affordance(view, "trade:cancel")) == ec::expect_scope::screen);
+        // The registered actions the screen's own affordances perform are not offered beside them.
+        for (const auto* const id : {"CONFIRM", "QUIT", "FILTER"}) {
+            CAPTURE(id);
+            CHECK(std::ranges::find(view.affordances, id, &ec::affordance::id)
+                  == view.affordances.end());
+        }
         CHECK(ts::affordance(view, "UP").keys == std::vector<std::string>{"k"});
         CHECK(ts::body<ec::list_body>(ts::part(view, "list:npc")).filterable);
 

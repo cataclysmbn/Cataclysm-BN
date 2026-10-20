@@ -1223,6 +1223,32 @@ TEST_CASE(
     CHECK_FALSE(body<ec::list_body>(find(generic, "list:choices")).activate.empty());
 }
 
+TEST_CASE(
+    "an affordance that performs a registered action answers to its keys",
+    "[engine_client_component]") {
+    const auto context = input_context("TEST_FILTER");
+    const auto scope = ec::screen_scope(
+        context, "test", {.view = [&](const auto&) {
+            return ec::screen_view{
+                .root = ec::list({.id = "list:rows", .rows = {{.id = "r:1"}}}),
+                .affordances = {ec::invoke_affordance(
+                    {.id = "t:filter",
+                     .label = "Filter",
+                     .args = {.text = ec::text_shape{}},
+                     .covers = "FILTER"})}};
+        }});
+    const auto input = client::input_context_scope(context, "TEST_FILTER");
+    auto state = map_only();
+    state.actions.push_back({.id = "FILTER", .name = "Filter", .keys = {"f"}});
+    const auto screen = top_of(state);
+    CHECK(std::ranges::find(screen.affordances, "FILTER", &ec::affordance::id)
+          == screen.affordances.end());
+    CHECK(affordance(screen, "t:filter").keys == std::vector<std::string>{"f"});
+    // A row's own affordance is run from the row, so it takes no keys.
+    const auto row = picking_screen({.activate = "t:pick", .covers = "CONFIRM"});
+    CHECK(affordance(row, "t:pick").keys.empty());
+}
+
 namespace {
 auto shortcut_of(const ec::screen_view& view, const std::string& id) -> const ec::shortcut& {
     const auto found = std::ranges::find(view.shortcuts, id, &ec::shortcut::affordance_id);
@@ -1321,9 +1347,12 @@ TEST_CASE(
         {.id = "NEXT_TAB", .name = "Go to next tab", .keys = {"TAB"}},
         {.id = "HELP_KEYBINDINGS", .name = "Display keybindings menu", .keys = {"?"}},
         {.id = "FILTER", .name = "Filter", .keys = {"f"}},
+        {.id = "SELECT", .name = "Select", .keys = {}},
     };
     const auto view = top_of(state);
     CHECK(affordance(view, "UP").role == "navigate");
+    // The mouse's click on a row or a square, which a client makes with its own clicks.
+    CHECK(affordance(view, "SELECT").role == "navigate");
     CHECK(affordance(view, "PAGE_DOWN").role == "navigate");
     CHECK(affordance(view, "NEXT_TAB").role == "navigate");
     CHECK(affordance(view, "HELP_KEYBINDINGS").role == "help");
