@@ -11,6 +11,7 @@
 #    include "options.h"
 #    include "output.h"
 #    include "path_info.h"
+#    include "presentation_sink.h"
 #    include "runtime_handlers.h"
 #    include "translations.h"
 
@@ -631,6 +632,7 @@ public:
 
 class imgui_backend final: public backend {
 public:
+    auto prepare() -> void override { ::presentation::install_native_sink(); }
     auto initialize() -> void override {
         auto& client = state();
         if (client.initialized) { return; }
