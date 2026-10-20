@@ -119,21 +119,28 @@ Two kinds, with different lifetimes:
 
 ## Later packages (unchanged scope from GOAL)
 
-P1 description bounds and reuse (needs an API decision: page-aware providers vs. test oracle change), P2
-perception/persistence equality, M5 cross-process conformance, M6 measurements, P3 remaining screens.
+P2 perception/persistence equality, M5 cross-process conformance, M6 measurements, P3 remaining screens.
 
 ## Lanes and resources
 
-| Lane                                  | Owner             | Worktree                     | Builds                                     |
-| ------------------------------------- | ----------------- | ---------------------------- | ------------------------------------------ |
-| L0 hygiene, integration, final suites | parent            | `magnum-opus`                | C++ full                                   |
-| L1 leak check                         | implementer agent | `magnum-opus-leak-check`     | C++ (`cata_test-mcp` only while iterating) |
-| L2 protocol design (Phase 1 doc)      | read-only agent   | none                         | none                                       |
-| L3 egui prototype (C1)                | implementer agent | `~/repo/cata/bn-client-egui` | Rust only                                  |
+Since 2026-10-19: the parent works the checklist itself and runs at most two implementer lanes at once.
+
+| Lane              | Owner             | Source boundary                                                       | Validation gate                                                                 | Handoff                       |
+| ----------------- | ----------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ----------------------------- |
+| L0 integration    | parent            | `magnum-opus` worktree; `GOAL.md`, `PLAN.md`, merges                  | focused tests per merge; full suites once per day                               | `out/lanes/handoff-<date>.md` |
+| Engine lane (×≤2) | implementer agent | own `git gtr` worktree `magnum-opus-<slug>`; files named in its brief | its focused Catch2/Deno tests on a `cata_test-mcp` + `cataclysm-bn-tiles` build | `out/lanes/<slug>/handoff.md` |
+| Client lane       | implementer agent | `~/repo/cata/bn-client-egui` (main merges only there)                 | `cargo test`, `cargo clippy`, kittest against a recorded engine session         | client repo `handoff.md`      |
+
+| Package     | Owner                                            | Dependency                                                |
+| ----------- | ------------------------------------------------ | --------------------------------------------------------- |
+| P2          | parent settles each item, then an engine lane    | none                                                      |
+| M0/M2, M3   | engine lane                                      | P2 replay matrix for the remembered-knowledge comparisons |
+| M6          | parent (one suite and one measurement at a time) | M0/M2, M3, P2 integrated                                  |
+| P3 leftover | engine lane for screen data, client lane for UI  | none                                                      |
 
 Rules: at most one C++ full build and one full suite at a time across lanes (pueue group `build` parallelism 1,
-group `cata` for tests); each lane reports commits, exact commands and log paths; the parent cherry-picks
-validated commits onto `feat/magnum-opus`.
+group `cata` for tests); each lane reports commits, exact commands and log paths; the parent reads each lane diff
+and cherry-picks validated commits onto `feat/magnum-opus`.
 
 ## Verification protocol
 
