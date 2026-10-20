@@ -523,6 +523,10 @@ auto push_reader::use_locale( std::string lang_id ) -> void { inbox_->locale = s
 auto session::record_to( const std::string &path ) -> void
 {
     recording_ = std::make_unique<std::ofstream>( path, std::ios::trunc );
+    if( !*recording_ ) {
+        recording_.reset();
+        throw std::runtime_error( "Could not create the contract recording: " + path );
+    }
 }
 
 auto session::record() -> void

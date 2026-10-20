@@ -85,7 +85,8 @@ class session final : public command_authority
         auto oracle_mismatches() const -> const std::vector<std::string> &; // *NOPAD*
         /// Writes every publication to `path` as one JSON line: the events it published and the snapshot it
         /// left, `{published: {epoch, events}, snapshot: {header, parts}}`. An engine-side consumer that a
-        /// client's reconstruction is compared with; costs a snapshot per publication.
+        /// client's reconstruction is compared with; costs a snapshot per publication. Throws when the file cannot
+        /// be created.
         auto record_to( const std::string &path ) -> void;
         /// World replacement interrupts the old receipt, queues `resync` and installs a new epoch.
         auto replace_world() -> void;
