@@ -2355,6 +2355,11 @@ bool game::do_turn()
         ZoneScopedN( "do_turn_cleanup_dead" );
         cleanup_dead();
     }
+    {
+        ZoneScopedN( "do_turn_acquire_perception" );
+        // The avatar sees how the turn ends whether or not a client draws it.
+        map_perception::acquire();
+    }
 
     if( u.moves < 0 && get_option<bool>( "FORCE_REDRAW" ) ) {
         ZoneScopedN( "do_turn_force_redraw" );
