@@ -3928,6 +3928,146 @@ Deno.test({
   },
 })
 
+const firstList = (component: Value): Value | undefined =>
+  component.kind === "list"
+    ? component
+    : (component.children ?? (component.child ? [component.child] : [])).map(firstList)
+      .find(Boolean)
+
+/** Follows pushes until the engine resyncs, then subscribes to the new state. */
+async function afterResync(session: Session): Promise<Session> {
+  for (let n = 0; n < 2000 && session.resyncs.length === 0; n++) {
+    session.handle(await session.client.note())
+  }
+  assert(session.resyncs.length > 0, "a resync")
+  const next = new Session(session.client)
+  await next.start()
+  return next
+}
+
+Deno.test({
+  name: "stdio: 0.2 invoke: a trade opened in dialogue and confirmed survives save and load",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      let session = await toMainMenu(client)
+      await session.pickId("new_game")
+      await session.pickId("new_game:play_now_default")
+      session = await afterResync(session)
+      await session.acknowledge(() => session.mirror.interaction.interaction === null)
+      const run = async (operation: Value) =>
+        assertEquals((await session.submit(operation)).stages.at(-1), "completed")
+      const until = async (context: string) => {
+        for (let n = 0; n < 200 && top(session).context !== context; n++) {
+          session.handle(await session.client.note())
+          await session.pay()
+        }
+        assertEquals(top(session).context, context)
+      }
+      const sold = "flashlight"
+      const carried = () =>
+        (session.mirror.avatar.inventory ?? []).filter((row: Value) => row.name.startsWith(sold))
+          .reduce((sum: number, row: Value) => sum + (row.count ?? 1), 0)
+
+      await run({ kind: "action", action_id: "debug" })
+      await session.choose("Spawning…")
+      await session.choose("Spawn an item")
+      await wishItem(client, session, "flashlight (off)")
+      while (session.mirror.interaction.interaction) await run({ kind: "cancel" })
+      const before = carried()
+      assert(before > 0, "the wished item is carried")
+
+      // The debug shopkeeper stands beside the avatar; its own trade is closed so the dialogue opens one.
+      await run({ kind: "action", action_id: "debug" })
+      await session.choose("Spawning…")
+      await session.choose("Trade with a spawned shopkeeper")
+      await until("NPC_TRADE")
+      assertEquals((await invokeTop(session, "trade:cancel", "screen")).stages.at(-1), "completed")
+      await run({ kind: "action", action_id: "chat" })
+      const talks = firstList(top(session).root)
+      const talk = talks?.rows.find((row: Value) => row.label.startsWith("Talk to"))
+      assert(talks && talk, "the chat menu offers a talk")
+      assertEquals(
+        (await invokeTop(session, talks.activate, "boundary", { row: talk.id })).stages.at(-1),
+        "completed",
+      )
+      // The scenario's companion is nearby too, so the game asks whom to talk to.
+      const whom = session.mirror.interaction.interaction?.choices
+        ?.find((entry: Value) => entry.label.endsWith("Merchant"))
+      if (whom) await run({ kind: "choose", choice_id: whom.id })
+      await until("DIALOGUE_CHOOSE_RESPONSE")
+      const merchant = [...session.mirror.entities.values()].find((entity: Value) =>
+        entity.name?.includes("Merchant")
+      )
+      assert(merchant, "the merchant is seen")
+      const trade = findComponent(top(session).root, "talk:responses").rows
+        .find((row: Value) => row.label.includes("Let's trade"))
+      assert(trade, "a response opens the trade")
+      assertEquals(
+        (await invokeTop(session, "talk:respond", "boundary", { row: trade.id })).stages.at(-1),
+        "completed",
+      )
+      await until("NPC_TRADE")
+
+      // Sell one: the avatar has no money to buy with.
+      const offered = findComponent(top(session).root, "list:you").rows
+        .find((row: Value) => row.label.includes(sold))
+      assert(offered, `the avatar offers a ${sold}`)
+      assertEquals(
+        (await invokeTop(session, "trade:set_count", "boundary", { row: offered.id, count: 1 }))
+          .stages.at(-1),
+        "completed",
+      )
+      assertEquals(carried(), before, "nothing moves before the confirmation")
+      assertEquals((await invokeTop(session, "trade:confirm", "screen")).stages.at(-1), "completed")
+      assertEquals(session.mirror.interaction.interaction?.context, "YESNO")
+      assertEquals((await session.choose("Yes")).stages.at(-1), "completed")
+      await until("DIALOGUE_CHOOSE_RESPONSE")
+      assertEquals(carried(), before - 1, "the sold item left the avatar")
+
+      const bye = findComponent(top(session).root, "talk:responses").rows
+        .find((row: Value) => row.label.includes("Bye"))
+      assertEquals(
+        (await invokeTop(session, "talk:respond", "boundary", { row: bye.id })).stages.at(-1),
+        "completed",
+      )
+      await session.acknowledge(() => session.mirror.interaction.interaction === null)
+      assertEquals(top(session).role, "map")
+
+      await run({ kind: "action", action_id: "save" })
+      await session.choose("Yes")
+      session = await afterResync(session)
+      await session.acknowledge(() => atMainMenu(session.mirror))
+      await session.pickId("load")
+      const world = firstList(top(session).root)?.rows.find((row: Value) =>
+        row.id.startsWith("load:")
+      )
+      assert(world, "the saved world is listed")
+      await session.pickId(world.id)
+      const character = session.mirror.interaction.interaction.choices
+        .find((entry: Value) => entry.enabled && !entry.label.includes("Return"))
+      // Loading the character replaces the world, which ends the command with it.
+      await session.submit({ kind: "choose", choice_id: character.id })
+      session = await afterResync(session)
+      await session.acknowledge(() => session.mirror.interaction.interaction === null)
+      assertEquals(top(session).role, "map")
+      assertEquals(carried(), before - 1, "the sale survives the save")
+      assert(
+        [...session.mirror.entities.values()].some((entity: Value) =>
+          entity.name === merchant.name
+        ),
+        "the merchant is still beside the avatar",
+      )
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
 /** CPU time in milliseconds and peak resident memory in KiB of a running process; Deno reads `/proc` only with every permission, `cat` with --allow-run. */
 const usage = async (pid: number) => {
   const output = await new Deno.Command("cat", {
