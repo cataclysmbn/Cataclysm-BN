@@ -1404,7 +1404,9 @@ TEST_CASE("mapbuffer_simulated_lookup_uses_load_manager_membership") {
     CHECK(buffer.get_submap(sm_pos) == sm);
 }
 
-TEST_CASE("lazy_border_submaps_are_dated_by_the_turn_that_started_them", "[map][lazy_border]") {
+TEST_CASE(
+    "lazy_border_submaps_are_applied_the_turn_after_they_start_dated_by_their_start",
+    "[map][lazy_border]") {
     clear_all_state();
 
     auto& buffer = MAPBUFFER;
@@ -1440,7 +1442,8 @@ TEST_CASE("lazy_border_submaps_are_dated_by_the_turn_that_started_them", "[map][
         load_request_source::script, dim_id, get_map().get_abs_sub(),
         get_map().get_abs_sub() + point_rel_sm(get_map().getmapsize(), get_map().getmapsize()));
     const auto release_map = on_out_of_scope([&]() { submap_loader.release_load(map_handle); });
-    // The jobs start on the pool in this turn; nothing asks for the border afterwards.
+    // The jobs start on the pool in this turn and run through its end; nothing asks for the border
+    // afterwards.
     const auto started = calendar::turn;
     const auto lazy_handle = submap_loader.request_load(
         load_request_source::lazy_border, dim_id, request_begin, request_end);
@@ -1451,7 +1454,11 @@ TEST_CASE("lazy_border_submaps_are_dated_by_the_turn_that_started_them", "[map][
     get_avatar().set_moves(0);
     CHECK_FALSE(g->do_turn());
     REQUIRE(calendar::turn == started + 1_turns);
-    submap_loader.drain_lazy_loads();
+    CHECK_FALSE(submap_loader.is_fully_drained());
+    get_avatar().set_moves(0);
+    CHECK_FALSE(g->do_turn());
+    REQUIRE(calendar::turn == started + 2_turns);
+    CHECK(submap_loader.is_fully_drained());
 
     const auto dated =
         omts | std::views::transform([&](const auto& omt) {
