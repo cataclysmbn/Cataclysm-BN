@@ -326,12 +326,17 @@ auto hex_of( const RGBColor &color ) -> std::string
     return string_format( "#%02x%02x%02x", color.r, color.g, color.b );
 }
 
+/// The level the native view draws: the avatar's, moved by the look cursor or another cursor that changed level, as
+/// `cata_tiles::draw` draws from its center.
+auto shown_level( const avatar &you ) -> int { return you.bub_pos().z() + you.view_offset.z(); }
+
 auto vehicle_part_at( const map &here, const tripoint_bub_ms &p, const avatar &you )
 -> std::optional<look>
 {
     const auto vp = here.veh_at( p );
     if( !vp ) { return std::nullopt; }
-    const auto roof = p.z() < you.bub_pos().z();
+    // The native view draws a roof over what lies below the level it draws.
+    const auto roof = p.z() < shown_level( you );
     const auto &veh = vp->vehicle();
     auto modifier = char{};
     const auto &part = veh.part_id_string( vp->part_index(), roof, modifier );
@@ -374,9 +379,6 @@ auto bare_unmemorized( const map &here, const tripoint_bub_ms &p, const avatar &
     std::ranges::none_of( here.field_at( p ), []( const auto & field ) { return field.second.is_field_alive(); } );
 }
 
-/// The level the native view draws: the avatar's, moved by the look cursor or another cursor that changed level, as
-/// `cata_tiles::draw` draws from its center.
-auto shown_level( const avatar &you ) -> int { return you.bub_pos().z() + you.view_offset.z(); }
 
 /// How many levels down the native view draws a square in sight that it looks through, as the level loop of
 /// `cata_tiles::draw` decides: it looks down to the first square with a floor, or a remembered one with
