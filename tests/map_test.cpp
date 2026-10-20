@@ -43,6 +43,7 @@
 #include <algorithm>
 #include <memory>
 #include <ranges>
+#include <set>
 #include <vector>
 
 namespace {
@@ -1407,8 +1408,9 @@ TEST_CASE("lazy_border_submaps_are_dated_by_the_turn_that_started_them", "[map][
     clear_all_state();
 
     auto& buffer = MAPBUFFER;
-    // Far enough out that no case has generated it, near enough to share the test overmap.
-    const auto request_begin = get_map().get_abs_sub() + point_rel_sm(40, 40);
+    // Outside the map even after it recentres, so only the jobs write these submaps.
+    const auto away = get_map().getmapsize() * 2;
+    const auto request_begin = get_map().get_abs_sub() + point_rel_sm(away, away);
     const auto request_end = request_begin + point_rel_sm(12, 12);
     auto omts = std::vector<tripoint_abs_omt>{};
     for (const auto x : std::views::iota(0, 6)) {
@@ -1432,31 +1434,33 @@ TEST_CASE("lazy_border_submaps_are_dated_by_the_turn_that_started_them", "[map][
         override_option("REALITY_BUBBLE_SIZE", std::to_string(g_reality_bubble_size));
     const auto no_mobile_bubble = override_option("ACTIVITY_MOBILE_BUBBLE_SIZE", "0");
     const auto no_idle_bubble = override_option("ACTIVITY_IDLE_BUBBLE_SIZE", "0");
+    // Without a simulated area every loaded submap counts as simulated and the turn touches it.
+    const auto dim_id = get_map().get_bound_dimension();
+    const auto map_handle = submap_loader.request_load(
+        load_request_source::script, dim_id, get_map().get_abs_sub(),
+        get_map().get_abs_sub() + point_rel_sm(get_map().getmapsize(), get_map().getmapsize()));
+    const auto release_map = on_out_of_scope([&]() { submap_loader.release_load(map_handle); });
     // The jobs start on the pool in this turn; nothing asks for the border afterwards.
     const auto started = calendar::turn;
     const auto lazy_handle = submap_loader.request_load(
-        load_request_source::lazy_border, get_map().get_bound_dimension(), request_begin,
-        request_end);
+        load_request_source::lazy_border, dim_id, request_begin, request_end);
     submap_loader.update();
     submap_loader.release_load(lazy_handle);
 
     g->new_game = false;
-    get_avatar().set_moves(100);
-    get_avatar().assign_activity(activity_id("ACT_WAIT"), to_moves<int>(30_seconds), 0);
+    get_avatar().set_moves(0);
     CHECK_FALSE(g->do_turn());
-    REQUIRE(calendar::turn > started);
+    REQUIRE(calendar::turn == started + 1_turns);
     submap_loader.drain_lazy_loads();
 
-    const auto generated =
+    const auto dated =
         omts | std::views::transform([&](const auto& omt) {
             return buffer.lookup_submap_in_memory(project_to<coords::sm>(omt));
         })
         | std::views::filter([](const submap* sm) { return sm != nullptr; })
-        | std::ranges::to<std::vector>();
-    REQUIRE_FALSE(generated.empty());
-    CHECK(std::ranges::all_of(generated, [&](const submap* sm) {
-        return sm->last_touched == started;
-    }));
+        | std::views::transform([](const submap* sm) { return to_turn<int>(sm->last_touched); })
+        | std::ranges::to<std::set>();
+    CHECK(dated == std::set{to_turn<int>(started)});
 }
 
 TEST_CASE("mapbuffer_load_or_generate_lookup_is_explicit") {
