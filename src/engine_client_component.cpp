@@ -420,10 +420,18 @@ auto screen_of( const boundary_state &state, const slot &entry, const bool top )
             const auto covered = std::ranges::find( registered, own.covers, &affordance::id );
             if( own.keys.empty() && !own.args.row && !own.covers.empty() && covered != registered.end() ) { own.keys = covered->keys; }
         }
-        // A registered action that an affordance of the screen performs is not offered a second time, unless it has a denial.
+        // A registered action that an affordance of the screen performs is not offered a second time, unless it has a
+        // denial. An affordance that runs a row performs it only while its list has a row to run.
+        const auto performs = [&]( const affordance & own ) {
+            if( !own.args.row || !result.root ) { return true; }
+            const auto *const list = find_component( *result.root, own.args.row->component_id );
+            const auto ids = list != nullptr ? row_ids( *list ) : std::nullopt;
+            return list != nullptr && ( !ids || !ids->empty() );
+        };
         std::erase_if( registered, [&]( const affordance & offered_action ) {
-            return std::ranges::contains( result.affordances, offered_action.id, &affordance::covers ) &&
-                   !std::ranges::contains( result.denials, offered_action.id, &denial::id );
+            return std::ranges::any_of( result.affordances, [&]( const affordance & own ) {
+                return own.covers == offered_action.id && performs( own );
+            } ) && !std::ranges::contains( result.denials, offered_action.id, &denial::id );
         } );
         for( const auto &[id, reason] : result.denials ) {
             const auto found = std::ranges::find( registered, id, &affordance::id );
