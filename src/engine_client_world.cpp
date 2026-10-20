@@ -335,9 +335,14 @@ auto vehicle_part_at( const map &here, const tripoint_bub_ms &p, const avatar &y
 {
     const auto vp = here.veh_at( p );
     if( !vp ) { return std::nullopt; }
-    // The native view draws a roof over what lies below the level it draws.
-    const auto roof = p.z() < shown_level( you );
     const auto &veh = vp->vehicle();
+    // The native view draws the roof over a part below the level it draws, unless a creature stands there or the
+    // part shows over its roof.
+    const auto displayed = vp.part_displayed();
+    const auto under_roof = displayed && !displayed->has_feature( VPFLAG_ROOF ) &&
+                            displayed->info().location != "on_roof" && !displayed->info().has_flag( "NO_ROOF_NEEDED" ) &&
+                            veh.roof_at_part( static_cast<int>( displayed->part_index() ) ) >= 0;
+    const auto roof = p.z() < shown_level( you ) && g->critter_at( p, true ) == nullptr && under_roof;
     auto modifier = char{};
     const auto &part = veh.part_id_string( vp->part_index(), roof, modifier );
     const auto facing = veh.part_display_direction( vp->part_index(), roof );
