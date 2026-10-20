@@ -7,7 +7,7 @@
         "screen_id": "screen:12",
         "role": "dialog",
         "kind": "talk",
-        "title": "Daniel Arevalo, Marloss Voice",
+        "title": "Daniel Arevalo, Merchant",
         "root": {
           "id": "talk:panes",
           "kind": "split",
@@ -21,7 +21,7 @@
               "child": {
                 "id": "talk:history:text",
                 "kind": "text",
-                "markup": "<color_c_light_green>Daniel Arevalo, Marloss Voice</color>: \"May the earth flourish beneath our paths.\""
+                "markup": "<color_c_light_green>Daniel Arevalo, Merchant</color>: \"Welcome…\""
               }
             },
             {
@@ -42,8 +42,8 @@
                     "columns": [],
                     "rows": [
                       {
-                        "id": "TALK_MARLOSS_VOICE:1",
-                        "label": "This place is dangerous, what are you doing here?",
+                        "id": "TALK_EVAC_MERCHANT:4",
+                        "label": "I heard this place was a refugee center…",
                         "description": "",
                         "denial": "",
                         "hotkey": "a",
@@ -54,8 +54,8 @@
                         "color": "c_white"
                       },
                       {
-                        "id": "TALK_MARLOSS_VOICE:2",
-                        "label": "Who are you?",
+                        "id": "TALK_EVAC_MERCHANT:5",
+                        "label": "What are you doing here?",
                         "description": "",
                         "denial": "",
                         "hotkey": "b",
@@ -66,8 +66,8 @@
                         "color": "c_white"
                       },
                       {
-                        "id": "TALK_MARLOSS_VOICE:3",
-                        "label": "I gotta go.",
+                        "id": "TALK_EVAC_MERCHANT:6",
+                        "label": "Heard anything about the outside world?",
                         "description": "",
                         "denial": "",
                         "hotkey": "c",
@@ -76,9 +76,105 @@
                         "selected": false,
                         "columns": [],
                         "color": "c_white"
+                      },
+                      {
+                        "id": "TALK_EVAC_MERCHANT:7",
+                        "label": "Is there any way I can join your group?",
+                        "description": "",
+                        "denial": "",
+                        "hotkey": "d",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_white"
+                      },
+                      {
+                        "id": "TALK_EVAC_MERCHANT:8",
+                        "label": "What's with these beggars?",
+                        "description": "",
+                        "denial": "",
+                        "hotkey": "e",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_white"
+                      },
+                      {
+                        "id": "TALK_EVAC_MERCHANT:11",
+                        "label": "Can I do anything for the center?",
+                        "description": "",
+                        "denial": "",
+                        "hotkey": "f",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_white"
+                      },
+                      {
+                        "id": "TALK_EVAC_MERCHANT:12",
+                        "label": "Let's trade then.",
+                        "description": "",
+                        "denial": "",
+                        "hotkey": "g",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_white"
+                      },
+                      {
+                        "id": "TALK_EVAC_MERCHANT:13",
+                        "label": "When will you have new stuff in stock?",
+                        "description": "",
+                        "denial": "",
+                        "hotkey": "h",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_white"
+                      },
+                      {
+                        "id": "TALK_EVAC_MERCHANT:15",
+                        "label": "What's your story?",
+                        "description": "",
+                        "denial": "",
+                        "hotkey": "i",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_white"
+                      },
+                      {
+                        "id": "TALK_EVAC_MERCHANT:16",
+                        "label": "What was it you were saying before?",
+                        "description": "",
+                        "denial": "",
+                        "hotkey": "j",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_white"
+                      },
+                      {
+                        "id": "TALK_EVAC_MERCHANT:17",
+                        "label": "Well, I'd better be going.  Bye.",
+                        "description": "",
+                        "denial": "",
+                        "hotkey": "k",
+                        "enabled": true,
+                        "selectable": true,
+                        "selected": false,
+                        "columns": [],
+                        "color": "c_white"
                       }
                     ],
-                    "total": 3,
+                    "total": 11,
                     "selection": "single",
                     "activate": "talk:respond"
                   },
@@ -172,7 +268,7 @@
         ],
         "focus": {
           "component_id": "talk:responses",
-          "row_id": "TALK_MARLOSS_VOICE:1"
+          "row_id": "TALK_EVAC_MERCHANT:4"
         },
         "context": "DIALOGUE_CHOOSE_RESPONSE"
       }
@@ -286,7 +382,7 @@
           "kind": "invoke",
           "affordance_id": "talk:special:run",
           "args": {
-            "row": "TALK_MARLOSS_VOICE:1"
+            "row": "TALK_EVAC_MERCHANT:4"
           }
         }
       }

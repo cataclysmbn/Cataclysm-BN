@@ -7,7 +7,7 @@
         "screen_id": "screen:10",
         "role": "screen",
         "kind": "trade",
-        "title": "Trading with Daniel Arevalo, Marloss Voice",
+        "title": "Trading with Daniel Arevalo, Merchant",
         "root": {
           "id": "trade:head",
           "kind": "panel",
@@ -34,25 +34,7 @@
               {
                 "id": "pane:npc",
                 "kind": "panel",
-                "title": "Inventory: Daniel Arevalo, Marloss Voice",
-                "stats": [
-                  {
-                    "key": "weight",
-                    "label": "weight",
-                    "value": "9.42",
-                    "max": "66.15",
-                    "unit": "kg",
-                    "tone": "good"
-                  },
-                  {
-                    "key": "volume",
-                    "label": "vol",
-                    "value": "0.95",
-                    "max": "12.50",
-                    "unit": "L",
-                    "tone": "good"
-                  }
-                ],
+                "title": "Inventory: Daniel Arevalo, Merchant",
                 "child": {
                   "id": "list:npc",
                   "kind": "list",
@@ -80,8 +62,8 @@
                   ],
                   "rows": [
                     {
-                      "id": "trade-category:dea8783f13ec9de9",
-                      "label": "FOOD",
+                      "id": "trade-category:f52ae33847823922",
+                      "label": "GUNS",
                       "description": "",
                       "denial": "",
                       "enabled": true,
@@ -92,8 +74,8 @@
                     },
                     {
                       "id": "item:2",
-                      "label": "marloss berry (3)",
-                      "description": "Origin: 'Bright Nights'\n--\nMaterial: Fruit Matter\nVolume: 0.188 L  Weight: 0.53 kg\nOwner: Marloss Evangelists\nCategory: FOOD\n--\nThis looks like a blueberry the size of your fist, but pinkish in color.  It has a strong but delicious aroma, but is clearly either mutated or of alien origin.\n--\nNutrition will vary with available ingredients.\nCalories (kcal): 347  Quench: 20\nEnjoyability: 30\nPortions: 3\nOther contents: Fruit (1%)\n--\nThrow damage: Bash: 2\nThrow range: 24\nMoves per throw: 60\nStamina cost: 83\n--\n* This item is not repairable.\n--\n* This item conducts electricity.\n* This comestible can be eaten even on full stomach.\n--\nPrice: $0.00\n--\nYou know of nothing you could craft with it.\n",
+                      "label": "handmade revolver+1<color_c_green> (6/6 .40 S&W JHP)</color>",
+                      "description": "Origin: 'Bright Nights'\n--\nMaterial: Steel\nVolume: 0.875 L  Weight: 1.33 kg\nOwner: The Free Merchants\nCategory: GUNS\nWeapon Category: Revolvers, Manual Action\n--\nA sturdy improvised revolver chambered for .38 Special and .357 Magnum.  Its simple design allows for field conversion to 9mm, .40 S&W, .44 Magnum, or .45 ACP with replacement barrel and cylinder assemblies.\n--\nMod: .40 S&W handmade revolver conversion kit (bore) \nA replacement barrel and cylinder assembly for a handmade revolver, converting it to fire .40 S&W cartridges.\n--\nMelee damage: Bash: 8  To-hit bonus: -2\nMoves per attack: 101\nStamina Cost: 110\nTypical damage per second:\nBest: 0.00  Vs. Agile: 0.00  Vs. Armored: 0.00\n--\nAverage melee damage:\nCritical hit chance 4% - 16%\nBashing: 7  Critical bash: 10\nMoves per attack: 67\n--\nBase throw damage: Bash: 9\nThrow damage: Bash: 14\nThrow range: 6\nMoves per throw: 92\nStamina cost: 133\n--\nRanged damage: -1+35 = 34\nMaximum range: 14\nArmor-pierce: 0+0 = 0\nDispersion: 620+50 = 670 (effective: 181)\nSight dispersion: 30+14 = 44\nRecoil percentage: 67\nEffective recoil: 373\nReload time: 285 moves per round\nSkill used: Handguns\nCapacity: 6 rounds of .40\nAmmunition: .40 S&W JHPs\n--\nBase aim speed: 94\nRegular\nEven chance of good hit at range: 3\nTime to reach aim level: 123 moves \nCareful\nEven chance of good hit at range: 4\nTime to reach aim level: 153 moves \nPrecise\nEven chance of good hit at range: 7\nTime to reach aim level: 182 moves \n--\nFire modes: revolver (1)\n--\nMods: 0/2 accessories; 0/1 barrel; 1/1 bore: .40 S&W handmade revolver conversion kit; 0/1 grip; 0/1 rail; 0/1 sights; 0/1 sling; 0/1 stock; 0/1 underbarrel.\n--\nRepair using grid gunsmith repair kit, grid firearm repair kit, gunsmith repair kit, or firearm repair kit.\n* This item can be reinforced.\n--\n* This item conducts electricity.\n* Fouling.  Fouling is caused by firing gunpowder loads repeatedly, which reduces reliability and can eventually cause damage to the gun.  Fouling accumulates slowly (unless blackpowder is used) due to the design of modern smokeless powder found in the vast majority of retail cartridges and it is not a significant problem until high levels of fouling are reached due to firing thousands of rounds without cleaning your firearm.\n--\nCan be stored in: MOLLE pack, power armor XL holster, power armor leg mount, survivor harness, shoulder holster, holster, power armor shoulder holster, power armor holster, survivor MOLLE pack, and XL holster\n--\nPrice: $400.33  Barter value: $8.70\n--\nYou know of nothing you could craft with it.\n",
                       "denial": "",
                       "hotkey": "a",
                       "enabled": true,
@@ -103,52 +85,55 @@
                         {
                           "key": "qty",
                           "label": "amt",
-                          "value": "3"
+                          "value": ""
                         },
                         {
                           "key": "weight",
                           "label": "weight",
-                          "value": "0.53"
+                          "value": "1.33"
                         },
                         {
                           "key": "vol",
                           "label": "vol",
-                          "value": "0.19"
+                          "value": "0.88"
                         },
                         {
                           "key": "price",
                           "label": "unit price",
-                          "value": "$0.00"
+                          "value": "$17.40",
+                          "color": "c_light_red"
                         }
                       ],
+                      "color": "c_yellow",
                       "mark": {
                         "glyph": "-"
                       },
                       "selected_count": 0,
                       "minimum_count": 0,
-                      "max": 3,
+                      "max": 1,
                       "look": {
                         "kind": "item",
-                        "id": "marloss_berry",
-                        "glyph": "%",
-                        "color": "c_pink",
-                        "name": "marloss berry"
+                        "id": "handmade_revolver",
+                        "glyph": "(",
+                        "color": "c_dark_gray",
+                        "name": "handmade revolver",
+                        "looks_like": [
+                          "sw_619",
+                          "sw_619",
+                          "sw_619",
+                          "sw_619",
+                          "sw_619",
+                          "sw_619",
+                          "sw_619",
+                          "sw_619",
+                          "sw_619",
+                          "sw_619"
+                        ]
                       }
                     },
                     {
-                      "id": "trade-category:a44a9e739570ed0e",
-                      "label": "BOOKS",
-                      "description": "",
-                      "denial": "",
-                      "enabled": true,
-                      "selectable": false,
-                      "selected": false,
-                      "columns": [],
-                      "header": true
-                    },
-                    {
                       "id": "item:3",
-                      "label": "Mycenacean Hymns (unread)",
+                      "label": "nail gun<color_c_light_gray> (0/20 nails)</color>",
                       "description": "",
                       "denial": "",
                       "hotkey": "b",
@@ -164,7 +149,7 @@
                         {
                           "key": "weight",
                           "label": "weight",
-                          "value": "0.40"
+                          "value": "3.90"
                         },
                         {
                           "key": "vol",
@@ -174,7 +159,7 @@
                         {
                           "key": "price",
                           "label": "unit price",
-                          "value": "$1.15",
+                          "value": "$10.00",
                           "color": "c_light_red"
                         }
                       ],
@@ -186,27 +171,27 @@
                       "max": 1,
                       "look": {
                         "kind": "item",
-                        "id": "mycenacean_hymns",
-                        "glyph": "?",
-                        "color": "c_dark_gray",
-                        "name": "Mycenacean Hymns",
+                        "id": "nailgun",
+                        "glyph": "(",
+                        "color": "c_yellow",
+                        "name": "nail gun",
                         "looks_like": [
-                          "holybook_bible1",
-                          "story_book",
-                          "story_book",
-                          "story_book",
-                          "story_book",
-                          "story_book",
-                          "story_book",
-                          "story_book",
-                          "story_book",
-                          "story_book"
+                          "glock_17",
+                          "glock_17",
+                          "glock_17",
+                          "glock_17",
+                          "glock_17",
+                          "glock_17",
+                          "glock_17",
+                          "glock_17",
+                          "glock_17",
+                          "glock_17"
                         ]
                       }
                     },
                     {
-                      "id": "trade-category:f328a7d89a25f986",
-                      "label": "SEEDS",
+                      "id": "trade-category:8e140b49b6e072af",
+                      "label": "AMMO",
                       "description": "",
                       "denial": "",
                       "enabled": true,
@@ -217,7 +202,7 @@
                     },
                     {
                       "id": "item:4",
-                      "label": "Marloss seed (1)",
+                      "label": ".30-06 Springfield, black powder (25)",
                       "description": "",
                       "denial": "",
                       "hotkey": "c",
@@ -228,7 +213,249 @@
                         {
                           "key": "qty",
                           "label": "amt",
-                          "value": ""
+                          "value": "25"
+                        },
+                        {
+                          "key": "weight",
+                          "label": "weight",
+                          "value": "0.50"
+                        },
+                        {
+                          "key": "vol",
+                          "label": "vol",
+                          "value": "0.30"
+                        },
+                        {
+                          "key": "price",
+                          "label": "unit price",
+                          "value": "$0.40",
+                          "color": "c_light_green"
+                        }
+                      ],
+                      "mark": {
+                        "glyph": "-"
+                      },
+                      "selected_count": 0,
+                      "minimum_count": 0,
+                      "max": 25,
+                      "look": {
+                        "kind": "item",
+                        "id": "bp_3006",
+                        "glyph": "=",
+                        "color": "c_yellow",
+                        "name": ".30-06 Springfield, black powder",
+                        "looks_like": [
+                          "3006"
+                        ]
+                      }
+                    },
+                    {
+                      "id": "item:5",
+                      "label": ".380 ACP JHP (28)",
+                      "description": "",
+                      "denial": "",
+                      "hotkey": "d",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "qty",
+                          "label": "amt",
+                          "value": "28"
+                        },
+                        {
+                          "key": "weight",
+                          "label": "weight",
+                          "value": "0.17"
+                        },
+                        {
+                          "key": "vol",
+                          "label": "vol",
+                          "value": "0.14"
+                        },
+                        {
+                          "key": "price",
+                          "label": "unit price",
+                          "value": "$0.40",
+                          "color": "c_light_green"
+                        }
+                      ],
+                      "mark": {
+                        "glyph": "-"
+                      },
+                      "selected_count": 0,
+                      "minimum_count": 0,
+                      "max": 28,
+                      "look": {
+                        "kind": "item",
+                        "id": "380_JHP",
+                        "glyph": "=",
+                        "color": "c_yellow",
+                        "name": ".380 ACP JHP",
+                        "looks_like": [
+                          "380_FMJ"
+                        ]
+                      }
+                    },
+                    {
+                      "id": "item:6",
+                      "label": ".45 ACP JHP, black powder (12)",
+                      "description": "",
+                      "denial": "",
+                      "hotkey": "f",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "qty",
+                          "label": "amt",
+                          "value": "12"
+                        },
+                        {
+                          "key": "weight",
+                          "label": "weight",
+                          "value": "0.12"
+                        },
+                        {
+                          "key": "vol",
+                          "label": "vol",
+                          "value": "0.10"
+                        },
+                        {
+                          "key": "price",
+                          "label": "unit price",
+                          "value": "$0.20",
+                          "color": "c_light_green"
+                        }
+                      ],
+                      "mark": {
+                        "glyph": "-"
+                      },
+                      "selected_count": 0,
+                      "minimum_count": 0,
+                      "max": 12,
+                      "look": {
+                        "kind": "item",
+                        "id": "bp_45_jhp",
+                        "glyph": "=",
+                        "color": "c_yellow",
+                        "name": ".45 ACP JHP, black powder",
+                        "looks_like": [
+                          "45_jhp"
+                        ]
+                      }
+                    },
+                    {
+                      "id": "item:7",
+                      "label": "7.62x51mm '.308 Winchester' (29)",
+                      "description": "",
+                      "denial": "",
+                      "hotkey": "g",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "qty",
+                          "label": "amt",
+                          "value": "29"
+                        },
+                        {
+                          "key": "weight",
+                          "label": "weight",
+                          "value": "0.52"
+                        },
+                        {
+                          "key": "vol",
+                          "label": "vol",
+                          "value": "0.35"
+                        },
+                        {
+                          "key": "price",
+                          "label": "unit price",
+                          "value": "$0.80",
+                          "color": "c_light_green"
+                        }
+                      ],
+                      "mark": {
+                        "glyph": "-"
+                      },
+                      "selected_count": 0,
+                      "minimum_count": 0,
+                      "max": 29,
+                      "look": {
+                        "kind": "item",
+                        "id": "308",
+                        "glyph": "=",
+                        "color": "c_yellow",
+                        "name": "7.62x51mm '.308 Winchester'"
+                      }
+                    },
+                    {
+                      "id": "item:8",
+                      "label": "7.62x51mm '.308 Winchester', black powder (29)",
+                      "description": "",
+                      "denial": "",
+                      "hotkey": "h",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "qty",
+                          "label": "amt",
+                          "value": "29"
+                        },
+                        {
+                          "key": "weight",
+                          "label": "weight",
+                          "value": "0.52"
+                        },
+                        {
+                          "key": "vol",
+                          "label": "vol",
+                          "value": "0.35"
+                        },
+                        {
+                          "key": "price",
+                          "label": "unit price",
+                          "value": "$0.40",
+                          "color": "c_light_green"
+                        }
+                      ],
+                      "mark": {
+                        "glyph": "-"
+                      },
+                      "selected_count": 0,
+                      "minimum_count": 0,
+                      "max": 29,
+                      "look": {
+                        "kind": "item",
+                        "id": "bp_308",
+                        "glyph": "=",
+                        "color": "c_yellow",
+                        "name": "7.62x51mm '.308 Winchester', black powder",
+                        "looks_like": [
+                          "308"
+                        ]
+                      }
+                    },
+                    {
+                      "id": "item:9",
+                      "label": "9x19mm FMJ, black powder (26)",
+                      "description": "",
+                      "denial": "",
+                      "hotkey": "i",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "qty",
+                          "label": "amt",
+                          "value": "26"
                         },
                         {
                           "key": "weight",
@@ -238,12 +465,13 @@
                         {
                           "key": "vol",
                           "label": "vol",
-                          "value": "0.01"
+                          "value": "0.13"
                         },
                         {
                           "key": "price",
                           "label": "unit price",
-                          "value": "$0.00"
+                          "value": "$0.20",
+                          "color": "c_light_green"
                         }
                       ],
                       "mark": {
@@ -251,18 +479,71 @@
                       },
                       "selected_count": 0,
                       "minimum_count": 0,
-                      "max": 1,
+                      "max": 26,
                       "look": {
                         "kind": "item",
-                        "id": "marloss_seed",
-                        "glyph": ".",
-                        "color": "c_cyan",
-                        "name": "Marloss seed"
+                        "id": "bp_9mmfmj",
+                        "glyph": "=",
+                        "color": "c_yellow",
+                        "name": "9x19mm FMJ, black powder",
+                        "looks_like": [
+                          "9mmfmj",
+                          "9mm"
+                        ]
                       }
                     },
                     {
-                      "id": "trade-category:30751bee58e6a938",
-                      "label": "WOOD SCRAP",
+                      "id": "item:10",
+                      "label": "9x19mm JHP, black powder (10)",
+                      "description": "",
+                      "denial": "",
+                      "hotkey": "j",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "qty",
+                          "label": "amt",
+                          "value": "10"
+                        },
+                        {
+                          "key": "weight",
+                          "label": "weight",
+                          "value": "0.07"
+                        },
+                        {
+                          "key": "vol",
+                          "label": "vol",
+                          "value": "0.05"
+                        },
+                        {
+                          "key": "price",
+                          "label": "unit price",
+                          "value": "$0.20",
+                          "color": "c_light_green"
+                        }
+                      ],
+                      "mark": {
+                        "glyph": "-"
+                      },
+                      "selected_count": 0,
+                      "minimum_count": 0,
+                      "max": 10,
+                      "look": {
+                        "kind": "item",
+                        "id": "bp_9mm",
+                        "glyph": "=",
+                        "color": "c_yellow",
+                        "name": "9x19mm JHP, black powder",
+                        "looks_like": [
+                          "9mm"
+                        ]
+                      }
+                    },
+                    {
+                      "id": "trade-category:2317fa2b784e7462",
+                      "label": "WORKSHOP TOOLS",
                       "description": "",
                       "denial": "",
                       "enabled": true,
@@ -272,11 +553,11 @@
                       "header": true
                     },
                     {
-                      "id": "item:5",
-                      "label": "long stick (1)",
+                      "id": "item:11",
+                      "label": "bottle jack",
                       "description": "",
                       "denial": "",
-                      "hotkey": "d",
+                      "hotkey": "k",
                       "enabled": true,
                       "selectable": true,
                       "selected": false,
@@ -289,20 +570,20 @@
                         {
                           "key": "weight",
                           "label": "weight",
-                          "value": "3.40"
+                          "value": "5.00"
                         },
                         {
                           "key": "vol",
                           "label": "vol",
-                          "value": "2.50"
+                          "value": "1.50"
                         },
                         {
                           "key": "price",
                           "label": "unit price",
-                          "value": "$0.00"
+                          "value": "$10.00",
+                          "color": "c_light_red"
                         }
                       ],
-                      "color": "c_yellow",
                       "mark": {
                         "glyph": "-"
                       },
@@ -311,17 +592,312 @@
                       "max": 1,
                       "look": {
                         "kind": "item",
-                        "id": "stick_long",
-                        "glyph": "/",
+                        "id": "jack",
+                        "glyph": ";",
+                        "color": "c_light_gray",
+                        "name": "bottle jack"
+                      }
+                    },
+                    {
+                      "id": "item:12",
+                      "label": "concrete mixer",
+                      "description": "",
+                      "denial": "",
+                      "hotkey": "l",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "qty",
+                          "label": "amt",
+                          "value": ""
+                        },
+                        {
+                          "key": "weight",
+                          "label": "weight",
+                          "value": "9.07"
+                        },
+                        {
+                          "key": "vol",
+                          "label": "vol",
+                          "value": "5.00"
+                        },
+                        {
+                          "key": "price",
+                          "label": "unit price",
+                          "value": "$10.00",
+                          "color": "c_light_red"
+                        }
+                      ],
+                      "mark": {
+                        "glyph": "-"
+                      },
+                      "selected_count": 0,
+                      "minimum_count": 0,
+                      "max": 1,
+                      "look": {
+                        "kind": "item",
+                        "id": "con_mix",
+                        "glyph": "$",
+                        "color": "c_dark_gray",
+                        "name": "concrete mixer"
+                      }
+                    },
+                    {
+                      "id": "item:13",
+                      "label": "screwdriver",
+                      "description": "",
+                      "denial": "",
+                      "hotkey": "m",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "qty",
+                          "label": "amt",
+                          "value": ""
+                        },
+                        {
+                          "key": "weight",
+                          "label": "weight",
+                          "value": "0.17"
+                        },
+                        {
+                          "key": "vol",
+                          "label": "vol",
+                          "value": "0.04"
+                        },
+                        {
+                          "key": "price",
+                          "label": "unit price",
+                          "value": "$1.00",
+                          "color": "c_light_red"
+                        }
+                      ],
+                      "mark": {
+                        "glyph": "-"
+                      },
+                      "selected_count": 0,
+                      "minimum_count": 0,
+                      "max": 1,
+                      "look": {
+                        "kind": "item",
+                        "id": "screwdriver",
+                        "glyph": ";",
+                        "color": "c_yellow",
+                        "name": "screwdriver"
+                      }
+                    },
+                    {
+                      "id": "trade-category:6a0f67741a506269",
+                      "label": "CLOTHING",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [],
+                      "header": true
+                    },
+                    {
+                      "id": "item:14",
+                      "label": "<color_c_light_green>|| </color>headlamp",
+                      "description": "",
+                      "denial": "",
+                      "hotkey": "n",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "qty",
+                          "label": "amt",
+                          "value": ""
+                        },
+                        {
+                          "key": "weight",
+                          "label": "weight",
+                          "value": "0.52"
+                        },
+                        {
+                          "key": "vol",
+                          "label": "vol",
+                          "value": "0.50"
+                        },
+                        {
+                          "key": "price",
+                          "label": "unit price",
+                          "value": "$2.00",
+                          "color": "c_light_red"
+                        }
+                      ],
+                      "mark": {
+                        "glyph": "-"
+                      },
+                      "selected_count": 0,
+                      "minimum_count": 0,
+                      "max": 1,
+                      "look": {
+                        "kind": "item",
+                        "id": "wearable_light",
+                        "glyph": "[",
+                        "color": "c_blue",
+                        "name": "headlamp"
+                      }
+                    },
+                    {
+                      "id": "trade-category:ef7b5776d2e1ed9b",
+                      "label": "VALUABLES",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [],
+                      "header": true
+                    },
+                    {
+                      "id": "item:15",
+                      "label": "FlatCoin (5)",
+                      "description": "",
+                      "denial": "",
+                      "hotkey": "o",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "qty",
+                          "label": "amt",
+                          "value": "5"
+                        },
+                        {
+                          "key": "weight",
+                          "label": "weight",
+                          "value": "0.09"
+                        },
+                        {
+                          "key": "vol",
+                          "label": "vol",
+                          "value": "0.01"
+                        },
+                        {
+                          "key": "price",
+                          "label": "unit price",
+                          "value": "$5.00",
+                          "color": "c_light_green"
+                        }
+                      ],
+                      "mark": {
+                        "glyph": "-"
+                      },
+                      "selected_count": 0,
+                      "minimum_count": 0,
+                      "max": 5,
+                      "look": {
+                        "kind": "item",
+                        "id": "FlatCoin",
+                        "glyph": "$",
                         "color": "c_brown",
-                        "name": "long stick",
-                        "looks_like": [
-                          "stick"
-                        ]
+                        "name": "FlatCoin"
+                      }
+                    },
+                    {
+                      "id": "item:16",
+                      "label": "Hub 01 Gold Coin (15)",
+                      "description": "",
+                      "denial": "",
+                      "hotkey": "p",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "qty",
+                          "label": "amt",
+                          "value": "15"
+                        },
+                        {
+                          "key": "weight",
+                          "label": "weight",
+                          "value": "0.42"
+                        },
+                        {
+                          "key": "vol",
+                          "label": "vol",
+                          "value": "0.03"
+                        },
+                        {
+                          "key": "price",
+                          "label": "unit price",
+                          "value": "$100.00",
+                          "color": "c_light_green"
+                        }
+                      ],
+                      "mark": {
+                        "glyph": "-"
+                      },
+                      "selected_count": 0,
+                      "minimum_count": 0,
+                      "max": 15,
+                      "look": {
+                        "kind": "item",
+                        "id": "RobofacCoin",
+                        "glyph": "$",
+                        "color": "c_brown",
+                        "name": "Hub 01 Gold Coin"
+                      }
+                    },
+                    {
+                      "id": "item:17",
+                      "label": "Merch (247)",
+                      "description": "",
+                      "denial": "",
+                      "hotkey": "q",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "qty",
+                          "label": "amt",
+                          "value": "247"
+                        },
+                        {
+                          "key": "weight",
+                          "label": "weight",
+                          "value": "0.25"
+                        },
+                        {
+                          "key": "vol",
+                          "label": "vol",
+                          "value": "0.25"
+                        },
+                        {
+                          "key": "price",
+                          "label": "unit price",
+                          "value": "$2.50",
+                          "color": "c_light_green"
+                        }
+                      ],
+                      "mark": {
+                        "glyph": "-"
+                      },
+                      "selected_count": 0,
+                      "minimum_count": 0,
+                      "max": 247,
+                      "look": {
+                        "kind": "item",
+                        "id": "FMCNote",
+                        "glyph": "$",
+                        "color": "c_white",
+                        "name": "Merch"
                       }
                     }
                   ],
-                  "total": 8,
+                  "total": 21,
                   "selection": "count",
                   "filterable": true
                 }

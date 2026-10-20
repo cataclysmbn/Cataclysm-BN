@@ -1574,7 +1574,7 @@ void debug()
 
         case DEBUG_TRADE_NPC: {
             const auto trader = get_map().place_npc( u.bub_pos() + tripoint_east,
-                                string_id<npc_template>( "marloss_voice" ), true );
+                                string_id<npc_template>( "evac_merchant" ), true );
             g->load_npcs();
             if( const auto guy = g->find_npc( trader ) ) {
                 npc_trading::trade( *guy, 0, npc_trading::deal_kind::trade );
