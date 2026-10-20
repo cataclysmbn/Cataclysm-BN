@@ -1285,6 +1285,8 @@ void flush_deferred_zones()
         auto lock = std::lock_guard( g_deferred_zones_mutex );
         pending.swap( g_deferred_zones );
     }
+    // Workers queue in completion order; add by place so every run lists the zones in the same order.
+    std::ranges::stable_sort( pending, {}, []( const deferred_zone & z ) { return std::tie( z.start, z.end ); } );
     auto &mgr = zone_manager::get_manager();
     std::ranges::for_each( pending, [&]( const deferred_zone & z ) {
         mgr.add( z.name, z.type, z.fac, z.invert, z.enabled, z.start, z.end );

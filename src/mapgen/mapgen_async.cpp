@@ -21,6 +21,7 @@
 #include <mutex>
 #include <optional>
 #include <ranges>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -67,6 +68,8 @@ void run_deferred_autonotes() {
         pending.swap(g_autonotes);
     }
     if (pending.empty()) { return; }
+    // Workers queue in completion order; note by place so every run notes in the same order.
+    std::ranges::stable_sort(pending, {}, [](const auto& e) { return std::tie(e.dim, e.omt_pos); });
 
     auto& settings = get_auto_notes_settings();
     const bool notes_active =
@@ -103,8 +106,9 @@ void run_deferred_mapgen_hooks() {
     // Fast path: nothing queued.  Skip the Lua state access entirely.
     if (pending.empty()) { return; }
 
-    // Sort by dimension so each batch can reuse one constructor.
-    std::ranges::sort(pending, [](const auto& a, const auto& b) { return a.dim < b.dim; });
+    // Workers queue in completion order; apply by place so every run hooks in the same order.
+    // Grouping by dimension also lets each batch reuse one constructor.
+    std::ranges::stable_sort(pending, {}, [](const auto& h) { return std::tie(h.dim, h.omt_pos); });
 
     // Reuse one constructor per dimension group so the batch function can
     // amortise Lua table allocation and hook-table lookup over all OMTs.
