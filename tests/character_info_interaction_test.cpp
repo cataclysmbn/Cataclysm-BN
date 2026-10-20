@@ -155,6 +155,8 @@ struct character_info_guard {
         get_avatar() = std::move(old_actor);
         auto stream = std::istringstream{old_kills};
         auto json = JsonIn{stream};
+        // Deserializing adds to the kills there are, so the case's own kills go first.
+        g->get_kill_tracker().clear();
         g->get_kill_tracker().deserialize(json);
         TERMX = old_termx;
         TERMY = old_termy;
