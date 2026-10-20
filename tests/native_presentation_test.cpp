@@ -7,6 +7,7 @@
 #include "client_animation.h"
 #include "color.h"
 #include "dispersion.h"
+#include "engine_client_presentation.h"
 #include "explosion.h"
 #include "explosion_queue.h"
 #include "explosion_test.h"
@@ -35,6 +36,7 @@
 #include <locale>
 #include <memory>
 #include <ranges>
+#include <set>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -435,5 +437,52 @@ TEST_CASE(
     for (const auto& display : displays) {
         CAPTURE(display.name);
         CHECK(melee_hit_under(display) == reference);
+    }
+}
+
+namespace {
+
+struct shot_record {
+    std::vector<engine_client::presentation_value> facts;
+    std::string rng;
+    auto operator<=>(const shot_record&) const = default; // *NOPAD*
+};
+
+/// What a client is told about `action` and the gameplay RNG after it, with projectile animations
+/// on or off.
+auto shot_under(const bool animated, const std::function<auto()->void>& action) -> shot_record {
+    lit_floor();
+    auto trace = trace_t{};
+    const override_option animations("ANIMATIONS", "true");
+    const override_option projectiles("ANIMATION_PROJECTILES", animated ? "true" : "false");
+    const override_option stepwise("BULLETS_AS_LASERS", "false");
+    const override_option pace("ANIMATION_DELAY", "0");
+    game_client::set_animation(std::make_unique<recording_animation>(trace));
+    const auto uninstall = on_out_of_scope([] {
+        game_client::set_animation(nullptr);
+        engine_client::presentation::collect(false);
+        SCT.vSCT.clear();
+    });
+    engine_client::presentation::collect(true);
+    engine_client::presentation::take();
+    rng_set_engine_seed(424242);
+    action();
+    return {.facts = engine_client::presentation::take(), .rng = rng_state()};
+}
+
+} // namespace
+
+TEST_CASE("projectile steps are emitted with animations off", "[native_presentation]") {
+    const auto shots = std::set<std::string>{"single shot", "line shot", "shotgun", "bounce"};
+    for (const auto& entry :
+         trace_cases() | std::views::filter([&](const auto& entry) {
+             return shots.contains(entry.name);
+         })) {
+        CAPTURE(entry.name);
+        const auto animated = shot_under(true, entry.action);
+        REQUIRE(std::ranges::any_of(animated.facts, [](const auto& fact) {
+            return fact.type == "projectile.moved";
+        }));
+        CHECK(shot_under(false, entry.action) == animated);
     }
 }
