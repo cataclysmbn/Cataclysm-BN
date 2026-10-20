@@ -1048,7 +1048,8 @@ TEST_CASE(
         hello + panel("3", "character", "") + panel("4", "character", row("skill:melee"))
         + panel("5", "inventory", row(knife)) + panel("6", "inventory", row(rock))
         + panel("7", "inventory", row("gone")) + panel("8", "options", "")
-        + panel("9", "character", "", "epoch:old"));
+        + panel("9", "character", "", "epoch:old") + panel("10", "character", row("skills"))
+        + panel("11", "inventory", ""));
     auto replies = std::map<int, nlohmann::json>{};
     auto lines = std::istringstream{test.output.str()};
     for (auto line = std::string{}; std::getline(lines, line);) {
@@ -1109,6 +1110,13 @@ TEST_CASE(
     CHECK(screen(7)["screen_id"] == "panel:inventory");
     CHECK(replies.at(8)["error"]["data"]["kind"] == "validation_failed");
     CHECK(replies.at(9)["error"]["data"]["kind"] == "stale_epoch");
+    // A tab's id puts the tab in front at its first row, as the native sheet opens a tab.
+    CHECK(screen(10)["focus"]["component_id"] == "character:skills:rows");
+    // Without a row the cursor is where the native screen opens it, on the first item, which is
+    // described.
+    CHECK_FALSE(focused(11).empty());
+    CHECK_FALSE(description(screen(11), focused(11)).empty());
+    CHECK(focused(7) == focused(11));
     CHECK(test.authority.at() == before);
     CHECK(rng_get_engine() == rng);
 }
