@@ -1136,6 +1136,7 @@ struct picking_options {
     std::string activate = {};
     std::string covers = {};
     std::string denial = {};
+    std::vector<ec::row> rows = {{.id = "r:1"}, {.id = "r:2"}};
 };
 auto picking_screen(const picking_options& options) -> ec::screen_view {
     const auto context = input_context("TEST_PICK");
@@ -1143,9 +1144,7 @@ auto picking_screen(const picking_options& options) -> ec::screen_view {
         context, "test", {.view = [&](const auto&) {
             return ec::screen_view{
                 .root = ec::list(
-                    {.id = "list:rows",
-                     .rows = {{.id = "r:1"}, {.id = "r:2"}},
-                     .activate = options.activate}),
+                    {.id = "list:rows", .rows = options.rows, .activate = options.activate}),
                 .affordances = {ec::invoke_affordance(
                     {.id = "t:pick",
                      .label = "Confirm Choice",
@@ -1185,6 +1184,18 @@ TEST_CASE(
     CHECK(activated->affordance_id == "t:pick");
     CHECK(activated->activates);
     CHECK(activated->args.row == "r:2");
+}
+
+TEST_CASE(
+    "a row's activation covers the registered confirm only while the list has a row to run",
+    "[engine_client_component]") {
+    const auto rows = picking_screen({.role = "select", .activate = "t:pick"});
+    CHECK(std::ranges::find(rows.affordances, "CONFIRM", &ec::affordance::id)
+          == rows.affordances.end());
+    // With no row, the screen's Enter is still the confirm, as in the caravan's empty category.
+    const auto empty = picking_screen({.role = "select", .activate = "t:pick", .rows = {}});
+    CHECK(affordance(empty, "CONFIRM").role == "confirm");
+    CHECK(affordance(empty, "CONFIRM").keys == std::vector<std::string>{"ENTER"});
 }
 
 TEST_CASE(
