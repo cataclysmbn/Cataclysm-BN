@@ -912,8 +912,32 @@ auto serialize_overmap( const game_client::interaction_overmap &squares ) -> std
 {
     return overmap_json( squares ).dump();
 }
-// A panel shows no map, so it needs no frame of one.
-auto serialize_screen_view( const screen_view &view ) -> std::string { return to_json( view, bubble_frame{} ).dump(); }
+namespace
+{
+/// Every row of each list under `value` into `result`, its JSON: a panel has no pages to fetch the rest from.
+auto all_rows( const component &value, json &result ) -> void
+{
+    if( const auto *const list = std::get_if<list_body>( &value.body ) ) {
+        result["rows"] = json::array();
+        for( const auto &entry : list->rows ) { result["rows"].push_back( to_json( entry ) ); }
+    }
+    if( result.contains( "children" ) ) {
+        for( const auto &[child, wire] : std::views::zip( value.children, result["children"] ) ) { all_rows( child, wire ); }
+    } else if( result.contains( "child" ) && !value.children.empty() ) {
+        all_rows( value.children.front(), result["child"] );
+    }
+}
+} // namespace
+
+// A panel shows no map, so it needs no frame of one. Its lists go whole while the frame allows, else a page of each.
+auto serialize_screen_view( const screen_view &view ) -> std::string
+{
+    auto result = to_json( view, bubble_frame{} );
+    const auto paged = result.dump();
+    if( view.root ) { all_rows( *view.root, result["root"] ); }
+    auto whole = result.dump();
+    return whole.size() <= maximum_inline_bytes ? whole : paged;
+}
 auto serialize_rows( const rows_page &page ) -> std::string
 {
     return json{{"boundary_id", page.boundary_id}, {"component_id", page.component_id},

@@ -24,23 +24,23 @@ title: 엔진/클라이언트 프로토콜 0.2
 
 ## 메서드
 
-| 메서드                   | 매개변수                                                   | 결과                                                                                             |
-| ------------------------ | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `bn.hello`               | `versions`, `client`, `schema`, `locale?`, `capabilities?` | `version`, `epoch`, `engine`, `limits`, `delivery?`, `schema`, `locale`, `engine_locale`, `role` |
-| `bn.viewport`            | `cols`, `rows`                                             | 없음                                                                                             |
-| `bn.interrupt`           | 없음                                                       | 없음                                                                                             |
-| `bn.hold`                | `epoch`, `screen_id`, `affordance_id`                      | 없음                                                                                             |
-| `bn.release`             | 없음                                                       | 없음                                                                                             |
-| `bn.subscribe`           | 없음                                                       | 스냅샷 헤더. 이어서 파트와 이벤트가 전송됨                                                       |
-| `bn.unsubscribe`         | 없음                                                       | 없음                                                                                             |
-| `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit`                  | `boundary_id`, `total`, `choices` (읽기 전용)                                                    |
-| `bn.world.describe`      | `epoch`, `boundary_id`, `pos`                              | `lines` (읽기 전용)                                                                              |
-| `bn.world.cells`         | `epoch`, `min`, `max`                                      | `at`, `cells`, `forgotten` (읽기 전용)                                                           |
-| `bn.overmap.cells`       | `epoch`, `min`, `max`                                      | `overmap` 한 층의 칸들, 커서와 무관 (읽기 전용)                                                  |
-| `bn.panel.view`          | `epoch`, `panel` (`character` 또는 `inventory`), `row?`    | 아바타에게 열릴 때의 `screen`, `row`(줄 또는 탭 id)에 포커스, 실행할 것 없음 (읽기 전용)         |
-| `bn.command.submit`      | `epoch`, `expect`, `operation`                             | `command_id`, `stage: "received"`                                                                |
-| `bn.command.result`      | `epoch`, `command_id`                                      | 최신 단계. 유실된 알림을 복구할 때 사용                                                          |
-| `bn.credit`              | `frames`                                                   | 부여 후 보유 `credits`                                                                           |
+| 메서드                   | 매개변수                                                   | 결과                                                                                                                          |
+| ------------------------ | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `bn.hello`               | `versions`, `client`, `schema`, `locale?`, `capabilities?` | `version`, `epoch`, `engine`, `limits`, `delivery?`, `schema`, `locale`, `engine_locale`, `role`                              |
+| `bn.viewport`            | `cols`, `rows`                                             | 없음                                                                                                                          |
+| `bn.interrupt`           | 없음                                                       | 없음                                                                                                                          |
+| `bn.hold`                | `epoch`, `screen_id`, `affordance_id`                      | 없음                                                                                                                          |
+| `bn.release`             | 없음                                                       | 없음                                                                                                                          |
+| `bn.subscribe`           | 없음                                                       | 스냅샷 헤더. 이어서 파트와 이벤트가 전송됨                                                                                    |
+| `bn.unsubscribe`         | 없음                                                       | 없음                                                                                                                          |
+| `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit`                  | `boundary_id`, `total`, `choices` (읽기 전용)                                                                                 |
+| `bn.world.describe`      | `epoch`, `boundary_id`, `pos`                              | `lines` (읽기 전용)                                                                                                           |
+| `bn.world.cells`         | `epoch`, `min`, `max`                                      | `at`, `cells`, `forgotten` (읽기 전용)                                                                                        |
+| `bn.overmap.cells`       | `epoch`, `min`, `max`                                      | `overmap` 한 층의 칸들, 커서와 무관 (읽기 전용)                                                                               |
+| `bn.panel.view`          | `epoch`, `panel` (`character` 또는 `inventory`), `row?`    | 아바타에게 열릴 때의 `screen`, `row`(줄 또는 탭 id)에 포커스, 한 프레임에 들어가면 목록의 모든 줄, 실행할 것 없음 (읽기 전용) |
+| `bn.command.submit`      | `epoch`, `expect`, `operation`                             | `command_id`, `stage: "received"`                                                                                             |
+| `bn.command.result`      | `epoch`, `command_id`                                      | 최신 단계. 유실된 알림을 복구할 때 사용                                                                                       |
+| `bn.credit`              | `frames`                                                   | 부여 후 보유 `credits`                                                                                                        |
 
 엔진이 보내는 알림은 `bn.snapshot.part`, `bn.events`, `bn.command`, `bn.resync`, `bn.loading`, `bn.progress`입니다. `bn.loading`과 `bn.progress`를 제외한 알림은 구독한 클라이언트에 입력 경계마다 전송됩니다. `bn.progress`(`{epoch}`)는 하트비트로, 대기 같은 활동이 입력 경계에 도달하지 않고 계속되는 동안 `bn.hello`를 마친 클라이언트에 2초마다 전송됩니다. 통신이 끊기면 엔진이 일하지 않는다는 뜻입니다. 월드를 불러오는 동안은 `bn.loading`이 같은 역할을 합니다.
 

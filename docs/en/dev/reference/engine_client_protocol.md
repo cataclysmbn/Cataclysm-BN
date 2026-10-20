@@ -24,23 +24,23 @@ Collect the `parts` snapshot parts, then apply `bn.events` in order. A gap, an e
 
 ## Methods
 
-| Method                   | Params                                                     | Result                                                                                                       |
-| ------------------------ | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `bn.hello`               | `versions`, `client`, `schema`, `locale?`, `capabilities?` | `version`, `epoch`, `engine`, `limits`, `delivery?`, `schema`, `locale`, `engine_locale`, `role`             |
-| `bn.viewport`            | `cols`, `rows`                                             | none                                                                                                         |
-| `bn.interrupt`           | none                                                       | none                                                                                                         |
-| `bn.hold`                | `epoch`, `screen_id`, `affordance_id`                      | none                                                                                                         |
-| `bn.release`             | none                                                       | none                                                                                                         |
-| `bn.subscribe`           | none                                                       | snapshot header; parts and events follow                                                                     |
-| `bn.unsubscribe`         | none                                                       | none                                                                                                         |
-| `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit`                  | `boundary_id`, `total`, `choices` (reads only)                                                               |
-| `bn.world.describe`      | `epoch`, `boundary_id`, `pos`                              | `lines` (reads only)                                                                                         |
-| `bn.world.cells`         | `epoch`, `min`, `max`                                      | `at`, `cells`, `forgotten` (reads only)                                                                      |
-| `bn.overmap.cells`       | `epoch`, `min`, `max`                                      | `overmap` squares of an overmap level, whatever the cursor (reads only)                                      |
-| `bn.panel.view`          | `epoch`, `panel` (`character` or `inventory`), `row?`      | the `screen` as it opens on the avatar, `row` (a row or tab id) focused, with nothing to invoke (reads only) |
-| `bn.command.submit`      | `epoch`, `expect`, `operation`                             | `command_id`, `stage: "received"`                                                                            |
-| `bn.command.result`      | `epoch`, `command_id`                                      | latest stage, for recovering a lost notification                                                             |
-| `bn.credit`              | `frames`                                                   | `credits` held after the grant                                                                               |
+| Method                   | Params                                                     | Result                                                                                                                                        |
+| ------------------------ | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bn.hello`               | `versions`, `client`, `schema`, `locale?`, `capabilities?` | `version`, `epoch`, `engine`, `limits`, `delivery?`, `schema`, `locale`, `engine_locale`, `role`                                              |
+| `bn.viewport`            | `cols`, `rows`                                             | none                                                                                                                                          |
+| `bn.interrupt`           | none                                                       | none                                                                                                                                          |
+| `bn.hold`                | `epoch`, `screen_id`, `affordance_id`                      | none                                                                                                                                          |
+| `bn.release`             | none                                                       | none                                                                                                                                          |
+| `bn.subscribe`           | none                                                       | snapshot header; parts and events follow                                                                                                      |
+| `bn.unsubscribe`         | none                                                       | none                                                                                                                                          |
+| `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit`                  | `boundary_id`, `total`, `choices` (reads only)                                                                                                |
+| `bn.world.describe`      | `epoch`, `boundary_id`, `pos`                              | `lines` (reads only)                                                                                                                          |
+| `bn.world.cells`         | `epoch`, `min`, `max`                                      | `at`, `cells`, `forgotten` (reads only)                                                                                                       |
+| `bn.overmap.cells`       | `epoch`, `min`, `max`                                      | `overmap` squares of an overmap level, whatever the cursor (reads only)                                                                       |
+| `bn.panel.view`          | `epoch`, `panel` (`character` or `inventory`), `row?`      | the `screen` as it opens on the avatar, `row` (a row or tab id) focused, every list row while it fits a frame, nothing to invoke (reads only) |
+| `bn.command.submit`      | `epoch`, `expect`, `operation`                             | `command_id`, `stage: "received"`                                                                                                             |
+| `bn.command.result`      | `epoch`, `command_id`                                      | latest stage, for recovering a lost notification                                                                                              |
+| `bn.credit`              | `frames`                                                   | `credits` held after the grant                                                                                                                |
 
 Notifications from the engine: `bn.snapshot.part`, `bn.events`, `bn.command`, `bn.resync`, `bn.loading`, `bn.progress`. All but `bn.loading` and `bn.progress` are sent at input boundaries to a subscribed client. `bn.progress` (`{epoch}`) is a heartbeat, sent every 2 seconds to a client that said `bn.hello` while a wait or other activity runs without reaching an input boundary, so silence on the wire means the engine is not working. `bn.loading` plays the same role while the world loads.
 
