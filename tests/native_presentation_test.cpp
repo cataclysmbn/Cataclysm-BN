@@ -13,6 +13,7 @@
 #include "game.h"
 #include "item.h"
 #include "itype.h"
+#include "json.h"
 #include "map/map.h"
 #include "map_helpers.h"
 #include "map_perception.h"
@@ -135,9 +136,11 @@ auto lit_floor() -> void {
     sounds::reset_sounds();
     auto& you = get_avatar();
     you.setpos(you_at);
-    // Earlier runs leave a spent focus pool and stale maximum HP, which shift later rolls.
+    // Earlier runs leave a spent focus pool, stale maximum HP and skills last practiced at the
+    // turn they were cleared, which shift later rolls.
     you.focus_pool = 100;
     you.recalc_hp();
+    you.clear_skills();
     get_map().build_map_cache(0);
     map_perception::acquire();
 }
@@ -371,5 +374,66 @@ TEST_CASE("a slower animation delay only adds explosion redraws", "[native_prese
         const auto trace = trace_of("10", entry.action);
         CHECK(without_redraws(trace) == entry.golden);
         CHECK(std::ranges::count_if(trace, is_redraw) == entry.redraws);
+    }
+}
+
+namespace {
+
+struct sct_display {
+    std::string name;
+    bool test_mode = false;
+    bool sct = true;
+    bool tiles = true;
+    bool iso = false;
+};
+
+/// The gameplay RNG and the monsters and avatar after the avatar hits a zombie to its east.
+auto melee_hit_under(const sct_display& display) -> std::string {
+    lit_floor();
+    rng_set_engine_seed(424242);
+    auto& target = spawn_test_monster("mon_zombie", you_at + tripoint_east);
+    auto& you = get_avatar();
+    you.set_skill_level(skill_id("melee"), 10);
+    you.set_skill_level(skill_id("unarmed"), 10);
+    const override_option animations("ANIMATIONS", "true");
+    const override_option sct("ANIMATION_SCT", display.sct ? "true" : "false");
+    const auto live = restore_on_out_of_scope(test_mode);
+    const auto tiles = restore_on_out_of_scope(use_tiles);
+    const auto iso = restore_on_out_of_scope(tile_iso);
+    test_mode = display.test_mode;
+    use_tiles = display.tiles;
+    tile_iso = display.iso;
+    const auto cleanup = on_out_of_scope([] { SCT.vSCT.clear(); });
+    you.melee_attack(target, false);
+    REQUIRE(target.get_hp() < target.get_hp_max());
+    auto stream = std::ostringstream{};
+    auto json = JsonOut(stream);
+    json.start_object();
+    json.member("rng", rng_state());
+    json.member("monsters");
+    json.start_array();
+    for (const auto& mon : g->all_monsters()) { mon.serialize(json); }
+    json.end_array();
+    json.member("avatar");
+    you.serialize(json);
+    json.end_object();
+    return stream.str();
+}
+
+} // namespace
+
+TEST_CASE(
+    "combat text leaves gameplay to the same RNG on every display", "[native_presentation][rng]") {
+    const auto reference = melee_hit_under({.name = "tiles"});
+    const auto displays = std::vector<sct_display>{
+        {.name = "tiles without combat text", .sct = false},
+        {.name = "curses", .tiles = false},
+        {.name = "curses without combat text", .sct = false, .tiles = false},
+        {.name = "isometric tiles", .iso = true},
+        {.name = "test mode", .test_mode = true},
+    };
+    for (const auto& display : displays) {
+        CAPTURE(display.name);
+        CHECK(melee_hit_under(display) == reference);
     }
 }
