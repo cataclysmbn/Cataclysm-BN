@@ -8,10 +8,13 @@
 #    include "engine_client_session.h"
 #    include "game_session.h"
 #    include "input.h"
+#    include "item.h"
+#    include "item_serial.h"
 #    include "json.h"
 #    include "mcp_server.h"
 #    include "mcp_socket.h"
 #    include "messages.h"
+#    include "player_helpers.h"
 #    include "rng.h"
 
 #    include <algorithm>
@@ -22,6 +25,8 @@
 #    include <fstream>
 #    include <functional>
 #    include <limits>
+#    include <map>
+#    include <nlohmann/json.hpp>
 #    include <sstream>
 #    include <string>
 #    include <thread>
@@ -1013,6 +1018,97 @@ TEST_CASE("overmap cells are a passive read of any overmap level", "[engine_clie
         CHECK(contains(out, std::string(R"("id":)") + id + R"(,"error")"));
     }
     CHECK(count_of(out, R"("kind":"validation_failed")") == 6);
+    CHECK(test.authority.at() == before);
+    CHECK(rng_get_engine() == rng);
+}
+
+TEST_CASE(
+    "a panel is a passive read of a screen with nothing to invoke", "[engine_client_server]") {
+    clear_avatar();
+    auto& you = get_avatar();
+    const auto knife = game_client::item_row_id(you.i_add(item::spawn(itype_id("knife_combat"))));
+    const auto rock = game_client::item_row_id(you.i_add(item::spawn(itype_id("rock"))));
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    const auto before = test.authority.at();
+    const auto rng = rng_get_engine();
+    const auto epoch = test.authority.epoch();
+    const auto panel =
+        [&](const std::string& id, const std::string& name, const std::string& rest,
+            const std::string& with = {}) {
+            return rpc(
+                "bn.panel.view",
+                R"({"epoch":")" + (with.empty() ? epoch : with) + R"(","panel":")" + name + "\""
+                    + rest + "}",
+                id);
+        };
+    const auto row = [](const std::string& id) { return R"(,"row":")" + id + "\""; };
+    test.pump(
+        hello + panel("3", "character", "") + panel("4", "character", row("skill:melee"))
+        + panel("5", "inventory", row(knife)) + panel("6", "inventory", row(rock))
+        + panel("7", "inventory", row("gone")) + panel("8", "options", "")
+        + panel("9", "character", "", "epoch:old"));
+    auto replies = std::map<int, nlohmann::json>{};
+    auto lines = std::istringstream{test.output.str()};
+    for (auto line = std::string{}; std::getline(lines, line);) {
+        const auto value = nlohmann::json::parse(line, nullptr, false);
+        if (value.is_object() && value.contains("id")) { replies[value["id"].get<int>()] = value; }
+    }
+    const auto screen = [&](const int id) { return replies.at(id).at("result"); };
+    const auto focused = [&](const int id) {
+        return screen(id)["focus"].value("row_id", std::string{});
+    };
+    // Nothing on a panel can be invoked, from the screen or from a component.
+    const auto invocable = [](const nlohmann::json& value) {
+        auto found = false;
+        const auto walk = [&](const auto& self, const nlohmann::json& node) -> void {
+            if (node.is_object()) {
+                found = found || node.contains("select") || node.contains("activate")
+                     || (node.contains("affordances") && !node["affordances"].empty());
+                for (const auto& [key, child] : node.items()) { self(self, child); }
+            } else if (node.is_array()) {
+                for (const auto& child : node) { self(self, child); }
+            }
+        };
+        walk(walk, value);
+        return found;
+    };
+    const auto description = [](const nlohmann::json& value, const std::string& id) {
+        auto found = std::string{};
+        const auto walk = [&](const auto& self, const nlohmann::json& node) -> void {
+            if (node.is_object()) {
+                if (node.value("id", "") == id && node.contains("description")) {
+                    found = node["description"].get<std::string>();
+                }
+                for (const auto& [key, child] : node.items()) { self(self, child); }
+            } else if (node.is_array()) {
+                for (const auto& child : node) { self(self, child); }
+            }
+        };
+        walk(walk, value);
+        return found;
+    };
+    CHECK(screen(3)["screen_id"] == "panel:character");
+    CHECK(screen(3)["kind"] == "character_sheet");
+    CHECK(focused(3) == "stat:str");
+    CHECK_FALSE(invocable(screen(3)));
+    // The focused row puts its tab in front.
+    CHECK(screen(4)["focus"]["component_id"] == "character:skills:rows");
+    CHECK(focused(4) == "skill:melee");
+    CHECK(screen(5)["screen_id"] == "panel:inventory");
+    CHECK(screen(5)["kind"] == "inventory");
+    CHECK_FALSE(invocable(screen(5)));
+    // The inventory describes the item under its cursor only.
+    CHECK(focused(5) == knife);
+    CHECK_FALSE(description(screen(5), knife).empty());
+    CHECK(description(screen(5), rock).empty());
+    CHECK(focused(6) == rock);
+    CHECK_FALSE(description(screen(6), rock).empty());
+    // A row that is gone leaves the cursor where the screen opens.
+    CHECK(screen(7)["screen_id"] == "panel:inventory");
+    CHECK(replies.at(8)["error"]["data"]["kind"] == "validation_failed");
+    CHECK(replies.at(9)["error"]["data"]["kind"] == "stale_epoch");
     CHECK(test.authority.at() == before);
     CHECK(rng_get_engine() == rng);
 }
