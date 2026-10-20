@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <limits>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -310,8 +311,13 @@ class time_duration
         template<typename T>
         friend constexpr T to_moves( const time_duration &duration ) {
             const auto moves = to_turns<std::int64_t>( duration ) * 100;
-            return static_cast<T>( std::clamp<std::int64_t>( moves, std::numeric_limits<T>::lowest(),
-                                   std::numeric_limits<T>::max() ) );
+            // A floating point range does not fit in std::int64_t; only integers saturate.
+            if constexpr( std::is_floating_point_v<T> ) {
+                return static_cast<T>( moves );
+            } else {
+                return static_cast<T>( std::clamp<std::int64_t>( moves, std::numeric_limits<T>::lowest(),
+                                       std::numeric_limits<T>::max() ) );
+            }
         }
         /**@{*/
 
