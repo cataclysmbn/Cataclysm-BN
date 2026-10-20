@@ -2333,6 +2333,8 @@ class Character : public Creature, public location_visitable<Character>
 
         bool knows_recipe( const recipe *rec ) const;
         void learn_recipe( const recipe *rec );
+        /// Forgets every recipe but those the current skills teach, as a new character with them knows.
+        auto forget_recipes() -> void;
         bool can_learn_by_disassembly( const recipe &rec ) const;
 
         /** Checks permanent morale for consistency and recovers it when an inconsistency is found. */

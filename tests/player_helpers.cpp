@@ -83,6 +83,9 @@ void clear_character(player& dummy, bool debug_storage) {
     dummy.environmental_revert_effect();
 
     dummy.clear_skills();
+    // Losing a skill unlearns nothing, so the recipes earlier skills or tests taught are forgotten
+    // here.
+    dummy.forget_recipes();
     dummy.clear_morale();
     dummy.activity->set_to_null();
     // Make sure any lingering safe references from the activity are removed
