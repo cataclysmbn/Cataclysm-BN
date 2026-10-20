@@ -152,7 +152,9 @@ std::string name_season( season_type s );
 const extern time_point &start_of_cataclysm;
 const extern time_point &start_of_game;
 const extern season_type &initial_season;
-extern time_point turn;
+/// The current turn. A pool task reads the turn it was submitted on, so work that outlives a turn
+/// sees the turn it started in.
+extern thread_local constinit time_point turn;
 
 extern calendar_config config;
 

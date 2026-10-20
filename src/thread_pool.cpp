@@ -4,6 +4,7 @@
 #include <functional>
 #include <thread>
 
+#include "calendar.h"
 #include "crash.h"
 #include "options.h"
 #include "rng.h"
@@ -77,9 +78,14 @@ auto cata_thread_pool::worker_loop( const unsigned int worker_index ) -> void
 
 void cata_thread_pool::submit( std::function<void()> task )
 {
+    // The task reads the turn it was submitted on, however long it runs.
+    auto at_turn = [turn = calendar::turn, task = std::move( task )]() {
+        calendar::turn = turn;
+        task();
+    };
     {
         std::lock_guard<std::mutex> lock( mutex_ );
-        queue_.push_back( std::move( task ) );
+        queue_.push_back( std::move( at_turn ) );
     }
     cv_.notify_one();
 }
