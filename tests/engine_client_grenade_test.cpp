@@ -15,6 +15,7 @@
 #include "map_helpers.h"
 #include "map_perception.h"
 #include "monster.h"
+#include "options.h"
 #include "options_helpers.h"
 #include "ranged.h"
 #include "rng.h"
@@ -222,7 +223,8 @@ TEST_CASE("a thrown grenade publishes its events in causal order", "[engine_clie
     CHECK(first_of(types, "sound.heard", bang) < types.size());
 }
 
-TEST_CASE("a grenade out of sight publishes none of its events", "[engine_client_grenade]") {
+TEST_CASE(
+    "a grenade out of sight publishes only what the avatar hears", "[engine_client_grenade]") {
     clear_all_state();
     build_test_map(ter_id("t_floor"));
     auto& here = get_map();
@@ -252,7 +254,17 @@ TEST_CASE("a grenade out of sight publishes none of its events", "[engine_client
     }
     const auto facts = presentation::take();
     presentation::collect(false);
-    CHECK(facts.empty());
+    const auto types = types_of(facts);
+    CAPTURE(types);
+    // The zombie dies in the blast; the native player plays its death at the volume the avatar
+    // hears it from there, with no direction. Nothing else of the grenade reaches the avatar.
+    const auto heard =
+        sfx::get_heard_volume(far_away, 75) * get_option<int>("SOUND_EFFECT_VOLUME") / 100;
+    CHECK(heard > 0);
+    const auto death = presentation_value{
+        .type = "sound.played",
+        .sound = sound_cue{.id = "mon_death", .variant = "zombie_death", .volume = heard}};
+    CHECK(facts == std::vector{death});
 }
 
 TEST_CASE(
