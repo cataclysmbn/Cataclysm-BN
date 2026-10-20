@@ -1907,6 +1907,54 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "world capture draws a vehicle's roof only over the level the view looks at",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& here = get_map();
+    const auto restore_terrain = restore_on_out_of_scope<catacurses::window>(g->w_terrain);
+    const auto restore_offset = restore_on_out_of_scope<tripoint_rel_ms>(get_avatar().view_offset);
+    g->w_terrain = catacurses::newwin(9, 15, point(2, 1));
+    // A platform one level up, ringed by open air, over a roofed car.
+    for (const auto y : std::views::iota(-8, 9)) {
+        for (const auto x : std::views::iota(-8, 9)) {
+            const auto platform = std::abs(x) <= 1 && std::abs(y) <= 1;
+            here.ter_set(setup.start + tripoint(x, y, 1),
+                         ter_id(platform ? "t_floor" : "t_open_air"));
+        }
+    }
+    // Room for the car west of the scene.
+    for (const auto y : std::views::iota(-6, 7)) {
+        for (const auto x : std::views::iota(-14, -6)) {
+            here.ter_set(setup.start + tripoint(x, y, 0), ter_id("t_floor"));
+        }
+    }
+    auto* const car = here.add_vehicle(
+        vproto_id("car"), setup.start + tripoint(-6, 2, 0), 0_degrees, 0, 0, false);
+    REQUIRE(car != nullptr);
+    step_to(setup.start + tripoint_above);
+    // The avatar looks down a level: the car stands on the level shown, so no part of it is its
+    // roof.
+    get_avatar().view_offset.z() = -1;
+    map_perception::acquire();
+    const auto lower = ec::world::capture_world();
+    auto shown = 0;
+    for (const auto& square : car->get_points()) {
+        const auto* cell = find_cell(lower, at(abs_to_map_local(here, square)));
+        if (cell == nullptr || !cell->vehicle) { continue; }
+        ++shown;
+        CAPTURE(square);
+        CHECK(cell->vehicle->id != std::optional<std::string>{"roof"});
+    }
+    CHECK(shown > 0);
+    here.destroy_vehicle(car);
+    for (const auto y : std::views::iota(-8, 9)) {
+        for (const auto x : std::views::iota(-8, 9)) {
+            here.ter_set(setup.start + tripoint(x, y, 1), ter_id("t_open_air"));
+        }
+    }
+}
+
+TEST_CASE(
     "world capture shows the level the view looks at, with what open air on it is drawn from",
     "[engine_client_world]") {
     const auto setup = make_scene();
