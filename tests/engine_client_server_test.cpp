@@ -28,6 +28,7 @@
 #    include <map>
 #    include <nlohmann/json.hpp>
 #    include <sstream>
+#    include <stdexcept>
 #    include <string>
 #    include <thread>
 #    include <vector>
@@ -1169,6 +1170,12 @@ TEST_CASE("a panel sends every row of a list longer than a page", "[engine_clien
     };
     count(count, screen);
     CHECK(rows > 200);
+}
+
+TEST_CASE("a contract recording that cannot be written is refused", "[engine_client_server]") {
+    auto authority = session{};
+    CHECK_THROWS_AS(
+        authority.record_to("test_user_dir/no such directory/recording.jsonl"), std::runtime_error);
 }
 
 TEST_CASE("a registered action is submittable as a command", "[engine_client_server]") {
