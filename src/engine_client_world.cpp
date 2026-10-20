@@ -337,12 +337,18 @@ auto vehicle_part_at( const map &here, const tripoint_bub_ms &p, const avatar &y
     if( !vp ) { return std::nullopt; }
     const auto &veh = vp->vehicle();
     // The native view draws the roof over a part below the level it draws, unless a creature stands there or the
-    // part shows over its roof.
+    // part shows over its roof. Only a creature the avatar sees lifts it, so the look does not give an unseen one away.
     const auto displayed = vp.part_displayed();
-    const auto under_roof = displayed && !displayed->has_feature( VPFLAG_ROOF ) &&
-                            displayed->info().location != "on_roof" && !displayed->info().has_flag( "NO_ROOF_NEEDED" ) &&
-                            veh.roof_at_part( static_cast<int>( displayed->part_index() ) ) >= 0;
-    const auto roof = p.z() < shown_level( you ) && g->critter_at( p, true ) == nullptr && under_roof;
+    const auto under_roof = [&] {
+        return displayed && !displayed->has_feature( VPFLAG_ROOF ) && displayed->info().location != "on_roof" &&
+        !displayed->info().has_flag( "NO_ROOF_NEEDED" ) &&
+        veh.roof_at_part( static_cast<int>( displayed->part_index() ) ) >= 0;
+    };
+    const auto seen_creature = [&] {
+        const auto *critter = g->critter_at( p, true );
+        return critter != nullptr && you.sees( *critter );
+    };
+    const auto roof = p.z() < shown_level( you ) && under_roof() && !seen_creature();
     auto modifier = char{};
     const auto &part = veh.part_id_string( vp->part_index(), roof, modifier );
     const auto facing = veh.part_display_direction( vp->part_index(), roof );
