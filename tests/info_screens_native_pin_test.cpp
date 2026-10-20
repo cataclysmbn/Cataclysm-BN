@@ -22,6 +22,7 @@
 #    include "npc.h"
 #    include "output.h"
 #    include "player_helpers.h"
+#    include "rng.h"
 #    include "scores_ui.h"
 #    include "state_helpers.h"
 #    include "stats_tracker.h"
@@ -696,6 +697,8 @@ TEST_CASE("the native mission list keeps its text and colors", "[info_native_pin
 }
 
 TEST_CASE("the native faction manager keeps its text and colors", "[info_native_pin]") {
+    // The follower's gender, gear and skills are random: the screens are recorded for one seed.
+    rng_set_engine_seed(424242);
     const auto guard = screen_guard{};
     auto& you = get_avatar();
     you.set_knows_creature_type(mtype_id("mon_zombie"));
