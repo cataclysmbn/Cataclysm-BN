@@ -40,6 +40,10 @@
       "params": "world_cells_params",
       "result": "overmap"
     },
+    "bn.panel.view": {
+      "params": "panel_params",
+      "result": "screen"
+    },
     "bn.command.submit": {
       "params": "submit_params",
       "result": "submit_result"
@@ -4549,6 +4553,28 @@
         }
       ],
       "description": "With `component_id`: the rows of that list from `offset`, and its total. Without: the 0.1 choices."
+    },
+    "panel_params": {
+      "type": "object",
+      "properties": {
+        "epoch": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "panel": {
+          "enum": [
+            "character",
+            "inventory"
+          ]
+        },
+        "row": {
+          "$ref": "#/$defs/opaque_id"
+        }
+      },
+      "required": [
+        "epoch",
+        "panel"
+      ],
+      "additionalProperties": false
     },
     "world_cells_params": {
       "type": "object",

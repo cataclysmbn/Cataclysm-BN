@@ -1,5 +1,6 @@
 #include "mcp_server.h"
 #include "engine_client_component.h"
+#include "engine_client_panels.h"
 #include "engine_client_schema.h"
 #include "engine_client_world.h"
 
@@ -1009,6 +1010,19 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         const auto wire = serialize_overmap( overmap_ui::known_squares(
                 tripoint_abs_omt( low.x, low.y, low.z ), tripoint_abs_omt( high.x, high.y, high.z ),
                 game_client::overmap_tiles() ) );
+        if( wire.size() > maximum_inline_bytes ) { return fail( error::resource_limit ); }
+        return rpc::make_result( request, wire );
+    }
+    if( request.method == "bn.panel.view" ) {
+        const auto words = localization::locale_scope{ locale_ };
+        const auto decoded = decode_panel_request( params );
+        if( !decoded ) { return invalid(); }
+        const auto current = session_.current();
+        if( !current ) { return fail( current.error() ); }
+        if( decoded->epoch != current->at.epoch ) { return fail( error::stale_epoch ); }
+        const auto view = panel_view( *decoded );
+        if( !view ) { return fail( view.error() ); }
+        const auto wire = serialize_screen_view( *view );
         if( wire.size() > maximum_inline_bytes ) { return fail( error::resource_limit ); }
         return rpc::make_result( request, wire );
     }

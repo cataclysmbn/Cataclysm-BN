@@ -1,4 +1,5 @@
 #include "engine_client_wire.h"
+#include "engine_client_panels.h"
 
 #include <algorithm>
 #include <charconv>
@@ -300,6 +301,13 @@ auto read_request( const json &value, cells_request &result ) -> void
     result.min = read_position( value.at( "min" ) );
     result.max = read_position( value.at( "max" ) );
 }
+auto read_request( const json &value, panel_request &result ) -> void
+{
+    members( value, {"epoch", "panel"}, {"row"} );
+    result.epoch = id( value, "epoch" );
+    result.panel = id( value, "panel" );
+    if( value.contains( "row" ) ) { result.row = id( value, "row" ); }
+}
 auto read_request( const json &value, command_request &result ) -> void
 {
     members( value, {"epoch", "expect", "operation"} );
@@ -384,6 +392,8 @@ std::expected<describe_request, decode_error>
 auto decode_cells_request( std::string_view input ) ->
 std::expected<cells_request, decode_error>
 { return decode<cells_request>( input ); }
+auto decode_panel_request( std::string_view input ) -> std::expected<panel_request, decode_error>
+{ return decode<panel_request>( input ); }
 auto decode_command_request( std::string_view input ) ->
 std::expected<command_request, decode_error>
 { return decode<command_request>( input ); }

@@ -55,6 +55,20 @@ export const character: Scenario = {
       await engine.choose("entry:0")
       await engine.acknowledge(() => engine.mirror.interaction.interaction === null)
 
+      // The sheet read as a panel while the map stays on top, as a client's window of its own shows it.
+      const stack = JSON.stringify(engine.mirror.interaction.stack)
+      const asked = { epoch: engine.mirror.at.epoch, panel: "character", row: "skill:melee" }
+      const panel = await engine.result("bn.panel.view", asked)
+      rec.accept("character panel query", "panel_params", asked)
+      rec.accept("character panel", "screen", panel)
+      assertEquals(panel.screen_id, "panel:character")
+      assertEquals(panel.affordances, [])
+      assertEquals(part(panel, "character:tabs").select, undefined)
+      assertEquals(panel.focus, { component_id: "character:skills:rows", row_id: "skill:melee" })
+      assertEquals(JSON.stringify(engine.mirror.interaction.stack), stack)
+      const unknown = await engine.request("bn.panel.view", { ...asked, panel: "options" })
+      assertEquals(unknown.error.data.kind, "validation_failed")
+
       // The sheet.
       assertEquals(
         (await engine.submit({ kind: "action", action_id: "player_data" })).stages.at(-1),
@@ -72,9 +86,9 @@ export const character: Scenario = {
       assertEquals(tab.stages.at(-1), "completed")
       rec.command("sheet tab picked", tab)
       assert(part(engine.top(), "character:tabs").tabs[2].selected, "the picked tab is selected")
-      const unknown = await engine.invoke("character:tab", { row: "nowhere" })
-      assertEquals(unknown.error, "invalid_arguments")
-      rec.command("sheet tab the sheet does not hold", unknown)
+      const nowhere = await engine.invoke("character:tab", { row: "nowhere" })
+      assertEquals(nowhere.error, "invalid_arguments")
+      rec.command("sheet tab the sheet does not hold", nowhere)
       const skills = part(engine.top(), "character:skills:rows").rows
       const skill = skills.find((row: Value) => !row.header)
       assert(skill, "a skill row")

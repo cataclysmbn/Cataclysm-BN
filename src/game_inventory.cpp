@@ -14,6 +14,8 @@
 #include "cursesdef.h"
 #include "damage.h"
 #include "debug.h"
+#include "engine_client_component.h"
+#include "engine_client_panels.h"
 #include "enums.h"
 #include "examine_item_menu.h"
 #include "flag.h"
@@ -122,6 +124,16 @@ class common_inventory_selector : public inventory_pick_selector
 
         [[nodiscard]] auto selected_unload_all() const -> bool {
             return unload_all_selected;
+        }
+
+        /// The screen as it opens, with the cursor on `row` when the selector has it.
+        auto passive_view( const std::string &row ) -> engine_client::screen_view {
+            const auto rows = interaction_rows();
+            const auto found = std::ranges::find( rows, row, &interaction_row::id );
+            if( found != rows.end() && found->entry != nullptr ) {
+                select( found->entry->any_item() );
+            }
+            return interaction_view();
         }
 
     protected:
@@ -263,14 +275,30 @@ static item *inv_internal( player &u, const inventory_selector_preset &preset,
     } while( true );
 }
 
-void game_menus::inv::common( avatar &you )
+namespace
 {
-    common_inventory_selector inv_s( you );
-
+auto title_common( common_inventory_selector &inv_s, const avatar &you ) -> void
+{
     inv_s.set_title( _( "Inventory" ) );
     inv_s.set_hint( string_format(
                         _( "Item hotkeys assigned: <color_light_gray>%d</color>/<color_light_gray>%d</color>" ),
                         you.allocated_invlets().count(), inv_chars.size() ) );
+}
+} // namespace
+
+auto game_menus::inv::passive_inventory( avatar &you,
+        const std::string &row ) -> engine_client::screen_view
+{
+    auto inv_s = common_inventory_selector( you );
+    title_common( inv_s, you );
+    inv_s.add_character_items( you );
+    return inv_s.passive_view( row );
+}
+
+void game_menus::inv::common( avatar &you )
+{
+    common_inventory_selector inv_s( you );
+    title_common( inv_s, you );
 
     bool started_action = false;
     do {

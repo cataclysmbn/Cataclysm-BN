@@ -1,6 +1,7 @@
 #include "engine_client_component.h"
 #include "engine_client_contract.h"
 #include "engine_client_event.h"
+#include "engine_client_panels.h"
 #include "string_formatter.h"
 #include "translations.h"
 
@@ -911,6 +912,8 @@ auto serialize_overmap( const game_client::interaction_overmap &squares ) -> std
 {
     return overmap_json( squares ).dump();
 }
+// A panel shows no map, so it needs no frame of one.
+auto serialize_screen_view( const screen_view &view ) -> std::string { return to_json( view, bubble_frame{} ).dump(); }
 auto serialize_rows( const rows_page &page ) -> std::string
 {
     return json{{"boundary_id", page.boundary_id}, {"component_id", page.component_id},

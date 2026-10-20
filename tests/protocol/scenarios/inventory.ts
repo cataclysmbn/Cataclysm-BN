@@ -71,6 +71,22 @@ export const inventory: Scenario = {
         "completed",
       )
       assertEquals(engine.top().role, "map")
+      // The inventory read as a panel while the map stays on top; it describes the row it is asked about.
+      const asked = { epoch: engine.mirror.at.epoch, panel: "inventory" }
+      const panel = await engine.result("bn.panel.view", asked)
+      rec.accept("inventory panel", "screen", panel)
+      assertEquals(panel.screen_id, "panel:inventory")
+      assertEquals(panel.affordances, [])
+      const held = walk(panel.root).filter((component) => component.kind === "list")
+        .flatMap((component) => component.rows).filter((row: Value) => !row.header)
+      const last = held.at(-1)
+      assert(last, "the panel lists the avatar's items")
+      const described = await engine.result("bn.panel.view", { ...asked, row: last.id })
+      assertEquals(described.focus.row_id, last.id)
+      const row = walk(described.root).flatMap((component) => component.rows ?? [])
+        .find((entry: Value) => entry.id === last.id)
+      assert(row.description, "the focused row is described")
+      assertEquals(engine.top().role, "map")
       const opened = await engine.invoke("drop")
       assertEquals(opened.stages.at(-1), "completed", JSON.stringify(opened))
       const screen = engine.top()

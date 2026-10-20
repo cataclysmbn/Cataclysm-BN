@@ -37,6 +37,7 @@ title: エンジン/クライアントプロトコル 0.2
 | `bn.world.describe`      | `epoch`, `boundary_id`, `pos`                              | `lines`(読み取り専用)                                                                            |
 | `bn.world.cells`         | `epoch`, `min`, `max`                                      | `at`, `cells`, `forgotten` (読み取り専用)                                                        |
 | `bn.overmap.cells`       | `epoch`, `min`, `max`                                      | `overmap` オーバーマップ 1 階層のマス、カーソルとは無関係 (読み取り専用)                         |
+| `bn.panel.view`          | `epoch`, `panel` (`character` または `inventory`), `row?`  | アバターに開いたときの `screen`、`row` にフォーカス、実行できるものなし (読み取り専用)           |
 | `bn.command.submit`      | `epoch`, `expect`, `operation`                             | `command_id`, `stage: "received"`                                                                |
 | `bn.command.result`      | `epoch`, `command_id`                                      | 最新のステージ。失われた通知の回復に使う                                                         |
 | `bn.credit`              | `frames`                                                   | 付与後の保有 `credits`                                                                           |

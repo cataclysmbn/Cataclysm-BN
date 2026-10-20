@@ -12,6 +12,7 @@
 #include "debug.h"
 #include "effect.h"
 #include "engine_client_component.h"
+#include "engine_client_panels.h"
 #include "engine_client_requirements.h"
 #include "enum_conversions.h"
 #include "game.h"
@@ -1778,11 +1779,23 @@ static std::pair<unsigned, unsigned> calculate_shared_column_win_height(
     return std::make_pair( first_win_size_y_max, second_win_size_y_max );
 }
 
-void character_display::disp_info( Character &ch )
+namespace
+{
+/// What the character sheet lists, gathered from `ch` as the native sheet opens; nothing is changed.
+struct sheet_data {
+    std::vector<effect_line> effects;
+    std::vector<trait_id> traits;
+    std::vector<std::pair<bionic, int>> bionics;
+    std::vector<HeaderSkill> skills;
+    std::string race;
+    std::map<std::string, speed_effect> speed_effects;
+};
+
+auto gather_sheet( const Character &ch ) -> sheet_data
 {
     std::vector<effect_line> effect_name_and_text;
-    for( auto &elem : ch.get_all_effects() ) {
-        for( auto &_effect_it : elem.second ) {
+    for( const auto &elem : ch.get_all_effects() ) {
+        for( const auto &_effect_it : elem.second ) {
             const std::string tmp = _effect_it.second.disp_name();
             if( _effect_it.second.is_removed() || tmp.empty() ) {
                 continue;
@@ -1861,11 +1874,8 @@ void character_display::disp_info( Character &ch )
         }
     }
 
-    const unsigned int effect_win_size_y_max = 1 + static_cast<unsigned>( effect_name_and_text.size() );
-
     std::vector<trait_id> traitslist = ch.get_mutations( false );
     std::ranges::sort( traitslist, trait_display_sort );
-    const unsigned int trait_win_size_y_max = 1 + static_cast<unsigned>( traitslist.size() );
 
     std::multimap<bionic_id, bionic> bionics_map;
     for( const auto &elem : *ch.my_bionics ) {
@@ -1891,7 +1901,6 @@ void character_display::disp_info( Character &ch )
         constexpr auto less = bionic_sort_less{ bionic_ui_sort_mode::NAME };
         return less( a.first, b.first );
     } );
-    const unsigned int bionics_win_size_y_max = 2 + bionics_list.size();
 
     const std::vector<const Skill *> player_skill = Skill::get_skills_sorted_by(
     [&]( const Skill & a, const Skill & b ) {
@@ -1911,14 +1920,6 @@ void character_display::disp_info( Character &ch )
         }
         skillslist.emplace_back( s, false );
     }
-    const unsigned int skill_win_size_y_max = 1 + skillslist.size();
-    const unsigned int info_win_size_y = 6;
-
-    const unsigned int grid_width = 26;
-    const unsigned int grid_height = 9;
-
-    const unsigned int infooffsetytop = grid_height + 2;
-    unsigned int infooffsetybottom = infooffsetytop + 1 + info_win_size_y;
 
     // Print name and header
     // Post-humanity trumps your pre-Cataclysm life
@@ -1934,20 +1935,10 @@ void character_display::disp_info( Character &ch )
         }
     }
 
-    input_context ctxt( "PLAYER_INFO" );
-    ctxt.register_updown();
-    ctxt.register_action( "NEXT_TAB", to_translation( "Cycle to next category" ) );
-    ctxt.register_action( "PREV_TAB", to_translation( "Cycle to previous category" ) );
-    ctxt.register_action( "QUIT" );
-    ctxt.register_action( "CONFIRM", to_translation( "Toggle skill training / Upgrade stat" ) );
-    ctxt.register_action( "CHANGE_PROFESSION_NAME", to_translation( "Change profession name" ) );
-    ctxt.register_action( "CHANGE_NAME", to_translation( "Change name" ) );
-    ctxt.register_action( "HELP_KEYBINDINGS" );
-
     std::map<std::string, speed_effect> speed_effects;
-    for( auto &elem : ch.get_all_effects() ) {
-        for( std::pair<const bodypart_str_id, effect> &_effect_it : elem.second ) {
-            effect &it = _effect_it.second;
+    for( const auto &elem : ch.get_all_effects() ) {
+        for( const auto &_effect_it : elem.second ) {
+            const effect &it = _effect_it.second;
             bool reduced = ch.resists_effect( it );
             int move_adjust = it.get_mod( "SPEED", reduced );
             if( move_adjust != 0 ) {
@@ -1960,6 +1951,70 @@ void character_display::disp_info( Character &ch )
             }
         }
     }
+
+    return { .effects = std::move( effect_name_and_text ), .traits = std::move( traitslist ),
+             .bionics = std::move( bionics_list ), .skills = std::move( skillslist ), .race = std::move( race ),
+             .speed_effects = std::move( speed_effects ) };
+}
+} // namespace
+
+auto character_display::passive_sheet( const Character &you,
+                                       const std::string &row ) -> ec::screen_view
+{
+    const auto sheet = gather_sheet( you );
+    auto tab = player_display_tab::stats;
+    auto line = 0u;
+    // A passive read runs no hook, so the focused skill is described by its own text.
+    auto description = std::string{};
+    const auto model = sheet_model{
+        .you = you, .tab = tab, .line = line, .race = sheet.race, .traits = sheet.traits, .bionics = sheet.bionics,
+        .effects = sheet.effects, .skills = sheet.skills, .skill_description = description,
+        .speed_effects = sheet.speed_effects,
+    };
+    for( const auto shown : all_tabs ) {
+        const auto ids = row_ids( model, shown );
+        if( const auto found = std::ranges::find( ids, row ); found != ids.end() ) {
+            tab = shown;
+            line = static_cast<unsigned>( found - ids.begin() );
+            break;
+        }
+    }
+    if( tab == player_display_tab::skills ) {
+        description = sheet.skills[focused_line( model )].skill->description();
+    }
+    return sheet_view( model );
+}
+
+void character_display::disp_info( Character &ch )
+{
+    const auto sheet = gather_sheet( ch );
+    const auto &effect_name_and_text = sheet.effects;
+    const auto &traitslist = sheet.traits;
+    const auto &bionics_list = sheet.bionics;
+    const auto &skillslist = sheet.skills;
+    const auto &race = sheet.race;
+    const auto &speed_effects = sheet.speed_effects;
+    const unsigned int effect_win_size_y_max = 1 + static_cast<unsigned>( effect_name_and_text.size() );
+    const unsigned int trait_win_size_y_max = 1 + static_cast<unsigned>( traitslist.size() );
+    const unsigned int bionics_win_size_y_max = 2 + bionics_list.size();
+    const unsigned int skill_win_size_y_max = 1 + skillslist.size();
+    const unsigned int info_win_size_y = 6;
+
+    const unsigned int grid_width = 26;
+    const unsigned int grid_height = 9;
+
+    const unsigned int infooffsetytop = grid_height + 2;
+    unsigned int infooffsetybottom = infooffsetytop + 1 + info_win_size_y;
+
+    input_context ctxt( "PLAYER_INFO" );
+    ctxt.register_updown();
+    ctxt.register_action( "NEXT_TAB", to_translation( "Cycle to next category" ) );
+    ctxt.register_action( "PREV_TAB", to_translation( "Cycle to previous category" ) );
+    ctxt.register_action( "QUIT" );
+    ctxt.register_action( "CONFIRM", to_translation( "Toggle skill training / Upgrade stat" ) );
+    ctxt.register_action( "CHANGE_PROFESSION_NAME", to_translation( "Change profession name" ) );
+    ctxt.register_action( "CHANGE_NAME", to_translation( "Change name" ) );
+    ctxt.register_action( "HELP_KEYBINDINGS" );
 
     border_helper borders;
 

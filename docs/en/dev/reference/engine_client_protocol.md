@@ -37,6 +37,7 @@ Collect the `parts` snapshot parts, then apply `bn.events` in order. A gap, an e
 | `bn.world.describe`      | `epoch`, `boundary_id`, `pos`                              | `lines` (reads only)                                                                             |
 | `bn.world.cells`         | `epoch`, `min`, `max`                                      | `at`, `cells`, `forgotten` (reads only)                                                          |
 | `bn.overmap.cells`       | `epoch`, `min`, `max`                                      | `overmap` squares of an overmap level, whatever the cursor (reads only)                          |
+| `bn.panel.view`          | `epoch`, `panel` (`character` or `inventory`), `row?`      | the `screen` as it opens on the avatar, `row` focused, with nothing to invoke (reads only)       |
 | `bn.command.submit`      | `epoch`, `expect`, `operation`                             | `command_id`, `stage: "received"`                                                                |
 | `bn.command.result`      | `epoch`, `command_id`                                      | latest stage, for recovering a lost notification                                                 |
 | `bn.credit`              | `frames`                                                   | `credits` held after the grant                                                                   |
