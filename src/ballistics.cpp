@@ -34,6 +34,7 @@
 #include "monster.h"
 #include "mtype.h"
 #include "options.h"
+#include "presentation_sink.h"
 #include "projectile.h"
 #include "rng.h"
 #include "sounds.h"
@@ -309,8 +310,8 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
                         Creature *origin, item *source_weapon, const vehicle *in_veh,
                         const bool suppress_damage_messages ) -> dealt_projectile_attack
 {
-    const bool do_animation = get_option<bool>( "ANIMATION_PROJECTILES" ) &&
-                              projectile_animation_suppression_depth == 0;
+    // A multishot presents its pellets together once they all flew.
+    const auto emits_flight = projectile_animation_suppression_depth == 0;
 
     const auto flight = engine_client::presentation::flight_scope{};
     double range = rl_dist( source, target_arg );
@@ -515,10 +516,13 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
 
         // Drawing the bullet uses player g->u, and not player p, because it's drawn
         // relative to YOUR position, which may not be the gunman's position.
-        if( do_animation && !do_draw_line ) {
+        if( emits_flight && !do_draw_line ) {
             // TODO: Make this draw thrown item/launched grenade/arrow
-            if( projectile_skip_current_frame >= projectile_skip_calculation ) {
-                g->draw_bullet( tp, static_cast<int>( i ), trajectory, bullet, custom_bullet_sprite );
+            const auto skipped = projectile_skip_current_frame < projectile_skip_calculation;
+            presentation::emit( game_client::bullet_animation_options{
+                .position = tp, .index = static_cast<int>( i ), .trajectory = &trajectory,
+                .bullet = bullet, .custom_sprite = custom_bullet_sprite, .skipped = skipped } );
+            if( !skipped ) {
                 projectile_skip_current_frame = 0;
                 // If we missed recalculate the skip factor so they spread out.
                 projectile_skip_calculation =
@@ -676,12 +680,12 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
     attack.hit_critter = last_hit_critter;
     attack.trajectory.assign( trajectory.begin(), trajectory.begin() + traj_len );
 
-    if( do_animation && do_draw_line && traj_len > 2 ) {
+    if( emits_flight && do_draw_line && traj_len > 2 ) {
         trajectory.erase( trajectory.begin() );
         trajectory.resize( traj_len-- );
         auto should_rotate = is_thrown && thrown_item &&
                              !thrown_item->has_flag( flag_FLY_STRAIGHT );
-        draw_line_of( {
+        presentation::emit( draw_sprite_line_options{
             .p = tp,
             .points = trajectory,
             .sprite = custom_bullet_sprite,

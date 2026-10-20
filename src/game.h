@@ -820,8 +820,6 @@ class game : public submap_load_listener
         void knockback( std::vector<tripoint_bub_ms> &traj, int stun, int dam_mult, Creature *source );
 
         // Animation related functions
-        void draw_bullet( const tripoint_bub_ms &t, int i, const std::vector<tripoint_bub_ms> &trajectory,
-        char bullet, const std::string &custom_sprite = {} );
         void draw_hit_mon( const tripoint_bub_ms &p, const monster &m, bool dead = false );
         void draw_hit_player( const Character &p, int dam );
         void draw_line( const tripoint_bub_ms &p, const tripoint_bub_ms &center_point,

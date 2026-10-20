@@ -11,10 +11,10 @@
 #include "enums.h"
 #include "game.h"
 #include "game_constants.h"
+#include "input.h"
 #include "line.h"
 #include "map/map.h"
-#include "map/mapdata.h"
-#include "map_memory.h"
+#include "map_perception.h"
 #include "monster.h"
 #include "mtype.h"
 #include "options.h"
@@ -22,6 +22,7 @@
 #include "point.h"
 #include "popup.h"
 #include "posix_time.h"
+#include "presentation_sink.h"
 #include "ranged.h"
 #include "translations.h"
 #include "travel/travel_destination.h"
@@ -30,11 +31,14 @@
 #include "weather/weather.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <list>
 #include <map>
+#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace
@@ -386,24 +390,6 @@ void draw_bullet_curses( map &m, const tripoint_bub_ms &t, const char bullet,
     bullet_animation().progress();
 }
 
-} // namespace
-
-void game::draw_bullet( const tripoint_bub_ms &t, const int i,
-                        const std::vector<tripoint_bub_ms> &trajectory, const char bullet,
-                        const std::string &custom_sprite )
-{
-    engine_client::presentation::record_bullet( { .at = t, .index = i, .bullet = bullet,
-            .custom_sprite = custom_sprite } );
-    refresh_player_visibility_cache_if_needed();
-    if( !game_client::animation().draw_bullet( { .position = t, .index = i,
-            .trajectory = &trajectory, .bullet = bullet, .custom_sprite = custom_sprite } ) ) {
-        draw_bullet_curses( m, t, bullet, &trajectory[i] );
-    }
-}
-
-namespace
-{
-
 auto get_longest_trajectory_size( const std::vector<std::vector<tripoint_bub_ms>> &trajectories ) ->
 size_t
 {
@@ -463,24 +449,6 @@ auto draw_bullet_trajectories_curses( game &g,
     }
 }
 
-} // namespace
-
-void draw_bullet_trajectories( const draw_bullet_trajectories_options &options )
-{
-    if( options.trajectories.empty() ) {
-        return;
-    }
-
-    engine_client::presentation::record_trajectories( options );
-    g->refresh_player_visibility_cache_if_needed();
-
-    if( !game_client::animation().draw_bullet_trajectories( { .trajectories = &options } ) ) {
-        draw_bullet_trajectories_curses( *g, options );
-    }
-}
-
-namespace
-{
 // short visual animation (player, monster, ...) (hit, dodge, ...)
 // cTile is a UTF-8 strings, and must be a single cell wide!
 void hit_animation( const avatar &u, const tripoint_bub_ms &center, nc_color cColor,
@@ -514,9 +482,7 @@ void draw_hit_mon_curses( const tripoint_bub_ms &center, const monster &m, const
 
 void game::draw_hit_mon( const tripoint_bub_ms &p, const monster &m, const bool dead )
 {
-    if( !game_client::animation().draw_hit_mon( { .position = p, .target = &m, .dead = dead } ) ) {
-        draw_hit_mon_curses( p, m, u, dead );
-    }
+    presentation::emit( game_client::hit_mon_animation_options{ .position = p, .target = &m, .dead = dead } );
 }
 
 namespace
@@ -531,9 +497,7 @@ void draw_hit_player_curses( const game &g, const Character &who, const int dam 
 
 void game::draw_hit_player( const Character &p, const int dam )
 {
-    if( !game_client::animation().draw_hit_player( { .position = p.bub_pos(), .target = &p, .damage = dam } ) ) {
-        draw_hit_player_curses( *this, p, dam );
-    }
+    presentation::emit( game_client::hit_player_animation_options{ .position = p.bub_pos(), .target = &p, .damage = dam } );
 }
 
 /* Line drawing code, not really an animation but should be separated anyway */
@@ -594,13 +558,6 @@ void draw_line_curses( game &g, const std::vector<tripoint_bub_ms> &points )
 }
 } //namespace
 
-void draw_line_of( const draw_sprite_line_options &options )
-{
-    engine_client::presentation::record_line( options );
-    if( !game_client::animation().draw_line_of( options ) ) {
-        g->draw_line( options.p, options.points );
-    }
-}
 void game::draw_line( const tripoint_bub_ms &p, const std::vector<tripoint_bub_ms> &points )
 {
     draw_line_curses( *this, points );
@@ -919,4 +876,113 @@ bool minimap_requires_animation()
 bool terrain_requires_animation()
 {
     return game_client::animation().terrain_requires_animation();
+}
+
+namespace
+{
+
+auto registered_sink = std::unique_ptr<presentation::sink> {};
+auto emitted_facts = std::uint64_t { 0 };
+
+auto record( const game_client::bullet_animation_options &step ) -> void
+{
+    engine_client::presentation::record_bullet( { .at = step.position, .index = step.index,
+            .bullet = step.bullet, .custom_sprite = step.custom_sprite } );
+}
+auto record( const draw_bullet_trajectories_options &shots ) -> void
+{
+    engine_client::presentation::record_trajectories( shots );
+}
+auto record( const draw_sprite_line_options &line ) -> void { engine_client::presentation::record_line( line ); }
+/// A client learns of a hit from `entity.damaged`.
+auto record( const auto &/*hit*/ ) -> void {}
+
+auto projectiles_animated() -> bool { return get_option<bool>( "ANIMATION_PROJECTILES" ); }
+
+class native_sink final : public presentation::sink
+{
+    public:
+        auto present( const presentation::fact &shown, const std::uint64_t /*ordinal*/ ) -> void override {
+            std::visit( [this]( const auto & fact ) { draw( fact ); }, shown );
+        }
+
+        auto pace( const game_client::animation_progress_options &options ) -> void override {
+            const auto presenting = map_perception::presentation_scope{};
+            if( options.draw_popup ) {
+                static_popup popup;
+                popup.wait_message( "%s", _( "Hang on a bit…" ) ).on_top( true );
+            }
+            g->invalidate_main_ui_adaptor();
+            ui_manager::redraw_invalidated();
+            refresh_display();
+            auto remaining = static_cast<long int>( get_option<int>( "ANIMATION_DELAY" ) ) *
+                             options.multiplier * 1000000L;
+            while( remaining > 0 ) {
+                const auto sleep_for = std::min( remaining, 100'000'000L );
+                const auto delay = timespec{ 0, sleep_for };
+                nanosleep( &delay, nullptr );
+                inp_mngr.pump_events();
+                remaining -= sleep_for;
+            }
+        }
+
+    private:
+        auto draw( const game_client::bullet_animation_options &step ) -> void {
+            if( step.skipped || !projectiles_animated() ) {
+                return;
+            }
+            g->refresh_player_visibility_cache_if_needed();
+            if( !game_client::animation().draw_bullet( step ) ) {
+                draw_bullet_curses( get_map(), step.position, step.bullet, &( *step.trajectory )[step.index] );
+            }
+        }
+        auto draw( const draw_bullet_trajectories_options &shots ) -> void {
+            if( shots.trajectories.empty() || !projectiles_animated() ) {
+                return;
+            }
+            g->refresh_player_visibility_cache_if_needed();
+            if( !game_client::animation().draw_bullet_trajectories( { .trajectories = &shots } ) ) {
+                draw_bullet_trajectories_curses( *g, shots );
+            }
+        }
+        auto draw( const draw_sprite_line_options &line ) -> void {
+            if( projectiles_animated() && !game_client::animation().draw_line_of( line ) ) {
+                g->draw_line( line.p, line.points );
+            }
+        }
+        auto draw( const game_client::hit_mon_animation_options &hit ) -> void {
+            if( !game_client::animation().draw_hit_mon( hit ) ) {
+                draw_hit_mon_curses( hit.position, *hit.target, g->u, hit.dead );
+            }
+        }
+        auto draw( const game_client::hit_player_animation_options &hit ) -> void {
+            if( !game_client::animation().draw_hit_player( hit ) ) {
+                draw_hit_player_curses( *g, *hit.target, hit.damage );
+            }
+        }
+};
+
+} // namespace
+
+auto presentation::set_sink( std::unique_ptr<sink> replacement ) -> void
+{
+    registered_sink = std::move( replacement );
+}
+
+auto presentation::install_native_sink() -> void { set_sink( std::make_unique<native_sink>() ); }
+
+auto presentation::emit( const fact &emitted ) -> void
+{
+    std::visit( []( const auto & fact ) { record( fact ); }, emitted );
+    const auto ordinal = emitted_facts++;
+    if( registered_sink ) {
+        registered_sink->present( emitted, ordinal );
+    }
+}
+
+auto game_client::progress_animation( const animation_progress_options &options ) -> void
+{
+    if( registered_sink ) {
+        registered_sink->pace( options );
+    }
 }

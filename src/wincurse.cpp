@@ -12,6 +12,7 @@
 #include "cursesdef.h"
 #include "options.h"
 #include "output.h"
+#include "presentation_sink.h"
 #include "color.h"
 #include "catacharset.h"
 #include "get_version.h"
@@ -795,6 +796,7 @@ class windows_backend final : public backend
 {
     public:
         auto native_window_handle() const -> void *override { return WindowHandle; }
+        auto prepare() -> void override { presentation::install_native_sink(); }
         auto initialize() -> void override { windows::initialize_native(); }
         auto shutdown() -> void override { windows::shutdown_native(); }
         auto present() -> void override { windows::present_native(); }

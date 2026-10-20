@@ -60,6 +60,7 @@ bucketed_points optimal_bucketing( const bucketed_points &buckets, size_t max_bu
 bool minimap_requires_animation();
 bool terrain_requires_animation();
 
+/// A line of sprites along the given points.
 struct draw_sprite_line_options {
     const tripoint_bub_ms &p;
     const std::vector<tripoint_bub_ms> &points;
@@ -67,15 +68,11 @@ struct draw_sprite_line_options {
     std::string sprite;
     bool rotate = false;
 };
-/// Draw a line of sprites along the given points
-void draw_line_of( const draw_sprite_line_options &options );
 
+/// Several projectile trajectories in a single animation sequence.
 struct draw_bullet_trajectories_options {
     const std::vector<std::vector<tripoint_bub_ms>> &trajectories;
     char bullet;
     bool draw_as_line = false;
     std::string custom_sprite;
 };
-
-/// Draw multiple projectile trajectories in a single animation sequence.
-void draw_bullet_trajectories( const draw_bullet_trajectories_options &options );

@@ -22,6 +22,7 @@
 #    include "game_ui.h"
 #    include "hsv_color.h"
 #    include "output.h"
+#    include "presentation_sink.h"
 
 #    include <algorithm>
 #    include <array>
@@ -34,7 +35,7 @@
 namespace
 {
 
-auto native_stdscr() -> ::WINDOW* { return ::stdscr; }
+auto native_stdscr() -> ::WINDOW * { return ::stdscr; }
 
 int native_timeout = -1;
 
@@ -327,6 +328,7 @@ namespace
 class curses_backend final: public backend
 {
     public:
+        auto prepare() -> void override { presentation::install_native_sink(); }
         auto initialize() -> void override { game_client::curses::initialize_native(); }
         auto shutdown() -> void override { game_client::curses::shutdown_native(); }
         auto present() -> void override { game_client::curses::present_native(); }

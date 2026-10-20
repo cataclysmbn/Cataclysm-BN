@@ -10,6 +10,7 @@
 #    include "monster.h"
 #    include "mtype.h"
 #    include "options.h"
+#    include "presentation_sink.h"
 #    include "sdltiles.h"
 #    include "travel/travel_destination.h"
 #    include "ui_manager.h"
@@ -388,6 +389,7 @@ public:
 
 auto install_tiles_animation() -> void {
     set_animation(std::make_unique<tiles_animation_service>());
+    ::presentation::install_native_sink();
 }
 } // namespace game_client
 

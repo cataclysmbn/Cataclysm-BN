@@ -22,6 +22,7 @@
 #include "mtype.h"
 #include "options_helpers.h"
 #include "output.h"
+#include "presentation_sink.h"
 #include "projectile.h"
 #include "ranged.h"
 #include "rng.h"
@@ -34,6 +35,7 @@
 #include <algorithm>
 #include <functional>
 #include <locale>
+#include <map>
 #include <memory>
 #include <ranges>
 #include <set>
@@ -148,7 +150,7 @@ auto lit_floor() -> void {
 }
 
 /// Runs `action` from a fixed seed with animations on outside test mode, recording the native
-/// effect calls, each explosion redraw, and the final RNG state.
+/// effect calls the native sink makes, each explosion redraw, and the final RNG state.
 auto trace_of(const std::string& delay, const std::function<auto()->void>& action) -> trace_t {
     auto trace = trace_t{};
     const override_option animations("ANIMATIONS", "true");
@@ -168,7 +170,9 @@ auto trace_of(const std::string& delay, const std::function<auto()->void>& actio
     const auto live = restore_on_out_of_scope(test_mode);
     test_mode = false;
     game_client::set_animation(std::make_unique<recording_animation>(trace));
+    presentation::install_native_sink();
     const auto uninstall = on_out_of_scope([] {
+        presentation::set_sink(nullptr);
         game_client::set_animation(nullptr);
         explosion_handler::get_explosion_queue().clear();
         SCT.vSCT.clear();
@@ -448,18 +452,31 @@ struct shot_record {
     auto operator<=>(const shot_record&) const = default; // *NOPAD*
 };
 
+/// Projectile and creature IDs count on across runs: numbers them by first appearance instead.
+auto relative_ids(std::vector<engine_client::presentation_value> facts)
+    -> std::vector<engine_client::presentation_value> {
+    auto numbers = std::map<std::string, std::string>{};
+    const auto renumber = [&numbers](std::string& id) {
+        if (!id.empty()) {
+            id = numbers.try_emplace(id, std::to_string(numbers.size())).first->second;
+        }
+    };
+    for (auto& fact : facts) {
+        renumber(fact.id);
+        renumber(fact.entity);
+    }
+    return facts;
+}
+
 /// What a client is told about `action` and the gameplay RNG after it, with projectile animations
 /// on or off.
 auto shot_under(const bool animated, const std::function<auto()->void>& action) -> shot_record {
     lit_floor();
-    auto trace = trace_t{};
     const override_option animations("ANIMATIONS", "true");
     const override_option projectiles("ANIMATION_PROJECTILES", animated ? "true" : "false");
     const override_option stepwise("BULLETS_AS_LASERS", "false");
     const override_option pace("ANIMATION_DELAY", "0");
-    game_client::set_animation(std::make_unique<recording_animation>(trace));
     const auto uninstall = on_out_of_scope([] {
-        game_client::set_animation(nullptr);
         engine_client::presentation::collect(false);
         SCT.vSCT.clear();
     });
@@ -467,7 +484,7 @@ auto shot_under(const bool animated, const std::function<auto()->void>& action) 
     engine_client::presentation::take();
     rng_set_engine_seed(424242);
     action();
-    return {.facts = engine_client::presentation::take(), .rng = rng_state()};
+    return {.facts = relative_ids(engine_client::presentation::take()), .rng = rng_state()};
 }
 
 } // namespace
@@ -484,5 +501,91 @@ TEST_CASE("projectile steps are emitted with animations off", "[native_presentat
             return fact.type == "projectile.moved";
         }));
         CHECK(shot_under(false, entry.action) == animated);
+    }
+}
+
+namespace {
+
+/// Logs each fact the game emits, with its ordinal, and each paced step.
+class recording_sink final: public presentation::sink {
+public:
+    explicit recording_sink(std::vector<std::uint64_t>& ordinals, trace_t& trace)
+        : ordinals(ordinals),
+          trace(trace) {}
+
+    auto present(const presentation::fact& shown, const std::uint64_t ordinal) -> void override {
+        ordinals.push_back(ordinal);
+        const auto* step = std::get_if<game_client::bullet_animation_options>(&shown);
+        trace.push_back(
+            step == nullptr
+                ? "other"
+                : string_format("bullet at=%s i=%d skipped=%d", at(step->position), step->index,
+                                static_cast<int>(step->skipped)));
+    }
+    auto pace(const game_client::animation_progress_options& /*options*/) -> void override {
+        trace.push_back("pace");
+    }
+
+private:
+    std::vector<std::uint64_t>& ordinals;
+    trace_t& trace;
+};
+
+auto long_shot() -> void { shoot(bullet_projectile(), tripoint_bub_ms(82, 62, 0)); }
+
+} // namespace
+
+TEST_CASE("the sink is told every projectile step in causal order", "[native_presentation]") {
+    lit_floor();
+    auto ordinals = std::vector<std::uint64_t>{};
+    auto trace = trace_t{};
+    const override_option projectiles("ANIMATION_PROJECTILES", "false");
+    const override_option stepwise("BULLETS_AS_LASERS", "false");
+    presentation::set_sink(std::make_unique<recording_sink>(ordinals, trace));
+    const auto uninstall = on_out_of_scope([] { presentation::set_sink(nullptr); });
+    rng_set_engine_seed(424242);
+    long_shot();
+    REQUIRE(trace.size() == 20);
+    for (const auto index : std::views::iota(0, 20)) {
+        CHECK(trace[index].starts_with(string_format(
+            "bullet at=%s i=%d ", at(you_at + tripoint_rel_ms(index + 1, 0, 0)), index + 1)));
+    }
+    CHECK(std::ranges::count(trace, "pace") == 0);
+    CHECK(std::ranges::any_of(trace, [](const auto& step) { return step.ends_with("skipped=1"); }));
+    CHECK(std::ranges::any_of(trace, [](const auto& step) { return step.ends_with("skipped=0"); }));
+    CHECK(
+        std::ranges::adjacent_find(ordinals, [](const auto a, const auto b) { return b != a + 1; })
+        == ordinals.end());
+}
+
+TEST_CASE("without a sink no projectile or hit is drawn", "[native_presentation]") {
+    const auto unexploded =
+        std::set<std::string>{"single shot", "line shot", "shotgun", "acidsplash", "bounce"};
+    for (const auto& entry :
+         trace_cases() | std::views::filter([&](const auto& entry) {
+             return unexploded.contains(entry.name);
+         })) {
+        CAPTURE(entry.name);
+        lit_floor();
+        auto trace = trace_t{};
+        const override_option animations("ANIMATIONS", "true");
+        const override_option projectiles("ANIMATION_PROJECTILES", "true");
+        const override_option stepwise("BULLETS_AS_LASERS", "false");
+        const override_option pace("ANIMATION_DELAY", "100");
+        const auto live = restore_on_out_of_scope(test_mode);
+        test_mode = false;
+        game_client::set_animation(std::make_unique<recording_animation>(trace));
+        const auto uninstall = on_out_of_scope([] {
+            game_client::set_animation(nullptr);
+            explosion_handler::get_explosion_queue().clear();
+            SCT.vSCT.clear();
+        });
+        rng_set_engine_seed(424242);
+        entry.action();
+        CHECK(std::ranges::none_of(trace, [](const auto& call) {
+            return call.starts_with("bullet ") || call.starts_with("trajectories ")
+                || call.starts_with("line_of ") || call.starts_with("hit_");
+        }));
+        CHECK(rng_state() == entry.golden.back().substr(std::string_view("end rng=").size()));
     }
 }

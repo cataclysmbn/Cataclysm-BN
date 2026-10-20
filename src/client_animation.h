@@ -40,6 +40,8 @@ struct bullet_animation_options {
     const std::vector<tripoint_bub_ms> *trajectory;
     char bullet;
     std::string custom_sprite;
+    /// The native frame skip leaves this step undrawn.
+    bool skipped = false;
 };
 
 struct bullet_trajectories_animation_options {
@@ -184,6 +186,7 @@ class animation_service
 
 auto animation() -> animation_service &; // *NOPAD*
 auto set_animation( std::unique_ptr<animation_service> service ) -> void;
+/// Holds one animation step on the registered `presentation::sink`; nothing without one.
 auto progress_animation( const animation_progress_options &options = {} ) -> void;
 auto install_tiles_animation() -> void;
 

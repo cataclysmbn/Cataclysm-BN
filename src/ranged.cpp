@@ -1,7 +1,6 @@
 #include "ranged.h"
 
 #include "activity_actor_definitions.h"
-#include "animation.h"
 #include "avatar.h"
 #include "ballistics.h"
 #include "bodypart.h"
@@ -57,6 +56,7 @@
 #include "reload/reload.h"
 #include "reload/reload_ui.h"
 #include "point.h"
+#include "presentation_sink.h"
 #include "projectile.h"
 #include "rng.h"
 #include "shape_impl.h"
@@ -1445,7 +1445,7 @@ int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_sho
             projectile.add_effect( ammo_effect_NO_CRIT );
         }
         if( !shape ) {
-            const auto render_multishot = shot_count > 1 && get_option<bool>( "ANIMATION_PROJECTILES" );
+            const auto render_multishot = shot_count > 1;
             const auto render_projectile = projectile;
             auto projectile_trajectories = std::vector<std::vector<tripoint_bub_ms>> {};
             projectile_trajectories.reserve( shot_count );
@@ -1490,7 +1490,7 @@ int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_sho
             }
 
             if( render_multishot ) {
-                draw_bullet_trajectories( {
+                presentation::emit( draw_bullet_trajectories_options{
                     .trajectories = projectile_trajectories,
                     .bullet = get_projectile_animation_symbol( projectile ),
                     .draw_as_line = projectile_draws_as_line( projectile ),
