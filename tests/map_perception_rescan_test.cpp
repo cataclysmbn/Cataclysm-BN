@@ -4,10 +4,12 @@
 #    include "calendar.h"
 #    include "catch/catch.hpp"
 #    include "game.h"
+#    include "game_constants.h"
 #    include "game_session.h"
 #    include "map/map.h"
 #    include "map_helpers.h"
 #    include "map_perception.h"
+#    include "options_helpers.h"
 #    include "state_helpers.h"
 #    include "weather/weather.h"
 
@@ -66,6 +68,24 @@ TEST_CASE(
     const auto wall = get_avatar().bub_pos() + tripoint(5, 3, 0);
     here.ter_set(wall, ter_id("t_wall"));
     map_perception::acquire();
+    CHECK(get_avatar().get_terrain_tile(map_local_to_abs(here, wall)).tile == "t_wall");
+}
+
+TEST_CASE(
+    "a turn remembers how it ends though the avatar does not act",
+    "[map_perception][rescan][mcp]") {
+    const auto no_autosave = override_option("AUTOSAVE", "false");
+    const auto normal_bubble_size =
+        override_option("REALITY_BUBBLE_SIZE", std::to_string(g_reality_bubble_size));
+    const auto no_mobile_bubble = override_option("ACTIVITY_MOBILE_BUBBLE_SIZE", "0");
+    const auto no_idle_bubble = override_option("ACTIVITY_IDLE_BUBBLE_SIZE", "0");
+    acquire_on_open_ground();
+    auto& here = get_map();
+    const auto wall = get_avatar().bub_pos() + tripoint(5, 3, 0);
+    here.ter_set(wall, ter_id("t_wall"));
+    g->new_game = false;
+    get_avatar().set_moves(0);
+    CHECK_FALSE(g->do_turn());
     CHECK(get_avatar().get_terrain_tile(map_local_to_abs(here, wall)).tile == "t_wall");
 }
 
