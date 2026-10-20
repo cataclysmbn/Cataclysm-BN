@@ -67,6 +67,8 @@ struct dialogue_fixture {
     dialogue_window window;
 
     dialogue_fixture() {
+        // The talker's stats are random and decide its trial chances: they are pinned for one seed.
+        rng_set_engine_seed(424242);
         test_mode = true;
         clear_all_state();
         clear_character(get_avatar(), false);
