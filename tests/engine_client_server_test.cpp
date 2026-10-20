@@ -1121,6 +1121,56 @@ TEST_CASE(
     CHECK(rng_get_engine() == rng);
 }
 
+TEST_CASE("a panel sends every row of a list longer than a page", "[engine_client_server]") {
+    clear_avatar();
+    auto& you = get_avatar();
+    // Distinct items, so that none stack: more rows than a top screen's first page holds.
+    for (const auto* const id : {"rock", "knife_combat", "hammer", "screwdriver", "wrench"}) {
+        for (const auto damage : std::views::iota(0, 50)) {
+            auto& added = you.i_add(item::spawn(itype_id(id)));
+            added.set_var("panel_test", damage);
+        }
+    }
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    test.pump(
+        hello
+        + rpc("bn.panel.view",
+              R"({"epoch":")" + test.authority.epoch() + R"(","panel":"inventory"})", "3"));
+    auto lines = std::istringstream{test.output.str()};
+    auto screen = nlohmann::json{};
+    for (auto line = std::string{}; std::getline(lines, line);) {
+        const auto value = nlohmann::json::parse(line, nullptr, false);
+        if (value.is_object() && value.value("id", 0) == 3) { screen = value.at("result"); }
+    }
+    auto lists = 0;
+    const auto walk = [&](const auto& self, const nlohmann::json& node) -> void {
+        if (node.is_object()) {
+            if (node.value("kind", "") == "list") {
+                ++lists;
+                CHECK(node["rows"].size() == node["total"].get<std::size_t>());
+            }
+            for (const auto& [key, child] : node.items()) { self(self, child); }
+        } else if (node.is_array()) {
+            for (const auto& child : node) { self(self, child); }
+        }
+    };
+    walk(walk, screen);
+    CHECK(lists > 0);
+    auto rows = std::size_t{0};
+    const auto count = [&](const auto& self, const nlohmann::json& node) -> void {
+        if (node.is_object()) {
+            if (node.value("kind", "") == "list") { rows += node["rows"].size(); }
+            for (const auto& [key, child] : node.items()) { self(self, child); }
+        } else if (node.is_array()) {
+            for (const auto& child : node) { self(self, child); }
+        }
+    };
+    count(count, screen);
+    CHECK(rows > 200);
+}
+
 TEST_CASE("a registered action is submittable as a command", "[engine_client_server]") {
     auto boundary = input_boundary{};
     auto test = fixture{};
