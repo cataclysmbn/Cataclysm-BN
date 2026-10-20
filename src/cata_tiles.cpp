@@ -3164,12 +3164,10 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
     const int max_visible_x = ( g->u.bub_pos().x() % SEEX ) + ( g_mapsize - 1 ) * SEEX;
     const int max_visible_y = ( g->u.bub_pos().y() % SEEY ) + ( g_mapsize - 1 ) * SEEY;
 
-    auto offscreen_memory_points = std::vector<point_bub_ms> {};
-    const auto prepare_offscreen_memory_scan = [&]() {
-        ZoneScopedN( "cata_tiles_prepare_offscreen_seen" );
-        // Map memory should be at least the size of the view range
-        // so that new tiles can be memorized, and at least the size of the display
-        // since at farthest zoom displayed area may be bigger than view range.
+    const auto prepare_map_memory_region = [&]() {
+        ZoneScopedN( "cata_tiles_prepare_map_memory_region" );
+        // Remembered tiles are read for the view range and the display, which at farthest zoom
+        // may be bigger than the view range.
         const auto min_mm_reg = point_bub_ms(
                                     std::min( o.x(), min_visible_x ),
                                     std::min( o.y(), min_visible_y )
@@ -3183,76 +3181,14 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
             bub_to_abs( tripoint_bub_ms( max_mm_reg, center.z() ) )
         );
     };
-    const auto already_drawn = half_open_rectangle<point>(
-                                   point( min_col, min_row ), point( max_col, max_row ) );
-    const auto offscreen_memory_xy_without_distance = [&]( const point_bub_ms & p ) {
-        if( iso_mode ) {
-            const auto col = p.y() + p.x() + s.x / 2 - o.y() - o.x();
-            const auto row = p.y() - p.x() + s.y / 2 - o.y() + o.x();
-            return !already_drawn.contains( point( col, row ) );
-        }
-        const auto screen_x = p.x() - o.x();
-        const auto screen_y = p.y() - o.y();
-        return screen_x < min_col || screen_x >= max_col ||
-               screen_y < min_row || screen_y >= max_row;
-    };
-    const auto offscreen_memory_xy = [&]( const point_bub_ms & p ) {
-        if( trigdist ? rl_dist( p, center.xy() ) > g_max_view_distance :
-            square_dist( p, center.xy() ) > g_max_view_distance ) {
-            return false;
-        }
-        return offscreen_memory_xy_without_distance( p );
-    };
-    const auto build_full_offscreen_memory_scan = [&]() {
-        ZoneScopedN( "cata_tiles_prepare_offscreen_candidates" );
-        const auto scan_distance_table = trigdist ?
-        &get_rl_dist_lookup_table( rl_dist_lookup_table_dimensions{
-            .max_dx = std::max( std::abs( min_visible_x - center.x() ),
-                                std::abs( max_visible_x - center.x() ) ),
-            .max_dy = std::max( std::abs( min_visible_y - center.y() ),
-                                std::abs( max_visible_y - center.y() ) ),
-            .max_dz = 0,
-            .trigdist = trigdist,
-        } ) :
-            nullptr;
-        offscreen_memory_points.clear();
-        offscreen_memory_points.reserve( static_cast<size_t>( ( max_visible_x - min_visible_x + 1 ) *
-                                         ( max_visible_y - min_visible_y + 1 ) ) );
-        for( const auto mem_y : std::views::iota( min_visible_y, max_visible_y + 1 ) ) {
-            const auto dy = std::abs( mem_y - center.y() );
-            for( const auto mem_x : std::views::iota( min_visible_x, max_visible_x + 1 ) ) {
-                const auto dx = std::abs( mem_x - center.x() );
-                const auto dist = scan_distance_table != nullptr ?
-                                  scan_distance_table->distance_2d( dx, dy ) :
-                                  std::max( dx, dy );
-                if( dist > g_max_view_distance ) {
-                    continue;
-                }
-                if( !offscreen_memory_xy_without_distance( point_bub_ms( mem_x, mem_y ) ) ) {
-                    continue;
-                }
-                offscreen_memory_points.emplace_back( mem_x, mem_y );
-            }
-        }
-        TracyPlot( "Cata Tiles Offscreen Memory Candidates",
-                   static_cast<int64_t>( offscreen_memory_points.size() ) );
-    };
-    const auto run_visibility_independent_work = [&]() {
-        prepare_offscreen_memory_scan();
-    };
-    const auto run_visibility_pending_work = [&]() {
-        ZoneScopedN( "cata_tiles_visibility_pending_work" );
-        run_visibility_independent_work();
-    };
 
     const auto cache_z = g->visibility_cache_z();
     const auto visibility_dirty = here.get_cache_ref( cache_z ).visibility_cache_dirty ||
                                   here.get_cache_ref( center.z() ).visibility_cache_dirty;
     if( visibility_dirty ) {
-        here.update_visibility_cache( cache_z, run_visibility_pending_work );
+        here.update_visibility_cache( cache_z, prepare_map_memory_region );
     } else {
-        ZoneScopedN( "cata_tiles_visibility_clean_work" );
-        run_visibility_independent_work();
+        prepare_map_memory_region();
     }
 
     const visibility_variables &cache = here.get_visibility_variables_cache();
@@ -3839,267 +3775,6 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
     void_vpart_override();
     void_draw_below_override();
     void_monster_override();
-
-    const auto memorize_live_terrain = [&]( const tripoint_bub_ms & p,
-    const bool( &invisible )[5] ) {
-        if( invisible[0] ) {
-            return;
-        }
-        const auto &t = here.ter( p );
-        if( !t ) {
-            return;
-        }
-        auto subtile = 0;
-        auto rotation = 0;
-        auto connect_group = 0;
-        if( t.obj().connects( connect_group ) ) {
-            get_connect_values( p, subtile, rotation, connect_group, {} );
-            here.set_memory_seen_cache_dirty( p );
-        } else {
-            get_terrain_orientation( p, rotation, subtile, {}, invisible );
-        }
-        const auto &tname = t.id().str();
-        if( here.check_seen_cache( p ) ) {
-            const auto abs_pos = bub_to_abs( p );
-            if( !t->has_flag( TFLAG_NO_MEMORY ) && !t->has_flag( TFLAG_Z_TRANSPARENT ) ) {
-                g->u.memorize_tile( abs_pos, tname, subtile, rotation );
-                g->u.memorize_terrain_tile( abs_pos, tname, subtile, rotation );
-            } else {
-                g->u.clear_memorized_tile( abs_pos );
-            }
-        }
-    };
-
-    const auto memorize_live_furniture = [&]( const tripoint_bub_ms & p,
-    const bool( &invisible )[5] ) {
-        if( invisible[0] ) {
-            return;
-        }
-        const auto &f = here.furn( p );
-        if( !f ) {
-            return;
-        }
-        const auto neighborhood_ids = std::array{
-            static_cast<int>( here.furn( p + point_south ) ),
-            static_cast<int>( here.furn( p + point_east ) ),
-            static_cast<int>( here.furn( p + point_west ) ),
-            static_cast<int>( here.furn( p + point_north ) )
-        };
-        auto subtile = 0;
-        auto rotation = 0;
-        auto connect_group = 0;
-        if( f.obj().connects( connect_group ) ) {
-            get_furn_connect_values( p, subtile, rotation, connect_group, {} );
-        } else {
-            get_tile_values_with_ter( p, f.to_i(), neighborhood_ids.data(), subtile, rotation );
-        }
-        if( here.check_seen_cache( p ) ) {
-            g->u.memorize_tile( bub_to_abs( p ), f.id().str(), subtile, rotation );
-        }
-    };
-
-    const auto memorize_live_trap = [&]( const tripoint_bub_ms & p,
-    const bool( &invisible )[5] ) {
-        if( invisible[0] ) {
-            return;
-        }
-        const auto &tr = here.tr_at( p );
-        const auto &tr_id = tr.loadid;
-        if( !tr_id || !tr_id.obj().can_see( p, g->u ) || tr_id == tr_ledge ) {
-            return;
-        }
-        const auto neighborhood_ids = std::array{
-            static_cast<int>( here.tr_at( p + point_south ).loadid ),
-            static_cast<int>( here.tr_at( p + point_east ).loadid ),
-            static_cast<int>( here.tr_at( p + point_west ).loadid ),
-            static_cast<int>( here.tr_at( p + point_north ).loadid )
-        };
-        auto subtile = 0;
-        auto rotation = 0;
-        get_tile_values( tr_id.to_i(), neighborhood_ids.data(), subtile, rotation );
-        if( here.check_seen_cache( p ) ) {
-            g->u.memorize_tile( bub_to_abs( p ), tr_id.id().str(), subtile, rotation );
-        }
-    };
-
-    const auto clear_projected_rope_memory = [&]( const tripoint_bub_ms & p ) {
-        if( !here.has_rope_at( p ) ) {
-            return;
-        }
-        const auto veh_pair = here.get_rope_at( p );
-        auto *const veh = veh_pair.first;
-        const auto veh_part = veh_pair.second;
-        const auto veh_z = veh->bub_ms_location().z();
-        const auto part = veh->part( veh_part ).info();
-        if( veh_z - p.z() <= 0 ) {
-            return;
-        }
-        if( part.ladder_length() >= veh_z - p.z() ) {
-            for( const auto z : std::views::iota( p.z() + 1, veh_z + 1 ) ) {
-                if( here.ter( tripoint_bub_ms( p.x(), p.y(), z ) ).id().str() != "t_open_air" ) {
-                    return;
-                }
-            }
-        }
-        const auto &vp_id = veh->part( veh_part ).info().get_id();
-        const auto vpname = std::string( "vp_" ) + vp_id.str();
-        auto &you = get_avatar();
-        const auto abs_pos = bub_to_abs( p );
-        if( you.get_memorized_tile( abs_pos ).tile == vpname ) {
-            you.clear_memorized_overlay( abs_pos );
-        }
-    };
-
-    const auto memorize_live_vehicle = [&]( const tripoint_bub_ms & p,
-    const bool( &invisible )[5] ) {
-        if( invisible[0] ) {
-            return;
-        }
-        const auto vp = here.veh_at( p );
-        if( !vp ) {
-            clear_projected_rope_memory( p );
-            return;
-        }
-        const auto &veh = vp->vehicle();
-        const auto veh_part = vp->part_index();
-        auto part_mod = char{ 0 };
-        const auto &vp_id = veh.part_id_string( veh_part, false, part_mod );
-        const auto subtile = part_mod == 1 ? open_ : part_mod == 2 ? broken : 0;
-        const auto rotation = static_cast<int>( std::round( to_degrees( veh.part_display_direction(
-                veh_part, false ) ) ) );
-        const auto vpname = std::string( "vp_" ) + vp_id.str();
-        auto &you = get_avatar();
-        const auto abs_pos = bub_to_abs( p );
-        if( veh.forward_velocity() ) {
-            you.clear_memorized_overlay( abs_pos );
-        } else {
-            you.memorize_tile( abs_pos, vpname, subtile, rotation );
-        }
-    };
-
-    {
-        ZoneScopedN( "cata_tiles_memorize_offscreen_seen" );
-        const auto &_cz = here.access_cache( center.z() );
-        const auto full_memory_scan = here.is_memory_seen_cache_dirty_all( center.z() );
-        if( full_memory_scan ) {
-            build_full_offscreen_memory_scan();
-        }
-        auto dirty_memory_candidates = std::vector<tripoint_bub_ms> {};
-        auto dirty_memory_candidate_set = std::unordered_set<tripoint_bub_ms> {};
-        const auto queue_dirty_memory_candidate = [&]( const tripoint_bub_ms & candidate ) {
-            if( !here.inbounds( candidate ) || !offscreen_memory_xy( candidate.xy() ) ) {
-                return;
-            }
-            if( dirty_memory_candidate_set.insert( candidate ).second ) {
-                dirty_memory_candidates.push_back( candidate );
-            }
-        };
-        if( !full_memory_scan ) {
-            for( const auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
-                if( here.is_memory_seen_cache_dirty_all( z ) ) {
-                    continue;
-                }
-                for( const tripoint_bub_ms &dirty_point : here.take_memory_seen_cache_dirty_points( z ) ) {
-                    queue_dirty_memory_candidate( dirty_point );
-                    for( const point &dir : neighborhood ) {
-                        queue_dirty_memory_candidate( dirty_point + dir );
-                    }
-                }
-            }
-        }
-        auto offscreen_scan_count = static_cast<int64_t>( full_memory_scan ?
-                                    offscreen_memory_points.size() : dirty_memory_candidates.size() );
-        auto offscreen_refresh_count = int64_t{ 0 };
-        auto offscreen_dirty_memory_count = int64_t{ 0 };
-        auto offscreen_connecting_refresh_count = int64_t{ 0 };
-        const auto memorize_offscreen_point = [&]( const tripoint_bub_ms & p,
-        const lit_level lighting ) {
-            const auto &ch = here.access_cache( p.z() );
-
-            if( apply_vision_effects( p, here.get_visibility( lighting, cache ) ) ) {
-                return;
-            }
-            const auto dirty_memory = here.check_seen_cache( p );
-            auto should_refresh_memory = dirty_memory;
-            auto connecting_refresh = false;
-            if( !should_refresh_memory ) {
-                auto connect_group = 0;
-                const auto &terrain = here.ter( p );
-                const auto adjacent_memory_dirty = std::ranges::any_of( neighborhood, [&]( const point & dir ) {
-                    const auto np = p + dir;
-                    return here.inbounds( np ) && here.check_seen_cache( np );
-                } );
-                connecting_refresh = adjacent_memory_dirty && terrain &&
-                                     terrain.obj().connects( connect_group );
-                should_refresh_memory = connecting_refresh;
-            }
-            if( !should_refresh_memory ) {
-                return;
-            }
-            ++offscreen_refresh_count;
-            offscreen_dirty_memory_count += dirty_memory ? int64_t{ 1 } :
-                                            int64_t{ 0 };
-            offscreen_connecting_refresh_count += connecting_refresh ? int64_t{ 1 } :
-                                                  int64_t{ 0 };
-            bool invisible[5];
-            invisible[0] = false;
-            for( const auto i : std::views::iota( 0, 4 ) ) {
-                const auto np = p + neighborhood[i];
-                invisible[1 + i] = !here.inbounds( np ) ||
-                                   np.y() < min_visible_y || np.y() > max_visible_y ||
-                                   np.x() < min_visible_x || np.x() > max_visible_x ||
-                                   would_apply_vision_effects( here.get_visibility( ch.visibility_cache[ch.idx( np.x(), np.y() )],
-                                           cache ) );
-            }
-            // Bypass draw calls: these tiles are offscreen and only need map memory refresh.
-            memorize_live_terrain( p, invisible );
-            if( here.check_seen_cache( p ) ) {
-                memorize_live_furniture( p, invisible );
-                memorize_live_trap( p, invisible );
-                memorize_live_vehicle( p, invisible );
-                here.check_and_set_seen_cache( p );
-            }
-        };
-        const auto memorize_full_scan_point = [&]( const point_bub_ms & mem_p ) {
-            const auto mem_x = mem_p.x();
-            const auto mem_y = mem_p.y();
-            lit_level lighting = _cz.visibility_cache[_cz.idx( mem_x, mem_y )];
-
-            int z = center.z();
-            for( ;  z > -OVERMAP_DEPTH; z-- ) {
-                const auto low_override = draw_below_override.find( {mem_x, mem_y, z} );
-                const bool low_overridden = low_override != draw_below_override.end();
-                const auto &_cur = here.access_cache( z );
-                const auto &_lower = here.access_cache( z - 1 );
-                if( low_overridden ? !low_override->second : ( here.dont_draw_lower_floor( {mem_x, mem_y, z} )
-                        || ( lighting != lit_level::BLANK &&
-                             _lower.visibility_cache[_lower.idx( mem_x, mem_y )] == lit_level::BLANK ) ) ) {
-                    lighting = _cur.visibility_cache[_cur.idx( mem_x, mem_y )];
-                    break;
-                }
-            }
-
-            const tripoint_bub_ms p( mem_x, mem_y, z );
-
-            memorize_offscreen_point( p, lighting );
-        };
-        //Memorize everything the character just saw even if it wasn't displayed.
-        if( full_memory_scan ) {
-            for( const point_bub_ms &mem_p : offscreen_memory_points ) {
-                memorize_full_scan_point( mem_p );
-            }
-            here.mark_memory_seen_cache_dirty_all_clean( center.z() );
-        } else {
-            for( const tripoint_bub_ms &p : dirty_memory_candidates ) {
-                const auto &ch = here.access_cache( p.z() );
-                memorize_offscreen_point( p, ch.visibility_cache[ch.idx( p.x(), p.y() )] );
-            }
-        }
-        TracyPlot( "Cata Tiles Offscreen Memory Scanned", offscreen_scan_count );
-        TracyPlot( "Cata Tiles Offscreen Memory Refreshed", offscreen_refresh_count );
-        TracyPlot( "Cata Tiles Offscreen Memory Dirty", offscreen_dirty_memory_count );
-        TracyPlot( "Cata Tiles Offscreen Memory Connecting", offscreen_connecting_refresh_count );
-    }
 
     in_animation = do_draw_explosion || do_draw_custom_explosion ||
                    do_draw_bullet || do_draw_hit || do_draw_line ||
@@ -5256,28 +4931,17 @@ bool cata_tiles::draw_terrain( const tripoint_bub_ms &p, const lit_level ll, int
     const ter_id &t = here.ter( p );
     const auto [bgCol, fgCol] = get_terrain_color( t.obj(), here, p );
 
-    // first memorize the actual terrain
     if( t && !invisible[0] ) {
         int subtile = 0;
         int rotation = 0;
         int connect_group = 0;
         if( t.obj().connects( connect_group ) ) {
             get_connect_values( p, subtile, rotation, connect_group, {} );
-            // re-memorize previously seen terrain in case new connections have been seen
-            here.set_memory_seen_cache_dirty( p );
         } else {
             get_terrain_orientation( p, rotation, subtile, {}, invisible );
             // do something to get other terrain orientation values
         }
         const std::string &tname = t.id().str();
-        if( here.check_seen_cache( p ) ) {
-            if( !t->has_flag( TFLAG_NO_MEMORY ) && !t->has_flag( TFLAG_Z_TRANSPARENT ) ) {
-                g->u.memorize_tile( bub_to_abs( p ), tname, subtile, rotation );
-                g->u.memorize_terrain_tile( bub_to_abs( p ), tname, subtile, rotation );
-            } else {
-                g->u.clear_memorized_tile( bub_to_abs( p ) );
-            }
-        }
         // draw the actual terrain if there's no override
         if( !neighborhood_overridden ) {
             // Open air is used for holes / sky. Drawing a cyan marker here can bleed through
@@ -5356,7 +5020,6 @@ bool cata_tiles::draw_furniture( const tripoint_bub_ms &p, const lit_level ll, i
     const furn_id &f = here.furn( p );
     const auto [bgCol, fgCol] = get_furniture_color( f.obj(), here, p );
 
-    // first memorize the actual furniture
     if( f && !invisible[0] ) {
         const int neighborhood[4] = {
             static_cast<int>( here.furn( p + point_south ) ),
@@ -5375,9 +5038,6 @@ bool cata_tiles::draw_furniture( const tripoint_bub_ms &p, const lit_level ll, i
         }
 
         const std::string &fname = f.id().str();
-        if( here.check_seen_cache( p ) ) {
-            g->u.memorize_tile( bub_to_abs( p ), fname, subtile, rotation );
-        }
         // draw the actual furniture if there's no override
         if( !neighborhood_overridden ) {
             const tile_search_params tile { fname, C_FURNITURE, empty_string, subtile, rotation};
@@ -5458,7 +5118,6 @@ bool cata_tiles::draw_trap( const tripoint_bub_ms &p, const lit_level ll, int &h
     const trap_id &tr_id = tr.loadid;
     auto [bgCol, fgCol] = get_trap_color( tr, here, p );
 
-    // first memorize the actual trap
     if( tr_id && !invisible[0] && tr_id.obj().can_see( p, g->u ) ) {
         const int neighborhood[4] = {
             static_cast<int>( here.tr_at( p + point_south ).loadid ),
@@ -5470,9 +5129,6 @@ bool cata_tiles::draw_trap( const tripoint_bub_ms &p, const lit_level ll, int &h
         int rotation = 0;
         get_tile_values( tr_id.to_i(), neighborhood, subtile, rotation );
         const std::string trname = tr_id.id().str();
-        if( here.check_seen_cache( p ) && tr_id != tr_ledge ) {
-            g->u.memorize_tile( bub_to_abs( p ), trname, subtile, rotation );
-        }
         // draw the actual trap if there's no override
         if( !neighborhood_overridden ) {
             const tile_search_params tile { trname, C_TRAP, empty_string, subtile, rotation };
@@ -5764,17 +5420,6 @@ bool cata_tiles::draw_vpart( const tripoint_bub_ms &p, lit_level ll, int &height
         const auto rotation = static_cast<int>( std::round( to_degrees( veh.part_display_direction(
                 veh_part, use_roof_variant ) ) ) );
         const std::string vpname = "vp_" + vp_id.str();
-        avatar &you = get_avatar();
-        // Always clear while moving — the check_seen_cache gate would miss residual
-        // stationary memory once map_memory_seen_cache is set by draw_from_id_string,
-        // letting ghost tiles survive until the submap exits the reality bubble.
-        // Always memorize while stationary so returning to a previous position
-        // after a trip refreshes the tile rather than leaving it blank.
-        if( veh.forward_velocity() ) {
-            you.clear_memorized_overlay( bub_to_abs( p ) );
-        } else {
-            you.memorize_tile( bub_to_abs( p ), vpname, subtile, rotation );
-        }
         if( !overridden ) {
             const std::optional<vpart_reference> cargopart = vp.part_with_feature( "CARGO", true );
             const bool draw_highlight =
@@ -5847,9 +5492,6 @@ bool cata_tiles::draw_vpart( const tripoint_bub_ms &p, lit_level ll, int &height
             const auto rotation = static_cast<int>( std::round( to_degrees( veh.part_display_direction(
                     veh_part, use_roof_variant ) ) ) );
             const std::string vpname = "vp_" + vp_id.str();
-            if( !veh.forward_velocity() ) {
-                get_avatar().memorize_tile( bub_to_abs( p ), vpname, subtile, rotation );
-            }
             const tile_search_params tile { vpname, C_VEHICLE_PART, empty_string, subtile, rotation };
             return draw_from_id_string(
                        tile, p, bgCol, fgCol,
@@ -5890,12 +5532,6 @@ bool cata_tiles::draw_vpart( const tripoint_bub_ms &p, lit_level ll, int &height
         const auto rotation = static_cast<int>( std::round( to_degrees( veh->part_display_direction(
                 veh_part ) ) ) );
         const std::string vpname = "vp_" + vp_id.str();
-        avatar &you = get_avatar();
-        const auto abs_pos = bub_to_abs( p );
-        // Projected rope segments are live draws, not persistent vehicle parts.
-        if( you.get_memorized_tile( abs_pos ).tile == vpname ) {
-            you.clear_memorized_overlay( abs_pos );
-        }
         const tile_search_params tile = {vpname, C_VEHICLE_PART, empty_string, subtile, rotation};
         const bool ret = draw_from_id_string(
                              tile, p, bgCol, fgCol,

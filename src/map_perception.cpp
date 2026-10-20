@@ -872,13 +872,6 @@ auto acquire() -> acquisition_counts
             ++counts.memory_writes;
         }
     }
-    for( const auto &cell : facts ) {
-        here.check_and_set_seen_cache( cell.position );
-    }
-    for( const auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
-        // Hidden dirty facts remain in pending, not in the old renderer work queue.
-        here.mark_memory_seen_cache_dirty_all_clean( z );
-    }
     state.full_pending = false;
     state.dirty.clear();
     counts.acquired = memories.size();

@@ -2415,7 +2415,9 @@ auto map::get_known_connections(
     std::function<bool(const tripoint_bub_ms&)> is_memorized;
     if (use_tiles) {
         is_memorized = [&](const tripoint_bub_ms& q) {
-            return !g->u.get_memorized_tile(map_local_to_abs(*this, q)).tile.empty();
+            const auto abs = map_local_to_abs(*this, q);
+            return !g->u.get_memorized_tile(abs).tile.empty()
+                || !g->u.get_terrain_tile(abs).tile.empty();
         };
     } else {
         is_memorized = [&](const tripoint_bub_ms& q) {
@@ -2463,7 +2465,9 @@ auto map::get_known_connections_f(
     avatar& player_character = get_avatar();
     if (use_tiles) {
         is_memorized = [&](const tripoint_bub_ms& q) {
-            return !player_character.get_memorized_tile(map_local_to_abs(*this, q)).tile.empty();
+            const auto abs = map_local_to_abs(*this, q);
+            return !player_character.get_memorized_tile(abs).tile.empty()
+                || !player_character.get_terrain_tile(abs).tile.empty();
         };
     } else {
         is_memorized = [&](const tripoint_bub_ms& q) {
@@ -6583,7 +6587,7 @@ void map::draw(const catacurses::window& w, const tripoint_bub_ms& center) {
         return true;
     };
 
-    drawsq_params params = drawsq_params().memorize(true);
+    drawsq_params params = drawsq_params();
     for (int wy = 0; wy < wnd_h; wy++) {
         for (int wx = 0; wx < wnd_w; wx++) {
             wmove(w, point(wx, wy));
@@ -6609,30 +6613,6 @@ void map::draw(const catacurses::window& w, const tripoint_bub_ms& center) {
             if (draw_maptile(w, p, curr_maptile, params)) { continue; }
             const maptile tile_below = maptile_at_internal(tripoint_bub_ms(p) - tripoint_above);
             draw_from_above(w, tripoint_bub_ms(p.xy(), p.z() - 1), tile_below, params);
-        }
-    }
-
-    // Memorize off-screen tiles
-    half_open_rectangle<point_bub_ms> display(offs.xy(), offs.xy() + point_rel_ms(wnd_w, wnd_h));
-    drawsq_params mm_params = drawsq_params().memorize(true).output(false);
-    for (int y = 0; y < draw_lc.cache_y; y++) {
-        for (int x = 0; x < draw_lc.cache_x; x++) {
-            const tripoint_bub_ms p(x, y, center.z());
-            if (display.contains(p.xy())) {
-                // Have been memorized during display loop
-                continue;
-            }
-
-            const lit_level lighting = visibility_cache[draw_lc.idx(p.x(), p.y())];
-            const visibility_type vis = get_visibility(lighting, cache);
-
-            if (vis != VIS_CLEAR) { continue; }
-
-            const maptile curr_maptile = maptile_at_internal(tripoint_bub_ms(p));
-            mm_params.low_light(lighting == lit_level::LOW)
-                .bright_light(lighting == lit_level::BRIGHT);
-
-            draw_maptile(w, p, curr_maptile, mm_params);
         }
     }
 }
@@ -6791,7 +6771,6 @@ auto map::draw_maptile(
         }
     }
 
-    int memory_sym = sym;
     int veh_part = 0;
     const vehicle* veh = veh_at_internal(tripoint_bub_ms(p), veh_part);
     if (veh != nullptr) {
@@ -6799,12 +6778,6 @@ auto map::draw_maptile(
         sym = special_symbol(part_face.dir_symbol(veh->part_sym(veh_part)));
         tercol = veh->part_color(veh_part);
         item_sym.clear(); // clear the item symbol so `sym` is used instead.
-
-        if (!veh->forward_velocity() && !veh->player_in_control(g->u)) { memory_sym = sym; }
-    }
-
-    if (param.memorize() && check_and_set_seen_cache(p)) {
-        g->u.memorize_symbol(map_local_to_abs(*this, p), memory_sym);
     }
 
     // If there's graffiti here, change background color
@@ -6840,12 +6813,10 @@ auto map::draw_maptile(
         }
     }
 
-    if (params.output()) {
-        if (item_sym.empty()) {
-            wputch(w, tercol, sym);
-        } else {
-            wprintz(w, tercol, item_sym);
-        }
+    if (item_sym.empty()) {
+        wputch(w, tercol, sym);
+    } else {
+        wprintz(w, tercol, item_sym);
     }
     return true;
 }
@@ -6917,7 +6888,7 @@ void map::draw_from_above(
 
     if (params.highlight()) { tercol = invert_color(tercol); }
 
-    if (params.output()) { wputch(w, tercol, sym); }
+    wputch(w, tercol, sym);
 }
 
 auto map::sees(const tripoint_bub_ms& F, const tripoint_bub_ms& T, const int range) const -> bool {
@@ -7681,13 +7652,6 @@ void map::shift(const point_rel_sm& sp) {
         ZoneScopedN("shift_grid_copy_load");
         for (const auto gridz : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
             clear_vehicle_list(gridz);
-            {
-                ZoneScopedN("shift_memory_seen_cache");
-                auto& gc = get_cache(gridz);
-                shift_bitset_cache(gc.map_memory_seen_cache, gc.cache_x, SEEX, sp);
-                gc.map_memory_seen_cache_dirty_points.clear();
-                gc.map_memory_seen_cache_dirty_all = true;
-            }
             {
                 ZoneScopedN("shift_prerequisite_caches");
                 auto& gc = get_cache(gridz);
@@ -9438,7 +9402,6 @@ level_cache::level_cache(int mx, int my)
       camera_cache(static_cast<size_t>(mx * my), 0.0f),
       visibility_cache(static_cast<size_t>(mx * my), lit_level::DARK),
       colored_light_cache(static_cast<size_t>(mx * my), 0u),
-      map_memory_seen_cache(static_cast<size_t>(mx * my)),
       veh_exists_at(static_cast<size_t>(mx * my), false),
       absorption_cache(static_cast<size_t>(mx * my), 0),
       sound_wall_cache(static_cast<size_t>(mx * my), false)
@@ -9505,22 +9468,6 @@ auto map::get_pf_special(const tripoint_bub_ms& p) const -> pf_special {
     if (!sm) { return PF_WALL; }
     if (sm->pf_dirty) { sm->rebuild_pf_cache(*this, project_to<coords::sm>(p)); }
     return sm->pf_special_cache[l.x()][l.y()];
-}
-
-auto map::check_seen_cache(const tripoint_bub_ms& p) const -> bool {
-    const level_cache& ch = get_cache(p.z());
-    return !ch.map_memory_seen_cache[static_cast<size_t>(p.x() + p.y() * ch.cache_x)];
-}
-
-auto map::check_and_set_seen_cache(const tripoint_bub_ms& p) const -> bool {
-    if (map_perception::presenting()) { return false; }
-    level_cache& ch = get_cache(p.z());
-    const size_t offset = static_cast<size_t>(p.x() + p.y() * ch.cache_x);
-    if (!ch.map_memory_seen_cache[offset]) {
-        ch.map_memory_seen_cache.set(offset);
-        return true;
-    }
-    return false;
 }
 
 auto map::is_map_cache_valid(const int zlev) -> bool {
@@ -9732,42 +9679,10 @@ void map::invalidate_visibility_caches() {
 
 void map::set_memory_seen_cache_dirty(const tripoint_bub_ms& p) {
     map_perception::invalidate_cell(*this, p);
-    level_cache& ch = get_cache(p.z());
-    const int offset = p.x() + p.y() * ch.cache_x;
-    if (offset >= 0 && offset < ch.cache_x * ch.cache_y) {
-        const auto bit = static_cast<size_t>(offset);
-        if (ch.map_memory_seen_cache[bit]) {
-            ch.map_memory_seen_cache.reset(bit);
-            if (!ch.map_memory_seen_cache_dirty_all) {
-                ch.map_memory_seen_cache_dirty_points.push_back(p);
-            }
-        }
-    }
 }
 
-auto map::set_memory_seen_cache_dirty(const int zlev) -> void {
+auto map::set_memory_seen_cache_dirty(const int /*zlev*/) -> void {
     map_perception::invalidate_all(*this);
-    level_cache& ch = get_cache(zlev);
-    ch.map_memory_seen_cache.reset();
-    ch.map_memory_seen_cache_dirty_points.clear();
-    ch.map_memory_seen_cache_dirty_all = true;
-}
-
-auto map::is_memory_seen_cache_dirty_all(const int zlev) const -> bool {
-    return get_cache(zlev).map_memory_seen_cache_dirty_all;
-}
-
-auto map::take_memory_seen_cache_dirty_points(const int zlev) -> std::vector<tripoint_bub_ms> {
-    level_cache& ch = get_cache(zlev);
-    auto dirty_points = std::move(ch.map_memory_seen_cache_dirty_points);
-    ch.map_memory_seen_cache_dirty_points.clear();
-    return dirty_points;
-}
-
-auto map::mark_memory_seen_cache_dirty_all_clean(const int zlev) -> void {
-    level_cache& ch = get_cache(zlev);
-    ch.map_memory_seen_cache_dirty_all = false;
-    ch.map_memory_seen_cache_dirty_points.clear();
 }
 
 void map::clip_to_bounds(point_bub_ms& p) const {

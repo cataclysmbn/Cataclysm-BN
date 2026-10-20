@@ -219,8 +219,6 @@ private:
     bool do_show_items = true;
     bool do_low_light = false;
     bool do_bright_light = false;
-    bool do_memorize = false;
-    bool do_output = true;
 
 public:
     constexpr drawsq_params() = default;
@@ -273,30 +271,6 @@ public:
     constexpr auto bright_light() const -> bool { return do_bright_light; }
     //@}
 
-    /**
-     * Whether the tile should be memorized. Used only in map::draw().
-     * Default: false.
-     */
-    //@{
-    constexpr auto memorize(bool v) -> drawsq_params& {
-        do_memorize = v;
-        return *this;
-    }
-    constexpr auto memorize() const -> bool { return do_memorize; }
-    //@}
-
-    /**
-     * HACK: Whether the tile should be printed. Used only in map::draw()
-     * as a hack for memorizing off-screen tiles.
-     * Default: true.
-     */
-    //@{
-    constexpr auto output(bool v) -> drawsq_params& {
-        do_output = v;
-        return *this;
-    }
-    constexpr auto output() const -> bool { return do_output; }
-    //@}
 
     /**
      * Set view center.
@@ -434,11 +408,6 @@ struct level_cache {
 
     std::vector<uint32_t> colored_light_cache;
     bool colored_light_cache_active = false;
-
-    // per-tile map-memory seen bitset (size: cache_x * cache_y), indexed [x + y * cache_x]
-    cata_dynamic_bitset map_memory_seen_cache;
-    std::vector<tripoint_bub_ms> map_memory_seen_cache_dirty_points;
-    bool map_memory_seen_cache_dirty_all = true;
 
     bool veh_in_active_range = false;
     std::vector<bool> veh_exists_at;
@@ -846,9 +815,6 @@ public:
 
     void set_memory_seen_cache_dirty(const tripoint_bub_ms& p);
     auto set_memory_seen_cache_dirty(int zlev) -> void;
-    auto is_memory_seen_cache_dirty_all(int zlev) const -> bool;
-    auto take_memory_seen_cache_dirty_points(int zlev) -> std::vector<tripoint_bub_ms>;
-    auto mark_memory_seen_cache_dirty_all_clean(int zlev) -> void;
 
     auto is_map_cache_valid(const int zlev) -> bool;
     void invalidate_map_cache(const int zlev);
@@ -861,9 +827,6 @@ public:
     auto visibility_caches_dirty() const -> bool;
     /// Mark visibility_cache_dirty for every loaded z-level.
     void invalidate_visibility_caches();
-
-    auto check_seen_cache(const tripoint_bub_ms& p) const -> bool;
-    auto check_and_set_seen_cache(const tripoint_bub_ms& p) const -> bool;
 
     /**
      * Callback invoked when a vehicle has moved.
