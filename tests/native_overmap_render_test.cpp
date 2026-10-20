@@ -253,9 +253,9 @@ TEST_CASE(
         uistate.overmap_show_map_notes = false;
         const auto frames = frames_of({"RIGHT", "RIGHT"});
         REQUIRE(frames.size() == 3);
-        CHECK(frames[0].map.digest == 0xd137208964d5d88fULL);
-        CHECK(frames[1].map.digest == 0xfdce65e30963d717ULL);
-        CHECK(frames[2].map.digest == 0xff4bf3d68729a342ULL);
+        CHECK(frames[0].map.digest == 0x91f018afa421b84aULL);
+        CHECK(frames[1].map.digest == 0x95adfbf6a990e318ULL);
+        CHECK(frames[2].map.digest == 0x2f70519a6c3d6c4dULL);
         CHECK(level_row(frames[2].sidebar) == level_of(world.center + point_east * 2));
     }
 }
@@ -281,7 +281,7 @@ TEST_CASE(
                 fold_left(map.glyphs[map.glyphs.size() / 2 + 4], std::string{}, std::plus<>{});
         };
         CHECK(text(frames.front().map).contains("Testville"));
-        CHECK(frames.front().map.digest == 0x4797df5b5571c084ULL);
+        CHECK(frames.front().map.digest == 0xb8b5af971d0e7a6eULL);
         CHECK(
             facts_of(frames.front().sidebar)
             == std::vector<std::string>{
@@ -294,8 +294,8 @@ TEST_CASE(
         overmap_helpers::lay_mission(world.center + point(2, 0));
         const auto frames = frames_of({"RIGHT", "RIGHT"});
         REQUIRE(frames.size() == 3);
-        CHECK(frames[0].map.digest == 0xa8a7cb686515f642ULL);
-        CHECK(frames[2].map.digest == 0xc04e54f8745bfd6aULL);
+        CHECK(frames[0].map.digest == 0x9ce0e34db0a2aa71ULL);
+        CHECK(frames[2].map.digest == 0xa8ed979b327dea24ULL);
         CHECK(
             facts_of(frames[2].sidebar)
             == std::vector<std::string>{

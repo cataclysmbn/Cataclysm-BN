@@ -19,8 +19,8 @@
 namespace overmap_helpers {
 
 /// Sets every square the window can show, so that the picture comes from the code alone: terrain
-/// that cycles through the kinds the cell logic tells apart, every fifth square unseen and some
-/// explored.
+/// that cycles through the kinds the cell logic tells apart, every fifth square unseen, some
+/// explored and none with a note or a route mark an earlier case left.
 inline void lay_terrain(const tripoint_abs_omt& center) {
     constexpr auto kinds = std::array{
         "forest", "field", "road_ns", "road_ew", "forest_trail_ns", "lake_surface", "forest_thick"};
@@ -30,9 +30,12 @@ inline void lay_terrain(const tripoint_abs_omt& center) {
             ACTIVE_OVERMAP_BUFFER
                 .ter_set(at, oter_id(kinds[static_cast<std::size_t>((x * 7 + y * 3 + 1000) % 7)]));
             ACTIVE_OVERMAP_BUFFER.set_seen(at, (x + 2 * y + 1001) % 5 != 0);
-            if ((x * 3 + y + 1000) % 11 == 0 && ACTIVE_OVERMAP_BUFFER.seen(at)) {
+            const auto explored = (x * 3 + y + 1000) % 11 == 0 && ACTIVE_OVERMAP_BUFFER.seen(at);
+            if (ACTIVE_OVERMAP_BUFFER.is_explored(at) != explored) {
                 ACTIVE_OVERMAP_BUFFER.toggle_explored(at);
             }
+            if (ACTIVE_OVERMAP_BUFFER.is_path(at)) { ACTIVE_OVERMAP_BUFFER.toggle_path(at); }
+            if (ACTIVE_OVERMAP_BUFFER.has_note(at)) { ACTIVE_OVERMAP_BUFFER.delete_note(at); }
         }
     }
 }
