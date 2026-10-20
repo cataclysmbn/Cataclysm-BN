@@ -20,6 +20,7 @@
 #include <vector>
 #include <array>
 #include <memory>
+#include <random>
 #include <type_traits>
 #include <cmath>
 
@@ -1888,12 +1889,28 @@ scrollingcombattext::cSCT::cSCT( point p_pos, const direction p_oDir,
 
 }
 
+namespace
+{
+
+/// Display-only coin for the isometric drift, kept off the gameplay RNG.
+auto cosmetic_coin() -> bool
+{
+    static auto cosmetic = std::minstd_rand( 1 );
+    return cosmetic() % 2 == 0;
+}
+
+} // namespace
+
 void scrollingcombattext::add( point pos, direction p_oDir,
                                const std::string &p_sText, const game_message_type p_gmt,
                                const std::string &p_sText2, const game_message_type p_gmt2,
                                const std::string &p_sType )
 {
     engine_client::presentation::record_text( pos, p_oDir, p_sType, p_sText, p_gmt, p_sText2, p_gmt2 );
+    // Gameplay draws this coin where a non-isometric game with combat text on always has, so the
+    // display options and test mode never shift the gameplay RNG stream.
+    const auto drift_up = p_sType != "hp" &&
+                          ( p_oDir == direction::EAST || p_oDir == direction::WEST ) && one_in( 2 );
     // TODO: A non-hack
     if( test_mode ) {
         return;
@@ -1918,12 +1935,13 @@ void scrollingcombattext::add( point pos, direction p_oDir,
 
         } else {
             //reserve Left/Right for creature hp display
+            const auto up = [&]() { return iso_mode ? cosmetic_coin() : drift_up; };
             if( p_oDir == ( iso_mode ? direction::SOUTHEAST : direction::EAST ) ) {
-                p_oDir = ( one_in( 2 ) ) ? ( iso_mode ? direction::EAST : direction::NORTHEAST ) :
+                p_oDir = up() ? ( iso_mode ? direction::EAST : direction::NORTHEAST ) :
                          ( iso_mode ? direction::SOUTH : direction::SOUTHEAST );
 
             } else if( p_oDir == ( iso_mode ? direction::NORTHWEST : direction::WEST ) ) {
-                p_oDir = ( one_in( 2 ) ) ? ( iso_mode ? direction::NORTH : direction::NORTHWEST ) :
+                p_oDir = up() ? ( iso_mode ? direction::NORTH : direction::NORTHWEST ) :
                          ( iso_mode ? direction::WEST : direction::SOUTHWEST );
             }
         }
