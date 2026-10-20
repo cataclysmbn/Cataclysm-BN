@@ -1210,15 +1210,15 @@ auto advanced_inventory::aim_view( const input_context &ctxt ) const -> ec::scre
             ec::invoke_affordance( {
                 .id = "aim:move", .label = ctxt.get_action_name( "MOVE_VARIABLE_ITEM" ),
                 .args = { .rows = ec::rows_shape{ .component_id = items_id( from ), .counts = true }, .pane = panes_shape },
-                .enabled = denial.empty(), .denial = denial
+                .enabled = denial.empty(), .denial = denial, .covers = "MOVE_VARIABLE_ITEM"
             } ),
             ec::invoke_affordance( {
                 .id = "aim:set_area", .label = _( "Show area" ),
                 .args = { .row = ec::row_shape{ .component_id = areas_id( from ) }, .pane = panes_shape }
             } ),
-            ec::invoke_affordance( { .id = "aim:toggle_vehicle", .label = ctxt.get_action_name( "TOGGLE_VEH" ), .args = { .pane = panes_shape } } ),
-            ec::invoke_affordance( { .id = "aim:filter", .label = ctxt.get_action_name( "FILTER" ), .args = { .text = ec::text_shape{}, .pane = panes_shape } } ),
-            ec::invoke_affordance( { .id = "aim:close", .label = ctxt.get_action_name( "QUIT" ), .role = "cancel" } ),
+            ec::invoke_affordance( { .id = "aim:toggle_vehicle", .label = ctxt.get_action_name( "TOGGLE_VEH" ), .args = { .pane = panes_shape }, .covers = "TOGGLE_VEH" } ),
+            ec::invoke_affordance( { .id = "aim:filter", .label = ctxt.get_action_name( "FILTER" ), .args = { .text = ec::text_shape{}, .pane = panes_shape }, .covers = "FILTER" } ),
+            ec::invoke_affordance( { .id = "aim:close", .label = ctxt.get_action_name( "QUIT" ), .role = "cancel", .covers = "QUIT" } ),
         },
         .focus_component = items_id( from ), .focus_row = cursor
     };

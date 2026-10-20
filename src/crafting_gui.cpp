@@ -1069,7 +1069,7 @@ auto crafting_view( const crafting_view_options &opts ) -> ec::screen_view
                                    .args = { .row = ec::row_shape{ .component_id = "crafting:subtabs" } } } ) );
         }
         affordances.push_back( ec::invoke_affordance( { .id = craft_search, .label = pgettext( "crafting gui", "Filter" ),
-                               .args = { .text = ec::text_shape{} } } ) );
+                               .args = { .text = ec::text_shape{} }, .covers = "FILTER" } ) );
         affordances.push_back( ec::invoke_affordance( { .id = craft_favorite, .label = pgettext( "crafting gui", "Favorite" ), .args = row_arg } ) );
         affordances.push_back( ec::invoke_affordance( { .id = craft_hide, .label = pgettext( "crafting gui", "Show/hide" ), .args = row_arg } ) );
         std::ranges::copy( std::array{ craft_search, craft_favorite, craft_hide }, std::back_inserter(

@@ -1022,10 +1022,10 @@ auto trading_window::view( const npc &np, input_context &ctxt ) const -> ec::scr
             } ),
             ec::invoke_affordance( {
                 .id = filter_id, .label = ctxt.get_action_name( "FILTER" ),
-                .args = { .text = ec::text_shape{}, .pane = ec::pane_shape{ .component_id = panes_id } }
+                .args = { .text = ec::text_shape{}, .pane = ec::pane_shape{ .component_id = panes_id } }, .covers = "FILTER"
             } ),
-            ec::invoke_affordance( { .id = confirm_id, .label = ctxt.get_action_name( "CONFIRM" ), .role = "confirm" } ),
-            ec::invoke_affordance( { .id = cancel_id, .label = ctxt.get_action_name( "QUIT" ), .role = "cancel" } ),
+            ec::invoke_affordance( { .id = confirm_id, .label = ctxt.get_action_name( "CONFIRM" ), .role = "confirm", .covers = "CONFIRM" } ),
+            ec::invoke_affordance( { .id = cancel_id, .label = ctxt.get_action_name( "QUIT" ), .role = "cancel", .covers = "QUIT" } ),
         },
         .focus_component = focus_them ? npc_list_id : you_list_id,
         .focus_row = focus_them ? theirs.focus_row : yours.focus_row,

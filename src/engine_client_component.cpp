@@ -180,14 +180,15 @@ auto native_affordances( build &b ) -> void
 }
 
 /// The role a registered action plays on every screen that has it: CONFIRM accepts, QUIT leaves, any key
-/// acknowledges where a screen names that key, the cursor, paging, tab and scroll actions only navigate, and
-/// the keybindings menu is the help. On the map the cursor keys are steps, which navigate nothing.
+/// acknowledges where a screen names that key, the cursor, paging, tab and scroll actions and the mouse's
+/// moves and clicks only navigate, and the keybindings menu is the help. On the map the cursor keys are steps,
+/// which navigate nothing.
 auto registered_role( const std::string &id, const bool map ) -> std::string
 {
     constexpr auto navigation = std::array{
         "UP", "DOWN", "LEFT", "RIGHT", "LEFTUP", "LEFTDOWN", "RIGHTUP", "RIGHTDOWN", "PAGE_UP", "PAGE_DOWN",
         "HOME", "END", "NEXT_TAB", "PREV_TAB", "NEXT_CATEGORY_TAB", "PREV_CATEGORY_TAB", "SCROLL_UP",
-        "SCROLL_DOWN", "MOUSE_MOVE", "TEXT.LEFT", "TEXT.RIGHT", "TEXT.UP", "TEXT.DOWN", "TEXT.HOME", "TEXT.END",
+        "SCROLL_DOWN", "MOUSE_MOVE", "SELECT", "TEXT.LEFT", "TEXT.RIGHT", "TEXT.UP", "TEXT.DOWN", "TEXT.HOME", "TEXT.END",
         "TEXT.PAGE_UP", "TEXT.PAGE_DOWN", "LEFT_WIDE", "RIGHT_WIDE", "UP_WIDE", "DOWN_WIDE"
     };
     return id == "CONFIRM" ? "confirm" : id == "QUIT" ? "cancel" : id == "ANY_INPUT" ? "any_key" :
@@ -413,6 +414,12 @@ auto screen_of( const boundary_state &state, const slot &entry, const bool top )
         }
         // The registered actions of the context follow the screen's own affordances.
         auto registered = registered_affordances( state, entry.map );
+        // An affordance that performs a registered action answers to its keys, unless it runs a row, which
+        // the client runs from the row itself.
+        for( auto &own : result.affordances ) {
+            const auto covered = std::ranges::find( registered, own.covers, &affordance::id );
+            if( own.keys.empty() && !own.args.row && !own.covers.empty() && covered != registered.end() ) { own.keys = covered->keys; }
+        }
         // A registered action that an affordance of the screen performs is not offered a second time, unless it has a denial.
         std::erase_if( registered, [&]( const affordance & offered_action ) {
             return std::ranges::contains( result.affordances, offered_action.id, &affordance::covers ) &&
