@@ -31,6 +31,7 @@
 #    include <cstdlib>
 #    include <format>
 #    include <nlohmann/json.hpp>
+#    include <optional>
 #    include <ranges>
 #    include <string>
 #    include <variant>
@@ -196,10 +197,14 @@ auto trimmed(std::string text) -> std::string {
 /// who knows the squares around.
 struct fixed_world {
     tripoint_abs_omt center;
+    std::optional<overmap_helpers::cities_aside> cities;
     // The state is cleared before the guard turns off test mode: clearing eats, which asks.
     explicit fixed_world() {
         clear_all_state();
         center = get_avatar().abs_omt_pos();
+        cities.emplace(center);
+        // A mission an earlier case laid would add its marker and distance.
+        get_avatar().reset_all_missions();
         overmap_helpers::lay_terrain(center);
         uistate.overmap_show_overlays = true;
         uistate.overmap_blinking = false;

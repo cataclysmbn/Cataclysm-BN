@@ -6,6 +6,7 @@
 #    include "catch/catch.hpp"
 #    include "coordinates.h"
 #    include "game.h"
+#    include "game_constants.h"
 #    include "mission.h"
 #    include "overmap/omdata.h"
 #    include "overmap/overmap.h"
@@ -15,6 +16,8 @@
 #    include <array>
 #    include <cstddef>
 #    include <string>
+#    include <utility>
+#    include <vector>
 
 namespace overmap_helpers {
 
@@ -39,6 +42,35 @@ inline void lay_terrain(const tripoint_abs_omt& center) {
         }
     }
 }
+
+/// Sets the generated cities one overmap around a square aside while it lives: they depend on the
+/// seed and name the squares near them, so only the cities a case lays exist.
+struct cities_aside {
+    struct held {
+        overmap* om;
+        std::vector<city> cities;
+    };
+    std::vector<held> aside;
+
+    explicit cities_aside(const tripoint_abs_omt& center) {
+        // The closest city is looked for one overmap around the square.
+        for (auto y = -1; y <= 1; ++y) {
+            for (auto x = -1; x <= 1; ++x) {
+                auto* const om =
+                    ACTIVE_OVERMAP_BUFFER.get_existing_om_global(center.xy() + point(x, y) * OMAPX)
+                        .om;
+                if (om != nullptr) {
+                    aside.push_back({.om = om, .cities = std::exchange(om->cities, {})});
+                }
+            }
+        }
+    }
+    cities_aside(const cities_aside&) = delete;
+    auto operator=(const cities_aside&) -> cities_aside& = delete;
+    ~cities_aside() {
+        for (auto& [om, cities] : aside) { om->cities = std::move(cities); }
+    }
+};
 
 /// A city of the overmap the avatar stands on, `offset` squares from `center`.
 inline void lay_city(const tripoint_abs_omt& center, const point& offset, const std::string& name) {

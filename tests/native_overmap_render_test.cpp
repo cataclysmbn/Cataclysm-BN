@@ -15,7 +15,6 @@
 #    include "game_constants.h"
 #    include "input.h"
 #    include "output.h"
-#    include "overmap/overmap.h"
 #    include "overmap/overmap_ui.h"
 #    include "overmap/overmapbuffer.h"
 #    include "overmap_helpers.h"
@@ -29,8 +28,8 @@
 #    include <cstdint>
 #    include <format>
 #    include <functional>
+#    include <optional>
 #    include <string>
-#    include <utility>
 #    include <vector>
 
 /// Pins what the native overmap prints, so that sharing its cell and sidebar facts with the engine
@@ -146,30 +145,15 @@ auto frames_of(const std::vector<std::string>& keys) -> std::vector<frame> {
     return frames;
 }
 
-/// The cities an overmap had before the fixture set them aside.
-struct held_cities {
-    overmap* om;
-    std::vector<city> cities;
-};
-
 struct fixed_world {
     tripoint_abs_omt center;
-    /// Generated cities depend on the seed and name the squares near them, so only the cities a
-    /// case lays exist while it runs.
-    std::vector<held_cities> held;
+    std::optional<overmap_helpers::cities_aside> cities;
     explicit fixed_world() {
         clear_all_state();
         center = get_avatar().abs_omt_pos();
-        // The closest city is looked for one overmap around the square.
-        for (auto y = -1; y <= 1; ++y) {
-            for (auto x = -1; x <= 1; ++x) {
-                const auto near = center.xy() + point(x, y) * OMAPX;
-                auto* const om = ACTIVE_OVERMAP_BUFFER.get_existing_om_global(near).om;
-                if (om != nullptr) {
-                    held.push_back({.om = om, .cities = std::exchange(om->cities, {})});
-                }
-            }
-        }
+        cities.emplace(center);
+        // A mission an earlier case laid would add its marker and distance.
+        get_avatar().reset_all_missions();
         overmap_helpers::lay_terrain(center);
         uistate.overmap_show_overlays = true;
         uistate.overmap_blinking = false;
@@ -180,10 +164,7 @@ struct fixed_world {
         uistate.overmap_show_city_labels = false;
         get_avatar().omt_path = {};
     }
-    ~fixed_world() {
-        clear_all_state();
-        for (auto& [om, cities] : held) { om->cities = std::move(cities); }
-    }
+    ~fixed_world() { clear_all_state(); }
 };
 
 } // namespace
