@@ -1,6 +1,1248 @@
 {
   "valid": [
     {
+      "name": "character panel query",
+      "def": "panel_params",
+      "value": {
+        "epoch": "epoch-2",
+        "panel": "character",
+        "row": "skill:melee"
+      }
+    },
+    {
+      "name": "character panel",
+      "def": "screen",
+      "value": {
+        "screen_id": "panel:character",
+        "role": "screen",
+        "kind": "character_sheet",
+        "title": "John Smith | Male",
+        "root": {
+          "id": "character:tabs",
+          "kind": "tabs",
+          "tabs": [
+            {
+              "id": "stats",
+              "label": "STATS",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "encumbrance",
+              "label": "ENCUMBRANCE AND WARMTH",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "skills",
+              "label": "SKILLS",
+              "selected": true,
+              "enabled": true
+            },
+            {
+              "id": "traits",
+              "label": "TRAITS",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "bionics",
+              "label": "BIONICS",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "effects",
+              "label": "EFFECTS",
+              "selected": false,
+              "enabled": true
+            }
+          ],
+          "child": {
+            "id": "character:panes",
+            "kind": "split",
+            "relation": "peers",
+            "active": "character:skills",
+            "children": [
+              {
+                "id": "character:stats",
+                "kind": "panel",
+                "title": "STATS",
+                "child": {
+                  "id": "character:stats:rows",
+                  "kind": "list",
+                  "columns": [
+                    {
+                      "key": "current",
+                      "label": "Current"
+                    },
+                    {
+                      "key": "base",
+                      "label": "Base"
+                    }
+                  ],
+                  "rows": [
+                    {
+                      "id": "stat:str",
+                      "label": "Strength:",
+                      "description": "Strength affects your melee damage, the amount of weight you can carry, your total HP, your resistance to many diseases, and the effectiveness of actions which require brute force.\nBase HP: <color_white>84</color>\nCarry weight (kg): <color_white>45.0</color>\nMelee damage: <color_white>6.0</color>",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "current",
+                          "label": "Current",
+                          "value": "8",
+                          "color": "c_white"
+                        },
+                        {
+                          "key": "base",
+                          "label": "Base",
+                          "value": "8"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "stat:dex",
+                      "label": "Dexterity:",
+                      "description": "Dexterity affects your chance to hit in melee combat, helps you steady your gun for ranged combat, and enhances many actions that require finesse.\nMelee to-hit bonus: <color_white>+4.5</color>\nRanged penalty: <color_white>-6</color>\nThrowing penalty per target's dodge: <color_white>+25</color>",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "current",
+                          "label": "Current",
+                          "value": "8",
+                          "color": "c_white"
+                        },
+                        {
+                          "key": "base",
+                          "label": "Base",
+                          "value": "8"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "stat:int",
+                      "label": "Intelligence:",
+                      "description": "Intelligence is less important in most situations, but it is vital for more complex tasks like electronics crafting.  It also affects how much skill you can pick up from reading a book.\nRead times: <color_white>100%</color>\nCrafting bonus: <color_white>+8%</color>",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "current",
+                          "label": "Current",
+                          "value": "8",
+                          "color": "c_white"
+                        },
+                        {
+                          "key": "base",
+                          "label": "Base",
+                          "value": "8"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "stat:per",
+                      "label": "Perception:",
+                      "description": "Perception is the most important stat for ranged combat.  It's also used for detecting traps, camouflaged creatures, and other things of interest.\nBase night vision range: <color_white>1.7</color>\nTrap detection level: <color_white>8</color>\nAiming penalty: <color_white>-14</color>",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "current",
+                          "label": "Current",
+                          "value": "8",
+                          "color": "c_white"
+                        },
+                        {
+                          "key": "base",
+                          "label": "Base",
+                          "value": "8"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "stat:height",
+                      "label": "Height:",
+                      "description": "Your height.  Simply how tall you are.\n175 cm",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "current",
+                          "label": "Height:",
+                          "value": "175 cm"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "stat:age",
+                      "label": "Age:",
+                      "description": "This is how old you are.\n25 years",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "current",
+                          "label": "Age:",
+                          "value": "25 years"
+                        }
+                      ]
+                    }
+                  ],
+                  "total": 6,
+                  "selection": "single"
+                }
+              },
+              {
+                "id": "character:encumbrance",
+                "kind": "panel",
+                "title": "ENCUMBRANCE AND WARMTH",
+                "child": {
+                  "id": "character:encumbrance:rows",
+                  "kind": "list",
+                  "columns": [
+                    {
+                      "key": "encumbrance",
+                      "label": "Encumbrance"
+                    },
+                    {
+                      "key": "layering",
+                      "label": "Layering"
+                    },
+                    {
+                      "key": "warmth",
+                      "label": "Warmth"
+                    }
+                  ],
+                  "rows": [
+                    {
+                      "id": "body:head",
+                      "label": "Head",
+                      "description": "<color_magenta>Head encumbrance has no effect; it simply limits how much you can put on.</color>",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "layering",
+                          "label": "Layering",
+                          "value": "0"
+                        },
+                        {
+                          "key": "warmth",
+                          "label": "Warmth",
+                          "value": "-56",
+                          "color": "c_light_blue"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "body:eyes",
+                      "label": "Eyes",
+                      "description": "Perception when checking traps or firing ranged weapons: <color_white>+0</color>\nDispersion when throwing items: <color_white>+0</color>\nNight vision range: <color_white>-0.0</color>",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "layering",
+                          "label": "Layering",
+                          "value": "0"
+                        },
+                        {
+                          "key": "warmth",
+                          "label": "Warmth",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "body:mouth",
+                      "label": "Mouth",
+                      "description": "<color_magenta>Covering your mouth will make it more difficult to breathe and catch your breath.</color>\nStamina Regeneration: <color_white>+0</color>\n",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "layering",
+                          "label": "Layering",
+                          "value": "0"
+                        },
+                        {
+                          "key": "warmth",
+                          "label": "Warmth",
+                          "value": "-56",
+                          "color": "c_light_blue"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "body:torso",
+                      "label": "Torso",
+                      "description": "Melee attack rolls: <color_white>+0%</color>\nDodge skill: <color_white>-0.0</color>\nSwimming movement point cost: <color_white>+0</color>\nMelee and thrown attack movement point cost: <color_white>+0</color>\n",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "layering",
+                          "label": "Layering",
+                          "value": "0"
+                        },
+                        {
+                          "key": "warmth",
+                          "label": "Warmth",
+                          "value": "-56",
+                          "color": "c_light_blue"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "body:arm_l:pair",
+                      "label": "Arms",
+                      "description": "<color_magenta>Arm encumbrance affects stamina cost of melee attacks and accuracy with ranged weapons.</color>\nMelee stamina cost: <color_white>+0</color>\nDispersion when using ranged attacks: <color_white>+0.0</color>\n",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "layering",
+                          "label": "Layering",
+                          "value": "0"
+                        },
+                        {
+                          "key": "warmth",
+                          "label": "Warmth",
+                          "value": "-56",
+                          "color": "c_light_blue"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "body:hand_l:pair",
+                      "label": "Hands",
+                      "description": "<color_magenta>Reduces the speed at which you can handle or manipulate items.</color>\n\nReloading movement point cost: <color_white>+0</color>\nDexterity when throwing items: <color_white>-0.0</color>\nMelee and thrown attack movement point cost: <color_white>+0</color>\nReduced gun aim speed: <color_white>0.0</color>",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "layering",
+                          "label": "Layering",
+                          "value": "0"
+                        },
+                        {
+                          "key": "warmth",
+                          "label": "Warmth",
+                          "value": "-56",
+                          "color": "c_light_blue"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "body:leg_l:pair",
+                      "label": "Legs",
+                      "description": "Movement point cost: <color_white>+0</color>\nSwimming movement point cost: <color_white>+0</color>\nDodge skill: <color_white>+0.0</color>\n",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "layering",
+                          "label": "Layering",
+                          "value": "0"
+                        },
+                        {
+                          "key": "warmth",
+                          "label": "Warmth",
+                          "value": "-56",
+                          "color": "c_light_blue"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "body:foot_l:pair",
+                      "label": "Feet",
+                      "description": "Movement point cost: <color_white>+0</color>\n",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "encumbrance",
+                          "label": "Encumbrance",
+                          "value": "0",
+                          "color": "c_light_gray"
+                        },
+                        {
+                          "key": "layering",
+                          "label": "Layering",
+                          "value": "0"
+                        },
+                        {
+                          "key": "warmth",
+                          "label": "Warmth",
+                          "value": "-56",
+                          "color": "c_light_blue"
+                        }
+                      ]
+                    }
+                  ],
+                  "total": 8,
+                  "selection": "single"
+                }
+              },
+              {
+                "id": "character:skills",
+                "kind": "panel",
+                "title": "SKILLS",
+                "child": {
+                  "id": "character:skills:rows",
+                  "kind": "list",
+                  "columns": [
+                    {
+                      "key": "level",
+                      "label": "Level"
+                    },
+                    {
+                      "key": "exercise",
+                      "label": "Exercise"
+                    },
+                    {
+                      "key": "dodge",
+                      "label": "Dodge"
+                    },
+                    {
+                      "key": "damage",
+                      "label": "Damage"
+                    }
+                  ],
+                  "rows": [
+                    {
+                      "id": "skill_type:display_melee",
+                      "label": "Melee skills",
+                      "description": "",
+                      "denial": "",
+                      "enabled": false,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [],
+                      "header": true
+                    },
+                    {
+                      "id": "skill:bashing",
+                      "label": "Bashing Weapons",
+                      "description": "Your skill in fighting with blunt weaponry, from rocks and sticks to baseball bats and the butts of rifles.  Skill increases damage, and higher levels will improve the accuracy of an attack.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "level",
+                          "label": "Level",
+                          "value": "0",
+                          "color": "c_light_blue"
+                        },
+                        {
+                          "key": "exercise",
+                          "label": "Exercise",
+                          "value": "0%"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "skill:cutting",
+                      "label": "Cutting Weapons",
+                      "description": "Your skill in fighting with weaponry designed to cut, hack and slash an opponent.  Lower levels of skill increase accuracy and damage, while higher levels will help to bypass heavy armor and thick hides.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "level",
+                          "label": "Level",
+                          "value": "0",
+                          "color": "c_light_blue"
+                        },
+                        {
+                          "key": "exercise",
+                          "label": "Exercise",
+                          "value": "0%"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "skill:dodge",
+                      "label": "Dodging",
+                      "description": "Your ability to dodge an oncoming threat, be it an enemy's attack, a triggered trap, or a falling rock.  This skill is also used in attempts to fall gracefully, and for other acrobatic feats.  The first number shown includes modifiers, and the second does not.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "level",
+                          "label": "Level",
+                          "value": "0",
+                          "color": "c_light_blue"
+                        },
+                        {
+                          "key": "exercise",
+                          "label": "Exercise",
+                          "value": "0%"
+                        },
+                        {
+                          "key": "dodge",
+                          "label": "Dodge",
+                          "value": "2.0"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "skill:melee",
+                      "label": "Melee",
+                      "description": "Your skill and finesse in personal combat, both with and without a weapon.  Higher levels can significantly increase the accuracy and effectiveness of your physical attacks.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "level",
+                          "label": "Level",
+                          "value": "5",
+                          "color": "c_light_blue"
+                        },
+                        {
+                          "key": "exercise",
+                          "label": "Exercise",
+                          "value": "0%"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "skill:stabbing",
+                      "label": "Piercing Weapons",
+                      "description": "Your skill in fighting with knives, spears and other such stabbing implements.  Skill increases attack accuracy as well as the chance of inflicting a deadly and critical blow.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "level",
+                          "label": "Level",
+                          "value": "0",
+                          "color": "c_light_blue"
+                        },
+                        {
+                          "key": "exercise",
+                          "label": "Exercise",
+                          "value": "0%"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "skill:unarmed",
+                      "label": "Unarmed Combat",
+                      "description": "Your skill in hand-to-hand fighting, with unarmed weapons or empty-handed.  Skill increases attack accuracy and unlocks techniques in many martial arts, while also providing a bonus to bare-handed damage.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "level",
+                          "label": "Level",
+                          "value": "0",
+                          "color": "c_light_blue"
+                        },
+                        {
+                          "key": "exercise",
+                          "label": "Exercise",
+                          "value": "0%"
+                        },
+                        {
+                          "key": "damage",
+                          "label": "Damage",
+                          "value": "0"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "skill_type:display_ranged",
+                      "label": "Ranged skills",
+                      "description": "",
+                      "denial": "",
+                      "enabled": false,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [],
+                      "header": true
+                    },
+                    {
+                      "id": "skill:archery",
+                      "label": "Archery",
+                      "description": "Your skill in using bow weapons, from hand-carved self bows to complex compound bows.  Quiet and effective, they require strength of body and sight to wield, and are not terribly accurate over a long distance.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "level",
+                          "label": "Level",
+                          "value": "0",
+                          "color": "c_light_blue"
+                        },
+                        {
+                          "key": "exercise",
+                          "label": "Exercise",
+                          "value": "0%"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "skill:pistol",
+                      "label": "Handguns",
+                      "description": "Handguns have poor accuracy compared to rifles, but are usually quick to fire and reload faster than other guns.  They are very effective at close quarters, though unsuited for long range engagement.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "level",
+                          "label": "Level",
+                          "value": "0",
+                          "color": "c_light_blue"
+                        },
+                        {
+                          "key": "exercise",
+                          "label": "Exercise",
+                          "value": "0%"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "skill:launcher",
+                      "label": "Launchers",
+                      "description": "Your skill in using heavy weapons like rocket, grenade or missile launchers.  These weapons have a variety of applications and may carry immense destructive power, but they are cumbersome and hard to manage.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "level",
+                          "label": "Level",
+                          "value": "0",
+                          "color": "c_light_blue"
+                        },
+                        {
+                          "key": "exercise",
+                          "label": "Exercise",
+                          "value": "0%"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "skill:gun",
+                      "label": "Marksmanship",
+                      "description": "Your overall skill in using bows and firearms.  With higher levels, this general experience increases accuracy with any bows or firearms, but is secondary to practice with the type of ranged weapon in question.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "level",
+                          "label": "Level",
+                          "value": "5",
+                          "color": "c_light_blue"
+                        },
+                        {
+                          "key": "exercise",
+                          "label": "Exercise",
+                          "value": "0%"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "skill:rifle",
+                      "label": "Rifles",
+                      "description": "Rifles have terrific range and accuracy compared to other firearms, but may be slow to fire and reload, and can prove difficult to use in close quarters.  Fully automatic rifles can fire rapidly, but are harder to handle properly.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "level",
+                          "label": "Level",
+                          "value": "0",
+                          "color": "c_light_blue"
+                        },
+                        {
+                          "key": "exercise",
+                          "label": "Exercise",
+                          "value": "0%"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "skill:shotgun",
+                      "label": "Shotguns",
+                      "description": "Shotguns are easy to shoot and can inflict massive damage, but their effectiveness and accuracy decline rapidly with range.  Slugs can be loaded into shotguns to provide greater range, though they are somewhat inaccurate.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "level",
+                          "label": "Level",
+                          "value": "0",
+                          "color": "c_light_blue"
+                        },
+                        {
+                          "key": "exercise",
+                          "label": "Exercise",
+                          "value": "0%"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "skill:smg",
+                      "label": "Submachine Guns",
+                      "description": "Comprised of an automatic rifle carbine designed to fire a pistol cartridge, submachine guns can reload and fire quickly, sometimes in bursts, but they are relatively inaccurate and may be prone to mechanical failures.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "level",
+                          "label": "Level",
+                          "value": "0",
+                          "color": "c_light_blue"
+                        },
+                        {
+                          "key": "exercise",
+                          "label": "Exercise",
+                          "value": "0%"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "skill:throw",
+                      "label": "Throwing",
+                      "description": "Your skill in throwing objects over a distance.  Skill increases accuracy, and at higher levels, the range of a throw.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "level",
+                          "label": "Level",
+                          "value": "0",
+                          "color": "c_light_blue"
+                        },
+                        {
+                          "key": "exercise",
+                          "label": "Exercise",
+                          "value": "0%"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "skill_type:display_crafting",
+                      "label": "Crafting skills",
+                      "description": "",
+                      "denial": "",
+                      "enabled": false,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [],
+                      "header": true
+                    },
+                    {
+                      "id": "skill:cooking",
+                      "label": "Cooking",
+                      "description": "Your skill in combining food ingredients to make other, tastier food items.  It may also be used in certain chemical mixtures and other, more esoteric tasks.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "level",
+                          "label": "Level",
+                          "value": "0",
+                          "color": "c_light_blue"
+                        },
+                        {
+                          "key": "exercise",
+                          "label": "Exercise",
+                          "value": "0%"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "skill:electronics",
+                      "label": "Electronics",
+                      "description": "Your skill in dealing with electrical systems, used in the craft and repair of objects with electrical components.  This skill is an important part of installing and managing bionic implants.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "level",
+                          "label": "Level",
+                          "value": "0",
+                          "color": "c_light_blue"
+                        },
+                        {
+                          "key": "exercise",
+                          "label": "Exercise",
+                          "value": "0%"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "skill:fabrication",
+                      "label": "Fabrication",
+                      "description": "Your skill in working with raw materials and shaping them into useful objects.  This skill plays an important role in the crafting of many objects.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "level",
+                          "label": "Level",
+                          "value": "0",
+                          "color": "c_light_blue"
+                        },
+                        {
+                          "key": "exercise",
+                          "label": "Exercise",
+                          "value": "0%"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "skill:survival",
+                      "label": "Survival",
+                      "description": "Your skill in surviving the wilderness, and in crafting various basic survival items.  This also covers your ability to skin and butcher animals for meat and hides.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "level",
+                          "label": "Level",
+                          "value": "0",
+                          "color": "c_light_blue"
+                        },
+                        {
+                          "key": "exercise",
+                          "label": "Exercise",
+                          "value": "0%"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "skill:tailor",
+                      "label": "Tailoring",
+                      "description": "Your skill in the craft and repair of clothing, bags, blankets and other textiles.  Affects knitting, sewing, stitching, weaving, and nearly anything else involving a needle and thread.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "level",
+                          "label": "Level",
+                          "value": "0",
+                          "color": "c_light_blue"
+                        },
+                        {
+                          "key": "exercise",
+                          "label": "Exercise",
+                          "value": "0%"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "skill_type:display_interaction",
+                      "label": "Interaction skills",
+                      "description": "",
+                      "denial": "",
+                      "enabled": false,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [],
+                      "header": true
+                    },
+                    {
+                      "id": "skill:swimming",
+                      "label": "Athletics",
+                      "description": "Your capability to perform physically demanding tasks such as running, jumping, climbing, and swimming efficiently. This skill influences your overall performance when swimming, reduces stamina consumption of physical activity, and reduces the impact of encumbrance.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "level",
+                          "label": "Level",
+                          "value": "0",
+                          "color": "c_light_blue"
+                        },
+                        {
+                          "key": "exercise",
+                          "label": "Exercise",
+                          "value": "0%"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "skill:computer",
+                      "label": "Computers",
+                      "description": "Your skill in accessing and manipulating computers.  Higher levels can allow a user to navigate complex software systems and even bypass their security.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "level",
+                          "label": "Level",
+                          "value": "0",
+                          "color": "c_light_blue"
+                        },
+                        {
+                          "key": "exercise",
+                          "label": "Exercise",
+                          "value": "0%"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "skill:driving",
+                      "label": "Driving",
+                      "description": "Your skill in operating and steering a vehicle in motion.  A higher level allows greater control over vehicles at higher speeds, and reduces the penalty of shooting while driving.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "level",
+                          "label": "Level",
+                          "value": "0",
+                          "color": "c_light_blue"
+                        },
+                        {
+                          "key": "exercise",
+                          "label": "Exercise",
+                          "value": "0%"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "skill:firstaid",
+                      "label": "First Aid",
+                      "description": "Your skill in effecting emergency medical treatment.  Higher levels allow better use of medicines and items like bandages and first aid kits, and reduce the failure and complication rates of medical procedures.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "level",
+                          "label": "Level",
+                          "value": "0",
+                          "color": "c_light_blue"
+                        },
+                        {
+                          "key": "exercise",
+                          "label": "Exercise",
+                          "value": "0%"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "skill:mechanics",
+                      "label": "Mechanics",
+                      "description": "Your skill in engineering, maintaining and repairing vehicles and other mechanical systems.  This skill covers the craft of items with complex parts, and plays a role in the installation of bionic equipment.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "level",
+                          "label": "Level",
+                          "value": "0",
+                          "color": "c_light_blue"
+                        },
+                        {
+                          "key": "exercise",
+                          "label": "Exercise",
+                          "value": "0%"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "skill:traps",
+                      "label": "Trapping",
+                      "description": "Your skill in creating, setting, finding and disarming traps safely and effectively.  This skill does not affect the evasion of traps that are triggered.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "level",
+                          "label": "Level",
+                          "value": "0",
+                          "color": "c_light_blue"
+                        },
+                        {
+                          "key": "exercise",
+                          "label": "Exercise",
+                          "value": "0%"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "skill_type:display_social",
+                      "label": "Social skills",
+                      "description": "",
+                      "denial": "",
+                      "enabled": false,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [],
+                      "header": true
+                    },
+                    {
+                      "id": "skill:barter",
+                      "label": "Bartering",
+                      "description": "Your skill in bargaining, haggling, and trading with others.  Higher levels increase the odds of getting the better end of a deal, and might even see you convincing others to give you free stuff.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "level",
+                          "label": "Level",
+                          "value": "0",
+                          "color": "c_light_blue"
+                        },
+                        {
+                          "key": "exercise",
+                          "label": "Exercise",
+                          "value": "0%"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "skill:speech",
+                      "label": "Speaking",
+                      "description": "Your skill in speaking to other people.  Covers ability in boasting, flattery, threats, persuasion, lies, and other facets of interpersonal communication.  Works best in conjunction with a high level of intelligence.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "level",
+                          "label": "Level",
+                          "value": "0",
+                          "color": "c_light_blue"
+                        },
+                        {
+                          "key": "exercise",
+                          "label": "Exercise",
+                          "value": "0%"
+                        }
+                      ]
+                    }
+                  ],
+                  "total": 32,
+                  "selection": "single"
+                }
+              },
+              {
+                "id": "character:traits",
+                "kind": "panel",
+                "title": "TRAITS",
+                "child": {
+                  "id": "character:traits:rows",
+                  "kind": "list",
+                  "columns": [],
+                  "rows": [
+                    {
+                      "id": "trait:QUICK",
+                      "label": "Quick",
+                      "description": "<color_c_light_green>Quick</color>: You're just generally quick!  You get a 10% bonus to action points.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [],
+                      "color": "c_light_green"
+                    }
+                  ],
+                  "total": 1,
+                  "selection": "single"
+                }
+              },
+              {
+                "id": "character:bionics",
+                "kind": "panel",
+                "title": "BIONICS",
+                "stats": [
+                  {
+                    "key": "power",
+                    "label": "Bionic Power:",
+                    "value": "0",
+                    "max": "0"
+                  }
+                ],
+                "child": {
+                  "id": "character:bionics:rows",
+                  "kind": "list",
+                  "columns": [],
+                  "rows": [],
+                  "total": 0,
+                  "selection": "single"
+                }
+              },
+              {
+                "id": "character:effects",
+                "kind": "panel",
+                "title": "EFFECTS",
+                "child": {
+                  "id": "character:effects:rows",
+                  "kind": "list",
+                  "columns": [],
+                  "rows": [],
+                  "total": 0,
+                  "selection": "single"
+                }
+              },
+              {
+                "id": "character:speed",
+                "kind": "panel",
+                "title": "SPEED",
+                "stats": [
+                  {
+                    "key": "base_move_cost",
+                    "label": "Base Move Cost:",
+                    "value": "100",
+                    "tone": "good"
+                  },
+                  {
+                    "key": "current_speed",
+                    "label": "Current Speed:",
+                    "value": "110",
+                    "tone": "good"
+                  },
+                  {
+                    "key": "mutations",
+                    "label": "Mutations",
+                    "value": "+10%",
+                    "tone": "good"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "affordances": [],
+        "focus": {
+          "component_id": "character:skills:rows",
+          "row_id": "skill:melee"
+        }
+      }
+    },
+    {
       "name": "character sheet",
       "def": "screen",
       "value": {

@@ -1,6 +1,89 @@
 {
   "valid": [
     {
+      "name": "inventory panel",
+      "def": "screen",
+      "value": {
+        "screen_id": "panel:inventory",
+        "role": "screen",
+        "kind": "inventory",
+        "title": "Inventory",
+        "root": {
+          "id": "inventory",
+          "kind": "panel",
+          "title": "",
+          "subtitle": "Item hotkeys assigned: 0/72",
+          "stats": [
+            {
+              "key": "weight",
+              "label": "Weight (kg):",
+              "value": "0.5",
+              "max": "45.0"
+            },
+            {
+              "key": "volume",
+              "label": "Volume (L):",
+              "value": "0.00",
+              "max": "0.00"
+            }
+          ],
+          "child": {
+            "id": "split:columns",
+            "kind": "split",
+            "relation": "peers",
+            "children": [
+              {
+                "id": "panel:worn",
+                "kind": "panel",
+                "title": "",
+                "child": {
+                  "id": "list:worn",
+                  "kind": "list",
+                  "columns": [],
+                  "rows": [
+                    {
+                      "id": "category:5599950bad45a4f1",
+                      "label": "WEAPON HELD",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [],
+                      "header": true
+                    },
+                    {
+                      "id": "item:2",
+                      "label": "rock (1)",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [],
+                      "color": "c_light_gray",
+                      "key_color": "c_white",
+                      "markup": "rock (1)",
+                      "look": {
+                        "kind": "item",
+                        "id": "rock",
+                        "glyph": "*",
+                        "color": "c_light_gray",
+                        "name": "rock"
+                      }
+                    }
+                  ],
+                  "total": 2,
+                  "selection": "single"
+                }
+              }
+            ]
+          }
+        },
+        "affordances": []
+      }
+    },
+    {
       "name": "drop selector screen",
       "def": "screen",
       "value": {
