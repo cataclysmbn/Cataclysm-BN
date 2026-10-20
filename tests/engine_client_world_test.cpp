@@ -1946,8 +1946,8 @@ TEST_CASE(
         CHECK(cell->vehicle->id != std::optional<std::string>{"roof"});
     }
     CHECK(shown > 0);
-    // From the platform the car lies below the level shown: its roof is drawn, except where a
-    // creature stands, as the native view draws the part and the creature on it.
+    // From the platform the car lies below the level shown: its roof is drawn, except where
+    // a creature the avatar sees stands, as the native view draws the part and the creature on it.
     get_avatar().view_offset.z() = 0;
     const auto roofed = [&] {
         map_perception::acquire();
@@ -1965,9 +1965,17 @@ TEST_CASE(
     };
     const auto from_above = roofed();
     REQUIRE_FALSE(from_above.empty());
-    spawn_test_monster("mon_zombie", from_above.front());
+    // A creature the avatar does not see, as one inside the car, leaves the roof drawn, so its look
+    // does not give it away.
+    REQUIRE(from_above.size() > 1);
+    const auto& hidden = spawn_test_monster("mon_zombie", from_above.front());
+    REQUIRE_FALSE(get_avatar().sees(hidden));
+    CHECK(roofed() == from_above);
+    auto& seen = spawn_test_monster("mon_zombie", from_above.back());
+    seen.hallucination = true;
+    REQUIRE(get_avatar().sees(seen));
     const auto stood_on = roofed();
-    CHECK_FALSE(std::ranges::contains(stood_on, from_above.front()));
+    CHECK_FALSE(std::ranges::contains(stood_on, from_above.back()));
     CHECK(stood_on.size() + 1 == from_above.size());
     here.destroy_vehicle(car);
     for (const auto y : std::views::iota(-8, 9)) {
