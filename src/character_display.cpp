@@ -1972,6 +1972,11 @@ auto character_display::passive_sheet( const Character &you,
         .speed_effects = sheet.speed_effects,
     };
     for( const auto shown : all_tabs ) {
+        // A tab's own id puts it in front at the row it opens on.
+        if( row == tab_name( shown ) ) {
+            tab = shown;
+            break;
+        }
         const auto ids = row_ids( model, shown );
         if( const auto found = std::ranges::find( ids, row ); found != ids.end() ) {
             tab = shown;

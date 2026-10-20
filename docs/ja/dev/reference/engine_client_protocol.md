@@ -24,23 +24,23 @@ title: エンジン/クライアントプロトコル 0.2
 
 ## メソッド
 
-| メソッド                 | パラメータ                                                 | 結果                                                                                             |
-| ------------------------ | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `bn.hello`               | `versions`, `client`, `schema`, `locale?`, `capabilities?` | `version`, `epoch`, `engine`, `limits`, `delivery?`, `schema`, `locale`, `engine_locale`, `role` |
-| `bn.viewport`            | `cols`, `rows`                                             | なし                                                                                             |
-| `bn.interrupt`           | なし                                                       | なし                                                                                             |
-| `bn.hold`                | `epoch`, `screen_id`, `affordance_id`                      | なし                                                                                             |
-| `bn.release`             | なし                                                       | なし                                                                                             |
-| `bn.subscribe`           | なし                                                       | スナップショットヘッダー。続いてパートとイベントが届く                                           |
-| `bn.unsubscribe`         | なし                                                       | なし                                                                                             |
-| `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit`                  | `boundary_id`, `total`, `choices` (読み取り専用)                                                 |
-| `bn.world.describe`      | `epoch`, `boundary_id`, `pos`                              | `lines`(読み取り専用)                                                                            |
-| `bn.world.cells`         | `epoch`, `min`, `max`                                      | `at`, `cells`, `forgotten` (読み取り専用)                                                        |
-| `bn.overmap.cells`       | `epoch`, `min`, `max`                                      | `overmap` オーバーマップ 1 階層のマス、カーソルとは無関係 (読み取り専用)                         |
-| `bn.panel.view`          | `epoch`, `panel` (`character` または `inventory`), `row?`  | アバターに開いたときの `screen`、`row` にフォーカス、実行できるものなし (読み取り専用)           |
-| `bn.command.submit`      | `epoch`, `expect`, `operation`                             | `command_id`, `stage: "received"`                                                                |
-| `bn.command.result`      | `epoch`, `command_id`                                      | 最新のステージ。失われた通知の回復に使う                                                         |
-| `bn.credit`              | `frames`                                                   | 付与後の保有 `credits`                                                                           |
+| メソッド                 | パラメータ                                                 | 結果                                                                                                       |
+| ------------------------ | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `bn.hello`               | `versions`, `client`, `schema`, `locale?`, `capabilities?` | `version`, `epoch`, `engine`, `limits`, `delivery?`, `schema`, `locale`, `engine_locale`, `role`           |
+| `bn.viewport`            | `cols`, `rows`                                             | なし                                                                                                       |
+| `bn.interrupt`           | なし                                                       | なし                                                                                                       |
+| `bn.hold`                | `epoch`, `screen_id`, `affordance_id`                      | なし                                                                                                       |
+| `bn.release`             | なし                                                       | なし                                                                                                       |
+| `bn.subscribe`           | なし                                                       | スナップショットヘッダー。続いてパートとイベントが届く                                                     |
+| `bn.unsubscribe`         | なし                                                       | なし                                                                                                       |
+| `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit`                  | `boundary_id`, `total`, `choices` (読み取り専用)                                                           |
+| `bn.world.describe`      | `epoch`, `boundary_id`, `pos`                              | `lines`(読み取り専用)                                                                                      |
+| `bn.world.cells`         | `epoch`, `min`, `max`                                      | `at`, `cells`, `forgotten` (読み取り専用)                                                                  |
+| `bn.overmap.cells`       | `epoch`, `min`, `max`                                      | `overmap` オーバーマップ 1 階層のマス、カーソルとは無関係 (読み取り専用)                                   |
+| `bn.panel.view`          | `epoch`, `panel` (`character` または `inventory`), `row?`  | アバターに開いたときの `screen`、`row` (行またはタブの id) にフォーカス、実行できるものなし (読み取り専用) |
+| `bn.command.submit`      | `epoch`, `expect`, `operation`                             | `command_id`, `stage: "received"`                                                                          |
+| `bn.command.result`      | `epoch`, `command_id`                                      | 最新のステージ。失われた通知の回復に使う                                                                   |
+| `bn.credit`              | `frames`                                                   | 付与後の保有 `credits`                                                                                     |
 
 エンジンからの通知は `bn.snapshot.part`、`bn.events`、`bn.command`、`bn.resync`、`bn.loading`、`bn.progress` です。`bn.loading` と `bn.progress` 以外は、購読中のクライアントへ入力境界ごとに送られます。`bn.progress`(`{epoch}`)はハートビートで、待機などの行動が入力境界に到達せずに続いている間、`bn.hello` を済ませたクライアントへ 2 秒ごとに送られます。通信が途絶えたなら、エンジンは動いていません。ワールドの読み込み中は `bn.loading` が同じ役割を果たします。
 

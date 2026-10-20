@@ -37,7 +37,7 @@ title: 엔진/클라이언트 프로토콜 0.2
 | `bn.world.describe`      | `epoch`, `boundary_id`, `pos`                              | `lines` (읽기 전용)                                                                              |
 | `bn.world.cells`         | `epoch`, `min`, `max`                                      | `at`, `cells`, `forgotten` (읽기 전용)                                                           |
 | `bn.overmap.cells`       | `epoch`, `min`, `max`                                      | `overmap` 한 층의 칸들, 커서와 무관 (읽기 전용)                                                  |
-| `bn.panel.view`          | `epoch`, `panel` (`character` 또는 `inventory`), `row?`    | 아바타에게 열릴 때의 `screen`, `row`에 포커스, 실행할 것 없음 (읽기 전용)                        |
+| `bn.panel.view`          | `epoch`, `panel` (`character` 또는 `inventory`), `row?`    | 아바타에게 열릴 때의 `screen`, `row`(줄 또는 탭 id)에 포커스, 실행할 것 없음 (읽기 전용)         |
 | `bn.command.submit`      | `epoch`, `expect`, `operation`                             | `command_id`, `stage: "received"`                                                                |
 | `bn.command.result`      | `epoch`, `command_id`                                      | 최신 단계. 유실된 알림을 복구할 때 사용                                                          |
 | `bn.credit`              | `frames`                                                   | 부여 후 보유 `credits`                                                                           |
