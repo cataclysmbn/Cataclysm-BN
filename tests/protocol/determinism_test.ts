@@ -545,9 +545,10 @@ async function playBack(binary: string, replay: string): Promise<StateRecord[]> 
     ],
     stdin: "null",
     stdout: "null",
-    stderr: "null",
+    stderr: "piped",
   }).output()
-  assert(status.success, `playback exit ${status.code}`)
+  const said = new TextDecoder().decode(status.stderr).split("\n").slice(-20).join("\n")
+  assert(status.success, `playback exit ${status.code}:\n${said}`)
   const records = parseStateLog(await Deno.readTextFile(log))
   await Deno.remove(profile, { recursive: true })
   return records
