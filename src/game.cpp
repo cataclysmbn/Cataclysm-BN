@@ -1971,6 +1971,8 @@ auto game::advance_time_action_tick() -> int
     const auto calendar_turns = action_time_scale::calendar_turns_for_next_tick(
                                     time_action_scale_turn_remainder );
     action_time_scale::set_calendar_turns_this_tick( calendar_turns );
+    // Lazy border mapgen on the pool reads the turn; it finishes in the turn that started it.
+    submap_loader.drain_lazy_loads();
     calendar::turn += time_duration::from_turns( calendar_turns );
     return calendar_turns;
 }

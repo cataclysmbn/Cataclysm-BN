@@ -18,7 +18,6 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
-#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -426,28 +425,6 @@ auto submap_load_manager::finish_lazy_omt_job(const omt_key& key) -> bool {
     return generated;
 }
 
-auto submap_load_manager::reap_lazy_omt_jobs() -> void {
-    ZoneScopedN("slm_lazy_z_reap");
-    auto generated = false;
-    auto completed = std::size_t{0};
-    auto generated_omt_columns = horizontal_omt_set{};
-    std::erase_if(lazy_omt_futures_, [&](auto& entry) {
-        auto& [key, future] = entry;
-        if (future.wait_for(std::chrono::seconds(0)) != std::future_status::ready) { return false; }
-        auto result = complete_lazy_omt_result_on_main_thread(key, future.get());
-        if (apply_lazy_omt_result(key, result)) {
-            generated = true;
-            generated_omt_columns.emplace(key.first, key.second.xy());
-        }
-        ++completed;
-        return true;
-    });
-
-    if (generated) { run_deferred_mapgen_hooks_and_omt_post_passes(generated_omt_columns); }
-    TracyPlot("Lazy Border Z Jobs Completed", static_cast<int64_t>(completed));
-    TracyPlot("Lazy Border Z Jobs In-Flight", static_cast<int64_t>(lazy_omt_futures_.size()));
-}
-
 auto submap_load_manager::start_lazy_omt_job(const omt_key& key) -> lazy_omt_start_result {
     if (lazy_omt_futures_.contains(key)) { return {}; }
 
@@ -699,7 +676,6 @@ auto submap_load_manager::process_lazy_border_preload() -> void {
 
 auto submap_load_manager::process_lazy_border_work() -> void {
     ZoneScopedN("slm_lazy_border_work");
-    reap_lazy_omt_jobs();
     process_lazy_border_preload();
     process_retained_omt_eviction();
 }
@@ -771,8 +747,6 @@ auto submap_load_manager::update(const bool defer_lazy_border_work) -> void {
         } else {
             process_deferred_lazy_border_work();
         }
-    } else if (!defer_lazy_border_work) {
-        reap_lazy_omt_jobs();
     }
 
     TracyPlot("Thread Pool Workers", static_cast<int64_t>(get_thread_pool().num_workers()));

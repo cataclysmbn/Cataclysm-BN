@@ -153,6 +153,9 @@ public:
      * Must be called before saving the game, switching dimensions, or
      * shutting down the thread pool so that no worker holds raw submap
      * pointers across those operations.
+     * Also called before the turn advances: results are applied, and the
+     * turn mapgen reads is the one that started the job, whatever the
+     * workers' speed.
      */
     void drain_lazy_loads();
 
@@ -363,7 +366,6 @@ private:
     auto erase_lazy_omt_job(const omt_key& key) -> void;
     auto apply_lazy_omt_result(const omt_key& key, const lazy_omt_load_result& result) -> bool;
     auto finish_lazy_omt_job(const omt_key& key) -> bool;
-    auto reap_lazy_omt_jobs() -> void;
     auto start_lazy_omt_job(const omt_key& key) -> lazy_omt_start_result;
     auto lazy_omt_priority(const omt_column_key& key) const -> int;
     auto queue_lazy_border_omts(const horizontal_omt_set& border_omts) -> void;
