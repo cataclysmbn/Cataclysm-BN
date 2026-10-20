@@ -1,5 +1,6 @@
 #pragma once
 
+#include "calendar.h"
 #include "coordinates.h"
 #include "mapgen/mapgen_functions.h"
 #include "point.h"
@@ -144,11 +145,15 @@ public:
      * Must be called before saving the game, switching dimensions, or
      * shutting down the thread pool so that no worker holds raw submap
      * pointers across those operations.
-     * Also called before the turn advances: results are applied, and the
-     * turn mapgen reads is the one that started the job, whatever the
-     * workers' speed.
      */
     void drain_lazy_loads();
+
+    /**
+     * Apply the lazy loads started before this turn, waiting only for those still running.
+     * Called before the turn advances: loads started in this turn run on into the next one,
+     * and their mapgen reads the turn they started in.
+     */
+    void finish_due_lazy_loads();
 
     /**
      * Return true if the submap at @p pos in @p dim_id is covered by any
@@ -324,7 +329,14 @@ private:
     lazy_omt_job_list lazy_omt_jobs_;
     std::unordered_map<omt_key, lazy_omt_job_list::iterator, coord_pair_hash<tripoint_abs_omt>>
         lazy_omt_job_index_;
-    std::map<omt_key, std::future<lazy_omt_load_result>> lazy_omt_futures_;
+    /** A lazy load on the pool and the turn it started in. */
+    struct lazy_omt_flight {
+        std::future<lazy_omt_load_result> result;
+        time_point started;
+    };
+    std::map<omt_key, lazy_omt_flight> lazy_omt_futures_;
+    /** Apply the lazy loads started before `started_before`, or all of them. */
+    auto finish_lazy_loads(const std::optional<time_point>& started_before) -> void;
 
     /** Compute the simulated desired set (excludes lazy_border). */
     auto compute_desired_set() const -> key_set;

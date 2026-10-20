@@ -412,7 +412,7 @@ auto submap_load_manager::finish_lazy_omt_job(const omt_key& key) -> bool {
     auto result = lazy_omt_load_result{};
     {
         ZoneScopedN("slm_lazy_z_wait");
-        result = it->second.get();
+        result = it->second.result.get();
     }
     result = complete_lazy_omt_result_on_main_thread(key, std::move(result));
     const auto generated = apply_lazy_omt_result(key, result);
@@ -468,36 +468,40 @@ auto submap_load_manager::start_lazy_omt_job(const omt_key& key) -> lazy_omt_sta
 
             lazy_omt_futures_.emplace(
                 key,
-                get_thread_pool().submit_returning(
-                    {.stream = 0x6c617a796f6d745f, .id = retained_omt_seed_id(key)},
-                    [&mb, omt_addr = key.second, selected_mapgen]() {
-                        return load_lazy_omt_zlevel_data(
-                            mb, omt_addr,
-                            {
-                                .defer_postprocess_hooks = true,
-                                .worker_safe = true,
-                                .use_selected_mapgen = true,
-                                .selected_mapgen = selected_mapgen,
-                            });
-                    }));
+                lazy_omt_flight{
+                    .result = get_thread_pool().submit_returning(
+                        {.stream = 0x6c617a796f6d745f, .id = retained_omt_seed_id(key)},
+                        [&mb, omt_addr = key.second, selected_mapgen]() {
+                            return load_lazy_omt_zlevel_data(
+                                mb, omt_addr,
+                                {
+                                    .defer_postprocess_hooks = true,
+                                    .worker_safe = true,
+                                    .use_selected_mapgen = true,
+                                    .selected_mapgen = selected_mapgen,
+                                });
+                        }),
+                    .started = calendar::turn});
             return {.started = true};
         }
     }
 
     lazy_omt_futures_.emplace(
         key,
-        get_thread_pool().submit_returning(
-            {.stream = 0x6c617a796f6d745f, .id = retained_omt_seed_id(key)},
-            [&mb, omt_addr = key.second]() {
-                return load_lazy_omt_zlevel_data(
-                    mb, omt_addr,
-                    {
-                        .defer_postprocess_hooks = true,
-                        .worker_safe = true,
-                        .use_selected_mapgen = false,
-                        .selected_mapgen = nullptr,
-                    });
-            }));
+        lazy_omt_flight{
+            .result = get_thread_pool().submit_returning(
+                {.stream = 0x6c617a796f6d745f, .id = retained_omt_seed_id(key)},
+                [&mb, omt_addr = key.second]() {
+                    return load_lazy_omt_zlevel_data(
+                        mb, omt_addr,
+                        {
+                            .defer_postprocess_hooks = true,
+                            .worker_safe = true,
+                            .use_selected_mapgen = false,
+                            .selected_mapgen = nullptr,
+                        });
+                }),
+            .started = calendar::turn});
     return {.started = true};
 }
 
@@ -685,20 +689,27 @@ auto submap_load_manager::has_lazy_border_work_pending() const -> bool {
         || retained_omt_index_.size() > retained_omt_soft_cap();
 }
 
-void submap_load_manager::drain_lazy_loads() {
+auto submap_load_manager::finish_lazy_loads(const std::optional<time_point>& started_before)
+    -> void {
     ZoneScopedN("drain_lazy_loads");
-    auto generated = false;
     auto generated_omt_columns = horizontal_omt_set{};
-    std::ranges::for_each(lazy_omt_futures_, [&](auto& entry) {
-        auto result = complete_lazy_omt_result_on_main_thread(entry.first, entry.second.get());
+    std::erase_if(lazy_omt_futures_, [&](auto& entry) {
+        if (started_before && entry.second.started >= *started_before) { return false; }
+        auto result =
+            complete_lazy_omt_result_on_main_thread(entry.first, entry.second.result.get());
         if (apply_lazy_omt_result(entry.first, result)) {
-            generated = true;
             generated_omt_columns.emplace(entry.first.first, entry.first.second.xy());
         }
+        return true;
     });
-    lazy_omt_futures_.clear();
-    if (generated) { run_deferred_mapgen_hooks_and_omt_post_passes(generated_omt_columns); }
+    if (!generated_omt_columns.empty()) {
+        run_deferred_mapgen_hooks_and_omt_post_passes(generated_omt_columns);
+    }
 }
+
+void submap_load_manager::drain_lazy_loads() { finish_lazy_loads(std::nullopt); }
+
+void submap_load_manager::finish_due_lazy_loads() { finish_lazy_loads(calendar::turn); }
 
 auto submap_load_manager::update() -> void {
     ZoneScoped;
