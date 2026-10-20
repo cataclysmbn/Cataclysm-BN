@@ -49,6 +49,13 @@ TEST_CASE("to_moves_is_exact_in_range_and_saturates_instead_of_overflowing", "[c
     CHECK(to_moves<std::int64_t>(365_days) == std::int64_t{365} * 24 * 60 * 60 * 100);
 }
 
+TEST_CASE("to_moves_converts_to_floating_point_exactly", "[calendar]") {
+    CHECK(to_moves<double>(1_seconds) == 100.0);
+    CHECK(to_moves<double>(-5_seconds) == -500.0);
+    CHECK(to_moves<double>(365_days) == 365.0 * 24 * 60 * 60 * 100);
+    CHECK(to_moves<float>(5_seconds) == 500.0f);
+}
+
 TEST_CASE("a_365_day_wait_activity_stays_active", "[calendar][activity]") {
     clear_all_state();
     auto& you = get_avatar();
