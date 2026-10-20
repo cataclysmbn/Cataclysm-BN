@@ -133,16 +133,7 @@ public:
      *
      * Call site: game::do_turn(), game::update_map()
      */
-    auto update(bool defer_lazy_border_work = false) -> void;
-
-    /**
-     * Process lazy-border preload/retention work that update() intentionally
-     * deferred.  Safe to call from render-time CPU/GPU overlap windows because
-     * lazy-border submaps are resident-only and do not enter simulation.
-     */
-    auto process_deferred_lazy_border_work() -> void;
-    /** True when a later GPU in-flight window has lazy-border resident work to drain. */
-    auto has_deferred_lazy_border_work() const noexcept -> bool;
+    auto update() -> void;
 
     /** Update the player position used to budget lazy-border preloading. */
     auto update_lazy_border_focus(const dimension_id& dim_id, const tripoint_abs_ms& pos) -> void;
@@ -370,7 +361,6 @@ private:
     auto lazy_omt_priority(const omt_column_key& key) const -> int;
     auto queue_lazy_border_omts(const horizontal_omt_set& border_omts) -> void;
     auto has_lazy_border_work_pending() const -> bool;
-    auto process_or_defer_lazy_border_work(bool defer_lazy_border_work) -> void;
     auto process_lazy_border_work() -> void;
     auto process_lazy_border_preload() -> void;
 
@@ -394,7 +384,6 @@ private:
     std::optional<lazy_omt_focus> lazy_omt_focus_;
     double lazy_omt_budget_credit_ = 0.0;
     int lazy_omt_last_credit_turn_ = -1;
-    bool lazy_border_work_deferred_ = false;
 };
 
 extern submap_load_manager submap_loader;

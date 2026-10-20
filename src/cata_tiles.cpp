@@ -3238,9 +3238,6 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                    static_cast<int64_t>( offscreen_memory_points.size() ) );
     };
     const auto run_visibility_independent_work = [&]() {
-        if( submap_loader.has_deferred_lazy_border_work() ) {
-            submap_loader.process_deferred_lazy_border_work();
-        }
         prepare_offscreen_memory_scan();
     };
     const auto run_visibility_pending_work = [&]() {
