@@ -1,8 +1,10 @@
 #include "catch/catch.hpp"
+#include "editor/document.h"
 #include "editor/json_pointer.h"
 #include "editor/mapgen_check.h"
 #include "json_formatter.h"
 
+#include <filesystem>
 #include <nlohmann/json.hpp>
 #include <ranges>
 #include <string>
@@ -103,4 +105,49 @@ TEST_CASE("an unknown terrain id is reported", "[editor_mapgen]") {
     const auto messages = check(entry);
     REQUIRE_FALSE(messages.empty());
     CHECK(names(messages, "t_no_such_terrain"));
+}
+
+TEST_CASE("an unknown overmap terrain points at its id", "[editor_mapgen]") {
+    auto entry = floor_entry();
+    entry["om_terrain"] = "no_such_terrain";
+    const auto messages = check(entry);
+    REQUIRE_FALSE(messages.empty());
+    CHECK(names(messages, "no_such_terrain"));
+    CHECK(messages[0].pointer == "/om_terrain");
+}
+
+TEST_CASE("an unknown palette points at its id", "[editor_mapgen]") {
+    auto entry = floor_entry();
+    entry["object"]["palettes"] = {"no_such_palette"};
+    const auto messages = check(entry);
+    REQUIRE_FALSE(messages.empty());
+    CHECK(names(messages, "no_such_palette"));
+    CHECK(messages[0].pointer == "/object/palettes/0");
+}
+
+/// The data still places a few things outside the map, which the game drops; nothing else is said.
+TEST_CASE(
+    "every json mapgen in the data loads with no word but its dropped placements",
+    "[editor_mapgen]") {
+    auto checked = 0;
+    for (const auto& file : std::filesystem::recursive_directory_iterator("data/json")) {
+        if (file.path().extension() != ".json") { continue; }
+        const auto doc = editor::document::open(file.path());
+        REQUIRE(doc);
+        for (const auto& object : doc->objects()) {
+            const auto& value = object.value;
+            if (!value.is_object() || value.value("type", "") != "mapgen"
+                || value.value("method", "") != "json") {
+                continue;
+            }
+            CAPTURE(file.path().string(), object.begin);
+            for (const auto& message : editor::check_mapgen(value.dump())) {
+                CAPTURE(message.text);
+                CHECK(message.text.find(" map") != std::string::npos);
+                CHECK(message.text.find("is outside the") != std::string::npos);
+            }
+            ++checked;
+        }
+    }
+    CHECK(checked > 1000);
 }

@@ -366,6 +366,7 @@ private:
     std::map<std::string, mapgen_basic_container> mapgens_;
     bool any_direct_lua_generator_ = false;
 
+public:
     /// Collect all the possible and expected keys that may get used with @ref pick.
     static auto get_usages() -> std::set<std::string> {
         std::set<std::string> result;
@@ -6328,7 +6329,8 @@ auto offset_named(std::string_view message, std::string_view text) -> std::optio
 }
 
 /// The loader drops a placement whose square is outside its map, since a map of several overmap
-/// squares keeps it for another of them; one outside all of them is named here.
+/// squares keeps it for another of them; one outside all of them is named here. A nested chunk's
+/// placement lands on the map around it, so it is not checked.
 auto check_placements_inside(const JsonObject& object, const point_rel_ms& size) -> void {
     // A copy, so that walking every member leaves a misspelt one unvisited and reported.
     auto members = object;
@@ -6347,6 +6349,53 @@ auto check_placements_inside(const JsonObject& object, const point_rel_ms& size)
                         axis);
                 } catch (const JsonError& e) { debugmsg("(json-error)\n%s", e.what()); }
             }
+        }
+    }
+}
+
+/// Names, where they are written, the overmap terrains nothing uses and the palettes nobody
+/// defines; the loader names them only after loading every file, or without a place.
+auto check_ids(const JsonObject& entry, const JsonObject& object) -> void {
+    const auto said_at = [](auto&& holder, const std::string& message, const auto& where) {
+        try {
+            holder.throw_error(message, where);
+        } catch (const JsonError& e) { debugmsg("(json-error)\n%s", e.what()); }
+    };
+    // The loader registers no mapgen of weight 0 and drops the one for "null".
+    const auto registered = entry.get_int("weight", 1000) > 0 && !entry.get_bool("disabled", false);
+    if (registered && entry.has_member("om_terrain")) {
+        const auto usages = mapgen_factory::get_usages();
+        const auto unused = [&](const std::string& name) {
+            return name != "null" && !usages.contains(name);
+        };
+        const auto message = [](const std::string& name) {
+            return string_format("Mapgen %s is not used by anything!", name);
+        };
+        if (entry.has_string("om_terrain")) {
+            const auto name = entry.get_string("om_terrain");
+            if (unused(name)) { said_at(entry, message(name), std::string("om_terrain")); }
+        } else {
+            auto names = entry.get_array("om_terrain");
+            for (auto index = 0; index < static_cast<int>(names.size()); ++index) {
+                if (names.has_array(index)) {
+                    auto row = names.get_array(index);
+                    for (auto column = 0; column < static_cast<int>(row.size()); ++column) {
+                        const auto name = row.get_string(column);
+                        if (unused(name)) { said_at(row, message(name), column); }
+                    }
+                } else if (const auto name = names.get_string(index); unused(name)) {
+                    said_at(names, message(name), index);
+                }
+            }
+        }
+    }
+    if (!object.has_array("palettes")) { return; }
+    auto palettes = object.get_array("palettes");
+    for (auto index = 0; index < static_cast<int>(palettes.size()); ++index) {
+        if (!palettes.has_string(index)) { continue; }
+        const auto name = palettes.get_string(index);
+        if (!palette_id(name).is_valid()) {
+            said_at(palettes, string_format("Requested palette with unknown id %s", name), index);
         }
     }
 }
@@ -6396,18 +6445,14 @@ auto load_detached(const JsonObject& entry, const JsonObject& object) -> void {
         auto mapgen = detached_mapgen(point_rel_omt::zero(), point_rel_omt(1, 1));
         finish(mapgen, name);
     }
+    if (entry.has_string("nested_mapgen_id")) { return; }
     const auto gridded =
         entry.has_array("om_terrain") && entry.get_array("om_terrain").test_array();
     const auto omts =
         gridded ? point(entry.get_array("om_terrain").get_array(0).size(),
                         entry.get_array("om_terrain").size())
                 : point(1, 1);
-    auto size = point_rel_ms(SEEX * 2 * omts.x, SEEY * 2 * omts.y);
-    if (object.has_array("mapgensize")) {
-        const auto given = object.get_array("mapgensize");
-        size = point_rel_ms(given.get_int(0), given.get_int(1));
-    }
-    check_placements_inside(object, size);
+    check_placements_inside(object, point_rel_ms(SEEX * 2 * omts.x, SEEY * 2 * omts.y));
 }
 
 } // namespace
@@ -6424,7 +6469,9 @@ auto editor::check_mapgen(const std::string_view text) -> std::vector<loader_mes
             if (entry.get_string("method") != "json") {
                 entry.throw_error("the editor reads only \"json\" mapgen", "method");
             }
-            load_detached(entry, entry.get_object("object"));
+            const auto object = entry.get_object("object");
+            check_ids(entry, object);
+            load_detached(entry, object);
         } catch (const JsonError& e) { thrown = e.what(); }
     });
     auto messages =
