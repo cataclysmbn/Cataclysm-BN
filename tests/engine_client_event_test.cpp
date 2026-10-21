@@ -455,6 +455,29 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "forgetting more squares than one event holds is split too, not a resync",
+    "[engine_client_event]") {
+    auto known = world_of({});
+    known.world.coverage = area(0, 3999);
+    for (const auto x : std::views::iota(0, 4000)) {
+        for (const auto y : std::views::iota(-5, 6)) {
+            known.world.cells[pos(x, y)] =
+                {.at = pos(x, y), .known = knowledge::visible, .terrain = dirt()};
+        }
+    }
+    auto stream = stream_of(known);
+    auto receiver = stream.current();
+    auto forgotten = known;
+    forgotten.world.cells.clear();
+    const auto published = stream.publish({.next = forgotten});
+    REQUIRE(published);
+    CHECK(published->size() > 1);
+    REQUIRE(apply_batch(receiver, {.epoch = "epoch:a", .events = *published}));
+    CHECK(receiver.value.world.cells.empty());
+    CHECK(same_state(receiver.value, stream.current().value));
+}
+
+TEST_CASE(
     "a capture that drops coverage, avatar or environment forces a resync",
     "[engine_client_event]") {
     auto full = world_of({visible_cell(1)});
