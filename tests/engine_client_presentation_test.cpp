@@ -22,6 +22,7 @@
 #include "weather/weather.h"
 
 #include <algorithm>
+#include <map>
 #include <nlohmann/json.hpp>
 #include <ranges>
 #include <set>
@@ -144,6 +145,38 @@ TEST_CASE("an explosion publishes its start, shaped blast rings and end", "[engi
         }
     }
     CHECK(squares.size() > 9);
+}
+
+TEST_CASE("a custom explosion tells the color of each blasted square", "[engine_client_event]") {
+    lit_floor(tripoint_bub_ms(70, 70, 0));
+    const auto at = tripoint_bub_ms(70, 70, 0);
+    const auto area = std::map<
+        tripoint_bub_ms,
+        nc_color>{{at, c_red}, {at + tripoint_east, c_green}, {at + tripoint_south, c_red}};
+    REQUIRE(engine_client::world::color_name(c_red) != engine_client::world::color_name(c_green));
+    const auto facts = facts_of([&] {
+        explosion_handler::draw_custom_explosion(at, area, "explosion");
+    });
+    const auto blast = std::ranges::find(facts, "explosion.blast", &presentation_value::type);
+    REQUIRE(blast != facts.end());
+    auto initial = state_value{.interaction = {.id = "boundary:1", .ready = {.phase = "menu"}}};
+    auto created = event_stream::create("epoch:a", initial);
+    REQUIRE(created);
+    const auto published = created->publish_presentation({.fact = *blast});
+    REQUIRE(published);
+    const auto wire = nlohmann::json::parse(
+        serialize_events({.epoch = "epoch:a", .events = {*published}}));
+    const auto& data = wire["events"][0]["data"];
+    REQUIRE(data["cells"].size() == area.size());
+    REQUIRE(data.contains("colors"));
+    REQUIRE(data["colors"].size() == area.size());
+    for (const auto& [square, color] : area) {
+        const auto p = engine_client::world::position_at(square);
+        const auto cell = nlohmann::json{{"dim", p.dim}, {"x", p.x}, {"y", p.y}, {"z", p.z}};
+        const auto index = std::ranges::find(data["cells"], cell) - data["cells"].begin();
+        REQUIRE(index < std::ssize(data["cells"]));
+        CHECK(data["colors"][index].get<std::string>() == engine_client::world::color_name(color));
+    }
 }
 
 TEST_CASE("combat text publishes its colored segments", "[engine_client_event]") {
