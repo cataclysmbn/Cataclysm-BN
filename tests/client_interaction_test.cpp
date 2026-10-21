@@ -3555,6 +3555,165 @@ TEST_CASE(
     CHECK(reads == 2);
     CHECK(edit.target == start);
 }
+
+namespace {
+/// The marks of `role` on a published target.
+auto marks_of(const nlohmann::json& target, const std::string& role)
+    -> std::vector<nlohmann::json> {
+    const auto marks = target.value("marks", nlohmann::json::array());
+    return marks | std::views::filter([&](const auto& mark) {
+               return mark["role"].template get<std::string>() == role;
+           })
+         | std::ranges::to<std::vector>();
+}
+/// The squares a mark lists, in the bubble and sorted.
+auto squares_of(const nlohmann::json& mark) -> std::vector<tripoint_bub_ms> {
+    auto squares =
+        mark["squares"] | std::views::transform(bubble_at) | std::ranges::to<std::vector>();
+    std::ranges::sort(squares, std::less{});
+    return squares;
+}
+/// The map editor's target as its screen in the stack publishes it, wherever that screen is.
+auto editmap_target() -> nlohmann::json {
+    const auto stack = nlohmann::json::parse(
+        engine_client::serialize_interaction_boundary(stack_state()))["stack"];
+    const auto screen = std::ranges::find_if(stack, [](const auto& screen) {
+        return screen.value("kind", "") == "editmap";
+    });
+    REQUIRE(screen != stack.end());
+    return (*screen)["root"]["child"]["target"];
+}
+} // namespace
+TEST_CASE(
+    "the map editor shape screen publishes the selected squares",
+    "[client][interaction][editmap][mcp]") {
+    clear_map();
+    auto& you = get_avatar();
+    clear_character(you, false);
+    const auto guard = interaction_test_guard{};
+    const auto start = you.bub_pos();
+    auto edit = editmap{};
+    edit.target = edit.origin = start;
+    edit.target_list = {start};
+    auto reads = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto target = cursor_target();
+        if (reads++ == 0) {
+            const auto marks = marks_of(target, "selection");
+            REQUIRE(marks.size() == 1);
+            CHECK(squares_of(marks.front()) == std::vector{start});
+            return move_cursor(start + tripoint(2, 2, 0));
+        }
+        const auto marks = marks_of(target, "selection");
+        REQUIRE(marks.size() == 1);
+        auto expected = std::vector<tripoint_bub_ms>{};
+        for (const auto dx : std::views::iota(0, 3)) {
+            for (const auto dy : std::views::iota(0, 3)) {
+                expected.push_back(start + tripoint(dx, dy, 0));
+            }
+        }
+        CHECK(squares_of(marks.front()) == expected);
+        CHECK_FALSE(marks.front().contains("rect"));
+        CHECK(marks_of(target, "omt_border").empty());
+        return resolve_action("CONFIRM");
+    });
+    CHECK(edit.select_shape(editmap_rect_filled) == 9);
+    CHECK(reads == 2);
+}
+TEST_CASE(
+    "the map editor mapgen retarget publishes the border of the targeted map square",
+    "[client][interaction][editmap][mcp]") {
+    clear_map();
+    auto& you = get_avatar();
+    clear_character(you, false);
+    const auto guard = interaction_test_guard{};
+    const auto start = you.bub_pos();
+    const auto east = start + tripoint(24, 0, 0);
+    auto edit = editmap{};
+    edit.target = edit.origin = start;
+    edit.target_list = {start};
+    auto reads = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        if (reads++ == 0) { return move_cursor(east); }
+        const auto target = cursor_target();
+        const auto borders = marks_of(target, "omt_border");
+        REQUIRE(borders.size() == 1);
+        const auto& rect = borders.front()["rect"];
+        CHECK(bubble_at(rect["min"]) == east + tripoint(1 - SEEX, 1 - SEEY, 0));
+        CHECK(bubble_at(rect["max"]) == east + tripoint(SEEX, SEEY, 0));
+        CHECK_FALSE(borders.front().contains("squares"));
+        CHECK(marks_of(target, "selection").empty());
+        return resolve_action("QUIT");
+    });
+    edit.mapgen_retarget();
+    CHECK(reads == 2);
+}
+TEST_CASE(
+    "the map editor publishes the mapgen stamp and its border under the preview",
+    "[client][interaction][editmap][mcp]") {
+    clear_map();
+    auto& you = get_avatar();
+    clear_character(you, false);
+    const auto guard = interaction_test_guard{};
+    auto reads = 0;
+    auto omt_target = tripoint_bub_ms{};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto snapshot = game_client::current_interaction();
+        switch (reads++) {
+            case 0:
+                return resolve_action("EDIT_OVERMAP");
+            case 1: {
+                CHECK(snapshot.context == "EDIT_MAPGEN");
+                const auto target = editmap_target();
+                omt_target = bubble_at(target["current"]);
+                const auto borders = marks_of(target, "omt_border");
+                REQUIRE(borders.size() == 1);
+                CHECK(bubble_at(borders.front()["rect"]["min"])
+                      == omt_target + tripoint(1 - SEEX, 1 - SEEY, 0));
+                CHECK(bubble_at(borders.front()["rect"]["max"])
+                      == omt_target + tripoint(SEEX, SEEY, 0));
+                CHECK(marks_of(target, "stamp").empty());
+                const auto field = std::ranges::find_if(snapshot.choices, [](const auto& choice) {
+                    return choice.label.ends_with("] field");
+                });
+                REQUIRE(field != snapshot.choices.end());
+                return resolve(
+                    {.input_id = snapshot.input_id,
+                     .operation = game_client::interaction_operation::choose,
+                     .target_id = field->id});
+            }
+            case 2: {
+                CHECK(snapshot.context == "MAPGEN_PREVIEW");
+                const auto target = editmap_target();
+                const auto stamps = marks_of(target, "stamp");
+                REQUIRE(stamps.size() == 1);
+                CHECK(bubble_at(stamps.front()["rect"]["min"])
+                      == omt_target + tripoint(-SEEX, -SEEY, 0));
+                CHECK(bubble_at(stamps.front()["rect"]["max"])
+                      == omt_target + tripoint(1 + SEEX, 1 + SEEY, 0));
+                CHECK(marks_of(target, "omt_border").size() == 1);
+                return resolve(
+                    {.input_id = snapshot.input_id,
+                     .operation = game_client::interaction_operation::cancel});
+            }
+            case 3:
+                CHECK(snapshot.context == "EDIT_MAPGEN");
+                CHECK(marks_of(editmap_target(), "stamp").empty());
+                return resolve(
+                    {.input_id = snapshot.input_id,
+                     .operation = game_client::interaction_operation::cancel});
+            default:
+                // Back on the editor, the border the mapgen targeted is what the edits apply to.
+                CHECK(cursor_target()["status"] == "editmap");
+                CHECK(marks_of(cursor_target(), "selection").size() == 1);
+                CHECK(marks_of(cursor_target(), "omt_border").empty());
+                return resolve_action("QUIT");
+        }
+    });
+    auto edit = editmap{};
+    edit.edit();
+    CHECK(reads == 5);
+}
 TEST_CASE(
     "an invoke names its affordance and its arguments and needs no native widget",
     "[client][interaction][mcp]") {
