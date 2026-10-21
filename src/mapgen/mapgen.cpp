@@ -23,6 +23,7 @@
 #include "drawing_primitives.h"
 #include "editor/mapgen_check.h"
 #include "editor/mapgen_legend.h"
+#include "editor/mapgen_preview.h"
 #include "enums.h"
 #include "fluid_grid.h"
 #include "game.h"
@@ -6400,8 +6401,10 @@ auto check_ids(const JsonObject& entry, const JsonObject& object) -> void {
     }
 }
 
-/// Loads `object` as a mapgen of `entry`'s kind, then finalizes and checks it.
-auto load_detached(const JsonObject& entry, const JsonObject& object) -> void {
+/// Loads `object` as a mapgen of `entry`'s kind, then finalizes and checks it; the mapgen of each
+/// overmap square, row by row.
+auto load_detached(const JsonObject& entry, const JsonObject& object) -> editor::detached_mapgens {
+    auto loaded = editor::detached_mapgens{.grid = point_rel_omt(1, 1)};
     const auto finish = [&](auto& mapgen, const std::string& name) {
         mapgen_defer::defer = false;
         const auto loaded = mapgen.load(object);
@@ -6418,6 +6421,7 @@ auto load_detached(const JsonObject& entry, const JsonObject& object) -> void {
     if (entry.has_string("nested_mapgen_id")) {
         auto nested = detached_nested_mapgen();
         finish(nested, entry.get_string("nested_mapgen_id"));
+        return loaded;
     } else if (entry.has_string("update_mapgen_id")) {
         auto update = update_mapgen_function_json(json_source_location{});
         if (update.setup_update(object)) {
@@ -6426,12 +6430,14 @@ auto load_detached(const JsonObject& entry, const JsonObject& object) -> void {
         }
     } else if (entry.has_array("om_terrain") && entry.get_array("om_terrain").test_array()) {
         const auto grid = entry.get_array("om_terrain");
-        const auto total = point_rel_omt(grid.get_array(0).size(), grid.size());
+        loaded.grid = point_rel_omt(grid.get_array(0).size(), grid.size());
         auto offset = point_rel_omt::zero();
         for (const JsonArray row : grid) {
             for (const std::string id : row) {
-                auto mapgen = detached_mapgen(offset, total);
-                finish(mapgen, id);
+                auto mapgen = std::make_shared<detached_mapgen>(offset, loaded.grid);
+                finish(*mapgen, id);
+                loaded.om_terrains.push_back(id);
+                loaded.functions.push_back(std::move(mapgen));
                 offset.x()++;
             }
             offset.y()++;
@@ -6442,17 +6448,14 @@ auto load_detached(const JsonObject& entry, const JsonObject& object) -> void {
             entry.has_string("om_terrain")
                 ? entry.get_string("om_terrain")
                 : entry.get_array("om_terrain").get_string(0);
-        auto mapgen = detached_mapgen(point_rel_omt::zero(), point_rel_omt(1, 1));
-        finish(mapgen, name);
+        auto mapgen = std::make_shared<detached_mapgen>(point_rel_omt::zero(), loaded.grid);
+        finish(*mapgen, name);
+        loaded.om_terrains.push_back(name);
+        loaded.functions.push_back(std::move(mapgen));
     }
-    if (entry.has_string("nested_mapgen_id")) { return; }
-    const auto gridded =
-        entry.has_array("om_terrain") && entry.get_array("om_terrain").test_array();
-    const auto omts =
-        gridded ? point(entry.get_array("om_terrain").get_array(0).size(),
-                        entry.get_array("om_terrain").size())
-                : point(1, 1);
-    check_placements_inside(object, point_rel_ms(SEEX * 2 * omts.x, SEEY * 2 * omts.y));
+    check_placements_inside(
+        object, point_rel_ms(SEEX * 2 * loaded.grid.x(), SEEY * 2 * loaded.grid.y()));
+    return loaded;
 }
 
 } // namespace
@@ -6513,4 +6516,20 @@ auto editor::mapgen_legend(const std::string_view text)
     });
     if (thrown) { return std::unexpected(*thrown); }
     return symbols | std::views::values | std::ranges::to<std::vector>();
+}
+
+auto editor::load_detached_mapgens(const std::string_view text)
+    -> std::expected<detached_mapgens, std::string> {
+    try {
+        auto in = std::istringstream(std::string(text));
+        auto jsin = JsonIn(in, std::string(editor_source));
+        const auto entry = jsin.get_object();
+        entry.allow_omitted_members();
+        if (entry.get_string("method") != "json") {
+            entry.throw_error("the editor reads only \"json\" mapgen", "method");
+        }
+        const auto object = entry.get_object("object");
+        object.allow_omitted_members();
+        return load_detached(entry, object);
+    } catch (const JsonError& e) { return std::unexpected(std::string(e.what())); }
 }
