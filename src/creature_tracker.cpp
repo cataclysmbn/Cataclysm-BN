@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <cassert>
 #include <ostream>
+#include <ranges>
 #include <string>
 #include <utility>
 
@@ -105,10 +106,19 @@ void Creature_tracker::add_to_faction_map( const shared_ptr_fast<monster> &critt
 
     // Only 1 faction per mon at the moment.
     if( critter.friendly == 0 ) {
-        monster_faction_map_[ critter.faction ].insert( critter_ptr );
+        monster_faction_map_[ critter.faction ].push_back( critter_ptr );
     } else {
         static const mfaction_str_id playerfaction( "player" );
-        monster_faction_map_[ playerfaction ].insert( critter_ptr );
+        monster_faction_map_[ playerfaction ].push_back( critter_ptr );
+    }
+}
+
+auto Creature_tracker::remove_from_faction_map( const shared_ptr_fast<monster> &critter ) -> void
+{
+    // A removed monster stays alive in removed_, so its entry is found by owner, not by lock().
+    const auto same = [&]( const weak_ptr_fast<monster> &entry ) { return !entry.owner_before( critter ) && !critter.owner_before( entry ); };
+    for( auto &members : monster_faction_map_ | std::views::values ) {
+        if( std::erase_if( members, same ) > 0 ) { return; }
     }
 }
 
@@ -126,14 +136,7 @@ void Creature_tracker::update_faction( const monster &critter )
 
     // remove existing entry from monster_faction_map.
     // it's just a weak ptr, the shared_ptr is still valid through monsters_list.
-    for( auto &pair : monster_faction_map_ ) {
-        auto &faction_monster_set = pair.second;
-        const auto fac_iter = faction_monster_set.find( *critter_ptr );
-        if( fac_iter != faction_monster_set.end() ) {
-            faction_monster_set.erase( fac_iter );
-            break;
-        }
-    }
+    remove_from_faction_map( *critter_ptr );
 
     // finally, rely on existing logic to re-add critter to the appropriate faction
     // in the monster_faction_map
@@ -217,15 +220,9 @@ void Creature_tracker::remove( const monster &critter )
         return;
     }
 
-    for( auto &pair : monster_faction_map_ ) {
-        const auto fac_iter = pair.second.find( *iter );
-        if( fac_iter != pair.second.end() ) {
-            // Need to do this manually because the shared pointer containing critter is kept valid
-            // within removed_ and so the weak pointer in monster_faction_map_ is also valid.
-            pair.second.erase( fac_iter );
-            break;
-        }
-    }
+    // Need to do this manually because the shared pointer containing critter is kept valid
+    // within removed_ and so the weak pointer in monster_faction_map_ is also valid.
+    remove_from_faction_map( *iter );
     remove_from_location_map( critter );
     removed_.push_back( *iter );
     monsters_list.erase( iter );

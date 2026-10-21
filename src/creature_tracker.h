@@ -2,7 +2,6 @@
 
 #include <cstddef>
 #include <memory>
-#include <set>
 #include <unordered_map>
 #include <vector>
 
@@ -19,18 +18,11 @@ class Creature_tracker
     private:
 
         void add_to_faction_map( const shared_ptr_fast<monster> &critter );
+        auto remove_from_faction_map( const shared_ptr_fast<monster> &critter ) -> void;
 
-        class weak_ptr_comparator
-        {
-            public:
-                bool operator()( const weak_ptr_fast<monster> &lhs,
-                                 const weak_ptr_fast<monster> &rhs ) const {
-                    return lhs.lock().get() < rhs.lock().get();
-                }
-        };
-
-        std::unordered_map<mfaction_id, std::set<weak_ptr_fast<monster>, weak_ptr_comparator>>
-                monster_faction_map_;
+        /// Each faction's monsters in the order they joined it. Target selection walks this list and
+        /// breaks ties by position in it, so it must not depend on where the monsters were allocated.
+        std::unordered_map<mfaction_id, std::vector<weak_ptr_fast<monster>>> monster_faction_map_;
 
         /**
          * Creatures that get removed via @ref remove are stored here until the end of the turn.
