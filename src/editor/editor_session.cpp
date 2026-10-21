@@ -26,6 +26,8 @@ namespace {
 
 namespace ec = engine_client;
 
+constexpr auto file_id = "editor:file";
+constexpr auto path_id = "path";
 constexpr auto canvas_id = "editor:canvas";
 constexpr auto tools_id = "editor:tools";
 constexpr auto legend_id = "editor:legend";
@@ -258,8 +260,15 @@ auto legend_rows(const session& state) -> std::vector<ec::row> {
 
 auto session_view(const input_context& ctxt, const session& state) -> ec::screen_view {
     auto affordances = std::vector<ec::affordance>{ec::invoke_affordance(
-        {.id = open_id, .label = _("Open"), .args = {.text = ec::text_shape{}}})};
-    auto parts = std::vector<ec::component>{};
+        {.id = open_id, .label = _("Open"), .args = {.text = ec::text_shape{.field_id = path_id}}})};
+    auto parts = ec::children_of(ec::component{
+        .id = file_id,
+        .affordances = {open_id},
+        .body = ec::form_body{
+            .fields = {{.id = path_id,
+                        .label = _("File"),
+                        .value = state.doc ? state.doc->path().generic_string() : ""}},
+            .submit = open_id}});
     const auto row_of = [](const char* const component) {
         return ec::arg_shape{.row = ec::row_shape{.component_id = component}};
     };

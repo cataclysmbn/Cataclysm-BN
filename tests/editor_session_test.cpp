@@ -193,7 +193,9 @@ TEST_CASE(
             case 0:
                 CHECK(screen.role == "screen");
                 // Nothing is open: only opening and leaving are offered.
-                CHECK(affordance(screen, "editor:open").args.text);
+                CHECK(affordance(screen, "editor:open").args.text->field_id == "path");
+                CHECK(
+                    body<ec::form_body>(part(screen, "editor:file")).fields.front().value.empty());
                 CHECK(affordance(screen, "QUIT").role == "cancel");
                 CHECK_FALSE(has_affordance(screen, "editor:paint"));
                 CHECK_FALSE(has_affordance(screen, "editor:save"));
@@ -207,6 +209,8 @@ TEST_CASE(
                 return invoke("editor:open", {.text = file.path.string()});
             case 2: {
                 CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                CHECK(body<ec::form_body>(part(screen, "editor:file")).fields.front().value
+                      == file.path.generic_string());
                 const auto& objects = body<ec::list_body>(part(screen, "editor:objects")).rows;
                 REQUIRE(objects.size() == 1);
                 CHECK(objects[0].label == "field");

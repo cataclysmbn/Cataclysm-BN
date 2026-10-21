@@ -1,0 +1,721 @@
+{
+  "valid": [
+    {
+      "name": "editor offered on the map without the trait",
+      "def": "affordance",
+      "value": {
+        "id": "editor",
+        "label": "Map Editor",
+        "keys": [],
+        "enabled": false,
+        "denial": "You need the Debug Editor trait.",
+        "expect": "screen"
+      }
+    },
+    {
+      "name": "editor offered on the map with the trait",
+      "def": "affordance",
+      "value": {
+        "id": "editor",
+        "label": "Map Editor",
+        "keys": [],
+        "enabled": true,
+        "expect": "screen"
+      }
+    },
+    {
+      "name": "map editor with nothing open",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:10",
+        "role": "screen",
+        "kind": "editor",
+        "title": "editor",
+        "root": {
+          "id": "editor:body",
+          "kind": "split",
+          "relation": "peers",
+          "children": [
+            {
+              "id": "editor:file",
+              "kind": "form",
+              "affordances": [
+                "editor:open"
+              ],
+              "fields": [
+                {
+                  "id": "path",
+                  "label": "File",
+                  "value": "",
+                  "type": "text"
+                }
+              ],
+              "submit": "editor:open"
+            }
+          ]
+        },
+        "affordances": [
+          {
+            "id": "editor:open",
+            "label": "Open",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {
+                "field_id": "path"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "role": "help",
+            "expect": "screen"
+          }
+        ],
+        "context": "EDITOR"
+      }
+    },
+    {
+      "name": "mod file opened in the map editor, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:1",
+          "revision": "14"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "editor:open",
+          "args": {
+            "text": "profile/mods/editor_scenario/chunk.json"
+          }
+        }
+      }
+    },
+    {
+      "name": "mod file opened in the map editor, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "received",
+        "stage_text": "Received."
+      }
+    },
+    {
+      "name": "mod file opened in the map editor, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "validated",
+        "stage_text": "Accepted."
+      }
+    },
+    {
+      "name": "mod file opened in the map editor, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "executing",
+        "stage_text": "Under way."
+      }
+    },
+    {
+      "name": "mod file opened in the map editor, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "completed",
+        "stage_text": "Done.",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "21",
+          "revision": "15"
+        }
+      }
+    },
+    {
+      "name": "map editor with a nested chunk open",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:10",
+        "role": "screen",
+        "kind": "editor",
+        "title": "editor",
+        "root": {
+          "id": "editor:body",
+          "kind": "split",
+          "relation": "peers",
+          "active": "editor:canvas",
+          "children": [
+            {
+              "id": "editor:file",
+              "kind": "form",
+              "affordances": [
+                "editor:open"
+              ],
+              "fields": [
+                {
+                  "id": "path",
+                  "label": "File",
+                  "value": "profile/mods/editor_scenario/chunk.json",
+                  "type": "text"
+                }
+              ],
+              "submit": "editor:open"
+            },
+            {
+              "id": "editor:document",
+              "kind": "panel",
+              "title": "profile/mods/editor_scenario/chunk.json",
+              "stats": [
+                {
+                  "key": "saved",
+                  "label": "Saved",
+                  "value": "Yes",
+                  "tone": "good"
+                },
+                {
+                  "key": "symbol",
+                  "label": "Symbol",
+                  "value": "#"
+                }
+              ]
+            },
+            {
+              "id": "editor:objects",
+              "kind": "list",
+              "affordances": [
+                "editor:object"
+              ],
+              "columns": [],
+              "rows": [
+                {
+                  "id": "object:0",
+                  "label": "editor_scenario_chunk",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": true,
+                  "columns": []
+                }
+              ],
+              "total": 1,
+              "selection": "single",
+              "activate": "editor:object"
+            },
+            {
+              "id": "editor:tools",
+              "kind": "tabs",
+              "affordances": [
+                "editor:tool"
+              ],
+              "tabs": [
+                {
+                  "id": "tool:point",
+                  "label": "Pencil",
+                  "selected": true,
+                  "enabled": true
+                },
+                {
+                  "id": "tool:line",
+                  "label": "Line",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "tool:rect",
+                  "label": "Rectangle",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "tool:rect_filled",
+                  "label": "Filled rectangle",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "tool:ellipse",
+                  "label": "Ellipse",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "tool:fill",
+                  "label": "Fill",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "tool:pick",
+                  "label": "Eyedropper",
+                  "selected": false,
+                  "enabled": true
+                }
+              ],
+              "select": "editor:tool",
+              "child": {
+                "id": "editor:canvas",
+                "kind": "grid",
+                "affordances": [
+                  "editor:paint"
+                ],
+                "cols": 4,
+                "rows": 4,
+                "cells": [
+                  {
+                    "x": 0,
+                    "y": 0,
+                    "id": "square:0,0",
+                    "glyph": ".",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  },
+                  {
+                    "x": 1,
+                    "y": 0,
+                    "id": "square:1,0",
+                    "glyph": ".",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  },
+                  {
+                    "x": 2,
+                    "y": 0,
+                    "id": "square:2,0",
+                    "glyph": ".",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  },
+                  {
+                    "x": 3,
+                    "y": 0,
+                    "id": "square:3,0",
+                    "glyph": ".",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  },
+                  {
+                    "x": 0,
+                    "y": 1,
+                    "id": "square:0,1",
+                    "glyph": ".",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  },
+                  {
+                    "x": 1,
+                    "y": 1,
+                    "id": "square:1,1",
+                    "glyph": ".",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  },
+                  {
+                    "x": 2,
+                    "y": 1,
+                    "id": "square:2,1",
+                    "glyph": ".",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  },
+                  {
+                    "x": 3,
+                    "y": 1,
+                    "id": "square:3,1",
+                    "glyph": ".",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  },
+                  {
+                    "x": 0,
+                    "y": 2,
+                    "id": "square:0,2",
+                    "glyph": ".",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  },
+                  {
+                    "x": 1,
+                    "y": 2,
+                    "id": "square:1,2",
+                    "glyph": ".",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  },
+                  {
+                    "x": 2,
+                    "y": 2,
+                    "id": "square:2,2",
+                    "glyph": ".",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  },
+                  {
+                    "x": 3,
+                    "y": 2,
+                    "id": "square:3,2",
+                    "glyph": ".",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  },
+                  {
+                    "x": 0,
+                    "y": 3,
+                    "id": "square:0,3",
+                    "glyph": ".",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  },
+                  {
+                    "x": 1,
+                    "y": 3,
+                    "id": "square:1,3",
+                    "glyph": ".",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  },
+                  {
+                    "x": 2,
+                    "y": 3,
+                    "id": "square:2,3",
+                    "glyph": ".",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  },
+                  {
+                    "x": 3,
+                    "y": 3,
+                    "id": "square:3,3",
+                    "glyph": ".",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  }
+                ]
+              }
+            },
+            {
+              "id": "editor:legend",
+              "kind": "list",
+              "affordances": [
+                "editor:symbol"
+              ],
+              "columns": [
+                {
+                  "key": "terrain",
+                  "label": "terrain"
+                }
+              ],
+              "rows": [
+                {
+                  "id": "symbol:#",
+                  "label": "#",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": true,
+                  "columns": [
+                    {
+                      "key": "terrain",
+                      "label": "terrain",
+                      "value": "\"t_wall\""
+                    }
+                  ]
+                },
+                {
+                  "id": "symbol:.",
+                  "label": ".",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "terrain",
+                      "label": "terrain",
+                      "value": "\"t_floor\""
+                    }
+                  ]
+                }
+              ],
+              "total": 2,
+              "selection": "single",
+              "activate": "editor:symbol"
+            },
+            {
+              "id": "editor:diagnostics",
+              "kind": "list",
+              "columns": [],
+              "rows": [],
+              "total": 0,
+              "selection": "none"
+            }
+          ]
+        },
+        "affordances": [
+          {
+            "id": "editor:open",
+            "label": "Open",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {
+                "field_id": "path"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:object",
+            "label": "Edit",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:objects"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:undo",
+            "label": "Undo",
+            "keys": [],
+            "enabled": false,
+            "denial": "Not available now.",
+            "expect": "screen"
+          },
+          {
+            "id": "editor:redo",
+            "label": "Redo",
+            "keys": [],
+            "enabled": false,
+            "denial": "Not available now.",
+            "expect": "screen"
+          },
+          {
+            "id": "editor:save",
+            "label": "Save",
+            "keys": [],
+            "enabled": false,
+            "denial": "Not available now.",
+            "expect": "screen"
+          },
+          {
+            "id": "editor:tool",
+            "label": "Tool",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:tools"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:symbol",
+            "label": "Symbol",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:legend"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:paint",
+            "label": "Draw",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:canvas"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "role": "help",
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "editor:canvas"
+        },
+        "context": "EDITOR"
+      }
+    },
+    {
+      "name": "rectangle drawn in the map editor, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:2",
+          "revision": "17"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "editor:paint",
+          "args": {
+            "row": "square:3,3"
+          }
+        }
+      }
+    },
+    {
+      "name": "rectangle drawn in the map editor, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "received",
+        "stage_text": "Received."
+      }
+    },
+    {
+      "name": "rectangle drawn in the map editor, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "validated",
+        "stage_text": "Accepted."
+      }
+    },
+    {
+      "name": "rectangle drawn in the map editor, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "executing",
+        "stage_text": "Under way."
+      }
+    },
+    {
+      "name": "rectangle drawn in the map editor, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "completed",
+        "stage_text": "Done.",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "24",
+          "revision": "18"
+        }
+      }
+    },
+    {
+      "name": "map editor saved, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "screen_id": "screen:10"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "editor:save"
+        }
+      }
+    },
+    {
+      "name": "map editor saved, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "received",
+        "stage_text": "Received."
+      }
+    },
+    {
+      "name": "map editor saved, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "validated",
+        "stage_text": "Accepted."
+      }
+    },
+    {
+      "name": "map editor saved, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "executing",
+        "stage_text": "Under way."
+      }
+    },
+    {
+      "name": "map editor saved, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "completed",
+        "stage_text": "Done.",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "27",
+          "revision": "21"
+        }
+      }
+    }
+  ],
+  "invalid": []
+}

@@ -103,7 +103,12 @@ export class Engine {
   loading: Value[] = []
   resyncs: Value[] = []
 
-  constructor(readonly rec: Recorder, profile: string, binary: string, args: string[] = []) {
+  constructor(
+    readonly rec: Recorder,
+    readonly profile: string,
+    binary: string,
+    args: string[] = [],
+  ) {
     this.#process = new Deno.Command(binary, {
       args: [
         "--client=mcp",
