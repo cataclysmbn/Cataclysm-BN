@@ -3,6 +3,7 @@
 #include "avatar.h"
 #include "bionics.h"
 #include "bodypart.h"
+#include "cached_options.h"
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catacharset.h"
@@ -39,6 +40,7 @@
 #include "monster.h"
 #include "npc.h"
 #include "options.h"
+#include "options_helpers.h"
 #include "overmap/overmap_special.h"
 #include "overmap/overmapbuffer.h"
 #include "overmap/overmapbuffer_registry.h"
@@ -48,6 +50,7 @@
 #include "state_helpers.h"
 #include "string_formatter.h"
 #include "stringmaker.h"
+#include "thread_pool.h"
 #include "type_id.h"
 #include "units_angle.h"
 #include "units_energy.h"
@@ -273,6 +276,55 @@ TEST_CASE(
     CHECK_THAT(dmsg, Catch::Contains("triggered attitude evaluation again"));
     // The nested attitude query is served by the stock rules, so the hook runs exactly once.
     CHECK(test_data.get<int>("max_depth") == 1);
+}
+
+// Lua runs on the main thread only, and planning a monster asks for its attitude.
+TEST_CASE("monsters_whose_attitude_lua_decides_are_planned_on_the_main_thread", "[lua][monster]") {
+    clear_all_state();
+    sol::state& lua = DynamicDataLoader::get_instance().lua->lua;
+    sol::table attitudes = lua.globals()["game"]["monster_attitude_functions"];
+    REQUIRE(attitudes.valid());
+    const auto no_autosave = override_option("AUTOSAVE", "false");
+    const auto same_bubble =
+        override_option("REALITY_BUBBLE_SIZE", std::to_string(g_reality_bubble_size));
+    const auto chunk_size = monster_plan_chunk_size;
+    const auto cleanup = on_out_of_scope([&]() {
+        monster_plan_chunk_size = chunk_size;
+        attitudes["test_recursive_attitude"] = sol::lua_nil;
+        lua.globals()["test_on_worker"] = sol::lua_nil;
+        lua.globals()["test_data"] = sol::lua_nil;
+        clear_all_state();
+    });
+
+    auto test_data = lua.create_table();
+    test_data["on_worker"] = false;
+    lua.globals()["test_data"] = test_data;
+    lua.set_function("test_on_worker", []() { return is_pool_worker_thread(); });
+    const auto script = lua.safe_script(
+        R"(
+        game.monster_attitude_functions["test_recursive_attitude"] = function(mon, target)
+            if test_on_worker() then
+                test_data.on_worker = true
+            end
+            return MonsterAttitude.MATT_IGNORE
+        end
+    )",
+        sol::script_pass_on_error);
+    REQUIRE(script.valid());
+
+    // One monster per planning task, so the pool takes several of them.
+    REQUIRE(parallel_enabled);
+    REQUIRE(parallel_monster_planning);
+    REQUIRE(get_thread_pool().num_workers() > 0);
+    monster_plan_chunk_size = 1;
+    for (const auto x : {56, 58, 62, 64}) {
+        spawn_test_monster("mon_test_lua_attitude_recursion", tripoint_bub_ms(x, 56, 0)).moves =
+            100;
+    }
+
+    CHECK_FALSE(g->do_turn());
+
+    CHECK_FALSE(test_data.get<bool>("on_worker"));
 }
 
 static void run_lua_test_script(sol::state& lua, const std::string& script_name) {
