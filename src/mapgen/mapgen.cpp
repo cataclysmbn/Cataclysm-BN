@@ -22,6 +22,7 @@
 #include "debug_log_capture.h"
 #include "drawing_primitives.h"
 #include "editor/mapgen_check.h"
+#include "editor/mapgen_legend.h"
 #include "enums.h"
 #include "fluid_grid.h"
 #include "game.h"
@@ -89,6 +90,7 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <cctype>
 #include <charconv>
 #include <cmath>
 #include <cstdlib>
@@ -3155,6 +3157,24 @@ void load_place_mapings<jmapgen_terrain>(
     load_place_mapings_alternatively<jmapgen_terrain>(value, vect);
 }
 
+namespace {
+
+/// The JSON text of the member `name` of `jo`.
+auto raw_member(const JsonObject& jo, const std::string& name) -> std::string {
+    auto& jsin = *jo.get_raw(name);
+    jsin.eat_whitespace();
+    const auto begin = jsin.tell();
+    jsin.skip_value();
+    auto text = jsin.substr(begin, jsin.tell() - begin);
+    while (!text.empty()
+           && (std::isspace(static_cast<unsigned char>(text.back())) || text.back() == ',')) {
+        text.pop_back();
+    }
+    return text;
+}
+
+} // namespace
+
 template <typename PieceType>
 void mapgen_palette::load_place_mapings(
     const JsonObject& jo, const std::string& member_name, placing_map& format_placings) {
@@ -3166,13 +3186,16 @@ void mapgen_palette::load_place_mapings(
             if (!sub.has_member(member_name)) { continue; }
             auto& vect = format_placings[key];
             ::load_place_mapings<PieceType>(sub.get_member(member_name), vect);
+            legend[key].push_back({.layer = member_name, .value = raw_member(sub, member_name)});
         }
     }
     if (!jo.has_object(member_name)) { return; }
-    for (const JsonMember member : jo.get_object(member_name)) {
+    const auto mappings = jo.get_object(member_name);
+    for (const JsonMember member : mappings) {
         const map_key key(member);
         auto& vect = format_placings[key];
         ::load_place_mapings<PieceType>(member, vect);
+        legend[key].push_back({.layer = member_name, .value = raw_member(mappings, member.name())});
     }
 }
 
@@ -3290,6 +3313,15 @@ void mapgen_palette::add(const mapgen_palette& rh, const add_palette_context& co
             format_placings[placing.first];
         these_placings
             .insert(these_placings.end(), constrained_placings.begin(), constrained_placings.end());
+    }
+    for (const auto& [key, lines] : rh.legend) {
+        auto& these_lines = legend[key];
+        for (const auto& line : lines) {
+            these_lines.push_back(
+                {.layer = line.layer,
+                 .value = line.value,
+                 .source = line.source.empty() ? rh.id.str() : line.source});
+        }
     }
     for (const auto& placing : rh.keys_with_terrain) { keys_with_terrain.insert(placing); }
     parameters.check_and_merge(rh.parameters, actual_context);
@@ -6402,4 +6434,36 @@ auto editor::check_mapgen(const std::string_view text) -> std::vector<loader_mes
         | std::ranges::to<std::vector>();
     if (thrown) { messages.push_back({.text = *thrown, .offset = offset_named(*thrown, text)}); }
     return messages;
+}
+
+auto editor::mapgen_legend(const std::string_view text)
+    -> std::expected<std::vector<legend_symbol>, std::string> {
+    auto symbols = std::map<std::string, legend_symbol>{};
+    auto thrown = std::optional<std::string>{};
+    // What the loader says is check_mapgen's to report.
+    capture_each_debugmsg_during([&] {
+        try {
+            auto in = std::istringstream(std::string(text));
+            auto jsin = JsonIn(in, std::string(editor_source));
+            const auto entry = jsin.get_object();
+            entry.allow_omitted_members();
+            const auto object = entry.get_object("object");
+            object.allow_omitted_members();
+            const auto palette = mapgen_palette::
+                load_temp(object, mod_management::get_default_core_content_pack().str(), "");
+            for (const auto& [key, lines] : palette.legend) {
+                symbols[key.str] = {.symbol = key.str, .lines = lines};
+            }
+            if (!object.has_array("rows")) { return; }
+            for (const std::string row : object.get_array("rows")) {
+                for (const auto& symbol : utf8_display_split(row)) {
+                    auto& found = symbols[symbol];
+                    found.symbol = symbol;
+                    found.used = true;
+                }
+            }
+        } catch (const JsonError& e) { thrown = e.what(); }
+    });
+    if (thrown) { return std::unexpected(*thrown); }
+    return symbols | std::views::values | std::ranges::to<std::vector>();
 }

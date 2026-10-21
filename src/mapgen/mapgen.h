@@ -2,6 +2,7 @@
 
 #include "cata_variant.h"
 #include "coordinates.h"
+#include "editor/mapgen_legend.h"
 #include "json.h"
 #include "mapgen_parameter.h"
 #include "memory_fast.h"
@@ -273,6 +274,8 @@ public:
 
     std::unordered_set<map_key> keys_with_terrain;
     placing_map format_placings;
+    /// What each key of format_placings is mapped to, as the data writes it, in the same order.
+    std::unordered_map<map_key, std::vector<editor::legend_line>> legend;
 
     template <typename PieceType>
     /**
