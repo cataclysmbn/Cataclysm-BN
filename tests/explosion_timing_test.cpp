@@ -60,6 +60,10 @@ struct timing_scenario {
     /// Builds the scene; not timed.
     std::function<auto()->void> setup = [] {};
     explosion_data data = blast();
+    /// The legacy blast, drawn as a custom explosion.
+    bool old_explosions = false;
+    /// Replaces the explosion at the center, as a shockwave does.
+    std::function<auto()->void> run = {};
 };
 
 auto scenarios() -> std::vector<timing_scenario> {
@@ -94,6 +98,14 @@ auto scenarios() -> std::vector<timing_scenario> {
                          tripoint_bub_ms(x, center.y(), 0), ter_id("test_t_clock_chain_wall"));
                  }
              }},
+        {.name = "custom blast (legacy)", .old_explosions = true},
+        {.name = "custom blast (shockwave)",
+         .run =
+             [] {
+                 explosion_handler::shockwave(
+                     center, {.radius = 8, .force = 10, .stun = 1, .dam_mult = 1}, "fd_smoke",
+                     nullptr);
+             }},
     };
 }
 
@@ -110,7 +122,8 @@ auto milliseconds_of(const timing_scenario& scenario, const timing_mode& mode) -
     scenario.setup();
     get_map().build_map_cache(0);
     const override_option animations("ANIMATIONS", "true");
-    const override_option old_explosions("OLD_EXPLOSIONS", "false");
+    const override_option
+        old_explosions("OLD_EXPLOSIONS", scenario.old_explosions ? "true" : "false");
     const override_option skip("SKIP_EXPLOSION_ANIMATION_AFTER", "0");
     const override_option pace("ANIMATION_DELAY", mode.delay);
     const auto live = restore_on_out_of_scope(test_mode);
@@ -130,7 +143,11 @@ auto milliseconds_of(const timing_scenario& scenario, const timing_mode& mode) -
     });
     rng_set_engine_seed(424242);
     const auto start = std::chrono::steady_clock::now();
-    explosion_handler::explosion(center, scenario.data, nullptr);
+    if (scenario.run) {
+        scenario.run();
+    } else {
+        explosion_handler::explosion(center, scenario.data, nullptr);
+    }
     explosion_handler::get_explosion_queue().execute();
     return std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start)
         .count();
