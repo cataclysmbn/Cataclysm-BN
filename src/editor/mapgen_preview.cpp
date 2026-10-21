@@ -44,6 +44,12 @@ auto preview_mapgen(const std::string_view text, const preview_options& options)
             failed = "only an overmap terrain's mapgen has a preview";
             return;
         }
+        for (const auto& function : loaded->functions) {
+            if (auto pinned = pin_parameters(*function, options.pins); !pinned) {
+                failed = pinned.error();
+                return;
+            }
+        }
         const auto& grid = loaded->grid;
         preview.size = point_rel_ms(SEEX * 2 * grid.x(), SEEY * 2 * grid.y());
         preview.squares.resize(preview.size.x() * preview.size.y());

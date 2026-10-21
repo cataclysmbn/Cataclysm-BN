@@ -4,6 +4,7 @@
 
 #include <cstddef>
 #include <expected>
+#include <map>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -27,12 +28,27 @@ struct detached_mapgens {
 /// function.
 auto load_detached_mapgens(std::string_view text) -> std::expected<detached_mapgens, std::string>;
 
+/// A parameter a preview can pin, with every value it can take.
+struct mapgen_parameter_choice {
+    std::string name;
+    std::vector<std::string> values;
+};
+
+/// The parameters of a function `load_detached_mapgens` loaded, by name.
+auto parameters_of(const mapgen_function& function) -> std::vector<mapgen_parameter_choice>;
+
+/// Fixes the named parameters of such a function to the given values.
+auto pin_parameters(mapgen_function& function, const std::map<std::string, std::string>& pins)
+    -> std::expected<void, std::string>;
+
 struct preview_options {
     /// The overmap square of the entry's first square; the others follow east and south of it.
     tripoint_abs_omt at;
     unsigned int seed = 1;
     /// The direction an overmap terrain that rotates is generated for.
     std::string direction = "north";
+    /// Parameters fixed to a value, by name; the others are picked as the game picks them.
+    std::map<std::string, std::string> pins = {};
 };
 
 /// What one square of a preview holds.

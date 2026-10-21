@@ -13,7 +13,9 @@
 #include "trap.h"
 #include "vehicle/vpart_position.h"
 
+#include <nlohmann/json.hpp>
 #include <ranges>
+#include <set>
 #include <string>
 
 namespace {
@@ -105,4 +107,69 @@ TEST_CASE("a nested chunk has no preview of its own", "[editor_mapgen]") {
         R"({"type":"mapgen","method":"json","nested_mapgen_id":"x","object":{"mapgensize":[2,2],"rows":["..",".."],"terrain":{".":"t_floor"}}})",
         {.at = at});
     REQUIRE_FALSE(preview);
+}
+
+namespace {
+
+/// A field of one parameterised floor, its parameter in `scope`.
+auto parameterised(const std::string& scope) -> std::string {
+    auto rows = nlohmann::ordered_json::array();
+    for (auto row = 0; row < 24; ++row) { rows.push_back(std::string(24, '.')); }
+    auto entry = nlohmann::ordered_json::parse(R"({
+        "type": "mapgen", "method": "json", "om_terrain": "field",
+        "object": {
+          "parameters": { "floor": { "type": "ter_str_id",
+            "default": { "distribution": [ [ "t_floor", 1 ], [ "t_dirt", 1 ] ] } } },
+          "terrain": { ".": { "param": "floor" } }
+        }
+      })");
+    entry["object"]["parameters"]["floor"]["scope"] = scope;
+    // The loader asks a parameter of a special's scope for the value it takes outside one.
+    if (scope == "overmap_special") { entry["object"]["terrain"]["."]["fallback"] = "t_floor"; }
+    entry["object"]["rows"] = rows;
+    return entry.dump();
+}
+
+auto floors(const editor::mapgen_preview& preview) -> std::set<std::string> {
+    return preview.squares | std::views::transform(&editor::preview_square::ter)
+         | std::ranges::to<std::set>();
+}
+
+} // namespace
+
+TEST_CASE("a pinned parameter takes its value on every seed", "[editor_mapgen]") {
+    for (const auto* scope : {"omt", "overmap_special"}) {
+        CAPTURE(scope);
+        const auto text = parameterised(scope);
+        const auto loaded = editor::load_detached_mapgens(text);
+        REQUIRE(loaded);
+        const auto choices = editor::parameters_of(*loaded->functions.front());
+        REQUIRE(choices.size() == 1);
+        CHECK(choices[0].name == "floor");
+        CHECK(std::ranges::is_permutation(
+            choices[0].values, std::vector<std::string>{"t_floor", "t_dirt"}));
+        auto seen = std::set<std::string>{};
+        for (auto seed = 1U; seed <= 8; ++seed) {
+            const auto free = editor::preview_mapgen(text, {.at = at, .seed = seed});
+            REQUIRE(free);
+            CAPTURE(free->messages);
+            CHECK(free->messages.empty());
+            seen.merge(floors(*free));
+            const auto pinned = editor::
+                preview_mapgen(text, {.at = at, .seed = seed, .pins = {{"floor", "t_dirt"}}});
+            REQUIRE(pinned);
+            // The field's region extras may draw over some squares.
+            CHECK(floors(*pinned).contains("t_dirt"));
+            CHECK_FALSE(floors(*pinned).contains("t_floor"));
+        }
+        CHECK(seen.contains("t_floor"));
+        CHECK(seen.contains("t_dirt"));
+    }
+}
+
+TEST_CASE("pinning a parameter the mapgen lacks is refused", "[editor_mapgen]") {
+    const auto refused =
+        editor::preview_mapgen(parameterised("omt"), {.at = at, .pins = {{"wall", "t_wall"}}});
+    REQUIRE_FALSE(refused);
+    CHECK(refused.error().find("wall") != std::string::npos);
 }

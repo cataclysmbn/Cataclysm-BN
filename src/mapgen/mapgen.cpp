@@ -6299,6 +6299,36 @@ public:
         : mapgen_function(1000),
           mapgen_function_json(json_source_location{}, 1000, offset, total) {}
     auto load(const JsonObject& jo) -> bool { return setup_common(jo); }
+
+    /// Fixes each parameter named in `pins` to its value; the error names one it does not have.
+    auto pin(const std::map<std::string, std::string>& pins) -> std::expected<void, std::string> {
+        for (const auto& [name, value] : pins) {
+            const auto found = parameters.map.find(name);
+            if (found == parameters.map.end()) { return std::unexpected("no parameter " + name); }
+            found->second = mapgen_parameter(
+                mapgen_value<std::string>(value), found->second.type(), found->second.scope());
+        }
+        return {};
+    }
+
+    auto parameters_of() const -> const mapgen_parameters& { return parameters; } // *NOPAD*
+
+    /// The overmap special that places a mapgen gives it the parameters of the special's scope;
+    /// a preview has no special, so they are picked here as the special picks them.
+    void generate(mapgendata& md) override {
+        auto args = mapgen_arguments{};
+        for (const auto& [name, parameter] : parameters.map) {
+            if (parameter.scope() == mapgen_parameter_scope::overmap_special) {
+                args.map.emplace(name, parameter.get(md));
+            }
+        }
+        if (args.map.empty()) {
+            mapgen_function_json::generate(md);
+            return;
+        }
+        auto with_args = mapgendata(md, args);
+        mapgen_function_json::generate(with_args);
+    }
 };
 
 class detached_nested_mapgen final: public mapgen_function_json_nested {
@@ -6542,4 +6572,29 @@ auto editor::nested_mapgen_ids() -> std::vector<std::string> {
 auto editor::palette_ids() -> std::vector<std::string> {
     return palettes | std::views::keys | std::views::transform(&palette_id::str)
          | std::ranges::to<std::vector>();
+}
+
+auto editor::parameters_of(const mapgen_function& function)
+    -> std::vector<mapgen_parameter_choice> {
+    const auto* const detached = dynamic_cast<const detached_mapgen*>(&function);
+    if (detached == nullptr) { return {}; }
+    const auto& parameters = detached->parameters_of();
+    auto choices =
+        parameters.map | std::views::transform([&](const auto& entry) {
+            return mapgen_parameter_choice{
+                .name = entry.first, .values = entry.second.all_possible_values(parameters)};
+        })
+        | std::ranges::to<std::vector>();
+    std::ranges::sort(choices, {}, &mapgen_parameter_choice::name);
+    return choices;
+}
+
+auto editor::pin_parameters(
+    mapgen_function& function, const std::map<std::string, std::string>& pins)
+    -> std::expected<void, std::string> {
+    auto* const detached = dynamic_cast<detached_mapgen*>(&function);
+    if (detached == nullptr) {
+        return std::unexpected(std::string("not a mapgen the editor loaded"));
+    }
+    return detached->pin(pins);
 }
