@@ -3,6 +3,7 @@
 #include "catch/catch.hpp"
 #include "editor/document.h"
 #include "editor/mapgen_preview.h"
+#include "item.h"
 #include "map/map.h"
 #include "map/mapbuffer.h"
 #include "mapgen/mapgen_constructor.h"
@@ -64,15 +65,21 @@ TEST_CASE("a preview is what the game generates from the registered mapgen", "[e
     overmap.ter_set(at, was);
 
     auto items = std::size_t{0};
+    auto ids_at = [&](const point_omt_ms& p) {
+        auto ids = std::vector<std::string>{};
+        for (const item* const it : constructor.i_at(p)) { ids.push_back(it->typeId().str()); }
+        std::ranges::sort(ids);
+        return ids;
+    };
     for (const auto p : constructor.points_on_zlevel()) {
         const auto& square = preview->squares[p.y() * preview->size.x() + p.x()];
         CAPTURE(p.x(), p.y());
         CHECK(square.ter == constructor.ter(p).id().str());
         CHECK(square.furn == constructor.furn(p).id().str());
         CHECK(square.trap == constructor.tr_at(p).id.str());
-        CHECK(square.items == constructor.i_at(p).size());
+        CHECK(square.items == ids_at(p));
         CHECK(square.vehicle == constructor.veh_at(p).has_value());
-        items += square.items;
+        items += square.items.size();
     }
     CHECK(items > 0);
     CHECK(overmap.ter(at) == was);
@@ -84,7 +91,8 @@ TEST_CASE("the same seed gives the same preview and another seed another", "[edi
         const auto preview = editor::preview_mapgen(text, {.at = at, .seed = seed});
         REQUIRE(preview);
         return preview->squares | std::views::transform([](const auto& square) {
-                   return square.ter + square.furn + square.trap + std::to_string(square.items);
+                   return square.ter + square.furn + square.trap
+                        + std::to_string(square.items.size());
                })
              | std::ranges::to<std::vector>();
     };
@@ -172,4 +180,24 @@ TEST_CASE("pinning a parameter the mapgen lacks is refused", "[editor_mapgen]") 
         editor::preview_mapgen(parameterised("omt"), {.at = at, .pins = {{"wall", "t_wall"}}});
     REQUIRE_FALSE(refused);
     CHECK(refused.error().find("wall") != std::string::npos);
+}
+
+TEST_CASE("a loot roll tells how often each item lies in the squares", "[editor_mapgen]") {
+    auto entry = nlohmann::ordered_json::parse(parameterised("omt"));
+    entry["object"]["place_loot"] = nlohmann::ordered_json::parse(
+        R"([{"item": "rock", "x": 3, "y": 3}, {"item": "stick", "x": 3, "y": 3, "chance": 50}])");
+    const auto shares = editor::
+        roll_loot(entry.dump(), {.preview = {.at = at}, .from = {3, 3}, .to = {3, 3}, .runs = 100});
+    REQUIRE(shares);
+    const auto share_of = [&](const std::string& id) {
+        const auto found = std::ranges::find(*shares, id, &editor::loot_share::item);
+        REQUIRE(found != shares->end());
+        return *found;
+    };
+    CHECK(shares->front().item == "rock");
+    CHECK(share_of("rock").chance == 1.0);
+    CHECK(share_of("rock").mean == 1.0);
+    CHECK(share_of("stick").chance > 0.3);
+    CHECK(share_of("stick").chance < 0.7);
+    CHECK(share_of("stick").mean == share_of("stick").chance);
 }

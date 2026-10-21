@@ -56,7 +56,8 @@ struct preview_square {
     std::string ter;
     std::string furn;
     std::string trap;
-    std::size_t items = 0;
+    /// The ids of the items on it, ordered.
+    std::vector<std::string> items;
     /// Whether a vehicle covers it.
     bool vehicle = false;
 };
@@ -68,6 +69,28 @@ struct mapgen_preview {
     /// What the loader and the generator said.
     std::vector<std::string> messages;
 };
+
+struct loot_options {
+    preview_options preview;
+    /// The squares whose items are counted, both corners included.
+    point_rel_ms from;
+    point_rel_ms to;
+    int runs = 100;
+};
+
+/// How often an item lies in the squares over the runs.
+struct loot_share {
+    std::string item;
+    /// The runs it lies there in, out of all.
+    double chance = 0.0;
+    /// How many lie there on average.
+    double mean = 0.0;
+};
+
+/// Previews the entry with seeds `seed` to `seed + runs - 1` and counts the items in the squares;
+/// the most common first.
+auto roll_loot(std::string_view text, const loot_options& options)
+    -> std::expected<std::vector<loot_share>, std::string>;
 
 /// Generates the entry in `text` as the game generates its overmap squares, into a scratch buffer:
 /// the world and its overmap are left as they were. The same options give the same squares.

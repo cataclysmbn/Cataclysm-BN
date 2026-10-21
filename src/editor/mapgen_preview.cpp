@@ -2,6 +2,7 @@
 
 #include "calendar.h"
 #include "debug_log_capture.h"
+#include "item.h"
 #include "map/map.h"
 #include "map/mapbuffer.h"
 #include "mapgen/mapgen_constructor.h"
@@ -26,6 +27,13 @@ auto overmap_terrain(const std::string& name, const std::string& direction)
         return turned.id();
     }
     return std::nullopt;
+}
+
+auto items_at(mapgen_constructor& constructor, const point_omt_ms& p) -> std::vector<std::string> {
+    auto ids = std::vector<std::string>{};
+    for (const item* const it : constructor.i_at(p)) { ids.push_back(it->typeId().str()); }
+    std::ranges::sort(ids);
+    return ids;
 }
 
 } // namespace
@@ -96,7 +104,7 @@ auto preview_mapgen(const std::string_view text, const preview_options& options)
                     {.ter = constructor.ter(p).id().str(),
                      .furn = constructor.furn(p).id().str(),
                      .trap = constructor.tr_at(p).id.str(),
-                     .items = constructor.i_at(p).size(),
+                     .items = items_at(constructor, p),
                      .vehicle = constructor.veh_at(p).has_value()};
             }
         }
@@ -106,6 +114,46 @@ auto preview_mapgen(const std::string_view text, const preview_options& options)
     });
     if (failed) { return std::unexpected(*failed); }
     return preview;
+}
+
+auto roll_loot(const std::string_view text, const loot_options& options)
+    -> std::expected<std::vector<loot_share>, std::string> {
+    struct tally {
+        int runs = 0;
+        int count = 0;
+    };
+    auto tallies = std::map<std::string, tally>{};
+    for (auto run = 0; run < options.runs; ++run) {
+        auto preview_options = options.preview;
+        preview_options.seed += run;
+        const auto preview = preview_mapgen(text, preview_options);
+        if (!preview) { return std::unexpected(preview.error()); }
+        auto seen = std::map<std::string, int>{};
+        for (auto y = std::max(options.from.y(), 0);
+             y <= std::min(options.to.y(), preview->size.y() - 1); ++y) {
+            for (auto x = std::max(options.from.x(), 0);
+                 x <= std::min(options.to.x(), preview->size.x() - 1); ++x) {
+                for (const auto& id : preview->squares[y * preview->size.x() + x].items) {
+                    ++seen[id];
+                }
+            }
+        }
+        for (const auto& [id, count] : seen) {
+            ++tallies[id].runs;
+            tallies[id].count += count;
+        }
+    }
+    const auto runs = static_cast<double>(std::max(options.runs, 1));
+    auto shares =
+        tallies | std::views::transform([&](const auto& entry) {
+            return loot_share{
+                .item = entry.first,
+                .chance = entry.second.runs / runs,
+                .mean = entry.second.count / runs};
+        })
+        | std::ranges::to<std::vector>();
+    std::ranges::stable_sort(shares, std::ranges::greater{}, &loot_share::chance);
+    return shares;
 }
 
 } // namespace editor
