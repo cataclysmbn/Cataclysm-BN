@@ -8,6 +8,7 @@
 #include "editor/mapgen_check.h"
 #include "editor/mapgen_legend.h"
 #include "editor/mapgen_legend_edit.h"
+#include "editor/mapgen_placement.h"
 #include "editor/mapgen_preview.h"
 #include "editor/mapgen_stroke.h"
 #include "engine_client_component.h"
@@ -51,6 +52,9 @@ constexpr auto redo_id = "editor:redo";
 constexpr auto save_id = "editor:save";
 constexpr auto preview_id = "editor:preview";
 constexpr auto mapping_id = "editor:mapping";
+constexpr auto placements_id = "editor:placements";
+constexpr auto placement_id = "editor:placement";
+constexpr auto diagnostic_id = "editor:diagnostic";
 constexpr auto mapping_set_id = "editor:mapping_set";
 constexpr auto mapping_apply_id = "editor:mapping_apply";
 
@@ -167,6 +171,8 @@ struct session {
     std::string symbol;
     const tool* current = tools.data();
     std::optional<point> anchor = std::nullopt;
+    /// The square a placement or a diagnostic that was picked names.
+    std::optional<point> focus = std::nullopt;
     std::vector<legend_symbol> legend;
     std::vector<diagnostic> diagnostics;
     /// The seed of the preview while one is shown; it follows every edit.
@@ -230,6 +236,7 @@ struct session {
         }
         doc = std::move(*opened);
         anchor.reset();
+        focus.reset();
         const auto found = mapgens();
         object = found.empty() ? doc->objects().size() : found.front();
         notice = found.empty() ? string_format(_("%s holds no JSON mapgen."), name) : "";
@@ -266,6 +273,28 @@ struct session {
             {.object = object, .layer = mapping_layer, .symbol = mapping_symbol, .value = value});
         if (!set) { notice = set.error(); }
         reload();
+    }
+
+    /// The square of the rows nearest to where the value at `pointer` of the object stands: its
+    /// row, or its placement's first square; none for any other value.
+    auto square_named(const std::string& pointer) const -> std::optional<point> {
+        const auto grid = symbols_of(*doc, object);
+        if (grid.empty()) { return std::nullopt; }
+        const auto inside = [&](const point& at) {
+            const auto y = std::clamp(at.y, 0, static_cast<int>(grid.size()) - 1);
+            return point(std::clamp(at.x, 0, std::max(0, static_cast<int>(grid[y].size()) - 1)), y);
+        };
+        auto row = 0;
+        if (std::sscanf(pointer.c_str(), "/object/rows/%d", &row) == 1) {
+            return inside(point(0, row));
+        }
+        const auto placed = placements_of(*doc, object);
+        const auto found = std::ranges::find_if(placed, [&](const placement& entry) {
+            const auto own = string_format("/object/%s/%d", entry.kind, entry.index);
+            return pointer == own || pointer.starts_with(own + "/");
+        });
+        if (found == placed.end()) { return std::nullopt; }
+        return inside(point(found->x.min, found->y.min));
     }
 
     auto paint(const point& at) -> void {
@@ -316,6 +345,7 @@ auto preview_grid(const mapgen_preview& shown) -> ec::component {
 
 auto canvas(const session& state) -> ec::component {
     const auto grid = symbols_of(*state.doc, state.object);
+    const auto cursor = state.anchor ? state.anchor : state.focus;
     auto cells = std::vector<ec::grid_cell>{};
     auto cols = 0;
     for (auto y = 0; y < static_cast<int>(grid.size()); ++y) {
@@ -336,9 +366,33 @@ auto canvas(const session& state) -> ec::component {
         .body = ec::grid_body{
             .cols = cols,
             .rows = static_cast<int>(grid.size()),
-            .cursor = state.anchor ? std::optional(ec::grid_point{state.anchor->x, state.anchor->y})
-                                   : std::nullopt,
+            .cursor = cursor ? std::optional(ec::grid_point{cursor->x, cursor->y}) : std::nullopt,
             .cells = std::move(cells)}};
+}
+
+auto range_text(const placement_range& range) -> std::string {
+    return range.min == range.max
+             ? std::to_string(range.min)
+             : string_format("%d-%d", range.min, range.max);
+}
+
+/// A row per placement: where it lands, and what it places as the data writes it.
+auto placement_rows(const session& state) -> std::vector<ec::row> {
+    return placements_of(*state.doc, state.object)
+         | std::views::transform([](const placement& entry) {
+               auto what = entry.value;
+               what.erase("x");
+               what.erase("y");
+               return ec::row{
+                   .id = string_format("placement:%s:%d", entry.kind, entry.index),
+                   .label = entry.kind,
+                   .description = string_format("/object/%s/%d", entry.kind, entry.index),
+                   .columns =
+                       {{.key = "x", .label = "x", .value = range_text(entry.x)},
+                        {.key = "y", .label = "y", .value = range_text(entry.y)},
+                        {.key = "value", .label = _("Places"), .value = what.dump()}}};
+           })
+         | std::ranges::to<std::vector>();
 }
 
 auto legend_rows(const session& state) -> std::vector<ec::row> {
@@ -446,16 +500,26 @@ auto session_view(const session& state) -> ec::screen_view {
             parts.push_back(ec::list(
                 {.id = diagnostics_id,
                  .rows = state.diagnostics | std::views::enumerate
-                       | std::views::transform([](const auto& entry) {
+                       | std::views::transform([&](const auto& entry) {
                              const auto& [index, message] = entry;
                              return ec::row{
                                  .id = string_format("message:%d", index),
                                  .label = message.text,
                                  .description = message.pointer,
-                                 .selectable = false};
+                                 .selectable = state.square_named(message.pointer).has_value()};
                          })
                        | std::ranges::to<std::vector>(),
-                 .selection = "none"}));
+                 .selection = "single",
+                 .activate = diagnostic_id}));
+            parts.push_back(ec::list(
+                {.id = placements_id,
+                 .rows = placement_rows(state),
+                 .selection = "single",
+                 .activate = placement_id}));
+            affordances.push_back(ec::invoke_affordance(
+                {.id = diagnostic_id, .label = _("Show"), .args = row_of(diagnostics_id)}));
+            affordances.push_back(ec::invoke_affordance(
+                {.id = placement_id, .label = _("Show"), .args = row_of(placements_id)}));
             affordances.push_back(ec::invoke_affordance(
                 {.id = tool_id, .label = _("Tool"), .args = row_of(tools_id)}));
             affordances.push_back(ec::invoke_affordance(
@@ -511,7 +575,8 @@ auto session_view(const session& state) -> ec::screen_view {
              .active = state.doc ? canvas_id : "",
              .children = std::move(parts)}),
         .affordances = std::move(affordances),
-        .focus_component = state.doc ? canvas_id : ""};
+        .focus_component = state.doc ? canvas_id : "",
+        .focus_row = state.focus ? square_id(*state.focus) : ""};
 }
 
 /// The square a canvas row names.
@@ -556,6 +621,7 @@ auto run_editor_session() -> void {
             if (std::sscanf(row.c_str(), "object:%zu", &index) == 1) {
                 state.object = index;
                 state.anchor.reset();
+                state.focus.reset();
                 state.reload();
             }
         } else if (id == tool_id) {
@@ -572,6 +638,21 @@ auto run_editor_session() -> void {
         } else if (id == undo_id || id == redo_id) {
             const auto moved = id == undo_id ? state.doc->undo() : state.doc->redo();
             if (moved) { state.reload(); }
+        } else if (id == placement_id) {
+            const auto placed = placements_of(*state.doc, state.object);
+            const auto found = std::ranges::find(placed, row, [](const placement& entry) {
+                return string_format("placement:%s:%d", entry.kind, entry.index);
+            });
+            if (found != placed.end()) {
+                state.focus = state.square_named(
+                    string_format("/object/%s/%d", found->kind, found->index));
+            }
+        } else if (id == diagnostic_id) {
+            auto index = std::size_t{0};
+            if (std::sscanf(row.c_str(), "message:%zu", &index) == 1
+                && index < state.diagnostics.size()) {
+                state.focus = state.square_named(state.diagnostics[index].pointer);
+            }
         } else if (id == mapping_set_id) {
             state.set_mapping(row, invoked->args.text.value_or(""));
         } else if (id == mapping_apply_id) {

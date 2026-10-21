@@ -472,10 +472,26 @@
             {
               "id": "editor:diagnostics",
               "kind": "list",
+              "affordances": [
+                "editor:diagnostic"
+              ],
               "columns": [],
               "rows": [],
               "total": 0,
-              "selection": "none"
+              "selection": "single",
+              "activate": "editor:diagnostic"
+            },
+            {
+              "id": "editor:placements",
+              "kind": "list",
+              "affordances": [
+                "editor:placement"
+              ],
+              "columns": [],
+              "rows": [],
+              "total": 0,
+              "selection": "single",
+              "activate": "editor:placement"
             },
             {
               "id": "editor:mapping",
@@ -667,6 +683,30 @@
             "enabled": false,
             "denial": "Not available now.",
             "expect": "screen"
+          },
+          {
+            "id": "editor:diagnostic",
+            "label": "Show",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:diagnostics"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:placement",
+            "label": "Show",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:placements"
+              }
+            },
+            "expect": "boundary"
           },
           {
             "id": "editor:tool",
@@ -1221,10 +1261,26 @@
             {
               "id": "editor:diagnostics",
               "kind": "list",
+              "affordances": [
+                "editor:diagnostic"
+              ],
               "columns": [],
               "rows": [],
               "total": 0,
-              "selection": "none"
+              "selection": "single",
+              "activate": "editor:diagnostic"
+            },
+            {
+              "id": "editor:placements",
+              "kind": "list",
+              "affordances": [
+                "editor:placement"
+              ],
+              "columns": [],
+              "rows": [],
+              "total": 0,
+              "selection": "single",
+              "activate": "editor:placement"
             },
             {
               "id": "editor:mapping",
@@ -1414,6 +1470,30 @@
             "keys": [],
             "enabled": true,
             "expect": "screen"
+          },
+          {
+            "id": "editor:diagnostic",
+            "label": "Show",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:diagnostics"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:placement",
+            "label": "Show",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:placements"
+              }
+            },
+            "expect": "boundary"
           },
           {
             "id": "editor:tool",

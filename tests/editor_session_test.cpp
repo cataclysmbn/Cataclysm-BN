@@ -71,7 +71,7 @@ struct mod_file {
         std::filesystem::path(PATH_INFO::user_moddir()) / "editor_session_test" / "floor.json";
     std::string text;
 
-    mod_file() {
+    explicit mod_file(const nlohmann::ordered_json& extra = nlohmann::ordered_json::object()) {
         auto rows = nlohmann::ordered_json::array();
         for (auto row = 0; row < 24; ++row) { rows.push_back(std::string(24, '.')); }
         const auto entry = nlohmann::ordered_json::array(
@@ -79,7 +79,9 @@ struct mod_file {
               {"method", "json"},
               {"om_terrain", "house_04"},
               {"object", {{"rows", rows}, {"terrain", {{".", "t_floor"}, {"#", "t_wall"}}}}}}});
-        text = format_json(entry.dump()).value();
+        auto with = entry;
+        with[0]["object"].update(extra);
+        text = format_json(with.dump()).value();
         std::filesystem::create_directories(path.parent_path());
         auto out = std::ofstream(path, std::ios::binary | std::ios::trunc);
         out << text;
@@ -465,6 +467,58 @@ TEST_CASE(
     editor::run_editor_session();
     CHECK(step == 15);
     CHECK(read_file(file.path) == file.text);
+}
+
+TEST_CASE(
+    "the editor lists placements and shows the square a placement or a diagnostic names",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file(nlohmann::ordered_json::parse(R"({"place_monster": [
+        {"monster": "mon_zombie", "x": [3, 5], "y": 7},
+        {"monster": "mon_zombie", "x": 30, "y": 2}]})"));
+    auto step = 0;
+    const auto cursor = [](const ec::screen_view& screen) {
+        return body<ec::grid_body>(part(screen, "editor:canvas")).cursor;
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1: {
+                const auto& placed = body<ec::list_body>(part(screen, "editor:placements")).rows;
+                REQUIRE(placed.size() == 2);
+                CHECK(placed[0].id == "placement:place_monster:0");
+                CHECK(placed[0].columns[0].value == "3-5");
+                CHECK(placed[0].columns[1].value == "7");
+                CHECK(placed[0].columns[2].value == R"({"monster":"mon_zombie"})");
+                // The loader drops the second: it names it, and it can be shown.
+                const auto& messages = body<ec::list_body>(part(screen, "editor:diagnostics")).rows;
+                REQUIRE(messages.size() == 1);
+                CHECK(messages[0].description.starts_with("/object/place_monster/1"));
+                CHECK(messages[0].selectable);
+                CHECK_FALSE(cursor(screen));
+                CHECK(refused(state, "editor:placement", {.row = "placement:place_items:0"}));
+                return invoke("editor:placement", {.row = "placement:place_monster:0"});
+            }
+            case 2:
+                CHECK(cursor(screen) == ec::grid_point{3, 7});
+                CHECK(screen.focus_row == "square:3,7");
+                return invoke("editor:diagnostic", {.row = "message:0"});
+            case 3:
+                // A square outside the rows is shown at the nearest edge.
+                CHECK(cursor(screen) == ec::grid_point{23, 2});
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 4);
 }
 
 #endif // CATA_MCP
