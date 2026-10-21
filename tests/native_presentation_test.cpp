@@ -33,6 +33,7 @@
 #include "weather/weather.h"
 
 #include <algorithm>
+#include <chrono>
 #include <functional>
 #include <locale>
 #include <map>
@@ -290,6 +291,18 @@ auto chain_reaction() -> void {
     REQUIRE(queue.get_count() == 2);
 }
 
+/// Two squares east of the avatar in two colors, as a scrambler or EMP blast draws its area.
+auto custom_explosion() -> void {
+    explosion_handler::draw_custom_explosion(
+        tripoint_bub_ms(66, 62, 0),
+        {{tripoint_bub_ms(66, 62, 0), c_red}, {tripoint_bub_ms(67, 62, 0), c_green}}, "explosion");
+}
+
+auto cone() -> void {
+    ranged::draw_cone_aoe(
+        you_at, {{tripoint_bub_ms(63, 62, 0), 1.0}, {tripoint_bub_ms(64, 62, 0), 0.5}});
+}
+
 struct trace_case {
     std::string name;
     std::function<auto()->void> action;
@@ -375,6 +388,20 @@ auto trace_cases() -> const std::vector<trace_case>& { // *NOPAD*
                  "end rng=1967261782",
              },
          .redraws = 479},
+        {.name = "custom explosion",
+         .action = custom_explosion,
+         .golden =
+             {
+                 "custom_explosion at=(66,62,0) cells=2 layers=1 name=explosion rng=424242",
+                 "end rng=424242",
+             }},
+        {.name = "cone",
+         .action = cone,
+         .golden =
+             {
+                 "cone_aoe at=(62,62,0) cells=2 rng=424242",
+                 "end rng=424242",
+             }},
     };
     return cases;
 }
@@ -641,19 +668,16 @@ TEST_CASE("the sink is told every projectile step in causal order", "[native_pre
         == ordinals.end());
 }
 
-TEST_CASE("without a sink no projectile or hit is drawn", "[native_presentation]") {
-    const auto unexploded =
-        std::set<std::string>{"single shot", "line shot", "shotgun", "acidsplash", "bounce"};
-    for (const auto& entry :
-         trace_cases() | std::views::filter([&](const auto& entry) {
-             return unexploded.contains(entry.name);
-         })) {
+TEST_CASE("without a sink nothing is drawn and nothing waits", "[native_presentation]") {
+    for (const auto& entry : trace_cases()) {
         CAPTURE(entry.name);
         lit_floor();
         auto trace = trace_t{};
         const override_option animations("ANIMATIONS", "true");
         const override_option projectiles("ANIMATION_PROJECTILES", "true");
         const override_option stepwise("BULLETS_AS_LASERS", "false");
+        const override_option old_explosions("OLD_EXPLOSIONS", "false");
+        const override_option skip("SKIP_EXPLOSION_ANIMATION_AFTER", "0");
         const override_option pace("ANIMATION_DELAY", "100");
         const auto live = restore_on_out_of_scope(test_mode);
         test_mode = false;
@@ -664,11 +688,12 @@ TEST_CASE("without a sink no projectile or hit is drawn", "[native_presentation]
             SCT.vSCT.clear();
         });
         rng_set_engine_seed(424242);
+        const auto start = std::chrono::steady_clock::now();
         entry.action();
-        CHECK(std::ranges::none_of(trace, [](const auto& call) {
-            return call.starts_with("bullet ") || call.starts_with("trajectories ")
-                || call.starts_with("line_of ") || call.starts_with("hit_");
-        }));
+        // Paced at this delay, the grenade and the chain reaction would hold the screen for
+        // several seconds.
+        CHECK(std::chrono::steady_clock::now() - start < std::chrono::seconds(2));
+        CHECK(trace.empty());
         CHECK(rng_state() == entry.golden.back().substr(std::string_view("end rng=").size()));
     }
 }
