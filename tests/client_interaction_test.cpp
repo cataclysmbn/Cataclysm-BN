@@ -3512,6 +3512,9 @@ TEST_CASE(
     auto& you = get_avatar();
     clear_character(you, false);
     const auto guard = interaction_test_guard{};
+    // The shape and retarget screens pan the view to their cursor; the editor that opens them puts
+    // it back.
+    const auto restore_offset = restore_on_out_of_scope<tripoint_rel_ms>(you.view_offset);
     const auto start = you.bub_pos();
     auto edit = editmap{};
     edit.target = edit.origin = start;
@@ -3591,6 +3594,9 @@ TEST_CASE(
     auto& you = get_avatar();
     clear_character(you, false);
     const auto guard = interaction_test_guard{};
+    // The shape and retarget screens pan the view to their cursor; the editor that opens them puts
+    // it back.
+    const auto restore_offset = restore_on_out_of_scope<tripoint_rel_ms>(you.view_offset);
     const auto start = you.bub_pos();
     auto edit = editmap{};
     edit.target = edit.origin = start;
@@ -3627,6 +3633,9 @@ TEST_CASE(
     auto& you = get_avatar();
     clear_character(you, false);
     const auto guard = interaction_test_guard{};
+    // The shape and retarget screens pan the view to their cursor; the editor that opens them puts
+    // it back.
+    const auto restore_offset = restore_on_out_of_scope<tripoint_rel_ms>(you.view_offset);
     const auto start = you.bub_pos();
     const auto east = start + tripoint(24, 0, 0);
     auto edit = editmap{};
@@ -3673,14 +3682,15 @@ TEST_CASE(
                 CHECK(bubble_at(borders.front()["rect"]["max"])
                       == omt_target + tripoint(SEEX, SEEY, 0));
                 CHECK(marks_of(target, "stamp").empty());
-                const auto field = std::ranges::find_if(snapshot.choices, [](const auto& choice) {
-                    return choice.label.ends_with("] field");
-                });
-                REQUIRE(field != snapshot.choices.end());
+                // The first overmap terrain the list offers; the null terrain before it is
+                // disabled.
+                const auto oter = std::ranges::
+                    find_if(snapshot.choices, &game_client::interaction_choice::enabled);
+                REQUIRE(oter != snapshot.choices.end());
                 return resolve(
                     {.input_id = snapshot.input_id,
                      .operation = game_client::interaction_operation::choose,
-                     .target_id = field->id});
+                     .target_id = oter->id});
             }
             case 2: {
                 CHECK(snapshot.context == "MAPGEN_PREVIEW");
