@@ -765,8 +765,8 @@
         "stage_text": "Done.",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "29",
-          "revision": "24"
+          "sequence": "36",
+          "revision": "30"
         }
       }
     }

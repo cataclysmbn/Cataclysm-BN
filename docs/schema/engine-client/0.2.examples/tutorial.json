@@ -777,6 +777,11 @@
             ]
           },
           {
+            "id": "editor",
+            "name": "Map Editor",
+            "keys": []
+          },
+          {
             "id": "lua_console",
             "name": "Lua Console",
             "keys": [
@@ -2040,6 +2045,14 @@
                 "expect": "screen"
               },
               {
+                "id": "editor",
+                "label": "Map Editor",
+                "keys": [],
+                "enabled": false,
+                "denial": "You need the Debug Editor trait.",
+                "expect": "screen"
+              },
+              {
                 "id": "lua_console",
                 "label": "Lua Console",
                 "keys": [
@@ -2399,6 +2412,14 @@
                 "icon": "options",
                 "enabled": true,
                 "glyph": "⚙"
+              },
+              {
+                "affordance_id": "editor",
+                "label": "Map Editor",
+                "keys": [],
+                "icon": "editor",
+                "enabled": true,
+                "glyph": "✏"
               },
               {
                 "affordance_id": "HELP_KEYBINDINGS",
@@ -3479,6 +3500,14 @@
             "expect": "screen"
           },
           {
+            "id": "editor",
+            "label": "Map Editor",
+            "keys": [],
+            "enabled": false,
+            "denial": "You need the Debug Editor trait.",
+            "expect": "screen"
+          },
+          {
             "id": "lua_console",
             "label": "Lua Console",
             "keys": [
@@ -3838,6 +3867,14 @@
             "icon": "options",
             "enabled": true,
             "glyph": "⚙"
+          },
+          {
+            "affordance_id": "editor",
+            "label": "Map Editor",
+            "keys": [],
+            "icon": "editor",
+            "enabled": true,
+            "glyph": "✏"
           },
           {
             "affordance_id": "HELP_KEYBINDINGS",
@@ -6389,6 +6426,14 @@
                     "expect": "screen"
                   },
                   {
+                    "id": "editor",
+                    "label": "Map Editor",
+                    "keys": [],
+                    "enabled": false,
+                    "denial": "You need the Debug Editor trait.",
+                    "expect": "screen"
+                  },
+                  {
                     "id": "lua_console",
                     "label": "Lua Console",
                     "keys": [
@@ -6748,6 +6793,14 @@
                     "icon": "options",
                     "enabled": true,
                     "glyph": "⚙"
+                  },
+                  {
+                    "affordance_id": "editor",
+                    "label": "Map Editor",
+                    "keys": [],
+                    "icon": "editor",
+                    "enabled": true,
+                    "glyph": "✏"
                   },
                   {
                     "affordance_id": "HELP_KEYBINDINGS",
@@ -7180,6 +7233,14 @@
                 "icon": "options",
                 "enabled": false,
                 "glyph": "⚙"
+              },
+              {
+                "affordance_id": "editor",
+                "label": "Map Editor",
+                "keys": [],
+                "icon": "editor",
+                "enabled": false,
+                "glyph": "✏"
               },
               {
                 "affordance_id": "HELP_KEYBINDINGS",
@@ -8098,6 +8159,14 @@
             "icon": "options",
             "enabled": true,
             "glyph": "⚙"
+          },
+          {
+            "affordance_id": "editor",
+            "label": "Map Editor",
+            "keys": [],
+            "icon": "editor",
+            "enabled": true,
+            "glyph": "✏"
           },
           {
             "affordance_id": "HELP_KEYBINDINGS",

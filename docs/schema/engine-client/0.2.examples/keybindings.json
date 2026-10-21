@@ -2507,6 +2507,28 @@
                     "color": "c_light_green"
                   },
                   {
+                    "id": "action:editor",
+                    "label": "Map Editor",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "keys",
+                        "label": "Keys",
+                        "value": "Unbound locally!"
+                      },
+                      {
+                        "key": "scope",
+                        "label": "Scope",
+                        "value": "Unbound"
+                      }
+                    ],
+                    "color": "c_light_red"
+                  },
+                  {
                     "id": "action:lua_console",
                     "label": "Lua Console",
                     "description": "",
@@ -2725,31 +2747,9 @@
                       }
                     ],
                     "color": "c_light_red"
-                  },
-                  {
-                    "id": "action:debug_outside",
-                    "label": "debug_outside",
-                    "description": "",
-                    "denial": "",
-                    "enabled": true,
-                    "selectable": true,
-                    "selected": false,
-                    "columns": [
-                      {
-                        "key": "keys",
-                        "label": "Keys",
-                        "value": "Unbound globally!"
-                      },
-                      {
-                        "key": "scope",
-                        "label": "Scope",
-                        "value": "Unbound"
-                      }
-                    ],
-                    "color": "c_light_red"
                   }
                 ],
-                "total": 146,
+                "total": 147,
                 "selection": "single",
                 "activate": "keybindings:pick",
                 "filterable": true
