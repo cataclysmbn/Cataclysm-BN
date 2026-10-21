@@ -476,6 +476,146 @@
               "rows": [],
               "total": 0,
               "selection": "none"
+            },
+            {
+              "id": "editor:mapping",
+              "kind": "form",
+              "affordances": [
+                "editor:mapping_set",
+                "editor:mapping_apply"
+              ],
+              "fields": [
+                {
+                  "id": "symbol",
+                  "label": "Symbol",
+                  "value": "#",
+                  "type": "text",
+                  "max_length": 1
+                },
+                {
+                  "id": "layer",
+                  "label": "Layer",
+                  "value": "terrain",
+                  "type": "select",
+                  "options": [
+                    {
+                      "id": "terrain",
+                      "label": "terrain"
+                    },
+                    {
+                      "id": "furniture",
+                      "label": "furniture"
+                    },
+                    {
+                      "id": "fields",
+                      "label": "fields"
+                    },
+                    {
+                      "id": "npcs",
+                      "label": "npcs"
+                    },
+                    {
+                      "id": "signs",
+                      "label": "signs"
+                    },
+                    {
+                      "id": "vendingmachines",
+                      "label": "vendingmachines"
+                    },
+                    {
+                      "id": "toilets",
+                      "label": "toilets"
+                    },
+                    {
+                      "id": "gaspumps",
+                      "label": "gaspumps"
+                    },
+                    {
+                      "id": "items",
+                      "label": "items"
+                    },
+                    {
+                      "id": "monsters",
+                      "label": "monsters"
+                    },
+                    {
+                      "id": "vehicles",
+                      "label": "vehicles"
+                    },
+                    {
+                      "id": "item",
+                      "label": "item"
+                    },
+                    {
+                      "id": "artifact",
+                      "label": "artifact"
+                    },
+                    {
+                      "id": "artifacts",
+                      "label": "artifacts"
+                    },
+                    {
+                      "id": "traps",
+                      "label": "traps"
+                    },
+                    {
+                      "id": "monster",
+                      "label": "monster"
+                    },
+                    {
+                      "id": "rubble",
+                      "label": "rubble"
+                    },
+                    {
+                      "id": "computers",
+                      "label": "computers"
+                    },
+                    {
+                      "id": "sealed_item",
+                      "label": "sealed_item"
+                    },
+                    {
+                      "id": "nested",
+                      "label": "nested"
+                    },
+                    {
+                      "id": "liquids",
+                      "label": "liquids"
+                    },
+                    {
+                      "id": "graffiti",
+                      "label": "graffiti"
+                    },
+                    {
+                      "id": "translate",
+                      "label": "translate"
+                    },
+                    {
+                      "id": "zones",
+                      "label": "zones"
+                    },
+                    {
+                      "id": "ter_furn_transforms",
+                      "label": "ter_furn_transforms"
+                    },
+                    {
+                      "id": "faction_owner_character",
+                      "label": "faction_owner_character"
+                    },
+                    {
+                      "id": "remove_all",
+                      "label": "remove_all"
+                    }
+                  ]
+                },
+                {
+                  "id": "value",
+                  "label": "Places",
+                  "value": "",
+                  "type": "text"
+                }
+              ],
+              "submit": "editor:mapping_apply"
             }
           ]
         },
@@ -563,6 +703,26 @@
               }
             },
             "expect": "boundary"
+          },
+          {
+            "id": "editor:mapping_set",
+            "label": "Value",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:mapping"
+              },
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:mapping_apply",
+            "label": "Set mapping",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
           },
           {
             "id": "editor:preview",
@@ -672,6 +832,690 @@
       }
     },
     {
+      "name": "legend mapping set in the map editor, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "screen_id": "screen:10"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "editor:mapping_apply"
+        }
+      }
+    },
+    {
+      "name": "legend mapping set in the map editor, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "received",
+        "stage_text": "Received."
+      }
+    },
+    {
+      "name": "legend mapping set in the map editor, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "validated",
+        "stage_text": "Accepted."
+      }
+    },
+    {
+      "name": "legend mapping set in the map editor, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "executing",
+        "stage_text": "Under way."
+      }
+    },
+    {
+      "name": "legend mapping set in the map editor, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "completed",
+        "stage_text": "Done.",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "29",
+          "revision": "23"
+        }
+      }
+    },
+    {
+      "name": "map editor with a drawn room and a new mapping",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:10",
+        "role": "screen",
+        "kind": "editor",
+        "title": "Map Editor",
+        "root": {
+          "id": "editor:body",
+          "kind": "split",
+          "relation": "peers",
+          "active": "editor:canvas",
+          "children": [
+            {
+              "id": "editor:file",
+              "kind": "form",
+              "affordances": [
+                "editor:open"
+              ],
+              "fields": [
+                {
+                  "id": "path",
+                  "label": "File",
+                  "value": "profile/mods/editor_scenario/chunk.json",
+                  "type": "text"
+                }
+              ],
+              "submit": "editor:open"
+            },
+            {
+              "id": "editor:document",
+              "kind": "panel",
+              "title": "profile/mods/editor_scenario/chunk.json",
+              "stats": [
+                {
+                  "key": "saved",
+                  "label": "Saved",
+                  "value": "No",
+                  "tone": "bad"
+                },
+                {
+                  "key": "symbol",
+                  "label": "Symbol",
+                  "value": "#"
+                }
+              ]
+            },
+            {
+              "id": "editor:objects",
+              "kind": "list",
+              "affordances": [
+                "editor:object"
+              ],
+              "columns": [],
+              "rows": [
+                {
+                  "id": "object:0",
+                  "label": "editor_scenario_chunk",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": true,
+                  "columns": []
+                }
+              ],
+              "total": 1,
+              "selection": "single",
+              "activate": "editor:object"
+            },
+            {
+              "id": "editor:tools",
+              "kind": "tabs",
+              "affordances": [
+                "editor:tool"
+              ],
+              "tabs": [
+                {
+                  "id": "tool:point",
+                  "label": "Pencil",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "tool:line",
+                  "label": "Line",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "tool:rect",
+                  "label": "Rectangle",
+                  "selected": true,
+                  "enabled": true
+                },
+                {
+                  "id": "tool:rect_filled",
+                  "label": "Filled rectangle",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "tool:ellipse",
+                  "label": "Ellipse",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "tool:fill",
+                  "label": "Fill",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "tool:pick",
+                  "label": "Eyedropper",
+                  "selected": false,
+                  "enabled": true
+                }
+              ],
+              "select": "editor:tool",
+              "child": {
+                "id": "editor:canvas",
+                "kind": "grid",
+                "affordances": [
+                  "editor:paint"
+                ],
+                "cols": 4,
+                "rows": 4,
+                "cells": [
+                  {
+                    "x": 0,
+                    "y": 0,
+                    "id": "square:0,0",
+                    "glyph": "#",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  },
+                  {
+                    "x": 1,
+                    "y": 0,
+                    "id": "square:1,0",
+                    "glyph": "#",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  },
+                  {
+                    "x": 2,
+                    "y": 0,
+                    "id": "square:2,0",
+                    "glyph": "#",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  },
+                  {
+                    "x": 3,
+                    "y": 0,
+                    "id": "square:3,0",
+                    "glyph": "#",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  },
+                  {
+                    "x": 0,
+                    "y": 1,
+                    "id": "square:0,1",
+                    "glyph": "#",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  },
+                  {
+                    "x": 1,
+                    "y": 1,
+                    "id": "square:1,1",
+                    "glyph": ".",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  },
+                  {
+                    "x": 2,
+                    "y": 1,
+                    "id": "square:2,1",
+                    "glyph": ".",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  },
+                  {
+                    "x": 3,
+                    "y": 1,
+                    "id": "square:3,1",
+                    "glyph": "#",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  },
+                  {
+                    "x": 0,
+                    "y": 2,
+                    "id": "square:0,2",
+                    "glyph": "#",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  },
+                  {
+                    "x": 1,
+                    "y": 2,
+                    "id": "square:1,2",
+                    "glyph": ".",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  },
+                  {
+                    "x": 2,
+                    "y": 2,
+                    "id": "square:2,2",
+                    "glyph": ".",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  },
+                  {
+                    "x": 3,
+                    "y": 2,
+                    "id": "square:3,2",
+                    "glyph": "#",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  },
+                  {
+                    "x": 0,
+                    "y": 3,
+                    "id": "square:0,3",
+                    "glyph": "#",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  },
+                  {
+                    "x": 1,
+                    "y": 3,
+                    "id": "square:1,3",
+                    "glyph": "#",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  },
+                  {
+                    "x": 2,
+                    "y": 3,
+                    "id": "square:2,3",
+                    "glyph": "#",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  },
+                  {
+                    "x": 3,
+                    "y": 3,
+                    "id": "square:3,3",
+                    "glyph": "#",
+                    "affordance": "editor:paint",
+                    "enabled": true
+                  }
+                ]
+              }
+            },
+            {
+              "id": "editor:legend",
+              "kind": "list",
+              "affordances": [
+                "editor:symbol"
+              ],
+              "columns": [
+                {
+                  "key": "terrain",
+                  "label": "terrain"
+                }
+              ],
+              "rows": [
+                {
+                  "id": "symbol:#",
+                  "label": "#",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": true,
+                  "columns": [
+                    {
+                      "key": "terrain",
+                      "label": "terrain",
+                      "value": "\"t_wall\""
+                    }
+                  ]
+                },
+                {
+                  "id": "symbol:.",
+                  "label": ".",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "terrain",
+                      "label": "terrain",
+                      "value": "\"t_floor\""
+                    }
+                  ]
+                },
+                {
+                  "id": "symbol:x",
+                  "label": "x",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "terrain",
+                      "label": "terrain",
+                      "value": "\"t_dirt\""
+                    }
+                  ]
+                }
+              ],
+              "total": 3,
+              "selection": "single",
+              "activate": "editor:symbol"
+            },
+            {
+              "id": "editor:diagnostics",
+              "kind": "list",
+              "columns": [],
+              "rows": [],
+              "total": 0,
+              "selection": "none"
+            },
+            {
+              "id": "editor:mapping",
+              "kind": "form",
+              "affordances": [
+                "editor:mapping_set",
+                "editor:mapping_apply"
+              ],
+              "fields": [
+                {
+                  "id": "symbol",
+                  "label": "Symbol",
+                  "value": "x",
+                  "type": "text",
+                  "max_length": 1
+                },
+                {
+                  "id": "layer",
+                  "label": "Layer",
+                  "value": "terrain",
+                  "type": "select",
+                  "options": [
+                    {
+                      "id": "terrain",
+                      "label": "terrain"
+                    },
+                    {
+                      "id": "furniture",
+                      "label": "furniture"
+                    },
+                    {
+                      "id": "fields",
+                      "label": "fields"
+                    },
+                    {
+                      "id": "npcs",
+                      "label": "npcs"
+                    },
+                    {
+                      "id": "signs",
+                      "label": "signs"
+                    },
+                    {
+                      "id": "vendingmachines",
+                      "label": "vendingmachines"
+                    },
+                    {
+                      "id": "toilets",
+                      "label": "toilets"
+                    },
+                    {
+                      "id": "gaspumps",
+                      "label": "gaspumps"
+                    },
+                    {
+                      "id": "items",
+                      "label": "items"
+                    },
+                    {
+                      "id": "monsters",
+                      "label": "monsters"
+                    },
+                    {
+                      "id": "vehicles",
+                      "label": "vehicles"
+                    },
+                    {
+                      "id": "item",
+                      "label": "item"
+                    },
+                    {
+                      "id": "artifact",
+                      "label": "artifact"
+                    },
+                    {
+                      "id": "artifacts",
+                      "label": "artifacts"
+                    },
+                    {
+                      "id": "traps",
+                      "label": "traps"
+                    },
+                    {
+                      "id": "monster",
+                      "label": "monster"
+                    },
+                    {
+                      "id": "rubble",
+                      "label": "rubble"
+                    },
+                    {
+                      "id": "computers",
+                      "label": "computers"
+                    },
+                    {
+                      "id": "sealed_item",
+                      "label": "sealed_item"
+                    },
+                    {
+                      "id": "nested",
+                      "label": "nested"
+                    },
+                    {
+                      "id": "liquids",
+                      "label": "liquids"
+                    },
+                    {
+                      "id": "graffiti",
+                      "label": "graffiti"
+                    },
+                    {
+                      "id": "translate",
+                      "label": "translate"
+                    },
+                    {
+                      "id": "zones",
+                      "label": "zones"
+                    },
+                    {
+                      "id": "ter_furn_transforms",
+                      "label": "ter_furn_transforms"
+                    },
+                    {
+                      "id": "faction_owner_character",
+                      "label": "faction_owner_character"
+                    },
+                    {
+                      "id": "remove_all",
+                      "label": "remove_all"
+                    }
+                  ]
+                },
+                {
+                  "id": "value",
+                  "label": "Places",
+                  "value": "t_dirt",
+                  "type": "text"
+                }
+              ],
+              "submit": "editor:mapping_apply"
+            }
+          ]
+        },
+        "affordances": [
+          {
+            "id": "editor:open",
+            "label": "Open",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {
+                "field_id": "path"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:object",
+            "label": "Edit",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:objects"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:undo",
+            "label": "Undo",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:redo",
+            "label": "Redo",
+            "keys": [],
+            "enabled": false,
+            "denial": "Not available now.",
+            "expect": "screen"
+          },
+          {
+            "id": "editor:save",
+            "label": "Save",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:tool",
+            "label": "Tool",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:tools"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:symbol",
+            "label": "Symbol",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:legend"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:paint",
+            "label": "Draw",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:canvas"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:mapping_set",
+            "label": "Value",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:mapping"
+              },
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:mapping_apply",
+            "label": "Set mapping",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:preview",
+            "label": "Preview",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "count": {
+                "min": 1,
+                "max": 4294967295,
+                "default": 1
+              }
+            },
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "role": "help",
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "editor:canvas"
+        },
+        "context": "EDITOR"
+      }
+    },
+    {
       "name": "map editor saved, request",
       "def": "submit_params",
       "value": {
@@ -690,7 +1534,7 @@
       "def": "submit_result",
       "value": {
         "epoch": "epoch-2",
-        "command_id": "command:3",
+        "command_id": "command:4",
         "stage": "received",
         "stage_text": "Received."
       }
@@ -700,7 +1544,7 @@
       "def": "command_notification",
       "value": {
         "epoch": "epoch-2",
-        "command_id": "command:3",
+        "command_id": "command:4",
         "stage": "validated",
         "stage_text": "Accepted."
       }
@@ -710,7 +1554,7 @@
       "def": "command_notification",
       "value": {
         "epoch": "epoch-2",
-        "command_id": "command:3",
+        "command_id": "command:4",
         "stage": "executing",
         "stage_text": "Under way."
       }
@@ -720,13 +1564,13 @@
       "def": "command_notification",
       "value": {
         "epoch": "epoch-2",
-        "command_id": "command:3",
+        "command_id": "command:4",
         "stage": "completed",
         "stage_text": "Done.",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "28",
-          "revision": "22"
+          "sequence": "32",
+          "revision": "26"
         }
       }
     }

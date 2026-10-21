@@ -380,4 +380,91 @@ TEST_CASE(
     CHECK(step == 5);
 }
 
+TEST_CASE(
+    "the editor's legend form adds, changes and removes a mapping as undo steps",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    auto step = 0;
+    const auto legend = [](const ec::screen_view& screen) {
+        return body<ec::list_body>(part(screen, "editor:legend")).rows
+             | std::views::transform(&ec::row::id) | std::ranges::to<std::vector>();
+    };
+    const auto field = [](const ec::screen_view& screen, const std::string& id) {
+        const auto& fields = body<ec::form_body>(part(screen, "editor:mapping")).fields;
+        const auto found = std::ranges::find(fields, id, &ec::form_field::id);
+        REQUIRE(found != fields.end());
+        return *found;
+    };
+    const auto set = [](const std::string& id, const std::string& text) {
+        return invoke("editor:mapping_set", {.row = id, .text = text});
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                // The form starts on the symbol drawn with, on terrain.
+                CHECK(field(screen, "symbol").value == "#");
+                CHECK(field(screen, "layer").value == "terrain");
+                CHECK(field(screen, "layer").type == "select");
+                CHECK(std::ranges::contains(
+                    field(screen, "layer").options, std::string("furniture"),
+                    &ec::form_option::id));
+                CHECK(refused(state, "editor:mapping_set", {.row = "colour", .text = "x"}));
+                return set("symbol", "x");
+            case 2:
+                return set("value", "t_dirt");
+            case 3:
+                CHECK(field(screen, "value").value == "t_dirt");
+                return invoke("editor:mapping_apply");
+            case 4:
+                // A bare id is written as a string.
+                CHECK(
+                    legend(screen) == std::vector<std::string>{"symbol:#", "symbol:.", "symbol:x"});
+                CHECK(saved(screen) == "No");
+                return set("value", R"(["t_dirt", "t_grass"])");
+            case 5:
+                return invoke("editor:mapping_apply");
+            case 6: {
+                const auto& rows = body<ec::list_body>(part(screen, "editor:legend")).rows;
+                CHECK(rows[2].columns.front().value == R"(["t_dirt","t_grass"])");
+                return set("layer", "terrains");
+            }
+            case 7:
+                return invoke("editor:mapping_apply");
+            case 8:
+                // A member the loader does not read is refused before it is written.
+                CHECK(body<ec::text_body>(part(screen, "editor:notice")).markup
+                      == "terrains maps no symbols.");
+                return set("layer", "terrain");
+            case 9:
+                return set("value", "");
+            case 10:
+                return invoke("editor:mapping_apply");
+            case 11:
+                CHECK(legend(screen) == std::vector<std::string>{"symbol:#", "symbol:."});
+                return invoke("editor:undo");
+            case 12:
+                CHECK(legend(screen).size() == 3);
+                return invoke("editor:undo");
+            case 13:
+                return invoke("editor:undo");
+            case 14:
+                CHECK(saved(screen) == "Yes");
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 15);
+    CHECK(read_file(file.path) == file.text);
+}
+
 #endif // CATA_MCP

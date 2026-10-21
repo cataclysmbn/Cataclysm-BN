@@ -111,6 +111,25 @@ export const editor: Scenario = {
       assertEquals(glyphs(engine.top()), ["....", "....", "....", "...."])
       assertEquals((await engine.invoke("editor:redo")).stages.at(-1), "completed")
       assertEquals(glyphs(engine.top()), walled)
+      // A new symbol through the legend form, one field at a time, then written as one step.
+      for (const [row, text] of [["symbol", "x"], ["value", "t_dirt"]]) {
+        assertEquals(
+          (await engine.invoke("editor:mapping_set", { row, text })).stages.at(-1),
+          "completed",
+        )
+      }
+      const mapped = await engine.invoke("editor:mapping_apply")
+      assertEquals(mapped.stages.at(-1), "completed")
+      rec.command("legend mapping set in the map editor", mapped)
+      assertEquals(part(engine.top(), "editor:legend").rows.map((row: Value) => row.id), [
+        "symbol:#",
+        "symbol:.",
+        "symbol:x",
+      ])
+      rec.accept("map editor with a drawn room and a new mapping", "screen", engine.top())
+      assertEquals((await engine.invoke("editor:undo")).stages.at(-1), "completed")
+      assertEquals(glyphs(engine.top()), walled)
+
       // A nested chunk is generated only inside another mapgen, so it has no preview of its own.
       const preview = await engine.invoke("editor:preview", { count: 3 })
       assertEquals(preview.stages.at(-1), "completed")

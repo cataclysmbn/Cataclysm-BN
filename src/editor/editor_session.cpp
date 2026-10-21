@@ -1,11 +1,13 @@
 #include "editor/editor_session.h"
 
 #include "avatar.h"
+#include "catacharset.h"
 #include "color.h"
 #include "editor/document.h"
 #include "editor/json_pointer.h"
 #include "editor/mapgen_check.h"
 #include "editor/mapgen_legend.h"
+#include "editor/mapgen_legend_edit.h"
 #include "editor/mapgen_preview.h"
 #include "editor/mapgen_stroke.h"
 #include "engine_client_component.h"
@@ -48,6 +50,39 @@ constexpr auto undo_id = "editor:undo";
 constexpr auto redo_id = "editor:redo";
 constexpr auto save_id = "editor:save";
 constexpr auto preview_id = "editor:preview";
+constexpr auto mapping_id = "editor:mapping";
+constexpr auto mapping_set_id = "editor:mapping_set";
+constexpr auto mapping_apply_id = "editor:mapping_apply";
+
+/// The members of a mapgen's object that map its symbols, as the loader reads them.
+constexpr auto legend_layers = std::array{
+    "terrain",
+    "furniture",
+    "fields",
+    "npcs",
+    "signs",
+    "vendingmachines",
+    "toilets",
+    "gaspumps",
+    "items",
+    "monsters",
+    "vehicles",
+    "item",
+    "artifact",
+    "artifacts",
+    "traps",
+    "monster",
+    "rubble",
+    "computers",
+    "sealed_item",
+    "nested",
+    "liquids",
+    "graffiti",
+    "translate",
+    "zones",
+    "ter_furn_transforms",
+    "faction_owner_character",
+    "remove_all"};
 
 struct tool {
     std::string id;
@@ -137,6 +172,11 @@ struct session {
     /// The seed of the preview while one is shown; it follows every edit.
     std::optional<unsigned int> seed = std::nullopt;
     std::optional<mapgen_preview> preview = std::nullopt;
+    /// The mapping the legend form sets: one symbol, one layer, and what it places there as JSON
+    /// or as a bare id; empty removes it.
+    std::string mapping_symbol;
+    std::string mapping_layer = "terrain";
+    std::string mapping_value;
 
     auto mapgens() const -> std::vector<std::size_t> {
         if (!doc) { return {}; }
@@ -193,6 +233,38 @@ struct session {
         const auto found = mapgens();
         object = found.empty() ? doc->objects().size() : found.front();
         notice = found.empty() ? string_format(_("%s holds no JSON mapgen."), name) : "";
+        reload();
+        mapping_symbol = symbol;
+    }
+
+    auto set_mapping(const std::string& field, const std::string& text) -> void {
+        if (field == "symbol") {
+            mapping_symbol = text;
+        } else if (field == "layer") {
+            mapping_layer = text;
+        } else if (field == "value") {
+            mapping_value = text;
+        }
+    }
+
+    auto apply_mapping() -> void {
+        if (utf8_width(mapping_symbol) != 1) {
+            notice = _("A symbol is one character wide.");
+            return;
+        }
+        if (!std::ranges::contains(legend_layers, mapping_layer)) {
+            notice = string_format(_("%s maps no symbols."), mapping_layer);
+            return;
+        }
+        auto value = std::optional<nlohmann::ordered_json>{};
+        if (!mapping_value.empty()) {
+            auto parsed = nlohmann::ordered_json::parse(mapping_value, nullptr, false);
+            value = parsed.is_discarded() ? nlohmann::ordered_json(mapping_value) : parsed;
+        }
+        const auto set = set_legend(
+            *doc,
+            {.object = object, .layer = mapping_layer, .symbol = mapping_symbol, .value = value});
+        if (!set) { notice = set.error(); }
         reload();
     }
 
@@ -390,6 +462,33 @@ auto session_view(const session& state) -> ec::screen_view {
                 {.id = symbol_id, .label = _("Symbol"), .args = row_of(legend_id)}));
             affordances.push_back(ec::invoke_affordance(
                 {.id = paint_id, .label = _("Draw"), .args = row_of(canvas_id)}));
+            parts.push_back(ec::component{
+                .id = mapping_id,
+                .affordances = {mapping_set_id, mapping_apply_id},
+                .body = ec::form_body{
+                    .fields =
+                        {{.id = "symbol",
+                          .label = _("Symbol"),
+                          .value = state.mapping_symbol,
+                          .max_length = 1},
+                         {.id = "layer",
+                          .label = _("Layer"),
+                          .value = state.mapping_layer,
+                          .type = "select",
+                          .options =
+                              legend_layers | std::views::transform([](const char* const layer) {
+                                  return ec::form_option{.id = layer, .label = layer};
+                              })
+                              | std::ranges::to<std::vector>()},
+                         {.id = "value", .label = _("Places"), .value = state.mapping_value}},
+                    .submit = mapping_apply_id}});
+            affordances.push_back(ec::invoke_affordance(
+                {.id = mapping_set_id,
+                 .label = _("Value"),
+                 .args = {.row = ec::row_shape{.component_id = mapping_id},
+                          .text = ec::text_shape{}}}));
+            affordances.push_back(
+                ec::invoke_affordance({.id = mapping_apply_id, .label = _("Set mapping")}));
             affordances.push_back(ec::invoke_affordance(
                 {.id = preview_id,
                  .label = _("Preview"),
@@ -467,11 +566,16 @@ auto run_editor_session() -> void {
             }
         } else if (id == symbol_id) {
             state.symbol = row.substr(std::string_view("symbol:").size());
+            state.mapping_symbol = state.symbol;
         } else if (id == paint_id) {
             if (const auto at = square_of(row)) { state.paint(*at); }
         } else if (id == undo_id || id == redo_id) {
             const auto moved = id == undo_id ? state.doc->undo() : state.doc->redo();
             if (moved) { state.reload(); }
+        } else if (id == mapping_set_id) {
+            state.set_mapping(row, invoked->args.text.value_or(""));
+        } else if (id == mapping_apply_id) {
+            state.apply_mapping();
         } else if (id == preview_id) {
             state.seed = static_cast<unsigned int>(invoked->args.count.value_or(1));
             state.reload();
