@@ -3,6 +3,7 @@
 #    include "avatar.h"
 #    include "calendar.h"
 #    include "catch/catch.hpp"
+#    include "explosion.h"
 #    include "game.h"
 #    include "game_constants.h"
 #    include "game_session.h"
@@ -87,6 +88,34 @@ TEST_CASE(
     get_avatar().set_moves(0);
     CHECK_FALSE(g->do_turn());
     CHECK(get_avatar().get_terrain_tile(map_local_to_abs(here, wall)).tile == "t_wall");
+}
+
+TEST_CASE(
+    "a turn leaves what changed after its own cache rebuild for the next one",
+    "[map_perception][rescan][explosion][mcp]") {
+    const auto no_autosave = override_option("AUTOSAVE", "false");
+    const auto normal_bubble_size =
+        override_option("REALITY_BUBBLE_SIZE", std::to_string(g_reality_bubble_size));
+    const auto no_mobile_bubble = override_option("ACTIVITY_MOBILE_BUBBLE_SIZE", "0");
+    const auto no_idle_bubble = override_option("ACTIVITY_IDLE_BUBBLE_SIZE", "0");
+    const auto no_animation = override_option("ANIMATION_DELAY", "0");
+    const auto old_explosions = override_option("OLD_EXPLOSIONS", "false");
+    acquire_on_open_ground();
+    auto& here = get_map();
+    const auto curtains = get_avatar().bub_pos() + tripoint(8, 0, 0);
+    here.ter_set(curtains, ter_id("t_curtains"));
+    // The turn rebuilds the caches before monsters move; its queued blasts go off after that.
+    explosion_handler::
+        explosion(curtains + tripoint(1, 0, 0), {.damage = 40, .radius = 2.0f}, nullptr);
+    g->new_game = false;
+    get_avatar().set_moves(0);
+    CHECK_FALSE(g->do_turn());
+    REQUIRE(here.ter(curtains) != ter_id("t_curtains"));
+    // Gameplay reads the caches as that rebuild made them until the next turn rebuilds them;
+    // acquiring knowledge at the end of the turn must not rebuild them early.
+    const auto& cache = here.access_cache(0);
+    const auto sm = project_to<coords::sm>(curtains);
+    CHECK(cache.transparency_cache_dirty[static_cast<size_t>(cache.bidx(sm.x(), sm.y()))]);
 }
 
 #endif
