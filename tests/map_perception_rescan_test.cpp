@@ -73,7 +73,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "a turn remembers how it ends though the avatar does not act",
+    "a turn remembers what its cache rebuild shows though the avatar does not act",
     "[map_perception][rescan][mcp]") {
     const auto no_autosave = override_option("AUTOSAVE", "false");
     const auto normal_bubble_size =

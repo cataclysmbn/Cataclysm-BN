@@ -697,7 +697,7 @@ auto changed_columns( const clear_squares_t &before, const clear_squares_t &afte
 }
 } // namespace
 
-auto acquire() -> acquisition_counts
+auto acquire( const acquire_options &options ) -> acquisition_counts
 {
     ZoneScopedN( "map_perception_acquire" );
     auto counts = acquisition_counts{};
@@ -718,8 +718,10 @@ auto acquire() -> acquisition_counts
     // inputs reuse native caches; camera offset, zoom and redraw are not inputs.
     invalidate_stale_visibility( here );
     // Native sparse dynamic-light detection must run even with a clean visibility flag.
-    ++counts.cache_checks;
-    here.build_map_cache( zlev, false );
+    if( options.build_caches ) {
+        ++counts.cache_checks;
+        here.build_map_cache( zlev, false );
+    }
     if( here.visibility_caches_dirty() ) {
         ++counts.visibility_updates;
         here.update_visibility_cache( zlev );

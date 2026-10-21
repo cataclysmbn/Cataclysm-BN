@@ -2279,6 +2279,11 @@ bool game::do_turn()
         ZoneScopedN( "do_turn_monster_visibility_cache" );
         m.build_map_cache( get_levz(), false );
     }
+    {
+        ZoneScopedN( "do_turn_acquire_perception" );
+        // The avatar sees the turn as this rebuild shows it whether or not a client draws it.
+        map_perception::acquire( { .build_caches = false } );
+    }
     // This has to be done after updating our map caches, as sound propagation relies on terrain.
     if( !soundperf ) {
         ZoneScopedN( "do_turn_sound_before_monsters" );
@@ -2354,11 +2359,6 @@ bool game::do_turn()
     {
         ZoneScopedN( "do_turn_cleanup_dead" );
         cleanup_dead();
-    }
-    {
-        ZoneScopedN( "do_turn_acquire_perception" );
-        // The avatar sees how the turn ends whether or not a client draws it.
-        map_perception::acquire();
     }
 
     if( u.moves < 0 && get_option<bool>( "FORCE_REDRAW" ) ) {

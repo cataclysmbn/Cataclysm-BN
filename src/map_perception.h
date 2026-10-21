@@ -110,9 +110,15 @@ class presentation_scope
 };
 auto presenting() -> bool;
 
+struct acquire_options {
+    /// Rebuild the map caches first. Gameplay reads them until the next rebuild, so a boundary that
+    /// follows the turn's own rebuild reads them as they are and leaves later changes to the next one.
+    bool build_caches = true;
+};
+
 /// Game-thread boundary only. Complete lighting/visibility, then acquire both memory channels.
 /// Never call from a renderer or a passive observation.
-auto acquire() -> acquisition_counts;
+auto acquire( const acquire_options &options = {} ) -> acquisition_counts;
 
 /// Dirty the visibility caches only when the avatar's position or vision differ from what the last
 /// acquisition saw; other changes mark the caches themselves. Lets a turn reuse the refresh that
