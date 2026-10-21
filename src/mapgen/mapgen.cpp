@@ -21,6 +21,7 @@
 #include "debug.h"
 #include "debug_log_capture.h"
 #include "drawing_primitives.h"
+#include "editor/catalog.h"
 #include "editor/mapgen_check.h"
 #include "editor/mapgen_legend.h"
 #include "editor/mapgen_preview.h"
@@ -6532,4 +6533,13 @@ auto editor::load_detached_mapgens(const std::string_view text)
         object.allow_omitted_members();
         return load_detached(entry, object);
     } catch (const JsonError& e) { return std::unexpected(std::string(e.what())); }
+}
+
+auto editor::nested_mapgen_ids() -> std::vector<std::string> {
+    return nested_mapgen | std::views::keys | std::ranges::to<std::vector>();
+}
+
+auto editor::palette_ids() -> std::vector<std::string> {
+    return palettes | std::views::keys | std::views::transform(&palette_id::str)
+         | std::ranges::to<std::vector>();
 }

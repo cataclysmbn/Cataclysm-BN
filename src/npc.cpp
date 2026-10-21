@@ -16,6 +16,7 @@
 #include "damage.h"
 #include "debug.h"
 #include "detached_ptr.h"
+#include "editor/catalog.h"
 #include "effect.h"
 #include "engine_client_presentation.h"
 #include "enums.h"
@@ -87,6 +88,7 @@
 #include <functional>
 #include <limits>
 #include <memory>
+#include <ranges>
 
 static const activity_id ACT_READ( "ACT_READ" );
 static const activity_id ACT_CRAFT( "ACT_CRAFT" );
@@ -3896,4 +3898,10 @@ void npc_follower_rules::clear_overrides()
 {
     overrides = ally_rule::DEFAULT;
     override_enable = ally_rule::DEFAULT;
+}
+
+auto editor::npc_template_ids() -> std::vector<std::string>
+{
+    return npc_templates | std::views::keys | std::views::transform( &string_id<npc_template>::str ) |
+           std::ranges::to<std::vector>();
 }

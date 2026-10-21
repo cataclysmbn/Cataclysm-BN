@@ -1,0 +1,72 @@
+#include "catch/catch.hpp"
+#include "editor/catalog.h"
+
+#include <algorithm>
+#include <ranges>
+#include <string>
+
+namespace {
+
+auto ids(const editor::catalog_page& page) -> std::vector<std::string> {
+    return page.entries | std::views::transform(&editor::catalog_entry::id)
+         | std::ranges::to<std::vector>();
+}
+
+} // namespace
+
+TEST_CASE("every kind of catalog lists what the game loaded", "[editor_catalog]") {
+    using enum editor::catalog_kind;
+    for (const auto kind :
+         {terrain, furniture, trap, field, item, item_group, monster, monster_group, vehicle,
+          npc_template, nested_mapgen, palette, overmap_terrain}) {
+        CAPTURE(static_cast<int>(kind));
+        const auto page = editor::search_catalog({.kind = kind});
+        CHECK(page.total > 10);
+        CHECK(page.entries.size() == std::min<std::size_t>(page.total, 50));
+        CHECK(std::ranges::is_sorted(ids(page)));
+    }
+}
+
+TEST_CASE("a catalog filter matches the id or the name, ignoring case", "[editor_catalog]") {
+    const auto by_id = editor::search_catalog(
+        {.kind = editor::catalog_kind::terrain, .filter = "T_WALL_LOG"});
+    CHECK(std::ranges::contains(ids(by_id), std::string("t_wall_log")));
+    CHECK(std::ranges::all_of(by_id.entries, [](const auto& entry) {
+        return entry.id.find("t_wall_log") != std::string::npos;
+    }));
+    const auto by_name = editor::search_catalog(
+        {.kind = editor::catalog_kind::monster, .filter = "zombie dog"});
+    // No monster id holds a space, so these matched by name.
+    CHECK(by_name.total > 0);
+    CHECK(std::ranges::all_of(by_name.entries, [](const auto& entry) {
+        return entry.id.find(' ') == std::string::npos;
+    }));
+}
+
+TEST_CASE("catalog pages split the matches without gaps", "[editor_catalog]") {
+    const auto query = editor::
+        catalog_query{.kind = editor::catalog_kind::item, .filter = "knife", .page_size = 7};
+    const auto first = editor::search_catalog(query);
+    REQUIRE(first.total > 14);
+    auto all = std::vector<std::string>{};
+    for (auto page = std::size_t{0}; page * 7 < first.total; ++page) {
+        auto next = query;
+        next.page = page;
+        std::ranges::copy(ids(editor::search_catalog(next)), std::back_inserter(all));
+    }
+    CHECK(all.size() == first.total);
+    CHECK(std::ranges::is_sorted(all));
+    CHECK(std::ranges::adjacent_find(all) == all.end());
+    auto past = query;
+    past.page = first.total;
+    CHECK(editor::search_catalog(past).entries.empty());
+}
+
+TEST_CASE("a catalog keeps what one mod last defined", "[editor_catalog]") {
+    const auto core = editor::search_catalog(
+        {.kind = editor::catalog_kind::furniture, .mod = "bn"});
+    CHECK(core.total > 10);
+    CHECK(editor::search_catalog({.kind = editor::catalog_kind::furniture, .mod = "no_such_mod"})
+              .total
+          == 0);
+}
