@@ -846,4 +846,58 @@ TEST_CASE(
     CHECK(written[0]["object"]["terrain"]["."] == "t_dirt");
 }
 
+TEST_CASE(
+    "the editor saves a document as a new file in the user mods, which it edits from then on",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    const auto copy = file.path.parent_path() / "copy.json";
+    const auto notice = [](const ec::screen_view& screen) {
+        return body<ec::text_body>(part(screen, "editor:notice")).markup;
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                CHECK_FALSE(has_affordance(screen, "editor:save_as"));
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK(affordance(screen, "editor:save_as").args.text->field_id == "path");
+                return invoke("editor:paint", {.row = "square:0,0"});
+            case 2:
+                return invoke("editor:save_as", {.text = "/tmp/editor_session_copy.json"});
+            case 3:
+                CHECK(notice(screen).starts_with("Save as writes a .json file in your mods"));
+                CHECK(saved(screen) == "No");
+                return invoke("editor:save_as", {.text = copy.string()});
+            case 4:
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                CHECK(saved(screen) == "Yes");
+                CHECK(body<ec::form_body>(part(screen, "editor:file")).fields.front().value
+                      == copy.generic_string());
+                return invoke("editor:save_as", {.text = file.path.string()});
+            case 5:
+                CHECK(notice(screen) == "That file already exists; nothing was saved.");
+                return invoke("editor:paint", {.row = "square:1,0"});
+            case 6:
+                return invoke("editor:save");
+            case 7:
+                CHECK(saved(screen) == "Yes");
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 8);
+    // The file it came from is untouched; the copy has both strokes.
+    CHECK(read_file(file.path) == file.text);
+    const auto rows = nlohmann::ordered_json::parse(read_file(copy))[0]["object"]["rows"];
+    CHECK(rows[0].get<std::string>().starts_with("##."));
+}
+
 #endif // CATA_MCP

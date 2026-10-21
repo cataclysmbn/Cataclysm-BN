@@ -111,6 +111,20 @@ auto read_text(const std::filesystem::path& path) -> std::optional<std::string> 
     return text.str();
 }
 
+/// Writes `bytes` through a temporary file beside `path`, so a failed write leaves the file as it
+/// was.
+auto write_text(const std::filesystem::path& path, const std::string& bytes) -> bool {
+    const auto temporary = std::filesystem::path(path).concat(".editor-save");
+    {
+        auto out = std::ofstream(temporary, std::ios::binary | std::ios::trunc);
+        out << bytes;
+        if (!out.flush()) { return false; }
+    }
+    auto renamed = std::error_code{};
+    std::filesystem::rename(temporary, path, renamed);
+    return !renamed;
+}
+
 } // namespace
 
 auto document::open(const std::filesystem::path& path) -> std::expected<document, std::string> {
@@ -226,15 +240,18 @@ auto document::changed_on_disk() const -> bool {
 auto document::save() -> std::expected<void, save_error> {
     if (changed_on_disk()) { return std::unexpected(save_error::changed_on_disk); }
     auto bytes = text();
-    const auto temporary = std::filesystem::path(path_).concat(".editor-save");
-    {
-        auto out = std::ofstream(temporary, std::ios::binary | std::ios::trunc);
-        out << bytes;
-        if (!out.flush()) { return std::unexpected(save_error::unwritable); }
-    }
-    auto renamed = std::error_code{};
-    std::filesystem::rename(temporary, path_, renamed);
-    if (renamed) { return std::unexpected(save_error::unwritable); }
+    if (!write_text(path_, bytes)) { return std::unexpected(save_error::unwritable); }
+    saved_ = std::move(bytes);
+    return {};
+}
+
+auto document::save_as(const std::filesystem::path& path) -> std::expected<void, save_error> {
+    if (std::filesystem::exists(path)) { return std::unexpected(save_error::exists); }
+    auto made = std::error_code{};
+    std::filesystem::create_directories(path.parent_path(), made);
+    auto bytes = text();
+    if (made || !write_text(path, bytes)) { return std::unexpected(save_error::unwritable); }
+    path_ = path;
     saved_ = std::move(bytes);
     return {};
 }

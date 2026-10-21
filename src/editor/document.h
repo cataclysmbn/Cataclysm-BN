@@ -35,6 +35,8 @@ enum class save_error {
     changed_on_disk,
     /// It could not be written.
     unwritable,
+    /// Saving as a file that already exists would overwrite it.
+    exists,
 };
 
 /// A data file opened for editing. Saving an unchanged document writes the bytes it was opened
@@ -64,6 +66,8 @@ public:
     /// The bytes saving writes now.
     auto text() const -> std::string;
     auto save() -> std::expected<void, save_error>;
+    /// Writes the bytes to a new file at `path`, which the document is from then on.
+    auto save_as(const std::filesystem::path& path) -> std::expected<void, save_error>;
 
 private:
     std::filesystem::path path_;

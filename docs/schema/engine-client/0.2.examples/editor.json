@@ -224,7 +224,8 @@
               "id": "editor:file",
               "kind": "form",
               "affordances": [
-                "editor:open"
+                "editor:open",
+                "editor:save_as"
               ],
               "fields": [
                 {
@@ -1940,6 +1941,18 @@
             "expect": "boundary"
           },
           {
+            "id": "editor:save_as",
+            "label": "Save as",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {
+                "field_id": "path"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
             "id": "editor:new_set",
             "label": "New file",
             "keys": [],
@@ -2327,7 +2340,8 @@
               "id": "editor:file",
               "kind": "form",
               "affordances": [
-                "editor:open"
+                "editor:open",
+                "editor:save_as"
               ],
               "fields": [
                 {
@@ -4059,6 +4073,18 @@
             "expect": "boundary"
           },
           {
+            "id": "editor:save_as",
+            "label": "Save as",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {
+                "field_id": "path"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
             "id": "editor:new_set",
             "label": "New file",
             "keys": [],
@@ -4322,7 +4348,8 @@
               "id": "editor:file",
               "kind": "form",
               "affordances": [
-                "editor:open"
+                "editor:open",
+                "editor:save_as"
               ],
               "fields": [
                 {
@@ -6055,6 +6082,18 @@
           {
             "id": "editor:open",
             "label": "Open",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {
+                "field_id": "path"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:save_as",
+            "label": "Save as",
             "keys": [],
             "enabled": true,
             "args": {

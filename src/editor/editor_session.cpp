@@ -49,6 +49,7 @@ constexpr auto objects_id = "editor:objects";
 constexpr auto diagnostics_id = "editor:diagnostics";
 
 constexpr auto open_id = "editor:open";
+constexpr auto save_as_id = "editor:save_as";
 constexpr auto new_id = "editor:new";
 constexpr auto new_set_id = "editor:new_set";
 constexpr auto new_apply_id = "editor:new_apply";
@@ -410,15 +411,32 @@ struct session {
         }
     }
     /// Writes the file; false, with the notice saying why, when it was not written.
-    auto save() -> bool {
-        const auto saved = doc->save();
-        if (!saved) {
-            notice =
-                saved.error() == save_error::changed_on_disk
-                    ? _("The file changed on disk since it was opened; nothing was saved.")
-                    : _("The file could not be written.");
+    auto save() -> bool { return written(doc->save()); }
+    /// Writes the document to a new file in the user mods, which it is from then on.
+    auto save_as(const std::string& name) -> void {
+        const auto path = std::filesystem::path(name);
+        if (path.extension() != ".json" || !inside(path, PATH_INFO::user_moddir())) {
+            notice = string_format(
+                _("Save as writes a .json file in your mods, %s."), PATH_INFO::user_moddir());
+            return;
         }
-        return saved.has_value();
+        written(doc->save_as(path));
+    }
+    auto written(const std::expected<void, save_error>& result) -> bool {
+        if (!result) {
+            switch (result.error()) {
+                case save_error::changed_on_disk:
+                    notice = _("The file changed on disk since it was opened; nothing was saved.");
+                    break;
+                case save_error::exists:
+                    notice = _("That file already exists; nothing was saved.");
+                    break;
+                case save_error::unwritable:
+                    notice = _("The file could not be written.");
+                    break;
+            }
+        }
+        return result.has_value();
     }
     /// Whether to leave: at once with nothing unsaved, else as the player answers save, discard or
     /// stay.
@@ -691,9 +709,17 @@ auto legend_rows(const session& state) -> std::vector<ec::row> {
 auto session_view(const session& state) -> ec::screen_view {
     auto affordances = std::vector<ec::affordance>{ec::invoke_affordance(
         {.id = open_id, .label = _("Open"), .args = {.text = ec::text_shape{.field_id = path_id}}})};
+    if (state.doc) {
+        affordances.push_back(ec::invoke_affordance(
+            {.id = save_as_id,
+             .label = _("Save as"),
+             .args = {.text = ec::text_shape{.field_id = path_id}}}));
+    }
     auto parts = ec::children_of(ec::component{
         .id = file_id,
-        .affordances = {open_id},
+        .affordances =
+            state.doc ? std::vector<std::string>{open_id, save_as_id}
+                      : std::vector<std::string>{open_id},
         .body = ec::form_body{
             .fields = {{.id = path_id,
                         .label = _("File"),
@@ -1054,6 +1080,8 @@ auto run_editor_session() -> void {
             state.reload();
         } else if (id == save_id) {
             state.save();
+        } else if (id == save_as_id) {
+            state.save_as(invoked->args.text.value_or(""));
         }
     }
 }
