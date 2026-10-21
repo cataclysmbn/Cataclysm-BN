@@ -89,3 +89,37 @@ TEST_CASE("monsters_dont_see_through_vehicle_holes", "[vision]") {
     CHECK(!inside.sees(outside));
     CHECK(!outside.sees(inside));
 }
+
+namespace {
+
+struct sight_line {
+    tripoint_bub_ms from;
+    tripoint_bub_ms to;
+};
+
+} // namespace
+
+// The blocker cache answers a pair of squares from either end and monsters plan in parallel, so
+// what it holds must not depend on which end asked first. The Bresenham line from (10, 10) to
+// (12, 11) crosses (11, 10) and the line back crosses (11, 11): a wall on (11, 10) blocks one way.
+TEST_CASE("terrain_los_blocker_answers_a_pair_alike_whichever_end_asks_first", "[vision]") {
+    clear_all_state();
+    auto& here = get_map();
+    // The map caches each pair as first traced; a rebound map has traced none of them yet.
+    rebind_map_dimension(here.get_bound_dimension());
+    const auto layout = [&](const int y) {
+        here.ter_set(tripoint_bub_ms(11, 10 + y, 0), t_wall);
+        return sight_line{.from = {10, 10 + y, 0}, .to = {12, 11 + y, 0}};
+    };
+    const auto traced_forward = layout(0);
+    const auto traced_back = layout(10);
+    const auto asked_from_far_end = layout(20);
+    const auto asked_from_near_end = layout(30);
+    here.build_map_cache(0);
+    REQUIRE(here.sees(traced_forward.from, traced_forward.to, -1)
+            != here.sees(traced_back.to, traced_back.from, -1));
+
+    g->clear_turn_los_blocker_cache();
+    CHECK(g->terrain_los_blocks_sight_between(asked_from_far_end.to, asked_from_far_end.from)
+          == g->terrain_los_blocks_sight_between(asked_from_near_end.from, asked_from_near_end.to));
+}
