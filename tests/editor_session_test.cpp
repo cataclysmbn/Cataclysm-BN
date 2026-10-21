@@ -294,7 +294,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "the editor asks before leaving unsaved changes and keeps the file when told to discard them",
+    "the editor asks to save, discard or stay before leaving unsaved changes",
     "[editor_session][engine_client_component]") {
     const auto guard = screen_guard{};
     const auto file = mod_file{};
@@ -309,13 +309,13 @@ TEST_CASE(
             case 2:
                 return act("QUIT");
             case 3:
-                return answer("No");
+                return answer("Stay");
             case 4:
                 // Still in the editor, with the change.
                 CHECK(cell(ec::top_screen(captured()), 0, 0).glyph == "#");
                 return act("QUIT");
             case 5:
-                return answer("Yes");
+                return answer("Leave without saving");
             default:
                 FAIL("the editor outlived its exit");
                 return act("QUIT");
@@ -325,6 +325,41 @@ TEST_CASE(
     editor::run_editor_session();
     CHECK(step == 6);
     CHECK(read_file(file.path) == file.text);
+
+    // Saving on the way out writes the change, unless the file changed on disk meanwhile.
+    step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                return invoke("editor:paint", {.row = "square:0,0"});
+            case 2: {
+                auto out = std::ofstream(file.path, std::ios::binary | std::ios::trunc);
+                out << file.text << "\n";
+                return act("QUIT");
+            }
+            case 3:
+                return answer("Save and leave");
+            case 4:
+                CHECK(body<ec::text_body>(part(ec::top_screen(captured()), "editor:notice")).markup
+                      == "The file changed on disk since it was opened; nothing was saved.");
+                {
+                    auto out = std::ofstream(file.path, std::ios::binary | std::ios::trunc);
+                    out << file.text;
+                }
+                return act("QUIT");
+            case 5:
+                return answer("Save and leave");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 6);
+    CHECK(read_file(file.path).find("\"#") != std::string::npos);
 }
 
 TEST_CASE(
@@ -731,7 +766,7 @@ TEST_CASE(
                 CHECK(saved(screen) == "No");
                 return act("QUIT");
             case 6:
-                return answer("Yes");
+                return answer("Leave without saving");
             default:
                 FAIL("the editor outlived its exit");
                 return act("QUIT");

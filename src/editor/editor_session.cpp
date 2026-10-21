@@ -19,6 +19,7 @@
 #include "path_info.h"
 #include "string_formatter.h"
 #include "translations.h"
+#include "ui.h"
 #include "ui_manager.h"
 
 #include <algorithm>
@@ -363,6 +364,29 @@ struct session {
         if (notice.empty()) {
             notice = string_format(_("%s changed on disk and was reloaded."), name);
         }
+    }
+    /// Writes the file; false, with the notice saying why, when it was not written.
+    auto save() -> bool {
+        const auto saved = doc->save();
+        if (!saved) {
+            notice =
+                saved.error() == save_error::changed_on_disk
+                    ? _("The file changed on disk since it was opened; nothing was saved.")
+                    : _("The file could not be written.");
+        }
+        return saved.has_value();
+    }
+    /// Whether to leave: at once with nothing unsaved, else as the player answers save, discard or
+    /// stay.
+    auto leave() -> bool {
+        if (!doc || !doc->dirty()) { return true; }
+        auto menu = uilist{};
+        menu.text = _("Your changes to this file are not saved.");
+        menu.addentry(0, true, 's', _("Save and leave"));
+        menu.addentry(1, true, 'd', _("Leave without saving"));
+        menu.addentry(2, true, 'c', _("Stay"));
+        menu.query();
+        return menu.ret == 1 || (menu.ret == 0 && save());
     }
     auto open(const std::string& name) -> void {
         const auto path = std::filesystem::path(name);
@@ -873,11 +897,7 @@ auto run_editor_session() -> void {
         const auto action = ctxt.handle_input();
         const auto invoked = ec::invoked(ctxt.get_raw_input());
         if (!invoked) {
-            if (action == "QUIT"
-                && (!state.doc || !state.doc->dirty()
-                    || query_yn(_("Leave the editor without saving your changes?")))) {
-                return;
-            }
+            if (action == "QUIT" && state.leave()) { return; }
             continue;
         }
         const auto& id = invoked->affordance_id;
@@ -962,13 +982,7 @@ auto run_editor_session() -> void {
             state.seed = static_cast<unsigned int>(invoked->args.count.value_or(1));
             state.reload();
         } else if (id == save_id) {
-            const auto saved = state.doc->save();
-            if (!saved) {
-                state.notice =
-                    saved.error() == save_error::changed_on_disk
-                        ? _("The file changed on disk since it was opened; nothing was saved.")
-                        : _("The file could not be written.");
-            }
+            state.save();
         }
     }
 }
