@@ -73,6 +73,13 @@ struct draw_sprite_line_options {
     std::optional<std::uint64_t> group = std::nullopt;
 };
 
+/// An explosion over the given squares, each drawn in its own color.
+struct draw_custom_explosion_options {
+    tripoint_bub_ms position;
+    std::map<tripoint_bub_ms, nc_color> area;
+    std::string name;
+};
+
 /// Several projectile trajectories in a single animation sequence.
 struct draw_bullet_trajectories_options {
     const std::vector<std::vector<tripoint_bub_ms>> &trajectories;

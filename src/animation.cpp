@@ -31,6 +31,7 @@
 #include "weather/weather.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cstdint>
 #include <list>
 #include <map>
@@ -250,23 +251,8 @@ void draw_custom_explosion_curses( game &g,
     }
 }
 
-} // namespace
-
-void explosion_handler::draw_explosion( const tripoint_bub_ms &p, const int r, const nc_color &col,
-                                        const std::string &exp_name )
+void draw_custom_explosion_layers( const draw_custom_explosion_options &blast )
 {
-    engine_client::presentation::record_explosion( p, r, col, exp_name );
-    if( !game_client::animation().draw_explosion( { .position = p, .radius = r,
-            .color = col, .name = exp_name } ) ) {
-        draw_explosion_curses( *g, p, r, col );
-    }
-}
-
-void explosion_handler::draw_custom_explosion( const tripoint_bub_ms &position,
-        const std::map<tripoint_bub_ms, nc_color> &all_area,
-        const std::string &exp_name )
-{
-    engine_client::presentation::record_custom_explosion( position, all_area, exp_name );
     if( test_mode ) {
         // Avoid drawing animation state during tests.
         return;
@@ -281,7 +267,7 @@ void explosion_handler::draw_custom_explosion( const tripoint_bub_ms &position,
     // Start by getting rid of everything except current z-level
     std::map<tripoint_bub_ms, explosion_tile> neighbors;
     const auto view_center = relative_view_pos( g->u, g->u.bub_pos() );
-    for( const auto &pr : all_area ) {
+    for( const auto &pr : blast.area ) {
         const tripoint_rel_ms relative_point = relative_view_pos( g->u, pr.first );
         if( relative_point.z() == ( game_client::has_tiles() ? view_center.z() : 0 ) ) {
             neighbors[pr.first] = explosion_tile{ N_NO_NEIGHBORS, pr.second };
@@ -358,10 +344,27 @@ void explosion_handler::draw_custom_explosion( const tripoint_bub_ms &position,
         layers.push_front( std::move( layer ) );
     }
 
-    if( !game_client::animation().draw_custom_explosion( { .position = position,
-            .area = &all_area, .name = exp_name, .layers = &layers } ) ) {
+    if( !game_client::animation().draw_custom_explosion( { .position = blast.position,
+            .area = &blast.area, .name = blast.name, .layers = &layers } ) ) {
         draw_custom_explosion_curses( *g, layers );
     }
+}
+
+} // namespace
+
+void explosion_handler::draw_explosion( const tripoint_bub_ms &p, const int r, const nc_color &col,
+                                        const std::string &exp_name )
+{
+    presentation::emit( game_client::explosion_animation_options{ .position = p, .radius = r, .color = col,
+                        .name = exp_name } );
+}
+
+void explosion_handler::draw_custom_explosion( const tripoint_bub_ms &position,
+        const std::map<tripoint_bub_ms, nc_color> &all_area,
+        const std::string &exp_name )
+{
+    presentation::emit( draw_custom_explosion_options{ .position = position, .area = all_area,
+                        .name = exp_name } );
 }
 
 namespace
@@ -854,17 +857,7 @@ namespace ranged
 {
 void draw_cone_aoe( const tripoint_bub_ms &origin, const std::map<tripoint_bub_ms, double> &aoe )
 {
-    if( test_mode ) {
-        return;
-    }
-
-    if( !game_client::animation().draw_cone_aoe( { .origin = origin, .coverage = &aoe } ) ) {
-        bucketed_points buckets = bucket_by_distance( origin, aoe );
-        // That hardcoded value could be improved... Not sure about the name
-        size_t max_bucket_count = std::min<size_t>( 10, aoe.size() );
-        bucketed_points waves = optimal_bucketing( buckets, max_bucket_count );
-        draw_cone_aoe_curses( origin, waves );
-    }
+    presentation::emit( game_client::cone_aoe_animation_options{ .origin = origin, .coverage = &aoe } );
 }
 } // namespace ranged
 
@@ -890,7 +883,17 @@ auto record( const game_client::bullet_animation_options &step ) -> void
             .bullet = step.bullet, .custom_sprite = step.custom_sprite } );
 }
 auto record( const draw_sprite_line_options &line ) -> void { engine_client::presentation::record_line( line ); }
-/// A client learns of a hit from `entity.damaged`, and of a multishot from the steps of its pellets.
+auto record( const game_client::explosion_animation_options &blast ) -> void
+{
+    engine_client::presentation::record_explosion( blast.position, blast.radius, blast.color,
+            blast.name );
+}
+auto record( const draw_custom_explosion_options &blast ) -> void
+{
+    engine_client::presentation::record_custom_explosion( blast.position, blast.area, blast.name );
+}
+/// A client learns of a hit from `entity.damaged`, of a multishot from the steps of its pellets, and of a cone
+/// attack from the damage it does.
 auto record( const auto &/*fact*/ ) -> void {}
 
 auto projectiles_animated() -> bool { return get_option<bool>( "ANIMATION_PROJECTILES" ); }
@@ -920,6 +923,21 @@ class native_sink final : public presentation::sink
                 inp_mngr.pump_events();
                 remaining -= sleep_for;
             }
+        }
+
+        auto redraw() -> void override {
+            const auto presenting = map_perception::presentation_scope{};
+            ui_manager::redraw();
+            refresh_display();
+        }
+
+        auto hold( const std::chrono::milliseconds duration ) -> void override {
+            const auto seconds = std::chrono::duration_cast<std::chrono::seconds>( duration );
+            const auto delay = timespec {
+                .tv_sec = static_cast<time_t>( seconds.count() ),
+                .tv_nsec = static_cast<long>( std::chrono::nanoseconds( duration - seconds ).count() )
+            };
+            nanosleep( &delay, nullptr );
         }
 
     private:
@@ -957,6 +975,21 @@ class native_sink final : public presentation::sink
                 draw_hit_player_curses( *g, *hit.target, hit.damage );
             }
         }
+        auto draw( const game_client::explosion_animation_options &blast ) -> void {
+            if( !game_client::animation().draw_explosion( blast ) ) {
+                draw_explosion_curses( *g, blast.position, blast.radius, blast.color );
+            }
+        }
+        auto draw( const draw_custom_explosion_options &blast ) -> void { draw_custom_explosion_layers( blast ); }
+        auto draw( const game_client::cone_aoe_animation_options &cone ) -> void {
+            if( test_mode || game_client::animation().draw_cone_aoe( cone ) ) {
+                return;
+            }
+            // That hardcoded value could be improved... Not sure about the name
+            const auto max_bucket_count = std::min<size_t>( 10, cone.coverage->size() );
+            draw_cone_aoe_curses( cone.origin,
+                                  optimal_bucketing( bucket_by_distance( cone.origin, *cone.coverage ), max_bucket_count ) );
+        }
 };
 
 } // namespace
@@ -965,6 +998,8 @@ auto presentation::set_sink( std::unique_ptr<sink> replacement ) -> void
 {
     registered_sink = std::move( replacement );
 }
+
+auto presentation::registered() -> sink * { return registered_sink.get(); } // *NOPAD*
 
 auto presentation::install_native_sink() -> void { set_sink( std::make_unique<native_sink>() ); }
 

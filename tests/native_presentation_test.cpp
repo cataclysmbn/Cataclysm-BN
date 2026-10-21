@@ -635,6 +635,10 @@ public:
     auto pace(const game_client::animation_progress_options& /*options*/) -> void override {
         trace.push_back("pace");
     }
+    auto redraw() -> void override { trace.push_back("redraw"); }
+    auto hold(const std::chrono::milliseconds /*duration*/) -> void override {
+        trace.push_back("hold");
+    }
 
 private:
     std::vector<std::uint64_t>& ordinals;
@@ -666,6 +670,36 @@ TEST_CASE("the sink is told every projectile step in causal order", "[native_pre
     CHECK(
         std::ranges::adjacent_find(ordinals, [](const auto a, const auto b) { return b != a + 1; })
         == ordinals.end());
+}
+
+TEST_CASE(
+    "the sink redraws each explosion step and holds it until the next is due",
+    "[native_presentation]") {
+    for (const auto& entry :
+         trace_cases() | std::views::filter([](const auto& entry) { return entry.redraws > 0; })) {
+        CAPTURE(entry.name);
+        lit_floor();
+        auto ordinals = std::vector<std::uint64_t>{};
+        auto trace = trace_t{};
+        const override_option animations("ANIMATIONS", "true");
+        const override_option old_explosions("OLD_EXPLOSIONS", "false");
+        const override_option skip("SKIP_EXPLOSION_ANIMATION_AFTER", "0");
+        const override_option pace("ANIMATION_DELAY", "10");
+        const auto live = restore_on_out_of_scope(test_mode);
+        test_mode = false;
+        presentation::set_sink(std::make_unique<recording_sink>(ordinals, trace));
+        const auto uninstall = on_out_of_scope([] {
+            presentation::set_sink(nullptr);
+            explosion_handler::get_explosion_queue().clear();
+            SCT.vSCT.clear();
+        });
+        rng_set_engine_seed(424242);
+        entry.action();
+        // As many redraws as the characterization clock counts.
+        CHECK(std::ranges::count(trace, "redraw") == entry.redraws);
+        CHECK(std::ranges::count(trace, "hold") > 0);
+        CHECK(rng_state() == entry.golden.back().substr(std::string_view("end rng=").size()));
+    }
 }
 
 TEST_CASE("without a sink nothing is drawn and nothing waits", "[native_presentation]") {

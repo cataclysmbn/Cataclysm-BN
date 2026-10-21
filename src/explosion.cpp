@@ -47,7 +47,7 @@
 #include "output.h"
 #include "player.h"
 #include "point.h"
-#include "posix_time.h"
+#include "presentation_sink.h"
 #include "projectile.h"
 #include "rng.h"
 #include "shadowcasting.h"
@@ -56,7 +56,6 @@
 #include "translations.h"
 #include "trap.h"
 #include "type_id.h"
-#include "ui_manager.h"
 #include "units.h"
 #include "units_mass.h"
 #include "units_volume.h"
@@ -515,11 +514,7 @@ class ExplosionProcess
                 controlled_explosion_clock->observation.sleep_ms += delay_ms;
                 controlled_explosion_clock->observation.elapsed_ms += delay_ms;
             } else {
-                const auto delay = timespec {
-                    .tv_sec = static_cast<time_t>( delay_ms / 1000 ),
-                    .tv_nsec = static_cast<long>( ( delay_ms % 1000 ) * 1000000 )
-                };
-                nanosleep( &delay, nullptr );
+                presentation::registered()->hold( std::chrono::milliseconds( delay_ms ) );
             }
         }
 
@@ -541,6 +536,8 @@ class ExplosionProcess
                                           controlled_explosion_clock->options.bypass_test_mode;
             if( ( test_mode && !bypass_test_mode ) ||
                 get_option<int>( "ANIMATION_DELAY" ) <= 0 ) { return false; }
+            // The characterization clock stands in for the display; without either nothing shows the blast.
+            if( !controlled_explosion_clock && presentation::registered() == nullptr ) { return false; }
 
             const auto skip_after = get_option<int>( "SKIP_EXPLOSION_ANIMATION_AFTER" );
             return skip_after == 0 || get_explosion_queue().get_count() <= skip_after;
@@ -1315,16 +1312,15 @@ auto ExplosionProcess::run() -> void
     while( process_next() ) {
         // No need to redraw in testing mode
         if( request_redraw && is_animated() ) {
-            const auto presenting = map_perception::presentation_scope{};
             if( controlled_explosion_clock ) {
+                const auto presenting = map_perception::presentation_scope{};
                 auto &state = *controlled_explosion_clock;
                 if( state.options.render ) { state.options.render(); }
                 state.observation.redraws++;
                 state.observation.redraw_ms += state.options.redraw_ms;
                 state.observation.elapsed_ms += state.options.redraw_ms;
             } else {
-                ui_manager::redraw();
-                refresh_display();
+                presentation::registered()->redraw();
             }
             request_redraw = false;
         }
