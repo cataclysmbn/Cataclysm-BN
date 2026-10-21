@@ -5555,7 +5555,9 @@ auto game::terrain_los_blocks_sight_between( const tripoint_bub_ms &from,
         }
     }
 
-    const auto blocks_sight = !m.sees( from, to, -1 );
+    // The answer serves both ends, but the lines from either end cross different squares, so trace
+    // the key's direction: which end asked first must not decide it.
+    const auto blocks_sight = !m.sees( key.first, key.second, -1 );
     {
         auto lock = std::unique_lock<std::shared_mutex>( turn_los_blocker_cache_mutex_ );
         const auto insert_result = turn_los_blocker_cache_.emplace( key, blocks_sight );
