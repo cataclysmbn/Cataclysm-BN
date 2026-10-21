@@ -284,7 +284,10 @@ auto record_custom_explosion( const tripoint_bub_ms &at,
     const auto id = "explosion:" + std::to_string( ++feed.next_explosion );
     push( { .type = "explosion.started", .id = id, .at = world::position_at( at ), .tile = tile,
             .duration_ms = step_ms() } );
-    push( { .type = "explosion.blast", .id = id, .cells = path_of( cells ), .duration_ms = step_ms() } );
+    const auto color_of = [&area]( const tripoint_bub_ms & cell ) { return world::color_name( area.at( cell ) ); };
+    push( { .type = "explosion.blast", .id = id, .cells = path_of( cells ),
+            .colors = cells | std::views::transform( color_of ) | std::ranges::to<std::vector>(),
+            .duration_ms = step_ms() } );
     push( { .type = "explosion.ended", .id = id } );
 }
 

@@ -3780,6 +3780,13 @@
           "items": {
             "$ref": "#/$defs/pos"
           }
+        },
+        "colors": {
+          "description": "A custom explosion's native color name of each of cells, in their order.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": [

@@ -846,6 +846,7 @@ auto to_json( const event_value &value ) -> json
             if( !fact.tile.empty() ) { data["tile"] = fact.tile; }
         } else if( value.type == "explosion.blast" || value.type == "explosion.shrapnel" ) {
             data = {{"explosion", fact.id}, {"cells", to_array( fact.cells )}};
+            if( !fact.colors.empty() ) { data["colors"] = fact.colors; }
         } else if( value.type == "explosion.ended" ) {
             data = {{"explosion", fact.id}};
         } else if( value.type == "item.activated" ) {

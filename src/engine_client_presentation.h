@@ -73,6 +73,8 @@ struct presentation_value {
     std::string group = {};
     /// The path of a projectile or the squares of one blast ring, in drawing order.
     std::vector<position> cells = {};
+    /// `explosion.blast` of a custom explosion: the native color name of each of `cells`, in their order.
+    std::vector<std::string> colors = {};
     std::optional<position> at = std::nullopt;
     /// What is shown: the projectile, the item, or the terrain or furniture after the change.
     std::optional<look> appearance = std::nullopt;
