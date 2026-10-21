@@ -5970,7 +5970,12 @@ void game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
     std::vector<monster_plan_t> precomputed( plannable.size() );
     {
         ZoneScopedN( "monmove_compute_plans" );
-        if( parallel_enabled && parallel_monster_planning ) {
+        // Lua runs on the main thread only, and planning asks monsters for their attitudes,
+        // which a monster type may leave to Lua.
+        const auto lua_decides_attitude = std::ranges::any_of( *mon_snap, []( const monster * critter ) {
+            return critter->type->lua_attitude.has_value();
+        } );
+        if( parallel_enabled && parallel_monster_planning && !lua_decides_attitude ) {
             ZoneScopedN( "monmove_compute_plans_parallel" );
             parallel_for_chunked( 0, static_cast<int>( plannable.size() ),
             monster_plan_chunk_size, [&]( int i ) {
