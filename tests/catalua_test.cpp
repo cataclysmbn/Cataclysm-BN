@@ -774,9 +774,17 @@ TEST_CASE(
 
 TEST_CASE("lua_activity_bindings", "[lua]") {
     clear_all_state();
-    auto& state = *DynamicDataLoader::get_instance().lua;
-    cata::init_global_state_tables(state, {});
-    sol::state& lua = state.lua;
+    sol::state& lua = DynamicDataLoader::get_instance().lua->lua;
+    // Registers into the live tables: init_global_state_tables() would drop every hook the data
+    // registered, such as the mapgens only Lua uses, for each test after this one.
+    sol::table activities = lua.globals()["game"]["activity_functions"];
+    REQUIRE(activities.valid());
+    const auto cleanup = on_out_of_scope([&]() {
+        activities["TEST_TURN"] = sol::lua_nil;
+        activities["TEST_CALLBACK"] = sol::lua_nil;
+        lua.globals()["test_data"] = sol::lua_nil;
+        clear_all_state();
+    });
 
     auto test_data = lua.create_table();
     lua.globals()["test_data"] = test_data;
