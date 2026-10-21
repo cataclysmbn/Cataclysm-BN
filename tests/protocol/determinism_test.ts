@@ -11,15 +11,11 @@
  */
 import { assert, assertEquals, assertNotEquals } from "@std/assert"
 import { atMainMenu, itemRows, Mirror, stackPick } from "./mirror.ts"
+import { Client, schemaHash } from "./stdio_client.ts"
 
 // deno-lint-ignore no-explicit-any
 type Value = any
 const schemaFile = new URL("../../docs/schema/engine-client/0.2.schema.json", import.meta.url)
-/** What a hello names: the first 16 hex digits of the SHA-256 of the raw bytes of the schema. */
-const schemaHash = "sha256:" + Array.from(
-  new Uint8Array(await crypto.subtle.digest("SHA-256", await Deno.readFile(schemaFile))),
-  (byte) => byte.toString(16).padStart(2, "0"),
-).join("").slice(0, 16)
 
 /** One record of a state log: the hashes after one `game::do_turn`. */
 type StateRecord = { step: number; turn: number; parts: Record<string, string> }
@@ -95,85 +91,6 @@ Deno.test("determinism: a log of the engine parses and rejects a foreign header"
   }
   assert(thrown, "a foreign header is refused")
 })
-
-/** The engine is killed after this long without protocol traffic. */
-const stall = 120_000
-
-class Client {
-  #process: Deno.ChildProcess
-  #writer: WritableStreamDefaultWriter<Uint8Array>
-  #reader: ReadableStreamDefaultReader<Uint8Array>
-  #decoder = new TextDecoder()
-  #buffer = ""
-  #id = 0
-  notes: Value[] = []
-  /** Pause after every chunk read, to drain the pipe slowly. */
-  readDelayMs = 0
-
-  constructor(binary: string, args: string[]) {
-    this.#process = new Deno.Command(binary, {
-      args: ["--client=mcp", ...args],
-      stdin: "piped",
-      stdout: "piped",
-      stderr: "null",
-    }).spawn()
-    this.#writer = this.#process.stdin.getWriter()
-    this.#reader = this.#process.stdout.getReader()
-  }
-
-  async #next(): Promise<Value> {
-    let timer: ReturnType<typeof setTimeout> | undefined
-    try {
-      while (!this.#buffer.includes("\n")) {
-        clearTimeout(timer)
-        timer = setTimeout(() => this.#process.kill("SIGKILL"), stall)
-        const part = await this.#reader.read()
-        assert(!part.done, "engine closed stdout")
-        this.#buffer += this.#decoder.decode(part.value, { stream: true })
-        if (this.readDelayMs) await new Promise((resolve) => setTimeout(resolve, this.readDelayMs))
-      }
-    } finally {
-      clearTimeout(timer)
-    }
-    const end = this.#buffer.indexOf("\n")
-    const line = this.#buffer.slice(0, end)
-    this.#buffer = this.#buffer.slice(end + 1)
-    return JSON.parse(line)
-  }
-
-  async result(method: string, params: unknown): Promise<Value> {
-    const id = ++this.#id
-    this.#writer.write(
-      new TextEncoder().encode(JSON.stringify({ jsonrpc: "2.0", id, method, params }) + "\n"),
-    ).catch(() => {})
-    while (true) {
-      const message = await this.#next()
-      if (message.id === id) {
-        assert(message.error === undefined, JSON.stringify(message.error))
-        return message.result
-      }
-      assert(message.id === undefined, `unexpected response ${JSON.stringify(message)}`)
-      this.notes.push(message)
-    }
-  }
-
-  /** Next notification, from the backlog first. */
-  async note(): Promise<Value> {
-    return this.notes.shift() ?? await this.#next()
-  }
-
-  async close() {
-    await this.#writer.close()
-    const status = await this.#process.status
-    assert(status.success, `engine exit ${JSON.stringify(status)}`)
-  }
-
-  kill() {
-    try {
-      this.#process.kill("SIGKILL")
-    } catch { /* already gone */ }
-  }
-}
 
 class Session {
   mirror!: Mirror
@@ -352,9 +269,6 @@ async function wishItem(session: Session, name: string) {
   await session.run({ kind: "choose", choice_id: found.id })
   await session.run({ kind: "fill", field_id: "field:value", value: "1", submit: true })
 }
-
-/** The choices of an open inventory selector. */
-const choices = (session: Session): Value[] => session.mirror.interaction.interaction.choices
 
 /** Every kind of boundary operation, once or more, in a session whose start is the tutorial. */
 async function playEveryOperation(session: Session) {

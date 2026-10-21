@@ -7,229 +7,28 @@
  *   --allow-run --allow-env tests/protocol/stdio_test.ts
  */
 import { assert, assertEquals, assertNotEquals } from "@std/assert"
-import { Ajv2020 } from "npm:ajv@8.17.1/dist/2020.js"
 import { atMainMenu, itemRows, Mirror, stackPick, standsFor } from "./mirror.ts"
+import { Client, schemaHash, withDeadline } from "./stdio_client.ts"
 
 // deno-lint-ignore no-explicit-any
 type Value = any
-const schemaFile = new URL("../../docs/schema/engine-client/0.2.schema.json", import.meta.url)
-// Every message the engine really sends is checked against the schema.
-const schema: Value = JSON.parse(await Deno.readTextFile(schemaFile))
-const ajv = new Ajv2020({ strict: false })
-ajv.addSchema(schema, "bn")
-const validate = (def: string, value: unknown, what: string) => {
-  const check = ajv.getSchema(`bn#/$defs/${def}`)
-  assert(check, def)
-  assert(
-    check(value),
-    `${what} violates ${def}: ${JSON.stringify(check.errors)}\n${JSON.stringify(value)}`,
-  )
-}
-/** What a hello names: the first 16 hex digits of the SHA-256 of the raw bytes of the schema. */
-const schemaHash = "sha256:" + Array.from(
-  new Uint8Array(await crypto.subtle.digest("SHA-256", await Deno.readFile(schemaFile))),
-  (byte) => byte.toString(16).padStart(2, "0"),
-).join("").slice(0, 16)
 
-/** The engine is killed after this long without protocol traffic, busy or not: loading steps and activities send heartbeats. */
-const stall = 120_000
-
-class Client {
-  #process: Deno.ChildProcess
-  #writer: WritableStreamDefaultWriter<Uint8Array>
-  #reader: ReadableStreamDefaultReader<Uint8Array>
-  #decoder = new TextDecoder()
-  #buffer = ""
-  #id = 0
-  /** Notifications that arrived while waiting for something else, in order. */
-  notes: Value[] = []
-  /** Responses to raw frames written with `raw`, which no `request` waits for. */
-  replies: Value[] = []
-  /** Pause after every chunk read, to drain the pipe slowly. */
-  readDelayMs = 0
-  /** Bytes read from the engine's stdout. */
-  bytes = 0
-
-  constructor(
-    binary: string,
-    profile: string,
-    stderr: "null" | "piped" = "null",
-    extraArgs: string[] = [],
-  ) {
-    this.#process = new Deno.Command(binary, {
-      // `extraArgs` come last, so a test can start another world with its own `--seed`.
-      args: [
-        "--client=mcp",
-        "--seed",
-        "protocol-stdio-1",
-        "--userdir",
-        `${profile}/`,
-        "--configdir",
-        `${profile}/config/`,
-        ...extraArgs,
-      ],
-      stdin: "piped",
-      stdout: "piped",
-      stderr,
-    }).spawn()
-    this.#writer = this.#process.stdin.getWriter()
-    this.#reader = this.#process.stdout.getReader()
-  }
-
-  async #line(): Promise<Value> {
-    let timer: ReturnType<typeof setTimeout> | undefined
-    try {
-      while (!this.#buffer.includes("\n")) {
-        clearTimeout(timer)
-        timer = setTimeout(() => this.#process.kill("SIGKILL"), stall)
-        const part = await this.#reader.read()
-        assert(!part.done, "engine closed stdout")
-        this.bytes += part.value.byteLength
-        this.#buffer += this.#decoder.decode(part.value, { stream: true })
-        if (this.readDelayMs) await new Promise((resolve) => setTimeout(resolve, this.readDelayMs))
-      }
-    } finally {
-      clearTimeout(timer)
-    }
-    const end = this.#buffer.indexOf("\n")
-    const line = this.#buffer.slice(0, end)
-    this.#buffer = this.#buffer.slice(end + 1)
-    const message = JSON.parse(line)
-    // A batch is answered by one array of responses.
-    return Array.isArray(message) ? message : { ...message, receivedAt: performance.now() }
-  }
-
-  /** Next frame that is not the response to a raw frame. */
-  async #next(): Promise<Value> {
-    while (true) {
-      const message = await this.#line()
-      if (message.method !== undefined || !this.rawIds.has(JSON.stringify(message.id))) {
-        return message
-      }
-      this.replies.push(message)
-    }
-  }
-
-  /** The ids written with `raw`; a malformed frame is answered with id null. */
-  rawIds = new Set<string>()
-
-  /**
-   * Queues `text` as it is, one frame per line, and expects a response with each id in `ids`.
-   * It does not wait for the engine to take the bytes: a pipe holds little, and an engine blocked on
-   * its own output reads nothing until the client does.
-   */
-  raw(text: string, ids: unknown[] = []) {
-    for (const id of ids) this.rawIds.add(JSON.stringify(id))
-    this.#queue(text)
-  }
-
-  #queue(text: string) {
-    this.#writer.write(new TextEncoder().encode(text)).catch(() => {})
-  }
-
-  /** Reads until `count` responses to raw frames have arrived; notifications on the way wait in `notes`. */
-  async repliesUntil(count: number) {
-    while (this.replies.length < count) {
-      // Not `#next`, which keeps reading past a reply until a notification comes: none may follow.
-      const message = await this.#line()
-      if (Array.isArray(message)) {
-        this.replies.push(...message)
-        continue
-      }
-      if (message.method === undefined && this.rawIds.has(JSON.stringify(message.id))) {
-        this.replies.push(message)
-        continue
-      }
-      this.#validateNotification(message)
-      this.notes.push(message)
-    }
-  }
-
-  #validateNotification(message: Value) {
-    const def = schema["x-notifications"][message.method]
-    validate(def, message.params, message.method)
-  }
-
-  /** Drops what was queued for the engine and closes its stdin, as a client that died; a write in flight ends when the engine reads or exits. */
-  closeInput() {
-    this.#writer.abort().catch(() => {})
-  }
-
-  signal(sig: Deno.Signal) {
-    this.#process.kill(sig)
-  }
-
-  /** Waits for the engine to leave; `stderr` is its text when piped. */
-  async exit(ms: number) {
-    const stderr = this.#process.stderr
-    return await withDeadline(
-      Promise.all([this.#process.status, stderr ? new Response(stderr).text() : ""]),
-      ms,
-      "the engine outlived its client",
-    ).then(([status, text]) => ({ status, stderr: text }))
-  }
-
-  /** Reads and drops what the engine writes until it closes stdout, as a client that still reads while it sends a bad frame. */
-  async drain() {
-    for (let part = await this.#reader.read(); !part.done; part = await this.#reader.read());
-  }
-
-  /** Closes the engine's stdout for good, as a client that died. */
-  async abandonOutput() {
-    await this.#reader.cancel()
-  }
-
-  async request(method: string, params: unknown): Promise<Value> {
-    const id = ++this.#id
-    this.#queue(JSON.stringify({ jsonrpc: "2.0", id, method, params }) + "\n")
-    while (true) {
-      const message = await this.#next()
-      if (message.id === id) {
-        if (message.error) {
-          validate("application_error", message.error.data, `${method} error`)
-        } else {
-          const def = schema["x-methods"][method].result
-          validate(def, message.result, `${method} result`)
-        }
-        return message
-      }
-      assert(message.id === undefined, `unexpected response ${JSON.stringify(message)}`)
-      this.#validateNotification(message)
-      this.notes.push(message)
-    }
-  }
-
-  async result(method: string, params: unknown): Promise<Value> {
-    const response = await this.request(method, params)
-    assert(response.error === undefined, JSON.stringify(response.error))
-    return response.result
-  }
-
-  /** Next notification, from the backlog first. */
-  async note(): Promise<Value> {
-    const queued = this.notes.shift()
-    if (queued) return queued
-    const message = await this.#next()
-    this.#validateNotification(message)
-    return message
-  }
-
-  async close() {
-    await this.#writer.close()
-    const status = await this.#process.status
-    assert(status.success, `engine exit ${JSON.stringify(status)}`)
-  }
-
-  get pid() {
-    return this.#process.pid
-  }
-
-  kill() {
-    try {
-      this.#process.kill("SIGKILL")
-    } catch { /* already gone */ }
-  }
-}
+/** A client on its own profile and the test world's seed; `extraArgs` come last, so a test can start another world with its own `--seed`. */
+const stdioClient = (
+  binary: string,
+  profile: string,
+  stderr: "null" | "piped" = "null",
+  extraArgs: string[] = [],
+) =>
+  new Client(binary, [
+    "--seed",
+    "protocol-stdio-1",
+    "--userdir",
+    `${profile}/`,
+    "--configdir",
+    `${profile}/config/`,
+    ...extraArgs,
+  ], stderr)
 
 /** The event types that carry state or the message log; every other type tells a game event or an animation. */
 const stateEvents = [
@@ -530,7 +329,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       // Nothing works before hello.
       const early = await client.request("bn.subscribe", {})
@@ -802,7 +601,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       const session = await enterTutorial(client)
       const stairs = { x: 1210, y: 1214 }
@@ -859,7 +658,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       const session = await enterTutorial(client)
       const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -969,7 +768,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       const session = await enterTutorial(client)
       await session.acknowledge(() => session.mirror.interaction.interaction === null)
@@ -1041,7 +840,7 @@ Deno.test({
   async fn() {
     const profile = await makeProfile()
     const recording = `${profile}/contract.jsonl`
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile, "null", [
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile, "null", [
       "--contract-record",
       recording,
     ])
@@ -1090,7 +889,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       const session = await enterTutorial(client)
       const turn = () => BigInt(session.mirror.environment.turn)
@@ -1124,7 +923,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       const session = await enterTutorial(client)
       await session.acknowledge(() => session.mirror.interaction.interaction === null)
@@ -1177,7 +976,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       const session = await enterTutorial(client)
       const before = session.mirror.messages.length
@@ -1210,7 +1009,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       const hello = await client.result("bn.hello", {
         versions: ["0.2"],
@@ -1263,7 +1062,6 @@ async function openSetting(session: Session, id: string) {
   assertEquals((await session.pickId(id)).stages.at(-1), "completed")
 }
 
-const shown = (session: Session): Value[] => session.mirror.interaction.interaction.choices
 const setTo = (session: Session, id: string, value: string) =>
   session.submit({ kind: "fill", field_id: id, value, submit: true })
 
@@ -1324,7 +1122,7 @@ Deno.test({
   async fn() {
     const profile = await makeProfile()
     const binary = Deno.env.get("BN_BINARY")!
-    let client = new Client(binary, profile)
+    let client = stdioClient(binary, profile)
     try {
       let session = await startSession(client)
       await openSetting(session, "settings:options")
@@ -1388,7 +1186,7 @@ Deno.test({
       await client.close()
 
       // Relaunch on the same profile: the saved values are what the menu shows.
-      client = new Client(binary, profile)
+      client = stdioClient(binary, profile)
       session = await startSession(client)
       await openSetting(session, "settings:options")
       assertEquals((await find("option:SAFEMODE")).value, "false")
@@ -1464,7 +1262,7 @@ Deno.test({
   async fn() {
     const profile = await makeProfile()
     const binary = Deno.env.get("BN_BINARY")!
-    let client = new Client(binary, profile)
+    let client = stdioClient(binary, profile)
     try {
       let session = await startSession(client)
       await openSetting(session, "settings:keybindings")
@@ -1502,7 +1300,7 @@ Deno.test({
       await client.close()
 
       // Relaunch on the same profile: the menu shows the saved key, and it moves the avatar.
-      client = new Client(binary, profile)
+      client = stdioClient(binary, profile)
       session = await startSession(client)
       await openSetting(session, "settings:keybindings")
       await invokeOn(session, "keybindings:filter", { text: "Move East" })
@@ -1548,7 +1346,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       const session = await startSession(client)
       const leave = async () => {
@@ -1586,7 +1384,7 @@ Deno.test({
   async fn() {
     const profile = await makeProfile()
     const binary = Deno.env.get("BN_BINARY")!
-    let client = new Client(binary, profile)
+    let client = stdioClient(binary, profile)
     try {
       let session = await startSession(client)
       await openSetting(session, "settings:autopickup")
@@ -1629,7 +1427,7 @@ Deno.test({
       await client.close()
 
       // The rules are the profile's; the ids are the new session's.
-      client = new Client(binary, profile)
+      client = stdioClient(binary, profile)
       session = await startSession(client)
       await openSetting(session, "settings:autopickup")
       const saved = ruleRows(session, "autopickup:rules")
@@ -1651,7 +1449,7 @@ Deno.test({
   async fn() {
     const profile = await makeProfile()
     const binary = Deno.env.get("BN_BINARY")!
-    let client = new Client(binary, profile)
+    let client = stdioClient(binary, profile)
     try {
       let session = await startSession(client)
       await openSetting(session, "settings:safemode")
@@ -1694,7 +1492,7 @@ Deno.test({
       await leaveAndSave(session, inMainMenu(session))
       await client.close()
 
-      client = new Client(binary, profile)
+      client = stdioClient(binary, profile)
       session = await startSession(client)
       await openSetting(session, "settings:safemode")
       const saved = ruleRows(session, "safemode:rules")
@@ -1716,7 +1514,7 @@ Deno.test({
   async fn() {
     const profile = await makeProfile()
     // A world whose tutorial starts with no map extra discovered, as the contract examples' does.
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile, "null", [
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile, "null", [
       "--seed",
       "contract-gen-1",
     ])
@@ -1766,7 +1564,7 @@ Deno.test({
   async fn() {
     const profile = await makeProfile({}, [])
     const binary = Deno.env.get("BN_BINARY")!
-    let client = new Client(binary, profile)
+    let client = stdioClient(binary, profile)
     try {
       let session = await startSession(client)
       await openSetting(session, "settings:distractions")
@@ -1807,7 +1605,7 @@ Deno.test({
       await session.acknowledge(inMainMenu(session))
       await client.close()
 
-      client = new Client(binary, profile)
+      client = stdioClient(binary, profile)
       session = await startSession(client)
       await openSetting(session, "settings:distractions")
       assertEquals(distractionRow(session, target.id).toggled, false)
@@ -1833,7 +1631,7 @@ Deno.test({
   async fn() {
     const profile = await makeProfile()
     const binary = Deno.env.get("BN_BINARY")!
-    let client = new Client(binary, profile)
+    let client = stdioClient(binary, profile)
     try {
       let session = await startSession(client)
       await openSetting(session, "settings:colors")
@@ -1899,7 +1697,7 @@ Deno.test({
       await leaveAndSave(session, inMainMenu(session))
       await client.close()
 
-      client = new Client(binary, profile)
+      client = stdioClient(binary, profile)
       session = await startSession(client)
       await openSetting(session, "settings:colors")
       assertEquals(colorColumn(session, second.id, "invert_custom"), first.label)
@@ -1917,7 +1715,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       const session = await enterTutorial(client)
       await session.acknowledge(() => session.mirror.interaction.interaction === null)
@@ -1940,7 +1738,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       const session = await enterTutorial(client)
       await session.acknowledge(() => session.mirror.interaction.interaction === null)
@@ -1978,7 +1776,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       const session = await enterTutorial(client)
       const here = session.mirror.avatar.at
@@ -2027,7 +1825,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       const session = await enterTutorial(client)
       const here = session.mirror.avatar.at
@@ -2079,7 +1877,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       const session = await enterTutorial(client)
       await session.acknowledge(() => session.mirror.interaction.interaction === null)
@@ -2145,7 +1943,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       const session = await enterTutorial(client, { viewport: { cols: 40, rows: 25 } })
       await session.acknowledge(() => session.mirror.interaction.interaction === null)
@@ -2179,7 +1977,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       const session = await enterTutorial(client, { tiles: true })
       await session.acknowledge(() => session.mirror.interaction.interaction === null)
@@ -2205,15 +2003,6 @@ Deno.test({
     }
   },
 })
-
-/** Rejects when `work` outlives `ms`, so a hung engine fails the test instead of the whole run. */
-const withDeadline = <T>(work: Promise<T>, ms: number, why: string) => {
-  let timer: ReturnType<typeof setTimeout> | undefined
-  const expired = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new Error(why)), ms)
-  })
-  return Promise.race([work, expired]).finally(() => clearTimeout(timer))
-}
 
 for (const sig of ["SIGTERM", "SIGINT"] as const) {
   Deno.test({
@@ -2387,7 +2176,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       await client.result("bn.hello", {
         versions: ["0.2"],
@@ -2530,7 +2319,7 @@ Deno.test({
     })
     const recording = `${profile}/presentation.jsonl`
     Deno.env.set("BN_PRESENTATION_RECORD", recording)
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       const session = await enterTutorial(client)
       await session.acknowledge(() => session.mirror.interaction.interaction === null)
@@ -2678,7 +2467,7 @@ const firstDiff = (a: Value, b: Value, path = ""): string | undefined => {
 /** A one-hour wait read by a client with credits; the frames that carried turns, and the wall time of the wait. */
 async function longWait(delivery: Value) {
   const profile = await makeProfile()
-  const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+  const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
   try {
     const session = await enterTutorial(client, { delivery })
     await settle(session)
@@ -2759,7 +2548,7 @@ Deno.test({
     const ends: string[] = []
     for (const mode of ["none", "pushing", "stalled"]) {
       const profile = await makeProfile()
-      const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+      const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
       try {
         const extra = mode === "none" ? {} : { delivery: { credits: 256 } }
         const session = await enterTutorial(client, extra)
@@ -2862,7 +2651,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       const session = await enterTutorial(client)
       await settle(session)
@@ -2893,7 +2682,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       const session = await enterTutorial(client, { delivery: { credits: 256 } })
       await settle(session)
@@ -2955,7 +2744,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       const kind = (response: Value) => response.error?.data?.kind
       const hello = await client.request("bn.hello", {
@@ -3017,7 +2806,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       const session = await enterTutorial(client)
       await settle(session)
@@ -3070,7 +2859,7 @@ for (const when of ["idle", "during a wait"]) {
     ignore: !Deno.env.get("BN_BINARY"),
     async fn() {
       const profile = await makeProfile()
-      const client = new Client(Deno.env.get("BN_BINARY")!, profile, "piped")
+      const client = stdioClient(Deno.env.get("BN_BINARY")!, profile, "piped")
       try {
         const extra = { delivery: { credits: 256 } }
         if (when === "idle") {
@@ -3131,7 +2920,7 @@ Deno.test({
     const ends: string[] = []
     for (const delay of [0, 50]) {
       const profile = await makeProfile()
-      const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+      const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
       try {
         const session = await enterTutorial(client, { delivery: { credits: 256 } })
         await settle(session)
@@ -3177,7 +2966,7 @@ for (const how of ["stdin and stdout closed", "SIGTERM"] as const) {
     ignore: !Deno.env.get("BN_BINARY"),
     async fn() {
       const profile = await makeProfile()
-      const client = new Client(Deno.env.get("BN_BINARY")!, profile, "piped")
+      const client = stdioClient(Deno.env.get("BN_BINARY")!, profile, "piped")
       try {
         const session = await enterTutorial(client, { delivery: { credits: 256 } })
         await settle(session)
@@ -3213,7 +3002,7 @@ for (const how of ["an oversized frame", "the end of stdin"] as const) {
     ignore: !Deno.env.get("BN_BINARY"),
     async fn() {
       const profile = await makeProfile()
-      const client = new Client(Deno.env.get("BN_BINARY")!, profile, "piped")
+      const client = stdioClient(Deno.env.get("BN_BINARY")!, profile, "piped")
       try {
         const session = await enterTutorial(client, { delivery: { credits: 256 } })
         await settle(session)
@@ -3249,7 +3038,7 @@ for (const when of ["idle", "during a wait"] as const) {
     ignore: !Deno.env.get("BN_BINARY"),
     async fn() {
       const profile = await makeProfile()
-      const client = new Client(Deno.env.get("BN_BINARY")!, profile, "piped")
+      const client = stdioClient(Deno.env.get("BN_BINARY")!, profile, "piped")
       try {
         const session = await enterTutorial(client, { delivery: { credits: 256 } })
         await settle(session)
@@ -3325,7 +3114,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       const wrong = "sha256:0000000000000000"
       const refused = await client.request("bn.hello", {
@@ -3393,7 +3182,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       const session = await enterTutorial(client)
       // The first turns of the tutorial open lessons; let them out of the way.
@@ -3435,7 +3224,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       const session = await enterTutorial(client)
       await session.acknowledge(() => session.mirror.interaction.interaction === null)
@@ -3467,7 +3256,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       const session = await enterTutorial(client)
       await session.acknowledge(() => session.mirror.interaction.interaction === null)
@@ -3545,7 +3334,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       const session = await enterTutorial(client)
       await session.acknowledge(() => session.mirror.interaction.interaction === null)
@@ -3610,7 +3399,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       const session = await enterTutorial(client)
       await session.acknowledge(() => session.mirror.interaction.interaction === null)
@@ -3661,7 +3450,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       const session = await enterTutorial(client)
       await session.acknowledge(() => session.mirror.interaction.interaction === null)
@@ -3739,7 +3528,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       const session = await enterTutorial(client)
       await session.acknowledge(() => session.mirror.interaction.interaction === null)
@@ -3811,7 +3600,7 @@ Deno.test({
         await Deno.symlink(await Deno.realPath(`data/${entry.name}`), `${data}/${entry.name}`)
       }
     }
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile, "null", [
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile, "null", [
       "--datadir",
       `${data}/`,
     ])
@@ -3859,7 +3648,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       let session = await toMainMenu(client)
       await session.pickId("new_game")
@@ -3905,7 +3694,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       let session = await toMainMenu(client)
       await session.pickId("new_game")
@@ -3950,7 +3739,7 @@ Deno.test({
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    const client = stdioClient(Deno.env.get("BN_BINARY")!, profile)
     try {
       let session = await toMainMenu(client)
       await session.pickId("new_game")
@@ -4095,7 +3884,7 @@ Deno.test({
     for (let run = 0; run < runs; run++) {
       for (const mode of ["unsubscribed", "mirror", "slow", "stalled"]) {
         const profile = await makeProfile()
-        const client = new Client(binary, profile)
+        const client = stdioClient(binary, profile)
         try {
           const session = await enterTutorial(client, { delivery: { credits: 256 } })
           await settle(session)
