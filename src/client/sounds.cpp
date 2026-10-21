@@ -927,6 +927,8 @@ void sfx::fade_audio_group(group, int) {}
 void sfx::fade_audio_channel(channel, int) {}
 bool sfx::is_channel_playing(channel) { return false; }
 int sfx::set_channel_volume(channel, int) { return 0; }
+void sfx::set_channel_3d_position(channel, units::angle, int) {}
+int sfx::get_channel_volume(channel) { return 0; }
 bool sfx::has_variant_sound(const std::string&, const std::string&) { return false; }
 void sfx::stop_sound_effect_fade(channel, int) {}
 void sfx::stop_sound_effect_timed(channel, int) {}
