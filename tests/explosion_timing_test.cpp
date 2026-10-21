@@ -3,6 +3,7 @@
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catch/catch.hpp"
+#include "client_animation.h"
 #include "explosion.h"
 #include "explosion_queue.h"
 #include "game.h"
@@ -16,6 +17,7 @@
 #include "rng.h"
 #include "sounds.h"
 #include "state_helpers.h"
+#include "tile_helpers.h"
 #include "weather/weather.h"
 
 #include <algorithm>
@@ -23,6 +25,7 @@
 #include <cmath>
 #include <functional>
 #include <iostream>
+#include <optional>
 #include <ranges>
 #include <string>
 #include <vector>
@@ -96,8 +99,9 @@ auto scenarios() -> std::vector<timing_scenario> {
 
 struct timing_mode {
     std::string name;
-    /// Tiles, curses and imgui register a sink; a headless process has none.
-    bool sink = false;
+    /// Tiles registers a sink, here drawing on a hidden software renderer; a headless process has
+    /// none.
+    bool tiles = false;
     std::string delay;
 };
 
@@ -111,9 +115,17 @@ auto milliseconds_of(const timing_scenario& scenario, const timing_mode& mode) -
     const override_option pace("ANIMATION_DELAY", mode.delay);
     const auto live = restore_on_out_of_scope(test_mode);
     test_mode = false;
-    if (mode.sink) { presentation::install_native_sink(); }
+    auto display = std::optional<tile_context_fixture>{};
+#if defined(TILES)
+    if (mode.tiles) {
+        display.emplace(false);
+        REQUIRE(display->valid());
+        game_client::install_tiles_animation();
+    }
+#endif
     const auto uninstall = on_out_of_scope([] {
         presentation::set_sink(nullptr);
+        game_client::set_animation(nullptr);
         explosion_handler::get_explosion_queue().clear();
     });
     rng_set_engine_seed(424242);
@@ -137,8 +149,10 @@ TEST_CASE("explosion wall time per presentation mode", "[.][explosion_timing]") 
     const auto modes = std::vector<timing_mode>{
         {.name = "headless", .delay = "0"},
         {.name = "headless", .delay = "10"},
-        {.name = "native", .sink = true, .delay = "0"},
-        {.name = "native", .sink = true, .delay = "10"},
+#if defined(TILES)
+        {.name = "tiles", .tiles = true, .delay = "0"},
+        {.name = "tiles", .tiles = true, .delay = "10"},
+#endif
     };
     for (const auto& scenario : scenarios()) {
         for (const auto& mode : modes) {
