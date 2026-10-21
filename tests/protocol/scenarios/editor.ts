@@ -1,7 +1,8 @@
 /**
  * @module
  * The map editor a protocol client draws: offered on the map only with the Debug Editor trait, it opens a mod's
- * mapgen file, draws a rectangle from an anchor square, undoes and redoes it as one step, and saves the file.
+ * mapgen file, draws a rectangle from an anchor square, undoes and redoes it as one step, moves a placement, and saves
+ * the file.
  */
 import { assert, assertEquals } from "@std/assert"
 import { Engine, type Scenario, type Value } from "./driver.ts"
@@ -16,7 +17,7 @@ const glyphs = (screen: Value) => {
 }
 const offer = (screen: Value) => screen.affordances.find((entry: Value) => entry.id === "editor")
 
-/** A nested chunk of floor whose legend also maps a wall. */
+/** A nested chunk of floor whose legend also maps a wall, with a zombie in it. */
 const chunk = [{
   type: "mapgen",
   method: "json",
@@ -25,6 +26,7 @@ const chunk = [{
     mapgensize: [4, 4],
     rows: ["....", "....", "....", "...."],
     terrain: { ".": "t_floor", "#": "t_wall" },
+    place_monster: [{ monster: "mon_zombie", x: 1, y: 2 }],
   },
 }]
 
@@ -130,6 +132,23 @@ export const editor: Scenario = {
       assertEquals((await engine.invoke("editor:undo")).stages.at(-1), "completed")
       assertEquals(glyphs(engine.top()), walled)
 
+      // A picked placement fills the move and field forms; a move is written as one step.
+      assertEquals(
+        (await engine.invoke("editor:placement", { row: "placement:place_monster:0" })).stages.at(
+          -1,
+        ),
+        "completed",
+      )
+      rec.accept("map editor with a placement picked", "screen", engine.top())
+      assertEquals(
+        (await engine.invoke("editor:move_set", { row: "x", text: "2" })).stages.at(-1),
+        "completed",
+      )
+      const moved = await engine.invoke("editor:move_apply")
+      assertEquals(moved.stages.at(-1), "completed")
+      rec.command("placement moved in the map editor", moved)
+      assertEquals(part(engine.top(), "editor:canvas").cursor, { x: 2, y: 2 })
+
       // A nested chunk is generated only inside another mapgen, so it has no preview of its own.
       const preview = await engine.invoke("editor:preview", { count: 3 })
       assertEquals(preview.stages.at(-1), "completed")
@@ -138,7 +157,12 @@ export const editor: Scenario = {
       const saved = await engine.invoke("editor:save")
       assertEquals(saved.stages.at(-1), "completed")
       rec.command("map editor saved", saved)
-      assertEquals(JSON.parse(await Deno.readTextFile(file))[0].object.rows, walled)
+      const written = JSON.parse(await Deno.readTextFile(file))[0].object
+      assertEquals([written.rows, written.place_monster], [walled, [{
+        monster: "mon_zombie",
+        x: 2,
+        y: 2,
+      }]])
 
       assertEquals((await engine.invoke("QUIT")).stages.at(-1), "completed")
       assertEquals(engine.top().role, "map")

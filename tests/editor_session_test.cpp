@@ -595,4 +595,91 @@ TEST_CASE(
     CHECK(step == 10);
 }
 
+TEST_CASE(
+    "the editor moves a picked placement and sets any field the loader accepts",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file(nlohmann::ordered_json::parse(
+        R"({"place_monster": [{"monster": "mon_zombie", "x": [3, 5], "y": 7}]})"));
+    auto step = 0;
+    const auto field =
+        [](const ec::screen_view& screen, const std::string& form, const std::string& id) {
+            const auto& fields = body<ec::form_body>(part(screen, form)).fields;
+            const auto found = std::ranges::find(fields, id, &ec::form_field::id);
+            REQUIRE(found != fields.end());
+            return found->value;
+        };
+    const auto placed = [](const ec::screen_view& screen) {
+        return body<ec::list_body>(part(screen, "editor:placements")).rows.front().columns;
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                // Nothing to move until a placement is picked.
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:move"));
+                CHECK(field(screen, "editor:field", "pointer").empty());
+                return invoke("editor:placement", {.row = "placement:place_monster:0"});
+            case 2:
+                CHECK(field(screen, "editor:move", "x") == "3-5");
+                CHECK(field(screen, "editor:move", "y") == "7");
+                CHECK(field(screen, "editor:field", "pointer") == "/object/place_monster/0");
+                CHECK(field(screen, "editor:field", "value")
+                      == R"({"monster":"mon_zombie","x":[3,5],"y":7})");
+                return invoke("editor:move_set", {.row = "x", .text = "10"});
+            case 3:
+                return invoke("editor:move_apply");
+            case 4:
+                // One square is written as a number, and the cursor follows.
+                CHECK(placed(screen)[0].value == "10");
+                CHECK(body<ec::grid_body>(part(screen, "editor:canvas")).cursor
+                      == ec::grid_point{10, 7});
+                return invoke("editor:move_set", {.row = "y", .text = "9-2"});
+            case 5:
+                return invoke("editor:move_apply");
+            case 6:
+                CHECK(body<ec::text_body>(part(screen, "editor:notice")).markup
+                      == "A place is a number or two joined by a dash, the smaller first.");
+                return invoke("editor:move_set", {.row = "y", .text = "7x"});
+            case 7:
+                return invoke("editor:move_apply");
+            case 8:
+                CHECK(body<ec::text_body>(part(screen, "editor:notice")).markup
+                      == "A place is a number or two joined by a dash, the smaller first.");
+                CHECK(placed(screen)[1].value == "7");
+                return invoke("editor:field_set",
+                              {.row = "pointer", .text = "/object/place_monster/0/chance"});
+            case 9:
+                return invoke("editor:field_set", {.row = "value", .text = "50"});
+            case 10:
+                return invoke("editor:field_apply");
+            case 11:
+                CHECK(placed(screen)[2].value == R"({"monster":"mon_zombie","chance":50})");
+                return invoke("editor:field_set", {.row = "value", .text = R"("fifty")"});
+            case 12:
+                return invoke("editor:field_apply");
+            case 13:
+                // What the loader refuses is not written.
+                CHECK(ec::find_component(*screen.root, "editor:notice"));
+                CHECK(placed(screen)[2].value == R"({"monster":"mon_zombie","chance":50})");
+                return invoke("editor:save");
+            case 14:
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 15);
+    const auto saved = nlohmann::ordered_json::parse(read_file(file.path));
+    CHECK(saved[0]["object"]["place_monster"][0]
+          == nlohmann::ordered_json::parse(
+              R"({"monster": "mon_zombie", "x": 10, "y": 7, "chance": 50})"));
+}
+
 #endif // CATA_MCP

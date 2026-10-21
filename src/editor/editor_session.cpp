@@ -23,11 +23,13 @@
 
 #include <algorithm>
 #include <array>
+#include <charconv>
 #include <filesystem>
 #include <limits>
 #include <optional>
 #include <ranges>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace editor {
@@ -64,6 +66,12 @@ constexpr auto placement_id = "editor:placement";
 constexpr auto diagnostic_id = "editor:diagnostic";
 constexpr auto mapping_set_id = "editor:mapping_set";
 constexpr auto mapping_apply_id = "editor:mapping_apply";
+constexpr auto move_id = "editor:move";
+constexpr auto move_set_id = "editor:move_set";
+constexpr auto move_apply_id = "editor:move_apply";
+constexpr auto field_id = "editor:field";
+constexpr auto field_set_id = "editor:field_set";
+constexpr auto field_apply_id = "editor:field_apply";
 
 /// The members of a mapgen's object that map its symbols, as the loader reads them.
 constexpr auto legend_layers = std::array{
@@ -245,6 +253,12 @@ auto editable_place(const std::filesystem::path& path) -> bool {
         && (inside(PATH_INFO::datadir()) || inside(PATH_INFO::user_moddir()));
 }
 
+auto range_text(const placement_range& range) -> std::string {
+    return range.min == range.max
+             ? std::to_string(range.min)
+             : string_format("%d-%d", range.min, range.max);
+}
+
 struct diagnostic {
     std::string text;
     std::string pointer;
@@ -261,6 +275,14 @@ struct session {
     std::optional<point> anchor = std::nullopt;
     /// The square a placement or a diagnostic that was picked names.
     std::optional<point> focus = std::nullopt;
+    /// The placement picked last, which the move form moves.
+    std::optional<placement> picked = std::nullopt;
+    std::string move_x;
+    std::string move_y;
+    /// What the field form sets: a pointer into the entry and a value as JSON or bare text; an
+    /// empty value removes it.
+    std::string field_pointer;
+    std::string field_value;
     std::vector<legend_symbol> legend;
     std::vector<diagnostic> diagnostics;
     /// The seed of the preview while one is shown; it follows every edit.
@@ -336,6 +358,7 @@ struct session {
         doc = std::move(*opened);
         anchor.reset();
         focus.reset();
+        picked.reset();
         const auto found = mapgens();
         object = found.empty() ? doc->objects().size() : found.front();
         notice = found.empty() ? string_format(_("%s holds no JSON mapgen."), name) : "";
@@ -394,6 +417,63 @@ struct session {
         });
         if (found == placed.end()) { return std::nullopt; }
         return inside(point(found->x.min, found->y.min));
+    }
+
+    auto pick(const placement& entry) -> void {
+        picked = entry;
+        move_x = range_text(entry.x);
+        move_y = range_text(entry.y);
+        field_pointer = string_format("/object/%s/%d", entry.kind, entry.index);
+        field_value = entry.value.dump();
+        focus = square_named(field_pointer);
+    }
+
+    auto move_picked() -> void {
+        const auto number = [](std::string_view text) -> std::optional<int> {
+            auto value = 0;
+            const auto [end, error] =
+                std::from_chars(text.data(), text.data() + text.size(), value);
+            if (error != std::errc{} || end != text.data() + text.size()) { return std::nullopt; }
+            return value;
+        };
+        const auto range_of = [&](std::string_view text) -> std::optional<placement_range> {
+            const auto dash = text.find('-', 1);
+            const auto min = number(text.substr(0, dash));
+            const auto max = dash == std::string_view::npos ? min : number(text.substr(dash + 1));
+            if (!min || !max || *max < *min) { return std::nullopt; }
+            return placement_range{.min = *min, .max = *max};
+        };
+        const auto x = range_of(move_x);
+        const auto y = range_of(move_y);
+        if (!x || !y) {
+            notice = _("A place is a number or two joined by a dash, the smaller first.");
+            return;
+        }
+        const auto moved = move_placement(
+            *doc,
+            {.object = object, .kind = picked->kind, .index = picked->index, .x = *x, .y = *y});
+        if (!moved) {
+            notice = moved.error();
+            return;
+        }
+        reload();
+        const auto placed = placements_of(*doc, object);
+        const auto found = std::ranges::find_if(placed, [&](const placement& entry) {
+            return entry.kind == picked->kind && entry.index == picked->index;
+        });
+        if (found != placed.end()) { pick(*found); }
+    }
+
+    auto set_picked_field() -> void {
+        auto value = std::optional<nlohmann::ordered_json>{};
+        if (!field_value.empty()) {
+            auto parsed = nlohmann::ordered_json::parse(field_value, nullptr, false);
+            value = parsed.is_discarded() ? nlohmann::ordered_json(field_value) : parsed;
+        }
+        const auto set =
+            set_field(*doc, {.object = object, .pointer = field_pointer, .value = value});
+        if (!set) { notice = set.error(); }
+        reload();
     }
 
     auto paint(const point& at) -> void {
@@ -467,12 +547,6 @@ auto canvas(const session& state) -> ec::component {
             .rows = static_cast<int>(grid.size()),
             .cursor = cursor ? std::optional(ec::grid_point{cursor->x, cursor->y}) : std::nullopt,
             .cells = std::move(cells)}};
-}
-
-auto range_text(const placement_range& range) -> std::string {
-    return range.min == range.max
-             ? std::to_string(range.min)
-             : string_format("%d-%d", range.min, range.max);
 }
 
 /// A row per placement: where it lands, and what it places as the data writes it.
@@ -619,6 +693,39 @@ auto session_view(const session& state) -> ec::screen_view {
                 {.id = diagnostic_id, .label = _("Show"), .args = row_of(diagnostics_id)}));
             affordances.push_back(ec::invoke_affordance(
                 {.id = placement_id, .label = _("Show"), .args = row_of(placements_id)}));
+            if (state.picked) {
+                parts.push_back(ec::component{
+                    .id = move_id,
+                    .affordances = {move_set_id, move_apply_id},
+                    .body = ec::form_body{
+                        .fields = {{.id = "x", .label = "x", .value = state.move_x},
+                                   {.id = "y", .label = "y", .value = state.move_y}},
+                        .submit = move_apply_id}});
+                affordances.push_back(ec::invoke_affordance(
+                    {.id = move_set_id,
+                     .label = _("Value"),
+                     .args = {.row = ec::row_shape{.component_id = move_id},
+                              .text = ec::text_shape{}}}));
+                affordances.push_back(
+                    ec::invoke_affordance({.id = move_apply_id, .label = _("Move")}));
+            }
+            parts.push_back(ec::component{
+                .id = field_id,
+                .affordances = {field_set_id, field_apply_id},
+                .body = ec::form_body{
+                    .fields =
+                        {{.id = "pointer", .label = _("Pointer"), .value = state.field_pointer},
+                         {.id = "value",
+                          .label = _("Value"),
+                          .value = state.field_value,
+                          .multiline = true}},
+                    .submit = field_apply_id}});
+            affordances.push_back(ec::invoke_affordance(
+                {.id = field_set_id,
+                 .label = _("Value"),
+                 .args =
+                     {.row = ec::row_shape{.component_id = field_id}, .text = ec::text_shape{}}}));
+            affordances.push_back(ec::invoke_affordance({.id = field_apply_id, .label = _("Set")}));
             affordances.push_back(ec::invoke_affordance(
                 {.id = tool_id, .label = _("Tool"), .args = row_of(tools_id)}));
             affordances.push_back(ec::invoke_affordance(
@@ -766,6 +873,7 @@ auto run_editor_session() -> void {
                 state.object = index;
                 state.anchor.reset();
                 state.focus.reset();
+                state.picked.reset();
                 state.reload();
             }
         } else if (id == tool_id) {
@@ -787,10 +895,16 @@ auto run_editor_session() -> void {
             const auto found = std::ranges::find(placed, row, [](const placement& entry) {
                 return string_format("placement:%s:%d", entry.kind, entry.index);
             });
-            if (found != placed.end()) {
-                state.focus = state.square_named(
-                    string_format("/object/%s/%d", found->kind, found->index));
-            }
+            if (found != placed.end()) { state.pick(*found); }
+        } else if (id == move_set_id) {
+            (row == "x" ? state.move_x : state.move_y) = invoked->args.text.value_or("");
+        } else if (id == move_apply_id && state.picked) {
+            state.move_picked();
+        } else if (id == field_set_id) {
+            (row == "pointer" ? state.field_pointer : state.field_value) =
+                invoked->args.text.value_or("");
+        } else if (id == field_apply_id) {
+            state.set_picked_field();
         } else if (id == diagnostic_id) {
             auto index = std::size_t{0};
             if (std::sscanf(row.c_str(), "message:%zu", &index) == 1
