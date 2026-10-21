@@ -1558,6 +1558,10 @@ static bool draw_window( Font_Ptr &font, const catacurses::window &w )
 
 auto game_client::tiles::draw_window_native( const catacurses::window &w ) -> void
 {
+    if( test_mode ) {
+        return;
+    }
+
     if( clear_display_buffer_before_redraw ) {
         clear_display_buffer_before_redraw = false;
         SetRenderTarget( renderer, display_buffer );
