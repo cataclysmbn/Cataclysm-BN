@@ -521,4 +521,78 @@ TEST_CASE(
     CHECK(step == 4);
 }
 
+TEST_CASE(
+    "the editor's catalog finds what a legend can name and puts it in the legend form",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    auto step = 0;
+    const auto field = [](const ec::screen_view& screen, const std::string& id) {
+        const auto& fields = body<ec::form_body>(part(screen, "editor:mapping")).fields;
+        const auto found = std::ranges::find(fields, id, &ec::form_field::id);
+        REQUIRE(found != fields.end());
+        return found->value;
+    };
+    const auto entries = [](const ec::screen_view& screen) -> const ec::list_body& {
+        return body<ec::list_body>(part(screen, "editor:catalog"));
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1: {
+                // Terrain first, a page at a time, by id.
+                const auto& kinds = body<ec::tabs_body>(part(screen, "editor:catalog_kinds")).tabs;
+                REQUIRE(kinds.size() == 11);
+                CHECK(kinds[0].id == "catalog:terrain");
+                CHECK(kinds[0].selected);
+                CHECK(entries(screen).rows.size() == 50);
+                CHECK(entries(screen).total > 50);
+                CHECK(entries(screen).filterable);
+                CHECK(affordance(screen, "editor:catalog_page").args.count->max > 0);
+                return invoke("editor:catalog_filter", {.text = "t_dirt"});
+            }
+            case 2: {
+                const auto& rows = entries(screen).rows;
+                CHECK(std::ranges::contains(rows, std::string("entry:t_dirt"), &ec::row::id));
+                CHECK(std::ranges::all_of(rows, [](const ec::row& entry) {
+                    return entry.columns[0].value.find("dirt") != std::string::npos
+                        || entry.label.find("dirt") != std::string::npos;
+                }));
+                return invoke("editor:catalog_pick", {.row = "entry:t_dirt"});
+            }
+            case 3:
+                CHECK(field(screen, "layer") == "terrain");
+                CHECK(field(screen, "value") == "t_dirt");
+                return invoke("editor:catalog_kind", {.row = "catalog:monster_group"});
+            case 4:
+                // A new kind starts on its first page, with the filter kept.
+                CHECK(entries(screen).offset == 0);
+                return invoke("editor:catalog_filter", {.text = "GROUP_ZOMBIE"});
+            case 5:
+                return invoke("editor:catalog_pick", {.row = "entry:GROUP_ZOMBIE"});
+            case 6:
+                // A group is named inside the mapping its layer reads.
+                CHECK(field(screen, "layer") == "monsters");
+                CHECK(field(screen, "value") == R"({"monster":"GROUP_ZOMBIE"})");
+                return invoke("editor:catalog_kind", {.row = "catalog:terrain"});
+            case 7:
+                return invoke("editor:catalog_filter", {.text = ""});
+            case 8:
+                return invoke("editor:catalog_page", {.count = 1});
+            case 9:
+                CHECK(entries(screen).offset == 50);
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 10);
+}
+
 #endif // CATA_MCP

@@ -632,6 +632,1155 @@
                 }
               ],
               "submit": "editor:mapping_apply"
+            },
+            {
+              "id": "editor:catalog_kinds",
+              "kind": "tabs",
+              "affordances": [
+                "editor:catalog_kind"
+              ],
+              "tabs": [
+                {
+                  "id": "catalog:terrain",
+                  "label": "Terrain",
+                  "selected": true,
+                  "enabled": true
+                },
+                {
+                  "id": "catalog:furniture",
+                  "label": "Furniture",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "catalog:trap",
+                  "label": "Traps",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "catalog:field",
+                  "label": "Fields",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "catalog:item",
+                  "label": "Items",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "catalog:item_group",
+                  "label": "Item groups",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "catalog:monster",
+                  "label": "Monsters",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "catalog:monster_group",
+                  "label": "Monster groups",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "catalog:vehicle",
+                  "label": "Vehicles",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "catalog:npc_template",
+                  "label": "NPCs",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "catalog:nested_mapgen",
+                  "label": "Nested chunks",
+                  "selected": false,
+                  "enabled": true
+                }
+              ],
+              "select": "editor:catalog_kind",
+              "child": {
+                "id": "editor:catalog",
+                "kind": "list",
+                "affordances": [
+                  "editor:catalog_pick"
+                ],
+                "columns": [
+                  {
+                    "key": "id",
+                    "label": "ID"
+                  },
+                  {
+                    "key": "mod",
+                    "label": "Mod"
+                  }
+                ],
+                "rows": [
+                  {
+                    "id": "entry:t_adobe_brick_floor",
+                    "label": "adobe floor",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_adobe_brick_floor"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_adobe_brick_floor_noroof",
+                    "label": "adobe floor",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_adobe_brick_floor_noroof"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_adobe_brick_wall",
+                    "label": "adobe wall",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_adobe_brick_wall"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_adobe_brick_wall_halfway",
+                    "label": "half-built adobe wall",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_adobe_brick_wall_halfway"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_airbridge_metal",
+                    "label": "metal bridge",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_airbridge_metal"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_airbridge_wood",
+                    "label": "crude plank bridge",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_airbridge_wood"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_alluvial_deposit",
+                    "label": "alluvial deposit",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_alluvial_deposit"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_atm",
+                    "label": "ATM",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_atm"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_backboard",
+                    "label": "backboard",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_backboard"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_backboard_in",
+                    "label": "backboard",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_backboard_in"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_ballistic_door_glass_c",
+                    "label": "closed ballistic glass door",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_ballistic_door_glass_c"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_ballistic_door_glass_o",
+                    "label": "open ballistic glass door",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_ballistic_door_glass_o"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_ballistic_glass",
+                    "label": "ballistic glass",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_ballistic_glass"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bark_wall_broken",
+                    "label": "broken bark wall",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bark_wall_broken"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bark_wall_chipped",
+                    "label": "chipped bark wall",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bark_wall_chipped"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_barkfloor",
+                    "label": "bark",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_barkfloor"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_barndoor",
+                    "label": "rope and pulley",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_barndoor"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bars",
+                    "label": "metal bars",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bars"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bog_iron",
+                    "label": "bog iron",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bog_iron"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bramble_door_c",
+                    "label": "closed bramble roots",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bramble_door_c"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bramble_door_o",
+                    "label": "open bramble roots",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bramble_door_o"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_brick_wall",
+                    "label": "brick wall",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_brick_wall"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_brick_wall_halfway",
+                    "label": "half-built brick wall",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_brick_wall_halfway"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bridge",
+                    "label": "walkway",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bridge"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_buffer_stop",
+                    "label": "buffer stop",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_buffer_stop"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bulk_tank",
+                    "label": "bulk tank",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulk_tank"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bulkhead_floor",
+                    "label": "bulkhead",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulkhead_floor"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bulkhead_floor_underwater",
+                    "label": "underwater bulkhead",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulkhead_floor_underwater"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bulkhead_floor_underwater_no_roof",
+                    "label": "underwater bulkhead",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulkhead_floor_underwater_no_roof"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bulkhead_roof",
+                    "label": "bulkhead",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulkhead_roof"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_card_fp",
+                    "label": "card reader",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_fp"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_card_industrial",
+                    "label": "card reader",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_industrial"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_card_military",
+                    "label": "card reader",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_military"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_card_reader_broken",
+                    "label": "broken card reader",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_reader_broken"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_card_robofac",
+                    "label": "card reader",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_robofac"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_card_science",
+                    "label": "card reader",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_science"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_carpet_concrete",
+                    "label": "industrial carpet",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_concrete"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_carpet_green",
+                    "label": "green carpet",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_green"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_carpet_metal",
+                    "label": "bunker carpet",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_metal"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_carpet_purple",
+                    "label": "purple carpet",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_purple"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_carpet_red",
+                    "label": "red carpet",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_red"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_carpet_yellow",
+                    "label": "yellow carpet",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_yellow"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_centrifuge",
+                    "label": "broken centrifuge",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_centrifuge"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_chainfence",
+                    "label": "chain link fence",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chainfence"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_chainfence_posts",
+                    "label": "metal post",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chainfence_posts"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_chaingate_c",
+                    "label": "closed wire gate",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chaingate_c"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_chaingate_l",
+                    "label": "locked wire gate",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chaingate_l"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_chaingate_o",
+                    "label": "open wire gate",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chaingate_o"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_chickenwire_fence",
+                    "label": "chickenwire fence",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chickenwire_fence"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_chickenwire_fence_post",
+                    "label": "chickenwire fence post",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chickenwire_fence_post"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  }
+                ],
+                "total": 812,
+                "selection": "single",
+                "activate": "editor:catalog_pick",
+                "filterable": true
+              }
             }
           ]
         },
@@ -740,6 +1889,54 @@
             "args": {
               "row": {
                 "component_id": "editor:canvas"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:catalog_kind",
+            "label": "Kind",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:catalog_kinds"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:catalog_filter",
+            "label": "Filter",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:catalog_page",
+            "label": "Page",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "count": {
+                "min": 0,
+                "max": 16,
+                "default": 0
+              }
+            },
+            "expect": "screen"
+          },
+          {
+            "id": "editor:catalog_pick",
+            "label": "Use",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:catalog"
               }
             },
             "expect": "boundary"
@@ -1421,6 +2618,1155 @@
                 }
               ],
               "submit": "editor:mapping_apply"
+            },
+            {
+              "id": "editor:catalog_kinds",
+              "kind": "tabs",
+              "affordances": [
+                "editor:catalog_kind"
+              ],
+              "tabs": [
+                {
+                  "id": "catalog:terrain",
+                  "label": "Terrain",
+                  "selected": true,
+                  "enabled": true
+                },
+                {
+                  "id": "catalog:furniture",
+                  "label": "Furniture",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "catalog:trap",
+                  "label": "Traps",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "catalog:field",
+                  "label": "Fields",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "catalog:item",
+                  "label": "Items",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "catalog:item_group",
+                  "label": "Item groups",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "catalog:monster",
+                  "label": "Monsters",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "catalog:monster_group",
+                  "label": "Monster groups",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "catalog:vehicle",
+                  "label": "Vehicles",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "catalog:npc_template",
+                  "label": "NPCs",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "catalog:nested_mapgen",
+                  "label": "Nested chunks",
+                  "selected": false,
+                  "enabled": true
+                }
+              ],
+              "select": "editor:catalog_kind",
+              "child": {
+                "id": "editor:catalog",
+                "kind": "list",
+                "affordances": [
+                  "editor:catalog_pick"
+                ],
+                "columns": [
+                  {
+                    "key": "id",
+                    "label": "ID"
+                  },
+                  {
+                    "key": "mod",
+                    "label": "Mod"
+                  }
+                ],
+                "rows": [
+                  {
+                    "id": "entry:t_adobe_brick_floor",
+                    "label": "adobe floor",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_adobe_brick_floor"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_adobe_brick_floor_noroof",
+                    "label": "adobe floor",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_adobe_brick_floor_noroof"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_adobe_brick_wall",
+                    "label": "adobe wall",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_adobe_brick_wall"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_adobe_brick_wall_halfway",
+                    "label": "half-built adobe wall",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_adobe_brick_wall_halfway"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_airbridge_metal",
+                    "label": "metal bridge",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_airbridge_metal"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_airbridge_wood",
+                    "label": "crude plank bridge",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_airbridge_wood"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_alluvial_deposit",
+                    "label": "alluvial deposit",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_alluvial_deposit"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_atm",
+                    "label": "ATM",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_atm"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_backboard",
+                    "label": "backboard",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_backboard"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_backboard_in",
+                    "label": "backboard",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_backboard_in"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_ballistic_door_glass_c",
+                    "label": "closed ballistic glass door",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_ballistic_door_glass_c"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_ballistic_door_glass_o",
+                    "label": "open ballistic glass door",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_ballistic_door_glass_o"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_ballistic_glass",
+                    "label": "ballistic glass",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_ballistic_glass"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bark_wall_broken",
+                    "label": "broken bark wall",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bark_wall_broken"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bark_wall_chipped",
+                    "label": "chipped bark wall",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bark_wall_chipped"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_barkfloor",
+                    "label": "bark",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_barkfloor"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_barndoor",
+                    "label": "rope and pulley",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_barndoor"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bars",
+                    "label": "metal bars",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bars"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bog_iron",
+                    "label": "bog iron",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bog_iron"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bramble_door_c",
+                    "label": "closed bramble roots",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bramble_door_c"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bramble_door_o",
+                    "label": "open bramble roots",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bramble_door_o"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_brick_wall",
+                    "label": "brick wall",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_brick_wall"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_brick_wall_halfway",
+                    "label": "half-built brick wall",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_brick_wall_halfway"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bridge",
+                    "label": "walkway",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bridge"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_buffer_stop",
+                    "label": "buffer stop",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_buffer_stop"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bulk_tank",
+                    "label": "bulk tank",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulk_tank"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bulkhead_floor",
+                    "label": "bulkhead",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulkhead_floor"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bulkhead_floor_underwater",
+                    "label": "underwater bulkhead",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulkhead_floor_underwater"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bulkhead_floor_underwater_no_roof",
+                    "label": "underwater bulkhead",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulkhead_floor_underwater_no_roof"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bulkhead_roof",
+                    "label": "bulkhead",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulkhead_roof"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_card_fp",
+                    "label": "card reader",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_fp"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_card_industrial",
+                    "label": "card reader",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_industrial"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_card_military",
+                    "label": "card reader",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_military"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_card_reader_broken",
+                    "label": "broken card reader",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_reader_broken"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_card_robofac",
+                    "label": "card reader",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_robofac"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_card_science",
+                    "label": "card reader",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_science"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_carpet_concrete",
+                    "label": "industrial carpet",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_concrete"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_carpet_green",
+                    "label": "green carpet",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_green"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_carpet_metal",
+                    "label": "bunker carpet",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_metal"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_carpet_purple",
+                    "label": "purple carpet",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_purple"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_carpet_red",
+                    "label": "red carpet",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_red"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_carpet_yellow",
+                    "label": "yellow carpet",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_yellow"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_centrifuge",
+                    "label": "broken centrifuge",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_centrifuge"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_chainfence",
+                    "label": "chain link fence",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chainfence"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_chainfence_posts",
+                    "label": "metal post",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chainfence_posts"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_chaingate_c",
+                    "label": "closed wire gate",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chaingate_c"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_chaingate_l",
+                    "label": "locked wire gate",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chaingate_l"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_chaingate_o",
+                    "label": "open wire gate",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chaingate_o"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_chickenwire_fence",
+                    "label": "chickenwire fence",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chickenwire_fence"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_chickenwire_fence_post",
+                    "label": "chickenwire fence post",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chickenwire_fence_post"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  }
+                ],
+                "total": 812,
+                "selection": "single",
+                "activate": "editor:catalog_pick",
+                "filterable": true
+              }
             }
           ]
         },
@@ -1527,6 +3873,54 @@
             "args": {
               "row": {
                 "component_id": "editor:canvas"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:catalog_kind",
+            "label": "Kind",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:catalog_kinds"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:catalog_filter",
+            "label": "Filter",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:catalog_page",
+            "label": "Page",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "count": {
+                "min": 0,
+                "max": 16,
+                "default": 0
+              }
+            },
+            "expect": "screen"
+          },
+          {
+            "id": "editor:catalog_pick",
+            "label": "Use",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:catalog"
               }
             },
             "expect": "boundary"

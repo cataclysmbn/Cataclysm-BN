@@ -3,6 +3,7 @@
 #include "avatar.h"
 #include "catacharset.h"
 #include "color.h"
+#include "editor/catalog.h"
 #include "editor/document.h"
 #include "editor/json_pointer.h"
 #include "editor/mapgen_check.h"
@@ -52,6 +53,12 @@ constexpr auto redo_id = "editor:redo";
 constexpr auto save_id = "editor:save";
 constexpr auto preview_id = "editor:preview";
 constexpr auto mapping_id = "editor:mapping";
+constexpr auto catalog_kinds_id = "editor:catalog_kinds";
+constexpr auto catalog_id = "editor:catalog";
+constexpr auto catalog_kind_id = "editor:catalog_kind";
+constexpr auto catalog_filter_id = "editor:catalog_filter";
+constexpr auto catalog_page_id = "editor:catalog_page";
+constexpr auto catalog_pick_id = "editor:catalog_pick";
 constexpr auto placements_id = "editor:placements";
 constexpr auto placement_id = "editor:placement";
 constexpr auto diagnostic_id = "editor:diagnostic";
@@ -105,6 +112,87 @@ const auto tools = std::array{
     tool{.id = "tool:fill", .kind = shape_kind::fill},
     tool{.id = "tool:pick", .kind = std::nullopt},
 };
+
+/// What of the catalog a legend maps, and how a mapping names it.
+struct catalog_use {
+    catalog_kind kind;
+    const char* id;
+    /// The legend layer that places it.
+    const char* layer;
+    /// The member that names it in a mapping; none: the mapping is the bare id.
+    const char* key = nullptr;
+    /// Whether that member is a list.
+    bool listed = false;
+};
+
+const auto catalog_uses = std::array{
+    catalog_use{.kind = catalog_kind::terrain, .id = "terrain", .layer = "terrain"},
+    catalog_use{.kind = catalog_kind::furniture, .id = "furniture", .layer = "furniture"},
+    catalog_use{.kind = catalog_kind::trap, .id = "trap", .layer = "traps"},
+    catalog_use{.kind = catalog_kind::field, .id = "field", .layer = "fields", .key = "field"},
+    catalog_use{.kind = catalog_kind::item, .id = "item", .layer = "item", .key = "item"},
+    catalog_use{
+        .kind = catalog_kind::item_group, .id = "item_group", .layer = "items", .key = "item"},
+    catalog_use{
+        .kind = catalog_kind::monster, .id = "monster", .layer = "monster", .key = "monster"},
+    catalog_use{
+        .kind = catalog_kind::monster_group,
+        .id = "monster_group",
+        .layer = "monsters",
+        .key = "monster"},
+    catalog_use{
+        .kind = catalog_kind::vehicle, .id = "vehicle", .layer = "vehicles", .key = "vehicle"},
+    catalog_use{
+        .kind = catalog_kind::npc_template, .id = "npc_template", .layer = "npcs", .key = "class"},
+    catalog_use{
+        .kind = catalog_kind::nested_mapgen,
+        .id = "nested_mapgen",
+        .layer = "nested",
+        .key = "chunks",
+        .listed = true},
+};
+
+auto catalog_label(const catalog_use& use) -> std::string {
+    switch (use.kind) {
+        case catalog_kind::terrain:
+            return _("Terrain");
+        case catalog_kind::furniture:
+            return _("Furniture");
+        case catalog_kind::trap:
+            return _("Traps");
+        case catalog_kind::field:
+            return _("Fields");
+        case catalog_kind::item:
+            return _("Items");
+        case catalog_kind::item_group:
+            return _("Item groups");
+        case catalog_kind::monster:
+            return _("Monsters");
+        case catalog_kind::monster_group:
+            return _("Monster groups");
+        case catalog_kind::vehicle:
+            return _("Vehicles");
+        case catalog_kind::npc_template:
+            return _("NPCs");
+        case catalog_kind::nested_mapgen:
+            return _("Nested chunks");
+        case catalog_kind::palette:
+            return _("Palettes");
+        case catalog_kind::overmap_terrain:
+            return _("Overmap terrain");
+    }
+    return {};
+}
+
+/// The mapping of `use`'s layer that places `id`, as the legend form writes it.
+auto mapping_of(const catalog_use& use, const std::string& id) -> std::string {
+    if (!use.key) { return id; }
+    const auto named =
+        use.listed ? nlohmann::ordered_json::array({id}) : nlohmann::ordered_json(id);
+    return nlohmann::ordered_json{{use.key, named}}.dump();
+}
+
+constexpr auto catalog_page_size = std::size_t{50};
 
 auto tool_label(const tool& value) -> std::string {
     if (!value.kind) { return _("Eyedropper"); }
@@ -183,6 +271,17 @@ struct session {
     std::string mapping_symbol;
     std::string mapping_layer = "terrain";
     std::string mapping_value;
+    const catalog_use* catalog = catalog_uses.data();
+    std::string catalog_filter;
+    std::size_t catalog_page = 0;
+
+    auto catalog_entries() const -> editor::catalog_page {
+        return search_catalog(
+            {.kind = catalog->kind,
+             .filter = catalog_filter,
+             .page = catalog_page,
+             .page_size = catalog_page_size});
+    }
 
     auto mapgens() const -> std::vector<std::size_t> {
         if (!doc) { return {}; }
@@ -546,6 +645,51 @@ auto session_view(const session& state) -> ec::screen_view {
                               | std::ranges::to<std::vector>()},
                          {.id = "value", .label = _("Places"), .value = state.mapping_value}},
                     .submit = mapping_apply_id}});
+            const auto found = state.catalog_entries();
+            const auto pages =
+                std::max<std::size_t>(1, (found.total + catalog_page_size - 1) / catalog_page_size);
+            parts.push_back(ec::tabs(
+                {.id = catalog_kinds_id,
+                 .tabs = catalog_uses | std::views::transform([&](const catalog_use& use) {
+                             return ec::tab_entry{
+                                 .id = std::string("catalog:") + use.id,
+                                 .label = catalog_label(use),
+                                 .selected = &use == state.catalog};
+                         })
+                       | std::ranges::to<std::vector>(),
+                 .select = catalog_kind_id,
+                 .child = ec::list(
+                     {.id = catalog_id,
+                      .rows = found.entries | std::views::transform([](const catalog_entry& entry) {
+                                  return ec::row{
+                                      .id = "entry:" + entry.id,
+                                      .label = entry.name,
+                                      .columns =
+                                          {{.key = "id", .label = _("ID"), .value = entry.id},
+                                           {.key = "mod", .label = _("Mod"), .value = entry.mod}}};
+                              })
+                            | std::ranges::to<std::vector>(),
+                      .total = found.total,
+                      .offset = state.catalog_page * catalog_page_size,
+                      .selection = "single",
+                      .activate = catalog_pick_id,
+                      .filterable = true})}));
+            affordances.push_back(ec::invoke_affordance(
+                {.id = catalog_kind_id, .label = _("Kind"), .args = row_of(catalog_kinds_id)}));
+            affordances.push_back(ec::invoke_affordance(
+                {.id = catalog_filter_id,
+                 .label = _("Filter"),
+                 .args = {.text = ec::text_shape{}}}));
+            affordances.push_back(ec::invoke_affordance(
+                {.id = catalog_page_id,
+                 .label = _("Page"),
+                 .args = {
+                     .count = ec::count_shape{
+                         .min = 0,
+                         .max = static_cast<std::int64_t>(pages - 1),
+                         .initial = static_cast<std::int64_t>(state.catalog_page)}}}));
+            affordances.push_back(ec::invoke_affordance(
+                {.id = catalog_pick_id, .label = _("Use"), .args = row_of(catalog_id)}));
             affordances.push_back(ec::invoke_affordance(
                 {.id = mapping_set_id,
                  .label = _("Value"),
@@ -652,6 +796,28 @@ auto run_editor_session() -> void {
             if (std::sscanf(row.c_str(), "message:%zu", &index) == 1
                 && index < state.diagnostics.size()) {
                 state.focus = state.square_named(state.diagnostics[index].pointer);
+            }
+        } else if (id == catalog_kind_id) {
+            const auto found = std::ranges::find_if(catalog_uses, [&](const catalog_use& use) {
+                return row == std::string("catalog:") + use.id;
+            });
+            if (found != catalog_uses.end()) {
+                state.catalog = &*found;
+                state.catalog_page = 0;
+            }
+        } else if (id == catalog_filter_id) {
+            state.catalog_filter = invoked->args.text.value_or("");
+            state.catalog_page = 0;
+        } else if (id == catalog_page_id) {
+            state.catalog_page = static_cast<std::size_t>(invoked->args.count.value_or(0));
+        } else if (id == catalog_pick_id) {
+            const auto entries = state.catalog_entries().entries;
+            const auto found = std::ranges::find(entries, row, [](const catalog_entry& entry) {
+                return "entry:" + entry.id;
+            });
+            if (found != entries.end()) {
+                state.mapping_layer = state.catalog->layer;
+                state.mapping_value = mapping_of(*state.catalog, found->id);
             }
         } else if (id == mapping_set_id) {
             state.set_mapping(row, invoked->args.text.value_or(""));
