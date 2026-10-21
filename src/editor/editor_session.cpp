@@ -344,6 +344,26 @@ struct session {
         }
     }
 
+    /// A file changed on disk since it was opened: reloaded while nothing is edited, else reported,
+    /// since saving would overwrite that change.
+    auto watch() -> void {
+        if (!doc || !doc->changed_on_disk()) { return; }
+        const auto name = doc->path().string();
+        if (doc->dirty()) {
+            notice =
+                string_format(_("%s changed on disk; saving would overwrite that change."), name);
+            return;
+        }
+        const auto kept = object;
+        open(name);
+        if (std::ranges::contains(mapgens(), kept)) {
+            object = kept;
+            reload();
+        }
+        if (notice.empty()) {
+            notice = string_format(_("%s changed on disk and was reloaded."), name);
+        }
+    }
     auto open(const std::string& name) -> void {
         const auto path = std::filesystem::path(name);
         if (!editable_place(path)) {
@@ -863,6 +883,7 @@ auto run_editor_session() -> void {
         const auto& id = invoked->affordance_id;
         const auto row = invoked->args.row.value_or("");
         state.notice.clear();
+        state.watch();
         if (id == open_id) {
             state.open(invoked->args.text.value_or(""));
         } else if (!state.doc) {

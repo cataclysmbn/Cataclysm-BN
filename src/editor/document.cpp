@@ -219,10 +219,12 @@ auto document::text() const -> std::string {
     return out;
 }
 
+auto document::changed_on_disk() const -> bool {
+    return read_text(path_).value_or(std::string{}) != saved_;
+}
+
 auto document::save() -> std::expected<void, save_error> {
-    if (read_text(path_).value_or(std::string{}) != saved_) {
-        return std::unexpected(save_error::changed_on_disk);
-    }
+    if (changed_on_disk()) { return std::unexpected(save_error::changed_on_disk); }
     auto bytes = text();
     const auto temporary = std::filesystem::path(path_).concat(".editor-save");
     {

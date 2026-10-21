@@ -682,4 +682,65 @@ TEST_CASE(
               R"({"monster": "mon_zombie", "x": 10, "y": 7, "chance": 50})"));
 }
 
+TEST_CASE(
+    "the editor reloads a file changed on disk unless it is edited, and then says so",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    const auto row = std::string(24, '.');
+    // The file as another program writes it: its first row `with` instead.
+    const auto write_outside = [&](const char with) {
+        auto text = file.text;
+        text.replace(text.find(row), row.size(), std::string(24, with));
+        auto out = std::ofstream(file.path, std::ios::binary | std::ios::trunc);
+        out << text;
+    };
+    const auto notice = [](const ec::screen_view& screen) {
+        return body<ec::text_body>(part(screen, "editor:notice")).markup;
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK(walls(screen) == 0);
+                write_outside('#');
+                return invoke("editor:symbol", {.row = "symbol:#"});
+            case 2:
+                CHECK(walls(screen) == 24);
+                CHECK(notice(screen) == file.path.string() + " changed on disk and was reloaded.");
+                CHECK(saved(screen) == "Yes");
+                return invoke("editor:paint", {.row = "square:5,5"});
+            case 3:
+                CHECK(walls(screen) == 25);
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                write_outside('.');
+                return invoke("editor:symbol", {.row = "symbol:#"});
+            case 4:
+                // An edited document keeps its edit, and the change on disk is not overwritten
+                // unasked.
+                CHECK(walls(screen) == 25);
+                CHECK(
+                    notice(screen)
+                    == file.path.string() + " changed on disk; saving would overwrite that change.");
+                return invoke("editor:save");
+            case 5:
+                CHECK(saved(screen) == "No");
+                return act("QUIT");
+            case 6:
+                return answer("Yes");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 7);
+    CHECK(read_file(file.path) == file.text);
+}
+
 #endif // CATA_MCP

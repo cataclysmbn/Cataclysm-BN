@@ -50,6 +50,8 @@ public:
     auto objects() const -> const std::vector<document_object>& { return objects_; } // *NOPAD*
     /// Whether the text differs from what was opened or last saved.
     auto dirty() const -> bool { return text() != saved_; }
+    /// Whether the file on disk differs from what was opened or last saved.
+    auto changed_on_disk() const -> bool;
 
     /// Applies an RFC 6902 patch to one object as one undo step; the error names what refused it.
     auto edit(std::size_t object, const nlohmann::ordered_json& patch)
