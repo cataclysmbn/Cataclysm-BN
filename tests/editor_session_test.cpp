@@ -192,6 +192,7 @@ TEST_CASE(
         switch (step++) {
             case 0:
                 CHECK(screen.role == "screen");
+                CHECK(screen.title == "Map Editor");
                 // Nothing is open: only opening and leaving are offered.
                 CHECK(affordance(screen, "editor:open").args.text->field_id == "path");
                 CHECK(

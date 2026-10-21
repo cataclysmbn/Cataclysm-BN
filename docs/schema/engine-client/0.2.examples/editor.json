@@ -30,7 +30,7 @@
         "screen_id": "screen:10",
         "role": "screen",
         "kind": "editor",
-        "title": "editor",
+        "title": "Map Editor",
         "root": {
           "id": "editor:body",
           "kind": "split",
@@ -164,7 +164,7 @@
         "screen_id": "screen:10",
         "role": "screen",
         "kind": "editor",
-        "title": "editor",
+        "title": "Map Editor",
         "root": {
           "id": "editor:body",
           "kind": "split",

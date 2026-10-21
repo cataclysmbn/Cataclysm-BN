@@ -258,7 +258,7 @@ auto legend_rows(const session& state) -> std::vector<ec::row> {
          | std::ranges::to<std::vector>();
 }
 
-auto session_view(const input_context& ctxt, const session& state) -> ec::screen_view {
+auto session_view(const session& state) -> ec::screen_view {
     auto affordances = std::vector<ec::affordance>{ec::invoke_affordance(
         {.id = open_id, .label = _("Open"), .args = {.text = ec::text_shape{.field_id = path_id}}})};
     auto parts = ec::children_of(ec::component{
@@ -350,7 +350,7 @@ auto session_view(const input_context& ctxt, const session& state) -> ec::screen
             {.id = "editor:notice", .body = ec::text_body{.markup = state.notice, .tone = "bad"}});
     }
     return {
-        .title = ctxt.get_action_name("editor"),
+        .title = _("Map Editor"),
         .root = ec::split(
             {.id = "editor:body",
              .active = state.doc ? canvas_id : "",
@@ -375,9 +375,8 @@ auto run_editor_session() -> void {
     auto state = session{};
     const auto screen = ec::screen_scope(
         ctxt, "editor",
-        {.role = "screen", .view = [&](const ec::boundary_state& /*boundary*/) {
-             return session_view(ctxt, state);
-         }});
+        {.role = "screen",
+         .view = [&](const ec::boundary_state& /*boundary*/) { return session_view(state); }});
     while (true) {
         ui_manager::redraw();
         const auto action = ctxt.handle_input();

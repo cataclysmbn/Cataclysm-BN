@@ -68,6 +68,7 @@ export const editor: Scenario = {
       const opening = await engine.submit({ kind: "action", action_id: "editor" })
       assertEquals(opening.stages.at(-1), "completed")
       await engine.follow(() => engine.top().kind === "editor")
+      assertEquals(engine.top().title, "Map Editor")
       rec.accept("map editor with nothing open", "screen", engine.top())
 
       const outside = await engine.invoke("editor:open", { text: "/etc/hostname.json" })
