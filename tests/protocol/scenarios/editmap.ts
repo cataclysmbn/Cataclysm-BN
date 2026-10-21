@@ -74,12 +74,12 @@ export const editmap: Scenario = {
         "the cursor is `current`; marks are the other highlights",
       )
 
-      // Leaving the preview restores the map under it, which may start the client over from a snapshot.
+      // Leaving the preview restores the map under it: the squares it showed are forgotten in events.
       for (const context of ["MAPGEN_PREVIEW", "EDIT_MAPGEN"]) {
         assertEquals(engine.top().context, context)
         assertEquals((await engine.invoke("QUIT")).stages.at(-1), "completed")
         await engine.follow(() => engine.stale || engine.top().context !== context)
-        if (engine.stale) await engine.subscribe()
+        assert(!engine.stale, `leaving ${context} starts the client over`)
       }
       await engine.follow(() => engine.top().kind === "editmap")
       const left = await engine.invoke("QUIT")

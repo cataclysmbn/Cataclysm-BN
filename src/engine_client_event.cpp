@@ -354,14 +354,20 @@ auto event_stream::issue( changes delta, std::optional<std::string> command,
         current_.at.revision = event.value().revision;
         return std::vector{ std::move( event ) };
     }
-    // A delta too large for one event goes out as two, the latter half of its cells after the rest, so a
-    // receiver applies the change without a snapshot.
+    // A delta too large for one event goes out as two, the latter half of its cells (or, with too few cells,
+    // of its forgotten squares) after the rest, so a receiver applies the change without a snapshot.
     auto whole = std::move( event.value_.delta );
-    if( whole.cells.size() < 2 ) { return std::unexpected( error::resource_limit ); }
-    const auto half = whole.cells.size() / 2;
-    auto rest = changes{ .cells = whole.cells | std::views::drop( half ) | std::views::as_rvalue |
-                                  std::ranges::to<std::vector>() };
-    whole.cells.resize( half );
+    const auto latter_half = []( auto & squares ) {
+        const auto half = squares.size() / 2;
+        auto latter = squares | std::views::drop( half ) | std::views::as_rvalue |
+                      std::ranges::to<std::vector>();
+        squares.resize( half );
+        return latter;
+    };
+    auto rest = changes{};
+    if( whole.cells.size() >= 2 ) { rest.cells = latter_half( whole.cells ); }
+    else if( whole.forgotten.size() >= 2 ) { rest.forgotten = latter_half( whole.forgotten ); }
+    else { return std::unexpected( error::resource_limit ); }
     const auto at = current_.at;
     auto events = issue( std::move( whole ), command, cause );
     auto after = events ? issue( std::move( rest ), std::move( command ), cause ) : events;
