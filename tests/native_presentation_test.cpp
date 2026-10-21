@@ -214,15 +214,31 @@ auto line_shot() -> void {
     shoot(proj, tripoint_bub_ms(68, 62, 0));
 }
 
-auto shotgun() -> void {
-    spawn_test_monster("mon_zombie", tripoint_bub_ms(66, 62, 0));
+auto fire_shotgun(const tripoint_bub_ms& target) -> void {
     auto& you = get_avatar();
     you.set_skill_level(skill_id("gun"), 10);
     you.set_skill_level(skill_id("shotgun"), 10);
     auto gun = item::spawn("test_shotgun");
     gun->ammo_set(itype_id("test_buckshot_8"));
     you.wield(std::move(gun));
-    REQUIRE(ranged::fire_gun(you, tripoint_bub_ms(66, 62, 0), 1) == 1);
+    REQUIRE(ranged::fire_gun(you, target, 1) == 1);
+}
+
+auto shotgun() -> void {
+    spawn_test_monster("mon_zombie", tripoint_bub_ms(66, 62, 0));
+    fire_shotgun(tripoint_bub_ms(66, 62, 0));
+}
+
+/// Eight pellets at a zombie two squares east, with a wall behind it that stops the rest.
+auto shotgun_at_wall() -> void {
+    auto& here = get_map();
+    for (const auto y : std::views::iota(52, 73)) {
+        here.ter_set(tripoint_bub_ms(66, y, 0), ter_id("t_wall"));
+    }
+    here.build_map_cache(0);
+    map_perception::acquire();
+    spawn_test_monster("mon_zombie", tripoint_bub_ms(64, 62, 0));
+    fire_shotgun(tripoint_bub_ms(64, 62, 0));
 }
 
 auto thrown_grenade() -> void {
@@ -501,6 +517,48 @@ TEST_CASE("projectile steps are emitted with animations off", "[native_presentat
             return fact.type == "projectile.moved";
         }));
         CHECK(shot_under(false, entry.action) == animated);
+    }
+}
+
+namespace {
+
+auto is_projectile_hit(const engine_client::presentation_value& fact) -> bool {
+    return fact.type == "projectile.hit";
+}
+
+/// Whether a move of the same projectile onto the square of the hit came before it.
+auto flew_to_hit(const std::vector<engine_client::presentation_value>& facts, const std::size_t hit)
+    -> bool {
+    return std::ranges::any_of(facts | std::views::take(hit), [&](const auto& fact) {
+        return fact.type == "projectile.moved" && fact.id == facts[hit].id
+            && std::ranges::contains(fact.cells, *facts[hit].at);
+    });
+}
+
+} // namespace
+
+TEST_CASE(
+    "each pellet of a multishot flies to a square before it hits there", "[native_presentation]") {
+    for (const auto* const lasers : {"false", "true"}) {
+        CAPTURE(lasers);
+        lit_floor();
+        const override_option drawn("BULLETS_AS_LASERS", lasers);
+        const override_option pace("ANIMATION_DELAY", "0");
+        const auto uninstall = on_out_of_scope([] { engine_client::presentation::collect(false); });
+        engine_client::presentation::collect(true);
+        engine_client::presentation::take();
+        rng_set_engine_seed(424242);
+        shotgun_at_wall();
+        const auto facts = engine_client::presentation::take();
+        const auto hits =
+            std::views::iota(std::size_t{0}, facts.size())
+            | std::views::filter([&](const auto index) { return is_projectile_hit(facts[index]); })
+            | std::ranges::to<std::vector>();
+        REQUIRE(hits.size() >= 2);
+        for (const auto hit : hits) {
+            CAPTURE(hit);
+            CHECK(flew_to_hit(facts, hit));
+        }
     }
 }
 
