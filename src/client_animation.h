@@ -1,7 +1,9 @@
 #pragma once
 
+#include <cstdint>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -42,6 +44,8 @@ struct bullet_animation_options {
     std::string custom_sprite;
     /// The native frame skip leaves this step undrawn.
     bool skipped = false;
+    /// The multishot the shot is a pellet of: the pellets are drawn together once they all flew.
+    std::optional<std::uint64_t> group = std::nullopt;
 };
 
 struct bullet_trajectories_animation_options {

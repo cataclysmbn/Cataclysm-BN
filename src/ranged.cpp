@@ -1450,9 +1450,9 @@ int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_sho
             auto projectile_trajectories = std::vector<std::vector<tripoint_bub_ms>> {};
             projectile_trajectories.reserve( shot_count );
             auto grouped_shot_hits = std::vector<grouped_shot_hit> {};
-            auto animation_suppression = std::optional<scoped_projectile_animation_suppression> {};
+            auto pellets = std::optional<scoped_projectile_group> {};
             if( render_multishot ) {
-                animation_suppression.emplace();
+                pellets.emplace();
             }
             auto shell_hit = false;
             auto shell_headshot = false;

@@ -75,16 +75,23 @@ static const std::string flag_THIN_OBSTACLE( "THIN_OBSTACLE" );
 
 static const flag_id flag_FLY_STRAIGHT( "FLY_STRAIGHT" );
 
-thread_local int projectile_animation_suppression_depth = 0;
-
-scoped_projectile_animation_suppression::scoped_projectile_animation_suppression()
+namespace
 {
-    projectile_animation_suppression_depth++;
+
+thread_local auto last_projectile_group = std::uint64_t { 0 };
+/// The multishot in progress.
+thread_local auto projectile_group = std::optional<std::uint64_t> {};
+
+} // namespace
+
+scoped_projectile_group::scoped_projectile_group() : outer_( projectile_group )
+{
+    projectile_group = ++last_projectile_group;
 }
 
-scoped_projectile_animation_suppression::~scoped_projectile_animation_suppression()
+scoped_projectile_group::~scoped_projectile_group()
 {
-    projectile_animation_suppression_depth--;
+    projectile_group = outer_;
 }
 
 namespace
@@ -310,10 +317,10 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
                         Creature *origin, item *source_weapon, const vehicle *in_veh,
                         const bool suppress_damage_messages ) -> dealt_projectile_attack
 {
-    // A multishot presents its pellets together once they all flew.
-    const auto emits_flight = projectile_animation_suppression_depth == 0;
+    // The multishot this attack is a pellet of, presented together once they all flew.
+    const auto group = projectile_group;
 
-    const auto flight = engine_client::presentation::flight_scope{};
+    const auto flight = engine_client::presentation::flight_scope{ group };
     double range = rl_dist( source, target_arg );
 
     Creature *target_critter = g->critter_at( target_arg );
@@ -516,12 +523,12 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
 
         // Drawing the bullet uses player g->u, and not player p, because it's drawn
         // relative to YOUR position, which may not be the gunman's position.
-        if( emits_flight && !do_draw_line ) {
+        if( !do_draw_line ) {
             // TODO: Make this draw thrown item/launched grenade/arrow
             const auto skipped = projectile_skip_current_frame < projectile_skip_calculation;
             presentation::emit( game_client::bullet_animation_options{
                 .position = tp, .index = static_cast<int>( i ), .trajectory = &trajectory,
-                .bullet = bullet, .custom_sprite = custom_bullet_sprite, .skipped = skipped } );
+                .bullet = bullet, .custom_sprite = custom_bullet_sprite, .skipped = skipped, .group = group } );
             if( !skipped ) {
                 projectile_skip_current_frame = 0;
                 // If we missed recalculate the skip factor so they spread out.
@@ -680,7 +687,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
     attack.hit_critter = last_hit_critter;
     attack.trajectory.assign( trajectory.begin(), trajectory.begin() + traj_len );
 
-    if( emits_flight && do_draw_line && traj_len > 2 ) {
+    if( do_draw_line && traj_len > 2 ) {
         trajectory.erase( trajectory.begin() );
         trajectory.resize( traj_len-- );
         auto should_rotate = is_thrown && thrown_item &&
@@ -690,6 +697,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
             .points = trajectory,
             .sprite = custom_bullet_sprite,
             .rotate = should_rotate,
+            .group = group,
         } );
     }
 

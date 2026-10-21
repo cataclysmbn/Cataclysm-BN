@@ -162,7 +162,7 @@ TEST_CASE("combat text publishes its colored segments", "[engine_client_event]")
 }
 
 TEST_CASE(
-    "presentation facts are transient, ordered and serialized with their duration",
+    "presentation facts are transient, ordered and serialized with their duration and group",
     "[engine_client_event]") {
     auto initial = state_value{.interaction = {.id = "boundary:1", .ready = {.phase = "menu"}}};
     initial.world.coverage = bounds{.min = pos(0, -5), .max = pos(10, 5)};
@@ -174,6 +174,7 @@ TEST_CASE(
         {.fact =
              {.type = "projectile.moved",
               .id = "projectile:1",
+              .group = "multishot:1",
               .cells = {pos(1), pos(2)},
               .appearance = look{.kind = "projectile", .glyph = "*", .color = "red"},
               .duration_ms = 20}});
@@ -192,9 +193,11 @@ TEST_CASE(
     CHECK(apply_batch(receiver, {.epoch = "epoch:a", .events = {*shot, *bang}}));
     CHECK(receiver.at.revision == 0);
     const auto wire = nlohmann::json::parse(
-        serialize_events({.epoch = "epoch:a", .events = {*shot}}));
+        serialize_events({.epoch = "epoch:a", .events = {*shot, *bang}}));
     CHECK(wire["events"][0]["display"]["duration_ms"] == 20);
     CHECK(wire["events"][0]["data"]["path"].size() == 2);
+    CHECK(wire["events"][0]["data"]["group"] == "multishot:1");
+    CHECK_FALSE(wire["events"][1]["data"].contains("group"));
 }
 
 TEST_CASE("only the SCT option silences combat text outside tests", "[engine_client_event]") {

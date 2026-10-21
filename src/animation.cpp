@@ -889,13 +889,9 @@ auto record( const game_client::bullet_animation_options &step ) -> void
     engine_client::presentation::record_bullet( { .at = step.position, .index = step.index,
             .bullet = step.bullet, .custom_sprite = step.custom_sprite } );
 }
-auto record( const draw_bullet_trajectories_options &shots ) -> void
-{
-    engine_client::presentation::record_trajectories( shots );
-}
 auto record( const draw_sprite_line_options &line ) -> void { engine_client::presentation::record_line( line ); }
-/// A client learns of a hit from `entity.damaged`.
-auto record( const auto &/*hit*/ ) -> void {}
+/// A client learns of a hit from `entity.damaged`, and of a multishot from the steps of its pellets.
+auto record( const auto &/*fact*/ ) -> void {}
 
 auto projectiles_animated() -> bool { return get_option<bool>( "ANIMATION_PROJECTILES" ); }
 
@@ -928,7 +924,8 @@ class native_sink final : public presentation::sink
 
     private:
         auto draw( const game_client::bullet_animation_options &step ) -> void {
-            if( step.skipped || !projectiles_animated() ) {
+            // A multishot draws its pellets together once they all flew.
+            if( step.group || step.skipped || !projectiles_animated() ) {
                 return;
             }
             g->refresh_player_visibility_cache_if_needed();
@@ -946,7 +943,7 @@ class native_sink final : public presentation::sink
             }
         }
         auto draw( const draw_sprite_line_options &line ) -> void {
-            if( projectiles_animated() && !game_client::animation().draw_line_of( line ) ) {
+            if( !line.group && projectiles_animated() && !game_client::animation().draw_line_of( line ) ) {
                 g->draw_line( line.p, line.points );
             }
         }

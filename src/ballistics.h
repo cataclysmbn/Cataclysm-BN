@@ -2,6 +2,9 @@
 
 #include "coordinates.h"
 
+#include <cstdint>
+#include <optional>
+
 class Creature;
 class item;
 class dispersion_sources;
@@ -9,15 +12,18 @@ class vehicle;
 struct dealt_projectile_attack;
 struct projectile;
 
-class scoped_projectile_animation_suppression
+/// The pellets of one multishot fly one after another and are presented together: every projectile
+/// fact of an attack made while the scope lives carries its group.
+class scoped_projectile_group
 {
     public:
-        scoped_projectile_animation_suppression();
-        ~scoped_projectile_animation_suppression();
+        scoped_projectile_group();
+        ~scoped_projectile_group();
 
-        scoped_projectile_animation_suppression( const scoped_projectile_animation_suppression & ) = delete;
-        auto operator=( const scoped_projectile_animation_suppression & ) ->
-        scoped_projectile_animation_suppression & = delete; // *NOPAD*
+        scoped_projectile_group( const scoped_projectile_group & ) = delete;
+        auto operator=( const scoped_projectile_group & ) -> scoped_projectile_group & = delete; // *NOPAD*
+    private:
+        std::optional<std::uint64_t> outer_;
 };
 
 /// Aim result for a single projectile attack

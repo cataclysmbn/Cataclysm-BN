@@ -68,6 +68,9 @@ struct presentation_value {
     /// Opaque ID of the projectile or explosion; empty for combat text. An `item.landed` of an item
     /// no attack launched has none.
     std::string id = {};
+    /// `projectile.moved`, `projectile.hit` and `item.landed`: opaque ID of the multishot the projectile is a pellet
+    /// of. Its pellets fly one after another and are presented together.
+    std::string group = {};
     /// The path of a projectile or the squares of one blast ring, in drawing order.
     std::vector<position> cells = {};
     std::optional<position> at = std::nullopt;
@@ -142,7 +145,6 @@ struct bullet_step {
     const std::string &custom_sprite;
 };
 auto record_bullet( const bullet_step &step ) -> void;
-auto record_trajectories( const draw_bullet_trajectories_options &options ) -> void;
 /// A shot drawn as one line of sprites (the BULLETS_AS_LASERS default), for a single animation frame.
 auto record_line( const draw_sprite_line_options &options ) -> void;
 /// A timed explosion (ExplosionProcess): `begin_blast` returns the ID the frames and the end carry.
@@ -166,17 +168,18 @@ struct throw_options {
 };
 /// The item leaves the thrower's hand. The projectile ID it mints is the one the flight and the landing carry.
 auto record_throw( const throw_options &options ) -> void;
-/// One projectile attack. Its throw, flight, hits and landing share one ID; a nested attack gives the outer
-/// one back when it ends.
+/// One projectile attack. Its throw, flight, hits and landing share one ID, and the group of the multishot it is a
+/// pellet of; a nested attack gives the outer ones back when it ends.
 class flight_scope
 {
     public:
-        flight_scope();
+        explicit flight_scope( std::optional<std::uint64_t> group = std::nullopt );
         ~flight_scope();
         flight_scope( const flight_scope & ) = delete;
         auto operator=( const flight_scope & ) -> flight_scope & = delete; // *NOPAD*
     private:
         std::string outer_id_;
+        std::string outer_group_;
         std::optional<std::size_t> outer_start_;
 };
 /// How many facts are pending now: where the facts an event causes begin.

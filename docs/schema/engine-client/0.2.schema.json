@@ -84,6 +84,10 @@
       "minLength": 1,
       "maxLength": 256
     },
+    "projectile_group": {
+      "$ref": "#/$defs/opaque_id",
+      "description": "The multishot the projectile is a pellet of. Its pellets fly one after another and the native game draws them together; every pellet's events carry the same group. Absent for a single projectile."
+    },
     "text": {
       "oneOf": [
         {
@@ -3637,6 +3641,9 @@
         },
         "look": {
           "$ref": "#/$defs/look"
+        },
+        "group": {
+          "$ref": "#/$defs/projectile_group"
         }
       },
       "required": [
@@ -3656,6 +3663,9 @@
         },
         "entity": {
           "$ref": "#/$defs/opaque_id"
+        },
+        "group": {
+          "$ref": "#/$defs/projectile_group"
         }
       },
       "required": [
@@ -3675,6 +3685,9 @@
         },
         "look": {
           "$ref": "#/$defs/look"
+        },
+        "group": {
+          "$ref": "#/$defs/projectile_group"
         }
       },
       "required": [

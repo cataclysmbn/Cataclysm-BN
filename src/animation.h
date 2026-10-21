@@ -1,7 +1,9 @@
 #pragma once
 
+#include <cstdint>
 #include <list>
 #include <map>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -67,6 +69,8 @@ struct draw_sprite_line_options {
     /// Sprite for 0 degree angle (↑)
     std::string sprite;
     bool rotate = false;
+    /// The multishot the shot is a pellet of: the pellets are drawn together once they all flew.
+    std::optional<std::uint64_t> group = std::nullopt;
 };
 
 /// Several projectile trajectories in a single animation sequence.

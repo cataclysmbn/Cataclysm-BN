@@ -479,6 +479,7 @@ auto relative_ids(std::vector<engine_client::presentation_value> facts)
     };
     for (auto& fact : facts) {
         renumber(fact.id);
+        renumber(fact.group);
         renumber(fact.entity);
     }
     return facts;
@@ -560,6 +561,30 @@ TEST_CASE(
             CHECK(flew_to_hit(facts, hit));
         }
     }
+}
+
+TEST_CASE(
+    "the pellets of a multishot share one group and a single shot has none",
+    "[native_presentation]") {
+    const auto is_projectile = [](const auto& fact) {
+        return fact.type.starts_with("projectile.");
+    };
+    const auto pellets =
+        shot_under(true, shotgun_at_wall).facts | std::views::filter(is_projectile)
+        | std::ranges::to<std::vector>();
+    REQUIRE_FALSE(pellets.empty());
+    CHECK_FALSE(pellets.front().group.empty());
+    CHECK(std::ranges::all_of(pellets, [&](const auto& fact) {
+        return fact.group == pellets.front().group;
+    }));
+    CHECK(std::ranges::count_if(pellets, is_projectile_hit) >= 2);
+    const auto ids =
+        pellets | std::views::transform(&engine_client::presentation_value::id)
+        | std::ranges::to<std::set>();
+    CHECK(ids.size() == 8);
+    const auto single = shot_under(true, single_shot).facts;
+    REQUIRE(std::ranges::any_of(single, is_projectile));
+    CHECK(std::ranges::all_of(single, [](const auto& fact) { return fact.group.empty(); }));
 }
 
 namespace {

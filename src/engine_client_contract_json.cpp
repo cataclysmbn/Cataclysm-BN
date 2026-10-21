@@ -891,6 +891,7 @@ auto to_json( const event_value &value ) -> json
                 data = {{"playlist", fact.sound->playlist}, {"volume", fact.sound->volume}};
             }
         }
+        if( !fact.group.empty() ) { data["group"] = fact.group; }
         result["data"] = std::move( data );
         if( fact.duration_ms != 0 ) { result["display"] = {{"duration_ms", fact.duration_ms}}; }
     }
