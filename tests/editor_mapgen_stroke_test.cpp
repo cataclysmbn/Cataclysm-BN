@@ -94,3 +94,39 @@ TEST_CASE("a stroke refuses what is not one symbol", "[editor_mapgen]") {
     CHECK_FALSE(editor::stroke(doc, {.symbol = ""}));
     CHECK(doc.text() == room);
 }
+
+TEST_CASE("a room is its outline around its inside in one step", "[editor_mapgen]") {
+    auto doc = editor::document::parse("room.json", room).value();
+    REQUIRE(editor::stroke(
+        doc,
+        {.drawn = {.kind = editor::shape_kind::room, .from = {1, 0}, .to = {4, 3}},
+         .symbol = "#",
+         .fill_symbol = "_"}));
+    CHECK(rows_of(doc) == std::vector<std::string>{".####.", ".#__#.", "##__##", ".####."});
+    CHECK(doc.undo());
+    CHECK_FALSE(doc.undo());
+}
+
+TEST_CASE("a brush widens each square and mirrors copy the shape", "[editor_mapgen]") {
+    auto doc = editor::document::parse("room.json", room).value();
+    REQUIRE(editor::stroke(
+        doc,
+        {.drawn = {.kind = editor::shape_kind::point, .from = {0, 0}, .size = 2, .mirror_x = true},
+         .symbol = "x"}));
+    CHECK(rows_of(doc) == std::vector<std::string>{"xx..xx", "xx..xx", "######", "......"});
+    auto mirrored = editor::document::parse("room.json", room).value();
+    REQUIRE(editor::stroke(
+        mirrored,
+        {.drawn =
+             {.kind = editor::shape_kind::point, .from = {1, 0}, .mirror_x = true, .mirror_y = true},
+         .symbol = "x"}));
+    CHECK(rows_of(mirrored) == std::vector<std::string>{".x..x.", "......", "######", ".x..x."});
+}
+
+TEST_CASE("the eyedropper reads the symbol under it", "[editor_mapgen]") {
+    const auto doc = editor::document::parse("room.json", room).value();
+    const auto grid = editor::symbols_of(doc, 0);
+    CHECK(editor::symbol_at(grid, {3, 2}) == "#");
+    CHECK(editor::symbol_at(grid, {3, 1}) == ".");
+    CHECK(editor::symbol_at(grid, {6, 0}).empty());
+}
