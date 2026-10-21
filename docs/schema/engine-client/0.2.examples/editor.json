@@ -565,6 +565,20 @@
             "expect": "boundary"
           },
           {
+            "id": "editor:preview",
+            "label": "Preview",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "count": {
+                "min": 1,
+                "max": 4294967295,
+                "default": 1
+              }
+            },
+            "expect": "screen"
+          },
+          {
             "id": "QUIT",
             "label": "Exit screen",
             "keys": [
@@ -711,8 +725,8 @@
         "stage_text": "Done.",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "27",
-          "revision": "21"
+          "sequence": "28",
+          "revision": "22"
         }
       }
     }

@@ -1,5 +1,6 @@
 #if defined(CATA_MCP)
 
+#    include "cata_utility.h"
 #    include "catch/catch.hpp"
 #    include "client_command.h"
 #    include "client_input.h"
@@ -14,6 +15,7 @@
 #    include "game_constants.h"
 #    include "input.h"
 #    include "json_formatter.h"
+#    include "map/map.h"
 #    include "output.h"
 #    include "path_info.h"
 #    include "point.h"
@@ -75,7 +77,7 @@ struct mod_file {
         const auto entry = nlohmann::ordered_json::array(
             {{{"type", "mapgen"},
               {"method", "json"},
-              {"om_terrain", "field"},
+              {"om_terrain", "house_04"},
               {"object", {{"rows", rows}, {"terrain", {{".", "t_floor"}, {"#", "t_wall"}}}}}}});
         text = format_json(entry.dump()).value();
         std::filesystem::create_directories(path.parent_path());
@@ -214,7 +216,7 @@ TEST_CASE(
                       == file.path.generic_string());
                 const auto& objects = body<ec::list_body>(part(screen, "editor:objects")).rows;
                 REQUIRE(objects.size() == 1);
-                CHECK(objects[0].label == "field");
+                CHECK(objects[0].label == "house_04");
                 CHECK(objects[0].selected);
                 const auto& canvas = body<ec::grid_body>(part(screen, "editor:canvas"));
                 CHECK(canvas.cols == 24);
@@ -321,6 +323,61 @@ TEST_CASE(
     editor::run_editor_session();
     CHECK(step == 6);
     CHECK(read_file(file.path) == file.text);
+}
+
+TEST_CASE(
+    "the editor previews the entry with a seed and keeps the preview in step with each drawing",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    const auto restore_mapgen = restore_on_out_of_scope<bool>(disable_mapgen);
+    disable_mapgen = false;
+    auto step = 0;
+    const auto preview = [](const ec::screen_view& screen) -> const ec::grid_body& {
+        return body<ec::grid_body>(part(screen, "editor:preview"));
+    };
+    const auto square = [&](const ec::screen_view& screen, const int x, const int y) {
+        const auto& cells = preview(screen).cells;
+        const auto found = std::ranges::find(cells, ec::grid_point{x, y}, &ec::grid_cell::at);
+        REQUIRE(found != cells.end());
+        return *found;
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:preview"));
+                CHECK(affordance(screen, "editor:preview").args.count->initial == 1);
+                CHECK(refused(state, "editor:preview", {.count = 0}));
+                return invoke("editor:preview", {.count = 7});
+            case 2:
+                // The game's own generation: the floor the rows name, with its name.
+                CHECK(preview(screen).cols == 24);
+                CHECK(preview(screen).rows == 24);
+                CHECK(square(screen, 3, 4).label == "wooden floor");
+                CHECK(body<ec::panel_body>(part(screen, "editor:document")).stats.back().value
+                      == "7");
+                CHECK(affordance(screen, "editor:preview").args.count->initial == 7);
+                return invoke("editor:paint", {.row = "square:3,4"});
+            case 3:
+                CHECK(square(screen, 3, 4).label != "wooden floor");
+                CHECK(square(screen, 3, 5).label == "wooden floor");
+                return invoke("editor:undo");
+            case 4:
+                CHECK(square(screen, 3, 4).label == "wooden floor");
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 5);
 }
 
 #endif // CATA_MCP

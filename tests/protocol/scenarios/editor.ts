@@ -111,6 +111,11 @@ export const editor: Scenario = {
       assertEquals(glyphs(engine.top()), ["....", "....", "....", "...."])
       assertEquals((await engine.invoke("editor:redo")).stages.at(-1), "completed")
       assertEquals(glyphs(engine.top()), walled)
+      // A nested chunk is generated only inside another mapgen, so it has no preview of its own.
+      const preview = await engine.invoke("editor:preview", { count: 3 })
+      assertEquals(preview.stages.at(-1), "completed")
+      assert(part(engine.top(), "editor:notice"), "the preview says why it shows nothing")
+      assertEquals(part(engine.top(), "editor:preview"), undefined)
       const saved = await engine.invoke("editor:save")
       assertEquals(saved.stages.at(-1), "completed")
       rec.command("map editor saved", saved)

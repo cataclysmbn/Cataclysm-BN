@@ -1,12 +1,16 @@
 #include "editor/editor_session.h"
 
+#include "avatar.h"
+#include "color.h"
 #include "editor/document.h"
 #include "editor/json_pointer.h"
 #include "editor/mapgen_check.h"
 #include "editor/mapgen_legend.h"
+#include "editor/mapgen_preview.h"
 #include "editor/mapgen_stroke.h"
 #include "engine_client_component.h"
 #include "input.h"
+#include "map/mapdata.h"
 #include "output.h"
 #include "path_info.h"
 #include "string_formatter.h"
@@ -16,6 +20,7 @@
 #include <algorithm>
 #include <array>
 #include <filesystem>
+#include <limits>
 #include <optional>
 #include <ranges>
 #include <string>
@@ -42,6 +47,7 @@ constexpr auto paint_id = "editor:paint";
 constexpr auto undo_id = "editor:undo";
 constexpr auto redo_id = "editor:redo";
 constexpr auto save_id = "editor:save";
+constexpr auto preview_id = "editor:preview";
 
 struct tool {
     std::string id;
@@ -128,6 +134,9 @@ struct session {
     std::optional<point> anchor = std::nullopt;
     std::vector<legend_symbol> legend;
     std::vector<diagnostic> diagnostics;
+    /// The seed of the preview while one is shown; it follows every edit.
+    std::optional<unsigned int> seed = std::nullopt;
+    std::optional<mapgen_preview> preview = std::nullopt;
 
     auto mapgens() const -> std::vector<std::size_t> {
         if (!doc) { return {}; }
@@ -152,6 +161,15 @@ struct session {
                     .pointer = message.offset ? pointer_at(text, *message.offset) : ""};
             })
             | std::ranges::to<std::vector>();
+        preview.reset();
+        if (seed) {
+            auto shown = preview_mapgen(text, {.at = get_avatar().abs_omt_pos(), .seed = *seed});
+            if (shown) {
+                preview = std::move(*shown);
+            } else {
+                notice = shown.error();
+            }
+        }
         if (std::ranges::none_of(legend, [&](const auto& entry) {
                 return entry.symbol == symbol;
             })) {
@@ -198,6 +216,31 @@ struct session {
         reload();
     }
 };
+
+/// What the game generates from the entry, a square per cell: its furniture, else its terrain.
+auto preview_grid(const mapgen_preview& shown) -> ec::component {
+    auto cells = std::vector<ec::grid_cell>{};
+    for (auto y = 0; y < shown.size.y(); ++y) {
+        for (auto x = 0; x < shown.size.x(); ++x) {
+            const auto& square = shown.squares[y * shown.size.x() + x];
+            const auto& ter = ter_str_id(square.ter).obj();
+            const auto furn = furn_str_id(square.furn);
+            const auto& top =
+                furn.is_null()
+                    ? static_cast<const map_data_common_t&>(ter)
+                    : static_cast<const map_data_common_t&>(furn.obj());
+            cells.push_back(
+                {.at = {x, y},
+                 .id = string_format("preview:%d,%d", x, y),
+                 .glyph = string_from_int(top.symbol()),
+                 .label = furn.is_null() ? ter.name() : ter.name() + ", " + furn.obj().name(),
+                 .color = string_from_color(top.color())});
+        }
+    }
+    return {.id = "editor:preview",
+            .body = ec::grid_body{
+                .cols = shown.size.x(), .rows = shown.size.y(), .cells = std::move(cells)}};
+}
 
 auto canvas(const session& state) -> ec::component {
     const auto grid = symbols_of(*state.doc, state.object);
@@ -283,6 +326,10 @@ auto session_view(const session& state) -> ec::screen_view {
         if (!state.symbol.empty()) {
             stats.push_back({.key = "symbol", .label = _("Symbol"), .value = state.symbol});
         }
+        if (state.seed) {
+            stats.push_back(
+                {.key = "seed", .label = _("Seed"), .value = std::to_string(*state.seed)});
+        }
         parts.push_back(ec::panel(
             {.id = "editor:document",
              .title = doc.path().generic_string(),
@@ -343,6 +390,15 @@ auto session_view(const session& state) -> ec::screen_view {
                 {.id = symbol_id, .label = _("Symbol"), .args = row_of(legend_id)}));
             affordances.push_back(ec::invoke_affordance(
                 {.id = paint_id, .label = _("Draw"), .args = row_of(canvas_id)}));
+            affordances.push_back(ec::invoke_affordance(
+                {.id = preview_id,
+                 .label = _("Preview"),
+                 .args = {
+                     .count = ec::count_shape{
+                         .min = 1,
+                         .max = std::numeric_limits<unsigned int>::max(),
+                         .initial = state.seed.value_or(1)}}}));
+            if (state.preview) { parts.push_back(preview_grid(*state.preview)); }
         }
     }
     if (!state.notice.empty()) {
@@ -416,6 +472,9 @@ auto run_editor_session() -> void {
         } else if (id == undo_id || id == redo_id) {
             const auto moved = id == undo_id ? state.doc->undo() : state.doc->redo();
             if (moved) { state.reload(); }
+        } else if (id == preview_id) {
+            state.seed = static_cast<unsigned int>(invoked->args.count.value_or(1));
+            state.reload();
         } else if (id == save_id) {
             const auto saved = state.doc->save();
             if (!saved) {
