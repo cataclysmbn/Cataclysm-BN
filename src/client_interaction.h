@@ -153,6 +153,18 @@ struct interaction_target_candidate {
     bool creature = false;
 };
 
+/// Squares a target screen highlights besides the cursor: `squares` lists them, or `rect` gives its inclusive corners.
+struct interaction_target_mark {
+    /// `selection`, `omt_border` or `stamp`.
+    std::string role;
+    std::vector<interaction_position> squares;
+    struct corners {
+        interaction_position min;
+        interaction_position max;
+    };
+    std::optional<corners> rect;
+};
+
 struct interaction_target {
     std::string coordinate_space = "bubble_ms";
     interaction_position source;
@@ -170,6 +182,8 @@ struct interaction_target {
     std::optional<int> distance;
     /// What the native look window prints of the cursor square; empty where the screen prints nothing.
     std::vector<engine_client::tile_part> parts;
+    /// What the native screen highlights besides the cursor; presentation only.
+    std::vector<interaction_target_mark> marks;
 };
 
 struct interaction_overmap_note {

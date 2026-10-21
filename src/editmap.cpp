@@ -389,14 +389,47 @@ auto editmap_parts( const tripoint_bub_ms &at ) -> std::vector<engine_client::ti
     return engine_client::to_parts( facts );
 }
 
-/// The map editor as a client sees it: the cursor with the native bounds, the tile under it; its actions are the
-/// input context's.
+/// A bubble square as the interaction model holds it.
+auto position_of( const tripoint_bub_ms &position ) -> game_client::interaction_position
+{
+    return { .x = position.x(), .y = position.y(), .z = position.z() };
+}
+
+/// The rectangle that holds `squares`, which lie on one z-level.
+auto corners_of( const auto &squares ) -> game_client::interaction_target_mark::corners
+{
+    namespace ranges = std::ranges;
+    using namespace std::views;
+    const auto xs = ranges::minmax( squares | transform( []( const tripoint_bub_ms & p ) { return p.x(); } ) );
+    const auto ys = ranges::minmax( squares | transform( []( const tripoint_bub_ms & p ) { return p.y(); } ) );
+    const auto z = ( *ranges::begin( squares ) ).z();
+    return { .min = { .x = xs.min, .y = ys.min, .z = z }, .max = { .x = xs.max, .y = ys.max, .z = z } };
+}
+
+/// What the native overlay highlights besides the cursor: the target list, whose mapgen border is the edge of a
+/// rectangle while a selection takes any shape, and the corners it marks around a mapgen preview.
+auto editmap_marks( const editmap &em ) -> std::vector<game_client::interaction_target_mark>
+{
+    namespace ranges = std::ranges;
+    using namespace std::views;
+    auto marks = std::vector<game_client::interaction_target_mark> {};
+    if( !em.target_list.empty() ) {
+        marks.push_back( em.target_list_role == "selection"
+                         ? game_client::interaction_target_mark{ .role = em.target_list_role, .squares = em.target_list | transform( position_of ) | ranges::to<std::vector>() }
+                         : game_client::interaction_target_mark{ .role = em.target_list_role, .rect = corners_of( em.target_list ) } );
+    }
+    if( const auto stamp = em.hilights.find( "mapgentgt" );
+        stamp != em.hilights.end() && !stamp->second.points.empty() ) {
+        marks.push_back( { .role = "stamp", .rect = corners_of( stamp->second.points | keys ) } );
+    }
+    return marks;
+}
+
+/// The map editor as a client sees it: the cursor with the native bounds, the tile under it and what the overlay
+/// highlights; its actions are the input context's.
 auto editmap_view( const editmap &em, const input_context &ctxt,
                    const editmap_screen &screen ) -> engine_client::screen_view
 {
-    const auto position_of = []( const tripoint_bub_ms & position ) {
-        return game_client::interaction_position{ .x = position.x(), .y = position.y(), .z = position.z() };
-    };
     return target_screen::screen_of( {
         .title = screen.title,
         .target = {
@@ -408,6 +441,7 @@ auto editmap_view( const editmap &em, const input_context &ctxt,
             .distance_metric = "square",
             .status = screen.status,
             .parts = editmap_parts( em.target ),
+            .marks = editmap_marks( em ),
         },
         .stats = { {
                 .key = "show_all", .label = remove_color_tags( ctxt.get_action_name( "EDITMAP_SHOW_ALL" ) ),
@@ -2089,6 +2123,8 @@ void editmap::mapgen_retarget()
     } );
     restore_on_out_of_scope<std::string> info_txt_prev( info_txt_curr );
     restore_on_out_of_scope<std::string> info_title_prev( info_title_curr );
+    restore_on_out_of_scope<std::string> target_list_role_prev( target_list_role );
+    target_list_role = "omt_border";
 
     blink = true;
     // One screen for the whole session, so a key queued against it is not refused as stale.
@@ -2175,6 +2211,8 @@ void editmap::edit_mapgen()
     } );
     restore_on_out_of_scope<std::string> info_txt_prev( info_txt_curr );
     restore_on_out_of_scope<std::string> info_title_prev( info_title_curr );
+    restore_on_out_of_scope<std::string> target_list_role_prev( target_list_role );
+    target_list_role = "omt_border";
     map &here = get_map();
 
     do {

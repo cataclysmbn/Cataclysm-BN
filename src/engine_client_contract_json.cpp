@@ -347,6 +347,19 @@ auto target_json( const game_client::interaction_target &target, const bubble_fr
         value["parts"] = json::array();
         for( const auto &part : target.parts ) { value["parts"].push_back( to_json( part ) ); }
     }
+    if( !target.marks.empty() ) {
+        value["marks"] = json::array();
+        for( const auto &mark : target.marks ) {
+            auto entry = json{{"role", mark.role}};
+            if( mark.rect ) {
+                entry["rect"] = {{"min", to_json( mark.rect->min, frame )}, {"max", to_json( mark.rect->max, frame )}};
+            } else {
+                entry["squares"] = json::array();
+                for( const auto &square : mark.squares ) { entry["squares"].push_back( to_json( square, frame ) ); }
+            }
+            value["marks"].push_back( std::move( entry ) );
+        }
+    }
     if( frame.omt ) { value["unit"] = "omt"; }
     return value;
 }

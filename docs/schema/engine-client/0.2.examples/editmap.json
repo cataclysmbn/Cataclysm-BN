@@ -1,0 +1,822 @@
+{
+  "valid": [
+    {
+      "name": "map editor with its selection",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:10",
+        "role": "dialog",
+        "kind": "editmap",
+        "title": "Map editor",
+        "root": {
+          "id": "target",
+          "kind": "panel",
+          "title": "Map editor",
+          "stats": [
+            {
+              "key": "show_all",
+              "label": "Show all",
+              "value": "Off"
+            }
+          ],
+          "child": {
+            "id": "target:map",
+            "kind": "map",
+            "affordances": [
+              "target:move"
+            ],
+            "mode": "world",
+            "target": {
+              "source": {
+                "dim": "",
+                "x": 1202,
+                "y": 1204,
+                "z": 0
+              },
+              "current": {
+                "dim": "",
+                "x": 1202,
+                "y": 1204,
+                "z": 0
+              },
+              "minimum": {
+                "dim": "",
+                "x": 1116,
+                "y": 1116,
+                "z": -10
+              },
+              "maximum": {
+                "dim": "",
+                "x": 1295,
+                "y": 1295,
+                "z": 10
+              },
+              "range": 180,
+              "distance_metric": "square",
+              "distance": 0,
+              "status": "editmap",
+              "candidates": [],
+              "parts": [
+                {
+                  "kind": "terrain",
+                  "text": "wooden floor",
+                  "id": "t_floor",
+                  "values": {
+                    "move_cost": 2
+                  }
+                },
+                {
+                  "kind": "creature",
+                  "text": "you"
+                },
+                {
+                  "kind": "item",
+                  "text": "lighter",
+                  "values": {
+                    "count": 1
+                  }
+                }
+              ],
+              "marks": [
+                {
+                  "role": "selection",
+                  "squares": [
+                    {
+                      "dim": "",
+                      "x": 1202,
+                      "y": 1204,
+                      "z": 0
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "affordances": [
+          {
+            "id": "target:move",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "pos": {
+                "unit": "square",
+                "component_id": "target:map"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Pan left",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Pan right",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "LEFTUP",
+            "label": "Pan up-left",
+            "keys": [
+              "y",
+              "7",
+              "NUMPAD_7"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "LEFTDOWN",
+            "label": "Pan down-left",
+            "keys": [
+              "b",
+              "1",
+              "NUMPAD_1"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHTUP",
+            "label": "Pan up-right",
+            "keys": [
+              "u",
+              "9",
+              "NUMPAD_9"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHTDOWN",
+            "label": "Pan down-right",
+            "keys": [
+              "n",
+              "3",
+              "NUMPAD_3"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT_WIDE",
+            "label": "Wide move left",
+            "keys": [
+              "H"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT_WIDE",
+            "label": "Wide move right",
+            "keys": [
+              "L"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "UP_WIDE",
+            "label": "Wide move up",
+            "keys": [
+              "K"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN_WIDE",
+            "label": "Wide move down",
+            "keys": [
+              "J"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "LEVEL_UP",
+            "label": "Go Up",
+            "keys": [
+              "PPAGE",
+              "<"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEVEL_DOWN",
+            "label": "Go Down",
+            "keys": [
+              "NPAGE",
+              ">"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "EDIT_TRAPS",
+            "label": "Edit traps",
+            "keys": [
+              "t"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "EDIT_FIELDS",
+            "label": "Edit fields",
+            "keys": [
+              "f"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "EDIT_TERRAIN",
+            "label": "Edit terrain",
+            "keys": [
+              "e"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "EDIT_FURNITURE",
+            "label": "Edit furniture",
+            "keys": [
+              "r"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "EDIT_OVERMAP",
+            "label": "Edit overmap / mapgen",
+            "keys": [
+              "o"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "EDIT_ITEMS",
+            "label": "Edit items",
+            "keys": [
+              "i"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "EDIT_MONSTER",
+            "label": "Edit creatures",
+            "keys": [
+              "m"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "EDITMAP_SHOW_ALL",
+            "label": "Show all",
+            "keys": [
+              "v"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "role": "help",
+            "expect": "screen"
+          }
+        ],
+        "context": "EDITMAP"
+      }
+    },
+    {
+      "name": "mapgen retarget with the border of its overmap terrain square",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:12",
+        "role": "dialog",
+        "kind": "editmap_mapgen",
+        "title": "Mapgen: Moving target",
+        "root": {
+          "id": "target",
+          "kind": "panel",
+          "title": "Mapgen: Moving target",
+          "stats": [
+            {
+              "key": "show_all",
+              "label": "Show all",
+              "value": "Off"
+            }
+          ],
+          "child": {
+            "id": "target:map",
+            "kind": "map",
+            "affordances": [
+              "target:move"
+            ],
+            "mode": "world",
+            "target": {
+              "source": {
+                "dim": "",
+                "x": 1202,
+                "y": 1204,
+                "z": 0
+              },
+              "current": {
+                "dim": "",
+                "x": 1211,
+                "y": 1211,
+                "z": 0
+              },
+              "minimum": {
+                "dim": "",
+                "x": 1116,
+                "y": 1116,
+                "z": -10
+              },
+              "maximum": {
+                "dim": "",
+                "x": 1295,
+                "y": 1295,
+                "z": 10
+              },
+              "range": 180,
+              "distance_metric": "square",
+              "distance": 9,
+              "status": "editmap_retarget",
+              "candidates": [],
+              "parts": [
+                {
+                  "kind": "terrain",
+                  "text": "wooden floor",
+                  "id": "t_floor",
+                  "values": {
+                    "move_cost": 2
+                  }
+                }
+              ],
+              "marks": [
+                {
+                  "role": "omt_border",
+                  "rect": {
+                    "min": {
+                      "dim": "",
+                      "x": 1200,
+                      "y": 1200,
+                      "z": 0
+                    },
+                    "max": {
+                      "dim": "",
+                      "x": 1223,
+                      "y": 1223,
+                      "z": 0
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "affordances": [
+          {
+            "id": "target:move",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "pos": {
+                "unit": "square",
+                "component_id": "target:map"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Pan left",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Pan right",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "LEFTUP",
+            "label": "Pan up-left",
+            "keys": [
+              "y",
+              "7",
+              "NUMPAD_7"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "LEFTDOWN",
+            "label": "Pan down-left",
+            "keys": [
+              "b",
+              "1",
+              "NUMPAD_1"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHTUP",
+            "label": "Pan up-right",
+            "keys": [
+              "u",
+              "9",
+              "NUMPAD_9"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHTDOWN",
+            "label": "Pan down-right",
+            "keys": [
+              "n",
+              "3",
+              "NUMPAD_3"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "role": "help",
+            "expect": "screen"
+          }
+        ],
+        "context": "EDITMAP_RETARGET"
+      }
+    },
+    {
+      "name": "map editor under a mapgen preview with the stamp",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:10",
+        "role": "dialog",
+        "kind": "editmap",
+        "title": "Map editor",
+        "root": {
+          "id": "target",
+          "kind": "panel",
+          "title": "Map editor",
+          "stats": [
+            {
+              "key": "show_all",
+              "label": "Show all",
+              "value": "Off"
+            }
+          ],
+          "child": {
+            "id": "target:map",
+            "kind": "map",
+            "mode": "world",
+            "target": {
+              "source": {
+                "dim": "",
+                "x": 1202,
+                "y": 1204,
+                "z": 0
+              },
+              "current": {
+                "dim": "",
+                "x": 1211,
+                "y": 1211,
+                "z": 0
+              },
+              "minimum": {
+                "dim": "",
+                "x": 1116,
+                "y": 1116,
+                "z": -10
+              },
+              "maximum": {
+                "dim": "",
+                "x": 1295,
+                "y": 1295,
+                "z": 10
+              },
+              "range": 180,
+              "distance_metric": "square",
+              "distance": 9,
+              "status": "editmap",
+              "candidates": [],
+              "parts": [
+                {
+                  "kind": "terrain",
+                  "text": "wooden floor",
+                  "id": "t_floor",
+                  "values": {
+                    "move_cost": 2
+                  }
+                }
+              ],
+              "marks": [
+                {
+                  "role": "omt_border",
+                  "rect": {
+                    "min": {
+                      "dim": "",
+                      "x": 1200,
+                      "y": 1200,
+                      "z": 0
+                    },
+                    "max": {
+                      "dim": "",
+                      "x": 1223,
+                      "y": 1223,
+                      "z": 0
+                    }
+                  }
+                },
+                {
+                  "role": "stamp",
+                  "rect": {
+                    "min": {
+                      "dim": "",
+                      "x": 1199,
+                      "y": 1199,
+                      "z": 0
+                    },
+                    "max": {
+                      "dim": "",
+                      "x": 1224,
+                      "y": 1224,
+                      "z": 0
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "affordances": [],
+        "context": "EDITMAP"
+      }
+    },
+    {
+      "name": "map editor left, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "screen_id": "screen:10"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "QUIT"
+        }
+      }
+    },
+    {
+      "name": "map editor left, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "received",
+        "stage_text": "Received."
+      }
+    },
+    {
+      "name": "map editor left, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "validated",
+        "stage_text": "Accepted."
+      }
+    },
+    {
+      "name": "map editor left, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "executing",
+        "stage_text": "Under way."
+      }
+    },
+    {
+      "name": "map editor left, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "completed",
+        "stage_text": "Done.",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "29",
+          "revision": "24"
+        }
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "mark with both squares and a rect",
+      "def": "mark",
+      "value": {
+        "role": "selection",
+        "squares": [
+          {
+            "dim": "",
+            "x": 1200,
+            "y": 1200,
+            "z": 0
+          }
+        ],
+        "rect": {
+          "min": {
+            "dim": "",
+            "x": 1200,
+            "y": 1200,
+            "z": 0
+          },
+          "max": {
+            "dim": "",
+            "x": 1223,
+            "y": 1223,
+            "z": 0
+          }
+        }
+      },
+      "why": "a mark is its squares or its rectangle, not both"
+    },
+    {
+      "name": "mark of an unknown role",
+      "def": "mark",
+      "value": {
+        "role": "cursor",
+        "squares": [
+          {
+            "dim": "",
+            "x": 1200,
+            "y": 1200,
+            "z": 0
+          }
+        ]
+      },
+      "why": "the cursor is `current`; marks are the other highlights"
+    }
+  ]
+}

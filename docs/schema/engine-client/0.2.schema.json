@@ -1910,6 +1910,13 @@
             "$ref": "#/$defs/tile_part"
           },
           "description": "What the native look window prints of the cursor square, fact by fact. Present on the look-around screen; on a shot, the creature under the cursor."
+        },
+        "marks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/mark"
+          },
+          "description": "Squares the native screen highlights besides the cursor, such as the map editor's selection. Absent when there are none."
         }
       },
       "required": [
@@ -1920,6 +1927,45 @@
         "distance",
         "status",
         "candidates"
+      ],
+      "additionalProperties": false
+    },
+    "mark": {
+      "type": "object",
+      "description": "Squares a screen highlights on the map, as `squares` (every square) or `rect` (inclusive corners). Presentation only: a mark changes no map memory.",
+      "properties": {
+        "role": {
+          "enum": [
+            "selection",
+            "omt_border",
+            "stamp"
+          ],
+          "description": "`selection`: the squares an edit applies to. `omt_border`: the edge of the overmap terrain square that mapgen targets. `stamp`: the corners around the square a mapgen preview is generated into."
+        },
+        "squares": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/pos"
+          }
+        },
+        "rect": {
+          "$ref": "#/$defs/bounds"
+        }
+      },
+      "required": [
+        "role"
+      ],
+      "oneOf": [
+        {
+          "required": [
+            "squares"
+          ]
+        },
+        {
+          "required": [
+            "rect"
+          ]
+        }
       ],
       "additionalProperties": false
     },
