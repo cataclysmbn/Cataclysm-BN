@@ -51,6 +51,35 @@
                 }
               ],
               "submit": "editor:open"
+            },
+            {
+              "id": "editor:new",
+              "kind": "form",
+              "affordances": [
+                "editor:new_set",
+                "editor:new_apply"
+              ],
+              "fields": [
+                {
+                  "id": "path",
+                  "label": "New file",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "id": "om_terrain",
+                  "label": "Overmap terrain",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "id": "fill",
+                  "label": "Terrain",
+                  "value": "t_floor",
+                  "type": "text"
+                }
+              ],
+              "submit": "editor:new_apply"
             }
           ]
         },
@@ -66,6 +95,26 @@
               }
             },
             "expect": "boundary"
+          },
+          {
+            "id": "editor:new_set",
+            "label": "New file",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:new"
+              },
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:new_apply",
+            "label": "Create",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
           },
           {
             "id": "QUIT",
@@ -186,6 +235,35 @@
                 }
               ],
               "submit": "editor:open"
+            },
+            {
+              "id": "editor:new",
+              "kind": "form",
+              "affordances": [
+                "editor:new_set",
+                "editor:new_apply"
+              ],
+              "fields": [
+                {
+                  "id": "path",
+                  "label": "New file",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "id": "om_terrain",
+                  "label": "Overmap terrain",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "id": "fill",
+                  "label": "Terrain",
+                  "value": "t_floor",
+                  "type": "text"
+                }
+              ],
+              "submit": "editor:new_apply"
             },
             {
               "id": "editor:document",
@@ -1862,6 +1940,26 @@
             "expect": "boundary"
           },
           {
+            "id": "editor:new_set",
+            "label": "New file",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:new"
+              },
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:new_apply",
+            "label": "Create",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
             "id": "editor:object",
             "label": "Edit",
             "keys": [],
@@ -2240,6 +2338,35 @@
                 }
               ],
               "submit": "editor:open"
+            },
+            {
+              "id": "editor:new",
+              "kind": "form",
+              "affordances": [
+                "editor:new_set",
+                "editor:new_apply"
+              ],
+              "fields": [
+                {
+                  "id": "path",
+                  "label": "New file",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "id": "om_terrain",
+                  "label": "Overmap terrain",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "id": "fill",
+                  "label": "Terrain",
+                  "value": "t_floor",
+                  "type": "text"
+                }
+              ],
+              "submit": "editor:new_apply"
             },
             {
               "id": "editor:document",
@@ -3932,6 +4059,26 @@
             "expect": "boundary"
           },
           {
+            "id": "editor:new_set",
+            "label": "New file",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:new"
+              },
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:new_apply",
+            "label": "Create",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
             "id": "editor:object",
             "label": "Edit",
             "keys": [],
@@ -4186,6 +4333,35 @@
                 }
               ],
               "submit": "editor:open"
+            },
+            {
+              "id": "editor:new",
+              "kind": "form",
+              "affordances": [
+                "editor:new_set",
+                "editor:new_apply"
+              ],
+              "fields": [
+                {
+                  "id": "path",
+                  "label": "New file",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "id": "om_terrain",
+                  "label": "Overmap terrain",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "id": "fill",
+                  "label": "Terrain",
+                  "value": "t_floor",
+                  "type": "text"
+                }
+              ],
+              "submit": "editor:new_apply"
             },
             {
               "id": "editor:document",
@@ -5887,6 +6063,26 @@
               }
             },
             "expect": "boundary"
+          },
+          {
+            "id": "editor:new_set",
+            "label": "New file",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:new"
+              },
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:new_apply",
+            "label": "Create",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
           },
           {
             "id": "editor:object",

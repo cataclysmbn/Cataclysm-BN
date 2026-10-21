@@ -778,4 +778,72 @@ TEST_CASE(
     CHECK(read_file(file.path) == file.text);
 }
 
+TEST_CASE(
+    "the editor creates a mapgen file in the user mods and opens it",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    // Removes the folder the new file goes in.
+    const auto folder = mod_file{};
+    const auto made = folder.path.parent_path() / "new.json";
+    const auto notice = [](const ec::screen_view& screen) {
+        return body<ec::text_body>(part(screen, "editor:notice")).markup;
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                CHECK(affordance(screen, "editor:new_apply").enabled);
+                return invoke("editor:new_set", {.row = "path", .text = "/tmp/new.json"});
+            case 1:
+                return invoke("editor:new_set", {.row = "om_terrain", .text = "house_04"});
+            case 2:
+                return invoke("editor:new_apply");
+            case 3:
+                // Only the user mods take a new file.
+                CHECK(notice(screen).starts_with("A new file goes in your mods"));
+                return invoke("editor:new_set", {.row = "path", .text = made.string()});
+            case 4:
+                return invoke("editor:new_set", {.row = "fill", .text = "t_no_such_terrain"});
+            case 5:
+                return invoke("editor:new_apply");
+            case 6:
+                CHECK(notice(screen) == "t_no_such_terrain is no terrain.");
+                CHECK_FALSE(std::filesystem::exists(made));
+                return invoke("editor:new_set", {.row = "fill", .text = "t_dirt"});
+            case 7:
+                return invoke("editor:new_apply");
+            case 8: {
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                CHECK(body<ec::form_body>(part(screen, "editor:file")).fields.front().value
+                      == made.generic_string());
+                const auto& objects = body<ec::list_body>(part(screen, "editor:objects")).rows;
+                REQUIRE(objects.size() == 1);
+                CHECK(objects[0].label == "house_04");
+                CHECK(body<ec::grid_body>(part(screen, "editor:canvas")).cells.size() == 576);
+                CHECK(cell(screen, 23, 23).glyph == ".");
+                const auto& legend = body<ec::list_body>(part(screen, "editor:legend")).rows;
+                REQUIRE(legend.size() == 1);
+                CHECK(legend[0].columns.front().value == "\"t_dirt\"");
+                CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
+                CHECK(saved(screen) == "Yes");
+                return invoke("editor:new_apply");
+            }
+            case 9:
+                CHECK(notice(screen) == made.string() + " already exists.");
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 10);
+    const auto written = nlohmann::ordered_json::parse(read_file(made));
+    CHECK(written[0]["om_terrain"] == "house_04");
+    CHECK(written[0]["object"]["terrain"]["."] == "t_dirt");
+}
+
 #endif // CATA_MCP

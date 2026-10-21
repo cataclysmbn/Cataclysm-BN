@@ -14,6 +14,7 @@
 #include "editor/mapgen_stroke.h"
 #include "engine_client_component.h"
 #include "input.h"
+#include "json_formatter.h"
 #include "map/mapdata.h"
 #include "output.h"
 #include "path_info.h"
@@ -26,6 +27,7 @@
 #include <array>
 #include <charconv>
 #include <filesystem>
+#include <fstream>
 #include <limits>
 #include <optional>
 #include <ranges>
@@ -47,6 +49,9 @@ constexpr auto objects_id = "editor:objects";
 constexpr auto diagnostics_id = "editor:diagnostics";
 
 constexpr auto open_id = "editor:open";
+constexpr auto new_id = "editor:new";
+constexpr auto new_set_id = "editor:new_set";
+constexpr auto new_apply_id = "editor:new_apply";
 constexpr auto object_id = "editor:object";
 constexpr auto tool_id = "editor:tool";
 constexpr auto symbol_id = "editor:symbol";
@@ -242,16 +247,54 @@ auto mapgen_name(const nlohmann::ordered_json& value) -> std::string {
 }
 
 /// Whether `path` lies inside the game's data or the player's mods, where the editor may write.
+auto inside(const std::filesystem::path& path, const std::string& root) -> bool {
+    auto error = std::error_code{};
+    const auto base = std::filesystem::weakly_canonical(root, error);
+    const auto relative = std::filesystem::weakly_canonical(path, error).lexically_relative(base);
+    return !error && !relative.empty() && *relative.begin() != "..";
+}
+
 auto editable_place(const std::filesystem::path& path) -> bool {
-    const auto inside = [&](const std::string& root) {
-        auto error = std::error_code{};
-        const auto base = std::filesystem::weakly_canonical(root, error);
-        const auto relative =
-            std::filesystem::weakly_canonical(path, error).lexically_relative(base);
-        return !error && !relative.empty() && *relative.begin() != "..";
-    };
     return path.extension() == ".json"
-        && (inside(PATH_INFO::datadir()) || inside(PATH_INFO::user_moddir()));
+        && (inside(path, PATH_INFO::datadir()) || inside(path, PATH_INFO::user_moddir()));
+}
+
+/// What the new mapgen form writes: a file of the user mods holding one mapgen of an overmap
+/// terrain, its squares all one terrain.
+struct new_mapgen {
+    std::string path;
+    std::string om_terrain;
+    std::string fill = "t_floor";
+};
+
+/// Writes `made`'s file; the error says why it was not written.
+auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string> {
+    const auto path = std::filesystem::path(made.path);
+    if (path.extension() != ".json" || !inside(path, PATH_INFO::user_moddir())) {
+        return std::unexpected(string_format(
+            _("A new file goes in your mods, %s, and ends in .json."), PATH_INFO::user_moddir()));
+    }
+    if (std::filesystem::exists(path)) {
+        return std::unexpected(string_format(_("%s already exists."), made.path));
+    }
+    if (made.om_terrain.empty()) {
+        return std::unexpected(_("A mapgen names its overmap terrain."));
+    }
+    if (!ter_str_id(made.fill).is_valid()) {
+        return std::unexpected(string_format(_("%s is no terrain."), made.fill));
+    }
+    const auto rows = std::vector<std::string>(24, std::string(24, '.'));
+    const auto entry = nlohmann::ordered_json::array(
+        {{{"type", "mapgen"},
+          {"method", "json"},
+          {"om_terrain", made.om_terrain},
+          {"object", {{"rows", rows}, {"terrain", {{".", made.fill}}}}}}});
+    auto error = std::error_code{};
+    std::filesystem::create_directories(path.parent_path(), error);
+    auto out = std::ofstream(path, std::ios::binary);
+    out << format_json(entry.dump()).value_or(entry.dump(2));
+    if (error || !out.flush()) { return std::unexpected(_("The file could not be written.")); }
+    return {};
 }
 
 auto range_text(const placement_range& range) -> std::string {
@@ -294,6 +337,7 @@ struct session {
     std::string mapping_symbol;
     std::string mapping_layer = "terrain";
     std::string mapping_value;
+    new_mapgen made;
     const catalog_use* catalog = catalog_uses.data();
     std::string catalog_filter;
     std::size_t catalog_page = 0;
@@ -658,6 +702,20 @@ auto session_view(const session& state) -> ec::screen_view {
     const auto row_of = [](const char* const component) {
         return ec::arg_shape{.row = ec::row_shape{.component_id = component}};
     };
+    parts.push_back(ec::component{
+        .id = new_id,
+        .affordances = {new_set_id, new_apply_id},
+        .body = ec::form_body{
+            .fields =
+                {{.id = "path", .label = _("New file"), .value = state.made.path},
+                 {.id = "om_terrain", .label = _("Overmap terrain"), .value = state.made.om_terrain},
+                 {.id = "fill", .label = _("Terrain"), .value = state.made.fill}},
+            .submit = new_apply_id}});
+    affordances.push_back(ec::invoke_affordance(
+        {.id = new_set_id,
+         .label = _("New file"),
+         .args = {.row = ec::row_shape{.component_id = new_id}, .text = ec::text_shape{}}}));
+    affordances.push_back(ec::invoke_affordance({.id = new_apply_id, .label = _("Create")}));
     if (state.doc) {
         const auto& doc = *state.doc;
         auto stats = std::vector<ec::panel_stat>{
@@ -906,6 +964,19 @@ auto run_editor_session() -> void {
         state.watch();
         if (id == open_id) {
             state.open(invoked->args.text.value_or(""));
+        } else if (id == new_set_id) {
+            const auto text = invoked->args.text.value_or("");
+            (row == "path" ? state.made.path
+             : row == "om_terrain"
+                 ? state.made.om_terrain
+                 : state.made.fill) = text;
+        } else if (id == new_apply_id) {
+            const auto made = create_mapgen(state.made);
+            if (made) {
+                state.open(state.made.path);
+            } else {
+                state.notice = made.error();
+            }
         } else if (!state.doc) {
             continue;
         } else if (id == object_id) {
