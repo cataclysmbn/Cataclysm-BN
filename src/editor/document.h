@@ -56,6 +56,8 @@ public:
         -> std::expected<void, std::string>;
     auto undo() -> bool;
     auto redo() -> bool;
+    auto can_undo() const -> bool { return !done_.empty(); }
+    auto can_redo() const -> bool { return !undone_.empty(); }
 
     /// The bytes saving writes now.
     auto text() const -> std::string;

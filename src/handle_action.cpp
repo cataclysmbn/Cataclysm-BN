@@ -33,6 +33,7 @@
 #include "diary.h"
 #include "distraction_manager.h"
 #include "editor/editor_access.h"
+#include "editor/editor_session.h"
 #include "engine_client_contract.h"
 #include "faction.h"
 #include "flag.h"
@@ -3058,7 +3059,12 @@ bool game::handle_action()
                     popup( denial );
                     break;
                 }
-                g->look_debug();
+                // A protocol client draws the editor; the native frontends keep the map editor they have.
+                if( game_client::has_protocol_client() ) {
+                    editor::run_editor_session();
+                } else {
+                    g->look_debug();
+                }
                 break;
 
             case ACTION_LUA_CONSOLE:
