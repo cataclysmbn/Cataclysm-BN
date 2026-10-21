@@ -19,7 +19,9 @@
 #include "computer.h"
 #include "coordinates.h"
 #include "debug.h"
+#include "debug_log_capture.h"
 #include "drawing_primitives.h"
+#include "editor/mapgen_check.h"
 #include "enums.h"
 #include "fluid_grid.h"
 #include "game.h"
@@ -87,6 +89,7 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <charconv>
 #include <cmath>
 #include <cstdlib>
 #include <functional>
@@ -96,6 +99,7 @@
 #include <optional>
 #include <ranges>
 #include <set>
+#include <sstream>
 #include <stdexcept>
 #include <unordered_map>
 
@@ -3490,14 +3494,17 @@ auto mapgen_function_json_base::setup_common(const JsonObject& jo) -> bool {
             std::vector<map_key> row_keys;
             for (const std::string& key : utf8_display_split(row)) { row_keys.emplace_back(key); }
             if (row_keys.size() < static_cast<size_t>(expected_dim.x())) {
-                parray.throw_error(string_format(
-                    "  format: row %d must have at least %d columns, not %d", c + 1,
-                    expected_dim.x(), row_keys.size()));
+                parray.throw_error(
+                    string_format("  format: row %d must have at least %d columns, not %d", c + 1,
+                                  expected_dim.x(), row_keys.size()),
+                    c);
             }
             if (row_keys.size() != static_cast<size_t>(total_size.x())) {
-                parray.throw_error(string_format(
-                    "  format: row %d must have %d columns, not %d; check mapgensize if applicable",
-                    c + 1, total_size.x(), row_keys.size()));
+                parray.throw_error(
+                    string_format(
+                        "  format: row %d must have %d columns, not %d; check mapgensize if applicable",
+                        c + 1, total_size.x(), row_keys.size()),
+                    c);
             }
             for (int i = m_offset.x(); i < expected_dim.x(); i++) {
                 const auto p = point_rel_ms(i, c) - m_offset;
@@ -6247,3 +6254,152 @@ namespace mapgen {
 auto has_update_id(const mapgen_id& id) -> bool { return update_mapgen.contains(id); }
 
 } // namespace mapgen
+
+namespace {
+
+/// A mapgen read from an entry in memory rather than from its data file.
+class detached_mapgen final: public mapgen_function_json {
+public:
+    detached_mapgen(const point_rel_omt& offset, const point_rel_omt& total)
+        : mapgen_function(1000),
+          mapgen_function_json(json_source_location{}, 1000, offset, total) {}
+    auto load(const JsonObject& jo) -> bool { return setup_common(jo); }
+};
+
+class detached_nested_mapgen final: public mapgen_function_json_nested {
+public:
+    detached_nested_mapgen(): mapgen_function_json_nested(json_source_location{}) {}
+    auto load(const JsonObject& jo) -> bool { return setup_common(jo); }
+};
+
+/// The source name the loader gives the text, which its messages name with a line and column.
+constexpr auto editor_source = std::string_view("editor");
+
+/// The byte a message names as "<source>:<line>:<column>", counted as `JsonIn::line_number` counts.
+auto offset_named(std::string_view message, std::string_view text) -> std::optional<size_t> {
+    const auto at = message.find(std::string(editor_source) + ":");
+    if (at == std::string_view::npos) { return std::nullopt; }
+    auto rest = message.substr(at + editor_source.size() + 1);
+    auto line = 0;
+    auto column = 0;
+    const auto read_line = std::from_chars(rest.data(), rest.data() + rest.size(), line);
+    if (read_line.ec != std::errc{} || *read_line.ptr != ':') { return std::nullopt; }
+    const auto read_column = std::from_chars(read_line.ptr + 1, rest.data() + rest.size(), column);
+    if (read_column.ec != std::errc{} || line < 1 || column < 1) { return std::nullopt; }
+    auto offset = size_t{0};
+    for (auto seen = 1; seen < line; ++seen) {
+        offset = text.find('\n', offset);
+        if (offset == std::string_view::npos) { return std::nullopt; }
+        ++offset;
+    }
+    return std::min(offset + column - 1, text.size());
+}
+
+/// The loader drops a placement whose square is outside its map, since a map of several overmap
+/// squares keeps it for another of them; one outside all of them is named here.
+auto check_placements_inside(const JsonObject& object, const point_rel_ms& size) -> void {
+    // A copy, so that walking every member leaves a misspelt one unvisited and reported.
+    auto members = object;
+    members.allow_omitted_members();
+    for (const JsonMember member : members) {
+        if (!member.name().starts_with("place_") || !member.test_array()) { continue; }
+        for (JsonObject placement : member.get_array()) {
+            placement.allow_omitted_members();
+            for (const auto& [axis, limit] : {std::pair{"x", size.x()}, std::pair{"y", size.y()}}) {
+                if (!placement.has_member(axis)) { continue; }
+                const auto range = jmapgen_int(placement, axis);
+                if (range.val >= 0 && range.valmax < limit) { continue; }
+                try {
+                    placement.throw_error(
+                        string_format("%s is outside the %dx%d map", axis, size.x(), size.y()),
+                        axis);
+                } catch (const JsonError& e) { debugmsg("(json-error)\n%s", e.what()); }
+            }
+        }
+    }
+}
+
+/// Loads `object` as a mapgen of `entry`'s kind, then finalizes and checks it.
+auto load_detached(const JsonObject& entry, const JsonObject& object) -> void {
+    const auto finish = [&](auto& mapgen, const std::string& name) {
+        mapgen_defer::defer = false;
+        const auto loaded = mapgen.load(object);
+        if (mapgen_defer::defer) {
+            mapgen_defer::defer = false;
+            auto deferred = mapgen_defer::jsi;
+            mapgen_defer::jsi = JsonObject();
+            deferred.throw_error(mapgen_defer::message, mapgen_defer::member);
+        }
+        if (!loaded) { object.throw_error("format: no terrain map"); }
+        mapgen.finalize_parameters();
+        mapgen.check(name);
+    };
+    if (entry.has_string("nested_mapgen_id")) {
+        auto nested = detached_nested_mapgen();
+        finish(nested, entry.get_string("nested_mapgen_id"));
+    } else if (entry.has_string("update_mapgen_id")) {
+        auto update = update_mapgen_function_json(json_source_location{});
+        if (update.setup_update(object)) {
+            update.finalize_parameters();
+            update.check(entry.get_string("update_mapgen_id"));
+        }
+    } else if (entry.has_array("om_terrain") && entry.get_array("om_terrain").test_array()) {
+        const auto grid = entry.get_array("om_terrain");
+        const auto total = point_rel_omt(grid.get_array(0).size(), grid.size());
+        auto offset = point_rel_omt::zero();
+        for (const JsonArray row : grid) {
+            for (const std::string id : row) {
+                auto mapgen = detached_mapgen(offset, total);
+                finish(mapgen, id);
+                offset.x()++;
+            }
+            offset.y()++;
+            offset.x() = 0;
+        }
+    } else {
+        const auto name =
+            entry.has_string("om_terrain")
+                ? entry.get_string("om_terrain")
+                : entry.get_array("om_terrain").get_string(0);
+        auto mapgen = detached_mapgen(point_rel_omt::zero(), point_rel_omt(1, 1));
+        finish(mapgen, name);
+    }
+    const auto gridded =
+        entry.has_array("om_terrain") && entry.get_array("om_terrain").test_array();
+    const auto omts =
+        gridded ? point(entry.get_array("om_terrain").get_array(0).size(),
+                        entry.get_array("om_terrain").size())
+                : point(1, 1);
+    auto size = point_rel_ms(SEEX * 2 * omts.x, SEEY * 2 * omts.y);
+    if (object.has_array("mapgensize")) {
+        const auto given = object.get_array("mapgensize");
+        size = point_rel_ms(given.get_int(0), given.get_int(1));
+    }
+    check_placements_inside(object, size);
+}
+
+} // namespace
+
+auto editor::check_mapgen(const std::string_view text) -> std::vector<loader_message> {
+    auto thrown = std::optional<std::string>{};
+    const auto said = capture_each_debugmsg_during([&] {
+        try {
+            auto in = std::istringstream(std::string(text));
+            auto jsin = JsonIn(in, std::string(editor_source));
+            const auto entry = jsin.get_object();
+            entry.get_string("type");
+            entry.get_int("weight", 1000);
+            if (entry.get_string("method") != "json") {
+                entry.throw_error("the editor reads only \"json\" mapgen", "method");
+            }
+            load_detached(entry, entry.get_object("object"));
+        } catch (const JsonError& e) { thrown = e.what(); }
+    });
+    auto messages =
+        said | std::views::transform([&](const std::string& message) {
+            return editor::loader_message{.text = message, .offset = offset_named(message, text)};
+        })
+        | std::ranges::to<std::vector>();
+    if (thrown) { messages.push_back({.text = *thrown, .offset = offset_named(*thrown, text)}); }
+    return messages;
+}

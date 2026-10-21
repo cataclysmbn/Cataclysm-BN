@@ -131,6 +131,8 @@ auto captured_errors = std::ostringstream {};
 static bool capturing = false;
 /** сaptured debug messages */
 static std::string captured;
+/** The captured debug messages one by one, while capture_each_debugmsg_during runs. */
+static std::vector<std::string> *captured_each = nullptr;
 static std::ostringstream captured_log;
 
 #if defined(BACKTRACE)
@@ -220,6 +222,16 @@ std::string capture_debugmsg_during( const std::function<void()> &func )
     capture_debugmsg capture;
     func();
     return capture.dmsg();
+}
+
+auto capture_each_debugmsg_during( const std::function < auto()->void > &func ) ->
+std::vector<std::string>
+{
+    auto each = std::vector<std::string> {};
+    const auto restore = on_out_of_scope( [previous = std::exchange( captured_each, &each )] { captured_each = previous; } );
+    capture_debugmsg capture;
+    func();
+    return each;
 }
 
 capture_debugmsg::capture_debugmsg()
@@ -701,6 +713,7 @@ void realDebugmsg( const char *filename, const char *line, const char *funcname,
 
     if( capturing ) {
         captured += text;
+        if( captured_each != nullptr ) { captured_each->push_back( text ); }
     } else {
         if( !rep_folder.test( filename, line, funcname, text ) ) {
             *detail::realDebugLog( debug_level, DC::DebugMsg, filename, line, funcname ) << text;
