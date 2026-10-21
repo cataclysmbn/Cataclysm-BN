@@ -3,10 +3,12 @@
 #include "calendar.h"
 #include "catch/catch.hpp"
 #include "game.h"
+#include "line.h"
 #include "map_helpers.h"
 #include "monster.h"
 #include "state_helpers.h"
 
+#include <algorithm>
 #include <memory>
 
 struct tripoint;
@@ -111,13 +113,13 @@ TEST_CASE("terrain_los_blocker_answers_a_pair_alike_whichever_end_asks_first", "
         here.ter_set(tripoint_bub_ms(11, 10 + y, 0), t_wall);
         return sight_line{.from = {10, 10 + y, 0}, .to = {12, 11 + y, 0}};
     };
-    const auto traced_forward = layout(0);
-    const auto traced_back = layout(10);
-    const auto asked_from_far_end = layout(20);
-    const auto asked_from_near_end = layout(30);
+    const auto asked_from_far_end = layout(0);
+    const auto asked_from_near_end = layout(10);
     here.build_map_cache(0);
-    REQUIRE(here.sees(traced_forward.from, traced_forward.to, -1)
-            != here.sees(traced_back.to, traced_back.from, -1));
+    const auto wall = tripoint_bub_ms(11, 10, 0);
+    REQUIRE(
+        std::ranges::contains(line_to(asked_from_far_end.from, asked_from_far_end.to), wall)
+        != std::ranges::contains(line_to(asked_from_far_end.to, asked_from_far_end.from), wall));
 
     g->clear_turn_los_blocker_cache();
     CHECK(g->terrain_los_blocks_sight_between(asked_from_far_end.to, asked_from_far_end.from)

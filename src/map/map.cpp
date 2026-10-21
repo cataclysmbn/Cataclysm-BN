@@ -6892,22 +6892,10 @@ void map::draw_from_above(
 }
 
 auto map::sees(const tripoint_bub_ms& F, const tripoint_bub_ms& T, const int range) const -> bool {
-    int dummy = 0;
-    return sees(F, T, range, dummy);
-}
-
-/**
- * This one is internal-only, we don't want to expose the slope tweaking ickiness outside the map
- * class.
- **/
-auto map::sees(
-    const tripoint_bub_ms& F, const tripoint_bub_ms& T, const int range, int& bresenham_slope) const
-    -> bool {
-    if ((range >= 0 && range < rl_dist(F, T)) || !inbounds(T) || !inbounds(F)) {
-        bresenham_slope = 0;
-        return false; // Out of range!
-    }
-    // Cannonicalize the order of the tripoints so the cache is reflexive.
+    if ((range >= 0 && range < rl_dist(F, T)) || !inbounds(T) || !inbounds(F)) { return false; }
+    // The cache answers a pair from either end, but the lines from either end cross different
+    // squares, so it always holds the line from the lesser end: which end or which planning
+    // thread asked first must not decide the answer.
     const tripoint_bub_ms& min = F < T ? F : T;
     const tripoint_bub_ms& max = !(F < T) ? F : T;
     // Pack two tripoints into one int64_t: 29 bits each (12 x + 12 y + 5 z).
@@ -6926,7 +6914,27 @@ auto map::sees(
         const auto& slot = skew_vision_cache[slot_idx];
         if (slot.key == key && slot.value >= 0) { return slot.value > 0; }
     }
+    auto slope = 0;
+    const auto visible = sees(min, max, -1, slope);
+    {
+        std::unique_lock<std::shared_mutex> lock(*skew_vision_cache_mutex);
+        skew_vision_cache[slot_idx] = {key, static_cast<char>(visible ? 1 : 0)};
+    }
+    return visible;
+}
 
+/**
+ * This one is internal-only, we don't want to expose the slope tweaking ickiness outside the map
+ * class.
+ **/
+auto map::sees(
+    const tripoint_bub_ms& F, const tripoint_bub_ms& T, const int range, int& bresenham_slope) const
+    -> bool {
+    if ((range >= 0 && range < rl_dist(F, T)) || !inbounds(T) || !inbounds(F)) {
+        bresenham_slope = 0;
+        return false; // Out of range!
+    }
+    // A line from another start offset is another line, so this trace is never cached.
     bool visible = true;
 
     // Ugly `if` for now
@@ -6948,10 +6956,6 @@ auto map::sees(
                       last_point = point_bub_ms(new_point);
                       return true;
                   });
-        {
-            std::unique_lock<std::shared_mutex> lock(*skew_vision_cache_mutex);
-            skew_vision_cache[slot_idx] = {key, static_cast<char>(visible ? 1 : 0)};
-        }
         return visible;
     }
 
@@ -6984,10 +6988,6 @@ auto map::sees(
             last_point = tripoint_bub_ms(new_point);
             return true;
         });
-    {
-        std::unique_lock<std::shared_mutex> lock(*skew_vision_cache_mutex);
-        skew_vision_cache[slot_idx] = {key, static_cast<char>(visible ? 1 : 0)};
-    }
     return visible;
 }
 
