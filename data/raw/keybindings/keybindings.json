@@ -2421,6 +2421,13 @@
   },
   {
     "type": "keybinding",
+    "name": "Map Editor",
+    "category": "DEFAULTMODE",
+    "id": "editor",
+    "bindings": [  ]
+  },
+  {
+    "type": "keybinding",
     "name": "Lua Console",
     "category": "DEFAULTMODE",
     "id": "lua_console",

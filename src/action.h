@@ -301,6 +301,8 @@ enum action_id : int {
     ACTION_TOGGLE_FULLSCREEN,
     /** Open debug menu */
     ACTION_DEBUG,
+    /** Open the map editor */
+    ACTION_EDITOR,
     /** Open Lua console */
     ACTION_LUA_CONSOLE,
     /** Hot-reload Lua code */

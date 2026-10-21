@@ -1,3 +1,4 @@
+#include "avatar.h"
 #include "cached_options.h"
 #include "cata_utility.h"
 #include "catch/catch.hpp"
@@ -5,6 +6,7 @@
 #include "client_interaction.h"
 #include "client_shortcut.h"
 #include "engine_client_component.h"
+#include "game.h"
 #include "input.h"
 #include "ui.h"
 
@@ -1372,4 +1374,31 @@ TEST_CASE(
     auto map = map_only();
     map.actions = state.actions;
     CHECK(affordance(top_of(map), "UP").role.empty());
+}
+
+TEST_CASE(
+    "the map offers the editor only with the Debug Editor trait", "[engine_client_component]") {
+    const auto trait = trait_id("DEBUG_EDITOR");
+    const auto context = get_default_mode_input_context();
+    REQUIRE(std::ranges::contains(context.get_registered_actions_copy(), std::string("editor")));
+    auto state = map_only();
+    state.actions.push_back({.id = "editor", .name = context.get_action_name("editor")});
+    auto& you = get_avatar();
+    const auto had = you.has_trait(trait);
+    you.unset_mutation(trait);
+    {
+        const auto view = top_of(state);
+        const auto& denied = affordance(view, "editor");
+        CHECK(denied.label == "Map Editor");
+        CHECK_FALSE(denied.enabled);
+        CHECK(denied.denial == "You need the Debug Editor trait.");
+    }
+    you.set_mutation(trait);
+    {
+        const auto view = top_of(state);
+        const auto& offered = affordance(view, "editor");
+        CHECK(offered.enabled);
+        CHECK(offered.denial.empty());
+    }
+    if (!had) { you.unset_mutation(trait); }
 }

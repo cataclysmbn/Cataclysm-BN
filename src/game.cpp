@@ -3603,6 +3603,7 @@ input_context get_default_mode_input_context()
     ctxt.register_action( "open_color" );
     ctxt.register_action( "open_world_mods" );
     ctxt.register_action( "debug" );
+    ctxt.register_action( "editor" );
     ctxt.register_action( "lua_console" );
     ctxt.register_action( "lua_reload" );
     ctxt.register_action( "open_wiki" );

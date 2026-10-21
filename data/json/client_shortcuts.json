@@ -105,6 +105,14 @@
   },
   {
     "type": "client_shortcut",
+    "id": "editor",
+    "action": "editor",
+    "icon": "editor",
+    "glyph": "✏",
+    "order": 135
+  },
+  {
+    "type": "client_shortcut",
     "id": "help",
     "action": "HELP_KEYBINDINGS",
     "icon": "help",

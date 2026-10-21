@@ -32,6 +32,7 @@
 #include "debug_menu.h"
 #include "diary.h"
 #include "distraction_manager.h"
+#include "editor/editor_access.h"
 #include "engine_client_contract.h"
 #include "faction.h"
 #include "flag.h"
@@ -3050,6 +3051,14 @@ bool game::handle_action()
                     break;    //don't do anything when sharing and not debugger
                 }
                 debug_menu::debug();
+                break;
+
+            case ACTION_EDITOR:
+                if( const auto denial = editor::editor_denial(); !denial.empty() ) {
+                    popup( denial );
+                    break;
+                }
+                g->look_debug();
                 break;
 
             case ACTION_LUA_CONSOLE:

@@ -12,6 +12,18 @@
       }
     },
     {
+      "name": "Map editor affordance of the map without the Debug Editor trait",
+      "def": "affordance",
+      "value": {
+        "id": "editor",
+        "label": "Map Editor",
+        "keys": [],
+        "enabled": false,
+        "denial": "You need the Debug Editor trait.",
+        "expect": "screen"
+      }
+    },
+    {
       "name": "first of five held moves, request",
       "def": "submit_params",
       "value": {
