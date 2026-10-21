@@ -1,0 +1,90 @@
+#include "editor/mapgen_placement.h"
+
+#include "editor/document.h"
+#include "editor/mapgen_check.h"
+
+#include <algorithm>
+#include <ranges>
+
+namespace editor {
+namespace {
+
+using ordered_json = nlohmann::ordered_json;
+
+auto range_of(const ordered_json& placed, const char* axis) -> placement_range {
+    if (!placed.contains(axis)) { return {}; }
+    const auto& value = placed[axis];
+    if (value.is_array() && value.size() == 2) {
+        return {.min = value[0].get<int>(), .max = value[1].get<int>()};
+    }
+    if (value.is_array() && value.size() == 1) {
+        return {.min = value[0].get<int>(), .max = value[0].get<int>()};
+    }
+    return value.is_number()
+             ? placement_range{.min = value.get<int>(), .max = value.get<int>()}
+             : placement_range{};
+}
+
+auto written(const placement_range& range) -> ordered_json {
+    return range.min == range.max ? ordered_json(range.min) : ordered_json{range.min, range.max};
+}
+
+auto texts(const std::vector<loader_message>& messages) -> std::vector<std::string> {
+    return messages | std::views::transform(&loader_message::text) | std::ranges::to<std::vector>();
+}
+
+} // namespace
+
+auto placements_of(const document& doc, const std::size_t object) -> std::vector<placement> {
+    const auto& value = doc.objects().at(object).value;
+    if (!value.contains("object")) { return {}; }
+    auto found = std::vector<placement>{};
+    for (const auto& [kind, entries] : value["object"].items()) {
+        if (!kind.starts_with("place_") || !entries.is_array()) { continue; }
+        for (const auto index : std::views::iota(std::size_t{0}, entries.size())) {
+            const auto& placed = entries[index];
+            if (!placed.is_object()) { continue; }
+            found.push_back(
+                {.kind = kind,
+                 .index = index,
+                 .x = range_of(placed, "x"),
+                 .y = range_of(placed, "y"),
+                 .value = placed});
+        }
+    }
+    return found;
+}
+
+auto move_placement(document& doc, const placement_move& move) -> std::expected<void, std::string> {
+    if (move.x.min > move.x.max || move.y.min > move.y.max) {
+        return std::unexpected(std::string("a range must not end before it starts"));
+    }
+    const auto at = ordered_json::json_pointer("/object") / move.kind / move.index;
+    return doc.edit(
+        move.object,
+        {{{"op", "add"}, {"path", (at / "x").to_string()}, {"value", written(move.x)}},
+         {{"op", "add"}, {"path", (at / "y").to_string()}, {"value", written(move.y)}}});
+}
+
+auto set_field(document& doc, const field_edit& edit) -> std::expected<void, std::string> {
+    if (edit.object >= doc.objects().size()) {
+        return std::unexpected("no object " + std::to_string(edit.object));
+    }
+    const auto& value = doc.objects()[edit.object].value;
+    const auto patch =
+        edit.value ? ordered_json{{{"op", "add"}, {"path", edit.pointer}, {"value", *edit.value}}}
+                   : ordered_json{{{"op", "remove"}, {"path", edit.pointer}}};
+    auto next = ordered_json{};
+    try {
+        next = value.patch(patch);
+    } catch (const ordered_json::exception& e) { return std::unexpected(std::string(e.what())); }
+    const auto before = texts(check_mapgen(value.dump()));
+    const auto after = texts(check_mapgen(next.dump()));
+    const auto said = std::ranges::find_if(after, [&](const std::string& text) {
+        return !std::ranges::contains(before, text);
+    });
+    if (said != after.end()) { return std::unexpected(*said); }
+    return doc.edit(edit.object, patch);
+}
+
+} // namespace editor
