@@ -559,4 +559,45 @@ TEST_CASE(
     CHECK(edited->vehicle().name == "Bicycle");
 }
 
+TEST_CASE(
+    "the vehicle editor moves a part within its mount's install order",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto labels = [](const ec::screen_view& screen) {
+        return rows(screen, "vehicle:stack") | std::views::transform(&ec::row::label)
+             | std::ranges::to<std::vector>();
+    };
+    auto before = std::vector<std::string>{};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:filter", {.text = "bicycle"});
+            case 1:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 2:
+                before = labels(screen);
+                REQUIRE(before.size() == 4);
+                return invoke("vehicle:earlier", {.row = "part:2"});
+            case 3:
+                CHECK(labels(screen)
+                      == std::vector<std::string>{before[0], before[2], before[1], before[3]});
+                return invoke("vehicle:later", {.row = "part:3"});
+            case 4:
+                CHECK(body<ec::text_body>(part(screen, "vehicle:notice")).markup
+                      == "The part is already at that end of its mount.");
+                return invoke("vehicle:undo");
+            case 5:
+                CHECK(labels(screen) == before);
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 6);
+}
+
 #endif

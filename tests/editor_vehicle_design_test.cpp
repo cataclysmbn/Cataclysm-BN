@@ -200,6 +200,34 @@ TEST_CASE("removing a part follows the game's unmount rules", "[editor_vehicle]"
     }
 }
 
+TEST_CASE("a part moves within its mount's install order as the game allows", "[editor_vehicle]") {
+    const auto bicycle = core_prototype("bicycle");
+    const auto listed = [](const ordered_json& prototype) {
+        return prototype.at("parts")[0]["parts"].get<std::vector<std::string>>();
+    };
+
+    SECTION("a part goes before the one installed before it on its mount") {
+        const auto next = editor::move_part(bicycle, 2, -1);
+        REQUIRE(next.has_value());
+        CHECK(
+            listed(*next)
+            == std::vector<
+                std::string>{"xlframe_vertical_2", "horn_bicycle", "saddle_pedal", "foot_pedals"});
+        CHECK(built(*next).messages.empty());
+    }
+    SECTION("the last part on a mount goes no later") {
+        const auto next = editor::move_part(bicycle, 3, 1);
+        REQUIRE_FALSE(next.has_value());
+        CHECK(next.error() == "The part is already at that end of its mount.");
+    }
+    SECTION("a part the blueprint's palette places stays") {
+        const auto tanker = core_prototype("afs_water_tanker");
+        const auto next = editor::move_part(tanker, 0, 1);
+        REQUIRE_FALSE(next.has_value());
+        CHECK(next.error() == "The blueprint's palette places this part; edit the palette.");
+    }
+}
+
 TEST_CASE("a prototype the game cannot read reports why", "[editor_vehicle]") {
     auto broken = core_prototype("bicycle");
     broken["parts"][0]["parts"][0] = "no_such_part";
