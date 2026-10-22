@@ -113,6 +113,13 @@ auto inside(const std::filesystem::path& path, const std::string& root) -> bool 
     return !error && !relative.empty() && *relative.begin() != "..";
 }
 
+/// `path` from the game's directory when it lies inside it, as a modder finds it there.
+auto shown_path(const std::filesystem::path& path) -> std::string {
+    const auto relative = std::filesystem::absolute(path).lexically_normal().lexically_proximate(
+        std::filesystem::current_path());
+    return (relative.empty() || *relative.begin() == ".." ? path : relative).generic_string();
+}
+
 /// The file a copied vehicle waits in, outside every world so that another world can paste it.
 auto copied_vehicle_file() -> std::filesystem::path {
     return std::filesystem::path(PATH_INFO::user_dir()) / "vehicle_copy.json";
@@ -810,25 +817,28 @@ auto session_view(const session& state) -> ec::screen_view {
                         .filterable = true})}));
     affordances.push_back(
         ec::invoke_affordance({.id = source_id, .label = _("Show"), .args = row_of(sources_id)}));
-    affordances.push_back(
-        ec::invoke_affordance({.id = open_id, .label = _("Open"), .args = row_of(prototypes_id)}));
-    affordances.push_back(ec::invoke_affordance(
-        {.id = filter_id, .label = _("Filter"), .args = {.text = ec::text_shape{}}}));
-    affordances.push_back(ec::invoke_affordance(
-        {.id = page_id,
-         .label = _("Page"),
-         .args = {
-             .count = ec::count_shape{
-                 .min = 0,
-                 .max = pages_of(found.total) - 1,
-                 .initial = static_cast<std::int64_t>(state.page)}}}));
-    affordances.push_back(ec::invoke_affordance(
-        {.id = export_id, .label = _("Export design"), .args = text_of(world_id)}));
-    affordances.push_back(ec::invoke_affordance(
-        {.id = copy_id, .label = _("Copy vehicle"), .args = row_of(world_id)}));
+    if (state.source_tab == "world") {
+        affordances.push_back(ec::invoke_affordance(
+            {.id = export_id, .label = _("Export design"), .args = text_of(world_id)}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = copy_id, .label = _("Copy vehicle"), .args = row_of(world_id)}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = edit_id, .label = _("Edit in place"), .args = row_of(world_id)}));
+    } else {
+        affordances.push_back(ec::invoke_affordance(
+            {.id = open_id, .label = _("Open"), .args = row_of(prototypes_id)}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = filter_id, .label = _("Filter"), .args = {.text = ec::text_shape{}}}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = page_id,
+             .label = _("Page"),
+             .args = {
+                 .count = ec::count_shape{
+                     .min = 0,
+                     .max = pages_of(found.total) - 1,
+                     .initial = static_cast<std::int64_t>(state.page)}}}));
+    }
     affordances.push_back(ec::invoke_affordance({.id = paste_id, .label = _("Paste vehicle")}));
-    affordances.push_back(ec::invoke_affordance(
-        {.id = edit_id, .label = _("Edit in place"), .args = row_of(world_id)}));
     if (!state.live && !state.doc) {
         return {.title = _("Vehicle Editor"),
                 .root = ec::split({.id = "vehicle:body", .children = std::move(parts)}),
@@ -874,7 +884,7 @@ auto session_view(const session& state) -> ec::screen_view {
         {.id = state.live ? "vehicle:live" : "vehicle:document",
          .title = state.live ? state.live->name
                              : state.prototype().value("name", state.prototype().value("id", "")),
-         .subtitle = state.live ? std::string{} : state.doc->path().generic_string(),
+         .subtitle = state.live ? std::string{} : shown_path(state.doc->path()),
          .stats = std::move(stats),
          .child = grid_of(veh, mounts, state.cursor)}));
     // The right column: what the picked mount holds, what it takes, and the fields of a part, the
@@ -1041,25 +1051,33 @@ auto session_view(const session& state) -> ec::screen_view {
         ec::invoke_affordance({.id = tool_id, .label = _("Tool"), .args = row_of(tools_id)}));
     affordances.push_back(
         ec::invoke_affordance({.id = mount_id, .label = _("Mount"), .args = row_of(grid_id)}));
-    affordances.push_back(
-        ec::invoke_affordance({.id = pick_id, .label = _("Edit"), .args = row_of(stack_id)}));
-    affordances.push_back(
-        ec::invoke_affordance({.id = remove_id, .label = _("Remove"), .args = row_of(stack_id)}));
-    affordances.push_back(
-        ec::invoke_affordance({.id = install_id, .label = _("Install"), .args = row_of(parts_id)}));
     affordances.push_back(ec::invoke_affordance(
         {.id = part_filter_id, .label = _("Filter parts"), .args = {.text = ec::text_shape{}}}));
-    affordances.push_back(ec::invoke_affordance(
-        {.id = part_page_id,
-         .label = _("Parts page"),
-         .args = {
-             .count = ec::count_shape{
-                 .min = 0,
-                 .max = pages_of(state.parts().total) - 1,
-                 .initial = static_cast<std::int64_t>(state.part_page)}}}));
+    /// Offers `value` while the tool tab `tab` is shown, the one whose parts it acts on.
+    const auto on = [&](const std::string_view tab, ec::affordance value) {
+        if (state.tool_tab == tab) { affordances.push_back(std::move(value)); }
+    };
+    on("mount",
+       ec::invoke_affordance({.id = pick_id, .label = _("Edit"), .args = row_of(stack_id)}));
+    on("mount",
+       ec::invoke_affordance({.id = remove_id, .label = _("Remove"), .args = row_of(stack_id)}));
+    on("install",
+       ec::invoke_affordance({.id = install_id, .label = _("Install"), .args = row_of(parts_id)}));
+    on("install",
+       ec::invoke_affordance(
+           {.id = part_page_id,
+            .label = _("Parts page"),
+            .args = {
+                .count = ec::count_shape{
+                    .min = 0,
+                    .max = pages_of(state.parts().total) - 1,
+                    .initial = static_cast<std::int64_t>(state.part_page)}}}));
     if (state.live) {
-        affordances.push_back(ec::invoke_affordance(
-            {.id = live_set_id, .label = _("Value"), .args = text_of(live_form_id)}));
+        for (const auto* const tab : {"part", "vehicle"}) {
+            on(tab,
+               ec::invoke_affordance(
+                   {.id = live_set_id, .label = _("Value"), .args = text_of(live_form_id)}));
+        }
         affordances.push_back(ec::invoke_affordance(
             {.id = undo_id, .label = _("Undo"), .enabled = !state.live_undo.empty()}));
         affordances.push_back(ec::invoke_affordance(
@@ -1067,28 +1085,36 @@ auto session_view(const session& state) -> ec::screen_view {
         affordances.push_back(ec::invoke_affordance({.id = done_id, .label = _("Done")}));
     } else {
         const auto& doc = *state.doc;
-        affordances.push_back(ec::invoke_affordance(
-            {.id = earlier_id, .label = _("Earlier"), .args = row_of(stack_id)}));
-        affordances.push_back(
-            ec::invoke_affordance({.id = later_id, .label = _("Later"), .args = row_of(stack_id)}));
-        affordances.push_back(ec::invoke_affordance(
-            {.id = prop_set_id, .label = _("Value"), .args = text_of(props_id)}));
-        affordances.push_back(ec::invoke_affordance(
-            {.id = part_set_id, .label = _("Value"), .args = text_of(part_form_id)}));
-        affordances.push_back(ec::invoke_affordance(
-            {.id = item_add_id, .label = _("Add item"), .args = {.text = ec::text_shape{}}}));
-        affordances.push_back(ec::invoke_affordance(
-            {.id = item_remove_id, .label = _("Remove item"), .args = row_of(items_id)}));
-        affordances.push_back(ec::invoke_affordance(
-            {.id = item_chance_id,
-             .label = _("Chance"),
-             .args = {.row = ec::row_shape{.component_id = items_id},
-                      .count = ec::count_shape{.min = 1, .max = 100, .initial = 100}}}));
-        affordances.push_back(ec::invoke_affordance(
-            {.id = field_set_id, .label = _("Value"), .args = text_of(field_id)}));
-        affordances.push_back(ec::invoke_affordance({.id = field_apply_id, .label = _("Set")}));
-        affordances.push_back(ec::invoke_affordance(
-            {.id = spawn_set_id, .label = _("Value"), .args = text_of(spawn_form_id)}));
+        on("mount",
+           ec::invoke_affordance(
+               {.id = earlier_id, .label = _("Earlier"), .args = row_of(stack_id)}));
+        on("mount",
+           ec::invoke_affordance({.id = later_id, .label = _("Later"), .args = row_of(stack_id)}));
+        on("vehicle",
+           ec::invoke_affordance(
+               {.id = prop_set_id, .label = _("Value"), .args = text_of(props_id)}));
+        on("part",
+           ec::invoke_affordance(
+               {.id = part_set_id, .label = _("Value"), .args = text_of(part_form_id)}));
+        on("cargo",
+           ec::invoke_affordance(
+               {.id = item_add_id, .label = _("Add item"), .args = {.text = ec::text_shape{}}}));
+        on("cargo",
+           ec::invoke_affordance(
+               {.id = item_remove_id, .label = _("Remove item"), .args = row_of(items_id)}));
+        on("cargo",
+           ec::invoke_affordance(
+               {.id = item_chance_id,
+                .label = _("Chance"),
+                .args = {.row = ec::row_shape{.component_id = items_id},
+                         .count = ec::count_shape{.min = 1, .max = 100, .initial = 100}}}));
+        on("json",
+           ec::invoke_affordance(
+               {.id = field_set_id, .label = _("Value"), .args = text_of(field_id)}));
+        on("json", ec::invoke_affordance({.id = field_apply_id, .label = _("Set")}));
+        on("spawn",
+           ec::invoke_affordance(
+               {.id = spawn_set_id, .label = _("Value"), .args = text_of(spawn_form_id)}));
         affordances.push_back(ec::invoke_affordance({.id = spawn_id, .label = _("Spawn")}));
         affordances.push_back(
             ec::invoke_affordance({.id = undo_id, .label = _("Undo"), .enabled = doc.can_undo()}));
