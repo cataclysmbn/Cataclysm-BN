@@ -733,6 +733,7 @@ static void open( const std::optional<tripoint_bub_ms> &target )
 
         if( here.has_flag( flag_LOCKED, openp ) ) {
             add_msg( m_info, to_translation( "The door is locked!" ) );
+            sfx::play_variant_sound( "menu_error", "default", 100 );
             return;
         } else if( tid.obj().close ) {
             // if the following message appears unexpectedly, the prior check was for t_door_o

@@ -19,8 +19,10 @@
 #    include "input.h"
 #    include "json_formatter.h"
 #    include "map/map.h"
+#    include "mapgen/mapgen_functions.h"
 #    include "options_helpers.h"
 #    include "output.h"
+#    include "overmap/omdata.h"
 #    include "overmap/overmapbuffer.h"
 #    include "path_info.h"
 #    include "point.h"
@@ -263,7 +265,7 @@ TEST_CASE(
                 CHECK(legend[0].selected);
                 CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
                 const auto& tools = body<ec::tabs_body>(part(screen, "editor:tools")).tabs;
-                REQUIRE(tools.size() == 7);
+                REQUIRE(tools.size() == 10);
                 CHECK(tools[0].id == "tool:point");
                 CHECK(tools[0].selected);
                 CHECK(saved(screen) == "Yes");
@@ -1075,6 +1077,460 @@ auto handle_action(std::unique_ptr<special_game> mode) -> bool {
 }
 
 } // namespace
+
+TEST_CASE(
+    "the editor draws a room, with a brush and mirrored, and goes back to any step of its history",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    auto step = 0;
+    const auto stat = [](const ec::screen_view& screen, const std::string& key) {
+        const auto& stats = body<ec::panel_body>(part(screen, "editor:document")).stats;
+        const auto found = std::ranges::find(stats, key, &ec::panel_stat::key);
+        INFO(key);
+        REQUIRE(found != stats.end());
+        return found->value;
+    };
+    const auto history = [](const ec::screen_view& screen) {
+        return body<ec::list_body>(part(screen, "editor:history")).rows;
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1: {
+                const auto& tools = body<ec::tabs_body>(part(screen, "editor:tools")).tabs;
+                REQUIRE(tools.size() == 10);
+                CHECK(tools[5].id == "tool:room");
+                CHECK(stat(screen, "inside") == "#");
+                CHECK(stat(screen, "brush") == "1");
+                CHECK(stat(screen, "mirror_x") == "Off");
+                CHECK(affordance(screen, "editor:undo").keys == std::vector<std::string>{"CTRL+Z"});
+                CHECK(affordance(screen, "editor:redo").keys == std::vector<std::string>{"CTRL+Y"});
+                CHECK(affordance(screen, "editor:save").keys == std::vector<std::string>{"CTRL+S"});
+                CHECK(refused(state, "editor:brush", {.count = 10}));
+                CHECK(refused(state, "editor:brush", {.count = 0}));
+                CHECK(history(screen).size() == 1);
+                CHECK(history(screen)[0].selected);
+                CHECK(history(screen)[0].description == "Saved");
+                return invoke("editor:symbol", {.row = "symbol:."});
+            }
+            case 2:
+                return invoke("editor:tool", {.row = "tool:room"});
+            case 3:
+                return invoke("editor:paint", {.row = "square:2,2"});
+            case 4:
+                return invoke("editor:paint", {.row = "square:6,5"});
+            case 5:
+                // The outline in the floor symbol, the inside in the wall symbol, in one step.
+                CHECK(walls(screen) == 6);
+                CHECK(cell(screen, 3, 3).glyph == "#");
+                CHECK(cell(screen, 2, 2).glyph == ".");
+                CHECK(history(screen).size() == 2);
+                CHECK(history(screen)[1].selected);
+                CHECK(history(screen)[0].description == "Saved");
+                return invoke("editor:jump", {.row = "step:0"});
+            case 6:
+                CHECK(walls(screen) == 0);
+                CHECK_FALSE(affordance(screen, "editor:undo").enabled);
+                CHECK(affordance(screen, "editor:redo").enabled);
+                CHECK(saved(screen) == "Yes");
+                CHECK(history(screen).size() == 2);
+                CHECK(history(screen)[0].selected);
+                return invoke("editor:jump", {.row = "step:1"});
+            case 7:
+                CHECK(walls(screen) == 6);
+                CHECK(saved(screen) == "No");
+                return invoke("editor:symbol", {.row = "symbol:#"});
+            case 8:
+                return invoke("editor:tool", {.row = "tool:point"});
+            case 9:
+                return invoke("editor:brush", {.count = 2});
+            case 10:
+                CHECK(stat(screen, "brush") == "2");
+                return invoke("editor:paint", {.row = "square:10,10"});
+            case 11:
+                CHECK(walls(screen) == 10);
+                return invoke("editor:mirror_x");
+            case 12:
+                CHECK(stat(screen, "mirror_x") == "On");
+                return invoke("editor:paint", {.row = "square:1,15"});
+            case 13:
+                // Two columns of two squares, and their mirror image across the middle column.
+                CHECK(walls(screen) == 18);
+                CHECK(cell(screen, 22, 15).glyph == "#");
+                CHECK(cell(screen, 21, 16).glyph == "#");
+                CHECK(history(screen).size() == 4);
+                return invoke("editor:jump", {.row = "step:2"});
+            case 14:
+                CHECK(walls(screen) == 10);
+                CHECK(history(screen).size() == 4);
+                CHECK(history(screen)[2].selected);
+                CHECK(refused(state, "editor:jump", {.row = "step:4"}));
+                return invoke("editor:save");
+            case 15:
+                CHECK(history(screen)[2].description == "Saved");
+                CHECK(history(screen)[0].description.empty());
+                // An edit after going back drops the steps undone, and the saved state with them
+                // once it lay among them.
+                return invoke("editor:jump", {.row = "step:1"});
+            case 16:
+                return invoke("editor:paint", {.row = "square:0,0"});
+            case 17:
+                CHECK(history(screen).size() == 3);
+                CHECK(std::ranges::none_of(history(screen), [](const auto& row) {
+                    return row.description == "Saved";
+                }));
+                return act("QUIT");
+            case 18:
+                // Unsaved, so leaving asks.
+                return answer("Leave without saving");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    const auto rows = nlohmann::ordered_json::parse(read_file(file.path))[0]["object"]["rows"];
+    CHECK(rows[10].get<std::string>() == std::string(10, '.') + "##" + std::string(12, '.'));
+    // The file holds the state saved, at the second step, and not the edit after it.
+    CHECK(rows[15].get<std::string>() == std::string(24, '.'));
+    CHECK(rows[0].get<std::string>() == std::string(24, '.'));
+}
+
+TEST_CASE(
+    "the editor applies the entry to the game, stamps it into the world, takes it back and tests it",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    auto step = 0;
+    const auto omt = get_avatar().abs_omt_pos();
+    const auto live = [&](const int x, const int y) {
+        return get_map().ter(abs_to_bub(project_to<coords::ms>(omt) + tripoint_rel_ms(x, y, 0)));
+    };
+    const auto before = live(2, 3);
+    const auto stamped = [](const ec::screen_view& screen) {
+        const auto& stats = body<ec::panel_body>(part(screen, "editor:document")).stats;
+        return std::ranges::contains(stats, std::string("stamped"), &ec::panel_stat::key);
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK_FALSE(affordance(screen, "editor:unstamp").enabled);
+                CHECK_FALSE(affordance(screen, "editor:test").enabled);
+                CHECK_FALSE(stamped(screen));
+                return invoke("editor:paint", {.row = "square:2,3"});
+            case 2:
+                return invoke("editor:apply");
+            case 3:
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                CHECK(live(2, 3) == before);
+                return invoke("editor:stamp");
+            case 4:
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                CHECK(live(2, 3) == ter_id("t_wall"));
+                CHECK(live(3, 3) == ter_id("t_floor"));
+                CHECK(stamped(screen));
+                CHECK(affordance(screen, "editor:unstamp").enabled);
+                return invoke("editor:unstamp");
+            case 5:
+                CHECK(live(2, 3) == before);
+                CHECK_FALSE(stamped(screen));
+                return invoke("editor:stamp");
+            case 6:
+                // Stamping again replaces the stamp rather than stacking on it.
+                CHECK(live(2, 3) == ter_id("t_wall"));
+                return invoke("editor:test");
+            default:
+                FAIL("the editor outlived its test");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    // The avatar plays in the middle of the stamped square.
+    CHECK(get_avatar().abs_omt_pos() == omt);
+    CHECK(get_avatar().abs_pos() == project_to<coords::ms>(omt) + tripoint_rel_ms(SEEX, SEEY, 0));
+    CHECK(step == 7);
+    editor::reset_editor_session();
+}
+
+TEST_CASE(
+    "the editor opens the mapgen of an overmap terrain, and any data file from its browser",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto restore_mapgen = restore_on_out_of_scope<bool>(disable_mapgen);
+    disable_mapgen = false;
+    auto step = 0;
+    const auto path = [](const ec::screen_view& screen) {
+        return body<ec::form_body>(part(screen, "editor:file")).fields.front().value;
+    };
+    const auto objects = [](const ec::screen_view& screen) {
+        return body<ec::list_body>(part(screen, "editor:objects")).rows;
+    };
+    const auto files = [](const ec::screen_view& screen) {
+        return body<ec::list_body>(part(screen, "editor:browser"));
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                // The browser lists the data files a page at a time, 50 of them.
+                CHECK(files(screen).rows.size() == 50);
+                CHECK(files(screen).total > 1000);
+                CHECK(files(screen).rows[0].id.starts_with("file:"));
+                return invoke("editor:open_oter", {.text = "no_such_overmap_terrain"});
+            case 1:
+                CHECK(body<ec::text_body>(part(screen, "editor:notice"))
+                          .markup.find("no_such_overmap_terrain")
+                      != std::string::npos);
+                CHECK_FALSE(has_affordance(screen, "editor:paint"));
+                return invoke("editor:open_oter", {.text = "2StoryModern06_1_north"});
+            case 2: {
+                // Its file is open on the entry that makes it, even when the file holds many.
+                CHECK(path(screen).ends_with(".json"));
+                CHECK(path(screen).ends_with("mapgen/house/2storymodern06.json"));
+                const auto entries = objects(screen);
+                const auto selected = std::ranges::find_if(entries, &ec::row::selected);
+                REQUIRE(selected != entries.end());
+                CHECK(selected->label.find("2StoryModern06_1") != std::string::npos);
+                return invoke("editor:browser_filter", {.text = "2STORYMODERN06.JSON"});
+            }
+            case 3:
+                // The filter ignores case and matches anywhere in the path.
+                REQUIRE(files(screen).rows.size() == 1);
+                CHECK(files(screen).total == 1);
+                CHECK(files(screen).rows[0].label == "json/mapgen/house/2storymodern06.json");
+                CHECK(refused(state, "editor:browser_page", {.count = 1}));
+                return invoke("editor:browser_open", {.row = files(screen).rows[0].id});
+            case 4:
+                CHECK(path(screen).ends_with("mapgen/house/2storymodern06.json"));
+                return invoke("editor:browser_filter", {.text = "no such path at all"});
+            case 5:
+                CHECK(files(screen).rows.empty());
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 6);
+}
+
+TEST_CASE(
+    "the editor creates a nested chunk file in the user mods and opens it",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto folder = mod_file{};
+    const auto made = folder.path.parent_path() / "chunk.json";
+    const auto notice = [](const ec::screen_view& screen) {
+        return body<ec::text_body>(part(screen, "editor:notice")).markup;
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0: {
+                const auto& fields = body<ec::form_body>(part(screen, "editor:new")).fields;
+                const auto kind = std::ranges::find(fields, "kind", &ec::form_field::id);
+                REQUIRE(kind != fields.end());
+                CHECK(kind->value == "mapgen");
+                CHECK(kind->options.size() == 2);
+                return invoke("editor:new_set", {.row = "path", .text = made.string()});
+            }
+            case 1:
+                return invoke("editor:new_set", {.row = "om_terrain", .text = "editor_test_chunk"});
+            case 2:
+                return invoke("editor:new_set", {.row = "kind", .text = "palette"});
+            case 3:
+                return invoke("editor:new_apply");
+            case 4:
+                CHECK(notice(screen) == "A new file holds a mapgen or a nested chunk.");
+                CHECK_FALSE(std::filesystem::exists(made));
+                return invoke("editor:new_set", {.row = "kind", .text = "nested"});
+            case 5:
+                return invoke("editor:new_set", {.row = "size", .text = "25"});
+            case 6:
+                return invoke("editor:new_apply");
+            case 7:
+                CHECK(notice(screen) == "A chunk is 1 to 24 squares wide.");
+                CHECK_FALSE(std::filesystem::exists(made));
+                return invoke("editor:new_set", {.row = "size", .text = "6"});
+            case 8:
+                return invoke("editor:new_apply");
+            case 9: {
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                const auto& objects = body<ec::list_body>(part(screen, "editor:objects")).rows;
+                REQUIRE(objects.size() == 1);
+                CHECK(objects[0].label == "editor_test_chunk");
+                const auto& canvas = body<ec::grid_body>(part(screen, "editor:canvas"));
+                CHECK(canvas.cols == 6);
+                CHECK(canvas.rows == 6);
+                CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
+                return act("QUIT");
+            }
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 10);
+    const auto written = nlohmann::ordered_json::parse(read_file(made));
+    CHECK(written[0]["nested_mapgen_id"] == "editor_test_chunk");
+    CHECK_FALSE(written[0].contains("om_terrain"));
+    CHECK(written[0]["object"]["mapgensize"] == nlohmann::ordered_json::array({6, 6}));
+    CHECK(written[0]["object"]["rows"].size() == 6);
+    CHECK(written[0]["object"]["rows"][5] == "......");
+    CHECK(format_json(read_file(made)) == read_file(made));
+}
+
+TEST_CASE(
+    "the editor copies a selection, rotates it and pastes it as one undo step",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    auto step = 0;
+    const auto clipboard = [](const ec::screen_view& screen) {
+        const auto& stats = body<ec::panel_body>(part(screen, "editor:document")).stats;
+        const auto found = std::ranges::find(stats, "clipboard", &ec::panel_stat::key);
+        return found == stats.end() ? std::string{} : found->value;
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK(clipboard(screen).empty());
+                CHECK_FALSE(affordance(screen, "editor:copy").enabled);
+                CHECK_FALSE(affordance(screen, "editor:rotate").enabled);
+                return invoke("editor:tool", {.row = "tool:line"});
+            case 2:
+                return invoke("editor:paint", {.row = "square:1,1"});
+            case 3:
+                return invoke("editor:paint", {.row = "square:3,1"});
+            case 4:
+                CHECK(walls(screen) == 3);
+                return invoke("editor:tool", {.row = "tool:select"});
+            case 5:
+                return invoke("editor:paint", {.row = "square:3,1"});
+            case 6:
+                return invoke("editor:paint", {.row = "square:1,2"});
+            case 7:
+                // The selection is the rectangle between the two squares, two rows of three.
+                CHECK(cell(screen, 2, 2).selected);
+                CHECK_FALSE(cell(screen, 4, 2).selected);
+                CHECK(affordance(screen, "editor:copy").enabled);
+                return invoke("editor:copy");
+            case 8:
+                CHECK(clipboard(screen) == "3x2");
+                CHECK(affordance(screen, "editor:rotate").enabled);
+                return invoke("editor:rotate");
+            case 9:
+                CHECK(clipboard(screen) == "2x3");
+                return invoke("editor:tool", {.row = "tool:paste"});
+            case 10:
+                return invoke("editor:paint", {.row = "square:10,10"});
+            case 11:
+                // A quarter turn clockwise: the wall row of the top is the right column.
+                CHECK(walls(screen) == 6);
+                CHECK(cell(screen, 11, 10).glyph == "#");
+                CHECK(cell(screen, 11, 11).glyph == "#");
+                CHECK(cell(screen, 11, 12).glyph == "#");
+                CHECK(cell(screen, 10, 10).glyph == ".");
+                return invoke("editor:undo");
+            case 12:
+                CHECK(walls(screen) == 3);
+                return invoke("editor:paint", {.row = "square:23,23"});
+            case 13:
+                // The part of the paste beyond the rows is dropped.
+                CHECK(walls(screen) == 3);
+                return invoke("editor:paint", {.row = "square:22,22"});
+            case 14:
+                CHECK(walls(screen) == 5);
+                CHECK(cell(screen, 23, 22).glyph == "#");
+                return act("QUIT");
+            case 15:
+                return answer("Leave without saving");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 16);
+}
+
+TEST_CASE(
+    "the editor exports the overmap square under the avatar to a new file and opens it",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto folder = mod_file{};
+    const auto made = folder.path.parent_path() / "export.json";
+    const auto notice = [](const ec::screen_view& screen) {
+        return body<ec::text_body>(part(screen, "editor:notice")).markup;
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:export", {.text = "/tmp/editor_export_test.json"});
+            case 1:
+                CHECK(notice(screen).starts_with("A new file goes in your mods"));
+                CHECK_FALSE(std::filesystem::exists("/tmp/editor_export_test.json"));
+                return invoke("editor:export", {.text = made.string()});
+            case 2: {
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                CHECK(body<ec::list_body>(part(screen, "editor:objects")).rows.size() == 1);
+                const auto& canvas = body<ec::grid_body>(part(screen, "editor:canvas"));
+                CHECK(canvas.cols == 24);
+                CHECK(canvas.rows == 24);
+                CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
+                return invoke("editor:export", {.text = made.string()});
+            }
+            case 3:
+                // A file that exists is not overwritten.
+                CHECK(notice(screen).ends_with("already exists."));
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 4);
+    const auto written = nlohmann::ordered_json::parse(read_file(made));
+    CHECK(written[0]["type"] == "mapgen");
+    CHECK(
+        written[0]["om_terrain"].get<std::string>()
+        == get_overmapbuffer(get_map().get_bound_dimension())
+               .ter(get_avatar().abs_omt_pos())
+               ->get_type_id()
+               .str());
+    CHECK(format_json(read_file(made)) == read_file(made));
+}
 
 TEST_CASE("game time does not pass while the map editor is open", "[editor_session]") {
     const auto guard = screen_guard{};

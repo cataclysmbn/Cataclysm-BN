@@ -1,4 +1,5 @@
 #include "avatar.h"
+#include "avatar_action.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
 #include "engine_client_presentation.h"
@@ -83,6 +84,21 @@ TEST_CASE("opening a door publishes the native door sound", "[engine_client_soun
     CHECK(played[0].variant == "t_door_c");
     CHECK(played[0].volume == sfx::get_heard_volume(door, 50));
     CHECK_FALSE(played[0].angle.has_value());
+}
+
+TEST_CASE("walking into a locked door publishes the error sound", "[engine_client_sound_cue]") {
+    if (!sound_supported()) { return; }
+    const auto room = sound_scene{};
+    auto& here = get_map();
+    here.ter_set(you_at + tripoint_east, ter_id("t_door_locked"));
+    REQUIRE_FALSE(avatar_action::move(get_avatar(), here, tripoint_rel_ms::east()));
+    const auto played = cues("sound.played");
+    REQUIRE(played.size() == 1);
+    CHECK(played[0].id == "menu_error");
+    // A step into an open floor makes no such sound.
+    here.ter_set(you_at + tripoint_east, ter_id("t_floor"));
+    CHECK(avatar_action::move(get_avatar(), here, tripoint_rel_ms::east()));
+    CHECK(cues("sound.played").empty());
 }
 
 TEST_CASE("a gunshot publishes the native gun sound", "[engine_client_sound_cue]") {

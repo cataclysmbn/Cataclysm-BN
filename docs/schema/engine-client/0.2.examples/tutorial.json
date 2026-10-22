@@ -4598,7 +4598,8 @@
                 "subtile": "end_piece",
                 "rotation": 1,
                 "wall": true,
-                "coverage": 95
+                "coverage": 95,
+                "form": "door"
               },
               "light": 1
             },

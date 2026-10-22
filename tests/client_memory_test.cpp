@@ -311,8 +311,14 @@ TEST_CASE(
         CHECK(click->action == "RIGHT");
         CHECK_FALSE(click->mouse_position);
     }
-    SECTION("a door further away, open floor and a locked door stay a click") {
-        for (const auto& at : {me + tripoint_east * 3, me + tripoint_west, me + tripoint_north}) {
+    SECTION("a locked door beside the avatar is a move into it, which says that it is locked") {
+        const auto click = engine_client::travel_click(target(me + tripoint_north));
+        REQUIRE(click);
+        CHECK(click->action == "UP");
+        CHECK_FALSE(click->mouse_position);
+    }
+    SECTION("a door further away and open floor stay a click") {
+        for (const auto& at : {me + tripoint_east * 3, me + tripoint_west}) {
             const auto click = engine_client::travel_click(target(at));
             REQUIRE(click);
             CHECK(click->action.empty());

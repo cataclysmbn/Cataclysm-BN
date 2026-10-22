@@ -25,6 +25,7 @@
 #include "editor/mapgen_check.h"
 #include "editor/mapgen_legend.h"
 #include "editor/mapgen_preview.h"
+#include "editor/mapgen_source.h"
 #include "enums.h"
 #include "fluid_grid.h"
 #include "game.h"
@@ -306,6 +307,13 @@ public:
         }
         return true;
     }
+    /// Makes `ptr` the only function the container picks.
+    void replace(const std::shared_ptr<mapgen_function>& ptr) {
+        assert(ptr);
+        mapgens_.clear();
+        weights_ = {};
+        weights_.add(ptr, std::max(ptr->weight, 1));
+    }
     auto pick(const int hardcoded_weight) const -> std::shared_ptr<mapgen_function> {
         if (hardcoded_weight > 0
             && rng(1, weights_.get_weight() + hardcoded_weight) > weights_.get_weight()) {
@@ -434,6 +442,10 @@ public:
     /// @see mapgen_basic_container::add
     auto add(const std::string& key, const std::shared_ptr<mapgen_function>& ptr) -> int {
         return mapgens_[key].add(ptr);
+    }
+    /// @see mapgen_basic_container::replace
+    void replace(const std::string& key, const std::shared_ptr<mapgen_function>& ptr) {
+        mapgens_[key].replace(ptr);
     }
     /// @see mapgen_basic_container::generate
     auto generate(mapgendata& dat, const std::string& key, const int hardcoded_weight = 0) const
@@ -709,6 +721,10 @@ void reset_mapgens() {
 /////////////////////////////////////////////////////////////////////////////////
 ///// 2 - right after init() finishes parsing all game json and terrain info/etc is set..
 /////   ...parse more json! (mapgen_function_json)
+
+auto mapgen_function_json_base::source_location() const -> const json_source_location& {
+    return *jsrcloc;
+}
 
 auto mapgen_function_json_base::calc_index(const point_rel_ms& p) const -> size_t {
     if (p.x() >= mapgensize.x()) { debugmsg("invalid value %zu for x in calc_index", p.x()); }
@@ -6563,6 +6579,26 @@ auto editor::load_detached_mapgens(const std::string_view text)
         object.allow_omitted_members();
         return load_detached(entry, object);
     } catch (const JsonError& e) { return std::unexpected(std::string(e.what())); }
+}
+
+auto editor::apply_mapgen(const std::string_view text) -> std::expected<void, std::string> {
+    const auto loaded = load_detached_mapgens(text);
+    if (!loaded) { return std::unexpected(loaded.error()); }
+    if (loaded->functions.empty()) {
+        return std::unexpected(std::string("only an overmap terrain's mapgen can be applied"));
+    }
+    for (const auto index : std::views::iota(std::size_t{0}, loaded->functions.size())) {
+        oter_mapgen.replace(loaded->om_terrains[index], loaded->functions[index]);
+    }
+    return {};
+}
+
+auto editor::mapgen_source_of(const std::string& mapgen_id) -> std::optional<mapgen_source> {
+    const auto picked = oter_mapgen.pick(mapgen_id);
+    const auto* const json = dynamic_cast<const mapgen_function_json_base*>(picked.get());
+    if (json == nullptr || !json->source_location().path) { return std::nullopt; }
+    return mapgen_source{
+        .path = *json->source_location().path, .offset = json->source_location().offset};
 }
 
 auto editor::nested_mapgen_ids() -> std::vector<std::string> {

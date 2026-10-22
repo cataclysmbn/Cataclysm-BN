@@ -31,7 +31,10 @@ export const editorMenu: Scenario = {
       await engine.toMainMenu()
       assertEquals((await engine.invoke("menu:tab", { row: "editor" })).stages.at(-1), "completed")
       const tab = engine.top()
-      assertEquals(part(tab, "menu:entries").rows.map((row: Value) => row.id), ["editor:map"])
+      assertEquals(part(tab, "menu:entries").rows.map((row: Value) => row.id), [
+        "editor:map",
+        "editor:vehicle",
+      ])
       rec.accept("title screen on the editor tab", "screen", tab)
 
       const started = await engine.invoke("menu:entry", { row: "editor:map" })

@@ -669,6 +669,7 @@
               "CTRL+U"
             ],
             "enabled": true,
+            "role": "edit",
             "expect": "screen"
           },
           {
@@ -678,6 +679,7 @@
               "BACKSPACE"
             ],
             "enabled": true,
+            "role": "edit",
             "expect": "screen"
           },
           {
@@ -707,6 +709,7 @@
               "DELETE"
             ],
             "enabled": true,
+            "role": "edit",
             "expect": "screen"
           },
           {
@@ -716,6 +719,7 @@
               "F2"
             ],
             "enabled": true,
+            "role": "edit",
             "expect": "screen"
           },
           {
@@ -997,6 +1001,7 @@
               "CTRL+U"
             ],
             "enabled": true,
+            "role": "edit",
             "expect": "screen"
           },
           {
@@ -1006,6 +1011,7 @@
               "BACKSPACE"
             ],
             "enabled": true,
+            "role": "edit",
             "expect": "screen"
           },
           {
@@ -1035,6 +1041,7 @@
               "DELETE"
             ],
             "enabled": true,
+            "role": "edit",
             "expect": "screen"
           },
           {
@@ -1044,6 +1051,7 @@
               "F2"
             ],
             "enabled": true,
+            "role": "edit",
             "expect": "screen"
           },
           {

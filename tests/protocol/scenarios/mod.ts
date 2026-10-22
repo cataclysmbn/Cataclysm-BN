@@ -25,6 +25,7 @@ import { title } from "./title.ts"
 import { trade } from "./trade.ts"
 import { tutorial } from "./tutorial.ts"
 import { vehicle } from "./vehicle.ts"
+import { vehicleEditor } from "./vehicle_editor.ts"
 
 export const scenarios: Scenario[] = [
   handshake,
@@ -42,6 +43,7 @@ export const scenarios: Scenario[] = [
   editmap,
   editor,
   editorMenu,
+  vehicleEditor,
   vehicle,
   character,
   info,

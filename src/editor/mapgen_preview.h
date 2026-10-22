@@ -1,11 +1,13 @@
 #pragma once
 
 #include "coordinates.h"
+#include "type_id.h"
 
 #include <cstddef>
 #include <expected>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -27,6 +29,16 @@ struct detached_mapgens {
 /// Loads the entry in `text`; the error is what the loader threw. Nested and update mapgens load no
 /// function.
 auto load_detached_mapgens(std::string_view text) -> std::expected<detached_mapgens, std::string>;
+
+/// Registers the entry in `text` as the mapgen of its overmap terrains, in place of the ones the
+/// game loaded for them, so that the game generates it from then on; the error is what the loader
+/// threw. Nested and update mapgens are not applied.
+auto apply_mapgen(std::string_view text) -> std::expected<void, std::string>;
+
+/// The overmap terrain an entry's `om_terrain` names: itself, or its turn to `direction` when it
+/// rotates.
+auto overmap_terrain(const std::string& name, const std::string& direction)
+    -> std::optional<oter_id>;
 
 /// A parameter a preview can pin, with every value it can take.
 struct mapgen_parameter_choice {

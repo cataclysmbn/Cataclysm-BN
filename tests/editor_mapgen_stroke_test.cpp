@@ -130,3 +130,42 @@ TEST_CASE("the eyedropper reads the symbol under it", "[editor_mapgen]") {
     CHECK(editor::symbol_at(grid, {3, 1}) == ".");
     CHECK(editor::symbol_at(grid, {6, 0}).empty());
 }
+
+TEST_CASE("a copied region pastes elsewhere as one undo step", "[editor_mapgen]") {
+    auto doc = editor::document::parse("room.json", room).value();
+    const auto clip = editor::copy_region(editor::symbols_of(doc, 0), {3, 2}, {1, 1});
+    CHECK(clip == editor::symbol_grid{{".", ".", "."}, {"#", "#", "#"}});
+    CHECK(editor::paste(doc, {.object = 0, .clip = clip, .at = {3, 2}}).value() == 6);
+    CHECK(rows_of(doc) == std::vector<std::string>{"......", "......", "###...", "...###"});
+    CHECK(doc.undo());
+    CHECK(rows_of(doc) == std::vector<std::string>{"......", "......", "######", "......"});
+    CHECK_FALSE(doc.undo());
+}
+
+TEST_CASE("a copy and a paste stop at the edge of the rows", "[editor_mapgen]") {
+    auto doc = editor::document::parse("room.json", room).value();
+    const auto grid = editor::symbols_of(doc, 0);
+    CHECK(editor::copy_region(grid, {-2, -2}, {1, 0}) == editor::symbol_grid{{".", "."}});
+    CHECK(editor::copy_region(grid, {6, 0}, {8, 3}).empty());
+    const auto clip = editor::symbol_grid{{"x", "y"}, {"z", "w"}};
+    CHECK(editor::paste(doc, {.object = 0, .clip = clip, .at = {5, 3}}).value() == 1);
+    CHECK(rows_of(doc) == std::vector<std::string>{"......", "......", "######", ".....x"});
+    CHECK(editor::paste(doc, {.object = 0, .clip = clip, .at = {6, 0}}).value() == 0);
+    CHECK(editor::paste(doc, {.object = 0, .clip = {}, .at = {0, 0}}).value() == 0);
+    CHECK(doc.undo());
+    CHECK_FALSE(doc.undo());
+}
+
+TEST_CASE("a paste refuses a symbol that is not one column wide", "[editor_mapgen]") {
+    auto doc = editor::document::parse("room.json", room).value();
+    CHECK_FALSE(editor::paste(doc, {.object = 0, .clip = {{"ab"}}, .at = {0, 0}}));
+    CHECK_FALSE(editor::paste(doc, {.object = 3, .clip = {{"x"}}, .at = {0, 0}}));
+    CHECK_FALSE(doc.can_undo());
+}
+
+TEST_CASE("rotating a clip turns it a quarter clockwise", "[editor_mapgen]") {
+    const auto clip = editor::symbol_grid{{"a", "b", "c"}, {"d", "e", "f"}};
+    CHECK(editor::rotated(clip) == editor::symbol_grid{{"d", "a"}, {"e", "b"}, {"f", "c"}});
+    CHECK(editor::rotated(editor::rotated(editor::rotated(editor::rotated(clip)))) == clip);
+    CHECK(editor::rotated({}).empty());
+}
