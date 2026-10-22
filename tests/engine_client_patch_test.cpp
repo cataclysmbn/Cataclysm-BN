@@ -312,6 +312,45 @@ TEST_CASE(
         }
     }
 
+    SECTION("ground a roof edge hides under open air, changed, shown and left") {
+        for (const auto y : std::views::iota(-1, 2)) {
+            for (const auto x : std::views::iota(-1, 2)) {
+                here.ter_set(start + tripoint(x, y, 1), ter_id("t_flat_roof"));
+            }
+        }
+        here.ter_set(start + tripoint(-2, 0, 0), ter_id("t_wall"));
+        const auto hidden = start + tripoint(-3, 0, 0);
+        const auto lies_hidden = [&] {
+            const auto cells = ec::world::capture_world().cells;
+            const auto abs = map_local_to_abs(here, hidden);
+            const auto found = cells.find({.dim = "", .x = abs.x(), .y = abs.y(), .z = abs.z()});
+            return found != cells.end() && found->second.known == ec::knowledge::remembered;
+        };
+        watched.step_to(start + tripoint(0, 0, 1));
+        get_avatar().clear_map_memory();
+        watched.publish();
+        CHECK(lies_hidden());
+        here.furn_set(hidden, furn_id("f_chair"));
+        watched.publish();
+        CHECK(lies_hidden());
+        here.ter_set(hidden, ter_id("t_dirt"));
+        watched.publish();
+        here.ter_set(start + tripoint(-2, 0, 0), ter_id("t_floor"));
+        watched.publish();
+        watched.step_to(start + tripoint(1, 0, 1));
+        watched.step_to(start + tripoint(1, 1, 1));
+        watched.step_to(start);
+        watched.step_to(start + tripoint(0, 0, 1));
+        for (const auto y : std::views::iota(-1, 2)) {
+            for (const auto x : std::views::iota(-1, 2)) {
+                here.ter_set(start + tripoint(x, y, 1), ter_id("t_open_air"));
+            }
+        }
+        here.furn_set(hidden, furn_id("f_null"));
+        here.ter_set(start + tripoint(-2, 0, 0), ter_id("t_grass"));
+        here.ter_set(hidden, ter_id("t_grass"));
+    }
+
     CHECK(watched.authority.oracle_mismatches().empty());
 }
 

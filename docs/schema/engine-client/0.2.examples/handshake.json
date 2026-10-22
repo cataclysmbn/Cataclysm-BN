@@ -13,7 +13,7 @@
           "revision": "0"
         },
         "schema": {
-          "engine": "sha256:ec125c0902097afe",
+          "engine": "sha256:f7ef58a1a7689706",
           "client": "sha256:0000000000000000"
         }
       }
@@ -29,7 +29,7 @@
           "name": "contract-gen",
           "version": "1"
         },
-        "schema": "sha256:ec125c0902097afe",
+        "schema": "sha256:f7ef58a1a7689706",
         "capabilities": {
           "viewport": {
             "cols": 40,
@@ -61,7 +61,7 @@
           "cells_per_query": 4096,
           "screen_queue": 8
         },
-        "schema": "sha256:ec125c0902097afe",
+        "schema": "sha256:f7ef58a1a7689706",
         "locale": "en_US",
         "engine_locale": "en_US",
         "role": "controller"
@@ -1309,7 +1309,7 @@
           "cells_per_query": 4096,
           "screen_queue": 8
         },
-        "schema": "sha256:ec125c0902097afe",
+        "schema": "sha256:f7ef58a1a7689706",
         "locale": "en_US",
         "engine_locale": "en_US"
       },
