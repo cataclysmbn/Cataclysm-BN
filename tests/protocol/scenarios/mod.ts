@@ -7,6 +7,7 @@ import { construction, crafting } from "./crafting.ts"
 import { diary } from "./diary.ts"
 import { editmap } from "./editmap.ts"
 import { editor } from "./editor.ts"
+import { editorMenu } from "./editor_menu.ts"
 import type { Scenario } from "./driver.ts"
 import { handshake } from "./handshake.ts"
 import { generic } from "./generic.ts"
@@ -40,6 +41,7 @@ export const scenarios: Scenario[] = [
   look,
   editmap,
   editor,
+  editorMenu,
   vehicle,
   character,
   info,

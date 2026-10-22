@@ -1,0 +1,2234 @@
+{
+  "valid": [
+    {
+      "name": "title screen on the editor tab",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:1",
+        "role": "screen",
+        "kind": "main_menu",
+        "title": "Cataclysm: Bright Nights",
+        "root": {
+          "id": "menu",
+          "kind": "split",
+          "relation": "peers",
+          "children": [
+            {
+              "id": "menu:banner",
+              "kind": "text",
+              "markup": "<color_light_cyan>   _________            __                   .__                                </color>\n<color_light_cyan>   \\_   ___ \\ _____   _/  |_ _____     ____  |  |   ___.__   ______  _____      </color>\n<color_light_cyan>   /    \\  \\/ \\__  \\  \\   __\\\\__  \\  _/ ___\\ |  |  <   |  | /  ___/ /     \\     </color>\n<color_light_cyan>   \\     \\____ / __ \\_ |  |   / __ \\_\\  \\___ |  |__ \\___  | \\___ \\ |  Y Y  \\    </color>\n<color_light_cyan>    \\______  /(____  / |__|  (____  / \\___  >|____/ / ____|/____  >|__|_|  /    </color>\n<color_light_cyan>           \\/      \\/             \\/      \\/        \\/          \\/       \\/     </color>\n<color_light_blue>           ____       _       _     _     _   _ _       _     _                 </color>\n<color_light_blue>          |  _ \\     (_)     | |   | |   | \\ | (_)     | |   | |                </color>\n<color_light_blue>          | |_) |_ __ _  __ _| |__ | |_  |  \\| |_  __ _| |__ | |_ ___           </color>\n<color_light_blue>          |  _ <| '__| |/ _` | '_ \\| __| | . ` | |/ _` | '_ \\| __/ __|          </color>\n<color_light_blue>          | |_) | |  | | (_| | | | | |_  | |\\  | | (_| | | | | |_\\__ \\          </color>\n<color_light_blue>          |____/|_|  |_|\\__, |_| |_|\\__| |_| \\_|_|\\__, |_| |_|\\__|___/          </color>\n<color_light_blue>                         __/ |                     __/ |                        </color>\n<color_light_blue>                        |___/                     |___/                         </color>\n<color_light_blue>                                                                                </color>\n<color_light_blue>                                                                                </color>\n<color_light_blue>                                                                                </color>\n<color_light_blue>                                                                                </color>\n\n<color_light_blue>Version: build</color>",
+              "role": "banner"
+            },
+            {
+              "id": "menu:tabs",
+              "kind": "tabs",
+              "affordances": [
+                "menu:tab"
+              ],
+              "tabs": [
+                {
+                  "id": "motd",
+                  "label": "MOTD",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "new_game",
+                  "label": "New Game",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "load",
+                  "label": "Load",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "world",
+                  "label": "World",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "editor",
+                  "label": "Editor",
+                  "selected": true,
+                  "enabled": true
+                },
+                {
+                  "id": "settings",
+                  "label": "Settings",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "help",
+                  "label": "Help",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "credits",
+                  "label": "Credits",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "quit",
+                  "label": "Quit",
+                  "selected": false,
+                  "enabled": true
+                }
+              ],
+              "select": "menu:tab",
+              "child": {
+                "id": "menu:entries",
+                "kind": "list",
+                "affordances": [
+                  "menu:entry"
+                ],
+                "columns": [],
+                "rows": [
+                  {
+                    "id": "editor:map",
+                    "label": "Map editor",
+                    "description": "Edit maps in a new world of open field, without making a character.",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": []
+                  }
+                ],
+                "total": 1,
+                "selection": "single",
+                "activate": "menu:entry"
+              }
+            }
+          ]
+        },
+        "affordances": [
+          {
+            "id": "menu:tab",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "menu:tabs"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "menu:entry",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "menu:entries"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Move cursor up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Move cursor down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Go to prev tab",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Go to next tab",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "NEXT_TAB",
+            "label": "Go to next tab",
+            "keys": [
+              "TAB"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "PREV_TAB",
+            "label": "Go to prev tab",
+            "keys": [
+              "BACKTAB"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_UP",
+            "label": "Page up",
+            "keys": [
+              "PPAGE"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_DOWN",
+            "label": "Page down",
+            "keys": [
+              "NPAGE"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "menu:entries",
+          "row_id": "editor:map"
+        },
+        "context": "MAIN_MENU"
+      }
+    },
+    {
+      "name": "map editor started from the main menu, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-1",
+        "expect": {
+          "boundary_id": "boundary:1",
+          "revision": "1"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "menu:entry",
+          "args": {
+            "row": "editor:map"
+          }
+        }
+      }
+    },
+    {
+      "name": "map editor started from the main menu, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:1",
+        "stage": "received",
+        "stage_text": "Received."
+      }
+    },
+    {
+      "name": "map editor started from the main menu, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:1",
+        "stage": "validated",
+        "stage_text": "Accepted."
+      }
+    },
+    {
+      "name": "map editor started from the main menu, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:1",
+        "stage": "executing",
+        "stage_text": "Under way."
+      }
+    },
+    {
+      "name": "map editor started from the main menu, interrupted",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-1",
+        "command_id": "command:1",
+        "stage": "interrupted",
+        "stage_text": "Interrupted.",
+        "error": "stale_epoch",
+        "error_text": "The world changed."
+      }
+    },
+    {
+      "name": "map editor of the main menu left for the map, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "screen_id": "screen:2"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "QUIT"
+        }
+      }
+    },
+    {
+      "name": "map editor of the main menu left for the map, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "received",
+        "stage_text": "Received."
+      }
+    },
+    {
+      "name": "map editor of the main menu left for the map, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "validated",
+        "stage_text": "Accepted."
+      }
+    },
+    {
+      "name": "map editor of the main menu left for the map, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "executing",
+        "stage_text": "Under way."
+      }
+    },
+    {
+      "name": "map editor of the main menu left for the map, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "completed",
+        "stage_text": "Done.",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "6",
+          "revision": "2"
+        }
+      }
+    },
+    {
+      "name": "map editor reopened on the document it was left with",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:3",
+        "role": "screen",
+        "kind": "editor",
+        "title": "Map Editor",
+        "root": {
+          "id": "editor:body",
+          "kind": "split",
+          "relation": "peers",
+          "active": "editor:canvas",
+          "children": [
+            {
+              "id": "editor:file",
+              "kind": "form",
+              "affordances": [
+                "editor:open",
+                "editor:save_as"
+              ],
+              "fields": [
+                {
+                  "id": "path",
+                  "label": "File",
+                  "value": "profile/mods/editor_menu_scenario/chunk.json",
+                  "type": "text"
+                }
+              ],
+              "submit": "editor:open"
+            },
+            {
+              "id": "editor:new",
+              "kind": "form",
+              "affordances": [
+                "editor:new_set",
+                "editor:new_apply"
+              ],
+              "fields": [
+                {
+                  "id": "path",
+                  "label": "New file",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "id": "om_terrain",
+                  "label": "Overmap terrain",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "id": "fill",
+                  "label": "Terrain",
+                  "value": "t_floor",
+                  "type": "text"
+                }
+              ],
+              "submit": "editor:new_apply"
+            },
+            {
+              "id": "editor:document",
+              "kind": "panel",
+              "title": "profile/mods/editor_menu_scenario/chunk.json",
+              "stats": [
+                {
+                  "key": "saved",
+                  "label": "Saved",
+                  "value": "Yes",
+                  "tone": "good"
+                },
+                {
+                  "key": "symbol",
+                  "label": "Symbol",
+                  "value": "."
+                }
+              ]
+            },
+            {
+              "id": "editor:objects",
+              "kind": "list",
+              "affordances": [
+                "editor:object"
+              ],
+              "columns": [],
+              "rows": [
+                {
+                  "id": "object:0",
+                  "label": "editor_menu_scenario_chunk",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": true,
+                  "columns": []
+                }
+              ],
+              "total": 1,
+              "selection": "single",
+              "activate": "editor:object"
+            },
+            {
+              "id": "editor:tools",
+              "kind": "tabs",
+              "affordances": [
+                "editor:tool"
+              ],
+              "tabs": [
+                {
+                  "id": "tool:point",
+                  "label": "Pencil",
+                  "selected": true,
+                  "enabled": true
+                },
+                {
+                  "id": "tool:line",
+                  "label": "Line",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "tool:rect",
+                  "label": "Rectangle",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "tool:rect_filled",
+                  "label": "Filled rectangle",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "tool:ellipse",
+                  "label": "Ellipse",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "tool:fill",
+                  "label": "Fill",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "tool:pick",
+                  "label": "Eyedropper",
+                  "selected": false,
+                  "enabled": true
+                }
+              ],
+              "select": "editor:tool",
+              "child": {
+                "id": "editor:canvas",
+                "kind": "grid",
+                "affordances": [
+                  "editor:paint"
+                ],
+                "cols": 2,
+                "rows": 2,
+                "cells": [
+                  {
+                    "x": 0,
+                    "y": 0,
+                    "id": "square:0,0",
+                    "glyph": ".",
+                    "affordance": "editor:paint",
+                    "enabled": true,
+                    "looks": [
+                      0
+                    ]
+                  },
+                  {
+                    "x": 1,
+                    "y": 0,
+                    "id": "square:1,0",
+                    "glyph": ".",
+                    "affordance": "editor:paint",
+                    "enabled": true,
+                    "looks": [
+                      0
+                    ]
+                  },
+                  {
+                    "x": 0,
+                    "y": 1,
+                    "id": "square:0,1",
+                    "glyph": ".",
+                    "affordance": "editor:paint",
+                    "enabled": true,
+                    "looks": [
+                      0
+                    ]
+                  },
+                  {
+                    "x": 1,
+                    "y": 1,
+                    "id": "square:1,1",
+                    "glyph": ".",
+                    "affordance": "editor:paint",
+                    "enabled": true,
+                    "looks": [
+                      0
+                    ]
+                  }
+                ],
+                "looks": [
+                  {
+                    "kind": "terrain",
+                    "id": "t_floor",
+                    "glyph": ".",
+                    "color": "c_cyan",
+                    "name": "wooden floor",
+                    "subtile": "center"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "editor:legend",
+              "kind": "list",
+              "affordances": [
+                "editor:symbol"
+              ],
+              "columns": [
+                {
+                  "key": "terrain",
+                  "label": "terrain"
+                }
+              ],
+              "rows": [
+                {
+                  "id": "symbol:.",
+                  "label": ".",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": true,
+                  "columns": [
+                    {
+                      "key": "terrain",
+                      "label": "terrain",
+                      "value": "\"t_floor\""
+                    }
+                  ]
+                }
+              ],
+              "total": 1,
+              "selection": "single",
+              "activate": "editor:symbol"
+            },
+            {
+              "id": "editor:diagnostics",
+              "kind": "list",
+              "affordances": [
+                "editor:diagnostic"
+              ],
+              "columns": [],
+              "rows": [],
+              "total": 0,
+              "selection": "single",
+              "activate": "editor:diagnostic"
+            },
+            {
+              "id": "editor:placements",
+              "kind": "list",
+              "affordances": [
+                "editor:placement"
+              ],
+              "columns": [],
+              "rows": [],
+              "total": 0,
+              "selection": "single",
+              "activate": "editor:placement"
+            },
+            {
+              "id": "editor:field",
+              "kind": "form",
+              "affordances": [
+                "editor:field_set",
+                "editor:field_apply"
+              ],
+              "fields": [
+                {
+                  "id": "pointer",
+                  "label": "Pointer",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "id": "value",
+                  "label": "Value",
+                  "value": "",
+                  "type": "text",
+                  "multiline": true
+                }
+              ],
+              "submit": "editor:field_apply"
+            },
+            {
+              "id": "editor:mapping",
+              "kind": "form",
+              "affordances": [
+                "editor:mapping_set",
+                "editor:mapping_apply"
+              ],
+              "fields": [
+                {
+                  "id": "symbol",
+                  "label": "Symbol",
+                  "value": ".",
+                  "type": "text",
+                  "max_length": 1
+                },
+                {
+                  "id": "layer",
+                  "label": "Layer",
+                  "value": "terrain",
+                  "type": "select",
+                  "options": [
+                    {
+                      "id": "terrain",
+                      "label": "terrain"
+                    },
+                    {
+                      "id": "furniture",
+                      "label": "furniture"
+                    },
+                    {
+                      "id": "fields",
+                      "label": "fields"
+                    },
+                    {
+                      "id": "npcs",
+                      "label": "npcs"
+                    },
+                    {
+                      "id": "signs",
+                      "label": "signs"
+                    },
+                    {
+                      "id": "vendingmachines",
+                      "label": "vendingmachines"
+                    },
+                    {
+                      "id": "toilets",
+                      "label": "toilets"
+                    },
+                    {
+                      "id": "gaspumps",
+                      "label": "gaspumps"
+                    },
+                    {
+                      "id": "items",
+                      "label": "items"
+                    },
+                    {
+                      "id": "monsters",
+                      "label": "monsters"
+                    },
+                    {
+                      "id": "vehicles",
+                      "label": "vehicles"
+                    },
+                    {
+                      "id": "item",
+                      "label": "item"
+                    },
+                    {
+                      "id": "artifact",
+                      "label": "artifact"
+                    },
+                    {
+                      "id": "artifacts",
+                      "label": "artifacts"
+                    },
+                    {
+                      "id": "traps",
+                      "label": "traps"
+                    },
+                    {
+                      "id": "monster",
+                      "label": "monster"
+                    },
+                    {
+                      "id": "rubble",
+                      "label": "rubble"
+                    },
+                    {
+                      "id": "computers",
+                      "label": "computers"
+                    },
+                    {
+                      "id": "sealed_item",
+                      "label": "sealed_item"
+                    },
+                    {
+                      "id": "nested",
+                      "label": "nested"
+                    },
+                    {
+                      "id": "liquids",
+                      "label": "liquids"
+                    },
+                    {
+                      "id": "graffiti",
+                      "label": "graffiti"
+                    },
+                    {
+                      "id": "translate",
+                      "label": "translate"
+                    },
+                    {
+                      "id": "zones",
+                      "label": "zones"
+                    },
+                    {
+                      "id": "ter_furn_transforms",
+                      "label": "ter_furn_transforms"
+                    },
+                    {
+                      "id": "faction_owner_character",
+                      "label": "faction_owner_character"
+                    },
+                    {
+                      "id": "remove_all",
+                      "label": "remove_all"
+                    }
+                  ]
+                },
+                {
+                  "id": "value",
+                  "label": "Places",
+                  "value": "",
+                  "type": "text"
+                }
+              ],
+              "submit": "editor:mapping_apply"
+            },
+            {
+              "id": "editor:catalog_kinds",
+              "kind": "tabs",
+              "affordances": [
+                "editor:catalog_kind"
+              ],
+              "tabs": [
+                {
+                  "id": "catalog:terrain",
+                  "label": "Terrain",
+                  "selected": true,
+                  "enabled": true
+                },
+                {
+                  "id": "catalog:furniture",
+                  "label": "Furniture",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "catalog:trap",
+                  "label": "Traps",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "catalog:field",
+                  "label": "Fields",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "catalog:item",
+                  "label": "Items",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "catalog:item_group",
+                  "label": "Item groups",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "catalog:monster",
+                  "label": "Monsters",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "catalog:monster_group",
+                  "label": "Monster groups",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "catalog:vehicle",
+                  "label": "Vehicles",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "catalog:npc_template",
+                  "label": "NPCs",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "catalog:nested_mapgen",
+                  "label": "Nested chunks",
+                  "selected": false,
+                  "enabled": true
+                }
+              ],
+              "select": "editor:catalog_kind",
+              "child": {
+                "id": "editor:catalog",
+                "kind": "list",
+                "affordances": [
+                  "editor:catalog_pick"
+                ],
+                "columns": [
+                  {
+                    "key": "id",
+                    "label": "ID"
+                  },
+                  {
+                    "key": "mod",
+                    "label": "Mod"
+                  }
+                ],
+                "rows": [
+                  {
+                    "id": "entry:t_adobe_brick_floor",
+                    "label": "adobe floor",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_adobe_brick_floor"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_adobe_brick_floor_noroof",
+                    "label": "adobe floor",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_adobe_brick_floor_noroof"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_adobe_brick_wall",
+                    "label": "adobe wall",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_adobe_brick_wall"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_adobe_brick_wall_halfway",
+                    "label": "half-built adobe wall",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_adobe_brick_wall_halfway"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_airbridge_metal",
+                    "label": "metal bridge",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_airbridge_metal"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_airbridge_wood",
+                    "label": "crude plank bridge",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_airbridge_wood"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_alluvial_deposit",
+                    "label": "alluvial deposit",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_alluvial_deposit"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_atm",
+                    "label": "ATM",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_atm"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_backboard",
+                    "label": "backboard",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_backboard"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_backboard_in",
+                    "label": "backboard",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_backboard_in"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_ballistic_door_glass_c",
+                    "label": "closed ballistic glass door",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_ballistic_door_glass_c"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_ballistic_door_glass_o",
+                    "label": "open ballistic glass door",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_ballistic_door_glass_o"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_ballistic_glass",
+                    "label": "ballistic glass",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_ballistic_glass"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bark_wall_broken",
+                    "label": "broken bark wall",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bark_wall_broken"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bark_wall_chipped",
+                    "label": "chipped bark wall",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bark_wall_chipped"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_barkfloor",
+                    "label": "bark",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_barkfloor"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_barndoor",
+                    "label": "rope and pulley",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_barndoor"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bars",
+                    "label": "metal bars",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bars"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bog_iron",
+                    "label": "bog iron",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bog_iron"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bramble_door_c",
+                    "label": "closed bramble roots",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bramble_door_c"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bramble_door_o",
+                    "label": "open bramble roots",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bramble_door_o"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_brick_wall",
+                    "label": "brick wall",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_brick_wall"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_brick_wall_halfway",
+                    "label": "half-built brick wall",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_brick_wall_halfway"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bridge",
+                    "label": "walkway",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bridge"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_buffer_stop",
+                    "label": "buffer stop",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_buffer_stop"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bulk_tank",
+                    "label": "bulk tank",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulk_tank"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bulkhead_floor",
+                    "label": "bulkhead",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulkhead_floor"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bulkhead_floor_underwater",
+                    "label": "underwater bulkhead",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulkhead_floor_underwater"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bulkhead_floor_underwater_no_roof",
+                    "label": "underwater bulkhead",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulkhead_floor_underwater_no_roof"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_bulkhead_roof",
+                    "label": "bulkhead",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulkhead_roof"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_card_fp",
+                    "label": "card reader",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_fp"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_card_industrial",
+                    "label": "card reader",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_industrial"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_card_military",
+                    "label": "card reader",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_military"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_card_reader_broken",
+                    "label": "broken card reader",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_reader_broken"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_card_robofac",
+                    "label": "card reader",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_robofac"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_card_science",
+                    "label": "card reader",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_science"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_carpet_concrete",
+                    "label": "industrial carpet",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_concrete"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_carpet_green",
+                    "label": "green carpet",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_green"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_carpet_metal",
+                    "label": "bunker carpet",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_metal"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_carpet_purple",
+                    "label": "purple carpet",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_purple"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_carpet_red",
+                    "label": "red carpet",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_red"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_carpet_yellow",
+                    "label": "yellow carpet",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_yellow"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_centrifuge",
+                    "label": "broken centrifuge",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_centrifuge"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_chainfence",
+                    "label": "chain link fence",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chainfence"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_chainfence_posts",
+                    "label": "metal post",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chainfence_posts"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_chaingate_c",
+                    "label": "closed wire gate",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chaingate_c"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_chaingate_l",
+                    "label": "locked wire gate",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chaingate_l"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_chaingate_o",
+                    "label": "open wire gate",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chaingate_o"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_chickenwire_fence",
+                    "label": "chickenwire fence",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chickenwire_fence"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "entry:t_chickenwire_fence_post",
+                    "label": "chickenwire fence post",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chickenwire_fence_post"
+                      },
+                      {
+                        "key": "mod",
+                        "label": "Mod",
+                        "value": "bn"
+                      }
+                    ]
+                  }
+                ],
+                "total": 812,
+                "selection": "single",
+                "activate": "editor:catalog_pick",
+                "filterable": true
+              }
+            }
+          ]
+        },
+        "affordances": [
+          {
+            "id": "editor:open",
+            "label": "Open",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {
+                "field_id": "path"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:save_as",
+            "label": "Save as",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {
+                "field_id": "path"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:new_set",
+            "label": "New file",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:new"
+              },
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:new_apply",
+            "label": "Create",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:object",
+            "label": "Edit",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:objects"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:undo",
+            "label": "Undo",
+            "keys": [],
+            "enabled": false,
+            "denial": "Not available now.",
+            "expect": "screen"
+          },
+          {
+            "id": "editor:redo",
+            "label": "Redo",
+            "keys": [],
+            "enabled": false,
+            "denial": "Not available now.",
+            "expect": "screen"
+          },
+          {
+            "id": "editor:save",
+            "label": "Save",
+            "keys": [],
+            "enabled": false,
+            "denial": "Not available now.",
+            "expect": "screen"
+          },
+          {
+            "id": "editor:diagnostic",
+            "label": "Show",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:diagnostics"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:placement",
+            "label": "Show",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:placements"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:field_set",
+            "label": "Value",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:field"
+              },
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:field_apply",
+            "label": "Set",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:tool",
+            "label": "Tool",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:tools"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:symbol",
+            "label": "Symbol",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:legend"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:paint",
+            "label": "Draw",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:canvas"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:catalog_kind",
+            "label": "Kind",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:catalog_kinds"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:catalog_filter",
+            "label": "Filter",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:catalog_page",
+            "label": "Page",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "count": {
+                "min": 0,
+                "max": 16,
+                "default": 0
+              }
+            },
+            "expect": "screen"
+          },
+          {
+            "id": "editor:catalog_pick",
+            "label": "Use",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:catalog"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:mapping_set",
+            "label": "Value",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:mapping"
+              },
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:mapping_apply",
+            "label": "Set mapping",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:preview",
+            "label": "Preview",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "count": {
+                "min": 1,
+                "max": 4294967295,
+                "default": 1
+              }
+            },
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "role": "help",
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "editor:canvas"
+        },
+        "context": "EDITOR"
+      }
+    }
+  ],
+  "invalid": []
+}

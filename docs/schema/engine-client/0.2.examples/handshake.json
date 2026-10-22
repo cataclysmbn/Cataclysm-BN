@@ -183,7 +183,7 @@
             "allow_cancel": false,
             "allow_set_count": false,
             "title": "",
-            "message": "   _________            __                   .__\n   \\_   ___ \\ _____   _/  |_ _____     ____  |  |   ___.__   ______  _____\n   /    \\  \\/ \\__  \\  \\   __\\\\__  \\  _/ ___\\ |  |  <   |  | /  ___/ /     \\\n   \\     \\____ / __ \\_ |  |   / __ \\_\\  \\___ |  |__ \\___  | \\___ \\ |  Y Y  \\\n    \\______  /(____  / |__|  (____  / \\___  >|____/ / ____|/____  >|__|_|  /\n           \\/      \\/             \\/      \\/        \\/          \\/       \\/\n           ____       _       _     _     _   _ _       _     _\n          |  _ \\     (_)     | |   | |   | \\ | (_)     | |   | |\n          | |_) |_ __ _  __ _| |__ | |_  |  \\| |_  __ _| |__ | |_ ___\n          |  _ <| '__| |/ _` | '_ \\| __| | . ` | |/ _` | '_ \\| __/ __|\n        ┌───────────────────────────────┐| |\\  | | (_| | | | | |_\\__ \\\n        │  Custom Character             │|_| \\_|_|\\__, |_| |_|\\__|___/\n        │» Preset Character             │          __/ |\n        │  Random Character             │         |___/\n        │  Play Now!  (Default Scenario)│\n        │  Play Now!                    │\n        │  Tutorial                     │\n        │  Defence mode                 │\n        └───────────────────────────────┘\n ───Version: build───\n   [MOTD]  [New Game]  [Load]  [World]  [Settings]  [Help]  [Credits]  [Quit]\n           Select from one of previously created character templates.",
+            "message": "   _________            __                   .__\n   \\_   ___ \\ _____   _/  |_ _____     ____  |  |   ___.__   ______  _____\n   /    \\  \\/ \\__  \\  \\   __\\\\__  \\  _/ ___\\ |  |  <   |  | /  ___/ /     \\\n   \\     \\____ / __ \\_ |  |   / __ \\_\\  \\___ |  |__ \\___  | \\___ \\ |  Y Y  \\\n    \\______  /(____  / |__|  (____  / \\___  >|____/ / ____|/____  >|__|_|  /\n           \\/      \\/             \\/      \\/        \\/          \\/       \\/\n           ____       _       _     _     _   _ _       _     _\n          |  _ \\     (_)     | |   | |   | \\ | (_)     | |   | |\n          | |_) |_ __ _  __ _| |__ | |_  |  \\| |_  __ _| |__ | |_ ___\n          |  _ <| '__| |/ _` | '_ \\| __| | . ` | |/ _` | '_ \\| __/ __|\n       ┌───────────────────────────────┐ | |\\  | | (_| | | | | |_\\__ \\\n       │  Custom Character             │ |_| \\_|_|\\__, |_| |_|\\__|___/\n       │» Preset Character             │           __/ |\n       │  Random Character             │          |___/\n       │  Play Now!  (Default Scenario)│\n       │  Play Now!                    │\n       │  Tutorial                     │\n       │  Defence mode                 │\n       └───────────────────────────────┘\n ───Version: build───\n  [MOTD] [New Game] [Load] [World] [Editor] [Settings] [Help] [Credits] [Quit]\n           Select from one of previously created character templates.",
             "choices": [],
             "choice_total": 0,
             "compat": {
@@ -235,6 +235,12 @@
                       {
                         "id": "world",
                         "label": "World",
+                        "selected": false,
+                        "enabled": true
+                      },
+                      {
+                        "id": "editor",
+                        "label": "Editor",
                         "selected": false,
                         "enabled": true
                       },
@@ -603,7 +609,7 @@
           "allow_cancel": false,
           "allow_set_count": false,
           "title": "",
-          "message": "   _________            __                   .__\n   \\_   ___ \\ _____   _/  |_ _____     ____  |  |   ___.__   ______  _____\n   /    \\  \\/ \\__  \\  \\   __\\\\__  \\  _/ ___\\ |  |  <   |  | /  ___/ /     \\\n   \\     \\____ / __ \\_ |  |   / __ \\_\\  \\___ |  |__ \\___  | \\___ \\ |  Y Y  \\\n    \\______  /(____  / |__|  (____  / \\___  >|____/ / ____|/____  >|__|_|  /\n           \\/      \\/             \\/      \\/        \\/          \\/       \\/\n           ____       _       _     _     _   _ _       _     _\n          |  _ \\     (_)     | |   | |   | \\ | (_)     | |   | |\n          | |_) |_ __ _  __ _| |__ | |_  |  \\| |_  __ _| |__ | |_ ___\n          |  _ <| '__| |/ _` | '_ \\| __| | . ` | |/ _` | '_ \\| __/ __|\n        ┌───────────────────────────────┐| |\\  | | (_| | | | | |_\\__ \\\n        │  Custom Character             │|_| \\_|_|\\__, |_| |_|\\__|___/\n        │» Preset Character             │          __/ |\n        │  Random Character             │         |___/\n        │  Play Now!  (Default Scenario)│\n        │  Play Now!                    │\n        │  Tutorial                     │\n        │  Defence mode                 │\n        └───────────────────────────────┘\n ───Version: build───\n   [MOTD]  [New Game]  [Load]  [World]  [Settings]  [Help]  [Credits]  [Quit]\n           Select from one of previously created character templates.",
+          "message": "   _________            __                   .__\n   \\_   ___ \\ _____   _/  |_ _____     ____  |  |   ___.__   ______  _____\n   /    \\  \\/ \\__  \\  \\   __\\\\__  \\  _/ ___\\ |  |  <   |  | /  ___/ /     \\\n   \\     \\____ / __ \\_ |  |   / __ \\_\\  \\___ |  |__ \\___  | \\___ \\ |  Y Y  \\\n    \\______  /(____  / |__|  (____  / \\___  >|____/ / ____|/____  >|__|_|  /\n           \\/      \\/             \\/      \\/        \\/          \\/       \\/\n           ____       _       _     _     _   _ _       _     _\n          |  _ \\     (_)     | |   | |   | \\ | (_)     | |   | |\n          | |_) |_ __ _  __ _| |__ | |_  |  \\| |_  __ _| |__ | |_ ___\n          |  _ <| '__| |/ _` | '_ \\| __| | . ` | |/ _` | '_ \\| __/ __|\n       ┌───────────────────────────────┐ | |\\  | | (_| | | | | |_\\__ \\\n       │  Custom Character             │ |_| \\_|_|\\__, |_| |_|\\__|___/\n       │» Preset Character             │           __/ |\n       │  Random Character             │          |___/\n       │  Play Now!  (Default Scenario)│\n       │  Play Now!                    │\n       │  Tutorial                     │\n       │  Defence mode                 │\n       └───────────────────────────────┘\n ───Version: build───\n  [MOTD] [New Game] [Load] [World] [Editor] [Settings] [Help] [Credits] [Quit]\n           Select from one of previously created character templates.",
           "choices": [],
           "choice_total": 0,
           "compat": {
@@ -655,6 +661,12 @@
                     {
                       "id": "world",
                       "label": "World",
+                      "selected": false,
+                      "enabled": true
+                    },
+                    {
+                      "id": "editor",
+                      "label": "Editor",
                       "selected": false,
                       "enabled": true
                     },
@@ -957,6 +969,12 @@
                 {
                   "id": "world",
                   "label": "World",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "editor",
+                  "label": "Editor",
                   "selected": false,
                   "enabled": true
                 },

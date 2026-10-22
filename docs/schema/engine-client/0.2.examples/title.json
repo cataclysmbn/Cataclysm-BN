@@ -51,6 +51,12 @@
                   "enabled": true
                 },
                 {
+                  "id": "editor",
+                  "label": "Editor",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
                   "id": "settings",
                   "label": "Settings",
                   "selected": false,
@@ -466,6 +472,12 @@
                 {
                   "id": "world",
                   "label": "World",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "editor",
+                  "label": "Editor",
                   "selected": false,
                   "enabled": true
                 },
