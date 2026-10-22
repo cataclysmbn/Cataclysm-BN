@@ -580,7 +580,8 @@
                     "name": "wooden floor",
                     "subtile": "center"
                   }
-                ]
+                ],
+                "role": "canvas"
               }
             },
             {

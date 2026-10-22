@@ -563,7 +563,8 @@
                     "name": "wooden floor",
                     "subtile": "center"
                   }
-                ]
+                ],
+                "role": "canvas"
               }
             },
             {
@@ -2755,7 +2756,8 @@
                     "name": "dirt",
                     "subtile": "center"
                   }
-                ]
+                ],
+                "role": "canvas"
               }
             },
             {
@@ -4835,7 +4837,8 @@
                     "name": "wooden floor",
                     "subtile": "center"
                   }
-                ]
+                ],
+                "role": "canvas"
               }
             },
             {
