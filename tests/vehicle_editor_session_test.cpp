@@ -1,5 +1,6 @@
 #if defined(CATA_MCP)
 
+#    include "avatar.h"
 #    include "cata_utility.h"
 #    include "catch/catch.hpp"
 #    include "client_input.h"
@@ -14,10 +15,15 @@
 #    include "engine_client_component.h"
 #    include "engine_client_contract.h"
 #    include "json_formatter.h"
+#    include "map/map.h"
+#    include "map_helpers.h"
 #    include "output.h"
 #    include "path_info.h"
 #    include "point.h"
 #    include "state_helpers.h"
+#    include "vehicle/veh_type.h"
+#    include "vehicle/vehicle.h"
+#    include "vehicle/vpart_position.h"
 
 #    include <algorithm>
 #    include <filesystem>
@@ -301,6 +307,76 @@ TEST_CASE(
     editor::run_editor_session();
     CHECK(kinds == std::vector<std::string>{"vehicle_editor"});
     editor::reset_editor_session();
+}
+
+TEST_CASE(
+    "the vehicle editor spawns the design it shows beside the avatar",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    clear_map();
+    const auto original = vproto_id("bicycle")->blueprint->part_count();
+    const auto restore = on_out_of_scope([] {
+        const auto path = editor::prototype_file("bicycle");
+        const auto json = nlohmann::ordered_json::parse(read_file(*path));
+        const auto found = std::ranges::find(json, "bicycle", [](const auto& entry) {
+            return entry.value("id", "");
+        });
+        REQUIRE(editor::apply_design(found->dump()).has_value());
+        clear_vehicles();
+    });
+    const auto at = get_avatar().bub_pos() + tripoint_rel_ms(8, 0, 0);
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:filter", {.text = "bicycle"});
+            case 1:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 2: {
+                const auto& fields = body<ec::form_body>(part(screen, "vehicle:spawn_form")).fields;
+                REQUIRE(fields.size() == 3);
+                CHECK(fields[1].value == "100");
+                CHECK(refused(state, "vehicle:spawn_set", {.row = "speed", .text = "1"}));
+                return invoke("vehicle:spawn_set", {.row = "fuel", .text = "101"});
+            }
+            case 3:
+                CHECK(body<ec::text_body>(part(screen, "vehicle:notice")).markup
+                      == "That value is out of range.");
+                return invoke("vehicle:spawn_set", {.row = "fuel", .text = "0"});
+            case 4:
+                CHECK(
+                    body<ec::form_body>(part(screen, "vehicle:spawn_form")).fields[1].value == "0");
+                return invoke("vehicle:mount", {.row = "mount:1,0"});
+            case 5:
+                return invoke("vehicle:part_filter", {.text = "headlight"});
+            case 6:
+                return invoke("vehicle:install", {.row = "vpart:headlight"});
+            case 7:
+                return invoke("vehicle:spawn");
+            case 8:
+                CHECK_FALSE(ec::find_component(*screen.root, "vehicle:notice"));
+                // A second one has the first in its way.
+                return invoke("vehicle:spawn");
+            case 9:
+                CHECK(body<ec::text_body>(part(screen, "vehicle:notice")).markup
+                      == "Something is in the way of the vehicle there.");
+                return invoke("vehicle:undo");
+            case 10:
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 11);
+    const auto spawned = get_map().veh_at(at);
+    REQUIRE(spawned);
+    // The design with the light, which the game now builds for the prototype.
+    CHECK(spawned->vehicle().part_count() == original + 1);
+    CHECK(vproto_id("bicycle")->blueprint->part_count() == original + 1);
 }
 
 #endif
