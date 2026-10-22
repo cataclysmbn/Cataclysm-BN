@@ -65,6 +65,8 @@ constexpr auto export_id = "vehicle:export";
 constexpr auto spawn_form_id = "vehicle:spawn_form";
 constexpr auto spawn_set_id = "vehicle:spawn_set";
 constexpr auto spawn_id = "vehicle:spawn";
+constexpr auto copy_id = "vehicle:copy";
+constexpr auto paste_id = "vehicle:paste";
 
 /// How far east of the avatar a spawned vehicle stands, clear of it.
 constexpr auto spawn_distance = 8;
@@ -89,6 +91,11 @@ auto inside(const std::filesystem::path& path, const std::string& root) -> bool 
     const auto base = std::filesystem::weakly_canonical(root, error);
     const auto relative = std::filesystem::weakly_canonical(path, error).lexically_relative(base);
     return !error && !relative.empty() && *relative.begin() != "..";
+}
+
+/// The file a copied vehicle waits in, outside every world so that another world can paste it.
+auto copied_vehicle_file() -> std::filesystem::path {
+    return std::filesystem::path(PATH_INFO::user_dir()) / "vehicle_copy.json";
 }
 
 struct session {
@@ -262,6 +269,30 @@ struct session {
         }
         out.close();
         open_file(path, id);
+    }
+
+    /// Keeps the world's vehicle `index` with its whole state in a file of the user directory, so
+    /// any world can paste it.
+    auto copy_vehicle(const std::size_t index) -> void {
+        const auto vehicles = get_map().get_vehicles();
+        if (index >= vehicles.size()) { return; }
+        auto out = std::ofstream(copied_vehicle_file(), std::ios::binary);
+        out << vehicle_state(*vehicles[index].v);
+        if (!out.flush()) { notice = _("The file could not be written."); }
+    }
+
+    /// Places an exact copy of the copied vehicle south of the avatar, clear of a spawned one.
+    auto paste_vehicle() -> void {
+        auto in = std::ifstream(copied_vehicle_file(), std::ios::binary);
+        if (!in) {
+            notice = _("No vehicle is copied.");
+            return;
+        }
+        const auto state = std::string(std::istreambuf_iterator<char>(in), {});
+        const auto at = get_avatar().bub_pos() + tripoint_rel_ms(0, spawn_distance, 0);
+        if (const auto placed = place_vehicle_state(state, at); !placed) {
+            notice = placed.error();
+        }
     }
 
     /// Puts the design in the game in place of its prototype and spawns it east of the avatar.
@@ -452,6 +483,9 @@ auto session_view(const session& state) -> ec::screen_view {
         {.id = export_id,
          .label = _("Export design"),
          .args = {.row = ec::row_shape{.component_id = world_id}, .text = ec::text_shape{}}}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = copy_id, .label = _("Copy vehicle"), .args = row_of(world_id)}));
+    affordances.push_back(ec::invoke_affordance({.id = paste_id, .label = _("Paste vehicle")}));
     if (state.doc) {
         const auto& doc = *state.doc;
         auto stats = std::vector<ec::panel_stat>{
@@ -660,6 +694,10 @@ auto run_vehicle_editor() -> void {
             if (const auto index = index_of(row, "world:%zu")) {
                 state.export_vehicle(*index, text);
             }
+        } else if (id == copy_id) {
+            if (const auto index = index_of(row, "world:%zu")) { state.copy_vehicle(*index); }
+        } else if (id == paste_id) {
+            state.paste_vehicle();
         } else if (!state.doc) {
             continue;
         } else if (id == mount_id) {

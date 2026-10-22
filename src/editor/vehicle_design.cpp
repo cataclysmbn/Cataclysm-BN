@@ -1,6 +1,7 @@
 #include "editor/vehicle_design.h"
 
 #include "debug_log_capture.h"
+#include "fstream_utils.h"
 #include "json.h"
 #include "map/map.h"
 #include "mod_manager.h"
@@ -178,6 +179,46 @@ auto spawn_design(const vproto_id& id, const tripoint_bub_ms& at, const spawn_op
     -> vehicle* {
     return get_map().add_vehicle(
         id, at, units::from_degrees(options.facing), options.fuel, options.condition, false);
+}
+
+auto vehicle_state(const vehicle& veh) -> std::string { return serialize(veh); }
+
+auto place_vehicle_state(const std::string& state, const tripoint_bub_ms& at)
+    -> std::expected<vehicle*, std::string> {
+    auto saved = nlohmann::ordered_json::parse(state, nullptr, false);
+    if (!saved.is_object() || !saved.contains("parts") || !saved["parts"].is_array()) {
+        return std::unexpected(_("That is no saved vehicle."));
+    }
+    const auto in_the_way = std::unexpected(_("Something is in the way of the vehicle there."));
+    auto& here = get_map();
+    auto* const copy = here.add_vehicle(
+        vproto_id("none"), at, units::from_degrees(int_of(saved, "faceDir")), 0, 0, false);
+    if (copy == nullptr) { return in_the_way; }
+    // The copy keeps the place, world and clock it was placed in.
+    const auto own = nlohmann::ordered_json::parse(serialize(*copy));
+    for (const auto* const key : {"posx", "posy", "om_id", "dimension_id", "last_update_turn"}) {
+        if (own.contains(key)) {
+            saved[key] = own[key];
+        } else {
+            saved.erase(key);
+        }
+    }
+    try {
+        deserialize(*copy, saved.dump());
+    } catch (const JsonError& error) {
+        here.destroy_vehicle(copy);
+        return std::unexpected(std::string(error.what()));
+    }
+    const auto blocked = std::ranges::any_of(copy->get_all_parts(), [&](const auto& part) {
+        return !here.inbounds(part.pos()) || here.impassable(part.pos())
+            || here.veh_at(part.pos()).has_value();
+    });
+    if (blocked) {
+        here.destroy_vehicle(copy);
+        return in_the_way;
+    }
+    here.add_vehicle_to_cache(copy);
+    return copy;
 }
 
 auto install_part(

@@ -90,6 +90,14 @@ auto design_stats(const vehicle& veh) -> std::vector<engine_client::panel_stat>;
 /// as damage, fill levels or cargo.
 auto export_design(const vehicle& veh, const std::string& id) -> nlohmann::ordered_json;
 
+/// The vehicle as the save stores it, with its whole state: parts, damage, fuel, cargo, name.
+auto vehicle_state(const vehicle& veh) -> std::string;
+
+/// An exact copy of the saved vehicle `state` placed on the map at `at`, facing as it faced; the
+/// error says why it stays off the map.
+auto place_vehicle_state(const std::string& state, const tripoint_bub_ms& at)
+    -> std::expected<vehicle*, std::string>;
+
 /// The data file of the loaded mods that defines the prototype `id` last, as the game loads them.
 auto prototype_file(const std::string& id) -> std::optional<std::filesystem::path>;
 
