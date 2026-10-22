@@ -77,9 +77,545 @@
                   "label": "Terrain",
                   "value": "t_floor",
                   "type": "text"
+                },
+                {
+                  "id": "kind",
+                  "label": "Kind",
+                  "value": "mapgen",
+                  "type": "select",
+                  "options": [
+                    {
+                      "id": "mapgen",
+                      "label": "Mapgen"
+                    },
+                    {
+                      "id": "nested",
+                      "label": "Nested chunk"
+                    }
+                  ]
+                },
+                {
+                  "id": "size",
+                  "label": "Chunk size",
+                  "value": "4",
+                  "type": "text"
                 }
               ],
               "submit": "editor:new_apply"
+            },
+            {
+              "id": "editor:browser",
+              "kind": "list",
+              "affordances": [
+                "editor:browser_open"
+              ],
+              "columns": [],
+              "rows": [
+                {
+                  "id": "file:data/json/achievements.json",
+                  "label": "json/achievements.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/ammo_effects.json",
+                  "label": "json/ammo_effects.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/ammo_effects_simple.json",
+                  "label": "json/ammo_effects_simple.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/anatomy.json",
+                  "label": "json/anatomy.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/artifact/debug_artifacts.json",
+                  "label": "json/artifact/debug_artifacts.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/ascii_arts.json",
+                  "label": "json/ascii_arts.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/base_weather.json",
+                  "label": "json/base_weather.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/bionics.json",
+                  "label": "json/bionics.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/body_parts.json",
+                  "label": "json/body_parts.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/client_shortcuts.json",
+                  "label": "json/client_shortcuts.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/clothing_mods.json",
+                  "label": "json/clothing_mods.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct.json",
+                  "label": "json/construction/construct.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_deco.json",
+                  "label": "json/construction/construct_deco.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_dig.json",
+                  "label": "json/construction/construct_dig.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_farm_wood.json",
+                  "label": "json/construction/construct_farm_wood.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_furn.json",
+                  "label": "json/construction/construct_furn.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_other.json",
+                  "label": "json/construction/construct_other.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_recreation.json",
+                  "label": "json/construction/construct_recreation.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_reinforce.json",
+                  "label": "json/construction/construct_reinforce.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_repair.json",
+                  "label": "json/construction/construct_repair.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_windows.json",
+                  "label": "json/construction/construct_windows.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_workshop.json",
+                  "label": "json/construction/construct_workshop.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction_category.json",
+                  "label": "json/construction_category.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction_group.json",
+                  "label": "json/construction_group.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/debug_spells.json",
+                  "label": "json/debug_spells.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/deconstruction.json",
+                  "label": "json/deconstruction.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/default_blacklist.json",
+                  "label": "json/default_blacklist.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/disease.json",
+                  "label": "json/disease.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/dreams.json",
+                  "label": "json/dreams.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/effects.json",
+                  "label": "json/effects.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/emit.json",
+                  "label": "json/emit.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/enchantment_conditions.json",
+                  "label": "json/enchantment_conditions.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/enchantment_flags.json",
+                  "label": "json/enchantment_flags.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/enchantment_values.json",
+                  "label": "json/enchantment_values.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/enchantment_vision.json",
+                  "label": "json/enchantment_vision.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/enchantments.json",
+                  "label": "json/enchantments.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/AFS_external.json",
+                  "label": "json/external_tileset/AFS_external.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_Facial_Hair.json",
+                  "label": "json/external_tileset/External_Tileset_DP_Facial_Hair.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_Hair.json",
+                  "label": "json/external_tileset/External_Tileset_DP_Hair.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_Normal.json",
+                  "label": "json/external_tileset/External_Tileset_DP_Normal.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_Skin.json",
+                  "label": "json/external_tileset/External_Tileset_DP_Skin.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_Tall.json",
+                  "label": "json/external_tileset/External_Tileset_DP_Tall.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_dmd.json",
+                  "label": "json/external_tileset/External_Tileset_DP_dmd.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_eyes.json",
+                  "label": "json/external_tileset/External_Tileset_DP_eyes.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_terrain_normal.json",
+                  "label": "json/external_tileset/External_Tileset_DP_terrain_normal.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/Tankmod/mod_tileset.json",
+                  "label": "json/external_tileset/Tankmod/mod_tileset.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/armor.json",
+                  "label": "json/external_tileset/armor.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/bike_parts.json",
+                  "label": "json/external_tileset/bike_parts.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/bodyhaircolourable.json",
+                  "label": "json/external_tileset/bodyhaircolourable.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/cats.json",
+                  "label": "json/external_tileset/cats.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                }
+              ],
+              "total": 2952,
+              "selection": "single",
+              "activate": "editor:browser_open",
+              "filterable": true
             }
           ]
         },
@@ -114,6 +650,71 @@
             "label": "Create",
             "keys": [],
             "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:open_oter",
+            "label": "Open overmap terrain",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:open_here",
+            "label": "Open mapgen here",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:export",
+            "label": "Export mapgen here",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {
+                "field_id": "path"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:browser_open",
+            "label": "Open",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:browser"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:browser_filter",
+            "label": "Filter files",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:browser_page",
+            "label": "Files page",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "count": {
+                "min": 0,
+                "max": 59,
+                "default": 0
+              }
+            },
             "expect": "screen"
           },
           {
@@ -238,35 +839,6 @@
               "submit": "editor:open"
             },
             {
-              "id": "editor:new",
-              "kind": "form",
-              "affordances": [
-                "editor:new_set",
-                "editor:new_apply"
-              ],
-              "fields": [
-                {
-                  "id": "path",
-                  "label": "New file",
-                  "value": "",
-                  "type": "text"
-                },
-                {
-                  "id": "om_terrain",
-                  "label": "Overmap terrain",
-                  "value": "",
-                  "type": "text"
-                },
-                {
-                  "id": "fill",
-                  "label": "Terrain",
-                  "value": "t_floor",
-                  "type": "text"
-                }
-              ],
-              "submit": "editor:new_apply"
-            },
-            {
               "id": "editor:document",
               "kind": "panel",
               "title": "profile/mods/editor_scenario/chunk.json",
@@ -281,6 +853,26 @@
                   "key": "symbol",
                   "label": "Symbol",
                   "value": "#"
+                },
+                {
+                  "key": "inside",
+                  "label": "Inside",
+                  "value": "#"
+                },
+                {
+                  "key": "brush",
+                  "label": "Brush",
+                  "value": "1"
+                },
+                {
+                  "key": "mirror_x",
+                  "label": "Mirror across",
+                  "value": "Off"
+                },
+                {
+                  "key": "mirror_y",
+                  "label": "Mirror down",
+                  "value": "Off"
                 }
               ]
             },
@@ -306,6 +898,29 @@
               "total": 1,
               "selection": "single",
               "activate": "editor:object"
+            },
+            {
+              "id": "editor:history",
+              "kind": "list",
+              "affordances": [
+                "editor:jump"
+              ],
+              "columns": [],
+              "rows": [
+                {
+                  "id": "step:0",
+                  "label": "Opened",
+                  "description": "Saved",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": true,
+                  "columns": []
+                }
+              ],
+              "total": 1,
+              "selection": "single",
+              "activate": "editor:jump"
             },
             {
               "id": "editor:tools",
@@ -345,6 +960,12 @@
                   "enabled": true
                 },
                 {
+                  "id": "tool:room",
+                  "label": "Room",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
                   "id": "tool:fill",
                   "label": "Fill",
                   "selected": false,
@@ -353,6 +974,18 @@
                 {
                   "id": "tool:pick",
                   "label": "Eyedropper",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "tool:select",
+                  "label": "Select",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "tool:paste",
+                  "label": "Paste",
                   "selected": false,
                   "enabled": true
                 }
@@ -1993,6 +2626,571 @@
                 "activate": "editor:catalog_pick",
                 "filterable": true
               }
+            },
+            {
+              "id": "editor:new",
+              "kind": "form",
+              "affordances": [
+                "editor:new_set",
+                "editor:new_apply"
+              ],
+              "fields": [
+                {
+                  "id": "path",
+                  "label": "New file",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "id": "om_terrain",
+                  "label": "Overmap terrain",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "id": "fill",
+                  "label": "Terrain",
+                  "value": "t_floor",
+                  "type": "text"
+                },
+                {
+                  "id": "kind",
+                  "label": "Kind",
+                  "value": "mapgen",
+                  "type": "select",
+                  "options": [
+                    {
+                      "id": "mapgen",
+                      "label": "Mapgen"
+                    },
+                    {
+                      "id": "nested",
+                      "label": "Nested chunk"
+                    }
+                  ]
+                },
+                {
+                  "id": "size",
+                  "label": "Chunk size",
+                  "value": "4",
+                  "type": "text"
+                }
+              ],
+              "submit": "editor:new_apply"
+            },
+            {
+              "id": "editor:browser",
+              "kind": "list",
+              "affordances": [
+                "editor:browser_open"
+              ],
+              "columns": [],
+              "rows": [
+                {
+                  "id": "file:data/json/achievements.json",
+                  "label": "json/achievements.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/ammo_effects.json",
+                  "label": "json/ammo_effects.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/ammo_effects_simple.json",
+                  "label": "json/ammo_effects_simple.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/anatomy.json",
+                  "label": "json/anatomy.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/artifact/debug_artifacts.json",
+                  "label": "json/artifact/debug_artifacts.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/ascii_arts.json",
+                  "label": "json/ascii_arts.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/base_weather.json",
+                  "label": "json/base_weather.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/bionics.json",
+                  "label": "json/bionics.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/body_parts.json",
+                  "label": "json/body_parts.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/client_shortcuts.json",
+                  "label": "json/client_shortcuts.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/clothing_mods.json",
+                  "label": "json/clothing_mods.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct.json",
+                  "label": "json/construction/construct.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_deco.json",
+                  "label": "json/construction/construct_deco.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_dig.json",
+                  "label": "json/construction/construct_dig.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_farm_wood.json",
+                  "label": "json/construction/construct_farm_wood.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_furn.json",
+                  "label": "json/construction/construct_furn.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_other.json",
+                  "label": "json/construction/construct_other.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_recreation.json",
+                  "label": "json/construction/construct_recreation.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_reinforce.json",
+                  "label": "json/construction/construct_reinforce.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_repair.json",
+                  "label": "json/construction/construct_repair.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_windows.json",
+                  "label": "json/construction/construct_windows.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_workshop.json",
+                  "label": "json/construction/construct_workshop.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction_category.json",
+                  "label": "json/construction_category.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction_group.json",
+                  "label": "json/construction_group.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/debug_spells.json",
+                  "label": "json/debug_spells.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/deconstruction.json",
+                  "label": "json/deconstruction.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/default_blacklist.json",
+                  "label": "json/default_blacklist.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/disease.json",
+                  "label": "json/disease.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/dreams.json",
+                  "label": "json/dreams.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/effects.json",
+                  "label": "json/effects.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/emit.json",
+                  "label": "json/emit.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/enchantment_conditions.json",
+                  "label": "json/enchantment_conditions.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/enchantment_flags.json",
+                  "label": "json/enchantment_flags.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/enchantment_values.json",
+                  "label": "json/enchantment_values.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/enchantment_vision.json",
+                  "label": "json/enchantment_vision.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/enchantments.json",
+                  "label": "json/enchantments.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/AFS_external.json",
+                  "label": "json/external_tileset/AFS_external.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_Facial_Hair.json",
+                  "label": "json/external_tileset/External_Tileset_DP_Facial_Hair.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_Hair.json",
+                  "label": "json/external_tileset/External_Tileset_DP_Hair.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_Normal.json",
+                  "label": "json/external_tileset/External_Tileset_DP_Normal.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_Skin.json",
+                  "label": "json/external_tileset/External_Tileset_DP_Skin.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_Tall.json",
+                  "label": "json/external_tileset/External_Tileset_DP_Tall.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_dmd.json",
+                  "label": "json/external_tileset/External_Tileset_DP_dmd.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_eyes.json",
+                  "label": "json/external_tileset/External_Tileset_DP_eyes.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_terrain_normal.json",
+                  "label": "json/external_tileset/External_Tileset_DP_terrain_normal.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/Tankmod/mod_tileset.json",
+                  "label": "json/external_tileset/Tankmod/mod_tileset.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/armor.json",
+                  "label": "json/external_tileset/armor.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/bike_parts.json",
+                  "label": "json/external_tileset/bike_parts.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/bodyhaircolourable.json",
+                  "label": "json/external_tileset/bodyhaircolourable.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/cats.json",
+                  "label": "json/external_tileset/cats.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                }
+              ],
+              "total": 2952,
+              "selection": "single",
+              "activate": "editor:browser_open",
+              "filterable": true
             }
           ]
         },
@@ -2042,6 +3240,71 @@
             "expect": "screen"
           },
           {
+            "id": "editor:open_oter",
+            "label": "Open overmap terrain",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:open_here",
+            "label": "Open mapgen here",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:export",
+            "label": "Export mapgen here",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {
+                "field_id": "path"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:browser_open",
+            "label": "Open",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:browser"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:browser_filter",
+            "label": "Filter files",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:browser_page",
+            "label": "Files page",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "count": {
+                "min": 0,
+                "max": 59,
+                "default": 0
+              }
+            },
+            "expect": "screen"
+          },
+          {
             "id": "editor:object",
             "label": "Edit",
             "keys": [],
@@ -2056,7 +3319,9 @@
           {
             "id": "editor:undo",
             "label": "Undo",
-            "keys": [],
+            "keys": [
+              "CTRL+Z"
+            ],
             "enabled": false,
             "denial": "Not available now.",
             "expect": "screen"
@@ -2064,7 +3329,9 @@
           {
             "id": "editor:redo",
             "label": "Redo",
-            "keys": [],
+            "keys": [
+              "CTRL+Y"
+            ],
             "enabled": false,
             "denial": "Not available now.",
             "expect": "screen"
@@ -2072,10 +3339,24 @@
           {
             "id": "editor:save",
             "label": "Save",
-            "keys": [],
+            "keys": [
+              "CTRL+S"
+            ],
             "enabled": false,
             "denial": "Not available now.",
             "expect": "screen"
+          },
+          {
+            "id": "editor:jump",
+            "label": "Go to step",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:history"
+              }
+            },
+            "expect": "boundary"
           },
           {
             "id": "editor:diagnostic",
@@ -2144,6 +3425,62 @@
               }
             },
             "expect": "boundary"
+          },
+          {
+            "id": "editor:inside",
+            "label": "Inside",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:legend"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:brush",
+            "label": "Brush",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "count": {
+                "min": 1,
+                "max": 9,
+                "default": 1
+              }
+            },
+            "expect": "screen"
+          },
+          {
+            "id": "editor:mirror_x",
+            "label": "Mirror across",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:mirror_y",
+            "label": "Mirror down",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:copy",
+            "label": "Copy",
+            "keys": [],
+            "enabled": false,
+            "denial": "Not available now.",
+            "expect": "screen"
+          },
+          {
+            "id": "editor:rotate",
+            "label": "Rotate",
+            "keys": [],
+            "enabled": false,
+            "denial": "Not available now.",
+            "expect": "screen"
           },
           {
             "id": "editor:paint",
@@ -2223,6 +3560,36 @@
             "label": "Set mapping",
             "keys": [],
             "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:apply",
+            "label": "Apply to game",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:stamp",
+            "label": "Stamp",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:unstamp",
+            "label": "Take back stamp",
+            "keys": [],
+            "enabled": false,
+            "denial": "Not available now.",
+            "expect": "screen"
+          },
+          {
+            "id": "editor:test",
+            "label": "Test",
+            "keys": [],
+            "enabled": false,
+            "denial": "Not available now.",
             "expect": "screen"
           },
           {
@@ -2423,35 +3790,6 @@
               "submit": "editor:open"
             },
             {
-              "id": "editor:new",
-              "kind": "form",
-              "affordances": [
-                "editor:new_set",
-                "editor:new_apply"
-              ],
-              "fields": [
-                {
-                  "id": "path",
-                  "label": "New file",
-                  "value": "",
-                  "type": "text"
-                },
-                {
-                  "id": "om_terrain",
-                  "label": "Overmap terrain",
-                  "value": "",
-                  "type": "text"
-                },
-                {
-                  "id": "fill",
-                  "label": "Terrain",
-                  "value": "t_floor",
-                  "type": "text"
-                }
-              ],
-              "submit": "editor:new_apply"
-            },
-            {
               "id": "editor:document",
               "kind": "panel",
               "title": "profile/mods/editor_scenario/chunk.json",
@@ -2466,6 +3804,26 @@
                   "key": "symbol",
                   "label": "Symbol",
                   "value": "#"
+                },
+                {
+                  "key": "inside",
+                  "label": "Inside",
+                  "value": "#"
+                },
+                {
+                  "key": "brush",
+                  "label": "Brush",
+                  "value": "1"
+                },
+                {
+                  "key": "mirror_x",
+                  "label": "Mirror across",
+                  "value": "Off"
+                },
+                {
+                  "key": "mirror_y",
+                  "label": "Mirror down",
+                  "value": "Off"
                 }
               ]
             },
@@ -2491,6 +3849,49 @@
               "total": 1,
               "selection": "single",
               "activate": "editor:object"
+            },
+            {
+              "id": "editor:history",
+              "kind": "list",
+              "affordances": [
+                "editor:jump"
+              ],
+              "columns": [],
+              "rows": [
+                {
+                  "id": "step:0",
+                  "label": "Opened",
+                  "description": "Saved",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "step:1",
+                  "label": "/object/rows/0",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "step:2",
+                  "label": "/object/terrain/x",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": true,
+                  "columns": []
+                }
+              ],
+              "total": 3,
+              "selection": "single",
+              "activate": "editor:jump"
             },
             {
               "id": "editor:tools",
@@ -2530,6 +3931,12 @@
                   "enabled": true
                 },
                 {
+                  "id": "tool:room",
+                  "label": "Room",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
                   "id": "tool:fill",
                   "label": "Fill",
                   "selected": false,
@@ -2538,6 +3945,18 @@
                 {
                   "id": "tool:pick",
                   "label": "Eyedropper",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "tool:select",
+                  "label": "Select",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "tool:paste",
+                  "label": "Paste",
                   "selected": false,
                   "enabled": true
                 }
@@ -4202,6 +5621,571 @@
                 "activate": "editor:catalog_pick",
                 "filterable": true
               }
+            },
+            {
+              "id": "editor:new",
+              "kind": "form",
+              "affordances": [
+                "editor:new_set",
+                "editor:new_apply"
+              ],
+              "fields": [
+                {
+                  "id": "path",
+                  "label": "New file",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "id": "om_terrain",
+                  "label": "Overmap terrain",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "id": "fill",
+                  "label": "Terrain",
+                  "value": "t_floor",
+                  "type": "text"
+                },
+                {
+                  "id": "kind",
+                  "label": "Kind",
+                  "value": "mapgen",
+                  "type": "select",
+                  "options": [
+                    {
+                      "id": "mapgen",
+                      "label": "Mapgen"
+                    },
+                    {
+                      "id": "nested",
+                      "label": "Nested chunk"
+                    }
+                  ]
+                },
+                {
+                  "id": "size",
+                  "label": "Chunk size",
+                  "value": "4",
+                  "type": "text"
+                }
+              ],
+              "submit": "editor:new_apply"
+            },
+            {
+              "id": "editor:browser",
+              "kind": "list",
+              "affordances": [
+                "editor:browser_open"
+              ],
+              "columns": [],
+              "rows": [
+                {
+                  "id": "file:data/json/achievements.json",
+                  "label": "json/achievements.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/ammo_effects.json",
+                  "label": "json/ammo_effects.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/ammo_effects_simple.json",
+                  "label": "json/ammo_effects_simple.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/anatomy.json",
+                  "label": "json/anatomy.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/artifact/debug_artifacts.json",
+                  "label": "json/artifact/debug_artifacts.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/ascii_arts.json",
+                  "label": "json/ascii_arts.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/base_weather.json",
+                  "label": "json/base_weather.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/bionics.json",
+                  "label": "json/bionics.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/body_parts.json",
+                  "label": "json/body_parts.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/client_shortcuts.json",
+                  "label": "json/client_shortcuts.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/clothing_mods.json",
+                  "label": "json/clothing_mods.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct.json",
+                  "label": "json/construction/construct.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_deco.json",
+                  "label": "json/construction/construct_deco.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_dig.json",
+                  "label": "json/construction/construct_dig.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_farm_wood.json",
+                  "label": "json/construction/construct_farm_wood.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_furn.json",
+                  "label": "json/construction/construct_furn.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_other.json",
+                  "label": "json/construction/construct_other.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_recreation.json",
+                  "label": "json/construction/construct_recreation.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_reinforce.json",
+                  "label": "json/construction/construct_reinforce.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_repair.json",
+                  "label": "json/construction/construct_repair.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_windows.json",
+                  "label": "json/construction/construct_windows.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_workshop.json",
+                  "label": "json/construction/construct_workshop.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction_category.json",
+                  "label": "json/construction_category.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction_group.json",
+                  "label": "json/construction_group.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/debug_spells.json",
+                  "label": "json/debug_spells.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/deconstruction.json",
+                  "label": "json/deconstruction.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/default_blacklist.json",
+                  "label": "json/default_blacklist.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/disease.json",
+                  "label": "json/disease.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/dreams.json",
+                  "label": "json/dreams.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/effects.json",
+                  "label": "json/effects.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/emit.json",
+                  "label": "json/emit.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/enchantment_conditions.json",
+                  "label": "json/enchantment_conditions.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/enchantment_flags.json",
+                  "label": "json/enchantment_flags.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/enchantment_values.json",
+                  "label": "json/enchantment_values.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/enchantment_vision.json",
+                  "label": "json/enchantment_vision.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/enchantments.json",
+                  "label": "json/enchantments.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/AFS_external.json",
+                  "label": "json/external_tileset/AFS_external.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_Facial_Hair.json",
+                  "label": "json/external_tileset/External_Tileset_DP_Facial_Hair.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_Hair.json",
+                  "label": "json/external_tileset/External_Tileset_DP_Hair.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_Normal.json",
+                  "label": "json/external_tileset/External_Tileset_DP_Normal.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_Skin.json",
+                  "label": "json/external_tileset/External_Tileset_DP_Skin.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_Tall.json",
+                  "label": "json/external_tileset/External_Tileset_DP_Tall.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_dmd.json",
+                  "label": "json/external_tileset/External_Tileset_DP_dmd.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_eyes.json",
+                  "label": "json/external_tileset/External_Tileset_DP_eyes.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_terrain_normal.json",
+                  "label": "json/external_tileset/External_Tileset_DP_terrain_normal.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/Tankmod/mod_tileset.json",
+                  "label": "json/external_tileset/Tankmod/mod_tileset.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/armor.json",
+                  "label": "json/external_tileset/armor.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/bike_parts.json",
+                  "label": "json/external_tileset/bike_parts.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/bodyhaircolourable.json",
+                  "label": "json/external_tileset/bodyhaircolourable.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/cats.json",
+                  "label": "json/external_tileset/cats.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                }
+              ],
+              "total": 2952,
+              "selection": "single",
+              "activate": "editor:browser_open",
+              "filterable": true
             }
           ]
         },
@@ -4251,6 +6235,71 @@
             "expect": "screen"
           },
           {
+            "id": "editor:open_oter",
+            "label": "Open overmap terrain",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:open_here",
+            "label": "Open mapgen here",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:export",
+            "label": "Export mapgen here",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {
+                "field_id": "path"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:browser_open",
+            "label": "Open",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:browser"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:browser_filter",
+            "label": "Filter files",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:browser_page",
+            "label": "Files page",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "count": {
+                "min": 0,
+                "max": 59,
+                "default": 0
+              }
+            },
+            "expect": "screen"
+          },
+          {
             "id": "editor:object",
             "label": "Edit",
             "keys": [],
@@ -4265,14 +6314,18 @@
           {
             "id": "editor:undo",
             "label": "Undo",
-            "keys": [],
+            "keys": [
+              "CTRL+Z"
+            ],
             "enabled": true,
             "expect": "screen"
           },
           {
             "id": "editor:redo",
             "label": "Redo",
-            "keys": [],
+            "keys": [
+              "CTRL+Y"
+            ],
             "enabled": false,
             "denial": "Not available now.",
             "expect": "screen"
@@ -4280,9 +6333,23 @@
           {
             "id": "editor:save",
             "label": "Save",
-            "keys": [],
+            "keys": [
+              "CTRL+S"
+            ],
             "enabled": true,
             "expect": "screen"
+          },
+          {
+            "id": "editor:jump",
+            "label": "Go to step",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:history"
+              }
+            },
+            "expect": "boundary"
           },
           {
             "id": "editor:diagnostic",
@@ -4351,6 +6418,62 @@
               }
             },
             "expect": "boundary"
+          },
+          {
+            "id": "editor:inside",
+            "label": "Inside",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:legend"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:brush",
+            "label": "Brush",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "count": {
+                "min": 1,
+                "max": 9,
+                "default": 1
+              }
+            },
+            "expect": "screen"
+          },
+          {
+            "id": "editor:mirror_x",
+            "label": "Mirror across",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:mirror_y",
+            "label": "Mirror down",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:copy",
+            "label": "Copy",
+            "keys": [],
+            "enabled": false,
+            "denial": "Not available now.",
+            "expect": "screen"
+          },
+          {
+            "id": "editor:rotate",
+            "label": "Rotate",
+            "keys": [],
+            "enabled": false,
+            "denial": "Not available now.",
+            "expect": "screen"
           },
           {
             "id": "editor:paint",
@@ -4433,6 +6556,36 @@
             "expect": "screen"
           },
           {
+            "id": "editor:apply",
+            "label": "Apply to game",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:stamp",
+            "label": "Stamp",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:unstamp",
+            "label": "Take back stamp",
+            "keys": [],
+            "enabled": false,
+            "denial": "Not available now.",
+            "expect": "screen"
+          },
+          {
+            "id": "editor:test",
+            "label": "Test",
+            "keys": [],
+            "enabled": false,
+            "denial": "Not available now.",
+            "expect": "screen"
+          },
+          {
             "id": "editor:preview",
             "label": "Preview",
             "keys": [],
@@ -4508,35 +6661,6 @@
               "submit": "editor:open"
             },
             {
-              "id": "editor:new",
-              "kind": "form",
-              "affordances": [
-                "editor:new_set",
-                "editor:new_apply"
-              ],
-              "fields": [
-                {
-                  "id": "path",
-                  "label": "New file",
-                  "value": "",
-                  "type": "text"
-                },
-                {
-                  "id": "om_terrain",
-                  "label": "Overmap terrain",
-                  "value": "",
-                  "type": "text"
-                },
-                {
-                  "id": "fill",
-                  "label": "Terrain",
-                  "value": "t_floor",
-                  "type": "text"
-                }
-              ],
-              "submit": "editor:new_apply"
-            },
-            {
               "id": "editor:document",
               "kind": "panel",
               "title": "profile/mods/editor_scenario/chunk.json",
@@ -4551,6 +6675,26 @@
                   "key": "symbol",
                   "label": "Symbol",
                   "value": "#"
+                },
+                {
+                  "key": "inside",
+                  "label": "Inside",
+                  "value": "#"
+                },
+                {
+                  "key": "brush",
+                  "label": "Brush",
+                  "value": "1"
+                },
+                {
+                  "key": "mirror_x",
+                  "label": "Mirror across",
+                  "value": "Off"
+                },
+                {
+                  "key": "mirror_y",
+                  "label": "Mirror down",
+                  "value": "Off"
                 }
               ]
             },
@@ -4576,6 +6720,49 @@
               "total": 1,
               "selection": "single",
               "activate": "editor:object"
+            },
+            {
+              "id": "editor:history",
+              "kind": "list",
+              "affordances": [
+                "editor:jump"
+              ],
+              "columns": [],
+              "rows": [
+                {
+                  "id": "step:0",
+                  "label": "Opened",
+                  "description": "Saved",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "step:1",
+                  "label": "/object/rows/0",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": true,
+                  "columns": []
+                },
+                {
+                  "id": "step:2",
+                  "label": "/object/terrain/x",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                }
+              ],
+              "total": 3,
+              "selection": "single",
+              "activate": "editor:jump"
             },
             {
               "id": "editor:tools",
@@ -4615,6 +6802,12 @@
                   "enabled": true
                 },
                 {
+                  "id": "tool:room",
+                  "label": "Room",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
                   "id": "tool:fill",
                   "label": "Fill",
                   "selected": false,
@@ -4623,6 +6816,18 @@
                 {
                   "id": "tool:pick",
                   "label": "Eyedropper",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "tool:select",
+                  "label": "Select",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "tool:paste",
+                  "label": "Paste",
                   "selected": false,
                   "enabled": true
                 }
@@ -6290,6 +8495,571 @@
                 "activate": "editor:catalog_pick",
                 "filterable": true
               }
+            },
+            {
+              "id": "editor:new",
+              "kind": "form",
+              "affordances": [
+                "editor:new_set",
+                "editor:new_apply"
+              ],
+              "fields": [
+                {
+                  "id": "path",
+                  "label": "New file",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "id": "om_terrain",
+                  "label": "Overmap terrain",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "id": "fill",
+                  "label": "Terrain",
+                  "value": "t_floor",
+                  "type": "text"
+                },
+                {
+                  "id": "kind",
+                  "label": "Kind",
+                  "value": "mapgen",
+                  "type": "select",
+                  "options": [
+                    {
+                      "id": "mapgen",
+                      "label": "Mapgen"
+                    },
+                    {
+                      "id": "nested",
+                      "label": "Nested chunk"
+                    }
+                  ]
+                },
+                {
+                  "id": "size",
+                  "label": "Chunk size",
+                  "value": "4",
+                  "type": "text"
+                }
+              ],
+              "submit": "editor:new_apply"
+            },
+            {
+              "id": "editor:browser",
+              "kind": "list",
+              "affordances": [
+                "editor:browser_open"
+              ],
+              "columns": [],
+              "rows": [
+                {
+                  "id": "file:data/json/achievements.json",
+                  "label": "json/achievements.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/ammo_effects.json",
+                  "label": "json/ammo_effects.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/ammo_effects_simple.json",
+                  "label": "json/ammo_effects_simple.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/anatomy.json",
+                  "label": "json/anatomy.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/artifact/debug_artifacts.json",
+                  "label": "json/artifact/debug_artifacts.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/ascii_arts.json",
+                  "label": "json/ascii_arts.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/base_weather.json",
+                  "label": "json/base_weather.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/bionics.json",
+                  "label": "json/bionics.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/body_parts.json",
+                  "label": "json/body_parts.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/client_shortcuts.json",
+                  "label": "json/client_shortcuts.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/clothing_mods.json",
+                  "label": "json/clothing_mods.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct.json",
+                  "label": "json/construction/construct.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_deco.json",
+                  "label": "json/construction/construct_deco.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_dig.json",
+                  "label": "json/construction/construct_dig.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_farm_wood.json",
+                  "label": "json/construction/construct_farm_wood.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_furn.json",
+                  "label": "json/construction/construct_furn.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_other.json",
+                  "label": "json/construction/construct_other.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_recreation.json",
+                  "label": "json/construction/construct_recreation.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_reinforce.json",
+                  "label": "json/construction/construct_reinforce.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_repair.json",
+                  "label": "json/construction/construct_repair.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_windows.json",
+                  "label": "json/construction/construct_windows.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction/construct_workshop.json",
+                  "label": "json/construction/construct_workshop.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction_category.json",
+                  "label": "json/construction_category.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/construction_group.json",
+                  "label": "json/construction_group.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/debug_spells.json",
+                  "label": "json/debug_spells.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/deconstruction.json",
+                  "label": "json/deconstruction.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/default_blacklist.json",
+                  "label": "json/default_blacklist.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/disease.json",
+                  "label": "json/disease.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/dreams.json",
+                  "label": "json/dreams.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/effects.json",
+                  "label": "json/effects.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/emit.json",
+                  "label": "json/emit.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/enchantment_conditions.json",
+                  "label": "json/enchantment_conditions.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/enchantment_flags.json",
+                  "label": "json/enchantment_flags.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/enchantment_values.json",
+                  "label": "json/enchantment_values.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/enchantment_vision.json",
+                  "label": "json/enchantment_vision.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/enchantments.json",
+                  "label": "json/enchantments.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/AFS_external.json",
+                  "label": "json/external_tileset/AFS_external.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_Facial_Hair.json",
+                  "label": "json/external_tileset/External_Tileset_DP_Facial_Hair.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_Hair.json",
+                  "label": "json/external_tileset/External_Tileset_DP_Hair.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_Normal.json",
+                  "label": "json/external_tileset/External_Tileset_DP_Normal.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_Skin.json",
+                  "label": "json/external_tileset/External_Tileset_DP_Skin.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_Tall.json",
+                  "label": "json/external_tileset/External_Tileset_DP_Tall.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_dmd.json",
+                  "label": "json/external_tileset/External_Tileset_DP_dmd.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_eyes.json",
+                  "label": "json/external_tileset/External_Tileset_DP_eyes.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/External_Tileset_DP_terrain_normal.json",
+                  "label": "json/external_tileset/External_Tileset_DP_terrain_normal.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/Tankmod/mod_tileset.json",
+                  "label": "json/external_tileset/Tankmod/mod_tileset.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/armor.json",
+                  "label": "json/external_tileset/armor.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/bike_parts.json",
+                  "label": "json/external_tileset/bike_parts.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/bodyhaircolourable.json",
+                  "label": "json/external_tileset/bodyhaircolourable.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "file:data/json/external_tileset/cats.json",
+                  "label": "json/external_tileset/cats.json",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                }
+              ],
+              "total": 2952,
+              "selection": "single",
+              "activate": "editor:browser_open",
+              "filterable": true
             }
           ]
         },
@@ -6339,6 +9109,71 @@
             "expect": "screen"
           },
           {
+            "id": "editor:open_oter",
+            "label": "Open overmap terrain",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:open_here",
+            "label": "Open mapgen here",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:export",
+            "label": "Export mapgen here",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {
+                "field_id": "path"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:browser_open",
+            "label": "Open",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:browser"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:browser_filter",
+            "label": "Filter files",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:browser_page",
+            "label": "Files page",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "count": {
+                "min": 0,
+                "max": 59,
+                "default": 0
+              }
+            },
+            "expect": "screen"
+          },
+          {
             "id": "editor:object",
             "label": "Edit",
             "keys": [],
@@ -6353,23 +9188,41 @@
           {
             "id": "editor:undo",
             "label": "Undo",
-            "keys": [],
+            "keys": [
+              "CTRL+Z"
+            ],
             "enabled": true,
             "expect": "screen"
           },
           {
             "id": "editor:redo",
             "label": "Redo",
-            "keys": [],
+            "keys": [
+              "CTRL+Y"
+            ],
             "enabled": true,
             "expect": "screen"
           },
           {
             "id": "editor:save",
             "label": "Save",
-            "keys": [],
+            "keys": [
+              "CTRL+S"
+            ],
             "enabled": true,
             "expect": "screen"
+          },
+          {
+            "id": "editor:jump",
+            "label": "Go to step",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:history"
+              }
+            },
+            "expect": "boundary"
           },
           {
             "id": "editor:diagnostic",
@@ -6460,6 +9313,62 @@
             "expect": "boundary"
           },
           {
+            "id": "editor:inside",
+            "label": "Inside",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:legend"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:brush",
+            "label": "Brush",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "count": {
+                "min": 1,
+                "max": 9,
+                "default": 1
+              }
+            },
+            "expect": "screen"
+          },
+          {
+            "id": "editor:mirror_x",
+            "label": "Mirror across",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:mirror_y",
+            "label": "Mirror down",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:copy",
+            "label": "Copy",
+            "keys": [],
+            "enabled": false,
+            "denial": "Not available now.",
+            "expect": "screen"
+          },
+          {
+            "id": "editor:rotate",
+            "label": "Rotate",
+            "keys": [],
+            "enabled": false,
+            "denial": "Not available now.",
+            "expect": "screen"
+          },
+          {
             "id": "editor:paint",
             "label": "Draw",
             "keys": [],
@@ -6537,6 +9446,36 @@
             "label": "Set mapping",
             "keys": [],
             "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:apply",
+            "label": "Apply to game",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:stamp",
+            "label": "Stamp",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:unstamp",
+            "label": "Take back stamp",
+            "keys": [],
+            "enabled": false,
+            "denial": "Not available now.",
+            "expect": "screen"
+          },
+          {
+            "id": "editor:test",
+            "label": "Test",
+            "keys": [],
+            "enabled": false,
+            "denial": "Not available now.",
             "expect": "screen"
           },
           {
