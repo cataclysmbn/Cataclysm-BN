@@ -33,7 +33,8 @@ class sink
         virtual auto hold( std::chrono::milliseconds duration ) -> void = 0;
 };
 
-auto set_sink( std::unique_ptr<sink> replacement ) -> void;
+/// Registers `replacement` and returns the sink it replaces.
+auto set_sink( std::unique_ptr<sink> replacement ) -> std::unique_ptr<sink>;
 /// The sink a native display registered; none in a headless process.
 auto registered() -> sink *; // *NOPAD*
 /// Draws with the registered animation service, else in curses.

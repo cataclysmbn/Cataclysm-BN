@@ -994,9 +994,9 @@ class native_sink final : public presentation::sink
 
 } // namespace
 
-auto presentation::set_sink( std::unique_ptr<sink> replacement ) -> void
+auto presentation::set_sink( std::unique_ptr<sink> replacement ) -> std::unique_ptr<sink>
 {
-    registered_sink = std::move( replacement );
+    return std::exchange( registered_sink, std::move( replacement ) );
 }
 
 auto presentation::registered() -> sink * { return registered_sink.get(); } // *NOPAD*

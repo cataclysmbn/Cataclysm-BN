@@ -13,7 +13,8 @@ auto animation() -> animation_service& // *NOPAD*
     return service ? *service : fallback;
 }
 
-auto set_animation(std::unique_ptr<animation_service> replacement) -> void {
-    service = std::move(replacement);
+auto set_animation(std::unique_ptr<animation_service> replacement)
+    -> std::unique_ptr<animation_service> {
+    return std::exchange(service, std::move(replacement));
 }
 } // namespace game_client

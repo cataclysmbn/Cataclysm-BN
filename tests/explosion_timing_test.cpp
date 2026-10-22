@@ -13,6 +13,7 @@
 #include "map_helpers.h"
 #include "map_perception.h"
 #include "options_helpers.h"
+#include "presentation_helpers.h"
 #include "presentation_sink.h"
 #include "rng.h"
 #include "sounds.h"
@@ -128,6 +129,7 @@ auto milliseconds_of(const timing_scenario& scenario, const timing_mode& mode) -
     const override_option pace("ANIMATION_DELAY", mode.delay);
     const auto live = restore_on_out_of_scope(test_mode);
     test_mode = false;
+    const auto presented = scoped_presentation{};
     auto display = std::optional<tile_context_fixture>{};
 #if defined(TILES)
     if (mode.tiles) {
@@ -137,8 +139,6 @@ auto milliseconds_of(const timing_scenario& scenario, const timing_mode& mode) -
     }
 #endif
     const auto uninstall = on_out_of_scope([] {
-        presentation::set_sink(nullptr);
-        game_client::set_animation(nullptr);
         explosion_handler::get_explosion_queue().clear();
     });
     rng_set_engine_seed(424242);

@@ -189,7 +189,9 @@ class animation_service
 };
 
 auto animation() -> animation_service &; // *NOPAD*
-auto set_animation( std::unique_ptr<animation_service> service ) -> void;
+/// Registers `service` and returns the one it replaces.
+auto set_animation( std::unique_ptr<animation_service> service ) ->
+std::unique_ptr<animation_service>;
 /// Holds one animation step on the registered `presentation::sink`; nothing without one.
 auto progress_animation( const animation_progress_options &options = {} ) -> void;
 auto install_tiles_animation() -> void;

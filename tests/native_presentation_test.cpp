@@ -22,6 +22,7 @@
 #include "mtype.h"
 #include "options_helpers.h"
 #include "output.h"
+#include "presentation_helpers.h"
 #include "presentation_sink.h"
 #include "projectile.h"
 #include "ranged.h"
@@ -170,11 +171,10 @@ auto trace_of(const std::string& delay, const std::function<auto()->void>& actio
     });
     const auto live = restore_on_out_of_scope(test_mode);
     test_mode = false;
+    const auto display = scoped_presentation{};
     game_client::set_animation(std::make_unique<recording_animation>(trace));
     presentation::install_native_sink();
     const auto uninstall = on_out_of_scope([] {
-        presentation::set_sink(nullptr);
-        game_client::set_animation(nullptr);
         explosion_handler::get_explosion_queue().clear();
         SCT.vSCT.clear();
     });
@@ -655,8 +655,8 @@ TEST_CASE("the sink is told every projectile step in causal order", "[native_pre
     auto trace = trace_t{};
     const override_option projectiles("ANIMATION_PROJECTILES", "false");
     const override_option stepwise("BULLETS_AS_LASERS", "false");
+    const auto display = scoped_presentation{};
     presentation::set_sink(std::make_unique<recording_sink>(ordinals, trace));
-    const auto uninstall = on_out_of_scope([] { presentation::set_sink(nullptr); });
     rng_set_engine_seed(424242);
     long_shot();
     REQUIRE(trace.size() == 20);
@@ -687,9 +687,9 @@ TEST_CASE(
         const override_option pace("ANIMATION_DELAY", "10");
         const auto live = restore_on_out_of_scope(test_mode);
         test_mode = false;
+        const auto display = scoped_presentation{};
         presentation::set_sink(std::make_unique<recording_sink>(ordinals, trace));
         const auto uninstall = on_out_of_scope([] {
-            presentation::set_sink(nullptr);
             explosion_handler::get_explosion_queue().clear();
             SCT.vSCT.clear();
         });
@@ -715,9 +715,9 @@ TEST_CASE("without a sink nothing is drawn and nothing waits", "[native_presenta
         const override_option pace("ANIMATION_DELAY", "100");
         const auto live = restore_on_out_of_scope(test_mode);
         test_mode = false;
+        const auto display = scoped_presentation{};
         game_client::set_animation(std::make_unique<recording_animation>(trace));
         const auto uninstall = on_out_of_scope([] {
-            game_client::set_animation(nullptr);
             explosion_handler::get_explosion_queue().clear();
             SCT.vSCT.clear();
         });
