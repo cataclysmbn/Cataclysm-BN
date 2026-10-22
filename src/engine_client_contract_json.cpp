@@ -561,6 +561,7 @@ auto to_json( const row &value ) -> json
     if( value.header ) { result["header"] = true; }
     if( value.toggled ) { result["toggled"] = *value.toggled; }
     if( value.look ) { result["look"] = to_json( *value.look ); }
+    if( !value.affordance.empty() ) { result["affordance"] = value.affordance; }
     return result;
 }
 /// The rows that go on the wire: a prefix of `rows` of at most `maximum_rows` and `maximum_list_bytes`, whose first row always goes.

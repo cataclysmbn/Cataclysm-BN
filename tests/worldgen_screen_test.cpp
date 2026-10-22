@@ -146,7 +146,7 @@ auto resolves_to(
 auto answer_popup(const game_client::interaction_snapshot& snapshot) -> input_event {
     auto command = game_client::interaction_command{.input_id = snapshot.input_id};
     const auto yes =
-        std::ranges::find(snapshot.choices, "YES", &game_client::interaction_choice::description);
+        std::ranges::find(snapshot.choices, "YES", &game_client::interaction_choice::action_id);
     command.operation =
         yes != snapshot.choices.end()
             ? game_client::interaction_operation::choose
@@ -379,7 +379,7 @@ TEST_CASE(
         if (snapshot.context == "YESNO") {
             // Leaving asks whether to save the changes: no.
             const auto no = std::ranges::
-                find(snapshot.choices, "NO", &game_client::interaction_choice::description);
+                find(snapshot.choices, "NO", &game_client::interaction_choice::action_id);
             REQUIRE(no != snapshot.choices.end());
             auto input = game_client::input_command{};
             input.interaction = game_client::interaction_command{

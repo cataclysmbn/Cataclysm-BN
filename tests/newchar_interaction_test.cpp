@@ -195,7 +195,7 @@ auto create_with(
             } else {
                 popups.push_back(snapshot.message);
                 const auto yes = std::ranges::
-                    find(snapshot.choices, "YES", &game_client::interaction_choice::description);
+                    find(snapshot.choices, "YES", &game_client::interaction_choice::action_id);
                 command.operation =
                     yes != snapshot.choices.end()
                         ? game_client::interaction_operation::choose

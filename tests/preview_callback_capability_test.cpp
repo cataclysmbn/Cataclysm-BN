@@ -281,7 +281,7 @@ TEST_CASE(
             REQUIRE(snapshot.choices.size() == 2);
             const auto choices =
                 snapshot.choices
-                | std::views::transform(&game_client::interaction_choice::description)
+                | std::views::transform(&game_client::interaction_choice::action_id)
                 | std::ranges::to<std::vector>();
             CHECK(choices == std::vector<std::string>{"YES", "NO"});
             if (first_schema.empty()) {
@@ -292,7 +292,7 @@ TEST_CASE(
                 CHECK(choices == first_choices);
             }
             const auto choice = std::ranges::
-                find(snapshot.choices, answer, &game_client::interaction_choice::description);
+                find(snapshot.choices, answer, &game_client::interaction_choice::action_id);
             REQUIRE(choice != snapshot.choices.end());
             REQUIRE(choice->enabled);
             REQUIRE(choice->selectable);

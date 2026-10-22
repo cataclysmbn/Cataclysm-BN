@@ -52,7 +52,7 @@ auto affordance_of(const ec::screen_view& screen, const std::string& id) -> cons
 auto declined(const snapshot_t& snapshot) -> std::optional<input_event> {
     if (snapshot.context != "YESNO") { return std::nullopt; }
     const auto choice =
-        std::ranges::find(snapshot.choices, "NO", &game_client::interaction_choice::description);
+        std::ranges::find(snapshot.choices, "NO", &game_client::interaction_choice::action_id);
     REQUIRE(choice != snapshot.choices.end());
     return choose(snapshot, choice->id);
 }

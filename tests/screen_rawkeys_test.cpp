@@ -49,7 +49,7 @@ TEST_CASE(
         REQUIRE(snapshot.structured);
         if (snapshot.context == "YESNO") {
             const auto yes = std::ranges::
-                find(snapshot.choices, "YES", &game_client::interaction_choice::description);
+                find(snapshot.choices, "YES", &game_client::interaction_choice::action_id);
             return choose(snapshot, yes->id);
         }
         if (snapshot.context == "MARTIAL_ARTS") {

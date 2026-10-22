@@ -299,9 +299,9 @@ game_client::interaction_snapshot // *NOPAD*
         snapshot.choices.push_back( {
             .id = "option:" + std::to_string( index ),
             .label = remove_color_tags( label ),
-            .description = option.action,
             .selected = index == cur,
             .highlighted = index == cur,
+            .action_id = option.action,
             .identity = "option:" + option.action + ( count == 0 ? "" : "#" + std::to_string( count ) ),
         } );
     }
@@ -316,9 +316,9 @@ game_client::interaction_snapshot // *NOPAD*
         snapshot.choices.push_back( {
             .id = "acknowledge",
             .label = label,
-            .description = action,
             .selected = true,
             .highlighted = true,
+            .action_id = action,
         } );
         if( anykey ) { snapshot.any_key_choice_id = "acknowledge"; }
     }

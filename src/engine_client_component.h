@@ -72,7 +72,7 @@ struct affordance {
     std::vector<std::string> keys = {};
     bool enabled = true;
     std::string denial = {};
-    /// `confirm`, `cancel`, `any_key`; empty for none.
+    /// `confirm`, `cancel`, `any_key`, `layout`; empty for none.
     std::string role = {};
     arg_shape args = {};
     invoke_kind runs = invoke_kind::action;
@@ -124,6 +124,8 @@ struct row {
     std::optional<bool> toggled = std::nullopt;
     /// What the row stands for, for a client to draw.
     std::optional<engine_client::look> look = std::nullopt;
+    /// The affordance of the screen that runs what the row does, a registered action; empty for none.
+    std::string affordance = {};
 };
 struct list_body {
     std::vector<list_column> columns = {};
@@ -201,7 +203,7 @@ struct text_body {
     std::string markup = {};
     /// `good`, `bad` or empty.
     std::string tone = {};
-    /// `terminal_output`, `banner` or empty.
+    /// `terminal_output`, `banner`, `prompt` or empty.
     std::string role = {};
 };
 struct grid_point {

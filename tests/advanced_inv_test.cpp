@@ -1002,8 +1002,8 @@ TEST_CASE(
     plan.other = [&](const game_client::interaction_snapshot& snapshot) {
         REQUIRE(snapshot.context == "YES_NO_ALWAYS_NEVER");
         CHECK(snapshot.message.find("stealing") != std::string::npos);
-        const auto refuse = std::ranges::
-            find(snapshot.choices, "NO", &game_client::interaction_choice::description);
+        const auto refuse =
+            std::ranges::find(snapshot.choices, "NO", &game_client::interaction_choice::action_id);
         REQUIRE(refuse != snapshot.choices.end());
         ++asked;
         return resolve({

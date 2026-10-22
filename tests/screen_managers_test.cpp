@@ -29,7 +29,7 @@ auto prompt_answer(const snapshot_t& snapshot, const std::string& answer)
     -> std::optional<input_event> {
     if (snapshot.context != "YESNO") { return std::nullopt; }
     const auto choice =
-        std::ranges::find(snapshot.choices, answer, &game_client::interaction_choice::description);
+        std::ranges::find(snapshot.choices, answer, &game_client::interaction_choice::action_id);
     REQUIRE(choice != snapshot.choices.end());
     return choose(snapshot, choice->id);
 }

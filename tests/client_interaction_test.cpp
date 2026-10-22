@@ -1987,7 +1987,7 @@ TEST_CASE(
             REQUIRE(snapshot.kind == game_client::interaction_kind::choices);
             CHECK(snapshot.message.contains("Really attack"));
             const auto no = std::ranges::
-                find(snapshot.choices, "NO", &game_client::interaction_choice::description);
+                find(snapshot.choices, "NO", &game_client::interaction_choice::action_id);
             REQUIRE(no != snapshot.choices.end());
             return resolve({
                 .input_id = snapshot.input_id,

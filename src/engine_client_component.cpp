@@ -85,7 +85,7 @@ auto row_of( const interaction_choice &choice ) -> row
         .color = choice.color, .key_color = choice.key_color, .markup = choice.markup,
         .parent_id = choice.parent_id, .nest_color = choice.nest_color, .mark = choice.mark,
         .selected_count = choice.selected_count, .minimum_count = choice.minimum_count,
-        .max = choice.available_count, .toggled = choice.toggled,
+        .max = choice.available_count, .toggled = choice.toggled, .affordance = choice.action_id,
     };
 }
 
@@ -182,10 +182,15 @@ auto native_affordances( build &b ) -> void
 
 /// The role a registered action plays on every screen that has it: CONFIRM accepts, QUIT leaves, any key
 /// acknowledges where a screen names that key, the cursor, paging, tab and scroll actions and the mouse's
-/// moves and clicks only navigate, and the keybindings menu is the help. On the map the cursor keys are steps,
-/// which navigate nothing.
+/// moves and clicks only navigate, the keybindings menu is the help, and the actions that only resize or
+/// rearrange the native window change its layout. On the map the cursor keys are steps, which navigate nothing.
 auto registered_role( const std::string &id, const bool map ) -> std::string
 {
+    // What these change is drawn by the native window alone; the screen publishes the same either way.
+    constexpr auto layout = std::array{
+        "TOGGLE_WIDE_DISPLAY", "TOGGLE_FULL_HEIGHT_DISPLAY", "TOGGLE_ITEM_INFO", "TOGGLE_EXPANDED",
+        "toggle_fullscreen"
+    };
     constexpr auto navigation = std::array{
         "UP", "DOWN", "LEFT", "RIGHT", "LEFTUP", "LEFTDOWN", "RIGHTUP", "RIGHTDOWN", "PAGE_UP", "PAGE_DOWN",
         "HOME", "END", "NEXT_TAB", "PREV_TAB", "NEXT_CATEGORY_TAB", "PREV_CATEGORY_TAB", "SCROLL_UP",
@@ -193,7 +198,7 @@ auto registered_role( const std::string &id, const bool map ) -> std::string
         "TEXT.PAGE_UP", "TEXT.PAGE_DOWN", "LEFT_WIDE", "RIGHT_WIDE", "UP_WIDE", "DOWN_WIDE"
     };
     return id == "CONFIRM" ? "confirm" : id == "QUIT" ? "cancel" : id == "ANY_INPUT" ? "any_key" :
-           id == "HELP_KEYBINDINGS" ? "help" : !map &&
+           id == "HELP_KEYBINDINGS" ? "help" : std::ranges::contains( layout, id ) ? "layout" : !map &&
            std::ranges::contains( navigation, id ) ? "navigate" : std::string{};
 }
 
@@ -251,6 +256,8 @@ auto generic_view( const boundary_state &state ) -> screen_view
     std::ranges::all_of( native.choices, [&]( const auto & choice ) { return choice.id == native.any_key_choice_id; } );
     if( !only_acknowledgement ) { add( make_list( b ) ); }
     add( make_editors( b ) );
+    // The message asks what the parts after it answer.
+    if( parts.size() > 1 && parts.front().id == "text:message" ) { std::get<text_body>( parts.front().body ).role = "prompt"; }
     native_affordances( b );
     const auto focused = std::ranges::find( native.choices, native.focus_choice_id,
                                             &interaction_choice::id );
@@ -387,6 +394,24 @@ auto separate_activation( component &value, std::vector<affordance> &affordances
     for( auto &child : value.children ) { separate_activation( child, affordances, label ); }
 }
 
+/// A pane titled as its screen would repeat the window's title: it goes untitled.
+auto untitle( component &value, const std::string &title ) -> void
+{
+    if( auto *const body = std::get_if<panel_body>( &value.body ); body != nullptr &&
+        body->title == title ) { body->title.clear(); }
+    for( auto &child : value.children ) { untitle( child, title ); }
+}
+
+/// A row names only an affordance its screen offers.
+auto drop_unoffered( component &value, const std::vector<affordance> &offered_affordances ) -> void
+{
+    if( auto *const body = std::get_if<list_body>( &value.body ) ) {
+        const auto unoffered = [&]( const row & entry ) { return !std::ranges::contains( offered_affordances, entry.affordance, &affordance::id ); };
+        for( auto &entry : body->rows | std::views::filter( unoffered ) ) { entry.affordance.clear(); }
+    }
+    for( auto &child : value.children ) { drop_unoffered( child, offered_affordances ); }
+}
+
 /// The content of an entry. Only the top screen reads the 0.1 interaction, for it belongs to the view
 /// that is reading input now, and only the top has affordances.
 auto screen_of( const boundary_state &state, const slot &entry, const bool top ) -> screen_view
@@ -435,7 +460,7 @@ auto screen_of( const boundary_state &state, const slot &entry, const bool top )
         std::erase_if( registered, [&]( const affordance & offered_action ) {
             return std::ranges::any_of( result.affordances, [&]( const affordance & own ) {
                 return own.covers == offered_action.id && performs( own );
-            } ) && !std::ranges::contains( result.denials, offered_action.id, &denial::id );
+            } )&& !std::ranges::contains( result.denials, offered_action.id, &denial::id );
         } );
         for( const auto &[id, reason] : result.denials ) {
             const auto found = std::ranges::find( registered, id, &affordance::id );
@@ -448,7 +473,11 @@ auto screen_of( const boundary_state &state, const slot &entry, const bool top )
         std::ranges::move( registered, std::back_inserter( result.affordances ) );
     }
     for( auto &offered : result.affordances ) { give_reason( offered.enabled, offered.denial ); }
-    if( result.root ) { give_reasons( *result.root ); }
+    if( result.root ) {
+        give_reasons( *result.root );
+        untitle( *result.root, result.title );
+        drop_unoffered( *result.root, result.affordances );
+    }
     return result;
 }
 

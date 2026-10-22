@@ -5503,6 +5503,10 @@
         "look": {
           "$ref": "#/$defs/look",
           "description": "What the row stands for, for a client to draw. Absent for rows that are not things."
+        },
+        "affordance": {
+          "$ref": "#/$defs/opaque_id",
+          "description": "The affordance of `screen.affordances` that does what the row does, such as a popup's `YES`: a client offers it on the row, not again as a button. Absent when no affordance of the screen does."
         }
       },
       "required": [
@@ -5675,9 +5679,10 @@
             "select",
             "navigate",
             "help",
-            "digit"
+            "digit",
+            "layout"
           ],
-          "description": "What the affordance means for the screen. `any_key` runs on a key no affordance binds. `select` moves the screen's cursor to the row named by `args.row` without activating it, so the detail that follows the cursor shows that row; a client invokes it when its focus moves in the list its `args.row` targets. `navigate` moves a cursor, page, tab or scroll position (a client already maps arrows, paging and the wheel to it and need not draw a button). `help` opens the native help or keybindings screen. `digit` types its key, a digit, into a counting list's count before any action bound to the key: as in the native list, it goes into the count the next mark takes, or opens the count prompt with it; a client need not draw a button."
+          "description": "What the affordance means for the screen. `any_key` runs on a key no affordance binds. `select` moves the screen's cursor to the row named by `args.row` without activating it, so the detail that follows the cursor shows that row; a client invokes it when its focus moves in the list its `args.row` targets. `navigate` moves a cursor, page, tab or scroll position (a client already maps arrows, paging and the wheel to it and need not draw a button). `help` opens the native help or keybindings screen. `digit` types its key, a digit, into a counting list's count before any action bound to the key: as in the native list, it goes into the count the next mark takes, or opens the count prompt with it; a client need not draw a button. `layout` only resizes or rearranges the native window, and the screen publishes the same whatever it does; a client that lays out its own windows need not draw a button."
         },
         "args": {
           "$ref": "#/$defs/arg_shape"
@@ -6284,7 +6289,8 @@
           "const": "panel"
         },
         "title": {
-          "$ref": "#/$defs/text"
+          "$ref": "#/$defs/text",
+          "description": "Empty where it would repeat the screen's `title`."
         },
         "subtitle": {
           "$ref": "#/$defs/text"
@@ -6496,9 +6502,10 @@
         "role": {
           "enum": [
             "terminal_output",
-            "banner"
+            "banner",
+            "prompt"
           ],
-          "description": "`terminal_output`: what an in-game computer or console prints. `banner`: the game's title art and version over the main menu."
+          "description": "`terminal_output`: what an in-game computer or console prints. `banner`: the game's title art and version over the main menu. `prompt`: the question the parts after it in its split answer, such as a popup's message over its choices."
         }
       },
       "required": [
