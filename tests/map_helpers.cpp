@@ -54,6 +54,8 @@ void wipe_map_terrain() {
                 }
             }
         }
+        // Skipped tiles were not set(), so mark the level dirty as set() would have.
+        g->m.invalidate_map_cache(z);
     }
     clear_vehicles();
     g->m.invalidate_map_cache(0);
