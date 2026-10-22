@@ -37,6 +37,18 @@ out/build/linux-full/src/cataclysm-bn --client=tiles \
 
 決定的 RNG サポートは、通常の並列処理を維持しながら、キー付きワーカータスクと並列ループのインデックスに独立した乱数ストリームを与えます。異なるゲームバージョン、プラットフォーム、標準ライブラリ、CPU/GPU 計算ポリシー、またはすべての非同期ゲームシステムで同じ結果になるという保証ではありません。入力コンテキストの検証はインタラクションのずれを検出しますが、シミュレーション状態全体のチェックサムではありません。
 
+## 2 つのビルドの比較
+
+一度記録し、その記録を比較対象のビルドと検査対象のビルドで再生します:
+
+```sh
+deno task replay:record --binary ./cataclysm-bn-tiles out/rec
+deno task replay:diff --recording out/rec/inputs.jsonl --profile out/rec/profile \
+  --base base/cataclysm-bn-tiles --head ./cataclysm-bn-tiles out/diff
+```
+
+`replay:record` は `--entry`(既定は `new_game:tutorial`)の新しいゲームを始め、`--waits` 回待機し、保存して終了します。`out/rec/profile` は記録が始まった時点の手付かずのユーザーディレクトリです。`replay:diff` は各ビルドでそのプロフィールのコピーから `--state-hash-log` 付きで記録を再生し、ログをターンごとに、保存されたワールドを `tools/client/compare_saves.ts` で比較します。`out/diff/summary.json` には、ターンまたは `rng`、`avatar`、`monsters`、`npcs`、`map` のハッシュが最初に異なるステップと、異なる保存レコードが書かれます。両ビルドが一致すれば 0、分かれれば 1、再生が失敗すれば 2 で終了します(入力コンテキストの変化も失敗で、`game.stderr` がそのイベントを示します)。ゲームルートがバイナリのディレクトリでないビルドには `--base-root` と `--head-root` を指定します。
+
 ## 実セッションのスモーク検査
 
 Linux では、`MCP=ON` のビルドに対して標準ライブラリだけを使うスモークドライバーを実行します。

@@ -415,6 +415,11 @@ export class Engine {
     await this.acknowledge(() => this.mirror.interaction.interaction === null)
   }
 
+  /** The engine's exit, once it quits on its own. */
+  exited(): Promise<Deno.CommandStatus> {
+    return this.#process.status
+  }
+
   kill() {
     try {
       this.#process.kill("SIGKILL")
@@ -422,7 +427,8 @@ export class Engine {
   }
 }
 
-async function makeProfile(): Promise<string> {
+/** A new throwaway profile with the options every run of the contract plays under. */
+export async function makeProfile(): Promise<string> {
   const profile = await Deno.makeTempDir({ prefix: "bn-contract-" })
   await Deno.mkdir(`${profile}/config`, { recursive: true })
   await Deno.writeTextFile(

@@ -37,6 +37,18 @@ out/build/linux-full/src/cataclysm-bn --client=tiles \
 
 결정적 RNG 지원은 일반 병렬 작업을 유지하면서 키가 지정된 워커 작업과 병렬 루프 인덱스에 독립적인 난수 스트림을 제공합니다. 서로 다른 게임 버전, 플랫폼, 표준 라이브러리, CPU/GPU 계산 정책 또는 모든 비동기 게임 시스템에서 결과가 같다는 보장은 아닙니다. 입력 컨텍스트 검증은 상호작용 변화를 감지하지만 전체 시뮬레이션 상태 체크섬은 아닙니다.
 
+## 두 빌드 비교
+
+한 번 기록한 뒤, 그 기록을 비교 기준 빌드와 검사 대상 빌드에서 재생합니다:
+
+```sh
+deno task replay:record --binary ./cataclysm-bn-tiles out/rec
+deno task replay:diff --recording out/rec/inputs.jsonl --profile out/rec/profile \
+  --base base/cataclysm-bn-tiles --head ./cataclysm-bn-tiles out/diff
+```
+
+`replay:record`는 `--entry`(기본값 `new_game:tutorial`)의 새 게임을 시작해 `--waits`번 기다린 뒤 저장하고 종료합니다. `out/rec/profile`은 기록이 시작된 시점의 손대지 않은 사용자 디렉터리입니다. `replay:diff`는 각 빌드에서 그 프로필의 사본으로 `--state-hash-log`를 켜고 기록을 재생한 뒤, 로그를 턴마다, 저장된 월드를 `tools/client/compare_saves.ts`로 비교합니다. `out/diff/summary.json`에는 턴이나 `rng`, `avatar`, `monsters`, `npcs`, `map` 해시가 처음 달라지는 단계와 달라진 저장 레코드가 적힙니다. 두 빌드가 같으면 0, 갈라지면 1, 재생이 실패하면 2로 끝납니다(입력 컨텍스트가 바뀐 것도 실패이며 `game.stderr`가 그 이벤트를 알려 줍니다). 게임 루트가 바이너리 디렉터리가 아닌 빌드에는 `--base-root`와 `--head-root`를 줍니다.
+
 ## 실제 세션 스모크 검사
 
 Linux에서는 `MCP=ON` 빌드를 대상으로 표준 라이브러리만 사용하는 스모크 드라이버를 실행하세요:
