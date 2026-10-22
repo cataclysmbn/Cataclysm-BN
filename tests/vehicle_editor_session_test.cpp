@@ -712,4 +712,67 @@ TEST_CASE(
     CHECK(step == 17);
 }
 
+TEST_CASE(
+    "the vehicle editor adds, weighs and removes a mount's item spawns",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    auto before = std::size_t{0};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:filter", {.text = "car"});
+            case 1:
+                return invoke("vehicle:open", {.row = "prototype:car"});
+            case 2:
+                return invoke("vehicle:mount", {.row = "mount:-2,0"});
+            case 3:
+                return invoke("vehicle:tool", {.row = "tool:cargo"});
+            case 4:
+                before = rows(screen, "vehicle:items").size();
+                return invoke("vehicle:item_add", {.text = "no_such_item"});
+            case 5:
+                CHECK(body<ec::text_body>(part(screen, "vehicle:notice")).markup
+                      == "No item or item group has that id.");
+                CHECK(rows(screen, "vehicle:items").size() == before);
+                return invoke("vehicle:item_add", {.text = "rock"});
+            case 6: {
+                const auto& items = rows(screen, "vehicle:items");
+                REQUIRE(items.size() == before + 1);
+                CHECK(items.back().label == "rock");
+                CHECK(items.back().columns[0].value == "100");
+                return invoke("vehicle:item_chance", {.row = items.back().id, .count = 40});
+            }
+            case 7:
+                CHECK(rows(screen, "vehicle:items").back().columns[0].value == "40");
+                return invoke("vehicle:item_add", {.text = "car_misc"});
+            case 8:
+                CHECK(rows(screen, "vehicle:items").back().label == "car_misc");
+                CHECK(messages(screen).empty());
+                return invoke(
+                    "vehicle:item_remove", {.row = rows(screen, "vehicle:items").back().id});
+            case 9:
+                CHECK(rows(screen, "vehicle:items").size() == before + 1);
+                return invoke("vehicle:undo");
+            case 10:
+                CHECK(rows(screen, "vehicle:items").size() == before + 2);
+                return invoke("vehicle:undo");
+            case 11:
+                return invoke("vehicle:undo");
+            case 12:
+                return invoke("vehicle:undo");
+            case 13:
+                CHECK(rows(screen, "vehicle:items").size() == before);
+                CHECK(stat(screen, "saved").value == "Yes");
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 14);
+}
+
 #endif
