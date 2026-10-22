@@ -730,14 +730,14 @@ TEST_CASE(
             case 10:
                 return invoke("editor:field_apply");
             case 11:
-                CHECK(placed(screen)[2].value == R"({"monster":"mon_zombie","chance":50})");
+                CHECK(placed(screen)[2].value == "monster: mon_zombie, chance: 50");
                 return invoke("editor:field_set", {.row = "value", .text = R"("fifty")"});
             case 12:
                 return invoke("editor:field_apply");
             case 13:
                 // What the loader refuses is not written.
                 CHECK(ec::find_component(*screen.root, "editor:notice"));
-                CHECK(placed(screen)[2].value == R"({"monster":"mon_zombie","chance":50})");
+                CHECK(placed(screen)[2].value == "monster: mon_zombie, chance: 50");
                 return invoke("editor:save");
             case 14:
                 return act("QUIT");

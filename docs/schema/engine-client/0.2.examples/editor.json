@@ -672,7 +672,7 @@
                     {
                       "key": "value",
                       "label": "Places",
-                      "value": "{\"monster\":\"mon_zombie\"}"
+                      "value": "monster: mon_zombie"
                     }
                   ]
                 }
@@ -2881,7 +2881,7 @@
                     {
                       "key": "value",
                       "label": "Places",
-                      "value": "{\"monster\":\"mon_zombie\"}"
+                      "value": "monster: mon_zombie"
                     }
                   ]
                 }
@@ -4946,7 +4946,7 @@
                     {
                       "key": "value",
                       "label": "Places",
-                      "value": "{\"monster\":\"mon_zombie\"}"
+                      "value": "monster: mon_zombie"
                     }
                   ]
                 }

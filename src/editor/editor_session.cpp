@@ -767,7 +767,19 @@ auto canvas(const session& state) -> ec::component {
             .role = "canvas"}};
 }
 
-/// A row per placement: where it lands, and what it places as the data writes it.
+/// What a placement places, a `key: value` for each member: a string as it reads, anything else as
+/// JSON.
+auto placement_text(const nlohmann::ordered_json& what) -> std::string {
+    if (!what.is_object()) { return what.dump(); }
+    return what.items() | std::views::transform([](const auto& member) {
+               const auto& value = member.value();
+               return member.key() + ": "
+                    + (value.is_string() ? value.template get<std::string>() : value.dump());
+           })
+         | std::views::join_with(std::string{", "}) | std::ranges::to<std::string>();
+}
+
+/// A row per placement: where it lands, and what it places.
 auto placement_rows(const session& state) -> std::vector<ec::row> {
     return placements_of(*state.doc, state.object)
          | std::views::transform([](const placement& entry) {
@@ -781,7 +793,7 @@ auto placement_rows(const session& state) -> std::vector<ec::row> {
                    .columns =
                        {{.key = "x", .label = "x", .value = range_text(entry.x)},
                         {.key = "y", .label = "y", .value = range_text(entry.y)},
-                        {.key = "value", .label = _("Places"), .value = what.dump()}}};
+                        {.key = "value", .label = _("Places"), .value = placement_text(what)}}};
            })
          | std::ranges::to<std::vector>();
 }
