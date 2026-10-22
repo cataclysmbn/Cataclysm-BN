@@ -178,6 +178,8 @@ struct interaction_target {
     std::string status_text;
     bool limit_to_reality_bubble = false;
     std::vector<interaction_target_candidate> candidates;
+    /// The squares of the line of fire in order, the source left out; empty where the screen draws none.
+    std::vector<interaction_position> trajectory;
     /// How far the cursor is from the source as the screen measures range; absent: by `distance_metric`.
     std::optional<int> distance;
     /// What the native look window prints of the cursor square; empty where the screen prints nothing.
