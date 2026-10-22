@@ -994,15 +994,7 @@ auto session_view(const session& state) -> ec::screen_view {
     const auto row_of = [](const char* const component) {
         return ec::arg_shape{.row = ec::row_shape{.component_id = component}};
     };
-    parts.push_back(ec::component{
-        .id = new_id,
-        .affordances = {new_set_id, new_apply_id},
-        .body = ec::form_body{
-            .fields =
-                {{.id = "path", .label = _("New file"), .value = state.made.path},
-                 {.id = "om_terrain", .label = _("Overmap terrain"), .value = state.made.om_terrain},
-                 {.id = "fill", .label = _("Terrain"), .value = state.made.fill}},
-            .submit = new_apply_id}});
+    auto late = std::vector<ec::component>{};
     affordances.push_back(ec::invoke_affordance(
         {.id = new_set_id,
          .label = _("New file"),
@@ -1021,22 +1013,6 @@ auto session_view(const session& state) -> ec::screen_view {
     const auto browser_pages =
         std::max<std::size_t>(1, (listed.size() + browser_page_size - 1) / browser_page_size);
     const auto data = std::filesystem::path(PATH_INFO::datadir());
-    parts.push_back(ec::list(
-        {.id = browser_id,
-         .rows =
-             shown | std::views::transform([&](const std::filesystem::path& path) {
-                 return ec::row{
-                     .id = "file:" + path.generic_string(),
-                     .label =
-                         (inside(path, PATH_INFO::datadir()) ? path.lexically_relative(data) : path)
-                             .generic_string()};
-             })
-             | std::ranges::to<std::vector>(),
-         .total = listed.size(),
-         .offset = state.browser_page * browser_page_size,
-         .selection = "single",
-         .activate = browser_open_id,
-         .filterable = true}));
     affordances.push_back(ec::invoke_affordance(
         {.id = browser_open_id, .label = _("Open"), .args = row_of(browser_id)}));
     affordances.push_back(ec::invoke_affordance(
@@ -1293,6 +1269,32 @@ auto session_view(const session& state) -> ec::screen_view {
             if (state.preview) { parts.push_back(preview_grid(*state.preview)); }
         }
     }
+    late.push_back(ec::component{
+        .id = new_id,
+        .affordances = {new_set_id, new_apply_id},
+        .body = ec::form_body{
+            .fields =
+                {{.id = "path", .label = _("New file"), .value = state.made.path},
+                 {.id = "om_terrain", .label = _("Overmap terrain"), .value = state.made.om_terrain},
+                 {.id = "fill", .label = _("Terrain"), .value = state.made.fill}},
+            .submit = new_apply_id}});
+    late.push_back(ec::list(
+        {.id = browser_id,
+         .rows =
+             shown | std::views::transform([&](const std::filesystem::path& path) {
+                 return ec::row{
+                     .id = "file:" + path.generic_string(),
+                     .label =
+                         (inside(path, PATH_INFO::datadir()) ? path.lexically_relative(data) : path)
+                             .generic_string()};
+             })
+             | std::ranges::to<std::vector>(),
+         .total = listed.size(),
+         .offset = state.browser_page * browser_page_size,
+         .selection = "single",
+         .activate = browser_open_id,
+         .filterable = true}));
+    std::ranges::move(late, std::back_inserter(parts));
     if (!state.notice.empty()) {
         parts.push_back(
             {.id = "editor:notice", .body = ec::text_body{.markup = state.notice, .tone = "bad"}});
