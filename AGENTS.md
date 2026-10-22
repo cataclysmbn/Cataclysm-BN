@@ -115,6 +115,9 @@ cmake --build --preset linux-full --target cataclysm-bn-tiles cata_test-tiles
 # Run Tests
 ./out/build/linux-full/tests/cata_test-tiles "[optional-filter]"
 
+# Run the whole suite as shards (also for cata_test-mcp); see docs/en/dev/guides/testing.md
+build-scripts/run-linux-test-shards.ts --mode file-tags --jobs 4 ./out/build/linux-full/tests/cata_test-tiles -- --use-colour no --rng-seed 1 --gpu-backend=software
+
 # Validate JSON
 ./build-scripts/lint-json.sh
 

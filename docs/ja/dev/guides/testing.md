@@ -6,6 +6,24 @@
 利用可能なコマンドラインオプションを確認するには `tests/cata_test --help` を実行するか、より詳細な入門については
 [Catch2 チュートリアル](https://github.com/catchorg/Catch2/blob/devel/docs/tutorial.md) を参照してください。
 
+## スイート全体の実行
+
+CI と同じく、ファイル名タグのシャードでスイート全体を実行します。ランナーはシャードごとにテストプロセスを
+1 つ起動し（データ読み込みに約 25 秒）、同時に実行するのは最大 `--jobs` 個です。
+
+```sh
+build-scripts/run-linux-test-shards.ts --mode file-tags --jobs 4 \
+  ./out/build/linux-full/tests/cata_test-tiles -- --use-colour no --rng-seed 1 --gpu-backend=software
+```
+
+MCP 版を実行するには `./out/build/linux-full/tests/cata_test-mcp` を渡します。シャードは
+`build-scripts/test-shard-weights.json` の重みで均等化されます。テストが大きく変わったら、Catch2 の XML レポート
+（テストオプションに `-r xml -d yes` を追加し、ランナーの出力を保存）から再生成します。
+
+```sh
+build-scripts/test-shard-weights.ts shards.log > build-scripts/test-shard-weights.json
+```
+
 ## PR のプレイテスト
 
 [`just playtest [--os OS] <PR URL>`](../reference/tooling.md#pr-のプレイテスト) で既存の PR ビルドをダウンロードし、ローカルでコンパイルせずに起動できます。前提条件、対応プラットフォーム、アーティファクトの選択、セーブの場所は開発者向けツールのガイドを参照してください。
