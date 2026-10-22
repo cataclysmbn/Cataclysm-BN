@@ -1300,6 +1300,10 @@ auto finalize_vehicle_prototype(const vproto_id& id, vehicle_prototype& proto) -
     }
 }
 
+auto register_vehicle_prototype(const vproto_id& id, vehicle_prototype&& proto) -> void {
+    vtypes[id] = std::move(proto);
+}
+
 auto vehicle_prototype::get_all() -> std::vector<vproto_id> {
     std::vector<vproto_id> result;
     result.reserve(vtypes.size());

@@ -2,6 +2,7 @@
 
 #include "debug_log_capture.h"
 #include "json.h"
+#include "map/map.h"
 #include "mod_manager.h"
 #include "output.h"
 #include "string_formatter.h"
@@ -117,8 +118,18 @@ auto design_parts(const nlohmann::ordered_json& prototype) -> std::vector<design
     return result;
 }
 
-auto build_design(const std::string_view text) -> built_design {
-    auto result = built_design{};
+namespace {
+
+/// A prototype read and finalized from JSON as the loader does, with what it said.
+struct read_design {
+    vproto_id id;
+    /// None when the JSON cannot be read as a prototype.
+    std::optional<vehicle_prototype> prototype;
+    std::vector<loader_message> messages;
+};
+
+auto read(const std::string_view text) -> read_design {
+    auto result = read_design{};
     auto thrown = std::optional<std::string>{};
     const auto said = capture_each_debugmsg_during([&] {
         try {
@@ -126,12 +137,11 @@ auto build_design(const std::string_view text) -> built_design {
             auto jsin = JsonIn(in, design_source);
             const auto entry = jsin.get_object();
             entry.get_string("type");
-            const auto id = vproto_id(entry.get_string("id"));
-            auto proto = vehicle_prototype{};
+            result.id = vproto_id(entry.get_string("id"));
+            auto& proto = result.prototype.emplace();
             proto.name = entry.get_string("name", "");
             read_vehicle_prototype(entry, proto);
-            finalize_vehicle_prototype(id, proto);
-            result.blueprint = std::move(proto.blueprint);
+            finalize_vehicle_prototype(result.id, proto);
         } catch (const JsonError& e) { thrown = e.what(); }
     });
     result.messages =
@@ -141,9 +151,33 @@ auto build_design(const std::string_view text) -> built_design {
         | std::ranges::to<std::vector>();
     if (thrown) {
         result.messages.push_back({.text = *thrown});
-        result.blueprint.reset();
+        result.prototype.reset();
     }
     return result;
+}
+
+} // namespace
+
+auto build_design(const std::string_view text) -> built_design {
+    auto design = read(text);
+    return {.blueprint = design.prototype ? std::move(design.prototype->blueprint) : nullptr,
+            .messages = std::move(design.messages)};
+}
+
+auto apply_design(const std::string_view text) -> std::expected<vproto_id, std::string> {
+    auto design = read(text);
+    if (!design.prototype || !design.messages.empty()) {
+        return std::unexpected(
+            _("The game cannot build this prototype; fix what it reports first."));
+    }
+    register_vehicle_prototype(design.id, std::move(*design.prototype));
+    return design.id;
+}
+
+auto spawn_design(const vproto_id& id, const tripoint_bub_ms& at, const spawn_options& options)
+    -> vehicle* {
+    return get_map().add_vehicle(
+        id, at, units::from_degrees(options.facing), options.fuel, options.condition, false);
 }
 
 auto install_part(

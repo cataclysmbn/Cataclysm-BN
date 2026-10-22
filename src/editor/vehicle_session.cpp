@@ -1,5 +1,6 @@
 #include "editor/vehicle_session.h"
 
+#include "avatar.h"
 #include "editor/catalog.h"
 #include "editor/document.h"
 #include "editor/vehicle_design.h"
@@ -19,6 +20,7 @@
 #include "vehicle/vehicle_part.h"
 
 #include <algorithm>
+#include <charconv>
 #include <filesystem>
 #include <limits>
 #include <optional>
@@ -54,6 +56,12 @@ constexpr auto undo_id = "vehicle:undo";
 constexpr auto redo_id = "vehicle:redo";
 constexpr auto save_id = "vehicle:save";
 constexpr auto save_as_id = "vehicle:save_as";
+constexpr auto spawn_form_id = "vehicle:spawn_form";
+constexpr auto spawn_set_id = "vehicle:spawn_set";
+constexpr auto spawn_id = "vehicle:spawn";
+
+/// How far east of the avatar a spawned vehicle stands, clear of it.
+constexpr auto spawn_distance = 8;
 
 constexpr auto page_size = std::size_t{50};
 
@@ -93,6 +101,7 @@ struct session {
     /// an empty value removes it.
     std::string field_pointer = "/name";
     std::string field_value;
+    spawn_options spawning;
 
     auto prototype() const -> const nlohmann::ordered_json& { // *NOPAD*
         return doc->objects()[object].value;
@@ -212,6 +221,47 @@ struct session {
             return;
         }
         change(next);
+    }
+
+    /// Puts the design in the game in place of its prototype and spawns it east of the avatar.
+    auto spawn() -> void {
+        const auto applied = apply_design(prototype().dump());
+        if (!applied) {
+            notice = applied.error();
+            return;
+        }
+        const auto at = get_avatar().bub_pos() + tripoint_rel_ms(spawn_distance, 0, 0);
+        if (!spawn_design(*applied, at, spawning)) {
+            notice = _("Something is in the way of the vehicle there.");
+        }
+    }
+
+    auto set_spawning(const std::string& field, const std::string& text) -> void {
+        const auto number = [&](const int low, const int high) -> std::optional<int> {
+            auto value = 0;
+            const auto [end, error] =
+                std::from_chars(text.data(), text.data() + text.size(), value);
+            if (error != std::errc{} || end != text.data() + text.size() || value < low
+                || value > high) {
+                return std::nullopt;
+            }
+            return value;
+        };
+        auto& value =
+            field == "facing" ? spawning.facing
+            : field == "fuel"
+                ? spawning.fuel
+                : spawning.condition;
+        const auto read =
+            field == "facing" ? number(0, 359)
+            : field == "fuel"
+                ? number(0, 100)
+                : number(-1, 1);
+        if (read) {
+            value = *read;
+        } else {
+            notice = _("That value is out of range.");
+        }
     }
 
     auto written(const std::expected<void, save_error>& result) -> bool {
@@ -447,6 +497,37 @@ auto session_view(const session& state) -> ec::screen_view {
              .label = _("Value"),
              .args = {.row = ec::row_shape{.component_id = field_id}, .text = ec::text_shape{}}}));
         affordances.push_back(ec::invoke_affordance({.id = field_apply_id, .label = _("Set")}));
+        parts.push_back(ec::component{
+            .id = spawn_form_id,
+            .affordances = {spawn_set_id, spawn_id},
+            .body = ec::form_body{
+                .fields =
+                    {{.id = "facing",
+                      .label = _("Facing"),
+                      .value = std::to_string(state.spawning.facing),
+                      .type = "integer",
+                      .min = 0,
+                      .max = 359},
+                     {.id = "fuel",
+                      .label = _("Fuel %"),
+                      .value = std::to_string(state.spawning.fuel),
+                      .type = "integer",
+                      .min = 0,
+                      .max = 100},
+                     {.id = "condition",
+                      .label = _("Condition"),
+                      .value = std::to_string(state.spawning.condition),
+                      .type = "select",
+                      .options = {{.id = "0", .label = _("Intact")},
+                                  {.id = "-1", .label = _("Lightly damaged")},
+                                  {.id = "1", .label = _("Disabled")}}}},
+                .submit = spawn_id}});
+        affordances.push_back(ec::invoke_affordance(
+            {.id = spawn_set_id,
+             .label = _("Value"),
+             .args =
+                 {.row = ec::row_shape{.component_id = spawn_form_id}, .text = ec::text_shape{}}}));
+        affordances.push_back(ec::invoke_affordance({.id = spawn_id, .label = _("Spawn")}));
         affordances.push_back(
             ec::invoke_affordance({.id = undo_id, .label = _("Undo"), .enabled = doc.can_undo()}));
         affordances.push_back(
@@ -548,6 +629,10 @@ auto run_vehicle_editor() -> void {
             state.save();
         } else if (id == save_as_id) {
             state.save_as(text);
+        } else if (id == spawn_set_id) {
+            state.set_spawning(row, text);
+        } else if (id == spawn_id) {
+            state.spawn();
         }
     }
 }

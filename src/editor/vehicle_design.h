@@ -1,8 +1,10 @@
 #pragma once
 
+#include "coordinates.h"
 #include "editor/mapgen_check.h"
 #include "engine_client_component.h"
 #include "point.h"
+#include "type_id.h"
 
 #include <expected>
 #include <filesystem>
@@ -39,6 +41,24 @@ struct built_design {
 };
 
 auto build_design(std::string_view text) -> built_design;
+
+/// Registers the prototype the JSON defines in place of the game's one of that id, as loading it
+/// again would, so that whatever spawns that id from then on builds this design; the error says
+/// why the game cannot build it.
+auto apply_design(std::string_view text) -> std::expected<vproto_id, std::string>;
+
+struct spawn_options {
+    /// Degrees clockwise from east, as the game turns vehicles.
+    int facing = 0;
+    /// Percent of each tank and battery filled.
+    int fuel = 100;
+    /// The game's spawn condition: -1 lightly damaged, 0 intact, 1 disabled.
+    int condition = 0;
+};
+
+/// Spawns the prototype `id` on the map at `at`; none when something there is in the way.
+auto spawn_design(const vproto_id& id, const tripoint_bub_ms& at, const spawn_options& options)
+    -> vehicle*;
 
 struct part_install {
     point mount;
