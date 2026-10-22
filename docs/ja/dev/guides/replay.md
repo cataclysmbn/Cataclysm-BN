@@ -49,16 +49,16 @@ deno task replay:diff --recording out/rec/inputs.jsonl --profile out/rec/profile
 
 `replay:record` は `--entry`(既定は `new_game:tutorial`)の新しいゲームを始め、`--waits` 回待機し、保存して終了します。`out/rec/profile` は記録が始まった時点の手付かずのユーザーディレクトリです。`replay:diff` は各ビルドでそのプロフィールのコピーから `--state-hash-log` 付きで記録を再生し、ログをターンごとに、保存されたワールドを `tools/client/compare_saves.ts` で比較します。`out/diff/summary.json` には、ターンまたは `rng`、`avatar`、`monsters`、`npcs`、`map` のハッシュが最初に異なるステップと、異なる保存レコードが書かれます。両ビルドが一致すれば 0、分かれれば 1、再生が失敗すれば 2 で終了します(入力コンテキストの変化も失敗で、`game.stderr` がそのイベントを示します)。ゲームルートがバイナリのディレクトリでないビルドには `--base-root` と `--head-root` を指定します。
 
-## 実セッションのスモーク検査
+## チュートリアルセッションの記録
 
-Linux では、`MCP=ON` のビルドに対して標準ライブラリだけを使うスモークドライバーを実行します。
+`--scenario tutorial` は、待機の後にもっと長いセッションを、クライアントと同じプロトコルで記録し、実行したステップを出力します。
 
 ```sh
-python3 tools/client/replay_smoke.py --binary out/build/linux-clients/src/cataclysm-bn --output out/replay-smoke-1
+deno task replay:record --binary ./cataclysm-bn-tiles --scenario tutorial out/tutorial
+deno task replay:diff --recording out/tutorial/inputs.jsonl --profile out/tutorial/profile \
+  --base base/cataclysm-bn-tiles --head ./cataclysm-bn-tiles out/tutorial-diff
 ```
 
-出力ディレクトリは事前に存在していてはいけません。ドライバーは同一の初期プロファイルを作成し、MCP を通じてチュートリアルセッションを記録します。待機によってチュートリアルの所持品が空になる前に、公開された空でない所持品セレクターで正確な数量を設定し、共通の照準 UI に入ってカーソルを動かします。次に、見えている位置と通行可能性を使ってバックパックを取得・着用し、地面の拾得モデルでマチェーテを選択し、ネイティブの解体メニューでカーゴパンツを再利用して、生成された布を拾い、活動状態を観察して非ブロッキングポーリングでのみ `IDLE` を送り、簡易包帯 2 個のバッチ製作を完了します。さらに、製作と建設の拒否検査、待機、東西への移動、所持品フィルター、セーブも維持します。MCP ホストなしで再生し、保存された JSON 全体を比較します。起動時の選択肢、チュートリアルダイアログ、所持品の項目とフィールド、照準、確認にはライブのセマンティック記述を使い、通常のゲームプレイ移動には検出したアクションを使います。同期に端末スクレイピング、固定入力回数、固定遅延は使いません。
-
-成果物には、両方の `--paths` 事前検査結果、入力記録、プロトコル要求/応答とタイミング、stderr ログ、両方のプロファイル/セーブ、バイナリと記録のハッシュ、`summary.json` が含まれます。短いシナリオの成功はそのシナリオの証拠であり、すべてのゲームプレイで決定的リプレイが可能だという証明ではありません。
+セッションでは、所持品セレクターで正確な数量を捨て、高度な所持品でフィルターと移動を行い、マチェーテを拾い、カーゴパンツを解体して布を拾い、簡易包帯 2 個のバッチを製作し、バックパックを着用し、存在しないレシピと建設を試し、待機し、東西へ移動して保存します。アイテムは歩いて探さず、デバッグメニューでアバターの足元に出すため、記録は毎回同じになります(`tools/client/replay_tutorial.ts`)。短いシナリオの成功はそのシナリオの証拠であり、すべてのゲームプレイで決定的リプレイが可能だという証明ではありません。
 
 [エンジンとクライアント](../explanation/engine_clients.md)、[MCP](mcp.md)、[Tracy プロファイリング](tracy.md)も参照してください。

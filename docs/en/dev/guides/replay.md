@@ -72,20 +72,17 @@ deno task replay:diff --recording out/rec/inputs.jsonl --profile out/rec/profile
 
 `replay:record` starts a new game of `--entry` (`new_game:tutorial` by default), waits `--waits` times, saves and quits; `out/rec/profile` is the untouched user directory the recording starts from. `replay:diff` plays the recording on each build from a copy of that profile with `--state-hash-log`, then compares the logs turn by turn and the saved worlds with `tools/client/compare_saves.ts`. `out/diff/summary.json` names the first step whose turn or `rng`, `avatar`, `monsters`, `npcs` or `map` hash differs, and the saved records that differ. It exits 0 when both builds agree, 1 when they part and 2 when a playback fails (a changed input context is such a failure; its `game.stderr` names the event). `--base-root` and `--head-root` name a build's game root when it is not the binary's directory.
 
-## Real-session smoke check
+## Recording a tutorial session
 
-On Linux, run the standard-library-only smoke driver against a build with `MCP=ON`:
+`--scenario tutorial` records a longer session after the waits, through the same protocol a client uses, and prints the steps it ran:
 
 ```sh
-python3 tools/client/replay_smoke.py --binary out/build/linux-clients/src/cataclysm-bn --output out/replay-smoke-1
+deno task replay:record --binary ./cataclysm-bn-tiles --scenario tutorial out/tutorial
+deno task replay:diff --recording out/tutorial/inputs.jsonl --profile out/tutorial/profile \
+  --base base/cataclysm-bn-tiles --head ./cataclysm-bn-tiles out/tutorial-diff
 ```
 
-The output directory must not already exist. The driver creates identical initial profiles and records a tutorial session through MCP. Before any waits can empty the tutorial inventory, it uses a published nonempty inventory selector to set an exact quantity and enters the common target UI to move its cursor. It then follows live visible positions and traversability to acquire and wear a backpack, selects a machete through the ground pickup model, salvages cargo pants through the native butcher menu, picks up the resulting rags, and completes a batch of two makeshift bandages by observing activity state and sending `IDLE` only at nonblocking polls. It also retains the crafting and construction denial checks, waits, moves east and west, exercises the inventory filter, and saves. Playback runs without an MCP host and compares the complete saved JSON. Startup choices, tutorial dialogs, inventory entries and fields, targeting, and confirmations use live semantic descriptors; normal gameplay movement uses discovered actions. No terminal scraping, fixed input counts, or fixed delays are used for synchronization.
-
-Artifacts include both `--paths` preflight results, the input recording, protocol
-requests/responses and timings, stderr logs, both profiles/saves, binary and recording hashes,
-and `summary.json`. A successful short scenario is evidence for that scenario, not proof of
-deterministic replay for all gameplay.
+The session drops an exact count through the inventory selector, filters and moves in the advanced inventory, picks up a machete, salvages cargo pants and picks up the rags, crafts a batch of two makeshift bandages, wears a backpack, tries a missing recipe and construction, waits, moves east and west, and saves. Items are spawned at the avatar's feet with the debug menu instead of walked to, so the recording is the same every time (`tools/client/replay_tutorial.ts`). A short scenario passing is evidence for that scenario, not proof of deterministic replay for all gameplay.
 
 See [engine and clients](../explanation/engine_clients.md), [MCP](mcp.md), and
 [Tracy profiling](tracy.md).

@@ -49,16 +49,16 @@ deno task replay:diff --recording out/rec/inputs.jsonl --profile out/rec/profile
 
 `replay:record`는 `--entry`(기본값 `new_game:tutorial`)의 새 게임을 시작해 `--waits`번 기다린 뒤 저장하고 종료합니다. `out/rec/profile`은 기록이 시작된 시점의 손대지 않은 사용자 디렉터리입니다. `replay:diff`는 각 빌드에서 그 프로필의 사본으로 `--state-hash-log`를 켜고 기록을 재생한 뒤, 로그를 턴마다, 저장된 월드를 `tools/client/compare_saves.ts`로 비교합니다. `out/diff/summary.json`에는 턴이나 `rng`, `avatar`, `monsters`, `npcs`, `map` 해시가 처음 달라지는 단계와 달라진 저장 레코드가 적힙니다. 두 빌드가 같으면 0, 갈라지면 1, 재생이 실패하면 2로 끝납니다(입력 컨텍스트가 바뀐 것도 실패이며 `game.stderr`가 그 이벤트를 알려 줍니다). 게임 루트가 바이너리 디렉터리가 아닌 빌드에는 `--base-root`와 `--head-root`를 줍니다.
 
-## 실제 세션 스모크 검사
+## 튜토리얼 세션 기록
 
-Linux에서는 `MCP=ON` 빌드를 대상으로 표준 라이브러리만 사용하는 스모크 드라이버를 실행하세요:
+`--scenario tutorial`은 기다리기 뒤에 더 긴 세션을 클라이언트와 같은 프로토콜로 기록하고, 실행한 단계를 출력합니다:
 
 ```sh
-python3 tools/client/replay_smoke.py --binary out/build/linux-clients/src/cataclysm-bn --output out/replay-smoke-1
+deno task replay:record --binary ./cataclysm-bn-tiles --scenario tutorial out/tutorial
+deno task replay:diff --recording out/tutorial/inputs.jsonl --profile out/tutorial/profile \
+  --base base/cataclysm-bn-tiles --head ./cataclysm-bn-tiles out/tutorial-diff
 ```
 
-출력 디렉터리는 기존에 없어야 합니다. 드라이버는 동일한 초기 프로필을 만들고 MCP를 통해 튜토리얼 세션을 기록합니다. 기다리기로 튜토리얼 인벤토리가 비기 전에 공개된 비어 있지 않은 인벤토리 선택기로 정확한 수량을 설정하고 공통 조준 UI에 들어가 커서를 이동합니다. 이어서 실시간으로 보이는 위치와 통행 가능 여부를 따라 배낭을 획득해 착용하고, 지면 줍기 모델로 마체테를 선택하며, 네이티브 도축 메뉴로 카고 바지를 재활용하고, 나온 천 조각을 줍고 활동 상태를 관찰해 비차단 폴링에서만 `IDLE`을 보내 임시 붕대 2개 묶음 제작을 완료합니다. 제작 및 건설 거부 검사, 기다리기, 동쪽/서쪽 이동, 인벤토리 필터, 저장도 유지합니다. MCP 호스트 없이 재생하고 전체 저장 JSON을 비교합니다. 시작 선택지, 튜토리얼 대화상자, 인벤토리 항목과 필드, 조준, 확인은 실시간 시맨틱 설명자를 사용하며 일반 게임 플레이 이동은 발견한 액션을 사용합니다. 동기화에 터미널 스크레이핑, 고정 입력 횟수, 고정 지연을 사용하지 않습니다.
-
-아티팩트에는 두 `--paths` 사전 검사 결과, 입력 기록, 프로토콜 요청/응답과 타이밍, stderr 로그, 두 프로필/저장 파일, 바이너리와 기록 해시, `summary.json`이 포함됩니다. 짧은 시나리오가 성공했다는 사실은 해당 시나리오의 증거이며 모든 게임 플레이에서 결정적 리플레이가 가능하다는 증명은 아닙니다.
+세션은 인벤토리 선택기로 정확한 수량을 버리고, 고급 인벤토리에서 필터와 이동을 하며, 마체테를 줍고, 카고 바지를 재활용해 나온 천 조각을 줍고, 임시 붕대 2개 묶음을 제작하고, 배낭을 착용하고, 없는 제작법과 건설을 시도하고, 기다리고, 동쪽/서쪽으로 이동한 뒤 저장합니다. 아이템은 걸어가서 찾지 않고 디버그 메뉴로 아바타 발밑에 만들기 때문에 기록은 매번 같습니다(`tools/client/replay_tutorial.ts`). 짧은 시나리오가 성공했다는 사실은 해당 시나리오의 증거이며 모든 게임 플레이에서 결정적 리플레이가 가능하다는 증명은 아닙니다.
 
 [엔진과 클라이언트](../explanation/engine_clients.md), [MCP](mcp.md), [Tracy 프로파일링](tracy.md)도 참조하세요.
