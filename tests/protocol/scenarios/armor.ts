@@ -21,7 +21,7 @@ const close = async (engine: Engine) => {
 }
 
 /** Wishes `item` to the avatar's feet and wears it, picked in the wear selector. */
-const wear = async (engine: Engine, item: string) => {
+export const wear = async (engine: Engine, item: string) => {
   await wish(engine, item)
   assertEquals((await engine.invoke("wear")).stages.at(-1), "completed")
   const list = walk(engine.top().root).find((component) =>

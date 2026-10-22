@@ -2,7 +2,8 @@
 /**
  * @module
  * Records an input recording that `replay_diff.ts` plays: a new game of the main menu's `--entry`, `--waits`
- * waits of the first length the wait menu offers, then a save and a clean quit.
+ * waits of the first length the wait menu offers, the `--scenario` session when asked for (`tutorial`, in
+ * `replay_tutorial.ts`), then a save and a clean quit.
  *
  * `deno run -A tools/client/replay_record.ts --binary <engine> <output>` writes `<output>/profile` (the user
  * directory the recording starts from, untouched), `<output>/record` (the one it played in) and
@@ -13,18 +14,17 @@ import { copy } from "@std/fs"
 import { dirname, join, resolve } from "@std/path"
 import { Engine, makeProfile, Recorder, type Value } from "../../tests/protocol/scenarios/driver.ts"
 import { atMainMenu } from "../../tests/protocol/mirror.ts"
-
-/** Closes the pop-ups over the map, by their cancel, until the map is on top. */
-async function dismiss(engine: Engine) {
-  for (let n = 0; engine.mirror.interaction.interaction !== null && n < 20; n++) {
-    const cancel = engine.top().affordances.find((entry: Value) => entry.role === "cancel")
-    if (!cancel) throw new Error(`a pop-up without a cancel: ${engine.top().context}`)
-    await engine.invoke(cancel.id)
-  }
-}
+import { dismiss, tutorialScenario, waitOnce } from "./replay_tutorial.ts"
 
 export async function record(
-  options: { binary: string; root: string; entry: string; waits: number; output: string },
+  options: {
+    binary: string
+    root: string
+    entry: string
+    waits: number
+    scenario?: string
+    output: string
+  },
 ) {
   await Deno.mkdir(options.output)
   const initial = await makeProfile()
@@ -34,6 +34,7 @@ export async function record(
   await copy(initial, played)
   await Deno.remove(initial, { recursive: true })
   const recording = join(options.output, "inputs.jsonl")
+  let steps: string[] = []
   const engine = new Engine(new Recorder(), played, options.binary, [
     "--basepath",
     `${options.root}/`,
@@ -47,11 +48,9 @@ export async function record(
     await engine.follow(() => engine.stale)
     await engine.subscribe()
     await dismiss(engine)
-    for (let n = 0; n < options.waits; n++) {
-      await engine.submit({ kind: "action", action_id: "wait" })
-      await engine.choose("entry:0")
-      await dismiss(engine)
-    }
+    for (let n = 0; n < options.waits; n++) await waitOnce(engine)
+    if (options.scenario === "tutorial") steps = await tutorialScenario(engine)
+    else if (options.scenario) throw new Error(`unknown scenario ${options.scenario}`)
     await engine.submit({ kind: "action", action_id: "save" })
     // Lessons and warnings come before the question whether to save and quit.
     while (engine.top().context !== "YESNO") {
@@ -70,7 +69,7 @@ export async function record(
   } finally {
     engine.kill()
   }
-  return { recording, profile }
+  return { recording, profile, steps }
 }
 
 if (import.meta.main) {
@@ -81,6 +80,7 @@ if (import.meta.main) {
     .option("--root <dir:string>", "Game root; the binary's directory when absent.")
     .option("--entry <id:string>", "Main menu new game entry.", { default: "new_game:tutorial" })
     .option("--waits <n:integer>", "Waits before saving.", { default: 10 })
+    .option("--scenario <name:string>", "Session to record after the waits: tutorial.")
     .arguments("<output:string>")
     .action(async (options, output) => {
       const binary = resolve(options.binary)
@@ -89,6 +89,7 @@ if (import.meta.main) {
         root: resolve(options.root ?? dirname(binary)),
         entry: options.entry,
         waits: options.waits,
+        scenario: options.scenario,
         output: resolve(output),
       })
       console.log(JSON.stringify(result, null, 2))

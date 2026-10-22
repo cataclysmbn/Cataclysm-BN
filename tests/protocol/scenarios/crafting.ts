@@ -7,7 +7,7 @@ import { assert, assertEquals } from "@std/assert"
 import { Engine, type Scenario, type Value } from "./driver.ts"
 
 /** The first component of the tree with `id`. */
-const find = (node: Value, id: string): Value | undefined => {
+export const find = (node: Value, id: string): Value | undefined => {
   if (!node || typeof node !== "object") return undefined
   if (node.id === id) return node
   for (const child of [...(node.children ?? []), ...(node.child ? [node.child] : [])]) {

@@ -13,10 +13,12 @@ export const walk = (component: Value): Value[] => [
   ...[...(component.children ?? []), ...(component.child ? [component.child] : [])].flatMap(walk),
 ]
 
-/** The row of the list on top whose label is `label`, chosen through the list's own affordance. */
-const chooseRow = async (engine: Engine, label: string) => {
+/** The row of the list on top whose label is `label` (or matches it), chosen through the list's own affordance. */
+export const chooseRow = async (engine: Engine, label: string | RegExp) => {
   const list = walk(engine.top().root).find((component) => component.kind === "list")
-  const row = list?.rows.find((entry: Value) => entry.label === label)
+  const row = list?.rows.find((entry: Value) =>
+    typeof label === "string" ? entry.label === label : label.test(entry.label)
+  )
   assert(row, `no row "${label}"`)
   assertEquals((await engine.invoke(list.activate, { row: row.id })).stages.at(-1), "completed")
 }

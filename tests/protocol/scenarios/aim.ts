@@ -12,7 +12,7 @@ const find = (component: Value, id: string): Value | undefined =>
     : (component.children ?? (component.child ? [component.child] : []))
       .map((child: Value) => find(child, id)).find(Boolean)
 
-const open = async (engine: Engine) => {
+export const open = async (engine: Engine) => {
   assertEquals(
     (await engine.submit({ kind: "action", action_id: "advinv" })).stages.at(-1),
     "completed",
