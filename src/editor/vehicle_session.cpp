@@ -7,6 +7,7 @@
 #include "engine_client_component.h"
 #include "engine_client_world.h"
 #include "input.h"
+#include "item_group.h"
 #include "json_formatter.h"
 #include "line.h"
 #include "map/map.h"
@@ -23,6 +24,7 @@
 #include "vehicle/vehicle_part.h"
 
 #include <algorithm>
+#include <array>
 #include <charconv>
 #include <filesystem>
 #include <fstream>
@@ -48,6 +50,7 @@ constexpr auto sources_id = "vehicle:sources";
 constexpr auto tools_id = "vehicle:tools";
 constexpr auto props_id = "vehicle:props";
 constexpr auto part_form_id = "vehicle:part_form";
+constexpr auto items_id = "vehicle:items";
 
 constexpr auto open_id = "vehicle:open";
 constexpr auto filter_id = "vehicle:filter";
@@ -81,6 +84,9 @@ constexpr auto source_id = "vehicle:source";
 constexpr auto tool_id = "vehicle:tool";
 constexpr auto prop_set_id = "vehicle:prop_set";
 constexpr auto part_set_id = "vehicle:part_set";
+constexpr auto item_add_id = "vehicle:item_add";
+constexpr auto item_remove_id = "vehicle:item_remove";
+constexpr auto item_chance_id = "vehicle:item_chance";
 
 /// How far east of the avatar a spawned vehicle stands, clear of it.
 constexpr auto spawn_distance = 8;
@@ -309,6 +315,45 @@ struct session {
             }
         }
         change(set_part_member(prototype(), {.index = *index, .key = key, .value = value}));
+    }
+
+    /// The indexes in the prototype's `items` of the item spawns on the picked mount.
+    auto item_spawns() const -> std::vector<std::size_t> {
+        const auto items = prototype().value("items", nlohmann::ordered_json::array());
+        if (!items.is_array()) { return {}; }
+        return std::views::iota(std::size_t{0}, items.size())
+             | std::views::filter([&](const std::size_t index) {
+                   return items[index].value("x", 0) == cursor.x
+                       && items[index].value("y", 0) == cursor.y;
+               })
+             | std::ranges::to<std::vector>();
+    }
+
+    /// Adds a spawn of the item or item group `id` on the picked mount, every time.
+    auto add_item(const std::string& id) -> void {
+        const auto group = item_group::group_is_defined(item_group_id(id));
+        if (!group && !itype_id(id).is_valid()) {
+            notice = _("No item or item group has that id.");
+            return;
+        }
+        auto next = prototype();
+        auto entry = nlohmann::ordered_json{{"x", cursor.x}, {"y", cursor.y}, {"chance", 100}};
+        entry[group ? "item_groups" : "items"] = nlohmann::ordered_json::array({id});
+        next["items"].push_back(std::move(entry));
+        change(next);
+    }
+
+    /// Removes the item spawn `index` of the prototype's `items`, or sets the percent chance it
+    /// spawns.
+    auto edit_item(const std::size_t index, const std::optional<int> chance) -> void {
+        if (!std::ranges::contains(item_spawns(), index)) { return; }
+        auto next = prototype();
+        if (chance) {
+            next["items"][index]["chance"] = *chance;
+        } else {
+            next["items"].erase(index);
+        }
+        change(next);
     }
 
     /// Writes the design of the world's vehicle `index` as a prototype in a new file of the user
@@ -840,6 +885,7 @@ auto session_view(const session& state) -> ec::screen_view {
         tab_of("tool:part", _("Part"), state.tool_tab),
         tab_of("tool:vehicle", _("Vehicle"), state.tool_tab)};
     if (!state.live) {
+        tabs.push_back(tab_of("tool:cargo", _("Cargo"), state.tool_tab));
         tabs.push_back(tab_of("tool:spawn", _("Spawn"), state.tool_tab));
         tabs.push_back(tab_of("tool:json", _("JSON"), state.tool_tab));
     }
@@ -909,6 +955,43 @@ auto session_view(const session& state) -> ec::screen_view {
                          {.id = "id",
                           .label = _("ID"),
                           .value = state.prototype().value("id", "")}}}};
+        }
+        if (tab == "cargo") {
+            const auto& items = state.prototype()["items"];
+            /// What a spawn's `items` or `item_groups` names, as written.
+            const auto named = [](const nlohmann::ordered_json& value) {
+                const auto one = [](const nlohmann::ordered_json& entry) {
+                    return entry.is_string() ? entry.get<std::string>() : entry.dump();
+                };
+                return value.is_array()
+                         ? join(value | std::views::transform(one) | std::ranges::to<std::vector>(),
+                                ", ")
+                         : one(value);
+            };
+            return ec::list(
+                {.id = items_id,
+                 .rows = state.item_spawns() | std::views::transform([&](const std::size_t index) {
+                             const auto& entry = items[index];
+                             const auto names =
+                                 std::array{"items", "item_groups"}
+                                 | std::views::filter([&](const char* const key) {
+                                       return entry.contains(key);
+                                   })
+                                 | std::views::transform([&](const char* const key) {
+                                       return named(entry[key]);
+                                   })
+                                 | std::ranges::to<std::vector>();
+                             return ec::row{
+                                 .id = string_format("item:%d", index),
+                                 .label = join(names, ", "),
+                                 .columns = {
+                                     {.key = "chance",
+                                      .label = _("Chance %"),
+                                      .value = std::to_string(entry.value("chance", 0)),
+                                      .color = ""}}};
+                         })
+                       | std::ranges::to<std::vector>(),
+                 .selection = "single"});
         }
         if (tab == "spawn") {
             return {
@@ -992,6 +1075,15 @@ auto session_view(const session& state) -> ec::screen_view {
             {.id = prop_set_id, .label = _("Value"), .args = text_of(props_id)}));
         affordances.push_back(ec::invoke_affordance(
             {.id = part_set_id, .label = _("Value"), .args = text_of(part_form_id)}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = item_add_id, .label = _("Add item"), .args = {.text = ec::text_shape{}}}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = item_remove_id, .label = _("Remove item"), .args = row_of(items_id)}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = item_chance_id,
+             .label = _("Chance"),
+             .args = {.row = ec::row_shape{.component_id = items_id},
+                      .count = ec::count_shape{.min = 1, .max = 100, .initial = 100}}}));
         affordances.push_back(ec::invoke_affordance(
             {.id = field_set_id, .label = _("Value"), .args = text_of(field_id)}));
         affordances.push_back(ec::invoke_affordance({.id = field_apply_id, .label = _("Set")}));
@@ -1137,6 +1229,17 @@ auto run_vehicle_editor() -> void {
             state.set_prop(row, text);
         } else if (id == part_set_id) {
             state.set_part(row, text);
+        } else if (id == item_add_id) {
+            state.tool_tab = "cargo";
+            state.add_item(text);
+        } else if (id == item_remove_id || id == item_chance_id) {
+            if (const auto index = index_of(row, "item:%zu")) {
+                state.edit_item(
+                    *index,
+                    id == item_chance_id
+                        ? std::optional(static_cast<int>(invoked->args.count.value_or(100)))
+                        : std::nullopt);
+            }
         } else if (id == field_set_id) {
             if (row == "pointer") {
                 state.field_pointer = text;
