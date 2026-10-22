@@ -612,7 +612,7 @@ auto grid_of(const vehicle* const veh, std::vector<point> mounts, const point& c
                 cell.label = remove_color_tags(join(
                     veh->parts_at_relative(tripoint_mnt_veh(x, y, 0), false)
                         | std::views::transform([&](const int index) {
-                              return veh->cpart(index).name();
+                              return veh->cpart(index).name(false);
                           })
                         | std::ranges::to<std::vector>(),
                     ", "));
