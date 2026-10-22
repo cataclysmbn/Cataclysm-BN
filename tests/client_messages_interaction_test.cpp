@@ -261,6 +261,30 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the message log's window size toggles only change the native layout",
+    "[client][interaction][mcp][screens][messages_screen][engine_client_component]") {
+    fill_log({{m_neutral, "You wake up"}});
+    const auto guard = screen_guard{};
+    auto stage = 0;
+    open_stack(
+        [] { Messages::display_messages(); },
+        [&](const auto& /*snapshot*/, const auto& top) {
+            REQUIRE(stage++ == 0);
+            const auto role_of = [&](const std::string& id) {
+                const auto found = std::ranges::find(top.affordances, id, &ec::affordance::id);
+                INFO(id);
+                REQUIRE(found != top.affordances.end());
+                return found->role;
+            };
+            CHECK(role_of("TOGGLE_WIDE_DISPLAY") == "layout");
+            CHECK(role_of("TOGGLE_FULL_HEIGHT_DISPLAY") == "layout");
+            CHECK(role_of("FILTER").empty());
+            return run_action("QUIT");
+        });
+    CHECK(stage == 1);
+}
+
+TEST_CASE(
     "the message log is the same at any viewport size and in another language",
     "[client][interaction][mcp][screens][messages_screen][engine_client_component]") {
     fill_log({{m_good, "You heal"}, {m_bad, "You are hit"}});

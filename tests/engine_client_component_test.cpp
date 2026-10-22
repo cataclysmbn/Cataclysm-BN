@@ -11,6 +11,7 @@
 #include "ui.h"
 
 #include <algorithm>
+#include <array>
 #include <map>
 #include <nlohmann/json.hpp>
 #include <ranges>
@@ -1401,4 +1402,71 @@ TEST_CASE(
         CHECK(offered.denial.empty());
     }
     if (!had) { you.unset_mutation(trait); }
+}
+
+TEST_CASE("a generic message asks what the parts after it answer", "[engine_client_component]") {
+    auto native = menu();
+    native.message = "Start how?";
+    const auto view = top_of(boundary(std::move(native)));
+    CHECK(body<ec::text_body>(find(view, "text:message")).role == "prompt");
+    // A message with nothing to answer is no question.
+    const auto alone = top_of(
+        boundary({.kind = client::interaction_kind::choices, .message = "Nothing to see here."}));
+    CHECK(body<ec::text_body>(find(alone, "text:message")).role.empty());
+}
+
+TEST_CASE(
+    "a row names the registered action it runs only when the screen offers it",
+    "[engine_client_component]") {
+    auto native = menu();
+    native.choices[0].action_id = "YES";
+    native.choices[1].action_id = "NOT_REGISTERED";
+    auto state = boundary(std::move(native));
+    state.actions.push_back({.id = "YES", .name = "Yes", .keys = {"y"}});
+    const auto rows = wire(state)["stack"].back()["root"]["rows"];
+    REQUIRE(rows.size() == 2);
+    CHECK(rows[0].value("affordance", std::string{}) == "YES");
+    CHECK(rows[0]["description"] == "");
+    CHECK_FALSE(rows[1].contains("affordance"));
+}
+
+TEST_CASE(
+    "an action that only changes the native layout is a layout affordance",
+    "[engine_client_component]") {
+    constexpr auto layout = std::array{
+        "TOGGLE_WIDE_DISPLAY", "TOGGLE_FULL_HEIGHT_DISPLAY", "TOGGLE_ITEM_INFO", "TOGGLE_EXPANDED"};
+    auto state = boundary(menu());
+    for (const auto* const id : layout) {
+        state.actions.push_back({.id = id, .name = std::string{id} + " name", .keys = {}});
+    }
+    // Blinking changes what the overmap publishes: its overlays come and go with it.
+    state.actions.push_back({.id = "TOGGLE_BLINKING", .name = "Toggle Blinking", .keys = {}});
+    const auto view = top_of(state);
+    for (const auto* const id : layout) {
+        INFO(id);
+        CHECK(affordance(view, id).role == "layout");
+    }
+    CHECK(affordance(view, "TOGGLE_BLINKING").role.empty());
+    auto map = map_only();
+    map.actions.push_back({.id = "toggle_fullscreen", .name = "Toggle Fullscreen mode"});
+    CHECK(affordance(top_of(map), "toggle_fullscreen").role == "layout");
+}
+
+TEST_CASE("a pane titled as its screen goes untitled", "[engine_client_component]") {
+    const auto context = input_context("TEST_TITLES");
+    const auto scope = ec::screen_scope(
+        context, "test", {.view = [](const auto&) {
+            return ec::screen_view{
+                .title = "Car",
+                .root = ec::split(
+                    {.id = "split:panes",
+                     .children = ec::children_of(
+                         ec::panel({.id = "pane:same", .title = "Car"}),
+                         ec::panel({.id = "pane:other", .title = "Engine"}))})};
+        }});
+    const auto input = client::input_context_scope(context, "TEST_TITLES");
+    const auto view = top_of(map_only());
+    CHECK(view.title == "Car");
+    CHECK(body<ec::panel_body>(find(view, "pane:same")).title.empty());
+    CHECK(body<ec::panel_body>(find(view, "pane:other")).title == "Engine");
 }

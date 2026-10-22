@@ -333,6 +333,9 @@ TEST_CASE(
                 CHECK_FALSE(move.label.empty());
                 CHECK(ec::scope_of(move) == ec::expect_scope::boundary);
                 CHECK(affordance(screen, "QUIT").role == "cancel");
+                // Blinking takes the overlays the screen publishes away and back: it is no
+                // layout of the native window only.
+                CHECK(affordance(screen, "TOGGLE_BLINKING").role.empty());
                 CHECK(affordance(screen, "CHOOSE_DESTINATION").enabled);
                 CHECK(affordance(screen, "LEVEL_UP").enabled);
                 CHECK(affordance(screen, "CREATE_NOTE").enabled);

@@ -45,6 +45,7 @@
 #    include <stdexcept>
 #    include <string>
 #    include <utility>
+#    include <variant>
 #    include <vector>
 
 namespace ec = engine_client;
@@ -248,6 +249,19 @@ auto ids_of(const std::vector<ec::row>& rows) -> std::vector<std::string> {
     return rows | std::views::transform(&ec::row::id) | std::ranges::to<std::vector>();
 }
 
+/// The cells of a pane's area grid.
+auto area_cells(const ec::screen_view& top, const std::string& id) -> std::vector<ec::grid_cell> {
+    REQUIRE(top.root);
+    const auto* const found = ec::find_component(*top.root, id);
+    REQUIRE(found != nullptr);
+    REQUIRE(std::holds_alternative<ec::grid_body>(found->body));
+    return std::get<ec::grid_body>(found->body).cells;
+}
+
+auto ids_of(const std::vector<ec::grid_cell>& cells) -> std::vector<std::string> {
+    return cells | std::views::transform(&ec::grid_cell::id) | std::ranges::to<std::vector>();
+}
+
 /// The id of the one row of `list` that stands for `type`.
 auto row_of(const ec::screen_view& top, const std::string& list, const std::string& type)
     -> std::string {
@@ -355,15 +369,27 @@ TEST_CASE(
         CHECK(top.role == "screen");
         CHECK(ec::component_kind(*top.root) == "split");
 
-        const auto areas = list_rows(top, "aim:pane:left:areas");
+        const auto areas = area_cells(top, "aim:pane:left:areas");
         CHECK(ids_of(areas) == area_names);
-        CHECK(std::ranges::count(areas, true, &ec::row::selected) == 1);
+        CHECK(std::ranges::count(areas, true, &ec::grid_cell::selected) == 1);
         CHECK(areas.front().selected);
         const auto area = [&](const std::string& id) {
-            const auto found = std::ranges::find(areas, id, &ec::row::id);
+            const auto found = std::ranges::find(areas, id, &ec::grid_cell::id);
             REQUIRE(found != areas.end());
             return *found;
         };
+        // Each area sits where the native header prints its key, and picking it shows it.
+        CHECK(area("area:INVENTORY").at == ec::grid_point{1, 1});
+        CHECK(area("area:INVENTORY").glyph == "I");
+        CHECK(area("area:INVENTORY").label == "Inventory");
+        CHECK(area("area:N").at == ec::grid_point{4, 0});
+        CHECK(area("area:N").glyph == "8");
+        CHECK(area("area:SW").at == ec::grid_point{3, 2});
+        CHECK(area("area:ALL").at == ec::grid_point{0, 2});
+        CHECK(area("area:BELOW").at == ec::grid_point{6, 1});
+        CHECK(std::ranges::all_of(areas, [](const ec::grid_cell& cell) {
+            return cell.affordance == "aim:set_area";
+        }));
         // With no container or grabbed vehicle around those areas cannot take items.
         CHECK_FALSE(area("area:CONTAINER").enabled);
         CHECK_FALSE(area("area:CONTAINER").denial.empty());
@@ -510,18 +536,18 @@ TEST_CASE(
         return ec::invoke_args{.row = "area:E", .pane = "aim:pane:left"};
     }));
     plan.steps.push_back([&](const ec::screen_view& top) {
-        const auto areas = list_rows(top, "aim:pane:left:areas");
-        const auto selected = std::ranges::find(areas, true, &ec::row::selected);
+        const auto areas = area_cells(top, "aim:pane:left:areas");
+        const auto selected = std::ranges::find(areas, true, &ec::grid_cell::selected);
         REQUIRE(selected != areas.end());
         CHECK(selected->id == "area:E");
-        // The state of the cargo is data on the area shown: the ground here.
-        CHECK(selected->toggled == std::optional{false});
+        // The area shows the ground, not a vehicle's cargo, so it keeps its key.
+        CHECK(selected->glyph == "6");
         CHECK(panel_of(top, "aim:pane:left").subtitle.starts_with("East"));
         CHECK(list_rows(top, "aim:pane:left:items").empty());
         // An area the pane cannot put items in is no row to show: the invoke is refused and the
         // pane stays where it was.
-        const auto areas_now = list_rows(top, "aim:pane:left:areas");
-        const auto container = std::ranges::find(areas_now, "area:CONTAINER", &ec::row::id);
+        const auto areas_now = area_cells(top, "aim:pane:left:areas");
+        const auto container = std::ranges::find(areas_now, "area:CONTAINER", &ec::grid_cell::id);
         REQUIRE(container != areas_now.end());
         CHECK_FALSE(container->enabled);
         const auto refused =
@@ -624,9 +650,9 @@ TEST_CASE(
               == invalid);
         CHECK(refused("aim:set_area", {.row = cube, .pane = "aim:pane:left"}) == invalid);
         // An area the pane cannot put items in is not shown.
-        const auto areas = list_rows(top, "aim:pane:left:areas");
-        const auto denied = std::ranges::find_if(areas, [](const ec::row& row) {
-            return !row.enabled;
+        const auto areas = area_cells(top, "aim:pane:left:areas");
+        const auto denied = std::ranges::find_if(areas, [](const ec::grid_cell& cell) {
+            return !cell.enabled;
         });
         REQUIRE(denied != areas.end());
         CHECK(refused("aim:set_area", {.row = denied->id, .pane = "aim:pane:left"}) == invalid);
@@ -824,8 +850,8 @@ TEST_CASE(
     auto plan = script{};
     plan.steps.push_back([&](const ec::screen_view& top) {
         // Both panes list the same area ids; each of the lists holds each id once.
-        const auto left = ids_of(list_rows(top, "aim:pane:left:areas"));
-        CHECK(left == ids_of(list_rows(top, "aim:pane:right:areas")));
+        const auto left = ids_of(area_cells(top, "aim:pane:left:areas"));
+        CHECK(left == ids_of(area_cells(top, "aim:pane:right:areas")));
         CHECK(left == area_names);
         // An area id is no item of the source, and an item id is no area to show.
         const auto state = capture();

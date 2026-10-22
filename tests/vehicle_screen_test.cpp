@@ -239,8 +239,8 @@ TEST_CASE(
                 CHECK(screen.title == fixture.veh->name);
                 // The vehicle screen covers the map natively, so it is a screen, not a dialog.
                 CHECK(screen.role == "screen");
-                CHECK(body<ec::panel_body>(part(screen, "vehicle:overview")).title
-                      == fixture.veh->name);
+                // The window already says the vehicle's name: its overview pane does not repeat it.
+                CHECK(body<ec::panel_body>(part(screen, "vehicle:overview")).title.empty());
                 REQUIRE(stat_of(screen, "owner") != nullptr);
                 CHECK(stat_of(screen, "owner")->tone == "good");
                 REQUIRE(stat_of(screen, "mass") != nullptr);
@@ -264,6 +264,10 @@ TEST_CASE(
             case 1: {
                 // The install list under its tabs, with the preview of the highlighted part beside
                 // it.
+                // The window asks for a part now, so the overview says whose vehicle it is.
+                CHECK(screen.title != fixture.veh->name);
+                CHECK(body<ec::panel_body>(part(screen, "vehicle:overview")).title
+                      == fixture.veh->name);
                 const auto& tabs = body<ec::tabs_body>(part(screen, "vehicle:tabs"));
                 REQUIRE(tabs.tabs.size() == 8);
                 CHECK(tabs.tabs.front().id == "all");

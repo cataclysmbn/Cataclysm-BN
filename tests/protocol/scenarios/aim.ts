@@ -68,16 +68,16 @@ export const aim: Scenario = {
         "a stat states its value",
       )
 
-      const area = find(screen.root, "aim:pane:right:areas").rows.find((row: Value) =>
-        row.enabled && !row.selected && squares.includes(row.id)
+      const area = find(screen.root, "aim:pane:right:areas").cells.find((cell: Value) =>
+        cell.enabled && !cell.selected && squares.includes(cell.id)
       )
       assert(area, "an area to show")
       const picked = await engine.invoke("aim:set_area", { row: area.id, pane: "aim:pane:right" })
       assertEquals(picked.stages.at(-1), "completed")
       rec.command("area shown in the right pane", picked)
       assert(
-        find(engine.top().root, "aim:pane:right:areas").rows.find((row: Value) =>
-          row.id === area.id
+        find(engine.top().root, "aim:pane:right:areas").cells.find((cell: Value) =>
+          cell.id === area.id
         ).selected,
         "the picked area is the one shown",
       )

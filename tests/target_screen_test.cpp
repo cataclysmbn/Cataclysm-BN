@@ -262,6 +262,20 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the look panel leaves its title to the window", "[target_screen][engine_client_component]") {
+    auto ctxt = input_context{"TARGET"};
+    const auto screen = ec::screen_scope(
+        ctxt, "test", {.view = [&](const ec::boundary_state&) {
+            return target_screen::screen_of(options_of(ctxt));
+        }});
+    const auto view = ec::top_screen(boundary());
+    CHECK(view.title == "Look Around");
+    REQUIRE(view.root);
+    REQUIRE(std::holds_alternative<ec::panel_body>(view.root->body));
+    CHECK(std::get<ec::panel_body>(view.root->body).title.empty());
+}
+
+TEST_CASE(
     "the target move is refused without a square", "[target_screen][engine_client_component]") {
     auto ctxt = input_context{"TARGET"};
     const auto screen = ec::screen_scope(

@@ -509,8 +509,7 @@ TEST_CASE(
         switch (step++) {
             case 0: {
                 CHECK(screen.title == "Keybindings");
-                CHECK(body<ec::panel_body>(part(screen, "keybindings:window")).title
-                      == "Keybindings");
+                CHECK(body<ec::panel_body>(part(screen, "keybindings:window")).title.empty());
                 CHECK(body<ec::panel_body>(part(screen, "keybindings:window")).stats.empty());
                 // The legend is native text, and every action of the context is a row by its id.
                 CHECK_FALSE(body<ec::text_body>(part(screen, "keybindings:legend")).markup.empty());

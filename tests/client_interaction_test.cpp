@@ -642,7 +642,7 @@ TEST_CASE(
             const auto snapshot = game_client::current_interaction();
             REQUIRE(snapshot.choices.size() == 2);
             const auto choice = std::ranges::
-                find(snapshot.choices, "YES", &game_client::interaction_choice::description);
+                find(snapshot.choices, "YES", &game_client::interaction_choice::action_id);
             REQUIRE(choice != snapshot.choices.end());
             return resolve({
                 .input_id = snapshot.input_id,
@@ -663,7 +663,8 @@ TEST_CASE(
         game_client::memory::set_input_provider([&](const int /*timeout*/) {
             const auto snapshot = game_client::current_interaction();
             REQUIRE(snapshot.choices.size() == 1);
-            CHECK(snapshot.choices.front().description == "ANY_INPUT");
+            CHECK(snapshot.choices.front().action_id == "ANY_INPUT");
+            CHECK(snapshot.choices.front().description.empty());
             CHECK(snapshot.choices.front().label == "Press any key");
             CHECK(snapshot.any_key_choice_id == snapshot.choices.front().id);
             // The key the player presses is the field's; the message is said once, by the popup.
@@ -683,7 +684,8 @@ TEST_CASE(
         game_client::memory::set_input_provider([&](const int /*timeout*/) {
             const auto snapshot = game_client::current_interaction();
             REQUIRE(snapshot.choices.size() == 1);
-            CHECK(snapshot.choices.front().description == "QUIT");
+            CHECK(snapshot.choices.front().action_id == "QUIT");
+            CHECK(snapshot.choices.front().description.empty());
             CHECK(snapshot.choices.front().label == "OK");
             return resolve({
                 .input_id = snapshot.input_id,

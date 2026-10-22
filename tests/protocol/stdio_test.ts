@@ -3355,8 +3355,9 @@ Deno.test({
       const screen = top(session)
       assertEquals(screen.context, "ADVANCED_INVENTORY")
       const areas = findComponent(screen.root, "aim:pane:left:areas")
-      assertEquals(areas.rows.length, 16)
-      assertEquals(areas.rows.map((row: Value) => row.id).slice(0, 2), [
+      assertEquals(areas.kind, "grid")
+      assertEquals(areas.cells.length, 16)
+      assertEquals(areas.cells.map((cell: Value) => cell.id).slice(0, 2), [
         "area:INVENTORY",
         "area:SW",
       ])
