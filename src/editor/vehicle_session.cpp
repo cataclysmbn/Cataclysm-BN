@@ -7,6 +7,9 @@
 #include "engine_client_component.h"
 #include "engine_client_world.h"
 #include "input.h"
+#include "json_formatter.h"
+#include "line.h"
+#include "map/map.h"
 #include "output.h"
 #include "path_info.h"
 #include "string_formatter.h"
@@ -22,6 +25,7 @@
 #include <algorithm>
 #include <charconv>
 #include <filesystem>
+#include <fstream>
 #include <limits>
 #include <optional>
 #include <ranges>
@@ -56,6 +60,8 @@ constexpr auto undo_id = "vehicle:undo";
 constexpr auto redo_id = "vehicle:redo";
 constexpr auto save_id = "vehicle:save";
 constexpr auto save_as_id = "vehicle:save_as";
+constexpr auto world_id = "vehicle:world";
+constexpr auto export_id = "vehicle:export";
 constexpr auto spawn_form_id = "vehicle:spawn_form";
 constexpr auto spawn_set_id = "vehicle:spawn_set";
 constexpr auto spawn_id = "vehicle:spawn";
@@ -154,7 +160,12 @@ struct session {
             notice = string_format(_("No data file of the loaded mods defines %s."), id);
             return;
         }
-        auto opened = document::open(*path);
+        open_file(*path, id);
+    }
+
+    /// Opens the prototype `id` of the data file at `path`.
+    auto open_file(const std::filesystem::path& path, const std::string& id) -> void {
+        auto opened = document::open(path);
         if (!opened) {
             notice = opened.error();
             return;
@@ -221,6 +232,36 @@ struct session {
             return;
         }
         change(next);
+    }
+
+    /// Writes the design of the world's vehicle `index` as a prototype in a new file of the user
+    /// mods, and opens it.
+    auto export_vehicle(const std::size_t index, const std::string& name) -> void {
+        const auto vehicles = get_map().get_vehicles();
+        const auto path = std::filesystem::path(name);
+        if (index >= vehicles.size()) { return; }
+        if (path.extension() != ".json" || !inside(path, PATH_INFO::user_moddir())) {
+            notice = string_format(
+                _("A design is exported to a new .json file in your mods, %s."),
+                PATH_INFO::user_moddir());
+            return;
+        }
+        if (std::filesystem::exists(path)) {
+            notice = _("That file already exists; nothing was saved.");
+            return;
+        }
+        const auto id = path.stem().string();
+        const auto design = nlohmann::ordered_json::array({export_design(*vehicles[index].v, id)});
+        auto error = std::error_code{};
+        std::filesystem::create_directories(path.parent_path(), error);
+        auto out = std::ofstream(path, std::ios::binary);
+        out << format_json(design.dump()).value_or(design.dump(2));
+        if (error || !out.flush()) {
+            notice = _("The file could not be written.");
+            return;
+        }
+        out.close();
+        open_file(path, id);
     }
 
     /// Puts the design in the game in place of its prototype and spawns it east of the avatar.
@@ -389,6 +430,28 @@ auto session_view(const session& state) -> ec::screen_view {
                  .min = 0,
                  .max = pages_of(found.total) - 1,
                  .initial = static_cast<std::int64_t>(state.page)}}}));
+    const auto vehicles = get_map().get_vehicles();
+    const auto here = get_avatar().bub_pos();
+    parts.push_back(ec::list(
+        {.id = world_id,
+         .rows = vehicles | std::views::enumerate | std::views::transform([&](const auto& entry) {
+                     const auto& [index, placed] = entry;
+                     return ec::row{
+                         .id = string_format("world:%d", index),
+                         .label = placed.v->name,
+                         .columns = {
+                             {.key = "distance",
+                              .label = _("Distance"),
+                              .value = std::to_string(rl_dist(here.raw(), placed.pos.raw())),
+                              .color = ""}}};
+                 })
+               | std::ranges::to<std::vector>(),
+         .selection = "single",
+         .activate = export_id}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = export_id,
+         .label = _("Export design"),
+         .args = {.row = ec::row_shape{.component_id = world_id}, .text = ec::text_shape{}}}));
     if (state.doc) {
         const auto& doc = *state.doc;
         auto stats = std::vector<ec::panel_stat>{
@@ -593,6 +656,10 @@ auto run_vehicle_editor() -> void {
             state.page = 0;
         } else if (id == page_id) {
             state.page = static_cast<std::size_t>(invoked->args.count.value_or(0));
+        } else if (id == export_id) {
+            if (const auto index = index_of(row, "world:%zu")) {
+                state.export_vehicle(*index, text);
+            }
         } else if (!state.doc) {
             continue;
         } else if (id == mount_id) {

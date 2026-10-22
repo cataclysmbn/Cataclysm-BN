@@ -78,12 +78,17 @@ auto remove_part(
     const nlohmann::ordered_json& prototype, const vehicle& blueprint, std::size_t index)
     -> std::expected<nlohmann::ordered_json, std::string>;
 
-/// The rows of a blueprint drawn from the parts the vehicle shows, west to east and north to
-/// south.
+/// The rows of a blueprint drawn from the parts the vehicle shows, whole and closed, west to east
+/// and north to south.
 auto blueprint_rows(const vehicle& veh) -> std::vector<std::string>;
 
 /// The facts of a prototype's vehicle a designer weighs: speed, power, mass, cargo.
 auto design_stats(const vehicle& veh) -> std::vector<engine_client::panel_stat>;
+
+/// A prototype `id` of the vehicle's design, as the game would build it again: its name, parts by
+/// mount in the order they were installed, each tank's fuel, and a blueprint; not its state, such
+/// as damage, fill levels or cargo.
+auto export_design(const vehicle& veh, const std::string& id) -> nlohmann::ordered_json;
 
 /// The data file of the loaded mods that defines the prototype `id` last, as the game loads them.
 auto prototype_file(const std::string& id) -> std::optional<std::filesystem::path>;

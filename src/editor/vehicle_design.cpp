@@ -251,7 +251,12 @@ auto blueprint_rows(const vehicle& veh) -> std::vector<std::string> {
         auto row = std::string{};
         for (auto x = min_x; x <= max_x; ++x) {
             const auto shown = veh.part_displayed_at(tripoint_mnt_veh(x, y, 0));
-            row += shown < 0 ? ' ' : veh.part_sym(shown);
+            // What the part is drawn as when whole and closed, since that is the design.
+            const auto* const part = shown < 0 ? nullptr : &veh.cpart(shown);
+            row += !part ? ' '
+                 : part->proxy_sym != '\0'
+                     ? part->proxy_sym
+                     : static_cast<char>(part->info().sym);
         }
         row.erase(row.find_last_not_of(' ') + 1);
         rows.push_back(std::move(row));
@@ -284,6 +289,40 @@ auto design_stats(const vehicle& veh) -> std::vector<engine_client::panel_stat> 
          .value = format_volume(cargo),
          .unit = volume_units_abbr()},
     };
+}
+
+auto export_design(const vehicle& veh, const std::string& id) -> nlohmann::ordered_json {
+    auto mounts = std::vector<point>{};
+    auto stacks = std::vector<nlohmann::ordered_json>{};
+    for (const auto& vp : veh.get_all_parts()) {
+        const auto& part = vp.part();
+        if (part.removed) { continue; }
+        const auto& part_id =
+            part.proxy_part_id.is_null() ? part.info().get_id() : part.proxy_part_id;
+        const auto fuel = part.is_tank() ? part.ammo_current() : itype_id::NULL_ID();
+        const auto named =
+            fuel.is_null()
+                ? nlohmann::ordered_json(part_id.str())
+                : nlohmann::ordered_json{{"part", part_id.str()}, {"fuel", fuel.str()}};
+        const auto mount = vp.mount().xy().raw();
+        const auto found = std::ranges::find(mounts, mount);
+        if (found == mounts.end()) {
+            mounts.push_back(mount);
+            stacks.push_back(nlohmann::ordered_json::array({named}));
+        } else {
+            stacks[found - mounts.begin()].push_back(named);
+        }
+    }
+    auto parts = nlohmann::ordered_json::array();
+    for (const auto& [mount, stack] : std::views::zip(mounts, stacks)) {
+        parts.push_back({{"x", mount.x}, {"y", mount.y}, {"parts", stack}});
+    }
+    return {
+        {"id", id},
+        {"type", "vehicle"},
+        {"name", veh.name},
+        {"blueprint", blueprint_rows(veh)},
+        {"parts", std::move(parts)}};
 }
 
 auto prototype_file(const std::string& id) -> std::optional<std::filesystem::path> {
