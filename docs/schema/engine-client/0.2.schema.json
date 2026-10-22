@@ -5680,9 +5680,10 @@
             "navigate",
             "help",
             "digit",
-            "layout"
+            "layout",
+            "edit"
           ],
-          "description": "What the affordance means for the screen. `any_key` runs on a key no affordance binds. `select` moves the screen's cursor to the row named by `args.row` without activating it, so the detail that follows the cursor shows that row; a client invokes it when its focus moves in the list its `args.row` targets. `navigate` moves a cursor, page, tab or scroll position (a client already maps arrows, paging and the wheel to it and need not draw a button). `help` opens the native help or keybindings screen. `digit` types its key, a digit, into a counting list's count before any action bound to the key: as in the native list, it goes into the count the next mark takes, or opens the count prompt with it; a client need not draw a button. `layout` only resizes or rearranges the native window, and the screen publishes the same whatever it does; a client that lays out its own windows need not draw a button."
+          "description": "What the affordance means for the screen. `any_key` runs on a key no affordance binds. `select` moves the screen's cursor to the row named by `args.row` without activating it, so the detail that follows the cursor shows that row; a client invokes it when its focus moves in the list its `args.row` targets. `navigate` moves a cursor, page, tab or scroll position (a client already maps arrows, paging and the wheel to it and need not draw a button). `help` opens the native help or keybindings screen. `digit` types its key, a digit, into a counting list's count before any action bound to the key: as in the native list, it goes into the count the next mark takes, or opens the count prompt with it; a client need not draw a button. `layout` only resizes or rearranges the native window, and the screen publishes the same whatever it does; a client that lays out its own windows need not draw a button. `edit` is a key that edits the text of the screen's text field (backspace, delete, clear, paste, input from a file); a client's own text box takes it, so it need not draw a button."
         },
         "args": {
           "$ref": "#/$defs/arg_shape"
