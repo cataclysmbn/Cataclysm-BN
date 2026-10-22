@@ -677,6 +677,7 @@ auto body_json( const grid_body &body, const bubble_frame & /*frame*/ ) -> json
         result["cells"].push_back( std::move( entry ) );
     }
     if( !body.looks.empty() ) { result["looks"] = to_array( body.looks ); }
+    if( !body.role.empty() ) { result["role"] = body.role; }
     return result;
 }
 auto body_json( const map_body &body, const bubble_frame &frame ) -> json

@@ -232,6 +232,8 @@ struct grid_body {
     std::vector<grid_cell> cells = {};
     /// The looks the cells name, each once.
     std::vector<engine_client::look> looks = {};
+    /// `canvas` for squares the player draws on, which take whatever room a client has; empty for none.
+    std::string role = {};
 };
 /// The looks of a grid, each once, which its cells name by index.
 struct look_palette {

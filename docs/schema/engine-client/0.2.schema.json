@@ -6649,6 +6649,12 @@
             "$ref": "#/$defs/look"
           },
           "description": "The looks the cells name, each once."
+        },
+        "role": {
+          "enum": [
+            "canvas"
+          ],
+          "description": "`canvas`: squares the player draws on, such as the map editor's, which take whatever room a client has. Absent for a grid that only shows or picks squares."
         }
       },
       "required": [

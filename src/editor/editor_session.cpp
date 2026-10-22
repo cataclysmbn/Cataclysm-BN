@@ -763,7 +763,8 @@ auto canvas(const session& state) -> ec::component {
             .rows = static_cast<int>(grid.size()),
             .cursor = cursor ? std::optional(ec::grid_point{cursor->x, cursor->y}) : std::nullopt,
             .cells = std::move(cells),
-            .looks = std::move(palette.looks)}};
+            .looks = std::move(palette.looks),
+            .role = "canvas"}};
 }
 
 /// A row per placement: where it lands, and what it places as the data writes it.
