@@ -263,10 +263,11 @@ auto travel_click( const travel_operation &operation ) -> std::optional<game_cli
     const auto at = tripoint_bub_ms( target->x, target->y, target->z );
     const auto &you = get_avatar();
     const auto step = at - you.bub_pos();
-    // The route planner takes no step into a closed door; native movement opens it.
+    // The route planner takes no step into a closed door; native movement opens it, or says that it is locked.
     if( operation.button == "left" && step.z() == 0 &&
         square_dist( at.xy().raw(), you.bub_pos().xy().raw() ) == 1 &&
-        get_map().can_open_door( &you, at, !get_map().is_outside( you.bub_pos() ) ) ) {
+        ( get_map().can_open_door( &you, at, !get_map().is_outside( you.bub_pos() ) ) ||
+          get_map().ter( at )->has_flag( "LOCKED" ) ) ) {
         return game_client::input_command{
             .action = action_ident( get_movement_action_from_delta( step, iso_rotate::yes ) ),
             .input_id = game_client::current_input_id() };
