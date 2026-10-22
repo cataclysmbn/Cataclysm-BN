@@ -566,7 +566,7 @@ TEST_CASE(
                 CHECK(placed[0].id == "placement:place_monster:0");
                 CHECK(placed[0].columns[0].value == "3-5");
                 CHECK(placed[0].columns[1].value == "7");
-                CHECK(placed[0].columns[2].value == R"({"monster":"mon_zombie"})");
+                CHECK(placed[0].columns[2].value == "monster: mon_zombie");
                 // The loader drops the second: it names it, and it can be shown.
                 const auto& messages = body<ec::list_body>(part(screen, "editor:diagnostics")).rows;
                 REQUIRE(messages.size() == 1);
