@@ -2,8 +2,9 @@
  * @module
  * The vehicle editor from the main menu: the Editor tab's vehicle editor entry starts the editor world and opens
  * the vehicle editor at once; it opens a prototype by its id, shows the vehicle the game builds from it, installs
- * a part on a mount, refuses one the game would not mount, undoes the install, spawns the prototype, edits the
- * spawned vehicle in place, copies and pastes it with its state, and leaves for the map.
+ * a part on a mount from the install tab, refuses one the game would not mount, undoes the install, spawns the
+ * prototype, edits the spawned vehicle in place from the world tab, copies and pastes it with its state, and leaves
+ * for the map.
  */
 import { assert, assertEquals } from "@std/assert"
 import { Engine, type Scenario, type Value } from "./driver.ts"
@@ -43,12 +44,12 @@ export const vehicleEditor: Scenario = {
         (await engine.invoke("vehicle:mount", { row: "mount:1,0" })).stages.at(-1),
         "completed",
       )
+      const before = stack(engine.top())
       assertEquals(
         (await engine.invoke("vehicle:part_filter", { text: "headlight" })).stages.at(-1),
         "completed",
       )
       rec.accept("vehicle editor with a prototype open on a mount", "screen", engine.top())
-      const before = stack(engine.top())
 
       const installed = await engine.invoke("vehicle:install", { row: "vpart:headlight" })
       rec.command("part installed on a prototype's mount", installed)
@@ -65,10 +66,18 @@ export const vehicleEditor: Scenario = {
       rec.accept("part the mount does not take", "row", frame)
 
       assertEquals((await engine.invoke("vehicle:undo")).stages.at(-1), "completed")
+      assertEquals(
+        (await engine.invoke("vehicle:tool", { row: "tool:mount" })).stages.at(-1),
+        "completed",
+      )
       assertEquals(stack(engine.top()), before)
 
       const spawned = await engine.invoke("vehicle:spawn")
       rec.command("prototype spawned beside the avatar", spawned)
+      assertEquals(
+        (await engine.invoke("vehicle:source", { row: "source:world" })).stages.at(-1),
+        "completed",
+      )
       const world = () => part(engine.top(), "vehicle:world").rows
       assertEquals(world().length, 1)
       assertEquals(
@@ -80,11 +89,11 @@ export const vehicleEditor: Scenario = {
         (await engine.invoke("vehicle:mount", { row: "mount:1,0" })).stages.at(-1),
         "completed",
       )
+      const plain = stack(engine.top())
       assertEquals(
         (await engine.invoke("vehicle:part_filter", { text: "headlight" })).stages.at(-1),
         "completed",
       )
-      const plain = stack(engine.top())
       const edited = await engine.invoke("vehicle:install", { row: "vpart:headlight" })
       rec.command("part installed on a world vehicle in place", edited)
       assertEquals(stack(engine.top()), [...plain, "headlight"])
