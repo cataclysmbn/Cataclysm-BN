@@ -7337,6 +7337,16 @@ void map::load(const point_abs_sm& w, const bool update_vehicle, const bool pump
         MAPBUFFER_REGISTRY.get(bound_dimension_).actualize_submap(map_local_to_abs(*this, p));
         if (pump_events) { inp_mngr.pump_events(); }
     }
+    for (const auto zlev : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
+        set_transparency_cache_dirty(zlev);
+        set_floor_cache_dirty(zlev);
+        set_outside_cache_dirty(zlev);
+        set_absorption_cache_dirty(zlev);
+        set_seen_cache_dirty(zlev);
+        set_pathfinding_cache_dirty(zlev);
+        set_suspension_cache_dirty(zlev);
+        set_vehicle_cache_dirty(zlev);
+    }
     refresh_active_submap_view();
     validate_active_submap_view_complete("map::load");
     reset_vehicle_cache();
@@ -7842,16 +7852,8 @@ void map::loadn(const tripoint_bub_sm& grid, const bool update_vehicles, const b
                 .absorption = true,
                 .pathfinding = true,
             });
-        } else {
-            set_transparency_cache_dirty(grid.z());
-            set_floor_cache_dirty(grid.z());
-            set_outside_cache_dirty(grid.z());
-            set_absorption_cache_dirty(grid.z());
-            set_seen_cache_dirty(grid.z());
-            set_pathfinding_cache_dirty(grid.z());
-            set_suspension_cache_dirty(grid.z());
-            set_vehicle_cache_dirty(grid.z());
         }
+        // Otherwise map::load marks each whole z-level once after loading all its submaps.
     }
     // Overlay boundary terrain on the edge tiles of this submap if it sits at the
     // edge of a bounded dimension.  Must run before reality-bubble actualization
