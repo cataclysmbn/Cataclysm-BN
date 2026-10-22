@@ -72,7 +72,7 @@ struct affordance {
     std::vector<std::string> keys = {};
     bool enabled = true;
     std::string denial = {};
-    /// `confirm`, `cancel`, `any_key`, `layout`; empty for none.
+    /// `confirm`, `cancel`, `any_key`, `layout`, `edit`; empty for none.
     std::string role = {};
     arg_shape args = {};
     invoke_kind runs = invoke_kind::action;

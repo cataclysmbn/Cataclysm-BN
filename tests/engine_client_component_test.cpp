@@ -1452,6 +1452,25 @@ TEST_CASE(
     CHECK(affordance(top_of(map), "toggle_fullscreen").role == "layout");
 }
 
+TEST_CASE(
+    "the keys that edit a text field's text are edits, not buttons",
+    "[engine_client_component][roles]") {
+    constexpr auto editing = std::
+        array{"TEXT.BACKSPACE", "TEXT.DELETE", "TEXT.CLEAR", "TEXT.PASTE", "TEXT.INPUT_FROM_FILE"};
+    auto state = boundary(menu());
+    for (const auto* const id : editing) {
+        state.actions.push_back({.id = id, .name = std::string{id} + " name", .keys = {}});
+    }
+    state.actions.push_back(
+        {.id = "TEXT.CONFIRM", .name = "Confirm text input", .keys = {"RETURN"}});
+    const auto view = top_of(state);
+    for (const auto* const id : editing) {
+        INFO(id);
+        CHECK(affordance(view, id).role == "edit");
+    }
+    CHECK(affordance(view, "TEXT.CONFIRM").role.empty());
+}
+
 TEST_CASE("a pane titled as its screen goes untitled", "[engine_client_component]") {
     const auto context = input_context("TEST_TITLES");
     const auto scope = ec::screen_scope(
