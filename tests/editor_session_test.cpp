@@ -332,6 +332,99 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the canvas drags as a trail for the pencil, as a span for shapes and not for the fill",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        const auto drag = [&] { return wire_part(state, "editor:canvas").value("drag", ""); };
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK(drag() == "trail");
+                CHECK(wire_part(state, "editor:canvas").value("drag_begin", "")
+                      == "editor:stroke_begin");
+                CHECK(
+                    wire_part(state, "editor:canvas").value("drag_end", "") == "editor:stroke_end");
+                return invoke("editor:tool", {.row = "tool:rect"});
+            case 2:
+                CHECK(drag() == "span");
+                CHECK_FALSE(wire_part(state, "editor:canvas").contains("drag_begin"));
+                return invoke("editor:tool", {.row = "tool:fill"});
+            case 3:
+                CHECK(drag().empty());
+                return invoke("editor:tool", {.row = "tool:pick"});
+            case 4:
+                CHECK(drag().empty());
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 5);
+}
+
+TEST_CASE(
+    "a pencil trail between stroke begin and end is one undo step",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                return invoke("editor:stroke_begin");
+            case 2:
+                return invoke("editor:paint", {.row = "square:1,1"});
+            case 3:
+                return invoke("editor:paint", {.row = "square:2,1"});
+            case 4:
+                return invoke("editor:paint", {.row = "square:3,1"});
+            case 5:
+                CHECK(walls(screen) == 3);
+                return invoke("editor:stroke_end");
+            case 6:
+                // Outside a stroke each square is a step of its own.
+                return invoke("editor:paint", {.row = "square:5,5"});
+            case 7:
+                return invoke("editor:paint", {.row = "square:6,5"});
+            case 8:
+                CHECK(walls(screen) == 5);
+                return invoke("editor:undo");
+            case 9:
+                CHECK(walls(screen) == 4);
+                return invoke("editor:undo");
+            case 10:
+                CHECK(walls(screen) == 3);
+                return invoke("editor:undo");
+            case 11:
+                CHECK(walls(screen) == 0);
+                CHECK_FALSE(affordance(screen, "editor:undo").enabled);
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 12);
+}
+
+TEST_CASE(
     "the editor asks to save, discard or stay before leaving unsaved changes",
     "[editor_session][engine_client_component]") {
     const auto guard = screen_guard{};

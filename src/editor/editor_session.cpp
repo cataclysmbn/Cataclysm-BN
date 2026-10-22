@@ -71,6 +71,8 @@ constexpr auto object_id = "editor:object";
 constexpr auto tool_id = "editor:tool";
 constexpr auto symbol_id = "editor:symbol";
 constexpr auto paint_id = "editor:paint";
+constexpr auto stroke_begin_id = "editor:stroke_begin";
+constexpr auto stroke_end_id = "editor:stroke_end";
 constexpr auto undo_id = "editor:undo";
 constexpr auto redo_id = "editor:redo";
 constexpr auto save_id = "editor:save";
@@ -950,7 +952,13 @@ auto canvas(const session& state) -> ec::component {
             .cursor = cursor ? std::optional(ec::grid_point{cursor->x, cursor->y}) : std::nullopt,
             .cells = std::move(cells),
             .looks = std::move(palette.looks),
-            .role = "canvas"}};
+            .role = "canvas",
+            .drag = state.current->spans ? "span"
+                  : state.current->kind == shape_kind::point
+                      ? "trail"
+                      : "",
+            .drag_begin = state.current->kind == shape_kind::point ? stroke_begin_id : "",
+            .drag_end = state.current->kind == shape_kind::point ? stroke_end_id : ""}};
 }
 
 /// What a placement places, a `key: value` for each member: a string as it reads, anything else as
@@ -1223,6 +1231,10 @@ auto session_view(const session& state) -> ec::screen_view {
                 {.id = rotate_id, .label = _("Rotate"), .enabled = !state.clip.empty()}));
             affordances.push_back(ec::invoke_affordance(
                 {.id = paint_id, .label = _("Draw"), .args = row_of(canvas_id)}));
+            affordances.push_back(
+                ec::invoke_affordance({.id = stroke_begin_id, .label = _("Begin stroke")}));
+            affordances.push_back(
+                ec::invoke_affordance({.id = stroke_end_id, .label = _("End stroke")}));
             parts.push_back(ec::component{
                 .id = mapping_id,
                 .affordances = {mapping_set_id, mapping_apply_id},
@@ -1469,6 +1481,10 @@ auto run_editor_session() -> void {
             }
         } else if (id == paint_id) {
             if (const auto at = square_of(row)) { state.paint(*at); }
+        } else if (id == stroke_begin_id) {
+            state.doc->begin_group();
+        } else if (id == stroke_end_id) {
+            state.doc->end_group();
         } else if (id == undo_id || id == redo_id) {
             const auto moved = id == undo_id ? state.doc->undo() : state.doc->redo();
             if (moved) { state.reload(); }
