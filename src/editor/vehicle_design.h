@@ -83,6 +83,21 @@ auto remove_part(
 auto move_part(const nlohmann::ordered_json& prototype, std::size_t index, int step)
     -> std::expected<nlohmann::ordered_json, std::string>;
 
+struct part_member {
+    /// The part, as an index of `design_parts`.
+    std::size_t index = 0;
+    /// The member of its JSON, such as `fuel` or `ammo`.
+    std::string key;
+    /// None removes the member.
+    std::optional<nlohmann::ordered_json> value = std::nullopt;
+};
+
+/// The prototype with the member of a part set or removed: a part named by its id alone becomes
+/// an object, and one left with its id alone is named by it again; the error says why the game
+/// would not load it.
+auto set_part_member(const nlohmann::ordered_json& prototype, const part_member& change)
+    -> std::expected<nlohmann::ordered_json, std::string>;
+
 /// The rows of a blueprint drawn from the parts the vehicle shows, whole and closed, west to east
 /// and north to south.
 auto blueprint_rows(const vehicle& veh) -> std::vector<std::string>;

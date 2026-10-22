@@ -371,6 +371,28 @@ auto remove_part(
     return redrawn(std::move(next));
 }
 
+auto set_part_member(const nlohmann::ordered_json& prototype, const part_member& change)
+    -> std::expected<nlohmann::ordered_json, std::string> {
+    const auto parts = design_parts(prototype);
+    if (change.index >= parts.size()) { return std::unexpected(_("There is no such part.")); }
+    auto next = prototype;
+    auto& entry = next[nlohmann::ordered_json::json_pointer(parts[change.index].pointer)];
+    if (entry.is_string()) { entry = nlohmann::ordered_json{{"part", entry}}; }
+    if (change.value) {
+        entry[change.key] = *change.value;
+    } else {
+        entry.erase(change.key);
+    }
+    if (entry.size() == 1 && entry.contains("part")) {
+        entry = nlohmann::ordered_json(entry["part"]);
+    }
+    const auto before = build_design(prototype.dump()).messages.size();
+    if (const auto built = build_design(next.dump()); built.messages.size() > before) {
+        return std::unexpected(built.messages.back().text);
+    }
+    return next;
+}
+
 auto move_part(const nlohmann::ordered_json& prototype, const std::size_t index, const int step)
     -> std::expected<nlohmann::ordered_json, std::string> {
     const auto parts = design_parts(prototype);
