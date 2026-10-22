@@ -1510,6 +1510,19 @@ static std::optional<tripoint_range<tripoint_bub_ms>> select_area()
                first.position.value(), second.position.value() );
 }
 
+auto spawn_vehicle( avatar &you, const vehicle_spawn &spawn ) -> vehicle *
+{
+    auto &here = get_map();
+    const auto at = you.bub_pos();
+    auto *const veh = here.add_vehicle( spawn.type, at, spawn.dir, 100, spawn.status, true, false,
+                                        true );
+    if( veh != nullptr ) {
+        veh->set_owner( you );
+        here.board_vehicle( at, &you );
+    }
+    return veh;
+}
+
 void debug()
 {
     bool debug_menu_has_hotkey = hotkey_for_action( ACTION_DEBUG, false ) != -1;
@@ -1725,7 +1738,6 @@ void debug()
                 if( veh_menu.ret >= 0 && veh_menu.ret < static_cast<int>( veh_strings.size() ) ) {
                     // Didn't cancel
                     const vproto_id &selected_opt = veh_strings[veh_menu.ret].second;
-                    auto dest = u.bub_pos();
                     uilist veh_cond_menu;
                     veh_cond_menu.text = _( "Vehicle condition" );
                     veh_cond_menu.addentry( 0, true, MENU_AUTOASSIGN, _( "Light damage" ) );
@@ -1736,16 +1748,7 @@ void debug()
                     if( veh_cond_menu.ret >= 0 && veh_cond_menu.ret < 3 ) {
                         int dir = 0;
                         if( query_int( dir, -90, _( "Vehicle direction (in degrees): " ) ) ) {
-                            vehicle *veh = m.add_vehicle( selected_opt, dest,
-                                                          normalize( units::from_degrees( dir ) ),
-                                                          100, veh_cond_menu.ret - 1,
-                                                          true,
-                                                          false,
-                                                          true );
-                            if( veh != nullptr ) {
-                                veh->set_owner( u );
-                                m.board_vehicle( dest, &u );
-                            }
+                            spawn_vehicle( u, { .type = selected_opt, .dir = normalize( units::from_degrees( dir ) ), .status = veh_cond_menu.ret - 1 } );
                         }
                     }
                 }

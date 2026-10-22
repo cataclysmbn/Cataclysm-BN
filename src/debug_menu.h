@@ -4,10 +4,14 @@
 #include <string>
 
 #include "coordinates.h"
+#include "type_id.h"
+#include "units_angle.h"
 
 class Character;
 class Creature;
+class avatar;
 class player;
+class vehicle;
 
 namespace debug_menu
 {
@@ -26,6 +30,15 @@ void effect_edit_menu( Creature &c );
 void wishitem( Character *who = nullptr );
 void wishitem( Character *, const tripoint_bub_ms & );
 void wishmonster( const std::optional<tripoint_bub_ms> &p );
+
+struct vehicle_spawn {
+    vproto_id type;
+    units::angle dir;
+    /// -1 light damage, 0 undamaged, 1 disabled.
+    int status = 0;
+};
+/// Spawns a vehicle the avatar owns on the avatar's square and seats the avatar in it.
+auto spawn_vehicle( avatar &you, const vehicle_spawn &spawn ) -> vehicle *; // *NOPAD*
 void wishmutate( Character * );
 void wishbionics( Character &c );
 void wishskill( Character * );

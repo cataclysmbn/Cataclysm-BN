@@ -10,6 +10,8 @@
 #include "creature_tracker.h"
 #include "damage.h"
 #include "debug.h"
+#include "debug_log_capture.h"
+#include "debug_menu.h"
 #include "enums.h"
 #include "game.h"
 #include "game_constants.h"
@@ -266,6 +268,33 @@ TEST_CASE("detaching_vehicle_unboards_passengers") {
     REQUIRE(player_character.in_vehicle);
     here.detach_vehicle(veh_ptr);
     REQUIRE(!player_character.in_vehicle);
+}
+
+TEST_CASE(
+    "a debug vehicle spawned into walls seats the avatar only on a seat it kept",
+    "[vehicle][debug]") {
+    clear_all_state();
+    auto& here = get_map();
+    auto& you = get_avatar();
+    const auto origin = tripoint_bub_ms(60, 60, 0);
+    // A part pushed into a wall smashes the vehicle, which destroys parts at random.
+    for (auto attempt = 0; attempt < 20; attempt++) {
+        clear_vehicles();
+        build_test_map(ter_id("t_pavement"));
+        for (const auto& p : here.points_in_radius(origin, 1)) {
+            if (p != origin) { here.ter_set(p, ter_id("t_wall")); }
+        }
+        you.setpos(origin);
+        you.in_vehicle = false;
+        const auto errors = capture_debug_errors_during([&]() {
+            debug_menu::
+                spawn_vehicle(you, {.type = vproto_id("bicycle"), .dir = -90_degrees, .status = 0});
+        });
+        CAPTURE(attempt);
+        CHECK(errors.empty());
+        const auto seat = here.veh_at(origin).part_with_feature(VPFLAG_BOARDABLE, true);
+        CHECK(you.in_vehicle == seat.has_value());
+    }
 }
 
 TEST_CASE("detaching_opaque_vehicle_invalidates_transparency_cache", "[vehicle][map_cache]") {
