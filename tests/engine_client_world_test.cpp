@@ -1880,6 +1880,53 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "world capture says what form a door, a fence, a plant, furniture and a field stand in",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& here = get_map();
+    const auto square = [&](const int x, const int y) { return setup.start + tripoint(x, y, 0); };
+    here.ter_set(square(-2, -1), ter_id("t_door_c"));
+    here.ter_set(square(-2, 0), ter_id("t_door_o"));
+    here.ter_set(square(-2, 1), ter_id("t_door_locked"));
+    here.ter_set(square(-1, -2), ter_id("t_fence"));
+    here.ter_set(square(0, -2), ter_id("t_shrub"));
+    here.furn_set(square(1, -2), furn_id("f_chair"));
+    here.furn_set(square(1, -1), furn_id("f_table"));
+    here.furn_set(square(1, 1), furn_id("f_bed"));
+    here.add_field(square(-1, 2), field_type_id("fd_fire"), 1);
+    here.add_field(square(0, 2), field_type_id("fd_smoke"), 1);
+    here.build_map_cache(0);
+    map_perception::acquire();
+    const auto state = ec::world::capture_world();
+    const auto cell_at = [&](const int x, const int y) {
+        const auto* cell = find_cell(state, at(square(x, y)));
+        REQUIRE(cell != nullptr);
+        return nlohmann::json::parse(ec::serialize_cells({.cells = {*cell}}))["cells"][0];
+    };
+    const auto terrain_form = [&](const int x, const int y) {
+        return cell_at(x, y)["terrain"].value("form", std::string{});
+    };
+    const auto furniture_form = [&](const int x, const int y) {
+        return cell_at(x, y)["furniture"].value("form", std::string{});
+    };
+    const auto field_form = [&](const int x, const int y) {
+        return cell_at(x, y)["fields"].back()["look"].value("form", std::string{});
+    };
+    CHECK(terrain_form(-2, -1) == "door");
+    CHECK(terrain_form(-2, 0) == "door");
+    CHECK(terrain_form(-2, 1) == "door");
+    CHECK(terrain_form(-1, -2) == "fence");
+    CHECK(terrain_form(0, -2) == "plant");
+    CHECK(furniture_form(1, -2) == "seat");
+    CHECK(furniture_form(1, -1) == "table");
+    CHECK(furniture_form(1, 1) == "bed");
+    CHECK(field_form(-1, 2) == "fire");
+    CHECK(field_form(0, 2) == "gas");
+    // Plain floor has no form, left out.
+    CHECK_FALSE(cell_at(0, 0)["terrain"].contains("form"));
+}
+
+TEST_CASE(
     "world capture marks a window as a window and no other wall as one", "[engine_client_world]") {
     const auto setup = make_scene();
     auto& here = get_map();
