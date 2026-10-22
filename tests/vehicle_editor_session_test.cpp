@@ -659,6 +659,8 @@ TEST_CASE(
             case 3:
                 // Every part on a mount names the mount's cell.
                 CHECK(cell(screen, "mount:-2,-1").label.find(", ") != std::string::npos);
+                // Their names, without the health bar the map draws before them.
+                CHECK(cell(screen, "mount:-2,-1").label.find('|') == std::string::npos);
                 return invoke("vehicle:pick", {.row = tank(screen)});
             case 4:
                 return invoke("vehicle:tool", {.row = "tool:part"});
