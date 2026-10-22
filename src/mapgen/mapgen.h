@@ -396,6 +396,8 @@ private:
 
 class mapgen_function_json_base {
 public:
+    /// Where the object was read from.
+    auto source_location() const -> const json_source_location&; // *NOPAD*
     void merge_non_nest_parameters_into(mapgen_parameters&, const std::string& outer_context) const;
     auto check_inbounds(const jmapgen_int& x, const jmapgen_int& y, const JsonObject& jso) const
         -> bool;

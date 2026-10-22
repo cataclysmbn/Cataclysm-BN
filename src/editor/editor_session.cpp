@@ -7,18 +7,24 @@
 #include "editor/document.h"
 #include "editor/json_pointer.h"
 #include "editor/mapgen_check.h"
+#include "editor/mapgen_export.h"
 #include "editor/mapgen_legend.h"
 #include "editor/mapgen_legend_edit.h"
 #include "editor/mapgen_placement.h"
 #include "editor/mapgen_preview.h"
+#include "editor/mapgen_source.h"
+#include "editor/mapgen_stamp.h"
 #include "editor/mapgen_stroke.h"
 #include "engine_client_component.h"
 #include "engine_client_world.h"
+#include "game.h"
 #include "input.h"
 #include "item.h"
 #include "json_formatter.h"
 #include "map/mapdata.h"
 #include "output.h"
+#include "overmap/omdata.h"
+#include "overmap/overmapbuffer.h"
 #include "path_info.h"
 #include "regional_settings.h"
 #include "string_formatter.h"
@@ -29,6 +35,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cctype>
 #include <charconv>
 #include <filesystem>
 #include <fstream>
@@ -84,6 +91,26 @@ constexpr auto move_apply_id = "editor:move_apply";
 constexpr auto field_id = "editor:field";
 constexpr auto field_set_id = "editor:field_set";
 constexpr auto field_apply_id = "editor:field_apply";
+constexpr auto inside_id = "editor:inside";
+constexpr auto brush_id = "editor:brush";
+constexpr auto mirror_x_id = "editor:mirror_x";
+constexpr auto mirror_y_id = "editor:mirror_y";
+constexpr auto export_id = "editor:export";
+constexpr auto copy_id = "editor:copy";
+constexpr auto rotate_id = "editor:rotate";
+constexpr auto history_id = "editor:history";
+constexpr auto jump_id = "editor:jump";
+constexpr auto open_oter_id = "editor:open_oter";
+constexpr auto open_here_id = "editor:open_here";
+constexpr auto browser_id = "editor:browser";
+constexpr auto browser_open_id = "editor:browser_open";
+constexpr auto browser_filter_id = "editor:browser_filter";
+constexpr auto browser_page_id = "editor:browser_page";
+constexpr auto apply_id = "editor:apply";
+constexpr auto stamp_id = "editor:stamp";
+constexpr auto unstamp_id = "editor:unstamp";
+constexpr auto test_id = "editor:test";
+constexpr auto max_brush = 9;
 
 /// The members of a mapgen's object that map its symbols, as the loader reads them.
 constexpr auto legend_layers = std::array{
@@ -115,12 +142,16 @@ constexpr auto legend_layers = std::array{
     "faction_owner_character",
     "remove_all"};
 
+/// What a tool that works on a region instead of a shape does with the square it is used on.
+enum class region_use { none, select, paste };
+
 struct tool {
     std::string id;
-    /// None: the eyedropper, which picks the symbol it is used on.
+    /// None: the eyedropper, which picks the symbol it is used on, unless it works on a region.
     std::optional<shape_kind> kind;
     /// Whether it takes two squares, the first of them its anchor.
     bool spans = false;
+    region_use region = region_use::none;
 };
 
 const auto tools = std::array{
@@ -129,8 +160,17 @@ const auto tools = std::array{
     tool{.id = "tool:rect", .kind = shape_kind::rect, .spans = true},
     tool{.id = "tool:rect_filled", .kind = shape_kind::rect_filled, .spans = true},
     tool{.id = "tool:ellipse", .kind = shape_kind::ellipse, .spans = true},
+    tool{.id = "tool:room", .kind = shape_kind::room, .spans = true},
     tool{.id = "tool:fill", .kind = shape_kind::fill},
     tool{.id = "tool:pick", .kind = std::nullopt},
+    tool{.id = "tool:select", .region = region_use::select},
+    tool{.id = "tool:paste", .region = region_use::paste},
+};
+
+/// The corners of the rectangle the select tool marked.
+struct selection {
+    point from;
+    point to;
 };
 
 /// What of the catalog a legend maps, and how a mapping names it.
@@ -215,6 +255,8 @@ auto mapping_of(const catalog_use& use, const std::string& id) -> std::string {
 constexpr auto catalog_page_size = std::size_t{50};
 
 auto tool_label(const tool& value) -> std::string {
+    if (value.region == region_use::select) { return _("Select"); }
+    if (value.region == region_use::paste) { return _("Paste"); }
     if (!value.kind) { return _("Eyedropper"); }
     switch (*value.kind) {
         case shape_kind::point:
@@ -266,42 +308,98 @@ auto editable_place(const std::filesystem::path& path) -> bool {
 }
 
 /// What the new mapgen form writes: a file of the user mods holding one mapgen of an overmap
-/// terrain, its squares all one terrain.
+/// terrain, or one nested chunk of that id, its squares all one terrain.
 struct new_mapgen {
     std::string path;
+    /// The id of the overmap terrain, or of the chunk.
     std::string om_terrain;
     std::string fill = "t_floor";
+    /// `mapgen` or `nested`.
+    std::string kind = "mapgen";
+    /// The side of a nested chunk, in squares.
+    std::string size = "4";
 };
 
-/// Writes `made`'s file; the error says why it was not written.
-auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string> {
-    const auto path = std::filesystem::path(made.path);
+constexpr auto max_chunk = 24;
+
+/// Whether a new file can be written at `made`; the error says why not.
+auto check_new_path(const std::string& made) -> std::expected<void, std::string> {
+    const auto path = std::filesystem::path(made);
     if (path.extension() != ".json" || !inside(path, PATH_INFO::user_moddir())) {
         return std::unexpected(string_format(
             _("A new file goes in your mods, %s, and ends in .json."), PATH_INFO::user_moddir()));
     }
     if (std::filesystem::exists(path)) {
-        return std::unexpected(string_format(_("%s already exists."), made.path));
+        return std::unexpected(string_format(_("%s already exists."), made));
     }
+    return {};
+}
+
+/// Writes `entries` as the new file `made`; the error says why it was not written.
+auto write_new_file(const std::string& made, const nlohmann::ordered_json& entries)
+    -> std::expected<void, std::string> {
+    const auto path = std::filesystem::path(made);
+    auto error = std::error_code{};
+    std::filesystem::create_directories(path.parent_path(), error);
+    auto out = std::ofstream(path, std::ios::binary);
+    out << format_json(entries.dump()).value_or(entries.dump(2));
+    if (error || !out.flush()) { return std::unexpected(_("The file could not be written.")); }
+    return {};
+}
+
+/// Writes `made`'s file; the error says why it was not written.
+auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string> {
+    if (auto checked = check_new_path(made.path); !checked) { return checked; }
     if (made.om_terrain.empty()) {
         return std::unexpected(_("A mapgen names its overmap terrain."));
     }
     if (!ter_str_id(made.fill).is_valid()) {
         return std::unexpected(string_format(_("%s is no terrain."), made.fill));
     }
-    const auto rows = std::vector<std::string>(24, std::string(24, '.'));
+    if (made.kind != "mapgen" && made.kind != "nested") {
+        return std::unexpected(_("A new file holds a mapgen or a nested chunk."));
+    }
+    const auto nested = made.kind == "nested";
+    auto side = 24;
+    if (nested) {
+        const auto [end, error] =
+            std::from_chars(made.size.data(), made.size.data() + made.size.size(), side);
+        if (error != std::errc{} || end != made.size.data() + made.size.size() || side < 1
+            || side > max_chunk) {
+            return std::unexpected(string_format(_("A chunk is 1 to %d squares wide."), max_chunk));
+        }
+    }
+    const auto rows = std::vector<std::string>(side, std::string(side, '.'));
+    auto object = nlohmann::ordered_json{{"rows", rows}, {"terrain", {{".", made.fill}}}};
+    if (nested) { object["mapgensize"] = {side, side}; }
     const auto entry = nlohmann::ordered_json::array(
         {{{"type", "mapgen"},
           {"method", "json"},
-          {"om_terrain", made.om_terrain},
-          {"object", {{"rows", rows}, {"terrain", {{".", made.fill}}}}}}});
-    auto error = std::error_code{};
-    std::filesystem::create_directories(path.parent_path(), error);
-    auto out = std::ofstream(path, std::ios::binary);
-    out << format_json(entry.dump()).value_or(entry.dump(2));
-    if (error || !out.flush()) { return std::unexpected(_("The file could not be written.")); }
-    return {};
+          {nested ? "nested_mapgen_id" : "om_terrain", made.om_terrain},
+          {"object", object}}});
+    return write_new_file(made.path, entry);
 }
+
+/// The JSON files of the game's data, its mods and the user's mods, in path order.
+auto data_files() -> std::vector<std::filesystem::path> {
+    auto files = std::vector<std::filesystem::path>{};
+    for (const auto& root :
+         {std::filesystem::path(PATH_INFO::datadir()) / "json",
+          std::filesystem::path(PATH_INFO::datadir()) / "mods",
+          std::filesystem::path(PATH_INFO::user_moddir())}) {
+        auto error = std::error_code{};
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(
+                 root, std::filesystem::directory_options::skip_permission_denied, error)) {
+            if (entry.is_regular_file(error) && entry.path().extension() == ".json") {
+                files.push_back(entry.path());
+            }
+        }
+    }
+    std::ranges::sort(files);
+    return files;
+}
+
+constexpr auto browser_page_size = std::size_t{50};
 
 auto range_text(const placement_range& range) -> std::string {
     return range.min == range.max
@@ -321,8 +419,18 @@ struct session {
     /// The object of `doc` on the canvas.
     std::size_t object = 0;
     std::string symbol;
+    /// The symbol inside a room.
+    std::string room_fill;
+    /// The side of the square of squares a pencil, line or outline draws with.
+    int brush = 1;
+    bool mirror_x = false;
+    bool mirror_y = false;
     const tool* current = tools.data();
     std::optional<point> anchor = std::nullopt;
+    /// The region the select tool marked, which `editor:copy` copies.
+    std::optional<selection> selected = std::nullopt;
+    /// The symbols copied last, which the paste tool pastes and `editor:rotate` turns.
+    symbol_grid clip;
     /// The square a placement or a diagnostic that was picked names.
     std::optional<point> focus = std::nullopt;
     /// The placement picked last, which the move form moves.
@@ -344,9 +452,52 @@ struct session {
     std::string mapping_layer = "terrain";
     std::string mapping_value;
     new_mapgen made;
+    /// The entry as it stands in the live world, while it is there.
+    std::optional<stamp> stamped = std::nullopt;
+    /// The files the browser lists; read again after a file is made.
+    mutable std::optional<std::vector<std::filesystem::path>> files = std::nullopt;
+    std::string browser_filter;
+    std::size_t browser_page = 0;
     const catalog_use* catalog = catalog_uses.data();
     std::string catalog_filter;
     std::size_t catalog_page = 0;
+
+    /// The files whose path holds the filter, ignoring case.
+    auto browser_entries() const -> std::vector<std::filesystem::path> {
+        if (!files) { files = data_files(); }
+        const auto lower = [](std::string text) {
+            std::ranges::transform(text, text.begin(), [](const unsigned char c) {
+                return static_cast<char>(std::tolower(c));
+            });
+            return text;
+        };
+        const auto wanted = lower(browser_filter);
+        return *files | std::views::filter([&](const std::filesystem::path& path) {
+            return lower(path.generic_string()).contains(wanted);
+        }) | std::ranges::to<std::vector>();
+    }
+
+    /// Opens the mapgen the game registered for an overmap terrain, on the entry that holds it.
+    auto open_mapgen_of(const std::string& name) -> void {
+        const auto id = oter_str_id(name);
+        const auto source = mapgen_source_of(id.is_valid() ? id.obj().get_mapgen_id() : name);
+        if (!source) {
+            notice =
+                string_format(_("%s has no mapgen in a file of the game or of your mods."), name);
+            return;
+        }
+        open(source->path);
+        if (!doc || !notice.empty()) { return; }
+        const auto& objects = doc->objects();
+        const auto found = std::ranges::find_if(objects, [&](const document_object& entry) {
+            return entry.begin <= static_cast<std::size_t>(source->offset)
+                && static_cast<std::size_t>(source->offset) < entry.end;
+        });
+        if (found != objects.end() && is_json_mapgen(found->value)) {
+            object = static_cast<std::size_t>(found - objects.begin());
+            reload();
+        }
+    }
 
     auto catalog_entries() const -> editor::catalog_page {
         return search_catalog(
@@ -392,6 +543,11 @@ struct session {
                 return entry.symbol == symbol;
             })) {
             symbol = legend.empty() ? std::string{} : legend.front().symbol;
+        }
+        if (std::ranges::none_of(legend, [&](const auto& entry) {
+                return entry.symbol == room_fill;
+            })) {
+            room_fill = legend.empty() ? std::string{} : legend.front().symbol;
         }
     }
 
@@ -477,6 +633,7 @@ struct session {
         }
         doc = std::move(*opened);
         anchor.reset();
+        selected.reset();
         focus.reset();
         picked.reset();
         const auto found = mapgens();
@@ -596,8 +753,39 @@ struct session {
         reload();
     }
 
+    /// Generates the entry over the avatar's overmap square, in place of what the world has there.
+    auto stamp_here() -> void {
+        unstamp();
+        auto made = stamp_mapgen(
+            doc->objects()[object].value.dump(),
+            {.at = get_avatar().abs_omt_pos(), .seed = seed.value_or(1)});
+        if (made) {
+            stamped = std::move(*made);
+        } else {
+            notice = made.error();
+        }
+    }
+
+    /// Puts back what the stamp replaced.
+    auto unstamp() -> void {
+        if (!stamped) { return; }
+        swap_stamp(*stamped);
+        stamped.reset();
+    }
+
     auto paint(const point& at) -> void {
         const auto grid = symbols_of(*doc, object);
+        if (current->region == region_use::select) {
+            selected = anchor ? std::optional(selection{.from = *anchor, .to = at}) : std::nullopt;
+            anchor = anchor ? std::nullopt : std::optional(at);
+            return;
+        }
+        if (current->region == region_use::paste) {
+            const auto pasted = editor::paste(*doc, {.object = object, .clip = clip, .at = at});
+            notice = pasted ? "" : pasted.error();
+            reload();
+            return;
+        }
         if (!current->kind) {
             symbol = symbol_at(grid, at);
             return;
@@ -609,8 +797,15 @@ struct session {
         const auto drawn = stroke(
             *doc,
             {.object = object,
-             .drawn = {.kind = *current->kind, .from = anchor.value_or(at), .to = at},
-             .symbol = symbol});
+             .drawn =
+                 {.kind = *current->kind,
+                  .from = anchor.value_or(at),
+                  .to = at,
+                  .size = brush,
+                  .mirror_x = mirror_x,
+                  .mirror_y = mirror_y},
+             .symbol = symbol,
+             .fill_symbol = room_fill});
         anchor.reset();
         notice = drawn ? "" : drawn.error();
         reload();
@@ -731,6 +926,14 @@ auto symbol_looks(const session& state) -> std::map<std::string, std::vector<eng
     return result;
 }
 
+/// Whether the square is inside the rectangle the select tool marked.
+auto in_selection(const session& state, const point& at) -> bool {
+    return state.selected && at.x >= std::min(state.selected->from.x, state.selected->to.x)
+        && at.x <= std::max(state.selected->from.x, state.selected->to.x)
+        && at.y >= std::min(state.selected->from.y, state.selected->to.y)
+        && at.y <= std::max(state.selected->from.y, state.selected->to.y);
+}
+
 auto canvas(const session& state) -> ec::component {
     const auto grid = symbols_of(*state.doc, state.object);
     auto palette = ec::look_palette{};
@@ -751,7 +954,7 @@ auto canvas(const session& state) -> ec::component {
                  .id = square_id(at),
                  .glyph = grid[y][x],
                  .affordance = paint_id,
-                 .selected = state.anchor == at,
+                 .selected = state.anchor == at || in_selection(state, at),
                  .looks = looks.contains(grid[y][x]) ? looks.at(grid[y][x]) : std::vector<int>{}});
         }
     }
@@ -830,6 +1033,22 @@ auto legend_rows(const session& state) -> std::vector<ec::row> {
          | std::ranges::to<std::vector>();
 }
 
+/// A row per state of the document, the original first: a step is named by the edit it did, and
+/// the row of the saved state says so.
+auto history_rows(const document& doc) -> std::vector<ec::row> {
+    const auto steps = doc.history();
+    auto rows = std::vector<ec::row>{};
+    for (const auto depth : std::views::iota(std::size_t{0}, steps.size() + 1)) {
+        auto row = ec::row{
+            .id = string_format("step:%d", depth),
+            .label = depth == 0 ? _("Opened") : steps[depth - 1].patch[0].value("path", ""),
+            .selected = depth == doc.depth()};
+        if (doc.saved_depth() == depth) { row.description = _("Saved"); }
+        rows.push_back(std::move(row));
+    }
+    return rows;
+}
+
 auto session_view(const session& state) -> ec::screen_view {
     auto affordances = std::vector<ec::affordance>{ec::invoke_affordance(
         {.id = open_id, .label = _("Open"), .args = {.text = ec::text_shape{.field_id = path_id}}})};
@@ -852,20 +1071,41 @@ auto session_view(const session& state) -> ec::screen_view {
     const auto row_of = [](const char* const component) {
         return ec::arg_shape{.row = ec::row_shape{.component_id = component}};
     };
-    parts.push_back(ec::component{
-        .id = new_id,
-        .affordances = {new_set_id, new_apply_id},
-        .body = ec::form_body{
-            .fields =
-                {{.id = "path", .label = _("New file"), .value = state.made.path},
-                 {.id = "om_terrain", .label = _("Overmap terrain"), .value = state.made.om_terrain},
-                 {.id = "fill", .label = _("Terrain"), .value = state.made.fill}},
-            .submit = new_apply_id}});
+    auto late = std::vector<ec::component>{};
     affordances.push_back(ec::invoke_affordance(
         {.id = new_set_id,
          .label = _("New file"),
          .args = {.row = ec::row_shape{.component_id = new_id}, .text = ec::text_shape{}}}));
     affordances.push_back(ec::invoke_affordance({.id = new_apply_id, .label = _("Create")}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = open_oter_id,
+         .label = _("Open overmap terrain"),
+         .args = {.text = ec::text_shape{}}}));
+    affordances.push_back(
+        ec::invoke_affordance({.id = open_here_id, .label = _("Open mapgen here")}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = export_id,
+         .label = _("Export mapgen here"),
+         .args = {.text = ec::text_shape{.field_id = path_id}}}));
+    const auto listed = state.browser_entries();
+    const auto shown =
+        std::views::drop(listed, state.browser_page * browser_page_size)
+        | std::views::take(browser_page_size);
+    const auto browser_pages =
+        std::max<std::size_t>(1, (listed.size() + browser_page_size - 1) / browser_page_size);
+    const auto data = std::filesystem::path(PATH_INFO::datadir());
+    affordances.push_back(ec::invoke_affordance(
+        {.id = browser_open_id, .label = _("Open"), .args = row_of(browser_id)}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = browser_filter_id, .label = _("Filter files"), .args = {.text = ec::text_shape{}}}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = browser_page_id,
+         .label = _("Files page"),
+         .args = {
+             .count = ec::count_shape{
+                 .min = 0,
+                 .max = static_cast<std::int64_t>(browser_pages - 1),
+                 .initial = static_cast<std::int64_t>(state.browser_page)}}}));
     if (state.doc) {
         const auto& doc = *state.doc;
         auto stats = std::vector<ec::panel_stat>{
@@ -876,6 +1116,28 @@ auto session_view(const session& state) -> ec::screen_view {
         };
         if (!state.symbol.empty()) {
             stats.push_back({.key = "symbol", .label = _("Symbol"), .value = state.symbol});
+        }
+        if (!state.room_fill.empty()) {
+            stats.push_back({.key = "inside", .label = _("Inside"), .value = state.room_fill});
+        }
+        stats.push_back(
+            {.key = "brush", .label = _("Brush"), .value = std::to_string(state.brush)});
+        stats.push_back(
+            {.key = "mirror_x",
+             .label = _("Mirror across"),
+             .value = state.mirror_x ? _("On") : _("Off")});
+        if (!state.clip.empty()) {
+            stats.push_back(
+                {.key = "clipboard",
+                 .label = _("Clipboard"),
+                 .value = string_format("%zux%zu", state.clip.front().size(), state.clip.size())});
+        }
+        stats.push_back(
+            {.key = "mirror_y",
+             .label = _("Mirror down"),
+             .value = state.mirror_y ? _("On") : _("Off")});
+        if (state.stamped) {
+            stats.push_back({.key = "stamped", .label = _("Stamped"), .value = _("Yes")});
         }
         if (state.seed) {
             stats.push_back(
@@ -899,12 +1161,19 @@ auto session_view(const session& state) -> ec::screen_view {
              .activate = object_id}));
         affordances.push_back(ec::invoke_affordance(
             {.id = object_id, .label = _("Edit"), .args = row_of(objects_id)}));
-        affordances.push_back(
-            ec::invoke_affordance({.id = undo_id, .label = _("Undo"), .enabled = doc.can_undo()}));
-        affordances.push_back(
-            ec::invoke_affordance({.id = redo_id, .label = _("Redo"), .enabled = doc.can_redo()}));
-        affordances.push_back(
-            ec::invoke_affordance({.id = save_id, .label = _("Save"), .enabled = doc.dirty()}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = undo_id, .label = _("Undo"), .keys = {"CTRL+Z"}, .enabled = doc.can_undo()}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = redo_id, .label = _("Redo"), .keys = {"CTRL+Y"}, .enabled = doc.can_redo()}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = save_id, .label = _("Save"), .keys = {"CTRL+S"}, .enabled = doc.dirty()}));
+        parts.push_back(ec::list(
+            {.id = history_id,
+             .rows = history_rows(doc),
+             .selection = "single",
+             .activate = jump_id}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = jump_id, .label = _("Go to step"), .args = row_of(history_id)}));
         if (std::ranges::contains(mapgens, state.object)) {
             parts.push_back(ec::tabs(
                 {.id = tools_id,
@@ -983,6 +1252,21 @@ auto session_view(const session& state) -> ec::screen_view {
             affordances.push_back(ec::invoke_affordance(
                 {.id = symbol_id, .label = _("Symbol"), .args = row_of(legend_id)}));
             affordances.push_back(ec::invoke_affordance(
+                {.id = inside_id, .label = _("Inside"), .args = row_of(legend_id)}));
+            affordances.push_back(ec::invoke_affordance(
+                {.id = brush_id,
+                 .label = _("Brush"),
+                 .args = {.count = ec::
+                              count_shape{.min = 1, .max = max_brush, .initial = state.brush}}}));
+            affordances.push_back(
+                ec::invoke_affordance({.id = mirror_x_id, .label = _("Mirror across")}));
+            affordances.push_back(
+                ec::invoke_affordance({.id = mirror_y_id, .label = _("Mirror down")}));
+            affordances.push_back(ec::invoke_affordance(
+                {.id = copy_id, .label = _("Copy"), .enabled = state.selected.has_value()}));
+            affordances.push_back(ec::invoke_affordance(
+                {.id = rotate_id, .label = _("Rotate"), .enabled = !state.clip.empty()}));
+            affordances.push_back(ec::invoke_affordance(
                 {.id = paint_id, .label = _("Draw"), .args = row_of(canvas_id)}));
             parts.push_back(ec::component{
                 .id = mapping_id,
@@ -1056,6 +1340,15 @@ auto session_view(const session& state) -> ec::screen_view {
                           .text = ec::text_shape{}}}));
             affordances.push_back(
                 ec::invoke_affordance({.id = mapping_apply_id, .label = _("Set mapping")}));
+            affordances.push_back(
+                ec::invoke_affordance({.id = apply_id, .label = _("Apply to game")}));
+            affordances.push_back(ec::invoke_affordance({.id = stamp_id, .label = _("Stamp")}));
+            affordances.push_back(ec::invoke_affordance(
+                {.id = unstamp_id,
+                 .label = _("Take back stamp"),
+                 .enabled = state.stamped.has_value()}));
+            affordances.push_back(ec::invoke_affordance(
+                {.id = test_id, .label = _("Test"), .enabled = state.stamped.has_value()}));
             affordances.push_back(ec::invoke_affordance(
                 {.id = preview_id,
                  .label = _("Preview"),
@@ -1067,6 +1360,39 @@ auto session_view(const session& state) -> ec::screen_view {
             if (state.preview) { parts.push_back(preview_grid(*state.preview)); }
         }
     }
+    late.push_back(ec::component{
+        .id = new_id,
+        .affordances = {new_set_id, new_apply_id},
+        .body = ec::form_body{
+            .fields =
+                {{.id = "path", .label = _("New file"), .value = state.made.path},
+                 {.id = "om_terrain", .label = _("Overmap terrain"), .value = state.made.om_terrain},
+                 {.id = "fill", .label = _("Terrain"), .value = state.made.fill},
+                 {.id = "kind",
+                  .label = _("Kind"),
+                  .value = state.made.kind,
+                  .type = "select",
+                  .options = {{.id = "mapgen", .label = _("Mapgen")},
+                              {.id = "nested", .label = _("Nested chunk")}}},
+                 {.id = "size", .label = _("Chunk size"), .value = state.made.size}},
+            .submit = new_apply_id}});
+    late.push_back(ec::list(
+        {.id = browser_id,
+         .rows =
+             shown | std::views::transform([&](const std::filesystem::path& path) {
+                 return ec::row{
+                     .id = "file:" + path.generic_string(),
+                     .label =
+                         (inside(path, PATH_INFO::datadir()) ? path.lexically_relative(data) : path)
+                             .generic_string()};
+             })
+             | std::ranges::to<std::vector>(),
+         .total = listed.size(),
+         .offset = state.browser_page * browser_page_size,
+         .selection = "single",
+         .activate = browser_open_id,
+         .filterable = true}));
+    std::ranges::move(late, std::back_inserter(parts));
     if (!state.notice.empty()) {
         parts.push_back(
             {.id = "editor:notice", .body = ec::text_body{.markup = state.notice, .tone = "bad"}});
@@ -1120,11 +1446,41 @@ auto run_editor_session() -> void {
         state.watch();
         if (id == open_id) {
             state.open(invoked->args.text.value_or(""));
+        } else if (id == open_oter_id) {
+            state.open_mapgen_of(invoked->args.text.value_or(""));
+        } else if (id == open_here_id) {
+            state.open_mapgen_of(
+                get_overmapbuffer(get_map().get_bound_dimension())
+                    .ter(get_avatar().abs_omt_pos())
+                    .id()
+                    .str());
+        } else if (id == export_id) {
+            const auto path = invoked->args.text.value_or("");
+            const auto exported =
+                check_new_path(path)
+                    .and_then([] { return export_omt(get_avatar().abs_omt_pos()); })
+                    .and_then([&](const nlohmann::ordered_json& entry) {
+                        return write_new_file(path, nlohmann::ordered_json::array({entry}));
+                    });
+            if (exported) {
+                state.open(path);
+            } else {
+                state.notice = exported.error();
+            }
+        } else if (id == browser_open_id) {
+            state.open(row.substr(std::string_view("file:").size()));
+        } else if (id == browser_filter_id) {
+            state.browser_filter = invoked->args.text.value_or("");
+            state.browser_page = 0;
+        } else if (id == browser_page_id) {
+            state.browser_page = static_cast<std::size_t>(invoked->args.count.value_or(0));
         } else if (id == new_set_id) {
             const auto text = invoked->args.text.value_or("");
-            (row == "path" ? state.made.path
-             : row == "om_terrain"
-                 ? state.made.om_terrain
+            (row == "path"         ? state.made.path
+             : row == "om_terrain" ? state.made.om_terrain
+             : row == "kind"       ? state.made.kind
+             : row == "size"
+                 ? state.made.size
                  : state.made.fill) = text;
         } else if (id == new_apply_id) {
             const auto made = create_mapgen(state.made);
@@ -1140,6 +1496,7 @@ auto run_editor_session() -> void {
             if (std::sscanf(row.c_str(), "object:%zu", &index) == 1) {
                 state.object = index;
                 state.anchor.reset();
+                state.selected.reset();
                 state.focus.reset();
                 state.picked.reset();
                 state.reload();
@@ -1153,6 +1510,26 @@ auto run_editor_session() -> void {
         } else if (id == symbol_id) {
             state.symbol = row.substr(std::string_view("symbol:").size());
             state.mapping_symbol = state.symbol;
+        } else if (id == inside_id) {
+            state.room_fill = row.substr(std::string_view("symbol:").size());
+        } else if (id == brush_id) {
+            state.brush = static_cast<int>(invoked->args.count.value_or(1));
+        } else if (id == mirror_x_id) {
+            state.mirror_x = !state.mirror_x;
+        } else if (id == mirror_y_id) {
+            state.mirror_y = !state.mirror_y;
+        } else if (id == copy_id) {
+            if (state.selected) {
+                state.clip = copy_region(
+                    symbols_of(*state.doc, state.object), state.selected->from, state.selected->to);
+            }
+        } else if (id == rotate_id) {
+            state.clip = rotated(state.clip);
+        } else if (id == jump_id) {
+            auto depth = std::size_t{0};
+            if (std::sscanf(row.c_str(), "step:%zu", &depth) == 1 && state.doc->jump(depth)) {
+                state.reload();
+            }
         } else if (id == paint_id) {
             if (const auto at = square_of(row)) { state.paint(*at); }
         } else if (id == undo_id || id == redo_id) {
@@ -1208,6 +1585,18 @@ auto run_editor_session() -> void {
         } else if (id == preview_id) {
             state.seed = static_cast<unsigned int>(invoked->args.count.value_or(1));
             state.reload();
+        } else if (id == apply_id) {
+            const auto applied = apply_mapgen(state.doc->objects()[state.object].value.dump());
+            if (!applied) { state.notice = applied.error(); }
+        } else if (id == stamp_id) {
+            state.stamp_here();
+        } else if (id == unstamp_id) {
+            state.unstamp();
+        } else if (id == test_id && state.stamped) {
+            // The avatar plays in the middle of the stamped square; the editor keeps its document.
+            g->place_player(abs_to_bub(
+                project_to<coords::ms>(state.stamped->at) + tripoint_rel_ms(SEEX, SEEY, 0)));
+            return;
         } else if (id == save_id) {
             state.save();
         } else if (id == save_as_id) {

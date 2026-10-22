@@ -62,6 +62,14 @@ public:
     auto redo() -> bool;
     auto can_undo() const -> bool { return !done_.empty(); }
     auto can_redo() const -> bool { return !undone_.empty(); }
+    /// The steps done, oldest first, then the steps undone, the next redo first.
+    auto history() const -> std::vector<document_edit>;
+    /// How many steps are done now.
+    auto depth() const -> std::size_t { return done_.size(); }
+    /// The depth the file was opened or last saved at; none once an edit after an undo has left it.
+    auto saved_depth() const -> std::optional<std::size_t> { return saved_depth_; }
+    /// Undoes or redoes until `depth` steps are done; false for a depth the history does not reach.
+    auto jump(std::size_t depth) -> bool;
 
     /// The bytes saving writes now.
     auto text() const -> std::string;
@@ -83,6 +91,7 @@ private:
     std::vector<nlohmann::ordered_json> opened_;
     std::vector<document_edit> done_;
     std::vector<document_edit> undone_;
+    std::optional<std::size_t> saved_depth_ = 0;
 };
 
 } // namespace editor

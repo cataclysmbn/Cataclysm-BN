@@ -114,6 +114,20 @@ auto in_reading_order(const std::set<point>& squares, const symbol_grid& grid)
     return ordered;
 }
 
+/// Writes the rows of `grid` that `changed_rows` names as one undo step of `doc`.
+auto commit_rows(
+    document& doc, const std::size_t object, const symbol_grid& grid,
+    const std::set<int>& changed_rows) -> std::expected<void, std::string> {
+    auto patch = nlohmann::ordered_json::array();
+    for (const auto y : changed_rows) {
+        auto row = std::string{};
+        for (const auto& symbol : grid[y]) { row += symbol; }
+        patch.push_back(
+            {{"op", "replace"}, {"path", "/object/rows/" + std::to_string(y)}, {"value", row}});
+    }
+    return doc.edit(object, patch);
+}
+
 } // namespace
 
 auto symbols_of(const document& doc, const std::size_t object) -> symbol_grid {
@@ -174,14 +188,56 @@ auto stroke(document& doc, const stroke_options& options)
     }
     paint(options.drawn, options.symbol);
     if (changed == 0) { return 0; }
-    auto patch = nlohmann::ordered_json::array();
-    for (const auto y : changed_rows) {
-        auto row = std::string{};
-        for (const auto& symbol : grid[y]) { row += symbol; }
-        patch.push_back(
-            {{"op", "replace"}, {"path", "/object/rows/" + std::to_string(y)}, {"value", row}});
+    if (auto edited = commit_rows(doc, options.object, grid, changed_rows); !edited) {
+        return std::unexpected(edited.error());
     }
-    if (auto edited = doc.edit(options.object, patch); !edited) {
+    return changed;
+}
+
+auto copy_region(const symbol_grid& grid, const point& from, const point& to) -> symbol_grid {
+    auto clip = symbol_grid{};
+    for (auto y = std::max(std::min(from.y, to.y), 0);
+         y <= std::min(std::max(from.y, to.y), static_cast<int>(grid.size()) - 1); ++y) {
+        auto row = std::vector<std::string>{};
+        for (auto x = std::max(std::min(from.x, to.x), 0);
+             x <= std::min(std::max(from.x, to.x), static_cast<int>(grid[y].size()) - 1); ++x) {
+            row.push_back(grid[y][x]);
+        }
+        if (!row.empty()) { clip.push_back(std::move(row)); }
+    }
+    return clip;
+}
+
+auto rotated(const symbol_grid& clip) -> symbol_grid {
+    if (clip.empty()) { return {}; }
+    auto turned = symbol_grid(clip.front().size());
+    for (const auto& row : clip | std::views::reverse) {
+        for (auto x = std::size_t{0}; x < turned.size(); ++x) { turned[x].push_back(row[x]); }
+    }
+    return turned;
+}
+
+auto paste(document& doc, const paste_options& options) -> std::expected<std::size_t, std::string> {
+    if (options.object >= doc.objects().size()) {
+        return std::unexpected("no object " + std::to_string(options.object));
+    }
+    auto grid = symbols_of(doc, options.object);
+    auto changed_rows = std::set<int>{};
+    auto changed = std::size_t{0};
+    for (const auto& [dy, row] : options.clip | std::views::enumerate) {
+        for (const auto& [dx, symbol] : row | std::views::enumerate) {
+            if (utf8_display_split(symbol).size() != 1 || utf8_width(symbol) != 1) {
+                return std::unexpected("\"" + symbol + "\" is not one symbol");
+            }
+            const auto at = options.at + point(dx, dy);
+            if (!inside(at, grid) || grid[at.y][at.x] == symbol) { continue; }
+            grid[at.y][at.x] = symbol;
+            changed_rows.insert(at.y);
+            ++changed;
+        }
+    }
+    if (changed == 0) { return 0; }
+    if (auto edited = commit_rows(doc, options.object, grid, changed_rows); !edited) {
         return std::unexpected(edited.error());
     }
     return changed;

@@ -63,4 +63,23 @@ struct stroke_options {
 auto stroke(document& doc, const stroke_options& options)
     -> std::expected<std::size_t, std::string>;
 
+/// The symbols of the rectangle with corners `from` and `to`, row by row, cut at the edge of the
+/// rows; empty when no square of it is inside them.
+auto copy_region(const symbol_grid& grid, const point& from, const point& to) -> symbol_grid;
+
+/// `clip` turned a quarter clockwise.
+auto rotated(const symbol_grid& clip) -> symbol_grid;
+
+struct paste_options {
+    std::size_t object = 0;
+    symbol_grid clip;
+    /// Where the top-left square of the clip lands.
+    point at;
+};
+
+/// Sets the squares under `options.clip` to its symbols as one undo step of `doc`, dropping the
+/// part beyond the rows; how many squares changed. Nothing changes, and no step is added, when
+/// none would.
+auto paste(document& doc, const paste_options& options) -> std::expected<std::size_t, std::string>;
+
 } // namespace editor
