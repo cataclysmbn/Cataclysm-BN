@@ -156,6 +156,22 @@ auto part(const ec::screen_view& screen, const std::string& id) -> const ec::com
     REQUIRE(found != nullptr);
     return *found;
 }
+/// The component `id` somewhere in `value`, null when it is not there.
+auto find_wire(const nlohmann::json& value, const std::string& id) -> nlohmann::json {
+    if (value.is_object() && value.contains("kind") && value.contains("id")
+        && value["id"].is_string() && value["id"].get<std::string>() == id) {
+        return value;
+    }
+    if (!value.is_structured()) { return nullptr; }
+    for (const auto& child : value) {
+        if (auto found = find_wire(child, id); !found.is_null()) { return found; }
+    }
+    return nullptr;
+}
+/// The component `id` as the boundary's wire carries it, null when it is not there.
+auto wire_part(const ec::boundary_state& state, const std::string& id) -> nlohmann::json {
+    return find_wire(nlohmann::json::parse(ec::serialize_interaction_boundary(state))["stack"], id);
+}
 template <typename Body> auto body(const ec::component& value) -> const Body& {
     REQUIRE(std::holds_alternative<Body>(value.body));
     return std::get<Body>(value.body);
@@ -237,6 +253,8 @@ TEST_CASE(
                 CHECK(canvas.cells.size() == 576);
                 CHECK(cell(screen, 2, 3).id == "square:2,3");
                 CHECK(cell(screen, 2, 3).affordance == "editor:paint");
+                // The canvas says it is one, so a client gives it the room a drawing needs.
+                CHECK(wire_part(state, "editor:canvas").value("role", "") == "canvas");
                 // The legend resolves each symbol as the loader does, the first one picked.
                 const auto& legend = body<ec::list_body>(part(screen, "editor:legend")).rows;
                 REQUIRE(legend.size() == 2);
