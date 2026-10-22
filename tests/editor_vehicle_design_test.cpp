@@ -300,3 +300,89 @@ TEST_CASE("a vehicle copied through its saved state is the same vehicle", "[edit
         CHECK(here.get_vehicles().size() == vehicles);
     }
 }
+
+TEST_CASE(
+    "a world vehicle is edited in place without the game's requirements and put back from its "
+    "saved state",
+    "[editor_vehicle]") {
+    clear_map();
+    const auto cleanup = on_out_of_scope([] { clear_vehicles(); });
+    auto* veh = editor::spawn_design(
+        vproto_id("bicycle"), tripoint_bub_ms(30, 30, 0), {.facing = 0, .fuel = 0, .condition = 0});
+    REQUIRE(veh != nullptr);
+    const auto before = editor::vehicle_state(*veh);
+    const auto count = veh->part_count();
+    const auto index_of = [&](const std::string& id) {
+        const auto all = std::views::iota(0, veh->part_count());
+        const auto found = std::ranges::find_if(all, [&](const int index) {
+            return veh->cpart(index).info().get_id().str() == id;
+        });
+        REQUIRE(found != all.end());
+        return *found;
+    };
+
+    SECTION("a part goes on a mount the game takes it on, and not on one it refuses") {
+        const auto lit = editor::install_live_part(*veh, {.mount = {1, 0}, .part = "headlight"});
+        REQUIRE(lit.has_value());
+        CHECK(veh->part_count() == count + 1);
+        CHECK(veh->cpart(*lit).info().get_id().str() == "headlight");
+        const auto refused =
+            editor::install_live_part(*veh, {.mount = {0, 0}, .part = "xlframe_vertical"});
+        REQUIRE_FALSE(refused.has_value());
+        CHECK(refused.error().find("cannot be mounted at 0,0") != std::string::npos);
+        CHECK(veh->part_count() == count + 1);
+    }
+    SECTION("a part nothing rests on comes off, a frame with parts on it stays") {
+        CHECK_FALSE(editor::remove_live_part(*veh, index_of("xlframe_vertical_2")).has_value());
+        CHECK(veh->part_count() == count);
+        const auto basket = index_of("basketsm_bike_rear");
+        CHECK(editor::remove_live_part(*veh, basket).has_value());
+        CHECK(veh->part_count() == count - 1);
+        CHECK_FALSE(editor::remove_live_part(*veh, count + 5).has_value());
+    }
+    SECTION("a part's health is set in percent") {
+        REQUIRE(editor::set_part_health(*veh, 0, 50).has_value());
+        CHECK(veh->cpart(0).health_percent() == Approx(0.5).margin(0.02));
+        CHECK_FALSE(editor::set_part_health(*veh, 0, 101).has_value());
+    }
+    SECTION("cargo goes in a cargo part only") {
+        const auto basket = index_of("basketsm_bike_rear");
+        REQUIRE(editor::add_part_cargo(*veh, basket, "rock").has_value());
+        CHECK(veh->get_items(basket).size() == 1);
+        CHECK_FALSE(editor::add_part_cargo(*veh, basket, "no_such_item").has_value());
+        CHECK_FALSE(editor::add_part_cargo(*veh, 0, "rock").has_value());
+    }
+    SECTION("the saved state puts the vehicle back as it was, where it was") {
+        REQUIRE(editor::install_live_part(*veh, {.mount = {1, 0}, .part = "headlight"}));
+        veh->name = "Changed";
+        const auto at = veh->bub_ms_location();
+        const auto restored = editor::restore_vehicle_state(*veh, before);
+        REQUIRE(restored.has_value());
+        veh = *restored;
+        CHECK(veh->part_count() == count);
+        CHECK(veh->name == "Bicycle");
+        CHECK(veh->bub_ms_location() == at);
+        CHECK(get_map().get_vehicles().size() == 1);
+    }
+}
+
+TEST_CASE("a tank's fuel is set to an amount of what it holds", "[editor_vehicle]") {
+    clear_map();
+    const auto cleanup = on_out_of_scope([] { clear_vehicles(); });
+    auto* const veh = editor::spawn_design(
+        vproto_id("car"), tripoint_bub_ms(30, 30, 0), {.facing = 0, .fuel = 50, .condition = 0});
+    REQUIRE(veh != nullptr);
+    const auto all = std::views::iota(0, veh->part_count());
+    const auto found = std::ranges::find_if(all, [&](const int index) {
+        return veh->cpart(index).is_tank() && !veh->cpart(index).ammo_current().is_null();
+    });
+    REQUIRE(found != all.end());
+    const auto tank = *found;
+    const auto fuel = veh->cpart(tank).ammo_current().str();
+    REQUIRE(editor::set_part_fuel(*veh, tank, {.fuel = fuel, .amount = 100}).has_value());
+    CHECK(veh->cpart(tank).ammo_remaining() == 100);
+    REQUIRE(editor::set_part_fuel(*veh, tank, {.fuel = fuel, .amount = 0}).has_value());
+    CHECK(veh->cpart(tank).ammo_remaining() == 0);
+    CHECK_FALSE(editor::set_part_fuel(*veh, tank, {.fuel = "rock", .amount = 10}).has_value());
+    CHECK_FALSE(editor::set_part_fuel(*veh, 0, {.fuel = fuel, .amount = 10}).has_value());
+}

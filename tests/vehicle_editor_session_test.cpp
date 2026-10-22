@@ -476,4 +476,87 @@ TEST_CASE(
     CHECK(pasted->vehicle().part_count() == source->part_count());
 }
 
+TEST_CASE(
+    "the vehicle editor edits a world vehicle in place, each change one undo step",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    clear_map();
+    const auto cleanup_vehicles = on_out_of_scope([] { clear_vehicles(); });
+    const auto at = get_avatar().bub_pos() + tripoint_rel_ms(8, 0, 0);
+    REQUIRE(editor::spawn_design(vproto_id("bicycle"), at, {}));
+    const auto title = [](const ec::screen_view& screen) {
+        return body<ec::panel_body>(part(screen, "vehicle:live")).title;
+    };
+    const auto labels = [](const ec::screen_view& screen) {
+        return rows(screen, "vehicle:stack") | std::views::transform(&ec::row::label)
+             | std::ranges::to<std::vector>();
+    };
+    const auto light = [](const ec::screen_view& screen) {
+        const auto& stack = rows(screen, "vehicle:stack");
+        const auto found = std::ranges::find(stack, "headlight", &ec::row::label);
+        REQUIRE(found != stack.end());
+        return *found;
+    };
+    auto plain = std::vector<std::string>{};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                CHECK_FALSE(has_affordance(screen, "vehicle:done"));
+                return invoke("vehicle:edit", {.row = "world:0"});
+            case 1:
+                CHECK(title(screen) == "Bicycle");
+                CHECK_FALSE(affordance(screen, "vehicle:undo").enabled);
+                return invoke("vehicle:mount", {.row = "mount:1,0"});
+            case 2:
+                plain = labels(screen);
+                return invoke("vehicle:install", {.row = "vpart:headlight"});
+            case 3:
+                CHECK(labels(screen).size() == plain.size() + 1);
+                CHECK(affordance(screen, "vehicle:undo").enabled);
+                return invoke("vehicle:live_set", {.row = "name", .text = "Mine"});
+            case 4:
+                CHECK(title(screen) == "Mine");
+                return invoke("vehicle:pick", {.row = light(screen).id});
+            case 5:
+                CHECK(light(screen).selected);
+                return invoke("vehicle:live_set", {.row = "health", .text = "50"});
+            case 6:
+                CHECK(light(screen).columns[0].value == "50");
+                return invoke("vehicle:install", {.row = "vpart:xlframe_vertical"});
+            case 7:
+                CHECK(body<ec::text_body>(part(screen, "vehicle:notice"))
+                          .markup.find("cannot be mounted")
+                      != std::string::npos);
+                return invoke("vehicle:undo");
+            case 8:
+                CHECK(light(screen).columns[0].value == "100");
+                return invoke("vehicle:undo");
+            case 9:
+                CHECK(title(screen) == "Bicycle");
+                return invoke("vehicle:undo");
+            case 10:
+                CHECK(labels(screen) == plain);
+                CHECK(rows(screen, "vehicle:world").size() == 1);
+                CHECK(affordance(screen, "vehicle:redo").enabled);
+                return invoke("vehicle:redo");
+            case 11:
+                CHECK(labels(screen).size() == plain.size() + 1);
+                return invoke("vehicle:done");
+            case 12:
+                CHECK(ec::find_component(*screen.root, "vehicle:live") == nullptr);
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 13);
+    const auto edited = get_map().veh_at(at);
+    REQUIRE(edited);
+    CHECK(edited->vehicle().name == "Bicycle");
+}
+
 #endif
