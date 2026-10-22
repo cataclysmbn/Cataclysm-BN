@@ -197,6 +197,9 @@ TEST_CASE(
                 return invoke("vehicle:open", {.row = "prototype:bicycle"});
             case 2: {
                 CHECK(body<ec::panel_body>(part(screen, "vehicle:document")).title == "Bicycle");
+                // The file as a modder finds it in the game's directory.
+                CHECK(body<ec::panel_body>(part(screen, "vehicle:document"))
+                          .subtitle.starts_with("data/json/vehicles/"));
                 CHECK(stat(screen, "saved").value == "Yes");
                 CHECK(std::stoi(stat(screen, "mass").value) > 0);
                 // Its three mounts in a row, and a ring of free mounts around them.
@@ -239,8 +242,9 @@ TEST_CASE(
                 return invoke("vehicle:redo");
             case 8:
                 CHECK(rows(screen, "vehicle:stack").size() == 4);
-                // The raw form of the JSON is a tab of its own, out of the way.
-                CHECK(refused(state, "vehicle:field_set", {.row = "pointer", .text = "/name"}));
+                // The raw form of the JSON is a tab of its own, out of the way, and so is what
+                // sets it.
+                CHECK_FALSE(has_affordance(screen, "vehicle:field_set"));
                 return invoke("vehicle:tool", {.row = "tool:json"});
             case 9:
                 return invoke("vehicle:field_set", {.row = "pointer", .text = "/name"});
@@ -413,6 +417,7 @@ TEST_CASE(
         switch (step++) {
             case 0:
                 CHECK(ec::find_component(*screen.root, "vehicle:world") == nullptr);
+                CHECK_FALSE(has_affordance(screen, "vehicle:export"));
                 return invoke("vehicle:source", {.row = "source:world"});
             case 1: {
                 const auto& world = rows(screen, "vehicle:world");
