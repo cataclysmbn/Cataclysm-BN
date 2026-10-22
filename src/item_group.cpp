@@ -385,12 +385,8 @@ bool Single_item_creator::replace_item( const itype_id &itemid, const itype_id &
             id = replacementid.str();
             return true;
         }
-    } else if( type == S_ITEM_GROUP ) {
-        Item_spawn_data *isd = item_controller->get_group( item_group_id( id ) );
-        if( isd != nullptr ) {
-            isd->replace_item( itemid, replacementid, "in itemgroup " + id );
-        }
     }
+    // Referenced groups are not followed: the caller replaces in every registered group itself.
     return type == S_NONE;
 }
 
