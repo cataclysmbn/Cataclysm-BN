@@ -1965,6 +1965,8 @@ bool game::handle_action()
             // starts destination activity after the player successfully reached his destination
             u.start_destination_activity();
             return false;
+        } else if( const auto next = gamemode->next_action() ) {
+            act = *next;
         } else {
             ZoneScopedN( "handle_action_get_player_input" );
             // No auto-move, ask player for input

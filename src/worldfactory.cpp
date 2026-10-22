@@ -240,6 +240,9 @@ WORLDINFO *worldfactory::make_new_world( special_game_type special_type )
         case special_game_type::DEFENSE:
             worldname = "DEFENSE";
             break;
+        case special_game_type::EDITOR:
+            worldname = "EDITOR";
+            break;
         default:
             return nullptr;
     }

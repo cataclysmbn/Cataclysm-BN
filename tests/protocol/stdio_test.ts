@@ -369,7 +369,17 @@ Deno.test({
           entries: (components.find((part) => part.kind === "list")?.rows ?? []) as Value[],
         }
       }
-      const allTabs = ["motd", "new_game", "load", "world", "settings", "help", "credits", "quit"]
+      const allTabs = [
+        "motd",
+        "new_game",
+        "load",
+        "world",
+        "editor",
+        "settings",
+        "help",
+        "credits",
+        "quit",
+      ]
       assertEquals(menu().tabs, allTabs)
       // The text tabs publish their text as a text component.
       for (const [label, tab] of [["MOTD", "motd"], ["Credits", "credits"]]) {

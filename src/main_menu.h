@@ -38,6 +38,9 @@ class main_menu
         std::vector<std::string> vNewGameSubItems;
         std::vector<std::string> vNewGameIds; // protocol ids of vNewGameSubItems
         std::vector<std::string> vNewGameHints;
+        std::vector<std::string> vEditorSubItems;
+        std::vector<std::string> vEditorIds; // protocol ids of vEditorSubItems
+        std::vector<std::string> vEditorHints;
         std::vector<char> vWorldHotkeys;
         std::vector<std::string> vSettingsSubItems;
         std::vector< std::vector<std::string> > vSettingsHotkeys;
@@ -63,6 +66,8 @@ class main_menu
         // Tab functions. They return whether a game was started or not. The ones that can never
         // start a game have a void return type.
         bool new_character_tab();
+        /// Starts the game mode in its own world, made the first time; whether it started.
+        auto start_special_game( special_game_type type ) -> bool;
         bool load_character_tab( const std::string &worldname );
         void world_tab( const std::string &worldname );
 

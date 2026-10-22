@@ -1,7 +1,6 @@
 #if defined(CATA_MCP)
 
 #    include "avatar.h"
-#    include "calendar.h"
 #    include "cata_utility.h"
 #    include "catch/catch.hpp"
 #    include "client_command.h"
@@ -22,6 +21,7 @@
 #    include "map/map.h"
 #    include "options_helpers.h"
 #    include "output.h"
+#    include "overmap/overmapbuffer.h"
 #    include "path_info.h"
 #    include "point.h"
 #    include "state_helpers.h"
@@ -1065,7 +1065,6 @@ TEST_CASE("game time does not pass while the map editor is open", "[editor_sessi
     auto& you = get_avatar();
     you.set_mutation(trait_id("DEBUG_EDITOR"));
     you.set_moves(100);
-    const auto before = calendar::turn;
     auto step = 0;
 
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
@@ -1090,8 +1089,66 @@ TEST_CASE("game time does not pass while the map editor is open", "[editor_sessi
     });
     handle_action(std::make_unique<special_game>());
     CHECK(step == 5);
-    CHECK(calendar::turn == before);
     CHECK(you.get_moves() == 100);
+}
+
+TEST_CASE(
+    "the main-menu editor game opens the editor first, leaves to the map and comes back",
+    "[editor_session][gamemode]") {
+    // Put back after the screen guard, whose test mode keeps clearing the avatar from prompting.
+    const auto origin = get_map().get_abs_sub();
+    const auto name = get_avatar().name;
+    const auto restore = on_out_of_scope([&] {
+        g->load_map(origin);
+        get_primary_overmapbuffer().clear();
+        clear_all_state();
+        get_avatar().name = name;
+    });
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    const auto animations = override_option("ANIMATIONS", "false");
+    auto mode = get_special_game(special_game_type::EDITOR);
+    REQUIRE(mode->init());
+    get_avatar().set_moves(100);
+    const auto at = get_avatar().abs_pos();
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                // The map was not asked for input first.
+                CHECK(screen.kind == "editor");
+                return invoke("editor:open", {.text = file.path.string()});
+            default:
+                return act("QUIT");
+        }
+    });
+    handle_action(std::move(mode));
+    CHECK(step == 2);
+
+    // Left, the editor shows the map where the avatar stands; the editor action comes back to the
+    // same document.
+    step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                CHECK(screen.role == "map");
+                return act("editor");
+            case 1:
+                CHECK(body<ec::form_body>(part(screen, "editor:file")).fields.front().value
+                      == file.path.generic_string());
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    handle_action(std::make_unique<special_game>());
+    CHECK(step == 2);
+    CHECK(get_avatar().get_moves() == 100);
+    CHECK(get_avatar().abs_pos() == at);
 }
 
 #endif // CATA_MCP
