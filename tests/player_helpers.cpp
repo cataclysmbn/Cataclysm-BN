@@ -131,7 +131,10 @@ void clear_character(player& dummy, bool debug_storage) {
     dummy.invalidate_crafting_inventory();
 }
 
-void clear_avatar() { clear_character(g->u); }
+void clear_avatar() {
+    clear_character(g->u);
+    g->u.reset_all_missions();
+}
 
 void process_activity(player& dummy) {
     do {
