@@ -50,6 +50,8 @@ struct screen_guard {
 
     screen_guard() {
         clear_all_state();
+        // Each case starts the editor afresh, as a new game does.
+        editor::reset_editor_session();
         test_mode = false;
         TERMX = 100;
         TERMY = 40;
@@ -60,6 +62,7 @@ struct screen_guard {
 
     ~screen_guard() {
         game_client::memory::set_input_provider({});
+        editor::reset_editor_session();
         TERMX = old_termx;
         TERMY = old_termy;
         test_mode = old_test_mode;
@@ -982,6 +985,45 @@ TEST_CASE(
     editor::run_editor_session();
     CHECK(step == 1);
     CHECK(read_file(file.path) == file.text);
+}
+
+TEST_CASE(
+    "the editor closes a file it left without saving and cannot read again",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                return invoke("editor:paint", {.row = "square:0,0"});
+            case 2:
+                std::filesystem::remove(file.path);
+                return act("QUIT");
+            case 3:
+                return answer("Leave without saving");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 4);
+
+    step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        CHECK(step++ == 0);
+        // Nothing is open: the discarded edits did not come back.
+        CHECK(body<ec::form_body>(part(screen, "editor:file")).fields.front().value.empty());
+        CHECK_FALSE(has_affordance(screen, "editor:paint"));
+        return act("QUIT");
+    });
+    editor::run_editor_session();
+    CHECK(step == 1);
 }
 
 namespace {

@@ -405,14 +405,18 @@ struct session {
                 string_format(_("%s changed on disk; saving would overwrite that change."), name);
             return;
         }
+        reopen();
+        if (notice.empty()) {
+            notice = string_format(_("%s changed on disk and was reloaded."), name);
+        }
+    }
+    /// Reads the open file again, on the object it showed while the file still has it.
+    auto reopen() -> void {
         const auto kept = object;
-        open(name);
+        open(doc->path().string());
         if (std::ranges::contains(mapgens(), kept)) {
             object = kept;
             reload();
-        }
-        if (notice.empty()) {
-            notice = string_format(_("%s changed on disk and was reloaded."), name);
         }
     }
     /// Writes the file; false, with the notice saying why, when it was not written.
@@ -443,8 +447,8 @@ struct session {
         }
         return result.has_value();
     }
-    /// Whether to leave: at once with nothing unsaved, else as the player answers save, discard or
-    /// stay.
+    /// Whether to leave: at once with nothing unsaved, else as the player answers save, discard
+    /// (which reads the file again) or stay.
     auto leave() -> bool {
         if (!doc || !doc->dirty()) { return true; }
         auto menu = uilist{};
@@ -453,6 +457,11 @@ struct session {
         menu.addentry(1, true, 'd', _("Leave without saving"));
         menu.addentry(2, true, 'c', _("Stay"));
         menu.query();
+        if (menu.ret == 1) {
+            reopen();
+            // A file that cannot be read again is closed, so its edits do not come back.
+            if (doc->dirty()) { doc.reset(); }
+        }
         return menu.ret == 1 || (menu.ret == 0 && save());
     }
     auto open(const std::string& name) -> void {
@@ -1067,13 +1076,19 @@ auto square_of(const std::string& id) -> std::optional<point> {
     return at;
 }
 
+/// The documents and view the editor keeps between visits.
+auto kept_session = std::optional<session>{};
+
 } // namespace
+
+auto reset_editor_session() -> void { kept_session.reset(); }
 
 auto run_editor_session() -> void {
     auto ctxt = input_context("EDITOR");
     ctxt.register_action("QUIT");
     ctxt.register_action("HELP_KEYBINDINGS");
-    auto state = session{};
+    auto& state = kept_session ? *kept_session : kept_session.emplace();
+    state.notice.clear();
     const auto screen = ec::screen_scope(
         ctxt, "editor",
         {.role = "screen",
