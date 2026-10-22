@@ -1917,6 +1917,13 @@ TEST_CASE(
         const auto step = reads++;
         if (step == 0) {
             CHECK(bubble_at(target["source"]) == source);
+            // The line of fire is published square by square up to the cursor, the source left out.
+            const auto line = target["trajectory"];
+            REQUIRE_FALSE(line.empty());
+            CHECK(bubble_at(line.back()) == bubble_at(target["current"]));
+            CHECK(std::ranges::none_of(line, [&](const nlohmann::json& at) {
+                return bubble_at(at) == source;
+            }));
             const auto has_candidate = [&](const tripoint_bub_ms& at) {
                 return std::ranges::any_of(target["candidates"], [&](const nlohmann::json& entry) {
                     return bubble_at(entry["position"]) == at;
@@ -1943,6 +1950,8 @@ TEST_CASE(
         }
         CHECK(bubble_at(target["current"]) == source + tripoint_east);
         CHECK(target["distance"] == 1);
+        REQUIRE(target["trajectory"].size() == 1);
+        CHECK(bubble_at(target["trajectory"].front()) == source + tripoint_east);
         return resolve_action("FIRE");
     });
 
@@ -3351,6 +3360,7 @@ TEST_CASE(
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
         const auto target = cursor_target();
         CHECK(target["status"] == "look");
+        CHECK_FALSE(target.contains("trajectory"));
         CHECK(top_screen()["role"] == "dialog");
         cursor = bubble_at(target["current"]);
         switch (reads++) {
