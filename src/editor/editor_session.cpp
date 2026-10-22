@@ -12,6 +12,7 @@
 #include "editor/mapgen_placement.h"
 #include "editor/mapgen_preview.h"
 #include "editor/mapgen_stroke.h"
+#include "editor/vehicle_session.h"
 #include "engine_client_component.h"
 #include "engine_client_world.h"
 #include "input.h"
@@ -38,6 +39,7 @@
 #include <ranges>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace editor {
@@ -84,6 +86,7 @@ constexpr auto move_apply_id = "editor:move_apply";
 constexpr auto field_id = "editor:field";
 constexpr auto field_set_id = "editor:field_set";
 constexpr auto field_apply_id = "editor:field_apply";
+constexpr auto vehicle_id = "editor:vehicle";
 
 /// The members of a mapgen's object that map its symbols, as the loader reads them.
 constexpr auto legend_layers = std::array{
@@ -866,6 +869,7 @@ auto session_view(const session& state) -> ec::screen_view {
          .label = _("New file"),
          .args = {.row = ec::row_shape{.component_id = new_id}, .text = ec::text_shape{}}}));
     affordances.push_back(ec::invoke_affordance({.id = new_apply_id, .label = _("Create")}));
+    affordances.push_back(ec::invoke_affordance({.id = vehicle_id, .label = _("Vehicle editor")}));
     if (state.doc) {
         const auto& doc = *state.doc;
         auto stats = std::vector<ec::panel_stat>{
@@ -1091,12 +1095,20 @@ auto square_of(const std::string& id) -> std::optional<point> {
 
 /// The documents and view the editor keeps between visits.
 auto kept_session = std::optional<session>{};
+/// Whether the next visit is to the vehicle editor.
+auto vehicle_first = false;
 
 } // namespace
 
 auto reset_editor_session() -> void { kept_session.reset(); }
 
+auto open_vehicle_editor_first() -> void { vehicle_first = true; }
+
 auto run_editor_session() -> void {
+    if (std::exchange(vehicle_first, false)) {
+        run_vehicle_editor();
+        return;
+    }
     auto ctxt = input_context("EDITOR");
     ctxt.register_action("QUIT");
     ctxt.register_action("HELP_KEYBINDINGS");
@@ -1120,6 +1132,8 @@ auto run_editor_session() -> void {
         state.watch();
         if (id == open_id) {
             state.open(invoked->args.text.value_or(""));
+        } else if (id == vehicle_id) {
+            run_vehicle_editor();
         } else if (id == new_set_id) {
             const auto text = invoked->args.text.value_or("");
             (row == "path" ? state.made.path

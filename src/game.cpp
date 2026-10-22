@@ -53,6 +53,7 @@
 #include "drop_token.h"
 #include "editmap.h"
 #include "editor/editor_session.h"
+#include "editor/vehicle_session.h"
 #include "enchantments/enchantment_vision.h"
 #include "engine_client_component.h"
 #include "engine_client_contract.h"
@@ -599,6 +600,7 @@ void game::setup( bool load_world_modfiles )
     init_bubble_config();
     m.resize( g_mapsize );
     editor::reset_editor_session();
+    editor::reset_vehicle_editor();
 
     next_npc_id = character_id( 1 );
     next_mission_id = 1;
