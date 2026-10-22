@@ -11,7 +11,7 @@
         "root": {
           "id": "target",
           "kind": "panel",
-          "title": "Map editor",
+          "title": "",
           "stats": [
             {
               "key": "show_all",
@@ -377,7 +377,7 @@
         "root": {
           "id": "target",
           "kind": "panel",
-          "title": "Mapgen: Moving target",
+          "title": "",
           "stats": [
             {
               "key": "show_all",
@@ -616,7 +616,7 @@
         "root": {
           "id": "target",
           "kind": "panel",
-          "title": "Map editor",
+          "title": "",
           "stats": [
             {
               "key": "show_all",

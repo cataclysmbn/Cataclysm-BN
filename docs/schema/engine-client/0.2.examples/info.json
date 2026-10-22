@@ -217,6 +217,7 @@
               "w"
             ],
             "enabled": true,
+            "role": "layout",
             "expect": "screen"
           },
           {
@@ -226,6 +227,7 @@
               "h"
             ],
             "enabled": true,
+            "role": "layout",
             "expect": "screen"
           },
           {

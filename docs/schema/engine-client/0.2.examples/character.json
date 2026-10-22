@@ -2942,7 +2942,7 @@
             {
               "id": "bionics:status",
               "kind": "panel",
-              "title": " BIONICS ",
+              "title": "",
               "stats": [
                 {
                   "key": "power",

@@ -4,7 +4,7 @@
       "name": "vehicle screen",
       "def": "screen",
       "value": {
-        "screen_id": "screen:20",
+        "screen_id": "screen:21",
         "role": "screen",
         "kind": "vehicle_interact",
         "title": "Bicycle",
@@ -16,7 +16,7 @@
             {
               "id": "vehicle:overview",
               "kind": "panel",
-              "title": "Bicycle",
+              "title": "",
               "stats": [
                 {
                   "key": "owner",
@@ -665,7 +665,7 @@
       "name": "install list of the vehicle screen",
       "def": "screen",
       "value": {
-        "screen_id": "screen:20",
+        "screen_id": "screen:21",
         "role": "screen",
         "kind": "vehicle_interact",
         "title": "Choose new part to install here:",
@@ -3585,7 +3585,7 @@
       "value": {
         "epoch": "epoch-2",
         "expect": {
-          "screen_id": "screen:20"
+          "screen_id": "screen:21"
         },
         "operation": {
           "kind": "invoke",

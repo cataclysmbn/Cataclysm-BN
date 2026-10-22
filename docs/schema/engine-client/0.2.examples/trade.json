@@ -1110,6 +1110,7 @@
               "+"
             ],
             "enabled": true,
+            "role": "layout",
             "expect": "screen"
           },
           {

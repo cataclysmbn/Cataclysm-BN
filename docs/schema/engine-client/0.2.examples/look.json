@@ -11,7 +11,7 @@
         "root": {
           "id": "target",
           "kind": "panel",
-          "title": "Look Around",
+          "title": "",
           "child": {
             "id": "target:map",
             "kind": "map",

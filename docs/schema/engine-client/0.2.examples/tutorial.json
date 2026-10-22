@@ -2165,6 +2165,7 @@
                 "label": "Toggle Fullscreen mode",
                 "keys": [],
                 "enabled": true,
+                "role": "layout",
                 "expect": "screen"
               },
               {
@@ -3620,6 +3621,7 @@
             "label": "Toggle Fullscreen mode",
             "keys": [],
             "enabled": true,
+            "role": "layout",
             "expect": "screen"
           },
           {
@@ -6546,6 +6548,7 @@
                     "label": "Toggle Fullscreen mode",
                     "keys": [],
                     "enabled": true,
+                    "role": "layout",
                     "expect": "screen"
                   },
                   {
@@ -7266,7 +7269,8 @@
                 {
                   "id": "text:message",
                   "kind": "text",
-                  "markup": "Wait for how long?"
+                  "markup": "Wait for how long?",
+                  "role": "prompt"
                 },
                 {
                   "id": "list:choices",
@@ -7587,7 +7591,8 @@
             {
               "id": "text:message",
               "kind": "text",
-              "markup": "Wait for how long?"
+              "markup": "Wait for how long?",
+              "role": "prompt"
             },
             {
               "id": "list:choices",

@@ -15,7 +15,8 @@
             {
               "id": "text:message",
               "kind": "text",
-              "markup": "Save and quit? (Case Sensitive)"
+              "markup": "Save and quit? (Case Sensitive)",
+              "role": "prompt"
             },
             {
               "id": "list:choices",
@@ -28,22 +29,24 @@
                 {
                   "id": "option:YES",
                   "label": "Yes",
-                  "description": "YES",
+                  "description": "",
                   "denial": "",
                   "enabled": true,
                   "selectable": true,
                   "selected": false,
-                  "columns": []
+                  "columns": [],
+                  "affordance": "YES"
                 },
                 {
                   "id": "option:NO",
                   "label": "No",
-                  "description": "NO",
+                  "description": "",
                   "denial": "",
                   "enabled": true,
                   "selectable": true,
                   "selected": true,
-                  "columns": []
+                  "columns": [],
+                  "affordance": "NO"
                 }
               ],
               "total": 2,
@@ -214,7 +217,8 @@
             {
               "id": "text:message",
               "kind": "text",
-              "markup": "Debug Functions - Manipulate the fabric of reality!\nYou can use them to fix a bug or test something.\nBe careful, as some of them may potentially break things."
+              "markup": "Debug Functions - Manipulate the fabric of reality!\nYou can use them to fix a bug or test something.\nBe careful, as some of them may potentially break things.",
+              "role": "prompt"
             },
             {
               "id": "list:choices",
@@ -1207,7 +1211,8 @@
             {
               "id": "text:message",
               "kind": "text",
-              "markup": "Info…"
+              "markup": "Info…",
+              "role": "prompt"
             },
             {
               "id": "list:choices",

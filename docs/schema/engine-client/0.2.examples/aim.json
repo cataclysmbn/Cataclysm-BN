@@ -55,177 +55,159 @@
                 "children": [
                   {
                     "id": "aim:pane:left:areas",
-                    "kind": "list",
-                    "affordances": [
-                      "aim:set_area"
-                    ],
-                    "columns": [],
-                    "rows": [
+                    "kind": "grid",
+                    "cols": 7,
+                    "rows": 3,
+                    "cells": [
                       {
+                        "x": 1,
+                        "y": 1,
                         "id": "area:INVENTORY",
+                        "glyph": "I",
                         "label": "Inventory",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": true,
-                        "selected": false,
-                        "columns": []
+                        "affordance": "aim:set_area",
+                        "enabled": true
                       },
                       {
+                        "x": 3,
+                        "y": 2,
                         "id": "area:SW",
+                        "glyph": "1",
                         "label": "South West",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": true,
-                        "selected": false,
-                        "columns": []
+                        "affordance": "aim:set_area",
+                        "enabled": true
                       },
                       {
+                        "x": 4,
+                        "y": 2,
                         "id": "area:S",
+                        "glyph": "2",
                         "label": "South",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": true,
-                        "selected": false,
-                        "columns": []
+                        "affordance": "aim:set_area",
+                        "enabled": true
                       },
                       {
+                        "x": 5,
+                        "y": 2,
                         "id": "area:SE",
+                        "glyph": "3",
                         "label": "South East",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": true,
-                        "selected": false,
-                        "columns": []
+                        "affordance": "aim:set_area",
+                        "enabled": true
                       },
                       {
+                        "x": 3,
+                        "y": 1,
                         "id": "area:W",
+                        "glyph": "4",
                         "label": "West",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": true,
-                        "selected": false,
-                        "columns": []
+                        "affordance": "aim:set_area",
+                        "enabled": true
                       },
                       {
+                        "x": 4,
+                        "y": 1,
                         "id": "area:CENTER",
+                        "glyph": "5",
                         "label": "Directly below you",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": true,
-                        "selected": false,
-                        "columns": []
+                        "affordance": "aim:set_area",
+                        "enabled": true
                       },
                       {
+                        "x": 5,
+                        "y": 1,
                         "id": "area:E",
+                        "glyph": "6",
                         "label": "East",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": true,
-                        "selected": false,
-                        "columns": []
+                        "affordance": "aim:set_area",
+                        "enabled": true
                       },
                       {
+                        "x": 3,
+                        "y": 0,
                         "id": "area:NW",
+                        "glyph": "7",
                         "label": "North West",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": true,
-                        "selected": false,
-                        "columns": []
+                        "affordance": "aim:set_area",
+                        "enabled": true
                       },
                       {
+                        "x": 4,
+                        "y": 0,
                         "id": "area:N",
+                        "glyph": "8",
                         "label": "North",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": true,
-                        "selected": false,
-                        "columns": []
+                        "affordance": "aim:set_area",
+                        "enabled": true
                       },
                       {
+                        "x": 5,
+                        "y": 0,
                         "id": "area:NE",
+                        "glyph": "9",
                         "label": "North East",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": true,
-                        "selected": false,
-                        "columns": []
+                        "affordance": "aim:set_area",
+                        "enabled": true
                       },
                       {
+                        "x": 6,
+                        "y": 0,
                         "id": "area:ABOVE",
+                        "glyph": "<",
                         "label": "Above",
-                        "description": "",
-                        "denial": "You can't put items there!",
+                        "affordance": "aim:set_area",
                         "enabled": false,
-                        "selectable": false,
-                        "selected": false,
-                        "columns": []
+                        "denial": "You can't put items there!"
                       },
                       {
+                        "x": 6,
+                        "y": 1,
                         "id": "area:BELOW",
+                        "glyph": ">",
                         "label": "Below",
-                        "description": "",
-                        "denial": "",
+                        "affordance": "aim:set_area",
                         "enabled": true,
-                        "selectable": true,
-                        "selected": true,
-                        "columns": [],
-                        "toggled": false
+                        "selected": true
                       },
                       {
+                        "x": 1,
+                        "y": 0,
                         "id": "area:DRAGGED",
+                        "glyph": "D",
                         "label": "Grabbed Vehicle",
-                        "description": "",
-                        "denial": "You can't put items there!",
+                        "affordance": "aim:set_area",
                         "enabled": false,
-                        "selectable": false,
-                        "selected": false,
-                        "columns": []
+                        "denial": "You can't put items there!"
                       },
                       {
+                        "x": 0,
+                        "y": 2,
                         "id": "area:ALL",
+                        "glyph": "A",
                         "label": "Surrounding area",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": true,
-                        "selected": false,
-                        "columns": []
+                        "affordance": "aim:set_area",
+                        "enabled": true
                       },
                       {
+                        "x": 0,
+                        "y": 0,
                         "id": "area:CONTAINER",
+                        "glyph": "C",
                         "label": "Container",
-                        "description": "",
-                        "denial": "You can't put items there!",
+                        "affordance": "aim:set_area",
                         "enabled": false,
-                        "selectable": false,
-                        "selected": false,
-                        "columns": []
+                        "denial": "You can't put items there!"
                       },
                       {
+                        "x": 1,
+                        "y": 2,
                         "id": "area:WORN",
+                        "glyph": "W",
                         "label": "Worn Items",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": true,
-                        "selected": false,
-                        "columns": []
+                        "affordance": "aim:set_area",
+                        "enabled": true
                       }
-                    ],
-                    "total": 16,
-                    "selection": "single",
-                    "activate": "aim:set_area"
+                    ]
                   },
                   {
                     "id": "aim:pane:left:items",
@@ -279,177 +261,159 @@
                 "children": [
                   {
                     "id": "aim:pane:right:areas",
-                    "kind": "list",
-                    "affordances": [
-                      "aim:set_area"
-                    ],
-                    "columns": [],
-                    "rows": [
+                    "kind": "grid",
+                    "cols": 7,
+                    "rows": 3,
+                    "cells": [
                       {
+                        "x": 1,
+                        "y": 1,
                         "id": "area:INVENTORY",
+                        "glyph": "I",
                         "label": "Inventory",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": true,
-                        "selected": false,
-                        "columns": []
+                        "affordance": "aim:set_area",
+                        "enabled": true
                       },
                       {
+                        "x": 3,
+                        "y": 2,
                         "id": "area:SW",
+                        "glyph": "1",
                         "label": "South West",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": true,
-                        "selected": false,
-                        "columns": []
+                        "affordance": "aim:set_area",
+                        "enabled": true
                       },
                       {
+                        "x": 4,
+                        "y": 2,
                         "id": "area:S",
+                        "glyph": "2",
                         "label": "South",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": true,
-                        "selected": false,
-                        "columns": []
+                        "affordance": "aim:set_area",
+                        "enabled": true
                       },
                       {
+                        "x": 5,
+                        "y": 2,
                         "id": "area:SE",
+                        "glyph": "3",
                         "label": "South East",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": true,
-                        "selected": false,
-                        "columns": []
+                        "affordance": "aim:set_area",
+                        "enabled": true
                       },
                       {
+                        "x": 3,
+                        "y": 1,
                         "id": "area:W",
+                        "glyph": "4",
                         "label": "West",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": true,
-                        "selected": false,
-                        "columns": []
+                        "affordance": "aim:set_area",
+                        "enabled": true
                       },
                       {
+                        "x": 4,
+                        "y": 1,
                         "id": "area:CENTER",
+                        "glyph": "5",
                         "label": "Directly below you",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": true,
-                        "selected": false,
-                        "columns": []
+                        "affordance": "aim:set_area",
+                        "enabled": true
                       },
                       {
+                        "x": 5,
+                        "y": 1,
                         "id": "area:E",
+                        "glyph": "6",
                         "label": "East",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": true,
-                        "selected": false,
-                        "columns": []
+                        "affordance": "aim:set_area",
+                        "enabled": true
                       },
                       {
+                        "x": 3,
+                        "y": 0,
                         "id": "area:NW",
+                        "glyph": "7",
                         "label": "North West",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": true,
-                        "selected": false,
-                        "columns": []
+                        "affordance": "aim:set_area",
+                        "enabled": true
                       },
                       {
+                        "x": 4,
+                        "y": 0,
                         "id": "area:N",
+                        "glyph": "8",
                         "label": "North",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": true,
-                        "selected": false,
-                        "columns": []
+                        "affordance": "aim:set_area",
+                        "enabled": true
                       },
                       {
+                        "x": 5,
+                        "y": 0,
                         "id": "area:NE",
+                        "glyph": "9",
                         "label": "North East",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": true,
-                        "selected": false,
-                        "columns": []
+                        "affordance": "aim:set_area",
+                        "enabled": true
                       },
                       {
+                        "x": 6,
+                        "y": 0,
                         "id": "area:ABOVE",
+                        "glyph": "<",
                         "label": "Above",
-                        "description": "",
-                        "denial": "You can't put items there!",
+                        "affordance": "aim:set_area",
                         "enabled": false,
-                        "selectable": false,
-                        "selected": false,
-                        "columns": []
+                        "denial": "You can't put items there!"
                       },
                       {
+                        "x": 6,
+                        "y": 1,
                         "id": "area:BELOW",
+                        "glyph": ">",
                         "label": "Below",
-                        "description": "",
-                        "denial": "",
+                        "affordance": "aim:set_area",
                         "enabled": true,
-                        "selectable": true,
-                        "selected": true,
-                        "columns": [],
-                        "toggled": false
+                        "selected": true
                       },
                       {
+                        "x": 1,
+                        "y": 0,
                         "id": "area:DRAGGED",
+                        "glyph": "D",
                         "label": "Grabbed Vehicle",
-                        "description": "",
-                        "denial": "You can't put items there!",
+                        "affordance": "aim:set_area",
                         "enabled": false,
-                        "selectable": false,
-                        "selected": false,
-                        "columns": []
+                        "denial": "You can't put items there!"
                       },
                       {
+                        "x": 0,
+                        "y": 2,
                         "id": "area:ALL",
+                        "glyph": "A",
                         "label": "Surrounding area",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": true,
-                        "selected": false,
-                        "columns": []
+                        "affordance": "aim:set_area",
+                        "enabled": true
                       },
                       {
+                        "x": 0,
+                        "y": 0,
                         "id": "area:CONTAINER",
+                        "glyph": "C",
                         "label": "Container",
-                        "description": "",
-                        "denial": "You can't put items there!",
+                        "affordance": "aim:set_area",
                         "enabled": false,
-                        "selectable": false,
-                        "selected": false,
-                        "columns": []
+                        "denial": "You can't put items there!"
                       },
                       {
+                        "x": 1,
+                        "y": 2,
                         "id": "area:WORN",
+                        "glyph": "W",
                         "label": "Worn Items",
-                        "description": "",
-                        "denial": "",
-                        "enabled": true,
-                        "selectable": true,
-                        "selected": false,
-                        "columns": []
+                        "affordance": "aim:set_area",
+                        "enabled": true
                       }
-                    ],
-                    "total": 16,
-                    "selection": "single",
-                    "activate": "aim:set_area"
+                    ]
                   },
                   {
                     "id": "aim:pane:right:items",

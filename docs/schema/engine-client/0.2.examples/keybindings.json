@@ -11,7 +11,7 @@
         "root": {
           "id": "keybindings:window",
           "kind": "panel",
-          "title": "Keybindings",
+          "title": "",
           "child": {
             "id": "keybindings:body",
             "kind": "split",
@@ -3117,7 +3117,7 @@
         "root": {
           "id": "keybindings:window",
           "kind": "panel",
-          "title": "Keybindings",
+          "title": "",
           "stats": [
             {
               "key": "mode",
