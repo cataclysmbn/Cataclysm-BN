@@ -1150,7 +1150,7 @@ auto advanced_inventory::pane_component( const side which ) const -> ec::compone
     }
     auto items = ec::list( { .id = items_id( which ), .rows = std::move( rows ), .selection = which == src ? "count" : "none" } );
     if( which == src ) { items.affordances.push_back( "aim:move" ); }
-    auto areas = ec::list( { .id = areas_id( which ), .rows = area_rows( which, cargo ), .selection = "single", .activate = "aim:set_area" } );
+    auto areas = area_grid( which, cargo );
     auto result = ec::panel( {
         .id = pane_id( which ), .title = which == left ? _( "Left pane" ) : _( "Right pane" ),
         .subtitle = std::move( subtitle ), .stats = pane_stats( pane ), .filter = pane.filter,
@@ -1160,28 +1160,42 @@ auto advanced_inventory::pane_component( const side which ) const -> ec::compone
     return result;
 }
 
-auto advanced_inventory::area_rows( const side which,
-                                    const bool cargo ) const -> std::vector<ec::row>
+auto advanced_inventory::area_grid( const side which, const bool cargo ) const -> ec::component
 {
+    using namespace std::views;
+    namespace ranges = std::ranges;
     const auto &pane = panes[which];
     const auto *const cursor = panes[src].get_cur_item_ptr();
-    return std::views::iota( 0, static_cast<int>( NUM_AIM_LOCATIONS ) ) | std::views::transform( [&](
-    const int index ) {
+    // A key of the native header is three characters wide, `[8]`.
+    const auto column = []( const advanced_inv_area & square ) { return square.hscreen.x / 3; };
+    const auto line = []( const advanced_inv_area & square ) { return square.hscreen.y; };
+    const auto columns = ranges::minmax( squares | transform( column ) );
+    const auto lines = ranges::minmax( squares | transform( line ) );
+    auto cells = iota( 0, static_cast<int>( NUM_AIM_LOCATIONS ) ) | transform( [&]( const int index ) {
         const auto area = static_cast<aim_location>( index );
+        auto &square = squares[area];
         // An area a pane shows is switched to, not put into.
         const auto enabled = panes[left].get_area() == area || panes[right].get_area() == area ||
-                             squares[area].canputitems( cursor );
+                             square.canputitems( cursor );
         const auto shown = area == pane.get_area();
-        return ec::row{
-            .id = area_id( area ), .label = aim_area_name( area ),
+        return ec::grid_cell{
+            .at = { column( square ) - columns.min, line( square ) - lines.min },
+            .id = area_id( area ),
+            // As natively, the shown area that lists the vehicle cargo there instead of the ground is a `V`.
+.glyph = shown && cargo ? std::string{ "V" } :
+            square.minimapname,
+            .label = aim_area_name( area ),
+            .affordance = "aim:set_area",
+            .enabled = enabled,
 .denial = enabled ? std::string{} :
-            _( "You can't put items there!" ), .enabled = enabled, .selectable = enabled,
+            _( "You can't put items there!" ),
             .selected = shown,
-            // The shown area lists the vehicle cargo there instead of the ground.
-.toggled = shown ? std::optional{ cargo } :
-            std::nullopt
         };
-    } ) | std::ranges::to<std::vector>();
+    } ) | ranges::to<std::vector>();
+    return {
+        .id = areas_id( which ),
+        .body = ec::grid_body{ .cols = columns.max - columns.min + 1, .rows = lines.max - lines.min + 1, .cells = std::move( cells ) },
+    };
 }
 
 auto advanced_inventory::aim_view( const input_context &ctxt ) const -> ec::screen_view

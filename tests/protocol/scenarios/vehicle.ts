@@ -67,7 +67,13 @@ export const vehicle: Scenario = {
       }
       // The bicycle is two squares long; the square east of the avatar is a part of it.
       assertEquals((await engine.invoke("examine")).stages.at(-1), "completed")
-      await chooseRow(engine, (label) => label === "East")
+      const compass = part(engine.top(), "direction:compass")
+      const east = compass?.cells.find((cell: Value) => cell.label === "East")
+      assert(east, "the compass has an east square")
+      assertEquals(
+        (await engine.invoke(east.affordance, { row: east.id })).stages.at(-1),
+        "completed",
+      )
       await chooseRow(engine, (label) => label === "Examine vehicle")
       await engine.follow(() => engine.top().context === "VEH_INTERACT")
 

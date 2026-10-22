@@ -119,8 +119,8 @@ class advanced_inventory
         /// What the screen publishes to a protocol client: a const read of the panes, never of a window.
         auto aim_view( const input_context &ctxt ) const -> engine_client::screen_view;
         auto pane_component( side which ) const -> engine_client::component;
-        /// The areas a pane can show, with the one it shows selected and, on it, whether it lists the vehicle cargo.
-        auto area_rows( side which, bool cargo ) const -> std::vector<engine_client::row>;
+        /// The areas a pane can show, where the native header prints their keys, with the one it shows selected.
+        auto area_grid( side which, bool cargo ) const -> engine_client::component;
         auto pane_stats( const advanced_inventory_pane &pane ) const
         -> std::vector<engine_client::panel_stat>;
         /// The id of each entry of `panes[which].items`, from where the item is and what it is; empty for

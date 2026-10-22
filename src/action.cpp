@@ -10,6 +10,7 @@
 #include "creature.h"
 #include "cursesdef.h"
 #include "debug.h"
+#include "engine_client_component.h"
 #include "enum_conversions.h"
 #include "flag.h"
 #include "game.h"
@@ -17,6 +18,7 @@
 #include "input.h"
 #include "item.h"
 #include "item_functions.h"
+#include "line.h"
 #include "lua_action_menu.h"
 #include "map/map.h"
 #include "map/mapdata.h"
@@ -1296,6 +1298,8 @@ action_id handle_main_menu()
 namespace
 {
 
+namespace ec = engine_client;
+
 struct direction_choice {
     tripoint_rel_ms offset;
     std::string label;
@@ -1321,6 +1325,14 @@ auto direction_choices( const bool allow_vertical ) -> std::vector<direction_cho
     return result;
 }
 
+/// The id of the choice of `offset`, the same among the choices and in the compass.
+auto direction_id( const tripoint_rel_ms &offset ) -> std::string
+{
+    return game_client::opaque_interaction_id( "direction", {
+        std::to_string( offset.x() ), std::to_string( offset.y() ), std::to_string( offset.z() )
+    } );
+}
+
 auto direction_interaction_snapshot( const std::string &message,
                                      const std::vector<direction_choice> &directions )
 -> game_client::interaction_snapshot
@@ -1333,15 +1345,47 @@ auto direction_interaction_snapshot( const std::string &message,
     };
     std::ranges::transform( directions, std::back_inserter( snapshot.choices ),
     []( const auto & entry ) {
-        return game_client::interaction_choice{
-            .id = game_client::opaque_interaction_id( "direction", {
-                std::to_string( entry.offset.x() ), std::to_string( entry.offset.y() ),
-                std::to_string( entry.offset.z() )
-            } ),
-            .label = entry.label,
-        };
+        return game_client::interaction_choice{ .id = direction_id( entry.offset ), .label = entry.label };
     } );
     return snapshot;
+}
+
+/// The directions as a compass: the squares around the avatar and its own where they lie, above and below in
+/// a column beside them.
+auto direction_view( const input_context &ctxt, const std::string &message,
+                     const std::vector<direction_choice> &directions ) -> ec::screen_view
+{
+    constexpr auto compass_id = "direction:compass";
+    constexpr auto choose_id = "direction:choose";
+    const auto cell_of = []( const direction_choice & entry ) {
+        const auto &at = entry.offset;
+        return ec::grid_cell{
+.at = at.z() != 0 ? ec::grid_point{ 3, at.z() > 0 ? 0 : 2 } :
+            ec::grid_point{ at.x() + 1, at.y() + 1 },
+            .id = direction_id( at ),
+            .glyph = trim( direction_name_short( direction_from( at.raw() ) ) ),
+            .label = entry.label,
+            .affordance = choose_id,
+        };
+    };
+    const auto vertical = std::ranges::any_of( directions, []( const direction_choice & entry ) { return entry.offset.z() != 0; } );
+    auto compass = ec::component{
+        .id = compass_id, .affordances = { choose_id },
+        .body = ec::grid_body{ .cols = vertical ? 4 : 3, .rows = 3, .cells = directions | std::views::transform( cell_of ) | std::ranges::to<std::vector>() },
+    };
+    auto prompt = ec::component{ .id = "text:message", .body = ec::text_body{ .markup = message, .role = "prompt" } };
+    return {
+        .title = _( "Choose direction" ),
+        .root = ec::split( { .id = "direction", .children = ec::children_of( std::move( prompt ), std::move( compass ) ) } ),
+        .affordances = {
+            {
+                .id = choose_id, .label = _( "Choose direction" ), .args = { .row = ec::row_shape{ .component_id = compass_id } },
+                .runs = ec::invoke_kind::choose
+            },
+            { .id = "bn:cancel", .label = ctxt.get_action_name( "QUIT" ), .role = "cancel", .runs = ec::invoke_kind::cancel, .covers = "QUIT" },
+        },
+        .focus_component = compass_id,
+    };
 }
 
 } // namespace
@@ -1365,6 +1409,11 @@ std::optional<tripoint_rel_ms> choose_direction( const std::string &message,
     popup.message( _( "%s (Direction button)" ), message ).on_top( true );
 
     const auto directions = direction_choices( allow_vertical );
+    const auto screen = ec::screen_scope( ctxt, "direction", { .view = [&]( const ec::boundary_state & /*state*/ )
+    {
+        return direction_view( ctxt, message, directions );
+    }
+                                                             } );
     const auto face_and_return = []( const tripoint_rel_ms & vec ) {
         // Make player's sprite face left/right if interacting with something to the left or right
         if( vec.x() > 0 ) {
