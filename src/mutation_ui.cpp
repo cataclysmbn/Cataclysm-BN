@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <ranges>
 #include <unordered_map>
 
 #include "character.h"
@@ -286,17 +287,22 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
 {
     std::vector<trait_id> passive;
     std::vector<trait_id> active;
-    for( std::pair<const trait_id, char_trait_data> &mut : who.my_mutations ) {
-        if( !mut.first->activated && ! mut.first->transform ) {
-            passive.push_back( mut.first );
+    // The table iterates in the order of its interned ids, which any newly interned id shuffles:
+    // the id order keeps the rows and the letters new mutations get.
+    auto traits = who.my_mutations | std::views::keys | std::ranges::to<std::vector>();
+    std::ranges::sort( traits, lexicographic<mutation_branch> {} );
+    for( const auto &trait : traits ) {
+        if( !trait->activated && ! trait->transform ) {
+            passive.push_back( trait );
         } else {
-            active.push_back( mut.first );
+            active.push_back( trait );
         }
         // New mutations are initialized with no key at all, so we have to do this here.
-        if( mut.second.key == ' ' ) {
+        auto &key = who.my_mutations[trait].key;
+        if( key == ' ' ) {
             for( const auto &letter : mutation_chars ) {
                 if( !trait_by_invlet( who.my_mutations, letter ) ) {
-                    mut.second.key = letter;
+                    key = letter;
                     break;
                 }
             }
