@@ -94,6 +94,8 @@ constexpr auto inside_id = "editor:inside";
 constexpr auto brush_id = "editor:brush";
 constexpr auto mirror_x_id = "editor:mirror_x";
 constexpr auto mirror_y_id = "editor:mirror_y";
+constexpr auto copy_id = "editor:copy";
+constexpr auto rotate_id = "editor:rotate";
 constexpr auto history_id = "editor:history";
 constexpr auto jump_id = "editor:jump";
 constexpr auto open_oter_id = "editor:open_oter";
@@ -138,12 +140,16 @@ constexpr auto legend_layers = std::array{
     "faction_owner_character",
     "remove_all"};
 
+/// What a tool that works on a region instead of a shape does with the square it is used on.
+enum class region_use { none, select, paste };
+
 struct tool {
     std::string id;
-    /// None: the eyedropper, which picks the symbol it is used on.
+    /// None: the eyedropper, which picks the symbol it is used on, unless it works on a region.
     std::optional<shape_kind> kind;
     /// Whether it takes two squares, the first of them its anchor.
     bool spans = false;
+    region_use region = region_use::none;
 };
 
 const auto tools = std::array{
@@ -155,6 +161,14 @@ const auto tools = std::array{
     tool{.id = "tool:room", .kind = shape_kind::room, .spans = true},
     tool{.id = "tool:fill", .kind = shape_kind::fill},
     tool{.id = "tool:pick", .kind = std::nullopt},
+    tool{.id = "tool:select", .region = region_use::select},
+    tool{.id = "tool:paste", .region = region_use::paste},
+};
+
+/// The corners of the rectangle the select tool marked.
+struct selection {
+    point from;
+    point to;
 };
 
 /// What of the catalog a legend maps, and how a mapping names it.
@@ -239,6 +253,8 @@ auto mapping_of(const catalog_use& use, const std::string& id) -> std::string {
 constexpr auto catalog_page_size = std::size_t{50};
 
 auto tool_label(const tool& value) -> std::string {
+    if (value.region == region_use::select) { return _("Select"); }
+    if (value.region == region_use::paste) { return _("Paste"); }
     if (!value.kind) { return _("Eyedropper"); }
     switch (*value.kind) {
         case shape_kind::point:
@@ -396,6 +412,10 @@ struct session {
     bool mirror_y = false;
     const tool* current = tools.data();
     std::optional<point> anchor = std::nullopt;
+    /// The region the select tool marked, which `editor:copy` copies.
+    std::optional<selection> selected = std::nullopt;
+    /// The symbols copied last, which the paste tool pastes and `editor:rotate` turns.
+    symbol_grid clip;
     /// The square a placement or a diagnostic that was picked names.
     std::optional<point> focus = std::nullopt;
     /// The placement picked last, which the move form moves.
@@ -598,6 +618,7 @@ struct session {
         }
         doc = std::move(*opened);
         anchor.reset();
+        selected.reset();
         focus.reset();
         picked.reset();
         const auto found = mapgens();
@@ -739,6 +760,17 @@ struct session {
 
     auto paint(const point& at) -> void {
         const auto grid = symbols_of(*doc, object);
+        if (current->region == region_use::select) {
+            selected = anchor ? std::optional(selection{.from = *anchor, .to = at}) : std::nullopt;
+            anchor = anchor ? std::nullopt : std::optional(at);
+            return;
+        }
+        if (current->region == region_use::paste) {
+            const auto pasted = editor::paste(*doc, {.object = object, .clip = clip, .at = at});
+            notice = pasted ? "" : pasted.error();
+            reload();
+            return;
+        }
         if (!current->kind) {
             symbol = symbol_at(grid, at);
             return;
@@ -879,6 +911,14 @@ auto symbol_looks(const session& state) -> std::map<std::string, std::vector<eng
     return result;
 }
 
+/// Whether the square is inside the rectangle the select tool marked.
+auto in_selection(const session& state, const point& at) -> bool {
+    return state.selected && at.x >= std::min(state.selected->from.x, state.selected->to.x)
+        && at.x <= std::max(state.selected->from.x, state.selected->to.x)
+        && at.y >= std::min(state.selected->from.y, state.selected->to.y)
+        && at.y <= std::max(state.selected->from.y, state.selected->to.y);
+}
+
 auto canvas(const session& state) -> ec::component {
     const auto grid = symbols_of(*state.doc, state.object);
     auto palette = ec::look_palette{};
@@ -899,7 +939,7 @@ auto canvas(const session& state) -> ec::component {
                  .id = square_id(at),
                  .glyph = grid[y][x],
                  .affordance = paint_id,
-                 .selected = state.anchor == at,
+                 .selected = state.anchor == at || in_selection(state, at),
                  .looks = looks.contains(grid[y][x]) ? looks.at(grid[y][x]) : std::vector<int>{}});
         }
     }
@@ -1067,6 +1107,12 @@ auto session_view(const session& state) -> ec::screen_view {
             {.key = "mirror_x",
              .label = _("Mirror across"),
              .value = state.mirror_x ? _("On") : _("Off")});
+        if (!state.clip.empty()) {
+            stats.push_back(
+                {.key = "clipboard",
+                 .label = _("Clipboard"),
+                 .value = string_format("%zux%zu", state.clip.front().size(), state.clip.size())});
+        }
         stats.push_back(
             {.key = "mirror_y",
              .label = _("Mirror down"),
@@ -1197,6 +1243,10 @@ auto session_view(const session& state) -> ec::screen_view {
                 ec::invoke_affordance({.id = mirror_x_id, .label = _("Mirror across")}));
             affordances.push_back(
                 ec::invoke_affordance({.id = mirror_y_id, .label = _("Mirror down")}));
+            affordances.push_back(ec::invoke_affordance(
+                {.id = copy_id, .label = _("Copy"), .enabled = state.selected.has_value()}));
+            affordances.push_back(ec::invoke_affordance(
+                {.id = rotate_id, .label = _("Rotate"), .enabled = !state.clip.empty()}));
             affordances.push_back(ec::invoke_affordance(
                 {.id = paint_id, .label = _("Draw"), .args = row_of(canvas_id)}));
             parts.push_back(ec::component{
@@ -1414,6 +1464,7 @@ auto run_editor_session() -> void {
             if (std::sscanf(row.c_str(), "object:%zu", &index) == 1) {
                 state.object = index;
                 state.anchor.reset();
+                state.selected.reset();
                 state.focus.reset();
                 state.picked.reset();
                 state.reload();
@@ -1435,6 +1486,13 @@ auto run_editor_session() -> void {
             state.mirror_x = !state.mirror_x;
         } else if (id == mirror_y_id) {
             state.mirror_y = !state.mirror_y;
+        } else if (id == copy_id) {
+            if (state.selected) {
+                state.clip = copy_region(
+                    symbols_of(*state.doc, state.object), state.selected->from, state.selected->to);
+            }
+        } else if (id == rotate_id) {
+            state.clip = rotated(state.clip);
         } else if (id == jump_id) {
             auto depth = std::size_t{0};
             if (std::sscanf(row.c_str(), "step:%zu", &depth) == 1 && state.doc->jump(depth)) {
