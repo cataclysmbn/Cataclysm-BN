@@ -1,7 +1,10 @@
 #include "editor/vehicle_design.h"
 
+#include "calendar.h"
 #include "debug_log_capture.h"
 #include "fstream_utils.h"
+#include "item.h"
+#include "itype.h"
 #include "json.h"
 #include "map/map.h"
 #include "mod_manager.h"
@@ -219,6 +222,95 @@ auto place_vehicle_state(const std::string& state, const tripoint_bub_ms& at)
     }
     here.add_vehicle_to_cache(copy);
     return copy;
+}
+
+auto restore_vehicle_state(vehicle& veh, const std::string& state)
+    -> std::expected<vehicle*, std::string> {
+    const auto at = veh.bub_ms_location();
+    get_map().destroy_vehicle(&veh);
+    return place_vehicle_state(state, at);
+}
+
+auto install_live_part(vehicle& veh, const part_install& install)
+    -> std::expected<int, std::string> {
+    const auto id = vpart_id(install.part);
+    if (!id.is_valid()) {
+        return std::unexpected(string_format(_("%s is no vehicle part."), install.part));
+    }
+    const auto mount = tripoint_mnt_veh(install.mount.x, install.mount.y, 0);
+    if (!veh.can_mount(mount, id)) {
+        return std::unexpected(string_format(
+            _("%s cannot be mounted at %d,%d."), id->name(), install.mount.x, install.mount.y));
+    }
+    const auto index = veh.install_part(mount, id);
+    if (index < 0) {
+        return std::unexpected(string_format(
+            _("%s cannot be mounted at %d,%d."), id->name(), install.mount.x, install.mount.y));
+    }
+    get_map().add_vehicle_to_cache(&veh);
+    return index;
+}
+
+auto remove_live_part(vehicle& veh, const int index) -> std::expected<void, std::string> {
+    if (index < 0 || index >= veh.part_count()) { return std::unexpected(_("No such part.")); }
+    if (veh.part_count() < 2) { return std::unexpected(_("A vehicle keeps its last part.")); }
+    auto reason = std::string{};
+    if (!veh.can_unmount(index, reason)) { return std::unexpected(reason); }
+    const auto mount = veh.part(index).mount;
+    const auto at = veh.bub_part_location(index);
+    veh.remove_part(index);
+    veh.part_removal_cleanup();
+    if (veh.parts_at_relative(mount, true).empty()) {
+        get_map().clear_vehicle_point_from_cache(&veh, at);
+    }
+    return {};
+}
+
+auto set_part_health(vehicle& veh, const int index, const int percent)
+    -> std::expected<void, std::string> {
+    if (index < 0 || index >= veh.part_count()) { return std::unexpected(_("No such part.")); }
+    if (percent < 0 || percent > 100) { return std::unexpected(_("That value is out of range.")); }
+    auto& part = veh.part(index);
+    veh.set_hp(part, part.info().durability * percent / 100);
+    return {};
+}
+
+auto set_part_fuel(vehicle& veh, const int index, const part_fuel& fuel)
+    -> std::expected<void, std::string> {
+    if (index < 0 || index >= veh.part_count()) { return std::unexpected(_("No such part.")); }
+    auto& part = veh.part(index);
+    if (!part.is_fuel_store(false)) { return std::unexpected(_("This part holds no fuel.")); }
+    if (fuel.amount < 0) { return std::unexpected(_("That value is out of range.")); }
+    if (fuel.amount == 0) {
+        part.ammo_unset();
+        return {};
+    }
+    const auto type = itype_id(fuel.fuel);
+    // A tank holds a liquid, a battery or magazine the ammunition its item takes.
+    const auto holds =
+        type.is_valid()
+        && (part.is_tank() ? type->phase >= LIQUID
+                           : type->ammo && part.get_base().ammo_types().contains(type->ammo->type));
+    if (!holds || part.ammo_set(type, fuel.amount) < 0) {
+        return std::unexpected(string_format(_("This part cannot hold %s."), fuel.fuel));
+    }
+    return {};
+}
+
+auto add_part_cargo(vehicle& veh, const int index, const std::string& item_id)
+    -> std::expected<void, std::string> {
+    if (index < 0 || index >= veh.part_count()) { return std::unexpected(_("No such part.")); }
+    if (!veh.part_flag(index, VPFLAG_CARGO)) {
+        return std::unexpected(_("This part holds no cargo."));
+    }
+    const auto type = itype_id(item_id);
+    if (!type.is_valid()) { return std::unexpected(string_format(_("%s is no item."), item_id)); }
+    const auto before = veh.get_items(index).size();
+    veh.add_item(index, item::spawn(type, calendar::turn));
+    if (veh.get_items(index).size() == before) {
+        return std::unexpected(_("It does not fit there."));
+    }
+    return {};
 }
 
 auto install_part(

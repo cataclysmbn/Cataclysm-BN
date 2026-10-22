@@ -98,6 +98,37 @@ auto vehicle_state(const vehicle& veh) -> std::string;
 auto place_vehicle_state(const std::string& state, const tripoint_bub_ms& at)
     -> std::expected<vehicle*, std::string>;
 
+/// The saved `state` in place of the vehicle, where it stands; the error says why it stays off
+/// the map, and the vehicle is gone then.
+auto restore_vehicle_state(vehicle& veh, const std::string& state)
+    -> std::expected<vehicle*, std::string>;
+
+/// Installs the part on a mount of the world's vehicle at once, without the game's requirements;
+/// the part's index, or why the game would not mount it.
+auto install_live_part(vehicle& veh, const part_install& install)
+    -> std::expected<int, std::string>;
+
+/// Removes the world's vehicle's part `index` at once; the error says why it stays.
+auto remove_live_part(vehicle& veh, int index) -> std::expected<void, std::string>;
+
+/// Sets the health of the vehicle's part `index` in percent of its durability.
+auto set_part_health(vehicle& veh, int index, int percent) -> std::expected<void, std::string>;
+
+struct part_fuel {
+    /// The fuel, battery charge or ammunition item.
+    std::string fuel;
+    /// How much of it, capped by what the part holds; 0 empties it.
+    int amount = 0;
+};
+
+/// Fills the tank, battery or magazine of the vehicle's part `index`.
+auto set_part_fuel(vehicle& veh, int index, const part_fuel& fuel)
+    -> std::expected<void, std::string>;
+
+/// Puts an item of the type `item_id` in the cargo space of the vehicle's part `index`.
+auto add_part_cargo(vehicle& veh, int index, const std::string& item_id)
+    -> std::expected<void, std::string>;
+
 /// The data file of the loaded mods that defines the prototype `id` last, as the game loads them.
 auto prototype_file(const std::string& id) -> std::optional<std::filesystem::path>;
 

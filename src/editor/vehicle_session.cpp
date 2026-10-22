@@ -26,6 +26,7 @@
 #include <charconv>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <limits>
 #include <optional>
 #include <ranges>
@@ -67,6 +68,10 @@ constexpr auto spawn_set_id = "vehicle:spawn_set";
 constexpr auto spawn_id = "vehicle:spawn";
 constexpr auto copy_id = "vehicle:copy";
 constexpr auto paste_id = "vehicle:paste";
+constexpr auto edit_id = "vehicle:edit";
+constexpr auto done_id = "vehicle:done";
+constexpr auto live_form_id = "vehicle:live_form";
+constexpr auto live_set_id = "vehicle:live_set";
 
 /// How far east of the avatar a spawned vehicle stands, clear of it.
 constexpr auto spawn_distance = 8;
@@ -115,6 +120,12 @@ struct session {
     std::string field_pointer = "/name";
     std::string field_value;
     spawn_options spawning;
+    /// The world's vehicle edited in place, the part picked on it, and its saved states before
+    /// each change to undo and after each undone one to redo.
+    vehicle* live = nullptr;
+    int live_part = -1;
+    std::vector<std::string> live_undo;
+    std::vector<std::string> live_redo;
 
     auto prototype() const -> const nlohmann::ordered_json& { // *NOPAD*
         return doc->objects()[object].value;
@@ -295,6 +306,98 @@ struct session {
         }
     }
 
+    /// Edits the world's vehicle `index` in place.
+    auto edit_vehicle(const std::size_t index) -> void {
+        const auto vehicles = get_map().get_vehicles();
+        if (index >= vehicles.size()) { return; }
+        live = vehicles[index].v;
+        cursor = point{};
+        live_part = -1;
+        live_undo.clear();
+        live_redo.clear();
+    }
+
+    /// Forgets the vehicle edited in place once it left the map.
+    auto check_live() -> void {
+        if (live && std::ranges::none_of(get_map().get_vehicles(), [&](const auto& placed) {
+                return placed.v == live;
+            })) {
+            live = nullptr;
+        }
+    }
+
+    /// Runs `edit` on the vehicle edited in place as one undo step.
+    auto live_change(const std::function<auto(vehicle&)->std::expected<void, std::string>>& edit)
+        -> void {
+        auto before = vehicle_state(*live);
+        if (const auto done = edit(*live); !done) {
+            notice = done.error();
+            return;
+        }
+        live_undo.push_back(std::move(before));
+        live_redo.clear();
+    }
+
+    /// Puts the vehicle edited in place back to the last state of `from`, keeping the current one
+    /// in `to`.
+    auto live_step(std::vector<std::string>& from, std::vector<std::string>& to) -> void {
+        if (from.empty()) { return; }
+        auto now = vehicle_state(*live);
+        const auto restored = restore_vehicle_state(*live, from.back());
+        from.pop_back();
+        if (!restored) {
+            notice = restored.error();
+            live = nullptr;
+            return;
+        }
+        live = *restored;
+        live_part = -1;
+        to.push_back(std::move(now));
+    }
+
+    /// Sets the field `field` of the live form.
+    auto set_live(const std::string& field, const std::string& text) -> void {
+        if (field == "name") {
+            live_change([&](vehicle& veh) -> std::expected<void, std::string> {
+                veh.name = text;
+                return {};
+            });
+            return;
+        }
+        if (live_part < 0 || live_part >= live->part_count()) {
+            notice = _("Pick a part first.");
+            return;
+        }
+        if (field == "cargo") {
+            live_change([&](vehicle& veh) { return add_part_cargo(veh, live_part, text); });
+            return;
+        }
+        if (field == "fuel_type") {
+            live_change([&](vehicle& veh) {
+                return set_part_fuel(
+                    veh, live_part,
+                    {.fuel = text, .amount = std::max(1, veh.part(live_part).ammo_remaining())});
+            });
+            return;
+        }
+        auto value = 0;
+        const auto* const end = text.data() + text.size();
+        if (const auto [ptr, error] = std::from_chars(text.data(), end, value);
+            error != std::errc{} || ptr != end) {
+            notice = _("That value is out of range.");
+            return;
+        }
+        if (field == "health") {
+            live_change([&](vehicle& veh) { return set_part_health(veh, live_part, value); });
+        } else if (field == "fuel") {
+            live_change([&](vehicle& veh) {
+                return set_part_fuel(
+                    veh, live_part,
+                    {.fuel = veh.part(live_part).ammo_current().str(), .amount = value});
+            });
+        }
+    }
+
     /// Puts the design in the game in place of its prototype and spawns it east of the avatar.
     auto spawn() -> void {
         const auto applied = apply_design(prototype().dump());
@@ -379,19 +482,16 @@ struct session {
     }
 };
 
-/// The mounts of the prototype and a ring of free ones around them, a cell each, west to east and
-/// north to south as its blueprint reads.
-auto grid_of(const session& state) -> ec::component {
-    const auto parts = design_parts(state.prototype());
-    auto mounts =
-        parts | std::views::transform(&design_part::mount) | std::ranges::to<std::vector>();
-    mounts.push_back(state.cursor);
+/// The `mounts` of the vehicle `veh` shows and a ring of free ones around them, a cell each, west
+/// to east and north to south as its blueprint reads.
+auto grid_of(const vehicle* const veh, std::vector<point> mounts, const point& cursor)
+    -> ec::component {
+    mounts.push_back(cursor);
     const auto [min_x, max_x] = std::ranges::minmax(mounts | std::views::transform(&point::x));
     const auto [min_y, max_y] = std::ranges::minmax(mounts | std::views::transform(&point::y));
     const auto origin = point(min_x - 1, min_y - 1);
     auto palette = ec::look_palette{};
     auto cells = std::vector<ec::grid_cell>{};
-    const auto* const veh = state.built.blueprint.get();
     for (auto y = min_y - 1; y <= max_y + 1; ++y) {
         for (auto x = min_x - 1; x <= max_x + 1; ++x) {
             const auto at = point(x, y);
@@ -400,7 +500,7 @@ auto grid_of(const session& state) -> ec::component {
                 .id = mount_text(at),
                 .glyph = " ",
                 .affordance = mount_id,
-                .selected = at == state.cursor};
+                .selected = at == cursor};
             const auto shown = veh ? veh->part_displayed_at(tripoint_mnt_veh(x, y, 0)) : -1;
             if (shown >= 0) {
                 cell.glyph = std::string(1, veh->part_sym(shown));
@@ -420,10 +520,78 @@ auto grid_of(const session& state) -> ec::component {
         .body = ec::grid_body{
             .cols = max_x - min_x + 3,
             .rows = max_y - min_y + 3,
-            .cursor = ec::grid_point{state.cursor.x - origin.x, state.cursor.y - origin.y},
+            .cursor = ec::grid_point{cursor.x - origin.x, cursor.y - origin.y},
             .cells = std::move(cells),
             .looks = std::move(palette.looks),
             .role = "canvas"}};
+}
+
+/// The parts the world's vehicle has on the picked mount, in the order the game installed them.
+auto live_stack(const session& state) -> ec::component {
+    const auto& veh = *state.live;
+    const auto mount = tripoint_mnt_veh(state.cursor.x, state.cursor.y, 0);
+    return ec::list(
+        {.id = stack_id,
+         .rows = veh.parts_at_relative(mount, false) | std::views::transform([&](const int index) {
+                     const auto& part = veh.cpart(index);
+                     auto columns = std::vector<game_client::interaction_column>{
+                         {.key = "health",
+                          .label = _("Health %"),
+                          .value = std::to_string(
+                              static_cast<int>(std::round(part.health_percent() * 100))),
+                          .color = ""}};
+                     if (part.is_fuel_store(false)) {
+                         columns.push_back(
+                             {.key = "fuel",
+                              .label = _("Fuel"),
+                              .value = std::to_string(part.ammo_remaining()),
+                              .color = ""});
+                     }
+                     return ec::row{
+                         .id = string_format("part:%d", index),
+                         .label = part.info().name(),
+                         .selected = index == state.live_part,
+                         .columns = std::move(columns)};
+                 })
+               | std::ranges::to<std::vector>(),
+         .selection = "single",
+         .activate = pick_id});
+}
+
+/// The vehicle's name and the picked part's health, fuel and cargo.
+auto live_form(const session& state) -> ec::component {
+    const auto& veh = *state.live;
+    auto fields = std::vector<ec::form_field>{
+        {.id = "name", .label = _("Name"), .value = veh.name}};
+    if (state.live_part >= 0 && state.live_part < veh.part_count()) {
+        const auto& part = veh.cpart(state.live_part);
+        fields.push_back(
+            {.id = "health",
+             .label = _("Health %"),
+             .value = std::to_string(static_cast<int>(std::round(part.health_percent() * 100))),
+             .type = "integer",
+             .min = 0,
+             .max = 100});
+        if (part.is_fuel_store(false)) {
+            fields.push_back(
+                {.id = "fuel",
+                 .label = _("Fuel"),
+                 .value = std::to_string(part.ammo_remaining()),
+                 .type = "integer",
+                 .min = 0});
+            fields.push_back(
+                {.id = "fuel_type",
+                 .label = _("Fuel type"),
+                 .value =
+                     part.ammo_current().is_null() ? std::string{} : part.ammo_current().str()});
+        }
+        if (veh.part_flag(state.live_part, VPFLAG_CARGO)) {
+            fields.push_back({.id = "cargo", .label = _("Add item"), .value = ""});
+        }
+    }
+    return {.id = live_form_id,
+            .affordances = {live_set_id},
+            .body = ec::form_body{.fields = std::move(fields)}};
 }
 
 auto session_view(const session& state) -> ec::screen_view {
@@ -486,51 +654,17 @@ auto session_view(const session& state) -> ec::screen_view {
     affordances.push_back(ec::invoke_affordance(
         {.id = copy_id, .label = _("Copy vehicle"), .args = row_of(world_id)}));
     affordances.push_back(ec::invoke_affordance({.id = paste_id, .label = _("Paste vehicle")}));
-    if (state.doc) {
-        const auto& doc = *state.doc;
-        auto stats = std::vector<ec::panel_stat>{
-            {.key = "saved",
-             .label = _("Saved"),
-             .value = doc.dirty() ? _("No") : _("Yes"),
-             .tone = doc.dirty() ? "bad" : "good"},
-            {.key = "mount",
-             .label = _("Mount"),
-             .value = string_format("%d,%d", state.cursor.x, state.cursor.y)}};
-        if (state.built.blueprint) {
-            std::ranges::move(design_stats(*state.built.blueprint), std::back_inserter(stats));
-        }
-        parts.push_back(ec::panel(
-            {.id = "vehicle:document",
-             .title = state.prototype().value("name", state.prototype().value("id", "")),
-             .subtitle = doc.path().generic_string(),
-             .stats = std::move(stats)}));
-        parts.push_back(grid_of(state));
-        const auto design = design_parts(state.prototype());
-        parts.push_back(ec::list(
-            {.id = stack_id,
-             .rows = design | std::views::enumerate | std::views::filter([&](const auto& entry) {
-                         return std::get<1>(entry).mount == state.cursor;
-                     })
-                   | std::views::transform([&](const auto& entry) {
-                         const auto& [index, part] = entry;
-                         const auto id = vpart_id(part.part);
-                         return ec::row{
-                             .id = string_format("part:%d", index),
-                             .label = id.is_valid() ? id->name() : part.part,
-                             .description = part.pointer,
-                             .selected = state.field_pointer == part.pointer};
-                     })
-                   | std::ranges::to<std::vector>(),
-             .selection = "single",
-             .activate = pick_id}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = edit_id, .label = _("Edit in place"), .args = row_of(world_id)}));
+    /// The parts the vehicle `veh` takes on the picked mount, and the affordances that edit its
+    /// parts.
+    const auto part_editing = [&](const vehicle* const veh) {
         const auto installable = state.parts();
         const auto mount = tripoint_mnt_veh(state.cursor.x, state.cursor.y, 0);
         parts.push_back(ec::list(
             {.id = parts_id,
              .rows = installable.shown | std::views::transform([&](const vpart_info* info) {
-                         const auto mounts =
-                             state.built.blueprint
-                             && state.built.blueprint->can_mount(mount, info->get_id());
+                         const auto mounts = veh && veh->can_mount(mount, info->get_id());
                          return ec::row{
                              .id = "vpart:" + info->get_id().str(),
                              .label = info->name(),
@@ -548,6 +682,94 @@ auto session_view(const session& state) -> ec::screen_view {
              .selection = "single",
              .activate = install_id,
              .filterable = true}));
+        affordances.push_back(
+            ec::invoke_affordance({.id = mount_id, .label = _("Mount"), .args = row_of(grid_id)}));
+        affordances.push_back(
+            ec::invoke_affordance({.id = pick_id, .label = _("Edit"), .args = row_of(stack_id)}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = remove_id, .label = _("Remove"), .args = row_of(stack_id)}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = install_id, .label = _("Install"), .args = row_of(parts_id)}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = part_filter_id, .label = _("Filter parts"), .args = {.text = ec::text_shape{}}}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = part_page_id,
+             .label = _("Parts page"),
+             .args = {
+                 .count = ec::count_shape{
+                     .min = 0,
+                     .max = pages_of(installable.total) - 1,
+                     .initial = static_cast<std::int64_t>(state.part_page)}}}));
+    };
+    if (state.live) {
+        const auto& veh = *state.live;
+        auto stats = std::vector<ec::panel_stat>{
+            {.key = "mount",
+             .label = _("Mount"),
+             .value = string_format("%d,%d", state.cursor.x, state.cursor.y)}};
+        std::ranges::move(design_stats(veh), std::back_inserter(stats));
+        parts.push_back(
+            ec::panel({.id = "vehicle:live", .title = veh.name, .stats = std::move(stats)}));
+        parts.push_back(grid_of(
+            &veh,
+            std::views::iota(0, veh.part_count()) | std::views::transform([&](const int index) {
+                return veh.cpart(index).mount.xy().raw();
+            }) | std::ranges::to<std::vector>(),
+            state.cursor));
+        parts.push_back(live_stack(state));
+        part_editing(&veh);
+        parts.push_back(live_form(state));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = live_set_id,
+             .label = _("Value"),
+             .args =
+                 {.row = ec::row_shape{.component_id = live_form_id}, .text = ec::text_shape{}}}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = undo_id, .label = _("Undo"), .enabled = !state.live_undo.empty()}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = redo_id, .label = _("Redo"), .enabled = !state.live_redo.empty()}));
+        affordances.push_back(ec::invoke_affordance({.id = done_id, .label = _("Done")}));
+    } else if (state.doc) {
+        const auto& doc = *state.doc;
+        auto stats = std::vector<ec::panel_stat>{
+            {.key = "saved",
+             .label = _("Saved"),
+             .value = doc.dirty() ? _("No") : _("Yes"),
+             .tone = doc.dirty() ? "bad" : "good"},
+            {.key = "mount",
+             .label = _("Mount"),
+             .value = string_format("%d,%d", state.cursor.x, state.cursor.y)}};
+        if (state.built.blueprint) {
+            std::ranges::move(design_stats(*state.built.blueprint), std::back_inserter(stats));
+        }
+        parts.push_back(ec::panel(
+            {.id = "vehicle:document",
+             .title = state.prototype().value("name", state.prototype().value("id", "")),
+             .subtitle = doc.path().generic_string(),
+             .stats = std::move(stats)}));
+        const auto design = design_parts(state.prototype());
+        parts.push_back(grid_of(
+            state.built.blueprint.get(),
+            design | std::views::transform(&design_part::mount) | std::ranges::to<std::vector>(),
+            state.cursor));
+        parts.push_back(ec::list(
+            {.id = stack_id,
+             .rows = design | std::views::enumerate | std::views::filter([&](const auto& entry) {
+                         return std::get<1>(entry).mount == state.cursor;
+                     })
+                   | std::views::transform([&](const auto& entry) {
+                         const auto& [index, part] = entry;
+                         const auto id = vpart_id(part.part);
+                         return ec::row{
+                             .id = string_format("part:%d", index),
+                             .label = id.is_valid() ? id->name() : part.part,
+                             .description = part.pointer,
+                             .selected = state.field_pointer == part.pointer};
+                     })
+                   | std::ranges::to<std::vector>(),
+             .selection = "single",
+             .activate = pick_id}));
+        part_editing(state.built.blueprint.get());
         parts.push_back(ec::component{
             .id = field_id,
             .affordances = {field_set_id, field_apply_id},
@@ -571,24 +793,6 @@ auto session_view(const session& state) -> ec::screen_view {
                      })
                    | std::ranges::to<std::vector>(),
              .selection = "none"}));
-        affordances.push_back(
-            ec::invoke_affordance({.id = mount_id, .label = _("Mount"), .args = row_of(grid_id)}));
-        affordances.push_back(
-            ec::invoke_affordance({.id = pick_id, .label = _("Edit"), .args = row_of(stack_id)}));
-        affordances.push_back(ec::invoke_affordance(
-            {.id = remove_id, .label = _("Remove"), .args = row_of(stack_id)}));
-        affordances.push_back(ec::invoke_affordance(
-            {.id = install_id, .label = _("Install"), .args = row_of(parts_id)}));
-        affordances.push_back(ec::invoke_affordance(
-            {.id = part_filter_id, .label = _("Filter parts"), .args = {.text = ec::text_shape{}}}));
-        affordances.push_back(ec::invoke_affordance(
-            {.id = part_page_id,
-             .label = _("Parts page"),
-             .args = {
-                 .count = ec::count_shape{
-                     .min = 0,
-                     .max = pages_of(installable.total) - 1,
-                     .initial = static_cast<std::int64_t>(state.part_page)}}}));
         affordances.push_back(ec::invoke_affordance(
             {.id = field_set_id,
              .label = _("Value"),
@@ -642,11 +846,11 @@ auto session_view(const session& state) -> ec::screen_view {
         .title = _("Vehicle Editor"),
         .root = ec::split(
             {.id = "vehicle:body",
-             .active = state.doc ? grid_id : prototypes_id,
+             .active = state.live || state.doc ? grid_id : prototypes_id,
              .children = std::move(parts)}),
         .affordances = std::move(affordances),
-        .focus_component = state.doc ? grid_id : prototypes_id,
-        .focus_row = state.doc ? mount_text(state.cursor) : ""};
+        .focus_component = state.live || state.doc ? grid_id : prototypes_id,
+        .focus_row = state.live || state.doc ? mount_text(state.cursor) : ""};
 }
 
 auto kept_session = std::optional<session>{};
@@ -655,6 +859,35 @@ auto kept_session = std::optional<session>{};
 auto index_of(const std::string& row, const char* const format) -> std::optional<std::size_t> {
     auto index = std::size_t{0};
     return std::sscanf(row.c_str(), format, &index) == 1 ? std::optional(index) : std::nullopt;
+}
+
+/// Runs the affordance `id` on the world's vehicle the editor edits in place.
+auto live_invoke(
+    session& state, const std::string& id, const std::string& row, const std::string& text)
+    -> void {
+    const auto index = index_of(row, "part:%zu").transform([](const std::size_t at) {
+        return static_cast<int>(at);
+    });
+    if (id == done_id) {
+        state.live = nullptr;
+    } else if (id == pick_id && index) {
+        state.live_part = *index;
+    } else if (id == remove_id && index) {
+        state.live_change([&](vehicle& veh) { return remove_live_part(veh, *index); });
+        state.live_part = -1;
+    } else if (id == install_id) {
+        const auto part = row.substr(std::string_view("vpart:").size());
+        state.live_change([&](vehicle& veh) {
+            return install_live_part(veh, {.mount = state.cursor, .part = part})
+                .transform([](const int /*index*/) {});
+        });
+    } else if (id == live_set_id) {
+        state.set_live(row, text);
+    } else if (id == undo_id) {
+        state.live_step(state.live_undo, state.live_redo);
+    } else if (id == redo_id) {
+        state.live_step(state.live_redo, state.live_undo);
+    }
 }
 
 } // namespace
@@ -675,8 +908,12 @@ auto run_vehicle_editor() -> void {
         ui_manager::redraw();
         const auto action = ctxt.handle_input();
         const auto invoked = ec::invoked(ctxt.get_raw_input());
+        state.check_live();
         if (!invoked) {
-            if (action == "QUIT" && state.leave()) { return; }
+            if (action == "QUIT" && state.leave()) {
+                state.live = nullptr;
+                return;
+            }
             continue;
         }
         const auto& id = invoked->affordance_id;
@@ -684,6 +921,7 @@ auto run_vehicle_editor() -> void {
         const auto text = invoked->args.text.value_or("");
         state.notice.clear();
         if (id == open_id) {
+            state.live = nullptr;
             state.open(row.substr(std::string_view("prototype:").size()));
         } else if (id == filter_id) {
             state.filter = text;
@@ -698,10 +936,19 @@ auto run_vehicle_editor() -> void {
             if (const auto index = index_of(row, "world:%zu")) { state.copy_vehicle(*index); }
         } else if (id == paste_id) {
             state.paste_vehicle();
-        } else if (!state.doc) {
-            continue;
+        } else if (id == edit_id) {
+            if (const auto index = index_of(row, "world:%zu")) { state.edit_vehicle(*index); }
         } else if (id == mount_id) {
             if (const auto at = mount_of(row)) { state.cursor = *at; }
+        } else if (id == part_filter_id) {
+            state.part_filter = text;
+            state.part_page = 0;
+        } else if (id == part_page_id) {
+            state.part_page = static_cast<std::size_t>(invoked->args.count.value_or(0));
+        } else if (state.live) {
+            live_invoke(state, id, row, text);
+        } else if (!state.doc) {
+            continue;
         } else if (id == pick_id) {
             if (const auto index = index_of(row, "part:%zu")) {
                 const auto design = design_parts(state.prototype());
@@ -714,11 +961,6 @@ auto run_vehicle_editor() -> void {
             if (const auto index = index_of(row, "part:%zu")) { state.remove(*index); }
         } else if (id == install_id) {
             state.install(row.substr(std::string_view("vpart:").size()));
-        } else if (id == part_filter_id) {
-            state.part_filter = text;
-            state.part_page = 0;
-        } else if (id == part_page_id) {
-            state.part_page = static_cast<std::size_t>(invoked->args.count.value_or(0));
         } else if (id == field_set_id) {
             if (row == "pointer") {
                 state.field_pointer = text;
