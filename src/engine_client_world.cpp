@@ -25,6 +25,7 @@
 #include "bionics.h"
 #include "effect.h"
 #include "engine_client_event.h"
+#include "enum_conversions.h"
 #include "item.h"
 #include "item_serial.h"
 #include "tileray.h"
@@ -57,6 +58,7 @@
 #include "vehicle/vpart_position.h"
 #include "vehicle/vpart_range.h"
 #include "weather/weather.h"
+#include "weather/weather_type.h"
 
 static const itype_id itype_corpse( "corpse" );
 static const trait_id trait_INATTENTIVE( "INATTENTIVE" );
@@ -1132,9 +1134,16 @@ namespace
 {
 auto capture_environment() -> environment_value
 {
+    const auto &weather = get_weather().weather_id.obj();
+    const auto daylight = std::lround( 100.0 * sunlight( calendar::turn ) / current_daylight_level(
+                                           calendar::turn ) );
     return environment_value{
         .turn = std::to_string( to_turn<int>( calendar::turn ) ), .time = to_string( calendar::turn ),
         .weather = get_weather().weather_id.str(), .season = season_name(),
+        .sky = sky_value{
+            .daylight = static_cast<int>( std::clamp( daylight, 0L, 100L ) ),
+            .precipitation = io::enum_to_string( weather.precip ), .rain = weather.rains,
+            .dimming = std::max( -weather.light_modifier, 0 ) },
         .mod_tilesets = mod_tileset_files() };
 }
 

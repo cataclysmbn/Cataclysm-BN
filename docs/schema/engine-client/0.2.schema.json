@@ -1416,6 +1416,44 @@
           ],
           "description": "Season of the calendar; tilesets name seasonal sprites with a _season_<name> suffix."
         },
+        "sky": {
+          "type": "object",
+          "description": "The sky over the avatar, for a client that draws one.",
+          "properties": {
+            "daylight": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "The daylight now, in percent of the full daylight of the season."
+            },
+            "precipitation": {
+              "enum": [
+                "none",
+                "very_light",
+                "light",
+                "medium",
+                "heavy"
+              ],
+              "description": "How much the weather lets fall."
+            },
+            "rain": {
+              "type": "boolean",
+              "description": "What falls is rain, not snow."
+            },
+            "dimming": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "How much ambient light the weather takes away, in the game's light points."
+            }
+          },
+          "required": [
+            "daylight",
+            "precipitation",
+            "rain",
+            "dimming"
+          ],
+          "additionalProperties": false
+        },
         "mod_tilesets": {
           "type": "array",
           "description": "The files of the game data that add sprites to tilesets, in the order the native view loads them. A tiled client numbers their sprites after those of its tileset, for the files whose compatibility names it.",
