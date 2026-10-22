@@ -263,7 +263,7 @@ TEST_CASE(
                 CHECK(legend[0].selected);
                 CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
                 const auto& tools = body<ec::tabs_body>(part(screen, "editor:tools")).tabs;
-                REQUIRE(tools.size() == 7);
+                REQUIRE(tools.size() == 8);
                 CHECK(tools[0].id == "tool:point");
                 CHECK(tools[0].selected);
                 CHECK(saved(screen) == "Yes");
@@ -1075,6 +1075,127 @@ auto handle_action(std::unique_ptr<special_game> mode) -> bool {
 }
 
 } // namespace
+
+TEST_CASE(
+    "the editor draws a room, with a brush and mirrored, and goes back to any step of its history",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    auto step = 0;
+    const auto stat = [](const ec::screen_view& screen, const std::string& key) {
+        const auto& stats = body<ec::panel_body>(part(screen, "editor:document")).stats;
+        const auto found = std::ranges::find(stats, key, &ec::panel_stat::key);
+        INFO(key);
+        REQUIRE(found != stats.end());
+        return found->value;
+    };
+    const auto history = [](const ec::screen_view& screen) {
+        return body<ec::list_body>(part(screen, "editor:history")).rows;
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1: {
+                const auto& tools = body<ec::tabs_body>(part(screen, "editor:tools")).tabs;
+                REQUIRE(tools.size() == 8);
+                CHECK(tools[5].id == "tool:room");
+                CHECK(stat(screen, "inside") == "#");
+                CHECK(stat(screen, "brush") == "1");
+                CHECK(stat(screen, "mirror_x") == "Off");
+                CHECK(refused(state, "editor:brush", {.count = 10}));
+                CHECK(refused(state, "editor:brush", {.count = 0}));
+                CHECK(history(screen).size() == 1);
+                CHECK(history(screen)[0].selected);
+                CHECK(history(screen)[0].description == "Saved");
+                return invoke("editor:symbol", {.row = "symbol:."});
+            }
+            case 2:
+                return invoke("editor:tool", {.row = "tool:room"});
+            case 3:
+                return invoke("editor:paint", {.row = "square:2,2"});
+            case 4:
+                return invoke("editor:paint", {.row = "square:6,5"});
+            case 5:
+                // The outline in the floor symbol, the inside in the wall symbol, in one step.
+                CHECK(walls(screen) == 6);
+                CHECK(cell(screen, 3, 3).glyph == "#");
+                CHECK(cell(screen, 2, 2).glyph == ".");
+                CHECK(history(screen).size() == 2);
+                CHECK(history(screen)[1].selected);
+                CHECK(history(screen)[0].description == "Saved");
+                return invoke("editor:jump", {.row = "step:0"});
+            case 6:
+                CHECK(walls(screen) == 0);
+                CHECK_FALSE(affordance(screen, "editor:undo").enabled);
+                CHECK(affordance(screen, "editor:redo").enabled);
+                CHECK(saved(screen) == "Yes");
+                CHECK(history(screen).size() == 2);
+                CHECK(history(screen)[0].selected);
+                return invoke("editor:jump", {.row = "step:1"});
+            case 7:
+                CHECK(walls(screen) == 6);
+                CHECK(saved(screen) == "No");
+                return invoke("editor:symbol", {.row = "symbol:#"});
+            case 8:
+                return invoke("editor:tool", {.row = "tool:point"});
+            case 9:
+                return invoke("editor:brush", {.count = 2});
+            case 10:
+                CHECK(stat(screen, "brush") == "2");
+                return invoke("editor:paint", {.row = "square:10,10"});
+            case 11:
+                CHECK(walls(screen) == 10);
+                return invoke("editor:mirror_x");
+            case 12:
+                CHECK(stat(screen, "mirror_x") == "On");
+                return invoke("editor:paint", {.row = "square:1,15"});
+            case 13:
+                // Two columns of two squares, and their mirror image across the middle column.
+                CHECK(walls(screen) == 18);
+                CHECK(cell(screen, 22, 15).glyph == "#");
+                CHECK(cell(screen, 21, 16).glyph == "#");
+                CHECK(history(screen).size() == 4);
+                return invoke("editor:jump", {.row = "step:2"});
+            case 14:
+                CHECK(walls(screen) == 10);
+                CHECK(history(screen).size() == 4);
+                CHECK(history(screen)[2].selected);
+                CHECK(refused(state, "editor:jump", {.row = "step:4"}));
+                return invoke("editor:save");
+            case 15:
+                CHECK(history(screen)[2].description == "Saved");
+                CHECK(history(screen)[0].description.empty());
+                // An edit after going back drops the steps undone, and the saved state with them
+                // once it lay among them.
+                return invoke("editor:jump", {.row = "step:1"});
+            case 16:
+                return invoke("editor:paint", {.row = "square:0,0"});
+            case 17:
+                CHECK(history(screen).size() == 3);
+                CHECK(std::ranges::none_of(history(screen), [](const auto& row) {
+                    return row.description == "Saved";
+                }));
+                return act("QUIT");
+            case 18:
+                // Unsaved, so leaving asks.
+                return answer("Leave without saving");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    const auto rows = nlohmann::ordered_json::parse(read_file(file.path))[0]["object"]["rows"];
+    CHECK(rows[10].get<std::string>() == std::string(10, '.') + "##" + std::string(12, '.'));
+    // The file holds the state saved, at the second step, and not the edit after it.
+    CHECK(rows[15].get<std::string>() == std::string(24, '.'));
+    CHECK(rows[0].get<std::string>() == std::string(24, '.'));
+}
 
 TEST_CASE("game time does not pass while the map editor is open", "[editor_session]") {
     const auto guard = screen_guard{};
