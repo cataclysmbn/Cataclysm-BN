@@ -25,6 +25,7 @@
 #include "bionics.h"
 #include "effect.h"
 #include "engine_client_event.h"
+#include "enum_conversions.h"
 #include "item.h"
 #include "item_serial.h"
 #include "tileray.h"
@@ -57,6 +58,7 @@
 #include "vehicle/vpart_position.h"
 #include "vehicle/vpart_range.h"
 #include "weather/weather.h"
+#include "weather/weather_type.h"
 
 static const itype_id itype_corpse( "corpse" );
 static const trait_id trait_INATTENTIVE( "INATTENTIVE" );
@@ -217,6 +219,34 @@ auto with_item_tint( look result, const item &thing ) -> look
     return result;
 }
 
+/// Whether the data flags it as a plant: a shrub, a flower, a plant or a sapling.
+auto is_plant( const map_data_common_t &data ) -> bool
+{
+    return data.has_flag( TFLAG_SHRUB ) || data.has_flag( TFLAG_FLOWER ) ||
+           data.has_flag( TFLAG_PLANT ) || data.has_flag( TFLAG_YOUNG );
+}
+
+/// What terrain stands as: a door, closed, open or locked; a fence; a plant; none for anything else.
+auto terrain_form( const ter_t &ter ) -> std::string
+{
+    if( !ter.has_flag( "WINDOW" ) &&
+        ( ter.has_flag( "DOOR" ) || ter.has_flag( "LOCKED" ) || !ter.close.is_null() ) ) { return "door"; }
+    if( is_plant( ter ) ) { return "plant"; }
+    if( ter.has_flag( TFLAG_THIN_OBSTACLE ) ) { return "fence"; }
+    return {};
+}
+
+/// What furniture stands as: a plant, a bed (a seat as comfortable to sleep on as a bed), a seat, a table; none for
+/// anything else.
+auto furniture_form( const furn_t &furn ) -> std::string
+{
+    constexpr auto bed_comfort = 5;
+    if( is_plant( furn ) ) { return "plant"; }
+    if( furn.has_flag( "CAN_SIT" ) ) { return furn.comfort >= bed_comfort ? "bed" : "seat"; }
+    if( furn.has_flag( "FLAT_SURF" ) ) { return "table"; }
+    return {};
+}
+
 auto terrain_look( const ter_id &id, const int symbol, const map_perception::orientation &shape,
                    const data_vars::data_set *vars = nullptr ) -> look
 {
@@ -228,6 +258,7 @@ auto terrain_look( const ter_id &id, const int symbol, const map_perception::ori
                   !id->has_flag( TFLAG_FLAT ) );
     result.window = id->has_flag( "WINDOW" );
     result.coverage = std::clamp( id->coverage, 0, 100 );
+    result.form = terrain_form( *id );
     if( vars != nullptr ) { result.tint_vars = tint_vars_of( *vars ); }
     return with_shape( std::move( result ), shape );
 }
@@ -240,6 +271,7 @@ auto furniture_look( const furn_id &id, const map_perception::orientation &shape
     result.looks_like = looks_like_chain<furn_str_id>( id->looks_like );
     result.tint_keys = tint_keys_of( id->get_flags(), id.id().str() );
     result.coverage = std::clamp( id->coverage, 0, 100 );
+    result.form = furniture_form( *id );
     if( vars != nullptr ) { result.tint_vars = tint_vars_of( *vars ); }
     return with_shape( std::move( result ), shape );
 }
@@ -465,6 +497,7 @@ auto fill_visible( map &here, const tripoint_bub_ms &p, const avatar &you,
         if( !entry.is_field_alive() ) { continue; }
         auto appearance = make_look( "field", type.id().str(), entry.symbol(), entry.color() );
         appearance.looks_like = looks_like_chain<field_type_str_id>( type->looks_like );
+        appearance.form = type->has_fire ? "fire" : type->phase == phase_id::GAS ? "gas" : "";
         appearance.name = type->get_name( std::max( entry.get_field_intensity() - 1, 0 ) );
         // The native view paints a field by the tint its type sets, both layers alike.
         const auto rgb = type->get_tint_rgb().or_else( [&]() -> std::optional<RGBColor> {
@@ -1101,9 +1134,16 @@ namespace
 {
 auto capture_environment() -> environment_value
 {
+    const auto &weather = get_weather().weather_id.obj();
+    const auto daylight = std::lround( 100.0 * sunlight( calendar::turn ) / current_daylight_level(
+                                           calendar::turn ) );
     return environment_value{
         .turn = std::to_string( to_turn<int>( calendar::turn ) ), .time = to_string( calendar::turn ),
         .weather = get_weather().weather_id.str(), .season = season_name(),
+        .sky = sky_value{
+            .daylight = static_cast<int>( std::clamp( daylight, 0L, 100L ) ),
+            .precipitation = io::enum_to_string( weather.precip ), .rain = weather.rains,
+            .dimming = std::max( -weather.light_modifier, 0 ) },
         .mod_tilesets = mod_tileset_files() };
 }
 

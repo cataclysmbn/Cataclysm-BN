@@ -302,6 +302,10 @@
           "maximum": 100,
           "description": "Of terrain and furniture: the game data's coverage, the percent of a person behind it that it covers; absent for none."
         },
+        "form": {
+          "enum": ["door", "fence", "plant", "seat", "table", "bed", "fire", "gas"],
+          "description": "Of terrain, furniture and fields: what the thing stands as, from its game data. Terrain: door (DOOR or LOCKED, or it closes, and not WINDOW), plant (SHRUB, FLOWER, PLANT or YOUNG) or fence (THIN_OBSTACLE). Furniture: plant, bed (CAN_SIT and the comfort of a bed), seat (CAN_SIT) or table (FLAT_SURF). A field: fire (its type burns) or gas. Absent for anything else."
+        },
         "tint": {
           "type": "object",
           "properties": {
@@ -464,6 +468,10 @@
           "minimum": 1,
           "maximum": 100,
           "description": "Of terrain and furniture: the game data's coverage, the percent of a person behind it that it covers; absent for none."
+        },
+        "form": {
+          "enum": ["door", "fence", "plant", "seat", "table", "bed", "fire", "gas"],
+          "description": "Of terrain, furniture and fields: what the thing stands as, from its game data. Terrain: door (DOOR or LOCKED, or it closes, and not WINDOW), plant (SHRUB, FLOWER, PLANT or YOUNG) or fence (THIN_OBSTACLE). Furniture: plant, bed (CAN_SIT and the comfort of a bed), seat (CAN_SIT) or table (FLAT_SURF). A field: fire (its type burns) or gas. Absent for anything else."
         },
         "tint": {
           "type": "object",
@@ -1407,6 +1415,44 @@
             "winter"
           ],
           "description": "Season of the calendar; tilesets name seasonal sprites with a _season_<name> suffix."
+        },
+        "sky": {
+          "type": "object",
+          "description": "The sky over the avatar, for a client that draws one.",
+          "properties": {
+            "daylight": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "The daylight now, in percent of the full daylight of the season."
+            },
+            "precipitation": {
+              "enum": [
+                "none",
+                "very_light",
+                "light",
+                "medium",
+                "heavy"
+              ],
+              "description": "How much the weather lets fall."
+            },
+            "rain": {
+              "type": "boolean",
+              "description": "What falls is rain, not snow."
+            },
+            "dimming": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "How much ambient light the weather takes away, in the game's light points."
+            }
+          },
+          "required": [
+            "daylight",
+            "precipitation",
+            "rain",
+            "dimming"
+          ],
+          "additionalProperties": false
         },
         "mod_tilesets": {
           "type": "array",

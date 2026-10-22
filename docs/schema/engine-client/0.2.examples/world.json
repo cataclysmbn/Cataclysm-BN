@@ -233,7 +233,13 @@
           "turn": "5184000",
           "time": "2026-04-01T08:00:00Z",
           "weather": "clear",
-          "season": "spring"
+          "season": "spring",
+          "sky": {
+            "daylight": 74,
+            "precipitation": "none",
+            "rain": false,
+            "dimming": 0
+          }
         },
         "entities": [
           {

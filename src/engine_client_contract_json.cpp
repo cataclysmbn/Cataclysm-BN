@@ -59,6 +59,7 @@ auto to_json( const look &value ) -> json
     if( value.window ) { result["window"] = true; }
     // No coverage is the default, left out.
     if( value.coverage != 0 ) { result["coverage"] = value.coverage; }
+    if( !value.form.empty() ) { result["form"] = value.form; }
     if( value.mutation ) {
         result["mutation"] = {{"id", value.mutation->id}, {"types", value.mutation->types},
             {"flags", value.mutation->flags}
@@ -271,6 +272,9 @@ auto to_json( const environment_value &value ) -> json
 {
     auto result = json{{"turn", value.turn}, {"time", value.time}, {"weather", value.weather}};
     if( !value.season.empty() ) { result["season"] = value.season; }
+    result["sky"] = {{"daylight", value.sky.daylight}, {"precipitation", value.sky.precipitation},
+        {"rain", value.sky.rain}, {"dimming", value.sky.dimming}
+    };
     if( !value.mod_tilesets.empty() ) {
         result["mod_tilesets"] = json::array();
         for( const auto &file : value.mod_tilesets ) {

@@ -1117,6 +1117,35 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "world capture says how much daylight there is and what falls from the sky",
+    "[engine_client_world]") {
+    make_scene();
+    const auto sky = [] {
+        const auto state = ec::world::capture_world();
+        REQUIRE(state.environment);
+        return state.environment->sky;
+    };
+    const auto noon = sky();
+    CHECK(noon.daylight == 100);
+    CHECK(noon.precipitation == "none");
+    CHECK_FALSE(noon.rain);
+    CHECK(noon.dimming == 0);
+    calendar::turn = calendar::turn_zero;
+    CHECK(sky().daylight < noon.daylight);
+    calendar::turn = calendar::turn_zero + 12_hours;
+    get_weather().weather_id = weather_type_id("rain");
+    const auto rain = sky();
+    CHECK(rain.precipitation == "medium");
+    CHECK(rain.rain);
+    CHECK(rain.dimming == 30);
+    get_weather().weather_id = weather_type_id("snowing");
+    const auto snow = sky();
+    CHECK(snow.precipitation == "heavy");
+    CHECK_FALSE(snow.rain);
+    get_weather().weather_id = weather_type_id("clear");
+}
+
+TEST_CASE(
     "world capture gives a hurt creature's health as the native look-around bar shows it",
     "[engine_client_world]") {
     const auto setup = make_scene();
@@ -1877,6 +1906,53 @@ TEST_CASE(
     CHECK(cells[1]["terrain"].value("coverage", 0) == ter_id("t_shrub")->coverage);
     // No coverage is the default, left out.
     CHECK_FALSE(cells[2]["terrain"].contains("coverage"));
+}
+
+TEST_CASE(
+    "world capture says what form a door, a fence, a plant, furniture and a field stand in",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& here = get_map();
+    const auto square = [&](const int x, const int y) { return setup.start + tripoint(x, y, 0); };
+    here.ter_set(square(-2, -1), ter_id("t_door_c"));
+    here.ter_set(square(-2, 0), ter_id("t_door_o"));
+    here.ter_set(square(-2, 1), ter_id("t_door_locked"));
+    here.ter_set(square(-1, -2), ter_id("t_fence"));
+    here.ter_set(square(0, -2), ter_id("t_shrub"));
+    here.furn_set(square(1, -2), furn_id("f_chair"));
+    here.furn_set(square(1, -1), furn_id("f_table"));
+    here.furn_set(square(1, 1), furn_id("f_bed"));
+    here.add_field(square(-1, 2), field_type_id("fd_fire"), 1);
+    here.add_field(square(0, 2), field_type_id("fd_smoke"), 1);
+    here.build_map_cache(0);
+    map_perception::acquire();
+    const auto state = ec::world::capture_world();
+    const auto cell_at = [&](const int x, const int y) {
+        const auto* cell = find_cell(state, at(square(x, y)));
+        REQUIRE(cell != nullptr);
+        return nlohmann::json::parse(ec::serialize_cells({.cells = {*cell}}))["cells"][0];
+    };
+    const auto terrain_form = [&](const int x, const int y) {
+        return cell_at(x, y)["terrain"].value("form", std::string{});
+    };
+    const auto furniture_form = [&](const int x, const int y) {
+        return cell_at(x, y)["furniture"].value("form", std::string{});
+    };
+    const auto field_form = [&](const int x, const int y) {
+        return cell_at(x, y)["fields"].back()["look"].value("form", std::string{});
+    };
+    CHECK(terrain_form(-2, -1) == "door");
+    CHECK(terrain_form(-2, 0) == "door");
+    CHECK(terrain_form(-2, 1) == "door");
+    CHECK(terrain_form(-1, -2) == "fence");
+    CHECK(terrain_form(0, -2) == "plant");
+    CHECK(furniture_form(1, -2) == "seat");
+    CHECK(furniture_form(1, -1) == "table");
+    CHECK(furniture_form(1, 1) == "bed");
+    CHECK(field_form(-1, 2) == "fire");
+    CHECK(field_form(0, 2) == "gas");
+    // Plain floor has no form, left out.
+    CHECK_FALSE(cell_at(0, 0)["terrain"].contains("form"));
 }
 
 TEST_CASE(
