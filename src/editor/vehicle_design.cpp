@@ -298,7 +298,7 @@ auto prototype_file(const std::string& id) -> std::optional<std::filesystem::pat
         for (const auto& file : std::filesystem::recursive_directory_iterator(mod->path, error)) {
             if (file.is_regular_file() && file.path().extension() == ".json"
                 && defines(file.path(), id)) {
-                found = file.path();
+                found = file.path().lexically_normal();
             }
         }
     }
