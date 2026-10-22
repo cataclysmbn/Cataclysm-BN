@@ -347,6 +347,10 @@ auto target_json( const game_client::interaction_target &target, const bubble_fr
             {"description", candidate.description}, {"creature", candidate.creature},
             {"position", to_json( candidate.position, frame )}} );
     }
+    if( !target.trajectory.empty() ) {
+        value["trajectory"] = json::array();
+        for( const auto &position : target.trajectory ) { value["trajectory"].push_back( to_json( position, frame ) ); }
+    }
     if( !target.parts.empty() ) {
         value["parts"] = json::array();
         for( const auto &part : target.parts ) { value["parts"].push_back( to_json( part ) ); }

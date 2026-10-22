@@ -3187,6 +3187,8 @@ auto target_ui::screen_view() -> engine_client::screen_view
         .status_text = status_text(),
         .limit_to_reality_bubble = limit_to_reality_bubble,
         .candidates = std::move( candidates ),
+        .trajectory = traj | std::views::filter( [this]( const tripoint_bub_ms & p ) { return p != src; } )
+        | std::views::transform( position_of ) | std::ranges::to<std::vector>(),
         .distance = dist_fn( dst ),
         .parts = std::move( described ),
     };

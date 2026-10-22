@@ -1950,6 +1950,13 @@
             "additionalProperties": false
           }
         },
+        "trajectory": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/pos"
+          },
+          "description": "The squares of the line of fire from the square after source to the cursor, in order, as the native screen draws them. Present while aiming; absent on the look and editor screens."
+        },
         "parts": {
           "type": "array",
           "items": {
