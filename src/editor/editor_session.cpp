@@ -290,12 +290,19 @@ auto editable_place(const std::filesystem::path& path) -> bool {
 }
 
 /// What the new mapgen form writes: a file of the user mods holding one mapgen of an overmap
-/// terrain, its squares all one terrain.
+/// terrain, or one nested chunk of that id, its squares all one terrain.
 struct new_mapgen {
     std::string path;
+    /// The id of the overmap terrain, or of the chunk.
     std::string om_terrain;
     std::string fill = "t_floor";
+    /// `mapgen` or `nested`.
+    std::string kind = "mapgen";
+    /// The side of a nested chunk, in squares.
+    std::string size = "4";
 };
+
+constexpr auto max_chunk = 24;
 
 /// Writes `made`'s file; the error says why it was not written.
 auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string> {
@@ -313,12 +320,27 @@ auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string> {
     if (!ter_str_id(made.fill).is_valid()) {
         return std::unexpected(string_format(_("%s is no terrain."), made.fill));
     }
-    const auto rows = std::vector<std::string>(24, std::string(24, '.'));
+    if (made.kind != "mapgen" && made.kind != "nested") {
+        return std::unexpected(_("A new file holds a mapgen or a nested chunk."));
+    }
+    const auto nested = made.kind == "nested";
+    auto side = 24;
+    if (nested) {
+        const auto [end, error] =
+            std::from_chars(made.size.data(), made.size.data() + made.size.size(), side);
+        if (error != std::errc{} || end != made.size.data() + made.size.size() || side < 1
+            || side > max_chunk) {
+            return std::unexpected(string_format(_("A chunk is 1 to %d squares wide."), max_chunk));
+        }
+    }
+    const auto rows = std::vector<std::string>(side, std::string(side, '.'));
+    auto object = nlohmann::ordered_json{{"rows", rows}, {"terrain", {{".", made.fill}}}};
+    if (nested) { object["mapgensize"] = {side, side}; }
     const auto entry = nlohmann::ordered_json::array(
         {{{"type", "mapgen"},
           {"method", "json"},
-          {"om_terrain", made.om_terrain},
-          {"object", {{"rows", rows}, {"terrain", {{".", made.fill}}}}}}});
+          {nested ? "nested_mapgen_id" : "om_terrain", made.om_terrain},
+          {"object", object}}});
     auto error = std::error_code{};
     std::filesystem::create_directories(path.parent_path(), error);
     auto out = std::ofstream(path, std::ios::binary);
@@ -1276,7 +1298,14 @@ auto session_view(const session& state) -> ec::screen_view {
             .fields =
                 {{.id = "path", .label = _("New file"), .value = state.made.path},
                  {.id = "om_terrain", .label = _("Overmap terrain"), .value = state.made.om_terrain},
-                 {.id = "fill", .label = _("Terrain"), .value = state.made.fill}},
+                 {.id = "fill", .label = _("Terrain"), .value = state.made.fill},
+                 {.id = "kind",
+                  .label = _("Kind"),
+                  .value = state.made.kind,
+                  .type = "select",
+                  .options = {{.id = "mapgen", .label = _("Mapgen")},
+                              {.id = "nested", .label = _("Nested chunk")}}},
+                 {.id = "size", .label = _("Chunk size"), .value = state.made.size}},
             .submit = new_apply_id}});
     late.push_back(ec::list(
         {.id = browser_id,
@@ -1365,9 +1394,11 @@ auto run_editor_session() -> void {
             state.browser_page = static_cast<std::size_t>(invoked->args.count.value_or(0));
         } else if (id == new_set_id) {
             const auto text = invoked->args.text.value_or("");
-            (row == "path" ? state.made.path
-             : row == "om_terrain"
-                 ? state.made.om_terrain
+            (row == "path"         ? state.made.path
+             : row == "om_terrain" ? state.made.om_terrain
+             : row == "kind"       ? state.made.kind
+             : row == "size"
+                 ? state.made.size
                  : state.made.fill) = text;
         } else if (id == new_apply_id) {
             const auto made = create_mapgen(state.made);
