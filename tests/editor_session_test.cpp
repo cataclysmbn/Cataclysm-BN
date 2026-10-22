@@ -1200,6 +1200,68 @@ TEST_CASE(
     CHECK(rows[0].get<std::string>() == std::string(24, '.'));
 }
 
+TEST_CASE(
+    "the editor applies the entry to the game, stamps it into the world, takes it back and tests it",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    auto step = 0;
+    const auto omt = get_avatar().abs_omt_pos();
+    const auto live = [&](const int x, const int y) {
+        return get_map().ter(abs_to_bub(project_to<coords::ms>(omt) + tripoint_rel_ms(x, y, 0)));
+    };
+    const auto before = live(2, 3);
+    const auto stamped = [](const ec::screen_view& screen) {
+        const auto& stats = body<ec::panel_body>(part(screen, "editor:document")).stats;
+        return std::ranges::contains(stats, std::string("stamped"), &ec::panel_stat::key);
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK_FALSE(affordance(screen, "editor:unstamp").enabled);
+                CHECK_FALSE(affordance(screen, "editor:test").enabled);
+                CHECK_FALSE(stamped(screen));
+                return invoke("editor:paint", {.row = "square:2,3"});
+            case 2:
+                return invoke("editor:apply");
+            case 3:
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                CHECK(live(2, 3) == before);
+                return invoke("editor:stamp");
+            case 4:
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                CHECK(live(2, 3) == ter_id("t_wall"));
+                CHECK(live(3, 3) == ter_id("t_floor"));
+                CHECK(stamped(screen));
+                CHECK(affordance(screen, "editor:unstamp").enabled);
+                return invoke("editor:unstamp");
+            case 5:
+                CHECK(live(2, 3) == before);
+                CHECK_FALSE(stamped(screen));
+                return invoke("editor:stamp");
+            case 6:
+                // Stamping again replaces the stamp rather than stacking on it.
+                CHECK(live(2, 3) == ter_id("t_wall"));
+                return invoke("editor:test");
+            default:
+                FAIL("the editor outlived its test");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    // The avatar plays in the middle of the stamped square.
+    CHECK(get_avatar().abs_omt_pos() == omt);
+    CHECK(get_avatar().abs_pos() == project_to<coords::ms>(omt) + tripoint_rel_ms(SEEX, SEEY, 0));
+    CHECK(step == 7);
+    editor::reset_editor_session();
+}
+
 TEST_CASE("game time does not pass while the map editor is open", "[editor_session]") {
     const auto guard = screen_guard{};
     const auto file = mod_file{};
