@@ -188,6 +188,7 @@ auto document::edit(const std::size_t object, const nlohmann::ordered_json& patc
         done_.push_back({.object = object, .patch = patch, .before = target.value, .after = next});
         target.value = std::move(next);
         undone_.clear();
+        if (saved_depth_ && *saved_depth_ >= done_.size()) { saved_depth_.reset(); }
     } catch (const ordered_json::exception& e) { return std::unexpected(std::string(e.what())); }
     return {};
 }
@@ -207,6 +208,19 @@ auto document::redo() -> bool {
     undone_.pop_back();
     objects_[step.object].value = step.after;
     done_.push_back(std::move(step));
+    return true;
+}
+
+auto document::history() const -> std::vector<document_edit> {
+    auto steps = done_;
+    steps.insert(steps.end(), undone_.rbegin(), undone_.rend());
+    return steps;
+}
+
+auto document::jump(const std::size_t depth) -> bool {
+    if (depth > done_.size() + undone_.size()) { return false; }
+    while (done_.size() > depth) { undo(); }
+    while (done_.size() < depth) { redo(); }
     return true;
 }
 
@@ -242,6 +256,7 @@ auto document::save() -> std::expected<void, save_error> {
     auto bytes = text();
     if (!write_text(path_, bytes)) { return std::unexpected(save_error::unwritable); }
     saved_ = std::move(bytes);
+    saved_depth_ = done_.size();
     return {};
 }
 
@@ -253,6 +268,7 @@ auto document::save_as(const std::filesystem::path& path) -> std::expected<void,
     if (made || !write_text(path, bytes)) { return std::unexpected(save_error::unwritable); }
     path_ = path;
     saved_ = std::move(bytes);
+    saved_depth_ = done_.size();
     return {};
 }
 

@@ -84,6 +84,13 @@ constexpr auto move_apply_id = "editor:move_apply";
 constexpr auto field_id = "editor:field";
 constexpr auto field_set_id = "editor:field_set";
 constexpr auto field_apply_id = "editor:field_apply";
+constexpr auto inside_id = "editor:inside";
+constexpr auto brush_id = "editor:brush";
+constexpr auto mirror_x_id = "editor:mirror_x";
+constexpr auto mirror_y_id = "editor:mirror_y";
+constexpr auto history_id = "editor:history";
+constexpr auto jump_id = "editor:jump";
+constexpr auto max_brush = 9;
 
 /// The members of a mapgen's object that map its symbols, as the loader reads them.
 constexpr auto legend_layers = std::array{
@@ -129,6 +136,7 @@ const auto tools = std::array{
     tool{.id = "tool:rect", .kind = shape_kind::rect, .spans = true},
     tool{.id = "tool:rect_filled", .kind = shape_kind::rect_filled, .spans = true},
     tool{.id = "tool:ellipse", .kind = shape_kind::ellipse, .spans = true},
+    tool{.id = "tool:room", .kind = shape_kind::room, .spans = true},
     tool{.id = "tool:fill", .kind = shape_kind::fill},
     tool{.id = "tool:pick", .kind = std::nullopt},
 };
@@ -321,6 +329,12 @@ struct session {
     /// The object of `doc` on the canvas.
     std::size_t object = 0;
     std::string symbol;
+    /// The symbol inside a room.
+    std::string room_fill;
+    /// The side of the square of squares a pencil, line or outline draws with.
+    int brush = 1;
+    bool mirror_x = false;
+    bool mirror_y = false;
     const tool* current = tools.data();
     std::optional<point> anchor = std::nullopt;
     /// The square a placement or a diagnostic that was picked names.
@@ -392,6 +406,11 @@ struct session {
                 return entry.symbol == symbol;
             })) {
             symbol = legend.empty() ? std::string{} : legend.front().symbol;
+        }
+        if (std::ranges::none_of(legend, [&](const auto& entry) {
+                return entry.symbol == room_fill;
+            })) {
+            room_fill = legend.empty() ? std::string{} : legend.front().symbol;
         }
     }
 
@@ -609,8 +628,15 @@ struct session {
         const auto drawn = stroke(
             *doc,
             {.object = object,
-             .drawn = {.kind = *current->kind, .from = anchor.value_or(at), .to = at},
-             .symbol = symbol});
+             .drawn =
+                 {.kind = *current->kind,
+                  .from = anchor.value_or(at),
+                  .to = at,
+                  .size = brush,
+                  .mirror_x = mirror_x,
+                  .mirror_y = mirror_y},
+             .symbol = symbol,
+             .fill_symbol = room_fill});
         anchor.reset();
         notice = drawn ? "" : drawn.error();
         reload();
@@ -830,6 +856,22 @@ auto legend_rows(const session& state) -> std::vector<ec::row> {
          | std::ranges::to<std::vector>();
 }
 
+/// A row per state of the document, the original first: a step is named by the edit it did, and
+/// the row of the saved state says so.
+auto history_rows(const document& doc) -> std::vector<ec::row> {
+    const auto steps = doc.history();
+    auto rows = std::vector<ec::row>{};
+    for (const auto depth : std::views::iota(std::size_t{0}, steps.size() + 1)) {
+        auto row = ec::row{
+            .id = string_format("step:%d", depth),
+            .label = depth == 0 ? _("Opened") : steps[depth - 1].patch[0].value("path", ""),
+            .selected = depth == doc.depth()};
+        if (doc.saved_depth() == depth) { row.description = _("Saved"); }
+        rows.push_back(std::move(row));
+    }
+    return rows;
+}
+
 auto session_view(const session& state) -> ec::screen_view {
     auto affordances = std::vector<ec::affordance>{ec::invoke_affordance(
         {.id = open_id, .label = _("Open"), .args = {.text = ec::text_shape{.field_id = path_id}}})};
@@ -877,6 +919,19 @@ auto session_view(const session& state) -> ec::screen_view {
         if (!state.symbol.empty()) {
             stats.push_back({.key = "symbol", .label = _("Symbol"), .value = state.symbol});
         }
+        if (!state.room_fill.empty()) {
+            stats.push_back({.key = "inside", .label = _("Inside"), .value = state.room_fill});
+        }
+        stats.push_back(
+            {.key = "brush", .label = _("Brush"), .value = std::to_string(state.brush)});
+        stats.push_back(
+            {.key = "mirror_x",
+             .label = _("Mirror across"),
+             .value = state.mirror_x ? _("On") : _("Off")});
+        stats.push_back(
+            {.key = "mirror_y",
+             .label = _("Mirror down"),
+             .value = state.mirror_y ? _("On") : _("Off")});
         if (state.seed) {
             stats.push_back(
                 {.key = "seed", .label = _("Seed"), .value = std::to_string(*state.seed)});
@@ -899,12 +954,19 @@ auto session_view(const session& state) -> ec::screen_view {
              .activate = object_id}));
         affordances.push_back(ec::invoke_affordance(
             {.id = object_id, .label = _("Edit"), .args = row_of(objects_id)}));
-        affordances.push_back(
-            ec::invoke_affordance({.id = undo_id, .label = _("Undo"), .enabled = doc.can_undo()}));
-        affordances.push_back(
-            ec::invoke_affordance({.id = redo_id, .label = _("Redo"), .enabled = doc.can_redo()}));
-        affordances.push_back(
-            ec::invoke_affordance({.id = save_id, .label = _("Save"), .enabled = doc.dirty()}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = undo_id, .label = _("Undo"), .keys = {"CTRL+Z"}, .enabled = doc.can_undo()}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = redo_id, .label = _("Redo"), .keys = {"CTRL+Y"}, .enabled = doc.can_redo()}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = save_id, .label = _("Save"), .keys = {"CTRL+S"}, .enabled = doc.dirty()}));
+        parts.push_back(ec::list(
+            {.id = history_id,
+             .rows = history_rows(doc),
+             .selection = "single",
+             .activate = jump_id}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = jump_id, .label = _("Go to step"), .args = row_of(history_id)}));
         if (std::ranges::contains(mapgens, state.object)) {
             parts.push_back(ec::tabs(
                 {.id = tools_id,
@@ -982,6 +1044,17 @@ auto session_view(const session& state) -> ec::screen_view {
                 {.id = tool_id, .label = _("Tool"), .args = row_of(tools_id)}));
             affordances.push_back(ec::invoke_affordance(
                 {.id = symbol_id, .label = _("Symbol"), .args = row_of(legend_id)}));
+            affordances.push_back(ec::invoke_affordance(
+                {.id = inside_id, .label = _("Inside"), .args = row_of(legend_id)}));
+            affordances.push_back(ec::invoke_affordance(
+                {.id = brush_id,
+                 .label = _("Brush"),
+                 .args = {.count = ec::
+                              count_shape{.min = 1, .max = max_brush, .initial = state.brush}}}));
+            affordances.push_back(
+                ec::invoke_affordance({.id = mirror_x_id, .label = _("Mirror across")}));
+            affordances.push_back(
+                ec::invoke_affordance({.id = mirror_y_id, .label = _("Mirror down")}));
             affordances.push_back(ec::invoke_affordance(
                 {.id = paint_id, .label = _("Draw"), .args = row_of(canvas_id)}));
             parts.push_back(ec::component{
@@ -1153,6 +1226,19 @@ auto run_editor_session() -> void {
         } else if (id == symbol_id) {
             state.symbol = row.substr(std::string_view("symbol:").size());
             state.mapping_symbol = state.symbol;
+        } else if (id == inside_id) {
+            state.room_fill = row.substr(std::string_view("symbol:").size());
+        } else if (id == brush_id) {
+            state.brush = static_cast<int>(invoked->args.count.value_or(1));
+        } else if (id == mirror_x_id) {
+            state.mirror_x = !state.mirror_x;
+        } else if (id == mirror_y_id) {
+            state.mirror_y = !state.mirror_y;
+        } else if (id == jump_id) {
+            auto depth = std::size_t{0};
+            if (std::sscanf(row.c_str(), "step:%zu", &depth) == 1 && state.doc->jump(depth)) {
+                state.reload();
+            }
         } else if (id == paint_id) {
             if (const auto at = square_of(row)) { state.paint(*at); }
         } else if (id == undo_id || id == redo_id) {

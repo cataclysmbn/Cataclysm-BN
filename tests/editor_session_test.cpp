@@ -1106,6 +1106,9 @@ TEST_CASE(
                 CHECK(stat(screen, "inside") == "#");
                 CHECK(stat(screen, "brush") == "1");
                 CHECK(stat(screen, "mirror_x") == "Off");
+                CHECK(affordance(screen, "editor:undo").keys == std::vector<std::string>{"CTRL+Z"});
+                CHECK(affordance(screen, "editor:redo").keys == std::vector<std::string>{"CTRL+Y"});
+                CHECK(affordance(screen, "editor:save").keys == std::vector<std::string>{"CTRL+S"});
                 CHECK(refused(state, "editor:brush", {.count = 10}));
                 CHECK(refused(state, "editor:brush", {.count = 0}));
                 CHECK(history(screen).size() == 1);
