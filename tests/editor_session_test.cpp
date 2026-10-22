@@ -19,6 +19,7 @@
 #    include "input.h"
 #    include "json_formatter.h"
 #    include "map/map.h"
+#    include "mapgen/mapgen_functions.h"
 #    include "options_helpers.h"
 #    include "output.h"
 #    include "overmap/overmapbuffer.h"
@@ -1260,6 +1261,72 @@ TEST_CASE(
     CHECK(get_avatar().abs_pos() == project_to<coords::ms>(omt) + tripoint_rel_ms(SEEX, SEEY, 0));
     CHECK(step == 7);
     editor::reset_editor_session();
+}
+
+TEST_CASE(
+    "the editor opens the mapgen of an overmap terrain, and any data file from its browser",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto restore_mapgen = restore_on_out_of_scope<bool>(disable_mapgen);
+    disable_mapgen = false;
+    auto step = 0;
+    const auto path = [](const ec::screen_view& screen) {
+        return body<ec::form_body>(part(screen, "editor:file")).fields.front().value;
+    };
+    const auto objects = [](const ec::screen_view& screen) {
+        return body<ec::list_body>(part(screen, "editor:objects")).rows;
+    };
+    const auto files = [](const ec::screen_view& screen) {
+        return body<ec::list_body>(part(screen, "editor:browser"));
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                // The browser lists the data files a page at a time, 50 of them.
+                CHECK(files(screen).rows.size() == 50);
+                CHECK(files(screen).total > 1000);
+                CHECK(files(screen).rows[0].id.starts_with("file:"));
+                return invoke("editor:open_oter", {.text = "no_such_overmap_terrain"});
+            case 1:
+                CHECK(body<ec::text_body>(part(screen, "editor:notice"))
+                          .markup.find("no_such_overmap_terrain")
+                      != std::string::npos);
+                CHECK_FALSE(has_affordance(screen, "editor:paint"));
+                return invoke("editor:open_oter", {.text = "2StoryModern06_1_north"});
+            case 2: {
+                // Its file is open on the entry that makes it, even when the file holds many.
+                CHECK(path(screen).ends_with(".json"));
+                CHECK(path(screen).ends_with("mapgen/house/2storymodern06.json"));
+                const auto entries = objects(screen);
+                const auto selected = std::ranges::find_if(entries, &ec::row::selected);
+                REQUIRE(selected != entries.end());
+                CHECK(selected->label.find("2StoryModern06_1") != std::string::npos);
+                return invoke("editor:browser_filter", {.text = "2STORYMODERN06.JSON"});
+            }
+            case 3:
+                // The filter ignores case and matches anywhere in the path.
+                REQUIRE(files(screen).rows.size() == 1);
+                CHECK(files(screen).total == 1);
+                CHECK(files(screen).rows[0].label == "json/mapgen/house/2storymodern06.json");
+                CHECK(refused(state, "editor:browser_page", {.count = 1}));
+                return invoke("editor:browser_open", {.row = files(screen).rows[0].id});
+            case 4:
+                CHECK(path(screen).ends_with("mapgen/house/2storymodern06.json"));
+                return invoke("editor:browser_filter", {.text = "no such path at all"});
+            case 5:
+                CHECK(files(screen).rows.empty());
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 6);
 }
 
 TEST_CASE("game time does not pass while the map editor is open", "[editor_session]") {
