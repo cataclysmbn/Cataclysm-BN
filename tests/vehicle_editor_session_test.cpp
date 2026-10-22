@@ -379,4 +379,52 @@ TEST_CASE(
     CHECK(vproto_id("bicycle")->blueprint->part_count() == original + 1);
 }
 
+TEST_CASE(
+    "the vehicle editor exports a world vehicle's design to a new mod file and opens it",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    clear_map();
+    const auto cleanup_vehicles = on_out_of_scope([] { clear_vehicles(); });
+    REQUIRE(editor::spawn_design(
+        vproto_id("car"), get_avatar().bub_pos() + tripoint_rel_ms(8, 0, 0), {}));
+    const auto file =
+        std::filesystem::path(PATH_INFO::user_moddir()) / "vehicle_editor_export" / "my_car.json";
+    std::filesystem::remove_all(file.parent_path());
+    const auto cleanup = on_out_of_scope([&] { std::filesystem::remove_all(file.parent_path()); });
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0: {
+                const auto& world = rows(screen, "vehicle:world");
+                REQUIRE(world.size() == 1);
+                CHECK(world[0].label == "Car");
+                CHECK(world[0].columns[0].value == "8");
+                return invoke("vehicle:export", {.row = "world:0", .text = "/tmp/my_car.json"});
+            }
+            case 1:
+                CHECK(body<ec::text_body>(part(screen, "vehicle:notice")).markup.find("your mods")
+                      != std::string::npos);
+                return invoke("vehicle:export", {.row = "world:0", .text = file.string()});
+            case 2:
+                CHECK(body<ec::panel_body>(part(screen, "vehicle:document")).title == "Car");
+                CHECK(stat(screen, "saved").value == "Yes");
+                CHECK(rows(screen, "vehicle:diagnostics").empty());
+                return invoke("vehicle:export", {.row = "world:0", .text = file.string()});
+            case 3:
+                CHECK(body<ec::text_body>(part(screen, "vehicle:notice")).markup
+                      == "That file already exists; nothing was saved.");
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 4);
+    const auto text = read_file(file);
+    CHECK(format_json(text) == text);
+    CHECK(nlohmann::ordered_json::parse(text)[0]["id"] == "my_car");
+}
+
 #endif

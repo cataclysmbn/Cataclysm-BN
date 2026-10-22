@@ -1,10 +1,14 @@
+#include "cata_utility.h"
 #include "catch/catch.hpp"
 #include "editor/document.h"
 #include "editor/vehicle_design.h"
+#include "map/map.h"
+#include "map_helpers.h"
 #include "mod_manager.h"
 #include "vehicle/veh_type.h"
 #include "vehicle/vehicle.h"
 #include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
 #include "world.h"
 #include "worldfactory.h"
 
@@ -213,4 +217,39 @@ TEST_CASE("a prototype's vehicle tells its speed, power, mass and cargo", "[edit
     CHECK(keys == std::vector<std::string>{"speed", "power", "mass", "cargo_volume"});
     CHECK(stats[1].value != "0");
     CHECK(std::stoi(stats[0].max) > 0);
+}
+
+TEST_CASE(
+    "a vehicle's design exported, spawned and exported again is the same design",
+    "[editor_vehicle]") {
+    clear_map();
+    const auto original = core_prototype("car");
+    const auto restore = on_out_of_scope([&] {
+        REQUIRE(editor::apply_design(original.dump()).has_value());
+        clear_vehicles();
+    });
+    const auto spawn = [](const tripoint_bub_ms& at) {
+        auto* const veh =
+            editor::spawn_design(vproto_id("car"), at, {.facing = 0, .fuel = 50, .condition = -1});
+        REQUIRE(veh != nullptr);
+        return veh;
+    };
+    auto* const first = spawn(tripoint_bub_ms(30, 30, 0));
+    const auto exported = editor::export_design(*first, "car");
+    CHECK(exported["name"].get<std::string>() == first->name);
+    CHECK(exported["blueprint"] == ordered_json(editor::blueprint_rows(*first)));
+    auto listed = std::size_t{0};
+    for (const auto& entry : exported["parts"]) { listed += entry["parts"].size(); }
+    CHECK(static_cast<int>(listed) == first->part_count());
+    // A design, not a state: no damage, fill level or cargo.
+    const auto text = exported.dump();
+    for (const auto* const state : {"hp", "damage", "items", "ammo_qty", "\"ammo\""}) {
+        INFO(state);
+        CHECK(text.find(state) == std::string::npos);
+    }
+    CHECK(text.find("\"fuel\"") != std::string::npos);
+
+    REQUIRE(editor::apply_design(text).has_value());
+    auto* const second = spawn(tripoint_bub_ms(30, 50, 0));
+    CHECK(editor::export_design(*second, "car") == exported);
 }
