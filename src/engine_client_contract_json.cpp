@@ -59,6 +59,7 @@ auto to_json( const look &value ) -> json
     if( value.window ) { result["window"] = true; }
     // No coverage is the default, left out.
     if( value.coverage != 0 ) { result["coverage"] = value.coverage; }
+    if( !value.form.empty() ) { result["form"] = value.form; }
     if( value.mutation ) {
         result["mutation"] = {{"id", value.mutation->id}, {"types", value.mutation->types},
             {"flags", value.mutation->flags}

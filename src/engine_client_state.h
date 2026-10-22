@@ -95,6 +95,9 @@ struct look {
     bool window = false;
     /// Of terrain and furniture: the data's `coverage`, the percent of a person behind it that it covers.
     int coverage = 0;
+    /// Of terrain, furniture and fields: what the thing stands as, `door`, `fence`, `plant`, `seat`, `table`, `bed`,
+    /// `fire` or `gas`; empty for anything else.
+    std::string form = {};
     auto operator<=>( const look & ) const = default; // *NOPAD*
 };
 struct field_entry {
