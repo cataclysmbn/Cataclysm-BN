@@ -10,4 +10,8 @@ auto run_editor_session() -> void;
 /// Forgets the document and view the editor keeps between visits, for a new game.
 auto reset_editor_session() -> void;
 
+/// Makes the next visit open the vehicle editor, as the main menu's vehicle editor does, and leave
+/// with it.
+auto open_vehicle_editor_first() -> void;
+
 } // namespace editor

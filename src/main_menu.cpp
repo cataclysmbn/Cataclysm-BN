@@ -9,6 +9,7 @@
 #include "color.h"
 #include "debug.h"
 #include "distraction_manager.h"
+#include "editor/editor_session.h"
 #include "engine_client_component.h"
 #include "enums.h"
 #include "filesystem.h"
@@ -590,6 +591,10 @@ void main_menu::init_strings()
         vEditorIds.emplace_back( "map" );
         vEditorHints.emplace_back(
             _( "Edit maps in a new world of open field, without making a character." ) );
+        vEditorSubItems.emplace_back( pgettext( "Main Menu|Editor", "Vehicle editor" ) );
+        vEditorIds.emplace_back( "vehicle" );
+        vEditorHints.emplace_back(
+            _( "Edit vehicle prototypes in a new world of open field, without making a character." ) );
     }
 
     vNewGameHotkeys.clear();
@@ -1048,6 +1053,9 @@ bool main_menu::opening_screen()
                     break;
                 case main_menu_opts::EDITOR:
                     start = !vEditorSubItems.empty() && start_special_game( special_game_type::EDITOR );
+                    if( start && vEditorIds[sel2] == "vehicle" ) {
+                        editor::open_vehicle_editor_first();
+                    }
                     break;
                 case main_menu_opts::MOTD:
                 case main_menu_opts::CREDITS:

@@ -155,10 +155,13 @@ TEST_CASE(
                     CHECK(shown->id == "editor");
                     CHECK(shown->label == "Editor");
                     const auto& rows = body<ec::list_body>(content).rows;
-                    REQUIRE(rows.size() == 1);
+                    REQUIRE(rows.size() == 2);
                     CHECK(rows[0].id == "editor:map");
                     CHECK(rows[0].label == "Map editor");
                     CHECK_FALSE(rows[0].description.empty());
+                    CHECK(rows[1].id == "editor:vehicle");
+                    CHECK(rows[1].label == "Vehicle editor");
+                    CHECK_FALSE(rows[1].description.empty());
                     CHECK(find(top, "menu:entry") != nullptr);
                     return invoke_event(top, "menu:tab", {.row = "quit"});
                 }

@@ -653,68 +653,10 @@
             "expect": "screen"
           },
           {
-            "id": "editor:open_oter",
-            "label": "Open overmap terrain",
+            "id": "editor:vehicle",
+            "label": "Vehicle editor",
             "keys": [],
             "enabled": true,
-            "args": {
-              "text": {}
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "editor:open_here",
-            "label": "Open mapgen here",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "editor:export",
-            "label": "Export mapgen here",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "text": {
-                "field_id": "path"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "editor:browser_open",
-            "label": "Open",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "editor:browser"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "editor:browser_filter",
-            "label": "Filter files",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "text": {}
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "editor:browser_page",
-            "label": "Files page",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "count": {
-                "min": 0,
-                "max": 59,
-                "default": 0
-              }
-            },
             "expect": "screen"
           },
           {
@@ -3240,68 +3182,10 @@
             "expect": "screen"
           },
           {
-            "id": "editor:open_oter",
-            "label": "Open overmap terrain",
+            "id": "editor:vehicle",
+            "label": "Vehicle editor",
             "keys": [],
             "enabled": true,
-            "args": {
-              "text": {}
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "editor:open_here",
-            "label": "Open mapgen here",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "editor:export",
-            "label": "Export mapgen here",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "text": {
-                "field_id": "path"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "editor:browser_open",
-            "label": "Open",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "editor:browser"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "editor:browser_filter",
-            "label": "Filter files",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "text": {}
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "editor:browser_page",
-            "label": "Files page",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "count": {
-                "min": 0,
-                "max": 59,
-                "default": 0
-              }
-            },
             "expect": "screen"
           },
           {
@@ -6235,68 +6119,10 @@
             "expect": "screen"
           },
           {
-            "id": "editor:open_oter",
-            "label": "Open overmap terrain",
+            "id": "editor:vehicle",
+            "label": "Vehicle editor",
             "keys": [],
             "enabled": true,
-            "args": {
-              "text": {}
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "editor:open_here",
-            "label": "Open mapgen here",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "editor:export",
-            "label": "Export mapgen here",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "text": {
-                "field_id": "path"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "editor:browser_open",
-            "label": "Open",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "editor:browser"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "editor:browser_filter",
-            "label": "Filter files",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "text": {}
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "editor:browser_page",
-            "label": "Files page",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "count": {
-                "min": 0,
-                "max": 59,
-                "default": 0
-              }
-            },
             "expect": "screen"
           },
           {
@@ -9109,68 +8935,10 @@
             "expect": "screen"
           },
           {
-            "id": "editor:open_oter",
-            "label": "Open overmap terrain",
+            "id": "editor:vehicle",
+            "label": "Vehicle editor",
             "keys": [],
             "enabled": true,
-            "args": {
-              "text": {}
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "editor:open_here",
-            "label": "Open mapgen here",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "editor:export",
-            "label": "Export mapgen here",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "text": {
-                "field_id": "path"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "editor:browser_open",
-            "label": "Open",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "editor:browser"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "editor:browser_filter",
-            "label": "Filter files",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "text": {}
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "editor:browser_page",
-            "label": "Files page",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "count": {
-                "min": 0,
-                "max": 59,
-                "default": 0
-              }
-            },
             "expect": "screen"
           },
           {

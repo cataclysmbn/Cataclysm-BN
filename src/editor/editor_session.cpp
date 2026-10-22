@@ -15,6 +15,7 @@
 #include "editor/mapgen_source.h"
 #include "editor/mapgen_stamp.h"
 #include "editor/mapgen_stroke.h"
+#include "editor/vehicle_session.h"
 #include "engine_client_component.h"
 #include "engine_client_world.h"
 #include "game.h"
@@ -45,6 +46,7 @@
 #include <ranges>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace editor {
@@ -91,26 +93,7 @@ constexpr auto move_apply_id = "editor:move_apply";
 constexpr auto field_id = "editor:field";
 constexpr auto field_set_id = "editor:field_set";
 constexpr auto field_apply_id = "editor:field_apply";
-constexpr auto inside_id = "editor:inside";
-constexpr auto brush_id = "editor:brush";
-constexpr auto mirror_x_id = "editor:mirror_x";
-constexpr auto mirror_y_id = "editor:mirror_y";
-constexpr auto export_id = "editor:export";
-constexpr auto copy_id = "editor:copy";
-constexpr auto rotate_id = "editor:rotate";
-constexpr auto history_id = "editor:history";
-constexpr auto jump_id = "editor:jump";
-constexpr auto open_oter_id = "editor:open_oter";
-constexpr auto open_here_id = "editor:open_here";
-constexpr auto browser_id = "editor:browser";
-constexpr auto browser_open_id = "editor:browser_open";
-constexpr auto browser_filter_id = "editor:browser_filter";
-constexpr auto browser_page_id = "editor:browser_page";
-constexpr auto apply_id = "editor:apply";
-constexpr auto stamp_id = "editor:stamp";
-constexpr auto unstamp_id = "editor:unstamp";
-constexpr auto test_id = "editor:test";
-constexpr auto max_brush = 9;
+constexpr auto vehicle_id = "editor:vehicle";
 
 /// The members of a mapgen's object that map its symbols, as the loader reads them.
 constexpr auto legend_layers = std::array{
@@ -1077,35 +1060,7 @@ auto session_view(const session& state) -> ec::screen_view {
          .label = _("New file"),
          .args = {.row = ec::row_shape{.component_id = new_id}, .text = ec::text_shape{}}}));
     affordances.push_back(ec::invoke_affordance({.id = new_apply_id, .label = _("Create")}));
-    affordances.push_back(ec::invoke_affordance(
-        {.id = open_oter_id,
-         .label = _("Open overmap terrain"),
-         .args = {.text = ec::text_shape{}}}));
-    affordances.push_back(
-        ec::invoke_affordance({.id = open_here_id, .label = _("Open mapgen here")}));
-    affordances.push_back(ec::invoke_affordance(
-        {.id = export_id,
-         .label = _("Export mapgen here"),
-         .args = {.text = ec::text_shape{.field_id = path_id}}}));
-    const auto listed = state.browser_entries();
-    const auto shown =
-        std::views::drop(listed, state.browser_page * browser_page_size)
-        | std::views::take(browser_page_size);
-    const auto browser_pages =
-        std::max<std::size_t>(1, (listed.size() + browser_page_size - 1) / browser_page_size);
-    const auto data = std::filesystem::path(PATH_INFO::datadir());
-    affordances.push_back(ec::invoke_affordance(
-        {.id = browser_open_id, .label = _("Open"), .args = row_of(browser_id)}));
-    affordances.push_back(ec::invoke_affordance(
-        {.id = browser_filter_id, .label = _("Filter files"), .args = {.text = ec::text_shape{}}}));
-    affordances.push_back(ec::invoke_affordance(
-        {.id = browser_page_id,
-         .label = _("Files page"),
-         .args = {
-             .count = ec::count_shape{
-                 .min = 0,
-                 .max = static_cast<std::int64_t>(browser_pages - 1),
-                 .initial = static_cast<std::int64_t>(state.browser_page)}}}));
+    affordances.push_back(ec::invoke_affordance({.id = vehicle_id, .label = _("Vehicle editor")}));
     if (state.doc) {
         const auto& doc = *state.doc;
         auto stats = std::vector<ec::panel_stat>{
@@ -1417,12 +1372,20 @@ auto square_of(const std::string& id) -> std::optional<point> {
 
 /// The documents and view the editor keeps between visits.
 auto kept_session = std::optional<session>{};
+/// Whether the next visit is to the vehicle editor.
+auto vehicle_first = false;
 
 } // namespace
 
 auto reset_editor_session() -> void { kept_session.reset(); }
 
+auto open_vehicle_editor_first() -> void { vehicle_first = true; }
+
 auto run_editor_session() -> void {
+    if (std::exchange(vehicle_first, false)) {
+        run_vehicle_editor();
+        return;
+    }
     auto ctxt = input_context("EDITOR");
     ctxt.register_action("QUIT");
     ctxt.register_action("HELP_KEYBINDINGS");
@@ -1446,34 +1409,8 @@ auto run_editor_session() -> void {
         state.watch();
         if (id == open_id) {
             state.open(invoked->args.text.value_or(""));
-        } else if (id == open_oter_id) {
-            state.open_mapgen_of(invoked->args.text.value_or(""));
-        } else if (id == open_here_id) {
-            state.open_mapgen_of(
-                get_overmapbuffer(get_map().get_bound_dimension())
-                    .ter(get_avatar().abs_omt_pos())
-                    .id()
-                    .str());
-        } else if (id == export_id) {
-            const auto path = invoked->args.text.value_or("");
-            const auto exported =
-                check_new_path(path)
-                    .and_then([] { return export_omt(get_avatar().abs_omt_pos()); })
-                    .and_then([&](const nlohmann::ordered_json& entry) {
-                        return write_new_file(path, nlohmann::ordered_json::array({entry}));
-                    });
-            if (exported) {
-                state.open(path);
-            } else {
-                state.notice = exported.error();
-            }
-        } else if (id == browser_open_id) {
-            state.open(row.substr(std::string_view("file:").size()));
-        } else if (id == browser_filter_id) {
-            state.browser_filter = invoked->args.text.value_or("");
-            state.browser_page = 0;
-        } else if (id == browser_page_id) {
-            state.browser_page = static_cast<std::size_t>(invoked->args.count.value_or(0));
+        } else if (id == vehicle_id) {
+            run_vehicle_editor();
         } else if (id == new_set_id) {
             const auto text = invoked->args.text.value_or("");
             (row == "path"         ? state.made.path
