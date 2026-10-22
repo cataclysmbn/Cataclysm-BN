@@ -507,7 +507,8 @@ auto game_client::tiles::present_native() -> void
     needupdate = false;
     lastupdate = SDL_GetTicks();
 
-    if( test_mode ) {
+    // A headless binary has no renderer to present to.
+    if( test_mode || !renderer ) {
         return;
     }
 
