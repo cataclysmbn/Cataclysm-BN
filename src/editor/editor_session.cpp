@@ -7,6 +7,7 @@
 #include "editor/document.h"
 #include "editor/json_pointer.h"
 #include "editor/mapgen_check.h"
+#include "editor/mapgen_export.h"
 #include "editor/mapgen_legend.h"
 #include "editor/mapgen_legend_edit.h"
 #include "editor/mapgen_placement.h"
@@ -94,6 +95,7 @@ constexpr auto inside_id = "editor:inside";
 constexpr auto brush_id = "editor:brush";
 constexpr auto mirror_x_id = "editor:mirror_x";
 constexpr auto mirror_y_id = "editor:mirror_y";
+constexpr auto export_id = "editor:export";
 constexpr auto copy_id = "editor:copy";
 constexpr auto rotate_id = "editor:rotate";
 constexpr auto history_id = "editor:history";
@@ -320,16 +322,34 @@ struct new_mapgen {
 
 constexpr auto max_chunk = 24;
 
-/// Writes `made`'s file; the error says why it was not written.
-auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string> {
-    const auto path = std::filesystem::path(made.path);
+/// Whether a new file can be written at `made`; the error says why not.
+auto check_new_path(const std::string& made) -> std::expected<void, std::string> {
+    const auto path = std::filesystem::path(made);
     if (path.extension() != ".json" || !inside(path, PATH_INFO::user_moddir())) {
         return std::unexpected(string_format(
             _("A new file goes in your mods, %s, and ends in .json."), PATH_INFO::user_moddir()));
     }
     if (std::filesystem::exists(path)) {
-        return std::unexpected(string_format(_("%s already exists."), made.path));
+        return std::unexpected(string_format(_("%s already exists."), made));
     }
+    return {};
+}
+
+/// Writes `entries` as the new file `made`; the error says why it was not written.
+auto write_new_file(const std::string& made, const nlohmann::ordered_json& entries)
+    -> std::expected<void, std::string> {
+    const auto path = std::filesystem::path(made);
+    auto error = std::error_code{};
+    std::filesystem::create_directories(path.parent_path(), error);
+    auto out = std::ofstream(path, std::ios::binary);
+    out << format_json(entries.dump()).value_or(entries.dump(2));
+    if (error || !out.flush()) { return std::unexpected(_("The file could not be written.")); }
+    return {};
+}
+
+/// Writes `made`'s file; the error says why it was not written.
+auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string> {
+    if (auto checked = check_new_path(made.path); !checked) { return checked; }
     if (made.om_terrain.empty()) {
         return std::unexpected(_("A mapgen names its overmap terrain."));
     }
@@ -357,12 +377,7 @@ auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string> {
           {"method", "json"},
           {nested ? "nested_mapgen_id" : "om_terrain", made.om_terrain},
           {"object", object}}});
-    auto error = std::error_code{};
-    std::filesystem::create_directories(path.parent_path(), error);
-    auto out = std::ofstream(path, std::ios::binary);
-    out << format_json(entry.dump()).value_or(entry.dump(2));
-    if (error || !out.flush()) { return std::unexpected(_("The file could not be written.")); }
-    return {};
+    return write_new_file(made.path, entry);
 }
 
 /// The JSON files of the game's data, its mods and the user's mods, in path order.
@@ -1068,6 +1083,10 @@ auto session_view(const session& state) -> ec::screen_view {
          .args = {.text = ec::text_shape{}}}));
     affordances.push_back(
         ec::invoke_affordance({.id = open_here_id, .label = _("Open mapgen here")}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = export_id,
+         .label = _("Export mapgen here"),
+         .args = {.text = ec::text_shape{.field_id = path_id}}}));
     const auto listed = state.browser_entries();
     const auto shown =
         std::views::drop(listed, state.browser_page * browser_page_size)
@@ -1435,6 +1454,19 @@ auto run_editor_session() -> void {
                     .ter(get_avatar().abs_omt_pos())
                     .id()
                     .str());
+        } else if (id == export_id) {
+            const auto path = invoked->args.text.value_or("");
+            const auto exported =
+                check_new_path(path)
+                    .and_then([] { return export_omt(get_avatar().abs_omt_pos()); })
+                    .and_then([&](const nlohmann::ordered_json& entry) {
+                        return write_new_file(path, nlohmann::ordered_json::array({entry}));
+                    });
+            if (exported) {
+                state.open(path);
+            } else {
+                state.notice = exported.error();
+            }
         } else if (id == browser_open_id) {
             state.open(row.substr(std::string_view("file:").size()));
         } else if (id == browser_filter_id) {

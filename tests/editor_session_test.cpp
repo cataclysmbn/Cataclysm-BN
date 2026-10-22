@@ -1524,7 +1524,7 @@ TEST_CASE(
     const auto written = nlohmann::ordered_json::parse(read_file(made));
     CHECK(written[0]["type"] == "mapgen");
     CHECK(
-        written[0]["om_terrain"]
+        written[0]["om_terrain"].get<std::string>()
         == get_overmapbuffer(get_map().get_bound_dimension())
                .ter(get_avatar().abs_omt_pos())
                ->get_type_id()

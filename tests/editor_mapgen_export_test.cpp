@@ -42,7 +42,7 @@ TEST_CASE("an exported overmap square maps each kind of square to a symbol", "[e
     const auto& entry = *exported;
     CHECK(entry["type"] == "mapgen");
     CHECK(entry["method"] == "json");
-    CHECK(entry["om_terrain"]
+    CHECK(entry["om_terrain"].get<std::string>()
           == get_overmapbuffer(here.get_bound_dimension()).ter(omt)->get_type_id().str());
     const auto& object = entry["object"];
     CHECK(object["rows"].size() == 24);
