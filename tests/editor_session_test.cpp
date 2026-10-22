@@ -264,7 +264,7 @@ TEST_CASE(
                 CHECK(legend[0].selected);
                 CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
                 const auto& tools = body<ec::tabs_body>(part(screen, "editor:tools")).tabs;
-                REQUIRE(tools.size() == 8);
+                REQUIRE(tools.size() == 10);
                 CHECK(tools[0].id == "tool:point");
                 CHECK(tools[0].selected);
                 CHECK(saved(screen) == "Yes");
@@ -1102,7 +1102,7 @@ TEST_CASE(
                 return invoke("editor:open", {.text = file.path.string()});
             case 1: {
                 const auto& tools = body<ec::tabs_body>(part(screen, "editor:tools")).tabs;
-                REQUIRE(tools.size() == 8);
+                REQUIRE(tools.size() == 10);
                 CHECK(tools[5].id == "tool:room");
                 CHECK(stat(screen, "inside") == "#");
                 CHECK(stat(screen, "brush") == "1");
@@ -1397,6 +1397,86 @@ TEST_CASE(
     CHECK(written[0]["object"]["rows"].size() == 6);
     CHECK(written[0]["object"]["rows"][5] == "......");
     CHECK(format_json(read_file(made)) == read_file(made));
+}
+
+TEST_CASE(
+    "the editor copies a selection, rotates it and pastes it as one undo step",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    auto step = 0;
+    const auto clipboard = [](const ec::screen_view& screen) {
+        const auto& stats = body<ec::panel_body>(part(screen, "editor:document")).stats;
+        const auto found = std::ranges::find(stats, "clipboard", &ec::panel_stat::key);
+        return found == stats.end() ? std::string{} : found->value;
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK(clipboard(screen).empty());
+                CHECK_FALSE(affordance(screen, "editor:copy").enabled);
+                CHECK_FALSE(affordance(screen, "editor:rotate").enabled);
+                return invoke("editor:tool", {.row = "tool:line"});
+            case 2:
+                return invoke("editor:paint", {.row = "square:1,1"});
+            case 3:
+                return invoke("editor:paint", {.row = "square:3,1"});
+            case 4:
+                CHECK(walls(screen) == 3);
+                return invoke("editor:tool", {.row = "tool:select"});
+            case 5:
+                return invoke("editor:paint", {.row = "square:3,1"});
+            case 6:
+                return invoke("editor:paint", {.row = "square:1,2"});
+            case 7:
+                // The selection is the rectangle between the two squares, two rows of three.
+                CHECK(cell(screen, 2, 2).selected);
+                CHECK_FALSE(cell(screen, 4, 2).selected);
+                CHECK(affordance(screen, "editor:copy").enabled);
+                return invoke("editor:copy");
+            case 8:
+                CHECK(clipboard(screen) == "3x2");
+                CHECK(affordance(screen, "editor:rotate").enabled);
+                return invoke("editor:rotate");
+            case 9:
+                CHECK(clipboard(screen) == "2x3");
+                return invoke("editor:tool", {.row = "tool:paste"});
+            case 10:
+                return invoke("editor:paint", {.row = "square:10,10"});
+            case 11:
+                // A quarter turn clockwise: the wall row of the top is the right column.
+                CHECK(walls(screen) == 6);
+                CHECK(cell(screen, 11, 10).glyph == "#");
+                CHECK(cell(screen, 11, 11).glyph == "#");
+                CHECK(cell(screen, 11, 12).glyph == "#");
+                CHECK(cell(screen, 10, 10).glyph == ".");
+                return invoke("editor:undo");
+            case 12:
+                CHECK(walls(screen) == 3);
+                return invoke("editor:paint", {.row = "square:23,23"});
+            case 13:
+                // The part of the paste beyond the rows is dropped.
+                CHECK(walls(screen) == 3);
+                return invoke("editor:paint", {.row = "square:22,22"});
+            case 14:
+                CHECK(walls(screen) == 5);
+                CHECK(cell(screen, 23, 22).glyph == "#");
+                return act("QUIT");
+            case 15:
+                return answer("Leave without saving");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 16);
 }
 
 TEST_CASE("game time does not pass while the map editor is open", "[editor_session]") {
