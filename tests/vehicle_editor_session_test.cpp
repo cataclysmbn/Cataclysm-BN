@@ -427,4 +427,53 @@ TEST_CASE(
     CHECK(nlohmann::ordered_json::parse(text)[0]["id"] == "my_car");
 }
 
+TEST_CASE(
+    "the vehicle editor copies a world vehicle with its state and pastes it south of the avatar",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    clear_map();
+    const auto cleanup_vehicles = on_out_of_scope([] { clear_vehicles(); });
+    auto* const source = editor::
+        spawn_design(vproto_id("car"), get_avatar().bub_pos() + tripoint_rel_ms(8, 12, 0), {});
+    REQUIRE(source != nullptr);
+    source->name = "Copied car";
+    const auto copied = std::filesystem::path(PATH_INFO::user_dir()) / "vehicle_copy.json";
+    std::filesystem::remove(copied);
+    const auto cleanup = on_out_of_scope([&] { std::filesystem::remove(copied); });
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:paste");
+            case 1:
+                CHECK(body<ec::text_body>(part(screen, "vehicle:notice")).markup
+                      == "No vehicle is copied.");
+                return invoke("vehicle:copy", {.row = "world:0"});
+            case 2:
+                CHECK(rows(screen, "vehicle:world").size() == 1);
+                return invoke("vehicle:paste");
+            case 3: {
+                const auto& world = rows(screen, "vehicle:world");
+                REQUIRE(world.size() == 2);
+                CHECK(world[1].label == "Copied car");
+                return invoke("vehicle:paste");
+            }
+            case 4:
+                CHECK(body<ec::text_body>(part(screen, "vehicle:notice")).markup
+                      == "Something is in the way of the vehicle there.");
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 5);
+    const auto pasted = get_map().veh_at(get_avatar().bub_pos() + tripoint_rel_ms(0, 8, 0));
+    REQUIRE(pasted);
+    CHECK(pasted->vehicle().name == "Copied car");
+    CHECK(pasted->vehicle().part_count() == source->part_count());
+}
+
 #endif

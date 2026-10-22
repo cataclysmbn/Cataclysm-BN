@@ -2,6 +2,7 @@
 #include "catch/catch.hpp"
 #include "editor/document.h"
 #include "editor/vehicle_design.h"
+#include "item.h"
 #include "map/map.h"
 #include "map_helpers.h"
 #include "mod_manager.h"
@@ -9,6 +10,7 @@
 #include "vehicle/vehicle.h"
 #include "vehicle/vehicle_part.h"
 #include "vehicle/vpart_position.h"
+#include "vehicle/vpart_range.h"
 #include "world.h"
 #include "worldfactory.h"
 
@@ -252,4 +254,49 @@ TEST_CASE(
     REQUIRE(editor::apply_design(text).has_value());
     auto* const second = spawn(tripoint_bub_ms(30, 50, 0));
     CHECK(editor::export_design(*second, "car") == exported);
+}
+
+TEST_CASE("a vehicle copied through its saved state is the same vehicle", "[editor_vehicle]") {
+    clear_map();
+    const auto cleanup = on_out_of_scope([] { clear_vehicles(); });
+    auto& here = get_map();
+    auto* const source = editor::spawn_design(
+        vproto_id("car"), tripoint_bub_ms(30, 30, 0), {.facing = 90, .fuel = 50, .condition = -1});
+    REQUIRE(source != nullptr);
+    source->name = "Copied car";
+    const auto cargo = source->get_avail_parts(VPFLAG_CARGO);
+    REQUIRE_FALSE(cargo.empty());
+    const auto trunk = cargo.begin()->part_index();
+    source->add_item(trunk, item::spawn(itype_id("rock")));
+    REQUIRE_FALSE(source->get_items(trunk).empty());
+    const auto state = editor::vehicle_state(*source);
+    const auto vehicles = here.get_vehicles().size();
+
+    SECTION("placed elsewhere, it saves as the original does but for its place") {
+        const auto copy = editor::place_vehicle_state(state, tripoint_bub_ms(30, 50, 0));
+        REQUIRE(copy.has_value());
+        CHECK(here.get_vehicles().size() == vehicles + 1);
+        const auto placed = [](const std::string& text) {
+            auto saved = ordered_json::parse(text);
+            for (const auto* const key : {"posx", "posy", "om_id", "last_update_turn"}) {
+                saved.erase(key);
+            }
+            return saved;
+        };
+        CHECK(placed(editor::vehicle_state(**copy)) == placed(state));
+        CHECK((*copy)->name == "Copied car");
+        CHECK(here.veh_at(tripoint_bub_ms(30, 50, 0))->vehicle().name == "Copied car");
+    }
+    SECTION("placed over the original, it is refused and leaves nothing behind") {
+        const auto copy = editor::place_vehicle_state(state, tripoint_bub_ms(30, 30, 0));
+        REQUIRE_FALSE(copy.has_value());
+        CHECK(copy.error() == "Something is in the way of the vehicle there.");
+        CHECK(here.get_vehicles().size() == vehicles);
+    }
+    SECTION("text that is no saved vehicle is refused") {
+        const auto copy = editor::place_vehicle_state("{}", tripoint_bub_ms(30, 50, 0));
+        REQUIRE_FALSE(copy.has_value());
+        CHECK(copy.error() == "That is no saved vehicle.");
+        CHECK(here.get_vehicles().size() == vehicles);
+    }
 }
