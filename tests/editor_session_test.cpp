@@ -22,6 +22,7 @@
 #    include "mapgen/mapgen_functions.h"
 #    include "options_helpers.h"
 #    include "output.h"
+#    include "overmap/omdata.h"
 #    include "overmap/overmapbuffer.h"
 #    include "path_info.h"
 #    include "point.h"
@@ -1477,6 +1478,58 @@ TEST_CASE(
 
     editor::run_editor_session();
     CHECK(step == 16);
+}
+
+TEST_CASE(
+    "the editor exports the overmap square under the avatar to a new file and opens it",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto folder = mod_file{};
+    const auto made = folder.path.parent_path() / "export.json";
+    const auto notice = [](const ec::screen_view& screen) {
+        return body<ec::text_body>(part(screen, "editor:notice")).markup;
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:export", {.text = "/tmp/editor_export_test.json"});
+            case 1:
+                CHECK(notice(screen).starts_with("A new file goes in your mods"));
+                CHECK_FALSE(std::filesystem::exists("/tmp/editor_export_test.json"));
+                return invoke("editor:export", {.text = made.string()});
+            case 2: {
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                CHECK(body<ec::list_body>(part(screen, "editor:objects")).rows.size() == 1);
+                const auto& canvas = body<ec::grid_body>(part(screen, "editor:canvas"));
+                CHECK(canvas.cols == 24);
+                CHECK(canvas.rows == 24);
+                CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
+                return invoke("editor:export", {.text = made.string()});
+            }
+            case 3:
+                // A file that exists is not overwritten.
+                CHECK(notice(screen).ends_with("already exists."));
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 4);
+    const auto written = nlohmann::ordered_json::parse(read_file(made));
+    CHECK(written[0]["type"] == "mapgen");
+    CHECK(
+        written[0]["om_terrain"]
+        == get_overmapbuffer(get_map().get_bound_dimension())
+               .ter(get_avatar().abs_omt_pos())
+               ->get_type_id()
+               .str());
+    CHECK(format_json(read_file(made)) == read_file(made));
 }
 
 TEST_CASE("game time does not pass while the map editor is open", "[editor_session]") {
