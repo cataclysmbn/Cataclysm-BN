@@ -1329,6 +1329,76 @@ TEST_CASE(
     CHECK(step == 6);
 }
 
+TEST_CASE(
+    "the editor creates a nested chunk file in the user mods and opens it",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto folder = mod_file{};
+    const auto made = folder.path.parent_path() / "chunk.json";
+    const auto notice = [](const ec::screen_view& screen) {
+        return body<ec::text_body>(part(screen, "editor:notice")).markup;
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0: {
+                const auto& fields = body<ec::form_body>(part(screen, "editor:new")).fields;
+                const auto kind = std::ranges::find(fields, "kind", &ec::form_field::id);
+                REQUIRE(kind != fields.end());
+                CHECK(kind->value == "mapgen");
+                CHECK(kind->options.size() == 2);
+                return invoke("editor:new_set", {.row = "path", .text = made.string()});
+            }
+            case 1:
+                return invoke("editor:new_set", {.row = "om_terrain", .text = "editor_test_chunk"});
+            case 2:
+                return invoke("editor:new_set", {.row = "kind", .text = "palette"});
+            case 3:
+                return invoke("editor:new_apply");
+            case 4:
+                CHECK(notice(screen) == "A new file holds a mapgen or a nested chunk.");
+                CHECK_FALSE(std::filesystem::exists(made));
+                return invoke("editor:new_set", {.row = "kind", .text = "nested"});
+            case 5:
+                return invoke("editor:new_set", {.row = "size", .text = "25"});
+            case 6:
+                return invoke("editor:new_apply");
+            case 7:
+                CHECK(notice(screen) == "A chunk is 1 to 24 squares wide.");
+                CHECK_FALSE(std::filesystem::exists(made));
+                return invoke("editor:new_set", {.row = "size", .text = "6"});
+            case 8:
+                return invoke("editor:new_apply");
+            case 9: {
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                const auto& objects = body<ec::list_body>(part(screen, "editor:objects")).rows;
+                REQUIRE(objects.size() == 1);
+                CHECK(objects[0].label == "editor_test_chunk");
+                const auto& canvas = body<ec::grid_body>(part(screen, "editor:canvas"));
+                CHECK(canvas.cols == 6);
+                CHECK(canvas.rows == 6);
+                CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
+                return act("QUIT");
+            }
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 10);
+    const auto written = nlohmann::ordered_json::parse(read_file(made));
+    CHECK(written[0]["nested_mapgen_id"] == "editor_test_chunk");
+    CHECK_FALSE(written[0].contains("om_terrain"));
+    CHECK(written[0]["object"]["mapgensize"] == nlohmann::ordered_json::array({6, 6}));
+    CHECK(written[0]["object"]["rows"].size() == 6);
+    CHECK(written[0]["object"]["rows"][5] == "......");
+    CHECK(format_json(read_file(made)) == read_file(made));
+}
+
 TEST_CASE("game time does not pass while the map editor is open", "[editor_session]") {
     const auto guard = screen_guard{};
     const auto file = mod_file{};
