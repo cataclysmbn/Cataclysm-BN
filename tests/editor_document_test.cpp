@@ -118,6 +118,55 @@ TEST_CASE("undo and redo restore the exact bytes", "[editor_document]") {
     CHECK(doc->text() == edited);
 }
 
+TEST_CASE("edits of one object inside a group are one undo step", "[editor_document]") {
+    auto doc = editor::document::parse("three.json", three_objects);
+    REQUIRE(doc);
+    const auto first = ordered_json::parse(R"([{"op":"replace","path":"/id","value":"t_first"}])");
+    const auto second = ordered_json::parse(R"([{"op":"remove","path":"/type"}])");
+    REQUIRE(doc->edit(0, first));
+    doc->begin_group();
+    REQUIRE(doc->edit(2, second));
+    REQUIRE(doc->edit(2, ordered_json::parse(R"([{"op":"add","path":"/type","value":"x"}])")));
+    // Another object ends the fold, and the group's next edit starts a step.
+    REQUIRE(doc->edit(1, first));
+    doc->end_group();
+    REQUIRE(doc->edit(1, second));
+    CHECK(doc->depth() == 4);
+    const auto edited = doc->text();
+    CHECK(doc->undo());
+    CHECK(doc->undo());
+    CHECK(doc->undo());
+    CHECK(doc->undo());
+    CHECK_FALSE(doc->undo());
+    CHECK(doc->text() == three_objects);
+    while (doc->redo()) {}
+    CHECK(doc->text() == edited);
+}
+
+TEST_CASE(
+    "a group folds a trail of edits into the one step, undone and redone whole",
+    "[editor_document]") {
+    auto doc = editor::document::parse("three.json", three_objects);
+    REQUIRE(doc);
+    doc->begin_group();
+    REQUIRE(doc->edit(0, ordered_json::parse(R"([{"op":"replace","path":"/id","value":"a"}])")));
+    REQUIRE(doc->edit(0, ordered_json::parse(R"([{"op":"replace","path":"/id","value":"b"}])")));
+    REQUIRE(doc->edit(0, ordered_json::parse(R"([{"op":"replace","path":"/id","value":"c"}])")));
+    doc->end_group();
+    CHECK(doc->depth() == 1);
+    CHECK(doc->history().front().patch.size() == 3);
+    const auto edited = doc->text();
+    CHECK(doc->undo());
+    CHECK(doc->text() == three_objects);
+    CHECK(doc->redo());
+    CHECK(doc->text() == edited);
+    // A refused patch inside a group changes nothing.
+    doc->begin_group();
+    CHECK_FALSE(doc->edit(0, ordered_json::parse(R"([{"op":"remove","path":"/missing"}])")));
+    doc->end_group();
+    CHECK(doc->depth() == 1);
+}
+
 TEST_CASE("a refused patch changes nothing and leaves no undo step", "[editor_document]") {
     auto doc = editor::document::parse("three.json", three_objects);
     REQUIRE(doc);
