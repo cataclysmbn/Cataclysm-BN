@@ -52,6 +52,8 @@ constexpr auto page_id = "vehicle:page";
 constexpr auto mount_id = "vehicle:mount";
 constexpr auto pick_id = "vehicle:pick";
 constexpr auto remove_id = "vehicle:remove";
+constexpr auto earlier_id = "vehicle:earlier";
+constexpr auto later_id = "vehicle:later";
 constexpr auto install_id = "vehicle:install";
 constexpr auto part_filter_id = "vehicle:part_filter";
 constexpr auto part_page_id = "vehicle:part_page";
@@ -794,6 +796,10 @@ auto session_view(const session& state) -> ec::screen_view {
                    | std::ranges::to<std::vector>(),
              .selection = "none"}));
         affordances.push_back(ec::invoke_affordance(
+            {.id = earlier_id, .label = _("Earlier"), .args = row_of(stack_id)}));
+        affordances.push_back(
+            ec::invoke_affordance({.id = later_id, .label = _("Later"), .args = row_of(stack_id)}));
+        affordances.push_back(ec::invoke_affordance(
             {.id = field_set_id,
              .label = _("Value"),
              .args = {.row = ec::row_shape{.component_id = field_id}, .text = ec::text_shape{}}}));
@@ -959,6 +965,10 @@ auto run_vehicle_editor() -> void {
             }
         } else if (id == remove_id) {
             if (const auto index = index_of(row, "part:%zu")) { state.remove(*index); }
+        } else if (id == earlier_id || id == later_id) {
+            if (const auto index = index_of(row, "part:%zu")) {
+                state.change(move_part(state.prototype(), *index, id == earlier_id ? -1 : 1));
+            }
         } else if (id == install_id) {
             state.install(row.substr(std::string_view("vpart:").size()));
         } else if (id == field_set_id) {

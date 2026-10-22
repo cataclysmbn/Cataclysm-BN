@@ -78,6 +78,11 @@ auto remove_part(
     const nlohmann::ordered_json& prototype, const vehicle& blueprint, std::size_t index)
     -> std::expected<nlohmann::ordered_json, std::string>;
 
+/// The prototype with the part `index` of `design_parts` swapped with the part installed before
+/// it on its mount, for a negative `step`, or after it; the error says why it stays.
+auto move_part(const nlohmann::ordered_json& prototype, std::size_t index, int step)
+    -> std::expected<nlohmann::ordered_json, std::string>;
+
 /// The rows of a blueprint drawn from the parts the vehicle shows, whole and closed, west to east
 /// and north to south.
 auto blueprint_rows(const vehicle& veh) -> std::vector<std::string>;

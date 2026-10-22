@@ -371,6 +371,48 @@ auto remove_part(
     return redrawn(std::move(next));
 }
 
+auto move_part(const nlohmann::ordered_json& prototype, const std::size_t index, const int step)
+    -> std::expected<nlohmann::ordered_json, std::string> {
+    const auto parts = design_parts(prototype);
+    if (index >= parts.size()) { return std::unexpected(_("There is no such part.")); }
+    const auto& moved = parts[index];
+    if (moved.from_palette) {
+        return std::unexpected(_("The blueprint's palette places this part; edit the palette."));
+    }
+    const auto same_mount = [&](const std::size_t other) {
+        return parts[other].mount == moved.mount;
+    };
+    const auto first_on_mount = [&](auto&& candidates) -> std::optional<std::size_t> {
+        const auto found = std::ranges::find_if(candidates, same_mount);
+        return found == std::ranges::end(candidates) ? std::nullopt : std::optional(*found);
+    };
+    const auto found =
+        step < 0 ? first_on_mount(std::views::iota(std::size_t{0}, index) | std::views::reverse)
+                 : first_on_mount(std::views::iota(index + 1, parts.size()));
+    if (!found) { return std::unexpected(_("The part is already at that end of its mount.")); }
+    const auto other = *found;
+    if (parts[other].from_palette) {
+        return std::unexpected(_("The blueprint's palette places this part; edit the palette."));
+    }
+    const auto listed = [](const design_part& part) {
+        auto entry = 0;
+        auto member = 0;
+        return std::sscanf(part.pointer.c_str(), "/parts/%d/parts/%d", &entry, &member) == 2;
+    };
+    if (!listed(moved) || !listed(parts[other])) {
+        return std::unexpected(_("Only parts listed in a mount's parts array move."));
+    }
+    auto next = prototype;
+    const auto at = nlohmann::ordered_json::json_pointer(moved.pointer);
+    const auto to = nlohmann::ordered_json::json_pointer(parts[other].pointer);
+    std::swap(next[at], next[to]);
+    const auto before = build_design(prototype.dump()).messages.size();
+    if (const auto built = build_design(next.dump()); built.messages.size() > before) {
+        return std::unexpected(built.messages.back().text);
+    }
+    return redrawn(std::move(next));
+}
+
 auto blueprint_rows(const vehicle& veh) -> std::vector<std::string> {
     auto mounts = std::vector<point>{};
     for (const auto& vp : veh.get_all_parts()) {
