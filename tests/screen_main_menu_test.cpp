@@ -59,8 +59,8 @@ struct menu_restore {
     }
 };
 
-const auto tab_ids = std::vector<
-    std::string>{"motd", "new_game", "load", "world", "settings", "help", "credits", "quit"};
+const auto tab_ids = std::vector<std::string>{
+    "motd", "new_game", "load", "world", "editor", "settings", "help", "credits", "quit"};
 
 } // namespace
 
@@ -115,7 +115,7 @@ TEST_CASE(
                 }
                 case 1: {
                     const auto [banner, tabs, content] = parts_of(top);
-                    CHECK(tabs.tabs[6].selected);
+                    CHECK(tabs.tabs[7].selected);
                     CHECK(std::ranges::count(tabs.tabs, true, &ec::tab_entry::selected) == 1);
                     // The credits are text, so there are no entries to pick.
                     CHECK_FALSE(body<ec::text_body>(content).markup.empty());
@@ -127,6 +127,44 @@ TEST_CASE(
                     CHECK(top.context == "YESNO");
                     return run_action("YES");
                 }
+                default:
+                    FAIL("unexpected extra screen " << top.context);
+            }
+            return input_event{};
+        });
+    CHECK(stage == 3);
+}
+
+TEST_CASE(
+    "the main menu's editor tab offers the map editor",
+    "[client][interaction][mcp][screens][main_menu]") {
+    clear_all_state();
+    const auto restore = menu_restore{};
+    const auto guard = screen_guard{};
+    auto stage = 0;
+    open_stack(
+        [&] { main_menu{}.opening_screen(); },
+        [&](const auto& /*snapshot*/, const auto& top) {
+            switch (stage++) {
+                case 0:
+                    return invoke_event(top, "menu:tab", {.row = "editor"});
+                case 1: {
+                    const auto [banner, tabs, content] = parts_of(top);
+                    const auto shown = std::ranges::find(tabs.tabs, true, &ec::tab_entry::selected);
+                    REQUIRE(shown != tabs.tabs.end());
+                    CHECK(shown->id == "editor");
+                    CHECK(shown->label == "Editor");
+                    const auto& rows = body<ec::list_body>(content).rows;
+                    REQUIRE(rows.size() == 1);
+                    CHECK(rows[0].id == "editor:map");
+                    CHECK(rows[0].label == "Map editor");
+                    CHECK_FALSE(rows[0].description.empty());
+                    CHECK(find(top, "menu:entry") != nullptr);
+                    return invoke_event(top, "menu:tab", {.row = "quit"});
+                }
+                case 2:
+                    CHECK(top.context == "YESNO");
+                    return run_action("YES");
                 default:
                     FAIL("unexpected extra screen " << top.context);
             }

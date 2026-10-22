@@ -1,5 +1,7 @@
 #if defined(CATA_MCP)
 
+#    include "avatar.h"
+#    include "calendar.h"
 #    include "cata_utility.h"
 #    include "catch/catch.hpp"
 #    include "client_command.h"
@@ -12,22 +14,28 @@
 #    include "editor/editor_session.h"
 #    include "engine_client_component.h"
 #    include "engine_client_contract.h"
+#    include "game.h"
 #    include "game_constants.h"
+#    include "gamemode.h"
 #    include "input.h"
 #    include "json_formatter.h"
 #    include "map/map.h"
+#    include "options_helpers.h"
 #    include "output.h"
 #    include "path_info.h"
 #    include "point.h"
 #    include "state_helpers.h"
+#    include "type_id.h"
 
 #    include <algorithm>
 #    include <filesystem>
 #    include <fstream>
+#    include <memory>
 #    include <nlohmann/json.hpp>
 #    include <ranges>
 #    include <sstream>
 #    include <string>
+#    include <utility>
 #    include <variant>
 #    include <vector>
 
@@ -907,6 +915,141 @@ TEST_CASE(
     CHECK(read_file(file.path) == file.text);
     const auto rows = nlohmann::ordered_json::parse(read_file(copy))[0]["object"]["rows"];
     CHECK(rows[0].get<std::string>().starts_with("##."));
+}
+
+TEST_CASE(
+    "the editor comes back to the document and view it was left with",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                return invoke("editor:tool", {.row = "tool:rect"});
+            case 2:
+                return invoke("editor:paint", {.row = "square:2,3"});
+            default:
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    REQUIRE(step == 4);
+
+    step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                CHECK(body<ec::form_body>(part(screen, "editor:file")).fields.front().value
+                      == file.path.generic_string());
+                CHECK(body<ec::grid_body>(part(screen, "editor:canvas")).cursor
+                      == ec::grid_point{2, 3});
+                // The rectangle tool is still picked: the second corner draws it.
+                return invoke("editor:paint", {.row = "square:5,5"});
+            case 1:
+                CHECK(cell(screen, 5, 5).glyph == "#");
+                return act("QUIT");
+            case 2:
+                return answer("Leave without saving");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 3);
+
+    // Leaving without saving put the file back as it is on disk; the file stays open.
+    step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                CHECK(body<ec::form_body>(part(screen, "editor:file")).fields.front().value
+                      == file.path.generic_string());
+                CHECK(saved(screen) == "Yes");
+                CHECK(cell(screen, 5, 5).glyph == ".");
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 1);
+    CHECK(read_file(file.path) == file.text);
+}
+
+namespace {
+
+/// `game::handle_action` and `game::gamemode` are private; the explicit instantiation reaches them
+/// without changing the game's headers, as client_interaction_test.cpp does.
+struct handle_action_member {
+    using type = auto (game::*)() -> bool;
+    friend auto native_member(handle_action_member) -> type;
+};
+template <typename Tag, typename Tag::type Member> struct native_test_member {
+    friend auto native_member(Tag /*tag*/) -> typename Tag::type { return Member; }
+};
+struct mode_member {
+    using type = std::unique_ptr<special_game> game::*;
+    friend auto native_member(mode_member) -> type;
+};
+template struct native_test_member<handle_action_member, &game::handle_action>;
+template struct native_test_member<mode_member, &game::gamemode>;
+
+auto game_mode() -> std::unique_ptr<special_game>& {
+    return g.get()->*native_member(mode_member{});
+} // *NOPAD*
+
+/// One turn of the native loop's input handling under the game mode given.
+auto handle_action(std::unique_ptr<special_game> mode) -> bool {
+    auto& current = game_mode();
+    auto kept = std::exchange(current, std::move(mode));
+    const auto restore = on_out_of_scope([&] { current = std::move(kept); });
+    return (g.get()->*native_member(handle_action_member{}))();
+}
+
+} // namespace
+
+TEST_CASE("game time does not pass while the map editor is open", "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    const auto animations = override_option("ANIMATIONS", "false");
+    auto& you = get_avatar();
+    you.set_mutation(trait_id("DEBUG_EDITOR"));
+    you.set_moves(100);
+    const auto before = calendar::turn;
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                CHECK(screen.role == "map");
+                return act("editor");
+            case 1:
+                CHECK(screen.kind == "editor");
+                return invoke("editor:open", {.text = file.path.string()});
+            case 2:
+                return invoke("editor:paint", {.row = "square:0,0"});
+            case 3:
+                return invoke("editor:save");
+            case 4:
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    handle_action(std::make_unique<special_game>());
+    CHECK(step == 5);
+    CHECK(calendar::turn == before);
+    CHECK(you.get_moves() == 100);
 }
 
 #endif // CATA_MCP
