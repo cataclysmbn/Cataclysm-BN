@@ -11,9 +11,11 @@
 #include "editor/mapgen_legend_edit.h"
 #include "editor/mapgen_placement.h"
 #include "editor/mapgen_preview.h"
+#include "editor/mapgen_stamp.h"
 #include "editor/mapgen_stroke.h"
 #include "engine_client_component.h"
 #include "engine_client_world.h"
+#include "game.h"
 #include "input.h"
 #include "item.h"
 #include "json_formatter.h"
@@ -90,6 +92,10 @@ constexpr auto mirror_x_id = "editor:mirror_x";
 constexpr auto mirror_y_id = "editor:mirror_y";
 constexpr auto history_id = "editor:history";
 constexpr auto jump_id = "editor:jump";
+constexpr auto apply_id = "editor:apply";
+constexpr auto stamp_id = "editor:stamp";
+constexpr auto unstamp_id = "editor:unstamp";
+constexpr auto test_id = "editor:test";
 constexpr auto max_brush = 9;
 
 /// The members of a mapgen's object that map its symbols, as the loader reads them.
@@ -358,6 +364,8 @@ struct session {
     std::string mapping_layer = "terrain";
     std::string mapping_value;
     new_mapgen made;
+    /// The entry as it stands in the live world, while it is there.
+    std::optional<stamp> stamped = std::nullopt;
     const catalog_use* catalog = catalog_uses.data();
     std::string catalog_filter;
     std::size_t catalog_page = 0;
@@ -613,6 +621,26 @@ struct session {
             set_field(*doc, {.object = object, .pointer = field_pointer, .value = value});
         if (!set) { notice = set.error(); }
         reload();
+    }
+
+    /// Generates the entry over the avatar's overmap square, in place of what the world has there.
+    auto stamp_here() -> void {
+        unstamp();
+        auto made = stamp_mapgen(
+            doc->objects()[object].value.dump(),
+            {.at = get_avatar().abs_omt_pos(), .seed = seed.value_or(1)});
+        if (made) {
+            stamped = std::move(*made);
+        } else {
+            notice = made.error();
+        }
+    }
+
+    /// Puts back what the stamp replaced.
+    auto unstamp() -> void {
+        if (!stamped) { return; }
+        swap_stamp(*stamped);
+        stamped.reset();
     }
 
     auto paint(const point& at) -> void {
@@ -932,6 +960,9 @@ auto session_view(const session& state) -> ec::screen_view {
             {.key = "mirror_y",
              .label = _("Mirror down"),
              .value = state.mirror_y ? _("On") : _("Off")});
+        if (state.stamped) {
+            stats.push_back({.key = "stamped", .label = _("Stamped"), .value = _("Yes")});
+        }
         if (state.seed) {
             stats.push_back(
                 {.key = "seed", .label = _("Seed"), .value = std::to_string(*state.seed)});
@@ -1129,6 +1160,15 @@ auto session_view(const session& state) -> ec::screen_view {
                           .text = ec::text_shape{}}}));
             affordances.push_back(
                 ec::invoke_affordance({.id = mapping_apply_id, .label = _("Set mapping")}));
+            affordances.push_back(
+                ec::invoke_affordance({.id = apply_id, .label = _("Apply to game")}));
+            affordances.push_back(ec::invoke_affordance({.id = stamp_id, .label = _("Stamp")}));
+            affordances.push_back(ec::invoke_affordance(
+                {.id = unstamp_id,
+                 .label = _("Take back stamp"),
+                 .enabled = state.stamped.has_value()}));
+            affordances.push_back(ec::invoke_affordance(
+                {.id = test_id, .label = _("Test"), .enabled = state.stamped.has_value()}));
             affordances.push_back(ec::invoke_affordance(
                 {.id = preview_id,
                  .label = _("Preview"),
@@ -1294,6 +1334,18 @@ auto run_editor_session() -> void {
         } else if (id == preview_id) {
             state.seed = static_cast<unsigned int>(invoked->args.count.value_or(1));
             state.reload();
+        } else if (id == apply_id) {
+            const auto applied = apply_mapgen(state.doc->objects()[state.object].value.dump());
+            if (!applied) { state.notice = applied.error(); }
+        } else if (id == stamp_id) {
+            state.stamp_here();
+        } else if (id == unstamp_id) {
+            state.unstamp();
+        } else if (id == test_id && state.stamped) {
+            // The avatar plays in the middle of the stamped square; the editor keeps its document.
+            g->place_player(abs_to_bub(
+                project_to<coords::ms>(state.stamped->at) + tripoint_rel_ms(SEEX, SEEY, 0)));
+            return;
         } else if (id == save_id) {
             state.save();
         } else if (id == save_as_id) {

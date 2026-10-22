@@ -306,6 +306,13 @@ public:
         }
         return true;
     }
+    /// Makes `ptr` the only function the container picks.
+    void replace(const std::shared_ptr<mapgen_function>& ptr) {
+        assert(ptr);
+        mapgens_.clear();
+        weights_ = {};
+        weights_.add(ptr, std::max(ptr->weight, 1));
+    }
     auto pick(const int hardcoded_weight) const -> std::shared_ptr<mapgen_function> {
         if (hardcoded_weight > 0
             && rng(1, weights_.get_weight() + hardcoded_weight) > weights_.get_weight()) {
@@ -434,6 +441,10 @@ public:
     /// @see mapgen_basic_container::add
     auto add(const std::string& key, const std::shared_ptr<mapgen_function>& ptr) -> int {
         return mapgens_[key].add(ptr);
+    }
+    /// @see mapgen_basic_container::replace
+    void replace(const std::string& key, const std::shared_ptr<mapgen_function>& ptr) {
+        mapgens_[key].replace(ptr);
     }
     /// @see mapgen_basic_container::generate
     auto generate(mapgendata& dat, const std::string& key, const int hardcoded_weight = 0) const
@@ -6563,6 +6574,18 @@ auto editor::load_detached_mapgens(const std::string_view text)
         object.allow_omitted_members();
         return load_detached(entry, object);
     } catch (const JsonError& e) { return std::unexpected(std::string(e.what())); }
+}
+
+auto editor::apply_mapgen(const std::string_view text) -> std::expected<void, std::string> {
+    const auto loaded = load_detached_mapgens(text);
+    if (!loaded) { return std::unexpected(loaded.error()); }
+    if (loaded->functions.empty()) {
+        return std::unexpected(std::string("only an overmap terrain's mapgen can be applied"));
+    }
+    for (const auto index : std::views::iota(std::size_t{0}, loaded->functions.size())) {
+        oter_mapgen.replace(loaded->om_terrains[index], loaded->functions[index]);
+    }
+    return {};
 }
 
 auto editor::nested_mapgen_ids() -> std::vector<std::string> {

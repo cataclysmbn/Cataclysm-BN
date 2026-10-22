@@ -18,17 +18,6 @@
 namespace editor {
 namespace {
 
-/// The overmap terrain an entry's `om_terrain` names: itself, or its turn to `direction` when it
-/// rotates.
-auto overmap_terrain(const std::string& name, const std::string& direction)
-    -> std::optional<oter_id> {
-    if (const auto plain = oter_str_id(name); plain.is_valid()) { return plain.id(); }
-    if (const auto turned = oter_str_id(name + "_" + direction); turned.is_valid()) {
-        return turned.id();
-    }
-    return std::nullopt;
-}
-
 auto items_at(mapgen_constructor& constructor, const point_omt_ms& p) -> std::vector<std::string> {
     auto ids = std::vector<std::string>{};
     for (const item* const it : constructor.i_at(p)) { ids.push_back(it->typeId().str()); }
@@ -37,6 +26,15 @@ auto items_at(mapgen_constructor& constructor, const point_omt_ms& p) -> std::ve
 }
 
 } // namespace
+
+auto overmap_terrain(const std::string& name, const std::string& direction)
+    -> std::optional<oter_id> {
+    if (const auto plain = oter_str_id(name); plain.is_valid()) { return plain.id(); }
+    if (const auto turned = oter_str_id(name + "_" + direction); turned.is_valid()) {
+        return turned.id();
+    }
+    return std::nullopt;
+}
 
 auto preview_mapgen(const std::string_view text, const preview_options& options)
     -> std::expected<mapgen_preview, std::string> {
