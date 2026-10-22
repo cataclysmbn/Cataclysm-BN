@@ -234,6 +234,12 @@ struct grid_body {
     std::vector<engine_client::look> looks = {};
     /// `canvas` for squares the player draws on, which take whatever room a client has; empty for none.
     std::string role = {};
+    /// `trail` for a drag whose every crossed square runs the cells' affordance, `span` for one whose press and
+    /// release squares do; empty for none, a click only.
+    std::string drag = {};
+    /// The affordances a client runs on press and after release of a drag, to make it one step; empty for none.
+    std::string drag_begin = {};
+    std::string drag_end = {};
 };
 /// The looks of a grid, each once, which its cells name by index.
 struct look_palette {

@@ -185,7 +185,15 @@ auto document::edit(const std::size_t object, const nlohmann::ordered_json& patc
     }
     try {
         auto next = target.value.patch(patch);
-        done_.push_back({.object = object, .patch = patch, .before = target.value, .after = next});
+        if (grouping_ && grouped_ && done_.back().object == object) {
+            auto& step = done_.back();
+            step.patch.insert(step.patch.end(), patch.begin(), patch.end());
+            step.after = next;
+        } else {
+            done_.push_back(
+                {.object = object, .patch = patch, .before = target.value, .after = next});
+            grouped_ = grouping_;
+        }
         target.value = std::move(next);
         undone_.clear();
         if (saved_depth_ && *saved_depth_ >= done_.size()) { saved_depth_.reset(); }

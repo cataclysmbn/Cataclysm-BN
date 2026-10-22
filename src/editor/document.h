@@ -58,6 +58,12 @@ public:
     /// Applies an RFC 6902 patch to one object as one undo step; the error names what refused it.
     auto edit(std::size_t object, const nlohmann::ordered_json& patch)
         -> std::expected<void, std::string>;
+    /// Until `end_group`, the edits of one object fold into one undo step.
+    auto begin_group() -> void {
+        grouping_ = true;
+        grouped_ = false;
+    }
+    auto end_group() -> void { grouping_ = false; }
     auto undo() -> bool;
     auto redo() -> bool;
     auto can_undo() const -> bool { return !done_.empty(); }
@@ -92,6 +98,9 @@ private:
     std::vector<document_edit> done_;
     std::vector<document_edit> undone_;
     std::optional<std::size_t> saved_depth_ = 0;
+    /// Whether a group is open, and whether it has made its step.
+    bool grouping_ = false;
+    bool grouped_ = false;
 };
 
 } // namespace editor

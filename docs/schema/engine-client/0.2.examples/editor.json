@@ -1146,7 +1146,10 @@
                     "subtile": "center"
                   }
                 ],
-                "role": "canvas"
+                "role": "canvas",
+                "drag": "trail",
+                "drag_begin": "editor:stroke_begin",
+                "drag_end": "editor:stroke_end"
               }
             },
             {
@@ -3393,6 +3396,20 @@
             "expect": "boundary"
           },
           {
+            "id": "editor:stroke_begin",
+            "label": "Begin stroke",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:stroke_end",
+            "label": "End stroke",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
             "id": "editor:catalog_kind",
             "label": "Kind",
             "keys": [],
@@ -4074,7 +4091,8 @@
                     "subtile": "center"
                   }
                 ],
-                "role": "canvas"
+                "role": "canvas",
+                "drag": "span"
               }
             },
             {
@@ -6335,6 +6353,20 @@
             "expect": "boundary"
           },
           {
+            "id": "editor:stroke_begin",
+            "label": "Begin stroke",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:stroke_end",
+            "label": "End stroke",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
             "id": "editor:catalog_kind",
             "label": "Kind",
             "keys": [],
@@ -6890,7 +6922,8 @@
                     "subtile": "center"
                   }
                 ],
-                "role": "canvas"
+                "role": "canvas",
+                "drag": "span"
               }
             },
             {
@@ -9175,6 +9208,20 @@
               }
             },
             "expect": "boundary"
+          },
+          {
+            "id": "editor:stroke_begin",
+            "label": "Begin stroke",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:stroke_end",
+            "label": "End stroke",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
           },
           {
             "id": "editor:catalog_kind",

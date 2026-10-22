@@ -686,6 +686,9 @@ auto body_json( const grid_body &body, const bubble_frame & /*frame*/ ) -> json
     }
     if( !body.looks.empty() ) { result["looks"] = to_array( body.looks ); }
     if( !body.role.empty() ) { result["role"] = body.role; }
+    if( !body.drag.empty() ) { result["drag"] = body.drag; }
+    if( !body.drag_begin.empty() ) { result["drag_begin"] = body.drag_begin; }
+    if( !body.drag_end.empty() ) { result["drag_end"] = body.drag_end; }
     return result;
 }
 auto body_json( const map_body &body, const bubble_frame &frame ) -> json

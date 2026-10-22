@@ -6709,6 +6709,21 @@
             "canvas"
           ],
           "description": "`canvas`: squares the player draws on, such as the map editor's, which take whatever room a client has. Absent for a grid that only shows or picks squares."
+        },
+        "drag": {
+          "enum": [
+            "trail",
+            "span"
+          ],
+          "description": "How a pointer drag over the cells runs their affordance. `trail`: every square the pointer crosses, from the press on. `span`: the squares under the press and under the release. Absent: only a click runs it."
+        },
+        "drag_begin": {
+          "$ref": "#/$defs/opaque_id",
+          "description": "The affordance a client runs when a drag over the cells begins, before the first square's. Absent for none."
+        },
+        "drag_end": {
+          "$ref": "#/$defs/opaque_id",
+          "description": "The affordance a client runs when a drag over the cells ends, after the last square's, so the engine can make the whole drag one step. Absent for none."
         }
       },
       "required": [
