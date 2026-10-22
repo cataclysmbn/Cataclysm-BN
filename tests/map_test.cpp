@@ -1644,6 +1644,19 @@ TEST_CASE("binding_dimensions_rebuilds_vehicle_caches", "[map][vehicle][dimensio
     CHECK(here.get_cache_ref(0).vehicle_list.contains(veh));
 }
 
+namespace {
+
+/// Loads the newly bound dimension's submaps and floors `p`: what its mapgen puts there depends on
+/// the overmaps earlier cases left, and may be a wall.
+auto make_passable_in_bound_dimension(const tripoint_bub_ms& p) -> void {
+    auto& here = get_map();
+    here.load(here.get_abs_sub(), true);
+    here.ter_set(p, ter_id("t_floor"));
+    here.furn_set(p, furn_str_id::NULL_ID());
+}
+
+} // namespace
+
 TEST_CASE("placed_monsters_inherit_bound_dimension") {
     clear_all_state();
 
@@ -1659,6 +1672,7 @@ TEST_CASE("placed_monsters_inherit_bound_dimension") {
     here.bind_dimension(test_dim);
 
     const auto monster_pos = tripoint_bub_ms(g_half_mapsize_x + 2, g_half_mapsize_y, 0);
+    make_passable_in_bound_dimension(monster_pos);
     auto* const mon = g->place_critter_at(mtype_id("mon_zombie"), monster_pos);
 
     REQUIRE(mon != nullptr);
@@ -1679,6 +1693,7 @@ TEST_CASE("map_dimension_rebind_discards_vehicle_cache_before_unload") {
 
     here.bind_dimension(test_dim);
     const auto vehicle_pos = tripoint_bub_ms(g_half_mapsize_x + 2, g_half_mapsize_y, 0);
+    make_passable_in_bound_dimension(vehicle_pos);
     REQUIRE(g->place_critter_at(mtype_id("mon_zombie"), vehicle_pos) != nullptr);
     auto* const vehicle = here.add_vehicle(vproto_id("none"), vehicle_pos, 0_degrees, 0, 0);
     REQUIRE(vehicle != nullptr);
