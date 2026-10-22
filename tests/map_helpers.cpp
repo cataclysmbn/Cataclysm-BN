@@ -42,9 +42,16 @@ void wipe_map_terrain() {
     const int mapsize = here.getmapsize() * SEEX;
     for (int z = -2; z <= OVERMAP_HEIGHT; ++z) {
         const ter_id terrain = z == 0 ? t_grass : z < 0 ? t_rock : t_open_air;
-        for (int x = 0; x < mapsize; ++x) {
-            for (int y = 0; y < mapsize; ++y) {
-                g->m.set(tripoint_bub_ms{x, y, z}, terrain, f_null);
+        for (int x = 0; x < mapsize; x += SEEX) {
+            for (int y = 0; y < mapsize; y += SEEY) {
+                // Only tiles that differ need the costly set(); most are already wiped.
+                const auto* const sm = g->m.get_submap_at(tripoint_bub_ms{x, y, z});
+                for (const auto p : submap_tiles()) {
+                    if (sm != nullptr && sm->get_ter(p) == terrain && sm->get_furn(p) == f_null) {
+                        continue;
+                    }
+                    g->m.set(tripoint_bub_ms{x + p.x(), y + p.y(), z}, terrain, f_null);
+                }
             }
         }
     }
