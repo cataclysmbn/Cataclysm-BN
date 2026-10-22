@@ -435,7 +435,7 @@ auto screen_of( const boundary_state &state, const slot &entry, const bool top )
         std::erase_if( registered, [&]( const affordance & offered_action ) {
             return std::ranges::any_of( result.affordances, [&]( const affordance & own ) {
                 return own.covers == offered_action.id && performs( own );
-            } )&& !std::ranges::contains( result.denials, offered_action.id, &denial::id );
+            } ) && !std::ranges::contains( result.denials, offered_action.id, &denial::id );
         } );
         for( const auto &[id, reason] : result.denials ) {
             const auto found = std::ranges::find( registered, id, &affordance::id );
@@ -692,4 +692,14 @@ auto read_rows( const rows_request &request,
     return result;
 }
 
+
+auto look_palette::indexes( const std::vector<engine_client::look> &values ) -> std::vector<int>
+{
+    return values | std::views::transform( [&]( const engine_client::look & value ) {
+        const auto found = std::ranges::find( looks, value );
+        if( found != looks.end() ) { return static_cast<int>( found - looks.begin() ); }
+        looks.push_back( value );
+        return static_cast<int>( looks.size() ) - 1;
+    } ) | std::ranges::to<std::vector>();
+}
 } // namespace engine_client

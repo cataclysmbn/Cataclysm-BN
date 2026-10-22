@@ -12,6 +12,7 @@
 #include "character_id.h"
 #include "client_interaction.h"
 #include "debug.h"
+#include "engine_client_world.h"
 #include "enums.h"
 #include "faction.h"
 #include "fault.h"
@@ -855,11 +856,15 @@ auto veh_interact::screen_of() -> ec::screen_view {
     for (auto& stat : stats) { stat.value = remove_color_tags(stat.value); }
 
     // The squares around the cursor, the cursor's own always among them.
-    const auto glyph_of = [this](const int part) {
-        const auto direction = normalize(
-            270_degrees + veh->part_display_direction(part) - veh->face.dir());
-        return string_from_int(special_symbol(tileray(direction).dir_symbol(veh->part_sym(part))));
+    // The grid shows the vehicle with its front up.
+    const auto direction_of = [this](const int part) {
+        return normalize(270_degrees + veh->part_display_direction(part) - veh->face.dir());
     };
+    const auto glyph_of = [&](const int part) {
+        return string_from_int(
+            special_symbol(tileray(direction_of(part)).dir_symbol(veh->part_sym(part))));
+    };
+    auto palette = ec::look_palette{};
     const auto cell_of = [&](const int part, const point_rel_veh at) {
         const auto& mount = veh->part(part).mount;
         return ec::grid_cell{
@@ -867,7 +872,9 @@ auto veh_interact::screen_of() -> ec::screen_view {
             .id = string_format("mount:%d,%d", mount.x(), mount.y()),
             .glyph = glyph_of(part),
             .label = remove_color_tags(veh->part(part).name()),
-            .color = string_from_color(veh->part_color(part))};
+            .color = string_from_color(veh->part_color(part)),
+            .looks = palette.indexes({engine_client::world::vehicle_part_appearance(
+                *veh, part, static_cast<int>(std::round(to_degrees(direction_of(part)))))})};
     };
     auto cells = std::vector<ec::grid_cell>{};
     for (const auto part : veh->all_standalone_parts()) {
@@ -919,7 +926,8 @@ auto veh_interact::screen_of() -> ec::screen_view {
                       .body = ec::grid_body{.cols = 2 * grid_reach.x + 1,
                                             .rows = 2 * grid_reach.y + 1,
                                             .cursor = ec::grid_point{grid_reach.x, grid_reach.y},
-                                            .cells = std::move(cells)}},
+                                            .cells = std::move(cells),
+                                            .looks = std::move(palette.looks)}},
                   ec::list({.id = "vehicle:parts",
                             .rows = std::move(parts_here_rows),
                             .selection = "none"}))})}));

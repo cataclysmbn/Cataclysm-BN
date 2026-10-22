@@ -13,13 +13,17 @@
 #include "editor/mapgen_preview.h"
 #include "editor/mapgen_stroke.h"
 #include "engine_client_component.h"
+#include "engine_client_world.h"
 #include "input.h"
+#include "item.h"
 #include "json_formatter.h"
 #include "map/mapdata.h"
 #include "output.h"
 #include "path_info.h"
+#include "regional_settings.h"
 #include "string_formatter.h"
 #include "translations.h"
+#include "trap.h"
 #include "ui.h"
 #include "ui_manager.h"
 
@@ -29,6 +33,7 @@
 #include <filesystem>
 #include <fstream>
 #include <limits>
+#include <map>
 #include <optional>
 #include <ranges>
 #include <string>
@@ -603,9 +608,31 @@ struct session {
     }
 };
 
+/// What a square holds from the bottom up, as the map shows it: terrain, furniture, trap, top item.
+auto square_looks(const preview_square& square) -> std::vector<engine_client::look> {
+    namespace world = engine_client::world;
+    auto looks = std::vector<engine_client::look>{};
+    if (const auto ter = ter_str_id(square.ter); ter.is_valid()) {
+        looks.push_back(world::terrain_appearance(ter.id()));
+    }
+    if (const auto furn = furn_str_id(square.furn); furn.is_valid() && !furn.is_null()) {
+        looks.push_back(world::furniture_appearance(furn.id()));
+    }
+    if (const auto tr = trap_str_id(square.trap); tr.is_valid() && !tr.is_null()) {
+        looks.push_back(world::trap_appearance(tr.obj()));
+    }
+    if (!square.items.empty()) {
+        if (const auto type = itype_id(square.items.back()); type.is_valid()) {
+            looks.push_back(world::item_appearance(*item::spawn_temporary(type, calendar::turn)));
+        }
+    }
+    return looks;
+}
+
 /// What the game generates from the entry, a square per cell: its furniture, else its terrain.
 auto preview_grid(const mapgen_preview& shown) -> ec::component {
     auto cells = std::vector<ec::grid_cell>{};
+    auto palette = ec::look_palette{};
     for (auto y = 0; y < shown.size.y(); ++y) {
         for (auto x = 0; x < shown.size.x(); ++x) {
             const auto& square = shown.squares[y * shown.size.x() + x];
@@ -620,16 +647,89 @@ auto preview_grid(const mapgen_preview& shown) -> ec::component {
                  .id = string_format("preview:%d,%d", x, y),
                  .glyph = string_from_int(top.symbol()),
                  .label = furn.is_null() ? ter.name() : ter.name() + ", " + furn.obj().name(),
-                 .color = string_from_color(top.color())});
+                 .color = string_from_color(top.color()),
+                 .looks = palette.indexes(square_looks(square))});
         }
     }
-    return {.id = "editor:preview",
-            .body = ec::grid_body{
-                .cols = shown.size.x(), .rows = shown.size.y(), .cells = std::move(cells)}};
+    return {
+        .id = "editor:preview",
+        .body = ec::grid_body{
+            .cols = shown.size.x(),
+            .rows = shown.size.y(),
+            .cells = std::move(cells),
+            .looks = std::move(palette.looks)}};
+}
+
+/// The first id a legend value names: the id itself, or the first of a list or weighted list; none
+/// for what only generation decides, such as a parameter.
+auto first_id(const std::string& value) -> std::optional<std::string> {
+    auto json = nlohmann::ordered_json::parse(value, nullptr, false);
+    while (json.is_array() && !json.empty()) { json = json.front(); }
+    return json.is_string() ? std::optional(json.get<std::string>()) : std::nullopt;
+}
+
+/// The likeliest terrain or furniture a region id such as `t_region_groundcover_urban` stands for
+/// in the default region; any other id itself.
+template <typename Id>
+auto regional(const Id& id, const std::map<Id, weighted_int_list<Id>>& choices) -> Id {
+    const auto found = choices.find(id);
+    if (found == choices.end() || found->second.empty()) { return id; }
+    return std::ranges::max(found->second, {}, &weighted_object<int, Id>::weight).obj;
+}
+
+/// What each symbol puts on a square from the bottom up, as the map shows it: its terrain, else the
+/// entry's fill, then its furniture and trap.
+auto symbol_looks(const session& state) -> std::map<std::string, std::vector<engine_client::look>> {
+    namespace world = engine_client::world;
+    const auto& object = state.doc->objects()[state.object].value;
+    const auto fill =
+        object.contains("object") && object["object"].contains("fill_ter")
+                && object["object"]["fill_ter"].is_string()
+            ? std::optional(object["object"]["fill_ter"].get<std::string>())
+            : std::nullopt;
+    const auto region = region_settings_map.find("default");
+    const auto resolve = [&](const auto& id) {
+        return region == region_settings_map.end() ? id : regional(id, [&] {
+            if constexpr (std::is_same_v<std::decay_t<decltype(id)>, ter_id>) {
+                return region->second.region_terrain_and_furniture.terrain;
+            } else {
+                return region->second.region_terrain_and_furniture.furniture;
+            }
+        }());
+    };
+    auto result = std::map<std::string, std::vector<engine_client::look>>{};
+    for (const auto& entry : state.legend) {
+        const auto named = [&](const char* layer) -> std::optional<std::string> {
+            const auto line = std::ranges::find(entry.lines, layer, &legend_line::layer);
+            return line == entry.lines.end() ? std::nullopt : first_id(line->value);
+        };
+        auto looks = std::vector<engine_client::look>{};
+        if (const auto ter = ter_str_id(
+                named("terrain").or_else([&] { return fill; }).value_or(""));
+            ter.is_valid() && !ter.is_null()) {
+            looks.push_back(world::terrain_appearance(resolve(ter.id())));
+        }
+        if (const auto furn = furn_str_id(named("furniture").value_or(""));
+            furn.is_valid() && !furn.is_null()) {
+            looks.push_back(world::furniture_appearance(resolve(furn.id())));
+        }
+        if (const auto tr = trap_str_id(named("traps").value_or(""));
+            tr.is_valid() && !tr.is_null()) {
+            looks.push_back(world::trap_appearance(tr.obj()));
+        }
+        result[entry.symbol] = std::move(looks);
+    }
+    return result;
 }
 
 auto canvas(const session& state) -> ec::component {
     const auto grid = symbols_of(*state.doc, state.object);
+    auto palette = ec::look_palette{};
+    const auto looks =
+        symbol_looks(state) | std::views::transform([&](const auto& entry) {
+            return std::pair{entry.first, palette.indexes(entry.second)};
+        })
+        | std::ranges::to<std::map>();
     const auto cursor = state.anchor ? state.anchor : state.focus;
     auto cells = std::vector<ec::grid_cell>{};
     auto cols = 0;
@@ -642,7 +742,8 @@ auto canvas(const session& state) -> ec::component {
                  .id = square_id(at),
                  .glyph = grid[y][x],
                  .affordance = paint_id,
-                 .selected = state.anchor == at});
+                 .selected = state.anchor == at,
+                 .looks = looks.contains(grid[y][x]) ? looks.at(grid[y][x]) : std::vector<int>{}});
         }
     }
     return {
@@ -652,7 +753,8 @@ auto canvas(const session& state) -> ec::component {
             .cols = cols,
             .rows = static_cast<int>(grid.size()),
             .cursor = cursor ? std::optional(ec::grid_point{cursor->x, cursor->y}) : std::nullopt,
-            .cells = std::move(cells)}};
+            .cells = std::move(cells),
+            .looks = std::move(palette.looks)}};
 }
 
 /// A row per placement: where it lands, and what it places as the data writes it.

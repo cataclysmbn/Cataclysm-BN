@@ -105,7 +105,10 @@
                         "glyph": "|",
                         "label": "|| extra light frame",
                         "color": "c_dark_gray",
-                        "enabled": true
+                        "enabled": true,
+                        "looks": [
+                          0
+                        ]
                       },
                       {
                         "x": 8,
@@ -114,7 +117,10 @@
                         "glyph": "o",
                         "label": "|| extra light frame",
                         "color": "c_brown",
-                        "enabled": true
+                        "enabled": true,
+                        "looks": [
+                          1
+                        ]
                       },
                       {
                         "x": 8,
@@ -124,7 +130,66 @@
                         "label": "|| extra light frame",
                         "color": "c_red",
                         "enabled": true,
-                        "selected": true
+                        "selected": true,
+                        "looks": [
+                          2
+                        ]
+                      }
+                    ],
+                    "looks": [
+                      {
+                        "kind": "vehicle_part",
+                        "id": "wheel_bicycle",
+                        "glyph": "|",
+                        "color": "c_dark_gray",
+                        "name": "bicycle wheel",
+                        "tile": "vp_wheel_bicycle",
+                        "looks_like": [
+                          "vp_wheel"
+                        ],
+                        "subtile": "center"
+                      },
+                      {
+                        "kind": "vehicle_part",
+                        "id": "basketsm_bike_rear",
+                        "glyph": "o",
+                        "color": "c_brown",
+                        "name": "small folding wire basket",
+                        "tile": "vp_basketsm_bike_rear",
+                        "looks_like": [
+                          "vp_basketsm",
+                          "vp_basketlg",
+                          "vp_basketsm",
+                          "vp_basketlg",
+                          "vp_basketsm",
+                          "vp_basketlg",
+                          "vp_basketsm",
+                          "vp_basketlg",
+                          "vp_basketsm",
+                          "vp_basketlg"
+                        ],
+                        "subtile": "center"
+                      },
+                      {
+                        "kind": "vehicle_part",
+                        "id": "saddle_pedal",
+                        "glyph": "#",
+                        "color": "c_red",
+                        "name": "saddle",
+                        "tile": "vp_saddle_pedal",
+                        "looks_like": [
+                          "vp_seat",
+                          "vp_reclining_seat",
+                          "vp_seat",
+                          "vp_reclining_seat",
+                          "vp_seat",
+                          "vp_reclining_seat",
+                          "vp_seat",
+                          "vp_reclining_seat",
+                          "vp_seat",
+                          "vp_reclining_seat"
+                        ],
+                        "subtile": "center"
                       }
                     ]
                   },
@@ -701,7 +766,10 @@
                         "glyph": "|",
                         "label": "|| extra light frame",
                         "color": "c_dark_gray",
-                        "enabled": true
+                        "enabled": true,
+                        "looks": [
+                          0
+                        ]
                       },
                       {
                         "x": 8,
@@ -710,7 +778,10 @@
                         "glyph": "o",
                         "label": "|| extra light frame",
                         "color": "c_brown",
-                        "enabled": true
+                        "enabled": true,
+                        "looks": [
+                          1
+                        ]
                       },
                       {
                         "x": 8,
@@ -720,7 +791,66 @@
                         "label": "|| extra light frame",
                         "color": "c_red",
                         "enabled": true,
-                        "selected": true
+                        "selected": true,
+                        "looks": [
+                          2
+                        ]
+                      }
+                    ],
+                    "looks": [
+                      {
+                        "kind": "vehicle_part",
+                        "id": "wheel_bicycle",
+                        "glyph": "|",
+                        "color": "c_dark_gray",
+                        "name": "bicycle wheel",
+                        "tile": "vp_wheel_bicycle",
+                        "looks_like": [
+                          "vp_wheel"
+                        ],
+                        "subtile": "center"
+                      },
+                      {
+                        "kind": "vehicle_part",
+                        "id": "basketsm_bike_rear",
+                        "glyph": "o",
+                        "color": "c_brown",
+                        "name": "small folding wire basket",
+                        "tile": "vp_basketsm_bike_rear",
+                        "looks_like": [
+                          "vp_basketsm",
+                          "vp_basketlg",
+                          "vp_basketsm",
+                          "vp_basketlg",
+                          "vp_basketsm",
+                          "vp_basketlg",
+                          "vp_basketsm",
+                          "vp_basketlg",
+                          "vp_basketsm",
+                          "vp_basketlg"
+                        ],
+                        "subtile": "center"
+                      },
+                      {
+                        "kind": "vehicle_part",
+                        "id": "saddle_pedal",
+                        "glyph": "#",
+                        "color": "c_red",
+                        "name": "saddle",
+                        "tile": "vp_saddle_pedal",
+                        "looks_like": [
+                          "vp_seat",
+                          "vp_reclining_seat",
+                          "vp_seat",
+                          "vp_reclining_seat",
+                          "vp_seat",
+                          "vp_reclining_seat",
+                          "vp_seat",
+                          "vp_reclining_seat",
+                          "vp_seat",
+                          "vp_reclining_seat"
+                        ],
+                        "subtile": "center"
                       }
                     ]
                   },

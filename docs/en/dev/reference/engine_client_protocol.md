@@ -64,6 +64,8 @@ A form that does not match the affordance is `invalid_arguments`.
 
 An affordance, row, tab or grid cell that is off and can be picked always carries a `denial`: the screen's reason in the player's language, else that it is not available now. A client shows it as the reason and adds none of its own.
 
+A grid that a client can draw with sprites carries `looks`, each look once, and each of its cells `looks`, indexes into them from the bottom up: what the square shows, as the world map's cells name it. The cell's `glyph` stands for them in text. The map editor's canvas and preview and the vehicle window's grid carry them.
+
 ## Held keys
 
 A step of the map carries `holdable`. A client sends `bn.hold` once when its key goes down and `bn.release` when it comes up, and never invokes it for key repeats. While a hold stands, the map is the screen on top and input is awaited, the engine gives the game one step of that action at each input prompt, as if the native key were pressed once more, and reads the requests the client has sent before each step. A tap owes one step even if released first. A popup or other screen on top, a step that changes neither the avatar's square nor the turn, a new `bn.hello` and a disconnect end the hold. `bn.hold` fails with `not_ready` during an activity, `stale_screen` for a screen that is not on top, `unknown_affordance` and `invalid_arguments` for an affordance that is missing or not holdable. Screen-scoped invokes still queue (a held arrow in a list).

@@ -388,6 +388,26 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the vehicle grid names what each square shows by look, each look once",
+    "[vehicle_screen][engine_client_component]") {
+    auto fixture = bicycle_fixture{};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        const auto& grid = body<ec::grid_body>(part(screen, "vehicle:grid"));
+        for (const auto& cell : grid.cells) {
+            REQUIRE_FALSE(cell.looks.empty());
+            for (const auto index : cell.looks) {
+                REQUIRE(index < static_cast<int>(grid.looks.size()));
+                CHECK(grid.looks[index].kind == "vehicle_part");
+            }
+        }
+        for (const auto& look : grid.looks) { CHECK(std::ranges::count(grid.looks, look) == 1); }
+        return act("QUIT");
+    });
+    static_cast<void>(veh_interact::run(*fixture.veh, tripoint_mnt_veh::zero()));
+}
+
+TEST_CASE(
     "the vehicle screen publishes no window text and no native stat line",
     "[vehicle_screen][engine_client_component]") {
     auto fixture = bicycle_fixture{};

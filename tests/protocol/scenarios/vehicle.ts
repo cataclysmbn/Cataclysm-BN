@@ -80,6 +80,13 @@ export const vehicle: Scenario = {
         grid.cells.some((cell: Value) => cell.selected),
         "the cursor square is among the cells",
       )
+      assert(
+        grid.cells.every((cell: Value) =>
+          cell.looks.length > 0 &&
+          cell.looks.every((i: number) => grid.looks[i]?.kind === "vehicle_part")
+        ),
+        "each square names its parts by look",
+      )
       assert(part(screen, "vehicle:parts").rows.length > 0, "the parts on the cursor square")
       const overview = part(screen, "vehicle:overview")
       assert(overview.stats.some((stat: Value) => stat.key === "mass"), "the vehicle's figures")

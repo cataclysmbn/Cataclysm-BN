@@ -6592,6 +6592,14 @@
               },
               "selected": {
                 "type": "boolean"
+              },
+              "looks": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "description": "What the cell shows from the bottom up, as indexes into the grid's `looks`, for a client that draws sprites; `glyph` stands for it otherwise."
               }
             },
             "required": [
@@ -6627,6 +6635,13 @@
               }
             ]
           }
+        },
+        "looks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/look"
+          },
+          "description": "The looks the cells name, each once."
         }
       },
       "required": [

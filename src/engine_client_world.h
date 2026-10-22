@@ -15,6 +15,8 @@ class avatar;
 class Creature;
 class item;
 class map;
+class vehicle;
+struct trap;
 
 namespace engine_client
 {
@@ -91,5 +93,8 @@ auto entity_alive( const std::string &id ) -> bool;
 auto item_appearance( const item &thing ) -> look;
 auto terrain_appearance( const ter_id &id ) -> look;
 auto furniture_appearance( const furn_id &id ) -> look;
+auto trap_appearance( const trap &tr ) -> look;
+/// What part `part` of `veh` shows, facing `degrees` (0 east, clockwise), as the map publishes it.
+auto vehicle_part_appearance( const vehicle &veh, int part, int degrees ) -> look;
 
 } // namespace engine_client::world

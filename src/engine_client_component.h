@@ -219,12 +219,23 @@ struct grid_cell {
     bool enabled = true;
     std::string denial = {};
     bool selected = false;
+    /// What the cell shows from the bottom up, as indexes into the grid's `looks`, for a client that draws
+    /// sprites; the glyph stands for it otherwise.
+    std::vector<int> looks = {};
 };
 struct grid_body {
     int cols = 0;
     int rows = 0;
     std::optional<grid_point> cursor = std::nullopt;
     std::vector<grid_cell> cells = {};
+    /// The looks the cells name, each once.
+    std::vector<engine_client::look> looks = {};
+};
+/// The looks of a grid, each once, which its cells name by index.
+struct look_palette {
+    std::vector<engine_client::look> looks = {};
+    /// The indexes of `values` in the palette, adding those it lacks.
+    auto indexes( const std::vector<engine_client::look> &values ) -> std::vector<int>;
 };
 /// Positions stay bubble-relative here, as natively; they become absolute on the wire.
 /// A list of the avatar's items the map shows beside it.

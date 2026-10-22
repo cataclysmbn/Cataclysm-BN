@@ -246,13 +246,20 @@ TEST_CASE(
                 CHECK(refused(state, "editor:tool", {.row = "tool:spray"}));
                 return invoke("editor:paint", {.row = "square:2,3"});
             }
-            case 3:
+            case 3: {
                 CHECK(cell(screen, 2, 3).glyph == "#");
                 CHECK(walls(screen) == 1);
+                // A client that draws sprites reads what each square shows from the grid's looks.
+                const auto& canvas = body<ec::grid_body>(part(screen, "editor:canvas"));
+                REQUIRE(cell(screen, 2, 3).looks.size() == 1);
+                CHECK(canvas.looks.at(cell(screen, 2, 3).looks.front()).id == "t_wall");
+                CHECK(canvas.looks.at(cell(screen, 2, 3).looks.front()).kind == "terrain");
+                CHECK(canvas.looks.size() == 2);
                 CHECK(saved(screen) == "No");
                 CHECK(affordance(screen, "editor:undo").enabled);
                 CHECK(affordance(screen, "editor:save").enabled);
                 return invoke("editor:tool", {.row = "tool:rect_filled"});
+            }
             case 4:
                 CHECK(body<ec::tabs_body>(part(screen, "editor:tools")).tabs[3].selected);
                 return invoke("editor:paint", {.row = "square:5,5"});
@@ -396,6 +403,8 @@ TEST_CASE(
                 CHECK(preview(screen).cols == 24);
                 CHECK(preview(screen).rows == 24);
                 CHECK(square(screen, 3, 4).label == "wooden floor");
+                REQUIRE_FALSE(square(screen, 3, 4).looks.empty());
+                CHECK(preview(screen).looks.at(square(screen, 3, 4).looks.front()).id == "t_floor");
                 CHECK(body<ec::panel_body>(part(screen, "editor:document")).stats.back().value
                       == "7");
                 CHECK(affordance(screen, "editor:preview").args.count->initial == 7);

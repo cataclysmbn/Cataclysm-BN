@@ -330,6 +330,30 @@ auto hex_of( const RGBColor &color ) -> std::string
 /// `cata_tiles::draw` draws from its center.
 auto shown_level( const avatar &you ) -> int { return you.bub_pos().z() + you.view_offset.z(); }
 
+/// What part `index` of `veh` shows, or the roof over it, facing `degrees`, in the colors the native view
+/// paints it with.
+auto part_look( const vehicle &veh, const int index, const bool roof, const int degrees ) -> look
+{
+    auto modifier = char{};
+    const auto &part = veh.part_id_string( index, roof, modifier );
+    auto result = part.is_valid() ? vehicle_part_look( part.obj(), modifier, degrees ) :
+                  look{ .kind = "vehicle_part", .id = part.str() };
+    result.glyph = glyph_of( special_symbol( veh.part_sym( index, roof ) ) );
+    result.color = color_of( veh.part_color( index, roof ) );
+    // The native view paints the displayed part, or the roof over it, with the part's own colors.
+    const auto painted = roof ? veh.roof_at_part( index ) : veh.part_displayed_at( veh.cpart(
+                             index ).mount );
+    if( painted != -1 ) {
+        const auto &shown = veh.cpart( painted );
+        result.tint_keys = tint_keys_of( shown.info().get_flags(), shown.info().get_id().str() );
+        const auto [bg, fg] = shown.get_color();
+        if( !hex_of( bg ).empty() || !hex_of( fg ).empty() ) {
+            result.tint = look_tint{ .bg = hex_of( bg ), .fg = hex_of( fg ) };
+        }
+    }
+    return result;
+}
+
 auto vehicle_part_at( const map &here, const tripoint_bub_ms &p, const avatar &you )
 -> std::optional<look>
 {
@@ -349,29 +373,9 @@ auto vehicle_part_at( const map &here, const tripoint_bub_ms &p, const avatar &y
         return critter != nullptr && you.sees( *critter );
     };
     const auto roof = p.z() < shown_level( you ) && under_roof() && !seen_creature();
-    auto modifier = char{};
-    const auto &part = veh.part_id_string( vp->part_index(), roof, modifier );
     const auto facing = veh.part_display_direction( vp->part_index(), roof );
-    auto result = part.is_valid() ?
-                  vehicle_part_look( part.obj(), modifier, static_cast<int>( std::round( to_degrees( facing ) ) ) ) :
-                  look{ .kind = "vehicle_part", .id = part.str() };
-    result.glyph = glyph_of( special_symbol( veh.part_sym( vp->part_index(), roof ) ) );
-    result.color = color_of( veh.part_color( vp->part_index(), roof ) );
-    // The native view paints the displayed part, or the roof over it, with the part's own colors.
-    const vehicle_part *painted = nullptr;
-    if( roof ) {
-        if( const auto index = veh.roof_at_part( vp->part_index() ); index != -1 ) { painted = &veh.cpart( index ); }
-    } else if( const auto shown = vp.part_displayed() ) {
-        painted = &shown->part();
-    }
-    if( painted != nullptr ) {
-        result.tint_keys = tint_keys_of( painted->info().get_flags(), painted->info().get_id().str() );
-        const auto [bg, fg] = painted->get_color();
-        if( !hex_of( bg ).empty() || !hex_of( fg ).empty() ) {
-            result.tint = look_tint{ .bg = hex_of( bg ), .fg = hex_of( fg ) };
-        }
-    }
-    return result;
+    return part_look( veh, vp->part_index(), roof,
+                      static_cast<int>( std::round( to_degrees( facing ) ) ) );
 }
 
 auto position_of( const map &here, const tripoint_bub_ms &p,
@@ -1079,6 +1083,13 @@ auto terrain_appearance( const ter_id &id ) -> look
 }
 
 auto furniture_appearance( const furn_id &id ) -> look { return furniture_look( id, {} ); }
+
+auto trap_appearance( const trap &tr ) -> look { return trap_look( tr, {} ); }
+
+auto vehicle_part_appearance( const vehicle &veh, const int part, const int degrees ) -> look
+{
+    return part_look( veh, part, false, degrees );
+}
 
 auto set_tint_ids( std::set<std::string> ids ) -> void
 {
