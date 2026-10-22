@@ -113,10 +113,12 @@ auto inside(const std::filesystem::path& path, const std::string& root) -> bool 
     return !error && !relative.empty() && *relative.begin() != "..";
 }
 
-/// `path` from the game's directory when it lies inside it, as a modder finds it there.
+/// `path` from the game's directory, the one that holds `data`, when it lies inside it, as a
+/// modder finds it there.
 auto shown_path(const std::filesystem::path& path) -> std::string {
+    const auto game = (std::filesystem::absolute(PATH_INFO::datadir()) / "..").lexically_normal();
     const auto relative = std::filesystem::absolute(path).lexically_normal().lexically_proximate(
-        std::filesystem::current_path());
+        game);
     return (relative.empty() || *relative.begin() == ".." ? path : relative).generic_string();
 }
 
