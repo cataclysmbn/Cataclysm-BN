@@ -99,9 +99,19 @@
                     "selectable": true,
                     "selected": false,
                     "columns": []
+                  },
+                  {
+                    "id": "editor:vehicle",
+                    "label": "Vehicle editor",
+                    "description": "Edit vehicle prototypes in a new world of open field, without making a character.",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": []
                   }
                 ],
-                "total": 1,
+                "total": 2,
                 "selection": "single",
                 "activate": "menu:entry"
               }
@@ -1998,6 +2008,13 @@
           {
             "id": "editor:new_apply",
             "label": "Create",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:vehicle",
+            "label": "Vehicle editor",
             "keys": [],
             "enabled": true,
             "expect": "screen"
