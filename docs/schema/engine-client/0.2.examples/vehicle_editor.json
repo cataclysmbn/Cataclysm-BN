@@ -72,122 +72,143 @@
           "id": "vehicle:body",
           "kind": "split",
           "relation": "peers",
-          "active": "vehicle:prototypes",
           "children": [
             {
-              "id": "vehicle:prototypes",
-              "kind": "list",
+              "id": "vehicle:sources",
+              "kind": "tabs",
               "affordances": [
-                "vehicle:open"
+                "vehicle:source"
               ],
-              "columns": [
+              "tabs": [
                 {
-                  "key": "id",
-                  "label": "ID"
+                  "id": "source:prototypes",
+                  "label": "Prototypes",
+                  "selected": true,
+                  "enabled": true
+                },
+                {
+                  "id": "source:world",
+                  "label": "World",
+                  "selected": false,
+                  "enabled": true
                 }
               ],
-              "rows": [
-                {
-                  "id": "prototype:bicycle",
-                  "label": "Bicycle",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "bicycle"
-                    }
-                  ]
-                },
-                {
-                  "id": "prototype:bicycle_carbon",
-                  "label": "Carbon Fiber Bicycle",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "bicycle_carbon"
-                    }
-                  ]
-                },
-                {
-                  "id": "prototype:bicycle_dirt",
-                  "label": "Mountain bike",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "bicycle_dirt"
-                    }
-                  ]
-                },
-                {
-                  "id": "prototype:bicycle_electric",
-                  "label": "Electric Bicycle",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "bicycle_electric"
-                    }
-                  ]
-                },
-                {
-                  "id": "prototype:bicycle_plastic",
-                  "label": "Plastic Bicycle",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "bicycle_plastic"
-                    }
-                  ]
-                }
-              ],
-              "total": 5,
-              "selection": "single",
-              "activate": "vehicle:open",
-              "filterable": true
-            },
-            {
-              "id": "vehicle:world",
-              "kind": "list",
-              "affordances": [
-                "vehicle:export"
-              ],
-              "columns": [],
-              "rows": [],
-              "total": 0,
-              "selection": "single",
-              "activate": "vehicle:export"
+              "select": "vehicle:source",
+              "child": {
+                "id": "vehicle:prototypes",
+                "kind": "list",
+                "affordances": [
+                  "vehicle:open"
+                ],
+                "columns": [
+                  {
+                    "key": "id",
+                    "label": "ID"
+                  }
+                ],
+                "rows": [
+                  {
+                    "id": "prototype:bicycle",
+                    "label": "Bicycle",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "bicycle"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "prototype:bicycle_carbon",
+                    "label": "Carbon Fiber Bicycle",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "bicycle_carbon"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "prototype:bicycle_dirt",
+                    "label": "Mountain bike",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "bicycle_dirt"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "prototype:bicycle_electric",
+                    "label": "Electric Bicycle",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "bicycle_electric"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "prototype:bicycle_plastic",
+                    "label": "Plastic Bicycle",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "bicycle_plastic"
+                      }
+                    ]
+                  }
+                ],
+                "total": 5,
+                "selection": "single",
+                "activate": "vehicle:open",
+                "filterable": true
+              }
             }
           ]
         },
         "affordances": [
+          {
+            "id": "vehicle:source",
+            "label": "Show",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "vehicle:sources"
+              }
+            },
+            "expect": "boundary"
+          },
           {
             "id": "vehicle:open",
             "label": "Open",
@@ -225,48 +246,11 @@
             "expect": "screen"
           },
           {
-            "id": "vehicle:export",
-            "label": "Export design",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "vehicle:world"
-              },
-              "text": {}
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "vehicle:copy",
-            "label": "Copy vehicle",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "vehicle:world"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
             "id": "vehicle:paste",
             "label": "Paste vehicle",
             "keys": [],
             "enabled": true,
             "expect": "screen"
-          },
-          {
-            "id": "vehicle:edit",
-            "label": "Edit in place",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "vehicle:world"
-              }
-            },
-            "expect": "boundary"
           },
           {
             "id": "QUIT",
@@ -313,115 +297,125 @@
           "active": "vehicle:grid",
           "children": [
             {
-              "id": "vehicle:prototypes",
-              "kind": "list",
+              "id": "vehicle:sources",
+              "kind": "tabs",
               "affordances": [
-                "vehicle:open"
+                "vehicle:source"
               ],
-              "columns": [
+              "tabs": [
                 {
-                  "key": "id",
-                  "label": "ID"
-                }
-              ],
-              "rows": [
-                {
-                  "id": "prototype:bicycle",
-                  "label": "Bicycle",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
+                  "id": "source:prototypes",
+                  "label": "Prototypes",
                   "selected": true,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "bicycle"
-                    }
-                  ]
+                  "enabled": true
                 },
                 {
-                  "id": "prototype:bicycle_carbon",
-                  "label": "Carbon Fiber Bicycle",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
+                  "id": "source:world",
+                  "label": "World",
                   "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "bicycle_carbon"
-                    }
-                  ]
-                },
-                {
-                  "id": "prototype:bicycle_dirt",
-                  "label": "Mountain bike",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "bicycle_dirt"
-                    }
-                  ]
-                },
-                {
-                  "id": "prototype:bicycle_electric",
-                  "label": "Electric Bicycle",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "bicycle_electric"
-                    }
-                  ]
-                },
-                {
-                  "id": "prototype:bicycle_plastic",
-                  "label": "Plastic Bicycle",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "bicycle_plastic"
-                    }
-                  ]
+                  "enabled": true
                 }
               ],
-              "total": 5,
-              "selection": "single",
-              "activate": "vehicle:open",
-              "filterable": true
-            },
-            {
-              "id": "vehicle:world",
-              "kind": "list",
-              "affordances": [
-                "vehicle:export"
-              ],
-              "columns": [],
-              "rows": [],
-              "total": 0,
-              "selection": "single",
-              "activate": "vehicle:export"
+              "select": "vehicle:source",
+              "child": {
+                "id": "vehicle:prototypes",
+                "kind": "list",
+                "affordances": [
+                  "vehicle:open"
+                ],
+                "columns": [
+                  {
+                    "key": "id",
+                    "label": "ID"
+                  }
+                ],
+                "rows": [
+                  {
+                    "id": "prototype:bicycle",
+                    "label": "Bicycle",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": true,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "bicycle"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "prototype:bicycle_carbon",
+                    "label": "Carbon Fiber Bicycle",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "bicycle_carbon"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "prototype:bicycle_dirt",
+                    "label": "Mountain bike",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "bicycle_dirt"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "prototype:bicycle_electric",
+                    "label": "Electric Bicycle",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "bicycle_electric"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "prototype:bicycle_plastic",
+                    "label": "Plastic Bicycle",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "bicycle_plastic"
+                      }
+                    ]
+                  }
+                ],
+                "total": 5,
+                "selection": "single",
+                "activate": "vehicle:open",
+                "filterable": true
+              }
             },
             {
               "id": "vehicle:document",
@@ -465,443 +459,385 @@
                   "value": "20.00",
                   "unit": "L"
                 }
-              ]
+              ],
+              "child": {
+                "id": "vehicle:grid",
+                "kind": "grid",
+                "affordances": [
+                  "vehicle:mount"
+                ],
+                "cols": 5,
+                "rows": 3,
+                "cursor": {
+                  "x": 3,
+                  "y": 1
+                },
+                "cells": [
+                  {
+                    "x": 0,
+                    "y": 0,
+                    "id": "mount:-2,-1",
+                    "glyph": " ",
+                    "affordance": "vehicle:mount",
+                    "enabled": true
+                  },
+                  {
+                    "x": 1,
+                    "y": 0,
+                    "id": "mount:-1,-1",
+                    "glyph": " ",
+                    "affordance": "vehicle:mount",
+                    "enabled": true
+                  },
+                  {
+                    "x": 2,
+                    "y": 0,
+                    "id": "mount:0,-1",
+                    "glyph": " ",
+                    "affordance": "vehicle:mount",
+                    "enabled": true
+                  },
+                  {
+                    "x": 3,
+                    "y": 0,
+                    "id": "mount:1,-1",
+                    "glyph": " ",
+                    "affordance": "vehicle:mount",
+                    "enabled": true
+                  },
+                  {
+                    "x": 4,
+                    "y": 0,
+                    "id": "mount:2,-1",
+                    "glyph": " ",
+                    "affordance": "vehicle:mount",
+                    "enabled": true
+                  },
+                  {
+                    "x": 0,
+                    "y": 1,
+                    "id": "mount:-2,0",
+                    "glyph": " ",
+                    "affordance": "vehicle:mount",
+                    "enabled": true
+                  },
+                  {
+                    "x": 1,
+                    "y": 1,
+                    "id": "mount:-1,0",
+                    "glyph": "o",
+                    "label": "extra light frame, light wheel mount, 67.5cm bicycle wheel, small folding wire basket",
+                    "color": "c_brown",
+                    "affordance": "vehicle:mount",
+                    "enabled": true,
+                    "looks": [
+                      0
+                    ]
+                  },
+                  {
+                    "x": 2,
+                    "y": 1,
+                    "id": "mount:0,0",
+                    "glyph": "#",
+                    "label": "extra light frame, saddle, bicycle horn, foot pedals",
+                    "color": "c_red",
+                    "affordance": "vehicle:mount",
+                    "enabled": true,
+                    "looks": [
+                      1
+                    ]
+                  },
+                  {
+                    "x": 3,
+                    "y": 1,
+                    "id": "mount:1,0",
+                    "glyph": "|",
+                    "label": "extra light frame, light wheel mount (steerable), 67.5cm bicycle wheel",
+                    "color": "c_dark_gray",
+                    "affordance": "vehicle:mount",
+                    "enabled": true,
+                    "selected": true,
+                    "looks": [
+                      2
+                    ]
+                  },
+                  {
+                    "x": 4,
+                    "y": 1,
+                    "id": "mount:2,0",
+                    "glyph": " ",
+                    "affordance": "vehicle:mount",
+                    "enabled": true
+                  },
+                  {
+                    "x": 0,
+                    "y": 2,
+                    "id": "mount:-2,1",
+                    "glyph": " ",
+                    "affordance": "vehicle:mount",
+                    "enabled": true
+                  },
+                  {
+                    "x": 1,
+                    "y": 2,
+                    "id": "mount:-1,1",
+                    "glyph": " ",
+                    "affordance": "vehicle:mount",
+                    "enabled": true
+                  },
+                  {
+                    "x": 2,
+                    "y": 2,
+                    "id": "mount:0,1",
+                    "glyph": " ",
+                    "affordance": "vehicle:mount",
+                    "enabled": true
+                  },
+                  {
+                    "x": 3,
+                    "y": 2,
+                    "id": "mount:1,1",
+                    "glyph": " ",
+                    "affordance": "vehicle:mount",
+                    "enabled": true
+                  },
+                  {
+                    "x": 4,
+                    "y": 2,
+                    "id": "mount:2,1",
+                    "glyph": " ",
+                    "affordance": "vehicle:mount",
+                    "enabled": true
+                  }
+                ],
+                "looks": [
+                  {
+                    "kind": "vehicle_part",
+                    "id": "basketsm_bike_rear",
+                    "glyph": "o",
+                    "color": "c_brown",
+                    "name": "small folding wire basket",
+                    "tile": "vp_basketsm_bike_rear",
+                    "looks_like": [
+                      "vp_basketsm",
+                      "vp_basketlg",
+                      "vp_basketsm",
+                      "vp_basketlg",
+                      "vp_basketsm",
+                      "vp_basketlg",
+                      "vp_basketsm",
+                      "vp_basketlg",
+                      "vp_basketsm",
+                      "vp_basketlg"
+                    ],
+                    "subtile": "center",
+                    "rotation": 3
+                  },
+                  {
+                    "kind": "vehicle_part",
+                    "id": "saddle_pedal",
+                    "glyph": "#",
+                    "color": "c_red",
+                    "name": "saddle",
+                    "tile": "vp_saddle_pedal",
+                    "looks_like": [
+                      "vp_seat",
+                      "vp_reclining_seat",
+                      "vp_seat",
+                      "vp_reclining_seat",
+                      "vp_seat",
+                      "vp_reclining_seat",
+                      "vp_seat",
+                      "vp_reclining_seat",
+                      "vp_seat",
+                      "vp_reclining_seat"
+                    ],
+                    "subtile": "center",
+                    "rotation": 3
+                  },
+                  {
+                    "kind": "vehicle_part",
+                    "id": "wheel_bicycle",
+                    "glyph": "|",
+                    "color": "c_dark_gray",
+                    "name": "bicycle wheel",
+                    "tile": "vp_wheel_bicycle",
+                    "looks_like": [
+                      "vp_wheel"
+                    ],
+                    "subtile": "center",
+                    "rotation": 3
+                  }
+                ],
+                "role": "canvas"
+              }
             },
             {
-              "id": "vehicle:grid",
-              "kind": "grid",
+              "id": "vehicle:tools",
+              "kind": "tabs",
               "affordances": [
-                "vehicle:mount"
+                "vehicle:tool"
               ],
-              "cols": 5,
-              "rows": 3,
-              "cursor": {
-                "x": 3,
-                "y": 1
-              },
-              "cells": [
+              "tabs": [
                 {
-                  "x": 0,
-                  "y": 0,
-                  "id": "mount:-2,-1",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
+                  "id": "tool:mount",
+                  "label": "Mount",
+                  "selected": false,
                   "enabled": true
                 },
                 {
-                  "x": 1,
-                  "y": 0,
-                  "id": "mount:-1,-1",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
-                  "enabled": true
-                },
-                {
-                  "x": 2,
-                  "y": 0,
-                  "id": "mount:0,-1",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
-                  "enabled": true
-                },
-                {
-                  "x": 3,
-                  "y": 0,
-                  "id": "mount:1,-1",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
-                  "enabled": true
-                },
-                {
-                  "x": 4,
-                  "y": 0,
-                  "id": "mount:2,-1",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
-                  "enabled": true
-                },
-                {
-                  "x": 0,
-                  "y": 1,
-                  "id": "mount:-2,0",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
-                  "enabled": true
-                },
-                {
-                  "x": 1,
-                  "y": 1,
-                  "id": "mount:-1,0",
-                  "glyph": "o",
-                  "label": "|| small folding wire basket",
-                  "color": "c_brown",
-                  "affordance": "vehicle:mount",
-                  "enabled": true,
-                  "looks": [
-                    0
-                  ]
-                },
-                {
-                  "x": 2,
-                  "y": 1,
-                  "id": "mount:0,0",
-                  "glyph": "#",
-                  "label": "|| saddle",
-                  "color": "c_red",
-                  "affordance": "vehicle:mount",
-                  "enabled": true,
-                  "looks": [
-                    1
-                  ]
-                },
-                {
-                  "x": 3,
-                  "y": 1,
-                  "id": "mount:1,0",
-                  "glyph": "|",
-                  "label": "|| 67.5cm bicycle wheel",
-                  "color": "c_dark_gray",
-                  "affordance": "vehicle:mount",
-                  "enabled": true,
+                  "id": "tool:install",
+                  "label": "Install",
                   "selected": true,
-                  "looks": [
-                    2
-                  ]
-                },
-                {
-                  "x": 4,
-                  "y": 1,
-                  "id": "mount:2,0",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
                   "enabled": true
                 },
                 {
-                  "x": 0,
-                  "y": 2,
-                  "id": "mount:-2,1",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
+                  "id": "tool:part",
+                  "label": "Part",
+                  "selected": false,
                   "enabled": true
                 },
                 {
-                  "x": 1,
-                  "y": 2,
-                  "id": "mount:-1,1",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
+                  "id": "tool:vehicle",
+                  "label": "Vehicle",
+                  "selected": false,
                   "enabled": true
                 },
                 {
-                  "x": 2,
-                  "y": 2,
-                  "id": "mount:0,1",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
+                  "id": "tool:cargo",
+                  "label": "Cargo",
+                  "selected": false,
                   "enabled": true
                 },
                 {
-                  "x": 3,
-                  "y": 2,
-                  "id": "mount:1,1",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
+                  "id": "tool:spawn",
+                  "label": "Spawn",
+                  "selected": false,
                   "enabled": true
                 },
                 {
-                  "x": 4,
-                  "y": 2,
-                  "id": "mount:2,1",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
+                  "id": "tool:json",
+                  "label": "JSON",
+                  "selected": false,
                   "enabled": true
                 }
               ],
-              "looks": [
-                {
-                  "kind": "vehicle_part",
-                  "id": "basketsm_bike_rear",
-                  "glyph": "o",
-                  "color": "c_brown",
-                  "name": "small folding wire basket",
-                  "tile": "vp_basketsm_bike_rear",
-                  "looks_like": [
-                    "vp_basketsm",
-                    "vp_basketlg",
-                    "vp_basketsm",
-                    "vp_basketlg",
-                    "vp_basketsm",
-                    "vp_basketlg",
-                    "vp_basketsm",
-                    "vp_basketlg",
-                    "vp_basketsm",
-                    "vp_basketlg"
-                  ],
-                  "subtile": "center",
-                  "rotation": 3
-                },
-                {
-                  "kind": "vehicle_part",
-                  "id": "saddle_pedal",
-                  "glyph": "#",
-                  "color": "c_red",
-                  "name": "saddle",
-                  "tile": "vp_saddle_pedal",
-                  "looks_like": [
-                    "vp_seat",
-                    "vp_reclining_seat",
-                    "vp_seat",
-                    "vp_reclining_seat",
-                    "vp_seat",
-                    "vp_reclining_seat",
-                    "vp_seat",
-                    "vp_reclining_seat",
-                    "vp_seat",
-                    "vp_reclining_seat"
-                  ],
-                  "subtile": "center",
-                  "rotation": 3
-                },
-                {
-                  "kind": "vehicle_part",
-                  "id": "wheel_bicycle",
-                  "glyph": "|",
-                  "color": "c_dark_gray",
-                  "name": "bicycle wheel",
-                  "tile": "vp_wheel_bicycle",
-                  "looks_like": [
-                    "vp_wheel"
-                  ],
-                  "subtile": "center",
-                  "rotation": 3
-                }
-              ],
-              "role": "canvas"
-            },
-            {
-              "id": "vehicle:stack",
-              "kind": "list",
-              "affordances": [
-                "vehicle:pick"
-              ],
-              "columns": [],
-              "rows": [
-                {
-                  "id": "part:4",
-                  "label": "extra light frame",
-                  "description": "/parts/1/parts/0",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": []
-                },
-                {
-                  "id": "part:5",
-                  "label": "light wheel mount (steerable)",
-                  "description": "/parts/1/parts/1",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": []
-                },
-                {
-                  "id": "part:6",
-                  "label": "bicycle wheel",
-                  "description": "/parts/1/parts/2",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": []
-                }
-              ],
-              "total": 3,
-              "selection": "single",
-              "activate": "vehicle:pick"
-            },
-            {
-              "id": "vehicle:parts",
-              "kind": "list",
-              "affordances": [
-                "vehicle:install"
-              ],
-              "columns": [
-                {
-                  "key": "id",
-                  "label": "ID"
-                }
-              ],
-              "rows": [
-                {
-                  "id": "vpart:headlight",
-                  "label": "headlight",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "headlight"
-                    }
-                  ]
-                },
-                {
-                  "id": "vpart:headlight_reinforced",
-                  "label": "reinforced headlight",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "headlight_reinforced"
-                    }
-                  ]
-                },
-                {
-                  "id": "vpart:motorcycle_headlight",
-                  "label": "motorcycle headlight",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "motorcycle_headlight"
-                    }
-                  ]
-                },
-                {
-                  "id": "vpart:wide_headlight",
-                  "label": "wide angle headlight",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "wide_headlight"
-                    }
-                  ]
-                },
-                {
-                  "id": "vpart:wide_headlight_reinforced",
-                  "label": "reinforced wide-angle headlight",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "wide_headlight_reinforced"
-                    }
-                  ]
-                }
-              ],
-              "total": 5,
-              "selection": "single",
-              "activate": "vehicle:install",
-              "filterable": true
-            },
-            {
-              "id": "vehicle:field",
-              "kind": "form",
-              "affordances": [
-                "vehicle:field_set",
-                "vehicle:field_apply"
-              ],
-              "fields": [
-                {
-                  "id": "pointer",
-                  "label": "Pointer",
-                  "value": "/name",
-                  "type": "text"
-                },
-                {
-                  "id": "value",
-                  "label": "Value",
-                  "value": "Bicycle",
-                  "type": "text",
-                  "multiline": true
-                }
-              ],
-              "submit": "vehicle:field_apply"
-            },
-            {
-              "id": "vehicle:diagnostics",
-              "kind": "list",
-              "columns": [],
-              "rows": [],
-              "total": 0,
-              "selection": "none"
-            },
-            {
-              "id": "vehicle:spawn_form",
-              "kind": "form",
-              "affordances": [
-                "vehicle:spawn_set",
-                "vehicle:spawn"
-              ],
-              "fields": [
-                {
-                  "id": "facing",
-                  "label": "Facing",
-                  "value": "0",
-                  "type": "integer",
-                  "min": 0,
-                  "max": 359
-                },
-                {
-                  "id": "fuel",
-                  "label": "Fuel %",
-                  "value": "100",
-                  "type": "integer",
-                  "min": 0,
-                  "max": 100
-                },
-                {
-                  "id": "condition",
-                  "label": "Condition",
-                  "value": "0",
-                  "type": "select",
-                  "options": [
-                    {
-                      "id": "0",
-                      "label": "Intact"
-                    },
-                    {
-                      "id": "-1",
-                      "label": "Lightly damaged"
-                    },
-                    {
-                      "id": "1",
-                      "label": "Disabled"
-                    }
-                  ]
-                }
-              ],
-              "submit": "vehicle:spawn"
+              "select": "vehicle:tool",
+              "child": {
+                "id": "vehicle:parts",
+                "kind": "list",
+                "affordances": [
+                  "vehicle:install"
+                ],
+                "columns": [
+                  {
+                    "key": "id",
+                    "label": "ID"
+                  }
+                ],
+                "rows": [
+                  {
+                    "id": "vpart:headlight",
+                    "label": "headlight",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "headlight"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "vpart:headlight_reinforced",
+                    "label": "reinforced headlight",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "headlight_reinforced"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "vpart:motorcycle_headlight",
+                    "label": "motorcycle headlight",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "motorcycle_headlight"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "vpart:wide_headlight",
+                    "label": "wide angle headlight",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "wide_headlight"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "vpart:wide_headlight_reinforced",
+                    "label": "reinforced wide-angle headlight",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "wide_headlight_reinforced"
+                      }
+                    ]
+                  }
+                ],
+                "total": 5,
+                "selection": "single",
+                "activate": "vehicle:install",
+                "filterable": true
+              }
             }
           ]
         },
         "affordances": [
+          {
+            "id": "vehicle:source",
+            "label": "Show",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "vehicle:sources"
+              }
+            },
+            "expect": "boundary"
+          },
           {
             "id": "vehicle:open",
             "label": "Open",
@@ -939,31 +875,6 @@
             "expect": "screen"
           },
           {
-            "id": "vehicle:export",
-            "label": "Export design",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "vehicle:world"
-              },
-              "text": {}
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "vehicle:copy",
-            "label": "Copy vehicle",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "vehicle:world"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
             "id": "vehicle:paste",
             "label": "Paste vehicle",
             "keys": [],
@@ -971,13 +882,13 @@
             "expect": "screen"
           },
           {
-            "id": "vehicle:edit",
-            "label": "Edit in place",
+            "id": "vehicle:tool",
+            "label": "Tool",
             "keys": [],
             "enabled": true,
             "args": {
               "row": {
-                "component_id": "vehicle:world"
+                "component_id": "vehicle:tools"
               }
             },
             "expect": "boundary"
@@ -995,26 +906,12 @@
             "expect": "boundary"
           },
           {
-            "id": "vehicle:pick",
-            "label": "Edit",
+            "id": "vehicle:part_filter",
+            "label": "Filter parts",
             "keys": [],
             "enabled": true,
             "args": {
-              "row": {
-                "component_id": "vehicle:stack"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "vehicle:remove",
-            "label": "Remove",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "vehicle:stack"
-              }
+              "text": {}
             },
             "expect": "boundary"
           },
@@ -1031,16 +928,6 @@
             "expect": "boundary"
           },
           {
-            "id": "vehicle:part_filter",
-            "label": "Filter parts",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "text": {}
-            },
-            "expect": "boundary"
-          },
-          {
             "id": "vehicle:part_page",
             "label": "Parts page",
             "keys": [],
@@ -1053,63 +940,6 @@
               }
             },
             "expect": "screen"
-          },
-          {
-            "id": "vehicle:earlier",
-            "label": "Earlier",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "vehicle:stack"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "vehicle:later",
-            "label": "Later",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "vehicle:stack"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "vehicle:field_set",
-            "label": "Value",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "vehicle:field"
-              },
-              "text": {}
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "vehicle:field_apply",
-            "label": "Set",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "vehicle:spawn_set",
-            "label": "Value",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "vehicle:spawn_form"
-              },
-              "text": {}
-            },
-            "expect": "boundary"
           },
           {
             "id": "vehicle:spawn",
@@ -1320,8 +1150,8 @@
         "stage_text": "Done.",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "12",
-          "revision": "8"
+          "sequence": "13",
+          "revision": "9"
         }
       }
     },
@@ -1332,7 +1162,7 @@
         "epoch": "epoch-2",
         "expect": {
           "boundary_id": "boundary:3",
-          "revision": "11"
+          "revision": "13"
         },
         "operation": {
           "kind": "invoke",
@@ -1383,8 +1213,8 @@
         "stage_text": "Done.",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "16",
-          "revision": "12"
+          "sequence": "18",
+          "revision": "14"
         }
       }
     },
@@ -1403,137 +1233,60 @@
           "active": "vehicle:grid",
           "children": [
             {
-              "id": "vehicle:prototypes",
-              "kind": "list",
+              "id": "vehicle:sources",
+              "kind": "tabs",
               "affordances": [
-                "vehicle:open"
+                "vehicle:source"
               ],
-              "columns": [
+              "tabs": [
                 {
-                  "key": "id",
-                  "label": "ID"
-                }
-              ],
-              "rows": [
+                  "id": "source:prototypes",
+                  "label": "Prototypes",
+                  "selected": false,
+                  "enabled": true
+                },
                 {
-                  "id": "prototype:bicycle",
-                  "label": "Bicycle",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
+                  "id": "source:world",
+                  "label": "World",
                   "selected": true,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "bicycle"
-                    }
-                  ]
-                },
-                {
-                  "id": "prototype:bicycle_carbon",
-                  "label": "Carbon Fiber Bicycle",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "bicycle_carbon"
-                    }
-                  ]
-                },
-                {
-                  "id": "prototype:bicycle_dirt",
-                  "label": "Mountain bike",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "bicycle_dirt"
-                    }
-                  ]
-                },
-                {
-                  "id": "prototype:bicycle_electric",
-                  "label": "Electric Bicycle",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "bicycle_electric"
-                    }
-                  ]
-                },
-                {
-                  "id": "prototype:bicycle_plastic",
-                  "label": "Plastic Bicycle",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "bicycle_plastic"
-                    }
-                  ]
+                  "enabled": true
                 }
               ],
-              "total": 5,
-              "selection": "single",
-              "activate": "vehicle:open",
-              "filterable": true
-            },
-            {
-              "id": "vehicle:world",
-              "kind": "list",
-              "affordances": [
-                "vehicle:export"
-              ],
-              "columns": [
-                {
-                  "key": "distance",
-                  "label": "Distance"
-                }
-              ],
-              "rows": [
-                {
-                  "id": "world:0",
-                  "label": "Bicycle",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "distance",
-                      "label": "Distance",
-                      "value": "8"
-                    }
-                  ]
-                }
-              ],
-              "total": 1,
-              "selection": "single",
-              "activate": "vehicle:export"
+              "select": "vehicle:source",
+              "child": {
+                "id": "vehicle:world",
+                "kind": "list",
+                "affordances": [
+                  "vehicle:edit"
+                ],
+                "columns": [
+                  {
+                    "key": "distance",
+                    "label": "Distance"
+                  }
+                ],
+                "rows": [
+                  {
+                    "id": "world:0",
+                    "label": "Bicycle",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "distance",
+                        "label": "Distance",
+                        "value": "8"
+                      }
+                    ]
+                  }
+                ],
+                "total": 1,
+                "selection": "single",
+                "activate": "vehicle:edit"
+              }
             },
             {
               "id": "vehicle:live",
@@ -1570,453 +1323,349 @@
                   "value": "20.00",
                   "unit": "L"
                 }
-              ]
+              ],
+              "child": {
+                "id": "vehicle:grid",
+                "kind": "grid",
+                "affordances": [
+                  "vehicle:mount"
+                ],
+                "cols": 5,
+                "rows": 3,
+                "cursor": {
+                  "x": 3,
+                  "y": 1
+                },
+                "cells": [
+                  {
+                    "x": 0,
+                    "y": 0,
+                    "id": "mount:-2,-1",
+                    "glyph": " ",
+                    "affordance": "vehicle:mount",
+                    "enabled": true
+                  },
+                  {
+                    "x": 1,
+                    "y": 0,
+                    "id": "mount:-1,-1",
+                    "glyph": " ",
+                    "affordance": "vehicle:mount",
+                    "enabled": true
+                  },
+                  {
+                    "x": 2,
+                    "y": 0,
+                    "id": "mount:0,-1",
+                    "glyph": " ",
+                    "affordance": "vehicle:mount",
+                    "enabled": true
+                  },
+                  {
+                    "x": 3,
+                    "y": 0,
+                    "id": "mount:1,-1",
+                    "glyph": " ",
+                    "affordance": "vehicle:mount",
+                    "enabled": true
+                  },
+                  {
+                    "x": 4,
+                    "y": 0,
+                    "id": "mount:2,-1",
+                    "glyph": " ",
+                    "affordance": "vehicle:mount",
+                    "enabled": true
+                  },
+                  {
+                    "x": 0,
+                    "y": 1,
+                    "id": "mount:-2,0",
+                    "glyph": " ",
+                    "affordance": "vehicle:mount",
+                    "enabled": true
+                  },
+                  {
+                    "x": 1,
+                    "y": 1,
+                    "id": "mount:-1,0",
+                    "glyph": "o",
+                    "label": "extra light frame, light wheel mount, 67.5cm bicycle wheel, small folding wire basket",
+                    "color": "c_brown",
+                    "affordance": "vehicle:mount",
+                    "enabled": true,
+                    "looks": [
+                      0
+                    ]
+                  },
+                  {
+                    "x": 2,
+                    "y": 1,
+                    "id": "mount:0,0",
+                    "glyph": "#",
+                    "label": "extra light frame, saddle, bicycle horn, foot pedals",
+                    "color": "c_red",
+                    "affordance": "vehicle:mount",
+                    "enabled": true,
+                    "looks": [
+                      1
+                    ]
+                  },
+                  {
+                    "x": 3,
+                    "y": 1,
+                    "id": "mount:1,0",
+                    "glyph": "|",
+                    "label": "extra light frame, light wheel mount (steerable), 67.5cm bicycle wheel, headlight",
+                    "color": "c_dark_gray",
+                    "affordance": "vehicle:mount",
+                    "enabled": true,
+                    "selected": true,
+                    "looks": [
+                      2
+                    ]
+                  },
+                  {
+                    "x": 4,
+                    "y": 1,
+                    "id": "mount:2,0",
+                    "glyph": " ",
+                    "affordance": "vehicle:mount",
+                    "enabled": true
+                  },
+                  {
+                    "x": 0,
+                    "y": 2,
+                    "id": "mount:-2,1",
+                    "glyph": " ",
+                    "affordance": "vehicle:mount",
+                    "enabled": true
+                  },
+                  {
+                    "x": 1,
+                    "y": 2,
+                    "id": "mount:-1,1",
+                    "glyph": " ",
+                    "affordance": "vehicle:mount",
+                    "enabled": true
+                  },
+                  {
+                    "x": 2,
+                    "y": 2,
+                    "id": "mount:0,1",
+                    "glyph": " ",
+                    "affordance": "vehicle:mount",
+                    "enabled": true
+                  },
+                  {
+                    "x": 3,
+                    "y": 2,
+                    "id": "mount:1,1",
+                    "glyph": " ",
+                    "affordance": "vehicle:mount",
+                    "enabled": true
+                  },
+                  {
+                    "x": 4,
+                    "y": 2,
+                    "id": "mount:2,1",
+                    "glyph": " ",
+                    "affordance": "vehicle:mount",
+                    "enabled": true
+                  }
+                ],
+                "looks": [
+                  {
+                    "kind": "vehicle_part",
+                    "id": "basketsm_bike_rear",
+                    "glyph": "o",
+                    "color": "c_brown",
+                    "name": "small folding wire basket",
+                    "tile": "vp_basketsm_bike_rear",
+                    "looks_like": [
+                      "vp_basketsm",
+                      "vp_basketlg",
+                      "vp_basketsm",
+                      "vp_basketlg",
+                      "vp_basketsm",
+                      "vp_basketlg",
+                      "vp_basketsm",
+                      "vp_basketlg",
+                      "vp_basketsm",
+                      "vp_basketlg"
+                    ],
+                    "subtile": "center",
+                    "rotation": 3
+                  },
+                  {
+                    "kind": "vehicle_part",
+                    "id": "saddle_pedal",
+                    "glyph": "#",
+                    "color": "c_red",
+                    "name": "saddle",
+                    "tile": "vp_saddle_pedal",
+                    "looks_like": [
+                      "vp_seat",
+                      "vp_reclining_seat",
+                      "vp_seat",
+                      "vp_reclining_seat",
+                      "vp_seat",
+                      "vp_reclining_seat",
+                      "vp_seat",
+                      "vp_reclining_seat",
+                      "vp_seat",
+                      "vp_reclining_seat"
+                    ],
+                    "subtile": "center",
+                    "rotation": 3
+                  },
+                  {
+                    "kind": "vehicle_part",
+                    "id": "wheel_bicycle",
+                    "glyph": "|",
+                    "color": "c_dark_gray",
+                    "name": "bicycle wheel",
+                    "tile": "vp_wheel_bicycle",
+                    "looks_like": [
+                      "vp_wheel"
+                    ],
+                    "subtile": "center",
+                    "rotation": 3
+                  }
+                ],
+                "role": "canvas"
+              }
             },
             {
-              "id": "vehicle:grid",
-              "kind": "grid",
+              "id": "vehicle:tools",
+              "kind": "tabs",
               "affordances": [
-                "vehicle:mount"
+                "vehicle:tool"
               ],
-              "cols": 5,
-              "rows": 3,
-              "cursor": {
-                "x": 3,
-                "y": 1
-              },
-              "cells": [
+              "tabs": [
                 {
-                  "x": 0,
-                  "y": 0,
-                  "id": "mount:-2,-1",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
-                  "enabled": true
-                },
-                {
-                  "x": 1,
-                  "y": 0,
-                  "id": "mount:-1,-1",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
-                  "enabled": true
-                },
-                {
-                  "x": 2,
-                  "y": 0,
-                  "id": "mount:0,-1",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
-                  "enabled": true
-                },
-                {
-                  "x": 3,
-                  "y": 0,
-                  "id": "mount:1,-1",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
-                  "enabled": true
-                },
-                {
-                  "x": 4,
-                  "y": 0,
-                  "id": "mount:2,-1",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
-                  "enabled": true
-                },
-                {
-                  "x": 0,
-                  "y": 1,
-                  "id": "mount:-2,0",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
-                  "enabled": true
-                },
-                {
-                  "x": 1,
-                  "y": 1,
-                  "id": "mount:-1,0",
-                  "glyph": "o",
-                  "label": "|| small folding wire basket",
-                  "color": "c_brown",
-                  "affordance": "vehicle:mount",
-                  "enabled": true,
-                  "looks": [
-                    0
-                  ]
-                },
-                {
-                  "x": 2,
-                  "y": 1,
-                  "id": "mount:0,0",
-                  "glyph": "#",
-                  "label": "|| saddle",
-                  "color": "c_red",
-                  "affordance": "vehicle:mount",
-                  "enabled": true,
-                  "looks": [
-                    1
-                  ]
-                },
-                {
-                  "x": 3,
-                  "y": 1,
-                  "id": "mount:1,0",
-                  "glyph": "|",
-                  "label": "|| 67.5cm bicycle wheel",
-                  "color": "c_dark_gray",
-                  "affordance": "vehicle:mount",
-                  "enabled": true,
+                  "id": "tool:mount",
+                  "label": "Mount",
                   "selected": true,
-                  "looks": [
-                    2
-                  ]
-                },
-                {
-                  "x": 4,
-                  "y": 1,
-                  "id": "mount:2,0",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
                   "enabled": true
                 },
                 {
-                  "x": 0,
-                  "y": 2,
-                  "id": "mount:-2,1",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
+                  "id": "tool:install",
+                  "label": "Install",
+                  "selected": false,
                   "enabled": true
                 },
                 {
-                  "x": 1,
-                  "y": 2,
-                  "id": "mount:-1,1",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
+                  "id": "tool:part",
+                  "label": "Part",
+                  "selected": false,
                   "enabled": true
                 },
                 {
-                  "x": 2,
-                  "y": 2,
-                  "id": "mount:0,1",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
-                  "enabled": true
-                },
-                {
-                  "x": 3,
-                  "y": 2,
-                  "id": "mount:1,1",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
-                  "enabled": true
-                },
-                {
-                  "x": 4,
-                  "y": 2,
-                  "id": "mount:2,1",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
+                  "id": "tool:vehicle",
+                  "label": "Vehicle",
+                  "selected": false,
                   "enabled": true
                 }
               ],
-              "looks": [
-                {
-                  "kind": "vehicle_part",
-                  "id": "basketsm_bike_rear",
-                  "glyph": "o",
-                  "color": "c_brown",
-                  "name": "small folding wire basket",
-                  "tile": "vp_basketsm_bike_rear",
-                  "looks_like": [
-                    "vp_basketsm",
-                    "vp_basketlg",
-                    "vp_basketsm",
-                    "vp_basketlg",
-                    "vp_basketsm",
-                    "vp_basketlg",
-                    "vp_basketsm",
-                    "vp_basketlg",
-                    "vp_basketsm",
-                    "vp_basketlg"
-                  ],
-                  "subtile": "center",
-                  "rotation": 3
-                },
-                {
-                  "kind": "vehicle_part",
-                  "id": "saddle_pedal",
-                  "glyph": "#",
-                  "color": "c_red",
-                  "name": "saddle",
-                  "tile": "vp_saddle_pedal",
-                  "looks_like": [
-                    "vp_seat",
-                    "vp_reclining_seat",
-                    "vp_seat",
-                    "vp_reclining_seat",
-                    "vp_seat",
-                    "vp_reclining_seat",
-                    "vp_seat",
-                    "vp_reclining_seat",
-                    "vp_seat",
-                    "vp_reclining_seat"
-                  ],
-                  "subtile": "center",
-                  "rotation": 3
-                },
-                {
-                  "kind": "vehicle_part",
-                  "id": "wheel_bicycle",
-                  "glyph": "|",
-                  "color": "c_dark_gray",
-                  "name": "bicycle wheel",
-                  "tile": "vp_wheel_bicycle",
-                  "looks_like": [
-                    "vp_wheel"
-                  ],
-                  "subtile": "center",
-                  "rotation": 3
-                }
-              ],
-              "role": "canvas"
-            },
-            {
-              "id": "vehicle:stack",
-              "kind": "list",
-              "affordances": [
-                "vehicle:pick"
-              ],
-              "columns": [
-                {
-                  "key": "health",
-                  "label": "Health %"
-                }
-              ],
-              "rows": [
-                {
-                  "id": "part:4",
-                  "label": "extra light frame",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "health",
-                      "label": "Health %",
-                      "value": "100"
-                    }
-                  ]
-                },
-                {
-                  "id": "part:5",
-                  "label": "light wheel mount (steerable)",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "health",
-                      "label": "Health %",
-                      "value": "100"
-                    }
-                  ]
-                },
-                {
-                  "id": "part:6",
-                  "label": "bicycle wheel",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "health",
-                      "label": "Health %",
-                      "value": "100"
-                    }
-                  ]
-                },
-                {
-                  "id": "part:11",
-                  "label": "headlight",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "health",
-                      "label": "Health %",
-                      "value": "100"
-                    }
-                  ]
-                }
-              ],
-              "total": 4,
-              "selection": "single",
-              "activate": "vehicle:pick"
-            },
-            {
-              "id": "vehicle:parts",
-              "kind": "list",
-              "affordances": [
-                "vehicle:install"
-              ],
-              "columns": [
-                {
-                  "key": "id",
-                  "label": "ID"
-                }
-              ],
-              "rows": [
-                {
-                  "id": "vpart:headlight",
-                  "label": "headlight",
-                  "description": "",
-                  "denial": "It cannot be mounted here.",
-                  "enabled": false,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "headlight"
-                    }
-                  ]
-                },
-                {
-                  "id": "vpart:headlight_reinforced",
-                  "label": "reinforced headlight",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "headlight_reinforced"
-                    }
-                  ]
-                },
-                {
-                  "id": "vpart:motorcycle_headlight",
-                  "label": "motorcycle headlight",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "motorcycle_headlight"
-                    }
-                  ]
-                },
-                {
-                  "id": "vpart:wide_headlight",
-                  "label": "wide angle headlight",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "wide_headlight"
-                    }
-                  ]
-                },
-                {
-                  "id": "vpart:wide_headlight_reinforced",
-                  "label": "reinforced wide-angle headlight",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "wide_headlight_reinforced"
-                    }
-                  ]
-                }
-              ],
-              "total": 5,
-              "selection": "single",
-              "activate": "vehicle:install",
-              "filterable": true
-            },
-            {
-              "id": "vehicle:live_form",
-              "kind": "form",
-              "affordances": [
-                "vehicle:live_set"
-              ],
-              "fields": [
-                {
-                  "id": "name",
-                  "label": "Name",
-                  "value": "Bicycle",
-                  "type": "text"
-                }
-              ]
+              "select": "vehicle:tool",
+              "child": {
+                "id": "vehicle:stack",
+                "kind": "list",
+                "affordances": [
+                  "vehicle:pick"
+                ],
+                "columns": [
+                  {
+                    "key": "health",
+                    "label": "Health %"
+                  }
+                ],
+                "rows": [
+                  {
+                    "id": "part:4",
+                    "label": "extra light frame",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "health",
+                        "label": "Health %",
+                        "value": "100"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "part:5",
+                    "label": "light wheel mount (steerable)",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "health",
+                        "label": "Health %",
+                        "value": "100"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "part:6",
+                    "label": "bicycle wheel",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "health",
+                        "label": "Health %",
+                        "value": "100"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "part:11",
+                    "label": "headlight",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "health",
+                        "label": "Health %",
+                        "value": "100"
+                      }
+                    ]
+                  }
+                ],
+                "total": 4,
+                "selection": "single",
+                "activate": "vehicle:pick"
+              }
             }
           ]
         },
         "affordances": [
           {
-            "id": "vehicle:open",
-            "label": "Open",
+            "id": "vehicle:source",
+            "label": "Show",
             "keys": [],
             "enabled": true,
             "args": {
               "row": {
-                "component_id": "vehicle:prototypes"
+                "component_id": "vehicle:sources"
               }
             },
             "expect": "boundary"
-          },
-          {
-            "id": "vehicle:filter",
-            "label": "Filter",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "text": {}
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "vehicle:page",
-            "label": "Page",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "count": {
-                "min": 0,
-                "max": 0,
-                "default": 0
-              }
-            },
-            "expect": "screen"
           },
           {
             "id": "vehicle:export",
@@ -2044,13 +1693,6 @@
             "expect": "boundary"
           },
           {
-            "id": "vehicle:paste",
-            "label": "Paste vehicle",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
             "id": "vehicle:edit",
             "label": "Edit in place",
             "keys": [],
@@ -2058,6 +1700,25 @@
             "args": {
               "row": {
                 "component_id": "vehicle:world"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "vehicle:paste",
+            "label": "Paste vehicle",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "vehicle:tool",
+            "label": "Tool",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "vehicle:tools"
               }
             },
             "expect": "boundary"
@@ -2071,6 +1732,16 @@
               "row": {
                 "component_id": "vehicle:grid"
               }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "vehicle:part_filter",
+            "label": "Filter parts",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {}
             },
             "expect": "boundary"
           },
@@ -2095,55 +1766,6 @@
               "row": {
                 "component_id": "vehicle:stack"
               }
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "vehicle:install",
-            "label": "Install",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "vehicle:parts"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "vehicle:part_filter",
-            "label": "Filter parts",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "text": {}
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "vehicle:part_page",
-            "label": "Parts page",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "count": {
-                "min": 0,
-                "max": 0,
-                "default": 0
-              }
-            },
-            "expect": "screen"
-          },
-          {
-            "id": "vehicle:live_set",
-            "label": "Value",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "vehicle:live_form"
-              },
-              "text": {}
             },
             "expect": "boundary"
           },
@@ -2254,8 +1876,8 @@
         "stage_text": "Done.",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "20",
-          "revision": "16"
+          "sequence": "22",
+          "revision": "18"
         }
       }
     }
