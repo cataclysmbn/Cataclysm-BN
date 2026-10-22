@@ -37,7 +37,7 @@ struct vehicle_spawn {
     /// -1 light damage, 0 undamaged, 1 disabled.
     int status = 0;
 };
-/// Spawns a vehicle the avatar owns on the avatar's square and seats the avatar in it.
+/// Spawns a vehicle the avatar owns on the avatar's square and seats the avatar on a seat left there.
 auto spawn_vehicle( avatar &you, const vehicle_spawn &spawn ) -> vehicle *; // *NOPAD*
 void wishmutate( Character * );
 void wishbionics( Character &c );

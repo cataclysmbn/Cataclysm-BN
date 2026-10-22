@@ -1516,8 +1516,12 @@ auto spawn_vehicle( avatar &you, const vehicle_spawn &spawn ) -> vehicle *
     const auto at = you.bub_pos();
     auto *const veh = here.add_vehicle( spawn.type, at, spawn.dir, 100, spawn.status, true, false,
                                         true );
-    if( veh != nullptr ) {
-        veh->set_owner( you );
+    if( veh == nullptr ) {
+        return nullptr;
+    }
+    veh->set_owner( you );
+    // A part spawned into a wall smashes the vehicle, which can destroy the seat on the avatar's square.
+    if( here.veh_at( at ).part_with_feature( VPFLAG_BOARDABLE, true ) ) {
         here.board_vehicle( at, &you );
     }
     return veh;
