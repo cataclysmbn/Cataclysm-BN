@@ -326,24 +326,22 @@ if( LUA_DOCS_ON_BUILD AND DENO_BINARY )
         VERBATIM)
 endif()
 
-if (TILES)
-    add_custom_command(TARGET cataclysm-bn POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "$<TARGET_FILE:cataclysm-bn>"
-            "$<TARGET_FILE_DIR:cataclysm-bn>/cataclysm-bn-tiles${CMAKE_EXECUTABLE_SUFFIX}")
+# Client aliases pick their frontend from argv[0]; symlink them instead of copying the binary where links are reliable.
+if (WIN32 OR APPLE)
+    set(CATA_CLIENT_ALIAS_COMMAND copy_if_different)
+else ()
+    set(CATA_CLIENT_ALIAS_COMMAND create_symlink)
 endif ()
-if (MCP)
-    add_custom_command(TARGET cataclysm-bn POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "$<TARGET_FILE:cataclysm-bn>"
-            "$<TARGET_FILE_DIR:cataclysm-bn>/cataclysm-bn-mcp${CMAKE_EXECUTABLE_SUFFIX}")
-endif ()
-if (IMGUI)
-    add_custom_command(TARGET cataclysm-bn POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "$<TARGET_FILE:cataclysm-bn>"
-            "$<TARGET_FILE_DIR:cataclysm-bn>/cataclysm-bn-imgui${CMAKE_EXECUTABLE_SUFFIX}")
-endif ()
+foreach (client_alias IN ITEMS tiles mcp imgui)
+    string(TOUPPER ${client_alias} client_option)
+    if (${client_option})
+        add_custom_command(TARGET cataclysm-bn POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E ${CATA_CLIENT_ALIAS_COMMAND}
+                "$<TARGET_FILE_NAME:cataclysm-bn>"
+                "cataclysm-bn-${client_alias}${CMAKE_EXECUTABLE_SUFFIX}"
+            WORKING_DIRECTORY "$<TARGET_FILE_DIR:cataclysm-bn>")
+    endif ()
+endforeach ()
 
 if (TILES)
     add_custom_target(cataclysm-bn-tiles DEPENDS cataclysm-bn)
