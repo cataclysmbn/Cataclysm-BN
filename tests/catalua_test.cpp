@@ -1568,6 +1568,7 @@ TEST_CASE("failed dimension deletion preserves saved metadata", "[lua]") {
     const auto target_dimension_id = dimension_id("lua\\test_failed_delete");
     const auto original_map_size = get_map().getmapsize();
     g->place_player_overmap(tripoint_abs_omt(tripoint_zero));
+    const auto original_origin = player_reality_bubble_origin();
 
     auto* const active_world = g->get_active_world();
     REQUIRE(active_world != nullptr);
@@ -1588,7 +1589,9 @@ TEST_CASE("failed dimension deletion preserves saved metadata", "[lua]") {
     });
 
     const auto pocket_data = enter_test_pocket(target_dimension_id, tripoint_abs_omt(24, 24, 0));
-    REQUIRE(g->travel_to_dimension(dimension_id(), world_type_id(), std::nullopt, std::nullopt));
+    // Home at the bubble it left: one around the pocket's square loads home submaps no cleanup
+    // unloads.
+    REQUIRE(g->travel_to_dimension(dimension_id(), world_type_id(), std::nullopt, original_origin));
 
     CHECK_FALSE(g->delete_dimension(target_dimension_id));
 
