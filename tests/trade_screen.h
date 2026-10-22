@@ -115,17 +115,15 @@ inline auto popup_message() -> std::string {
     return body<ec::text_body>(part(screen, "text:message")).markup;
 }
 
-/// The input that answers the popup on top by choosing its row with `description` (the first when
+/// The input that answers the popup on top by choosing its row that runs `action` (the first when
 /// empty), as a client does: an invoke of the list's choose affordance, resolved to its native
 /// event.
-inline auto answer(const std::string& description = {}) -> input_event {
+inline auto answer(const std::string& action = {}) -> input_event {
     const auto state = captured();
     const auto screen = ec::top_screen(state);
     const auto& all = rows(screen, "list:choices");
     const auto found =
-        description.empty()
-            ? all.begin()
-            : std::ranges::find(all, description, &ec::row::description);
+        action.empty() ? all.begin() : std::ranges::find(all, action, &ec::row::affordance);
     REQUIRE(found != all.end());
     const auto operation = ec::resolve_invoke(
         state, {.affordance_id = "bn:choose:list:choices", .args = {.row = found->id}});
