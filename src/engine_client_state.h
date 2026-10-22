@@ -358,11 +358,24 @@ struct mod_tileset_file {
     std::vector<std::string> compatibility = {};
     auto operator<=>( const mod_tileset_file & ) const = default; // *NOPAD*
 };
+/// The sky over the avatar: how much daylight there is and what the weather lets fall.
+struct sky_value {
+    /// The daylight now, in percent of full day.
+    int daylight = 0;
+    /// The weather's precipitation: `none`, `very_light`, `light`, `medium` or `heavy`.
+    std::string precipitation = "none";
+    /// What falls is rain, not snow.
+    bool rain = false;
+    /// How much ambient light the weather takes away, in the game's light points.
+    int dimming = 0;
+    auto operator<=>( const sky_value & ) const = default; // *NOPAD*
+};
 struct environment_value {
     std::string turn = {};
     std::string time = {};
     std::string weather = {};
     std::string season = {};
+    sky_value sky = {};
     /// The tilesets of the loaded game data, in the order the native view applies them.
     std::vector<mod_tileset_file> mod_tilesets = {};
     auto operator<=>( const environment_value & ) const = default; // *NOPAD*

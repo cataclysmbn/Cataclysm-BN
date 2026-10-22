@@ -1117,6 +1117,35 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "world capture says how much daylight there is and what falls from the sky",
+    "[engine_client_world]") {
+    make_scene();
+    const auto sky = [] {
+        const auto state = ec::world::capture_world();
+        REQUIRE(state.environment);
+        return state.environment->sky;
+    };
+    const auto noon = sky();
+    CHECK(noon.daylight == 100);
+    CHECK(noon.precipitation == "none");
+    CHECK_FALSE(noon.rain);
+    CHECK(noon.dimming == 0);
+    calendar::turn = calendar::turn_zero;
+    CHECK(sky().daylight < noon.daylight);
+    calendar::turn = calendar::turn_zero + 12_hours;
+    get_weather().weather_id = weather_type_id("rain");
+    const auto rain = sky();
+    CHECK(rain.precipitation == "medium");
+    CHECK(rain.rain);
+    CHECK(rain.dimming == 30);
+    get_weather().weather_id = weather_type_id("snowing");
+    const auto snow = sky();
+    CHECK(snow.precipitation == "heavy");
+    CHECK_FALSE(snow.rain);
+    get_weather().weather_id = weather_type_id("clear");
+}
+
+TEST_CASE(
     "world capture gives a hurt creature's health as the native look-around bar shows it",
     "[engine_client_world]") {
     const auto setup = make_scene();
