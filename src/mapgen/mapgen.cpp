@@ -25,6 +25,7 @@
 #include "editor/mapgen_check.h"
 #include "editor/mapgen_legend.h"
 #include "editor/mapgen_preview.h"
+#include "editor/mapgen_source.h"
 #include "enums.h"
 #include "fluid_grid.h"
 #include "game.h"
@@ -720,6 +721,10 @@ void reset_mapgens() {
 /////////////////////////////////////////////////////////////////////////////////
 ///// 2 - right after init() finishes parsing all game json and terrain info/etc is set..
 /////   ...parse more json! (mapgen_function_json)
+
+auto mapgen_function_json_base::source_location() const -> const json_source_location& {
+    return *jsrcloc;
+}
 
 auto mapgen_function_json_base::calc_index(const point_rel_ms& p) const -> size_t {
     if (p.x() >= mapgensize.x()) { debugmsg("invalid value %zu for x in calc_index", p.x()); }
@@ -6586,6 +6591,14 @@ auto editor::apply_mapgen(const std::string_view text) -> std::expected<void, st
         oter_mapgen.replace(loaded->om_terrains[index], loaded->functions[index]);
     }
     return {};
+}
+
+auto editor::mapgen_source_of(const std::string& mapgen_id) -> std::optional<mapgen_source> {
+    const auto picked = oter_mapgen.pick(mapgen_id);
+    const auto* const json = dynamic_cast<const mapgen_function_json_base*>(picked.get());
+    if (json == nullptr || !json->source_location().path) { return std::nullopt; }
+    return mapgen_source{
+        .path = *json->source_location().path, .offset = json->source_location().offset};
 }
 
 auto editor::nested_mapgen_ids() -> std::vector<std::string> {

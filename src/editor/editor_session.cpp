@@ -11,6 +11,7 @@
 #include "editor/mapgen_legend_edit.h"
 #include "editor/mapgen_placement.h"
 #include "editor/mapgen_preview.h"
+#include "editor/mapgen_source.h"
 #include "editor/mapgen_stamp.h"
 #include "editor/mapgen_stroke.h"
 #include "engine_client_component.h"
@@ -21,6 +22,8 @@
 #include "json_formatter.h"
 #include "map/mapdata.h"
 #include "output.h"
+#include "overmap/omdata.h"
+#include "overmap/overmapbuffer.h"
 #include "path_info.h"
 #include "regional_settings.h"
 #include "string_formatter.h"
@@ -31,6 +34,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cctype>
 #include <charconv>
 #include <filesystem>
 #include <fstream>
@@ -92,6 +96,12 @@ constexpr auto mirror_x_id = "editor:mirror_x";
 constexpr auto mirror_y_id = "editor:mirror_y";
 constexpr auto history_id = "editor:history";
 constexpr auto jump_id = "editor:jump";
+constexpr auto open_oter_id = "editor:open_oter";
+constexpr auto open_here_id = "editor:open_here";
+constexpr auto browser_id = "editor:browser";
+constexpr auto browser_open_id = "editor:browser_open";
+constexpr auto browser_filter_id = "editor:browser_filter";
+constexpr auto browser_page_id = "editor:browser_page";
 constexpr auto apply_id = "editor:apply";
 constexpr auto stamp_id = "editor:stamp";
 constexpr auto unstamp_id = "editor:unstamp";
@@ -317,6 +327,27 @@ auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string> {
     return {};
 }
 
+/// The JSON files of the game's data, its mods and the user's mods, in path order.
+auto data_files() -> std::vector<std::filesystem::path> {
+    auto files = std::vector<std::filesystem::path>{};
+    for (const auto& root :
+         {std::filesystem::path(PATH_INFO::datadir()) / "json",
+          std::filesystem::path(PATH_INFO::datadir()) / "mods",
+          std::filesystem::path(PATH_INFO::user_moddir())}) {
+        auto error = std::error_code{};
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(
+                 root, std::filesystem::directory_options::skip_permission_denied, error)) {
+            if (entry.is_regular_file(error) && entry.path().extension() == ".json") {
+                files.push_back(entry.path());
+            }
+        }
+    }
+    std::ranges::sort(files);
+    return files;
+}
+
+constexpr auto browser_page_size = std::size_t{50};
+
 auto range_text(const placement_range& range) -> std::string {
     return range.min == range.max
              ? std::to_string(range.min)
@@ -366,9 +397,50 @@ struct session {
     new_mapgen made;
     /// The entry as it stands in the live world, while it is there.
     std::optional<stamp> stamped = std::nullopt;
+    /// The files the browser lists; read again after a file is made.
+    mutable std::optional<std::vector<std::filesystem::path>> files = std::nullopt;
+    std::string browser_filter;
+    std::size_t browser_page = 0;
     const catalog_use* catalog = catalog_uses.data();
     std::string catalog_filter;
     std::size_t catalog_page = 0;
+
+    /// The files whose path holds the filter, ignoring case.
+    auto browser_entries() const -> std::vector<std::filesystem::path> {
+        if (!files) { files = data_files(); }
+        const auto lower = [](std::string text) {
+            std::ranges::transform(text, text.begin(), [](const unsigned char c) {
+                return static_cast<char>(std::tolower(c));
+            });
+            return text;
+        };
+        const auto wanted = lower(browser_filter);
+        return *files | std::views::filter([&](const std::filesystem::path& path) {
+            return lower(path.generic_string()).contains(wanted);
+        }) | std::ranges::to<std::vector>();
+    }
+
+    /// Opens the mapgen the game registered for an overmap terrain, on the entry that holds it.
+    auto open_mapgen_of(const std::string& name) -> void {
+        const auto id = oter_str_id(name);
+        const auto source = mapgen_source_of(id.is_valid() ? id.obj().get_mapgen_id() : name);
+        if (!source) {
+            notice =
+                string_format(_("%s has no mapgen in a file of the game or of your mods."), name);
+            return;
+        }
+        open(source->path);
+        if (!doc || !notice.empty()) { return; }
+        const auto& objects = doc->objects();
+        const auto found = std::ranges::find_if(objects, [&](const document_object& entry) {
+            return entry.begin <= static_cast<std::size_t>(source->offset)
+                && static_cast<std::size_t>(source->offset) < entry.end;
+        });
+        if (found != objects.end() && is_json_mapgen(found->value)) {
+            object = static_cast<std::size_t>(found - objects.begin());
+            reload();
+        }
+    }
 
     auto catalog_entries() const -> editor::catalog_page {
         return search_catalog(
@@ -936,6 +1008,47 @@ auto session_view(const session& state) -> ec::screen_view {
          .label = _("New file"),
          .args = {.row = ec::row_shape{.component_id = new_id}, .text = ec::text_shape{}}}));
     affordances.push_back(ec::invoke_affordance({.id = new_apply_id, .label = _("Create")}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = open_oter_id,
+         .label = _("Open overmap terrain"),
+         .args = {.text = ec::text_shape{}}}));
+    affordances.push_back(
+        ec::invoke_affordance({.id = open_here_id, .label = _("Open mapgen here")}));
+    const auto listed = state.browser_entries();
+    const auto shown =
+        std::views::drop(listed, state.browser_page * browser_page_size)
+        | std::views::take(browser_page_size);
+    const auto browser_pages =
+        std::max<std::size_t>(1, (listed.size() + browser_page_size - 1) / browser_page_size);
+    const auto data = std::filesystem::path(PATH_INFO::datadir());
+    parts.push_back(ec::list(
+        {.id = browser_id,
+         .rows =
+             shown | std::views::transform([&](const std::filesystem::path& path) {
+                 return ec::row{
+                     .id = "file:" + path.generic_string(),
+                     .label =
+                         (inside(path, PATH_INFO::datadir()) ? path.lexically_relative(data) : path)
+                             .generic_string()};
+             })
+             | std::ranges::to<std::vector>(),
+         .total = listed.size(),
+         .offset = state.browser_page * browser_page_size,
+         .selection = "single",
+         .activate = browser_open_id,
+         .filterable = true}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = browser_open_id, .label = _("Open"), .args = row_of(browser_id)}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = browser_filter_id, .label = _("Filter files"), .args = {.text = ec::text_shape{}}}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = browser_page_id,
+         .label = _("Files page"),
+         .args = {
+             .count = ec::count_shape{
+                 .min = 0,
+                 .max = static_cast<std::int64_t>(browser_pages - 1),
+                 .initial = static_cast<std::int64_t>(state.browser_page)}}}));
     if (state.doc) {
         const auto& doc = *state.doc;
         auto stats = std::vector<ec::panel_stat>{
@@ -1233,6 +1346,21 @@ auto run_editor_session() -> void {
         state.watch();
         if (id == open_id) {
             state.open(invoked->args.text.value_or(""));
+        } else if (id == open_oter_id) {
+            state.open_mapgen_of(invoked->args.text.value_or(""));
+        } else if (id == open_here_id) {
+            state.open_mapgen_of(
+                get_overmapbuffer(get_map().get_bound_dimension())
+                    .ter(get_avatar().abs_omt_pos())
+                    .id()
+                    .str());
+        } else if (id == browser_open_id) {
+            state.open(row.substr(std::string_view("file:").size()));
+        } else if (id == browser_filter_id) {
+            state.browser_filter = invoked->args.text.value_or("");
+            state.browser_page = 0;
+        } else if (id == browser_page_id) {
+            state.browser_page = static_cast<std::size_t>(invoked->args.count.value_or(0));
         } else if (id == new_set_id) {
             const auto text = invoked->args.text.value_or("");
             (row == "path" ? state.made.path
