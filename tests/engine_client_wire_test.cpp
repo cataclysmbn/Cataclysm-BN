@@ -467,3 +467,23 @@ TEST_CASE("a choices request may name the list to read", "[engine_client_wire]")
     CHECK_FALSE(decode_choices_request(window(R"(,"component_id":"")")));
     CHECK_FALSE(decode_choices_request(window(R"(,"component_id":7)")));
 }
+
+TEST_CASE(
+    "set_mode names a mode and one of its values", "[engine_client_wire][engine_client_mode]") {
+    const auto decoded = decode_command_request(
+        command(R"({"kind":"set_mode","mode":"safe_mode","value":"off"})", "null"));
+    REQUIRE(decoded);
+    const auto* mode = std::get_if<mode_operation>(&decoded->operation);
+    REQUIRE(mode);
+    CHECK(mode->mode == "safe_mode");
+    CHECK(mode->value == "off");
+    CHECK_FALSE(
+        decode_command_request(command(R"({"kind":"set_mode","mode":"safe_mode"})", "null")));
+    CHECK_FALSE(decode_command_request(command(R"({"kind":"set_mode","value":"off"})", "null")));
+    CHECK_FALSE(
+        decode_command_request(command(R"({"kind":"set_mode","mode":"","value":"off"})", "null")));
+    CHECK_FALSE(decode_command_request(
+        command(R"({"kind":"set_mode","mode":"safe_mode","value":""})", "null")));
+    CHECK_FALSE(decode_command_request(
+        command(R"({"kind":"set_mode","mode":"safe_mode","value":"off","count":1})", "null")));
+}

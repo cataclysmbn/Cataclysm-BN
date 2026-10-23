@@ -4604,4 +4604,48 @@ TEST_CASE(
     }));
 }
 
+TEST_CASE(
+    "a client sets a mode to a named value through the session, however often it sends it",
+    "[client][interaction][mcp][engine_client_contract][engine_client_mode]") {
+    const auto guard = interaction_test_guard{};
+    const auto fixture = pickup_fixture_guard(false);
+    const auto running = game_session::running();
+    const auto safe = g->safe_mode;
+    const auto cleanup = on_out_of_scope([&] {
+        game_client::memory::set_input_provider({});
+        game_session::set_running(running);
+        g->safe_mode = safe;
+    });
+    game_session::set_running(true);
+    engine_client::process_session().replace_world();
+    g->set_safe_mode(SAFE_MODE_ON);
+    const auto set_mode = [](const std::string& mode, const std::string& value) {
+        game_client::memory::set_input_provider([&](const int /*timeout*/) {
+            const auto event = deliver(engine_client::mode_operation{.mode = mode, .value = value});
+            REQUIRE(event);
+            return *event;
+        });
+        handle_action();
+    };
+    for (const auto* target : {"off", "off", "on", "on"}) {
+        INFO(target);
+        set_mode("safe_mode", target);
+        CHECK((g->safe_mode != SAFE_MODE_OFF) == (std::string{target} == "on"));
+    }
+    // An unknown mode or value is refused at validation, before the game reads anything.
+    auto errors = std::vector<engine_client::error>{};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        for (const auto& operation :
+             {engine_client::mode_operation{.mode = "nope", .value = "on"},
+              engine_client::mode_operation{.mode = "safe_mode", .value = "nope"}}) {
+            const auto event = deliver(operation);
+            REQUIRE_FALSE(event);
+            errors.push_back(event.error());
+        }
+        return input_event{};
+    });
+    handle_action();
+    CHECK(errors == std::vector(2, engine_client::error::validation_failed));
+}
+
 #endif // CATA_MCP
