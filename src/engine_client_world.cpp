@@ -430,7 +430,9 @@ auto bare_unmemorized( const map &here, const tripoint_bub_ms &p, const avatar &
 /// How many levels down the native view draws a square in sight that it looks through, as the level loop of
 /// `cata_tiles::draw` decides: it looks down to the first square with a floor, or a remembered one with
 /// something on it, and draws that square when it is in sight, remembered or a vehicle under open air in
-/// sight, else the lowest square in sight with something on it on the way down. None when it draws nothing.
+/// sight, else the lowest square in sight with something on it on the way down. Where there is none, that floor
+/// is ground the avatar neither sees nor remembers, which the native view leaves dark and which is only the
+/// depth here, with no cell of its own. None when it draws nothing.
 auto drawn_depth( map &here, const tripoint_bub_ms &p,
                   const avatar &you ) -> std::optional<int>
 {
@@ -454,9 +456,9 @@ auto drawn_depth( map &here, const tripoint_bub_ms &p,
         };
         if( !here.dont_draw_lower_floor( at ) && ( z == p.z() || open_air || !remembered() ) ) { continue; }
         const auto shown = seen || remembered() || ( seen_open_air && here.veh_at( at ) );
-        const auto drawn = shown ? std::optional( z ) : lowest_seen;
-        if( !drawn || *drawn == p.z() ) { return std::nullopt; }
-        return p.z() - *drawn;
+        const auto drawn = shown ? z : lowest_seen.value_or( z );
+        if( drawn == p.z() ) { return std::nullopt; }
+        return p.z() - drawn;
     }
     return std::nullopt;
 }
