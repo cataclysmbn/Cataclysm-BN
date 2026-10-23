@@ -10,6 +10,7 @@
 #    include "player_activity.h"
 #    include "state_helpers.h"
 #endif
+#include "engine_client_mode.h"
 #include "input.h"
 #include "path_info.h"
 #include "replay/replay.h"
@@ -224,6 +225,26 @@ TEST_CASE("replay plays back an invoke with every argument", "[replay][input][in
     const auto played = replay::next_input_event(boundary);
     REQUIRE(played);
     CHECK(played->interaction == event.interaction);
+    replay::finish();
+}
+
+TEST_CASE("replay plays back a mode set to a named value", "[replay][input][interaction]") {
+    const auto fixture = replay_fixture{};
+    const auto boundary =
+        replay::input_boundary_metadata{.context = "DEFAULTMODE", .actions = {"UP"}};
+    const auto event = engine_client::mode_operation_event({.mode = "safe_mode", .value = "off"});
+    replay::configure_recording(fixture.path.string(), {.rng_seed = 7});
+    replay::start();
+    replay::record_input_event(event, boundary);
+    replay::finish();
+    replay::configure_playback(fixture.path.string());
+    replay::start();
+    const auto played = replay::next_input_event(boundary);
+    REQUIRE(played);
+    const auto mode = engine_client::mode_operation_of(*played);
+    REQUIRE(mode);
+    CHECK(mode->mode == "safe_mode");
+    CHECK(mode->value == "off");
     replay::finish();
 }
 
