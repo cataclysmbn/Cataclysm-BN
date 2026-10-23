@@ -212,6 +212,11 @@ class uilist_callback
             return {};
         }
 
+        /// What the last choice did, which the callback shows until the next one; published after the menu's text.
+        virtual auto notice() const -> std::string {
+            return {};
+        }
+
         /// The raw keys `key` reacts to, for clients that only send actions and choices.
         virtual std::vector<uilist_key> keys() const {
             return {};

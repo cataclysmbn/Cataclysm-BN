@@ -1194,6 +1194,10 @@ auto uilist::as_interaction() const -> game_client::interaction_snapshot
         .filterable = filtering,
         .filter = filter,
     };
+    if( const auto notice = callback != nullptr ? remove_color_tags( callback->notice() ) : std::string{};
+        !notice.empty() ) {
+        snapshot.message += ( snapshot.message.empty() ? "" : "\n" ) + notice;
+    }
     // Key rows come first, like the main menu's tabs, so they are on the first page of a long menu.
     if( callback != nullptr ) {
         for( const auto &callback_key : callback->keys() ) {

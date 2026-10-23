@@ -66,6 +66,10 @@ class wish_mutate_callback: public uilist_callback
 
         wish_mutate_callback() = default;
 
+        auto notice() const -> std::string override {
+            return msg;
+        }
+
         std::vector<uilist_key> keys() const override {
             return {
                 { .key = 't', .name = _( "Toggle the selected mutation" ) },
@@ -303,7 +307,6 @@ class wish_mutate_callback: public uilist_callback
             lastlen = line2 + 1;
 
             mvwprintz( menu->window, point( startx, menu->w_height - 3 ), c_green, msg );
-            msg.clear();
             input_context ctxt( menu->input_category );
             mvwprintw( menu->window, point( startx, menu->w_height - 2 ),
                        _( "[%s] find, [%s] quit, [t] toggle base trait, [c] mutation categories menu" ),
@@ -348,6 +351,7 @@ void debug_menu::wishmutate( Character *who )
     wmenu.callback = &cb;
     do {
         wmenu.query();
+        cb.msg.clear();
         if( wmenu.ret >= 0 ) {
             int rc = 0;
             const trait_id mstr = cb.vTraits[ wmenu.ret ];
@@ -552,6 +556,10 @@ class wish_monster_callback: public uilist_callback
             lastent = -2;
         }
 
+        auto notice() const -> std::string override {
+            return msg;
+        }
+
         std::vector<uilist_key> keys() const override {
             return {
                 { .key = 'f', .name = _( "Toggle friendly" ) },
@@ -628,7 +636,6 @@ class wish_monster_callback: public uilist_callback
             }
 
             mvwprintz( w_info, point( 0, getmaxy( w_info ) - 3 ), c_green, msg );
-            msg.clear();
             input_context ctxt( menu->input_category );
             mvwprintw( w_info, point( 0, getmaxy( w_info ) - 2 ),
                        _( "[%s] find, [f]riendly, [h]allucination, [i]ncrease group, [d]ecrease group, [%s] quit" ),
@@ -668,6 +675,7 @@ void debug_menu::wishmonster( const std::optional<tripoint_bub_ms> &p )
 
     do {
         wmenu.query();
+        cb.msg.clear();
         if( wmenu.ret >= 0 ) {
             const mtype_id &mon_type = mtypes[ wmenu.ret ]->id;
             if( std::optional<tripoint_bub_ms> spawn = p ? p : g->look_around( LA_MODE_3D ) ) {
@@ -762,6 +770,10 @@ class wish_item_callback: public uilist_callback
             }
         }
 
+        auto notice() const -> std::string override {
+            return msg;
+        }
+
         std::vector<uilist_key> keys() const override {
             return {
                 { .key = 'f', .name = _( "Choose a container" ) },
@@ -854,7 +866,6 @@ class wish_item_callback: public uilist_callback
                            _( "Select any item to spawn everything (ignores filters)." ) );
             }
             mvwprintz( menu->window, point( startx, menu->w_height - 3 ), c_green, msg );
-            msg.erase();
             input_context ctxt( menu->input_category );
             mvwprintw( menu->window, point( startx, menu->w_height - 2 ),
                        _( "[%s] find, [f] choose container, [F] flag, [E] everything, [%s] quit" ),
@@ -915,6 +926,7 @@ void debug_menu::wishitem( Character *who, const tripoint_bub_ms &pos )
     }
     do {
         wmenu.query();
+        cb.msg.clear();
         if( cb.spawn_everything && wmenu.ret != UILIST_CANCEL ) {
             wmenu.ret = opts.size() - 1;
         }
