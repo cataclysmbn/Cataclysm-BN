@@ -1331,6 +1331,46 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "world capture gives open air in sight over ground the avatar neither sees nor remembers a depth and no ground",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& here = get_map();
+    // A platform one level up over the room, ringed by open air, with a wall at ground level under
+    // its edge.
+    for (const auto y : std::views::iota(-6, 7)) {
+        for (const auto x : std::views::iota(-6, 7)) {
+            const auto platform = std::abs(x) <= 1 && std::abs(y) <= 1;
+            here.ter_set(setup.start + tripoint(x, y, 1),
+                         ter_id(platform ? "t_floor" : "t_open_air"));
+        }
+    }
+    here.ter_set(setup.start + tripoint(-2, 0, 0), ter_id("t_wall"));
+    const auto air = setup.start + tripoint(-3, 0, 1);
+    const auto hidden = air + tripoint_below;
+    step_to(setup.start + tripoint_above);
+    get_avatar().clear_map_memory();
+    REQUIRE(map_perception::visible_at(here, air));
+    REQUIRE_FALSE(map_perception::visible_at(here, hidden));
+    REQUIRE(get_avatar().get_terrain_tile(map_local_to_abs(here, hidden)).tile.empty());
+    const auto state = ec::world::capture_world();
+    const auto* through = find_cell(state, at(air));
+    REQUIRE(through != nullptr);
+    // How far down the first floor is, so that the client can fill the column; nothing of the
+    // ground itself.
+    CHECK(through->below == 1);
+    CHECK(through->known == ec::knowledge::visible);
+    CHECK(find_cell(state, at(hidden)) == nullptr);
+    // Once the avatar remembers the ground, that is drawn instead.
+    get_avatar().memorize_tile(map_local_to_abs(here, hidden), "t_floor", 0, 0);
+    const auto remembered = ec::world::capture_world();
+    REQUIRE(find_cell(remembered, at(air)) != nullptr);
+    CHECK(find_cell(remembered, at(air))->below == 1);
+    const auto* ground = find_cell(remembered, at(hidden));
+    REQUIRE(ground != nullptr);
+    CHECK(ground->known == ec::knowledge::remembered);
+}
+
+TEST_CASE(
     "world capture never gives a remembered square a live vehicle part", "[engine_client_world]") {
     const auto setup = make_scene();
     auto& here = get_map();
