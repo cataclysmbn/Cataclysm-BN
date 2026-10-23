@@ -80,6 +80,12 @@ uilist::pos_scalar &uilist::pos_scalar::operator=( const std::function<int( int 
     return *this;
 }
 
+namespace
+{
+/// The screen affordance that presses a key the callback tests itself, followed by the key's code.
+constexpr auto key_affordance_prefix = std::string_view { "bn:key:" };
+} // namespace
+
 uilist::uilist()
 {
     init();
@@ -1100,12 +1106,13 @@ void uilist::query( bool loop, int timeout )
             // A client set the filter text without opening the prompt.
             set_filter( *event.interaction->arguments->text );
         } else if( event.interaction &&
-                   event.interaction->operation == game_client::interaction_operation::choose &&
-                   event.interaction->target_id.starts_with( "action:key:" ) ) {
+                   event.interaction->operation == game_client::interaction_operation::invoke &&
+                   event.interaction->target_id.starts_with( key_affordance_prefix ) ) {
             // A client pressed a key the callback tests itself.
             auto pressed = input_event();
             pressed.type = input_event_t::keyboard;
-            pressed.sequence.push_back( std::stoi( event.interaction->target_id.substr( 11 ) ) );
+            pressed.sequence.push_back( std::stoi( event.interaction->target_id.substr(
+                    key_affordance_prefix.size() ) ) );
             if( callback != nullptr ) {
                 callback->key( ctxt, pressed, selected, this );
             }
@@ -1198,16 +1205,16 @@ auto uilist::as_interaction() const -> game_client::interaction_snapshot
         !notice.empty() ) {
         snapshot.message += ( snapshot.message.empty() ? "" : "\n" ) + notice;
     }
-    // Key rows come first, like the main menu's tabs, so they are on the first page of a long menu.
     if( callback != nullptr ) {
         for( const auto &callback_key : callback->keys() ) {
-            snapshot.choices.push_back( {
-                .id = "action:key:" + std::to_string( callback_key.key ),
+            snapshot.keys.push_back( {
+                .id = std::string{ key_affordance_prefix } + std::to_string( callback_key.key ),
                 .label = callback_key.name,
+                .keys = { inp_mngr.get_keyname( callback_key.key, input_event_t::keyboard, true ) },
             } );
         }
     }
-    snapshot.choices.reserve( snapshot.choices.size() + fentries.size() );
+    snapshot.choices.reserve( fentries.size() );
     // A row is known by its entry's own return value; entries that share one are told apart by
     // their order among them, whatever the filter shows.
     auto seen = std::map<int, int> {};

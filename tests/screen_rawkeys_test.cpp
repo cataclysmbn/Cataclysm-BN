@@ -26,12 +26,10 @@ namespace {
 
 using namespace client_screen_test;
 
-auto key_row(const int key) -> std::string { return "action:key:" + std::to_string(key); }
-
 } // namespace
 
 TEST_CASE(
-    "the technique reference opens from the technique menu through its F1 key row",
+    "the technique reference opens from the technique menu through its F1 key affordance",
     "[client][interaction][mcp][screens][rawkeys]") {
     clear_all_state();
     clear_map();
@@ -61,8 +59,8 @@ TEST_CASE(
         // The technique menu itself.
         ++menus;
         if (stage == 0) {
-            CHECK(row(snapshot, key_row(KEY_F(1))) != snapshot.choices.end());
-            return choose(snapshot, key_row(KEY_F(1)));
+            CHECK(has_key(snapshot, KEY_F(1)));
+            return press(KEY_F(1));
         }
         return cancel(snapshot);
     });
@@ -76,7 +74,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "the mutation wish menu toggles a trait and filters by category through its key rows",
+    "the mutation wish menu toggles a trait and filters by category through its key affordances",
     "[client][interaction][mcp][screens][rawkeys]") {
     clear_all_state();
     clear_map();
@@ -97,10 +95,10 @@ TEST_CASE(
         }
         switch (stage++) {
             case 0: {
-                // The menu is longer than one page and the key rows are still on the first.
+                // The menu is longer than one page and its keys are screen affordances, not rows.
                 CHECK(snapshot.choice_total > snapshot.choices.size());
-                CHECK(row(snapshot, key_row('t')) != snapshot.choices.end());
-                CHECK(row(snapshot, key_row('c')) != snapshot.choices.end());
+                CHECK(has_key(snapshot, 't'));
+                CHECK(has_key(snapshot, 'c'));
                 const auto cursor = std::ranges::
                     find(snapshot.choices, true, &game_client::interaction_choice::highlighted);
                 REQUIRE(cursor != snapshot.choices.end());
@@ -110,10 +108,10 @@ TEST_CASE(
                 REQUIRE(trait != trait_id::NULL_ID());
                 you.toggle_trait(trait);
                 REQUIRE(you.has_base_trait(trait));
-                return choose(snapshot, key_row('t'));
+                return press('t');
             }
             case 1:
-                return choose(snapshot, key_row('c'));
+                return press('c');
             default:
                 return cancel(snapshot);
         }
@@ -147,7 +145,7 @@ TEST_CASE(
                 REQUIRE(trait != trait_id::NULL_ID());
                 you.set_mutation(trait);
                 REQUIRE_FALSE(you.has_base_trait(trait));
-                return choose(snapshot, key_row('t'));
+                return press('t');
             }
             default:
                 return cancel(snapshot);
@@ -160,7 +158,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "the monster wish menu spawns a friendly monster after the friendly key row",
+    "the monster wish menu spawns a friendly monster after the friendly key affordance",
     "[client][interaction][mcp][screens][rawkeys]") {
     clear_all_state();
     clear_map();
@@ -174,9 +172,9 @@ TEST_CASE(
         REQUIRE(snapshot.structured);
         switch (stage++) {
             case 0: {
-                CHECK(row(snapshot, key_row('f')) != snapshot.choices.end());
-                CHECK(row(snapshot, key_row('h')) != snapshot.choices.end());
-                return choose(snapshot, key_row('f'));
+                CHECK(has_key(snapshot, 'f'));
+                CHECK(has_key(snapshot, 'h'));
+                return press('f');
             }
             case 1: {
                 auto index = 0;
@@ -197,7 +195,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "the item wish menu opens its container chooser through the container key row",
+    "the item wish menu opens its container chooser through the container key affordance",
     "[client][interaction][mcp][screens][rawkeys]") {
     clear_all_state();
     clear_map();
@@ -213,10 +211,10 @@ TEST_CASE(
         switch (stage++) {
             case 0: {
                 CHECK(snapshot.choice_total > snapshot.choices.size());
-                CHECK(row(snapshot, key_row('f')) != snapshot.choices.end());
-                CHECK(row(snapshot, key_row('F')) != snapshot.choices.end());
-                CHECK(row(snapshot, key_row('E')) != snapshot.choices.end());
-                return choose(snapshot, key_row('f'));
+                CHECK(has_key(snapshot, 'f'));
+                CHECK(has_key(snapshot, 'F'));
+                CHECK(has_key(snapshot, 'E'));
+                return press('f');
             }
             case 1:
                 return cancel(snapshot);
@@ -232,7 +230,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "the reload picker lowers the amount to load through its left key row",
+    "the reload picker lowers the amount to load through its left key affordance",
     "[client][interaction][mcp][screens][rawkeys]") {
     clear_all_state();
     clear_map();
@@ -250,10 +248,10 @@ TEST_CASE(
         REQUIRE(snapshot.structured);
         switch (stage++) {
             case 0: {
-                CHECK(row(snapshot, key_row(KEY_LEFT)) != snapshot.choices.end());
-                CHECK(row(snapshot, key_row(KEY_RIGHT)) != snapshot.choices.end());
+                CHECK(has_key(snapshot, KEY_LEFT));
+                CHECK(has_key(snapshot, KEY_RIGHT));
                 before = row(snapshot, "entry:0")->label;
-                return choose(snapshot, key_row(KEY_LEFT));
+                return press(KEY_LEFT);
             }
             default:
                 CHECK(row(snapshot, "entry:0")->label != before);

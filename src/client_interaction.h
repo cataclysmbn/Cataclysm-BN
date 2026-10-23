@@ -284,6 +284,13 @@ struct interaction_group_page {
     std::size_t offset = 0;
 };
 
+/// A key the screen's own handler tests, which a client presses by invoking the `id` affordance.
+struct interaction_key {
+    std::string id;
+    std::string label;
+    std::vector<std::string> keys;
+};
+
 /// Pure data describing the interaction currently waiting at an input boundary.
 struct interaction_snapshot {
     std::uint64_t input_id = 0;
@@ -302,6 +309,8 @@ struct interaction_snapshot {
     std::vector<interaction_pane> panes;
     std::vector<interaction_area> areas;
     std::vector<interaction_choice> choices;
+    /// The keys the screen's handler tests besides its actions; they are screen buttons, never rows.
+    std::vector<interaction_key> keys;
     std::optional<interaction_field> field;
     std::optional<interaction_target> target;
     /// Nonzero where the engine redraws the screen on its own every this many milliseconds, with no input.

@@ -91,6 +91,25 @@ inline auto row(const snapshot_t& snapshot, const std::string& id) {
     return std::ranges::find(snapshot.choices, id, &game_client::interaction_choice::id);
 }
 
+/// The affordance that presses `key` on a uilist whose callback tests it.
+inline auto key_id(const int key) -> std::string { return "bn:key:" + std::to_string(key); }
+
+inline auto has_key(const snapshot_t& snapshot, const int key) -> bool {
+    return std::ranges::contains(snapshot.keys, key_id(key), &game_client::interaction_key::id);
+}
+
+/// The invoke of the affordance that presses `key`, as a client sends it.
+inline auto press(const int key) -> input_event {
+    auto event = input_event{};
+    event.type = input_event_t::interaction;
+    event.interaction = game_client::interaction_event{
+        .operation = game_client::interaction_operation::invoke,
+        .target_id = key_id(key),
+        .arguments = game_client::interaction_arguments{},
+    };
+    return event;
+}
+
 inline auto rows_with(const snapshot_t& snapshot, const std::string& prefix)
     -> std::vector<std::string> {
     auto ids = std::vector<std::string>{};

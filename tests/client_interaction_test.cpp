@@ -3965,29 +3965,23 @@ TEST_CASE(
 
     // edit menu -> "add effect" key -> effect list -> "change body part" key -> body part list
     auto observed = std::vector<game_client::interaction_snapshot>{};
-    const auto find_key = [](const game_client::interaction_snapshot& snapshot, const int key) {
-        return std::ranges::
-            find(snapshot.choices, "action:key:" + std::to_string(key),
-                 &game_client::interaction_choice::id);
+    const auto has_key = [](const game_client::interaction_snapshot& snapshot, const int key) {
+        return std::ranges::contains(
+            snapshot.keys, "bn:key:" + std::to_string(key), &game_client::interaction_key::id);
     };
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
         observed.push_back(game_client::current_interaction({.limit = 1000}));
         const auto& snapshot = observed.back();
+        const auto press = [&](const int key) {
+            return invoke_event("bn:key:" + std::to_string(key));
+        };
+        if (observed.size() == 1 && has_key(snapshot, 'a')) { return press('a'); }
+        if (observed.size() == 2 && has_key(snapshot, 'b')) { return press('b'); }
         auto command = game_client::interaction_command{
             .input_id = snapshot.input_id,
             .operation = game_client::interaction_operation::cancel,
         };
-        const auto press = [&](const int key) {
-            if (find_key(snapshot, key) != snapshot.choices.end()) {
-                command.operation = game_client::interaction_operation::choose;
-                command.target_id = "action:key:" + std::to_string(key);
-            }
-        };
-        if (observed.size() == 1) {
-            press('a');
-        } else if (observed.size() == 2) {
-            press('b');
-        } else if (observed.size() == 3) {
+        if (observed.size() == 3) {
             command.operation = game_client::interaction_operation::choose;
             command.target_id = "entry:1";
         }
@@ -4005,9 +3999,7 @@ TEST_CASE(
     CHECK(row.description.find("Duration") != std::string::npos);
     CHECK(row.description.find("Permanent") != std::string::npos);
     // the effect list's own handled actions are offered to the client
-    for (const auto key : {'b', 'i', 'd', 'o'}) {
-        CHECK(find_key(list, key) != list.choices.end());
-    }
+    for (const auto key : {'b', 'i', 'd', 'o'}) { CHECK(has_key(list, key)); }
     // picking a body part through the client changes the panel of the redrawn list
     CHECK(selected_entry(observed[3]).description.find(body_part->name.translated())
           != std::string::npos);

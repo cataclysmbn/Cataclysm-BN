@@ -170,8 +170,12 @@ TEST_CASE(
                 CHECK_FALSE(column_of(pew, "range").empty());
                 CHECK(pew.description.find("Casting Time") != std::string::npos);
                 CHECK_FALSE(pew.favorite);
-                CHECK(std::ranges::any_of(rows(screen), [](const auto& row) {
-                    return row.label == "Assign spell hotkey" && row.id.starts_with("action:key:");
+                CHECK(std::ranges::none_of(rows(screen), [](const auto& row) {
+                    return row.id.starts_with("action:key:") || row.id.starts_with("bn:key:");
+                }));
+                CHECK(std::ranges::any_of(screen.affordances, [](const auto& offered) {
+                    return offered.label == "Assign spell hotkey"
+                        && offered.id.starts_with("bn:key:");
                 }));
                 // A row is named by what it is: its place in the list names nothing.
                 CHECK(

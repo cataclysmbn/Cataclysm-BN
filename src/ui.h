@@ -182,7 +182,7 @@ class uilist;
 * @{
 */
 /// A key a callback tests on its own, outside the input context's actions. The menu publishes it as an
-/// `action:key:<code>` row so a client can press it, and runs the callback's key handler with that key.
+/// `bn:key:<code>` screen affordance so a client can press it, and runs the callback's key handler with that key.
 struct uilist_key {
     int key;
     std::string name;

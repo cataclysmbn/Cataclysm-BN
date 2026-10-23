@@ -178,6 +178,10 @@ auto native_affordances( build &b ) -> void
                  .keys = found ? quit->keys : std::vector<std::string> {}, .role = "cancel",
                  .runs = invoke_kind::cancel, .covers = found ? quit->id : std::string{} } );
     }
+    // The keys the screen's handler tests itself are buttons of the screen, never rows of its list.
+    for( const auto &key : native.keys ) {
+        b.add( { .id = key.id, .label = key.label, .keys = key.keys, .runs = invoke_kind::screen } );
+    }
     if( !native.any_key_choice_id.empty() ) {
         // The screen's own word: the row any key acknowledges.
         const auto acknowledged = std::ranges::find( native.choices, native.any_key_choice_id,
