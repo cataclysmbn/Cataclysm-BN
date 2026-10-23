@@ -45,6 +45,9 @@ auto mint_serial() -> std::uint64_t
 /// Generated affordance ids hold a `:`, which no registered action id does.
 auto choose_id( const std::string &component_id ) -> std::string { return "bn:choose:" + component_id; }
 
+/// The affordance that sets a list's filter text.
+auto filter_id( const std::string &component_id ) -> std::string { return "bn:filter:" + component_id; }
+
 /// A list's `select` affordance only moves the cursor; the affordance that runs the row has this prefix
 /// before the select's id, which `invoked` takes off again.
 constexpr auto activate_prefix = std::string_view { "bn:activate:" };
@@ -108,6 +111,10 @@ auto make_list( build &b ) -> std::optional<component>
     if( native.filterable &&
         std::ranges::find( b.state.actions, filter_action, &action::id ) != b.state.actions.end() ) {
         result.affordances.push_back( filter_action );
+        // Setting the text runs on the list's screen and opens no prompt; an empty text clears the filter.
+        result.affordances.push_back( b.add( { .id = filter_id( id ), .label = native_label( b.state, { filter_action } ),
+                                               .args = { .text = text_shape{} }, .runs = invoke_kind::screen } ) );
+        std::get<list_body>( result.body ).filter = native.filter;
     }
     if( std::get<list_body>( result.body ).selection != "none" ) {
         auto &body = std::get<list_body>( result.body );

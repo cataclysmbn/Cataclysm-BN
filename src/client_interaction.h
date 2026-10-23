@@ -318,6 +318,8 @@ struct interaction_snapshot {
     std::map<std::string, interaction_group_page> groups;
     /// The list takes a filter text (its screen's FILTER action).
     bool filterable = false;
+    /// The filter text the list holds; empty when it shows every row.
+    std::string filter;
 };
 
 struct interaction_page {

@@ -1091,6 +1091,11 @@ void uilist::query( bool loop, int timeout )
         if( event.interaction &&
             event.interaction->operation == game_client::interaction_operation::cancel ) {
             ret = UILIST_CANCEL;
+        } else if( event.interaction && filtering &&
+                   event.interaction->operation == game_client::interaction_operation::invoke &&
+                   event.interaction->arguments && event.interaction->arguments->text ) {
+            // A client set the filter text without opening the prompt.
+            set_filter( *event.interaction->arguments->text );
         } else if( event.interaction &&
                    event.interaction->operation == game_client::interaction_operation::choose &&
                    event.interaction->target_id.starts_with( "action:key:" ) ) {
@@ -1184,6 +1189,7 @@ auto uilist::as_interaction() const -> game_client::interaction_snapshot
         .message = remove_color_tags( text ),
         .allow_cancel = allow_cancel,
         .filterable = filtering,
+        .filter = filter,
     };
     // Key rows come first, like the main menu's tabs, so they are on the first page of a long menu.
     if( callback != nullptr ) {

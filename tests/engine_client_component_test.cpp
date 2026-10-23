@@ -854,6 +854,19 @@ TEST_CASE("a list says whether it can be filtered", "[engine_client_component]")
     CHECK(affordance(view, "FILTER").label == "Filter");
     CHECK(wire(state)["stack"].back()["root"]["filterable"] == true);
 
+    SECTION("a filterable list takes the filter text on its own screen and says what it holds") {
+        native.filter = "tele";
+        const auto typed = top_of([&] {
+            auto filtered = boundary(native);
+            filtered.actions.push_back({.id = "FILTER", .name = "Filter", .keys = {"/"}});
+            return filtered;
+        }());
+        const auto& set = affordance(typed, "bn:filter:list:choices");
+        CHECK(set.runs == ec::invoke_kind::screen);
+        CHECK(set.args.text.has_value());
+        CHECK(std::ranges::contains(find(typed, "list:choices").affordances, set.id));
+        CHECK(body<ec::list_body>(find(typed, "list:choices")).filter == "tele");
+    }
     SECTION("a list that cannot be filtered offers no filter") {
         auto plain = boundary(menu());
         plain.actions.push_back({.id = "FILTER", .name = "Filter", .keys = {"/"}});

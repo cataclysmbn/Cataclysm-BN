@@ -137,6 +137,8 @@ struct list_body {
     std::string activate = {};
     /// The list takes a filter text; its filter affordance is among the component's.
     bool filterable = false;
+    /// The filter text the list holds; empty when it shows every row.
+    std::string filter = {};
 };
 struct tab_entry {
     std::string id = {};

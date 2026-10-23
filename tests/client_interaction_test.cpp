@@ -4662,7 +4662,7 @@ auto list_filter_of(const nlohmann::json& screen) -> std::string {
 
 auto offers_filter_text(const nlohmann::json& screen) -> bool {
     return std::ranges::any_of(screen.at("affordances"), [](const nlohmann::json& offered) {
-        return offered.at("id") == "list:filter" && offered.contains("args")
+        return offered.at("id") == "bn:filter:list:choices" && offered.contains("args")
             && offered.at("args").contains("text");
     });
 }
@@ -4688,9 +4688,9 @@ TEST_CASE(
         offered = offered && offers_filter_text(screen);
         switch (labels.size()) {
             case 1:
-                return invoke_event("list:filter", {.text = "tele"});
+                return invoke_event("bn:filter:list:choices", {.text = "tele"});
             case 2:
-                return invoke_event("list:filter", {.text = ""});
+                return invoke_event("bn:filter:list:choices", {.text = ""});
             default:
                 return resolve({
                     .input_id = snapshot.input_id,
@@ -4724,7 +4724,7 @@ TEST_CASE("semantic replay repeats a uilist filter invoke", "[client][interactio
 
     auto reads = 0;
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        if (reads++ == 0) { return invoke_event("list:filter", {.text = "tele"}); }
+        if (reads++ == 0) { return invoke_event("bn:filter:list:choices", {.text = "tele"}); }
         return resolve({
             .input_id = game_client::current_interaction().input_id,
             .operation = game_client::interaction_operation::cancel,

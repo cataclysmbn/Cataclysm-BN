@@ -605,6 +605,7 @@ auto body_json( const list_body &body, const bubble_frame & /*frame*/ ) -> json
     result["selection"] = body.selection;
     if( !body.activate.empty() ) { result["activate"] = body.activate; }
     if( body.filterable ) { result["filterable"] = true; }
+    if( !body.filter.empty() ) { result["filter"] = body.filter; }
     return result;
 }
 auto body_json( const tabs_body &body, const bubble_frame & /*frame*/ ) -> json
