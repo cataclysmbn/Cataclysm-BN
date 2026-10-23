@@ -22,6 +22,7 @@ auto to_json( const cell &value ) -> json;
 auto to_json( const entity &value ) -> json;
 auto to_json( const avatar_stat &value ) -> json;
 auto to_json( const inventory_entry &value ) -> json;
+auto to_json( const mode_value &value ) -> json;
 auto to_json( const sidebar_text &value ) -> json;
 auto to_json( const sidebar_limb &value ) -> json;
 auto to_json( const sidebar_layout &value ) -> json;
@@ -184,6 +185,12 @@ auto to_json( const inventory_entry &value ) -> json
     }
     return result;
 }
+auto to_json( const mode_value &value ) -> json
+{
+    auto choices = json::array();
+    for( const auto &choice : value.values ) { choices.push_back( {{"id", choice.id}, {"label", choice.label}} ); }
+    return {{"id", value.id}, {"label", value.label}, {"value", value.value}, {"values", std::move( choices )}};
+}
 auto to_json( const sidebar_text &value ) -> json
 {
     auto result = json{};
@@ -261,6 +268,7 @@ auto to_json( const avatar_value &value ) -> json
     if( !value.traits.empty() ) { result["traits"] = value.traits; }
     if( !value.inventory.empty() ) { result["inventory"] = to_array( value.inventory ); }
     if( !value.compass.empty() ) { result["compass"] = to_array( value.compass ); }
+    if( !value.modes.empty() ) { result["modes"] = to_array( value.modes ); }
     if( !value.ground.empty() ) { result["ground"] = to_array( value.ground ); }
     if( value.activity ) {
         result["activity"] = {{"id", value.activity->id}, {"name", value.activity->name}};

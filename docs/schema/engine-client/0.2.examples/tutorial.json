@@ -5355,7 +5355,8 @@
             },
             "keep": [
               "look",
-              "overlays"
+              "overlays",
+              "modes"
             ]
           },
           "interaction": {

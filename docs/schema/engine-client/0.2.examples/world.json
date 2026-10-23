@@ -1104,6 +1104,25 @@
           "z": 0
         },
         "name": "Ada",
+        "modes": [
+          {
+            "id": "safe_mode",
+            "label": "Safe mode",
+            "value": "on",
+            "values": [{ "id": "on", "label": "On" }, { "id": "off", "label": "Off" }]
+          },
+          {
+            "id": "move_mode",
+            "label": "Movement mode",
+            "value": "walk",
+            "values": [
+              { "id": "walk", "label": "Walk" },
+              { "id": "run", "label": "Run" },
+              { "id": "crouch", "label": "Crouch" },
+              { "id": "prone", "label": "Prone" }
+            ]
+          }
+        ],
         "stats": [
           {
             "id": "strength",

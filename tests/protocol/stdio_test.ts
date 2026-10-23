@@ -509,6 +509,22 @@ Deno.test({
 
       // Waypoint travel: the first click publishes the engine's own route, the second walks it.
       await session.acknowledge(() => session.mirror.interaction.interaction === null)
+
+      // A mode is set to the named value however often the command is sent, without reading it first.
+      const modeValue = (id: string) =>
+        session.mirror.avatar.modes.find((mode: Value) => mode.id === id)?.value
+      for (const value of ["off", "off", "on", "on"]) {
+        const set = await session.submit({ kind: "set_mode", mode: "safe_mode", value })
+        assertEquals(set.stages.at(-1), "completed")
+        assertEquals(modeValue("safe_mode"), value)
+      }
+      const unknownValue = await session.submit({
+        kind: "set_mode",
+        mode: "safe_mode",
+        value: "maybe",
+      })
+      assertEquals(unknownValue.stages.at(-1), "rejected")
+      assertEquals(modeValue("safe_mode"), "on")
       const here = session.mirror.avatar.at
       const reach = (pos: Value) => Math.max(Math.abs(pos.x - here.x), Math.abs(pos.y - here.y))
       const open = (entry: Value) =>

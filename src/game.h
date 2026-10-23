@@ -1133,6 +1133,7 @@ class game : public submap_load_listener
                 using IRLTimeMs = std::chrono::time_point<std::chrono::system_clock, std::chrono::milliseconds>;
                 void toggle();
                 void print_time();
+                auto is_enabled() const -> bool { return enabled; }
             private:
                 bool enabled = false;
                 std::optional<IRLTimeMs> start_time = std::nullopt;
@@ -1212,6 +1213,8 @@ class game : public submap_load_listener
         bool display_overlay_state( action_id );
         // toggles the timing of in-game hours
         void toggle_debug_hour_timer();
+        auto debug_hour_timer_enabled() const -> bool { return debug_hour_timer.is_enabled(); }
+        auto reset_safe_mode_warning() -> void { safe_mode_warning_logged = false; }
         /** Creature for which to display the visibility map */
         Creature *displaying_visibility_creature;
         /** Type of lighting condition overlay to display */

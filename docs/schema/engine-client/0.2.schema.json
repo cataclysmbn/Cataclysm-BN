@@ -962,6 +962,13 @@
         "sidebar": {
           "$ref": "#/$defs/sidebar"
         },
+        "modes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/mode"
+          },
+          "description": "The settings `set_mode` sets, each with the value it holds now."
+        },
         "activity": {
           "$ref": "#/$defs/activity"
         },
@@ -1061,6 +1068,13 @@
         "sidebar": {
           "$ref": "#/$defs/sidebar"
         },
+        "modes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/mode"
+          },
+          "description": "The settings `set_mode` sets, each with the value it holds now."
+        },
         "activity": {
           "$ref": "#/$defs/activity"
         },
@@ -1101,6 +1115,7 @@
               "stats",
               "inventory",
               "sidebar",
+              "modes",
               "compass",
               "ground"
             ]
@@ -6028,6 +6043,29 @@
           "description": "Takes a described action on a map square, as its native action does. An action the square does not offer now is `validation_failed`."
         },
         {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "set_mode"
+            },
+            "mode": {
+              "$ref": "#/$defs/opaque_id",
+              "description": "The `id` of a mode of `avatar.modes`."
+            },
+            "value": {
+              "$ref": "#/$defs/opaque_id",
+              "description": "The `id` of one of that mode's `values`."
+            }
+          },
+          "required": [
+            "kind",
+            "mode",
+            "value"
+          ],
+          "additionalProperties": false,
+          "description": "Sets a mode to the named value, as its native key does when it lands there, and does nothing when the mode holds it. An unknown mode or value is `validation_failed`."
+        },
+        {
           "$ref": "#/$defs/invoke"
         }
       ]
@@ -7079,6 +7117,48 @@
       ],
       "additionalProperties": false,
       "description": "A button of the map's shortcut bar. The list is data (`client_shortcut` in the game's JSON), so mods add buttons; it keeps its order and is published whether or not the map is on top, so a client can leave the bar in place under a menu."
+    },
+    "mode": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "label": {
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/opaque_id",
+          "description": "The `id` of the value it holds now."
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/opaque_id"
+              },
+              "label": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "label"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "value",
+        "values"
+      ],
+      "additionalProperties": false,
+      "description": "A setting that native keys toggle or cycle, with the values it takes. Set it with the `set_mode` operation."
     },
     "tile_action": {
       "type": "object",

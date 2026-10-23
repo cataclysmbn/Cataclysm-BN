@@ -485,6 +485,7 @@ std::expected<game_client::input_command, error>
         native = *travel_click( *travel );
     } else if( std::holds_alternative<item_operation>( input_->operation ) ||
                std::holds_alternative<tile_operation>( input_->operation ) ||
+               std::holds_alternative<mode_operation>( input_->operation ) ||
                std::holds_alternative<invoke_operation>( input_->operation ) ) {
         // The native input only wakes the read; the validated event takes its place at the delivery seam.
         native = item_operation_input();

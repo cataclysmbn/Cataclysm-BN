@@ -140,6 +140,10 @@ auto read_operation( const json &value ) -> command_operation
         members( value, {"kind", "action_id", "pos"} );
         return tile_operation{ .action_id = id( value, "action_id" ), .target = read_position( value.at( "pos" ) ) };
     }
+    if( kind == "set_mode" ) {
+        members( value, {"kind", "mode", "value"} );
+        return mode_operation{ .mode = id( value, "mode" ), .value = id( value, "value" ) };
+    }
     if( kind == "pickup" || kind == "drop" ) {
         members( value, {"kind", "item_id", "count"} );
         return item_operation{ .drop = kind == "drop", .item_id = id( value, "item_id" ),

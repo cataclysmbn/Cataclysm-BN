@@ -163,6 +163,7 @@ auto kept_members( const avatar_value &before,
     keep( "inventory", before.inventory == after.inventory, after.inventory.empty() );
     keep( "sidebar", before.sidebar == after.sidebar, false );
     keep( "compass", before.compass == after.compass, after.compass.empty() );
+    keep( "modes", before.modes == after.modes, after.modes.empty() );
     keep( "ground", before.ground == after.ground, after.ground.empty() );
     return kept;
 }

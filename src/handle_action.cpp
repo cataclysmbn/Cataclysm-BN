@@ -2008,6 +2008,21 @@ bool game::handle_action()
         return true;
     }
 
+    // A mode a client set to a named value, as the native key does when it lands on that value.
+    if( const auto mode = engine_client::mode_operation_of( ctxt.get_raw_input() );
+        mode && !u.is_dead_state() ) {
+        user_action_counter += 1;
+        u.clear_destination();
+        destination_preview.clear();
+        // The session checked the mode and the value as it took the command, so a miss is a replay that diverged.
+        if( !engine_client::run_mode_operation( *mode ) ) {
+            throw std::runtime_error( "Mode operation rejected: " + mode->mode + " cannot be set to " +
+                                      mode->value );
+        }
+        u.mod_moves( -current_turn.moves_elapsed() );
+        return true;
+    }
+
     // An action a client chose from the context menu of a map square, as the native action on that square.
     if( const auto tile = engine_client::tile_operation_of( ctxt.get_raw_input() );
         tile && !u.is_dead_state() ) {

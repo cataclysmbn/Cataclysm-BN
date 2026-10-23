@@ -15,6 +15,7 @@ import { info } from "./info.ts"
 import { inventory } from "./inventory.ts"
 import { look } from "./look.ts"
 import { map } from "./map.ts"
+import { modes } from "./modes.ts"
 import { newgame } from "./newgame.ts"
 import { overmap } from "./overmap.ts"
 import { npctalk } from "./npctalk.ts"
@@ -36,6 +37,7 @@ export const scenarios: Scenario[] = [
   aim,
   inventory,
   pickup,
+  modes,
   title,
   crafting,
   construction,

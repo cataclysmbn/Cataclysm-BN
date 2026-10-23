@@ -70,6 +70,9 @@ auto validate_shape( const command_request &request ) -> bool
             return valid_id( item->item_id ) && item->count > 0 && item->count <= maximum_safe_integer;
         }
         if( const auto tile = std::get_if<tile_operation>( &request.operation ) ) { return valid_id( tile->action_id ); }
+        if( const auto mode = std::get_if<mode_operation>( &request.operation ) ) {
+            return valid_id( mode->mode ) && valid_id( mode->value );
+        }
         const auto action = std::get_if<registered_action>( &request.operation );
         return action == nullptr || valid_id( action->id );
     }
@@ -853,6 +856,14 @@ auto command_lifecycle::validate( const clock_point &at, const boundary_state &c
             return reject( error::validation_failed, _( "That cannot be done on this square now." ) );
         }
         resolved = *event;
+    } else if( const auto mode = std::get_if<mode_operation>( &operation ) ) {
+        if( !permissions.accepts_registered_actions ||
+            game_client::active_input_context().category != "DEFAULTMODE" ||
+            get_avatar().is_dead_state() ) { return reject( error::not_ready ); }
+        if( const auto checked = mode_operation_check( *mode ); !checked ) {
+            return reject( error::validation_failed, checked.error() );
+        }
+        resolved = mode_operation_event( *mode );
     } else if( const auto screen = std::get_if<invoke_operation>( &operation ) ) {
         // An affordance the screen runs itself reaches its loop as a recorded input.
         if( !permissions.accepts_interaction_commands ) { return reject( error::not_ready ); }

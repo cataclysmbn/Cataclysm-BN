@@ -25,6 +25,7 @@
 #include "bionics.h"
 #include "effect.h"
 #include "engine_client_event.h"
+#include "engine_client_mode.h"
 #include "enum_conversions.h"
 #include "item.h"
 #include "item_serial.h"
@@ -1023,7 +1024,7 @@ auto capture_avatar( map &here, const avatar &you,
             { "moves", _( "Moves" ), std::to_string( you.get_moves() ) },
             { "pain", _( "Pain" ), std::to_string( you.get_pain() ) }
         },
-        .sidebar = sidebar_snapshot( you ), .compass = capture_compass( you ),
+        .sidebar = sidebar_snapshot( you ), .compass = capture_compass( you ), .modes = engine_modes(),
         .activity = capture_activity( you ) };
     const auto stacks = item_stacks( here, you );
     result.inventory = stacks.inventory | std::views::transform( &item_stack::row ) |

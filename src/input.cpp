@@ -950,7 +950,8 @@ const std::string &input_context::handle_input( const int timeout )
         }
         // The map view carries out a client's pickup, drop or square action itself (game::handle_action); it has no widget.
         if( category == "DEFAULTMODE" && ( engine_client::item_operation_of( next_action ) ||
-                                           engine_client::tile_operation_of( next_action ) ) ) {
+                                           engine_client::tile_operation_of( next_action ) ||
+                                           engine_client::mode_operation_of( next_action ) ) ) {
             result = &ANY_INPUT;
             break;
         }

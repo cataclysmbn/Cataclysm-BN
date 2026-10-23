@@ -1,0 +1,276 @@
+{
+  "valid": [
+    {
+      "name": "safe mode of the avatar",
+      "def": "mode",
+      "value": {
+        "id": "safe_mode",
+        "label": "Safe mode",
+        "value": "on",
+        "values": [
+          {
+            "id": "on",
+            "label": "On"
+          },
+          {
+            "id": "off",
+            "label": "Off"
+          }
+        ]
+      }
+    },
+    {
+      "name": "mode of an option with several values",
+      "def": "mode",
+      "value": {
+        "id": "auto_pulp_butcher",
+        "label": "Auto pulp or butcher",
+        "value": "off",
+        "values": [
+          {
+            "id": "off",
+            "label": "Disabled"
+          },
+          {
+            "id": "pulp",
+            "label": "Pulp"
+          },
+          {
+            "id": "pulp_adjacent",
+            "label": "Pulp Adjacent"
+          },
+          {
+            "id": "butcher",
+            "label": "Butcher"
+          }
+        ]
+      }
+    },
+    {
+      "name": "safe mode set off, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "revision": "7",
+          "boundary_id": "boundary:1",
+          "schema_id": null
+        },
+        "operation": {
+          "kind": "set_mode",
+          "mode": "safe_mode",
+          "value": "off"
+        }
+      }
+    },
+    {
+      "name": "safe mode set off, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "received",
+        "stage_text": "Received."
+      }
+    },
+    {
+      "name": "safe mode set off, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "validated",
+        "stage_text": "Accepted."
+      }
+    },
+    {
+      "name": "safe mode set off, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "executing",
+        "stage_text": "Under way."
+      }
+    },
+    {
+      "name": "safe mode set off, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "completed",
+        "stage_text": "Done.",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "15",
+          "revision": "8"
+        }
+      }
+    },
+    {
+      "name": "safe mode set off again, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "revision": "8",
+          "boundary_id": "boundary:2",
+          "schema_id": null
+        },
+        "operation": {
+          "kind": "set_mode",
+          "mode": "safe_mode",
+          "value": "off"
+        }
+      }
+    },
+    {
+      "name": "safe mode set off again, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "received",
+        "stage_text": "Received."
+      }
+    },
+    {
+      "name": "safe mode set off again, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "validated",
+        "stage_text": "Accepted."
+      }
+    },
+    {
+      "name": "safe mode set off again, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "executing",
+        "stage_text": "Under way."
+      }
+    },
+    {
+      "name": "safe mode set off again, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "completed",
+        "stage_text": "Done.",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "16",
+          "revision": "9"
+        }
+      }
+    },
+    {
+      "name": "safe mode set on, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "revision": "9",
+          "boundary_id": "boundary:3",
+          "schema_id": null
+        },
+        "operation": {
+          "kind": "set_mode",
+          "mode": "safe_mode",
+          "value": "on"
+        }
+      }
+    },
+    {
+      "name": "safe mode set on, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "received",
+        "stage_text": "Received."
+      }
+    },
+    {
+      "name": "safe mode set on, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "validated",
+        "stage_text": "Accepted."
+      }
+    },
+    {
+      "name": "safe mode set on, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "executing",
+        "stage_text": "Under way."
+      }
+    },
+    {
+      "name": "safe mode set on, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "completed",
+        "stage_text": "Done.",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "18",
+          "revision": "10"
+        }
+      }
+    },
+    {
+      "name": "mode set to a value it does not take, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "revision": "10",
+          "boundary_id": "boundary:4",
+          "schema_id": null
+        },
+        "operation": {
+          "kind": "set_mode",
+          "mode": "safe_mode",
+          "value": "maybe"
+        }
+      }
+    },
+    {
+      "name": "mode set to a value it does not take, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "received",
+        "stage_text": "Received."
+      }
+    },
+    {
+      "name": "mode set to a value it does not take, rejected",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "rejected",
+        "stage_text": "Refused.",
+        "error": "validation_failed",
+        "error_text": "That mode has no such value."
+      }
+    }
+  ],
+  "invalid": []
+}

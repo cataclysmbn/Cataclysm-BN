@@ -2,6 +2,7 @@
 
 #include "client_command.h"
 #include "client_interaction.h"
+#include "engine_client_mode.h"
 #include "engine_client_state.h"
 #include "engine_client_world.h"
 #include "tile_parts.h"
@@ -264,7 +265,7 @@ struct expectation {
 enum class expect_scope { screen, boundary };
 auto scope_name( expect_scope scope ) -> std::string;
 using command_operation = std::variant<semantic_operation, registered_action, travel_operation,
-      item_operation, tile_operation, invoke_operation>;
+      item_operation, tile_operation, mode_operation, invoke_operation>;
 struct command_request {
     std::string epoch = {};
     expectation expect = {};

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "engine_client_mode.h"
+
 #include <compare>
 #include <cstdint>
 #include <map>
@@ -343,6 +345,8 @@ struct avatar_value {
     /// The creatures the native compass panel lists, by the direction of their horizontal offset from the avatar
     /// (`center` for the avatar's own column), clockwise from north and `center` last; directions with none are absent.
     std::vector<compass_direction> compass = {};
+    /// The modes `set_mode` sets, with their values now.
+    std::vector<mode_value> modes = {};
     /// The stacks on the avatar's own square, which a pickup chooses from.
     std::vector<inventory_entry> ground = {};
     std::optional<activity_value> activity = std::nullopt;
