@@ -6226,7 +6226,11 @@
         },
         "filterable": {
           "type": "boolean",
-          "description": "The list takes a filter text: invoking the filter affordance among `affordances` opens a prompt whose text narrows `rows`. Absent: it does not."
+          "description": "The list takes a filter text: invoking the `FILTER` affordance among `affordances` opens a prompt whose text narrows `rows`, and invoking the affordance with a `text` argument sets the text directly, an empty text clearing it. Absent: it does not."
+        },
+        "filter": {
+          "type": "string",
+          "description": "The filter text the list holds. Absent: it holds none."
         }
       },
       "required": [

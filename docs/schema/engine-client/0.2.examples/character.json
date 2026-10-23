@@ -4063,6 +4063,7 @@
           "kind": "list",
           "affordances": [
             "FILTER",
+            "bn:filter:list:choices",
             "bn:choose:list:choices"
           ],
           "columns": [
@@ -4903,6 +4904,16 @@
         },
         "affordances": [
           {
+            "id": "bn:filter:list:choices",
+            "label": "Filter spells",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
             "id": "bn:choose:list:choices",
             "label": "Confirm Choice",
             "keys": [],
@@ -5182,6 +5193,7 @@
           "kind": "list",
           "affordances": [
             "FILTER",
+            "bn:filter:list:choices",
             "bn:choose:list:choices"
           ],
           "columns": [
@@ -6022,6 +6034,16 @@
           "filterable": true
         },
         "affordances": [
+          {
+            "id": "bn:filter:list:choices",
+            "label": "Filter spells",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {}
+            },
+            "expect": "boundary"
+          },
           {
             "id": "bn:choose:list:choices",
             "label": "Confirm Choice",

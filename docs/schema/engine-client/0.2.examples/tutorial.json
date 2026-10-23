@@ -7279,6 +7279,7 @@
                   "kind": "list",
                   "affordances": [
                     "FILTER",
+                    "bn:filter:list:choices",
                     "bn:choose:list:choices"
                   ],
                   "columns": [],
@@ -7435,6 +7436,16 @@
               ]
             },
             "affordances": [
+              {
+                "id": "bn:filter:list:choices",
+                "label": "Filter",
+                "keys": [],
+                "enabled": true,
+                "args": {
+                  "text": {}
+                },
+                "expect": "boundary"
+              },
               {
                 "id": "bn:choose:list:choices",
                 "label": "Confirm Choice",
@@ -7601,6 +7612,7 @@
               "kind": "list",
               "affordances": [
                 "FILTER",
+                "bn:filter:list:choices",
                 "bn:choose:list:choices"
               ],
               "columns": [],
@@ -7757,6 +7769,16 @@
           ]
         },
         "affordances": [
+          {
+            "id": "bn:filter:list:choices",
+            "label": "Filter",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {}
+            },
+            "expect": "boundary"
+          },
           {
             "id": "bn:choose:list:choices",
             "label": "Confirm Choice",
