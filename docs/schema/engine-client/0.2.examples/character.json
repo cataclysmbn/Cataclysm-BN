@@ -4090,36 +4090,6 @@
           ],
           "rows": [
             {
-              "id": "action:key:42",
-              "label": "Toggle favorite",
-              "description": "",
-              "denial": "",
-              "enabled": true,
-              "selectable": true,
-              "selected": false,
-              "columns": []
-            },
-            {
-              "id": "action:key:73",
-              "label": "Toggle casting distractions",
-              "description": "",
-              "denial": "",
-              "enabled": true,
-              "selectable": true,
-              "selected": false,
-              "columns": []
-            },
-            {
-              "id": "action:key:61",
-              "label": "Assign spell hotkey",
-              "description": "",
-              "denial": "",
-              "enabled": true,
-              "selectable": true,
-              "selected": false,
-              "columns": []
-            },
-            {
               "id": "spell:poison",
               "label": "Poison",
               "description": "<color_yellow>Classless</color>\n<color_light_gray>Poisons the target.</color>\n<color_light_gray>does not require hands and can be cast through walls</color>\n<color_light_gray>Blocker mutations: None</color>\n<color_light_gray>Skill: spellcraft</color>\n<color_light_gray>Spell Level: 0 (MAX)</color>\n<color_light_gray>Max Level: 0</color>\n<color_light_gray><color_c_magenta>Too Difficult!</color></color>\n<color_light_gray>Difficulty: 0</color>\n<color_light_gray>Current Exp: <color_c_light_green>0</color></color>\n<color_light_gray>to Next Level: <color_c_light_green>4881</color></color>\n\n<color_light_gray>Casting Cost: none  (infinite current)</color>\n<color_light_gray><color_c_light_gray>Casting Time: 0 moves</color></color>\n\n<color_light_gray>Valid Targets: hostile</color>\n<color_light_gray></color>\n<color_light_gray></color>\n<color_light_gray>Range: 2</color>\n<color_light_gray>Duration: 2 minutes and 30 seconds - 5 minutes</color>\n",
@@ -4895,9 +4865,46 @@
                   "value": "self"
                 }
               ]
+            },
+            {
+              "id": "spell:AEA_TELEPORT",
+              "label": "Artifact Teleport",
+              "description": "<color_yellow>Classless</color>\n<color_light_gray>Randomly teleports you a short distance.</color>\n<color_light_gray>does not require hands</color>\n<color_light_gray>Blocker mutations: None</color>\n<color_light_gray>Skill: spellcraft</color>\n<color_light_gray>Spell Level: 0 (MAX)</color>\n<color_light_gray>Max Level: 0</color>\n<color_light_gray><color_c_magenta>Too Difficult!</color></color>\n<color_light_gray>Difficulty: 0</color>\n<color_light_gray>Current Exp: <color_c_light_green>0</color></color>\n<color_light_gray>to Next Level: <color_c_light_green>4881</color></color>\n\n<color_light_gray>Casting Cost: none  (infinite current)</color>\n<color_light_gray><color_c_light_gray>Casting Time: 0 moves</color></color>\n\n<color_light_gray>Valid Targets: self</color>\n<color_light_gray></color>\n<color_light_gray></color>\n<color_light_gray>Range: 2</color>\n<color_light_gray></color>\n",
+              "denial": "",
+              "hotkey": "v",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": [
+                {
+                  "key": "spell_level",
+                  "label": "Spell Level",
+                  "value": "0"
+                },
+                {
+                  "key": "failure_chance",
+                  "label": "Failure Chance",
+                  "value": "Too Difficult!"
+                },
+                {
+                  "key": "casting_cost",
+                  "label": "Casting Cost",
+                  "value": "none "
+                },
+                {
+                  "key": "casting_time",
+                  "label": "Casting Time",
+                  "value": "0 moves"
+                },
+                {
+                  "key": "range",
+                  "label": "Range",
+                  "value": "2"
+                }
+              ]
             }
           ],
-          "total": 102,
+          "total": 99,
           "selection": "single",
           "activate": "bn:choose:list:choices",
           "filterable": true
@@ -4933,6 +4940,33 @@
             ],
             "enabled": true,
             "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "bn:key:42",
+            "label": "Toggle favorite",
+            "keys": [
+              "*"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "bn:key:73",
+            "label": "Toggle casting distractions",
+            "keys": [
+              "I"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "bn:key:61",
+            "label": "Assign spell hotkey",
+            "keys": [
+              "="
+            ],
+            "enabled": true,
             "expect": "screen"
           },
           {
@@ -5219,36 +5253,6 @@
             }
           ],
           "rows": [
-            {
-              "id": "action:key:42",
-              "label": "Toggle favorite",
-              "description": "",
-              "denial": "",
-              "enabled": true,
-              "selectable": true,
-              "selected": false,
-              "columns": []
-            },
-            {
-              "id": "action:key:73",
-              "label": "Toggle casting distractions",
-              "description": "",
-              "denial": "",
-              "enabled": true,
-              "selectable": true,
-              "selected": false,
-              "columns": []
-            },
-            {
-              "id": "action:key:61",
-              "label": "Assign spell hotkey",
-              "description": "",
-              "denial": "",
-              "enabled": true,
-              "selectable": true,
-              "selected": false,
-              "columns": []
-            },
             {
               "id": "spell:poison",
               "label": "Poison",
@@ -6026,9 +6030,46 @@
                   "value": "self"
                 }
               ]
+            },
+            {
+              "id": "spell:AEA_TELEPORT",
+              "label": "Artifact Teleport",
+              "description": "<color_yellow>Classless</color>\n<color_light_gray>Randomly teleports you a short distance.</color>\n<color_light_gray>does not require hands</color>\n<color_light_gray>Blocker mutations: None</color>\n<color_light_gray>Skill: spellcraft</color>\n<color_light_gray>Spell Level: 0 (MAX)</color>\n<color_light_gray>Max Level: 0</color>\n<color_light_gray><color_c_magenta>Too Difficult!</color></color>\n<color_light_gray>Difficulty: 0</color>\n<color_light_gray>Current Exp: <color_c_light_green>0</color></color>\n<color_light_gray>to Next Level: <color_c_light_green>4881</color></color>\n\n<color_light_gray>Casting Cost: none  (infinite current)</color>\n<color_light_gray><color_c_light_gray>Casting Time: 0 moves</color></color>\n\n<color_light_gray>Valid Targets: self</color>\n<color_light_gray></color>\n<color_light_gray></color>\n<color_light_gray>Range: 2</color>\n<color_light_gray></color>\n",
+              "denial": "",
+              "hotkey": "v",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": [
+                {
+                  "key": "spell_level",
+                  "label": "Spell Level",
+                  "value": "0"
+                },
+                {
+                  "key": "failure_chance",
+                  "label": "Failure Chance",
+                  "value": "Too Difficult!"
+                },
+                {
+                  "key": "casting_cost",
+                  "label": "Casting Cost",
+                  "value": "none "
+                },
+                {
+                  "key": "casting_time",
+                  "label": "Casting Time",
+                  "value": "0 moves"
+                },
+                {
+                  "key": "range",
+                  "label": "Range",
+                  "value": "2"
+                }
+              ]
             }
           ],
-          "total": 102,
+          "total": 99,
           "selection": "single",
           "activate": "bn:choose:list:choices",
           "filterable": true
@@ -6064,6 +6105,33 @@
             ],
             "enabled": true,
             "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "bn:key:42",
+            "label": "Toggle favorite",
+            "keys": [
+              "*"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "bn:key:73",
+            "label": "Toggle casting distractions",
+            "keys": [
+              "I"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "bn:key:61",
+            "label": "Assign spell hotkey",
+            "keys": [
+              "="
+            ],
+            "enabled": true,
             "expect": "screen"
           },
           {

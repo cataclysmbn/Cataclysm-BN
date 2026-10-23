@@ -90,5 +90,52 @@ export const generic: Scenario = {
         "a switch that is off says so",
       )
       rec.accept("list of switches screen", "screen", switches)
+
+      // The keys a list's handler tests itself are buttons of the screen, never rows to pick.
+      const leave = (screen: Value) =>
+        screen.affordances.find((entry: Value) => entry.role === "cancel")
+      const pick = async (label: RegExp) => {
+        const top = engine.top()
+        const target = rows(top).find((row: Value) => label.test(row.label))
+        assert(target, `a row ${label}`)
+        const chooser = top.affordances.find((entry: Value) =>
+          entry.args?.row && entry.id.startsWith("bn:choose")
+        )
+        assertEquals(
+          (await engine.invoke(chooser.id, { row: target.id })).stages.at(-1),
+          "completed",
+        )
+      }
+      await engine.invoke(leave(engine.top()).id)
+      await pick(/^Spawning/)
+      await pick(/^Spawn an item/)
+      const spawner = engine.top()
+      const keys = spawner.affordances.filter((entry: Value) => entry.id.startsWith("bn:key:"))
+      assert(keys.length >= 3, "the item spawner offers its keys")
+      assert(
+        keys.some((entry: Value) =>
+          entry.label === "Choose a container" && entry.keys.length === 1
+        ),
+        "a key is named and bound",
+      )
+      assert(
+        rows(spawner).every((row: Value) => !/^(action|bn):key:/.test(row.id)),
+        "no key is a row",
+      )
+      const narrow = spawner.affordances.find((entry: Value) => entry.id.startsWith("bn:filter:"))
+      assert(narrow, "the spawner takes a filter")
+      assertEquals((await engine.invoke(narrow.id, { text: "shirt" })).stages.at(-1), "completed")
+      const found = engine.top()
+      assert(rows(found).length > 0, "the filter leaves results")
+      rows(found).forEach((row: Value) => assert(/shirt/i.test(row.label), row.label))
+      assertEquals(
+        found.affordances.filter((entry: Value) => entry.id.startsWith("bn:key:")).length,
+        keys.length,
+        "the keys stay while the list is filtered",
+      )
+      rec.accept("list with key buttons screen", "screen", found)
+      const toggle = keys.find((entry: Value) => entry.label === "Toggle spawning everything")
+      assert(toggle, "the spawner toggles spawning everything")
+      rec.command("list key pressed", await engine.invoke(toggle.id))
     }),
 }

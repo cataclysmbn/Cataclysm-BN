@@ -1920,6 +1920,438 @@
         },
         "context": "UILIST"
       }
+    },
+    {
+      "name": "list with key buttons screen",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:16",
+        "role": "dialog",
+        "kind": "uilist",
+        "root": {
+          "id": "list:choices",
+          "kind": "list",
+          "affordances": [
+            "FILTER",
+            "bn:filter:list:choices",
+            "bn:choose:list:choices"
+          ],
+          "columns": [],
+          "rows": [
+            {
+              "id": "entry:1799",
+              "label": "dress shirt",
+              "description": "<color_c_cyan>#1799: dress_shirt</color>\n<color_c_light_blue>Origin: 'Bright Nights'</color>\n--\nMaterial: <color_c_light_blue>Cotton</color>\nVolume: <color_c_yellow>0.750</color> L  Weight: <color_c_yellow>0.25</color> kg\nCategory: <color_c_magenta>CLOTHING</color>\n--\nA white button-down shirt with long sleeves.  Looks professional!\n--\n<color_c_white>Throw damage</color>: Bash: <color_c_yellow>1</color>\nThrow range: <color_c_yellow>24</color>\nMoves per throw: <color_c_yellow>72</color>\nStamina cost: <color_c_yellow>65</color>\n--\n<color_c_white>Storage</color>: <color_c_yellow>0.25</color> L\n--\n<color_c_white>Covers</color>: The <color_c_cyan>torso</color>. The <color_c_cyan>arms</color>. \nLayer: <color_c_light_blue>Normal</color>. \nWarmth: <color_c_yellow>10</color>\n--\n<color_c_white>Coverage</color>: <color_c_yellow>90</color>% <color_c_cyan>(for all parts)</color>\n<color_c_white>Encumbrance</color>: <color_c_yellow>5</color> <color_c_cyan>(for all parts)</color>\n<color_c_white>Protection</color>: Bash: <color_c_yellow>1</color>  Cut: <color_c_yellow>1</color>  Ballistic: <color_c_yellow>1</color>\n  Acid: <color_c_yellow>0</color>  Fire: <color_c_yellow>0</color>  Environmental: <color_c_yellow>0</color>\n--\n<color_c_white>Repair</color> using bone needle, wooden needle, sewing kit, sewing machine, or tailor's kit.\n* This item can be <color_c_green>reinforced</color>.\n--\n* This item <color_c_green>does not conduct</color> electricity.\n* This clothing is <color_c_green>uniquely compatible</color> with mutants possessing <color_c_cyan>wings</color>.\n* This clothing is <color_c_cyan>fancy</color>.\n* This clothing <color_c_cyan>can be refitted</color>.\n--\nPrice: $<color_c_yellow>15.00</color>  Barter value: $<color_c_yellow>0.50</color>\n--\nYou know of nothing you could craft with it.\n",
+              "denial": "",
+              "enabled": true,
+              "selectable": true,
+              "selected": true,
+              "columns": []
+            },
+            {
+              "id": "entry:2078",
+              "label": "flag shirt",
+              "description": "",
+              "denial": "",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": []
+            },
+            {
+              "id": "entry:2490",
+              "label": "hawaiian shirt",
+              "description": "",
+              "denial": "",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": []
+            },
+            {
+              "id": "entry:3118",
+              "label": "Linux t-shirt",
+              "description": "",
+              "denial": "",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": []
+            },
+            {
+              "id": "entry:3158",
+              "label": "long-sleeved shirt",
+              "description": "",
+              "denial": "",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": []
+            },
+            {
+              "id": "entry:3270",
+              "label": "mail carrier shirt",
+              "description": "",
+              "denial": "",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": []
+            },
+            {
+              "id": "entry:3607",
+              "label": "multicam black tactical shirt",
+              "description": "",
+              "denial": "",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": []
+            },
+            {
+              "id": "entry:4283",
+              "label": "polo shirt",
+              "description": "",
+              "denial": "",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": []
+            },
+            {
+              "id": "entry:4953",
+              "label": "sheriff's shirt",
+              "description": "",
+              "denial": "",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": []
+            },
+            {
+              "id": "entry:5314",
+              "label": "striped shirt",
+              "description": "",
+              "denial": "",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": []
+            },
+            {
+              "id": "entry:5411",
+              "label": "sweatshirt",
+              "description": "",
+              "denial": "",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": []
+            },
+            {
+              "id": "entry:5571",
+              "label": "thermal shirt",
+              "description": "",
+              "denial": "",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": []
+            },
+            {
+              "id": "entry:5681",
+              "label": "tour t-shirt",
+              "description": "",
+              "denial": "",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": []
+            },
+            {
+              "id": "entry:5720",
+              "label": "t-shirt",
+              "description": "",
+              "denial": "",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": []
+            },
+            {
+              "id": "entry:5721",
+              "label": "t-shirt",
+              "description": "",
+              "denial": "",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": []
+            },
+            {
+              "id": "entry:5761",
+              "label": "undershirt",
+              "description": "",
+              "denial": "",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": []
+            },
+            {
+              "id": "entry:6040",
+              "label": "work t-shirt",
+              "description": "",
+              "denial": "",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": []
+            }
+          ],
+          "total": 17,
+          "selection": "single",
+          "activate": "bn:choose:list:choices",
+          "filterable": true,
+          "filter": "shirt"
+        },
+        "affordances": [
+          {
+            "id": "bn:filter:list:choices",
+            "label": "Filter",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:choose:list:choices",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "list:choices"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:cancel",
+            "label": "Cancel menu",
+            "keys": [
+              "ESC"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "bn:key:102",
+            "label": "Choose a container",
+            "keys": [
+              "f"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "bn:key:70",
+            "label": "Add a flag",
+            "keys": [
+              "F"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "bn:key:69",
+            "label": "Toggle spawning everything",
+            "keys": [
+              "E"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "DOWN",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_UP",
+            "label": "Fast scroll up",
+            "keys": [
+              "PPAGE"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_DOWN",
+            "label": "Fast scroll down",
+            "keys": [
+              "NPAGE"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "HOME",
+            "label": "Go to first entry",
+            "keys": [],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "END",
+            "label": "Go to last entry",
+            "keys": [],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "SCROLL_UP",
+            "label": "Scroll up",
+            "keys": [],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "SCROLL_DOWN",
+            "label": "Scroll down",
+            "keys": [],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "SELECT",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          },
+          {
+            "id": "FILTER",
+            "label": "Filter",
+            "keys": [
+              "/"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "role": "help",
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "list:choices",
+          "row_id": "entry:1799"
+        },
+        "context": "UILIST"
+      }
+    },
+    {
+      "name": "list key pressed, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "screen_id": "screen:16"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "bn:key:69"
+        }
+      }
+    },
+    {
+      "name": "list key pressed, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "received",
+        "stage_text": "Received."
+      }
+    },
+    {
+      "name": "list key pressed, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "validated",
+        "stage_text": "Accepted."
+      }
+    },
+    {
+      "name": "list key pressed, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "executing",
+        "stage_text": "Under way."
+      }
+    },
+    {
+      "name": "list key pressed, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "completed",
+        "stage_text": "Done.",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "26",
+          "revision": "20"
+        }
+      }
     }
   ],
   "invalid": []
