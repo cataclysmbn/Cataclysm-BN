@@ -1095,6 +1095,7 @@ void uilist::query( bool loop, int timeout )
             ret = UILIST_CANCEL;
         } else if( event.interaction && filtering &&
                    event.interaction->operation == game_client::interaction_operation::invoke &&
+                   event.interaction->target_id.starts_with( "bn:filter:" ) &&
                    event.interaction->arguments && event.interaction->arguments->text ) {
             // A client set the filter text without opening the prompt.
             set_filter( *event.interaction->arguments->text );
