@@ -4772,4 +4772,117 @@ TEST_CASE("semantic replay repeats a uilist filter invoke", "[client][interactio
     replay::finish();
 }
 
+namespace {
+
+/// A callback that tests two raw keys itself, like the debug item spawner.
+class key_recorder: public uilist_callback {
+public:
+    std::vector<int> pressed;
+    auto keys() const -> std::vector<uilist_key> override {
+        return {{.key = 'a', .name = "Add a flag"}, {.key = 'c', .name = "Choose a container"}};
+    }
+    auto key(const input_context&, const input_event& event, int, uilist*) -> bool override {
+        pressed.push_back(event.get_first_input());
+        return true;
+    }
+};
+
+auto has_affordance(const nlohmann::json& screen, const std::string& id) -> bool {
+    return std::ranges::any_of(screen.at("affordances"), [&](const nlohmann::json& offered) {
+        return offered.at("id").get<std::string>() == id;
+    });
+}
+
+} // namespace
+
+TEST_CASE(
+    "a uilist's callback keys are screen affordances, not list rows",
+    "[client][interaction][mcp]") {
+    const auto guard = interaction_test_guard{};
+    auto menu = uilist{};
+    filter_menu(menu);
+    auto recorder = key_recorder{};
+    menu.callback = &recorder;
+    auto reads = 0;
+    auto rows_seen = std::vector<std::string>{};
+    auto offered = false;
+    auto labelled = false;
+    auto keyed = false;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto snapshot = game_client::current_interaction();
+        const auto screen = screen_wire();
+        if (reads++ == 0) {
+            rows_seen =
+                snapshot.choices | std::views::transform(&game_client::interaction_choice::id)
+                | std::ranges::to<std::vector>();
+            offered = has_affordance(screen, "bn:key:97") && has_affordance(screen, "bn:key:99");
+            for (const auto& entry : screen.at("affordances")) {
+                if (entry.at("id") == "bn:key:99") {
+                    labelled = entry.at("label") == "Choose a container";
+                    keyed = entry.at("keys") == nlohmann::json::array({"c"});
+                }
+            }
+            return invoke_event("bn:key:99");
+        }
+        return resolve({
+            .input_id = snapshot.input_id,
+            .operation = game_client::interaction_operation::cancel,
+        });
+    });
+    menu.query();
+    CHECK(rows_seen == std::vector<std::string>{"entry:0", "entry:1", "entry:2"});
+    CHECK(offered);
+    CHECK(labelled);
+    CHECK(keyed);
+    CHECK(recorder.pressed == std::vector<int>{'c'});
+}
+
+TEST_CASE("semantic replay repeats a uilist key invoke", "[client][interaction][replay][mcp]") {
+    const auto guard = interaction_test_guard{};
+    static auto counter = std::atomic_uint64_t{0};
+    const auto directory =
+        std::filesystem::path(PATH_INFO::user_dir())
+        / ("list-key-replay-" + std::to_string(counter.fetch_add(1)));
+    REQUIRE(std::filesystem::create_directory(directory));
+    const auto cleanup = on_out_of_scope([&] {
+        replay::stop();
+        std::filesystem::remove_all(directory);
+    });
+    const auto path = directory / "input.jsonl";
+
+    auto reads = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        if (reads++ == 0) { return invoke_event("bn:key:97"); }
+        return resolve({
+            .input_id = game_client::current_interaction().input_id,
+            .operation = game_client::interaction_operation::cancel,
+        });
+    });
+    replay::configure_recording(path.string(), {.rng_seed = 31});
+    replay::start();
+    {
+        auto recorded = uilist{};
+        filter_menu(recorded);
+        auto recorder = key_recorder{};
+        recorded.callback = &recorder;
+        recorded.query();
+        CHECK(recorder.pressed == std::vector<int>{'a'});
+    }
+    replay::finish();
+
+    game_client::memory::set_input_provider([](const int /*timeout*/) -> input_event {
+        throw std::runtime_error("playback must not read live input");
+    });
+    replay::configure_playback(path.string(), {.rng_seed = 31});
+    replay::start();
+    auto played = uilist{};
+    filter_menu(played);
+    auto recorder = key_recorder{};
+    played.callback = &recorder;
+    played.query();
+    CHECK(recorder.pressed == std::vector<int>{'a'});
+    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
+    replay::finish();
+}
+
 #endif // CATA_MCP
