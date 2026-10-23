@@ -1146,6 +1146,39 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "world capture says how far the sun and the moon have crossed the sky and the moon's phase",
+    "[engine_client_world]") {
+    make_scene();
+    const auto sky = [] {
+        const auto state = ec::world::capture_world();
+        REQUIRE(state.environment);
+        return state.environment->sky;
+    };
+    const auto noon = sky();
+    REQUIRE(noon.sun);
+    CHECK(*noon.sun > 30);
+    CHECK(*noon.sun < 70);
+    CHECK_FALSE(noon.moon);
+    const auto day = calendar::turn;
+    calendar::turn = sunrise(day);
+    CHECK(sky().sun == 0);
+    calendar::turn = sunset(day) - 1_seconds;
+    CHECK(sky().sun == 100);
+    calendar::turn = sunset(day);
+    CHECK_FALSE(sky().sun);
+    CHECK(sky().moon == 0);
+    calendar::turn = calendar::turn_zero;
+    const auto midnight = sky();
+    CHECK_FALSE(midnight.sun);
+    REQUIRE(midnight.moon);
+    CHECK(*midnight.moon > 30);
+    CHECK(*midnight.moon < 70);
+    CHECK(midnight.moon_phase == "new");
+    calendar::turn = calendar::turn_zero + calendar::season_length() / 2;
+    CHECK(sky().moon_phase != "new");
+}
+
+TEST_CASE(
     "world capture gives a hurt creature's health as the native look-around bar shows it",
     "[engine_client_world]") {
     const auto setup = make_scene();
