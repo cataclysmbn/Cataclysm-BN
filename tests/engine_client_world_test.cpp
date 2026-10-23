@@ -1287,6 +1287,26 @@ TEST_CASE(
     CHECK(painted_cell->vehicle->tint->bg.empty());
 }
 
+TEST_CASE("world capture marks the squares that have a roof over them", "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& here = get_map();
+    // A square is under a roof when no open sky reaches it through the 3x3 above it, so the roof
+    // covers a block.
+    const auto indoors = setup.start + tripoint(-3, 0, 0);
+    for (const auto y : std::views::iota(-2, 3)) {
+        for (const auto x : std::views::iota(-5, 0)) {
+            here.ter_set(setup.start + tripoint(x, y, 1), ter_id("t_floor"));
+        }
+    }
+    map_perception::acquire();
+    const auto state = ec::world::capture_world();
+    REQUIRE(find_cell(state, at(indoors)) != nullptr);
+    CHECK(find_cell(state, at(indoors))->roofed);
+    REQUIRE(find_cell(state, at(setup.start + tripoint(-3, 5, 0))) != nullptr);
+    CHECK_FALSE(find_cell(state, at(setup.start + tripoint(-3, 5, 0)))->roofed);
+    CHECK_FALSE(find_cell(state, at(setup.start))->roofed);
+}
+
 TEST_CASE("world capture marks a square holding a corpse that can rise", "[engine_client_world]") {
     const auto setup = make_scene();
     const auto grave = setup.start + tripoint_east;
