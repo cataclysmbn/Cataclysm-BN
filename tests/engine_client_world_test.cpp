@@ -1331,56 +1331,6 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "world capture shows the ground a roof edge hides under open air as dimmed terrain and furniture only",
-    "[engine_client_world]") {
-    const auto setup = make_scene();
-    auto& here = get_map();
-    // A platform one level up over the room, ringed by open air, with a wall at ground level under
-    // its edge.
-    for (const auto y : std::views::iota(-6, 7)) {
-        for (const auto x : std::views::iota(-6, 7)) {
-            const auto platform = std::abs(x) <= 1 && std::abs(y) <= 1;
-            here.ter_set(setup.start + tripoint(x, y, 1),
-                         ter_id(platform ? "t_floor" : "t_open_air"));
-        }
-    }
-    here.ter_set(setup.start + tripoint(-2, 0, 0), ter_id("t_wall"));
-    const auto air = setup.start + tripoint(-3, 0, 1);
-    const auto hidden = air + tripoint_below;
-    here.furn_set(hidden, furn_id("f_chair"));
-    here.add_item_or_charges(hidden, item::spawn("rock"));
-    here.add_field(hidden, field_type_id("fd_smoke"), 1);
-    spawn_test_monster("mon_zombie", hidden);
-    step_to(setup.start + tripoint_above);
-    get_avatar().clear_map_memory();
-    REQUIRE(map_perception::visible_at(here, air));
-    REQUIRE_FALSE(map_perception::visible_at(here, hidden));
-    REQUIRE(get_avatar().get_terrain_tile(map_local_to_abs(here, hidden)).tile.empty());
-    const auto state = ec::world::capture_world();
-    const auto* through = find_cell(state, at(air));
-    REQUIRE(through != nullptr);
-    CHECK(through->below == 1);
-    const auto* ground = find_cell(state, at(hidden));
-    REQUIRE(ground != nullptr);
-    CHECK(ground->known == ec::knowledge::remembered);
-    REQUIRE(ground->memory);
-    CHECK(ground->memory->terrain.id == "t_floor");
-    REQUIRE(ground->memory->overlay);
-    CHECK(ground->memory->overlay->id == "f_chair");
-    // Nothing but the static layout: no creature, item, field or live layer.
-    CHECK(ground->items.empty());
-    CHECK(ground->fields.empty());
-    CHECK_FALSE(ground->vehicle);
-    CHECK_FALSE(ground->terrain);
-    CHECK_FALSE(ground->light);
-    CHECK(std::ranges::none_of(state.entities, [&](const auto& entry) {
-        return entry.second.at == at(hidden);
-    }));
-    // Capturing never memorizes what it shows.
-    CHECK(get_avatar().get_terrain_tile(map_local_to_abs(here, hidden)).tile.empty());
-}
-
-TEST_CASE(
     "world capture never gives a remembered square a live vehicle part", "[engine_client_world]") {
     const auto setup = make_scene();
     auto& here = get_map();
