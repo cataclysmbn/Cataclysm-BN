@@ -494,6 +494,7 @@ auto fill_visible( map &here, const tripoint_bub_ms &p, const avatar &you,
                    const map_perception::sight &view, cell &out ) -> bool
 {
     const auto shapes = map_perception::visible_orientations( here, p, view );
+    out.roofed = !here.is_outside( p );
     if( here.furn( p ) != f_null ) { out.furniture = furniture_look( here.furn( p ), shapes.furniture, here.furn_vars( p ) ); }
     const auto &displayed = here.field_at( p ).displayed_field_type();
     for( const auto &[type, entry] : here.field_at( p ) ) {
@@ -600,7 +601,7 @@ constexpr auto plain_mark = std::uint64_t { 1 } << 63;
 /// when something else is on the square (furniture, a field, a trap, an item, a vehicle, variables of the
 /// terrain, colored light), which a cell is then built for every time. Such a cell is built from the terrain, the shape the
 /// squares around it the avatar knows give it (and its symbol, for a wall), its light, what the native view
-/// draws below it, and the season (symbol and color); the language and the tints of the looks are
+/// draws below it, the season (symbol and color) and whether a roof covers it; the language and the tints of the looks are
 /// the capture's, not the square's. So two captures that find the same key at a square would build the same
 /// cell there, and the second need not build it.
 auto plain_key( map &here, const tripoint_bub_ms &p, const avatar &you,
@@ -624,6 +625,7 @@ auto plain_key( map &here, const tripoint_bub_ms &p, const avatar &you,
     put( cache.visibility_cache[cache.idx( p.x(), p.y() )], 28 );
     put( below ? *below + 1 : 0, 36 );
     put( season_of_year( calendar::turn ), 44 );
+    put( !here.is_outside( p ), 48 );
     return key;
 }
 

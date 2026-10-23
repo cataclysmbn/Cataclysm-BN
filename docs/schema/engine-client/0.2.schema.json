@@ -629,6 +629,10 @@
         "cargo": {
           "const": true,
           "description": "A cargo part of a vehicle on the square holds items; the native view highlights the part. Present only on visible squares."
+        },
+        "roofed": {
+          "const": true,
+          "description": "The square is not outside (the game's is_outside is false): a roof or a floor above covers it, so rain and snow do not fall there. Present only on visible squares."
         }
       },
       "required": [
@@ -658,6 +662,7 @@
               "vehicle": false,
               "light": false,
               "cargo": false,
+              "roofed": false,
               "below": false
             },
             "required": [
@@ -687,6 +692,7 @@
               "light": false,
               "memory": false,
               "cargo": false,
+              "roofed": false,
               "below": false
             }
           }

@@ -4196,6 +4196,7 @@
                 "name": "wooden floor",
                 "subtile": "corner"
               },
+              "roofed": true,
               "light": 1
             },
             {
@@ -4214,6 +4215,7 @@
                 "subtile": "t_connection",
                 "rotation": 1
               },
+              "roofed": true,
               "light": 1
             },
             {
@@ -4270,6 +4272,7 @@
                 "name": "wooden floor",
                 "subtile": "t_connection"
               },
+              "roofed": true,
               "light": 1
             },
             {
@@ -4286,6 +4289,7 @@
                 "color": "c_cyan",
                 "name": "wooden floor"
               },
+              "roofed": true,
               "light": 1
             },
             {
@@ -4343,6 +4347,7 @@
                 "subtile": "corner",
                 "rotation": 3
               },
+              "roofed": true,
               "light": 1
             },
             {
@@ -4359,6 +4364,7 @@
                 "color": "c_cyan",
                 "name": "wooden floor"
               },
+              "roofed": true,
               "light": 1
             },
             {
@@ -4416,6 +4422,7 @@
                 "subtile": "corner",
                 "rotation": 3
               },
+              "roofed": true,
               "light": 1
             },
             {
@@ -4434,6 +4441,7 @@
                 "subtile": "t_connection",
                 "rotation": 3
               },
+              "roofed": true,
               "light": 1
             },
             {
@@ -4471,6 +4479,7 @@
                 "subtile": "t_connection",
                 "rotation": 1
               },
+              "roofed": true,
               "light": 4
             },
             {
@@ -4489,6 +4498,7 @@
                 "subtile": "corner",
                 "rotation": 1
               },
+              "roofed": true,
               "light": 4
             },
             {
@@ -4524,6 +4534,7 @@
                 "color": "c_cyan",
                 "name": "wooden floor"
               },
+              "roofed": true,
               "light": 4
             },
             {
@@ -4542,6 +4553,7 @@
                 "subtile": "t_connection",
                 "rotation": 1
               },
+              "roofed": true,
               "light": 4
             },
             {
@@ -4560,6 +4572,7 @@
                 "subtile": "corner",
                 "rotation": 1
               },
+              "roofed": true,
               "light": 4
             },
             {
@@ -4601,6 +4614,7 @@
                 "coverage": 95,
                 "form": "door"
               },
+              "roofed": true,
               "light": 1
             },
             {
@@ -4618,6 +4632,7 @@
                 "name": "wooden floor",
                 "subtile": "unconnected"
               },
+              "roofed": true,
               "light": 1
             },
             {
@@ -4653,6 +4668,7 @@
                 "color": "c_cyan",
                 "name": "wooden floor"
               },
+              "roofed": true,
               "light": 4
             },
             {
@@ -4671,6 +4687,7 @@
                 "subtile": "corner",
                 "rotation": 1
               },
+              "roofed": true,
               "light": 4
             },
             {
@@ -4711,6 +4728,7 @@
                 "wall": true,
                 "coverage": 100
               },
+              "roofed": true,
               "light": 1
             },
             {
@@ -4729,6 +4747,7 @@
                 "subtile": "end_piece",
                 "rotation": 1
               },
+              "roofed": true,
               "light": 1
             },
             {
@@ -4766,6 +4785,7 @@
                 "subtile": "t_connection",
                 "rotation": 2
               },
+              "roofed": true,
               "light": 4
             },
             {
@@ -4841,6 +4861,7 @@
                 "name": "wooden floor",
                 "subtile": "unconnected"
               },
+              "roofed": true,
               "light": 4
             },
             {
@@ -4859,6 +4880,7 @@
                 "subtile": "end_piece",
                 "rotation": 1
               },
+              "roofed": true,
               "light": 4
             },
             {
@@ -4895,6 +4917,7 @@
                 "subtile": "corner",
                 "rotation": 1
               },
+              "roofed": true,
               "light": 4
             },
             {

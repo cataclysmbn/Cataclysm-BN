@@ -133,6 +133,8 @@ struct cell {
     bool reviving = false;
     /// A cargo part of a vehicle on the square holds items; the native view highlights the part.
     bool cargo = false;
+    /// The square is not outside: a roof or a floor above covers it, so weather does not fall there.
+    bool roofed = false;
     std::vector<look> traps = {};
     std::vector<look> items = {};
     std::optional<look> vehicle = std::nullopt;
