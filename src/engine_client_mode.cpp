@@ -33,29 +33,39 @@ struct mode_def {
 auto on_off() -> std::vector<mode_choice> { return { { "on", _( "On" ) }, { "off", _( "Off" ) } }; }
 auto on_off_id( const bool on ) -> std::string { return on ? "on" : "off"; }
 
-auto flag( std::string id, std::string label, const bool now,
-           std::function < auto( bool ) -> void > apply ) -> mode_def
+/// An on/off mode: its id and label, whether it is on now and what sets it on or off.
+struct flag_options {
+    std::string id;
+    std::string label;
+    bool now = false;
+    std::function < auto( bool ) -> void > apply;
+};
+auto flag( flag_options opts ) -> mode_def
 {
-    return { .shown = { .id = std::move( id ), .label = std::move( label ), .value = on_off_id( now ), .values = on_off() },
-    .apply = [apply = std::move( apply )]( const std::string & value ) { apply( value == "on" ); } };
+    return { .shown = { .id = std::move( opts.id ), .label = std::move( opts.label ), .value = on_off_id( opts.now ), .values = on_off() },
+    .apply = [apply = std::move( opts.apply )]( const std::string & value ) { apply( value == "on" ); } };
 }
 
 /// An option as a mode: `on`/`off` for a bool option, the option's own values for a selection. `announce` is what
 /// the native key prints once the option holds the value.
-auto option_mode( std::string id, const std::string &name,
-                  const std::function < auto( const options_manager::cOpt & ) -> void > &announce,
-                  const bool save ) -> mode_def
+struct option_mode_options {
+    std::string id;
+    std::string name;
+    std::function < auto( const options_manager::cOpt & ) -> void > announce;
+    bool save = false;
+};
+auto option_mode( option_mode_options opts ) -> mode_def
 {
-    auto &option = get_options().get_option( name );
+    auto &option = get_options().get_option( opts.name );
     const auto is_bool = option.getType() == "bool";
     auto values = is_bool ? on_off() : option.getItems() | std::views::transform( [](
     const auto & item ) {
         return mode_choice{ .id = item.first, .label = item.second.translated() };
     } ) | std::ranges::to<std::vector>();
-    return { .shown = { .id = std::move( id ), .label = option.getMenuText(),
+    return { .shown = { .id = std::move( opts.id ), .label = option.getMenuText(),
                         .value = is_bool ? on_off_id( option.value_as<bool>() ) : option.getValue(), .values = std::move( values )
                       },
-             .apply = [name, is_bool, save, announce]( const std::string & value )
+             .apply = [name = opts.name, is_bool, save = opts.save, announce = opts.announce]( const std::string & value )
     {
         auto &chosen = get_options().get_option( name );
         chosen.setValue( is_bool ? ( value == "on" ? "true" : "false" ) : value );
@@ -84,8 +94,8 @@ auto mode_defs() -> std::vector<mode_def>
 {
     auto &you = get_avatar();
     auto result = std::vector<mode_def> {};
-    result.push_back( flag( "safe_mode", _( "Safe mode" ),
-    g->safe_mode != SAFE_MODE_OFF, []( const bool on ) {
+    result.push_back( flag( { .id = "safe_mode", .label = _( "Safe mode" ), .now = g->safe_mode != SAFE_MODE_OFF, .apply = []( const bool on )
+    {
         if( on ) {
             g->set_safe_mode( SAFE_MODE_ON );
             g->mostseen = 0;
@@ -101,24 +111,24 @@ auto mode_defs() -> std::vector<mode_def>
             get_avatar().remove_effect( effect_laserlocked );
             g->reset_safe_mode_warning();
         }
-    } ) );
-    result.push_back( option_mode( "auto_safe_mode",
-    "AUTOSAFEMODE", []( const options_manager::cOpt & option ) {
+    } } ) );
+    result.push_back( option_mode( { .id = "auto_safe_mode", .name = "AUTOSAFEMODE", .announce = []( const options_manager::cOpt & option )
+    {
         add_msg( m_info, option.value_as<bool>() ? to_translation( "Auto safe mode ON!" ) :
                  to_translation( "Auto safe mode OFF!" ) );
-    }, false ) );
-    result.push_back( flag( "auto_travel_mode", _( "Auto travel mode" ),
-    g->auto_travel_mode, []( const bool on ) {
+    }, .save = false } ) );
+    result.push_back( flag( { .id = "auto_travel_mode", .label = _( "Auto travel mode" ), .now = g->auto_travel_mode, .apply = []( const bool on )
+    {
         g->auto_travel_mode = on;
         add_msg( m_info, on ? to_translation( "Auto travel mode ON!" ) :
                  to_translation( "Auto travel mode OFF!" ) );
-    } ) );
-    result.push_back( flag( "manual_combat_mode", _( "Manual combat mode" ),
-    g->manual_combat_mode, []( const bool on ) {
+    } } ) );
+    result.push_back( flag( { .id = "manual_combat_mode", .label = _( "Manual combat mode" ), .now = g->manual_combat_mode, .apply = []( const bool on )
+    {
         g->manual_combat_mode = on;
         add_msg( m_info, on ? to_translation( "Manual combat mode ON!" ) :
                  to_translation( "Manual combat mode OFF!" ) );
-    } ) );
+    } } ) );
     result.push_back( { .shown = { .id = "thief_mode", .label = _( "Thief mode" ), .value = thief_value(),
     .values = { { "ask", _( "Ask" ) }, { "honest", _( "Honest" ) }, { "steal", _( "Steal" ) } }
                                  },
@@ -134,45 +144,43 @@ auto mode_defs() -> std::vector<mode_def>
                  to_translation( "You will pick up also those things that belong to others!" ) :
                  to_translation( "You will be reminded not to steal." ) );
     } } );
-    result.push_back( option_mode( "auto_features",
-    "AUTO_FEATURES", []( const options_manager::cOpt & option ) {
+    result.push_back( option_mode( { .id = "auto_features", .name = "AUTO_FEATURES", .announce = []( const options_manager::cOpt & option )
+    {
         //~ Auto Features are now ON/OFF
         add_msg( to_translation( "%s are now %s." ), option.getMenuText(),
                  option.value_as<bool>() ? _( "ON" ) : _( "OFF" ) );
-    }, true ) );
-    result.push_back( option_mode( "auto_pulp_butcher",
-    "AUTO_PULP_BUTCHER", []( const options_manager::cOpt & option ) {
+    }, .save = true } ) );
+    result.push_back( option_mode( { .id = "auto_pulp_butcher", .name = "AUTO_PULP_BUTCHER", .announce = []( const options_manager::cOpt & option )
+    {
         //~ Auto Pulp/Pulp Adjacent/Butcher is now set to x
         add_msg( to_translation( "%s is now set to %s." ), option.getMenuText(), option.getValueName() );
-    }, true ) );
-    result.push_back( option_mode( "auto_mining",
-    "AUTO_MINING", []( const options_manager::cOpt & option ) {
+    }, .save = true } ) );
+    result.push_back( option_mode( { .id = "auto_mining", .name = "AUTO_MINING", .announce = []( const options_manager::cOpt & option )
+    {
         //~ Auto Mining is now ON/OFF
         add_msg( to_translation( "%s is now %s." ), option.getMenuText(),
                  option.value_as<bool>() ? _( "ON" ) : _( "OFF" ) );
-    }, true ) );
-    result.push_back( option_mode( "auto_foraging",
-    "AUTO_FORAGING", []( const options_manager::cOpt & option ) {
+    }, .save = true } ) );
+    result.push_back( option_mode( { .id = "auto_foraging", .name = "AUTO_FORAGING", .announce = []( const options_manager::cOpt & option )
+    {
         //~ Auto Foraging is now set to x
         add_msg( to_translation( "%s is now set to %s." ), option.getMenuText(), option.getValueName() );
-    }, true ) );
-    result.push_back( option_mode( "auto_pickup",
-    "AUTO_PICKUP", []( const options_manager::cOpt & option ) {
+    }, .save = true } ) );
+    result.push_back( option_mode( { .id = "auto_pickup", .name = "AUTO_PICKUP", .announce = []( const options_manager::cOpt & option )
+    {
         //~ Auto pickup is now set to x
         add_msg( to_translation( "%s is now set to %s." ), option.getMenuText(), option.getValueName() );
-    }, true ) );
-    result.push_back( flag( "zone_overlay", _( "Zone overlay" ), g->show_zone_overlay,
-    []( const bool on ) { g->show_zone_overlay = on; } ) );
-    result.push_back( flag( "map_memory", _( "Map memory" ), you.should_show_map_memory(),
-    []( const bool ) { get_avatar().toggle_map_memory(); } ) );
-    result.push_back( flag( "hour_timer", _( "Hour timer" ), g->debug_hour_timer_enabled(),
-    []( const bool ) { g->toggle_debug_hour_timer(); } ) );
+    }, .save = true } ) );
+    result.push_back( flag( { .id = "zone_overlay", .label = _( "Zone overlay" ), .now = g->show_zone_overlay, .apply = []( const bool on ) { g->show_zone_overlay = on; } } ) );
+    result.push_back( flag( { .id = "map_memory", .label = _( "Map memory" ), .now = you.should_show_map_memory(), .apply = []( const bool /*on*/ ) { get_avatar().toggle_map_memory(); } } ) );
+    result.push_back( flag( { .id = "hour_timer", .label = _( "Hour timer" ), .now = g->debug_hour_timer_enabled(), .apply = []( const bool /*on*/ ) { g->toggle_debug_hour_timer(); } } ) );
     // The native key does nothing in a competitive shared map without the debugger.
     if( !MAP_SHARING::isCompetitive() || MAP_SHARING::isDebugger() ) {
-        result.push_back( flag( "debug_mode", _( "Debug mode" ), debug_mode, []( const bool on ) {
+        result.push_back( flag( { .id = "debug_mode", .label = _( "Debug mode" ), .now = debug_mode, .apply = []( const bool on )
+        {
             debug_mode = on;
             add_msg( m_info, on ? to_translation( "Debug mode ON!" ) : to_translation( "Debug mode OFF!" ) );
-        } ) );
+        } } ) );
     }
     result.push_back( { .shown = { .id = "move_mode", .label = _( "Movement mode" ), .value = move_value( you.get_movement_mode() ),
                                    .values = move_choices()
@@ -213,10 +221,12 @@ auto mode_operation_event( const mode_operation &operation ) -> input_event
     auto result = input_event{};
     result.type = input_event_t::interaction;
     result.interaction = game_client::interaction_event{
-        .operation = game_client::interaction_operation::choose,
+        // A field filled with the value: the shape replay reads back with its value.
+        .operation = game_client::interaction_operation::fill,
         .schema_id = std::string( mode_schema ),
         .target_id = operation.mode,
         .value = operation.value,
+        .submit = true,
     };
     return result;
 }
