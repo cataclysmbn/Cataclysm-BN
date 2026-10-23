@@ -4709,6 +4709,25 @@ TEST_CASE(
     CHECK(filters[2].empty());
 }
 
+TEST_CASE(
+    "an invoke with text for another affordance leaves a uilist's filter alone",
+    "[client][interaction][mcp]") {
+    const auto guard = interaction_test_guard{};
+    auto menu = uilist{};
+    filter_menu(menu);
+    auto reads = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        if (reads++ == 0) { return invoke_event("bn:other:list:choices", {.text = "tele"}); }
+        return resolve({
+            .input_id = game_client::current_interaction().input_id,
+            .operation = game_client::interaction_operation::cancel,
+        });
+    });
+    menu.query();
+    CHECK(menu.as_interaction().choices.size() == 3);
+    CHECK(menu.as_interaction().filter.empty());
+}
+
 TEST_CASE("semantic replay repeats a uilist filter invoke", "[client][interaction][replay][mcp]") {
     const auto guard = interaction_test_guard{};
     static auto counter = std::atomic_uint64_t{0};
