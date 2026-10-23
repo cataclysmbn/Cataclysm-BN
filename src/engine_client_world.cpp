@@ -494,7 +494,6 @@ auto fill_visible( map &here, const tripoint_bub_ms &p, const avatar &you,
                    const map_perception::sight &view, cell &out ) -> bool
 {
     const auto shapes = map_perception::visible_orientations( here, p, view );
-    out.roofed = !here.is_outside( p );
     if( here.furn( p ) != f_null ) { out.furniture = furniture_look( here.furn( p ), shapes.furniture, here.furn_vars( p ) ); }
     const auto &displayed = here.field_at( p ).displayed_field_type();
     for( const auto &[type, entry] : here.field_at( p ) ) {
@@ -640,7 +639,7 @@ auto visible_cell( map &here, const tripoint_bub_ms &p, const avatar &you,
     // it must not cost a cell.
     const auto bare = bare_unmemorized( here, p, you );
     if( bare && !below ) { return std::nullopt; }
-    auto out = cell{ .at = position_of( here, p, dimension ), .below = below };
+    auto out = cell{ .at = position_of( here, p, dimension ), .roofed = !here.is_outside( p ), .below = below };
     if( !bare && !fill_visible( here, p, you, view, out ) ) { return std::nullopt; }
     return out;
 }
