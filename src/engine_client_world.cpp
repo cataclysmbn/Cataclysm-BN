@@ -427,28 +427,10 @@ auto bare_unmemorized( const map &here, const tripoint_bub_ms &p, const avatar &
 }
 
 
-/// Whether the avatar has memorized a square.
-auto has_memory( const avatar &you, const tripoint_abs_ms &abs ) -> bool
-{
-    return !you.get_terrain_tile( abs ).tile.empty() || !you.get_memorized_tile( abs ).tile.empty();
-}
-
-/// Whether a square is out of the avatar's line of sight as the native view reckons it (`VIS_HIDDEN`, which a
-/// dark square in sight is not), and holds nothing the avatar remembers or perceives a vehicle on.
-auto occluded_at( map &here, const avatar &you, const tripoint_bub_ms &at ) -> bool
-{
-    const auto &cache = here.access_cache( at.z() );
-    return here.get_visibility( cache.visibility_cache[cache.idx( at.x(), at.y() )],
-                                here.get_visibility_variables_cache() ) == VIS_HIDDEN &&
-           !has_memory( you, map_local_to_abs( here, at ) ) && !here.veh_at( at );
-}
-
 /// How many levels down the native view draws a square in sight that it looks through, as the level loop of
 /// `cata_tiles::draw` decides: it looks down to the first square with a floor, or a remembered one with
 /// something on it, and draws that square when it is in sight, remembered or a vehicle under open air in
-/// sight, else the lowest square in sight with something on it on the way down. Where there is none, that floor
-/// is one out of the avatar's sight that it does not remember, which the native view leaves dark and this
-/// publishes as its layout alone. None when it draws nothing.
+/// sight, else the lowest square in sight with something on it on the way down. None when it draws nothing.
 auto drawn_depth( map &here, const tripoint_bub_ms &p,
                   const avatar &you ) -> std::optional<int>
 {
@@ -464,24 +446,19 @@ auto drawn_depth( map &here, const tripoint_bub_ms &p,
         seen_open_air = seen_open_air || ( seen && open_air );
         auto memory = std::optional<bool> {};
         const auto remembered = [&]() {
-            if( !memory ) { memory = has_memory( you, map_local_to_abs( here, at ) ); }
+            if( !memory ) {
+                const auto abs = map_local_to_abs( here, at );
+                memory = !you.get_terrain_tile( abs ).tile.empty() || !you.get_memorized_tile( abs ).tile.empty();
+            }
             return *memory;
         };
         if( !here.dont_draw_lower_floor( at ) && ( z == p.z() || open_air || !remembered() ) ) { continue; }
         const auto shown = seen || remembered() || ( seen_open_air && here.veh_at( at ) );
-        const auto drawn = shown ? std::optional( z ) : lowest_seen ? lowest_seen :
-                           occluded_at( here, you, at ) ? std::optional( z ) : std::nullopt;
+        const auto drawn = shown ? std::optional( z ) : lowest_seen;
         if( !drawn || *drawn == p.z() ) { return std::nullopt; }
         return p.z() - *drawn;
     }
     return std::nullopt;
-}
-
-/// Whether the square `depth` levels below `p` is one `occluded_at` says.
-auto occluded_below( map &here, const avatar &you, const tripoint_bub_ms &p,
-                     const int depth ) -> bool
-{
-    return occluded_at( here, you, tripoint_bub_ms( p.xy(), p.z() - depth ) );
 }
 
 /// The variables of the terrain at a square, none when it has none. Reads without adding an empty entry.
@@ -635,8 +612,6 @@ auto plain_key( map &here, const tripoint_bub_ms &p, const avatar &you,
     }
     const auto shape = map_perception::terrain_orientation( here, p, view );
     const auto below = p.z() == shown_level( you ) ? drawn_depth( here, p, you ) : std::nullopt;
-    // The ground drawn through it is not the avatar's to remember: its layout is read from the map every time.
-    if( below && occluded_below( here, you, p, *below ) ) { return 0; }
     const auto &cache = here.access_cache( p.z() );
     auto key = plain_mark;
     const auto put = [&]( const auto value, const int shift ) { key |= static_cast<std::uint64_t>( value ) << shift; };
@@ -663,25 +638,6 @@ auto visible_cell( map &here, const tripoint_bub_ms &p, const avatar &you,
     auto out = cell{ .at = position_of( here, p, dimension ), .below = below };
     if( !bare && !fill_visible( here, p, you, view, out ) ) { return std::nullopt; }
     return out;
-}
-
-/// The square the cell of `p` draws through open air when the avatar neither sees nor remembers it.
-auto occluded_square( map &here, const avatar &you, const tripoint_bub_ms &p,
-                      const cell &out ) -> std::optional<tripoint_bub_ms>
-{
-    if( !out.below || !occluded_below( here, you, p, *out.below ) ) { return std::nullopt; }
-    return tripoint_bub_ms( p.xy(), p.z() - *out.below );
-}
-
-/// The cell of a square hidden from the avatar under open air: its terrain and furniture as memory, like a
-/// square the avatar has been to, and nothing live.
-auto occluded_cell( const map &here, const tripoint_bub_ms &p, const map_perception::sight &view,
-                    const std::string &dimension ) -> cell
-{
-    const auto shapes = map_perception::visible_orientations( here, p, view );
-    auto layers = memory_layers{ .terrain = terrain_look( here.ter( p ), map_perception::connected_wall_symbol( here, p ), shapes.terrain ) };
-    if( here.furn( p ) != f_null ) { layers.overlay = furniture_look( here.furn( p ), shapes.furniture ); }
-    return { .at = position_of( here, p, dimension ), .known = knowledge::remembered, .memory = std::move( layers ) };
 }
 
 /// The cell of a square the avatar does not see: what it memorized, or a vehicle it is entitled to know
@@ -739,22 +695,17 @@ class bare_scan
 };
 
 /// Cells the avatar knows by memory or by a vehicle it is entitled to perceive; nothing else costs time.
-/// Returns the hidden squares it drew through open air, whose cells it made of their layout alone.
 auto capture_known( map &here, const avatar &you, const std::string &dimension,
-                    std::map<position, cell> &cells ) -> std::set<tripoint_bub_ms>
+                    std::map<position, cell> &cells ) -> void
 {
     ZoneScopedN( "engine_client_capture_known" );
-    const auto view = map_perception::current_sight();
-    auto occluded = std::set<tripoint_bub_ms> {};
     {
         ZoneScopedN( "engine_client_capture_visible" );
+        const auto view = map_perception::current_sight();
         auto bare = bare_scan( here, you );
         for( const auto &p : map_perception::visible_cells( here ) ) {
             if( bare( p ) ) { continue; }
-            if( auto out = visible_cell( here, p, you, view, dimension ) ) {
-                if( const auto hidden = occluded_square( here, you, p, *out ) ) { occluded.insert( *hidden ); }
-                cells.emplace( out->at, std::move( *out ) );
-            }
+            if( auto out = visible_cell( here, p, you, view, dimension ) ) { cells.emplace( out->at, std::move( *out ) ); }
         }
     }
     ZoneNamedN( remembered_zone, "engine_client_capture_remembered", true );
@@ -767,11 +718,6 @@ auto capture_known( map &here, const avatar &you, const std::string &dimension,
         remember( abs_to_map_local( here, square.abs ), square.memory );
     }
     for( const auto &p : vehicle_squares( here ) ) { remember( p, std::nullopt ); }
-    for( const auto &p : occluded ) {
-        auto out = occluded_cell( here, p, view, dimension );
-        cells.emplace( out.at, std::move( out ) );
-    }
-    return occluded;
 }
 
 /// Opaque IDs for creatures the avatar has been shown. The weak pointer pins the creature's control
@@ -1247,8 +1193,6 @@ struct patch_basis {
     /// `plain_key` of each of those, as of the last patch.
     std::vector<std::uint64_t> keys = {};
     std::set<tripoint_bub_ms> vehicles = {};
-    /// The hidden squares the last patch drew through open air.
-    std::set<tripoint_bub_ms> occluded = {};
 };
 /// The order `map_perception::visible_cells` lists squares in, so that two lists merge in one pass.
 auto by_level( const tripoint_bub_ms &a, const tripoint_bub_ms &b ) -> bool
@@ -1286,8 +1230,6 @@ auto shifted( patch_basis from, const map &here, const point &by ) -> patch_basi
     from.live = std::move( live );
     from.keys = std::move( keys );
     from.vehicles = from.vehicles | std::views::transform( translate ) | std::views::filter(
-                        kept ) | std::ranges::to<std::set>();
-    from.occluded = from.occluded | std::views::transform( translate ) | std::views::filter(
                         kept ) | std::ranges::to<std::set>();
     return from;
 }
@@ -1360,9 +1302,8 @@ auto capture_patch( const snapshot &previous, const bool consecutive ) -> world_
     auto vehicles = vehicle_squares( here );
     auto live = std::vector<tripoint_bub_ms> {};
     auto keys = std::vector<std::uint64_t> {};
-    auto occluded = std::set<tripoint_bub_ms> {};
     if( !continues ) {
-        occluded = capture_known( here, you, dimension, patch.cells );
+        capture_known( here, you, dimension, patch.cells );
         patch.exhaustive = true;
         auto bare = bare_scan( here, you );
         std::ranges::copy_if( visible, std::back_inserter( live ), [&]( const auto & p ) { return !bare( p ) && patch.cells.contains( position_of( here, p, dimension ) ); } );
@@ -1386,7 +1327,6 @@ auto capture_patch( const snapshot &previous, const bool consecutive ) -> world_
             if( auto out = visible_cell( here, p, you, view, dimension ) ) {
                 live.push_back( p );
                 keys.push_back( key );
-                if( const auto hidden = occluded_square( here, you, p, *out ) ) { occluded.insert( *hidden ); }
                 const auto before = known.find( out->at );
                 if( before == known.end() || before->second != *out ) { patch.cells.emplace( out->at, std::move( *out ) ); }
             }
@@ -1405,23 +1345,15 @@ auto capture_patch( const snapshot &previous, const bool consecutive ) -> world_
             if( !lived( p ) && known.contains( position_of( here, p, dimension ) ) ) { unknown( p ); }
         }
         // The rest is named by what the avatar remembers of it.
-        // A hidden square drawn through open air is named by its layout, and so is not named by memory.
-        for( const auto &p : occluded ) {
-            auto out = occluded_cell( here, p, view, dimension );
-            const auto before = known.find( out.at );
-            if( before == known.end() || before->second != out ) { patch.cells.emplace( out.at, std::move( out ) ); }
-        }
         const auto name = [&]( const tripoint_bub_ms & p ) {
             const auto at = position_of( here, p, dimension );
-            if( seen( p ) || occluded.contains( p ) || patch.cells.contains( at ) ||
-                patch.unknown.contains( at ) ) { return; }
+            if( seen( p ) || patch.cells.contains( at ) || patch.unknown.contains( at ) ) { return; }
             if( auto out = remembered_cell( here, p, you, dimension ) ) { patch.cells.emplace( at, std::move( *out ) ); }
             else if( known.contains( at ) ) { patch.unknown.insert( at ); }
         };
         auto left = std::vector<tripoint_bub_ms> {};
         std::ranges::set_difference( basis.visible, visible, std::back_inserter( left ), by_level );
         std::ranges::for_each( left, name );
-        std::ranges::for_each( basis.occluded, name );
         std::ranges::for_each( vehicles, name );
         if( vehicles != basis.vehicles ) { std::ranges::for_each( basis.vehicles, name ); }
         for( const auto &abs : *changes ) { name( abs_to_map_local( here, abs ) ); }
@@ -1438,7 +1370,7 @@ auto capture_patch( const snapshot &previous, const bool consecutive ) -> world_
         .valid = true, .epoch = previous.at.epoch, .revision = previous.at.revision,
         .coverage = patch.world.coverage, .memory_owner = memory_owner, .tints = tint_generation(),
         .language = get_language().id, .visible = std::move( visible ), .live = std::move( live ),
-        .keys = std::move( keys ), .vehicles = std::move( vehicles ), .occluded = std::move( occluded )
+        .keys = std::move( keys ), .vehicles = std::move( vehicles )
     };
     return patch;
 }

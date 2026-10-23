@@ -184,12 +184,11 @@ auto session::check_oracle( const state_value &before,
     const auto full = state_value{ .interaction = now.interaction,
                                    .world = world_capture_ ? world_capture_() : world_state{} };
     const auto expected = diff( before, full );
-    // A change published as several events is the first one's with the cells and forgotten squares of the others.
+    // A change published as several events is the first one's with the cells of the others.
     auto actual = events.empty() ? changes{} :
                   events.front().value().delta;
     for( const auto &event : events | std::views::drop( 1 ) ) {
         std::ranges::copy( event.value().delta.cells, std::back_inserter( actual.cells ) );
-        std::ranges::copy( event.value().delta.forgotten, std::back_inserter( actual.forgotten ) );
     }
     auto differs = std::string{};
     const auto note = [&]( const char *section, const bool same ) { if( !same ) { differs += std::string( " " ) + section; } };

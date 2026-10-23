@@ -605,7 +605,7 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 20,
-          "description": "A square in sight on the avatar's level that the native tiles view looks through (open air and other terrain without a floor, such as treetops, glass roofs and ramps down): how many levels down the square is that it draws here (the first square with a floor or with something remembered on it, when it is in sight, remembered or a vehicle; else the lowest square in sight with something on it on the way down, else the first floor when the avatar's line of sight does not reach it and it has no memory of it, which is published as a remembered cell holding its terrain and furniture as `memory` alone). The square keeps what is on it, such as a field; bare open air carries nothing else, and bare open air with nothing seen through it is not published."
+          "description": "A square in sight on the avatar's level that the native tiles view looks through (open air and other terrain without a floor, such as treetops, glass roofs and ramps down): how many levels down the square is that it draws here (the first square with a floor or with something remembered on it, when it is in sight, remembered or a vehicle; else the lowest square in sight with something on it on the way down). The square keeps what is on it, such as a field; bare open air carries nothing else, and bare open air with nothing seen through it is not published."
         },
         "memory": {
           "type": "object",
