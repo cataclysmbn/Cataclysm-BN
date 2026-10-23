@@ -1298,10 +1298,17 @@ TEST_CASE("world capture marks the squares that have a roof over them", "[engine
             here.ter_set(setup.start + tripoint(x, y, 1), ter_id("t_floor"));
         }
     }
+    // A hole in the floor under the roof is under it too.
+    const auto hole = indoors + tripoint_south;
+    here.ter_set(hole, ter_id("t_open_air"));
+    here.ter_set(hole + tripoint_below, ter_id("t_floor"));
     map_perception::acquire();
     const auto state = ec::world::capture_world();
     REQUIRE(find_cell(state, at(indoors)) != nullptr);
     CHECK(find_cell(state, at(indoors))->roofed);
+    REQUIRE(find_cell(state, at(hole)) != nullptr);
+    CHECK(find_cell(state, at(hole))->below.has_value());
+    CHECK(find_cell(state, at(hole))->roofed);
     REQUIRE(find_cell(state, at(setup.start + tripoint(-3, 5, 0))) != nullptr);
     CHECK_FALSE(find_cell(state, at(setup.start + tripoint(-3, 5, 0)))->roofed);
     CHECK_FALSE(find_cell(state, at(setup.start))->roofed);
