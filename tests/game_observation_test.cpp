@@ -310,6 +310,9 @@ TEST_CASE(
     you.setpos(project_to<coords::ms>(edge));
     const auto neighbor = point_abs_om{own.raw() + nearest.step};
     buffer.get(neighbor);
+    // Reading an overmap back hands its monster groups over the edge to the saved neighbor,
+    // which loads it: only the observation may be tested for that.
+    buffer.get(own).clear_mon_groups();
     buffer.save(dimension);
     buffer.clear();
     buffer.get(own);
