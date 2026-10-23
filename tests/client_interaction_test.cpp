@@ -4647,5 +4647,110 @@ TEST_CASE(
     handle_action();
     CHECK(errors == std::vector(2, engine_client::error::validation_failed));
 }
+namespace {
+
+auto filter_menu(uilist& menu) -> void {
+    menu.entries.emplace_back(10, true, MENU_AUTOASSIGN, "Teleport");
+    menu.entries.emplace_back(20, true, MENU_AUTOASSIGN, "Spawn monster");
+    menu.entries.emplace_back(30, true, MENU_AUTOASSIGN, "Teleport to overmap");
+    menu.filterlist();
+}
+
+auto list_filter_of(const nlohmann::json& screen) -> std::string {
+    return screen.at("root").value("filter", "");
+}
+
+auto offers_filter_text(const nlohmann::json& screen) -> bool {
+    return std::ranges::any_of(screen.at("affordances"), [](const nlohmann::json& offered) {
+        return offered.at("id") == "list:filter" && offered.contains("args")
+            && offered.at("args").contains("text");
+    });
+}
+
+} // namespace
+
+TEST_CASE(
+    "a client sets and clears a uilist's filter by invoking its filter affordance",
+    "[client][interaction][mcp]") {
+    const auto guard = interaction_test_guard{};
+    auto menu = uilist{};
+    filter_menu(menu);
+    auto labels = std::vector<std::vector<std::string>>{};
+    auto filters = std::vector<std::string>{};
+    auto offered = true;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto snapshot = game_client::current_interaction();
+        const auto screen = screen_wire();
+        labels.push_back(
+            snapshot.choices | std::views::transform(&game_client::interaction_choice::label)
+            | std::ranges::to<std::vector>());
+        filters.push_back(list_filter_of(screen));
+        offered = offered && offers_filter_text(screen);
+        switch (labels.size()) {
+            case 1:
+                return invoke_event("list:filter", {.text = "tele"});
+            case 2:
+                return invoke_event("list:filter", {.text = ""});
+            default:
+                return resolve({
+                    .input_id = snapshot.input_id,
+                    .operation = game_client::interaction_operation::cancel,
+                });
+        }
+    });
+    menu.query();
+    CHECK(offered);
+    REQUIRE(labels.size() == 3);
+    CHECK(labels[0].size() == 3);
+    CHECK(filters[0].empty());
+    CHECK(labels[1] == std::vector<std::string>{"Teleport", "Teleport to overmap"});
+    CHECK(filters[1] == "tele");
+    CHECK(labels[2].size() == 3);
+    CHECK(filters[2].empty());
+}
+
+TEST_CASE("semantic replay repeats a uilist filter invoke", "[client][interaction][replay][mcp]") {
+    const auto guard = interaction_test_guard{};
+    static auto counter = std::atomic_uint64_t{0};
+    const auto directory =
+        std::filesystem::path(PATH_INFO::user_dir())
+        / ("list-filter-replay-" + std::to_string(counter.fetch_add(1)));
+    REQUIRE(std::filesystem::create_directory(directory));
+    const auto cleanup = on_out_of_scope([&] {
+        replay::stop();
+        std::filesystem::remove_all(directory);
+    });
+    const auto path = directory / "input.jsonl";
+
+    auto reads = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        if (reads++ == 0) { return invoke_event("list:filter", {.text = "tele"}); }
+        return resolve({
+            .input_id = game_client::current_interaction().input_id,
+            .operation = game_client::interaction_operation::cancel,
+        });
+    });
+    replay::configure_recording(path.string(), {.rng_seed = 29});
+    replay::start();
+    {
+        auto recorded = uilist{};
+        filter_menu(recorded);
+        recorded.query();
+        CHECK(recorded.as_interaction().choices.size() == 2);
+    }
+    replay::finish();
+
+    game_client::memory::set_input_provider([](const int /*timeout*/) -> input_event {
+        throw std::runtime_error("playback must not read live input");
+    });
+    replay::configure_playback(path.string(), {.rng_seed = 29});
+    replay::start();
+    auto played = uilist{};
+    filter_menu(played);
+    played.query();
+    CHECK(played.as_interaction().choices.size() == 2);
+    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
+    replay::finish();
+}
 
 #endif // CATA_MCP
