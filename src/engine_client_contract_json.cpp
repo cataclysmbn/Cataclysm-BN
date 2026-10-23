@@ -281,8 +281,10 @@ auto to_json( const environment_value &value ) -> json
     auto result = json{{"turn", value.turn}, {"time", value.time}, {"weather", value.weather}};
     if( !value.season.empty() ) { result["season"] = value.season; }
     result["sky"] = {{"daylight", value.sky.daylight}, {"precipitation", value.sky.precipitation},
-        {"rain", value.sky.rain}, {"dimming", value.sky.dimming}
+        {"rain", value.sky.rain}, {"dimming", value.sky.dimming}, {"moon_phase", value.sky.moon_phase}
     };
+    if( value.sky.sun ) { result["sky"]["sun"] = *value.sky.sun; }
+    if( value.sky.moon ) { result["sky"]["moon"] = *value.sky.moon; }
     if( !value.mod_tilesets.empty() ) {
         result["mod_tilesets"] = json::array();
         for( const auto &file : value.mod_tilesets ) {

@@ -1135,6 +1135,36 @@ auto set_tint_ids( std::set<std::string> ids ) -> void
 
 namespace
 {
+/// How far `now` is from `start` to `end`, in percent.
+auto percent_between( const time_point &start, const time_point &end, const time_point &now ) -> int
+{
+    return static_cast<int>( std::lround( 100.0 * ( now - start ) / ( end - start ) ) );
+}
+
+/// The sun's way from sunrise to sunset at `now`; empty at night.
+auto sun_crossing( const time_point &now ) -> std::optional<int>
+{
+    const auto rise = sunrise( now );
+    const auto set = sunset( now );
+    if( now < rise || now >= set ) { return std::nullopt; }
+    return percent_between( rise, set, now );
+}
+
+/// The moon's way through the night from sunset to sunrise at `now`; empty by day.
+auto moon_crossing( const time_point &now ) -> std::optional<int>
+{
+    if( now >= sunset( now ) ) { return percent_between( sunset( now ), sunrise( now + 1_days ), now ); }
+    if( now < sunrise( now ) ) { return percent_between( sunset( now - 1_days ), sunrise( now ), now ); }
+    return std::nullopt;
+}
+
+auto moon_phase_name( const moon_phase phase ) -> std::string
+{
+    static constexpr auto names = std::array{ "new", "waxing_crescent", "half_moon_waxing", "waxing_gibbous", "full",
+                          "waning_gibbous", "half_moon_waning", "waning_crescent" };
+    return names.at( phase );
+}
+
 auto capture_environment() -> environment_value
 {
     const auto &weather = get_weather().weather_id.obj();
@@ -1146,7 +1176,8 @@ auto capture_environment() -> environment_value
         .sky = sky_value{
             .daylight = static_cast<int>( std::clamp( daylight, 0L, 100L ) ),
             .precipitation = io::enum_to_string( weather.precip ), .rain = weather.rains,
-            .dimming = std::max( -weather.light_modifier, 0 ) },
+            .dimming = std::max( -weather.light_modifier, 0 ), .sun = sun_crossing( calendar::turn ),
+            .moon = moon_crossing( calendar::turn ), .moon_phase = moon_phase_name( get_moon_phase( calendar::turn ) ) },
         .mod_tilesets = mod_tileset_files() };
 }
 

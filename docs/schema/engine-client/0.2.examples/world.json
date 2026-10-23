@@ -238,7 +238,9 @@
             "daylight": 74,
             "precipitation": "none",
             "rain": false,
-            "dimming": 0
+            "dimming": 0,
+            "moon_phase": "waning_crescent",
+            "sun": 15
           }
         },
         "entities": [

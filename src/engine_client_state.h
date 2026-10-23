@@ -362,7 +362,7 @@ struct mod_tileset_file {
     std::vector<std::string> compatibility = {};
     auto operator<=>( const mod_tileset_file & ) const = default; // *NOPAD*
 };
-/// The sky over the avatar: how much daylight there is and what the weather lets fall.
+/// The sky over the avatar: how much daylight there is, where the sun or the moon is and what the weather lets fall.
 struct sky_value {
     /// The daylight now, in percent of full day.
     int daylight = 0;
@@ -372,6 +372,13 @@ struct sky_value {
     bool rain = false;
     /// How much ambient light the weather takes away, in the game's light points.
     int dimming = 0;
+    /// How far the sun has crossed the sky from sunrise to sunset, in percent; empty at night.
+    std::optional<int> sun;
+    /// How far the moon has crossed the night sky from sunset to sunrise, in percent; empty by day.
+    std::optional<int> moon;
+    /// The moon's phase: `new`, `waxing_crescent`, `half_moon_waxing`, `waxing_gibbous`, `full`, `waning_gibbous`,
+    /// `half_moon_waning` or `waning_crescent`.
+    std::string moon_phase = "new";
     auto operator<=>( const sky_value & ) const = default; // *NOPAD*
 };
 struct environment_value {

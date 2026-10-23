@@ -1459,13 +1459,39 @@
               "type": "integer",
               "minimum": 0,
               "description": "How much ambient light the weather takes away, in the game's light points."
+            },
+            "sun": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "How far the sun has crossed the sky from sunrise to sunset, in percent; absent at night. It rises in the east and sets in the west."
+            },
+            "moon": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "How far the moon has crossed the night sky from sunset to sunrise, in percent; absent by day."
+            },
+            "moon_phase": {
+              "enum": [
+                "new",
+                "waxing_crescent",
+                "half_moon_waxing",
+                "waxing_gibbous",
+                "full",
+                "waning_gibbous",
+                "half_moon_waning",
+                "waning_crescent"
+              ],
+              "description": "The moon's phase."
             }
           },
           "required": [
             "daylight",
             "precipitation",
             "rain",
-            "dimming"
+            "dimming",
+            "moon_phase"
           ],
           "additionalProperties": false
         },
