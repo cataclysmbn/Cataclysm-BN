@@ -267,3 +267,41 @@ TEST_CASE(
 }
 
 #endif // CATA_MCP
+
+TEST_CASE(
+    "the item spawner says a wish was granted when it lists the items again",
+    "[client][interaction][mcp][screens][wish]") {
+    clear_all_state();
+    clear_map();
+    auto& you = get_avatar();
+    clear_character(you, false);
+    const auto guard = screen_guard{};
+    auto stage = 0;
+    auto again = std::string{};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto snapshot = game_client::current_interaction();
+        REQUIRE(snapshot.structured);
+        switch (stage++) {
+            case 0: {
+                const auto entry = std::ranges::find_if(snapshot.choices, [](const auto& c) {
+                    return c.id.starts_with("entry:");
+                });
+                REQUIRE(entry != snapshot.choices.end());
+                return choose(snapshot, entry->id);
+            }
+            case 1:
+                REQUIRE(snapshot.field);
+                return operate(
+                    snapshot, game_client::interaction_operation::fill, snapshot.field->id, "1");
+            case 2:
+                again = snapshot.message;
+                return cancel(snapshot);
+            default:
+                return cancel(snapshot);
+        }
+    });
+    debug_menu::wishitem(&you);
+    INFO(again);
+    CHECK(stage >= 3);
+    CHECK(again.find("Wish granted") != std::string::npos);
+}
