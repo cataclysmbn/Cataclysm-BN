@@ -907,6 +907,12 @@ TEST_CASE(
         CHECK(labels(snapshot) == std::vector<std::string>{"Teleport", "Teleport to overmap"});
         CHECK(snapshot.filterable);
     }
+    SECTION("an exact-match filter keeps its quotes and keeps only the row it names") {
+        menu.set_filter("\"Teleport\"");
+        const auto snapshot = menu.as_interaction();
+        CHECK(labels(snapshot) == std::vector<std::string>{"Teleport"});
+        CHECK(snapshot.filter == "\"Teleport\"");
+    }
     SECTION("a switch carries its state") {
         const auto snapshot = menu.as_interaction();
         CHECK_FALSE(snapshot.choices[0].toggled);
