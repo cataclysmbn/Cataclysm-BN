@@ -292,8 +292,10 @@ void uilist::filterlist()
     int num_entries = entries.size();
     // check if string begin by " and finish by ". If that's the case, we only return a result if it matches it exactly
     bool exact_match_only = !filter.empty() && filter.front() == '\"' && filter.back() == '\"';
+    // The filter keeps its quotes, so the text a client set is the text it reads back.
+    auto needle = filter;
     if( exact_match_only ) {
-        filter.erase( std::remove( filter.begin(), filter.end(), '\"' ), filter.end() );
+        needle.erase( std::remove( needle.begin(), needle.end(), '\"' ), needle.end() );
     }
 
     for( int i = 0; i < num_entries; i++ ) {
@@ -302,14 +304,14 @@ void uilist::filterlist()
         }
         if( filtering ) {
             if( exact_match_only ) {
-                if( !( entries[i].txt == filter ) ) {
+                if( !( entries[i].txt == needle ) ) {
                     continue;
                 }
             } else if( ignore_case ) {
-                if( !lcmatch( entries[i].txt, filter ) ) {
+                if( !lcmatch( entries[i].txt, needle ) ) {
                     continue;
                 }
-            } else if( entries[i].txt.find( filter ) == std::string::npos ) {
+            } else if( entries[i].txt.find( needle ) == std::string::npos ) {
                 continue;
             }
         }
