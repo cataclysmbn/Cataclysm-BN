@@ -2722,6 +2722,31 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "a survivor with no favorite or recent recipe opens crafting on the recipes they know",
+    "[crafting][engine_client_component][mcp]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    const auto guard = interaction_test_guard{};
+    const auto state = crafting_state_guard{};
+    const auto recent = restore_on_out_of_scope<decltype(uistate.recent_recipes)>(
+        uistate.recent_recipes);
+    uistate.favorite_recipes.clear();
+    uistate.recent_recipes.clear();
+    prepare_crafting_fixture();
+
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = current_screen();
+        REQUIRE(screen.context == "CRAFTING");
+        ++step;
+        CHECK_FALSE(rows_of(screen, "crafting:recipes").empty());
+        return resolve_action("QUIT");
+    });
+    get_avatar().craft(get_avatar().bub_pos());
+    CHECK(step == 1);
+}
+
+TEST_CASE(
     "selecting a crafting row moves the cursor and its detail without crafting",
     "[crafting][engine_client_component][mcp]") {
     clear_all_state();
