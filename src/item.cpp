@@ -4528,6 +4528,9 @@ auto item::final_info( std::vector<iteminfo> &info, const iteminfo_request &requ
     } );
 
     if( !holsters.empty() && parts->test( iteminfo_parts::DESCRIPTION_HOLSTERS ) ) {
+        std::ranges::sort( holsters, localized_compare, []( const itype * e ) {
+            return e->nname( 1 );
+        } );
         insert_separation_line( info );
         info.emplace_back( "DESCRIPTION", _( "<bold>Can be stored in</bold>: " ) +
                            enumerate_as_string( holsters.begin(), holsters.end(),
