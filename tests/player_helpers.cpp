@@ -23,7 +23,9 @@
 #include "stomach.h"
 #include "string_id.h"
 #include "type_id.h"
+#include "vitamin.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <list>
 #include <memory>
@@ -75,6 +77,8 @@ void clear_character(player& dummy, bool debug_storage) {
     // contents (needs to happen before clear_morale).
     dummy.stomach.empty();
     dummy.consumption_history->elems.clear();
+    // As a new character's: a deficiency an earlier test starved into it would blind it at night.
+    std::ranges::for_each(vitamin::all(), [&](const auto& v) { dummy.vitamin_set(v.id, 0); });
     item& food = *item::spawn_temporary("debug_nutrition");
     dummy.eat(food);
 
