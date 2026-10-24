@@ -382,6 +382,7 @@ TEST_CASE(
     REQUIRE(world_generator->active_world);
     const auto base_path = PATH_INFO::base_path();
     const auto language = get_option<std::string>("USE_LANG");
+    const auto old_language = get_language().id;
     const auto old_loaded = l10n_data::mod_catalogues_are_loaded();
     const auto old_locale = l10n_data::pin_library();
     auto& mods = world_generator->active_world->info->active_mod_order;
@@ -395,8 +396,11 @@ TEST_CASE(
         mod.path = old_mod_path;
         mods = old_mods;
         PATH_INFO::init_base_path(base_path);
-        get_options().get_option("USE_LANG").setValue(language);
+        // The suite never set its language from the system, so the language in use is restored, not
+        // the system's.
+        get_options().get_option("USE_LANG").setValue(old_language);
         set_language();
+        get_options().get_option("USE_LANG").setValue(language);
         l10n_data::unload_catalogues();
         l10n_data::load_mod_catalogues();
         if (!old_loaded) { l10n_data::unload_mod_catalogues(); }
