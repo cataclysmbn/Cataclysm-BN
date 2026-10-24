@@ -30,6 +30,27 @@ const chunk = [{
   },
 }]
 
+/** A house whose floor is a parameter, with a wall at (3, 4) and a pile of hardware at (3, 3). */
+const house = [{
+  type: "mapgen",
+  method: "json",
+  om_terrain: "house_04",
+  object: {
+    rows: Array.from({ length: 24 }, (_, y) => y === 4 ? "...#" + ".".repeat(20) : ".".repeat(24)),
+    parameters: {
+      floor: {
+        type: "ter_str_id",
+        scope: "omt",
+        default: { distribution: [["t_floor", 1], ["t_dirt", 1]] },
+      },
+    },
+    terrain: { ".": { param: "floor" }, "#": "t_wall" },
+    place_items: [{ item: "hardware", x: 3, y: 3, chance: 100, repeat: 3 }],
+  },
+}]
+const labels = (screen: Value) =>
+  part(screen, "editor:preview").cells.map((cell: Value) => cell.label)
+
 export const editor: Scenario = {
   area: "editor",
   run: (rec) =>
@@ -163,6 +184,58 @@ export const editor: Scenario = {
         x: 2,
         y: 2,
       }]])
+
+      // A mapgen of an overmap terrain previews: a parameter pinned, the preview turned and re-rolled with a
+      // seed it shows, and the items a square can hold listed.
+      const houseFile = `${engine.profile}/mods/editor_scenario/house.json`
+      await Deno.writeTextFile(houseFile, JSON.stringify(house, null, 2) + "\n")
+      assertEquals(
+        (await engine.invoke("editor:open", { text: houseFile })).stages.at(-1),
+        "completed",
+      )
+      assertEquals((await engine.invoke("editor:preview", { count: 5 })).stages.at(-1), "completed")
+      assertEquals(part(engine.top(), "editor:pins").fields.map((field: Value) => field.id), [
+        "floor",
+      ])
+      const pinned = await engine.invoke("editor:pin_set", { row: "floor", text: "t_dirt" })
+      assertEquals(pinned.stages.at(-1), "completed")
+      rec.command("preview parameter pinned in the map editor", pinned)
+      assert(labels(engine.top()).includes("dirt"), "the pin shows in the preview")
+      assert(!labels(engine.top()).includes("wooden floor"), "the pin leaves no other floor")
+      // A parameter the form lacks is refused as an invalid row.
+      const unknown = await engine.invoke("editor:pin_set", { row: "wall", text: "t_wall" })
+      assertEquals(unknown.error, "invalid_arguments")
+      const north = labels(engine.top())
+      assert(north[4 * 24 + 3].includes("wall"), "the wall lies at (3, 4)")
+      const turned = await engine.invoke("editor:turn", { row: "turn:90" })
+      assertEquals(turned.stages.at(-1), "completed")
+      rec.command("preview turned in the map editor", turned)
+      assertEquals(
+        part(engine.top(), "editor:rotation").rows.filter((row: Value) => row.selected).map((
+          row: Value,
+        ) => row.id),
+        ["turn:90"],
+      )
+      assert(labels(engine.top()).join() !== north.join(), "the preview turned")
+      assertEquals(
+        (await engine.invoke("editor:turn", { row: "turn:0" })).stages.at(-1),
+        "completed",
+      )
+      assertEquals(labels(engine.top()), north)
+      const seeded = (screen: Value) => part(screen, "editor:document").stats.at(-1).value
+      assertEquals(seeded(engine.top()), "5")
+      const rerolled = await engine.invoke("editor:reroll")
+      assertEquals(rerolled.stages.at(-1), "completed")
+      rec.command("preview re-rolled in the map editor", rerolled)
+      assertEquals(seeded(engine.top()), "6")
+      assertEquals((await engine.invoke("editor:preview", { count: 5 })).stages.at(-1), "completed")
+      assertEquals(labels(engine.top()), north)
+      const looted = await engine.invoke("editor:loot", { row: "square:3,3" })
+      assertEquals(looted.stages.at(-1), "completed")
+      rec.command("loot roll of a square in the map editor", looted)
+      const loot = part(engine.top(), "editor:loot").rows
+      assert(loot.length > 0, "a square with place_items lists what can spawn")
+      rec.accept("map editor with a preview and its loot roll", "screen", engine.top())
 
       assertEquals((await engine.invoke("QUIT")).stages.at(-1), "completed")
       assertEquals(engine.top().role, "map")
