@@ -111,6 +111,8 @@ void clear_character(player& dummy, bool debug_storage) {
     dummy.clear_effects();   // mark effects for removal
     dummy.process_effects(); // actually remove them
     dummy.set_underwater(false);
+    // Removing a blindness or a sleep leaves the sight it limited cut short until recalculated.
+    dummy.recalc_sight_limits();
 
     // Make stats nominal.
     dummy.str_max = 8;
