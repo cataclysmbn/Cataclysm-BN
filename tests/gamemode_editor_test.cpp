@@ -3,9 +3,12 @@
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catch/catch.hpp"
+#include "editor/catalog.h"
 #include "game.h"
 #include "game_constants.h"
 #include "gamemode.h"
+#include "init.h"
+#include "loading_ui.h"
 #include "map/map.h"
 #include "mod_manager.h"
 #include "options.h"
@@ -15,8 +18,10 @@
 #include "world.h"
 #include "worldfactory.h"
 
+#include <algorithm>
 #include <optional>
 #include <string>
+#include <vector>
 
 TEST_CASE(
     "the main-menu editor game starts without a character on an open field at noon",
@@ -66,4 +71,53 @@ TEST_CASE(
     CHECK(made->active_mod_order == world_generator->get_mod_manager().get_default_mods());
     // The main menu opens it again rather than making a second one.
     CHECK(world_generator->make_new_world(special_game_type::EDITOR) == made);
+}
+
+TEST_CASE(
+    "an editor world made with a chosen mod loads the mod after its dependency",
+    "[gamemode][editor][worldfactory]") {
+    const auto core = mod_management::get_default_core_content_pack();
+    auto* const made =
+        world_generator->make_new_world(special_game_type::EDITOR, {mod_id("desertpack")});
+    REQUIRE(made != nullptr);
+    const auto cleanup = on_out_of_scope([name = made->world_name] {
+        world_generator->delete_world(name, true);
+    });
+    const auto& order = made->active_mod_order;
+    const auto dependency = std::ranges::find(order, core);
+    const auto chosen = std::ranges::find(order, mod_id("desertpack"));
+    REQUIRE(dependency != order.end());
+    REQUIRE(chosen != order.end());
+    CHECK(dependency < chosen);
+    // Opening the editor again with other mods replaces the first choice instead of keeping it.
+    CHECK(world_generator->make_new_world(special_game_type::EDITOR, {core}) == made);
+    CHECK(made->active_mod_order == std::vector{core});
+}
+
+TEST_CASE(
+    "the mod an editor world was made with has its terrain in the editor's catalog",
+    "[gamemode][editor][editor_catalog][worldfactory]") {
+    const auto has_sand = [] {
+        return editor::search_catalog(
+                   {.kind = editor::catalog_kind::terrain, .filter = "t_sand_singing"})
+                   .total
+            == 1;
+    };
+    REQUIRE_FALSE(has_sand());
+    auto* const original = world_generator->active_world->info;
+    auto* const made =
+        world_generator->make_new_world(special_game_type::EDITOR, {mod_id("desertpack")});
+    REQUIRE(made != nullptr);
+    const auto reload = [](WORLDINFO* const info) {
+        world_generator->set_active_world(info);
+        auto ui = loading_ui(false);
+        init::load_world_modfiles(ui, g->get_active_world(), SAVE_ARTIFACTS);
+    };
+    const auto cleanup = on_out_of_scope([&, name = made->world_name] {
+        reload(original);
+        world_generator->delete_world(name, true);
+        clear_all_state();
+    });
+    reload(made);
+    CHECK(has_sand());
 }
