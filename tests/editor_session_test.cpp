@@ -562,7 +562,7 @@ auto previewed_extra() -> nlohmann::ordered_json {
         rows.push_back(row == 4 ? "...#" + std::string(20, '.') : std::string(24, '.'));
     }
     auto extra = nlohmann::ordered_json::parse(R"({
-        "parameters": { "floor": { "type": "ter_str_id",
+        "parameters": { "floor": { "type": "ter_str_id", "scope": "omt",
           "default": { "distribution": [ [ "t_floor", 1 ], [ "t_dirt", 1 ] ] } } },
         "terrain": { ".": { "param": "floor" }, "#": "t_wall" },
         "place_items": [ { "item": "hardware", "x": 3, "y": 3, "chance": 100, "repeat": 3 } ]
@@ -687,7 +687,7 @@ TEST_CASE(
                 CHECK(rotation(screen) == std::vector<std::string>{"turn:0"});
                 north = preview_labels(screen);
                 CHECK(north == generated("north"));
-                CHECK(north[4 * 24 + 3] == "wall");
+                CHECK(north[4 * 24 + 3] == ter_str_id("t_wall").obj().name());
                 CHECK(refused(state, "editor:turn", {.row = "turn:45"}));
                 return invoke("editor:turn", {.row = "turn:90"});
             case 4:
