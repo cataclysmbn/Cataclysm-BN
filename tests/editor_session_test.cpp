@@ -11,6 +11,7 @@
 #    include "cursesdef.h"
 #    include "cursesport.h"
 #    include "editor/editor_session.h"
+#    include "editor/mapgen_preview.h"
 #    include "engine_client_component.h"
 #    include "engine_client_contract.h"
 #    include "game.h"
@@ -19,6 +20,7 @@
 #    include "input.h"
 #    include "json_formatter.h"
 #    include "map/map.h"
+#    include "map/mapdata.h"
 #    include "mapgen/mapgen_functions.h"
 #    include "options_helpers.h"
 #    include "output.h"
@@ -548,6 +550,271 @@ TEST_CASE(
 
     editor::run_editor_session();
     CHECK(step == 5);
+}
+
+namespace {
+
+/// A mapgen whose floor is a parameter, with one wall at (3, 4) to tell its turns apart, and
+/// groups of items at (3, 3).
+auto previewed_extra() -> nlohmann::ordered_json {
+    auto rows = nlohmann::ordered_json::array();
+    for (auto row = 0; row < 24; ++row) {
+        rows.push_back(row == 4 ? "...#" + std::string(20, '.') : std::string(24, '.'));
+    }
+    auto extra = nlohmann::ordered_json::parse(R"({
+        "parameters": { "floor": { "type": "ter_str_id",
+          "default": { "distribution": [ [ "t_floor", 1 ], [ "t_dirt", 1 ] ] } } },
+        "terrain": { ".": { "param": "floor" }, "#": "t_wall" },
+        "place_items": [ { "item": "hardware", "x": 3, "y": 3, "chance": 100, "repeat": 3 } ]
+      })");
+    extra["rows"] = rows;
+    return extra;
+}
+
+auto preview_labels(const ec::screen_view& screen) -> std::vector<std::string> {
+    return body<ec::grid_body>(part(screen, "editor:preview")).cells
+         | std::views::transform(&ec::grid_cell::label) | std::ranges::to<std::vector>();
+}
+
+} // namespace
+
+TEST_CASE(
+    "the editor pins a mapgen parameter and the preview uses it",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{previewed_extra()};
+    const auto restore_mapgen = restore_on_out_of_scope<bool>(disable_mapgen);
+    disable_mapgen = false;
+    auto step = 0;
+    const auto pinned = [](const ec::screen_view& screen) {
+        const auto& fields = body<ec::form_body>(part(screen, "editor:pins")).fields;
+        REQUIRE(fields.size() == 1);
+        CHECK(fields.front().id == "floor");
+        CHECK(fields.front().type == "select");
+        return fields.front();
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                // The parameters are offered once a preview is shown, with every value they take.
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:pins"));
+                return invoke("editor:preview", {.count = 3});
+            case 2: {
+                const auto field = pinned(screen);
+                CHECK(field.value.empty());
+                CHECK(std::ranges::contains(field.options, "t_dirt", &ec::form_option::id));
+                CHECK(std::ranges::contains(field.options, "t_floor", &ec::form_option::id));
+                return invoke("editor:pin_set", {.row = "floor", .text = "t_dirt"});
+            }
+            case 3: {
+                CHECK(pinned(screen).value == "t_dirt");
+                const auto labels = preview_labels(screen);
+                CHECK(std::ranges::contains(labels, "dirt"));
+                CHECK_FALSE(std::ranges::contains(labels, "wooden floor"));
+                return invoke("editor:pin_set", {.row = "floor", .text = "t_floor"});
+            }
+            case 4:
+                CHECK(pinned(screen).value == "t_floor");
+                CHECK_FALSE(std::ranges::contains(preview_labels(screen), "dirt"));
+                // A parameter the mapgen lacks is refused with its name, and the pin stays.
+                return invoke("editor:pin_set", {.row = "wall", .text = "t_wall"});
+            case 5:
+                CHECK(body<ec::text_body>(part(screen, "editor:notice")).markup.find("wall")
+                      != std::string::npos);
+                CHECK(pinned(screen).value == "t_floor");
+                CHECK_FALSE(std::ranges::contains(preview_labels(screen), "dirt"));
+                return invoke("editor:pin_set", {.row = "floor", .text = ""});
+            case 6:
+                CHECK(pinned(screen).value.empty());
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 7);
+}
+
+TEST_CASE(
+    "the editor turns the preview to the mapgen's own rotation",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{previewed_extra()};
+    const auto restore_mapgen = restore_on_out_of_scope<bool>(disable_mapgen);
+    disable_mapgen = false;
+    auto step = 0;
+    auto north = std::vector<std::string>{};
+    const auto rotation = [](const ec::screen_view& screen) {
+        const auto& rows = body<ec::list_body>(part(screen, "editor:rotation")).rows;
+        CHECK((rows | std::views::transform(&ec::row::id) | std::ranges::to<std::vector>())
+              == std::vector<std::string>{"turn:0", "turn:90", "turn:180", "turn:270"});
+        return rows | std::views::filter(&ec::row::selected) | std::views::transform(&ec::row::id)
+             | std::ranges::to<std::vector>();
+    };
+    // What the library generates, as the preview shows it.
+    const auto generated = [&](const std::string& direction) {
+        const auto made = editor::preview_mapgen(
+            nlohmann::ordered_json::parse(file.text)[0].dump(),
+            {.at = get_avatar().abs_omt_pos(),
+             .seed = 3,
+             .direction = direction,
+             .pins = {{"floor", "t_floor"}}});
+        REQUIRE(made);
+        return made->squares | std::views::transform([](const editor::preview_square& square) {
+                   return ter_str_id(square.ter).obj().name();
+               })
+             | std::ranges::to<std::vector>();
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                return invoke("editor:preview", {.count = 3});
+            case 2:
+                return invoke("editor:pin_set", {.row = "floor", .text = "t_floor"});
+            case 3:
+                CHECK(rotation(screen) == std::vector<std::string>{"turn:0"});
+                north = preview_labels(screen);
+                CHECK(north == generated("north"));
+                CHECK(north[4 * 24 + 3] == "wall");
+                CHECK(refused(state, "editor:turn", {.row = "turn:45"}));
+                return invoke("editor:turn", {.row = "turn:90"});
+            case 4:
+                CHECK(rotation(screen) == std::vector<std::string>{"turn:90"});
+                CHECK(preview_labels(screen) == generated("east"));
+                CHECK(preview_labels(screen) != north);
+                return invoke("editor:turn", {.row = "turn:180"});
+            case 5:
+                CHECK(preview_labels(screen) == generated("south"));
+                return invoke("editor:turn", {.row = "turn:270"});
+            case 6:
+                CHECK(preview_labels(screen) == generated("west"));
+                return invoke("editor:turn", {.row = "turn:0"});
+            case 7:
+                CHECK(preview_labels(screen) == north);
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 8);
+}
+
+TEST_CASE(
+    "the editor re-rolls the preview with a seed it shows",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{previewed_extra()};
+    const auto restore_mapgen = restore_on_out_of_scope<bool>(disable_mapgen);
+    disable_mapgen = false;
+    auto step = 0;
+    auto first = std::vector<std::string>{};
+    const auto seed = [](const ec::screen_view& screen) {
+        return body<ec::panel_body>(part(screen, "editor:document")).stats.back().value;
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK_FALSE(has_affordance(screen, "editor:reroll"));
+                return invoke("editor:preview", {.count = 5});
+            case 2:
+                CHECK(seed(screen) == "5");
+                first = preview_labels(screen);
+                REQUIRE(has_affordance(screen, "editor:reroll"));
+                return invoke("editor:reroll");
+            case 3:
+                // A new seed, recorded in the document's stats.
+                CHECK(seed(screen) != "5");
+                return invoke("editor:preview", {.count = 5});
+            case 4:
+                CHECK(seed(screen) == "5");
+                CHECK(preview_labels(screen) == first);
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 5);
+}
+
+TEST_CASE(
+    "the editor lists what can spawn on a square of the mapgen",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{previewed_extra()};
+    const auto restore_mapgen = restore_on_out_of_scope<bool>(disable_mapgen);
+    disable_mapgen = false;
+    auto step = 0;
+    auto first = std::vector<std::string>{};
+    const auto rows = [](const ec::screen_view& screen) {
+        return body<ec::list_body>(part(screen, "editor:loot")).rows;
+    };
+    const auto lines = [&](const ec::screen_view& screen) {
+        return rows(screen) | std::views::transform([](const ec::row& row) {
+                   return row.id + " " + row.columns[0].value + " " + row.columns[1].value + " "
+                        + row.columns[2].value;
+               })
+             | std::ranges::to<std::vector>();
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:loot"));
+                CHECK(affordance(screen, "editor:loot").args.row->component_id == "editor:canvas");
+                return invoke("editor:preview", {.count = 5});
+            case 2:
+                return invoke("editor:loot", {.row = "square:3,3"});
+            case 3:
+                first = lines(screen);
+                REQUIRE_FALSE(first.empty());
+                for (const auto& row : rows(screen)) {
+                    CHECK(itype_id(row.id.substr(std::string_view("loot:").size())).is_valid());
+                    CHECK(row.columns.size() == 3);
+                }
+                // The same seed rolls the same list.
+                return invoke("editor:loot", {.row = "square:3,3"});
+            case 4:
+                CHECK(lines(screen) == first);
+                // A square nothing spawns on has an empty list.
+                return invoke("editor:loot", {.row = "square:10,10"});
+            case 5:
+                CHECK(rows(screen).empty());
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 6);
 }
 
 TEST_CASE(
