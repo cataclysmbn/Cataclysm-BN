@@ -6,10 +6,13 @@
 #include "iteminfo_query.h"
 #include "itype.h"
 #include "options_helpers.h"
+#include "output.h"
 #include "player_helpers.h"
 #include "recipe.h"
 #include "rng.h"
 #include "state_helpers.h"
+#include "string_utils.h"
+#include "translations.h"
 #include "type_id.h"
 #include "value_ptr.h"
 
@@ -1068,4 +1071,24 @@ TEST_CASE("show available recipes with item as an ingredient", "[item][iteminfo]
             }
         }
     }
+}
+
+TEST_CASE("an item lists what it can be stored in by name", "[item][iteminfo]") {
+    const auto q = iteminfo_query(
+        std::vector<iteminfo_parts>{iteminfo_parts::DESCRIPTION_HOLSTERS});
+    const auto info = remove_color_tags(item::spawn_temporary("sword_wood")->info_string(q, 1));
+    const auto prefix = std::string("Can be stored in: ");
+    const auto start = info.find(prefix);
+    REQUIRE(start != std::string::npos);
+    auto names = std::vector<std::string>{};
+    auto list = info.substr(start + prefix.size());
+    list = list.substr(0, list.find('\n'));
+    for (const auto& part : string_split(list, ',')) {
+        auto name = trim(part);
+        if (name.starts_with("and ")) { name = name.substr(4); }
+        names.push_back(name);
+    }
+    CAPTURE(list);
+    REQUIRE(names.size() > 2);
+    CHECK(std::ranges::is_sorted(names, localized_compare));
 }
