@@ -8542,6 +8542,8 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
               static_cast<int64_t>(OVERMAP_HEIGHT - -OVERMAP_DEPTH + 1 - valid_lm_levels));
     bool seen_cache_dirty = false;
     bool gpu_transparency_dirty = false;
+    // Lines map::sees remembered were traced through the old transparency.
+    auto transparency_changed = false;
     bool gpu_floor_dirty = false;
     bool gpu_vehicle_floor_dirty = false;
     bool gpu_vehicle_obscured_dirty = false;
@@ -8618,6 +8620,7 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
         auto const transparency_dirty_levels =
             build_transparency_caches(-OVERMAP_DEPTH, OVERMAP_HEIGHT);
         if (!transparency_dirty_levels.empty()) {
+            transparency_changed = true;
             gpu_transparency_dirty = true;
             std::ranges::
                 copy(transparency_dirty_levels, std::back_inserter(gpu_transparency_dirty_levels));
@@ -8811,7 +8814,9 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
     }
 
     seen_cache_dirty |= build_vision_transparency_cache(get_player_character());
-    if (seen_cache_dirty) { skew_vision_cache.assign(vision_cache_slots, vision_cache_slot{}); }
+    if (seen_cache_dirty || transparency_changed) {
+        skew_vision_cache.assign(vision_cache_slots, vision_cache_slot{});
+    }
     const auto need_seen_rebuild =
         seen_cache_dirty || force_seen_rebuild_for_gpu_residency || m_last_seen_cache_origin != p;
     TracyPlot("Map Need Seen Rebuild", need_seen_rebuild ? int64_t{1} : int64_t{0});
