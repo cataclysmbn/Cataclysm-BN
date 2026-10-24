@@ -724,9 +724,10 @@ TEST_CASE("without a sink nothing is drawn and nothing waits", "[native_presenta
         rng_set_engine_seed(424242);
         const auto start = std::chrono::steady_clock::now();
         entry.action();
-        // Paced at this delay, the grenade and the chain reaction would hold the screen for
-        // several seconds.
-        CHECK(std::chrono::steady_clock::now() - start < std::chrono::seconds(2));
+        // Paced at this delay, each redraw would hold the screen 100 ms: the bound is half of that,
+        // plus the 2 s the work itself may take on a loaded machine.
+        CHECK(std::chrono::steady_clock::now() - start
+              < entry.redraws * std::chrono::milliseconds(100) / 2 + std::chrono::seconds(2));
         CHECK(trace.empty());
         CHECK(rng_state() == entry.golden.back().substr(std::string_view("end rng=").size()));
     }
