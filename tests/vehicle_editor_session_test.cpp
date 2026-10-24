@@ -720,6 +720,105 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the vehicle editor sets a turret's ammunition and a prototype's flags and colours, refusing "
+    "what the game would not load",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto field =
+        [](const ec::screen_view& screen, const char* const form, const std::string& id) {
+            const auto& fields = body<ec::form_body>(part(screen, form)).fields;
+            const auto found = std::ranges::find(fields, id, &ec::form_field::id);
+            INFO(id);
+            REQUIRE(found != fields.end());
+            return found->value;
+        };
+    const auto notice = [](const ec::screen_view& screen) {
+        return body<ec::text_body>(part(screen, "vehicle:notice")).markup;
+    };
+    const auto turret = [](const ec::screen_view& screen) {
+        const auto& stack = rows(screen, "vehicle:stack");
+        const auto found =
+            std::ranges::find(stack, std::string("/parts/0/parts/3"), &ec::row::description);
+        REQUIRE(found != stack.end());
+        return found->id;
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:filter", {.text = "armored"});
+            case 1:
+                return invoke("vehicle:open", {.row = "prototype:armored_car"});
+            case 2:
+                return invoke("vehicle:mount", {.row = "mount:-3,1"});
+            case 3:
+                return invoke("vehicle:pick", {.row = turret(screen)});
+            case 4:
+                return invoke("vehicle:tool", {.row = "tool:part"});
+            case 5:
+                CHECK(field(screen, "vehicle:part_form", "ammo_types") == "556");
+                CHECK(field(screen, "vehicle:part_form", "ammo_min") == "3");
+                CHECK(field(screen, "vehicle:part_form", "ammo_max") == "30");
+                return invoke("vehicle:part_set", {.row = "ammo_types", .text = "556, 9mm"});
+            case 6:
+                // The machine gun does not fire pistol rounds.
+                CHECK_FALSE(notice(screen).empty());
+                CHECK(field(screen, "vehicle:part_form", "ammo_types") == "556");
+                return invoke(
+                    "vehicle:part_set", {.row = "ammo_types", .text = "556, 556_incendiary"});
+            case 7:
+                CHECK(field(screen, "vehicle:part_form", "ammo_types") == "556, 556_incendiary");
+                return invoke("vehicle:part_set", {.row = "ammo_min", .text = "40"});
+            case 8:
+                CHECK(notice(screen) == "A turret cannot load fewer rounds at most than at least.");
+                CHECK(field(screen, "vehicle:part_form", "ammo_min") == "3");
+                return invoke("vehicle:part_set", {.row = "ammo_max", .text = "10"});
+            case 9:
+                CHECK(field(screen, "vehicle:part_form", "ammo_max") == "10");
+                return invoke("vehicle:tool", {.row = "tool:vehicle"});
+            case 10:
+                CHECK(field(screen, "vehicle:props", "color_palette") == "military_standard");
+                CHECK(field(screen, "vehicle:props", "flags").empty());
+                return invoke("vehicle:prop_set", {.row = "flags", .text = "VEHICLE_LOCKED"});
+            case 11:
+                CHECK(field(screen, "vehicle:props", "flags") == "VEHICLE_LOCKED");
+                return invoke("vehicle:prop_set",
+                              {.row = "flags", .text = "VEHICLE_LOCKED, VEHICLE_NO_HOTWIRE"});
+            case 12:
+                CHECK(field(screen, "vehicle:props", "flags")
+                      == "VEHICLE_LOCKED, VEHICLE_NO_HOTWIRE");
+                return invoke(
+                    "vehicle:prop_set", {.row = "color_palette", .text = "no_such_palette"});
+            case 13:
+                CHECK_FALSE(notice(screen).empty());
+                CHECK(field(screen, "vehicle:props", "color_palette") == "military_standard");
+                return invoke("vehicle:prop_set", {.row = "color_palette", .text = ""});
+            case 14:
+                CHECK(field(screen, "vehicle:props", "color_palette").empty());
+                return invoke("vehicle:prop_set", {.row = "flags", .text = ""});
+            case 15:
+                CHECK(field(screen, "vehicle:props", "flags").empty());
+                return invoke("vehicle:undo");
+            case 16:
+            case 17:
+            case 18:
+            case 19:
+            case 20:
+                return invoke("vehicle:undo");
+            case 21:
+                CHECK(stat(screen, "saved").value == "Yes");
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 22);
+}
+
+TEST_CASE(
     "the vehicle editor adds, weighs and removes a mount's item spawns",
     "[editor_vehicle][engine_client_component]") {
     const auto guard = screen_guard{};
