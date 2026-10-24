@@ -123,7 +123,7 @@
     "time": "1 h 45 m",
     "book_learn": [ [ "recipe_melee", 3 ] ],
     "using": [ [ "blacksmithing_intermediate", 2 ] ],
-    "components": [ [ [ "material_aluminium_ingot", 2 ], [ "chem_aluminium_powder", 30 ] ] ]
+    "components": [ [ [ "material_aluminium_ingot", 3 ] ] ]
   },
   {
     "type": "recipe",
