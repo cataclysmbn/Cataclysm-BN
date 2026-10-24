@@ -109,9 +109,19 @@
                     "selectable": true,
                     "selected": false,
                     "columns": []
+                  },
+                  {
+                    "id": "editor:save",
+                    "label": "Load save",
+                    "description": "Open a saved game in the editor, with the character where the save left it.",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": []
                   }
                 ],
-                "total": 2,
+                "total": 3,
                 "selection": "single",
                 "activate": "menu:entry"
               }
@@ -257,25 +267,841 @@
       }
     },
     {
-      "name": "map editor started from the main menu, request",
+      "name": "mod list of the main menu's editor",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:2",
+        "role": "screen",
+        "kind": "world_creation",
+        "title": "Mods",
+        "root": {
+          "id": "worldgen:mods",
+          "kind": "split",
+          "relation": "peers",
+          "children": [
+            {
+              "id": "worldgen:mods:header",
+              "kind": "panel",
+              "title": "",
+              "child": {
+                "id": "worldgen:mods:body",
+                "kind": "split",
+                "relation": "detail",
+                "children": [
+                  {
+                    "id": "worldgen:mods:lists",
+                    "kind": "split",
+                    "relation": "peers",
+                    "active": "worldgen:mods:categories",
+                    "children": [
+                      {
+                        "id": "worldgen:mods:categories",
+                        "kind": "tabs",
+                        "affordances": [
+                          "worldgen:mods:category"
+                        ],
+                        "tabs": [
+                          {
+                            "id": "tab_default",
+                            "label": "Default",
+                            "selected": true,
+                            "enabled": true
+                          },
+                          {
+                            "id": "tab_blacklist",
+                            "label": "Blacklist",
+                            "selected": false,
+                            "enabled": true
+                          },
+                          {
+                            "id": "tab_balance",
+                            "label": "Balance",
+                            "selected": false,
+                            "enabled": true
+                          }
+                        ],
+                        "select": "worldgen:mods:category",
+                        "child": {
+                          "id": "worldgen:mods:available",
+                          "kind": "panel",
+                          "title": "Mod List",
+                          "child": {
+                            "id": "worldgen:mods:available:rows",
+                            "kind": "list",
+                            "affordances": [
+                              "worldgen:mods:add",
+                              "worldgen:mods:add"
+                            ],
+                            "columns": [],
+                            "rows": [
+                              {
+                                "id": "mod:aftershock",
+                                "label": "Aftershock",
+                                "description": "",
+                                "denial": "",
+                                "enabled": true,
+                                "selectable": true,
+                                "selected": false,
+                                "columns": []
+                              },
+                              {
+                                "id": "mod:crt_expansion",
+                                "label": "<color_red>C.R.I.T. Expansion</color>",
+                                "description": "",
+                                "denial": "",
+                                "enabled": true,
+                                "selectable": true,
+                                "selected": false,
+                                "columns": []
+                              },
+                              {
+                                "id": "mod:lethal_zeds",
+                                "label": "<color_red>Lethal Zombies</color>",
+                                "description": "",
+                                "denial": "",
+                                "enabled": true,
+                                "selectable": true,
+                                "selected": false,
+                                "columns": []
+                              },
+                              {
+                                "id": "mod:desertpack",
+                                "label": "Desert Region",
+                                "description": "",
+                                "denial": "",
+                                "enabled": true,
+                                "selectable": true,
+                                "selected": false,
+                                "columns": []
+                              },
+                              {
+                                "id": "mod:exotic_ammo",
+                                "label": "Exotic ammo types",
+                                "description": "",
+                                "denial": "",
+                                "enabled": true,
+                                "selectable": true,
+                                "selected": false,
+                                "columns": []
+                              },
+                              {
+                                "id": "mod:flowerpots_plus",
+                                "label": "FlowerPots++",
+                                "description": "",
+                                "denial": "",
+                                "enabled": true,
+                                "selectable": true,
+                                "selected": false,
+                                "columns": []
+                              },
+                              {
+                                "id": "mod:lua_ai_attitude_debug",
+                                "label": "Lua AI Examples",
+                                "description": "",
+                                "denial": "",
+                                "enabled": true,
+                                "selectable": true,
+                                "selected": false,
+                                "columns": []
+                              },
+                              {
+                                "id": "mod:lua_special_attack_demo",
+                                "label": "Lua Special Attack Demo",
+                                "description": "",
+                                "denial": "",
+                                "enabled": true,
+                                "selectable": true,
+                                "selected": false,
+                                "columns": []
+                              },
+                              {
+                                "id": "mod:MonsterGirls",
+                                "label": "Monster Girls Mutations",
+                                "description": "",
+                                "denial": "",
+                                "enabled": true,
+                                "selectable": true,
+                                "selected": false,
+                                "columns": []
+                              },
+                              {
+                                "id": "mod:resurrection_tech",
+                                "label": "Resurrection",
+                                "description": "",
+                                "denial": "",
+                                "enabled": true,
+                                "selectable": true,
+                                "selected": false,
+                                "columns": []
+                              },
+                              {
+                                "id": "mod:rocky_zombies",
+                                "label": "Rocky Zombies",
+                                "description": "",
+                                "denial": "",
+                                "enabled": true,
+                                "selectable": true,
+                                "selected": false,
+                                "columns": []
+                              },
+                              {
+                                "id": "mod:rpg_system",
+                                "label": "RPG System",
+                                "description": "",
+                                "denial": "",
+                                "enabled": true,
+                                "selectable": true,
+                                "selected": false,
+                                "columns": []
+                              },
+                              {
+                                "id": "mod:teleportation_tech",
+                                "label": "Teleportation",
+                                "description": "",
+                                "denial": "",
+                                "enabled": true,
+                                "selectable": true,
+                                "selected": false,
+                                "columns": []
+                              },
+                              {
+                                "id": "mod:weather_variants",
+                                "label": "Weather Variants",
+                                "description": "",
+                                "denial": "",
+                                "enabled": true,
+                                "selectable": true,
+                                "selected": false,
+                                "columns": []
+                              },
+                              {
+                                "id": "mod:CheesyInnaWoodFixes",
+                                "label": "CheesyInnaWoodFixes",
+                                "description": "",
+                                "denial": "",
+                                "enabled": true,
+                                "selectable": true,
+                                "selected": false,
+                                "columns": []
+                              },
+                              {
+                                "id": "mod:jump_pad",
+                                "label": "Jump Pad",
+                                "description": "",
+                                "denial": "",
+                                "enabled": true,
+                                "selectable": true,
+                                "selected": false,
+                                "columns": []
+                              },
+                              {
+                                "id": "mod:civilians",
+                                "label": "Civilians",
+                                "description": "",
+                                "denial": "",
+                                "enabled": true,
+                                "selectable": true,
+                                "selected": false,
+                                "columns": []
+                              },
+                              {
+                                "id": "mod:DinoMod",
+                                "label": "DinoMod",
+                                "description": "",
+                                "denial": "",
+                                "enabled": true,
+                                "selectable": true,
+                                "selected": false,
+                                "columns": []
+                              },
+                              {
+                                "id": "mod:alt_map_key",
+                                "label": "Alternative Map Key",
+                                "description": "",
+                                "denial": "",
+                                "enabled": true,
+                                "selectable": true,
+                                "selected": false,
+                                "columns": []
+                              },
+                              {
+                                "id": "mod:crazy_cataclysm",
+                                "label": "Crazy Cataclysm",
+                                "description": "",
+                                "denial": "",
+                                "enabled": true,
+                                "selectable": true,
+                                "selected": false,
+                                "columns": []
+                              },
+                              {
+                                "id": "mod:my_sweet_cataclysm",
+                                "label": "My Sweet Cataclysm: BN Edition",
+                                "description": "",
+                                "denial": "",
+                                "enabled": true,
+                                "selectable": true,
+                                "selected": false,
+                                "columns": []
+                              },
+                              {
+                                "id": "mod:MMA",
+                                "label": "Mythical Martial Arts",
+                                "description": "",
+                                "denial": "",
+                                "enabled": true,
+                                "selectable": true,
+                                "selected": false,
+                                "columns": []
+                              },
+                              {
+                                "id": "mod:Arcana",
+                                "label": "<color_cyan>Arcana and Magic Items</color>",
+                                "description": "",
+                                "denial": "",
+                                "enabled": true,
+                                "selectable": true,
+                                "selected": false,
+                                "columns": []
+                              },
+                              {
+                                "id": "mod:MagicalNights",
+                                "label": "Magical Nights",
+                                "description": "",
+                                "denial": "",
+                                "enabled": true,
+                                "selectable": true,
+                                "selected": false,
+                                "columns": []
+                              },
+                              {
+                                "id": "mod:color_expansion",
+                                "label": "Color Expansion",
+                                "description": "",
+                                "denial": "",
+                                "enabled": true,
+                                "selectable": true,
+                                "selected": false,
+                                "columns": []
+                              },
+                              {
+                                "id": "mod:sample-uv-mod",
+                                "label": "Dynamic Characters",
+                                "description": "",
+                                "denial": "",
+                                "enabled": true,
+                                "selectable": true,
+                                "selected": false,
+                                "columns": []
+                              },
+                              {
+                                "id": "mod:UDP_BN_FAKE_SNOW",
+                                "label": "MSX Fake Snow",
+                                "description": "",
+                                "denial": "",
+                                "enabled": true,
+                                "selectable": true,
+                                "selected": false,
+                                "columns": []
+                              },
+                              {
+                                "id": "mod:no_vehicle_colors",
+                                "label": "No Vehicle Colors",
+                                "description": "",
+                                "denial": "",
+                                "enabled": true,
+                                "selectable": true,
+                                "selected": false,
+                                "columns": []
+                              },
+                              {
+                                "id": "mod:vehicle_color_expansion",
+                                "label": "Vehicle Color Expansion",
+                                "description": "",
+                                "denial": "",
+                                "enabled": true,
+                                "selectable": true,
+                                "selected": false,
+                                "columns": []
+                              },
+                              {
+                                "id": "mod:innawoods",
+                                "label": "innawoods",
+                                "description": "",
+                                "denial": "",
+                                "enabled": true,
+                                "selectable": true,
+                                "selected": false,
+                                "columns": []
+                              }
+                            ],
+                            "total": 30,
+                            "selection": "single",
+                            "activate": "bn:activate:worldgen:mods:add"
+                          }
+                        }
+                      },
+                      {
+                        "id": "worldgen:mods:active",
+                        "kind": "panel",
+                        "title": "Mod Load Order",
+                        "child": {
+                          "id": "worldgen:mods:active:rows",
+                          "kind": "list",
+                          "affordances": [
+                            "worldgen:mods:remove",
+                            "worldgen:mods:remove"
+                          ],
+                          "columns": [
+                            {
+                              "key": "order",
+                              "label": "Order"
+                            }
+                          ],
+                          "rows": [
+                            {
+                              "id": "active:bn",
+                              "label": "Bright Nights",
+                              "description": "",
+                              "denial": "",
+                              "enabled": true,
+                              "selectable": true,
+                              "selected": false,
+                              "columns": [
+                                {
+                                  "key": "order",
+                                  "label": "Order",
+                                  "value": "1"
+                                }
+                              ],
+                              "toggled": true
+                            },
+                            {
+                              "id": "active:no_npc_food",
+                              "label": "Disable NPC Needs",
+                              "description": "",
+                              "denial": "",
+                              "enabled": true,
+                              "selectable": true,
+                              "selected": false,
+                              "columns": [
+                                {
+                                  "key": "order",
+                                  "label": "Order",
+                                  "value": "2"
+                                }
+                              ],
+                              "toggled": true
+                            },
+                            {
+                              "id": "active:novitamins",
+                              "label": "Simplified Nutrition",
+                              "description": "",
+                              "denial": "",
+                              "enabled": true,
+                              "selectable": true,
+                              "selected": false,
+                              "columns": [
+                                {
+                                  "key": "order",
+                                  "label": "Order",
+                                  "value": "3"
+                                }
+                              ],
+                              "toggled": true
+                            },
+                            {
+                              "id": "active:No_Rail_Stations",
+                              "label": "No Rail Stations",
+                              "description": "",
+                              "denial": "",
+                              "enabled": true,
+                              "selectable": true,
+                              "selected": false,
+                              "columns": [
+                                {
+                                  "key": "order",
+                                  "label": "Order",
+                                  "value": "4"
+                                }
+                              ],
+                              "toggled": true
+                            },
+                            {
+                              "id": "active:no_reviving_zombies",
+                              "label": "Prevent Zombie Revivication",
+                              "description": "",
+                              "denial": "",
+                              "enabled": true,
+                              "selectable": true,
+                              "selected": false,
+                              "columns": [
+                                {
+                                  "key": "order",
+                                  "label": "Order",
+                                  "value": "5"
+                                }
+                              ],
+                              "toggled": true
+                            },
+                            {
+                              "id": "active:limit_fungal_growth",
+                              "label": "Limit Fungal Growth",
+                              "description": "",
+                              "denial": "",
+                              "enabled": true,
+                              "selectable": true,
+                              "selected": false,
+                              "columns": [
+                                {
+                                  "key": "order",
+                                  "label": "Order",
+                                  "value": "6"
+                                }
+                              ],
+                              "toggled": true
+                            },
+                            {
+                              "id": "active:udp_redux",
+                              "label": "UDP Redux",
+                              "description": "",
+                              "denial": "",
+                              "enabled": true,
+                              "selectable": true,
+                              "selected": false,
+                              "columns": [
+                                {
+                                  "key": "order",
+                                  "label": "Order",
+                                  "value": "7"
+                                }
+                              ],
+                              "toggled": true
+                            },
+                            {
+                              "id": "active:pride_flags",
+                              "label": "<color_red>P</color><color_pink>r</color><color_yellow>i</color><color_green>d</color><color_blue>e</color> <color_magenta>F</color><color_red>l</color><color_pink>a</color><color_yellow>g</color><color_green>s</color> <color_blue>f</color><color_magenta>o</color><color_red>r</color> <color_pink>B</color><color_yellow>N</color>",
+                              "description": "",
+                              "denial": "",
+                              "enabled": true,
+                              "selectable": true,
+                              "selected": false,
+                              "columns": [
+                                {
+                                  "key": "order",
+                                  "label": "Order",
+                                  "value": "8"
+                                }
+                              ],
+                              "toggled": true
+                            },
+                            {
+                              "id": "active:tablet_ebook",
+                              "label": "Tablet e-book",
+                              "description": "",
+                              "denial": "",
+                              "enabled": true,
+                              "selectable": true,
+                              "selected": false,
+                              "columns": [
+                                {
+                                  "key": "order",
+                                  "label": "Order",
+                                  "value": "9"
+                                }
+                              ],
+                              "toggled": true
+                            },
+                            {
+                              "id": "active:change_hairstyle",
+                              "label": "Change Hairstyle",
+                              "description": "",
+                              "denial": "",
+                              "enabled": true,
+                              "selectable": true,
+                              "selected": false,
+                              "columns": [
+                                {
+                                  "key": "order",
+                                  "label": "Order",
+                                  "value": "10"
+                                }
+                              ],
+                              "toggled": true
+                            },
+                            {
+                              "id": "active:cbm_slots",
+                              "label": "Bionic Slots",
+                              "description": "",
+                              "denial": "",
+                              "enabled": true,
+                              "selectable": true,
+                              "selected": false,
+                              "columns": [
+                                {
+                                  "key": "order",
+                                  "label": "Order",
+                                  "value": "11"
+                                }
+                              ],
+                              "toggled": true
+                            }
+                          ],
+                          "total": 11,
+                          "selection": "single",
+                          "activate": "bn:activate:worldgen:mods:remove"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "worldgen:mods:details",
+                    "kind": "text",
+                    "markup": "Authors: Candlebury, Coolthulu, Esther, and Maleclypse  Maintainers: Candlebury and Maleclypse\nDependencies: [Bright Nights] and [Exotic ammo types]\nDrifts the game away from realism and more towards sci-fi.  Long term goal of being a significantly different experience that remains compatible with other mods.\nMod info path: data/mods/Aftershock/modinfo.json\n"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "affordances": [
+          {
+            "id": "worldgen:mods:add",
+            "label": "Activate / deactivate mod",
+            "keys": [],
+            "enabled": true,
+            "role": "select",
+            "args": {
+              "row": {
+                "component_id": "worldgen:mods:available:rows"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "worldgen:mods:remove",
+            "label": "Activate / deactivate mod",
+            "keys": [],
+            "enabled": true,
+            "role": "select",
+            "args": {
+              "row": {
+                "component_id": "worldgen:mods:active:rows"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "worldgen:mods:category",
+            "label": "Category",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "worldgen:mods:categories"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:activate:worldgen:mods:add",
+            "label": "Activate / deactivate mod",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "worldgen:mods:available:rows"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:activate:worldgen:mods:remove",
+            "label": "Activate / deactivate mod",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "worldgen:mods:active:rows"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "k",
+              "8",
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "j",
+              "DOWN",
+              "2",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Switch to other list",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Switch to other list",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "role": "help",
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Exit screen",
+            "keys": [
+              "ESC",
+              "q",
+              "Q",
+              "SPACE"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "NEXT_CATEGORY_TAB",
+            "label": "Move to next category tab",
+            "keys": [
+              ">"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "PREV_CATEGORY_TAB",
+            "label": "Move to previous category tab",
+            "keys": [
+              "<"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "ADD_MOD",
+            "label": "Move selected mod up",
+            "keys": [
+              "+"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "REMOVE_MOD",
+            "label": "Move selected mod down",
+            "keys": [
+              "-"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SAVE_DEFAULT_MODS",
+            "label": "Save mods as default",
+            "keys": [
+              "s"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "VIEW_MOD_DESCRIPTION",
+            "label": "View full mod description",
+            "keys": [
+              "v"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "FILTER",
+            "label": "Filter",
+            "keys": [
+              "f",
+              "F",
+              "/"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TOGGLE_SHOW_OBSOLETE",
+            "label": "Show obsolete mods",
+            "keys": [
+              "o"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "worldgen:mods:available:rows",
+          "row_id": "mod:aftershock"
+        },
+        "context": "MODMANAGER_DIALOG"
+      }
+    },
+    {
+      "name": "map editor started from the main menu with the chosen mods, request",
       "def": "submit_params",
       "value": {
         "epoch": "epoch-1",
         "expect": {
-          "boundary_id": "boundary:1",
-          "revision": "1"
+          "screen_id": "screen:5"
         },
         "operation": {
           "kind": "invoke",
-          "affordance_id": "menu:entry",
-          "args": {
-            "row": "editor:map"
-          }
+          "affordance_id": "YES"
         }
       }
     },
     {
-      "name": "map editor started from the main menu, receipt",
+      "name": "map editor started from the main menu with the chosen mods, receipt",
       "def": "submit_result",
       "value": {
         "epoch": "epoch-1",
@@ -285,7 +1111,7 @@
       }
     },
     {
-      "name": "map editor started from the main menu, validated",
+      "name": "map editor started from the main menu with the chosen mods, validated",
       "def": "command_notification",
       "value": {
         "epoch": "epoch-1",
@@ -295,7 +1121,7 @@
       }
     },
     {
-      "name": "map editor started from the main menu, executing",
+      "name": "map editor started from the main menu with the chosen mods, executing",
       "def": "command_notification",
       "value": {
         "epoch": "epoch-1",
@@ -305,7 +1131,7 @@
       }
     },
     {
-      "name": "map editor started from the main menu, interrupted",
+      "name": "map editor started from the main menu with the chosen mods, interrupted",
       "def": "command_notification",
       "value": {
         "epoch": "epoch-1",
@@ -322,7 +1148,7 @@
       "value": {
         "epoch": "epoch-2",
         "expect": {
-          "screen_id": "screen:2"
+          "screen_id": "screen:6"
         },
         "operation": {
           "kind": "invoke",
@@ -379,7 +1205,7 @@
       "name": "map editor reopened on the document it was left with",
       "def": "screen",
       "value": {
-        "screen_id": "screen:3",
+        "screen_id": "screen:7",
         "role": "screen",
         "kind": "editor",
         "title": "Map Editor",

@@ -6,15 +6,11 @@
       "value": {
         "epoch": "epoch-1",
         "expect": {
-          "boundary_id": "boundary:1",
-          "revision": "1"
+          "screen_id": "screen:3"
         },
         "operation": {
           "kind": "invoke",
-          "affordance_id": "menu:entry",
-          "args": {
-            "row": "editor:vehicle"
-          }
+          "affordance_id": "YES"
         }
       }
     },
@@ -64,7 +60,7 @@
       "name": "vehicle editor listing the prototypes that match a filter",
       "def": "screen",
       "value": {
-        "screen_id": "screen:2",
+        "screen_id": "screen:4",
         "role": "screen",
         "kind": "vehicle_editor",
         "title": "Vehicle Editor",
@@ -286,7 +282,7 @@
       "name": "vehicle editor with a prototype open on a mount",
       "def": "screen",
       "value": {
-        "screen_id": "screen:2",
+        "screen_id": "screen:4",
         "role": "screen",
         "kind": "vehicle_editor",
         "title": "Vehicle Editor",
@@ -1019,7 +1015,7 @@
       "value": {
         "epoch": "epoch-2",
         "expect": {
-          "boundary_id": "boundary:2",
+          "boundary_id": "boundary:1",
           "revision": "4"
         },
         "operation": {
@@ -1102,7 +1098,7 @@
       "value": {
         "epoch": "epoch-2",
         "expect": {
-          "screen_id": "screen:2"
+          "screen_id": "screen:4"
         },
         "operation": {
           "kind": "invoke",
@@ -1161,7 +1157,7 @@
       "value": {
         "epoch": "epoch-2",
         "expect": {
-          "boundary_id": "boundary:3",
+          "boundary_id": "boundary:2",
           "revision": "13"
         },
         "operation": {
@@ -1222,7 +1218,7 @@
       "name": "vehicle editor editing a world vehicle in place",
       "def": "screen",
       "value": {
-        "screen_id": "screen:2",
+        "screen_id": "screen:4",
         "role": "screen",
         "kind": "vehicle_editor",
         "title": "Vehicle Editor",
@@ -1828,7 +1824,7 @@
       "value": {
         "epoch": "epoch-2",
         "expect": {
-          "screen_id": "screen:2"
+          "screen_id": "screen:4"
         },
         "operation": {
           "kind": "invoke",

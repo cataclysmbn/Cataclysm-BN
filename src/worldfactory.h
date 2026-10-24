@@ -5,6 +5,7 @@
 #include <iosfwd>
 #include <map>
 #include <memory>
+#include <optional>
 #include <vector>
 #include <string>
 
@@ -36,7 +37,9 @@ class worldfactory
 
         // Generate a world
         WORLDINFO *make_new_world( bool show_prompt = true, const std::string &world_to_copy = "" );
-        WORLDINFO *make_new_world( special_game_type special_type );
+        /// A mod list given for the editor replaces the one of the world made before; each mod brings its
+        /// dependencies, as the world creation's mod list does.
+        WORLDINFO *make_new_world( special_game_type special_type, const std::vector<mod_id> &mods = {} );
         // Used for unit tests - does NOT verify if the mods can be loaded
         WORLDINFO *make_new_world( const std::vector<mod_id> &mods );
         // Returns the *existing* world of given name.
@@ -76,6 +79,10 @@ class worldfactory
         static void draw_worldgen_tabs( const catacurses::window &w, size_t current );
         void show_active_world_mods( const std::vector<mod_id> &world_mods );
         void edit_active_world_mods( WORLDINFO *world );
+        /// The mod list screen, started from `initial`; the mods chosen, or nothing when `question` was
+        /// answered no.
+        auto pick_mods( const std::vector<mod_id> &initial,
+                        const std::string &question ) -> std::optional<std::vector<mod_id>>;
 
         void convert_to_v2( const std::string &worldname );
 
