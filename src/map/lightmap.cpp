@@ -2280,6 +2280,11 @@ auto has_vehicle_diagonal_block(const level_cache& cache) -> bool {
     });
 }
 
+/// `std::lround` without the library call: halves round away from zero, as the GPU rays do.
+auto round_away(const float value) -> int {
+    return static_cast<int>(value + (value < 0.0f ? -0.5f : 0.5f));
+}
+
 auto has_opaque_tile(const level_cache& cache) -> bool {
     return std::ranges::any_of(cache.transparency_cache, [](const float transparency) {
         return transparency <= LIGHT_TRANSPARENCY_SOLID;
@@ -2546,7 +2551,7 @@ void map::build_seen_cache(const tripoint_bub_ms& origin, const int target_z) {
 
                 // Explicit z-boundary crossing check.
                 // The discrete DDA loop can miss floor crossings at shallow angles:
-                // lround(0.5) rounds up, keeping cz at new_origin.z() so no transition is
+                // rounding 0.5 away from zero keeps cz at new_origin.z() so no transition is
                 // detected for e.g. fdh=2, fdz=1.  Interpolate each crossing directly.
                 //   Going down: crossing k separates z=(new_origin.z-k) from z=(new_origin.z-k-1),
                 //               so check floor_cache at z=(new_origin.z-k).
@@ -2556,10 +2561,8 @@ void map::build_seen_cache(const tripoint_bub_ms& origin, const int target_z) {
                     const int n_cross = static_cast<int>(std::abs(dz));
                     for (int k = 0; k < n_cross; ++k) {
                         const float t = (static_cast<float>(k) + 0.5f) / std::abs(dz);
-                        const int fx = static_cast<int>(
-                            std::lround(static_cast<float>(new_origin.x()) + t * dx));
-                        const int fy = static_cast<int>(
-                            std::lround(static_cast<float>(new_origin.y()) + t * dy));
+                        const int fx = new_origin.x() + round_away(t * dx);
+                        const int fy = new_origin.y() + round_away(t * dy);
                         const int floor_z =
                             (dz < 0.0f) ? static_cast<int>(new_origin.z()) - k
                                         : static_cast<int>(new_origin.z()) + k + 1;
@@ -2579,9 +2582,9 @@ void map::build_seen_cache(const tripoint_bub_ms& origin, const int target_z) {
                 int oy = new_origin.y();
                 int oz = new_origin.z();
                 for (int s = 1; s < steps; ++s) {
-                    const int cx = static_cast<int>(std::lround(new_origin.x() + s * sx));
-                    const int cy = static_cast<int>(std::lround(new_origin.y() + s * sy));
-                    const int cz = static_cast<int>(std::lround(new_origin.z() + s * sz));
+                    const int cx = new_origin.x() + round_away(s * sx);
+                    const int cy = new_origin.y() + round_away(s * sy);
+                    const int cz = new_origin.z() + round_away(s * sz);
                     if (cz < -OVERMAP_DEPTH || cz > OVERMAP_HEIGHT) { continue; }
                     if (cx >= 0 && cy >= 0) {
                         if (oz != cz && oz > -OVERMAP_DEPTH && cz < OVERMAP_HEIGHT) {
@@ -2618,10 +2621,8 @@ void map::build_seen_cache(const tripoint_bub_ms& origin, const int target_z) {
                 const int n_cross = static_cast<int>(std::abs(dz));
                 for (int k = 0; k < n_cross; ++k) {
                     const float t = (static_cast<float>(k) + 0.5f) / std::abs(dz);
-                    const int fx = static_cast<int>(
-                        std::lround(static_cast<float>(new_origin.x()) + t * dx));
-                    const int fy = static_cast<int>(
-                        std::lround(static_cast<float>(new_origin.y()) + t * dy));
+                    const int fx = new_origin.x() + round_away(t * dx);
+                    const int fy = new_origin.y() + round_away(t * dy);
                     const int floor_z =
                         (dz < 0.0f) ? static_cast<int>(new_origin.z()) - k
                                     : static_cast<int>(new_origin.z()) + k + 1;
@@ -2681,27 +2682,17 @@ void map::build_seen_cache(const tripoint_bub_ms& origin, const int target_z) {
                             if (!is_3d_clear(x, y, z)) { sc = 0.0f; }
                             continue;
                         }
-                        // Blind spot (accurate) or all tiles (fast): fill from new_origin.z
-                        // projection when the vertical path is clear.
-                        // Accurate path: restrict to tiles geometrically unreachable by
-                        // cast_zlight (dz * Z_LEVEL_SCALE > max(|dx|,|dy|)), then verify
-                        // via DDA to block paths shadowed by walls at intermediate levels.
-                        //
-                        // The threshold `fdz * Z_LEVEL_SCALE > fdh` is the exact condition
-                        // under which is_3d_clear's DDA is dominated by the vertical component
-                        // (i.e. total = |dz|*Z_LEVEL_SCALE in max(|dx|,|dy|,|dz|*Z_LEVEL_SCALE)).
-                        // Both share the same Z_LEVEL_SCALE constant; if that constant or the
-                        // DDA distance formula changes, this threshold must be updated to match.
+                        // Unlit tile (accurate) or any tile (fast): fill from new_origin.z's
+                        // projection.  The accurate path asks only whether a ray from the origin
+                        // reaches the tile, as the GPU seen pass does: cast_zlight leaves lit
+                        // neither the tiles above its steep cone nor the tile of a floor, e.g.
+                        // open air at a shallow angle or a vehicle in it.  The DDA also blocks
+                        // paths shadowed by walls and floors at intermediate levels.
                         const float new_origin_vis = new_origin_seen[tile_idx];
-                        if (!vert_blocked[tile_idx] && new_origin_vis > 0.0f) {
+                        if (new_origin_vis > 0.0f) {
                             if (use_3d_shadowcasting) {
-                                const float fdz = static_cast<float>(std::abs(z - new_origin.z()));
-                                const float fdh = static_cast<float>(std::max(
-                                    std::abs(x - new_origin.x()), std::abs(y - new_origin.y())));
-                                if (fdz * Z_LEVEL_SCALE > fdh && is_3d_clear(x, y, z)) {
-                                    sc = new_origin_vis;
-                                }
-                            } else {
+                                if (is_3d_clear(x, y, z)) { sc = new_origin_vis; }
+                            } else if (!vert_blocked[tile_idx]) {
                                 sc = new_origin_vis;
                             }
                         }
