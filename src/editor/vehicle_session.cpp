@@ -123,6 +123,25 @@ auto shown_path(const std::filesystem::path& path) -> std::string {
 }
 
 /// The file a copied vehicle waits in, outside every world so that another world can paste it.
+/// The trimmed entries of a comma-separated list, as a JSON array; none when it lists nothing.
+auto listed(const std::string& text) -> std::optional<nlohmann::ordered_json> {
+    auto entries =
+        string_split(text, ',') | std::views::transform(trim)
+        | std::views::filter([](const std::string& entry) { return !entry.empty(); })
+        | std::ranges::to<std::vector>();
+    if (entries.empty()) { return std::nullopt; }
+    return nlohmann::ordered_json(std::move(entries));
+}
+
+/// A JSON array of strings as a comma-separated list.
+auto list_text(const nlohmann::ordered_json& value) -> std::string {
+    if (!value.is_array()) { return {}; }
+    return value | std::views::transform([](const nlohmann::ordered_json& entry) {
+               return entry.is_string() ? entry.get<std::string>() : entry.dump();
+           })
+         | std::views::join_with(std::string_view(", ")) | std::ranges::to<std::string>();
+}
+
 auto copied_vehicle_file() -> std::filesystem::path {
     return std::filesystem::path(PATH_INFO::user_dir()) / "vehicle_copy.json";
 }
@@ -280,14 +299,29 @@ struct session {
         change(next);
     }
 
-    /// Sets the prototype's name or id.
+    /// Sets the prototype's name, id, colour palette or flags; empty removes the last two.
     auto set_prop(const std::string& field, const std::string& text) -> void {
-        if (text.empty()) {
+        const auto optional = field == "color_palette" || field == "flags";
+        if (text.empty() && !optional) {
             notice = _("A prototype keeps its name and id.");
             return;
         }
         auto next = prototype();
-        next[field] = text;
+        const auto value =
+            field == "flags" ? listed(text)
+            : text.empty()
+                ? std::nullopt
+                : std::optional(nlohmann::ordered_json(text));
+        if (value) {
+            next[field] = *value;
+        } else {
+            next.erase(field);
+        }
+        const auto before = build_design(prototype().dump()).messages.size();
+        if (const auto built = build_design(next.dump()); built.messages.size() > before) {
+            notice = built.messages.back().text;
+            return;
+        }
         change(next);
     }
 
@@ -301,12 +335,22 @@ struct session {
                  : std::optional(static_cast<std::size_t>(found - design.begin()));
     }
 
-    /// Sets the member `key` of the picked part from the part form: a number for `ammo`, text for
-    /// the rest; empty removes it.
+    /// Sets the member `key` of the picked part from the part form: a number for `ammo`, a list
+    /// for `ammo_types`, either end of `ammo_qty` for `ammo_min` and `ammo_max`, text for the
+    /// rest; empty removes it.
     auto set_part(const std::string& key, const std::string& text) -> void {
         const auto index = picked_part();
         if (!index) {
             notice = _("Pick a part first.");
+            return;
+        }
+        if (key == "ammo_types") {
+            change(
+                set_part_member(prototype(), {.index = *index, .key = key, .value = listed(text)}));
+            return;
+        }
+        if (key == "ammo_min" || key == "ammo_max") {
+            set_ammo_qty(*index, key == "ammo_max", text);
             return;
         }
         auto value = std::optional<nlohmann::ordered_json>{};
@@ -324,6 +368,35 @@ struct session {
             }
         }
         change(set_part_member(prototype(), {.index = *index, .key = key, .value = value}));
+    }
+
+    /// Sets the fewest (or, `most`, the most) rounds a turret spawns loaded with; a turret with
+    /// no range is full, so a first end sets both, and empty makes it full again.
+    auto set_ammo_qty(const std::size_t index, const bool most, const std::string& text) -> void {
+        auto value = std::optional<nlohmann::ordered_json>{};
+        if (!text.empty()) {
+            auto number = 0;
+            const auto* const end = text.data() + text.size();
+            if (const auto [ptr, error] = std::from_chars(text.data(), end, number);
+                error != std::errc{} || ptr != end || number < 0) {
+                notice = _("That value is out of range.");
+                return;
+            }
+            const auto current = nlohmann::ordered_json::parse(
+                value_at(design_parts(prototype())[index].pointer + "/ammo_qty"), nullptr, false);
+            auto range =
+                current.is_array() && current.size() == 2 && current[0].is_number_integer()
+                        && current[1].is_number_integer()
+                    ? std::array{current[0].get<int>(), current[1].get<int>()}
+                    : std::array{number, number};
+            range[most ? 1 : 0] = number;
+            if (range[0] > range[1]) {
+                notice = _("A turret cannot load fewer rounds at most than at least.");
+                return;
+            }
+            value = range;
+        }
+        change(set_part_member(prototype(), {.index = index, .key = "ammo_qty", .value = value}));
     }
 
     /// The indexes in the prototype's `items` of the item spawns on the picked mount.
@@ -743,6 +816,37 @@ auto part_form(const session& state) -> std::optional<ec::component> {
              .type = "integer",
              .min = 0,
              .max = 100});
+        const auto pointer = design[*index].pointer;
+        const auto at = nlohmann::ordered_json::json_pointer(pointer);
+        const auto& entry =
+            state.prototype().contains(at)
+                ? state.prototype()[at]
+                : nlohmann::ordered_json::object();
+        const auto qty =
+            entry.is_object()
+                ? entry.value("ammo_qty", nlohmann::ordered_json())
+                : nlohmann::ordered_json();
+        const auto end = [&](const std::size_t side) {
+            return qty.is_array() && qty.size() == 2 ? qty[side].dump() : std::string{};
+        };
+        fields.push_back(
+            {.id = "ammo_types",
+             .label = _("Ammo types"),
+             .value = entry.is_object()
+                        ? list_text(entry.value("ammo_types", nlohmann::ordered_json()))
+                        : std::string{}});
+        fields.push_back(
+            {.id = "ammo_min",
+             .label = _("Rounds, fewest"),
+             .value = end(0),
+             .type = "integer",
+             .min = 0});
+        fields.push_back(
+            {.id = "ammo_max",
+             .label = _("Rounds, most"),
+             .value = end(1),
+             .type = "integer",
+             .min = 0});
     }
     if (fields.empty()) { return std::nullopt; }
     return ec::component{
@@ -960,13 +1064,18 @@ auto session_view(const session& state) -> ec::screen_view {
                 .id = props_id,
                 .affordances = {prop_set_id},
                 .body = ec::form_body{
-                    .fields =
-                        {{.id = "name",
-                          .label = _("Name"),
-                          .value = state.prototype().value("name", "")},
-                         {.id = "id",
-                          .label = _("ID"),
-                          .value = state.prototype().value("id", "")}}}};
+                    .fields = {
+                        {.id = "name",
+                         .label = _("Name"),
+                         .value = state.prototype().value("name", "")},
+                        {.id = "id", .label = _("ID"), .value = state.prototype().value("id", "")},
+                        {.id = "color_palette",
+                         .label = _("Colour palette"),
+                         .value = state.prototype().value("color_palette", "")},
+                        {.id = "flags",
+                         .label = _("Flags"),
+                         .value = list_text(
+                             state.prototype().value("flags", nlohmann::ordered_json()))}}}};
         }
         if (tab == "cargo") {
             const auto& items = state.prototype()["items"];

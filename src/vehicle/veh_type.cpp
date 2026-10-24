@@ -1220,6 +1220,11 @@ auto finalize_vehicle_prototype(const vproto_id& id, vehicle_prototype& proto) -
     blueprint.type = id;
     blueprint.name = _(proto.name);
 
+    if (!proto.color_palette.is_empty() && !proto.color_palette.is_valid()) {
+        debugmsg("init_vehicles: unknown color_palette %s in %s", proto.color_palette.c_str(),
+                 id.c_str());
+    }
+
     blueprint.suspend_refresh();
     for (auto& pt : proto.parts) {
         if (proto.color_palette.is_valid() && !proto.color_match.contains(pt.part.str())) {
@@ -1254,7 +1259,7 @@ auto finalize_vehicle_prototype(const vproto_id& id, vehicle_prototype& proto) -
 
         } else {
             for (const itype_id& e : pt.ammo_types) {
-                if (!e->ammo && base->gun->ammo.contains(e->ammo->type)) {
+                if (!e.is_valid() || !e->ammo || !base->gun->ammo.contains(e->ammo->type)) {
                     debugmsg("init_vehicles: turret %s has invalid ammo_type %s in %s",
                              pt.part.c_str(), e.c_str(), id.c_str());
                 }
