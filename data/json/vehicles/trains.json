@@ -330,7 +330,7 @@
       [ "==='#'|" ],
       [ "O---+-O" ]
     ],
-    "color_palette": "industrial_standard",
+    "color_palette": "cargo_standard",
     "parts": [
       { "x": 0, "y": 1, "parts": [ "frame_vertical", "box", "roof" ] },
       {
