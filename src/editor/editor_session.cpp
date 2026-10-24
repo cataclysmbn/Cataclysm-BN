@@ -78,6 +78,12 @@ constexpr auto undo_id = "editor:undo";
 constexpr auto redo_id = "editor:redo";
 constexpr auto save_id = "editor:save";
 constexpr auto preview_id = "editor:preview";
+constexpr auto pins_id = "editor:pins";
+constexpr auto pin_set_id = "editor:pin_set";
+constexpr auto rotation_id = "editor:rotation";
+constexpr auto turn_id = "editor:turn";
+constexpr auto reroll_id = "editor:reroll";
+constexpr auto loot_id = "editor:loot";
 constexpr auto mapping_id = "editor:mapping";
 constexpr auto catalog_kinds_id = "editor:catalog_kinds";
 constexpr auto catalog_id = "editor:catalog";
@@ -97,6 +103,18 @@ constexpr auto field_id = "editor:field";
 constexpr auto field_set_id = "editor:field_set";
 constexpr auto field_apply_id = "editor:field_apply";
 constexpr auto vehicle_id = "editor:vehicle";
+
+/// A turn of the preview in degrees clockwise, and the direction the game generates it for.
+struct preview_turn {
+    int degrees;
+    const char* direction;
+};
+constexpr auto preview_turns = std::array{
+    preview_turn{0, "north"}, preview_turn{90, "east"}, preview_turn{180, "south"},
+    preview_turn{270, "west"}};
+
+/// How many seeds a loot roll counts over.
+constexpr auto loot_runs = 50;
 
 /// The members of a mapgen's object that map its symbols, as the loader reads them.
 constexpr auto legend_layers = std::array{
@@ -432,6 +450,13 @@ struct session {
     /// The seed of the preview while one is shown; it follows every edit.
     std::optional<unsigned int> seed = std::nullopt;
     std::optional<mapgen_preview> preview = std::nullopt;
+    /// The direction the preview is generated for, and the parameters it fixes.
+    std::string direction = "north";
+    std::map<std::string, std::string> pins;
+    /// The parameters the entry has, with the values they take, while a preview is shown.
+    std::vector<mapgen_parameter_choice> parameters;
+    /// What can spawn on the square last asked about, as of the last edit.
+    std::optional<std::vector<loot_share>> loot = std::nullopt;
     /// The mapping the legend form sets: one symbol, one layer, and what it places there as JSON
     /// or as a bare id; empty removes it.
     std::string mapping_symbol;
@@ -502,6 +527,49 @@ struct session {
              | std::ranges::to<std::vector>();
     }
 
+    /// The options the entry is previewed with over the avatar's overmap square.
+    auto preview_options_of(const unsigned int with_seed) const -> preview_options {
+        return {.at = get_avatar().abs_omt_pos(),
+                .seed = with_seed,
+                .direction = direction,
+                .pins = pins};
+    }
+
+    /// Fixes a parameter to a value, or frees it when the value is empty; a pin the preview
+    /// refuses is taken back and its reason shown.
+    auto pin(const std::string& name, const std::string& value) -> void {
+        const auto was = pins;
+        const auto was_seed = seed;
+        if (value.empty()) {
+            pins.erase(name);
+        } else {
+            pins[name] = value;
+        }
+        seed = seed.value_or(1);
+        reload();
+        if (preview) { return; }
+        const auto reason = notice;
+        pins = was;
+        seed = was_seed;
+        reload();
+        notice = reason;
+    }
+
+    /// Counts what the entry puts on a square over several seeds, from the seed shown on.
+    auto roll_loot_at(const point& at) -> void {
+        const auto rolled = roll_loot(
+            doc->objects()[object].value.dump(),
+            {.preview = preview_options_of(seed.value_or(1)),
+             .from = {at.x, at.y},
+             .to = {at.x, at.y},
+             .runs = loot_runs});
+        if (rolled) {
+            loot = *rolled;
+        } else {
+            notice = rolled.error();
+        }
+    }
+
     /// What the loader makes of the object now: its legend and what it reports.
     auto reload() -> void {
         legend.clear();
@@ -517,8 +585,20 @@ struct session {
             })
             | std::ranges::to<std::vector>();
         preview.reset();
+        parameters.clear();
+        loot.reset();
         if (seed) {
-            auto shown = preview_mapgen(text, {.at = get_avatar().abs_omt_pos(), .seed = *seed});
+            if (const auto loaded = load_detached_mapgens(text)) {
+                for (const auto& function : loaded->functions) {
+                    for (auto& choice : parameters_of(*function)) {
+                        if (!std::ranges::
+                                contains(parameters, choice.name, &mapgen_parameter_choice::name)) {
+                            parameters.push_back(std::move(choice));
+                        }
+                    }
+                }
+            }
+            auto shown = preview_mapgen(text, preview_options_of(*seed));
             if (shown) {
                 preview = std::move(*shown);
             } else {
@@ -817,6 +897,17 @@ auto square_looks(const preview_square& square) -> std::vector<engine_client::lo
         }
     }
     return looks;
+}
+
+/// The values a parameter can be pinned to, after the choice of none.
+auto pin_options(const std::vector<std::string>& values) -> std::vector<ec::form_option> {
+    auto options = std::vector{ec::form_option{.id = "", .label = _("Any")}};
+    std::ranges::copy(
+        values | std::views::transform([](const auto& value) {
+            return ec::form_option{.id = value, .label = value};
+        }),
+        std::back_inserter(options));
+    return options;
 }
 
 /// What the game generates from the entry, a square per cell: its furniture, else its terrain.
@@ -1325,7 +1416,68 @@ auto session_view(const session& state) -> ec::screen_view {
                          .min = 1,
                          .max = std::numeric_limits<unsigned int>::max(),
                          .initial = state.seed.value_or(1)}}}));
+            affordances.push_back(ec::invoke_affordance(
+                {.id = loot_id, .label = _("What can spawn here"), .args = row_of(canvas_id)}));
+            if (state.seed) {
+                affordances.push_back(
+                    ec::invoke_affordance({.id = reroll_id, .label = _("Re-roll")}));
+                affordances.push_back(ec::invoke_affordance(
+                    {.id = turn_id, .label = _("Turn"), .args = row_of(rotation_id)}));
+                parts.push_back(ec::list(
+                    {.id = rotation_id,
+                     .rows = preview_turns | std::views::transform([&](const preview_turn& turn) {
+                                 return ec::row{
+                                     .id = string_format("turn:%d", turn.degrees),
+                                     .label = string_format("%d°", turn.degrees),
+                                     .selected = state.direction == turn.direction};
+                             })
+                           | std::ranges::to<std::vector>(),
+                     .selection = "single",
+                     .activate = turn_id}));
+                if (!state.parameters.empty()) {
+                    affordances.push_back(ec::invoke_affordance(
+                        {.id = pin_set_id,
+                         .label = _("Pin"),
+                         .args = {.row = ec::row_shape{.component_id = pins_id},
+                                  .text = ec::text_shape{}}}));
+                    parts.push_back(ec::component{
+                        .id = pins_id,
+                        .affordances = {pin_set_id},
+                        .body = ec::form_body{
+                            .fields =
+                                state.parameters | std::views::transform([&](const auto& choice) {
+                                    const auto pinned = state.pins.find(choice.name);
+                                    return ec::form_field{
+                                        .id = choice.name,
+                                        .label = choice.name,
+                                        .value = pinned == state.pins.end()
+                                                   ? std::string{}
+                                                   : pinned->second,
+                                        .type = "select",
+                                        .options = pin_options(choice.values)};
+                                })
+                                | std::ranges::to<std::vector>()}});
+                }
+            }
             if (state.preview) { parts.push_back(preview_grid(*state.preview)); }
+            if (state.loot) {
+                parts.push_back(ec::list(
+                    {.id = loot_id,
+                     .rows = *state.loot | std::views::transform([](const loot_share& share) {
+                         const auto type = itype_id(share.item);
+                         return ec::row{
+                             .id = "loot:" + share.item,
+                             .label = type.is_valid() ? item::nname(type) : share.item,
+                             .columns =
+                                 {{.key = "id", .label = _("ID"), .value = share.item},
+                                  {.key = "chance",
+                                   .label = _("Chance"),
+                                   .value = string_format("%.0f%%", share.chance * 100)},
+                                  {.key = "mean",
+                                   .label = _("Average"),
+                                   .value = string_format("%.2f", share.mean)}}};
+                     }) | std::ranges::to<std::vector>()}));
+            }
         }
     }
     late.push_back(ec::component{
@@ -1542,6 +1694,21 @@ auto run_editor_session() -> void {
         } else if (id == preview_id) {
             state.seed = static_cast<unsigned int>(invoked->args.count.value_or(1));
             state.reload();
+        } else if (id == reroll_id && state.seed) {
+            state.seed = *state.seed + 1;
+            state.reload();
+        } else if (id == turn_id) {
+            const auto found = std::ranges::find_if(preview_turns, [&](const preview_turn& turn) {
+                return row == string_format("turn:%d", turn.degrees);
+            });
+            if (found != preview_turns.end()) {
+                state.direction = found->direction;
+                state.reload();
+            }
+        } else if (id == pin_set_id) {
+            state.pin(row, invoked->args.text.value_or(""));
+        } else if (id == loot_id) {
+            if (const auto at = square_of(row)) { state.roll_loot_at(*at); }
         } else if (id == apply_id) {
             const auto applied = apply_mapgen(state.doc->objects()[state.object].value.dump());
             if (!applied) { state.notice = applied.error(); }

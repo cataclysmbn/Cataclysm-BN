@@ -3769,6 +3769,18 @@
             "expect": "screen"
           },
           {
+            "id": "editor:loot",
+            "label": "What can spawn here",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:canvas"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
             "id": "QUIT",
             "label": "Exit screen",
             "keys": [
