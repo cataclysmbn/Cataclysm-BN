@@ -1196,6 +1196,12 @@ void map::build_sunlight_cache(int pzlev) {
     const int zlev_max =
         clamp(calc_max_populated_zlev() + 1, std::min(OVERMAP_HEIGHT, pzlev + 1), OVERMAP_HEIGHT);
 
+    // Nothing is populated above zlev_max, so the sky reaches every square there; the GPU lights
+    // these levels too.
+    for (const auto zlev : std::views::iota(zlev_max + 1, OVERMAP_HEIGHT + 1)) {
+        std::ranges::fill(get_cache(zlev).lm, g->natural_light_level(0));
+    }
+
     // true if all previous z-levels are fully transparent to light (no floors, transparency >= air)
     bool fully_outside = true;
 
