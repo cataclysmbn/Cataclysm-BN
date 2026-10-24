@@ -533,9 +533,9 @@
         " wwwwwwww   wwwwwwww ",
         " w......w   w......w ",
         " [......wwfww......[ ",
-        " w.................w ",
-        " w.................w ",
-        " [.................[ ",
+        " w......w...w......w ",
+        " w......f...f......w ",
+        " [......w...w......[ ",
         " w......wwwww......w ",
         " wwwffwww   wwwwwwww ",
         "                     "
@@ -601,12 +601,12 @@
         "                     ",
         "                     ",
         " wwwwwwww   wwwwwwww ",
-        " w......w   wccccccw ",
+        " w......w   w.cccc.w ",
         " [..CCC.ww+ww......[ ",
         " w......w...w......w ",
-        " w......+...+..tt..w ",
+        " w..:...+.:.+...:..w ",
         " [......w...w......[ ",
-        " w......wwwww......w ",
+        " w......wwwww..rrttw ",
         " www++www   wwwwwwww ",
         "                     "
       ],
@@ -617,9 +617,12 @@
         "[": "t_window_boarded_noglass",
         "C": "t_floor",
         "c": "t_floor",
-        "t": "t_floor"
+        "t": "t_floor",
+        "r": "t_floor",
+        ":": "t_floor_olight"
       },
-      "furniture": { "C": "f_counter", "c": "f_cupboard", "t": "f_table" },
+      "furniture": { "C": "f_counter", "c": "f_cupboard", "t": "f_table", "r": "f_rack_wood" },
+      "items": { "r": { "item": "drugs_heal_simple", "chance": 100, "repeat": [ 3, 6 ] } },
       "place_npcs": [ { "class": "ranch_nurse_1", "x": 5, "y": 16 } ]
     }
   },
@@ -672,13 +675,13 @@
         " wwwwwwww   wwwwwwww ",
         " w......wwwww......w ",
         " [......w...w......[ ",
-        " w......+...+......w ",
+        " w..:...+...+...:..w ",
         " w......w...w......w ",
         " [......w...w......[ ",
         " w......w...w......w ",
-        " wwwwwwww...wwwwwwww ",
+        " wwwwwwww.:.wwwwwwww ",
         "   w....w...w....w   ",
-        "   w....+...+....w   ",
+        "   w.:..+...+..:.w   ",
         "   w....w...w....w   ",
         "         ...         ",
         "         ...         ",
@@ -690,7 +693,7 @@
         "                     ",
         "                     "
       ],
-      "terrain": { ".": "t_floor", "w": "t_wall_wood", "+": "t_door_c", "[": "t_window_boarded_noglass" }
+      "terrain": { ".": "t_floor", "w": "t_wall_wood", "+": "t_door_c", "[": "t_window_boarded_noglass", ":": "t_floor_olight" }
     }
   },
   {
@@ -704,14 +707,14 @@
         "                     ",
         "                     ",
         "                     ",
-        " wwwwwwww   wwwwwwww ",
-        " w.#..#.wwwww.#..#.w ",
-        " [.#..#.w...w.#..#.[ ",
-        " w......+...+......w ",
-        " w......w...w......w ",
-        " [.#..#.w...w.#..#.[ ",
-        " w.#..#.w...w.#..#.w ",
-        " wwwwwwww...wwwwwwww ",
+        "                     ",
+        "   #  #       #  #   ",
+        "   #  #       #  #   ",
+        "                     ",
+        "                     ",
+        "   #  #       #  #   ",
+        "   #  #       #  #   ",
+        "                     ",
         "                     ",
         "                     ",
         "                     ",
@@ -725,7 +728,6 @@
         "                     ",
         "                     "
       ],
-      "terrain": { ".": "t_floor", "w": "t_wall_wood", "+": "t_door_c", "[": "t_window_boarded_noglass" },
       "furniture": { "#": "f_makeshift_bed" }
     }
   },
@@ -740,14 +742,14 @@
         "                     ",
         "                     ",
         "                     ",
-        " wwwwwwww   wwwwwwww ",
-        " wd#..#dwwwwwd#..#dw ",
-        " [.#..#.w...w.#..#.[ ",
-        " w......+...+......w ",
-        " w......w...w......w ",
-        " [.#..#.w...w.#..#.[ ",
-        " wd#..#dw...wd#..#dw ",
-        " wwwwwwww...wwwwwwww ",
+        "                     ",
+        "  d    d     d    d  ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "  d    d     d    d  ",
+        "                     ",
         "                     ",
         "                     ",
         "                     ",
@@ -761,8 +763,7 @@
         "                     ",
         "                     "
       ],
-      "terrain": { ".": "t_floor", "w": "t_wall_wood", "+": "t_door_c", "[": "t_window_boarded_noglass" },
-      "furniture": { "#": "f_makeshift_bed", "d": "f_dresser" },
+      "furniture": { "d": "f_dresser" },
       "place_npcs": [ { "class": "ranch_doctor", "x": 15, "y": 7 } ]
     }
   },
