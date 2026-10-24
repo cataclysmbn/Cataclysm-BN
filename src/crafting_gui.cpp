@@ -1310,6 +1310,20 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
     const auto &available_recipes = crafter.get_available_recipes( crafting_inv, &helpers );
     std::unordered_map<const recipe *, availability> availability_cache( available_recipes.size() );
 
+    // Without a favorite the screen opens on the recipes used last, and without those on the first tab holding
+    // a recipe the crafter knows, not on an empty list.
+    if( uistate.favorite_recipes.empty() ) {
+        if( !uistate.recent_recipes.empty() ) {
+            subtab.next();
+        } else {
+            const auto start = tab.cur();
+            do {
+                tab.next();
+            } while( tab.cur() != start && available_recipes.empty_category( tab.cur(), "" ) );
+            subtab = list_circularizer<std::string>( craft_subcat_list[tab.cur()] );
+        }
+    }
+
     const std::string new_recipe_str = pgettext( "crafting gui", "NEW!" );
     const nc_color new_recipe_str_col = c_light_green;
     const int new_recipe_str_width = utf8_width( new_recipe_str );
