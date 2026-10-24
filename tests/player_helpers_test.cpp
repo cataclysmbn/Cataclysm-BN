@@ -1,4 +1,5 @@
 #include "avatar.h"
+#include "calendar.h"
 #include "catch/catch.hpp"
 #include "mission.h"
 #include "skill.h"
@@ -56,4 +57,27 @@ TEST_CASE("a cleared avatar keeps no missions", "[player_helpers]") {
     clear_all_state();
     CHECK(you.get_active_missions().empty());
     CHECK(you.get_active_mission() == nullptr);
+}
+
+TEST_CASE("a cleared avatar keeps no vitamin deficiency", "[player_helpers]") {
+    auto& you = get_avatar();
+    clear_all_state();
+    const auto vitamin_a = vitamin_id("vitA");
+    const auto fresh = you.vitamin_get(vitamin_a);
+    // Starving cases leave the avatar deficient, which blinds it at night.
+    you.vitamin_set(vitamin_a, -95);
+    clear_all_state();
+    CHECK(you.vitamin_get(vitamin_a) == fresh);
+}
+
+TEST_CASE("a cleared avatar sees as far as a fresh one", "[player_helpers]") {
+    auto& you = get_avatar();
+    clear_all_state();
+    const auto fresh = you.unimpaired_range();
+    // A case that ends with the avatar asleep or blind leaves its sight cut short.
+    you.add_effect(efftype_id("blind"), 1_hours);
+    you.recalc_sight_limits();
+    REQUIRE(you.unimpaired_range() == 0);
+    clear_all_state();
+    CHECK(you.unimpaired_range() == fresh);
 }
