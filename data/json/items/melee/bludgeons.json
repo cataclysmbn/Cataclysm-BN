@@ -119,7 +119,6 @@
     "weight": "850 g",
     "relative": { "to_hit": -1, "bashing": 7 },
     "extend": { "techniques": [ "BRUTAL" ] },
-    "flags": [ "DURABLE_MELEE" ],
     "price_postapoc": "2500 cent"
   },
   {
