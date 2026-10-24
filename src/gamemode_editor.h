@@ -21,8 +21,8 @@ struct editor_game : public editor_opening_game {
     auto init() -> bool override;
 };
 
-/// A save opened in editor mode from the main menu: the game it was, with the editor trait added to
-/// the avatar, which stays where the save put it.
+/// A save opened in editor mode from the main menu: the game it was, with the editor allowed for the
+/// session, not by a trait a save would keep, and the avatar where the save put it.
 struct editor_save_game : public editor_opening_game {
     auto init() -> bool override;
 };

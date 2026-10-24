@@ -4,6 +4,7 @@
 #include "avatar.h"
 #include "calendar.h"
 #include "character_functions.h"
+#include "editor/editor_access.h"
 #include "coordinates.h"
 #include "game.h"
 #include "game_constants.h"
@@ -78,6 +79,6 @@ auto editor_opening_game::next_action() -> std::optional<action_id>
 
 auto editor_save_game::init() -> bool
 {
-    get_avatar().set_mutation( trait_id( "DEBUG_EDITOR" ) );
+    editor::allow_editor_this_session( true );
     return true;
 }

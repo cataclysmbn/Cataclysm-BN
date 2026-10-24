@@ -5,6 +5,7 @@
 #include "color.h"
 #include "editor/catalog.h"
 #include "editor/document.h"
+#include "editor/editor_access.h"
 #include "editor/json_pointer.h"
 #include "editor/mapgen_check.h"
 #include "editor/mapgen_export.h"
@@ -1389,7 +1390,10 @@ auto vehicle_first = false;
 
 } // namespace
 
-auto reset_editor_session() -> void { kept_session.reset(); }
+auto reset_editor_session() -> void {
+    kept_session.reset();
+    allow_editor_this_session(false);
+}
 
 auto open_vehicle_editor_first() -> void { vehicle_first = true; }
 
