@@ -8,6 +8,7 @@
 #include "character_functions.h"
 #include "client_interaction.h"
 #include "color.h"
+#include "compute/gpu_platform.h"
 #include "cursesdef.h"
 #include "engine_client_event.h"
 #include "engine_client_world.h"
@@ -1740,8 +1741,12 @@ TEST_CASE(
     const auto time_of_day = GENERATE(12_hours, 0_hours, 6_hours);
     CAPTURE(time_of_day);
     const auto cpu = walked_memory(preload_config::compute_accel::cpu, time_of_day);
-    const auto gpu = walked_memory(preload_config::compute_accel::gpu_software, time_of_day);
     REQUIRE_FALSE(cpu.empty());
+#if defined(CATA_SDL)
+    // A run pinned to CPU compute creates no GPU device, so there is nothing to compare with.
+    if (cata_gpu::get_device() == nullptr) { return; }
+#endif
+    const auto gpu = walked_memory(preload_config::compute_accel::gpu_software, time_of_day);
     CHECK(cpu == gpu);
 }
 
