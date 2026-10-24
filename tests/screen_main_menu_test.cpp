@@ -22,6 +22,7 @@
 #    include <algorithm>
 #    include <memory>
 #    include <ranges>
+#    include <sstream>
 #    include <string>
 #    include <variant>
 #    include <vector>
@@ -341,6 +342,11 @@ TEST_CASE(
     REQUIRE(mode->init());
     CHECK(editor::editor_denial().empty());
     CHECK_FALSE(g->has_gametype());
+    // The access lasts the session: what a save of this game writes does not hold the trait.
+    CHECK_FALSE(get_avatar().has_trait(trait_id("DEBUG_EDITOR")));
+    auto written = std::ostringstream{};
+    g->serialize(written);
+    CHECK_FALSE(written.str().contains("DEBUG_EDITOR"));
 
     auto kinds = std::vector<std::string>{};
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
