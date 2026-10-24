@@ -4,6 +4,7 @@
 #include "avatar.h"
 #include "calendar.h"
 #include "character_functions.h"
+#include "editor/editor_access.h"
 #include "coordinates.h"
 #include "game.h"
 #include "game_constants.h"
@@ -71,7 +72,13 @@ auto editor_game::init() -> bool
     return true;
 }
 
-auto editor_game::next_action() -> std::optional<action_id>
+auto editor_opening_game::next_action() -> std::optional<action_id>
 {
     return std::exchange( opened, true ) ? std::nullopt : std::optional( ACTION_EDITOR );
+}
+
+auto editor_save_game::init() -> bool
+{
+    editor::allow_editor_this_session( true );
+    return true;
 }

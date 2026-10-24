@@ -19,7 +19,12 @@ export const vehicleEditor: Scenario = {
     Engine.run(rec, async (engine) => {
       await engine.toMainMenu()
       assertEquals((await engine.invoke("menu:tab", { row: "editor" })).stages.at(-1), "completed")
-      const started = await engine.invoke("menu:entry", { row: "editor:vehicle" })
+      assertEquals(
+        (await engine.invoke("menu:entry", { row: "editor:vehicle" })).stages.at(-1),
+        "completed",
+      )
+      assertEquals((await engine.invoke("QUIT")).stages.at(-1), "completed")
+      const started = await engine.invoke("YES")
       rec.command("vehicle editor started from the main menu", started)
       await engine.follow(() => engine.stale)
       await engine.subscribe()

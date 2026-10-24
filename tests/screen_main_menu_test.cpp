@@ -3,15 +3,26 @@
 #    include "avatar.h"
 #    include "catch/catch.hpp"
 #    include "client_screen_support.h"
+#    include "editor/editor_access.h"
+#    include "editor/editor_session.h"
 #    include "engine_client_component.h"
+#    include "filesystem.h"
+#    include "game.h"
+#    include "gamemode.h"
+#    include "gamemode_editor.h"
 #    include "locale_fixture.h"
 #    include "locale_scope.h"
 #    include "main_menu.h"
+#    include "map/map.h"
 #    include "state_helpers.h"
+#    include "type_id.h"
+#    include "world.h"
 #    include "worldfactory.h"
 
 #    include <algorithm>
+#    include <memory>
 #    include <ranges>
+#    include <sstream>
 #    include <string>
 #    include <variant>
 #    include <vector>
@@ -58,6 +69,22 @@ struct menu_restore {
         get_avatar().name = avatar_name;
     }
 };
+
+/// `game::handle_action` and the game mode are private; the explicit instantiations reach them
+/// without changing the game's headers, as client_interaction_test.cpp does.
+struct handle_action_member {
+    using type = auto (game::*)() -> bool;
+    friend auto native_member(handle_action_member) -> type;
+};
+template <typename Tag, typename Tag::type Member> struct native_test_member {
+    friend auto native_member(Tag /*tag*/) -> typename Tag::type { return Member; }
+};
+struct mode_member {
+    using type = std::unique_ptr<special_game> game::*;
+    friend auto native_member(mode_member) -> type;
+};
+template struct native_test_member<handle_action_member, &game::handle_action>;
+template struct native_test_member<mode_member, &game::gamemode>;
 
 const auto tab_ids = std::vector<std::string>{
     "motd", "new_game", "load", "world", "editor", "settings", "help", "credits", "quit"};
@@ -155,13 +182,16 @@ TEST_CASE(
                     CHECK(shown->id == "editor");
                     CHECK(shown->label == "Editor");
                     const auto& rows = body<ec::list_body>(content).rows;
-                    REQUIRE(rows.size() == 2);
+                    REQUIRE(rows.size() == 3);
                     CHECK(rows[0].id == "editor:map");
                     CHECK(rows[0].label == "Map editor");
                     CHECK_FALSE(rows[0].description.empty());
                     CHECK(rows[1].id == "editor:vehicle");
                     CHECK(rows[1].label == "Vehicle editor");
                     CHECK_FALSE(rows[1].description.empty());
+                    CHECK(rows[2].id == "editor:save");
+                    CHECK(rows[2].label == "Load save");
+                    CHECK_FALSE(rows[2].description.empty());
                     CHECK(find(top, "menu:entry") != nullptr);
                     return invoke_event(top, "menu:tab", {.row = "quit"});
                 }
@@ -200,6 +230,135 @@ TEST_CASE(
                    return run_action("YES");
                });
     CHECK(stage == 2);
+}
+
+TEST_CASE(
+    "cancelling the editor's mod picker returns to the main menu and makes no world",
+    "[client][interaction][mcp][screens][main_menu][editor]") {
+    clear_all_state();
+    REQUIRE_FALSE(world_generator->has_world("EDITOR"));
+    const auto restore = menu_restore{};
+    const auto guard = screen_guard{};
+    auto stage = 0;
+    open_stack(
+        [&] { main_menu{}.opening_screen(); },
+        [&](const auto& /*snapshot*/, const auto& top) {
+            switch (stage++) {
+                case 0:
+                    return invoke_event(top, "menu:tab", {.row = "editor"});
+                case 1:
+                    return invoke_event(top, "menu:entry", {.row = "editor:map"});
+                case 2: {
+                    // The game's own mod list comes first, with the mods of the default list
+                    // active.
+                    CHECK(top.context == "MODMANAGER_DIALOG");
+                    CHECK(ec::find_component(*top.root, "worldgen:mods:active:rows") != nullptr);
+                    return run_action("QUIT");
+                }
+                case 3:
+                    CHECK(top.context == "YESNO");
+                    return run_action("NO");
+                case 4: {
+                    const auto [banner, tabs, content] = parts_of(top);
+                    const auto shown = std::ranges::find(tabs.tabs, true, &ec::tab_entry::selected);
+                    REQUIRE(shown != tabs.tabs.end());
+                    CHECK(shown->id == "editor");
+                    CHECK_FALSE(world_generator->has_world("EDITOR"));
+                    return invoke_event(top, "menu:tab", {.row = "quit"});
+                }
+                case 5:
+                    return run_action("YES");
+                default:
+                    FAIL("unexpected extra screen " << top.context);
+            }
+            return input_event{};
+        });
+    CHECK(stage == 6);
+    CHECK_FALSE(world_generator->has_world("EDITOR"));
+}
+
+TEST_CASE(
+    "the main menu's load save entry lists the saves of the worlds and leaves them alone",
+    "[client][interaction][mcp][screens][main_menu][editor]") {
+    clear_all_state();
+    const auto restore = menu_restore{};
+    const auto guard = screen_guard{};
+    // The menu finds the saves on disk: a save of the player alone is enough to list.
+    get_avatar().name = "Editor Mode Probe";
+    get_avatar().set_save_id(get_avatar().name);
+    const auto world_name = g->get_active_world()->info->world_name;
+    const auto save = save_t::from_save_id(get_avatar().name);
+    REQUIRE(g->get_active_world()->write_to_player_file(SAVE_EXTENSION, [](std::ostream& out) {
+        g->serialize(out);
+    }));
+    const auto file =
+        g->get_active_world()->info->folder_path() + "/" + save.base_path() + SAVE_EXTENSION;
+    const auto cleanup = on_out_of_scope([&] { remove_file(file); });
+    auto stage = 0;
+    open_stack([&] { main_menu{}.opening_screen(); },
+               [&](const auto& snapshot, const auto& top) {
+                   switch (stage++) {
+                       case 0:
+                           return invoke_event(top, "menu:tab", {.row = "editor"});
+                       case 1:
+                           return invoke_event(top, "menu:entry", {.row = "editor:save"});
+                       case 2: {
+                           const auto saved =
+                               std::ranges::find_if(snapshot.choices, [&](const auto& choice) {
+                                   return choice.label == world_name + ": Editor Mode Probe";
+                               });
+                           CHECK(saved != snapshot.choices.end());
+                           return cancel(snapshot);
+                       }
+                       case 3:
+                           return invoke_event(top, "menu:tab", {.row = "quit"});
+                       case 4:
+                           return run_action("YES");
+                       default:
+                           FAIL("unexpected extra screen " << top.context);
+                   }
+                   return input_event{};
+               });
+    CHECK(stage == 5);
+    CHECK_FALSE(g->has_gametype());
+}
+
+TEST_CASE(
+    "a save opened in editor mode gets the editor on top and the avatar stays where it was",
+    "[client][interaction][mcp][screens][editor]") {
+    clear_all_state();
+    const auto guard = screen_guard{};
+    editor::reset_editor_session();
+    get_avatar().unset_mutation(trait_id("DEBUG_EDITOR"));
+    const auto expected = get_avatar().abs_pos();
+    auto& mode = g.get()->*native_member(mode_member{});
+    mode = std::make_unique<editor_save_game>();
+    const auto cleanup = on_out_of_scope([&] {
+        mode.reset();
+        get_avatar().unset_mutation(trait_id("DEBUG_EDITOR"));
+        editor::reset_editor_session();
+    });
+    CHECK_FALSE(editor::editor_denial().empty());
+    REQUIRE(mode->init());
+    CHECK(editor::editor_denial().empty());
+    CHECK_FALSE(g->has_gametype());
+    // The access lasts the session: what a save of this game writes does not hold the trait.
+    CHECK_FALSE(get_avatar().has_trait(trait_id("DEBUG_EDITOR")));
+    auto written = std::ostringstream{};
+    g->serialize(written);
+    CHECK_FALSE(written.str().contains("DEBUG_EDITOR"));
+
+    auto kinds = std::vector<std::string>{};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        kinds.push_back(top_screen_now().kind);
+        return run_action("QUIT");
+    });
+    (g.get()->*native_member(handle_action_member{}))();
+    REQUIRE(kinds.size() == 1);
+    CHECK(kinds.front() == "editor");
+    CHECK(get_avatar().abs_pos() == expected);
+    // It opens the editor once, then asks for inputs as any game does.
+    CHECK_FALSE(mode->next_action());
 }
 
 #endif // CATA_MCP

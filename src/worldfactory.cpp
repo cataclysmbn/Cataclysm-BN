@@ -230,7 +230,8 @@ WORLDINFO *worldfactory::make_new_world( bool show_prompt, const std::string &wo
     return add_world( std::move( retworld ) );
 }
 
-WORLDINFO *worldfactory::make_new_world( special_game_type special_type )
+WORLDINFO *worldfactory::make_new_world( special_game_type special_type,
+        const std::vector<mod_id> &mods )
 {
     std::string worldname;
     switch( special_type ) {
@@ -247,14 +248,27 @@ WORLDINFO *worldfactory::make_new_world( special_game_type special_type )
             return nullptr;
     }
 
+    auto order = std::vector<mod_id> {};
+    for( const auto &mod : mods ) {
+        mman_ui->try_add( mod, order );
+    }
+
     // Look through all worlds and see if a world named worldname already exists. If so, then just return it instead of
     // making a new world.
     if( has_world( worldname ) ) {
-        return all_worlds[worldname].get();
+        auto *const existing = all_worlds[worldname].get();
+        if( !order.empty() ) {
+            existing->active_mod_order = order;
+            existing->save();
+        }
+        return existing;
     }
 
     std::unique_ptr<WORLDINFO> special_world = std::make_unique<WORLDINFO>();
     special_world->world_name = worldname;
+    if( !order.empty() ) {
+        special_world->active_mod_order = order;
+    }
 
     special_world->WORLD_OPTIONS["WORLD_END"].setValue( "delete" );
 
@@ -927,6 +941,15 @@ void worldfactory::show_active_world_mods( const std::vector<mod_id> &world_mods
 
 void worldfactory::edit_active_world_mods( WORLDINFO *world )
 {
+    if( const auto mods = pick_mods( world->active_mod_order, _( "Save changes?" ) ) ) {
+        world->active_mod_order = *mods;
+        world->save();
+    }
+}
+
+auto worldfactory::pick_mods( const std::vector<mod_id> &initial,
+                              const std::string &question ) -> std::optional<std::vector<mod_id>>
+{
     // set up window
     catacurses::window wf_win;
     ui_adaptor ui;
@@ -945,17 +968,14 @@ void worldfactory::edit_active_world_mods( WORLDINFO *world )
         wnoutrefresh( wf_win );
     } );
 
-    bool save_changes = false;
-    mod_manager::t_mod_list new_mod_order = world->active_mod_order;
-    show_modselection_window( wf_win, new_mod_order, [&save_changes]() {
-        save_changes = query_yn( _( "Save changes?" ) );
+    auto accepted = false;
+    auto mods = initial;
+    show_modselection_window( wf_win, mods, [&accepted, &question]() {
+        accepted = query_yn( "%s", question );
         return true;
     }, nullptr, true );
 
-    if( save_changes ) {
-        world->active_mod_order = new_mod_order;
-        world->save();
-    }
+    return accepted ? std::optional( mods ) : std::nullopt;
 }
 
 int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win, WORLDINFO *world,
