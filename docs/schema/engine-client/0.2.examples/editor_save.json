@@ -1,0 +1,273 @@
+{
+  "valid": [
+    {
+      "name": "saves to open in the editor",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:4",
+        "role": "dialog",
+        "kind": "uilist",
+        "root": {
+          "id": "split:root",
+          "kind": "split",
+          "relation": "peers",
+          "children": [
+            {
+              "id": "text:message",
+              "kind": "text",
+              "markup": "Open a save in the editor",
+              "role": "prompt"
+            },
+            {
+              "id": "list:choices",
+              "kind": "list",
+              "affordances": [
+                "FILTER",
+                "bn:filter:list:choices",
+                "bn:choose:list:choices"
+              ],
+              "columns": [],
+              "rows": [
+                {
+                  "id": "entry:0",
+                  "label": "Saxe: Dillon Hein",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "1",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": true,
+                  "columns": []
+                },
+                {
+                  "id": "entry:1",
+                  "label": "<= Return",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "q",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                }
+              ],
+              "total": 2,
+              "selection": "single",
+              "activate": "bn:choose:list:choices",
+              "filterable": true
+            }
+          ]
+        },
+        "affordances": [
+          {
+            "id": "bn:filter:list:choices",
+            "label": "Filter",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:choose:list:choices",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "list:choices"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:cancel",
+            "label": "Cancel menu",
+            "keys": [
+              "ESC"
+            ],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "DOWN",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_UP",
+            "label": "Fast scroll up",
+            "keys": [
+              "PPAGE"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_DOWN",
+            "label": "Fast scroll down",
+            "keys": [
+              "NPAGE"
+            ],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "HOME",
+            "label": "Go to first entry",
+            "keys": [],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "END",
+            "label": "Go to last entry",
+            "keys": [],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "SCROLL_UP",
+            "label": "Scroll up",
+            "keys": [],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "SCROLL_DOWN",
+            "label": "Scroll down",
+            "keys": [],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "SELECT",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "role": "navigate",
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          },
+          {
+            "id": "FILTER",
+            "label": "Filter",
+            "keys": [
+              "/"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "role": "help",
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "list:choices",
+          "row_id": "entry:0"
+        },
+        "context": "UILIST"
+      }
+    },
+    {
+      "name": "save chosen to open in the editor, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-3",
+        "expect": {
+          "revision": "2",
+          "boundary_id": "boundary:1",
+          "schema_id": "c1f368cbfdd7811a"
+        },
+        "operation": {
+          "kind": "choose",
+          "choice_id": "entry:0"
+        }
+      }
+    },
+    {
+      "name": "save chosen to open in the editor, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-3",
+        "command_id": "command:1",
+        "stage": "received",
+        "stage_text": "Received."
+      }
+    },
+    {
+      "name": "save chosen to open in the editor, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-3",
+        "command_id": "command:1",
+        "stage": "validated",
+        "stage_text": "Accepted."
+      }
+    },
+    {
+      "name": "save chosen to open in the editor, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-3",
+        "command_id": "command:1",
+        "stage": "executing",
+        "stage_text": "Under way."
+      }
+    },
+    {
+      "name": "save chosen to open in the editor, interrupted",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-3",
+        "command_id": "command:1",
+        "stage": "interrupted",
+        "stage_text": "Interrupted.",
+        "error": "stale_epoch",
+        "error_text": "The world changed."
+      }
+    }
+  ],
+  "invalid": []
+}

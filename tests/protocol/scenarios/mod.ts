@@ -8,6 +8,7 @@ import { diary } from "./diary.ts"
 import { editmap } from "./editmap.ts"
 import { editor } from "./editor.ts"
 import { editorMenu } from "./editor_menu.ts"
+import { editorSave } from "./editor_save.ts"
 import type { Scenario } from "./driver.ts"
 import { handshake } from "./handshake.ts"
 import { generic } from "./generic.ts"
@@ -45,6 +46,7 @@ export const scenarios: Scenario[] = [
   editmap,
   editor,
   editorMenu,
+  editorSave,
   vehicleEditor,
   vehicle,
   character,
