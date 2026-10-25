@@ -1339,6 +1339,18 @@ tab_direction set_traits( avatar &u, points_left &points )
     };
     recalc_display_cache();
 
+    // Toggles a trait and keeps the point pool and good/bad totals in sync with it
+    const auto toggle_with_points = [&]( const trait_id & tr ) {
+        const auto delta = u.has_trait( tr ) ? -tr->points : tr->points;
+        u.toggle_trait( tr );
+        points.trait_points -= delta;
+        if( tr->points > 0 ) {
+            num_good += delta;
+        } else if( tr->points < 0 ) {
+            num_bad += delta;
+        }
+    };
+
     int iCurWorkingPage = 0;
     int iStartPos[3] = { 0, 0, 0 };
     int iCurrentLine[3] = { 0, 0, 0 };
@@ -1626,7 +1638,7 @@ tab_direction set_traits( avatar &u, points_left &points )
                     } );
                     if( it != base_traits.end() ) {
                         inc_type = 1;
-                        u.toggle_trait( *it );
+                        toggle_with_points( *it );
                     } else {
                         popup( _( "You already picked a conflicting trait!" ) );
                     }
@@ -1664,9 +1676,8 @@ tab_direction set_traits( avatar &u, points_left &points )
                 inc_type = 1;
             }
 
-            //inc_type is either -1 or 1, so we can just multiply by it to invert
             if( inc_type != 0 ) {
-                u.toggle_trait( cur_trait );
+                toggle_with_points( cur_trait );
 #if defined(TILES)
                 // If character had trait - it's now removed. Trait could blocked some clothes, need to retoggle
                 if( has_trait && character_preview.clothes_showing() ) {
@@ -1674,12 +1685,6 @@ tab_direction set_traits( avatar &u, points_left &points )
                     character_preview.toggle_clothes();
                 }
 #endif
-                points.trait_points -= mdata.points * inc_type;
-                if( iCurWorkingPage == 0 ) {
-                    num_good += mdata.points * inc_type;
-                } else {
-                    num_bad += mdata.points * inc_type;
-                }
             }
 
             recalc_display_cache();
