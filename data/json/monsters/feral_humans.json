@@ -51,18 +51,7 @@
     "zombify_into": "mon_zombie",
     "upgrades": { "half_life": 40, "into_group": "GROUP_FERAL_UPGRADE" },
     "anger_triggers": [ "FRIEND_DIED", "FRIEND_ATTACKED", "HURT" ],
-    "flags": [
-      "SEES",
-      "HEARS",
-      "SMELLS",
-      "WARM",
-      "BASHES",
-      "GROUP_BASH",
-      "HUMAN",
-      "CAN_OPEN_DOORS",
-      "PATH_AVOID_DANGER_1",
-      "DROPS_AMMO"
-    ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "WARM", "BASHES", "GROUP_BASH", "HUMAN", "CAN_OPEN_DOORS", "PATH_AVOID_DANGER_1" ]
   },
   {
     "id": "mon_feral_human_crowbar",
@@ -147,7 +136,6 @@
       "HUMAN",
       "CAN_OPEN_DOORS",
       "PATH_AVOID_DANGER_2",
-      "DROPS_AMMO",
       "CBM_SCI"
     ]
   },
@@ -216,7 +204,6 @@
       "CLIMBS",
       "PUSH_MON",
       "PATH_AVOID_DANGER_2",
-      "DROPS_AMMO",
       "NO_SLIP"
     ]
   },
@@ -346,8 +333,7 @@
       "CAN_OPEN_DOORS",
       "CLIMBS",
       "PUSH_MON",
-      "PATH_AVOID_DANGER_1",
-      "DROPS_AMMO"
+      "PATH_AVOID_DANGER_1"
     ],
     "anger_triggers": [ "FRIEND_DIED", "FRIEND_ATTACKED", "HURT" ]
   },
@@ -549,7 +535,6 @@
       "CLIMBS",
       "PUSH_MON",
       "PATH_AVOID_DANGER_1",
-      "DROPS_AMMO",
       "NO_SLIP"
     ]
   },
@@ -601,7 +586,6 @@
       "CLIMBS",
       "PUSH_MON",
       "PATH_AVOID_DANGER_1",
-      "DROPS_AMMO",
       "NO_SLIP"
     ],
     "anger_triggers": [ "FRIEND_ATTACKED", "PLAYER_CLOSE", "STALK" ],
@@ -673,7 +657,6 @@
       "CLIMBS",
       "PUSH_MON",
       "PATH_AVOID_DANGER_1",
-      "DROPS_AMMO",
       "NO_SLIP"
     ],
     "anger_triggers": [ "FRIEND_ATTACKED", "PLAYER_CLOSE", "STALK" ]
@@ -753,7 +736,6 @@
         "no_crits": true
       }
     ],
-    "extend": { "flags": [ "DROPS_AMMO" ] },
     "delete": { "upgrades": { "half_life": 40, "into_group": "GROUP_FERAL_SOLDIER_UPGRADE" } }
   },
   {
@@ -782,7 +764,6 @@
         "no_crits": true
       }
     ],
-    "extend": { "flags": [ "DROPS_AMMO" ] },
     "delete": { "upgrades": { "half_life": 40, "into_group": "GROUP_FERAL_SOLDIER_UPGRADE" } }
   },
   {
@@ -810,7 +791,6 @@
         "no_crits": true
       }
     ],
-    "extend": { "flags": [ "DROPS_AMMO" ] },
     "delete": { "upgrades": { "half_life": 40, "into_group": "GROUP_FERAL_SOLDIER_UPGRADE" } }
   },
   {
@@ -838,7 +818,6 @@
         "no_crits": true
       }
     ],
-    "extend": { "flags": [ "DROPS_AMMO" ] },
     "delete": { "upgrades": { "half_life": 40, "into_group": "GROUP_FERAL_SOLDIER_UPGRADE" } }
   },
   {
@@ -1001,7 +980,7 @@
     "harvest": "CBM_OP_BOSS_FERAL",
     "vision_night": 11,
     "path_settings": { "max_dist": 40, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
-    "starting_ammo": { "shot_00": 25 },
+    "starting_ammo": { "shot_00": 100 },
     "special_attacks": [
       [ "PARROT_AT_DANGER", 0 ],
       {
@@ -1042,8 +1021,7 @@
       "CAN_OPEN_DOORS",
       "PATH_AVOID_DANGER_1",
       "ELECTRIC",
-      "NO_SLIP",
-      "DROPS_AMMO"
+      "NO_SLIP"
     ]
   },
   {
@@ -1120,8 +1098,7 @@
       "CAN_OPEN_DOORS",
       "PATH_AVOID_DANGER_1",
       "ELECTRIC",
-      "NO_SLIP",
-      "DROPS_AMMO"
+      "NO_SLIP"
     ]
   },
   {
@@ -1216,7 +1193,7 @@
     "armor_cut": 4,
     "armor_bullet": 8,
     "armor_acid": 0,
-    "starting_ammo": { "8mm_caseless": 50 },
+    "starting_ammo": { "8mm_caseless": 60 },
     "monster_weapon": "corpo_gun",
     "special_attacks": [
       [ "PARROT_AT_DANGER", 3 ],
@@ -1250,7 +1227,7 @@
     "armor_bullet": 12,
     "dodge": 2,
     "harvest": "human",
-    "starting_ammo": { "9mm": 15 },
+    "starting_ammo": { "9mm": 30 },
     "special_attacks": [
       [ "PARROT_AT_DANGER", 5 ],
       {
@@ -1306,7 +1283,7 @@
     "path_settings": { "max_dist": 40, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
     "emit_fields": [ { "emit_id": "emit_shadow_field_darkfield", "delay": "1 s" } ],
     "monster_weapon": "mon_feral_blackops_boss_commander_monster_weapon",
-    "starting_ammo": { "5x50dart": 100 },
+    "starting_ammo": { "5x50dart": 200 },
     "special_attacks": [
       [ "PARROT_AT_DANGER", 0 ],
       [ "BIO_OP_TAKEDOWN", 10 ],
@@ -1344,8 +1321,7 @@
       "PATH_AVOID_DANGER_1",
       "NIGHT_INVISIBILITY",
       "PRIORITIZE_TARGETS",
-      "NO_SLIP",
-      "DROPS_AMMO"
+      "NO_SLIP"
     ]
   },
   {
@@ -1408,8 +1384,7 @@
       "NIGHT_INVISIBILITY",
       "UNCANNY_DODGE",
       "PRIORITIZE_TARGETS",
-      "NO_SLIP",
-      "DROPS_AMMO"
+      "NO_SLIP"
     ]
   },
   {
@@ -1446,7 +1421,7 @@
     "vision_night": 20,
     "path_settings": { "max_dist": 40, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
     "emit_fields": [ { "emit_id": "emit_shadow_field_darkfield", "delay": "1 s" } ],
-    "starting_ammo": { "8mm_caseless": 25, "bot_EMP_hack": 10 },
+    "starting_ammo": { "8mm_caseless": 25, "bot_EMP_hack": 100 },
     "monster_weapon": "mon_feral_blackops_boss_technician_monster_weapon",
     "special_attacks": [
       [ "PARROT_AT_DANGER", 0 ],
@@ -1485,8 +1460,7 @@
       "PATH_AVOID_DANGER_1",
       "NIGHT_INVISIBILITY",
       "PRIORITIZE_TARGETS",
-      "NO_SLIP",
-      "DROPS_AMMO"
+      "NO_SLIP"
     ]
   },
   {
@@ -1524,7 +1498,7 @@
     "path_settings": { "max_dist": 40, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
     "emit_fields": [ { "emit_id": "emit_shadow_field_darkfield", "delay": "1 s" } ],
     "monster_weapon": "mon_feral_blackops_boss_sniper_monster_weapon",
-    "starting_ammo": { "8mm_hvp": 25 },
+    "starting_ammo": { "8mm_hvp": 50 },
     "special_attacks": [
       [ "PARROT_AT_DANGER", 0 ],
       [ "BIO_OP_TAKEDOWN", 10 ],
@@ -1559,8 +1533,7 @@
       "PATH_AVOID_DANGER_1",
       "NIGHT_INVISIBILITY",
       "PRIORITIZE_TARGETS",
-      "NO_SLIP",
-      "DROPS_AMMO"
+      "NO_SLIP"
     ]
   },
   {
@@ -1594,7 +1567,7 @@
     "vision_night": 4,
     "path_settings": { "max_dist": 40, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
     "harvest": "zombie_maybe_mil_bionics",
-    "starting_ammo": { "300blk": 30 },
+    "starting_ammo": { "300blk": 120 },
     "monster_weapon": "mon_feral_swat_boss_commander_monster_weapon",
     "special_attacks": [
       [ "PARROT_AT_DANGER", 5 ],
@@ -1666,7 +1639,7 @@
     "vision_night": 4,
     "path_settings": { "max_dist": 40, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
     "harvest": "zombie_maybe_mil_bionics",
-    "starting_ammo": { "45_acp": 12 },
+    "starting_ammo": { "45_acp": 120 },
     "monster_weapon": "mon_feral_swat_boss_shieldman_monster_weapon",
     "special_attacks": [
       [ "PARROT_AT_DANGER", 5 ],
@@ -1704,8 +1677,7 @@
       "PRIORITIZE_TARGETS",
       "NO_BREATHE",
       "FACTION_MEMORY",
-      "NO_SLIP",
-      "DROPS_AMMO"
+      "NO_SLIP"
     ],
     "anger_triggers": [ "FRIEND_ATTACKED", "PLAYER_CLOSE", "HURT" ]
   },
@@ -1740,7 +1712,7 @@
     "vision_night": 4,
     "path_settings": { "max_dist": 40, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
     "harvest": "zombie_maybe_mil_bionics",
-    "starting_ammo": { "40x46mm_m651": 10, "bot_flashbang_hack": 5 },
+    "starting_ammo": { "40x46mm_m651": 20, "bot_flashbang_hack": 20 },
     "special_attacks": [
       [ "PARROT_AT_DANGER", 5 ],
       [ "GRENADIER", 15 ],
@@ -1778,8 +1750,7 @@
       "PRIORITIZE_TARGETS",
       "NO_BREATHE",
       "FACTION_MEMORY",
-      "NO_SLIP",
-      "DROPS_AMMO"
+      "NO_SLIP"
     ],
     "anger_triggers": [ "FRIEND_ATTACKED", "PLAYER_CLOSE", "HURT" ]
   },
