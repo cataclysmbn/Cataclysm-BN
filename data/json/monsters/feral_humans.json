@@ -1304,7 +1304,7 @@
     "harvest": "CBM_OP_BOSS_FERAL",
     "vision_night": 20,
     "path_settings": { "max_dist": 40, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
-    "emit_fields": [ { "emit_id": "emit_shadow_field", "delay": "1 s" } ],
+    "emit_fields": [ { "emit_id": "emit_shadow_field_darkfield", "delay": "1 s" } ],
     "monster_weapon": "mon_feral_blackops_boss_commander_monster_weapon",
     "starting_ammo": { "5x50dart": 100 },
     "special_attacks": [
@@ -1384,7 +1384,7 @@
     "harvest": "CBM_OP_BOSS_FERAL",
     "vision_night": 20,
     "uncanny_dodge_cost": 50,
-    "emit_fields": [ { "emit_id": "emit_shadow_field", "delay": "1 s" } ],
+    "emit_fields": [ { "emit_id": "emit_shadow_field_darkfield", "delay": "1 s" } ],
     "special_attacks": [ [ "PARROT_AT_DANGER", 0 ], [ "BIO_OP_BIOJUTSU", 10 ] ],
     "special_when_hit": [ "ZAPBACK", 75 ],
     "death_function": [ "NORMAL" ],
@@ -1445,7 +1445,7 @@
     "harvest": "CBM_OP_BOSS_FERAL",
     "vision_night": 20,
     "path_settings": { "max_dist": 40, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
-    "emit_fields": [ { "emit_id": "emit_shadow_field", "delay": "1 s" } ],
+    "emit_fields": [ { "emit_id": "emit_shadow_field_darkfield", "delay": "1 s" } ],
     "starting_ammo": { "8mm_caseless": 25, "bot_EMP_hack": 10 },
     "monster_weapon": "mon_feral_blackops_boss_technician_monster_weapon",
     "special_attacks": [
@@ -1522,7 +1522,7 @@
     "harvest": "CBM_OP_BOSS_FERAL",
     "vision_night": 30,
     "path_settings": { "max_dist": 40, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
-    "emit_fields": [ { "emit_id": "emit_shadow_field", "delay": "1 s" } ],
+    "emit_fields": [ { "emit_id": "emit_shadow_field_darkfield", "delay": "1 s" } ],
     "monster_weapon": "mon_feral_blackops_boss_sniper_monster_weapon",
     "starting_ammo": { "8mm_hvp": 25 },
     "special_attacks": [
