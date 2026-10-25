@@ -281,7 +281,7 @@
     "copy-from": "m16a4",
     "type": "GUN",
     "name": { "str_sp": "fake monster M16A4" },
-    "description": "This exists to give feral snipers and TALON bots less accurate shots.",
+    "description": "This exists to give feral soldiers less accurate shots.",
     "dispersion": 750
   },
   {
