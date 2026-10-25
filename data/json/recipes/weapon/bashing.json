@@ -109,7 +109,7 @@
     "difficulty": 3,
     "time": "1h",
     "autolearn": true,
-    "book_learn": [ [ "recipe_melee", 3 ] ],
+    "book_learn": [ [ "recipe_melee", 2 ] ],
     "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [ [ [ "log", 1 ] ], [ [ "varnish", 2, "LIST" ] ] ]
   },
