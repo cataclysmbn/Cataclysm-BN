@@ -91,7 +91,7 @@
     "visibility": -1,
     "avoidance": 0,
     "difficulty": 0,
-    "comfort": 4,
+    "comfort": 3,
     "floor_bedding_warmth": -1000,
     "action": "none",
     "drops": [ "rollmat" ],
