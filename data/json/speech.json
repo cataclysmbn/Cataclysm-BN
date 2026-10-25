@@ -426,7 +426,11 @@
       "mon_feral_militia",
       "mon_feral_prepper",
       "mon_feral_survivalist",
-      "mon_feral_soldier"
+      "mon_feral_soldier",
+      "mon_feral_soldier_rifle",
+      "mon_feral_soldier_lmg",
+      "mon_feral_soldier_shotgun",
+      "mon_feral_soldier_sniper"
     ],
     "sound": "\"I love the smell of napalm in the morning.\"",
     "volume": 80
@@ -443,7 +447,11 @@
       "mon_feral_militia",
       "mon_feral_prepper",
       "mon_feral_survivalist",
-      "mon_feral_soldier"
+      "mon_feral_soldier",
+      "mon_feral_soldier_rifle",
+      "mon_feral_soldier_lmg",
+      "mon_feral_soldier_shotgun",
+      "mon_feral_soldier_sniper"
     ],
     "sound": "\"This is the way the fuckin' world ends.\"",
     "volume": 80
@@ -2195,7 +2203,16 @@
   },
   {
     "type": "speech",
-    "speaker": [ "mon_eyebot", "mon_feral_labsecurity_9mm", "mon_feral_labsecurity_9mm", "mon_feral_soldier" ],
+    "speaker": [
+      "mon_eyebot",
+      "mon_feral_labsecurity_9mm",
+      "mon_feral_labsecurity_9mm",
+      "mon_feral_soldier",
+      "mon_feral_soldier_rifle",
+      "mon_feral_soldier_lmg",
+      "mon_feral_soldier_shotgun",
+      "mon_feral_soldier_sniper"
+    ],
     "sound": "\"Let me see your hands!\"",
     "volume": 65
   },
@@ -2219,7 +2236,16 @@
   },
   {
     "type": "speech",
-    "speaker": [ "mon_eyebot", "mon_feral_labsecurity_9mm", "mon_feral_labsecurity_9mm", "mon_feral_soldier" ],
+    "speaker": [
+      "mon_eyebot",
+      "mon_feral_labsecurity_9mm",
+      "mon_feral_labsecurity_9mm",
+      "mon_feral_soldier",
+      "mon_feral_soldier_rifle",
+      "mon_feral_soldier_lmg",
+      "mon_feral_soldier_shotgun",
+      "mon_feral_soldier_sniper"
+    ],
     "sound": "\"Get on the ground!  Now!\"",
     "volume": 65
   },
@@ -2243,13 +2269,31 @@
   },
   {
     "type": "speech",
-    "speaker": [ "mon_eyebot", "mon_feral_labsecurity_9mm", "mon_feral_labsecurity_9mm", "mon_feral_soldier" ],
+    "speaker": [
+      "mon_eyebot",
+      "mon_feral_labsecurity_9mm",
+      "mon_feral_labsecurity_9mm",
+      "mon_feral_soldier",
+      "mon_feral_soldier_rifle",
+      "mon_feral_soldier_lmg",
+      "mon_feral_soldier_shotgun",
+      "mon_feral_soldier_sniper"
+    ],
     "sound": "\"Keep your hands up!\"",
     "volume": 65
   },
   {
     "type": "speech",
-    "speaker": [ "mon_eyebot", "mon_feral_labsecurity_9mm", "mon_feral_labsecurity_9mm", "mon_feral_soldier" ],
+    "speaker": [
+      "mon_eyebot",
+      "mon_feral_labsecurity_9mm",
+      "mon_feral_labsecurity_9mm",
+      "mon_feral_soldier",
+      "mon_feral_soldier_rifle",
+      "mon_feral_soldier_lmg",
+      "mon_feral_soldier_shotgun",
+      "mon_feral_soldier_sniper"
+    ],
     "sound": "\"Get on your knees!\"",
     "volume": 65
   },
@@ -2267,7 +2311,16 @@
   },
   {
     "type": "speech",
-    "speaker": [ "mon_eyebot", "mon_feral_labsecurity_9mm", "mon_feral_labsecurity_9mm", "mon_feral_soldier" ],
+    "speaker": [
+      "mon_eyebot",
+      "mon_feral_labsecurity_9mm",
+      "mon_feral_labsecurity_9mm",
+      "mon_feral_soldier",
+      "mon_feral_soldier_rifle",
+      "mon_feral_soldier_lmg",
+      "mon_feral_soldier_shotgun",
+      "mon_feral_soldier_sniper"
+    ],
     "sound": "\"Remain where you are!\"",
     "volume": 65
   },
@@ -2645,7 +2698,15 @@
   },
   {
     "type": "speech",
-    "speaker": [ "mon_feral_labsecurity_9mm", "mon_feral_labsecurity_flashlight", "mon_feral_soldier" ],
+    "speaker": [
+      "mon_feral_labsecurity_9mm",
+      "mon_feral_labsecurity_flashlight",
+      "mon_feral_soldier",
+      "mon_feral_soldier_rifle",
+      "mon_feral_soldier_lmg",
+      "mon_feral_soldier_shotgun",
+      "mon_feral_soldier_sniper"
+    ],
     "sound": "\"X-ray breaching perimeter!\"",
     "volume": 75
   },
@@ -2801,67 +2862,135 @@
   },
   {
     "type": "speech",
-    "speaker": [ "mon_feral_soldier" ],
+    "speaker": [
+      "mon_feral_soldier",
+      "mon_feral_soldier_rifle",
+      "mon_feral_soldier_lmg",
+      "mon_feral_soldier_shotgun",
+      "mon_feral_soldier_sniper"
+    ],
     "sound": "\"We've got incoming!\"",
     "volume": 70
   },
   {
     "type": "speech",
-    "speaker": [ "mon_feral_soldier" ],
+    "speaker": [
+      "mon_feral_soldier",
+      "mon_feral_soldier_rifle",
+      "mon_feral_soldier_lmg",
+      "mon_feral_soldier_shotgun",
+      "mon_feral_soldier_sniper"
+    ],
     "sound": "\"Hostiles inbound.\"",
     "volume": 65
   },
   {
     "type": "speech",
-    "speaker": [ "mon_feral_labsecurity_9mm", "mon_feral_labsecurity_flashlight", "mon_feral_soldier" ],
+    "speaker": [
+      "mon_feral_labsecurity_9mm",
+      "mon_feral_labsecurity_flashlight",
+      "mon_feral_soldier",
+      "mon_feral_soldier_rifle",
+      "mon_feral_soldier_lmg",
+      "mon_feral_soldier_shotgun",
+      "mon_feral_soldier_sniper"
+    ],
     "sound": "\"I've got movement!\"",
     "volume": 70
   },
   {
     "type": "speech",
-    "speaker": [ "mon_feral_soldier" ],
+    "speaker": [
+      "mon_feral_soldier",
+      "mon_feral_soldier_rifle",
+      "mon_feral_soldier_lmg",
+      "mon_feral_soldier_shotgun",
+      "mon_feral_soldier_sniper"
+    ],
     "sound": "\"Danger close!\"",
     "volume": 70
   },
   {
     "type": "speech",
-    "speaker": [ "mon_feral_soldier" ],
+    "speaker": [
+      "mon_feral_soldier",
+      "mon_feral_soldier_rifle",
+      "mon_feral_soldier_lmg",
+      "mon_feral_soldier_shotgun",
+      "mon_feral_soldier_sniper"
+    ],
     "sound": "\"Last one alive, lock the door!\"",
     "volume": 75
   },
   {
     "type": "speech",
-    "speaker": [ "mon_feral_soldier" ],
+    "speaker": [
+      "mon_feral_soldier",
+      "mon_feral_soldier_rifle",
+      "mon_feral_soldier_lmg",
+      "mon_feral_soldier_shotgun",
+      "mon_feral_soldier_sniper"
+    ],
     "sound": "\"We have you surrounded, at least from this side!\"",
     "volume": 70
   },
   {
     "type": "speech",
-    "speaker": [ "mon_feral_soldier" ],
+    "speaker": [
+      "mon_feral_soldier",
+      "mon_feral_soldier_rifle",
+      "mon_feral_soldier_lmg",
+      "mon_feral_soldier_shotgun",
+      "mon_feral_soldier_sniper"
+    ],
     "sound": "\"Charge!\"",
     "volume": 75
   },
   {
     "type": "speech",
-    "speaker": [ "mon_feral_soldier" ],
+    "speaker": [
+      "mon_feral_soldier",
+      "mon_feral_soldier_rifle",
+      "mon_feral_soldier_lmg",
+      "mon_feral_soldier_shotgun",
+      "mon_feral_soldier_sniper"
+    ],
     "sound": "\"Contact!\"",
     "volume": 70
   },
   {
     "type": "speech",
-    "speaker": [ "mon_feral_soldier" ],
+    "speaker": [
+      "mon_feral_soldier",
+      "mon_feral_soldier_rifle",
+      "mon_feral_soldier_lmg",
+      "mon_feral_soldier_shotgun",
+      "mon_feral_soldier_sniper"
+    ],
     "sound": "\"Contact, enemy in sight!\"",
     "volume": 75
   },
   {
     "type": "speech",
-    "speaker": [ "mon_feral_soldier" ],
+    "speaker": [
+      "mon_feral_soldier",
+      "mon_feral_soldier_rifle",
+      "mon_feral_soldier_lmg",
+      "mon_feral_soldier_shotgun",
+      "mon_feral_soldier_sniper"
+    ],
     "sound": "\"Target in sight!\"",
     "volume": 70
   },
   {
     "type": "speech",
-    "speaker": [ "mon_feral_soldier" ],
+    "speaker": [
+      "mon_feral_soldier",
+      "mon_feral_soldier_rifle",
+      "mon_feral_soldier_lmg",
+      "mon_feral_soldier_shotgun",
+      "mon_feral_soldier_sniper"
+    ],
     "sound": "\"We've got hostiles!\"",
     "volume": 70
   },
@@ -3346,5 +3475,41 @@
     "speaker": "mon_feral_swat_boss_cloaker",
     "sound": "\"WULULULULU!\"",
     "volume": 90
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_soldier_lmg",
+    "sound": "\"Suppressing fire!\"",
+    "volume": 70
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_soldier_lmg",
+    "sound": "\"Dakka dakka dakka!\"",
+    "volume": 70
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_soldier_lmg",
+    "sound": "\"Cry some more!\"",
+    "volume": 80
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_soldier_sniper",
+    "sound": "\"Eyes on tango, engaging!\"",
+    "volume": 70
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_soldier_sniper",
+    "sound": "\"Taking the shot!\"",
+    "volume": 70
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_soldier_sniper",
+    "sound": "\"Wave goodbye to your head!\"",
+    "volume": 70
   }
 ]

@@ -118,7 +118,7 @@
         "type": "gun",
         "cooldown": 3,
         "move_cost": 150,
-        "gun_type": "m16a4",
+        "gun_type": "m16a4_monster",
         "ammo_type": "556",
         "//": "A quarter as effective as a nice, stable turret",
         "fake_skills": [ [ "gun", 2 ], [ "rifle", 2 ] ],

@@ -761,6 +761,54 @@
   },
   {
     "type": "item_group",
+    "id": "mon_feral_soldier_rifle_monster_weapon",
+    "subtype": "distribution",
+    "magazine": 100,
+    "ammo": 50,
+    "entries": [
+      { "item": "m4a1", "prob": 50, "damage": [ 1, 4 ], "dirt": [ 0, 1500 ] },
+      { "item": "m27iar", "prob": 20, "damage": [ 1, 4 ], "dirt": [ 0, 1500 ] },
+      { "item": "h&k416a5", "prob": 20, "damage": [ 1, 4 ], "dirt": [ 0, 1500 ] },
+      { "item": "m16a4", "prob": 5, "damage": [ 1, 4 ], "dirt": [ 0, 1500 ] },
+      { "item": "scar_l", "prob": 5, "damage": [ 1, 4 ], "dirt": [ 0, 1500 ] }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_feral_soldier_lmg_monster_weapon",
+    "subtype": "distribution",
+    "magazine": 100,
+    "ammo": 50,
+    "//": "No easy way to spawn the M27 damaged with its high-cap mag so only M249 for you",
+    "entries": [ { "item": "m249", "prob": 75, "damage": [ 1, 4 ], "dirt": [ 0, 1500 ] } ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_feral_soldier_shotgun_monster_weapon",
+    "subtype": "distribution",
+    "magazine": 100,
+    "ammo": 50,
+    "entries": [
+      { "item": "m1014", "prob": 100, "damage": [ 1, 4 ], "dirt": [ 0, 1500 ] },
+      { "item": "mossberg_590", "prob": 100, "damage": [ 1, 4 ], "dirt": [ 0, 1500 ] },
+      { "item": "remington_870_express", "prob": 100, "damage": [ 1, 4 ], "dirt": [ 0, 1500 ] }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_feral_soldier_sniper_monster_weapon",
+    "subtype": "distribution",
+    "magazine": 100,
+    "ammo": 50,
+    "entries": [
+      { "item": "m1a", "prob": 100, "damage": [ 1, 4 ], "dirt": [ 0, 1500 ] },
+      { "item": "m14ebr", "prob": 100, "damage": [ 1, 4 ], "dirt": [ 0, 1500 ] },
+      { "item": "M24", "prob": 100, "damage": [ 1, 4 ], "dirt": [ 0, 1500 ] },
+      { "item": "m110a1", "prob": 100, "damage": [ 1, 4 ], "dirt": [ 0, 1500 ] }
+    ]
+  },
+  {
+    "type": "item_group",
     "id": "feral_jackboot_shotgun",
     "subtype": "distribution",
     "entries": [
