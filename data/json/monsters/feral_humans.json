@@ -1723,7 +1723,7 @@
     "id": "mon_feral_fpf_boss",
     "type": "MONSTER",
     "name": { "str": "feral FPF commander" },
-    "description": "This feral is heavily armored and wearing an exo-suit, marking them as the commander for this site's Federal Protective Force.  Glowing white blades extend from their wrists as they bound with unnatural speed.  Before the Cataclysm, they defended this facility and it's nuclear material, and they seem to have no intention to abandon this duty now.",
+    "description": "This feral is heavily armored and wearing an exo-suit, marking them as the commander for this site's Federal Protective Force.  Glowing white blades extend from their wrists as they bound with unnatural speed.  Before the Cataclysm, they defended this facility and its nuclear material, and they seem to have no intention to abandon this duty now.",
     "default_faction": "zombie",
     "bodytype": "human",
     "species": [ "HUMAN" ],
