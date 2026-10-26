@@ -311,6 +311,8 @@ struct list_options {
     bool filterable = false;
     /// The filter text the list holds; empty when it shows every row.
     std::string filter = {};
+    /// The affordance that sets the filter text, listed among the component's.
+    std::string search = {};
 };
 /// A list over `rows`, with the column header they use.
 auto list( list_options options ) -> component;
