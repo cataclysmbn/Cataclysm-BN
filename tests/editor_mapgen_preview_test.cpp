@@ -1,7 +1,9 @@
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catch/catch.hpp"
+#include "editor/catalog.h"
 #include "editor/document.h"
+#include "editor/mapgen_check.h"
 #include "editor/mapgen_preview.h"
 #include "item.h"
 #include "map/map.h"
@@ -200,4 +202,68 @@ TEST_CASE("a loot roll tells how often each item lies in the squares", "[editor_
     CHECK(share_of("stick").chance > 0.3);
     CHECK(share_of("stick").chance < 0.7);
     CHECK(share_of("stick").mean == share_of("stick").chance);
+}
+
+TEST_CASE(
+    "a file's nested chunks stand in for the game's only while they live and only when they load",
+    "[editor_mapgen]") {
+    const auto restore_mapgen = restore_on_out_of_scope<bool>(disable_mapgen);
+    disable_mapgen = false;
+    const auto chunk = [](const std::string& name, const nlohmann::ordered_json& object) {
+        return nlohmann::ordered_json{
+            {"type", "mapgen"}, {"method", "json"}, {"nested_mapgen_id", name}, {"object", object}}
+            .dump();
+    };
+    const auto lava = nlohmann::ordered_json::parse(
+        R"({"mapgensize": [1, 1], "rows": ["X"], "terrain": {"X": "t_lava"}})");
+    const auto parent = [](const std::string& name) {
+        auto rows = nlohmann::ordered_json::array();
+        for (auto y = 0; y < 24; ++y) { rows.push_back(std::string(24, '.')); }
+        return nlohmann::ordered_json{
+            {"type", "mapgen"},
+            {"method", "json"},
+            {"om_terrain", "house_04"},
+            {"object",
+             {{"rows", rows},
+              {"terrain", {{".", "t_floor"}}},
+              {"place_nested", {{{"chunks", {name}}, {"x", 0}, {"y", 0}}}}}}}
+            .dump();
+    };
+    const auto corner = [&](const std::string& name) {
+        const auto shown = editor::preview_mapgen(parent(name), {.at = at});
+        REQUIRE(shown);
+        return shown->squares.front().ter;
+    };
+    // A chunk of the game's: the file's places lava over it while it stands in.
+    const auto game = std::string("room_6x6_woodworker");
+    const auto before = corner(game);
+    REQUIRE(before == "t_wall_w");
+    {
+        const auto stand_ins = editor::file_stand_ins({chunk(game, lava)});
+        CHECK(corner(game) == "t_lava");
+    }
+    CHECK(corner(game) == before);
+    {
+        // One that does not load leaves the game's in place.
+        auto stand_ins = editor::file_stand_ins({chunk(
+            game,
+            nlohmann::ordered_json::parse(
+                R"({"mapgensize": [1, 1], "rows": ["XX"], "terrain": {"X": "t_lava"}})"))});
+        CHECK(corner(game) == before);
+        // Nor does applying with it take the game's away.
+        stand_ins.keep_chunks();
+    }
+    CHECK(corner(game) == before);
+
+    // A chunk the game lacks is gone again after, as an unknown one.
+    const auto own = std::string("editor_stand_in_test_chunk");
+    {
+        const auto stand_ins = editor::file_stand_ins({chunk(own, lava)});
+        CHECK(corner(own) == "t_lava");
+        CHECK(std::ranges::contains(editor::nested_mapgen_ids(), own));
+    }
+    CHECK_FALSE(std::ranges::contains(editor::nested_mapgen_ids(), own));
+    CHECK(std::ranges::any_of(editor::check_mapgen(parent(own)), [&](const auto& message) {
+        return message.text.find("Unknown nested mapgen function id " + own) != std::string::npos;
+    }));
 }
