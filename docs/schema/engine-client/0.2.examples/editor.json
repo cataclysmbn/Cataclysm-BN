@@ -127,6 +127,7 @@
               "id": "editor:import_form",
               "kind": "form",
               "affordances": [
+                "editor:import_set",
                 "editor:import"
               ],
               "fields": [
@@ -782,16 +783,24 @@
             "expect": "screen"
           },
           {
-            "id": "editor:import",
-            "label": "Stamp mapgen text",
+            "id": "editor:import_set",
+            "label": "Mapgen to stamp",
             "keys": [],
             "enabled": true,
             "args": {
-              "text": {
-                "field_id": "import"
-              }
+              "row": {
+                "component_id": "editor:import_form"
+              },
+              "text": {}
             },
             "expect": "boundary"
+          },
+          {
+            "id": "editor:import",
+            "label": "Stamp text",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
           },
           {
             "id": "editor:browser_open",
@@ -2973,6 +2982,7 @@
               "id": "editor:import_form",
               "kind": "form",
               "affordances": [
+                "editor:import_set",
                 "editor:import"
               ],
               "fields": [
@@ -3640,16 +3650,24 @@
             "expect": "screen"
           },
           {
-            "id": "editor:import",
-            "label": "Stamp mapgen text",
+            "id": "editor:import_set",
+            "label": "Mapgen to stamp",
             "keys": [],
             "enabled": true,
             "args": {
-              "text": {
-                "field_id": "import"
-              }
+              "row": {
+                "component_id": "editor:import_form"
+              },
+              "text": {}
             },
             "expect": "boundary"
+          },
+          {
+            "id": "editor:import",
+            "label": "Stamp text",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
           },
           {
             "id": "editor:browser_open",
@@ -6316,6 +6334,7 @@
               "id": "editor:import_form",
               "kind": "form",
               "affordances": [
+                "editor:import_set",
                 "editor:import"
               ],
               "fields": [
@@ -6983,16 +7002,24 @@
             "expect": "screen"
           },
           {
-            "id": "editor:import",
-            "label": "Stamp mapgen text",
+            "id": "editor:import_set",
+            "label": "Mapgen to stamp",
             "keys": [],
             "enabled": true,
             "args": {
-              "text": {
-                "field_id": "import"
-              }
+              "row": {
+                "component_id": "editor:import_form"
+              },
+              "text": {}
             },
             "expect": "boundary"
+          },
+          {
+            "id": "editor:import",
+            "label": "Stamp text",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
           },
           {
             "id": "editor:browser_open",
@@ -9529,6 +9556,7 @@
               "id": "editor:import_form",
               "kind": "form",
               "affordances": [
+                "editor:import_set",
                 "editor:import"
               ],
               "fields": [
@@ -10196,16 +10224,24 @@
             "expect": "screen"
           },
           {
-            "id": "editor:import",
-            "label": "Stamp mapgen text",
+            "id": "editor:import_set",
+            "label": "Mapgen to stamp",
             "keys": [],
             "enabled": true,
             "args": {
-              "text": {
-                "field_id": "import"
-              }
+              "row": {
+                "component_id": "editor:import_form"
+              },
+              "text": {}
             },
             "expect": "boundary"
+          },
+          {
+            "id": "editor:import",
+            "label": "Stamp text",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
           },
           {
             "id": "editor:browser_open",
@@ -26497,6 +26533,7 @@
               "id": "editor:import_form",
               "kind": "form",
               "affordances": [
+                "editor:import_set",
                 "editor:import"
               ],
               "fields": [
@@ -27164,16 +27201,24 @@
             "expect": "screen"
           },
           {
-            "id": "editor:import",
-            "label": "Stamp mapgen text",
+            "id": "editor:import_set",
+            "label": "Mapgen to stamp",
             "keys": [],
             "enabled": true,
             "args": {
-              "text": {
-                "field_id": "import"
-              }
+              "row": {
+                "component_id": "editor:import_form"
+              },
+              "text": {}
             },
             "expect": "boundary"
+          },
+          {
+            "id": "editor:import",
+            "label": "Stamp text",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
           },
           {
             "id": "editor:browser_open",
