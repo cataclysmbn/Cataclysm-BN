@@ -1,10 +1,14 @@
 #include "editor/mapgen_export.h"
 
+#include "game.h"
 #include "game_constants.h"
+#include "item.h"
 #include "map/field.h"
 #include "map/map.h"
 #include "map/mapbuffer.h"
 #include "map/submap.h"
+#include "monster.h"
+#include "mtype.h"
 #include "overmap/omdata.h"
 #include "overmap/overmapbuffer.h"
 #include "trap.h"
@@ -40,6 +44,22 @@ struct kind {
     }
 };
 
+/// A `place_item` entry per kind of item on the square at `x`, `y`, in the order they lie there.
+auto items_at(const location_vector<item>& items, int x, int y)
+    -> std::vector<nlohmann::ordered_json> {
+    auto kinds = std::vector<itype_id>{};
+    auto amounts = std::map<itype_id, int>{};
+    for (const auto* const it : items) {
+        if (amounts[it->typeId()]++ == 0) { kinds.push_back(it->typeId()); }
+    }
+    return kinds | std::views::transform([&](const itype_id& id) {
+               auto entry = nlohmann::ordered_json{{"item", id.str()}, {"x", x}, {"y", y}};
+               if (amounts[id] > 1) { entry["amount"] = amounts[id]; }
+               return entry;
+           })
+         | std::ranges::to<std::vector>();
+}
+
 /// The fields on a square, in the order the game keeps them.
 auto fields_of(const field& on) -> std::vector<laid_field> {
     return on | std::views::transform([](const auto& entry) {
@@ -57,6 +77,7 @@ auto export_region(const tripoint_abs_omt& at, const point_rel_omt& size)
     const auto base = project_to<coords::sm>(at);
     auto kinds = std::vector<std::vector<kind>>{};
     auto counts = std::map<kind, std::size_t>{};
+    auto placed_items = nlohmann::ordered_json::array();
     for (auto y = 0; y < 2 * SEEY * size.y(); ++y) {
         auto& row = kinds.emplace_back();
         for (auto x = 0; x < 2 * SEEX * size.x(); ++x) {
@@ -72,6 +93,9 @@ auto export_region(const tripoint_abs_omt& at, const point_rel_omt& size)
                  .trap = sm->get_trap(local),
                  .fields = fields_of(sm->get_field(local))});
             ++counts[row.back()];
+            for (auto& entry : items_at(sm->get_items(local), x, y)) {
+                placed_items.push_back(std::move(entry));
+            }
         }
     }
     auto ordered = counts | std::views::keys | std::ranges::to<std::vector>();
@@ -112,6 +136,25 @@ auto export_region(const tripoint_abs_omt& at, const point_rel_omt& size)
     if (!furniture.empty()) { object["furniture"] = furniture; }
     if (!traps.empty()) { object["traps"] = traps; }
     if (!fields.empty()) { object["fields"] = fields; }
+    if (!placed_items.empty()) { object["place_item"] = placed_items; }
+    const auto corner = project_to<coords::ms>(at);
+    const auto inside = [&](const monster& mon) {
+        const auto offset = mon.abs_pos() - corner;
+        return offset.z() == 0 && offset.x() >= 0 && offset.y() >= 0
+            && offset.x() < 2 * SEEX * size.x() && offset.y() < 2 * SEEY * size.y();
+    };
+    auto monsters =
+        g->all_monsters() | std::views::filter(inside)
+        | std::views::transform([&](const monster& mon) {
+              const auto offset = mon.abs_pos() - corner;
+              return nlohmann::ordered_json{
+                  {"monster", mon.type->id.str()}, {"x", offset.x()}, {"y", offset.y()}};
+          })
+        | std::ranges::to<std::vector>();
+    std::ranges::sort(monsters, {}, [](const nlohmann::ordered_json& entry) {
+        return std::tuple(entry["y"].get<int>(), entry["x"].get<int>());
+    });
+    if (!monsters.empty()) { object["place_monster"] = monsters; }
     auto& overmap = get_overmapbuffer(here.get_bound_dimension());
     const auto name = [&](const tripoint_abs_omt& omt) {
         return nlohmann::ordered_json(overmap.ter(omt)->get_type_id().str());
