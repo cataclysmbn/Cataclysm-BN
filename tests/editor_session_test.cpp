@@ -2554,4 +2554,99 @@ TEST_CASE(
     CHECK(read_file(file.path) == file.text);
 }
 
+TEST_CASE(
+    "the editor applies and stamps a mapgen with the palettes of its own file",
+    "[editor_session][editor_palette]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    const auto omt = get_avatar().abs_omt_pos();
+    const auto live = [&](const int x, const int y) {
+        return get_map().ter(abs_to_bub(project_to<coords::ms>(omt) + tripoint_rel_ms(x, y, 0)));
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                return invoke("editor:extract_palette", {.text = "editor_session_test_extracted"});
+            case 2:
+                return invoke("editor:stamp");
+            case 3: {
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                // The palette's floor, under what the square's map extras put on it.
+                const auto squares = std::views::iota(0, SEEX * 2 * SEEY * 2);
+                CHECK(
+                    std::ranges::count_if(
+                        squares,
+                        [&](const int at) {
+                            return live(at % (SEEX * 2), at / (SEEX * 2)) == ter_id("t_floor");
+                        })
+                    > SEEX * SEEY * 2);
+                return invoke("editor:unstamp");
+            }
+            case 4:
+                return invoke("editor:apply");
+            case 5:
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                return invoke("editor:undo");
+            case 6:
+                return invoke("editor:save");
+            default:
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 8);
+}
+
+TEST_CASE(
+    "the editor refuses to extract a legend the palette could not hold, and leaves no step",
+    "[editor_session][editor_palette]") {
+    const auto guard = screen_guard{};
+    const auto notice = [](const ec::screen_view& screen) {
+        return body<ec::text_body>(part(screen, "editor:notice")).markup;
+    };
+    const auto refused = [&](const nlohmann::ordered_json& extra, const std::string& told) {
+        const auto file = mod_file{extra};
+        auto step = 0;
+        game_client::memory::set_input_provider([&](const int /*timeout*/) {
+            const auto screen = ec::top_screen(captured());
+            switch (step++) {
+                case 0:
+                    return invoke("editor:open", {.text = file.path.string()});
+                case 1:
+                    return invoke(
+                        "editor:extract_palette", {.text = "editor_session_test_extracted"});
+                case 2:
+                    CHECK(notice(screen) == told);
+                    CHECK(body<ec::list_body>(part(screen, "editor:objects")).rows.size() == 1);
+                    CHECK_FALSE(affordance(screen, "editor:undo").enabled);
+                    CHECK_FALSE(affordance(screen, "editor:redo").enabled);
+                    return act("QUIT");
+                default:
+                    return act("QUIT");
+            }
+        });
+        editor::run_editor_session();
+        CHECK(step == 3);
+        CHECK(read_file(file.path) == file.text);
+    };
+    SECTION("palettes that are not a list") {
+        refused({{"palettes", "editor_session_test_palette"}},
+                "The mapgen's palettes are not a list.");
+    }
+    SECTION("a mapping that reads the mapgen's parameters") {
+        refused(
+            {{"parameters",
+              {{"floor",
+                {{"type", "ter_str_id"}, {"default", {{"distribution", {{"t_floor", 1}}}}}}}}},
+             {"terrain", {{".", {{"param", "floor"}}}}}},
+            "The legend reads the mapgen's parameters, which a palette does not have.");
+    }
+}
+
 #endif // CATA_MCP
