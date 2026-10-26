@@ -20,4 +20,8 @@ auto open_vehicle_editor_first() -> void;
 /// vehicle editor's document is left with that editor.
 auto open_first(const recent_document& recent) -> void;
 
+/// Whether the editor opens again now: it let turns pass by waiting as the avatar, and the wait is
+/// over or was cut short. Once true, false until it lets turns pass again.
+auto reopens_after_waiting() -> bool;
+
 } // namespace editor

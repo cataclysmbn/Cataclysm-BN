@@ -1,5 +1,6 @@
 #include "editor/editor_session.h"
 
+#include "all_enum_values.h"
 #include "avatar.h"
 #include "catacharset.h"
 #include "color.h"
@@ -22,6 +23,7 @@
 #include "editor/vehicle_session.h"
 #include "engine_client_component.h"
 #include "engine_client_world.h"
+#include "enums.h"
 #include "game.h"
 #include "input.h"
 #include "item.h"
@@ -31,6 +33,7 @@
 #include "overmap/omdata.h"
 #include "overmap/overmapbuffer.h"
 #include "path_info.h"
+#include "player_activity.h"
 #include "regional_settings.h"
 #include "string_formatter.h"
 #include "translations.h"
@@ -42,11 +45,13 @@
 #include <array>
 #include <cctype>
 #include <charconv>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
 #include <limits>
 #include <map>
+#include <memory>
 #include <optional>
 #include <ranges>
 #include <string>
@@ -122,6 +127,7 @@ constexpr auto export_palette_id = "editor:export_palette";
 constexpr auto export_options_id = "editor:export_options";
 constexpr auto import_id = "editor:import";
 constexpr auto import_form_id = "editor:import_form";
+constexpr auto advance_id = "editor:advance";
 constexpr auto copy_id = "editor:copy";
 constexpr auto rotate_id = "editor:rotate";
 constexpr auto cut_id = "editor:cut";
@@ -143,6 +149,8 @@ constexpr auto test_id = "editor:test";
 constexpr auto max_brush = 9;
 /// The most overmap squares an export spans each way: what the loaded map holds around the avatar.
 constexpr auto max_export = 3;
+/// The most turns the editor lets pass at once: an hour.
+constexpr auto max_advance = 3600;
 constexpr auto vehicle_id = "editor:vehicle";
 
 /// A turn of the preview in degrees clockwise, and the direction the game generates it for.
@@ -487,6 +495,8 @@ struct session {
     std::optional<document> doc = std::nullopt;
     /// What the last command did not do, and why; empty when it did.
     std::string notice;
+    /// How many turns passed while the editor waited, until the next affordance.
+    std::optional<int> waited = std::nullopt;
     /// The object of `doc` on the canvas.
     std::size_t object = 0;
     std::string symbol;
@@ -1837,6 +1847,10 @@ auto session_view(const session& state) -> ec::screen_view {
     affordances.push_back(ec::invoke_affordance(
         {.id = unstamp_id, .label = _("Take back stamp"), .enabled = state.stamped.has_value()}));
     affordances.push_back(ec::invoke_affordance(
+        {.id = advance_id,
+         .label = _("Let turns pass"),
+         .args = {.count = ec::count_shape{.min = 1, .max = max_advance, .initial = 60}}}));
+    affordances.push_back(ec::invoke_affordance(
         {.id = import_id,
          .label = _("Stamp mapgen text"),
          .args = {.text = ec::text_shape{.field_id = "import"}}}));
@@ -1967,6 +1981,12 @@ auto session_view(const session& state) -> ec::screen_view {
         parts.push_back(
             {.id = "editor:notice", .body = ec::text_body{.markup = state.notice, .tone = "bad"}});
     }
+    if (state.waited) {
+        parts.push_back(
+            {.id = "editor:waited",
+             .body = ec::text_body{
+                 .markup = string_format(_("%d turns passed."), *state.waited), .tone = "good"}});
+    }
     // A palette has no canvas; its legend is what it edits.
     const auto* const active = state.on_mapgen() ? canvas_id : state.doc ? legend_id : "";
     return {
@@ -1981,6 +2001,8 @@ auto session_view(const session& state) -> ec::screen_view {
 auto kept_session = std::optional<session>{};
 /// What the next visit opens, as the main menu asked.
 auto first = std::optional<recent_document>{};
+/// When the turns the editor lets pass began, while they pass.
+auto advancing = std::optional<time_point>{};
 
 } // namespace
 
@@ -1993,6 +2015,14 @@ auto reset_editor_session() -> void {
 auto open_vehicle_editor_first() -> void { first = recent_document{.editor = "vehicle"}; }
 
 auto open_first(const recent_document& recent) -> void { first = recent; }
+
+auto reopens_after_waiting() -> bool {
+    const auto& waiting = get_avatar().activity;
+    if (!advancing || (waiting && *waiting)) { return false; }
+    const auto passed = to_turns<int>(calendar::turn - *std::exchange(advancing, std::nullopt));
+    (kept_session ? *kept_session : kept_session.emplace()).waited = passed;
+    return true;
+}
 
 auto run_editor_session() -> void {
     const auto opening = std::exchange(first, std::nullopt);
@@ -2021,6 +2051,7 @@ auto run_editor_session() -> void {
         const auto& id = invoked->affordance_id;
         const auto row = invoked->args.row.value_or("");
         state.notice.clear();
+        state.waited.reset();
         state.watch();
         if (id == open_id) {
             state.open(invoked->args.text.value_or(""));
@@ -2058,6 +2089,19 @@ auto run_editor_session() -> void {
                 id == export_width_id
                     ? point_rel_omt(count, state.export_size.y())
                     : point_rel_omt(state.export_size.x(), count);
+        } else if (id == advance_id) {
+            // The game's turns run outside the editor: it waits them as the avatar and opens again.
+            auto wait = std::make_unique<player_activity>(
+                activity_id("ACT_WAIT"),
+                to_moves<int>(time_duration::from_turns(
+                    std::clamp<std::int64_t>(invoked->args.count.value_or(1), 1, max_advance))),
+                0);
+            for (const auto type : all_enum_values<distraction_type>()) {
+                wait->ignore_distraction(type);
+            }
+            get_avatar().assign_activity(std::move(wait), false);
+            advancing = calendar::turn;
+            return;
         } else if (id == unstamp_id) {
             state.unstamp();
         } else if (id == import_id) {

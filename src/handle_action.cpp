@@ -1968,6 +1968,8 @@ bool game::handle_action()
             return false;
         } else if( const auto next = gamemode->next_action() ) {
             act = *next;
+        } else if( editor::reopens_after_waiting() ) {
+            act = ACTION_EDITOR;
         } else {
             ZoneScopedN( "handle_action_get_player_input" );
             // No auto-move, ask player for input
