@@ -94,7 +94,8 @@
                 "id": "vehicle:prototypes",
                 "kind": "list",
                 "affordances": [
-                  "vehicle:open"
+                  "vehicle:open",
+                  "vehicle:filter"
                 ],
                 "columns": [
                   {
@@ -318,7 +319,8 @@
                 "id": "vehicle:prototypes",
                 "kind": "list",
                 "affordances": [
-                  "vehicle:open"
+                  "vehicle:open",
+                  "vehicle:filter"
                 ],
                 "columns": [
                   {
@@ -725,7 +727,8 @@
                 "id": "vehicle:parts",
                 "kind": "list",
                 "affordances": [
-                  "vehicle:install"
+                  "vehicle:install",
+                  "vehicle:part_filter"
                 ],
                 "columns": [
                   {
