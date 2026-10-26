@@ -1955,6 +1955,8 @@ auto reset_editor_session() -> void {
 
 auto open_vehicle_editor_first() -> void { vehicle_first = true; }
 
+auto open_first(const recent_document& /*recent*/) -> void {}
+
 auto run_editor_session() -> void {
     if (std::exchange(vehicle_first, false)) {
         run_vehicle_editor();

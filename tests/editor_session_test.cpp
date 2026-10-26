@@ -12,6 +12,7 @@
 #    include "cursesport.h"
 #    include "editor/editor_session.h"
 #    include "editor/mapgen_preview.h"
+#    include "editor/recent_documents.h"
 #    include "engine_client_component.h"
 #    include "engine_client_contract.h"
 #    include "game.h"
@@ -32,6 +33,8 @@
 #    include "point.h"
 #    include "state_helpers.h"
 #    include "type_id.h"
+#    include "world.h"
+#    include "worldfactory.h"
 
 #    include <algorithm>
 #    include <filesystem>
@@ -2928,6 +2931,63 @@ TEST_CASE(
              {"terrain", {{".", {{"param", "floor"}}}}}},
             "The legend reads the mapgen's parameters, which a palette does not have.");
     }
+}
+
+TEST_CASE(
+    "the editors remember what they open, newest first, once each, with the mods loaded",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    const auto forget = [] { std::filesystem::remove(editor::recent_documents_file()); };
+    forget();
+    const auto cleanup = on_out_of_scope(forget);
+    CHECK(editor::recent_documents().empty());
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        switch (step++) {
+            case 0:
+            case 1:
+                return invoke("editor:open", {.text = file.path.string()});
+            default:
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 3);
+    const auto mods = world_generator->active_world->info->active_mod_order;
+    CHECK(editor::recent_documents()
+          == std::vector{editor::recent_document{
+              .editor = "map", .name = file.path.generic_string(), .mods = mods}});
+    for (auto index = 0; index < 12; ++index) {
+        editor::remember_document({.editor = "vehicle", .name = string_format("v%d", index)});
+    }
+    const auto recent = editor::recent_documents();
+    REQUIRE(recent.size() == editor::recent_limit);
+    CHECK(recent.front().name == "v11");
+    CHECK(recent.back().name == "v2");
+}
+
+TEST_CASE(
+    "the map editor opens the document the main menu asked for at its first visit",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    const auto cleanup = on_out_of_scope([] {
+        std::filesystem::remove(editor::recent_documents_file());
+    });
+    editor::open_first({.editor = "map", .name = file.path.generic_string()});
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        if (step++ == 0) {
+            CHECK(body<ec::form_body>(part(screen, "editor:file")).fields.front().value
+                  == file.path.generic_string());
+            CHECK(body<ec::list_body>(part(screen, "editor:objects")).rows.size() == 1);
+        }
+        return act("QUIT");
+    });
+    editor::run_editor_session();
+    CHECK(step == 1);
 }
 
 #endif // CATA_MCP

@@ -10,6 +10,7 @@
 #    include "cursesdef.h"
 #    include "cursesport.h"
 #    include "editor/editor_session.h"
+#    include "editor/recent_documents.h"
 #    include "editor/vehicle_design.h"
 #    include "editor/vehicle_session.h"
 #    include "engine_client_component.h"
@@ -896,6 +897,35 @@ TEST_CASE(
     });
     editor::run_vehicle_editor();
     CHECK(step == 14);
+}
+
+TEST_CASE(
+    "the vehicle editor opens the prototype the main menu asked for and remembers it",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto forget = [] { std::filesystem::remove(editor::recent_documents_file()); };
+    forget();
+    const auto cleanup = on_out_of_scope([&] {
+        forget();
+        editor::reset_editor_session();
+    });
+    editor::open_first({.editor = "vehicle", .name = "bicycle"});
+    auto kinds = std::vector<std::string>{};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        kinds.push_back(screen.kind);
+        if (kinds.size() == 1) {
+            CHECK(body<ec::panel_body>(part(screen, "vehicle:document")).title == "Bicycle");
+        }
+        return act("QUIT");
+    });
+    editor::run_editor_session();
+    // It leaves with the vehicle editor, as the main menu's vehicle editor does.
+    CHECK(kinds == std::vector<std::string>{"vehicle_editor"});
+    const auto recent = editor::recent_documents();
+    REQUIRE_FALSE(recent.empty());
+    CHECK(recent.front().editor == "vehicle");
+    CHECK(recent.front().name == "bicycle");
 }
 
 #endif
