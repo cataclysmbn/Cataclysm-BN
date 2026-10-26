@@ -91,6 +91,10 @@
                     {
                       "id": "nested",
                       "label": "Nested chunk"
+                    },
+                    {
+                      "id": "palette",
+                      "label": "Palette"
                     }
                   ]
                 },
@@ -2763,6 +2767,10 @@
                     {
                       "id": "nested",
                       "label": "Nested chunk"
+                    },
+                    {
+                      "id": "palette",
+                      "label": "Palette"
                     }
                   ]
                 },
@@ -5923,6 +5931,10 @@
                     {
                       "id": "nested",
                       "label": "Nested chunk"
+                    },
+                    {
+                      "id": "palette",
+                      "label": "Palette"
                     }
                   ]
                 },
@@ -8953,6 +8965,10 @@
                     {
                       "id": "nested",
                       "label": "Nested chunk"
+                    },
+                    {
+                      "id": "palette",
+                      "label": "Palette"
                     }
                   ]
                 },
@@ -25738,6 +25754,10 @@
                     {
                       "id": "nested",
                       "label": "Nested chunk"
+                    },
+                    {
+                      "id": "palette",
+                      "label": "Palette"
                     }
                   ]
                 },
