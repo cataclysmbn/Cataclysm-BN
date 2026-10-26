@@ -2024,6 +2024,7 @@ auto advancing = std::optional<time_point>{};
 auto reset_editor_session() -> void {
     kept_session.reset();
     first.reset();
+    advancing.reset();
     allow_editor_this_session(false);
 }
 
@@ -2061,7 +2062,10 @@ auto run_editor_session() -> void {
         const auto action = ctxt.handle_input();
         const auto invoked = ec::invoked(ctxt.get_raw_input());
         if (!invoked) {
-            if (action == "QUIT" && state.leave()) { return; }
+            if (action == "QUIT" && state.leave()) {
+                state.status.clear();
+                return;
+            }
             continue;
         }
         const auto& id = invoked->affordance_id;
@@ -2115,6 +2119,8 @@ auto run_editor_session() -> void {
             for (const auto type : all_enum_values<distraction_type>()) {
                 wait->ignore_distraction(type);
             }
+            // The wait is all the avatar does: what it was doing would hold the editor back after.
+            get_avatar().cancel_activity();
             get_avatar().assign_activity(std::move(wait), false);
             advancing = calendar::turn;
             return;
