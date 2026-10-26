@@ -698,11 +698,6 @@ struct session {
 
     /// The levels around the canvas entry that the file makes.
     auto reload_levels() -> void {
-        level.reset();
-        level_up.reset();
-        level_down.reset();
-        below.clear();
-        below_legends.clear();
         const auto& objects = doc->objects();
         const auto names = entry_terrains(objects[object].value);
         if (names.empty() || names.front().empty()) { return; }
@@ -739,6 +734,11 @@ struct session {
     auto reload() -> void {
         legend.clear();
         diagnostics.clear();
+        level.reset();
+        level_up.reset();
+        level_down.reset();
+        below.clear();
+        below_legends.clear();
         if (!doc || object >= doc->objects().size()) { return; }
         const auto stand_ins = file_stand_ins(stand_in_texts());
         const auto text = doc->objects()[object].value.dump();
@@ -1405,8 +1405,12 @@ auto faded_squares(const session& state, ec::look_palette& palette)
     const auto& object = objects[state.object].value;
     const auto open_air =
         state.legend | std::views::filter([&](const legend_symbol& entry) {
+            // Open air that places anything else shows what it places.
             const auto ter = symbol_terrain(object, entry);
-            return ter.is_valid() && ter.obj().has_flag(TFLAG_NO_FLOOR);
+            return ter.is_valid() && ter.obj().has_flag(TFLAG_NO_FLOOR)
+                && std::ranges::all_of(entry.lines, [](const legend_line& line) {
+                       return line.layer == "terrain";
+                   });
         })
         | std::views::transform(&legend_symbol::symbol) | std::ranges::to<std::set>();
     const auto grid = symbols_of(*state.doc, state.object);
