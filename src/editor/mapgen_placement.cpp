@@ -66,6 +66,16 @@ auto move_placement(document& doc, const placement_move& move) -> std::expected<
          {{"op", "add"}, {"path", (at / "y").to_string()}, {"value", written(move.y)}}});
 }
 
+auto add_placement(document& /*doc*/, const placement_add& /*add*/)
+    -> std::expected<void, std::string> {
+    return std::unexpected(std::string("not yet"));
+}
+
+auto remove_placement(document& /*doc*/, const placement_at& /*at*/)
+    -> std::expected<void, std::string> {
+    return std::unexpected(std::string("not yet"));
+}
+
 auto set_field(document& doc, const field_edit& edit) -> std::expected<void, std::string> {
     if (edit.object >= doc.objects().size()) {
         return std::unexpected("no object " + std::to_string(edit.object));

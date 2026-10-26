@@ -80,3 +80,57 @@ TEST_CASE("a field edit the loader refuses changes nothing and says why", "[edit
     CHECK_FALSE(doc.undo());
     CHECK(doc.text() == entry);
 }
+
+TEST_CASE(
+    "a placement is added at the end of its kind, or as a new kind, in one step",
+    "[editor_mapgen]") {
+    auto doc = editor::document::parse("placed.json", entry).value();
+    REQUIRE(editor::add_placement(
+        doc,
+        {.kind = "place_items",
+         .x = {.min = 1, .max = 2},
+         .y = {.min = 4, .max = 4},
+         .value = ordered_json::parse(R"({"item":"SUS_tools","chance":50})")}));
+    CHECK(doc.objects()[0].value["object"]["place_items"][1]
+          == ordered_json::parse(R"({"item":"SUS_tools","chance":50,"x":[1,2],"y":4})"));
+    REQUIRE(editor::add_placement(
+        doc,
+        {.kind = "place_traps",
+         .x = {.min = 6, .max = 6},
+         .y = {.min = 6, .max = 6},
+         .value = ordered_json::parse(R"({"trap":"tr_beartrap"})")}));
+    CHECK(doc.objects()[0].value["object"]["place_traps"]
+          == ordered_json::parse(R"([{"trap":"tr_beartrap","x":6,"y":6}])"));
+    CHECK(editor::placements_of(doc, 0).size() == 4);
+    CHECK(doc.undo());
+    CHECK(doc.undo());
+    CHECK(doc.text() == entry);
+}
+
+TEST_CASE("a placement the loader refuses is not added, and says why", "[editor_mapgen]") {
+    auto doc = editor::document::parse("placed.json", entry).value();
+    const auto unknown = editor::add_placement(
+        doc, {.kind = "place_items", .value = ordered_json::parse(R"({"item":"no_such_group"})")});
+    REQUIRE_FALSE(unknown);
+    CHECK(unknown.error().find("no_such_group") != std::string::npos);
+    CHECK_FALSE(editor::add_placement(doc, {.kind = "place_items", .value = "SUS_tools"}));
+    CHECK_FALSE(editor::add_placement(
+        doc,
+        {.kind = "place_items",
+         .x = {.min = 3, .max = 1},
+         .value = ordered_json::parse(R"({"item":"SUS_tools"})")}));
+    CHECK_FALSE(doc.undo());
+}
+
+TEST_CASE(
+    "removing a placement takes its kind along with its last entry, in one step",
+    "[editor_mapgen]") {
+    auto doc = editor::document::parse("placed.json", entry).value();
+    REQUIRE(editor::remove_placement(doc, {.kind = "place_items"}));
+    CHECK_FALSE(doc.objects()[0].value["object"].contains("place_items"));
+    CHECK(editor::placements_of(doc, 0).size() == 1);
+    CHECK_FALSE(editor::remove_placement(doc, {.kind = "place_monster", .index = 1}));
+    CHECK(doc.undo());
+    CHECK_FALSE(doc.undo());
+    CHECK(doc.text() == entry);
+}
