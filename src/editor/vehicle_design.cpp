@@ -2,6 +2,7 @@
 
 #include "calendar.h"
 #include "debug_log_capture.h"
+#include "editor/recent_documents.h"
 #include "fstream_utils.h"
 #include "item.h"
 #include "itype.h"
@@ -18,8 +19,6 @@
 #include "vehicle/vehicle_part.h"
 #include "vehicle/vpart_position.h"
 #include "vehicle/vpart_range.h"
-#include "world.h"
-#include "worldfactory.h"
 
 #include <algorithm>
 #include <fstream>
@@ -523,10 +522,7 @@ auto export_design(const vehicle& veh, const std::string& id) -> nlohmann::order
 }
 
 auto prototype_file(const std::string& id) -> std::optional<std::filesystem::path> {
-    const auto mods =
-        world_generator->active_world
-            ? world_generator->active_world->info->active_mod_order
-            : std::vector<mod_id>{mod_management::get_default_core_content_pack()};
+    const auto mods = loaded_mods();
     auto found = std::optional<std::filesystem::path>{};
     for (const auto& mod : mods) {
         if (!mod.is_valid()) { continue; }

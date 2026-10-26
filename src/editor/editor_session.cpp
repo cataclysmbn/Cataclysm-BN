@@ -786,6 +786,7 @@ struct session {
             return;
         }
         doc = std::move(*opened);
+        remember_document({.editor = "map", .name = path.generic_string(), .mods = loaded_mods()});
         anchor.reset();
         selected.reset();
         focus.reset();
@@ -1944,7 +1945,8 @@ auto square_of(const std::string& id) -> std::optional<point> {
 /// The documents and view the editor keeps between visits.
 auto kept_session = std::optional<session>{};
 /// Whether the next visit is to the vehicle editor.
-auto vehicle_first = false;
+/// What the next visit opens, as the main menu asked.
+auto first = std::optional<recent_document>{};
 
 } // namespace
 
@@ -1953,13 +1955,14 @@ auto reset_editor_session() -> void {
     allow_editor_this_session(false);
 }
 
-auto open_vehicle_editor_first() -> void { vehicle_first = true; }
+auto open_vehicle_editor_first() -> void { first = recent_document{.editor = "vehicle"}; }
 
-auto open_first(const recent_document& /*recent*/) -> void {}
+auto open_first(const recent_document& recent) -> void { first = recent; }
 
 auto run_editor_session() -> void {
-    if (std::exchange(vehicle_first, false)) {
-        run_vehicle_editor();
+    const auto opening = std::exchange(first, std::nullopt);
+    if (opening && opening->editor == "vehicle") {
+        run_vehicle_editor(opening->name);
         return;
     }
     auto ctxt = input_context("EDITOR");
@@ -1967,6 +1970,7 @@ auto run_editor_session() -> void {
     ctxt.register_action("HELP_KEYBINDINGS");
     auto& state = kept_session ? *kept_session : kept_session.emplace();
     state.notice.clear();
+    if (opening) { state.open(opening->name); }
     const auto screen = ec::screen_scope(
         ctxt, "editor",
         {.role = "screen",

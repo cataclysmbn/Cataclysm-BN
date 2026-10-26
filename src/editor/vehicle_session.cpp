@@ -3,6 +3,7 @@
 #include "avatar.h"
 #include "editor/catalog.h"
 #include "editor/document.h"
+#include "editor/recent_documents.h"
 #include "editor/session_file.h"
 #include "editor/session_page.h"
 #include "editor/vehicle_design.h"
@@ -235,6 +236,7 @@ struct session {
         }
         object = static_cast<std::size_t>(found - objects.begin());
         doc = std::move(*opened);
+        remember_document({.editor = "vehicle", .name = id, .mods = loaded_mods()});
         cursor = point{};
         field_pointer = "/name";
         reload();
@@ -1247,12 +1249,13 @@ auto live_invoke(
 
 auto reset_vehicle_editor() -> void { kept_session.reset(); }
 
-auto run_vehicle_editor() -> void {
+auto run_vehicle_editor(const std::string& prototype) -> void {
     auto ctxt = input_context("EDITOR");
     ctxt.register_action("QUIT");
     ctxt.register_action("HELP_KEYBINDINGS");
     auto& state = kept_session ? *kept_session : kept_session.emplace();
     state.notice.clear();
+    if (!prototype.empty()) { state.open(prototype); }
     const auto screen = ec::screen_scope(
         ctxt, "vehicle_editor",
         {.role = "screen",

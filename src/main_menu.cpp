@@ -601,6 +601,17 @@ void main_menu::init_strings()
         vEditorIds.emplace_back( "save" );
         vEditorHints.emplace_back(
             _( "Open a saved game in the editor, with the character where the save left it." ) );
+        // The documents the editors opened, newest first, with the mods they were opened with.
+        for( const auto &[index, recent] : editor::recent_documents() | std::views::enumerate ) {
+            const auto mods = recent.mods | std::views::transform( []( const mod_id & mod ) {
+                return mod.is_valid() ? mod->name() : mod.str();
+            } ) | std::ranges::to<std::vector>();
+            vEditorSubItems.emplace_back( recent.name );
+            vEditorIds.emplace_back( string_format( "recent:%d", index ) );
+            vEditorHints.emplace_back( string_format( recent.editor == "vehicle"
+                                       ? _( "Open it in the vehicle editor with %s." )
+                                       : _( "Open it in the map editor with %s." ), enumerate_as_string( mods ) ) );
+        }
     }
 
     vNewGameHotkeys.clear();
@@ -1191,12 +1202,20 @@ auto main_menu::editor_tab( const std::string &id ) -> bool
     if( id == "save" ) {
         return open_save_in_editor();
     }
-    const auto mods = world_generator->pick_mods( world_generator->get_mod_manager().get_default_mods(),
-                      _( "Open the editor with these mods?" ) );
+    const auto recent = editor::recent_documents();
+    auto index = std::size_t{ 0 };
+    const auto reopened = std::sscanf( id.c_str(), "recent:%zu", &index ) == 1 && index < recent.size()
+                          ? std::optional( recent[index] ) : std::nullopt;
+    const auto initial = reopened
+                         ? reopened->mods | std::views::filter( &mod_id::is_valid ) | std::ranges::to<std::vector>()
+                         : world_generator->get_mod_manager().get_default_mods();
+    const auto mods = world_generator->pick_mods( initial, _( "Open the editor with these mods?" ) );
     if( !mods || !start_special_game( special_game_type::EDITOR, *mods ) ) {
         return false;
     }
-    if( id == "vehicle" ) {
+    if( reopened ) {
+        editor::open_first( *reopened );
+    } else if( id == "vehicle" ) {
         editor::open_vehicle_editor_first();
     }
     return true;
