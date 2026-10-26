@@ -116,6 +116,8 @@ constexpr auto brush_id = "editor:brush";
 constexpr auto mirror_x_id = "editor:mirror_x";
 constexpr auto mirror_y_id = "editor:mirror_y";
 constexpr auto export_id = "editor:export";
+constexpr auto export_width_id = "editor:export_width";
+constexpr auto export_height_id = "editor:export_height";
 constexpr auto copy_id = "editor:copy";
 constexpr auto rotate_id = "editor:rotate";
 constexpr auto cut_id = "editor:cut";
@@ -135,6 +137,8 @@ constexpr auto stamp_id = "editor:stamp";
 constexpr auto unstamp_id = "editor:unstamp";
 constexpr auto test_id = "editor:test";
 constexpr auto max_brush = 9;
+/// The most overmap squares an export spans each way: what the loaded map holds around the avatar.
+constexpr auto max_export = 3;
 constexpr auto vehicle_id = "editor:vehicle";
 
 /// A turn of the preview in degrees clockwise, and the direction the game generates it for.
@@ -531,6 +535,8 @@ struct session {
     std::string mapping_layer = "terrain";
     std::string mapping_value;
     new_mapgen made;
+    /// How many overmap squares an export spans east and south, centred on the avatar's.
+    point_rel_omt export_size = point_rel_omt(1, 1);
     /// The entry as it stands in the live world, while it is there.
     std::optional<stamp> stamped = std::nullopt;
     /// The files the browser lists; read again after a file is made.
@@ -1810,6 +1816,18 @@ auto session_view(const session& state) -> ec::screen_view {
         {.id = export_id,
          .label = _("Export mapgen here"),
          .args = {.text = ec::text_shape{.field_id = path_id}}}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = export_width_id,
+         .label = _("Export width"),
+         .args = {
+             .count =
+                 ec::count_shape{.min = 1, .max = max_export, .initial = state.export_size.x()}}}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = export_height_id,
+         .label = _("Export height"),
+         .args = {
+             .count =
+                 ec::count_shape{.min = 1, .max = max_export, .initial = state.export_size.y()}}}));
     const auto listed = state.browser_entries();
     affordances.push_back(ec::invoke_affordance(
         {.id = browser_open_id, .label = _("Open"), .args = row_of(browser_id)}));
@@ -1995,7 +2013,13 @@ auto run_editor_session() -> void {
             const auto path = invoked->args.text.value_or("");
             const auto exported =
                 check_new_path(path)
-                    .and_then([] { return export_omt(get_avatar().abs_omt_pos()); })
+                    .and_then([&] {
+                        const auto size = state.export_size;
+                        return export_region(
+                            get_avatar().abs_omt_pos()
+                                - point_rel_omt((size.x() - 1) / 2, (size.y() - 1) / 2),
+                            size);
+                    })
                     .and_then([&](const nlohmann::ordered_json& entry) {
                         return write_new_file(path, nlohmann::ordered_json::array({entry}));
                     });
@@ -2004,6 +2028,13 @@ auto run_editor_session() -> void {
             } else {
                 state.notice = exported.error();
             }
+        } else if (id == export_width_id || id == export_height_id) {
+            const auto count = static_cast<int>(
+                std::clamp<std::int64_t>(invoked->args.count.value_or(1), 1, max_export));
+            state.export_size =
+                id == export_width_id
+                    ? point_rel_omt(count, state.export_size.y())
+                    : point_rel_omt(state.export_size.x(), count);
         } else if (id == browser_open_id) {
             state.open(std::string(row_rest(row, "file").value_or("")));
         } else if (id == browser_filter_id) {

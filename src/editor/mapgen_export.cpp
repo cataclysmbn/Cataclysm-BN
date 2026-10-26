@@ -51,18 +51,19 @@ auto fields_of(const field& on) -> std::vector<laid_field> {
 
 } // namespace
 
-auto export_omt(const tripoint_abs_omt& at) -> std::expected<nlohmann::ordered_json, std::string> {
+auto export_region(const tripoint_abs_omt& at, const point_rel_omt& size)
+    -> std::expected<nlohmann::ordered_json, std::string> {
     auto& here = get_map();
     const auto base = project_to<coords::sm>(at);
     auto kinds = std::vector<std::vector<kind>>{};
     auto counts = std::map<kind, std::size_t>{};
-    for (auto y = 0; y < 2 * SEEY; ++y) {
+    for (auto y = 0; y < 2 * SEEY * size.y(); ++y) {
         auto& row = kinds.emplace_back();
-        for (auto x = 0; x < 2 * SEEX; ++x) {
+        for (auto x = 0; x < 2 * SEEX * size.x(); ++x) {
             const auto* const sm = here.get_mapbuffer().lookup_submap_in_memory(
                 base + point_rel_sm(x / SEEX, y / SEEY));
             if (sm == nullptr) {
-                return std::unexpected("the overmap square is not loaded in the map");
+                return std::unexpected("the overmap squares are not all loaded in the map");
             }
             const auto local = point_sm_ms(x % SEEX, y % SEEY);
             row.push_back(
@@ -78,7 +79,7 @@ auto export_omt(const tripoint_abs_omt& at) -> std::expected<nlohmann::ordered_j
         return counts[a] > counts[b];
     });
     if (ordered.size() > symbols.size()) {
-        return std::unexpected("the overmap square holds too many kinds of squares");
+        return std::unexpected("the overmap squares hold too many kinds of squares");
     }
     auto terrain = nlohmann::ordered_json::object();
     auto furniture = nlohmann::ordered_json::object();
@@ -111,10 +112,19 @@ auto export_omt(const tripoint_abs_omt& at) -> std::expected<nlohmann::ordered_j
     if (!furniture.empty()) { object["furniture"] = furniture; }
     if (!traps.empty()) { object["traps"] = traps; }
     if (!fields.empty()) { object["fields"] = fields; }
+    auto& overmap = get_overmapbuffer(here.get_bound_dimension());
+    const auto name = [&](const tripoint_abs_omt& omt) {
+        return nlohmann::ordered_json(overmap.ter(omt)->get_type_id().str());
+    };
+    auto om_terrain = nlohmann::ordered_json::array();
+    for (auto y = 0; y < size.y(); ++y) {
+        auto& row = om_terrain.emplace_back(nlohmann::ordered_json::array());
+        for (auto x = 0; x < size.x(); ++x) { row.push_back(name(at + point_rel_omt(x, y))); }
+    }
     return nlohmann::ordered_json{
         {"type", "mapgen"},
         {"method", "json"},
-        {"om_terrain", get_overmapbuffer(here.get_bound_dimension()).ter(at)->get_type_id().str()},
+        {"om_terrain", size == point_rel_omt(1, 1) ? name(at) : om_terrain},
         {"object", object}};
 }
 
