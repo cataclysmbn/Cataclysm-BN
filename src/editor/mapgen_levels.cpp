@@ -148,9 +148,40 @@ auto stacked_squares(
 }
 
 auto neighbour_squares(
-    const level_index& /*index*/, const std::vector<document_object>& /*entries*/,
-    const std::size_t /*entry*/) -> std::vector<neighbour_square> {
-    return {};
+    const level_index& index, const std::vector<document_object>& entries, const std::size_t entry)
+    -> std::vector<neighbour_square> {
+    const auto rows = entry_terrains(entries.at(entry).value);
+    const auto own = [&](const point& at) {
+        return at.y >= 0 && at.y < static_cast<int>(rows.size()) && at.x >= 0
+            && at.x < static_cast<int>(rows[at.y].size());
+    };
+    const auto beside = [&](const std::string& om_terrain, const point& step) {
+        for (const auto& place : places_of(index, om_terrain)) {
+            const auto found = place.layout->find(place.at + tripoint(step, 0));
+            if (place.layout->at(place.at).turned || found == place.layout->end()
+                || found->second.turned) {
+                continue;
+            }
+            if (const auto other = square_making(entries, found->second.name, entry)) {
+                return other;
+            }
+        }
+        return std::optional<entry_square>{};
+    };
+    auto result = std::vector<neighbour_square>{};
+    for (const auto [y, row] : std::views::enumerate(rows)) {
+        for (const auto [x, name] : std::views::enumerate(row)) {
+            for (const auto& step : four_adjacent_offsets) {
+                const auto at = point(static_cast<int>(x), static_cast<int>(y)) + step;
+                if (own(at)) { continue; }
+                if (const auto other = beside(name, step)) {
+                    result.push_back(
+                        {.origin = point(at.x * SEEX * 2, at.y * SEEY * 2), .other = *other});
+                }
+            }
+        }
+    }
+    return result;
 }
 
 } // namespace editor

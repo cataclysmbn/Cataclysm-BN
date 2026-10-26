@@ -511,10 +511,11 @@ struct session {
     std::optional<int> level = std::nullopt;
     std::optional<std::size_t> level_up = std::nullopt;
     std::optional<std::size_t> level_down = std::nullopt;
-    /// The overmap squares of the canvas entry over a level the file makes, with that level's
-    /// legends by entry.
+    /// The overmap squares of the canvas entry over a level the file makes, the squares beside it
+    /// the file makes, and the legends of the entries that make them.
     std::vector<stacked_square> below;
-    std::map<std::size_t, std::vector<legend_symbol>> below_legends;
+    std::vector<neighbour_square> beside;
+    std::map<std::size_t, std::vector<legend_symbol>> other_legends;
     std::string symbol;
     /// The symbol inside a room.
     std::string room_fill;
@@ -712,12 +713,15 @@ struct session {
         level_up = entry_at(1);
         level_down = entry_at(-1);
         below = stacked_squares(index, objects, object, -1);
-        for (const auto& square : below) {
-            if (below_legends.contains(square.other.entry)) { continue; }
-            below_legends[square.other.entry] =
-                mapgen_legend(objects[square.other.entry].value.dump())
+        beside = neighbour_squares(index, objects, object);
+        const auto read_legend = [&](const entry_square& other) {
+            if (other_legends.contains(other.entry)) { return; }
+            other_legends[other.entry] =
+                mapgen_legend(objects[other.entry].value.dump())
                     .value_or(std::vector<legend_symbol>{});
-        }
+        };
+        std::ranges::for_each(below, read_legend, &stacked_square::other);
+        std::ranges::for_each(beside, read_legend, &neighbour_square::other);
     }
 
     /// Puts the file's entry `index` on the canvas.
@@ -738,7 +742,8 @@ struct session {
         level_up.reset();
         level_down.reset();
         below.clear();
-        below_legends.clear();
+        beside.clear();
+        other_legends.clear();
         if (!doc || object >= doc->objects().size()) { return; }
         const auto stand_ins = file_stand_ins(stand_in_texts());
         const auto text = doc->objects()[object].value.dump();
@@ -1417,7 +1422,7 @@ auto faded_squares(const session& state, ec::look_palette& palette)
     auto result = std::map<point, faded_square>{};
     for (const auto& square : state.below) {
         const auto& other = objects[square.other.entry].value;
-        const auto looks = symbol_looks(other, state.below_legends.at(square.other.entry));
+        const auto looks = symbol_looks(other, state.other_legends.at(square.other.entry));
         const auto other_grid = symbols_of(*state.doc, square.other.entry);
         for (auto y = 0; y < SEEY * 2; ++y) {
             for (auto x = 0; x < SEEX * 2; ++x) {
@@ -1436,6 +1441,43 @@ auto faded_squares(const session& state, ec::look_palette& palette)
     return result;
 }
 
+/// How far into the overmap squares beside the canvas entry the canvas shows them.
+constexpr auto neighbour_strip = 4;
+
+/// The edges of the overmap squares beside the canvas entry, of `size`, that other entries make,
+/// faded, by square of its rows; each opens the entry that makes it.
+auto neighbour_cells(const session& state, const point& size, ec::look_palette& palette)
+    -> std::vector<ec::grid_cell> {
+    const auto& objects = state.doc->objects();
+    const auto shown = [&](const point& at) {
+        return at.x >= -neighbour_strip && at.y >= -neighbour_strip
+            && at.x < size.x + neighbour_strip && at.y < size.y + neighbour_strip;
+    };
+    auto result = std::vector<ec::grid_cell>{};
+    for (const auto& square : state.beside) {
+        const auto looks = symbol_looks(
+            objects[square.other.entry].value, state.other_legends.at(square.other.entry));
+        const auto other_grid = symbols_of(*state.doc, square.other.entry);
+        for (auto y = 0; y < SEEY * 2; ++y) {
+            for (auto x = 0; x < SEEX * 2; ++x) {
+                const auto at = square.origin + point(x, y);
+                const auto glyph = symbol_at(other_grid, square.other.origin + point(x, y));
+                if (!shown(at) || glyph.empty()) { continue; }
+                const auto found = looks.find(glyph);
+                result.push_back(
+                    {.at = {at.x, at.y},
+                     .id = index_row("object", square.other.entry),
+                     .glyph = glyph,
+                     .affordance = object_id,
+                     .looks =
+                         found == looks.end() ? std::vector<int>{} : palette.indexes(found->second),
+                     .faded = true});
+            }
+        }
+    }
+    return result;
+}
+
 auto canvas(const session& state) -> ec::component {
     const auto& object = state.doc->objects()[state.object].value;
     const auto grid = symbols_of(*state.doc, state.object);
@@ -1447,6 +1489,15 @@ auto canvas(const session& state) -> ec::component {
         | std::ranges::to<std::map>();
     const auto faded = faded_squares(state, palette);
     const auto cursor = state.anchor ? state.anchor : state.focus;
+    // The entry moves a whole overmap square for squares beside it west or north, so its
+    // outline stays where the grid's falls.
+    const auto shift = point(
+        std::ranges::any_of(state.beside, [](const auto& square) { return square.origin.x < 0; })
+            ? SEEX * 2
+            : 0,
+        std::ranges::any_of(state.beside, [](const auto& square) { return square.origin.y < 0; })
+            ? SEEY * 2
+            : 0);
     auto cells = std::vector<ec::grid_cell>{};
     auto cols = 0;
     for (auto y = 0; y < static_cast<int>(grid.size()); ++y) {
@@ -1455,7 +1506,7 @@ auto canvas(const session& state) -> ec::component {
             const auto at = point(x, y);
             const auto under = faded.find(at);
             cells.push_back(
-                {.at = {x, y},
+                {.at = {x + shift.x, y + shift.y},
                  .id = point_row("square", at),
                  .glyph = under != faded.end() ? under->second.glyph : grid[y][x],
                  .affordance = paint_id,
@@ -1467,13 +1518,27 @@ auto canvas(const session& state) -> ec::component {
                  .faded = under != faded.end()});
         }
     }
+    const auto rows = static_cast<int>(grid.size());
+    auto width = shift.x + cols;
+    auto height = shift.y + rows;
+    for (auto& beside : neighbour_cells(state, point(cols, rows), palette)) {
+        beside.at = {beside.at.x + shift.x, beside.at.y + shift.y};
+        width = std::max(width, beside.at.x + 1);
+        height = std::max(height, beside.at.y + 1);
+        cells.push_back(std::move(beside));
+    }
     return {
         .id = canvas_id,
-        .affordances = {paint_id},
+        .affordances =
+            state.beside.empty()
+                ? std::vector<std::string>{paint_id}
+                : std::vector<std::string>{paint_id, object_id},
         .body = ec::grid_body{
-            .cols = cols,
-            .rows = static_cast<int>(grid.size()),
-            .cursor = cursor ? std::optional(ec::grid_point{cursor->x, cursor->y}) : std::nullopt,
+            .cols = width,
+            .rows = height,
+            .cursor =
+                cursor ? std::optional(ec::grid_point{cursor->x + shift.x, cursor->y + shift.y})
+                       : std::nullopt,
             .cells = std::move(cells),
             .looks = std::move(palette.looks),
             .role = "canvas",
