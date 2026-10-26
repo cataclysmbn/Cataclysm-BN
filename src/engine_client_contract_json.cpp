@@ -694,6 +694,7 @@ auto body_json( const grid_body &body, const bubble_frame & /*frame*/ ) -> json
         if( !cell.denial.empty() ) { entry["denial"] = cell.denial; }
         if( cell.selected ) { entry["selected"] = true; }
         if( !cell.looks.empty() ) { entry["looks"] = cell.looks; }
+        if( cell.faded ) { entry["faded"] = true; }
         result["cells"].push_back( std::move( entry ) );
     }
     if( !body.looks.empty() ) { result["looks"] = to_array( body.looks ); }

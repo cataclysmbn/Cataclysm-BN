@@ -6735,6 +6735,10 @@
                   "minimum": 0
                 },
                 "description": "What the cell shows from the bottom up, as indexes into the grid's `looks`, for a client that draws sprites; `glyph` stands for it otherwise."
+              },
+              "faded": {
+                "type": "boolean",
+                "description": "Whether the cell shows another level, such as the one below seen through open air on the map editor's canvas, which a client draws faded. Absent for false."
               }
             },
             "required": [

@@ -12,6 +12,7 @@
 #include "editor/mapgen_export.h"
 #include "editor/mapgen_legend.h"
 #include "editor/mapgen_legend_edit.h"
+#include "editor/mapgen_levels.h"
 #include "editor/mapgen_placement.h"
 #include "editor/mapgen_preview.h"
 #include "editor/mapgen_source.h"
@@ -54,6 +55,7 @@
 #include <memory>
 #include <optional>
 #include <ranges>
+#include <set>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -138,6 +140,8 @@ constexpr auto history_id = "editor:history";
 constexpr auto jump_id = "editor:jump";
 constexpr auto open_oter_id = "editor:open_oter";
 constexpr auto open_here_id = "editor:open_here";
+constexpr auto level_up_id = "editor:level_up";
+constexpr auto level_down_id = "editor:level_down";
 constexpr auto browser_id = "editor:browser";
 constexpr auto browser_open_id = "editor:browser_open";
 constexpr auto browser_filter_id = "editor:browser_filter";
@@ -502,6 +506,15 @@ struct session {
     std::string import_text;
     /// The object of `doc` on the canvas.
     std::size_t object = 0;
+    /// The level the canvas entry stands on in the building or overmap special that stacks it, and
+    /// the file's entries of the levels above and below.
+    std::optional<int> level = std::nullopt;
+    std::optional<std::size_t> level_up = std::nullopt;
+    std::optional<std::size_t> level_down = std::nullopt;
+    /// The overmap squares of the canvas entry over a level the file makes, with that level's
+    /// legends by entry.
+    std::vector<stacked_square> below;
+    std::map<std::size_t, std::vector<legend_symbol>> below_legends;
     std::string symbol;
     /// The symbol inside a room.
     std::string room_fill;
@@ -683,6 +696,44 @@ struct session {
         }
     }
 
+    /// The levels around the canvas entry that the file makes.
+    auto reload_levels() -> void {
+        level.reset();
+        level_up.reset();
+        level_down.reset();
+        below.clear();
+        below_legends.clear();
+        const auto& objects = doc->objects();
+        const auto names = entry_terrains(objects[object].value);
+        if (names.empty() || names.front().empty()) { return; }
+        const auto& first = names.front().front();
+        const auto entry_at = [&](const int dz) {
+            return terrain_above(first, dz)
+                .and_then([&](const auto& name) { return square_making(objects, name); })
+                .transform([](const entry_square& square) { return square.entry; });
+        };
+        level = terrain_level(first);
+        level_up = entry_at(1);
+        level_down = entry_at(-1);
+        below = stacked_squares(objects, object, -1);
+        for (const auto& square : below) {
+            if (below_legends.contains(square.other.entry)) { continue; }
+            below_legends[square.other.entry] =
+                mapgen_legend(objects[square.other.entry].value.dump())
+                    .value_or(std::vector<legend_symbol>{});
+        }
+    }
+
+    /// Puts the file's entry `index` on the canvas.
+    auto show_object(const std::size_t index) -> void {
+        object = index;
+        anchor.reset();
+        selected.reset();
+        focus.reset();
+        picked.reset();
+        reload();
+    }
+
     /// What the loader makes of the object now: its legend and what it reports.
     auto reload() -> void {
         legend.clear();
@@ -691,6 +742,7 @@ struct session {
         const auto stand_ins = file_stand_ins(stand_in_texts());
         const auto text = doc->objects()[object].value.dump();
         legend = mapgen_legend(text).value_or(std::vector<legend_symbol>{});
+        reload_levels();
         diagnostics =
             check_mapgen(text) | std::views::transform([&](const auto& message) {
                 return diagnostic{
@@ -1280,16 +1332,28 @@ auto regional(const Id& id, const std::map<Id, weighted_int_list<Id>>& choices) 
     return std::ranges::max(found->second, {}, &weighted_object<int, Id>::weight).obj;
 }
 
-/// What each symbol puts on a square from the bottom up, as the map shows it: its terrain, else the
-/// entry's fill, then its furniture and trap.
-auto symbol_looks(const session& state) -> std::map<std::string, std::vector<engine_client::look>> {
-    namespace world = engine_client::world;
-    const auto& object = state.doc->objects()[state.object].value;
+/// The id a symbol's legend names on `layer`, if any.
+auto named_on(const legend_symbol& entry, const char* layer) -> std::optional<std::string> {
+    const auto line = std::ranges::find(entry.lines, layer, &legend_line::layer);
+    return line == entry.lines.end() ? std::nullopt : first_id(line->value);
+}
+
+/// The terrain a symbol of the entry `object` puts on a square: its own, else the entry's fill.
+auto symbol_terrain(const nlohmann::ordered_json& object, const legend_symbol& entry)
+    -> ter_str_id {
     const auto fill =
         object.contains("object") && object["object"].contains("fill_ter")
                 && object["object"]["fill_ter"].is_string()
             ? std::optional(object["object"]["fill_ter"].get<std::string>())
             : std::nullopt;
+    return ter_str_id(named_on(entry, "terrain").or_else([&] { return fill; }).value_or(""));
+}
+
+/// What each symbol of the entry `object` puts on a square from the bottom up, as the map shows
+/// it: its terrain, then its furniture and trap.
+auto symbol_looks(const nlohmann::ordered_json& object, const std::vector<legend_symbol>& legend)
+    -> std::map<std::string, std::vector<engine_client::look>> {
+    namespace world = engine_client::world;
     const auto region = region_settings_map.find("default");
     const auto resolve = [&](const auto& id) {
         return region == region_settings_map.end() ? id : regional(id, [&] {
@@ -1301,15 +1365,10 @@ auto symbol_looks(const session& state) -> std::map<std::string, std::vector<eng
         }());
     };
     auto result = std::map<std::string, std::vector<engine_client::look>>{};
-    for (const auto& entry : state.legend) {
-        const auto named = [&](const char* layer) -> std::optional<std::string> {
-            const auto line = std::ranges::find(entry.lines, layer, &legend_line::layer);
-            return line == entry.lines.end() ? std::nullopt : first_id(line->value);
-        };
+    for (const auto& entry : legend) {
+        const auto named = [&](const char* layer) { return named_on(entry, layer); };
         auto looks = std::vector<engine_client::look>{};
-        if (const auto ter = ter_str_id(
-                named("terrain").or_else([&] { return fill; }).value_or(""));
-            ter.is_valid() && !ter.is_null()) {
+        if (const auto ter = symbol_terrain(object, entry); ter.is_valid() && !ter.is_null()) {
             looks.push_back(world::terrain_appearance(resolve(ter.id())));
         }
         if (const auto furn = furn_str_id(named("furniture").value_or(""));
@@ -1333,15 +1392,55 @@ auto in_selection(const session& state, const point& at) -> bool {
         && at.y <= std::max(state.selected->from.y, state.selected->to.y);
 }
 
+/// What the level below shows through the canvas entry's open air, by square.
+struct faded_square {
+    std::string glyph;
+    std::vector<int> looks;
+};
+
+auto faded_squares(const session& state, ec::look_palette& palette)
+    -> std::map<point, faded_square> {
+    const auto& objects = state.doc->objects();
+    const auto& object = objects[state.object].value;
+    const auto open_air =
+        state.legend | std::views::filter([&](const legend_symbol& entry) {
+            const auto ter = symbol_terrain(object, entry);
+            return ter.is_valid() && ter.obj().has_flag(TFLAG_NO_FLOOR);
+        })
+        | std::views::transform(&legend_symbol::symbol) | std::ranges::to<std::set>();
+    const auto grid = symbols_of(*state.doc, state.object);
+    auto result = std::map<point, faded_square>{};
+    for (const auto& square : state.below) {
+        const auto& other = objects[square.other.entry].value;
+        const auto looks = symbol_looks(other, state.below_legends.at(square.other.entry));
+        const auto other_grid = symbols_of(*state.doc, square.other.entry);
+        for (auto y = 0; y < SEEY * 2; ++y) {
+            for (auto x = 0; x < SEEX * 2; ++x) {
+                const auto at = square.origin + point(x, y);
+                if (!open_air.contains(symbol_at(grid, at))) { continue; }
+                const auto glyph = symbol_at(other_grid, square.other.origin + point(x, y));
+                if (glyph.empty()) { continue; }
+                const auto found = looks.find(glyph);
+                result[at] = {
+                    .glyph = glyph,
+                    .looks =
+                        found == looks.end() ? std::vector<int>{} : palette.indexes(found->second)};
+            }
+        }
+    }
+    return result;
+}
+
 auto canvas(const session& state) -> ec::component {
     const auto& object = state.doc->objects()[state.object].value;
     const auto grid = symbols_of(*state.doc, state.object);
     auto palette = ec::look_palette{};
     const auto looks =
-        symbol_looks(state) | std::views::transform([&](const auto& entry) {
+        symbol_looks(object, state.legend) | std::views::transform([&](const auto& entry) {
             return std::pair{entry.first, palette.indexes(entry.second)};
         })
         | std::ranges::to<std::map>();
+    const auto faded = faded_squares(state, palette);
     const auto cursor = state.anchor ? state.anchor : state.focus;
     auto cells = std::vector<ec::grid_cell>{};
     auto cols = 0;
@@ -1349,13 +1448,18 @@ auto canvas(const session& state) -> ec::component {
         cols = std::max(cols, static_cast<int>(grid[y].size()));
         for (auto x = 0; x < static_cast<int>(grid[y].size()); ++x) {
             const auto at = point(x, y);
+            const auto under = faded.find(at);
             cells.push_back(
                 {.at = {x, y},
                  .id = point_row("square", at),
-                 .glyph = grid[y][x],
+                 .glyph = under != faded.end() ? under->second.glyph : grid[y][x],
                  .affordance = paint_id,
                  .selected = state.anchor == at || in_selection(state, at),
-                 .looks = looks.contains(grid[y][x]) ? looks.at(grid[y][x]) : std::vector<int>{}});
+                 .looks = under != faded.end() ? under->second.looks
+                        : looks.contains(grid[y][x])
+                            ? looks.at(grid[y][x])
+                            : std::vector<int>{},
+                 .faded = under != faded.end()});
         }
     }
     return {
@@ -1509,6 +1613,10 @@ auto document_stats(const session& state) -> std::vector<ec::panel_stat> {
             {.key = "apply_on_save",
              .label = _("Apply on save"),
              .value = state.apply_on_save ? _("On") : _("Off")});
+        if (state.level) {
+            stats.push_back(
+                {.key = "level", .label = _("Level"), .value = std::to_string(*state.level)});
+        }
         if (state.seed) {
             stats.push_back(
                 {.key = "seed", .label = _("Seed"), .value = std::to_string(*state.seed)});
@@ -1800,6 +1908,18 @@ auto drawing_affordances(const session& state) -> std::vector<ec::affordance> {
         {.id = flip_y_id, .label = _("Flip down"), .enabled = !state.clip.empty()}));
     affordances.push_back(
         ec::invoke_affordance({.id = paint_id, .label = _("Draw"), .args = row_of(canvas_id)}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = level_up_id,
+         .label = _("Level up"),
+         .keys = {"<"},
+         .enabled = state.level_up.has_value(),
+         .denial = state.level_up ? "" : _("No level above in this file.")}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = level_down_id,
+         .label = _("Level down"),
+         .keys = {">"},
+         .enabled = state.level_down.has_value(),
+         .denial = state.level_down ? "" : _("No level below in this file.")}));
     affordances.push_back(
         ec::invoke_affordance({.id = stroke_begin_id, .label = _("Begin stroke")}));
     affordances.push_back(ec::invoke_affordance({.id = stroke_end_id, .label = _("End stroke")}));
@@ -2163,13 +2283,10 @@ auto run_editor_session() -> void {
         } else if (!state.doc) {
             continue;
         } else if (id == object_id) {
-            if (const auto index = row_index(row, "object")) {
-                state.object = *index;
-                state.anchor.reset();
-                state.selected.reset();
-                state.focus.reset();
-                state.picked.reset();
-                state.reload();
+            if (const auto index = row_index(row, "object")) { state.show_object(*index); }
+        } else if (id == level_up_id || id == level_down_id) {
+            if (const auto index = id == level_up_id ? state.level_up : state.level_down) {
+                state.show_object(*index);
             }
         } else if (id == tool_id) {
             const auto found = std::ranges::find(tools, row, &tool::id);
