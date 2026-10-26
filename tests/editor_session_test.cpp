@@ -2435,6 +2435,15 @@ TEST_CASE(
                 // A palette has no rows to draw on.
                 CHECK(ec::find_component(*screen.root, "editor:canvas") == nullptr);
                 CHECK_FALSE(has_affordance(screen, "editor:paint"));
+                // Nor the drawing tools' state, nor symbols the rows leave unused.
+                const auto& stats = body<ec::panel_body>(part(screen, "editor:document")).stats;
+                CHECK(std::ranges::to<std::vector<std::string>>(
+                          stats | std::views::transform(&ec::panel_stat::key))
+                      == std::vector<std::string>{"saved"});
+                for (const auto& row : body<ec::list_body>(part(screen, "editor:legend")).rows) {
+                    CHECK_FALSE(std::ranges::contains(
+                        row.columns, std::string("use"), &game_client::interaction_column::key));
+                }
                 const auto& messages = body<ec::list_body>(part(screen, "editor:diagnostics")).rows;
                 CHECK(std::ranges::any_of(messages, [](const ec::row& row) {
                     return row.label.find("no_such_palette") != std::string::npos
