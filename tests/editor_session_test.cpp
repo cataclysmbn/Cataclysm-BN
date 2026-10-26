@@ -1867,7 +1867,7 @@ TEST_CASE(
     CHECK_FALSE(editor::reopens_after_waiting());
 
     const auto waited = [](const ec::screen_view& screen) {
-        const auto* const found = ec::find_component(*screen.root, "editor:waited");
+        const auto* const found = ec::find_component(*screen.root, "editor:status");
         return found ? body<ec::text_body>(*found).markup : std::string();
     };
     step = 0;
@@ -1917,17 +1917,29 @@ TEST_CASE(
         const auto screen = ec::top_screen(captured());
         switch (step++) {
             case 0:
-                return invoke("editor:import", {.text = "{ not json"});
+                return invoke("editor:import_set", {.row = "import", .text = "{ not json"});
             case 1:
+                // Setting the text keeps it in the form and stamps nothing yet.
+                CHECK(body<ec::form_body>(part(screen, "editor:import_form")).fields[0].value
+                      == "{ not json");
+                CHECK(live() == before);
+                return invoke("editor:import");
+            case 2:
                 CHECK_FALSE(notice(screen).empty());
                 CHECK(live() == before);
-                return invoke("editor:import", {.text = walls.dump()});
-            case 2:
+                // A file's array of entries, as an export writes it, stamps its mapgen.
+                return invoke(
+                    "editor:import_set",
+                    {.row = "import", .text = nlohmann::ordered_json::array({walls}).dump()});
+            case 3:
+                return invoke("editor:import");
+            case 4:
                 CHECK(notice(screen).empty());
+                CHECK(body<ec::text_body>(part(screen, "editor:status")).markup == "Stamped.");
                 CHECK(live() == ter_id("t_wall"));
                 CHECK(affordance(screen, "editor:unstamp").enabled);
                 return invoke("editor:unstamp");
-            case 3:
+            case 5:
                 CHECK(live() == before);
                 return act("QUIT");
             default:
@@ -1937,7 +1949,7 @@ TEST_CASE(
     });
 
     editor::run_editor_session();
-    CHECK(step == 4);
+    CHECK(step == 6);
     editor::reset_editor_session();
 }
 
