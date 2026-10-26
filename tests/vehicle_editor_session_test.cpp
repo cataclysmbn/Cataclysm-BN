@@ -908,6 +908,7 @@ TEST_CASE(
     const auto cleanup = on_out_of_scope([&] {
         forget();
         editor::reset_editor_session();
+        editor::reset_vehicle_editor();
     });
     editor::open_first({.editor = "vehicle", .name = "bicycle"});
     auto kinds = std::vector<std::string>{};

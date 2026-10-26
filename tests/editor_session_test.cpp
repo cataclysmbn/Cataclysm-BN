@@ -3008,4 +3008,20 @@ TEST_CASE(
     CHECK(step == 1);
 }
 
+TEST_CASE(
+    "a new game forgets the document the main menu asked the editor to open", "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    editor::open_first({.editor = "map", .name = file.path.generic_string()});
+    editor::reset_editor_session();
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        if (step++ == 0) { CHECK_FALSE(has_affordance(screen, "editor:save")); }
+        return act("QUIT");
+    });
+    editor::run_editor_session();
+    CHECK(step == 1);
+}
+
 #endif // CATA_MCP
