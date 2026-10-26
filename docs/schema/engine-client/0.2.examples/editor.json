@@ -650,7 +650,7 @@
                   "columns": []
                 }
               ],
-              "total": 2952,
+              "total": 2953,
               "selection": "single",
               "activate": "editor:browser_open",
               "filterable": true
@@ -765,6 +765,20 @@
             "keys": [],
             "enabled": false,
             "denial": "Not available now.",
+            "expect": "screen"
+          },
+          {
+            "id": "editor:advance",
+            "label": "Let turns pass",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "count": {
+                "min": 1,
+                "max": 3600,
+                "default": 60
+              }
+            },
             "expect": "screen"
           },
           {
@@ -3482,7 +3496,7 @@
                   "columns": []
                 }
               ],
-              "total": 2952,
+              "total": 2953,
               "selection": "single",
               "activate": "editor:browser_open",
               "filterable": true
@@ -3609,6 +3623,20 @@
             "keys": [],
             "enabled": false,
             "denial": "Not available now.",
+            "expect": "screen"
+          },
+          {
+            "id": "editor:advance",
+            "label": "Let turns pass",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "count": {
+                "min": 1,
+                "max": 3600,
+                "default": 60
+              }
+            },
             "expect": "screen"
           },
           {
@@ -6811,7 +6839,7 @@
                   "columns": []
                 }
               ],
-              "total": 2952,
+              "total": 2953,
               "selection": "single",
               "activate": "editor:browser_open",
               "filterable": true
@@ -6938,6 +6966,20 @@
             "keys": [],
             "enabled": false,
             "denial": "Not available now.",
+            "expect": "screen"
+          },
+          {
+            "id": "editor:advance",
+            "label": "Let turns pass",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "count": {
+                "min": 1,
+                "max": 3600,
+                "default": 60
+              }
+            },
             "expect": "screen"
           },
           {
@@ -10010,7 +10052,7 @@
                   "columns": []
                 }
               ],
-              "total": 2952,
+              "total": 2953,
               "selection": "single",
               "activate": "editor:browser_open",
               "filterable": true
@@ -10137,6 +10179,20 @@
             "keys": [],
             "enabled": false,
             "denial": "Not available now.",
+            "expect": "screen"
+          },
+          {
+            "id": "editor:advance",
+            "label": "Let turns pass",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "count": {
+                "min": 1,
+                "max": 3600,
+                "default": 60
+              }
+            },
             "expect": "screen"
           },
           {
@@ -26964,7 +27020,7 @@
                   "columns": []
                 }
               ],
-              "total": 2952,
+              "total": 2953,
               "selection": "single",
               "activate": "editor:browser_open",
               "filterable": true
@@ -27091,6 +27147,20 @@
             "keys": [],
             "enabled": false,
             "denial": "Not available now.",
+            "expect": "screen"
+          },
+          {
+            "id": "editor:advance",
+            "label": "Let turns pass",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "count": {
+                "min": 1,
+                "max": 3600,
+                "default": 60
+              }
+            },
             "expect": "screen"
           },
           {
