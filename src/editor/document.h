@@ -20,14 +20,19 @@ struct document_object {
     std::optional<std::string> duplicate_key = std::nullopt;
 };
 
-/// One step of the history: an RFC 6902 patch of one object, with the object before and after it.
-/// Undo restores the value itself, since an inverse patch would put a removed member back at the
-/// end.
+/// An RFC 6902 patch of one object, with the object before and after it; `before` is null for an
+/// object the edit added. Undo restores the value itself, since an inverse patch would put a
+/// removed member back at the end.
 struct document_edit {
     std::size_t object = 0;
     nlohmann::ordered_json patch;
     nlohmann::ordered_json before;
     nlohmann::ordered_json after;
+};
+
+/// One step of the history: its edits, in the order they were made.
+struct document_step {
+    std::vector<document_edit> edits;
 };
 
 enum class save_error {
@@ -58,10 +63,15 @@ public:
     /// Applies an RFC 6902 patch to one object as one undo step; the error names what refused it.
     auto edit(std::size_t object, const nlohmann::ordered_json& patch)
         -> std::expected<void, std::string>;
-    /// Until `end_group`, the edits of one object fold into one undo step.
-    auto begin_group() -> void {
+    /// Appends `value` as the file's last object, as one undo step; its index. A file of one value
+    /// takes no other.
+    auto add(nlohmann::ordered_json value) -> std::expected<std::size_t, std::string>;
+    /// Until `end_group`, the edits of one object fold into one undo step; `across`, the edits and
+    /// additions of every object do.
+    auto begin_group(const bool across = false) -> void {
         grouping_ = true;
         grouped_ = false;
+        across_ = across;
     }
     auto end_group() -> void { grouping_ = false; }
     auto undo() -> bool;
@@ -69,7 +79,7 @@ public:
     auto can_undo() const -> bool { return !done_.empty(); }
     auto can_redo() const -> bool { return !undone_.empty(); }
     /// The steps done, oldest first, then the steps undone, the next redo first.
-    auto history() const -> std::vector<document_edit>;
+    auto history() const -> std::vector<document_step>;
     /// How many steps are done now.
     auto depth() const -> std::size_t { return done_.size(); }
     /// The depth the file was opened or last saved at; none once an edit after an undo has left it.
@@ -95,12 +105,16 @@ private:
     /// The values the objects were opened with; an object equal to its own is written from its
     /// span.
     std::vector<nlohmann::ordered_json> opened_;
-    std::vector<document_edit> done_;
-    std::vector<document_edit> undone_;
+    std::vector<document_step> done_;
+    std::vector<document_step> undone_;
     std::optional<std::size_t> saved_depth_ = 0;
     /// Whether a group is open, and whether it has made its step.
     bool grouping_ = false;
     bool grouped_ = false;
+    bool across_ = false;
+
+    /// Records `edit` as a step of its own, or in the step of the open group.
+    auto record(document_edit edit) -> void;
 };
 
 } // namespace editor

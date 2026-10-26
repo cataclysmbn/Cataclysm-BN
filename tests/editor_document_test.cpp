@@ -224,10 +224,27 @@ TEST_CASE(
     REQUIRE(doc->objects().size() == 4);
     CHECK(doc->objects()[3].value == ordered_json{{"type", "palette"}, {"id", "p"}});
     const auto edited = doc->text();
-    // The bytes are what the data formatter writes, the unedited object as it was.
-    CHECK(format_json(edited) == edited);
-    CHECK(edited.find(R"("weight": 1.50)") != std::string::npos);
-    CHECK(ordered_json::parse(edited)[3]["id"] == "p");
+    // The edited and added objects in the data style, the unedited one as it was.
+    CHECK(edited == R"([
+  {
+    "type": "terrain",
+    "id": "t_1",
+    "name": "a\tb"
+  },
+  {
+    "type": "terrain",
+    "id": "t_two",
+    "weight": 1.50
+  },
+  {
+    "id": "t_three"
+  },
+  {
+    "type": "palette",
+    "id": "p"
+  }
+]
+)");
     CHECK(doc->undo());
     CHECK(doc->objects().size() == 3);
     CHECK(doc->text() == three_objects);

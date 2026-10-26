@@ -1320,7 +1320,8 @@ auto history_rows(const document& doc) -> std::vector<ec::row> {
     for (const auto depth : std::views::iota(std::size_t{0}, steps.size() + 1)) {
         auto row = ec::row{
             .id = string_format("step:%d", depth),
-            .label = depth == 0 ? _("Opened") : steps[depth - 1].patch[0].value("path", ""),
+            .label =
+                depth == 0 ? _("Opened") : steps[depth - 1].edits.front().patch[0].value("path", ""),
             .selected = depth == doc.depth()};
         if (doc.saved_depth() == depth) { row.description = _("Saved"); }
         rows.push_back(std::move(row));

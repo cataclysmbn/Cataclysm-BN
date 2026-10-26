@@ -185,27 +185,52 @@ auto document::edit(const std::size_t object, const nlohmann::ordered_json& patc
     }
     try {
         auto next = target.value.patch(patch);
-        if (grouping_ && grouped_ && done_.back().object == object) {
-            auto& step = done_.back();
-            step.patch.insert(step.patch.end(), patch.begin(), patch.end());
-            step.after = next;
-        } else {
-            done_.push_back(
-                {.object = object, .patch = patch, .before = target.value, .after = next});
-            grouped_ = grouping_;
-        }
+        record({.object = object, .patch = patch, .before = target.value, .after = next});
         target.value = std::move(next);
-        undone_.clear();
-        if (saved_depth_ && *saved_depth_ >= done_.size()) { saved_depth_.reset(); }
     } catch (const ordered_json::exception& e) { return std::unexpected(std::string(e.what())); }
     return {};
+}
+
+auto document::add(nlohmann::ordered_json value) -> std::expected<std::size_t, std::string> {
+    if (!listed_) { return std::unexpected(std::string("the file holds one value, not a list")); }
+    const auto index = objects_.size();
+    record(
+        {.object = index,
+         .patch = ordered_json::array({{{"op", "add"}, {"path", ""}, {"value", value}}}),
+         .before = nullptr,
+         .after = value});
+    objects_.push_back({.begin = std::string::npos, .end = std::string::npos, .value = value});
+    return index;
+}
+
+auto document::record(document_edit edit) -> void {
+    auto* const step = grouping_ && grouped_ ? &done_.back() : nullptr;
+    auto* const last = step ? &step->edits.back() : nullptr;
+    if (last && last->object == edit.object && !edit.before.is_null()) {
+        last->patch.insert(last->patch.end(), edit.patch.begin(), edit.patch.end());
+        last->after = std::move(edit.after);
+    } else if (step && across_) {
+        step->edits.push_back(std::move(edit));
+    } else {
+        done_.push_back({.edits = {std::move(edit)}});
+        grouped_ = grouping_;
+    }
+    undone_.clear();
+    if (saved_depth_ && *saved_depth_ >= done_.size()) { saved_depth_.reset(); }
 }
 
 auto document::undo() -> bool {
     if (done_.empty()) { return false; }
     auto step = std::move(done_.back());
     done_.pop_back();
-    objects_[step.object].value = step.before;
+    for (const auto& edit : step.edits | std::views::reverse) {
+        if (edit.before.is_null()) {
+            // An added object is the last one while its step is undone.
+            objects_.pop_back();
+        } else {
+            objects_[edit.object].value = edit.before;
+        }
+    }
     undone_.push_back(std::move(step));
     return true;
 }
@@ -214,12 +239,19 @@ auto document::redo() -> bool {
     if (undone_.empty()) { return false; }
     auto step = std::move(undone_.back());
     undone_.pop_back();
-    objects_[step.object].value = step.after;
+    for (const auto& edit : step.edits) {
+        if (edit.before.is_null()) {
+            objects_.push_back(
+                {.begin = std::string::npos, .end = std::string::npos, .value = edit.after});
+        } else {
+            objects_[edit.object].value = edit.after;
+        }
+    }
     done_.push_back(std::move(step));
     return true;
 }
 
-auto document::history() const -> std::vector<document_edit> {
+auto document::history() const -> std::vector<document_step> {
     auto steps = done_;
     steps.insert(steps.end(), undone_.rbegin(), undone_.rend());
     return steps;
@@ -233,15 +265,17 @@ auto document::jump(const std::size_t depth) -> bool {
 }
 
 auto document::text() const -> std::string {
+    const auto opened = opened_.size();
     const auto edited = [&](const std::size_t index) {
         return objects_[index].value != opened_[index];
     };
-    if (std::ranges::none_of(std::views::iota(std::size_t{0}, objects_.size()), edited)) {
+    if (objects_.size() == opened
+        && std::ranges::none_of(std::views::iota(std::size_t{0}, opened), edited)) {
         return original_;
     }
     auto out = std::string{};
     auto copied = std::size_t{0};
-    for (const auto index : std::views::iota(std::size_t{0}, objects_.size())) {
+    for (const auto index : std::views::iota(std::size_t{0}, opened)) {
         const auto& entry = objects_[index];
         out.append(original_, copied, entry.begin - copied);
         if (edited(index)) {
@@ -250,6 +284,19 @@ auto document::text() const -> std::string {
             out.append(original_, entry.begin, entry.end - entry.begin);
         }
         copied = entry.end;
+    }
+    if (objects_.size() > opened) {
+        // Added objects follow the last one, or open the empty list, in the data style.
+        if (opened == 0) {
+            copied = original_.find('[') + 1;
+            out.append(original_, 0, copied);
+            copied = original_.find(']', copied);
+        }
+        for (const auto index : std::views::iota(opened, objects_.size())) {
+            out += index == 0 ? "\n  " : ",\n  ";
+            out += render(objects_[index].value, listed_);
+        }
+        if (opened == 0) { out += '\n'; }
     }
     out.append(original_, copied);
     return out;
