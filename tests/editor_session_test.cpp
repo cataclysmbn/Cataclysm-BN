@@ -20,7 +20,9 @@
 #    include "input.h"
 #    include "json_formatter.h"
 #    include "map/map.h"
+#    include "map/mapbuffer.h"
 #    include "map/mapdata.h"
+#    include "mapgen/mapgen_constructor.h"
 #    include "mapgen/mapgen_functions.h"
 #    include "options_helpers.h"
 #    include "output.h"
@@ -2619,6 +2621,58 @@ TEST_CASE(
 
     editor::run_editor_session();
     CHECK(step == 9);
+}
+
+TEST_CASE(
+    "an applied mapgen places the nested chunks of its own file as they were applied",
+    "[editor_session][editor_mapgen]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file(nlohmann::ordered_json::parse(
+        R"({"place_nested": [{"chunks": ["editor_session_test_applied"], "x": 2, "y": 6}]})"));
+    {
+        auto entries = nlohmann::ordered_json::parse(file.text);
+        entries.push_back(nlohmann::ordered_json::parse(R"({
+            "type": "mapgen",
+            "method": "json",
+            "nested_mapgen_id": "editor_session_test_applied",
+            "object": {"mapgensize": [1, 1], "rows": ["#"], "terrain": {"#": "t_wall"}}
+          })"));
+        auto out = std::ofstream(file.path, std::ios::binary | std::ios::trunc);
+        out << format_json(entries.dump()).value();
+    }
+    const auto restore_mapgen = restore_on_out_of_scope<bool>(disable_mapgen);
+    disable_mapgen = false;
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                return invoke("editor:apply");
+            case 2:
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                return act("QUIT");
+            default:
+                return answer("Leave without saving");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 3);
+    auto buffer = mapbuffer{};
+    buffer.set_dimension_id(get_map().get_bound_dimension());
+    auto constructor = mapgen_constructor(buffer);
+    const auto picked = pick_mapgen_func("house_04");
+    REQUIRE(picked);
+    REQUIRE(
+        constructor
+            .generate(tripoint_abs_omt(60, 60, 0), calendar::turn,
+                      {.use_selected_mapgen = true, .selected_mapgen = picked})
+            .is_generated());
+    CHECK(constructor.ter(point_omt_ms(2, 6)) == ter_id("t_wall"));
+    CHECK(constructor.ter(point_omt_ms(3, 6)) == ter_id("t_floor"));
 }
 
 TEST_CASE(
