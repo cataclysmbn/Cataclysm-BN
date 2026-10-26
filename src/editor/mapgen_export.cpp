@@ -1,11 +1,13 @@
 #include "editor/mapgen_export.h"
 
 #include "game_constants.h"
+#include "map/field.h"
 #include "map/map.h"
 #include "map/mapbuffer.h"
 #include "map/submap.h"
 #include "overmap/omdata.h"
 #include "overmap/overmapbuffer.h"
+#include "trap.h"
 #include "type_id.h"
 
 #include <algorithm>
@@ -21,14 +23,31 @@ namespace {
 constexpr auto symbols = std::string_view(
     ".#abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789,;:!%&*+-/<>=?@^~_()[]{}|$");
 
+struct laid_field {
+    int type;
+    int intensity;
+    auto operator<=>(const laid_field&) const = default; // *NOPAD*
+};
+
 struct kind {
     ter_id ter;
     furn_id furn;
+    trap_id trap;
+    std::vector<laid_field> fields;
     auto operator<(const kind& other) const -> bool {
-        return std::tuple(ter.to_i(), furn.to_i())
-             < std::tuple(other.ter.to_i(), other.furn.to_i());
+        return std::tuple(ter.to_i(), furn.to_i(), trap.to_i(), fields)
+             < std::tuple(other.ter.to_i(), other.furn.to_i(), other.trap.to_i(), other.fields);
     }
 };
+
+/// The fields on a square, in the order the game keeps them.
+auto fields_of(const field& on) -> std::vector<laid_field> {
+    return on | std::views::transform([](const auto& entry) {
+               return laid_field{
+                   .type = entry.first.to_i(), .intensity = entry.second.get_field_intensity()};
+           })
+         | std::ranges::to<std::vector>();
+}
 
 } // namespace
 
@@ -46,7 +65,11 @@ auto export_omt(const tripoint_abs_omt& at) -> std::expected<nlohmann::ordered_j
                 return std::unexpected("the overmap square is not loaded in the map");
             }
             const auto local = point_sm_ms(x % SEEX, y % SEEY);
-            row.push_back({.ter = sm->get_ter(local), .furn = sm->get_furn(local)});
+            row.push_back(
+                {.ter = sm->get_ter(local),
+                 .furn = sm->get_furn(local),
+                 .trap = sm->get_trap(local),
+                 .fields = fields_of(sm->get_field(local))});
             ++counts[row.back()];
         }
     }
@@ -59,12 +82,24 @@ auto export_omt(const tripoint_abs_omt& at) -> std::expected<nlohmann::ordered_j
     }
     auto terrain = nlohmann::ordered_json::object();
     auto furniture = nlohmann::ordered_json::object();
+    auto traps = nlohmann::ordered_json::object();
+    auto fields = nlohmann::ordered_json::object();
     auto symbol_of = std::map<kind, char>{};
     for (const auto& [index, entry] : ordered | std::views::enumerate) {
         const auto symbol = std::string(1, symbols[index]);
         symbol_of[entry] = symbols[index];
         terrain[symbol] = entry.ter.id().str();
         if (entry.furn != furn_id("f_null")) { furniture[symbol] = entry.furn.id().str(); }
+        if (entry.trap != tr_null) { traps[symbol] = entry.trap.id().str(); }
+        if (!entry.fields.empty()) {
+            fields[symbol] =
+                entry.fields | std::views::transform([](const laid_field& laid) {
+                    return nlohmann::ordered_json{
+                        {"field", field_type_id(laid.type).id().str()},
+                        {"intensity", laid.intensity}};
+                })
+                | std::ranges::to<std::vector>();
+        }
     }
     auto rows = nlohmann::ordered_json::array();
     for (const auto& row : kinds) {
@@ -74,6 +109,8 @@ auto export_omt(const tripoint_abs_omt& at) -> std::expected<nlohmann::ordered_j
     }
     auto object = nlohmann::ordered_json{{"rows", rows}, {"terrain", terrain}};
     if (!furniture.empty()) { object["furniture"] = furniture; }
+    if (!traps.empty()) { object["traps"] = traps; }
+    if (!fields.empty()) { object["fields"] = fields; }
     return nlohmann::ordered_json{
         {"type", "mapgen"},
         {"method", "json"},
