@@ -4,6 +4,7 @@
 #include "editor/catalog.h"
 #include "editor/document.h"
 #include "editor/session_file.h"
+#include "editor/session_page.h"
 #include "editor/vehicle_design.h"
 #include "engine_client_component.h"
 #include "engine_client_world.h"
@@ -92,11 +93,6 @@ constexpr auto item_chance_id = "vehicle:item_chance";
 /// How far east of the avatar a spawned vehicle stands, clear of it.
 constexpr auto spawn_distance = 8;
 
-constexpr auto page_size = std::size_t{50};
-
-auto pages_of(const std::size_t total) -> std::int64_t {
-    return static_cast<std::int64_t>(std::max<std::size_t>(1, (total + page_size - 1) / page_size));
-}
 
 auto mount_text(const point& at) -> std::string { return string_format("mount:%d,%d", at.x, at.y); }
 
@@ -905,14 +901,8 @@ auto session_view(const session& state) -> ec::screen_view {
             {.id = open_id, .label = _("Open"), .args = row_of(prototypes_id)}));
         affordances.push_back(ec::invoke_affordance(
             {.id = filter_id, .label = _("Filter"), .args = {.text = ec::text_shape{}}}));
-        affordances.push_back(ec::invoke_affordance(
-            {.id = page_id,
-             .label = _("Page"),
-             .args = {
-                 .count = ec::count_shape{
-                     .min = 0,
-                     .max = pages_of(found.total) - 1,
-                     .initial = static_cast<std::int64_t>(state.page)}}}));
+        affordances.push_back(page_affordance(
+            {.id = page_id, .label = _("Page"), .total = found.total, .page = state.page}));
     }
     affordances.push_back(ec::invoke_affordance({.id = paste_id, .label = _("Paste vehicle")}));
     if (!state.live && !state.doc) {
@@ -1147,14 +1137,11 @@ auto session_view(const session& state) -> ec::screen_view {
     on("install",
        ec::invoke_affordance({.id = install_id, .label = _("Install"), .args = row_of(parts_id)}));
     on("install",
-       ec::invoke_affordance(
+       page_affordance(
            {.id = part_page_id,
             .label = _("Parts page"),
-            .args = {
-                .count = ec::count_shape{
-                    .min = 0,
-                    .max = pages_of(state.parts().total) - 1,
-                    .initial = static_cast<std::int64_t>(state.part_page)}}}));
+            .total = state.parts().total,
+            .page = state.part_page}));
     if (state.live) {
         for (const auto* const tab : {"part", "vehicle"}) {
             on(tab,

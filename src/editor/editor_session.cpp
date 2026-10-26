@@ -17,6 +17,7 @@
 #include "editor/mapgen_stamp.h"
 #include "editor/mapgen_stroke.h"
 #include "editor/session_file.h"
+#include "editor/session_page.h"
 #include "editor/vehicle_session.h"
 #include "engine_client_component.h"
 #include "engine_client_world.h"
@@ -284,7 +285,6 @@ auto mapping_of(const catalog_use& use, const std::string& id) -> std::string {
     return nlohmann::ordered_json{{use.key, named}}.dump();
 }
 
-constexpr auto catalog_page_size = std::size_t{50};
 
 auto tool_label(const tool& value) -> std::string {
     if (value.region == region_use::select) { return _("Select"); }
@@ -424,7 +424,6 @@ auto data_files() -> std::vector<std::filesystem::path> {
     return files;
 }
 
-constexpr auto browser_page_size = std::size_t{50};
 
 auto range_text(const placement_range& range) -> std::string {
     return range.min == range.max
@@ -558,7 +557,7 @@ struct session {
             {.kind = catalog->kind,
              .filter = catalog_filter,
              .page = catalog_page,
-             .page_size = catalog_page_size});
+             .page_size = page_size});
     }
 
     auto mapgens() const -> std::vector<std::size_t> {
@@ -1321,6 +1320,29 @@ auto session_view(const session& state) -> ec::screen_view {
          .label = _("New file"),
          .args = {.row = ec::row_shape{.component_id = new_id}, .text = ec::text_shape{}}}));
     affordances.push_back(ec::invoke_affordance({.id = new_apply_id, .label = _("Create")}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = open_oter_id,
+         .label = _("Open overmap terrain"),
+         .args = {.text = ec::text_shape{}}}));
+    affordances.push_back(
+        ec::invoke_affordance({.id = open_here_id, .label = _("Open mapgen here")}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = export_id,
+         .label = _("Export mapgen here"),
+         .args = {.text = ec::text_shape{.field_id = path_id}}}));
+    const auto listed = state.browser_entries();
+    const auto shown =
+        std::views::drop(listed, state.browser_page * page_size) | std::views::take(page_size);
+    const auto data = std::filesystem::path(PATH_INFO::datadir());
+    affordances.push_back(ec::invoke_affordance(
+        {.id = browser_open_id, .label = _("Open"), .args = row_of(browser_id)}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = browser_filter_id, .label = _("Filter files"), .args = {.text = ec::text_shape{}}}));
+    affordances.push_back(page_affordance(
+        {.id = browser_page_id,
+         .label = _("Files page"),
+         .total = listed.size(),
+         .page = state.browser_page}));
     affordances.push_back(ec::invoke_affordance({.id = vehicle_id, .label = _("Vehicle editor")}));
     if (state.doc) {
         const auto& doc = *state.doc;
@@ -1543,8 +1565,6 @@ auto session_view(const session& state) -> ec::screen_view {
                          {.id = "value", .label = _("Places"), .value = state.mapping_value}},
                     .submit = mapping_apply_id}});
             const auto found = state.catalog_entries();
-            const auto pages =
-                std::max<std::size_t>(1, (found.total + catalog_page_size - 1) / catalog_page_size);
             parts.push_back(ec::tabs(
                 {.id = catalog_kinds_id,
                  .tabs = catalog_uses | std::views::transform([&](const catalog_use& use) {
@@ -1567,7 +1587,7 @@ auto session_view(const session& state) -> ec::screen_view {
                               })
                             | std::ranges::to<std::vector>(),
                       .total = found.total,
-                      .offset = state.catalog_page * catalog_page_size,
+                      .offset = state.catalog_page * page_size,
                       .selection = "single",
                       .activate = catalog_pick_id,
                       .filterable = true,
@@ -1579,14 +1599,11 @@ auto session_view(const session& state) -> ec::screen_view {
                 {.id = catalog_filter_id,
                  .label = _("Filter"),
                  .args = {.text = ec::text_shape{}}}));
-            affordances.push_back(ec::invoke_affordance(
+            affordances.push_back(page_affordance(
                 {.id = catalog_page_id,
                  .label = _("Page"),
-                 .args = {
-                     .count = ec::count_shape{
-                         .min = 0,
-                         .max = static_cast<std::int64_t>(pages - 1),
-                         .initial = static_cast<std::int64_t>(state.catalog_page)}}}));
+                 .total = found.total,
+                 .page = state.catalog_page}));
             affordances.push_back(ec::invoke_affordance(
                 {.id = catalog_pick_id, .label = _("Use"), .args = row_of(catalog_id)}));
             affordances.push_back(ec::invoke_affordance(
@@ -1705,7 +1722,7 @@ auto session_view(const session& state) -> ec::screen_view {
              })
              | std::ranges::to<std::vector>(),
          .total = listed.size(),
-         .offset = state.browser_page * browser_page_size,
+         .offset = state.browser_page * page_size,
          .selection = "single",
          .activate = browser_open_id,
          .filterable = true,
