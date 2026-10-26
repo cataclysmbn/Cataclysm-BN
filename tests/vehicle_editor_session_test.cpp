@@ -195,6 +195,8 @@ TEST_CASE(
             case 1:
                 CHECK(row(screen, "vehicle:prototypes", "prototype:bicycle").label == "Bicycle");
                 CHECK(body<ec::list_body>(part(screen, "vehicle:prototypes")).filter == "bicycle");
+                CHECK(std::ranges::contains(
+                    part(screen, "vehicle:prototypes").affordances, std::string("vehicle:filter")));
                 return invoke("vehicle:open", {.row = "prototype:bicycle"});
             case 2: {
                 CHECK(body<ec::panel_body>(part(screen, "vehicle:document")).title == "Bicycle");
@@ -232,6 +234,8 @@ TEST_CASE(
             case 4:
                 CHECK(
                     body<ec::list_body>(part(screen, "vehicle:parts")).filter == "frame_vertical");
+                CHECK(std::ranges::contains(
+                    part(screen, "vehicle:parts").affordances, std::string("vehicle:part_filter")));
                 // A second frame is not mountable here, as the game says.
                 CHECK_FALSE(row(screen, "vehicle:parts", "vpart:xlframe_vertical").enabled);
                 CHECK_FALSE(row(screen, "vehicle:parts", "vpart:xlframe_vertical").denial.empty());

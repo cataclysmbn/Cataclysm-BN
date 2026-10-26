@@ -1259,6 +1259,9 @@ TEST_CASE(
             case 2: {
                 const auto& rows = entries(screen).rows;
                 CHECK(entries(screen).filter == "t_dirt");
+                CHECK(std::ranges::contains(
+                    part(screen, "editor:catalog").affordances,
+                    std::string("editor:catalog_filter")));
                 CHECK(std::ranges::contains(rows, std::string("entry:t_dirt"), &ec::row::id));
                 CHECK(std::ranges::all_of(rows, [](const ec::row& entry) {
                     return entry.columns[0].value.find("dirt") != std::string::npos
@@ -1940,6 +1943,9 @@ TEST_CASE(
                 REQUIRE(files(screen).rows.size() == 1);
                 CHECK(files(screen).total == 1);
                 CHECK(files(screen).filter == "2STORYMODERN06.JSON");
+                CHECK(std::ranges::contains(
+                    part(screen, "editor:browser").affordances,
+                    std::string("editor:browser_filter")));
                 CHECK(files(screen).rows[0].label == "json/mapgen/house/2storymodern06.json");
                 CHECK(refused(state, "editor:browser_page", {.count = 1}));
                 return invoke("editor:browser_open", {.row = files(screen).rows[0].id});
