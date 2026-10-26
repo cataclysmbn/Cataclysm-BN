@@ -13,6 +13,7 @@
 #include "mod_manager.h"
 #include "options.h"
 #include "overmap/overmapbuffer.h"
+#include "overmap/overmapbuffer_registry.h"
 #include "state_helpers.h"
 #include "type_id.h"
 #include "world.h"
@@ -110,6 +111,10 @@ TEST_CASE(
     REQUIRE(made != nullptr);
     const auto reload = [](WORLDINFO* const info) {
         world_generator->set_active_world(info);
+        // As game::setup does: overmaps point into the region settings the reload replaces.
+        for_each_overmapbuffer([](const dimension_id& /*dimension*/, overmapbuffer& buffer) {
+            buffer.clear();
+        });
         auto ui = loading_ui(false);
         init::load_world_modfiles(ui, g->get_active_world(), SAVE_ARTIFACTS);
     };
