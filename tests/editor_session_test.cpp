@@ -3496,6 +3496,53 @@ TEST_CASE(
     CHECK(back[0].other.entry == 0);
 }
 
+TEST_CASE("a square beside two squares of an entry is one neighbour", "[editor_levels]") {
+    const auto index = editor::level_index(
+        {.layouts = {
+             {{tripoint(0, 0, 0), {.name = "a"}},
+              {tripoint(1, 0, 0), {.name = "b"}},
+              {tripoint(0, 1, 0), {.name = "c"}},
+              {tripoint(1, 1, 0), {.name = "d"}}}}});
+    const auto entries = std::vector<editor::document_object>{
+        {.value = nlohmann::ordered_json::parse(R"({"om_terrain": [["a", "b"], ["c"]]})")},
+        {.value = nlohmann::ordered_json::parse(R"({"om_terrain": "d"})")}};
+    const auto beside = editor::neighbour_squares(index, entries, 0);
+    REQUIRE(beside.size() == 1);
+    CHECK(beside[0].origin == point(24, 24));
+}
+
+TEST_CASE(
+    "a square beside the canvas entry that draws nothing leaves the canvas in place",
+    "[editor_session][editor_levels]") {
+    const auto guard = screen_guard{};
+    auto entries = building_halves();
+    // urban_1_1, west of urban_1_2, is all its fill.
+    entries[0]["object"] = {{"fill_ter", "t_floor"}};
+    std::swap(entries[0], entries[1]);
+    const auto file = levels_file(entries);
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK(cell(screen, 0, 0).id == "square:0,0");
+                CHECK(body<ec::grid_body>(part(screen, "editor:canvas")).cols == 24);
+                CHECK(part(screen, "editor:canvas").affordances
+                      == std::vector<std::string>{"editor:paint"});
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 2);
+}
+
 TEST_CASE("an entry's own squares are none of its neighbours", "[editor_levels]") {
     const auto index = editor::level_index(
         {.layouts = {{{tripoint(0, 0, 0), {.name = "shop_front"}},
