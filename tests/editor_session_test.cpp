@@ -3426,6 +3426,19 @@ TEST_CASE("a terrain repeated up a tower leads past itself to the next one", "[e
     CHECK(editor::terrain_above(index, "tower", -1) == std::nullopt);
 }
 
+TEST_CASE(
+    "the level below an entry's square is another entry's even when the entry makes it too",
+    "[editor_levels]") {
+    const auto index = editor::level_index({.columns = {{{-1, "cellar"}, {0, "shop"}}}});
+    const auto entries = std::vector<editor::document_object>{
+        {.value = nlohmann::ordered_json::parse(R"({"om_terrain": [["shop", "cellar"]]})")},
+        {.value = nlohmann::ordered_json::parse(R"({"om_terrain": "cellar"})")}};
+    const auto below = editor::stacked_squares(index, entries, 0, -1);
+    REQUIRE(below.size() == 1);
+    CHECK(below[0].origin == point_zero);
+    CHECK(below[0].other.entry == 1);
+}
+
 TEST_CASE("an entry of several overmap terrains makes each of them", "[editor_levels]") {
     const auto entries = std::vector<editor::document_object>{
         {.value = nlohmann::ordered_json::parse(R"({"om_terrain": ["shed", "barn"]})")}};
