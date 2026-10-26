@@ -110,11 +110,11 @@ struct clip_size {
 };
 
 /// `placed`, in a clip of `size`, turned a quarter clockwise with it.
-auto turned(const placement& placed, const clip_size& size) -> placement;
+auto turned(placement placed, const clip_size& size) -> placement;
 /// `placed`, in a clip of `size`, mirrored left to right with it.
-auto mirrored_x(const placement& placed, const clip_size& size) -> placement;
+auto mirrored_x(placement placed, const clip_size& size) -> placement;
 /// `placed`, in a clip of `size`, mirrored top to bottom with it.
-auto mirrored_y(const placement& placed, const clip_size& size) -> placement;
+auto mirrored_y(placement placed, const clip_size& size) -> placement;
 
 struct field_edit {
     std::size_t object = 0;

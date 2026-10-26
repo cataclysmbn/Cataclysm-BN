@@ -217,9 +217,16 @@ auto rotated(const symbol_grid& clip) -> symbol_grid {
     return turned;
 }
 
-auto mirrored_x(const symbol_grid& /*clip*/) -> symbol_grid { return {}; }
+auto mirrored_x(const symbol_grid& clip) -> symbol_grid {
+    return clip | std::views::transform([](const auto& row) {
+               return row | std::views::reverse | std::ranges::to<std::vector>();
+           })
+         | std::ranges::to<symbol_grid>();
+}
 
-auto mirrored_y(const symbol_grid& /*clip*/) -> symbol_grid { return {}; }
+auto mirrored_y(const symbol_grid& clip) -> symbol_grid {
+    return clip | std::views::reverse | std::ranges::to<symbol_grid>();
+}
 
 auto paste(document& doc, const paste_options& options) -> std::expected<std::size_t, std::string> {
     if (options.object >= doc.objects().size()) {

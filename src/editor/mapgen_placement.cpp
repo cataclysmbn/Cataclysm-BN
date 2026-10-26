@@ -104,17 +104,38 @@ auto remove_placement(document& doc, const placement_at& at) -> std::expected<vo
         {.object = at.object, .pointer = last ? kind.to_string() : (kind / at.index).to_string()});
 }
 
-auto placements_inside(
-    const document& /*doc*/, const std::size_t /*object*/, const placement_area& /*area*/)
+auto placements_inside(const document& doc, const std::size_t object, const placement_area& area)
     -> std::vector<placement> {
-    return {};
+    const auto within = [](const placement_range& range, const placement_range& outer) {
+        return range.min >= outer.min && range.max <= outer.max;
+    };
+    return placements_of(doc, object) | std::views::filter([&](const placement& placed) {
+               return within(placed.x, area.x) && within(placed.y, area.y);
+           })
+         | std::views::transform([&](placement placed) {
+               placed.x = {.min = placed.x.min - area.x.min, .max = placed.x.max - area.x.min};
+               placed.y = {.min = placed.y.min - area.y.min, .max = placed.y.max - area.y.min};
+               return placed;
+           })
+         | std::ranges::to<std::vector>();
 }
 
-auto turned(const placement& placed, const clip_size& /*size*/) -> placement { return placed; }
+auto turned(placement placed, const clip_size& size) -> placement {
+    const auto x = placed.x;
+    placed.x = {.min = size.rows - 1 - placed.y.max, .max = size.rows - 1 - placed.y.min};
+    placed.y = x;
+    return placed;
+}
 
-auto mirrored_x(const placement& placed, const clip_size& /*size*/) -> placement { return placed; }
+auto mirrored_x(placement placed, const clip_size& size) -> placement {
+    placed.x = {.min = size.columns - 1 - placed.x.max, .max = size.columns - 1 - placed.x.min};
+    return placed;
+}
 
-auto mirrored_y(const placement& placed, const clip_size& /*size*/) -> placement { return placed; }
+auto mirrored_y(placement placed, const clip_size& size) -> placement {
+    placed.y = {.min = size.rows - 1 - placed.y.max, .max = size.rows - 1 - placed.y.min};
+    return placed;
+}
 
 auto set_field(document& doc, const field_edit& edit) -> std::expected<void, std::string> {
     if (edit.object >= doc.objects().size()) {
