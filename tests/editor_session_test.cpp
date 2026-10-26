@@ -30,6 +30,7 @@
 #    include "overmap/omdata.h"
 #    include "overmap/overmapbuffer.h"
 #    include "path_info.h"
+#    include "player_activity.h"
 #    include "point.h"
 #    include "state_helpers.h"
 #    include "type_id.h"
@@ -1836,6 +1837,57 @@ TEST_CASE(
     // The file holds the state saved, at the second step, and not the edit after it.
     CHECK(rows[15].get<std::string>() == std::string(24, '.'));
     CHECK(rows[0].get<std::string>() == std::string(24, '.'));
+}
+
+TEST_CASE(
+    "the editor lets turns pass as the avatar waits and opens again after them",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        switch (step++) {
+            case 0:
+                return invoke("editor:advance", {.count = 5});
+            default:
+                FAIL("the editor outlived its wait");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 1);
+    const auto& waiting = get_avatar().activity;
+    REQUIRE(waiting);
+    CHECK(waiting->id() == activity_id("ACT_WAIT"));
+    CHECK(waiting->get_moves_left() == to_moves<int>(5_turns));
+    CHECK_FALSE(editor::reopens_after_waiting());
+
+    get_avatar().cancel_activity();
+    calendar::turn += 5_turns;
+    CHECK(editor::reopens_after_waiting());
+    CHECK_FALSE(editor::reopens_after_waiting());
+
+    const auto waited = [](const ec::screen_view& screen) {
+        const auto* const found = ec::find_component(*screen.root, "editor:waited");
+        return found ? body<ec::text_body>(*found).markup : std::string();
+    };
+    step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                CHECK(waited(screen) == "5 turns passed.");
+                return invoke("editor:export_width", {.count = 1});
+            case 1:
+                CHECK(waited(screen).empty());
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 2);
+    editor::reset_editor_session();
 }
 
 TEST_CASE(
