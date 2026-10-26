@@ -147,6 +147,15 @@ async function playEveryOperation(session: Session) {
   await session.choose("5 minutes")
   await session.clear()
 
+  // A mode set to a named value; setting the value it holds again changes nothing.
+  const mode = (id: string) => session.mirror.avatar.modes.find((entry: Value) => entry.id === id)
+  const other =
+    mode("thief_mode").values.find((entry: Value) => entry.id !== mode("thief_mode").value).id
+  for (let times = 0; times < 2; times++) {
+    await run({ kind: "set_mode", mode: "thief_mode", value: other })
+    assertEquals(mode("thief_mode").value, other)
+  }
+
   // Waypoint travel: the first click plans the route, the second walks it.
   const here = session.mirror.avatar.at
   const reach = (pos: Value) => Math.max(Math.abs(pos.x - here.x), Math.abs(pos.y - here.y))
