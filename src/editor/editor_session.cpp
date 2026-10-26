@@ -719,6 +719,26 @@ struct session {
         }
     }
 
+    /// Why the rows cannot use `glyph`, counting its own terrain mapping only when `own`: the
+    /// loader wants terrain under every symbol of a whole map unless fill_ter or predecessor_mapgen
+    /// gives it.
+    auto bare(const std::string& glyph, const bool own) const -> std::optional<std::string> {
+        const auto& entry = doc->objects()[object].value;
+        const auto filled =
+            entry.contains("object")
+            && (entry["object"].contains("fill_ter")
+                || entry["object"].contains("predecessor_mapgen"));
+        const auto found = std::ranges::find(legend, glyph, &legend_symbol::symbol);
+        const auto under =
+            found != legend.end()
+            && std::ranges::any_of(found->lines, [&](const legend_line& line) {
+                   return line.layer == "terrain" && (own || !line.source.empty());
+               });
+        if (!entry.contains("om_terrain") || filled || under) { return std::nullopt; }
+        return string_format(
+            _("%s has no terrain under it: map its terrain first, or set fill_ter."), glyph);
+    }
+
     auto apply_mapping() -> void {
         if (utf8_width(mapping_symbol) != 1) {
             notice = _("A symbol is one character wide.");
@@ -726,6 +746,15 @@ struct session {
         }
         if (!std::ranges::contains(legend_layers, mapping_layer)) {
             notice = string_format(_("%s maps no symbols."), mapping_layer);
+            return;
+        }
+        const auto found = std::ranges::find(legend, mapping_symbol, &legend_symbol::symbol);
+        const auto used = found != legend.end() && found->used;
+        const auto removes_terrain = mapping_layer == "terrain" && mapping_value.empty();
+        const auto adds_other = mapping_layer != "terrain" && !mapping_value.empty();
+        if (const auto refused = bare(mapping_symbol, !removes_terrain);
+            refused && ((removes_terrain && used) || adds_other)) {
+            notice = *refused;
             return;
         }
         auto value = std::optional<nlohmann::ordered_json>{};
@@ -855,6 +884,16 @@ struct session {
         if (!current->kind) {
             symbol = symbol_at(grid, at);
             return;
+        }
+        const auto inks =
+            *current->kind == shape_kind::room
+                ? std::vector{symbol, room_fill}
+                : std::vector{symbol};
+        for (const auto& ink : inks) {
+            if (const auto refused = bare(ink, true)) {
+                notice = *refused;
+                return;
+            }
         }
         if (current->spans && !anchor) {
             anchor = at;
