@@ -66,14 +66,42 @@ auto move_placement(document& doc, const placement_move& move) -> std::expected<
          {{"op", "add"}, {"path", (at / "y").to_string()}, {"value", written(move.y)}}});
 }
 
-auto add_placement(document& /*doc*/, const placement_add& /*add*/)
-    -> std::expected<void, std::string> {
-    return std::unexpected(std::string("not yet"));
+auto add_placement(document& doc, const placement_add& add) -> std::expected<void, std::string> {
+    if (add.object >= doc.objects().size()) {
+        return std::unexpected("no object " + std::to_string(add.object));
+    }
+    if (!add.value.is_object()) {
+        return std::unexpected(std::string("a placement is a JSON object"));
+    }
+    if (add.x.min > add.x.max || add.y.min > add.y.max) {
+        return std::unexpected(std::string("a range must not end before it starts"));
+    }
+    auto placed = add.value;
+    placed["x"] = written(add.x);
+    placed["y"] = written(add.y);
+    const auto& value = doc.objects()[add.object].value;
+    const auto kind = ordered_json::json_pointer("/object") / add.kind;
+    const auto has = value.contains(kind) && value[kind].is_array();
+    return set_field(
+        doc,
+        {.object = add.object,
+         .pointer = has ? (kind / "-").to_string() : kind.to_string(),
+         .value = has ? placed : ordered_json::array({placed})});
 }
 
-auto remove_placement(document& /*doc*/, const placement_at& /*at*/)
-    -> std::expected<void, std::string> {
-    return std::unexpected(std::string("not yet"));
+auto remove_placement(document& doc, const placement_at& at) -> std::expected<void, std::string> {
+    if (at.object >= doc.objects().size()) {
+        return std::unexpected("no object " + std::to_string(at.object));
+    }
+    const auto& value = doc.objects()[at.object].value;
+    const auto kind = ordered_json::json_pointer("/object") / at.kind;
+    if (!value.contains(kind) || !value[kind].is_array() || at.index >= value[kind].size()) {
+        return std::unexpected("no placement " + at.kind + " " + std::to_string(at.index));
+    }
+    const auto last = value[kind].size() == 1;
+    return set_field(
+        doc,
+        {.object = at.object, .pointer = last ? kind.to_string() : (kind / at.index).to_string()});
 }
 
 auto set_field(document& doc, const field_edit& edit) -> std::expected<void, std::string> {
