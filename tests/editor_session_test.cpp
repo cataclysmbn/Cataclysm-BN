@@ -3222,4 +3222,75 @@ TEST_CASE(
     CHECK(step == 1);
 }
 
+/// A mod file of a house's ground floor beside another house, its roof, open air on its west half,
+/// and a nested chunk; removed when the test ends.
+struct levels_file {
+    std::filesystem::path path =
+        std::filesystem::path(PATH_INFO::user_moddir()) / "editor_session_test" / "levels.json";
+
+    levels_file() {
+        auto ground = nlohmann::ordered_json::array();
+        auto roof = nlohmann::ordered_json::array();
+        for (auto row = 0; row < 24; ++row) {
+            ground.push_back(std::string(48, '.'));
+            roof.push_back(std::string(12, ' ') + std::string(12, 'r'));
+        }
+        const auto entries = nlohmann::ordered_json::array(
+            {{{"type", "mapgen"},
+              {"method", "json"},
+              {"om_terrain",
+               nlohmann::ordered_json::array(
+                   {nlohmann::ordered_json::array({"house_01", "house_04"})})},
+              {"object", {{"rows", ground}, {"terrain", {{".", "t_floor"}}}}}},
+             {{"type", "mapgen"},
+              {"method", "json"},
+              {"om_terrain", "house_01_roof"},
+              {"object",
+               {{"rows", roof}, {"terrain", {{" ", "t_open_air"}, {"r", "t_flat_roof"}}}}}},
+             {{"type", "mapgen"},
+              {"method", "json"},
+              {"nested_mapgen_id", "editor_session_test_levels_chunk"},
+              {"object",
+               {{"mapgensize", {1, 1}}, {"rows", {"#"}}, {"terrain", {{"#", "t_wall"}}}}}}});
+        std::filesystem::create_directories(path.parent_path());
+        auto out = std::ofstream(path, std::ios::binary | std::ios::trunc);
+        out << format_json(entries.dump()).value();
+    }
+
+    ~levels_file() { std::filesystem::remove_all(path.parent_path()); }
+};
+
+TEST_CASE(
+    "the canvas of an overmap terrain's mapgen outlines each overmap square",
+    "[editor_session][editor_levels]") {
+    const auto guard = screen_guard{};
+    const auto file = levels_file{};
+    const auto block = [](const ec::boundary_state& state) {
+        return wire_part(state, "editor:canvas").value("block", nlohmann::json());
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK(body<ec::grid_body>(part(screen, "editor:canvas")).cols == 48);
+                CHECK(block(state) == nlohmann::json{{"x", 24}, {"y", 24}});
+                return invoke("editor:object", {.row = "object:2"});
+            case 2:
+                CHECK(block(state).is_null());
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 3);
+}
+
 #endif // CATA_MCP
