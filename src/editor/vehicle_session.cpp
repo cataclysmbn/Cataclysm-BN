@@ -1190,9 +1190,15 @@ auto session_view(const session& state) -> ec::screen_view {
                    {.id = live_set_id, .label = _("Value"), .args = text_of(live_form_id)}));
         }
         affordances.push_back(ec::invoke_affordance(
-            {.id = undo_id, .label = _("Undo"), .enabled = !state.live_undo.empty()}));
+            {.id = undo_id,
+             .label = _("Undo"),
+             .keys = {"CTRL+Z"},
+             .enabled = !state.live_undo.empty()}));
         affordances.push_back(ec::invoke_affordance(
-            {.id = redo_id, .label = _("Redo"), .enabled = !state.live_redo.empty()}));
+            {.id = redo_id,
+             .label = _("Redo"),
+             .keys = {"CTRL+Y"},
+             .enabled = !state.live_redo.empty()}));
         affordances.push_back(ec::invoke_affordance({.id = done_id, .label = _("Done")}));
     } else {
         const auto& doc = *state.doc;
@@ -1227,12 +1233,12 @@ auto session_view(const session& state) -> ec::screen_view {
            ec::invoke_affordance(
                {.id = spawn_set_id, .label = _("Value"), .args = text_of(spawn_form_id)}));
         affordances.push_back(ec::invoke_affordance({.id = spawn_id, .label = _("Spawn")}));
-        affordances.push_back(
-            ec::invoke_affordance({.id = undo_id, .label = _("Undo"), .enabled = doc.can_undo()}));
-        affordances.push_back(
-            ec::invoke_affordance({.id = redo_id, .label = _("Redo"), .enabled = doc.can_redo()}));
-        affordances.push_back(
-            ec::invoke_affordance({.id = save_id, .label = _("Save"), .enabled = doc.dirty()}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = undo_id, .label = _("Undo"), .keys = {"CTRL+Z"}, .enabled = doc.can_undo()}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = redo_id, .label = _("Redo"), .keys = {"CTRL+Y"}, .enabled = doc.can_redo()}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = save_id, .label = _("Save"), .keys = {"CTRL+S"}, .enabled = doc.dirty()}));
         affordances.push_back(ec::invoke_affordance(
             {.id = save_as_id, .label = _("Save as"), .args = {.text = ec::text_shape{}}}));
     }
