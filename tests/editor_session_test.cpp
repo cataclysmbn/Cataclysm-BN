@@ -1150,6 +1150,80 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the editor cuts a selection with its placements and pastes it mirrored, each one undo step",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file(nlohmann::ordered_json::parse(
+        R"({"place_monster": [{"monster": "mon_zombie", "x": [3, 5], "y": 7}]})"));
+    auto step = 0;
+    const auto placed = [](const ec::screen_view& screen) {
+        return body<ec::list_body>(part(screen, "editor:placements")).rows;
+    };
+    const auto clipboard = [](const ec::screen_view& screen) {
+        const auto& stats = body<ec::panel_body>(part(screen, "editor:document")).stats;
+        const auto found = std::ranges::find(stats, "clipboard", &ec::panel_stat::key);
+        REQUIRE(found != stats.end());
+        return found->value;
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK_FALSE(affordance(screen, "editor:cut").enabled);
+                return invoke("editor:paint", {.row = "square:3,7"});
+            case 2:
+                return invoke("editor:tool", {.row = "tool:select"});
+            case 3:
+                return invoke("editor:paint", {.row = "square:2,6"});
+            case 4:
+                return invoke("editor:paint", {.row = "square:5,8"});
+            case 5:
+                return invoke("editor:inside", {.row = "symbol:."});
+            case 6:
+                return invoke("editor:cut");
+            case 7:
+                // What is cut leaves the inside symbol, and takes the placements wholly inside.
+                CHECK(cell(screen, 3, 7).glyph == ".");
+                CHECK(placed(screen).empty());
+                CHECK(clipboard(screen) == "4x3");
+                return invoke("editor:flip_x");
+            case 8:
+                return invoke("editor:tool", {.row = "tool:paste"});
+            case 9:
+                return invoke("editor:paint", {.row = "square:10,10"});
+            case 10:
+                CHECK(cell(screen, 12, 11).glyph == "#");
+                REQUIRE(placed(screen).size() == 1);
+                CHECK(placed(screen)[0].columns[0].value == "10-12");
+                CHECK(placed(screen)[0].columns[1].value == "11");
+                return invoke("editor:undo");
+            case 11:
+                CHECK(cell(screen, 12, 11).glyph == ".");
+                CHECK(placed(screen).empty());
+                return invoke("editor:undo");
+            case 12:
+                CHECK(cell(screen, 3, 7).glyph == "#");
+                CHECK(placed(screen).size() == 1);
+                return invoke("editor:undo");
+            case 13:
+                CHECK(saved(screen) == "Yes");
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 14);
+    CHECK(read_file(file.path) == file.text);
+}
+
+TEST_CASE(
     "the editor's catalog finds what a legend can name and puts it in the legend form",
     "[editor_session][engine_client_component]") {
     const auto guard = screen_guard{};
