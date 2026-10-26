@@ -34,6 +34,7 @@
 #include "string_formatter.h"
 #include "translations.h"
 #include "trap.h"
+#include "type_id.h"
 #include "ui_manager.h"
 
 #include <algorithm>
@@ -338,13 +339,14 @@ auto editable_place(const std::filesystem::path& path) -> bool {
 }
 
 /// What the new mapgen form writes: a file of the user mods holding one mapgen of an overmap
-/// terrain, or one nested chunk of that id, its squares all one terrain.
+/// terrain, one nested chunk of that id, its squares all one terrain, or one palette of that id
+/// mapping a symbol to that terrain.
 struct new_mapgen {
     std::string path;
-    /// The id of the overmap terrain, or of the chunk.
+    /// The id of the overmap terrain, of the chunk or of the palette.
     std::string om_terrain;
     std::string fill = "t_floor";
-    /// `mapgen` or `nested`.
+    /// `mapgen`, `nested` or `palette`.
     std::string kind = "mapgen";
     /// The side of a nested chunk, in squares.
     std::string size = "4";
@@ -380,14 +382,24 @@ auto write_new_file(const std::string& made, const nlohmann::ordered_json& entri
 /// Writes `made`'s file; the error says why it was not written.
 auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string> {
     if (auto checked = check_new_path(made.path); !checked) { return checked; }
+    if (made.kind != "mapgen" && made.kind != "nested" && made.kind != "palette") {
+        return std::unexpected(_("A new file holds a mapgen, a nested chunk or a palette."));
+    }
     if (made.om_terrain.empty()) {
         return std::unexpected(_("A mapgen names its overmap terrain."));
     }
     if (!ter_str_id(made.fill).is_valid()) {
         return std::unexpected(string_format(_("%s is no terrain."), made.fill));
     }
-    if (made.kind != "mapgen" && made.kind != "nested") {
-        return std::unexpected(_("A new file holds a mapgen or a nested chunk."));
+    if (made.kind == "palette") {
+        // The loader keeps one palette of an id.
+        if (palette_id(made.om_terrain).is_valid()) {
+            return std::unexpected(string_format(_("%s is a palette already."), made.om_terrain));
+        }
+        return write_new_file(
+            made.path,
+            nlohmann::ordered_json::array(
+                {{{"type", "palette"}, {"id", made.om_terrain}, {"terrain", {{".", made.fill}}}}}));
     }
     const auto nested = made.kind == "nested";
     auto side = 24;
@@ -1726,14 +1738,19 @@ auto session_view(const session& state) -> ec::screen_view {
         .body = ec::form_body{
             .fields =
                 {{.id = "path", .label = _("New file"), .value = state.made.path},
-                 {.id = "om_terrain", .label = _("Overmap terrain"), .value = state.made.om_terrain},
+                 {.id = "om_terrain",
+                  .label = state.made.kind == "palette" ? _("Palette id")
+                         : state.made.kind == "nested"  ? _("Chunk id")
+                                                        : _("Overmap terrain"),
+                  .value = state.made.om_terrain},
                  {.id = "fill", .label = _("Terrain"), .value = state.made.fill},
                  {.id = "kind",
                   .label = _("Kind"),
                   .value = state.made.kind,
                   .type = "select",
                   .options = {{.id = "mapgen", .label = _("Mapgen")},
-                              {.id = "nested", .label = _("Nested chunk")}}},
+                              {.id = "nested", .label = _("Nested chunk")},
+                              {.id = "palette", .label = _("Palette")}}},
                  {.id = "size", .label = _("Chunk size"), .value = state.made.size}},
             .submit = new_apply_id}});
     late.push_back(ec::list(
