@@ -1330,6 +1330,26 @@ auto submap::rebuild_absorption_cache( const map &m, const tripoint_bub_sm &grid
     // The bubble tripoint location of 0,0 in our cv envelope, which is -1,-1 from our submap 0,0.
     const tripoint_bub_ms cv_abs_trip = abs_trip + cv_to_sm_ms_rel_adj;
 
+    // The border of the envelope reads the eight submaps around this one. Look each up once instead of
+    // going through the map and its dimension registry for every border tile.
+    auto &buffer = m.get_mapbuffer();
+    std::array<std::array<submap *, 3>, 3> around = {};
+    for( int ox = 0; ox < 3; ox++ ) {
+        for( int oy = 0; oy < 3; oy++ ) {
+            const auto neighbour = tripoint_bub_sm( grid_pos.x() + ox - 1, grid_pos.y() + oy - 1,
+                                                    grid_pos.z() );
+            if( ( ox == 1 && oy == 1 ) || neighbour.x() < 0 || neighbour.y() < 0 ||
+                neighbour.x() >= m.getmapsize() || neighbour.y() >= m.getmapsize() ) {
+                continue;
+            }
+            auto *const sm = buffer.lookup_submap_in_memory( map_local_to_abs( m, neighbour ) );
+            if( sm != nullptr && sm->outside_dirty ) {
+                sm->rebuild_outside_cache( above, neighbour );
+            }
+            around[ox][oy] = sm;
+        }
+    }
+
     for( uint8_t x = 0; x < checkvars_envelope_max_x; x++ ) {
         for( uint8_t y = 0; y < checkvars_envelope_max_y; y++ ) {
             auto &cv = checkvars[x][y];
@@ -1343,11 +1363,18 @@ auto submap::rebuild_absorption_cache( const map &m, const tripoint_bub_sm &grid
                     continue;
                 } else {
                     const auto &tidx = lev_cache.idx( tile.x(), tile.y() );
-                    const auto &ter = m.ter( tile );
-                    const auto &furn = m.furn( tile );
+                    const auto ox = x == 0 ? 0 : x == checkvars_boundary_max_x ? 2 : 1;
+                    const auto oy = y == 0 ? 0 : y == checkvars_boundary_max_y ? 2 : 1;
+                    const auto *const side = around[ox][oy];
+                    const auto side_tile = point_sm_ms{ x == 0 ? SEEX - 1 : x == checkvars_boundary_max_x ? 0 : x - 1,
+                                                        y == 0 ? SEEY - 1 : y == checkvars_boundary_max_y ? 0 : y - 1 };
+                    const bool beyond_bounds = buffer.is_outside_pocket_dimension_bounds( map_local_to_abs( m, tile ) );
+                    const ter_id ter = beyond_bounds ? buffer.get_boundary_terrain() :
+                                       side ? side->get_ter( side_tile ) : t_null;
+                    const furn_id furn = beyond_bounds || !side ? f_null : side->get_furn( side_tile );
                     // Rather common for tents, standalone curtains, and other such oddities to have one of these. These will count for adjacency purposes, so long as they are not permeable.
                     cv[7] = furn->has_flag( TFLAG_NO_SCENT ) || furn->has_flag( TFLAG_BLOCK_WIND );
-                    cv[2] = m.is_outside( tile );
+                    cv[2] = !side || side->outside_cache[side_tile.x()][side_tile.y()];
                     cv[3] = ( !at_max_zlev ) ? above->floor_cache[tidx] > 0 : false;
                     // There are something like 5 pieces of furniture with the reduce scent flag, and most of them are cardboard walls that are also permeable. Fine to not check that.
                     cv[4] = ter->has_flag( TFLAG_PERMEABLE ) || ter->has_flag( TFLAG_REDUCE_SCENT ) ||
