@@ -2260,4 +2260,83 @@ TEST_CASE(
     CHECK(get_avatar().abs_pos() == at);
 }
 
+TEST_CASE(
+    "the editor opens a palette, edits its legend and names what the loader says of it",
+    "[editor_session][editor_palette]") {
+    const auto guard = screen_guard{};
+    const auto path =
+        std::filesystem::path(PATH_INFO::user_moddir()) / "editor_session_test" / "palette.json";
+    std::filesystem::create_directories(path.parent_path());
+    const auto cleanup = on_out_of_scope([&] { std::filesystem::remove_all(path.parent_path()); });
+    {
+        auto out = std::ofstream(path, std::ios::binary | std::ios::trunc);
+        out << format_json(
+                   nlohmann::ordered_json::array(
+                       {{{"type", "palette"},
+                         {"id", "editor_session_test_palette"},
+                         {"palettes", {"no_such_palette"}},
+                         {"terrain", {{".", "t_floor"}}},
+                         {"furniture", {{"c", "f_chair"}}}}})
+                       .dump())
+                   .value();
+    }
+    const auto ids = [](const ec::screen_view& screen, const std::string& list) {
+        return body<ec::list_body>(part(screen, list)).rows | std::views::transform(&ec::row::id)
+             | std::ranges::to<std::vector>();
+    };
+    const auto set = [](const std::string& id, const std::string& text) {
+        return invoke("editor:mapping_set", {.row = id, .text = text});
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = path.string()});
+            case 1: {
+                const auto& objects = body<ec::list_body>(part(screen, "editor:objects")).rows;
+                REQUIRE(objects.size() == 1);
+                CHECK(objects[0].label == "editor_session_test_palette");
+                CHECK(objects[0].selected);
+                CHECK(ids(screen, "editor:legend")
+                      == std::vector<std::string>{"symbol:.", "symbol:c"});
+                // A palette has no rows to draw on.
+                CHECK(ec::find_component(*screen.root, "editor:canvas") == nullptr);
+                CHECK_FALSE(has_affordance(screen, "editor:paint"));
+                const auto& messages = body<ec::list_body>(part(screen, "editor:diagnostics")).rows;
+                CHECK(std::ranges::any_of(messages, [](const ec::row& row) {
+                    return row.label.find("no_such_palette") != std::string::npos
+                        && row.description == "/palettes/0";
+                }));
+                return set("symbol", "x");
+            }
+            case 2:
+                return set("value", "t_dirt");
+            case 3:
+                return invoke("editor:mapping_apply");
+            case 4:
+                CHECK(ids(screen, "editor:legend")
+                      == std::vector<std::string>{"symbol:.", "symbol:c", "symbol:x"});
+                return invoke("editor:save");
+            case 5: {
+                const auto written = nlohmann::ordered_json::parse(read_file(path));
+                CHECK(written[0]["terrain"]
+                      == nlohmann::ordered_json{{".", "t_floor"}, {"x", "t_dirt"}});
+                CHECK_FALSE(written[0].contains("object"));
+                return invoke("editor:undo");
+            }
+            case 6:
+                CHECK(ids(screen, "editor:legend")
+                      == std::vector<std::string>{"symbol:.", "symbol:c"});
+                return invoke("editor:save");
+            default:
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 8);
+}
+
 #endif // CATA_MCP
