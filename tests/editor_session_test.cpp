@@ -2036,6 +2036,72 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "a mapgen reads the palettes of its own file as they are edited",
+    "[editor_session][editor_palette]") {
+    const auto guard = screen_guard{};
+    auto rows = nlohmann::ordered_json::array();
+    for (auto row = 0; row < 24; ++row) { rows.push_back(std::string(24, row == 0 ? 'x' : '.')); }
+    const auto file = mod_file{{{"palettes", {"editor_session_test_palette"}}, {"rows", rows}}};
+    {
+        // The file's palette, which the game never loaded.
+        auto entries = nlohmann::ordered_json::parse(file.text);
+        entries.push_back(
+            {{"type", "palette"},
+             {"id", "editor_session_test_palette"},
+             {"terrain", {{"x", "t_dirt"}}}});
+        auto out = std::ofstream(file.path, std::ios::binary | std::ios::trunc);
+        out << format_json(entries.dump()).value();
+    }
+    const auto line = [](const ec::screen_view& screen, const std::string& symbol) {
+        const auto& rows = body<ec::list_body>(part(screen, "editor:legend")).rows;
+        const auto found = std::ranges::find(rows, "symbol:" + symbol, &ec::row::id);
+        REQUIRE(found != rows.end());
+        return *found;
+    };
+    const auto messages = [](const ec::screen_view& screen) {
+        return body<ec::list_body>(part(screen, "editor:diagnostics")).rows
+             | std::views::transform(&ec::row::label) | std::ranges::to<std::vector>();
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK(messages(screen).empty());
+                CHECK(line(screen, "x").description == "From editor_session_test_palette");
+                CHECK(line(screen, "x").columns.front().value == R"("t_dirt")");
+                return invoke("editor:object", {.row = "object:1"});
+            case 2:
+                return invoke("editor:mapping_set", {.row = "symbol", .text = "x"});
+            case 3:
+                return invoke("editor:mapping_set", {.row = "value", .text = "t_grass"});
+            case 4:
+                return invoke("editor:mapping_apply");
+            case 5:
+                return invoke("editor:object", {.row = "object:0"});
+            case 6:
+                // The mapgen reads the palette as edited, before it is saved.
+                CHECK(line(screen, "x").columns.front().value == R"("t_grass")");
+                CHECK(messages(screen).empty());
+                return act("QUIT");
+            case 7:
+                return answer("Leave without saving");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 8);
+    // The game's palettes are as it loaded them.
+    CHECK_FALSE(palette_id("editor_session_test_palette").is_valid());
+}
+
+TEST_CASE(
     "the editor creates a palette file in the user mods and opens it on its legend",
     "[editor_session][editor_palette]") {
     const auto guard = screen_guard{};
