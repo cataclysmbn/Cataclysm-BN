@@ -2585,14 +2585,24 @@ TEST_CASE(
                             return live(at % (SEEX * 2), at / (SEEX * 2)) == ter_id("t_floor");
                         })
                     > SEEX * SEEY * 2);
+                return invoke("editor:object", {.row = "object:1"});
+            }
+            case 4: {
+                // The stamp stays in the world while the palette is open, and can be taken back.
+                const auto& stats = body<ec::panel_body>(part(screen, "editor:document")).stats;
+                CHECK(std::ranges::contains(stats, std::string("stamped"), &ec::panel_stat::key));
+                CHECK(affordance(screen, "editor:unstamp").enabled);
                 return invoke("editor:unstamp");
             }
-            case 4:
-                return invoke("editor:apply");
             case 5:
+                CHECK_FALSE(has_affordance(screen, "editor:unstamp"));
+                return invoke("editor:object", {.row = "object:0"});
+            case 6:
+                return invoke("editor:apply");
+            case 7:
                 CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
                 return invoke("editor:undo");
-            case 6:
+            case 8:
                 return invoke("editor:save");
             default:
                 return act("QUIT");
@@ -2600,7 +2610,7 @@ TEST_CASE(
     });
 
     editor::run_editor_session();
-    CHECK(step == 8);
+    CHECK(step == 10);
 }
 
 TEST_CASE(
