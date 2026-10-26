@@ -129,6 +129,7 @@ constexpr auto browser_open_id = "editor:browser_open";
 constexpr auto browser_filter_id = "editor:browser_filter";
 constexpr auto browser_page_id = "editor:browser_page";
 constexpr auto apply_id = "editor:apply";
+constexpr auto apply_on_save_id = "editor:apply_on_save";
 constexpr auto stamp_id = "editor:stamp";
 constexpr auto unstamp_id = "editor:unstamp";
 constexpr auto test_id = "editor:test";
@@ -488,6 +489,8 @@ struct session {
     int brush = 1;
     bool mirror_x = false;
     bool mirror_y = false;
+    /// Whether saving the file, or reading it again after it changed on disk, applies the entry.
+    bool apply_on_save = false;
     const tool* current = tools.data();
     std::optional<point> anchor = std::nullopt;
     /// The region the select tool marked, which `editor:copy` copies.
@@ -717,6 +720,7 @@ struct session {
         reopen();
         if (notice.empty()) {
             notice = string_format(_("%s changed on disk and was reloaded."), name);
+            if (apply_on_save && on_mapgen()) { apply(); }
         }
     }
     /// Reads the open file again, on the object it showed while the file still has it.
@@ -729,8 +733,27 @@ struct session {
         }
     }
     /// Writes the file; false, with the notice saying why, when it was not written.
-    auto save() -> bool { return told(save_document(*doc)); }
-    auto save_as(const std::string& name) -> void { told(save_document_as(*doc, name)); }
+    auto save() -> bool { return written(save_document(*doc)); }
+    auto save_as(const std::string& name) -> void { written(save_document_as(*doc, name)); }
+    auto written(const std::expected<void, std::string>& result) -> bool {
+        if (told(result) && apply_on_save && on_mapgen()) { apply(); }
+        return result.has_value();
+    }
+    /// Registers the entry as the game's: a mapgen as that of its overmap terrains, and the file's
+    /// nested chunks, which a nested chunk is applied as, as the game's chunks of their ids.
+    auto apply() -> void {
+        auto stand_ins = file_stand_ins(stand_in_texts());
+        const auto& entry = doc->objects()[object].value;
+        const auto applied =
+            entry.contains("nested_mapgen_id")
+                ? std::expected<void, std::string>{}
+                : apply_mapgen(entry.dump());
+        if (applied) {
+            stand_ins.keep_chunks();
+        } else {
+            notice = applied.error();
+        }
+    }
     auto told(const std::expected<void, std::string>& result) -> bool {
         if (!result) { notice = result.error(); }
         return result.has_value();
@@ -1483,6 +1506,10 @@ auto session_view(const session& state) -> ec::screen_view {
                 {.key = "mirror_y",
                  .label = _("Mirror down"),
                  .value = state.mirror_y ? _("On") : _("Off")});
+            stats.push_back(
+                {.key = "apply_on_save",
+                 .label = _("Apply on save"),
+                 .value = state.apply_on_save ? _("On") : _("Off")});
             if (state.seed) {
                 stats.push_back(
                     {.key = "seed", .label = _("Seed"), .value = std::to_string(*state.seed)});
@@ -1742,6 +1769,8 @@ auto session_view(const session& state) -> ec::screen_view {
             if (state.on_mapgen()) {
                 affordances.push_back(
                     ec::invoke_affordance({.id = apply_id, .label = _("Apply to game")}));
+                affordances.push_back(
+                    ec::invoke_affordance({.id = apply_on_save_id, .label = _("Apply on save")}));
                 affordances.push_back(ec::invoke_affordance({.id = stamp_id, .label = _("Stamp")}));
                 affordances.push_back(ec::invoke_affordance(
                     {.id = unstamp_id,
@@ -2086,13 +2115,9 @@ auto run_editor_session() -> void {
         } else if (id == loot_id) {
             if (const auto at = square_of(row)) { state.roll_loot_at(*at); }
         } else if (id == apply_id) {
-            auto stand_ins = file_stand_ins(state.stand_in_texts());
-            const auto applied = apply_mapgen(state.doc->objects()[state.object].value.dump());
-            if (applied) {
-                stand_ins.keep_chunks();
-            } else {
-                state.notice = applied.error();
-            }
+            state.apply();
+        } else if (id == apply_on_save_id) {
+            state.apply_on_save = !state.apply_on_save;
         } else if (id == stamp_id) {
             state.stamp_here();
         } else if (id == unstamp_id) {
