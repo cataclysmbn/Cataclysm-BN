@@ -1421,6 +1421,357 @@ auto history_rows(const document& doc) -> std::vector<ec::row> {
     return rows;
 }
 
+/// The argument of an affordance that takes a row of .
+auto row_of(const char* const component) -> ec::arg_shape {
+    return ec::arg_shape{.row = ec::row_shape{.component_id = component}};
+}
+
+/// The stats of the document panel: the drawing state only on a mapgen.
+auto document_stats(const session& state) -> std::vector<ec::panel_stat> {
+    const auto& doc = *state.doc;
+    auto stats = std::vector<ec::panel_stat>{
+        {.key = "saved",
+         .label = _("Saved"),
+         .value = doc.dirty() ? _("No") : _("Yes"),
+         .tone = doc.dirty() ? "bad" : "good"},
+    };
+    // A palette has no rows to draw on, and no drawing state.
+    if (state.on_mapgen()) {
+        if (!state.symbol.empty()) {
+            stats.push_back({.key = "symbol", .label = _("Symbol"), .value = state.symbol});
+        }
+        if (!state.room_fill.empty()) {
+            stats.push_back({.key = "inside", .label = _("Inside"), .value = state.room_fill});
+        }
+        stats.push_back(
+            {.key = "brush", .label = _("Brush"), .value = std::to_string(state.brush)});
+        stats.push_back(
+            {.key = "mirror_x",
+             .label = _("Mirror across"),
+             .value = state.mirror_x ? _("On") : _("Off")});
+        if (!state.clip.empty()) {
+            stats.push_back(
+                {.key = "clipboard",
+                 .label = _("Clipboard"),
+                 .value = string_format("%zux%zu", state.clip.front().size(), state.clip.size())});
+        }
+        stats.push_back(
+            {.key = "mirror_y",
+             .label = _("Mirror down"),
+             .value = state.mirror_y ? _("On") : _("Off")});
+        stats.push_back(
+            {.key = "apply_on_save",
+             .label = _("Apply on save"),
+             .value = state.apply_on_save ? _("On") : _("Off")});
+        if (state.seed) {
+            stats.push_back(
+                {.key = "seed", .label = _("Seed"), .value = std::to_string(*state.seed)});
+        }
+    }
+    // The stamp stays in the world whichever entry is open.
+    if (state.stamped) {
+        stats.push_back({.key = "stamped", .label = _("Stamped"), .value = _("Yes")});
+    }
+    return stats;
+}
+
+/// The forms that move the picked placement and add one.
+auto placement_forms(
+    const session& state, std::vector<ec::component>& parts,
+    std::vector<ec::affordance>& affordances) -> void {
+    if (state.picked) {
+        parts.push_back(ec::component{
+            .id = move_id,
+            .affordances = {move_set_id, move_apply_id},
+            .body = ec::form_body{
+                .fields = {{.id = "x", .label = "x", .value = state.move_x},
+                           {.id = "y", .label = "y", .value = state.move_y}},
+                .submit = move_apply_id}});
+        affordances.push_back(ec::invoke_affordance(
+            {.id = move_set_id,
+             .label = _("Value"),
+             .args = {.row = ec::row_shape{.component_id = move_id}, .text = ec::text_shape{}}}));
+        affordances.push_back(ec::invoke_affordance({.id = move_apply_id, .label = _("Move")}));
+        affordances.push_back(
+            ec::invoke_affordance({.id = placement_delete_id, .label = _("Delete placement")}));
+    }
+    parts.push_back(ec::component{
+        .id = place_id,
+        .affordances = {place_set_id, place_apply_id},
+        .body = ec::form_body{
+            .fields =
+                {{.id = "kind",
+                  .label = _("Kind"),
+                  .value = state.place_kind,
+                  .type = "select",
+                  .options =
+                      placement_kinds | std::views::transform([](const std::string_view kind) {
+                          return ec::
+                              form_option{.id = std::string(kind), .label = std::string(kind)};
+                      })
+                      | std::ranges::to<std::vector>()},
+                 {.id = "x", .label = "x", .value = state.place_x},
+                 {.id = "y", .label = "y", .value = state.place_y},
+                 {.id = "value", .label = _("Value"), .value = state.place_value, .multiline = true}},
+            .submit = place_apply_id}});
+    affordances.push_back(ec::invoke_affordance(
+        {.id = place_set_id,
+         .label = _("Value"),
+         .args = {.row = ec::row_shape{.component_id = place_id}, .text = ec::text_shape{}}}));
+    affordances.push_back(
+        ec::invoke_affordance({.id = place_apply_id, .label = _("Add placement")}));
+}
+
+/// The legend form and the catalog that fills it.
+auto mapping_parts(
+    const session& state, std::vector<ec::component>& parts,
+    std::vector<ec::affordance>& affordances) -> void {
+    parts.push_back(ec::component{
+        .id = mapping_id,
+        .affordances = {mapping_set_id, mapping_apply_id},
+        .body = ec::form_body{
+            .fields =
+                {{.id = "symbol",
+                  .label = _("Symbol"),
+                  .value = state.mapping_symbol,
+                  .max_length = 1},
+                 {.id = "layer",
+                  .label = _("Layer"),
+                  .value = state.mapping_layer,
+                  .type = "select",
+                  .options = legend_layers | std::views::transform([](const char* const layer) {
+                                 return ec::form_option{.id = layer, .label = layer};
+                             })
+                           | std::ranges::to<std::vector>()},
+                 {.id = "value", .label = _("Places"), .value = state.mapping_value}},
+            .submit = mapping_apply_id}});
+    const auto found = state.catalog_entries();
+    parts.push_back(ec::tabs(
+        {.id = catalog_kinds_id,
+         .tabs = catalog_uses | std::views::transform([&](const catalog_use& use) {
+                     return ec::tab_entry{
+                         .id = std::string("catalog:") + use.id,
+                         .label = catalog_label(use),
+                         .selected = &use == state.catalog};
+                 })
+               | std::ranges::to<std::vector>(),
+         .select = catalog_kind_id,
+         .child = ec::list(
+             {.id = catalog_id,
+              .rows = found.entries | std::views::transform([](const catalog_entry& entry) {
+                          return ec::row{
+                              .id = "entry:" + entry.id,
+                              .label = entry.name,
+                              .columns = {{.key = "id", .label = _("ID"), .value = entry.id},
+                                          {.key = "mod", .label = _("Mod"), .value = entry.mod}}};
+                      })
+                    | std::ranges::to<std::vector>(),
+              .total = found.total,
+              .offset = state.catalog_page * page_size,
+              .selection = "single",
+              .activate = catalog_pick_id,
+              .filterable = true,
+              .filter = state.catalog_filter,
+              .search = catalog_filter_id})}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = catalog_kind_id, .label = _("Kind"), .args = row_of(catalog_kinds_id)}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = catalog_filter_id, .label = _("Filter"), .args = {.text = ec::text_shape{}}}));
+    affordances.push_back(page_affordance(
+        {.id = catalog_page_id,
+         .label = _("Page"),
+         .total = found.total,
+         .page = state.catalog_page}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = catalog_pick_id, .label = _("Use"), .args = row_of(catalog_id)}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = mapping_set_id,
+         .label = _("Value"),
+         .args = {.row = ec::row_shape{.component_id = mapping_id}, .text = ec::text_shape{}}}));
+    affordances.push_back(
+        ec::invoke_affordance({.id = mapping_apply_id, .label = _("Set mapping")}));
+}
+
+/// What puts the entry in the game: apply, stamp, test and the preview with its controls; a
+/// palette only takes back a stamp.
+auto game_parts(
+    const session& state, std::vector<ec::component>& parts,
+    std::vector<ec::affordance>& affordances) -> void {
+    if (state.on_mapgen()) {
+        affordances.push_back(ec::invoke_affordance({.id = apply_id, .label = _("Apply to game")}));
+        affordances.push_back(
+            ec::invoke_affordance({.id = apply_on_save_id, .label = _("Apply on save")}));
+        affordances.push_back(ec::invoke_affordance({.id = stamp_id, .label = _("Stamp")}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = unstamp_id,
+             .label = _("Take back stamp"),
+             .enabled = state.stamped.has_value()}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = test_id, .label = _("Test"), .enabled = state.stamped.has_value()}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = preview_id,
+             .label = _("Preview"),
+             .args = {
+                 .count = ec::count_shape{
+                     .min = 1,
+                     .max = std::numeric_limits<unsigned int>::max(),
+                     .initial = state.seed.value_or(1)}}}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = loot_id, .label = _("What can spawn here"), .args = row_of(canvas_id)}));
+        if (state.seed) {
+            affordances.push_back(ec::invoke_affordance({.id = reroll_id, .label = _("Re-roll")}));
+            affordances.push_back(ec::invoke_affordance(
+                {.id = turn_id, .label = _("Turn"), .args = row_of(rotation_id)}));
+            parts.push_back(ec::list(
+                {.id = rotation_id,
+                 .rows = preview_turns | std::views::transform([&](const preview_turn& turn) {
+                             return ec::row{
+                                 .id = string_format("turn:%d", turn.degrees),
+                                 .label = string_format("%d°", turn.degrees),
+                                 .selected = state.direction == turn.direction};
+                         })
+                       | std::ranges::to<std::vector>(),
+                 .selection = "single",
+                 .activate = turn_id}));
+            if (!state.parameters.empty()) {
+                affordances.push_back(ec::invoke_affordance(
+                    {.id = pin_set_id,
+                     .label = _("Pin"),
+                     .args = {.row = ec::row_shape{.component_id = pins_id},
+                              .text = ec::text_shape{}}}));
+                parts.push_back(ec::component{
+                    .id = pins_id,
+                    .affordances = {pin_set_id},
+                    .body = ec::form_body{
+                        .fields =
+                            state.parameters | std::views::transform([&](const auto& choice) {
+                                const auto pinned = state.pins.find(choice.name);
+                                return ec::form_field{
+                                    .id = choice.name,
+                                    .label = choice.name,
+                                    .value =
+                                        pinned == state.pins.end() ? std::string{} : pinned->second,
+                                    .type = "select",
+                                    .options = pin_options(choice.values)};
+                            })
+                            | std::ranges::to<std::vector>()}});
+            }
+        }
+        if (state.preview) { parts.push_back(preview_grid(*state.preview)); }
+        if (state.loot) {
+            parts.push_back(ec::list(
+                {.id = loot_id,
+                 .rows = *state.loot | std::views::transform([](const loot_share& share) {
+                     const auto type = itype_id(share.item);
+                     return ec::row{
+                         .id = "loot:" + share.item,
+                         .label = type.is_valid() ? item::nname(type) : share.item,
+                         .columns =
+                             {{.key = "id", .label = _("ID"), .value = share.item},
+                              {.key = "chance",
+                               .label = _("Chance"),
+                               .value = string_format("%.0f%%", share.chance * 100)},
+                              {.key = "mean",
+                               .label = _("Average"),
+                               .value = string_format("%.2f", share.mean)}}};
+                 }) | std::ranges::to<std::vector>()}));
+        }
+    } else if (state.stamped) {
+        affordances.push_back(
+            ec::invoke_affordance({.id = unstamp_id, .label = _("Take back stamp")}));
+    }
+}
+
+/// The form that creates a new file.
+auto new_file_form(const session& state) -> ec::component {
+    return ec::component{
+        .id = new_id,
+        .affordances = {new_set_id, new_apply_id},
+        .body = ec::form_body{
+            .fields =
+                {{.id = "path", .label = _("New file"), .value = state.made.path},
+                 {.id = "om_terrain",
+                  .label = state.made.kind == "palette" ? _("Palette id")
+                         : state.made.kind == "nested"  ? _("Chunk id")
+                                                        : _("Overmap terrain"),
+                  .value = state.made.om_terrain},
+                 {.id = "fill", .label = _("Terrain"), .value = state.made.fill},
+                 {.id = "kind",
+                  .label = _("Kind"),
+                  .value = state.made.kind,
+                  .type = "select",
+                  .options = {{.id = "mapgen", .label = _("Mapgen")},
+                              {.id = "nested", .label = _("Nested chunk")},
+                              {.id = "palette", .label = _("Palette")}}},
+                 {.id = "size", .label = _("Chunk size"), .value = state.made.size}},
+            .submit = new_apply_id}};
+}
+
+/// The page of data files shown.
+auto browser_list(const session& state, const std::vector<std::filesystem::path>& listed)
+    -> ec::component {
+    const auto shown =
+        std::views::drop(listed, state.browser_page * page_size) | std::views::take(page_size);
+    const auto data = std::filesystem::path(PATH_INFO::datadir());
+    return ec::list(
+        {.id = browser_id,
+         .rows =
+             shown | std::views::transform([&](const std::filesystem::path& path) {
+                 return ec::row{
+                     .id = "file:" + path.generic_string(),
+                     .label =
+                         (inside(path, PATH_INFO::datadir()) ? path.lexically_relative(data) : path)
+                             .generic_string()};
+             })
+             | std::ranges::to<std::vector>(),
+         .total = listed.size(),
+         .offset = state.browser_page * page_size,
+         .selection = "single",
+         .activate = browser_open_id,
+         .filterable = true,
+         .filter = state.browser_filter,
+         .search = browser_filter_id});
+}
+
+/// The affordances that pick what to draw with and draw; a palette only picks its symbol.
+auto drawing_affordances(const session& state) -> std::vector<ec::affordance> {
+    const auto symbol = ec::invoke_affordance(
+        {.id = symbol_id, .label = _("Symbol"), .args = row_of(legend_id)});
+    if (!state.on_mapgen()) { return {symbol}; }
+    auto affordances = std::vector<ec::affordance>{};
+    affordances.push_back(
+        ec::invoke_affordance({.id = tool_id, .label = _("Tool"), .args = row_of(tools_id)}));
+    affordances.push_back(symbol);
+    affordances.push_back(
+        ec::invoke_affordance({.id = inside_id, .label = _("Inside"), .args = row_of(legend_id)}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = brush_id,
+         .label = _("Brush"),
+         .args = {.count = ec::count_shape{.min = 1, .max = max_brush, .initial = state.brush}}}));
+    affordances.push_back(ec::invoke_affordance({.id = mirror_x_id, .label = _("Mirror across")}));
+    affordances.push_back(ec::invoke_affordance({.id = mirror_y_id, .label = _("Mirror down")}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = copy_id, .label = _("Copy"), .enabled = state.selected.has_value()}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = cut_id, .label = _("Cut"), .enabled = state.selected.has_value()}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = rotate_id, .label = _("Rotate"), .enabled = !state.clip.empty()}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = flip_x_id, .label = _("Flip across"), .enabled = !state.clip.empty()}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = flip_y_id, .label = _("Flip down"), .enabled = !state.clip.empty()}));
+    affordances.push_back(
+        ec::invoke_affordance({.id = paint_id, .label = _("Draw"), .args = row_of(canvas_id)}));
+    affordances.push_back(
+        ec::invoke_affordance({.id = stroke_begin_id, .label = _("Begin stroke")}));
+    affordances.push_back(ec::invoke_affordance({.id = stroke_end_id, .label = _("End stroke")}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = extract_palette_id,
+         .label = _("Extract legend to palette"),
+         .args = {.text = ec::text_shape{}}}));
+    return affordances;
+}
+
 auto session_view(const session& state) -> ec::screen_view {
     auto affordances = std::vector<ec::affordance>{ec::invoke_affordance(
         {.id = open_id, .label = _("Open"), .args = {.text = ec::text_shape{.field_id = path_id}}})};
@@ -1440,10 +1791,6 @@ auto session_view(const session& state) -> ec::screen_view {
                         .label = _("File"),
                         .value = state.doc ? state.doc->path().generic_string() : ""}},
             .submit = open_id}});
-    const auto row_of = [](const char* const component) {
-        return ec::arg_shape{.row = ec::row_shape{.component_id = component}};
-    };
-    auto late = std::vector<ec::component>{};
     affordances.push_back(ec::invoke_affordance(
         {.id = new_set_id,
          .label = _("New file"),
@@ -1460,9 +1807,6 @@ auto session_view(const session& state) -> ec::screen_view {
          .label = _("Export mapgen here"),
          .args = {.text = ec::text_shape{.field_id = path_id}}}));
     const auto listed = state.browser_entries();
-    const auto shown =
-        std::views::drop(listed, state.browser_page * page_size) | std::views::take(page_size);
-    const auto data = std::filesystem::path(PATH_INFO::datadir());
     affordances.push_back(ec::invoke_affordance(
         {.id = browser_open_id, .label = _("Open"), .args = row_of(browser_id)}));
     affordances.push_back(ec::invoke_affordance(
@@ -1475,54 +1819,10 @@ auto session_view(const session& state) -> ec::screen_view {
     affordances.push_back(ec::invoke_affordance({.id = vehicle_id, .label = _("Vehicle editor")}));
     if (state.doc) {
         const auto& doc = *state.doc;
-        auto stats = std::vector<ec::panel_stat>{
-            {.key = "saved",
-             .label = _("Saved"),
-             .value = doc.dirty() ? _("No") : _("Yes"),
-             .tone = doc.dirty() ? "bad" : "good"},
-        };
-        // A palette has no rows to draw on, and no drawing state.
-        if (state.on_mapgen()) {
-            if (!state.symbol.empty()) {
-                stats.push_back({.key = "symbol", .label = _("Symbol"), .value = state.symbol});
-            }
-            if (!state.room_fill.empty()) {
-                stats.push_back({.key = "inside", .label = _("Inside"), .value = state.room_fill});
-            }
-            stats.push_back(
-                {.key = "brush", .label = _("Brush"), .value = std::to_string(state.brush)});
-            stats.push_back(
-                {.key = "mirror_x",
-                 .label = _("Mirror across"),
-                 .value = state.mirror_x ? _("On") : _("Off")});
-            if (!state.clip.empty()) {
-                stats.push_back(
-                    {.key = "clipboard",
-                     .label = _("Clipboard"),
-                     .value =
-                         string_format("%zux%zu", state.clip.front().size(), state.clip.size())});
-            }
-            stats.push_back(
-                {.key = "mirror_y",
-                 .label = _("Mirror down"),
-                 .value = state.mirror_y ? _("On") : _("Off")});
-            stats.push_back(
-                {.key = "apply_on_save",
-                 .label = _("Apply on save"),
-                 .value = state.apply_on_save ? _("On") : _("Off")});
-            if (state.seed) {
-                stats.push_back(
-                    {.key = "seed", .label = _("Seed"), .value = std::to_string(*state.seed)});
-            }
-        }
-        // The stamp stays in the world whichever entry is open.
-        if (state.stamped) {
-            stats.push_back({.key = "stamped", .label = _("Stamped"), .value = _("Yes")});
-        }
         parts.push_back(ec::panel(
             {.id = "editor:document",
              .title = doc.path().generic_string(),
-             .stats = std::move(stats)}));
+             .stats = document_stats(state)}));
         const auto entries = state.entries();
         parts.push_back(ec::list(
             {.id = objects_id,
@@ -1591,56 +1891,7 @@ auto session_view(const session& state) -> ec::screen_view {
                 affordances.push_back(ec::invoke_affordance(
                     {.id = placement_id, .label = _("Show"), .args = row_of(placements_id)}));
             }
-            if (state.on_mapgen() && state.picked) {
-                parts.push_back(ec::component{
-                    .id = move_id,
-                    .affordances = {move_set_id, move_apply_id},
-                    .body = ec::form_body{
-                        .fields = {{.id = "x", .label = "x", .value = state.move_x},
-                                   {.id = "y", .label = "y", .value = state.move_y}},
-                        .submit = move_apply_id}});
-                affordances.push_back(ec::invoke_affordance(
-                    {.id = move_set_id,
-                     .label = _("Value"),
-                     .args = {.row = ec::row_shape{.component_id = move_id},
-                              .text = ec::text_shape{}}}));
-                affordances.push_back(
-                    ec::invoke_affordance({.id = move_apply_id, .label = _("Move")}));
-                affordances.push_back(ec::invoke_affordance(
-                    {.id = placement_delete_id, .label = _("Delete placement")}));
-            }
-            if (state.on_mapgen()) {
-                parts.push_back(ec::component{
-                    .id = place_id,
-                    .affordances = {place_set_id, place_apply_id},
-                    .body = ec::form_body{
-                        .fields =
-                            {{.id = "kind",
-                              .label = _("Kind"),
-                              .value = state.place_kind,
-                              .type = "select",
-                              .options = placement_kinds
-                                       | std::views::transform([](const std::string_view kind) {
-                                             return ec::form_option{
-                                                 .id = std::string(kind),
-                                                 .label = std::string(kind)};
-                                         })
-                                       | std::ranges::to<std::vector>()},
-                             {.id = "x", .label = "x", .value = state.place_x},
-                             {.id = "y", .label = "y", .value = state.place_y},
-                             {.id = "value",
-                              .label = _("Value"),
-                              .value = state.place_value,
-                              .multiline = true}},
-                        .submit = place_apply_id}});
-                affordances.push_back(ec::invoke_affordance(
-                    {.id = place_set_id,
-                     .label = _("Value"),
-                     .args = {.row = ec::row_shape{.component_id = place_id},
-                              .text = ec::text_shape{}}}));
-                affordances.push_back(
-                    ec::invoke_affordance({.id = place_apply_id, .label = _("Add placement")}));
-            }
+            if (state.on_mapgen()) { placement_forms(state, parts, affordances); }
             parts.push_back(ec::component{
                 .id = field_id,
                 .affordances = {field_set_id, field_apply_id},
@@ -1658,243 +1909,13 @@ auto session_view(const session& state) -> ec::screen_view {
                  .args =
                      {.row = ec::row_shape{.component_id = field_id}, .text = ec::text_shape{}}}));
             affordances.push_back(ec::invoke_affordance({.id = field_apply_id, .label = _("Set")}));
-            const auto symbol_affordance = ec::invoke_affordance(
-                {.id = symbol_id, .label = _("Symbol"), .args = row_of(legend_id)});
-            if (!state.on_mapgen()) { affordances.push_back(symbol_affordance); }
-            if (state.on_mapgen()) {
-                affordances.push_back(ec::invoke_affordance(
-                    {.id = tool_id, .label = _("Tool"), .args = row_of(tools_id)}));
-                affordances.push_back(symbol_affordance);
-                affordances.push_back(ec::invoke_affordance(
-                    {.id = inside_id, .label = _("Inside"), .args = row_of(legend_id)}));
-                affordances.push_back(ec::invoke_affordance(
-                    {.id = brush_id,
-                     .label = _("Brush"),
-                     .args = {.count = ec::count_shape{
-                                  .min = 1, .max = max_brush, .initial = state.brush}}}));
-                affordances.push_back(
-                    ec::invoke_affordance({.id = mirror_x_id, .label = _("Mirror across")}));
-                affordances.push_back(
-                    ec::invoke_affordance({.id = mirror_y_id, .label = _("Mirror down")}));
-                affordances.push_back(ec::invoke_affordance(
-                    {.id = copy_id, .label = _("Copy"), .enabled = state.selected.has_value()}));
-                affordances.push_back(ec::invoke_affordance(
-                    {.id = cut_id, .label = _("Cut"), .enabled = state.selected.has_value()}));
-                affordances.push_back(ec::invoke_affordance(
-                    {.id = rotate_id, .label = _("Rotate"), .enabled = !state.clip.empty()}));
-                affordances.push_back(ec::invoke_affordance(
-                    {.id = flip_x_id, .label = _("Flip across"), .enabled = !state.clip.empty()}));
-                affordances.push_back(ec::invoke_affordance(
-                    {.id = flip_y_id, .label = _("Flip down"), .enabled = !state.clip.empty()}));
-                affordances.push_back(ec::invoke_affordance(
-                    {.id = paint_id, .label = _("Draw"), .args = row_of(canvas_id)}));
-                affordances.push_back(
-                    ec::invoke_affordance({.id = stroke_begin_id, .label = _("Begin stroke")}));
-                affordances.push_back(
-                    ec::invoke_affordance({.id = stroke_end_id, .label = _("End stroke")}));
-                affordances.push_back(ec::invoke_affordance(
-                    {.id = extract_palette_id,
-                     .label = _("Extract legend to palette"),
-                     .args = {.text = ec::text_shape{}}}));
-            }
-            parts.push_back(ec::component{
-                .id = mapping_id,
-                .affordances = {mapping_set_id, mapping_apply_id},
-                .body = ec::form_body{
-                    .fields =
-                        {{.id = "symbol",
-                          .label = _("Symbol"),
-                          .value = state.mapping_symbol,
-                          .max_length = 1},
-                         {.id = "layer",
-                          .label = _("Layer"),
-                          .value = state.mapping_layer,
-                          .type = "select",
-                          .options =
-                              legend_layers | std::views::transform([](const char* const layer) {
-                                  return ec::form_option{.id = layer, .label = layer};
-                              })
-                              | std::ranges::to<std::vector>()},
-                         {.id = "value", .label = _("Places"), .value = state.mapping_value}},
-                    .submit = mapping_apply_id}});
-            const auto found = state.catalog_entries();
-            parts.push_back(ec::tabs(
-                {.id = catalog_kinds_id,
-                 .tabs = catalog_uses | std::views::transform([&](const catalog_use& use) {
-                             return ec::tab_entry{
-                                 .id = std::string("catalog:") + use.id,
-                                 .label = catalog_label(use),
-                                 .selected = &use == state.catalog};
-                         })
-                       | std::ranges::to<std::vector>(),
-                 .select = catalog_kind_id,
-                 .child = ec::list(
-                     {.id = catalog_id,
-                      .rows = found.entries | std::views::transform([](const catalog_entry& entry) {
-                                  return ec::row{
-                                      .id = "entry:" + entry.id,
-                                      .label = entry.name,
-                                      .columns =
-                                          {{.key = "id", .label = _("ID"), .value = entry.id},
-                                           {.key = "mod", .label = _("Mod"), .value = entry.mod}}};
-                              })
-                            | std::ranges::to<std::vector>(),
-                      .total = found.total,
-                      .offset = state.catalog_page * page_size,
-                      .selection = "single",
-                      .activate = catalog_pick_id,
-                      .filterable = true,
-                      .filter = state.catalog_filter,
-                      .search = catalog_filter_id})}));
-            affordances.push_back(ec::invoke_affordance(
-                {.id = catalog_kind_id, .label = _("Kind"), .args = row_of(catalog_kinds_id)}));
-            affordances.push_back(ec::invoke_affordance(
-                {.id = catalog_filter_id,
-                 .label = _("Filter"),
-                 .args = {.text = ec::text_shape{}}}));
-            affordances.push_back(page_affordance(
-                {.id = catalog_page_id,
-                 .label = _("Page"),
-                 .total = found.total,
-                 .page = state.catalog_page}));
-            affordances.push_back(ec::invoke_affordance(
-                {.id = catalog_pick_id, .label = _("Use"), .args = row_of(catalog_id)}));
-            affordances.push_back(ec::invoke_affordance(
-                {.id = mapping_set_id,
-                 .label = _("Value"),
-                 .args = {.row = ec::row_shape{.component_id = mapping_id},
-                          .text = ec::text_shape{}}}));
-            affordances.push_back(
-                ec::invoke_affordance({.id = mapping_apply_id, .label = _("Set mapping")}));
-            if (state.on_mapgen()) {
-                affordances.push_back(
-                    ec::invoke_affordance({.id = apply_id, .label = _("Apply to game")}));
-                affordances.push_back(
-                    ec::invoke_affordance({.id = apply_on_save_id, .label = _("Apply on save")}));
-                affordances.push_back(ec::invoke_affordance({.id = stamp_id, .label = _("Stamp")}));
-                affordances.push_back(ec::invoke_affordance(
-                    {.id = unstamp_id,
-                     .label = _("Take back stamp"),
-                     .enabled = state.stamped.has_value()}));
-                affordances.push_back(ec::invoke_affordance(
-                    {.id = test_id, .label = _("Test"), .enabled = state.stamped.has_value()}));
-                affordances.push_back(ec::invoke_affordance(
-                    {.id = preview_id,
-                     .label = _("Preview"),
-                     .args = {
-                         .count = ec::count_shape{
-                             .min = 1,
-                             .max = std::numeric_limits<unsigned int>::max(),
-                             .initial = state.seed.value_or(1)}}}));
-                affordances.push_back(ec::invoke_affordance(
-                    {.id = loot_id, .label = _("What can spawn here"), .args = row_of(canvas_id)}));
-                if (state.seed) {
-                    affordances.push_back(
-                        ec::invoke_affordance({.id = reroll_id, .label = _("Re-roll")}));
-                    affordances.push_back(ec::invoke_affordance(
-                        {.id = turn_id, .label = _("Turn"), .args = row_of(rotation_id)}));
-                    parts.push_back(ec::list(
-                        {.id = rotation_id,
-                         .rows =
-                             preview_turns | std::views::transform([&](const preview_turn& turn) {
-                                 return ec::row{
-                                     .id = string_format("turn:%d", turn.degrees),
-                                     .label = string_format("%d°", turn.degrees),
-                                     .selected = state.direction == turn.direction};
-                             })
-                             | std::ranges::to<std::vector>(),
-                         .selection = "single",
-                         .activate = turn_id}));
-                    if (!state.parameters.empty()) {
-                        affordances.push_back(ec::invoke_affordance(
-                            {.id = pin_set_id,
-                             .label = _("Pin"),
-                             .args = {.row = ec::row_shape{.component_id = pins_id},
-                                      .text = ec::text_shape{}}}));
-                        parts.push_back(ec::component{
-                            .id = pins_id,
-                            .affordances = {pin_set_id},
-                            .body = ec::form_body{
-                                .fields = state.parameters
-                                        | std::views::transform([&](const auto& choice) {
-                                              const auto pinned = state.pins.find(choice.name);
-                                              return ec::form_field{
-                                                  .id = choice.name,
-                                                  .label = choice.name,
-                                                  .value = pinned == state.pins.end()
-                                                             ? std::string{}
-                                                             : pinned->second,
-                                                  .type = "select",
-                                                  .options = pin_options(choice.values)};
-                                          })
-                                        | std::ranges::to<std::vector>()}});
-                    }
-                }
-                if (state.preview) { parts.push_back(preview_grid(*state.preview)); }
-                if (state.loot) {
-                    parts.push_back(ec::list(
-                        {.id = loot_id,
-                         .rows = *state.loot | std::views::transform([](const loot_share& share) {
-                             const auto type = itype_id(share.item);
-                             return ec::row{
-                                 .id = "loot:" + share.item,
-                                 .label = type.is_valid() ? item::nname(type) : share.item,
-                                 .columns =
-                                     {{.key = "id", .label = _("ID"), .value = share.item},
-                                      {.key = "chance",
-                                       .label = _("Chance"),
-                                       .value = string_format("%.0f%%", share.chance * 100)},
-                                      {.key = "mean",
-                                       .label = _("Average"),
-                                       .value = string_format("%.2f", share.mean)}}};
-                         }) | std::ranges::to<std::vector>()}));
-                }
-            } else if (state.stamped) {
-                affordances.push_back(
-                    ec::invoke_affordance({.id = unstamp_id, .label = _("Take back stamp")}));
-            }
+            std::ranges::move(drawing_affordances(state), std::back_inserter(affordances));
+            mapping_parts(state, parts, affordances);
+            game_parts(state, parts, affordances);
         }
     }
-    late.push_back(ec::component{
-        .id = new_id,
-        .affordances = {new_set_id, new_apply_id},
-        .body = ec::form_body{
-            .fields =
-                {{.id = "path", .label = _("New file"), .value = state.made.path},
-                 {.id = "om_terrain",
-                  .label = state.made.kind == "palette" ? _("Palette id")
-                         : state.made.kind == "nested"  ? _("Chunk id")
-                                                        : _("Overmap terrain"),
-                  .value = state.made.om_terrain},
-                 {.id = "fill", .label = _("Terrain"), .value = state.made.fill},
-                 {.id = "kind",
-                  .label = _("Kind"),
-                  .value = state.made.kind,
-                  .type = "select",
-                  .options = {{.id = "mapgen", .label = _("Mapgen")},
-                              {.id = "nested", .label = _("Nested chunk")},
-                              {.id = "palette", .label = _("Palette")}}},
-                 {.id = "size", .label = _("Chunk size"), .value = state.made.size}},
-            .submit = new_apply_id}});
-    late.push_back(ec::list(
-        {.id = browser_id,
-         .rows =
-             shown | std::views::transform([&](const std::filesystem::path& path) {
-                 return ec::row{
-                     .id = "file:" + path.generic_string(),
-                     .label =
-                         (inside(path, PATH_INFO::datadir()) ? path.lexically_relative(data) : path)
-                             .generic_string()};
-             })
-             | std::ranges::to<std::vector>(),
-         .total = listed.size(),
-         .offset = state.browser_page * page_size,
-         .selection = "single",
-         .activate = browser_open_id,
-         .filterable = true,
-         .filter = state.browser_filter,
-         .search = browser_filter_id}));
-    std::ranges::move(late, std::back_inserter(parts));
+    parts.push_back(new_file_form(state));
+    parts.push_back(browser_list(state, listed));
     if (!state.notice.empty()) {
         parts.push_back(
             {.id = "editor:notice", .body = ec::text_body{.markup = state.notice, .tone = "bad"}});
