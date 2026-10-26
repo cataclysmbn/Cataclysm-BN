@@ -1,4 +1,5 @@
 #include "catch/catch.hpp"
+#include "editor/catalog.h"
 #include "editor/document.h"
 #include "editor/mapgen_check.h"
 #include "editor/mapgen_preview.h"
@@ -10,7 +11,12 @@
 #include <functional>
 #include <iostream>
 #include <string>
+#include <utility>
 #include <vector>
+
+#if defined(__GLIBC__)
+#    include <malloc.h>
+#endif
 
 namespace {
 
@@ -59,6 +65,32 @@ auto stroke_timing(const std::string& path, const std::size_t object, const int 
         });
 }
 
+/// Bytes the heap holds, small and mmapped blocks together.
+auto heap_bytes() -> std::size_t {
+#if defined(__GLIBC__)
+    const auto heap = mallinfo2();
+    return heap.uordblks + heap.hblkhd;
+#else
+    return 0;
+#endif
+}
+
+/// MiB the undo history of `steps` point strokes on object `object` of `path` holds. Each stroke
+/// changes a square no earlier one did, so every step is a real one.
+auto undo_mib(const std::string& path, const std::size_t object, const int steps) -> double {
+    auto doc = editor::document::open(path).value();
+    const auto width = static_cast<int>(editor::symbols_of(doc, object).front().size());
+    const auto before = heap_bytes();
+    for (auto step = 0; step < steps; ++step) {
+        REQUIRE(editor::stroke(
+            doc,
+            {.object = object, .drawn = {.from = {step % width, step / width}}, .symbol = "x"}));
+    }
+    REQUIRE(doc.depth() == static_cast<std::size_t>(steps));
+    const auto held = heap_bytes() - before;
+    return static_cast<double>(held) / (1024.0 * 1024.0);
+}
+
 } // namespace
 
 TEST_CASE("editor operation times against their budgets", "[.][editor_timing]") {
@@ -83,6 +115,28 @@ TEST_CASE("editor operation times against their budgets", "[.][editor_timing]") 
                          text, {.at = tripoint_abs_omt(40, 40, 0), .seed = ++seed}));
                  }),
            100);
+
+    for (const auto& [kind, filter] :
+         {std::pair{editor::catalog_kind::terrain, "wall"},
+          std::pair{editor::catalog_kind::furniture, "chair"},
+          std::pair{editor::catalog_kind::item, "rifle"},
+          std::pair{editor::catalog_kind::monster, "zombie"}}) {
+        report(
+            "catalog page of 50 for '" + std::string(filter) + "' in kind "
+                + std::to_string(static_cast<int>(kind)),
+            timed([] {},
+                  [&] {
+                      REQUIRE(editor::search_catalog({.kind = kind, .filter = filter}).total > 0);
+                  }),
+            20);
+    }
+
+    for (const auto& [path, object] :
+         {std::pair{"data/json/mapgen/mall/mall_ground.json", 14UL},
+          std::pair{"data/json/mapgen/cground3x3.json", 0UL}}) {
+        std::cout << "editor-memory\tundo 1000 steps " << path << " object " << object
+                  << "\tMiB=" << undo_mib(path, object, 1000) << "\tbudget=64\n";
+    }
 
     const auto scratch = std::filesystem::temp_directory_path() / "cata_editor_timing.json";
     auto doc = std::optional<editor::document>{};
