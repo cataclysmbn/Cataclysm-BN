@@ -985,7 +985,7 @@
     "description": "You embody your omnivorous nature!  You are able to eat almost anything considered normal human food, with the exception of heavily processed foods.",
     "cancels": [ "ANTIWHEAT", "MEATARIAN", "ANTIFRUIT", "LACTOSE", "VEGETARIAN" ],
     "threshreq": [ "THRESH_ALPHA" ],
-    "category": [ "ALPHA" ],
+    "category": [ "ALPHA" ]
   },
   {
     "type": "mutation",
