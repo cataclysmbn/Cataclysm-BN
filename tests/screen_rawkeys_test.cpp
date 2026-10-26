@@ -264,8 +264,6 @@ TEST_CASE(
     CHECK(selected.qty() < selected.ammo->charges);
 }
 
-#endif // CATA_MCP
-
 TEST_CASE(
     "the item spawner says a wish was granted when it lists the items again",
     "[client][interaction][mcp][screens][wish]") {
@@ -303,3 +301,5 @@ TEST_CASE(
     CHECK(stage >= 3);
     CHECK(again.find("Wish granted") != std::string::npos);
 }
+
+#endif // CATA_MCP
