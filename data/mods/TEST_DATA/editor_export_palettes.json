@@ -1,0 +1,18 @@
+[
+  {
+    "type": "palette",
+    "id": "test_export_grass",
+    "terrain": { "a": "t_grass" }
+  },
+  {
+    "type": "palette",
+    "id": "test_export_dirt",
+    "terrain": { "a": "t_dirt" }
+  },
+  {
+    "type": "palette",
+    "id": "test_export_either",
+    "palettes": [ { "distribution": [ [ "test_export_grass", 1 ], [ "test_export_dirt", 1 ] ] } ],
+    "terrain": { "b": "t_floor" }
+  }
+]

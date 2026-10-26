@@ -226,3 +226,25 @@ TEST_CASE("an export refuses a palette the game does not have", "[editor_mapgen]
     REQUIRE_FALSE(exported);
     CHECK(exported.error().find("no_such_palette") != std::string::npos);
 }
+
+TEST_CASE("an export leaves a palette symbol that maps one of several choices", "[editor_mapgen]") {
+    clear_all_state();
+    const auto omt = get_avatar().abs_omt_pos();
+    auto& here = get_map();
+    for (auto y = 0; y < 24; ++y) {
+        for (auto x = 0; x < 24; ++x) {
+            const auto at = abs_to_bub(abs_at(omt, point(x, y)));
+            here.ter_set(at, ter_id(x < 12 ? "t_dirt" : "t_floor"));
+            here.furn_set(at, furn_id("f_null"));
+        }
+    }
+    const auto exported = editor::export_region(omt, point_rel_omt(1, 1), " test_export_either ");
+    REQUIRE(exported);
+    const auto& object = (*exported)["object"];
+    CHECK(object["palettes"] == nlohmann::ordered_json::array({"test_export_either"}));
+    CHECK(symbol_at(object, point(20, 0)) == "b");
+    // "a" is grass or dirt as the palette's distribution picks: dirt gets a symbol of its own.
+    const auto dirt = symbol_at(object, point(0, 0));
+    CHECK(dirt != "a");
+    CHECK(object["terrain"][dirt] == "t_dirt");
+}
