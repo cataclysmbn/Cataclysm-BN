@@ -2470,4 +2470,79 @@ TEST_CASE(
     CHECK(step == 8);
 }
 
+TEST_CASE(
+    "the editor extracts a mapgen's own legend to a palette of its file as one undo step",
+    "[editor_session][editor_palette]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{{{"furniture", {{"c", "f_chair"}}}}};
+    const auto lines = [](const ec::screen_view& screen) {
+        return body<ec::list_body>(part(screen, "editor:legend")).rows
+             | std::views::transform([](const ec::row& row) {
+                   return row.id + " " + row.columns.front().value + " " + row.description;
+               })
+             | std::ranges::to<std::vector>();
+    };
+    const auto notice = [](const ec::screen_view& screen) {
+        return body<ec::text_body>(part(screen, "editor:notice")).markup;
+    };
+    auto before = std::vector<std::string>{};
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                before = lines(screen);
+                return invoke("editor:extract_palette", {.text = "cabin_palette"});
+            case 2:
+                CHECK(notice(screen) == "cabin_palette is a palette already.");
+                return invoke("editor:extract_palette", {.text = "editor_session_test_extracted"});
+            case 3: {
+                // The symbols place what they did, now from the palette.
+                CHECK(
+                    lines(screen)
+                    == std::vector<std::string>{
+                        R"(symbol:# "t_wall" From editor_session_test_extracted)",
+                        R"(symbol:. "t_floor" From editor_session_test_extracted)",
+                        R"(symbol:c "f_chair" From editor_session_test_extracted)"});
+                CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
+                const auto& objects = body<ec::list_body>(part(screen, "editor:objects")).rows;
+                REQUIRE(objects.size() == 2);
+                CHECK(objects[0].selected);
+                CHECK(objects[1].label == "editor_session_test_extracted");
+                CHECK(body<ec::list_body>(part(screen, "editor:history")).rows.size() == 2);
+                return invoke("editor:save");
+            }
+            case 4: {
+                const auto written = nlohmann::ordered_json::parse(read_file(file.path));
+                REQUIRE(written.size() == 2);
+                CHECK(written[0]["object"]["palettes"]
+                      == nlohmann::ordered_json::array({"editor_session_test_extracted"}));
+                CHECK_FALSE(written[0]["object"].contains("terrain"));
+                CHECK_FALSE(written[0]["object"].contains("furniture"));
+                CHECK(
+                    written[1]
+                    == nlohmann::ordered_json{
+                        {"type", "palette"},
+                        {"id", "editor_session_test_extracted"},
+                        {"terrain", {{".", "t_floor"}, {"#", "t_wall"}}},
+                        {"furniture", {{"c", "f_chair"}}}});
+                return invoke("editor:undo");
+            }
+            case 5:
+                CHECK(lines(screen) == before);
+                CHECK(body<ec::list_body>(part(screen, "editor:objects")).rows.size() == 1);
+                return invoke("editor:save");
+            default:
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 7);
+    CHECK(read_file(file.path) == file.text);
+}
+
 #endif // CATA_MCP
