@@ -3,6 +3,7 @@
 #include "avatar.h"
 #include "editor/catalog.h"
 #include "editor/document.h"
+#include "editor/session_file.h"
 #include "editor/vehicle_design.h"
 #include "engine_client_component.h"
 #include "engine_client_world.h"
@@ -16,7 +17,6 @@
 #include "string_formatter.h"
 #include "string_utils.h"
 #include "translations.h"
-#include "ui.h"
 #include "ui_manager.h"
 #include "units_utility.h"
 #include "vehicle/veh_type.h"
@@ -29,6 +29,7 @@
 #include <filesystem>
 #include <fstream>
 #include <functional>
+#include <iterator>
 #include <limits>
 #include <optional>
 #include <ranges>
@@ -103,14 +104,6 @@ auto mount_of(const std::string& id) -> std::optional<point> {
     auto at = point{};
     if (std::sscanf(id.c_str(), "mount:%d,%d", &at.x, &at.y) != 2) { return std::nullopt; }
     return at;
-}
-
-/// Whether `path` lies inside `root`.
-auto inside(const std::filesystem::path& path, const std::string& root) -> bool {
-    auto error = std::error_code{};
-    const auto base = std::filesystem::weakly_canonical(root, error);
-    const auto relative = std::filesystem::weakly_canonical(path, error).lexically_relative(base);
-    return !error && !relative.empty() && *relative.begin() != "..";
 }
 
 /// `path` from the game's directory, the one that holds `data`, when it lies inside it, as a
@@ -444,7 +437,7 @@ struct session {
         const auto vehicles = get_map().get_vehicles();
         const auto path = std::filesystem::path(name);
         if (index >= vehicles.size()) { return; }
-        if (path.extension() != ".json" || !inside(path, PATH_INFO::user_moddir())) {
+        if (!is_mod_file(path)) {
             notice = string_format(
                 _("A design is exported to a new .json file in your mods, %s."),
                 PATH_INFO::user_moddir());
@@ -625,46 +618,21 @@ struct session {
         }
     }
 
-    auto written(const std::expected<void, save_error>& result) -> bool {
-        if (!result) {
-            switch (result.error()) {
-                case save_error::changed_on_disk:
-                    notice = _("The file changed on disk since it was opened; nothing was saved.");
-                    break;
-                case save_error::exists:
-                    notice = _("That file already exists; nothing was saved.");
-                    break;
-                case save_error::unwritable:
-                    notice = _("The file could not be written; save it as a file in your mods.");
-                    break;
-            }
-        }
+    auto told(const std::expected<void, std::string>& result) -> bool {
+        if (!result) { notice = result.error(); }
         return result.has_value();
     }
 
-    auto save() -> bool { return written(doc->save()); }
+    auto save() -> bool { return told(save_document(*doc)); }
 
-    auto save_as(const std::string& name) -> void {
-        const auto path = std::filesystem::path(name);
-        if (path.extension() != ".json" || !inside(path, PATH_INFO::user_moddir())) {
-            notice = string_format(
-                _("Save as writes a .json file in your mods, %s."), PATH_INFO::user_moddir());
-            return;
-        }
-        written(doc->save_as(path));
-    }
+    auto save_as(const std::string& name) -> void { told(save_document_as(*doc, name)); }
 
     /// Whether to leave: at once with nothing unsaved, else as the player answers.
     auto leave() -> bool {
         if (!doc || !doc->dirty()) { return true; }
-        auto menu = uilist{};
-        menu.text = _("Your changes to this file are not saved.");
-        menu.addentry(0, true, 's', _("Save and leave"));
-        menu.addentry(1, true, 'd', _("Leave without saving"));
-        menu.addentry(2, true, 'c', _("Stay"));
-        menu.query();
-        if (menu.ret == 1) { doc.reset(); }
-        return menu.ret == 1 || (menu.ret == 0 && save());
+        const auto answer = ask_leave();
+        if (answer == leave_answer::discard) { doc.reset(); }
+        return answer == leave_answer::discard || (answer == leave_answer::save && save());
     }
 };
 
@@ -1237,12 +1205,9 @@ auto session_view(const session& state) -> ec::screen_view {
            ec::invoke_affordance(
                {.id = spawn_set_id, .label = _("Value"), .args = text_of(spawn_form_id)}));
         affordances.push_back(ec::invoke_affordance({.id = spawn_id, .label = _("Spawn")}));
-        affordances.push_back(ec::invoke_affordance(
-            {.id = undo_id, .label = _("Undo"), .keys = {"CTRL+Z"}, .enabled = doc.can_undo()}));
-        affordances.push_back(ec::invoke_affordance(
-            {.id = redo_id, .label = _("Redo"), .keys = {"CTRL+Y"}, .enabled = doc.can_redo()}));
-        affordances.push_back(ec::invoke_affordance(
-            {.id = save_id, .label = _("Save"), .keys = {"CTRL+S"}, .enabled = doc.dirty()}));
+        std::ranges::
+            move(history_affordances(doc, {.undo = undo_id, .redo = redo_id, .save = save_id}),
+                 std::back_inserter(affordances));
         affordances.push_back(ec::invoke_affordance(
             {.id = save_as_id, .label = _("Save as"), .args = {.text = ec::text_shape{}}}));
     }

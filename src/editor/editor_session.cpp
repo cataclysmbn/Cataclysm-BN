@@ -16,6 +16,7 @@
 #include "editor/mapgen_source.h"
 #include "editor/mapgen_stamp.h"
 #include "editor/mapgen_stroke.h"
+#include "editor/session_file.h"
 #include "editor/vehicle_session.h"
 #include "engine_client_component.h"
 #include "engine_client_world.h"
@@ -32,7 +33,6 @@
 #include "string_formatter.h"
 #include "translations.h"
 #include "trap.h"
-#include "ui.h"
 #include "ui_manager.h"
 
 #include <algorithm>
@@ -41,6 +41,7 @@
 #include <charconv>
 #include <filesystem>
 #include <fstream>
+#include <iterator>
 #include <limits>
 #include <map>
 #include <optional>
@@ -326,13 +327,6 @@ auto mapgen_name(const nlohmann::ordered_json& value) -> std::string {
 }
 
 /// Whether `path` lies inside the game's data or the player's mods, where the editor may write.
-auto inside(const std::filesystem::path& path, const std::string& root) -> bool {
-    auto error = std::error_code{};
-    const auto base = std::filesystem::weakly_canonical(root, error);
-    const auto relative = std::filesystem::weakly_canonical(path, error).lexically_relative(base);
-    return !error && !relative.empty() && *relative.begin() != "..";
-}
-
 auto editable_place(const std::filesystem::path& path) -> bool {
     return path.extension() == ".json"
         && (inside(path, PATH_INFO::datadir()) || inside(path, PATH_INFO::user_moddir()));
@@ -356,7 +350,7 @@ constexpr auto max_chunk = 24;
 /// Whether a new file can be written at `made`; the error says why not.
 auto check_new_path(const std::string& made) -> std::expected<void, std::string> {
     const auto path = std::filesystem::path(made);
-    if (path.extension() != ".json" || !inside(path, PATH_INFO::user_moddir())) {
+    if (!is_mod_file(path)) {
         return std::unexpected(string_format(
             _("A new file goes in your mods, %s, and ends in .json."), PATH_INFO::user_moddir()));
     }
@@ -691,49 +685,23 @@ struct session {
         }
     }
     /// Writes the file; false, with the notice saying why, when it was not written.
-    auto save() -> bool { return written(doc->save()); }
-    /// Writes the document to a new file in the user mods, which it is from then on.
-    auto save_as(const std::string& name) -> void {
-        const auto path = std::filesystem::path(name);
-        if (path.extension() != ".json" || !inside(path, PATH_INFO::user_moddir())) {
-            notice = string_format(
-                _("Save as writes a .json file in your mods, %s."), PATH_INFO::user_moddir());
-            return;
-        }
-        written(doc->save_as(path));
-    }
-    auto written(const std::expected<void, save_error>& result) -> bool {
-        if (!result) {
-            switch (result.error()) {
-                case save_error::changed_on_disk:
-                    notice = _("The file changed on disk since it was opened; nothing was saved.");
-                    break;
-                case save_error::exists:
-                    notice = _("That file already exists; nothing was saved.");
-                    break;
-                case save_error::unwritable:
-                    notice = _("The file could not be written.");
-                    break;
-            }
-        }
+    auto save() -> bool { return told(save_document(*doc)); }
+    auto save_as(const std::string& name) -> void { told(save_document_as(*doc, name)); }
+    auto told(const std::expected<void, std::string>& result) -> bool {
+        if (!result) { notice = result.error(); }
         return result.has_value();
     }
     /// Whether to leave: at once with nothing unsaved, else as the player answers save, discard
     /// (which reads the file again) or stay.
     auto leave() -> bool {
         if (!doc || !doc->dirty()) { return true; }
-        auto menu = uilist{};
-        menu.text = _("Your changes to this file are not saved.");
-        menu.addentry(0, true, 's', _("Save and leave"));
-        menu.addentry(1, true, 'd', _("Leave without saving"));
-        menu.addentry(2, true, 'c', _("Stay"));
-        menu.query();
-        if (menu.ret == 1) {
+        const auto answer = ask_leave();
+        if (answer == leave_answer::discard) {
             reopen();
             // A file that cannot be read again is closed, so its edits do not come back.
             if (doc->dirty()) { doc.reset(); }
         }
-        return menu.ret == 1 || (menu.ret == 0 && save());
+        return answer == leave_answer::discard || (answer == leave_answer::save && save());
     }
     auto open(const std::string& name) -> void {
         const auto path = std::filesystem::path(name);
@@ -1409,12 +1377,9 @@ auto session_view(const session& state) -> ec::screen_view {
              .activate = object_id}));
         affordances.push_back(ec::invoke_affordance(
             {.id = object_id, .label = _("Edit"), .args = row_of(objects_id)}));
-        affordances.push_back(ec::invoke_affordance(
-            {.id = undo_id, .label = _("Undo"), .keys = {"CTRL+Z"}, .enabled = doc.can_undo()}));
-        affordances.push_back(ec::invoke_affordance(
-            {.id = redo_id, .label = _("Redo"), .keys = {"CTRL+Y"}, .enabled = doc.can_redo()}));
-        affordances.push_back(ec::invoke_affordance(
-            {.id = save_id, .label = _("Save"), .keys = {"CTRL+S"}, .enabled = doc.dirty()}));
+        std::ranges::
+            move(history_affordances(doc, {.undo = undo_id, .redo = redo_id, .save = save_id}),
+                 std::back_inserter(affordances));
         parts.push_back(ec::list(
             {.id = history_id,
              .rows = history_rows(doc),
