@@ -2,13 +2,18 @@
 #include "catch/catch.hpp"
 #include "editor/mapgen_export.h"
 #include "editor/mapgen_stamp.h"
+#include "item.h"
 #include "map/map.h"
+#include "map/submap.h"
+#include "map_helpers.h"
+#include "monster.h"
 #include "overmap/omdata.h"
 #include "overmap/overmapbuffer.h"
 #include "state_helpers.h"
 #include "trap.h"
 #include "type_id.h"
 
+#include <algorithm>
 #include <nlohmann/json.hpp>
 #include <string>
 
@@ -128,5 +133,39 @@ TEST_CASE("an exported region of overmap squares stamps back as one entry", "[ed
     auto stamped = editor::stamp_mapgen(entry.dump(), {.at = omt});
     REQUIRE(stamped);
     CHECK(here.ter(abs_to_bub(abs_at(east, point(3, 5)))) == ter_id("t_wall"));
+    editor::swap_stamp(*stamped);
+}
+
+TEST_CASE("an exported overmap square places its items and monsters", "[editor_mapgen]") {
+    clear_all_state();
+    const auto omt = get_avatar().abs_omt_pos();
+    auto& here = get_map();
+    const auto heap = abs_to_bub(abs_at(omt, point(8, 8)));
+    for (auto count = 0; count < 3; ++count) {
+        here.add_item(heap, item::spawn(itype_id("rock"), calendar::turn));
+    }
+    const auto lair = abs_to_bub(abs_at(omt, point(10, 10)));
+    spawn_test_monster("mon_zombie", lair);
+    const auto exported = editor::export_region(omt, point_rel_omt(1, 1));
+    REQUIRE(exported);
+    const auto& object = (*exported)["object"];
+    CHECK(object["place_item"]
+          == nlohmann::ordered_json::parse(R"([{"item":"rock","x":8,"y":8,"amount":3}])"));
+    CHECK(object["place_monster"]
+          == nlohmann::ordered_json::parse(R"([{"monster":"mon_zombie","x":10,"y":10}])"));
+    here.i_clear(heap);
+    auto stamped = editor::stamp_mapgen(exported->dump(), {.at = omt});
+    REQUIRE(stamped);
+    // Rocks count by charges: the three stamp back as one pile of three.
+    auto rocks = 0;
+    for (const auto* const it : here.i_at(heap)) {
+        rocks += it->typeId() == itype_id("rock") ? it->count() : 0;
+    }
+    CHECK(rocks == 3);
+    auto offset = point_sm_ms{};
+    const auto* const sm = here.get_submap_at(lair, offset);
+    CHECK(std::ranges::any_of(sm->spawns, [&](const spawn_point& spawn) {
+        return spawn.type == mtype_id("mon_zombie") && spawn.pos == offset;
+    }));
     editor::swap_stamp(*stamped);
 }
