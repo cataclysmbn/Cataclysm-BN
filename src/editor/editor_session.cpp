@@ -126,6 +126,7 @@ constexpr auto export_height_id = "editor:export_height";
 constexpr auto export_palette_id = "editor:export_palette";
 constexpr auto export_options_id = "editor:export_options";
 constexpr auto import_id = "editor:import";
+constexpr auto import_set_id = "editor:import_set";
 constexpr auto import_form_id = "editor:import_form";
 constexpr auto advance_id = "editor:advance";
 constexpr auto copy_id = "editor:copy";
@@ -495,8 +496,10 @@ struct session {
     std::optional<document> doc = std::nullopt;
     /// What the last command did not do, and why; empty when it did.
     std::string notice;
-    /// How many turns passed while the editor waited, until the next affordance.
-    std::optional<int> waited = std::nullopt;
+    /// What went right, said until the next affordance.
+    std::string status;
+    /// The mapgen text `editor:import` stamps.
+    std::string import_text;
     /// The object of `doc` on the canvas.
     std::size_t object = 0;
     std::string symbol;
@@ -1112,6 +1115,15 @@ struct session {
     auto stamp_here() -> void {
         const auto stand_ins = file_stand_ins(stand_in_texts());
         stamp_text(doc->objects()[object].value.dump());
+    }
+
+    /// Stamps the pasted text: a mapgen entry, or the first mapgen of a file's array of entries.
+    auto import_pasted() -> void {
+        const auto parsed = nlohmann::ordered_json::parse(import_text, nullptr, false);
+        const auto found =
+            parsed.is_array() ? std::ranges::find_if(parsed, is_json_mapgen) : parsed.end();
+        stamp_text(parsed.is_array() && found != parsed.end() ? found->dump() : import_text);
+        if (stamped && notice.empty()) { status = _("Stamped."); }
     }
 
     /// Stamps the mapgen entry in `text` over the avatar's overmap square, in place of any stamp.
@@ -1851,9 +1863,10 @@ auto session_view(const session& state) -> ec::screen_view {
          .label = _("Let turns pass"),
          .args = {.count = ec::count_shape{.min = 1, .max = max_advance, .initial = 60}}}));
     affordances.push_back(ec::invoke_affordance(
-        {.id = import_id,
-         .label = _("Stamp mapgen text"),
-         .args = {.text = ec::text_shape{.field_id = "import"}}}));
+        {.id = import_set_id,
+         .label = _("Mapgen to stamp"),
+         .args = {.row = ec::row_shape{.component_id = import_form_id}, .text = ec::text_shape{}}}));
+    affordances.push_back(ec::invoke_affordance({.id = import_id, .label = _("Stamp text")}));
     const auto listed = state.browser_entries();
     affordances.push_back(ec::invoke_affordance(
         {.id = browser_open_id, .label = _("Open"), .args = row_of(browser_id)}));
@@ -1972,20 +1985,22 @@ auto session_view(const session& state) -> ec::screen_view {
             .submit = export_palette_id}});
     parts.push_back(ec::component{
         .id = import_form_id,
-        .affordances = {import_id},
+        .affordances = {import_set_id, import_id},
         .body = ec::form_body{
-            .fields = {{.id = "import", .label = _("Mapgen to stamp"), .multiline = true}},
+            .fields =
+                {{.id = "import",
+                  .label = _("Mapgen to stamp"),
+                  .value = state.import_text,
+                  .multiline = true}},
             .submit = import_id}});
     parts.push_back(browser_list(state, listed));
     if (!state.notice.empty()) {
         parts.push_back(
             {.id = "editor:notice", .body = ec::text_body{.markup = state.notice, .tone = "bad"}});
     }
-    if (state.waited) {
+    if (!state.status.empty()) {
         parts.push_back(
-            {.id = "editor:waited",
-             .body = ec::text_body{
-                 .markup = string_format(_("%d turns passed."), *state.waited), .tone = "good"}});
+            {.id = "editor:status", .body = ec::text_body{.markup = state.status, .tone = "good"}});
     }
     // A palette has no canvas; its legend is what it edits.
     const auto* const active = state.on_mapgen() ? canvas_id : state.doc ? legend_id : "";
@@ -2020,7 +2035,8 @@ auto reopens_after_waiting() -> bool {
     const auto& waiting = get_avatar().activity;
     if (!advancing || (waiting && *waiting)) { return false; }
     const auto passed = to_turns<int>(calendar::turn - *std::exchange(advancing, std::nullopt));
-    (kept_session ? *kept_session : kept_session.emplace()).waited = passed;
+    (kept_session ? *kept_session : kept_session.emplace()).status =
+        string_format(_("%d turns passed."), passed);
     return true;
 }
 
@@ -2051,7 +2067,7 @@ auto run_editor_session() -> void {
         const auto& id = invoked->affordance_id;
         const auto row = invoked->args.row.value_or("");
         state.notice.clear();
-        state.waited.reset();
+        state.status.clear();
         state.watch();
         if (id == open_id) {
             state.open(invoked->args.text.value_or(""));
@@ -2104,8 +2120,10 @@ auto run_editor_session() -> void {
             return;
         } else if (id == unstamp_id) {
             state.unstamp();
+        } else if (id == import_set_id) {
+            state.import_text = invoked->args.text.value_or("");
         } else if (id == import_id) {
-            state.stamp_text(invoked->args.text.value_or(""));
+            state.import_pasted();
         } else if (id == export_palette_id) {
             state.export_palette = invoked->args.text.value_or("");
         } else if (id == browser_open_id) {
