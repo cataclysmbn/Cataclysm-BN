@@ -2309,6 +2309,11 @@ TEST_CASE(
             case 2: {
                 const auto rows = rows_of(screen, "construction:groups");
                 REQUIRE_FALSE(rows.empty());
+                CHECK(
+                    std::get<engine_client::list_body>(
+                        component_of(screen, "construction:groups").body)
+                        .filter
+                    == "TEST semantic construction");
                 return construct_row("construct:select", con.group.str());
             }
             case 3: {

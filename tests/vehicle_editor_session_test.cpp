@@ -194,6 +194,7 @@ TEST_CASE(
                 return invoke("vehicle:filter", {.text = "bicycle"});
             case 1:
                 CHECK(row(screen, "vehicle:prototypes", "prototype:bicycle").label == "Bicycle");
+                CHECK(body<ec::list_body>(part(screen, "vehicle:prototypes")).filter == "bicycle");
                 return invoke("vehicle:open", {.row = "prototype:bicycle"});
             case 2: {
                 CHECK(body<ec::panel_body>(part(screen, "vehicle:document")).title == "Bicycle");
@@ -229,6 +230,8 @@ TEST_CASE(
                 CHECK(rows(screen, "vehicle:stack").size() == 3);
                 return invoke("vehicle:part_filter", {.text = "frame_vertical"});
             case 4:
+                CHECK(
+                    body<ec::list_body>(part(screen, "vehicle:parts")).filter == "frame_vertical");
                 // A second frame is not mountable here, as the game says.
                 CHECK_FALSE(row(screen, "vehicle:parts", "vpart:xlframe_vertical").enabled);
                 CHECK_FALSE(row(screen, "vehicle:parts", "vpart:xlframe_vertical").denial.empty());
