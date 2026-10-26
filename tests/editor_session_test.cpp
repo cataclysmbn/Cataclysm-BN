@@ -818,6 +818,46 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the editor's legend flags a symbol the rows never use and one they use but nothing maps",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    auto rows = nlohmann::ordered_json::array({"z" + std::string(23, '.')});
+    for (auto row = 1; row < 24; ++row) { rows.push_back(std::string(24, '.')); }
+    const auto file = mod_file(
+        {{"rows", rows}, {"fill_ter", "t_floor"}, {"furniture", {{"C", "f_chair"}}}});
+    auto step = 0;
+    const auto use = [](const ec::screen_view& screen, const std::string& id) {
+        const auto& rows = body<ec::list_body>(part(screen, "editor:legend")).rows;
+        const auto found = std::ranges::find(rows, id, &ec::row::id);
+        REQUIRE(found != rows.end());
+        const auto column =
+            std::ranges::find(found->columns, "use", &game_client::interaction_column::key);
+        return column == found->columns.end() ? std::string{} : column->value;
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK(use(screen, "symbol:C") == "Unused");
+                CHECK(use(screen, "symbol:z") == "Undefined");
+                CHECK(use(screen, "symbol:.").empty());
+                CHECK(use(screen, "symbol:#") == "Unused");
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 2);
+}
+
+TEST_CASE(
     "the editor refuses a symbol the rows would use without terrain under it",
     "[editor_session][engine_client_component]") {
     const auto guard = screen_guard{};
