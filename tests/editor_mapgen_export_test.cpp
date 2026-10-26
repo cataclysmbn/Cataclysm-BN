@@ -6,6 +6,7 @@
 #include "overmap/omdata.h"
 #include "overmap/overmapbuffer.h"
 #include "state_helpers.h"
+#include "trap.h"
 #include "type_id.h"
 
 #include <nlohmann/json.hpp>
@@ -81,4 +82,29 @@ TEST_CASE("an export refuses an overmap square the map has not loaded", "[editor
     const auto exported = editor::export_omt(far);
     REQUIRE_FALSE(exported);
     CHECK(exported.error().find("loaded") != std::string::npos);
+}
+
+TEST_CASE("an exported overmap square stamps back its traps and fields", "[editor_mapgen]") {
+    clear_all_state();
+    const auto omt = get_avatar().abs_omt_pos();
+    auto& here = get_map();
+    const auto trapped = abs_to_bub(abs_at(omt, point(4, 4)));
+    const auto bloody = abs_to_bub(abs_at(omt, point(6, 6)));
+    here.trap_set(trapped, trap_id("tr_beartrap"));
+    here.add_field(bloody, field_type_id("fd_blood"), 2);
+    here.add_field(bloody, field_type_id("fd_bile"), 1);
+    const auto exported = editor::export_omt(omt);
+    REQUIRE(exported);
+    here.remove_trap(trapped);
+    here.remove_field(bloody, field_type_id("fd_blood"));
+    here.remove_field(bloody, field_type_id("fd_bile"));
+    auto stamped = editor::stamp_mapgen(exported->dump(), {.at = omt});
+    REQUIRE(stamped);
+    CHECK(here.tr_at(trapped).loadid == trap_id("tr_beartrap"));
+    CHECK(here.get_field_intensity(bloody, field_type_id("fd_blood")) == 2);
+    CHECK(here.get_field_intensity(bloody, field_type_id("fd_bile")) == 1);
+    CHECK(here.tr_at(abs_to_bub(abs_at(omt, point(5, 4)))).is_null());
+    CHECK(here.get_field_intensity(abs_to_bub(abs_at(omt, point(5, 6))), field_type_id("fd_blood"))
+          == 0);
+    editor::swap_stamp(*stamped);
 }
