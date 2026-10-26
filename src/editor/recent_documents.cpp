@@ -21,15 +21,21 @@ auto recent_documents() -> std::vector<recent_document> {
     const auto read = nlohmann::json::parse(in, nullptr, false);
     if (!read.is_array()) { return {}; }
     auto recent = std::vector<recent_document>{};
+    const auto text = [](const nlohmann::json& entry, const char* const key) {
+        return entry.contains(key) && entry[key].is_string();
+    };
+    // An entry in another shape, as a hand edit leaves, is skipped; mods that are no names are.
     for (const auto& entry : read) {
-        if (!entry.is_object()) { continue; }
+        if (!entry.is_object() || !text(entry, "editor") || !text(entry, "name")) { continue; }
         auto mods = std::vector<mod_id>{};
-        for (const auto& mod : entry.value("mods", nlohmann::json::array())) {
-            if (mod.is_string()) { mods.emplace_back(mod.get<std::string>()); }
+        if (entry.contains("mods") && entry["mods"].is_array()) {
+            for (const auto& mod : entry["mods"]) {
+                if (mod.is_string()) { mods.emplace_back(mod.get<std::string>()); }
+            }
         }
         recent.push_back(
-            {.editor = entry.value("editor", ""),
-             .name = entry.value("name", ""),
+            {.editor = entry["editor"].get<std::string>(),
+             .name = entry["name"].get<std::string>(),
              .mods = std::move(mods)});
     }
     return recent;
