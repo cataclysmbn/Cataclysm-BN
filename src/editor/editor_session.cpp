@@ -1952,10 +1952,8 @@ auto session_view(const session& state) -> ec::screen_view {
         .focus_row = state.focus ? point_row("square", *state.focus) : ""};
 }
 
-/// The square a canvas row names.
 /// The documents and view the editor keeps between visits.
 auto kept_session = std::optional<session>{};
-/// Whether the next visit is to the vehicle editor.
 /// What the next visit opens, as the main menu asked.
 auto first = std::optional<recent_document>{};
 
