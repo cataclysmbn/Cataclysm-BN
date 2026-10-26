@@ -124,6 +124,23 @@
               "submit": "editor:export_palette"
             },
             {
+              "id": "editor:import_form",
+              "kind": "form",
+              "affordances": [
+                "editor:import"
+              ],
+              "fields": [
+                {
+                  "id": "import",
+                  "label": "Mapgen to stamp",
+                  "value": "",
+                  "type": "text",
+                  "multiline": true
+                }
+              ],
+              "submit": "editor:import"
+            },
+            {
               "id": "editor:browser",
               "kind": "list",
               "affordances": [
@@ -738,6 +755,26 @@
             "args": {
               "text": {
                 "field_id": "palette"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:unstamp",
+            "label": "Take back stamp",
+            "keys": [],
+            "enabled": false,
+            "denial": "Not available now.",
+            "expect": "screen"
+          },
+          {
+            "id": "editor:import",
+            "label": "Stamp mapgen text",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {
+                "field_id": "import"
               }
             },
             "expect": "boundary"
@@ -2919,6 +2956,23 @@
               "submit": "editor:export_palette"
             },
             {
+              "id": "editor:import_form",
+              "kind": "form",
+              "affordances": [
+                "editor:import"
+              ],
+              "fields": [
+                {
+                  "id": "import",
+                  "label": "Mapgen to stamp",
+                  "value": "",
+                  "type": "text",
+                  "multiline": true
+                }
+              ],
+              "submit": "editor:import"
+            },
+            {
               "id": "editor:browser",
               "kind": "list",
               "affordances": [
@@ -3550,6 +3604,26 @@
             "expect": "boundary"
           },
           {
+            "id": "editor:unstamp",
+            "label": "Take back stamp",
+            "keys": [],
+            "enabled": false,
+            "denial": "Not available now.",
+            "expect": "screen"
+          },
+          {
+            "id": "editor:import",
+            "label": "Stamp mapgen text",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {
+                "field_id": "import"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
             "id": "editor:browser_open",
             "label": "Open",
             "keys": [],
@@ -3937,14 +4011,6 @@
             "label": "Stamp",
             "keys": [],
             "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "editor:unstamp",
-            "label": "Take back stamp",
-            "keys": [],
-            "enabled": false,
-            "denial": "Not available now.",
             "expect": "screen"
           },
           {
@@ -6219,6 +6285,23 @@
               "submit": "editor:export_palette"
             },
             {
+              "id": "editor:import_form",
+              "kind": "form",
+              "affordances": [
+                "editor:import"
+              ],
+              "fields": [
+                {
+                  "id": "import",
+                  "label": "Mapgen to stamp",
+                  "value": "",
+                  "type": "text",
+                  "multiline": true
+                }
+              ],
+              "submit": "editor:import"
+            },
+            {
               "id": "editor:browser",
               "kind": "list",
               "affordances": [
@@ -6850,6 +6933,26 @@
             "expect": "boundary"
           },
           {
+            "id": "editor:unstamp",
+            "label": "Take back stamp",
+            "keys": [],
+            "enabled": false,
+            "denial": "Not available now.",
+            "expect": "screen"
+          },
+          {
+            "id": "editor:import",
+            "label": "Stamp mapgen text",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {
+                "field_id": "import"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
             "id": "editor:browser_open",
             "label": "Open",
             "keys": [],
@@ -7235,14 +7338,6 @@
             "label": "Stamp",
             "keys": [],
             "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "editor:unstamp",
-            "label": "Take back stamp",
-            "keys": [],
-            "enabled": false,
-            "denial": "Not available now.",
             "expect": "screen"
           },
           {
@@ -9389,6 +9484,23 @@
               "submit": "editor:export_palette"
             },
             {
+              "id": "editor:import_form",
+              "kind": "form",
+              "affordances": [
+                "editor:import"
+              ],
+              "fields": [
+                {
+                  "id": "import",
+                  "label": "Mapgen to stamp",
+                  "value": "",
+                  "type": "text",
+                  "multiline": true
+                }
+              ],
+              "submit": "editor:import"
+            },
+            {
               "id": "editor:browser",
               "kind": "list",
               "affordances": [
@@ -10020,6 +10132,26 @@
             "expect": "boundary"
           },
           {
+            "id": "editor:unstamp",
+            "label": "Take back stamp",
+            "keys": [],
+            "enabled": false,
+            "denial": "Not available now.",
+            "expect": "screen"
+          },
+          {
+            "id": "editor:import",
+            "label": "Stamp mapgen text",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {
+                "field_id": "import"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
             "id": "editor:browser_open",
             "label": "Open",
             "keys": [],
@@ -10431,14 +10563,6 @@
             "label": "Stamp",
             "keys": [],
             "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "editor:unstamp",
-            "label": "Take back stamp",
-            "keys": [],
-            "enabled": false,
-            "denial": "Not available now.",
             "expect": "screen"
           },
           {
@@ -26314,6 +26438,23 @@
               "submit": "editor:export_palette"
             },
             {
+              "id": "editor:import_form",
+              "kind": "form",
+              "affordances": [
+                "editor:import"
+              ],
+              "fields": [
+                {
+                  "id": "import",
+                  "label": "Mapgen to stamp",
+                  "value": "",
+                  "type": "text",
+                  "multiline": true
+                }
+              ],
+              "submit": "editor:import"
+            },
+            {
               "id": "editor:browser",
               "kind": "list",
               "affordances": [
@@ -26945,6 +27086,26 @@
             "expect": "boundary"
           },
           {
+            "id": "editor:unstamp",
+            "label": "Take back stamp",
+            "keys": [],
+            "enabled": false,
+            "denial": "Not available now.",
+            "expect": "screen"
+          },
+          {
+            "id": "editor:import",
+            "label": "Stamp mapgen text",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {
+                "field_id": "import"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
             "id": "editor:browser_open",
             "label": "Open",
             "keys": [],
@@ -27332,14 +27493,6 @@
             "label": "Stamp",
             "keys": [],
             "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "editor:unstamp",
-            "label": "Take back stamp",
-            "keys": [],
-            "enabled": false,
-            "denial": "Not available now.",
             "expect": "screen"
           },
           {
