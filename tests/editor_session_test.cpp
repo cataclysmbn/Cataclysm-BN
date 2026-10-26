@@ -2968,6 +2968,24 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the editors' recent documents keep only the entries written in their shape",
+    "[editor_session]") {
+    const auto cleanup = on_out_of_scope([] {
+        std::filesystem::remove(editor::recent_documents_file());
+    });
+    {
+        auto out = std::ofstream(editor::recent_documents_file(), std::ios::binary);
+        out << R"([{"editor": 1, "name": "x"}, "junk", {"editor": "map", "name": "a.json", "mods": "bn"},
+            {"editor": "map", "name": "b.json", "mods": ["bn", 2]}])";
+    }
+    CHECK(
+        editor::recent_documents()
+        == std::vector<editor::recent_document>{
+            {.editor = "map", .name = "a.json"},
+            {.editor = "map", .name = "b.json", .mods = {mod_id("bn")}}});
+}
+
+TEST_CASE(
     "the map editor opens the document the main menu asked for at its first visit",
     "[editor_session]") {
     const auto guard = screen_guard{};
