@@ -173,10 +173,12 @@ auto neighbour_squares(
         for (const auto [x, name] : std::views::enumerate(row)) {
             for (const auto& step : four_adjacent_offsets) {
                 const auto at = point(static_cast<int>(x), static_cast<int>(y)) + step;
-                if (own(at)) { continue; }
+                const auto origin = point(at.x * SEEX * 2, at.y * SEEY * 2);
+                if (own(at) || std::ranges::contains(result, origin, &neighbour_square::origin)) {
+                    continue;
+                }
                 if (const auto other = beside(name, step)) {
-                    result.push_back(
-                        {.origin = point(at.x * SEEX * 2, at.y * SEEY * 2), .other = *other});
+                    result.push_back({.origin = origin, .other = *other});
                 }
             }
         }

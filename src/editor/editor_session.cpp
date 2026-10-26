@@ -1489,19 +1489,18 @@ auto canvas(const session& state) -> ec::component {
         | std::ranges::to<std::map>();
     const auto faded = faded_squares(state, palette);
     const auto cursor = state.anchor ? state.anchor : state.focus;
-    // The entry moves a whole overmap square for squares beside it west or north, so its
+    const auto cols = std::ranges::fold_left(
+        grid | std::views::transform([](const auto& row) { return static_cast<int>(row.size()); }),
+        0, [](const int a, const int b) { return std::max(a, b); });
+    const auto rows = static_cast<int>(grid.size());
+    auto beside = neighbour_cells(state, point(cols, rows), palette);
+    // The entry moves a whole overmap square for squares drawn beside it west or north, so its
     // outline stays where the grid's falls.
     const auto shift = point(
-        std::ranges::any_of(state.beside, [](const auto& square) { return square.origin.x < 0; })
-            ? SEEX * 2
-            : 0,
-        std::ranges::any_of(state.beside, [](const auto& square) { return square.origin.y < 0; })
-            ? SEEY * 2
-            : 0);
+        std::ranges::any_of(beside, [](const auto& cell) { return cell.at.x < 0; }) ? SEEX * 2 : 0,
+        std::ranges::any_of(beside, [](const auto& cell) { return cell.at.y < 0; }) ? SEEY * 2 : 0);
     auto cells = std::vector<ec::grid_cell>{};
-    auto cols = 0;
-    for (auto y = 0; y < static_cast<int>(grid.size()); ++y) {
-        cols = std::max(cols, static_cast<int>(grid[y].size()));
+    for (auto y = 0; y < rows; ++y) {
         for (auto x = 0; x < static_cast<int>(grid[y].size()); ++x) {
             const auto at = point(x, y);
             const auto under = faded.find(at);
@@ -1518,21 +1517,20 @@ auto canvas(const session& state) -> ec::component {
                  .faded = under != faded.end()});
         }
     }
-    const auto rows = static_cast<int>(grid.size());
     auto width = shift.x + cols;
     auto height = shift.y + rows;
-    for (auto& beside : neighbour_cells(state, point(cols, rows), palette)) {
-        beside.at = {beside.at.x + shift.x, beside.at.y + shift.y};
-        width = std::max(width, beside.at.x + 1);
-        height = std::max(height, beside.at.y + 1);
-        cells.push_back(std::move(beside));
+    const auto opens = !beside.empty();
+    for (auto& cell : beside) {
+        cell.at = {cell.at.x + shift.x, cell.at.y + shift.y};
+        width = std::max(width, cell.at.x + 1);
+        height = std::max(height, cell.at.y + 1);
+        cells.push_back(std::move(cell));
     }
     return {
         .id = canvas_id,
         .affordances =
-            state.beside.empty()
-                ? std::vector<std::string>{paint_id}
-                : std::vector<std::string>{paint_id, object_id},
+            opens ? std::vector<std::string>{paint_id, object_id}
+                  : std::vector<std::string>{paint_id},
         .body = ec::grid_body{
             .cols = width,
             .rows = height,
