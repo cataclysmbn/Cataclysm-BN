@@ -1075,7 +1075,7 @@ TEST_CASE(
                     body<ec::text_body>(part(screen, "editor:notice")).markup.find("no_such_group")
                     != std::string::npos);
                 CHECK(placed(screen).size() == 1);
-                return set("value", R"({"item": "SUS_tools", "chance": 50})");
+                return set("value", R"({"item": "tools_common", "chance": 50})");
             case 8:
                 return invoke("editor:place_apply");
             case 9:

@@ -90,9 +90,9 @@ TEST_CASE(
         {.kind = "place_items",
          .x = {.min = 1, .max = 2},
          .y = {.min = 4, .max = 4},
-         .value = ordered_json::parse(R"({"item":"SUS_tools","chance":50})")}));
+         .value = ordered_json::parse(R"({"item":"tools_common","chance":50})")}));
     CHECK(doc.objects()[0].value["object"]["place_items"][1]
-          == ordered_json::parse(R"({"item":"SUS_tools","chance":50,"x":[1,2],"y":4})"));
+          == ordered_json::parse(R"({"item":"tools_common","chance":50,"x":[1,2],"y":4})"));
     REQUIRE(editor::add_placement(
         doc,
         {.kind = "place_traps",
@@ -113,12 +113,12 @@ TEST_CASE("a placement the loader refuses is not added, and says why", "[editor_
         doc, {.kind = "place_items", .value = ordered_json::parse(R"({"item":"no_such_group"})")});
     REQUIRE_FALSE(unknown);
     CHECK(unknown.error().find("no_such_group") != std::string::npos);
-    CHECK_FALSE(editor::add_placement(doc, {.kind = "place_items", .value = "SUS_tools"}));
+    CHECK_FALSE(editor::add_placement(doc, {.kind = "place_items", .value = "tools_common"}));
     CHECK_FALSE(editor::add_placement(
         doc,
         {.kind = "place_items",
          .x = {.min = 3, .max = 1},
-         .value = ordered_json::parse(R"({"item":"SUS_tools"})")}));
+         .value = ordered_json::parse(R"({"item":"tools_common"})")}));
     CHECK_FALSE(doc.undo());
 }
 
