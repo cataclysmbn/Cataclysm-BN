@@ -707,15 +707,16 @@ struct session {
         const auto names = entry_terrains(objects[object].value);
         if (names.empty() || names.front().empty()) { return; }
         const auto& first = names.front().front();
+        const auto index = index_levels();
         const auto entry_at = [&](const int dz) {
-            return terrain_above(first, dz)
+            return terrain_above(index, first, dz)
                 .and_then([&](const auto& name) { return square_making(objects, name); })
                 .transform([](const entry_square& square) { return square.entry; });
         };
-        level = terrain_level(first);
+        level = terrain_level(index, first);
         level_up = entry_at(1);
         level_down = entry_at(-1);
-        below = stacked_squares(objects, object, -1);
+        below = stacked_squares(index, objects, object, -1);
         for (const auto& square : below) {
             if (below_legends.contains(square.other.entry)) { continue; }
             below_legends[square.other.entry] =

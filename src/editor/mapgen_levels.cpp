@@ -52,13 +52,17 @@ auto entry_terrains(const nlohmann::ordered_json& value) -> std::vector<std::vec
     return rows;
 }
 
-auto terrain_above(const std::string& om_terrain, const int dz) -> std::optional<std::string> {
+auto index_levels() -> level_index { return {}; }
+
+auto terrain_above(const level_index& /*index*/, const std::string& om_terrain, const int dz)
+    -> std::optional<std::string> {
     const auto place = place_of(om_terrain);
     if (!place) { return std::nullopt; }
     return type_name(place->special->get_terrain_at(place->at + tripoint_rel_omt(0, 0, dz)));
 }
 
-auto terrain_level(const std::string& om_terrain) -> std::optional<int> {
+auto terrain_level(const level_index& /*index*/, const std::string& om_terrain)
+    -> std::optional<int> {
     const auto place = place_of(om_terrain);
     return place ? std::optional(place->at.z()) : std::nullopt;
 }
@@ -80,13 +84,13 @@ auto square_making(const std::vector<document_object>& entries, const std::strin
 }
 
 auto stacked_squares(
-    const std::vector<document_object>& entries, const std::size_t entry, const int dz)
-    -> std::vector<stacked_square> {
+    const level_index& index, const std::vector<document_object>& entries, const std::size_t entry,
+    const int dz) -> std::vector<stacked_square> {
     auto result = std::vector<stacked_square>{};
     const auto rows = entry_terrains(entries.at(entry).value);
     for (const auto [y, row] : std::views::enumerate(rows)) {
         for (const auto [x, name] : std::views::enumerate(row)) {
-            const auto above = terrain_above(name, dz);
+            const auto above = terrain_above(index, name, dz);
             if (!above) { continue; }
             if (const auto other = square_making(entries, *above)) {
                 result.push_back(

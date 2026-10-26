@@ -4,6 +4,7 @@
 #include "point.h"
 
 #include <cstddef>
+#include <map>
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <string>
@@ -15,12 +16,24 @@ namespace editor {
 /// names, one per overmap square for rows of names; none for an entry of no overmap terrain.
 auto entry_terrains(const nlohmann::ordered_json& value) -> std::vector<std::vector<std::string>>;
 
-/// The overmap terrain `dz` levels above `om_terrain` in the first building or overmap special
-/// that stacks it, by its name without a direction.
-auto terrain_above(const std::string& om_terrain, int dz) -> std::optional<std::string>;
+/// The overmap terrains one building or overmap special stacks on one overmap square, by level.
+using level_column = std::map<int, std::string>;
 
-/// The level `om_terrain` stands on in the first building or overmap special that holds it.
-auto terrain_level(const std::string& om_terrain) -> std::optional<int>;
+/// Where the fixed buildings and overmap specials stack overmap terrains, by name without a
+/// direction.
+struct level_index {
+    std::vector<level_column> columns;
+};
+
+/// The columns of every fixed building and overmap special of the game.
+auto index_levels() -> level_index;
+
+/// The overmap terrain `dz` levels above `om_terrain` where a column stacks one other than itself.
+auto terrain_above(const level_index& index, const std::string& om_terrain, int dz)
+    -> std::optional<std::string>;
+
+/// The level `om_terrain` stands on in the first column that holds it.
+auto terrain_level(const level_index& index, const std::string& om_terrain) -> std::optional<int>;
 
 /// An overmap square of an entry: which entry and where its squares start in the rows.
 struct entry_square {
@@ -40,7 +53,8 @@ struct stacked_square {
 
 /// The overmap squares of entry `entry` whose square `dz` levels above some entry of `entries`
 /// makes.
-auto stacked_squares(const std::vector<document_object>& entries, std::size_t entry, int dz)
-    -> std::vector<stacked_square>;
+auto stacked_squares(
+    const level_index& index, const std::vector<document_object>& entries, std::size_t entry,
+    int dz) -> std::vector<stacked_square>;
 
 } // namespace editor

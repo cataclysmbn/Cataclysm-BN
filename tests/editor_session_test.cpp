@@ -3235,7 +3235,7 @@ struct levels_file {
         auto roof = nlohmann::ordered_json::array();
         for (auto row = 0; row < 24; ++row) {
             ground.push_back(std::string(48, '.'));
-            roof.push_back(std::string(12, ' ') + std::string(12, 'r'));
+            roof.push_back(std::string(11, ' ') + "c" + std::string(12, 'r'));
         }
         const auto entries = nlohmann::ordered_json::array(
             {{{"type", "mapgen"},
@@ -3248,7 +3248,9 @@ struct levels_file {
               {"method", "json"},
               {"om_terrain", "house_01_roof"},
               {"object",
-               {{"rows", roof}, {"terrain", {{" ", "t_open_air"}, {"r", "t_flat_roof"}}}}}},
+               {{"rows", roof},
+                {"terrain", {{" ", "t_open_air"}, {"c", "t_open_air"}, {"r", "t_flat_roof"}}},
+                {"furniture", {{"c", "f_chair"}}}}}},
              {{"type", "mapgen"},
               {"method", "json"},
               {"nested_mapgen_id", "editor_session_test_levels_chunk"},
@@ -3380,6 +3382,9 @@ TEST_CASE(
                     return entry.value("faded", false);
                 }));
                 CHECK_FALSE(cell(screen, 20, 0).faded);
+                // Open air that holds furniture shows its own square.
+                CHECK_FALSE(cell(screen, 11, 0).faded);
+                CHECK(cell(screen, 11, 0).glyph == "c");
                 CHECK(cell(screen, 20, 0).glyph == "r");
                 return invoke("editor:symbol", {.row = "symbol:r"});
             }
@@ -3403,13 +3408,31 @@ TEST_CASE(
 }
 
 TEST_CASE("a building stacks its roof one level above its ground floor", "[editor_levels]") {
-    INFO(overmap_specials::get_all().size());
-    CHECK(editor::terrain_level("house_01") == 0);
-    CHECK(editor::terrain_level("house_01_roof") == 1);
-    CHECK(editor::terrain_above("house_01", 1) == "house_01_roof");
-    CHECK(editor::terrain_above("house_01_roof", -1) == "house_01");
-    CHECK(editor::terrain_above("house_01", -1) == std::nullopt);
-    CHECK(editor::terrain_level("no_such_terrain") == std::nullopt);
+    const auto index = editor::index_levels();
+    CHECK(editor::terrain_level(index, "house_01") == 0);
+    CHECK(editor::terrain_level(index, "house_01_roof") == 1);
+    CHECK(editor::terrain_above(index, "house_01", 1) == "house_01_roof");
+    CHECK(editor::terrain_above(index, "house_01_roof", -1) == "house_01");
+    CHECK(editor::terrain_above(index, "house_01", -1) == std::nullopt);
+    CHECK(editor::terrain_level(index, "no_such_terrain") == std::nullopt);
+}
+
+TEST_CASE("a terrain repeated up a tower leads past itself to the next one", "[editor_levels]") {
+    const auto index = editor::level_index(
+        {.columns = {{{0, "tower"}, {1, "tower"}, {2, "tower_roof"}}}});
+    CHECK(editor::terrain_level(index, "tower") == 0);
+    CHECK(editor::terrain_above(index, "tower", 1) == "tower_roof");
+    CHECK(editor::terrain_above(index, "tower_roof", -1) == "tower");
+    CHECK(editor::terrain_above(index, "tower", -1) == std::nullopt);
+}
+
+TEST_CASE("an entry of several overmap terrains makes each of them", "[editor_levels]") {
+    const auto entries = std::vector<editor::document_object>{
+        {.value = nlohmann::ordered_json::parse(R"({"om_terrain": ["shed", "barn"]})")}};
+    const auto made = editor::square_making(entries, "barn");
+    REQUIRE(made.has_value());
+    CHECK(made->entry == 0);
+    CHECK(made->origin == point_zero);
 }
 
 #endif // CATA_MCP
