@@ -2763,6 +2763,69 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "on reload the editor applies only the entry it showed and says why a chunk was not applied",
+    "[editor_session][editor_mapgen]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    const auto write = [&](const std::optional<std::string>& row) {
+        auto entries = nlohmann::ordered_json::parse(file.text);
+        if (row) {
+            entries.push_back(
+                {{"type", "mapgen"},
+                 {"method", "json"},
+                 {"nested_mapgen_id", "editor_session_test_reloaded"},
+                 {"object",
+                  {{"mapgensize", {1, 1}}, {"rows", {*row}}, {"terrain", {{"#", "t_wall"}}}}}});
+        }
+        auto out = std::ofstream(file.path, std::ios::binary | std::ios::trunc);
+        out << format_json(entries.dump()).value();
+    };
+    write("#");
+    const auto notice = [](const ec::screen_view& screen) {
+        const auto* const found = ec::find_component(*screen.root, "editor:notice");
+        return found == nullptr ? std::string{} : body<ec::text_body>(*found).markup;
+    };
+    const auto reloaded = string_format("%s changed on disk and was reloaded.", file.path.string());
+    // The game's own mapgens, so that the one picked is the one registered.
+    const auto restore_mapgen = restore_on_out_of_scope<bool>(disable_mapgen);
+    disable_mapgen = false;
+    auto before = std::shared_ptr<mapgen_function>{};
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                return invoke("editor:object", {.row = "object:1"});
+            case 2:
+                return invoke("editor:apply_on_save");
+            case 3:
+                write("##");
+                return invoke("editor:catalog_page", {.count = 0});
+            case 4:
+                // The chunk the loader refuses is not applied, and the notice says why.
+                CHECK_FALSE(notice(screen).empty());
+                CHECK(notice(screen) != reloaded);
+                before = pick_mapgen_func("house_04");
+                write(std::nullopt);
+                return invoke("editor:catalog_page", {.count = 0});
+            case 5:
+                // The chunk is gone: the mapgen shown in its place is not applied.
+                CHECK(notice(screen) == reloaded);
+                CHECK(pick_mapgen_func("house_04") == before);
+                return act("QUIT");
+            default:
+                return answer("Leave without saving");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 6);
+}
+
+TEST_CASE(
     "the editor applies and stamps a mapgen with the palettes of its own file",
     "[editor_session][editor_palette]") {
     const auto guard = screen_guard{};
