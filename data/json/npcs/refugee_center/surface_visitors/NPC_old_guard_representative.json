@@ -249,7 +249,6 @@
     "item": "necropolis_datasheet",
     "start": { "assign_mission_target": { "om_terrain": "necropolis_a_29", "om_special": "Necropolis", "reveal_radius": 5 } },
     "origins": [ "ORIGIN_SECONDARY" ],
-    "followup": "MISSION_FREE_MERCHANTS_EVAC_4",
     "dialogue": {
       "describe": "We need help…",
       "offer": "If you are interested, I recently received a message that a unit was deploying into our AO.  I've been informed of an underground facility they're attempting to secure, and they may require assistance.  The bird dropped them off next to a pump station.  Not much more I can tell you.  We've had difficulty keeping in contact with them, so command has requested you give us a status report when you return.  If you could locate the captain in charge, I'm sure he could use your skills.",
