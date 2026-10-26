@@ -1414,7 +1414,8 @@ auto session_view(const session& state) -> ec::screen_view {
                       .offset = state.catalog_page * catalog_page_size,
                       .selection = "single",
                       .activate = catalog_pick_id,
-                      .filterable = true})}));
+                      .filterable = true,
+                      .filter = state.catalog_filter})}));
             affordances.push_back(ec::invoke_affordance(
                 {.id = catalog_kind_id, .label = _("Kind"), .args = row_of(catalog_kinds_id)}));
             affordances.push_back(ec::invoke_affordance(
@@ -1550,7 +1551,8 @@ auto session_view(const session& state) -> ec::screen_view {
          .offset = state.browser_page * browser_page_size,
          .selection = "single",
          .activate = browser_open_id,
-         .filterable = true}));
+         .filterable = true,
+         .filter = state.browser_filter}));
     std::ranges::move(late, std::back_inserter(parts));
     if (!state.notice.empty()) {
         parts.push_back(

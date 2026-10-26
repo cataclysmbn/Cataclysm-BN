@@ -309,6 +309,8 @@ struct list_options {
     /// The affordance that picks a row.
     std::string activate = {};
     bool filterable = false;
+    /// The filter text the list holds; empty when it shows every row.
+    std::string filter = {};
 };
 /// A list over `rows`, with the column header they use.
 auto list( list_options options ) -> component;

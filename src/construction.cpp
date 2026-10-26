@@ -828,6 +828,8 @@ struct construction_view_options {
     int tabindex;
     int select;
     bool filter_mode;
+    /// The search text; it narrows the groups in filter mode.
+    const std::string &filter;
     bool blueprint;
     bool hide_unconstructable;
 };
@@ -905,7 +907,7 @@ auto construction_view( const construction_view_options &opts ) -> ec::screen_vi
         rows.push_back( std::move( entry ) );
     }
     auto groups = ec::list( { .id = groups_id, .rows = std::move( rows ), .selection = "single",
-                              .activate = construct_construct, .filterable = true } );
+                              .activate = construct_construct, .filterable = true, .filter = opts.filter_mode ? opts.filter : std::string{} } );
     std::ranges::copy( std::array{ construct_favorite, construct_search }, std::back_inserter(
                            groups.affordances ) );
     const auto cursor = static_cast<size_t>( opts.select );
@@ -1056,7 +1058,7 @@ std::optional<construction_id> construction_menu( const bool blueprint )
             return construction_view( {
                 .constructs = constructs, .buildable = construct_buildable, .categories = construct_cat,
                 .category_order = construct_cat_order, .inv = total_inv, .tabindex = tabindex, .select = select,
-                .filter_mode = filter_mode, .blueprint = blueprint, .hide_unconstructable = hide_unconstructable,
+                .filter_mode = filter_mode, .filter = filter, .blueprint = blueprint, .hide_unconstructable = hide_unconstructable,
             } );
         },
     } );

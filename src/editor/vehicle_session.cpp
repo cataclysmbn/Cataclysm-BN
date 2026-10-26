@@ -920,7 +920,8 @@ auto session_view(const session& state) -> ec::screen_view {
                         .offset = state.page * page_size,
                         .selection = "single",
                         .activate = open_id,
-                        .filterable = true})}));
+                        .filterable = true,
+                        .filter = state.filter})}));
     affordances.push_back(
         ec::invoke_affordance({.id = source_id, .label = _("Show"), .args = row_of(sources_id)}));
     if (state.source_tab == "world") {
@@ -1027,7 +1028,8 @@ auto session_view(const session& state) -> ec::screen_view {
              .offset = state.part_page * page_size,
              .selection = "single",
              .activate = install_id,
-             .filterable = true});
+             .filterable = true,
+             .filter = state.part_filter});
     };
     const auto document_stack = [&] {
         const auto design = design_parts(state.prototype());
