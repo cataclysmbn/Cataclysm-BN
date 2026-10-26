@@ -587,6 +587,16 @@ struct session {
                })
              | std::ranges::to<std::vector>();
     }
+    /// The palettes of the file, which stand in for the game's while a mapgen of it is read.
+    auto palette_texts() const -> std::vector<std::string> {
+        return doc->objects() | std::views::filter([](const document_object& entry) {
+                   return is_palette(entry.value);
+               })
+             | std::views::transform([](const document_object& entry) {
+                   return entry.value.dump();
+               })
+             | std::ranges::to<std::vector>();
+    }
     /// Whether the object edited is a mapgen, which has rows to draw on and a preview.
     auto on_mapgen() const -> bool {
         return doc && object < doc->objects().size()
@@ -623,6 +633,7 @@ struct session {
 
     /// Counts what the entry puts on a square over several seeds, from the seed shown on.
     auto roll_loot_at(const point& at) -> void {
+        const auto stand_ins = palette_stand_ins(palette_texts());
         const auto rolled = roll_loot(
             doc->objects()[object].value.dump(),
             {.preview = preview_options_of(seed.value_or(1)),
@@ -641,6 +652,7 @@ struct session {
         legend.clear();
         diagnostics.clear();
         if (!doc || object >= doc->objects().size()) { return; }
+        const auto stand_ins = palette_stand_ins(palette_texts());
         const auto text = doc->objects()[object].value.dump();
         legend = mapgen_legend(text).value_or(std::vector<legend_symbol>{});
         diagnostics =

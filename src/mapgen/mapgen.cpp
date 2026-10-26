@@ -6563,6 +6563,31 @@ auto editor::check_mapgen(const std::string_view text) -> std::vector<loader_mes
     return messages;
 }
 
+editor::palette_stand_ins::palette_stand_ins(const std::vector<std::string>& texts) {
+    auto ids = std::make_shared<std::vector<palette_id>>();
+    auto kept = std::make_shared<std::vector<decltype(palettes)::node_type>>();
+    capture_each_debugmsg_during([&] {
+        for (const auto& text : texts) {
+            try {
+                auto in = std::istringstream(text);
+                auto jsin = JsonIn(in, std::string(editor_source));
+                const auto entry = jsin.get_object();
+                entry.allow_omitted_members();
+                const auto id = palette_id(entry.get_string("id"));
+                if (!std::ranges::contains(*ids, id)) {
+                    ids->push_back(id);
+                    if (auto node = palettes.extract(id)) { kept->push_back(std::move(node)); }
+                }
+                mapgen_palette::load(entry, mod_management::get_default_core_content_pack().str());
+            } catch (const JsonError& /*e*/) {}
+        }
+    });
+    restore_ = [ids, kept] {
+        for (const auto& id : *ids) { palettes.erase(id); }
+        for (auto& node : *kept) { palettes.insert(std::move(node)); }
+    };
+}
+
 auto editor::mapgen_legend(const std::string_view text)
     -> std::expected<std::vector<legend_symbol>, std::string> {
     auto symbols = std::map<std::string, legend_symbol>{};
