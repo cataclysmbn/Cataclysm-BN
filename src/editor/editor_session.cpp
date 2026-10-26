@@ -1481,13 +1481,14 @@ auto session_view(const session& state) -> ec::screen_view {
                 {.key = "mirror_y",
                  .label = _("Mirror down"),
                  .value = state.mirror_y ? _("On") : _("Off")});
-            if (state.stamped) {
-                stats.push_back({.key = "stamped", .label = _("Stamped"), .value = _("Yes")});
-            }
             if (state.seed) {
                 stats.push_back(
                     {.key = "seed", .label = _("Seed"), .value = std::to_string(*state.seed)});
             }
+        }
+        // The stamp stays in the world whichever entry is open.
+        if (state.stamped) {
+            stats.push_back({.key = "stamped", .label = _("Stamped"), .value = _("Yes")});
         }
         parts.push_back(ec::panel(
             {.id = "editor:document",
@@ -1817,6 +1818,9 @@ auto session_view(const session& state) -> ec::screen_view {
                                        .value = string_format("%.2f", share.mean)}}};
                          }) | std::ranges::to<std::vector>()}));
                 }
+            } else if (state.stamped) {
+                affordances.push_back(
+                    ec::invoke_affordance({.id = unstamp_id, .label = _("Take back stamp")}));
             }
         }
     }
