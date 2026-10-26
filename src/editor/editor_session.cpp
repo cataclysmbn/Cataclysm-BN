@@ -16,6 +16,7 @@
 #include "editor/mapgen_source.h"
 #include "editor/mapgen_stamp.h"
 #include "editor/mapgen_stroke.h"
+#include "editor/row_id.h"
 #include "editor/session_file.h"
 #include "editor/session_page.h"
 #include "editor/vehicle_session.h"
@@ -311,8 +312,6 @@ auto tool_label(const tool& value) -> std::string {
     }
     return {};
 }
-
-auto square_id(const point& at) -> std::string { return string_format("square:%d,%d", at.x, at.y); }
 
 auto is_json_mapgen(const nlohmann::ordered_json& value) -> bool {
     return value.is_object() && value.value("type", "") == "mapgen"
@@ -1210,7 +1209,7 @@ auto preview_grid(const mapgen_preview& shown) -> ec::component {
                     : static_cast<const map_data_common_t&>(furn.obj());
             cells.push_back(
                 {.at = {x, y},
-                 .id = string_format("preview:%d,%d", x, y),
+                 .id = point_row("preview", {x, y}),
                  .glyph = string_from_int(top.symbol()),
                  .label = furn.is_null() ? ter.name() : ter.name() + ", " + furn.obj().name(),
                  .color = string_from_color(top.color()),
@@ -1313,7 +1312,7 @@ auto canvas(const session& state) -> ec::component {
             const auto at = point(x, y);
             cells.push_back(
                 {.at = {x, y},
-                 .id = square_id(at),
+                 .id = point_row("square", at),
                  .glyph = grid[y][x],
                  .affordance = paint_id,
                  .selected = state.anchor == at || in_selection(state, at),
@@ -1416,7 +1415,7 @@ auto history_rows(const document& doc) -> std::vector<ec::row> {
     auto rows = std::vector<ec::row>{};
     for (const auto depth : std::views::iota(std::size_t{0}, steps.size() + 1)) {
         auto row = ec::row{
-            .id = string_format("step:%d", depth),
+            .id = index_row("step", depth),
             .label =
                 depth == 0 ? _("Opened") : steps[depth - 1].edits.back().patch[0].value("path", ""),
             .selected = depth == doc.depth()};
@@ -1833,7 +1832,7 @@ auto session_view(const session& state) -> ec::screen_view {
             {.id = objects_id,
              .rows = entries | std::views::transform([&](const auto index) {
                          return ec::row{
-                             .id = string_format("object:%d", index),
+                             .id = index_row("object", index),
                              .label = entry_name(doc.objects()[index].value),
                              .selected = index == state.object};
                      })
@@ -1877,7 +1876,7 @@ auto session_view(const session& state) -> ec::screen_view {
                        | std::views::transform([&](const auto& entry) {
                              const auto& [index, message] = entry;
                              return ec::row{
-                                 .id = string_format("message:%d", index),
+                                 .id = index_row("message", index),
                                  .label = message.text,
                                  .description = message.pointer,
                                  .selectable = state.square_named(message.pointer).has_value()};
@@ -1932,16 +1931,10 @@ auto session_view(const session& state) -> ec::screen_view {
         .root = ec::split({.id = "editor:body", .active = active, .children = std::move(parts)}),
         .affordances = std::move(affordances),
         .focus_component = active,
-        .focus_row = state.focus ? square_id(*state.focus) : ""};
+        .focus_row = state.focus ? point_row("square", *state.focus) : ""};
 }
 
 /// The square a canvas row names.
-auto square_of(const std::string& id) -> std::optional<point> {
-    auto at = point{};
-    if (std::sscanf(id.c_str(), "square:%d,%d", &at.x, &at.y) != 2) { return std::nullopt; }
-    return at;
-}
-
 /// The documents and view the editor keeps between visits.
 auto kept_session = std::optional<session>{};
 /// Whether the next visit is to the vehicle editor.
@@ -1990,6 +1983,34 @@ auto run_editor_session() -> void {
         state.watch();
         if (id == open_id) {
             state.open(invoked->args.text.value_or(""));
+        } else if (id == open_oter_id) {
+            state.open_mapgen_of(invoked->args.text.value_or(""));
+        } else if (id == open_here_id) {
+            state.open_mapgen_of(
+                get_overmapbuffer(get_map().get_bound_dimension())
+                    .ter(get_avatar().abs_omt_pos())
+                    .id()
+                    .str());
+        } else if (id == export_id) {
+            const auto path = invoked->args.text.value_or("");
+            const auto exported =
+                check_new_path(path)
+                    .and_then([] { return export_omt(get_avatar().abs_omt_pos()); })
+                    .and_then([&](const nlohmann::ordered_json& entry) {
+                        return write_new_file(path, nlohmann::ordered_json::array({entry}));
+                    });
+            if (exported) {
+                state.open(path);
+            } else {
+                state.notice = exported.error();
+            }
+        } else if (id == browser_open_id) {
+            state.open(std::string(row_rest(row, "file").value_or("")));
+        } else if (id == browser_filter_id) {
+            state.browser_filter = invoked->args.text.value_or("");
+            state.browser_page = 0;
+        } else if (id == browser_page_id) {
+            state.browser_page = static_cast<std::size_t>(invoked->args.count.value_or(0));
         } else if (id == vehicle_id) {
             run_vehicle_editor();
         } else if (id == new_set_id) {
@@ -2010,9 +2031,8 @@ auto run_editor_session() -> void {
         } else if (!state.doc) {
             continue;
         } else if (id == object_id) {
-            auto index = std::size_t{0};
-            if (std::sscanf(row.c_str(), "object:%zu", &index) == 1) {
-                state.object = index;
+            if (const auto index = row_index(row, "object")) {
+                state.object = *index;
                 state.anchor.reset();
                 state.selected.reset();
                 state.focus.reset();
@@ -2026,10 +2046,10 @@ auto run_editor_session() -> void {
                 state.anchor.reset();
             }
         } else if (id == symbol_id) {
-            state.symbol = row.substr(std::string_view("symbol:").size());
+            state.symbol = row_rest(row, "symbol").value_or("");
             state.mapping_symbol = state.symbol;
         } else if (id == inside_id) {
-            state.room_fill = row.substr(std::string_view("symbol:").size());
+            state.room_fill = row_rest(row, "symbol").value_or("");
         } else if (id == brush_id) {
             state.brush = static_cast<int>(invoked->args.count.value_or(1));
         } else if (id == mirror_x_id) {
@@ -2055,12 +2075,10 @@ auto run_editor_session() -> void {
                     ? mirrored_x(state.clip)
                     : mirrored_y(state.clip);
         } else if (id == jump_id) {
-            auto depth = std::size_t{0};
-            if (std::sscanf(row.c_str(), "step:%zu", &depth) == 1 && state.doc->jump(depth)) {
-                state.reload();
-            }
+            const auto depth = row_index(row, "step");
+            if (depth && state.doc->jump(*depth)) { state.reload(); }
         } else if (id == paint_id) {
-            if (const auto at = square_of(row)) { state.paint(*at); }
+            if (const auto at = row_point(row, "square")) { state.paint(*at); }
         } else if (id == stroke_begin_id) {
             state.doc->begin_group();
         } else if (id == stroke_end_id) {
@@ -2097,10 +2115,9 @@ auto run_editor_session() -> void {
         } else if (id == field_apply_id) {
             state.set_picked_field();
         } else if (id == diagnostic_id) {
-            auto index = std::size_t{0};
-            if (std::sscanf(row.c_str(), "message:%zu", &index) == 1
-                && index < state.diagnostics.size()) {
-                state.focus = state.square_named(state.diagnostics[index].pointer);
+            const auto index = row_index(row, "message");
+            if (index && *index < state.diagnostics.size()) {
+                state.focus = state.square_named(state.diagnostics[*index].pointer);
             }
         } else if (id == catalog_kind_id) {
             const auto found = std::ranges::find_if(catalog_uses, [&](const catalog_use& use) {
@@ -2145,7 +2162,7 @@ auto run_editor_session() -> void {
         } else if (id == pin_set_id) {
             state.pin(row, invoked->args.text.value_or(""));
         } else if (id == loot_id) {
-            if (const auto at = square_of(row)) { state.roll_loot_at(*at); }
+            if (const auto at = row_point(row, "square")) { state.roll_loot_at(*at); }
         } else if (id == apply_id) {
             state.apply();
         } else if (id == apply_on_save_id) {
