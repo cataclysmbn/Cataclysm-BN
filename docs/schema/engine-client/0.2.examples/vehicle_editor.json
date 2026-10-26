@@ -187,7 +187,8 @@
                 "total": 5,
                 "selection": "single",
                 "activate": "vehicle:open",
-                "filterable": true
+                "filterable": true,
+                "filter": "bicycle"
               }
             }
           ]
@@ -410,7 +411,8 @@
                 "total": 5,
                 "selection": "single",
                 "activate": "vehicle:open",
-                "filterable": true
+                "filterable": true,
+                "filter": "bicycle"
               }
             },
             {
@@ -816,7 +818,8 @@
                 "total": 5,
                 "selection": "single",
                 "activate": "vehicle:install",
-                "filterable": true
+                "filterable": true,
+                "filter": "headlight"
               }
             }
           ]
@@ -947,7 +950,9 @@
           {
             "id": "vehicle:undo",
             "label": "Undo",
-            "keys": [],
+            "keys": [
+              "CTRL+Z"
+            ],
             "enabled": false,
             "denial": "Not available now.",
             "expect": "screen"
@@ -955,7 +960,9 @@
           {
             "id": "vehicle:redo",
             "label": "Redo",
-            "keys": [],
+            "keys": [
+              "CTRL+Y"
+            ],
             "enabled": false,
             "denial": "Not available now.",
             "expect": "screen"
@@ -963,7 +970,9 @@
           {
             "id": "vehicle:save",
             "label": "Save",
-            "keys": [],
+            "keys": [
+              "CTRL+S"
+            ],
             "enabled": false,
             "denial": "Not available now.",
             "expect": "screen"
@@ -1768,14 +1777,18 @@
           {
             "id": "vehicle:undo",
             "label": "Undo",
-            "keys": [],
+            "keys": [
+              "CTRL+Z"
+            ],
             "enabled": true,
             "expect": "screen"
           },
           {
             "id": "vehicle:redo",
             "label": "Redo",
-            "keys": [],
+            "keys": [
+              "CTRL+Y"
+            ],
             "enabled": false,
             "denial": "Not available now.",
             "expect": "screen"
