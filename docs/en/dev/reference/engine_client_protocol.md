@@ -66,7 +66,7 @@ An affordance, row, tab or grid cell that is off and can be picked always carrie
 
 A text with the `role` `prompt` is the question the parts after it in its split answer (a popup's or a menu's message), which a client shows above them. A row's `affordance` names the affordance of the screen that does what the row does (a popup's `YES`), present only while the screen offers it, so a client offers that action on the row and not again as a button. A panel never repeats its screen's `title`: where it would, its `title` is empty.
 
-A grid that a client can draw with sprites carries `looks`, each look once, and each of its cells `looks`, indexes into them from the bottom up: what the square shows, as the world map's cells name it. The cell's `glyph` stands for them in text. The map editor's canvas and preview and the vehicle window's grid carry them. A grid of squares the player draws on has the role `canvas` and takes whatever room a client has; a grid that only shows or picks squares has none.
+A grid that a client can draw with sprites carries `looks`, each look once, and each of its cells `looks`, indexes into them from the bottom up: what the square shows, as the world map's cells name it. The cell's `glyph` stands for them in text. The map editor's canvas and preview and the vehicle window's grid carry them. A grid of squares the player draws on has the role `canvas` and takes whatever room a client has; a grid that only shows or picks squares has none. A grid may carry `block`, the `x` by `y` squares a client outlines as one, such as each overmap square of the map editor's canvas.
 
 ## Held keys
 

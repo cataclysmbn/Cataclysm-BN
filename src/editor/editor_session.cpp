@@ -1334,6 +1334,7 @@ auto in_selection(const session& state, const point& at) -> bool {
 }
 
 auto canvas(const session& state) -> ec::component {
+    const auto& object = state.doc->objects()[state.object].value;
     const auto grid = symbols_of(*state.doc, state.object);
     auto palette = ec::look_palette{};
     const auto looks =
@@ -1372,7 +1373,10 @@ auto canvas(const session& state) -> ec::component {
                       ? "trail"
                       : "",
             .drag_begin = state.current->kind == shape_kind::point ? stroke_begin_id : "",
-            .drag_end = state.current->kind == shape_kind::point ? stroke_end_id : ""}};
+            .drag_end = state.current->kind == shape_kind::point ? stroke_end_id : "",
+            .block = object.contains("om_terrain")
+                       ? ec::grid_point{SEEX * 2, SEEY * 2}
+                       : ec::grid_point{}}};
 }
 
 /// What a placement places, a `key: value` for each member: a string as it reads, anything else as

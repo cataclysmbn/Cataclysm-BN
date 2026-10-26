@@ -6798,6 +6798,25 @@
         "drag_end": {
           "$ref": "#/$defs/opaque_id",
           "description": "The affordance a client runs when a drag over the cells ends, after the last square's, so the engine can make the whole drag one step. Absent for none."
+        },
+        "block": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "y": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "x",
+            "y"
+          ],
+          "additionalProperties": false,
+          "description": "The `x` by `y` squares a client outlines as one, counted from the top-left, such as each overmap square of the map editor's canvas. Absent for none."
         }
       },
       "required": [

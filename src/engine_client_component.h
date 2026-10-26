@@ -242,6 +242,8 @@ struct grid_body {
     /// The affordances a client runs on press and after release of a drag, to make it one step; empty for none.
     std::string drag_begin = {};
     std::string drag_end = {};
+    /// The squares a client outlines as one, such as an overmap square's; none while zero.
+    grid_point block = {};
 };
 /// The looks of a grid, each once, which its cells name by index.
 struct look_palette {
