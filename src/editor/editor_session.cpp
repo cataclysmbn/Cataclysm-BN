@@ -120,6 +120,8 @@ constexpr auto export_width_id = "editor:export_width";
 constexpr auto export_height_id = "editor:export_height";
 constexpr auto export_palette_id = "editor:export_palette";
 constexpr auto export_options_id = "editor:export_options";
+constexpr auto import_id = "editor:import";
+constexpr auto import_form_id = "editor:import_form";
 constexpr auto copy_id = "editor:copy";
 constexpr auto rotate_id = "editor:rotate";
 constexpr auto cut_id = "editor:cut";
@@ -1098,11 +1100,15 @@ struct session {
 
     /// Generates the entry over the avatar's overmap square, in place of what the world has there.
     auto stamp_here() -> void {
-        unstamp();
         const auto stand_ins = file_stand_ins(stand_in_texts());
-        auto made = stamp_mapgen(
-            doc->objects()[object].value.dump(),
-            {.at = get_avatar().abs_omt_pos(), .seed = seed.value_or(1)});
+        stamp_text(doc->objects()[object].value.dump());
+    }
+
+    /// Stamps the mapgen entry in `text` over the avatar's overmap square, in place of any stamp.
+    auto stamp_text(const std::string& text) -> void {
+        unstamp();
+        auto made =
+            stamp_mapgen(text, {.at = get_avatar().abs_omt_pos(), .seed = seed.value_or(1)});
         if (made) {
             stamped = std::move(*made);
         } else {
@@ -1606,8 +1612,7 @@ auto mapping_parts(
         ec::invoke_affordance({.id = mapping_apply_id, .label = _("Set mapping")}));
 }
 
-/// What puts the entry in the game: apply, stamp, test and the preview with its controls; a
-/// palette only takes back a stamp.
+/// What puts the entry in the game: apply, stamp, test and the preview with its controls.
 auto game_parts(
     const session& state, std::vector<ec::component>& parts,
     std::vector<ec::affordance>& affordances) -> void {
@@ -1616,10 +1621,6 @@ auto game_parts(
         affordances.push_back(
             ec::invoke_affordance({.id = apply_on_save_id, .label = _("Apply on save")}));
         affordances.push_back(ec::invoke_affordance({.id = stamp_id, .label = _("Stamp")}));
-        affordances.push_back(ec::invoke_affordance(
-            {.id = unstamp_id,
-             .label = _("Take back stamp"),
-             .enabled = state.stamped.has_value()}));
         affordances.push_back(ec::invoke_affordance(
             {.id = test_id, .label = _("Test"), .enabled = state.stamped.has_value()}));
         affordances.push_back(ec::invoke_affordance(
@@ -1690,9 +1691,6 @@ auto game_parts(
                                .value = string_format("%.2f", share.mean)}}};
                  }) | std::ranges::to<std::vector>()}));
         }
-    } else if (state.stamped) {
-        affordances.push_back(
-            ec::invoke_affordance({.id = unstamp_id, .label = _("Take back stamp")}));
     }
 }
 
@@ -1836,6 +1834,12 @@ auto session_view(const session& state) -> ec::screen_view {
         {.id = export_palette_id,
          .label = _("Export palette"),
          .args = {.text = ec::text_shape{.field_id = "palette"}}}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = unstamp_id, .label = _("Take back stamp"), .enabled = state.stamped.has_value()}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = import_id,
+         .label = _("Stamp mapgen text"),
+         .args = {.text = ec::text_shape{.field_id = "import"}}}));
     const auto listed = state.browser_entries();
     affordances.push_back(ec::invoke_affordance(
         {.id = browser_open_id, .label = _("Open"), .args = row_of(browser_id)}));
@@ -1952,6 +1956,12 @@ auto session_view(const session& state) -> ec::screen_view {
             .fields =
                 {{.id = "palette", .label = _("Export palette"), .value = state.export_palette}},
             .submit = export_palette_id}});
+    parts.push_back(ec::component{
+        .id = import_form_id,
+        .affordances = {import_id},
+        .body = ec::form_body{
+            .fields = {{.id = "import", .label = _("Mapgen to stamp"), .multiline = true}},
+            .submit = import_id}});
     parts.push_back(browser_list(state, listed));
     if (!state.notice.empty()) {
         parts.push_back(
@@ -2048,6 +2058,10 @@ auto run_editor_session() -> void {
                 id == export_width_id
                     ? point_rel_omt(count, state.export_size.y())
                     : point_rel_omt(state.export_size.x(), count);
+        } else if (id == unstamp_id) {
+            state.unstamp();
+        } else if (id == import_id) {
+            state.stamp_text(invoked->args.text.value_or(""));
         } else if (id == export_palette_id) {
             state.export_palette = invoked->args.text.value_or("");
         } else if (id == browser_open_id) {
@@ -2215,8 +2229,6 @@ auto run_editor_session() -> void {
             state.apply_on_save = !state.apply_on_save;
         } else if (id == stamp_id) {
             state.stamp_here();
-        } else if (id == unstamp_id) {
-            state.unstamp();
         } else if (id == test_id && state.stamped) {
             // The avatar plays in the middle of the stamped square; the editor keeps its document.
             g->place_player(abs_to_bub(

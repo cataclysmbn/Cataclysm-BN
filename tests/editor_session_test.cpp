@@ -1851,7 +1851,8 @@ TEST_CASE(
     auto walls = nlohmann::ordered_json{
         {"type", "mapgen"},
         {"method", "json"},
-        {"om_terrain", "field"},
+        {"om_terrain",
+         get_overmapbuffer(get_map().get_bound_dimension()).ter(omt)->get_type_id().str()},
         {"object",
          {{"rows", std::vector<std::string>(24, std::string(24, '#'))},
           {"terrain", {{"#", "t_wall"}}}}}};
@@ -2968,7 +2969,7 @@ TEST_CASE(
                 return invoke("editor:unstamp");
             }
             case 5:
-                CHECK_FALSE(has_affordance(screen, "editor:unstamp"));
+                CHECK_FALSE(affordance(screen, "editor:unstamp").enabled);
                 return invoke("editor:object", {.row = "object:0"});
             case 6:
                 return invoke("editor:apply");
