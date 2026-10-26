@@ -344,13 +344,14 @@ TEST_CASE(
             watched.publish();
         }
     };
-    walk(tripoint_east, 30);
-    walk(tripoint_west, 30);
-    walk(tripoint(1, 1, 0), 30);
-    walk(tripoint(-1, -1, 0), 30);
-    walk(tripoint_north, 30);
-    walk(tripoint_south, 30);
-    CHECK(shifts >= 2);
+    // Each walk is longer than a submap, so each one shifts the map.
+    walk(tripoint_east, SEEX + 1);
+    walk(tripoint_west, SEEX + 1);
+    walk(tripoint(1, 1, 0), SEEX + 1);
+    walk(tripoint(-1, -1, 0), SEEX + 1);
+    walk(tripoint_north, SEEX + 1);
+    walk(tripoint_south, SEEX + 1);
+    CHECK(shifts >= 6);
     CHECK(exhaustive_continuations == 0);
     CHECK(watched.authority.oracle_mismatches().empty());
 }
