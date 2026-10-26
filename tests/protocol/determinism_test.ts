@@ -10,7 +10,8 @@
  *   --allow-run --allow-env tests/protocol/determinism_test.ts
  */
 import { assert, assertEquals, assertNotEquals } from "@std/assert"
-import { atMainMenu, itemRows, Mirror, stackPick } from "./mirror.ts"
+import { atMainMenu, itemRows } from "./mirror.ts"
+import { Session } from "./session.ts"
 import { Client, schemaHash } from "./stdio_client.ts"
 
 // deno-lint-ignore no-explicit-any
@@ -92,140 +93,8 @@ Deno.test("determinism: a log of the engine parses and rejects a foreign header"
   assert(thrown, "a foreign header is refused")
 })
 
-class Session {
-  mirror!: Mirror
-  /** The operation kinds submitted. */
-  kinds = new Set<string>()
-  stages = new Map<string, string[]>()
-  /** Pushed frames the client may be sent before it pays; 0 for a client that asked for no credits. */
-  window = 0
-  #unpaid = 0
-
-  constructor(readonly client: Client) {}
-
-  /** Subscribes again after a `bn.resync`: the snapshot replaces the mirror; command stages that arrived meanwhile are handled after it, and no event may. */
-  async resubscribe() {
-    const header = await this.client.result("bn.subscribe", {})
-    const early = this.client.notes.splice(0)
-    await this.start(header)
-    for (const note of early) {
-      assertNotEquals(note.method, "bn.events", "an event between a resync and its snapshot")
-      this.handle(note)
-    }
-  }
-
-  async start(subscribed?: Value) {
-    const header = subscribed ?? await this.client.result("bn.subscribe", {})
-    const parts: Value[] = []
-    while (parts.length < header.parts) {
-      const note = await this.client.note()
-      assertEquals(note.method, "bn.snapshot.part")
-      parts.push(note.params)
-    }
-    this.mirror = Mirror.fromSnapshot(header, parts)
-  }
-
-  async pay() {
-    if (this.window === 0 || this.#unpaid < Math.max(1, this.window / 2)) return
-    const frames = this.#unpaid
-    this.#unpaid = 0
-    await this.client.result("bn.credit", { frames })
-  }
-
-  refused = ""
-
-  handle(note: Value) {
-    const { method, params } = note
-    if (method === "bn.events" || method === "bn.command") this.#unpaid++
-    if (method === "bn.events") {
-      this.mirror.applyEvents(params.epoch, params.events)
-    } else if (method === "bn.command") {
-      if (params.error) this.refused = params.error
-      const stages = this.stages.get(params.command_id) ?? ["received"]
-      stages.push(params.stage)
-      this.stages.set(params.command_id, stages)
-    } else if (!["bn.loading", "bn.progress", "bn.resync"].includes(method)) {
-      throw new Error(`unexpected notification ${method}`)
-    }
-  }
-
-  /** Submit against what the mirror believes, then follow pushes until the command is terminal. */
-  async submit(operation: Value) {
-    this.kinds.add(operation.kind)
-    const mirror = this.mirror
-    const top = mirror.interaction.stack.at(-1)
-    const offered = operation.kind === "invoke"
-      ? top?.affordances.find((entry: Value) => entry.id === operation.affordance_id)
-      : undefined
-    const { command_id: id } = await this.client.result("bn.command.submit", {
-      epoch: mirror.at.epoch,
-      // An invoke names what its affordance's scope asks for; every other operation, the boundary.
-      expect: operation.kind === "invoke"
-        ? offered?.expect === "boundary"
-          ? { revision: mirror.at.revision, boundary_id: mirror.interaction.boundary_id }
-          : { screen_id: top.screen_id }
-        : {
-          revision: mirror.at.revision,
-          boundary_id: mirror.interaction.boundary_id,
-          schema_id: mirror.interaction.interaction?.schema_id ?? null,
-        },
-      operation,
-    })
-    this.stages.set(id, ["received"])
-    while (!["completed", "rejected", "interrupted"].includes(this.stages.get(id)!.at(-1)!)) {
-      const note = await this.client.note()
-      this.handle(note)
-      if (note.method === "bn.resync") await this.resubscribe()
-      await this.pay()
-    }
-    return this.stages.get(id)!.at(-1)!
-  }
-
-  /** Submit and expect the command to complete. */
-  async run(operation: Value) {
-    assertEquals(
-      await this.submit(operation),
-      "completed",
-      `${JSON.stringify(operation)} ${this.refused}`,
-    )
-  }
-
-  /** Choose the entry; the stage is returned, as loading a world ends its command `interrupted`. */
-  async pick(label: string) {
-    const choice = this.mirror.interaction.interaction?.choices?.find((entry: Value) =>
-      entry.enabled && entry.label === label
-    )
-    if (choice) return await this.submit({ kind: "choose", choice_id: choice.id })
-    // A screen of components has no choices: its tab or row is picked by its own affordance.
-    const pick = stackPick(this.mirror, label)
-    assert(pick, `no choice ${label}`)
-    return await this.submit({ kind: "invoke", ...pick })
-  }
-
-  async choose(label: string) {
-    assertEquals(await this.pick(label), "completed", label)
-  }
-
-  /** Acknowledge single-choice prompts until `done` holds. */
-  async acknowledge(done: () => boolean) {
-    for (let step = 0; !done() && step < 20; step++) {
-      const choices = this.mirror.interaction.interaction.choices.filter((entry: Value) =>
-        entry.enabled
-      )
-      assertEquals(choices.length, 1, "unexpected prompt")
-      await this.run({ kind: "choose", choice_id: choices[0].id })
-    }
-    assert(done())
-  }
-
-  /** Let the tutorial's pop-ups out of the way. */
-  clear() {
-    return this.acknowledge(() => this.mirror.interaction.interaction === null)
-  }
-}
-
-async function makeProfile(): Promise<string> {
-  const profile = await Deno.makeTempDir({ prefix: "bn-determinism-" })
+async function makeProfile(path?: string): Promise<string> {
+  const profile = path ?? await Deno.makeTempDir({ prefix: "bn-determinism-" })
   await Deno.mkdir(`${profile}/config`, { recursive: true })
   await Deno.writeTextFile(
     `${profile}/config/options.json`,
@@ -445,8 +314,12 @@ async function drive(
 }
 
 /** The recording played with no client: no stdin, no protocol. */
-async function playBack(binary: string, replay: string): Promise<StateRecord[]> {
-  const profile = await makeProfile()
+async function playBack(
+  binary: string,
+  replay: string,
+  at?: string,
+): Promise<StateRecord[]> {
+  const profile = await makeProfile(at)
   const log = `${profile}/state.jsonl`
   const status = await new Deno.Command(binary, {
     args: [
@@ -464,7 +337,7 @@ async function playBack(binary: string, replay: string): Promise<StateRecord[]> 
   const said = new TextDecoder().decode(status.stderr).split("\n").slice(-20).join("\n")
   assert(status.success, `playback exit ${status.code}:\n${said}`)
   const records = parseStateLog(await Deno.readTextFile(log))
-  await Deno.remove(profile, { recursive: true })
+  if (!at) await Deno.remove(profile, { recursive: true })
   return records
 }
 
@@ -524,5 +397,152 @@ Deno.test({
       for (const run of [a, b]) await Deno.remove(run.profile, { recursive: true })
       assertEquals(found, undefined, `pair ${pair} of unrecorded runs`)
     }
+  },
+})
+
+/** From the title screen into the editor of `entry` with the default mods; the session on the editor's world. */
+async function enterEditor(client: Client, entry: string): Promise<Session> {
+  await client.result("bn.hello", {
+    versions: ["0.2"],
+    schema: schemaHash,
+    client: { name: "determinism-test", version: "1" },
+  })
+  let session = new Session(client)
+  await session.start()
+  await session.acknowledge(() => atMainMenu(session.mirror))
+  await session.choose("Editor")
+  await session.choose(entry)
+  await session.run({ kind: "invoke", affordance_id: "QUIT" })
+  assertEquals(await session.pick("Yes"), "interrupted")
+  assertEquals((await client.note()).method, "bn.resync")
+  session = new Session(client)
+  await session.start()
+  return session
+}
+
+/** The editor's component `id` on the top screen. */
+const part = (session: Session, id: string): Value => {
+  const find = (node: Value): Value =>
+    !node
+      ? undefined
+      : node.id === id
+      ? node
+      : [node.child, ...(node.children ?? [])].map(find).find(
+        Boolean,
+      )
+  return find(session.mirror.interaction.stack.at(-1).root)
+}
+
+type EditorPlay = (session: Session, profile: string) => Promise<void>
+
+/**
+ * `play` in an editor of `entry` recorded in a profile at `profile`, then the recording replayed headless
+ * in a fresh profile at the same path. Returns the files `files` names of both, which a replay must
+ * make equal.
+ */
+async function recordAndReplayEditor(
+  binary: string,
+  entry: string,
+  play: EditorPlay,
+  files: string[],
+) {
+  const profile = await makeProfile()
+  const recording = `${profile}.jsonl`
+  const client = new Client(binary, [
+    "--seed",
+    seed,
+    ...profileArgs(profile),
+    "--replay-record",
+    recording,
+  ])
+  try {
+    await play(await enterEditor(client, entry), profile)
+    await client.close()
+  } catch (error) {
+    client.kill()
+    throw error
+  }
+  const read = (path: string) => Deno.readFile(`${profile}/${path}`)
+  const recorded = await Promise.all(files.map(read))
+  await Deno.remove(profile, { recursive: true })
+  await makeProfile(profile)
+  await playBack(binary, recording, profile)
+  const replayed = await Promise.all(files.map(read))
+  await Deno.remove(profile, { recursive: true })
+  const lines = (await Deno.readTextFile(recording)).split("\n").filter(Boolean).map((line) =>
+    JSON.parse(line)
+  )
+  await Deno.remove(recording)
+  return { recorded, replayed, targets: lines.map((line) => line.interaction?.target_id) }
+}
+
+Deno.test({
+  name: "determinism: a recorded map editor session replays to the same saved file",
+  ignore: !binary,
+  async fn() {
+    const source = `${Deno.cwd()}/data/json/mapgen/house/2storymodern06.json`
+    const saved = "mods/replay/house.json"
+    const { recorded, replayed, targets } = await recordAndReplayEditor(
+      binary!,
+      "Map editor",
+      async (session, profile) => {
+        const invoke = (affordance_id: string, args: Value = {}) =>
+          session.run({ kind: "invoke", affordance_id, args })
+        await invoke("editor:open", { text: source })
+        await invoke("editor:symbol", { row: "symbol:#" })
+        await invoke("editor:paint", { row: "square:2,3" })
+        await invoke("editor:paint", { row: "square:3,3" })
+        await invoke("editor:undo")
+        await invoke("editor:paint", { row: "square:4,3" })
+        await invoke("editor:save_as", { text: `${profile}/${saved}` })
+        assertEquals(part(session, "editor:document").stats[0].value, "Yes")
+        await invoke("QUIT")
+      },
+      [saved],
+    )
+    for (const id of ["open", "symbol", "paint", "undo", "save_as"]) {
+      assert(targets.includes(`editor:${id}`), `editor:${id} is in the recording`)
+    }
+    assert(recorded[0].length > 0, "a file was saved")
+    assertNotEquals(
+      new TextDecoder().decode(recorded[0]),
+      await Deno.readTextFile(source),
+      "the strokes changed the file",
+    )
+    assertEquals(replayed[0], recorded[0])
+  },
+})
+
+Deno.test({
+  name: "determinism: a recorded vehicle editor session replays to the same saved file",
+  ignore: !binary,
+  async fn() {
+    const saved = "mods/replay/vehicle.json"
+    const { recorded, replayed, targets } = await recordAndReplayEditor(
+      binary!,
+      "Vehicle editor",
+      async (session, profile) => {
+        const invoke = (affordance_id: string, args: Value = {}) =>
+          session.run({ kind: "invoke", affordance_id, args })
+        const removeLast = () =>
+          invoke("vehicle:remove", { row: part(session, "vehicle:stack").rows.at(-1).id })
+        await invoke("vehicle:open", { row: "prototype:2seater2" })
+        const parts = part(session, "vehicle:stack").rows.length
+        await removeLast()
+        await removeLast()
+        await invoke("vehicle:undo")
+        await removeLast()
+        assertEquals(part(session, "vehicle:stack").rows.length, parts - 2)
+        await invoke("vehicle:save_as", { text: `${profile}/${saved}` })
+        assertEquals(part(session, "vehicle:document").stats[0].value, "Yes")
+        await invoke("QUIT")
+      },
+      [saved],
+    )
+    for (const id of ["open", "remove", "undo", "save_as"]) {
+      assert(targets.includes(`vehicle:${id}`), `vehicle:${id} is in the recording`)
+    }
+    assert(recorded[0].length > 0, "a file was saved")
+    assertEquals(replayed[0], recorded[0])
   },
 })
