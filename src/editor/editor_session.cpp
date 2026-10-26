@@ -717,20 +717,22 @@ struct session {
                 string_format(_("%s changed on disk; saving would overwrite that change."), name);
             return;
         }
-        reopen();
+        const auto kept = reopen();
         if (notice.empty()) {
             notice = string_format(_("%s changed on disk and was reloaded."), name);
-            if (apply_on_save && on_mapgen()) { apply(); }
+            // Another entry shown in place of a gone one was not what was being applied.
+            if (kept && apply_on_save && on_mapgen()) { apply(); }
         }
     }
-    /// Reads the open file again, on the object it showed while the file still has it.
-    auto reopen() -> void {
+    /// Reads the open file again, on the object it showed while the file still has it; whether
+    /// it does.
+    auto reopen() -> bool {
         const auto kept = object;
         open(doc->path().string());
-        if (std::ranges::contains(entries(), kept)) {
-            object = kept;
-            reload();
-        }
+        if (!std::ranges::contains(entries(), kept)) { return false; }
+        object = kept;
+        reload();
+        return true;
     }
     /// Writes the file; false, with the notice saying why, when it was not written.
     auto save() -> bool { return written(save_document(*doc)); }
@@ -744,10 +746,12 @@ struct session {
     auto apply() -> void {
         auto stand_ins = file_stand_ins(stand_in_texts());
         const auto& entry = doc->objects()[object].value;
+        // A chunk the loader refuses stands in for nothing, so what it said is why.
         const auto applied =
-            entry.contains("nested_mapgen_id")
+            !entry.contains("nested_mapgen_id") ? apply_mapgen(entry.dump())
+            : diagnostics.empty()
                 ? std::expected<void, std::string>{}
-                : apply_mapgen(entry.dump());
+                : std::expected<void, std::string>(std::unexpect, diagnostics.front().text);
         if (applied) {
             stand_ins.keep_chunks();
         } else {
