@@ -16,23 +16,29 @@ namespace editor {
 /// names, one per overmap square for rows of names; none for an entry of no overmap terrain.
 auto entry_terrains(const nlohmann::ordered_json& value) -> std::vector<std::vector<std::string>>;
 
-/// The overmap terrains one building or overmap special stacks on one overmap square, by level.
-using level_column = std::map<int, std::string>;
-
-/// Where the fixed buildings and overmap specials stack overmap terrains, by name without a
-/// direction.
-struct level_index {
-    std::vector<level_column> columns;
+/// An overmap terrain a building or overmap special places, by name without a direction.
+struct placed_terrain {
+    std::string name;
+    /// Whether it is placed turned from how its mapgen draws it.
+    bool turned = false;
 };
 
-/// The columns of every fixed building and overmap special of the game.
+/// The overmap terrains one building or overmap special places, by square.
+using special_layout = std::map<tripoint, placed_terrain>;
+
+/// Where the fixed buildings and overmap specials place overmap terrains.
+struct level_index {
+    std::vector<special_layout> layouts;
+};
+
+/// The layouts of every fixed building and overmap special of the game.
 auto index_levels() -> level_index;
 
-/// The overmap terrain `dz` levels above `om_terrain` where a column stacks one other than itself.
+/// The overmap terrain `dz` levels above `om_terrain` where a layout stacks one other than itself.
 auto terrain_above(const level_index& index, const std::string& om_terrain, int dz)
     -> std::optional<std::string>;
 
-/// The level `om_terrain` stands on in the first column that holds it.
+/// The level `om_terrain` stands on in the first layout that holds it.
 auto terrain_level(const level_index& index, const std::string& om_terrain) -> std::optional<int>;
 
 /// An overmap square of an entry: which entry and where its squares start in the rows.

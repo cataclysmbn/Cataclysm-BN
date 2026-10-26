@@ -3419,7 +3419,10 @@ TEST_CASE("a building stacks its roof one level above its ground floor", "[edito
 
 TEST_CASE("a terrain repeated up a tower leads past itself to the next one", "[editor_levels]") {
     const auto index = editor::level_index(
-        {.columns = {{{0, "tower"}, {1, "tower"}, {2, "tower_roof"}}}});
+        {.layouts = {
+             {{tripoint(0, 0, 0), {.name = "tower"}},
+              {tripoint(0, 0, 1), {.name = "tower"}},
+              {tripoint(0, 0, 2), {.name = "tower_roof"}}}}});
     CHECK(editor::terrain_level(index, "tower") == 0);
     CHECK(editor::terrain_above(index, "tower", 1) == "tower_roof");
     CHECK(editor::terrain_above(index, "tower_roof", -1) == "tower");
@@ -3429,7 +3432,9 @@ TEST_CASE("a terrain repeated up a tower leads past itself to the next one", "[e
 TEST_CASE(
     "the level below an entry's square is another entry's even when the entry makes it too",
     "[editor_levels]") {
-    const auto index = editor::level_index({.columns = {{{-1, "cellar"}, {0, "shop"}}}});
+    const auto index = editor::level_index(
+        {.layouts = {
+             {{tripoint(0, 0, -1), {.name = "cellar"}}, {tripoint(0, 0, 0), {.name = "shop"}}}}});
     const auto entries = std::vector<editor::document_object>{
         {.value = nlohmann::ordered_json::parse(R"({"om_terrain": [["shop", "cellar"]]})")},
         {.value = nlohmann::ordered_json::parse(R"({"om_terrain": "cellar"})")}};

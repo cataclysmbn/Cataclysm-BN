@@ -9,25 +9,27 @@
 namespace editor {
 namespace {
 
-/// The name of a written terrain without its direction.
-auto type_name(const oter_str_id& terrain) -> std::optional<std::string> {
+/// A written terrain as placed: its name without its direction, and whether that turns it.
+auto placed(const oter_str_id& terrain) -> std::optional<placed_terrain> {
     if (terrain.is_null() || !terrain.is_valid()) { return std::nullopt; }
-    return terrain.obj().get_type_id().str();
+    return placed_terrain{
+        .name = terrain.obj().get_type_id().str(),
+        .turned = terrain.obj().get_dir() != om_direction::type::north};
 }
 
-/// A level of a column.
-struct column_place {
-    const level_column* column = nullptr;
-    int z = 0;
+/// A square of a layout.
+struct layout_place {
+    const special_layout* layout = nullptr;
+    tripoint at;
 };
 
-/// Every level a column holds `om_terrain` on, in column order.
+/// Every square a layout places `om_terrain` on, in layout order.
 auto places_of(const level_index& index, const std::string& om_terrain)
-    -> std::vector<column_place> {
-    auto result = std::vector<column_place>{};
-    for (const auto& column : index.columns) {
-        for (const auto& [z, name] : column) {
-            if (name == om_terrain) { result.push_back({.column = &column, .z = z}); }
+    -> std::vector<layout_place> {
+    auto result = std::vector<layout_place>{};
+    for (const auto& layout : index.layouts) {
+        for (const auto& [at, placed] : layout) {
+            if (placed.name == om_terrain) { result.push_back({.layout = &layout, .at = at}); }
         }
     }
     return result;
@@ -84,13 +86,12 @@ auto entry_terrains(const nlohmann::ordered_json& value) -> std::vector<std::vec
 auto index_levels() -> level_index {
     auto index = level_index{};
     for (const auto& special : overmap_specials::get_all()) {
-        auto columns = std::map<point, level_column>{};
+        auto& layout = index.layouts.emplace_back();
         for (const auto& location : special.required_locations()) {
-            if (const auto name = type_name(special.get_terrain_at(location.p))) {
-                columns[location.p.xy().raw()][location.p.z()] = *name;
+            if (auto terrain = placed(special.get_terrain_at(location.p))) {
+                layout[location.p.raw()] = std::move(*terrain);
             }
         }
-        for (auto& [at, column] : columns) { index.columns.push_back(std::move(column)); }
     }
     return index;
 }
@@ -98,15 +99,17 @@ auto index_levels() -> level_index {
 auto terrain_above(const level_index& index, const std::string& om_terrain, const int dz)
     -> std::optional<std::string> {
     for (const auto& place : places_of(index, om_terrain)) {
-        const auto found = place.column->find(place.z + dz);
-        if (found != place.column->end() && found->second != om_terrain) { return found->second; }
+        const auto found = place.layout->find(place.at + tripoint(0, 0, dz));
+        if (found != place.layout->end() && found->second.name != om_terrain) {
+            return found->second.name;
+        }
     }
     return std::nullopt;
 }
 
 auto terrain_level(const level_index& index, const std::string& om_terrain) -> std::optional<int> {
     const auto places = places_of(index, om_terrain);
-    return places.empty() ? std::nullopt : std::optional(places.front().z);
+    return places.empty() ? std::nullopt : std::optional(places.front().at.z);
 }
 
 auto square_making(
