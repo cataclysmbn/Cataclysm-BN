@@ -109,9 +109,11 @@ auto terrain_level(const level_index& index, const std::string& om_terrain) -> s
     return places.empty() ? std::nullopt : std::optional(places.front().z);
 }
 
-auto square_making(const std::vector<document_object>& entries, const std::string& om_terrain)
-    -> std::optional<entry_square> {
+auto square_making(
+    const std::vector<document_object>& entries, const std::string& om_terrain,
+    const std::optional<std::size_t> skipped) -> std::optional<entry_square> {
     for (const auto [index, entry] : std::views::enumerate(entries)) {
+        if (skipped == static_cast<std::size_t>(index)) { continue; }
         for (const auto& square : entry_names(entry.value)) {
             if (square.name == om_terrain) {
                 return entry_square{
@@ -132,7 +134,7 @@ auto stacked_squares(
             const auto above = terrain_above(index, name, dz);
             if (!above) { continue; }
             // A level of the entry itself is the canvas already.
-            if (const auto other = square_making(entries, *above); other && other->entry != entry) {
+            if (const auto other = square_making(entries, *above, entry)) {
                 result.push_back(
                     {.origin = point(static_cast<int>(x) * SEEX * 2, static_cast<int>(y) * SEEY * 2),
                      .other = *other});

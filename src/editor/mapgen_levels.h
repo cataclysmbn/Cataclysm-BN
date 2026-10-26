@@ -41,9 +41,10 @@ struct entry_square {
     point origin;
 };
 
-/// The overmap square of the entries that makes `om_terrain`.
-auto square_making(const std::vector<document_object>& entries, const std::string& om_terrain)
-    -> std::optional<entry_square>;
+/// The overmap square of the entries, other than `skipped`, that makes `om_terrain`.
+auto square_making(
+    const std::vector<document_object>& entries, const std::string& om_terrain,
+    std::optional<std::size_t> skipped = std::nullopt) -> std::optional<entry_square>;
 
 /// An overmap square of one entry with the square `dz` levels above it in another.
 struct stacked_square {
