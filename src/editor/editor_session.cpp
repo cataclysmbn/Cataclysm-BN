@@ -1952,6 +1952,7 @@ auto first = std::optional<recent_document>{};
 
 auto reset_editor_session() -> void {
     kept_session.reset();
+    first.reset();
     allow_editor_this_session(false);
 }
 

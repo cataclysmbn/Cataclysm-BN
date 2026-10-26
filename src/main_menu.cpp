@@ -1206,9 +1206,11 @@ auto main_menu::editor_tab( const std::string &id ) -> bool
     auto index = std::size_t{ 0 };
     const auto reopened = std::sscanf( id.c_str(), "recent:%zu", &index ) == 1 && index < recent.size()
                           ? std::optional( recent[index] ) : std::nullopt;
-    const auto initial = reopened
-                         ? reopened->mods | std::views::filter( &mod_id::is_valid ) | std::ranges::to<std::vector>()
-                         : world_generator->get_mod_manager().get_default_mods();
+    // A document whose mods are all gone starts from the default mods, as the editors do.
+    const auto kept = reopened
+                      ? reopened->mods | std::views::filter( &mod_id::is_valid ) | std::ranges::to<std::vector>()
+                      : std::vector<mod_id> {};
+    const auto initial = kept.empty() ? world_generator->get_mod_manager().get_default_mods() : kept;
     const auto mods = world_generator->pick_mods( initial, _( "Open the editor with these mods?" ) );
     if( !mods || !start_special_game( special_game_type::EDITOR, *mods ) ) {
         return false;
