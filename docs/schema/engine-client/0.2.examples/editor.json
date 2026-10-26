@@ -3608,6 +3608,16 @@
             "expect": "screen"
           },
           {
+            "id": "editor:extract_palette",
+            "label": "Extract legend to palette",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
             "id": "editor:catalog_kind",
             "label": "Kind",
             "keys": [],
@@ -6770,6 +6780,16 @@
             "expect": "screen"
           },
           {
+            "id": "editor:extract_palette",
+            "label": "Extract legend to palette",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
             "id": "editor:catalog_kind",
             "label": "Kind",
             "keys": [],
@@ -9828,6 +9848,16 @@
             "keys": [],
             "enabled": true,
             "expect": "screen"
+          },
+          {
+            "id": "editor:extract_palette",
+            "label": "Extract legend to palette",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {}
+            },
+            "expect": "boundary"
           },
           {
             "id": "editor:catalog_kind",
@@ -26651,6 +26681,16 @@
             "keys": [],
             "enabled": true,
             "expect": "screen"
+          },
+          {
+            "id": "editor:extract_palette",
+            "label": "Extract legend to palette",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {}
+            },
+            "expect": "boundary"
           },
           {
             "id": "editor:catalog_kind",
