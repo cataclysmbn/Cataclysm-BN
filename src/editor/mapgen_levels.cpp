@@ -147,4 +147,10 @@ auto stacked_squares(
     return result;
 }
 
+auto neighbour_squares(
+    const level_index& /*index*/, const std::vector<document_object>& /*entries*/,
+    const std::size_t /*entry*/) -> std::vector<neighbour_square> {
+    return {};
+}
+
 } // namespace editor

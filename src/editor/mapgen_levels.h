@@ -64,4 +64,17 @@ auto stacked_squares(
     const level_index& index, const std::vector<document_object>& entries, std::size_t entry,
     int dz) -> std::vector<stacked_square>;
 
+/// An overmap square beside an entry's squares that another entry makes.
+struct neighbour_square {
+    /// Where the square starts, relative to the entry's rows.
+    point origin;
+    entry_square other;
+};
+
+/// The overmap squares beside entry `entry` on its level, where a layout places both unturned,
+/// that another entry of `entries` makes.
+auto neighbour_squares(
+    const level_index& index, const std::vector<document_object>& entries, std::size_t entry)
+    -> std::vector<neighbour_square>;
+
 } // namespace editor

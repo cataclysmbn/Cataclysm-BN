@@ -3224,38 +3224,56 @@ TEST_CASE(
     CHECK(step == 1);
 }
 
-/// A mod file of a house's ground floor beside another house, its roof, open air on its west half,
-/// and a nested chunk; removed when the test ends.
+/// The entries of a house's ground floor beside another house, its roof, open air on its west
+/// half, and a nested chunk.
+auto house_levels() -> nlohmann::ordered_json {
+    auto ground = nlohmann::ordered_json::array();
+    auto roof = nlohmann::ordered_json::array();
+    for (auto row = 0; row < 24; ++row) {
+        ground.push_back(std::string(48, '.'));
+        roof.push_back(std::string(11, ' ') + "c" + std::string(12, 'r'));
+    }
+    return nlohmann::ordered_json::array(
+        {{{"type", "mapgen"},
+          {"method", "json"},
+          {"om_terrain",
+           nlohmann::ordered_json::array({nlohmann::ordered_json::array({"house_01", "house_04"})})},
+          {"object", {{"rows", ground}, {"terrain", {{".", "t_floor"}}}}}},
+         {{"type", "mapgen"},
+          {"method", "json"},
+          {"om_terrain", "house_01_roof"},
+          {"object",
+           {{"rows", roof},
+            {"terrain", {{" ", "t_open_air"}, {"c", "t_open_air"}, {"r", "t_flat_roof"}}},
+            {"furniture", {{"c", "f_chair"}}}}}},
+         {{"type", "mapgen"},
+          {"method", "json"},
+          {"nested_mapgen_id", "editor_session_test_levels_chunk"},
+          {"object", {{"mapgensize", {1, 1}}, {"rows", {"#"}}, {"terrain", {{"#", "t_wall"}}}}}}});
+}
+
+/// The entries of the two ground floor squares of a city building, the west of floor and the
+/// east of wall.
+auto building_halves() -> nlohmann::ordered_json {
+    const auto half = [](const char* om_terrain, const char symbol, const char* terrain) {
+        auto rows = nlohmann::ordered_json::array();
+        for (auto row = 0; row < 24; ++row) { rows.push_back(std::string(24, symbol)); }
+        return nlohmann::ordered_json{
+            {"type", "mapgen"},
+            {"method", "json"},
+            {"om_terrain", om_terrain},
+            {"object", {{"rows", rows}, {"terrain", {{std::string(1, symbol), terrain}}}}}};
+    };
+    return nlohmann::ordered_json::array(
+        {half("urban_1_1", '.', "t_floor"), half("urban_1_2", '#', "t_wall")});
+}
+
+/// A mod file of `entries`; removed when the test ends.
 struct levels_file {
     std::filesystem::path path =
         std::filesystem::path(PATH_INFO::user_moddir()) / "editor_session_test" / "levels.json";
 
-    levels_file() {
-        auto ground = nlohmann::ordered_json::array();
-        auto roof = nlohmann::ordered_json::array();
-        for (auto row = 0; row < 24; ++row) {
-            ground.push_back(std::string(48, '.'));
-            roof.push_back(std::string(11, ' ') + "c" + std::string(12, 'r'));
-        }
-        const auto entries = nlohmann::ordered_json::array(
-            {{{"type", "mapgen"},
-              {"method", "json"},
-              {"om_terrain",
-               nlohmann::ordered_json::array(
-                   {nlohmann::ordered_json::array({"house_01", "house_04"})})},
-              {"object", {{"rows", ground}, {"terrain", {{".", "t_floor"}}}}}},
-             {{"type", "mapgen"},
-              {"method", "json"},
-              {"om_terrain", "house_01_roof"},
-              {"object",
-               {{"rows", roof},
-                {"terrain", {{" ", "t_open_air"}, {"c", "t_open_air"}, {"r", "t_flat_roof"}}},
-                {"furniture", {{"c", "f_chair"}}}}}},
-             {{"type", "mapgen"},
-              {"method", "json"},
-              {"nested_mapgen_id", "editor_session_test_levels_chunk"},
-              {"object",
-               {{"mapgensize", {1, 1}}, {"rows", {"#"}}, {"terrain", {{"#", "t_wall"}}}}}}});
+    explicit levels_file(const nlohmann::ordered_json& entries = house_levels()) {
         std::filesystem::create_directories(path.parent_path());
         auto out = std::ofstream(path, std::ios::binary | std::ios::trunc);
         out << format_json(entries.dump()).value();
@@ -3451,6 +3469,91 @@ TEST_CASE("an entry of several overmap terrains makes each of them", "[editor_le
     REQUIRE(made.has_value());
     CHECK(made->entry == 0);
     CHECK(made->origin == point_zero);
+}
+
+TEST_CASE(
+    "an entry's neighbours are the squares beside it on its level that other entries make",
+    "[editor_levels]") {
+    const auto index = editor::level_index(
+        {.layouts = {
+             {{tripoint(0, 0, 0), {.name = "shop_front"}},
+              {tripoint(1, 0, 0), {.name = "shop_back"}},
+              {tripoint(0, 1, 0), {.name = "shop_yard", .turned = true}},
+              {tripoint(0, 0, 1), {.name = "shop_roof"}}}}});
+    const auto entries = std::vector<editor::document_object>{
+        {.value = nlohmann::ordered_json::parse(R"({"om_terrain": "shop_front"})")},
+        {.value = nlohmann::ordered_json::parse(R"({"om_terrain": "shop_back"})")},
+        {.value = nlohmann::ordered_json::parse(R"({"om_terrain": "shop_yard"})")},
+        {.value = nlohmann::ordered_json::parse(R"({"om_terrain": "shop_roof"})")}};
+    // The yard is turned from how its mapgen draws it, and the roof is a level up.
+    const auto front = editor::neighbour_squares(index, entries, 0);
+    REQUIRE(front.size() == 1);
+    CHECK(front[0].origin == point(24, 0));
+    CHECK(front[0].other.entry == 1);
+    const auto back = editor::neighbour_squares(index, entries, 1);
+    REQUIRE(back.size() == 1);
+    CHECK(back[0].origin == point(-24, 0));
+    CHECK(back[0].other.entry == 0);
+}
+
+TEST_CASE("an entry's own squares are none of its neighbours", "[editor_levels]") {
+    const auto index = editor::level_index(
+        {.layouts = {{{tripoint(0, 0, 0), {.name = "shop_front"}},
+                      {tripoint(1, 0, 0), {.name = "shop_back"}}}}});
+    const auto entries = std::vector<editor::document_object>{
+        {.value = nlohmann::ordered_json::parse(R"({"om_terrain": [["shop_front", "shop_back"]]})")},
+        {.value = nlohmann::ordered_json::parse(R"({"om_terrain": "shop_back"})")}};
+    CHECK(editor::neighbour_squares(index, entries, 0).empty());
+}
+
+TEST_CASE(
+    "the canvas shows the edges of the squares beside it that the file makes, faded",
+    "[editor_session][editor_levels]") {
+    const auto guard = screen_guard{};
+    const auto file = levels_file(building_halves());
+    const auto has_cell = [](const ec::screen_view& screen, const int x, const int y) {
+        const auto& cells = body<ec::grid_body>(part(screen, "editor:canvas")).cells;
+        return std::ranges::contains(cells, ec::grid_point{x, y}, &ec::grid_cell::at);
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1: {
+                // urban_1_2 stands east of urban_1_1.
+                CHECK(body<ec::grid_body>(part(screen, "editor:canvas")).cols == 28);
+                CHECK_FALSE(cell(screen, 23, 0).faded);
+                const auto& beside = cell(screen, 24, 0);
+                CHECK(beside.faded);
+                CHECK(beside.glyph == "#");
+                CHECK(beside.id == "object:1");
+                CHECK(beside.affordance == "editor:object");
+                CHECK(cell(screen, 27, 23).faded);
+                CHECK_FALSE(has_cell(screen, 28, 0));
+                CHECK_FALSE(has_cell(screen, 24, 24));
+                return invoke("editor:object", {.row = beside.id});
+            }
+            case 2:
+                // urban_1_1 stands west of urban_1_2: the canvas starts an overmap square east,
+                // where its outline falls.
+                CHECK(cell(screen, 24, 0).id == "square:0,0");
+                CHECK(cell(screen, 24, 0).glyph == "#");
+                CHECK_FALSE(cell(screen, 24, 0).faded);
+                CHECK(cell(screen, 20, 0).faded);
+                CHECK(cell(screen, 20, 0).glyph == ".");
+                CHECK_FALSE(has_cell(screen, 19, 0));
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 3);
 }
 
 #endif // CATA_MCP
