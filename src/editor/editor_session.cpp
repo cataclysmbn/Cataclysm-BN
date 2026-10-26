@@ -594,10 +594,12 @@ struct session {
                })
              | std::ranges::to<std::vector>();
     }
-    /// The palettes of the file, which stand in for the game's while a mapgen of it is read.
-    auto palette_texts() const -> std::vector<std::string> {
+    /// The palettes and nested chunks of the file, which stand in for the game's while a mapgen of
+    /// it is read.
+    auto stand_in_texts() const -> std::vector<std::string> {
         return doc->objects() | std::views::filter([](const document_object& entry) {
-                   return is_palette(entry.value);
+                   return is_palette(entry.value)
+                       || (is_json_mapgen(entry.value) && entry.value.contains("nested_mapgen_id"));
                })
              | std::views::transform([](const document_object& entry) {
                    return entry.value.dump();
@@ -640,7 +642,7 @@ struct session {
 
     /// Counts what the entry puts on a square over several seeds, from the seed shown on.
     auto roll_loot_at(const point& at) -> void {
-        const auto stand_ins = palette_stand_ins(palette_texts());
+        const auto stand_ins = file_stand_ins(stand_in_texts());
         const auto rolled = roll_loot(
             doc->objects()[object].value.dump(),
             {.preview = preview_options_of(seed.value_or(1)),
@@ -659,7 +661,7 @@ struct session {
         legend.clear();
         diagnostics.clear();
         if (!doc || object >= doc->objects().size()) { return; }
-        const auto stand_ins = palette_stand_ins(palette_texts());
+        const auto stand_ins = file_stand_ins(stand_in_texts());
         const auto text = doc->objects()[object].value.dump();
         legend = mapgen_legend(text).value_or(std::vector<legend_symbol>{});
         diagnostics =
@@ -1060,7 +1062,7 @@ struct session {
     /// Generates the entry over the avatar's overmap square, in place of what the world has there.
     auto stamp_here() -> void {
         unstamp();
-        const auto stand_ins = palette_stand_ins(palette_texts());
+        const auto stand_ins = file_stand_ins(stand_in_texts());
         auto made = stamp_mapgen(
             doc->objects()[object].value.dump(),
             {.at = get_avatar().abs_omt_pos(), .seed = seed.value_or(1)});
@@ -2084,7 +2086,7 @@ auto run_editor_session() -> void {
         } else if (id == loot_id) {
             if (const auto at = square_of(row)) { state.roll_loot_at(*at); }
         } else if (id == apply_id) {
-            const auto stand_ins = palette_stand_ins(state.palette_texts());
+            const auto stand_ins = file_stand_ins(state.stand_in_texts());
             const auto applied = apply_mapgen(state.doc->objects()[state.object].value.dump());
             if (!applied) { state.notice = applied.error(); }
         } else if (id == stamp_id) {

@@ -6563,28 +6563,58 @@ auto editor::check_mapgen(const std::string_view text) -> std::vector<loader_mes
     return messages;
 }
 
-editor::palette_stand_ins::palette_stand_ins(const std::vector<std::string>& texts) {
+editor::file_stand_ins::file_stand_ins(const std::vector<std::string>& texts) {
     auto ids = std::make_shared<std::vector<palette_id>>();
     auto kept = std::make_shared<std::vector<decltype(palettes)::node_type>>();
+    auto names = std::make_shared<std::vector<std::string>>();
+    auto kept_chunks = std::make_shared<std::vector<decltype(nested_mapgen)::node_type>>();
     capture_each_debugmsg_during([&] {
-        for (const auto& text : texts) {
-            try {
-                auto in = std::istringstream(text);
-                auto jsin = JsonIn(in, std::string(editor_source));
-                const auto entry = jsin.get_object();
-                entry.allow_omitted_members();
-                const auto id = palette_id(entry.get_string("id"));
-                if (!std::ranges::contains(*ids, id)) {
-                    ids->push_back(id);
-                    if (auto node = palettes.extract(id)) { kept->push_back(std::move(node)); }
-                }
-                mapgen_palette::load(entry, mod_management::get_default_core_content_pack().str());
-            } catch (const JsonError& /*e*/) {}
+        // Palettes first, so that a chunk reads the palettes of the file.
+        for (const auto chunks : {false, true}) {
+            for (const auto& text : texts) {
+                try {
+                    auto in = std::istringstream(text);
+                    auto jsin = JsonIn(in, std::string(editor_source));
+                    const auto entry = jsin.get_object();
+                    entry.allow_omitted_members();
+                    if (!chunks && entry.get_string("type") == "palette") {
+                        const auto id = palette_id(entry.get_string("id"));
+                        if (!std::ranges::contains(*ids, id)) {
+                            ids->push_back(id);
+                            if (auto node = palettes.extract(id)) {
+                                kept->push_back(std::move(node));
+                            }
+                        }
+                        mapgen_palette::
+                            load(entry, mod_management::get_default_core_content_pack().str());
+                    } else if (chunks && entry.has_string("nested_mapgen_id")) {
+                        const auto name = entry.get_string("nested_mapgen_id");
+                        if (!std::ranges::contains(*names, name)) {
+                            names->push_back(name);
+                            if (auto node = nested_mapgen.extract(name)) {
+                                kept_chunks->push_back(std::move(node));
+                            }
+                        }
+                        auto chunk = std::make_shared<detached_nested_mapgen>();
+                        auto object = entry.get_object("object");
+                        object.allow_omitted_members();
+                        mapgen_defer::defer = false;
+                        const auto loaded = chunk->load(object);
+                        // A chunk the loader would defer is left to checking it, which reports why.
+                        if (std::exchange(mapgen_defer::defer, false) || !loaded) { continue; }
+                        chunk->finalize_parameters();
+                        nested_mapgen[name].add(chunk, entry.get_int("weight", 1000));
+                        nested_mapgen[name].precalc();
+                    }
+                } catch (const JsonError& /*e*/) {}
+            }
         }
     });
-    restore_ = [ids, kept] {
+    restore_ = [ids, kept, names, kept_chunks] {
         for (const auto& id : *ids) { palettes.erase(id); }
         for (auto& node : *kept) { palettes.insert(std::move(node)); }
+        for (const auto& name : *names) { nested_mapgen.erase(name); }
+        for (auto& node : *kept_chunks) { nested_mapgen.insert(std::move(node)); }
     };
 }
 

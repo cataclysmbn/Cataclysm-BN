@@ -22,15 +22,15 @@ struct loader_message {
 /// mapgen using it would, so that a loop through it is reported.
 auto check_mapgen(std::string_view text) -> std::vector<loader_message>;
 
-/// While it lives, each palette entry of `texts` stands in for the game's palette of its id, as if
-/// the game had loaded it, so that a mapgen reads the palettes of its own file as they are edited.
-/// What loading them said is dropped: checking a palette reports it.
-class palette_stand_ins {
+/// While it lives, each palette and nested chunk entry of `texts` stands in for the game's ones of
+/// its id, as if the game had loaded it, so that a mapgen reads the palettes and places the chunks
+/// of its own file as they are edited. What loading them said is dropped: checking one reports it.
+class file_stand_ins {
 public:
-    explicit palette_stand_ins(const std::vector<std::string>& texts);
-    ~palette_stand_ins() { restore_(); }
-    palette_stand_ins(const palette_stand_ins&) = delete;
-    auto operator=(const palette_stand_ins&) -> palette_stand_ins& = delete;
+    explicit file_stand_ins(const std::vector<std::string>& texts);
+    ~file_stand_ins() { restore_(); }
+    file_stand_ins(const file_stand_ins&) = delete;
+    auto operator=(const file_stand_ins&) -> file_stand_ins& = delete;
 
 private:
     std::function<auto()->void> restore_;
