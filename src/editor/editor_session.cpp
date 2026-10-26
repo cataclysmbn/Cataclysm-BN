@@ -1332,7 +1332,7 @@ auto legend_rows(const session& state) -> std::vector<ec::row> {
                }
                // A symbol the rows never use, or one they use that nothing maps, is flagged after
                // what it places.
-               if (!entry.used || entry.lines.empty()) {
+               if (state.on_mapgen() && (!entry.used || entry.lines.empty())) {
                    columns.push_back(
                        {.key = "use",
                         .label = _("Use"),
@@ -1434,34 +1434,38 @@ auto session_view(const session& state) -> ec::screen_view {
              .value = doc.dirty() ? _("No") : _("Yes"),
              .tone = doc.dirty() ? "bad" : "good"},
         };
-        if (!state.symbol.empty()) {
-            stats.push_back({.key = "symbol", .label = _("Symbol"), .value = state.symbol});
-        }
-        if (!state.room_fill.empty()) {
-            stats.push_back({.key = "inside", .label = _("Inside"), .value = state.room_fill});
-        }
-        stats.push_back(
-            {.key = "brush", .label = _("Brush"), .value = std::to_string(state.brush)});
-        stats.push_back(
-            {.key = "mirror_x",
-             .label = _("Mirror across"),
-             .value = state.mirror_x ? _("On") : _("Off")});
-        if (!state.clip.empty()) {
+        // A palette has no rows to draw on, and no drawing state.
+        if (state.on_mapgen()) {
+            if (!state.symbol.empty()) {
+                stats.push_back({.key = "symbol", .label = _("Symbol"), .value = state.symbol});
+            }
+            if (!state.room_fill.empty()) {
+                stats.push_back({.key = "inside", .label = _("Inside"), .value = state.room_fill});
+            }
             stats.push_back(
-                {.key = "clipboard",
-                 .label = _("Clipboard"),
-                 .value = string_format("%zux%zu", state.clip.front().size(), state.clip.size())});
-        }
-        stats.push_back(
-            {.key = "mirror_y",
-             .label = _("Mirror down"),
-             .value = state.mirror_y ? _("On") : _("Off")});
-        if (state.stamped) {
-            stats.push_back({.key = "stamped", .label = _("Stamped"), .value = _("Yes")});
-        }
-        if (state.seed) {
+                {.key = "brush", .label = _("Brush"), .value = std::to_string(state.brush)});
             stats.push_back(
-                {.key = "seed", .label = _("Seed"), .value = std::to_string(*state.seed)});
+                {.key = "mirror_x",
+                 .label = _("Mirror across"),
+                 .value = state.mirror_x ? _("On") : _("Off")});
+            if (!state.clip.empty()) {
+                stats.push_back(
+                    {.key = "clipboard",
+                     .label = _("Clipboard"),
+                     .value =
+                         string_format("%zux%zu", state.clip.front().size(), state.clip.size())});
+            }
+            stats.push_back(
+                {.key = "mirror_y",
+                 .label = _("Mirror down"),
+                 .value = state.mirror_y ? _("On") : _("Off")});
+            if (state.stamped) {
+                stats.push_back({.key = "stamped", .label = _("Stamped"), .value = _("Yes")});
+            }
+            if (state.seed) {
+                stats.push_back(
+                    {.key = "seed", .label = _("Seed"), .value = std::to_string(*state.seed)});
+            }
         }
         parts.push_back(ec::panel(
             {.id = "editor:document",
