@@ -1984,17 +1984,17 @@ TEST_CASE(
                 const auto kind = std::ranges::find(fields, "kind", &ec::form_field::id);
                 REQUIRE(kind != fields.end());
                 CHECK(kind->value == "mapgen");
-                CHECK(kind->options.size() == 2);
+                CHECK(kind->options.size() == 3);
                 return invoke("editor:new_set", {.row = "path", .text = made.string()});
             }
             case 1:
                 return invoke("editor:new_set", {.row = "om_terrain", .text = "editor_test_chunk"});
             case 2:
-                return invoke("editor:new_set", {.row = "kind", .text = "palette"});
+                return invoke("editor:new_set", {.row = "kind", .text = "special"});
             case 3:
                 return invoke("editor:new_apply");
             case 4:
-                CHECK(notice(screen) == "A new file holds a mapgen or a nested chunk.");
+                CHECK(notice(screen) == "A new file holds a mapgen, a nested chunk or a palette.");
                 CHECK_FALSE(std::filesystem::exists(made));
                 return invoke("editor:new_set", {.row = "kind", .text = "nested"});
             case 5:
@@ -2032,6 +2032,71 @@ TEST_CASE(
     CHECK(written[0]["object"]["mapgensize"] == nlohmann::ordered_json::array({6, 6}));
     CHECK(written[0]["object"]["rows"].size() == 6);
     CHECK(written[0]["object"]["rows"][5] == "......");
+    CHECK(format_json(read_file(made)) == read_file(made));
+}
+
+TEST_CASE(
+    "the editor creates a palette file in the user mods and opens it on its legend",
+    "[editor_session][editor_palette]") {
+    const auto guard = screen_guard{};
+    const auto folder = mod_file{};
+    const auto made = folder.path.parent_path() / "palette.json";
+    const auto notice = [](const ec::screen_view& screen) {
+        return body<ec::text_body>(part(screen, "editor:notice")).markup;
+    };
+    const auto label = [](const ec::screen_view& screen, const std::string& id) {
+        const auto& fields = body<ec::form_body>(part(screen, "editor:new")).fields;
+        const auto found = std::ranges::find(fields, id, &ec::form_field::id);
+        REQUIRE(found != fields.end());
+        return found->label;
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                CHECK(label(screen, "om_terrain") == "Overmap terrain");
+                return invoke("editor:new_set", {.row = "path", .text = made.string()});
+            case 1:
+                return invoke("editor:new_set", {.row = "kind", .text = "palette"});
+            case 2:
+                // The id field names what a palette is known by.
+                CHECK(label(screen, "om_terrain") == "Palette id");
+                return invoke("editor:new_set", {.row = "om_terrain", .text = "cabin_palette"});
+            case 3:
+                return invoke("editor:new_apply");
+            case 4:
+                CHECK(notice(screen) == "cabin_palette is a palette already.");
+                CHECK_FALSE(std::filesystem::exists(made));
+                return invoke(
+                    "editor:new_set", {.row = "om_terrain", .text = "editor_test_palette"});
+            case 5:
+                return invoke("editor:new_apply");
+            case 6: {
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                const auto& objects = body<ec::list_body>(part(screen, "editor:objects")).rows;
+                REQUIRE(objects.size() == 1);
+                CHECK(objects[0].label == "editor_test_palette");
+                CHECK(body<ec::list_body>(part(screen, "editor:legend")).rows.front().id
+                      == "symbol:.");
+                CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
+                CHECK(screen.focus_component == "editor:legend");
+                return act("QUIT");
+            }
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 7);
+    const auto written = nlohmann::ordered_json::parse(read_file(made));
+    CHECK(
+        written
+        == nlohmann::ordered_json::parse(
+            R"([{"type": "palette", "id": "editor_test_palette", "terrain": {".": "t_floor"}}])"));
     CHECK(format_json(read_file(made)) == read_file(made));
 }
 
