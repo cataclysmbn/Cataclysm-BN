@@ -2902,7 +2902,7 @@ public:
         auto merge_from = [&](const std::string& name) {
             if (name == "null") { return; }
             const auto iter = nested_mapgen.find(name);
-            if (iter == nested_mapgen.end()) {
+            if (iter == nested_mapgen.end() || iter->second.empty()) {
                 debugmsg("Unknown nested mapgen function id %s", name);
                 return;
             }
@@ -2978,7 +2978,8 @@ private:
                 continue;
             }
             const auto iter = nested_mapgen.find(entry.obj);
-            if (iter == nested_mapgen.end()) {
+            // A name the editor left with no chunks is unknown, and nothing keeps its list.
+            if (iter == nested_mapgen.end() || iter->second.empty()) {
                 debugmsg("Unknown nested mapgen function id %s", entry.obj.c_str());
                 resolved.add({}, entry.weight);
                 continue;
@@ -6571,65 +6572,72 @@ editor::file_stand_ins::file_stand_ins(const std::vector<std::string>& texts) {
         /// The game's chunks of the name, none when it has none.
         std::optional<nested_mapgen_function_list> was;
     };
-    // The game's lists stay where they are, since the mapgens that place them keep their address.
     auto chunks_kept = std::make_shared<std::vector<kept_chunks>>();
-    capture_each_debugmsg_during([&] {
-        // Palettes first, so that a chunk reads the palettes of the file.
-        for (const auto chunks : {false, true}) {
-            for (const auto& text : texts) {
-                try {
-                    auto in = std::istringstream(text);
-                    auto jsin = JsonIn(in, std::string(editor_source));
-                    const auto entry = jsin.get_object();
-                    entry.allow_omitted_members();
-                    if (!chunks && entry.get_string("type") == "palette") {
-                        const auto id = palette_id(entry.get_string("id"));
-                        if (!std::ranges::contains(*ids, id)) {
-                            ids->push_back(id);
-                            if (auto node = palettes.extract(id)) {
-                                kept->push_back(std::move(node));
-                            }
-                        }
-                        mapgen_palette::
-                            load(entry, mod_management::get_default_core_content_pack().str());
-                    } else if (chunks && entry.has_string("nested_mapgen_id")) {
-                        const auto name = entry.get_string("nested_mapgen_id");
-                        if (!std::ranges::contains(*chunks_kept, name, &kept_chunks::name)) {
-                            const auto found = nested_mapgen.find(name);
-                            chunks_kept->push_back(
-                                {.name = name,
-                                 .was = found == nested_mapgen.end()
-                                          ? std::nullopt
-                                          : std::optional(std::exchange(found->second, {}))});
-                        }
-                        auto chunk = std::make_shared<detached_nested_mapgen>();
-                        auto object = entry.get_object("object");
-                        object.allow_omitted_members();
-                        mapgen_defer::defer = false;
-                        const auto loaded = chunk->load(object);
-                        // A chunk the loader would defer is left to checking it, which reports why.
-                        if (std::exchange(mapgen_defer::defer, false) || !loaded) { continue; }
-                        chunk->finalize_parameters();
-                        nested_mapgen[name].add(chunk, entry.get_int("weight", 1000));
-                        nested_mapgen[name].precalc();
-                    }
-                } catch (const JsonError& /*e*/) {}
-            }
-        }
-    });
+    // Set first, so that whatever loading throws, the game gets its own back.
     restore_palettes_ = [ids, kept] {
         for (const auto& id : *ids) { palettes.erase(id); }
         for (auto& node : *kept) { palettes.insert(std::move(node)); }
     };
+    // The lists stay where they are, since the mapgens that place them keep their address; a name
+    // the game lacks is left with no chunks, which places nothing, as an unknown name does.
     restore_chunks_ = [chunks_kept] {
         for (auto& entry : *chunks_kept) {
-            if (entry.was) {
-                nested_mapgen[entry.name] = std::move(*entry.was);
-            } else {
-                nested_mapgen.erase(entry.name);
-            }
+            nested_mapgen[entry.name] = std::move(entry.was).value_or(
+                nested_mapgen_function_list{});
         }
     };
+    const auto each_entry = [&](const auto& read) {
+        for (const auto& text : texts) {
+            try {
+                auto in = std::istringstream(text);
+                auto jsin = JsonIn(in, std::string(editor_source));
+                const auto entry = jsin.get_object();
+                entry.allow_omitted_members();
+                read(entry);
+            } catch (const JsonError& /*e*/) {}
+        }
+    };
+    capture_each_debugmsg_during([&] {
+        // Palettes first, so that a chunk reads the palettes of the file.
+        each_entry([&](const JsonObject& entry) {
+            if (entry.get_string("type") != "palette") { return; }
+            const auto id = palette_id(entry.get_string("id"));
+            if (!std::ranges::contains(*ids, id)) {
+                ids->push_back(id);
+                if (auto node = palettes.extract(id)) { kept->push_back(std::move(node)); }
+            }
+            mapgen_palette::load(entry, mod_management::get_default_core_content_pack().str());
+        });
+        auto loaded = std::map<std::string, nested_mapgen_function_list>{};
+        each_entry([&](const JsonObject& entry) {
+            if (!entry.has_string("nested_mapgen_id")) { return; }
+            auto chunk = std::make_shared<detached_nested_mapgen>();
+            auto object = entry.get_object("object");
+            object.allow_omitted_members();
+            mapgen_defer::defer = false;
+            const auto read = chunk->load(object);
+            // A chunk the loader would defer is left to checking it, which reports why.
+            if (std::exchange(mapgen_defer::defer, false) || !read) { return; }
+            loaded[entry.get_string("nested_mapgen_id")].add(chunk, entry.get_int("weight", 1000));
+        });
+        // Only names with a chunk that loaded stand in, so a broken one leaves the game's.
+        for (auto& [name, chunks] : loaded) {
+            chunks.precalc();
+            const auto found = nested_mapgen.find(name);
+            chunks_kept->push_back(
+                {.name = name,
+                 .was = found == nested_mapgen.end()
+                          ? std::nullopt
+                          : std::optional(std::exchange(found->second, std::move(chunks)))});
+            if (found == nested_mapgen.end()) { nested_mapgen[name] = std::move(chunks); }
+        }
+        // As the game does after loading them all, so that a chunk sees the chunks it places.
+        for (const auto& entry : *chunks_kept) {
+            for (const auto& chunk : nested_mapgen[entry.name]) {
+                chunk.obj->finalize_parameters();
+            }
+        }
+    });
 }
 
 auto editor::mapgen_legend(const std::string_view text)
@@ -6703,7 +6711,9 @@ auto editor::mapgen_source_of(const std::string& mapgen_id) -> std::optional<map
 }
 
 auto editor::nested_mapgen_ids() -> std::vector<std::string> {
-    return nested_mapgen | std::views::keys | std::ranges::to<std::vector>();
+    return nested_mapgen
+         | std::views::filter([](const auto& entry) { return !entry.second.empty(); })
+         | std::views::keys | std::ranges::to<std::vector>();
 }
 
 auto editor::palette_ids() -> std::vector<std::string> {
