@@ -247,29 +247,57 @@ auto capture_state() -> std::string {
     return stream.str();
 }
 
-auto run_fixture(const pacing_mode& mode, const fixture_options& options = {}) -> fixture_result {
-    const auto saved_rng = restore_on_out_of_scope(rng_get_engine());
-    const auto sound_cleanup = on_out_of_scope(reset_fixture_sounds);
-    reset_fixture_sounds();
-    const auto original_geometry = capture_fixture_geometry();
-    const auto normal_bubble = override_option("REALITY_BUBBLE_SIZE", "4");
-    const auto no_mobile_bubble = override_option("ACTIVITY_MOBILE_BUBBLE_SIZE", "0");
-    const auto no_idle_bubble = override_option("ACTIVITY_IDLE_BUBBLE_SIZE", "0");
-    const auto no_underground_bubble = override_option("UNDERGROUND_BUBBLE_SIZE", "0");
-    const auto no_vehicle_bubble = override_option("VEHICLE_BUBBLE_SIZE", "0");
-    const auto no_combat_bubble = override_option("COMBAT_BUBBLE_SIZE", "0");
-    const auto cleanup = on_out_of_scope([original_geometry]() {
+/// The fixture's 11x11 map at the origin, entered from the geometry the test arrived in and
+/// restored on exit. A test that runs the fixture repeatedly holds one scope, so the incoming
+/// geometry is entered and restored once instead of around every run; a bare run enters and leaves
+/// its own.
+class fixture_geometry_scope {
+public:
+    fixture_geometry_scope() {
+        active = true;
+        clear_fixture_world();
+        // Always use the native resize/load paths: options and globals may agree
+        // while another test has directly resized the map to a different dimension.
+        set_fixture_bubble_size(4);
+        g->load_map(point_abs_sm::zero(), false);
+        clear_fixture_world();
+    }
+    fixture_geometry_scope(const fixture_geometry_scope&) = delete;
+    auto operator=(const fixture_geometry_scope&) -> fixture_geometry_scope& = delete;
+    ~fixture_geometry_scope() {
+        active = false;
         explosion_handler::get_explosion_queue().clear();
         clear_fixture_world();
         restore_fixture_geometry(original_geometry);
         get_avatar().clear_map_memory();
+    }
+    static inline auto active = false;
+
+private:
+    // Declared first: the geometry is captured before any option is overridden, and the overrides
+    // outlive the restore in the destructor.
+    const fixture_geometry original_geometry = capture_fixture_geometry();
+    const override_option normal_bubble{"REALITY_BUBBLE_SIZE", "4"};
+    const override_option no_mobile_bubble{"ACTIVITY_MOBILE_BUBBLE_SIZE", "0"};
+    const override_option no_idle_bubble{"ACTIVITY_IDLE_BUBBLE_SIZE", "0"};
+    const override_option no_underground_bubble{"UNDERGROUND_BUBBLE_SIZE", "0"};
+    const override_option no_vehicle_bubble{"VEHICLE_BUBBLE_SIZE", "0"};
+    const override_option no_combat_bubble{"COMBAT_BUBBLE_SIZE", "0"};
+};
+
+auto run_fixture(const pacing_mode& mode, const fixture_options& options = {}) -> fixture_result {
+    const auto saved_rng = restore_on_out_of_scope(rng_get_engine());
+    const auto sound_cleanup = on_out_of_scope(reset_fixture_sounds);
+    reset_fixture_sounds();
+    const auto own_geometry =
+        fixture_geometry_scope::active
+            ? std::optional<fixture_geometry_scope>{}
+            : std::optional<fixture_geometry_scope>{std::in_place};
+    const auto cleanup = on_out_of_scope([]() {
+        explosion_handler::get_explosion_queue().clear();
+        clear_fixture_world();
+        get_avatar().clear_map_memory();
     });
-    clear_fixture_world();
-    // Always use the native resize/load paths: options and globals may agree
-    // while another test has directly resized the map to a different dimension.
-    set_fixture_bubble_size(4);
-    g->load_map(point_abs_sm::zero(), false);
-    clear_fixture_world();
     move_player_out_of_the_way();
     CHECK(get_map().getmapsize() == g_mapsize);
     CHECK(g_mapsize == 11);
@@ -504,6 +532,7 @@ TEST_CASE("curses_map_draw_leaves_gameplay_rng_untouched", "[explosion_clock][ma
 }
 
 TEST_CASE("explosion_redraw_preserves_gameplay_rng_and_knowledge", "[explosion][explosion_clock]") {
+    const auto geometry = fixture_geometry_scope{};
     const auto quiet = run_fixture(
         pacing_mode{.name = "knowledge_quiet", .animation_delay = "0", .observer = true});
     const auto drawn = run_fixture(pacing_mode{
@@ -516,6 +545,7 @@ TEST_CASE("explosion_redraw_preserves_gameplay_rng_and_knowledge", "[explosion][
 
 TEST_CASE("explosion_logical_time_presentation_invariance", "[explosion][explosion_clock]") {
     namespace ranges = std::ranges;
+    const auto geometry = fixture_geometry_scope{};
     const auto modes = std::array{
         pacing_mode{.name = "animated_1", .animation_delay = "1"},
         pacing_mode{.name = "animated_10", .animation_delay = "10"},
