@@ -154,7 +154,7 @@ TEST_CASE(
     REQUIRE(doc->edit(0, ordered_json::parse(R"([{"op":"replace","path":"/id","value":"c"}])")));
     doc->end_group();
     CHECK(doc->depth() == 1);
-    CHECK(doc->history().front().patch.size() == 3);
+    CHECK(doc->history().front().edits.front().patch.size() == 3);
     const auto edited = doc->text();
     CHECK(doc->undo());
     CHECK(doc->text() == three_objects);
@@ -205,4 +205,50 @@ TEST_CASE("saving refuses a file changed on disk since it was opened", "[editor_
     REQUIRE_FALSE(saved);
     CHECK(saved.error() == editor::save_error::changed_on_disk);
     CHECK(read_file(file.path) == outside);
+}
+
+TEST_CASE(
+    "an object added in a group is written after the last one and undone with the group's edits",
+    "[editor_document]") {
+    auto doc = editor::document::parse("three.json", three_objects);
+    REQUIRE(doc);
+    doc->begin_group(true);
+    REQUIRE(doc->edit(0, ordered_json::parse(R"([{"op":"replace","path":"/id","value":"t_1"}])")));
+    const auto added = doc->add({{"type", "palette"}, {"id", "p"}});
+    REQUIRE(added);
+    CHECK(*added == 3);
+    REQUIRE(doc->edit(2, ordered_json::parse(R"([{"op":"remove","path":"/type"}])")));
+    doc->end_group();
+    CHECK(doc->depth() == 1);
+    CHECK(doc->history().front().edits.size() == 3);
+    REQUIRE(doc->objects().size() == 4);
+    CHECK(doc->objects()[3].value == ordered_json{{"type", "palette"}, {"id", "p"}});
+    const auto edited = doc->text();
+    // The bytes are what the data formatter writes, the unedited object as it was.
+    CHECK(format_json(edited) == edited);
+    CHECK(edited.find(R"("weight": 1.50)") != std::string::npos);
+    CHECK(ordered_json::parse(edited)[3]["id"] == "p");
+    CHECK(doc->undo());
+    CHECK(doc->objects().size() == 3);
+    CHECK(doc->text() == three_objects);
+    CHECK(doc->redo());
+    CHECK(doc->text() == edited);
+}
+
+TEST_CASE("an object is added to an empty file", "[editor_document]") {
+    auto doc = editor::document::parse("empty.json", "[]\n");
+    REQUIRE(doc);
+    REQUIRE(doc->add({{"type", "palette"}, {"id", "p"}}));
+    CHECK(doc->text() == format_json(doc->text()));
+    CHECK(ordered_json::parse(doc->text())
+          == ordered_json::parse(R"([{"type":"palette","id":"p"}])"));
+    CHECK(doc->undo());
+    CHECK(doc->text() == "[]\n");
+}
+
+TEST_CASE("a file of one value takes no other object", "[editor_document]") {
+    auto doc = editor::document::parse("one.json", R"({"type": "terrain", "id": "t_one"})");
+    REQUIRE(doc);
+    CHECK_FALSE(doc->add({{"type", "palette"}, {"id", "p"}}));
+    CHECK_FALSE(doc->can_undo());
 }
