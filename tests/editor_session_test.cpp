@@ -11,6 +11,7 @@
 #    include "cursesdef.h"
 #    include "cursesport.h"
 #    include "editor/editor_session.h"
+#    include "editor/mapgen_levels.h"
 #    include "editor/mapgen_preview.h"
 #    include "editor/recent_documents.h"
 #    include "engine_client_component.h"
@@ -28,6 +29,7 @@
 #    include "options_helpers.h"
 #    include "output.h"
 #    include "overmap/omdata.h"
+#    include "overmap/overmap_special.h"
 #    include "overmap/overmapbuffer.h"
 #    include "path_info.h"
 #    include "player_activity.h"
@@ -3291,6 +3293,123 @@ TEST_CASE(
 
     editor::run_editor_session();
     CHECK(step == 3);
+}
+
+TEST_CASE(
+    "the editor goes up and down the levels a building stacks in the file",
+    "[editor_session][editor_levels]") {
+    const auto guard = screen_guard{};
+    const auto file = levels_file{};
+    const auto level = [](const ec::screen_view& screen) {
+        const auto& stats = body<ec::panel_body>(part(screen, "editor:document")).stats;
+        const auto found = std::ranges::find(stats, "level", &ec::panel_stat::key);
+        return found == stats.end() ? std::string("none") : found->value;
+    };
+    const auto selected = [](const ec::screen_view& screen) {
+        const auto& rows = body<ec::list_body>(part(screen, "editor:objects")).rows;
+        const auto found = std::ranges::find_if(rows, &ec::row::selected);
+        return found == rows.end() ? std::string() : found->id;
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK(level(screen) == "0");
+                CHECK(affordance(screen, "editor:level_up").keys == std::vector<std::string>{"<"});
+                CHECK(affordance(screen, "editor:level_up").enabled);
+                CHECK(
+                    affordance(screen, "editor:level_down").keys == std::vector<std::string>{">"});
+                // house_01 has no level below it.
+                CHECK_FALSE(affordance(screen, "editor:level_down").enabled);
+                CHECK_FALSE(affordance(screen, "editor:level_down").denial.empty());
+                return invoke("editor:level_up");
+            case 2:
+                CHECK(selected(screen) == "object:1");
+                CHECK(level(screen) == "1");
+                CHECK_FALSE(affordance(screen, "editor:level_up").enabled);
+                return invoke("editor:level_down");
+            case 3:
+                CHECK(selected(screen) == "object:0");
+                return invoke("editor:object", {.row = "object:2"});
+            case 4:
+                // A nested chunk stands on no level.
+                CHECK(level(screen) == "none");
+                CHECK_FALSE(affordance(screen, "editor:level_up").enabled);
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 5);
+}
+
+TEST_CASE(
+    "the canvas shows the level below, faded, where its own squares are open air",
+    "[editor_session][editor_levels]") {
+    const auto guard = screen_guard{};
+    const auto file = levels_file{};
+    const auto look = [](const ec::screen_view& screen, const int x, const int y) {
+        const auto& grid = body<ec::grid_body>(part(screen, "editor:canvas"));
+        const auto& shown = cell(screen, x, y);
+        return shown.looks.empty() ? std::string() : grid.looks.at(shown.looks.front()).id;
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK_FALSE(cell(screen, 0, 0).faded);
+                return invoke("editor:level_up");
+            case 2: {
+                CHECK(cell(screen, 0, 0).faded);
+                CHECK(cell(screen, 0, 0).glyph == ".");
+                CHECK(look(screen, 0, 0) == "t_floor");
+                const auto cells = wire_part(state, "editor:canvas")["cells"];
+                CHECK(std::ranges::any_of(cells, [](const auto& entry) {
+                    return entry.value("faded", false);
+                }));
+                CHECK_FALSE(cell(screen, 20, 0).faded);
+                CHECK(cell(screen, 20, 0).glyph == "r");
+                return invoke("editor:symbol", {.row = "symbol:r"});
+            }
+            case 3:
+                return invoke("editor:paint", {.row = "square:0,0"});
+            case 4:
+                // Drawing on a faded square draws on this level.
+                CHECK_FALSE(cell(screen, 0, 0).faded);
+                CHECK(cell(screen, 0, 0).glyph == "r");
+                return act("QUIT");
+            case 5:
+                return answer("Leave without saving");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 6);
+}
+
+TEST_CASE("a building stacks its roof one level above its ground floor", "[editor_levels]") {
+    INFO(overmap_specials::get_all().size());
+    CHECK(editor::terrain_level("house_01") == 0);
+    CHECK(editor::terrain_level("house_01_roof") == 1);
+    CHECK(editor::terrain_above("house_01", 1) == "house_01_roof");
+    CHECK(editor::terrain_above("house_01_roof", -1) == "house_01");
+    CHECK(editor::terrain_above("house_01", -1) == std::nullopt);
+    CHECK(editor::terrain_level("no_such_terrain") == std::nullopt);
 }
 
 #endif // CATA_MCP

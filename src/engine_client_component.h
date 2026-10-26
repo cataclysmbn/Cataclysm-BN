@@ -226,6 +226,8 @@ struct grid_cell {
     /// What the cell shows from the bottom up, as indexes into the grid's `looks`, for a client that draws
     /// sprites; the glyph stands for it otherwise.
     std::vector<int> looks = {};
+    /// Whether it shows another level, which a client draws faded.
+    bool faded = false;
 };
 struct grid_body {
     int cols = 0;
