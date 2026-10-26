@@ -25,9 +25,9 @@ struct legend_symbol {
     bool used = false;
 };
 
-/// The legend of one `"type": "mapgen"` entry in `text`, resolved through its own legend and the
-/// palettes it names as the loader resolves it: every symbol mapped or used, ordered by symbol. The
-/// error is what the loader threw.
+/// The legend of one `"type": "mapgen"` or `"type": "palette"` entry in `text`, resolved through
+/// its own legend and the palettes it names as the loader resolves it: every symbol mapped or used,
+/// ordered by symbol. The error is what the loader threw.
 auto mapgen_legend(std::string_view text) -> std::expected<std::vector<legend_symbol>, std::string>;
 
 } // namespace editor

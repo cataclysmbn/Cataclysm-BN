@@ -151,3 +151,26 @@ TEST_CASE(
     }
     CHECK(checked > 1000);
 }
+
+TEST_CASE("a palette loads with no word from the loader", "[editor_mapgen][editor_palette]") {
+    CHECK(
+        check({{"type", "palette"},
+               {"id", "editor_check_palette"},
+               {"palettes", {"cabin_palette"}},
+               {"terrain", {{".", "t_floor"}}}})
+            .empty());
+}
+
+TEST_CASE(
+    "a palette that a palette it names names again is a loop", "[editor_mapgen][editor_palette]") {
+    // cabin_palette names cabin_palette_common, which here names cabin_palette.
+    const auto looped = ordered_json{
+        {"type", "palette"}, {"id", "cabin_palette_common"}, {"palettes", {"cabin_palette"}}};
+    const auto messages = check(looped);
+    CHECK(names(messages, "loop in palette references: cabin_palette_common > cabin_palette"));
+    // The palette the game loaded is back afterwards, so that nothing loops through it any more.
+    CHECK(
+        check(
+            {{"type", "palette"}, {"id", "editor_check_palette"}, {"palettes", {"cabin_palette"}}})
+            .empty());
+}

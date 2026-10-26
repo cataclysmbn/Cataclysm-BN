@@ -9,12 +9,14 @@ auto set_legend(document& doc, const legend_edit& edit) -> std::expected<void, s
         return std::unexpected("no object " + std::to_string(edit.object));
     }
     const auto& value = doc.objects()[edit.object].value;
-    if (!value.contains("object") || !value["object"].is_object()) {
+    // A palette maps its symbols itself; a mapgen in its object.
+    const auto palette = value.value("type", "") == "palette";
+    if (!palette && (!value.contains("object") || !value["object"].is_object())) {
         return std::unexpected(std::string("the entry has no object"));
     }
-    const auto& object = value["object"];
+    const auto& object = palette ? value : value["object"];
     using json_pointer = nlohmann::ordered_json::json_pointer;
-    const auto layer = json_pointer("/object") / edit.layer;
+    const auto layer = (palette ? json_pointer() : json_pointer("/object")) / edit.layer;
     const auto mapping = layer / edit.symbol;
     const auto has_layer = object.contains(edit.layer) && object[edit.layer].is_object();
     auto patch = nlohmann::ordered_json::array();

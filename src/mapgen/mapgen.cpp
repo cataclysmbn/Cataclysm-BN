@@ -8,6 +8,7 @@
 #include "assign.h"
 #include "avatar.h"
 #include "calendar.h"
+#include "cata_utility.h"
 #include "catacharset.h"
 #include "catalua.h"
 #include "catalua_hooks.h"
@@ -6509,6 +6510,28 @@ auto load_detached(const JsonObject& entry, const JsonObject& object) -> editor:
     return loaded;
 }
 
+/// Loads a palette entry as the loader does, then adds it with every palette it names as a mapgen
+/// using it would, and checks the result. The entry stands in for the palette of its id meanwhile,
+/// so that a loop through it is found.
+auto check_palette(const JsonObject& entry) -> void {
+    check_ids(entry, entry);
+    const auto id = palette_id(entry.get_string("id"));
+    auto kept = palettes.extract(id);
+    const auto restore = on_out_of_scope([&] {
+        palettes.erase(id);
+        if (kept) { palettes.insert(std::move(kept)); }
+    });
+    mapgen_palette::load(entry, mod_management::get_default_core_content_pack().str());
+    auto user = std::ostringstream{};
+    auto jsout = JsonOut(user);
+    jsout.start_object();
+    jsout.member("palettes", std::vector{id.str()});
+    jsout.end_object();
+    auto in = std::istringstream(user.str());
+    auto jsin = JsonIn(in, std::string(editor_source));
+    mapgen_palette::load_temp(jsin.get_object(), "", "").check();
+}
+
 } // namespace
 
 auto editor::check_mapgen(const std::string_view text) -> std::vector<loader_message> {
@@ -6518,7 +6541,10 @@ auto editor::check_mapgen(const std::string_view text) -> std::vector<loader_mes
             auto in = std::istringstream(std::string(text));
             auto jsin = JsonIn(in, std::string(editor_source));
             const auto entry = jsin.get_object();
-            entry.get_string("type");
+            if (entry.get_string("type") == "palette") {
+                check_palette(entry);
+                return;
+            }
             entry.get_int("weight", 1000);
             if (entry.get_string("method") != "json") {
                 entry.throw_error("the editor reads only \"json\" mapgen", "method");
@@ -6548,7 +6574,9 @@ auto editor::mapgen_legend(const std::string_view text)
             auto jsin = JsonIn(in, std::string(editor_source));
             const auto entry = jsin.get_object();
             entry.allow_omitted_members();
-            const auto object = entry.get_object("object");
+            // A palette maps its symbols itself; a mapgen in its object.
+            const auto object =
+                entry.get_string("type", "") == "palette" ? entry : entry.get_object("object");
             object.allow_omitted_members();
             const auto palette = mapgen_palette::
                 load_temp(object, mod_management::get_default_core_content_pack().str(), "");

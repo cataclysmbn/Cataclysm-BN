@@ -316,9 +316,14 @@ auto is_json_mapgen(const nlohmann::ordered_json& value) -> bool {
         && value.value("method", "") == "json";
 }
 
-/// What names a mapgen entry: its overmap terrain, or the id it is nested or updated by.
-auto mapgen_name(const nlohmann::ordered_json& value) -> std::string {
-    for (const auto* const key : {"om_terrain", "nested_mapgen_id", "update_mapgen_id"}) {
+auto is_palette(const nlohmann::ordered_json& value) -> bool {
+    return value.is_object() && value.value("type", "") == "palette";
+}
+
+/// What names an entry: a mapgen's overmap terrain, or the id it is nested or updated by; a
+/// palette's id.
+auto entry_name(const nlohmann::ordered_json& value) -> std::string {
+    for (const auto* const key : {"om_terrain", "nested_mapgen_id", "update_mapgen_id", "id"}) {
         if (!value.contains(key)) { continue; }
         const auto& name = value[key];
         return name.is_string() ? name.get<std::string>() : name.dump();
@@ -560,13 +565,20 @@ struct session {
              .page_size = page_size});
     }
 
-    auto mapgens() const -> std::vector<std::size_t> {
+    /// The objects the editor edits: JSON mapgens and palettes.
+    auto entries() const -> std::vector<std::size_t> {
         if (!doc) { return {}; }
         return std::views::iota(std::size_t{0}, doc->objects().size())
              | std::views::filter([&](const auto index) {
-                   return is_json_mapgen(doc->objects()[index].value);
+                   const auto& value = doc->objects()[index].value;
+                   return is_json_mapgen(value) || is_palette(value);
                })
              | std::ranges::to<std::vector>();
+    }
+    /// Whether the object edited is a mapgen, which has rows to draw on and a preview.
+    auto on_mapgen() const -> bool {
+        return doc && object < doc->objects().size()
+            && is_json_mapgen(doc->objects()[object].value);
     }
 
     /// The options the entry is previewed with over the avatar's overmap square.
@@ -629,7 +641,7 @@ struct session {
         preview.reset();
         parameters.clear();
         loot.reset();
-        if (seed) {
+        if (seed && on_mapgen()) {
             if (const auto loaded = load_detached_mapgens(text)) {
                 for (const auto& function : loaded->functions) {
                     for (auto& choice : parameters_of(*function)) {
@@ -678,7 +690,7 @@ struct session {
     auto reopen() -> void {
         const auto kept = object;
         open(doc->path().string());
-        if (std::ranges::contains(mapgens(), kept)) {
+        if (std::ranges::contains(entries(), kept)) {
             object = kept;
             reload();
         }
@@ -718,9 +730,9 @@ struct session {
         selected.reset();
         focus.reset();
         picked.reset();
-        const auto found = mapgens();
+        const auto found = entries();
         object = found.empty() ? doc->objects().size() : found.front();
-        notice = found.empty() ? string_format(_("%s holds no JSON mapgen."), name) : "";
+        notice = found.empty() ? string_format(_("%s holds no JSON mapgen or palette."), name) : "";
         reload();
         mapping_symbol = symbol;
     }
@@ -1385,13 +1397,13 @@ auto session_view(const session& state) -> ec::screen_view {
             {.id = "editor:document",
              .title = doc.path().generic_string(),
              .stats = std::move(stats)}));
-        const auto mapgens = state.mapgens();
+        const auto entries = state.entries();
         parts.push_back(ec::list(
             {.id = objects_id,
-             .rows = mapgens | std::views::transform([&](const auto index) {
+             .rows = entries | std::views::transform([&](const auto index) {
                          return ec::row{
                              .id = string_format("object:%d", index),
-                             .label = mapgen_name(doc.objects()[index].value),
+                             .label = entry_name(doc.objects()[index].value),
                              .selected = index == state.object};
                      })
                    | std::ranges::to<std::vector>(),
@@ -1409,18 +1421,20 @@ auto session_view(const session& state) -> ec::screen_view {
              .activate = jump_id}));
         affordances.push_back(ec::invoke_affordance(
             {.id = jump_id, .label = _("Go to step"), .args = row_of(history_id)}));
-        if (std::ranges::contains(mapgens, state.object)) {
-            parts.push_back(ec::tabs(
-                {.id = tools_id,
-                 .tabs = tools | std::views::transform([&](const tool& entry) {
-                             return ec::tab_entry{
-                                 .id = entry.id,
-                                 .label = tool_label(entry),
-                                 .selected = &entry == state.current};
-                         })
-                       | std::ranges::to<std::vector>(),
-                 .select = tool_id,
-                 .child = canvas(state)}));
+        if (std::ranges::contains(entries, state.object)) {
+            if (state.on_mapgen()) {
+                parts.push_back(ec::tabs(
+                    {.id = tools_id,
+                     .tabs = tools | std::views::transform([&](const tool& entry) {
+                                 return ec::tab_entry{
+                                     .id = entry.id,
+                                     .label = tool_label(entry),
+                                     .selected = &entry == state.current};
+                             })
+                           | std::ranges::to<std::vector>(),
+                     .select = tool_id,
+                     .child = canvas(state)}));
+            }
             parts.push_back(ec::list(
                 {.id = legend_id,
                  .rows = legend_rows(state),
@@ -1440,16 +1454,18 @@ auto session_view(const session& state) -> ec::screen_view {
                        | std::ranges::to<std::vector>(),
                  .selection = "single",
                  .activate = diagnostic_id}));
-            parts.push_back(ec::list(
-                {.id = placements_id,
-                 .rows = placement_rows(state),
-                 .selection = "single",
-                 .activate = placement_id}));
             affordances.push_back(ec::invoke_affordance(
                 {.id = diagnostic_id, .label = _("Show"), .args = row_of(diagnostics_id)}));
-            affordances.push_back(ec::invoke_affordance(
-                {.id = placement_id, .label = _("Show"), .args = row_of(placements_id)}));
-            if (state.picked) {
+            if (state.on_mapgen()) {
+                parts.push_back(ec::list(
+                    {.id = placements_id,
+                     .rows = placement_rows(state),
+                     .selection = "single",
+                     .activate = placement_id}));
+                affordances.push_back(ec::invoke_affordance(
+                    {.id = placement_id, .label = _("Show"), .args = row_of(placements_id)}));
+            }
+            if (state.on_mapgen() && state.picked) {
                 parts.push_back(ec::component{
                     .id = move_id,
                     .affordances = {move_set_id, move_apply_id},
@@ -1467,35 +1483,38 @@ auto session_view(const session& state) -> ec::screen_view {
                 affordances.push_back(ec::invoke_affordance(
                     {.id = placement_delete_id, .label = _("Delete placement")}));
             }
-            parts.push_back(ec::component{
-                .id = place_id,
-                .affordances = {place_set_id, place_apply_id},
-                .body = ec::form_body{
-                    .fields =
-                        {{.id = "kind",
-                          .label = _("Kind"),
-                          .value = state.place_kind,
-                          .type = "select",
-                          .options = placement_kinds
-                                   | std::views::transform([](const std::string_view kind) {
-                                         return ec::form_option{
-                                             .id = std::string(kind), .label = std::string(kind)};
-                                     })
-                                   | std::ranges::to<std::vector>()},
-                         {.id = "x", .label = "x", .value = state.place_x},
-                         {.id = "y", .label = "y", .value = state.place_y},
-                         {.id = "value",
-                          .label = _("Value"),
-                          .value = state.place_value,
-                          .multiline = true}},
-                    .submit = place_apply_id}});
-            affordances.push_back(ec::invoke_affordance(
-                {.id = place_set_id,
-                 .label = _("Value"),
-                 .args =
-                     {.row = ec::row_shape{.component_id = place_id}, .text = ec::text_shape{}}}));
-            affordances.push_back(
-                ec::invoke_affordance({.id = place_apply_id, .label = _("Add placement")}));
+            if (state.on_mapgen()) {
+                parts.push_back(ec::component{
+                    .id = place_id,
+                    .affordances = {place_set_id, place_apply_id},
+                    .body = ec::form_body{
+                        .fields =
+                            {{.id = "kind",
+                              .label = _("Kind"),
+                              .value = state.place_kind,
+                              .type = "select",
+                              .options = placement_kinds
+                                       | std::views::transform([](const std::string_view kind) {
+                                             return ec::form_option{
+                                                 .id = std::string(kind),
+                                                 .label = std::string(kind)};
+                                         })
+                                       | std::ranges::to<std::vector>()},
+                             {.id = "x", .label = "x", .value = state.place_x},
+                             {.id = "y", .label = "y", .value = state.place_y},
+                             {.id = "value",
+                              .label = _("Value"),
+                              .value = state.place_value,
+                              .multiline = true}},
+                        .submit = place_apply_id}});
+                affordances.push_back(ec::invoke_affordance(
+                    {.id = place_set_id,
+                     .label = _("Value"),
+                     .args = {.row = ec::row_shape{.component_id = place_id},
+                              .text = ec::text_shape{}}}));
+                affordances.push_back(
+                    ec::invoke_affordance({.id = place_apply_id, .label = _("Add placement")}));
+            }
             parts.push_back(ec::component{
                 .id = field_id,
                 .affordances = {field_set_id, field_apply_id},
@@ -1513,37 +1532,41 @@ auto session_view(const session& state) -> ec::screen_view {
                  .args =
                      {.row = ec::row_shape{.component_id = field_id}, .text = ec::text_shape{}}}));
             affordances.push_back(ec::invoke_affordance({.id = field_apply_id, .label = _("Set")}));
-            affordances.push_back(ec::invoke_affordance(
-                {.id = tool_id, .label = _("Tool"), .args = row_of(tools_id)}));
-            affordances.push_back(ec::invoke_affordance(
-                {.id = symbol_id, .label = _("Symbol"), .args = row_of(legend_id)}));
-            affordances.push_back(ec::invoke_affordance(
-                {.id = inside_id, .label = _("Inside"), .args = row_of(legend_id)}));
-            affordances.push_back(ec::invoke_affordance(
-                {.id = brush_id,
-                 .label = _("Brush"),
-                 .args = {.count = ec::
-                              count_shape{.min = 1, .max = max_brush, .initial = state.brush}}}));
-            affordances.push_back(
-                ec::invoke_affordance({.id = mirror_x_id, .label = _("Mirror across")}));
-            affordances.push_back(
-                ec::invoke_affordance({.id = mirror_y_id, .label = _("Mirror down")}));
-            affordances.push_back(ec::invoke_affordance(
-                {.id = copy_id, .label = _("Copy"), .enabled = state.selected.has_value()}));
-            affordances.push_back(ec::invoke_affordance(
-                {.id = cut_id, .label = _("Cut"), .enabled = state.selected.has_value()}));
-            affordances.push_back(ec::invoke_affordance(
-                {.id = rotate_id, .label = _("Rotate"), .enabled = !state.clip.empty()}));
-            affordances.push_back(ec::invoke_affordance(
-                {.id = flip_x_id, .label = _("Flip across"), .enabled = !state.clip.empty()}));
-            affordances.push_back(ec::invoke_affordance(
-                {.id = flip_y_id, .label = _("Flip down"), .enabled = !state.clip.empty()}));
-            affordances.push_back(ec::invoke_affordance(
-                {.id = paint_id, .label = _("Draw"), .args = row_of(canvas_id)}));
-            affordances.push_back(
-                ec::invoke_affordance({.id = stroke_begin_id, .label = _("Begin stroke")}));
-            affordances.push_back(
-                ec::invoke_affordance({.id = stroke_end_id, .label = _("End stroke")}));
+            const auto symbol_affordance = ec::invoke_affordance(
+                {.id = symbol_id, .label = _("Symbol"), .args = row_of(legend_id)});
+            if (!state.on_mapgen()) { affordances.push_back(symbol_affordance); }
+            if (state.on_mapgen()) {
+                affordances.push_back(ec::invoke_affordance(
+                    {.id = tool_id, .label = _("Tool"), .args = row_of(tools_id)}));
+                affordances.push_back(symbol_affordance);
+                affordances.push_back(ec::invoke_affordance(
+                    {.id = inside_id, .label = _("Inside"), .args = row_of(legend_id)}));
+                affordances.push_back(ec::invoke_affordance(
+                    {.id = brush_id,
+                     .label = _("Brush"),
+                     .args = {.count = ec::count_shape{
+                                  .min = 1, .max = max_brush, .initial = state.brush}}}));
+                affordances.push_back(
+                    ec::invoke_affordance({.id = mirror_x_id, .label = _("Mirror across")}));
+                affordances.push_back(
+                    ec::invoke_affordance({.id = mirror_y_id, .label = _("Mirror down")}));
+                affordances.push_back(ec::invoke_affordance(
+                    {.id = copy_id, .label = _("Copy"), .enabled = state.selected.has_value()}));
+                affordances.push_back(ec::invoke_affordance(
+                    {.id = cut_id, .label = _("Cut"), .enabled = state.selected.has_value()}));
+                affordances.push_back(ec::invoke_affordance(
+                    {.id = rotate_id, .label = _("Rotate"), .enabled = !state.clip.empty()}));
+                affordances.push_back(ec::invoke_affordance(
+                    {.id = flip_x_id, .label = _("Flip across"), .enabled = !state.clip.empty()}));
+                affordances.push_back(ec::invoke_affordance(
+                    {.id = flip_y_id, .label = _("Flip down"), .enabled = !state.clip.empty()}));
+                affordances.push_back(ec::invoke_affordance(
+                    {.id = paint_id, .label = _("Draw"), .args = row_of(canvas_id)}));
+                affordances.push_back(
+                    ec::invoke_affordance({.id = stroke_begin_id, .label = _("Begin stroke")}));
+                affordances.push_back(
+                    ec::invoke_affordance({.id = stroke_end_id, .label = _("End stroke")}));
+            }
             parts.push_back(ec::component{
                 .id = mapping_id,
                 .affordances = {mapping_set_id, mapping_apply_id},
@@ -1613,84 +1636,87 @@ auto session_view(const session& state) -> ec::screen_view {
                           .text = ec::text_shape{}}}));
             affordances.push_back(
                 ec::invoke_affordance({.id = mapping_apply_id, .label = _("Set mapping")}));
-            affordances.push_back(
-                ec::invoke_affordance({.id = apply_id, .label = _("Apply to game")}));
-            affordances.push_back(ec::invoke_affordance({.id = stamp_id, .label = _("Stamp")}));
-            affordances.push_back(ec::invoke_affordance(
-                {.id = unstamp_id,
-                 .label = _("Take back stamp"),
-                 .enabled = state.stamped.has_value()}));
-            affordances.push_back(ec::invoke_affordance(
-                {.id = test_id, .label = _("Test"), .enabled = state.stamped.has_value()}));
-            affordances.push_back(ec::invoke_affordance(
-                {.id = preview_id,
-                 .label = _("Preview"),
-                 .args = {
-                     .count = ec::count_shape{
-                         .min = 1,
-                         .max = std::numeric_limits<unsigned int>::max(),
-                         .initial = state.seed.value_or(1)}}}));
-            affordances.push_back(ec::invoke_affordance(
-                {.id = loot_id, .label = _("What can spawn here"), .args = row_of(canvas_id)}));
-            if (state.seed) {
+            if (state.on_mapgen()) {
                 affordances.push_back(
-                    ec::invoke_affordance({.id = reroll_id, .label = _("Re-roll")}));
+                    ec::invoke_affordance({.id = apply_id, .label = _("Apply to game")}));
+                affordances.push_back(ec::invoke_affordance({.id = stamp_id, .label = _("Stamp")}));
                 affordances.push_back(ec::invoke_affordance(
-                    {.id = turn_id, .label = _("Turn"), .args = row_of(rotation_id)}));
-                parts.push_back(ec::list(
-                    {.id = rotation_id,
-                     .rows = preview_turns | std::views::transform([&](const preview_turn& turn) {
+                    {.id = unstamp_id,
+                     .label = _("Take back stamp"),
+                     .enabled = state.stamped.has_value()}));
+                affordances.push_back(ec::invoke_affordance(
+                    {.id = test_id, .label = _("Test"), .enabled = state.stamped.has_value()}));
+                affordances.push_back(ec::invoke_affordance(
+                    {.id = preview_id,
+                     .label = _("Preview"),
+                     .args = {
+                         .count = ec::count_shape{
+                             .min = 1,
+                             .max = std::numeric_limits<unsigned int>::max(),
+                             .initial = state.seed.value_or(1)}}}));
+                affordances.push_back(ec::invoke_affordance(
+                    {.id = loot_id, .label = _("What can spawn here"), .args = row_of(canvas_id)}));
+                if (state.seed) {
+                    affordances.push_back(
+                        ec::invoke_affordance({.id = reroll_id, .label = _("Re-roll")}));
+                    affordances.push_back(ec::invoke_affordance(
+                        {.id = turn_id, .label = _("Turn"), .args = row_of(rotation_id)}));
+                    parts.push_back(ec::list(
+                        {.id = rotation_id,
+                         .rows =
+                             preview_turns | std::views::transform([&](const preview_turn& turn) {
                                  return ec::row{
                                      .id = string_format("turn:%d", turn.degrees),
                                      .label = string_format("%d°", turn.degrees),
                                      .selected = state.direction == turn.direction};
                              })
-                           | std::ranges::to<std::vector>(),
-                     .selection = "single",
-                     .activate = turn_id}));
-                if (!state.parameters.empty()) {
-                    affordances.push_back(ec::invoke_affordance(
-                        {.id = pin_set_id,
-                         .label = _("Pin"),
-                         .args = {.row = ec::row_shape{.component_id = pins_id},
-                                  .text = ec::text_shape{}}}));
-                    parts.push_back(ec::component{
-                        .id = pins_id,
-                        .affordances = {pin_set_id},
-                        .body = ec::form_body{
-                            .fields =
-                                state.parameters | std::views::transform([&](const auto& choice) {
-                                    const auto pinned = state.pins.find(choice.name);
-                                    return ec::form_field{
-                                        .id = choice.name,
-                                        .label = choice.name,
-                                        .value = pinned == state.pins.end()
-                                                   ? std::string{}
-                                                   : pinned->second,
-                                        .type = "select",
-                                        .options = pin_options(choice.values)};
-                                })
-                                | std::ranges::to<std::vector>()}});
+                             | std::ranges::to<std::vector>(),
+                         .selection = "single",
+                         .activate = turn_id}));
+                    if (!state.parameters.empty()) {
+                        affordances.push_back(ec::invoke_affordance(
+                            {.id = pin_set_id,
+                             .label = _("Pin"),
+                             .args = {.row = ec::row_shape{.component_id = pins_id},
+                                      .text = ec::text_shape{}}}));
+                        parts.push_back(ec::component{
+                            .id = pins_id,
+                            .affordances = {pin_set_id},
+                            .body = ec::form_body{
+                                .fields = state.parameters
+                                        | std::views::transform([&](const auto& choice) {
+                                              const auto pinned = state.pins.find(choice.name);
+                                              return ec::form_field{
+                                                  .id = choice.name,
+                                                  .label = choice.name,
+                                                  .value = pinned == state.pins.end()
+                                                             ? std::string{}
+                                                             : pinned->second,
+                                                  .type = "select",
+                                                  .options = pin_options(choice.values)};
+                                          })
+                                        | std::ranges::to<std::vector>()}});
+                    }
                 }
-            }
-            if (state.preview) { parts.push_back(preview_grid(*state.preview)); }
-            if (state.loot) {
-                parts.push_back(ec::list(
-                    {.id = loot_id,
-                     .rows = *state.loot | std::views::transform([](const loot_share& share) {
-                         const auto type = itype_id(share.item);
-                         return ec::row{
-                             .id = "loot:" + share.item,
-                             .label = type.is_valid() ? item::nname(type) : share.item,
-                             .columns =
-                                 {{.key = "id", .label = _("ID"), .value = share.item},
-                                  {.key = "chance",
-                                   .label = _("Chance"),
-                                   .value = string_format("%.0f%%", share.chance * 100)},
-                                  {.key = "mean",
-                                   .label = _("Average"),
-                                   .value = string_format("%.2f", share.mean)}}};
-                     }) | std::ranges::to<std::vector>()}));
+                if (state.preview) { parts.push_back(preview_grid(*state.preview)); }
+                if (state.loot) {
+                    parts.push_back(ec::list(
+                        {.id = loot_id,
+                         .rows = *state.loot | std::views::transform([](const loot_share& share) {
+                             const auto type = itype_id(share.item);
+                             return ec::row{
+                                 .id = "loot:" + share.item,
+                                 .label = type.is_valid() ? item::nname(type) : share.item,
+                                 .columns =
+                                     {{.key = "id", .label = _("ID"), .value = share.item},
+                                      {.key = "chance",
+                                       .label = _("Chance"),
+                                       .value = string_format("%.0f%%", share.chance * 100)},
+                                      {.key = "mean",
+                                       .label = _("Average"),
+                                       .value = string_format("%.2f", share.mean)}}};
+                         }) | std::ranges::to<std::vector>()}));
+                }
             }
         }
     }
@@ -1733,14 +1759,13 @@ auto session_view(const session& state) -> ec::screen_view {
         parts.push_back(
             {.id = "editor:notice", .body = ec::text_body{.markup = state.notice, .tone = "bad"}});
     }
+    // A palette has no canvas; its legend is what it edits.
+    const auto* const active = state.on_mapgen() ? canvas_id : state.doc ? legend_id : "";
     return {
         .title = _("Map Editor"),
-        .root = ec::split(
-            {.id = "editor:body",
-             .active = state.doc ? canvas_id : "",
-             .children = std::move(parts)}),
+        .root = ec::split({.id = "editor:body", .active = active, .children = std::move(parts)}),
         .affordances = std::move(affordances),
-        .focus_component = state.doc ? canvas_id : "",
+        .focus_component = active,
         .focus_row = state.focus ? square_id(*state.focus) : ""};
 }
 
