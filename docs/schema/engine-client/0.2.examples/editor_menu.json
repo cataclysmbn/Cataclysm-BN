@@ -4006,6 +4006,26 @@
             "expect": "boundary"
           },
           {
+            "id": "editor:level_up",
+            "label": "Level up",
+            "keys": [
+              "<"
+            ],
+            "enabled": false,
+            "denial": "No level above in this file.",
+            "expect": "screen"
+          },
+          {
+            "id": "editor:level_down",
+            "label": "Level down",
+            "keys": [
+              ">"
+            ],
+            "enabled": false,
+            "denial": "No level below in this file.",
+            "expect": "screen"
+          },
+          {
             "id": "editor:stroke_begin",
             "label": "Begin stroke",
             "keys": [],

@@ -3947,6 +3947,26 @@
             "expect": "boundary"
           },
           {
+            "id": "editor:level_up",
+            "label": "Level up",
+            "keys": [
+              "<"
+            ],
+            "enabled": false,
+            "denial": "No level above in this file.",
+            "expect": "screen"
+          },
+          {
+            "id": "editor:level_down",
+            "label": "Level down",
+            "keys": [
+              ">"
+            ],
+            "enabled": false,
+            "denial": "No level below in this file.",
+            "expect": "screen"
+          },
+          {
             "id": "editor:stroke_begin",
             "label": "Begin stroke",
             "keys": [],
@@ -7297,6 +7317,26 @@
             "expect": "boundary"
           },
           {
+            "id": "editor:level_up",
+            "label": "Level up",
+            "keys": [
+              "<"
+            ],
+            "enabled": false,
+            "denial": "No level above in this file.",
+            "expect": "screen"
+          },
+          {
+            "id": "editor:level_down",
+            "label": "Level down",
+            "keys": [
+              ">"
+            ],
+            "enabled": false,
+            "denial": "No level below in this file.",
+            "expect": "screen"
+          },
+          {
             "id": "editor:stroke_begin",
             "label": "Begin stroke",
             "keys": [],
@@ -10545,6 +10585,26 @@
             "expect": "boundary"
           },
           {
+            "id": "editor:level_up",
+            "label": "Level up",
+            "keys": [
+              "<"
+            ],
+            "enabled": false,
+            "denial": "No level above in this file.",
+            "expect": "screen"
+          },
+          {
+            "id": "editor:level_down",
+            "label": "Level down",
+            "keys": [
+              ">"
+            ],
+            "enabled": false,
+            "denial": "No level below in this file.",
+            "expect": "screen"
+          },
+          {
             "id": "editor:stroke_begin",
             "label": "Begin stroke",
             "keys": [],
@@ -11160,6 +11220,11 @@
                   "key": "apply_on_save",
                   "label": "Apply on save",
                   "value": "Off"
+                },
+                {
+                  "key": "level",
+                  "label": "Level",
+                  "value": "0"
                 },
                 {
                   "key": "seed",
@@ -15917,7 +15982,11 @@
                   }
                 ],
                 "role": "canvas",
-                "drag": "span"
+                "drag": "span",
+                "block": {
+                  "x": 24,
+                  "y": 24
+                }
               }
             },
             {
@@ -27496,6 +27565,26 @@
               }
             },
             "expect": "boundary"
+          },
+          {
+            "id": "editor:level_up",
+            "label": "Level up",
+            "keys": [
+              "<"
+            ],
+            "enabled": false,
+            "denial": "No level above in this file.",
+            "expect": "screen"
+          },
+          {
+            "id": "editor:level_down",
+            "label": "Level down",
+            "keys": [
+              ">"
+            ],
+            "enabled": false,
+            "denial": "No level below in this file.",
+            "expect": "screen"
           },
           {
             "id": "editor:stroke_begin",
