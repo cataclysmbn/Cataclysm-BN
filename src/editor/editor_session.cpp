@@ -77,6 +77,7 @@ constexpr auto symbol_id = "editor:symbol";
 constexpr auto paint_id = "editor:paint";
 constexpr auto stroke_begin_id = "editor:stroke_begin";
 constexpr auto stroke_end_id = "editor:stroke_end";
+constexpr auto extract_palette_id = "editor:extract_palette";
 constexpr auto undo_id = "editor:undo";
 constexpr auto redo_id = "editor:redo";
 constexpr auto save_id = "editor:save";
@@ -761,6 +762,50 @@ struct session {
         mapping_symbol = symbol;
     }
 
+    /// Moves the mapgen's own legend into a new palette `name` at the end of the file, which the
+    /// mapgen then names last so that its symbols place what they did, as one undo step.
+    auto extract_palette(const std::string& name) -> void {
+        const auto taken =
+            palette_id(name).is_valid()
+            || std::ranges::any_of(doc->objects(), [&](const document_object& entry) {
+                   return is_palette(entry.value) && entry.value.value("id", "") == name;
+               });
+        if (name.empty() || taken) {
+            notice =
+                name.empty()
+                    ? _("A palette has an id.")
+                    : string_format(_("%s is a palette already."), name);
+            return;
+        }
+        const auto& own = doc->objects()[object].value["object"];
+        auto palette = nlohmann::ordered_json{{"type", "palette"}, {"id", name}};
+        auto patch = nlohmann::ordered_json::array();
+        for (const auto& [layer, mapping] : own.items()) {
+            if (!std::ranges::contains(legend_layers, layer)) { continue; }
+            palette[layer] = mapping;
+            patch.push_back({{"op", "remove"}, {"path", "/object/" + layer}});
+        }
+        if (patch.empty()) {
+            notice = _("The mapgen maps no symbols itself.");
+            return;
+        }
+        patch.push_back(
+            own.contains("palettes")
+                ? nlohmann::
+                      ordered_json{{"op", "add"}, {"path", "/object/palettes/-"}, {"value", name}}
+                : nlohmann::ordered_json{
+                      {"op", "add"},
+                      {"path", "/object/palettes"},
+                      {"value", nlohmann::ordered_json::array({name})}});
+        doc->begin_group(true);
+        const auto added = doc->add(std::move(palette));
+        const auto edited = added ? doc->edit(object, patch) : std::unexpected(added.error());
+        doc->end_group();
+        if (added && !edited) { doc->undo(); }
+        if (!edited) { notice = edited.error(); }
+        reload();
+    }
+
     auto set_mapping(const std::string& field, const std::string& text) -> void {
         if (field == "symbol") {
             mapping_symbol = text;
@@ -1321,7 +1366,7 @@ auto history_rows(const document& doc) -> std::vector<ec::row> {
         auto row = ec::row{
             .id = string_format("step:%d", depth),
             .label =
-                depth == 0 ? _("Opened") : steps[depth - 1].edits.front().patch[0].value("path", ""),
+                depth == 0 ? _("Opened") : steps[depth - 1].edits.back().patch[0].value("path", ""),
             .selected = depth == doc.depth()};
         if (doc.saved_depth() == depth) { row.description = _("Saved"); }
         rows.push_back(std::move(row));
@@ -1591,6 +1636,10 @@ auto session_view(const session& state) -> ec::screen_view {
                     ec::invoke_affordance({.id = stroke_begin_id, .label = _("Begin stroke")}));
                 affordances.push_back(
                     ec::invoke_affordance({.id = stroke_end_id, .label = _("End stroke")}));
+                affordances.push_back(ec::invoke_affordance(
+                    {.id = extract_palette_id,
+                     .label = _("Extract legend to palette"),
+                     .args = {.text = ec::text_shape{}}}));
             }
             parts.push_back(ec::component{
                 .id = mapping_id,
@@ -1923,6 +1972,8 @@ auto run_editor_session() -> void {
             state.doc->begin_group();
         } else if (id == stroke_end_id) {
             state.doc->end_group();
+        } else if (id == extract_palette_id) {
+            state.extract_palette(invoked->args.text.value_or(""));
         } else if (id == undo_id || id == redo_id) {
             const auto moved = id == undo_id ? state.doc->undo() : state.doc->redo();
             if (moved) { state.reload(); }
