@@ -43,7 +43,7 @@ TEST_CASE("an exported overmap square maps each kind of square to a symbol", "[e
     here.ter_set(abs_to_bub(abs_at(omt, point(2, 3))), ter_id("t_wall"));
     here.furn_set(abs_to_bub(abs_at(omt, point(5, 5))), furn_id("f_table"));
 
-    const auto exported = editor::export_region(omt, point_rel_omt(1, 1));
+    const auto exported = editor::export_region(omt, point_rel_omt(1, 1), "");
     REQUIRE(exported);
     const auto& entry = *exported;
     CHECK(entry["type"] == "mapgen");
@@ -72,7 +72,7 @@ TEST_CASE("an exported overmap square can be stamped back unchanged", "[editor_m
     const auto omt = get_avatar().abs_omt_pos();
     auto& here = get_map();
     here.ter_set(abs_to_bub(abs_at(omt, point(7, 9))), ter_id("t_wall"));
-    const auto exported = editor::export_region(omt, point_rel_omt(1, 1));
+    const auto exported = editor::export_region(omt, point_rel_omt(1, 1), "");
     REQUIRE(exported);
     here.ter_set(abs_to_bub(abs_at(omt, point(7, 9))), ter_id("t_floor"));
     auto stamped = editor::stamp_mapgen(exported->dump(), {.at = omt});
@@ -84,7 +84,7 @@ TEST_CASE("an exported overmap square can be stamped back unchanged", "[editor_m
 TEST_CASE("an export refuses an overmap square the map has not loaded", "[editor_mapgen]") {
     clear_all_state();
     const auto far = get_avatar().abs_omt_pos() + point_rel_omt(40, 0);
-    const auto exported = editor::export_region(far, point_rel_omt(1, 1));
+    const auto exported = editor::export_region(far, point_rel_omt(1, 1), "");
     REQUIRE_FALSE(exported);
     CHECK(exported.error().find("loaded") != std::string::npos);
 }
@@ -98,7 +98,7 @@ TEST_CASE("an exported overmap square stamps back its traps and fields", "[edito
     here.trap_set(trapped, trap_id("tr_beartrap"));
     here.add_field(bloody, field_type_id("fd_blood"), 2);
     here.add_field(bloody, field_type_id("fd_bile"), 1);
-    const auto exported = editor::export_region(omt, point_rel_omt(1, 1));
+    const auto exported = editor::export_region(omt, point_rel_omt(1, 1), "");
     REQUIRE(exported);
     here.remove_trap(trapped);
     here.remove_field(bloody, field_type_id("fd_blood"));
@@ -120,7 +120,7 @@ TEST_CASE("an exported region of overmap squares stamps back as one entry", "[ed
     auto& here = get_map();
     const auto east = omt + point_rel_omt(1, 0);
     here.ter_set(abs_to_bub(abs_at(east, point(3, 5))), ter_id("t_wall"));
-    const auto exported = editor::export_region(omt, point_rel_omt(2, 1));
+    const auto exported = editor::export_region(omt, point_rel_omt(2, 1), "");
     REQUIRE(exported);
     const auto& entry = *exported;
     auto& overmap = get_overmapbuffer(here.get_bound_dimension());
@@ -146,7 +146,7 @@ TEST_CASE("an exported overmap square places its items and monsters", "[editor_m
     }
     const auto lair = abs_to_bub(abs_at(omt, point(10, 10)));
     spawn_test_monster("mon_zombie", lair);
-    const auto exported = editor::export_region(omt, point_rel_omt(1, 1));
+    const auto exported = editor::export_region(omt, point_rel_omt(1, 1), "");
     REQUIRE(exported);
     const auto& object = (*exported)["object"];
     CHECK(object["place_item"]
@@ -174,9 +174,55 @@ TEST_CASE("an exported pet stays friendly", "[editor_mapgen]") {
     clear_all_state();
     const auto omt = get_avatar().abs_omt_pos();
     spawn_test_monster("mon_dog", abs_to_bub(abs_at(omt, point(12, 2)))).friendly = -1;
-    const auto exported = editor::export_region(omt, point_rel_omt(1, 1));
+    const auto exported = editor::export_region(omt, point_rel_omt(1, 1), "");
     REQUIRE(exported);
     CHECK((*exported)["object"]["place_monster"]
           == nlohmann::ordered_json::parse(
               R"([{"monster":"mon_dog","x":12,"y":2,"friendly":true}])"));
+}
+
+TEST_CASE(
+    "an export reuses the symbols of a palette that map a kind of square alone",
+    "[editor_mapgen]") {
+    clear_all_state();
+    const auto omt = get_avatar().abs_omt_pos();
+    auto& here = get_map();
+    for (auto y = 0; y < 24; ++y) {
+        for (auto x = 0; x < 24; ++x) {
+            const auto at = abs_to_bub(abs_at(omt, point(x, y)));
+            here.ter_set(at, ter_id("t_floor"));
+            here.furn_set(at, furn_id("f_null"));
+        }
+    }
+    here.ter_set(abs_to_bub(abs_at(omt, point(2, 3))), ter_id("t_brick_wall"));
+    here.furn_set(abs_to_bub(abs_at(omt, point(5, 5))), furn_id("f_table"));
+
+    const auto exported = editor::export_region(omt, point_rel_omt(1, 1), "lab_workspace_palette");
+    REQUIRE(exported);
+    const auto& object = (*exported)["object"];
+    CHECK(object["palettes"] == nlohmann::ordered_json::array({"lab_workspace_palette"}));
+    CHECK(symbol_at(object, point(0, 0)) == ".");
+    CHECK(symbol_at(object, point(2, 3)) == "#");
+    CHECK_FALSE(object["terrain"].contains("."));
+    CHECK_FALSE(object["terrain"].contains("#"));
+    // The palette maps "t" to a table alone, without the floor under it: the export's own symbol.
+    const auto table = symbol_at(object, point(5, 5));
+    CHECK(table != "t");
+    CHECK(object["terrain"][table] == "t_floor");
+    CHECK(object["furniture"][table] == "f_table");
+
+    here.ter_set(abs_to_bub(abs_at(omt, point(2, 3))), ter_id("t_floor"));
+    auto stamped = editor::stamp_mapgen(exported->dump(), {.at = omt});
+    REQUIRE(stamped);
+    CHECK(here.ter(abs_to_bub(abs_at(omt, point(2, 3)))) == ter_id("t_brick_wall"));
+    CHECK(here.furn(abs_to_bub(abs_at(omt, point(5, 5)))) == furn_id("f_table"));
+    editor::swap_stamp(*stamped);
+}
+
+TEST_CASE("an export refuses a palette the game does not have", "[editor_mapgen]") {
+    clear_all_state();
+    const auto exported =
+        editor::export_region(get_avatar().abs_omt_pos(), point_rel_omt(1, 1), "no_such_palette");
+    REQUIRE_FALSE(exported);
+    CHECK(exported.error().find("no_such_palette") != std::string::npos);
 }

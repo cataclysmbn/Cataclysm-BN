@@ -2252,7 +2252,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "the editor exports the overmap squares around the avatar as one entry",
+    "the editor exports the overmap squares around the avatar as one entry with its palette",
     "[editor_session][engine_client_component]") {
     const auto guard = screen_guard{};
     const auto folder = mod_file{};
@@ -2267,8 +2267,12 @@ TEST_CASE(
             case 1:
                 return invoke("editor:export_height", {.count = 3});
             case 2:
+                return invoke("editor:export_palette", {.text = "lab_workspace_palette"});
+            case 3:
+                CHECK(body<ec::form_body>(part(screen, "editor:export_options")).fields[0].value
+                      == "lab_workspace_palette");
                 return invoke("editor:export", {.text = made.string()});
-            case 3: {
+            case 4: {
                 const auto& canvas = body<ec::grid_body>(part(screen, "editor:canvas"));
                 CHECK(canvas.cols == 48);
                 CHECK(canvas.rows == 72);
@@ -2281,8 +2285,10 @@ TEST_CASE(
     });
 
     editor::run_editor_session();
-    CHECK(step == 4);
+    CHECK(step == 5);
     const auto written = nlohmann::ordered_json::parse(read_file(made));
+    CHECK(written[0]["object"]["palettes"]
+          == nlohmann::ordered_json::array({"lab_workspace_palette"}));
     auto& overmap = get_overmapbuffer(get_map().get_bound_dimension());
     // A width of 2 starts at the avatar's square, a height of 3 one square north.
     const auto corner = get_avatar().abs_omt_pos() + point_rel_omt(0, -1);
