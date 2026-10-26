@@ -1839,6 +1839,17 @@ TEST_CASE(
     CHECK(rows[0].get<std::string>() == std::string(24, '.'));
 }
 
+TEST_CASE("a new game forgets that the editor waits to open again", "[editor_session]") {
+    const auto guard = screen_guard{};
+    game_client::memory::set_input_provider([](const int /*timeout*/) {
+        return invoke("editor:advance", {.count = 5});
+    });
+    editor::run_editor_session();
+    get_avatar().cancel_activity();
+    editor::reset_editor_session();
+    CHECK_FALSE(editor::reopens_after_waiting());
+}
+
 TEST_CASE(
     "the editor lets turns pass as the avatar waits and opens again after them",
     "[editor_session][engine_client_component]") {
@@ -1865,6 +1876,29 @@ TEST_CASE(
     calendar::turn += 5_turns;
     CHECK(editor::reopens_after_waiting());
     CHECK_FALSE(editor::reopens_after_waiting());
+    // Leaving at once forgets the message too.
+    auto shown = std::string();
+    auto visits = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        const auto* const found = ec::find_component(*screen.root, "editor:status");
+        shown = found ? body<ec::text_body>(*found).markup : std::string();
+        ++visits;
+        return act("QUIT");
+    });
+    editor::run_editor_session();
+    CHECK(shown == "5 turns passed.");
+    editor::run_editor_session();
+    CHECK(shown.empty());
+    CHECK(visits == 2);
+
+    game_client::memory::set_input_provider([](const int /*timeout*/) {
+        return invoke("editor:advance", {.count = 5});
+    });
+    editor::run_editor_session();
+    get_avatar().cancel_activity();
+    calendar::turn += 5_turns;
+    REQUIRE(editor::reopens_after_waiting());
 
     const auto waited = [](const ec::screen_view& screen) {
         const auto* const found = ec::find_component(*screen.root, "editor:status");
