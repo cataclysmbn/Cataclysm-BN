@@ -106,6 +106,29 @@ constexpr auto place_apply_id = "editor:place_apply";
 constexpr auto field_id = "editor:field";
 constexpr auto field_set_id = "editor:field_set";
 constexpr auto field_apply_id = "editor:field_apply";
+constexpr auto inside_id = "editor:inside";
+constexpr auto brush_id = "editor:brush";
+constexpr auto mirror_x_id = "editor:mirror_x";
+constexpr auto mirror_y_id = "editor:mirror_y";
+constexpr auto export_id = "editor:export";
+constexpr auto copy_id = "editor:copy";
+constexpr auto rotate_id = "editor:rotate";
+constexpr auto cut_id = "editor:cut";
+constexpr auto flip_x_id = "editor:flip_x";
+constexpr auto flip_y_id = "editor:flip_y";
+constexpr auto history_id = "editor:history";
+constexpr auto jump_id = "editor:jump";
+constexpr auto open_oter_id = "editor:open_oter";
+constexpr auto open_here_id = "editor:open_here";
+constexpr auto browser_id = "editor:browser";
+constexpr auto browser_open_id = "editor:browser_open";
+constexpr auto browser_filter_id = "editor:browser_filter";
+constexpr auto browser_page_id = "editor:browser_page";
+constexpr auto apply_id = "editor:apply";
+constexpr auto stamp_id = "editor:stamp";
+constexpr auto unstamp_id = "editor:unstamp";
+constexpr auto test_id = "editor:test";
+constexpr auto max_brush = 9;
 constexpr auto vehicle_id = "editor:vehicle";
 
 /// A turn of the preview in degrees clockwise, and the direction the game generates it for.
@@ -454,6 +477,8 @@ struct session {
     std::optional<selection> selected = std::nullopt;
     /// The symbols copied last, which the paste tool pastes and `editor:rotate` turns.
     symbol_grid clip;
+    /// The placements wholly inside what was copied, relative to its top-left square.
+    std::vector<placement> clip_placed;
     /// The square a placement or a diagnostic that was picked names.
     std::optional<point> focus = std::nullopt;
     /// The placement picked last, which the move form moves.
@@ -846,6 +871,74 @@ struct session {
         if (found != placed.end()) { pick(*found); }
     }
 
+    auto clip_size_now() const -> clip_size {
+        return {.columns = clip.empty() ? 0 : static_cast<int>(clip.front().size()),
+                .rows = static_cast<int>(clip.size())};
+    }
+
+    /// Copies the selection's symbols and the placements wholly inside it.
+    auto copy() -> void {
+        const auto grid = symbols_of(*doc, object);
+        clip = copy_region(grid, selected->from, selected->to);
+        const auto low =
+            point(std::max(std::min(selected->from.x, selected->to.x), 0),
+                  std::max(std::min(selected->from.y, selected->to.y), 0));
+        const auto size = clip_size_now();
+        clip_placed = placements_inside(
+            *doc, object,
+            {.x = {.min = low.x, .max = low.x + size.columns - 1},
+             .y = {.min = low.y, .max = low.y + size.rows - 1}});
+    }
+
+    /// Copies the selection, then leaves the inside symbol on it and removes the placements
+    /// copied, as one undo step.
+    auto cut() -> void {
+        if (const auto refused = bare(room_fill, true)) {
+            notice = *refused;
+            return;
+        }
+        copy();
+        doc->begin_group();
+        const auto filled = stroke(
+            *doc,
+            {.object = object,
+             .drawn = {.kind = shape_kind::rect_filled, .from = selected->from, .to = selected->to},
+             .symbol = room_fill});
+        // Later entries go first, so the indices of the earlier ones still hold.
+        auto removed = std::expected<void, std::string>{};
+        for (const auto& entry : clip_placed | std::views::reverse) {
+            if (!removed) { break; }
+            removed = remove_placement(
+                *doc, {.object = object, .kind = entry.kind, .index = entry.index});
+        }
+        doc->end_group();
+        notice = !filled ? filled.error() : !removed ? removed.error() : "";
+        reload();
+    }
+
+    /// Pastes the clip's symbols and placements with its top-left square at `at`, as one undo step.
+    auto paste_at(const point& at) -> void {
+        doc->begin_group();
+        const auto depth = doc->depth();
+        auto done =
+            editor::paste(*doc, {.object = object, .clip = clip, .at = at})
+                .transform([](std::size_t /*changed*/) {});
+        for (const auto& entry : clip_placed) {
+            if (!done) { break; }
+            done = add_placement(
+                *doc,
+                {.object = object,
+                 .kind = entry.kind,
+                 .x = {.min = entry.x.min + at.x, .max = entry.x.max + at.x},
+                 .y = {.min = entry.y.min + at.y, .max = entry.y.max + at.y},
+                 .value = entry.value});
+        }
+        doc->end_group();
+        if (!done && doc->depth() > depth) { doc->undo(); }
+        notice = done ? "" : done.error();
+        reload();
+    }
+
     /// Adds what the add form names and picks it.
     auto add_placed() -> void {
         const auto x = range_read(place_x);
@@ -931,9 +1024,7 @@ struct session {
             return;
         }
         if (current->region == region_use::paste) {
-            const auto pasted = editor::paste(*doc, {.object = object, .clip = clip, .at = at});
-            notice = pasted ? "" : pasted.error();
-            reload();
+            paste_at(at);
             return;
         }
         if (!current->kind) {
@@ -1453,7 +1544,13 @@ auto session_view(const session& state) -> ec::screen_view {
             affordances.push_back(ec::invoke_affordance(
                 {.id = copy_id, .label = _("Copy"), .enabled = state.selected.has_value()}));
             affordances.push_back(ec::invoke_affordance(
+                {.id = cut_id, .label = _("Cut"), .enabled = state.selected.has_value()}));
+            affordances.push_back(ec::invoke_affordance(
                 {.id = rotate_id, .label = _("Rotate"), .enabled = !state.clip.empty()}));
+            affordances.push_back(ec::invoke_affordance(
+                {.id = flip_x_id, .label = _("Flip across"), .enabled = !state.clip.empty()}));
+            affordances.push_back(ec::invoke_affordance(
+                {.id = flip_y_id, .label = _("Flip down"), .enabled = !state.clip.empty()}));
             affordances.push_back(ec::invoke_affordance(
                 {.id = paint_id, .label = _("Draw"), .args = row_of(canvas_id)}));
             affordances.push_back(
@@ -1758,13 +1855,24 @@ auto run_editor_session() -> void {
             state.mirror_x = !state.mirror_x;
         } else if (id == mirror_y_id) {
             state.mirror_y = !state.mirror_y;
-        } else if (id == copy_id) {
-            if (state.selected) {
-                state.clip = copy_region(
-                    symbols_of(*state.doc, state.object), state.selected->from, state.selected->to);
+        } else if (id == copy_id && state.selected) {
+            state.copy();
+        } else if (id == cut_id && state.selected) {
+            state.cut();
+        } else if (id == rotate_id || id == flip_x_id || id == flip_y_id) {
+            const auto size = state.clip_size_now();
+            for (auto& entry : state.clip_placed) {
+                entry =
+                    id == rotate_id ? turned(entry, size)
+                    : id == flip_x_id
+                        ? mirrored_x(entry, size)
+                        : mirrored_y(entry, size);
             }
-        } else if (id == rotate_id) {
-            state.clip = rotated(state.clip);
+            state.clip =
+                id == rotate_id ? rotated(state.clip)
+                : id == flip_x_id
+                    ? mirrored_x(state.clip)
+                    : mirrored_y(state.clip);
         } else if (id == jump_id) {
             auto depth = std::size_t{0};
             if (std::sscanf(row.c_str(), "step:%zu", &depth) == 1 && state.doc->jump(depth)) {
