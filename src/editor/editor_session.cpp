@@ -322,6 +322,12 @@ auto is_palette(const nlohmann::ordered_json& value) -> bool {
     return value.is_object() && value.value("type", "") == "palette";
 }
 
+/// Whether a mapping places what a mapgen parameter says, which only that mapgen has.
+auto reads_parameter(const nlohmann::ordered_json& mapping) -> bool {
+    if (mapping.is_object() && mapping.contains("param")) { return true; }
+    return mapping.is_structured() && std::ranges::any_of(mapping, reads_parameter);
+}
+
 /// What names an entry: a mapgen's overmap terrain, or the id it is nested or updated by; a
 /// palette's id.
 auto entry_name(const nlohmann::ordered_json& value) -> std::string {
@@ -765,6 +771,7 @@ struct session {
     /// Moves the mapgen's own legend into a new palette `name` at the end of the file, which the
     /// mapgen then names last so that its symbols place what they did, as one undo step.
     auto extract_palette(const std::string& name) -> void {
+        if (!on_mapgen()) { return; }
         const auto taken =
             palette_id(name).is_valid()
             || std::ranges::any_of(doc->objects(), [&](const document_object& entry) {
@@ -777,11 +784,26 @@ struct session {
                     : string_format(_("%s is a palette already."), name);
             return;
         }
-        const auto& own = doc->objects()[object].value["object"];
+        const auto& entry = doc->objects()[object];
+        const auto& own = entry.value["object"];
+        // Refused before anything is added, so that the edit after the palette is added holds.
+        if (entry.duplicate_key) {
+            notice = string_format(_("The key \"%s\" appears twice."), *entry.duplicate_key);
+            return;
+        }
+        if (own.contains("palettes") && !own["palettes"].is_array()) {
+            notice = _("The mapgen's palettes are not a list.");
+            return;
+        }
         auto palette = nlohmann::ordered_json{{"type", "palette"}, {"id", name}};
         auto patch = nlohmann::ordered_json::array();
         for (const auto& [layer, mapping] : own.items()) {
             if (!std::ranges::contains(legend_layers, layer)) { continue; }
+            if (reads_parameter(mapping)) {
+                notice = _(
+                    "The legend reads the mapgen's parameters, which a palette does not have.");
+                return;
+            }
             palette[layer] = mapping;
             patch.push_back({{"op", "remove"}, {"path", "/object/" + layer}});
         }
@@ -801,7 +823,6 @@ struct session {
         const auto added = doc->add(std::move(palette));
         const auto edited = added ? doc->edit(object, patch) : std::unexpected(added.error());
         doc->end_group();
-        if (added && !edited) { doc->undo(); }
         if (!edited) { notice = edited.error(); }
         reload();
     }
@@ -1039,6 +1060,7 @@ struct session {
     /// Generates the entry over the avatar's overmap square, in place of what the world has there.
     auto stamp_here() -> void {
         unstamp();
+        const auto stand_ins = palette_stand_ins(palette_texts());
         auto made = stamp_mapgen(
             doc->objects()[object].value.dump(),
             {.at = get_avatar().abs_omt_pos(), .seed = seed.value_or(1)});
@@ -2058,6 +2080,7 @@ auto run_editor_session() -> void {
         } else if (id == loot_id) {
             if (const auto at = square_of(row)) { state.roll_loot_at(*at); }
         } else if (id == apply_id) {
+            const auto stand_ins = palette_stand_ins(state.palette_texts());
             const auto applied = apply_mapgen(state.doc->objects()[state.object].value.dump());
             if (!applied) { state.notice = applied.error(); }
         } else if (id == stamp_id) {
