@@ -6566,8 +6566,13 @@ auto editor::check_mapgen(const std::string_view text) -> std::vector<loader_mes
 editor::file_stand_ins::file_stand_ins(const std::vector<std::string>& texts) {
     auto ids = std::make_shared<std::vector<palette_id>>();
     auto kept = std::make_shared<std::vector<decltype(palettes)::node_type>>();
-    auto names = std::make_shared<std::vector<std::string>>();
-    auto kept_chunks = std::make_shared<std::vector<decltype(nested_mapgen)::node_type>>();
+    struct kept_chunks {
+        std::string name;
+        /// The game's chunks of the name, none when it has none.
+        std::optional<nested_mapgen_function_list> was;
+    };
+    // The game's lists stay where they are, since the mapgens that place them keep their address.
+    auto chunks_kept = std::make_shared<std::vector<kept_chunks>>();
     capture_each_debugmsg_during([&] {
         // Palettes first, so that a chunk reads the palettes of the file.
         for (const auto chunks : {false, true}) {
@@ -6589,11 +6594,13 @@ editor::file_stand_ins::file_stand_ins(const std::vector<std::string>& texts) {
                             load(entry, mod_management::get_default_core_content_pack().str());
                     } else if (chunks && entry.has_string("nested_mapgen_id")) {
                         const auto name = entry.get_string("nested_mapgen_id");
-                        if (!std::ranges::contains(*names, name)) {
-                            names->push_back(name);
-                            if (auto node = nested_mapgen.extract(name)) {
-                                kept_chunks->push_back(std::move(node));
-                            }
+                        if (!std::ranges::contains(*chunks_kept, name, &kept_chunks::name)) {
+                            const auto found = nested_mapgen.find(name);
+                            chunks_kept->push_back(
+                                {.name = name,
+                                 .was = found == nested_mapgen.end()
+                                          ? std::nullopt
+                                          : std::optional(std::exchange(found->second, {}))});
                         }
                         auto chunk = std::make_shared<detached_nested_mapgen>();
                         auto object = entry.get_object("object");
@@ -6610,11 +6617,18 @@ editor::file_stand_ins::file_stand_ins(const std::vector<std::string>& texts) {
             }
         }
     });
-    restore_ = [ids, kept, names, kept_chunks] {
+    restore_palettes_ = [ids, kept] {
         for (const auto& id : *ids) { palettes.erase(id); }
         for (auto& node : *kept) { palettes.insert(std::move(node)); }
-        for (const auto& name : *names) { nested_mapgen.erase(name); }
-        for (auto& node : *kept_chunks) { nested_mapgen.insert(std::move(node)); }
+    };
+    restore_chunks_ = [chunks_kept] {
+        for (auto& entry : *chunks_kept) {
+            if (entry.was) {
+                nested_mapgen[entry.name] = std::move(*entry.was);
+            } else {
+                nested_mapgen.erase(entry.name);
+            }
+        }
     };
 }
 

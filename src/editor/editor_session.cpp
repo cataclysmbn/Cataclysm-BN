@@ -2086,9 +2086,13 @@ auto run_editor_session() -> void {
         } else if (id == loot_id) {
             if (const auto at = square_of(row)) { state.roll_loot_at(*at); }
         } else if (id == apply_id) {
-            const auto stand_ins = file_stand_ins(state.stand_in_texts());
+            auto stand_ins = file_stand_ins(state.stand_in_texts());
             const auto applied = apply_mapgen(state.doc->objects()[state.object].value.dump());
-            if (!applied) { state.notice = applied.error(); }
+            if (applied) {
+                stand_ins.keep_chunks();
+            } else {
+                state.notice = applied.error();
+            }
         } else if (id == stamp_id) {
             state.stamp_here();
         } else if (id == unstamp_id) {

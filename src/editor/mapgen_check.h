@@ -28,12 +28,21 @@ auto check_mapgen(std::string_view text) -> std::vector<loader_message>;
 class file_stand_ins {
 public:
     explicit file_stand_ins(const std::vector<std::string>& texts);
-    ~file_stand_ins() { restore_(); }
+    ~file_stand_ins() {
+        restore_palettes_();
+        restore_chunks_();
+    }
     file_stand_ins(const file_stand_ins&) = delete;
     auto operator=(const file_stand_ins&) -> file_stand_ins& = delete;
+    /// Leaves the chunks as the game's own when it ends, for a mapgen applied with them; the
+    /// mapgen read the palettes when it was loaded.
+    auto keep_chunks() -> void {
+        restore_chunks_ = [] {};
+    }
 
 private:
-    std::function<auto()->void> restore_;
+    std::function<auto()->void> restore_palettes_;
+    std::function<auto()->void> restore_chunks_;
 };
 
 } // namespace editor
