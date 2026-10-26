@@ -13,6 +13,7 @@
 #include "mtype.h"
 #include "overmap/omdata.h"
 #include "overmap/overmapbuffer.h"
+#include "string_utils.h"
 #include "trap.h"
 #include "type_id.h"
 
@@ -56,11 +57,14 @@ struct lent_symbols {
 };
 
 /// The kind of square that `symbol` maps alone, terrain and at most furniture and a trap, each
-/// a plain id; none when it maps anything else.
+/// a plain id once; none when it maps anything else.
 auto plain_kind(const legend_symbol& symbol) -> std::optional<kind> {
     auto found = kind{.ter = ter_id(), .furn = furn_id("f_null"), .trap = tr_null};
     auto has_terrain = false;
+    auto layers = std::set<std::string>{};
     for (const auto& line : symbol.lines) {
+        // Two lines of a layer: palettes the data chooses among, or one over the other.
+        if (!layers.insert(line.layer).second) { return std::nullopt; }
         const auto value = nlohmann::ordered_json::parse(line.value, nullptr, false);
         if (!value.is_string()) { return std::nullopt; }
         const auto id = value.get<std::string>();
@@ -129,7 +133,8 @@ auto fields_of(const field& on) -> std::vector<laid_field> {
 auto export_region(
     const tripoint_abs_omt& at, const point_rel_omt& size, const std::string& palette)
     -> std::expected<nlohmann::ordered_json, std::string> {
-    const auto lent = lent_by(palette);
+    const auto named = trim(palette);
+    const auto lent = lent_by(named);
     if (!lent) { return std::unexpected(lent.error()); }
     auto& here = get_map();
     const auto base = project_to<coords::sm>(at);
@@ -200,7 +205,7 @@ auto export_region(
             | std::ranges::to<std::string>());
     }
     auto object = nlohmann::ordered_json{{"rows", rows}};
-    if (!palette.empty()) { object["palettes"] = nlohmann::ordered_json::array({palette}); }
+    if (!named.empty()) { object["palettes"] = nlohmann::ordered_json::array({named}); }
     object["terrain"] = terrain;
     if (!furniture.empty()) { object["furniture"] = furniture; }
     if (!traps.empty()) { object["traps"] = traps; }
