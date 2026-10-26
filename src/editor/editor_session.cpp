@@ -99,6 +99,10 @@ constexpr auto mapping_apply_id = "editor:mapping_apply";
 constexpr auto move_id = "editor:move";
 constexpr auto move_set_id = "editor:move_set";
 constexpr auto move_apply_id = "editor:move_apply";
+constexpr auto placement_delete_id = "editor:placement_delete";
+constexpr auto place_id = "editor:place";
+constexpr auto place_set_id = "editor:place_set";
+constexpr auto place_apply_id = "editor:place_apply";
 constexpr auto field_id = "editor:field";
 constexpr auto field_set_id = "editor:field_set";
 constexpr auto field_apply_id = "editor:field_apply";
@@ -411,6 +415,21 @@ auto range_text(const placement_range& range) -> std::string {
              : string_format("%d-%d", range.min, range.max);
 }
 
+/// The range `range_text` wrote: a number or two joined by a dash, the smaller first.
+auto range_read(std::string_view text) -> std::optional<placement_range> {
+    const auto number = [](std::string_view part) -> std::optional<int> {
+        auto value = 0;
+        const auto [end, error] = std::from_chars(part.data(), part.data() + part.size(), value);
+        if (error != std::errc{} || end != part.data() + part.size()) { return std::nullopt; }
+        return value;
+    };
+    const auto dash = text.find('-', 1);
+    const auto min = number(text.substr(0, dash));
+    const auto max = dash == std::string_view::npos ? min : number(text.substr(dash + 1));
+    if (!min || !max || *max < *min) { return std::nullopt; }
+    return placement_range{.min = *min, .max = *max};
+}
+
 struct diagnostic {
     std::string text;
     std::string pointer;
@@ -441,6 +460,11 @@ struct session {
     std::optional<placement> picked = std::nullopt;
     std::string move_x;
     std::string move_y;
+    /// What the add form places: a `place_*` kind, its squares, and its other members as JSON.
+    std::string place_kind = "place_items";
+    std::string place_x = "0";
+    std::string place_y = "0";
+    std::string place_value;
     /// What the field form sets: a pointer into the entry and a value as JSON or bare text; an
     /// empty value removes it.
     std::string field_pointer;
@@ -801,22 +825,8 @@ struct session {
     }
 
     auto move_picked() -> void {
-        const auto number = [](std::string_view text) -> std::optional<int> {
-            auto value = 0;
-            const auto [end, error] =
-                std::from_chars(text.data(), text.data() + text.size(), value);
-            if (error != std::errc{} || end != text.data() + text.size()) { return std::nullopt; }
-            return value;
-        };
-        const auto range_of = [&](std::string_view text) -> std::optional<placement_range> {
-            const auto dash = text.find('-', 1);
-            const auto min = number(text.substr(0, dash));
-            const auto max = dash == std::string_view::npos ? min : number(text.substr(dash + 1));
-            if (!min || !max || *max < *min) { return std::nullopt; }
-            return placement_range{.min = *min, .max = *max};
-        };
-        const auto x = range_of(move_x);
-        const auto y = range_of(move_y);
+        const auto x = range_read(move_x);
+        const auto y = range_read(move_y);
         if (!x || !y) {
             notice = _("A place is a number or two joined by a dash, the smaller first.");
             return;
@@ -834,6 +844,43 @@ struct session {
             return entry.kind == picked->kind && entry.index == picked->index;
         });
         if (found != placed.end()) { pick(*found); }
+    }
+
+    /// Adds what the add form names and picks it.
+    auto add_placed() -> void {
+        const auto x = range_read(place_x);
+        const auto y = range_read(place_y);
+        if (!x || !y) {
+            notice = _("A place is a number or two joined by a dash, the smaller first.");
+            return;
+        }
+        const auto value =
+            place_value.empty()
+                ? nlohmann::ordered_json::object()
+                : nlohmann::ordered_json::parse(place_value, nullptr, false);
+        const auto added = add_placement(
+            *doc, {.object = object, .kind = place_kind, .x = *x, .y = *y, .value = value});
+        if (!added) {
+            notice = added.error();
+            return;
+        }
+        notice.clear();
+        reload();
+        const auto placed = placements_of(*doc, object);
+        const auto found = std::ranges::find_last(placed, place_kind, &placement::kind);
+        if (!found.empty()) { pick(found.front()); }
+    }
+
+    auto delete_picked() -> void {
+        const auto removed = remove_placement(
+            *doc, {.object = object, .kind = picked->kind, .index = picked->index});
+        if (!removed) {
+            notice = removed.error();
+            return;
+        }
+        picked.reset();
+        focus.reset();
+        reload();
     }
 
     auto set_picked_field() -> void {
@@ -873,6 +920,14 @@ struct session {
         if (current->region == region_use::select) {
             selected = anchor ? std::optional(selection{.from = *anchor, .to = at}) : std::nullopt;
             anchor = anchor ? std::nullopt : std::optional(at);
+            if (selected) {
+                place_x = range_text(
+                    {.min = std::min(selected->from.x, selected->to.x),
+                     .max = std::max(selected->from.x, selected->to.x)});
+                place_y = range_text(
+                    {.min = std::min(selected->from.y, selected->to.y),
+                     .max = std::max(selected->from.y, selected->to.y)});
+            }
             return;
         }
         if (current->region == region_use::paste) {
@@ -1323,7 +1378,38 @@ auto session_view(const session& state) -> ec::screen_view {
                               .text = ec::text_shape{}}}));
                 affordances.push_back(
                     ec::invoke_affordance({.id = move_apply_id, .label = _("Move")}));
+                affordances.push_back(ec::invoke_affordance(
+                    {.id = placement_delete_id, .label = _("Delete placement")}));
             }
+            parts.push_back(ec::component{
+                .id = place_id,
+                .affordances = {place_set_id, place_apply_id},
+                .body = ec::form_body{
+                    .fields =
+                        {{.id = "kind",
+                          .label = _("Kind"),
+                          .value = state.place_kind,
+                          .type = "select",
+                          .options = placement_kinds
+                                   | std::views::transform([](const std::string_view kind) {
+                                         return ec::form_option{
+                                             .id = std::string(kind), .label = std::string(kind)};
+                                     })
+                                   | std::ranges::to<std::vector>()},
+                         {.id = "x", .label = "x", .value = state.place_x},
+                         {.id = "y", .label = "y", .value = state.place_y},
+                         {.id = "value",
+                          .label = _("Value"),
+                          .value = state.place_value,
+                          .multiline = true}},
+                    .submit = place_apply_id}});
+            affordances.push_back(ec::invoke_affordance(
+                {.id = place_set_id,
+                 .label = _("Value"),
+                 .args =
+                     {.row = ec::row_shape{.component_id = place_id}, .text = ec::text_shape{}}}));
+            affordances.push_back(
+                ec::invoke_affordance({.id = place_apply_id, .label = _("Add placement")}));
             parts.push_back(ec::component{
                 .id = field_id,
                 .affordances = {field_set_id, field_apply_id},
@@ -1695,6 +1781,17 @@ auto run_editor_session() -> void {
             (row == "x" ? state.move_x : state.move_y) = invoked->args.text.value_or("");
         } else if (id == move_apply_id && state.picked) {
             state.move_picked();
+        } else if (id == placement_delete_id && state.picked) {
+            state.delete_picked();
+        } else if (id == place_set_id) {
+            const auto text = invoked->args.text.value_or("");
+            (row == "kind" ? state.place_kind
+             : row == "x"  ? state.place_x
+             : row == "y"
+                 ? state.place_y
+                 : state.place_value) = text;
+        } else if (id == place_apply_id) {
+            state.add_placed();
         } else if (id == field_set_id) {
             (row == "pointer" ? state.field_pointer : state.field_value) =
                 invoked->args.text.value_or("");
