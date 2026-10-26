@@ -38,7 +38,7 @@ TEST_CASE("an exported overmap square maps each kind of square to a symbol", "[e
     here.ter_set(abs_to_bub(abs_at(omt, point(2, 3))), ter_id("t_wall"));
     here.furn_set(abs_to_bub(abs_at(omt, point(5, 5))), furn_id("f_table"));
 
-    const auto exported = editor::export_omt(omt);
+    const auto exported = editor::export_region(omt, point_rel_omt(1, 1));
     REQUIRE(exported);
     const auto& entry = *exported;
     CHECK(entry["type"] == "mapgen");
@@ -67,7 +67,7 @@ TEST_CASE("an exported overmap square can be stamped back unchanged", "[editor_m
     const auto omt = get_avatar().abs_omt_pos();
     auto& here = get_map();
     here.ter_set(abs_to_bub(abs_at(omt, point(7, 9))), ter_id("t_wall"));
-    const auto exported = editor::export_omt(omt);
+    const auto exported = editor::export_region(omt, point_rel_omt(1, 1));
     REQUIRE(exported);
     here.ter_set(abs_to_bub(abs_at(omt, point(7, 9))), ter_id("t_floor"));
     auto stamped = editor::stamp_mapgen(exported->dump(), {.at = omt});
@@ -79,7 +79,7 @@ TEST_CASE("an exported overmap square can be stamped back unchanged", "[editor_m
 TEST_CASE("an export refuses an overmap square the map has not loaded", "[editor_mapgen]") {
     clear_all_state();
     const auto far = get_avatar().abs_omt_pos() + point_rel_omt(40, 0);
-    const auto exported = editor::export_omt(far);
+    const auto exported = editor::export_region(far, point_rel_omt(1, 1));
     REQUIRE_FALSE(exported);
     CHECK(exported.error().find("loaded") != std::string::npos);
 }
@@ -93,7 +93,7 @@ TEST_CASE("an exported overmap square stamps back its traps and fields", "[edito
     here.trap_set(trapped, trap_id("tr_beartrap"));
     here.add_field(bloody, field_type_id("fd_blood"), 2);
     here.add_field(bloody, field_type_id("fd_bile"), 1);
-    const auto exported = editor::export_omt(omt);
+    const auto exported = editor::export_region(omt, point_rel_omt(1, 1));
     REQUIRE(exported);
     here.remove_trap(trapped);
     here.remove_field(bloody, field_type_id("fd_blood"));
@@ -106,5 +106,27 @@ TEST_CASE("an exported overmap square stamps back its traps and fields", "[edito
     CHECK(here.tr_at(abs_to_bub(abs_at(omt, point(5, 4)))).is_null());
     CHECK(here.get_field_intensity(abs_to_bub(abs_at(omt, point(5, 6))), field_type_id("fd_blood"))
           == 0);
+    editor::swap_stamp(*stamped);
+}
+
+TEST_CASE("an exported region of overmap squares stamps back as one entry", "[editor_mapgen]") {
+    clear_all_state();
+    const auto omt = get_avatar().abs_omt_pos();
+    auto& here = get_map();
+    const auto east = omt + point_rel_omt(1, 0);
+    here.ter_set(abs_to_bub(abs_at(east, point(3, 5))), ter_id("t_wall"));
+    const auto exported = editor::export_region(omt, point_rel_omt(2, 1));
+    REQUIRE(exported);
+    const auto& entry = *exported;
+    auto& overmap = get_overmapbuffer(here.get_bound_dimension());
+    CHECK(entry["om_terrain"]
+          == nlohmann::ordered_json::array({nlohmann::ordered_json::array(
+              {overmap.ter(omt)->get_type_id().str(), overmap.ter(east)->get_type_id().str()})}));
+    CHECK(entry["object"]["rows"].size() == 24);
+    CHECK(entry["object"]["rows"][0].get<std::string>().size() == 48);
+    here.ter_set(abs_to_bub(abs_at(east, point(3, 5))), ter_id("t_floor"));
+    auto stamped = editor::stamp_mapgen(entry.dump(), {.at = omt});
+    REQUIRE(stamped);
+    CHECK(here.ter(abs_to_bub(abs_at(east, point(3, 5)))) == ter_id("t_wall"));
     editor::swap_stamp(*stamped);
 }
