@@ -1333,7 +1333,7 @@ auto submap::rebuild_absorption_cache( const map &m, const tripoint_bub_sm &grid
     // The border of the envelope reads the eight submaps around this one. Look each up once instead of
     // going through the map and its dimension registry for every border tile.
     auto &buffer = m.get_mapbuffer();
-    std::array<std::array<submap *, 3>, 3> around = {};
+    auto around = std::array<std::array<submap *, 3>, 3> {};
     for( int ox = 0; ox < 3; ox++ ) {
         for( int oy = 0; oy < 3; oy++ ) {
             const auto neighbour = tripoint_bub_sm( grid_pos.x() + ox - 1, grid_pos.y() + oy - 1,
@@ -1368,10 +1368,10 @@ auto submap::rebuild_absorption_cache( const map &m, const tripoint_bub_sm &grid
                     const auto *const side = around[ox][oy];
                     const auto side_tile = point_sm_ms{ x == 0 ? SEEX - 1 : x == checkvars_boundary_max_x ? 0 : x - 1,
                                                         y == 0 ? SEEY - 1 : y == checkvars_boundary_max_y ? 0 : y - 1 };
-                    const bool beyond_bounds = buffer.is_outside_pocket_dimension_bounds( map_local_to_abs( m, tile ) );
-                    const ter_id ter = beyond_bounds ? buffer.get_boundary_terrain() :
-                                       side ? side->get_ter( side_tile ) : t_null;
-                    const furn_id furn = beyond_bounds || !side ? f_null : side->get_furn( side_tile );
+                    const auto beyond_bounds = buffer.is_outside_pocket_dimension_bounds( map_local_to_abs( m, tile ) );
+                    const auto ter = beyond_bounds ? buffer.get_boundary_terrain() :
+                                     side ? side->get_ter( side_tile ) : t_null;
+                    const auto furn = beyond_bounds || !side ? f_null : side->get_furn( side_tile );
                     // Rather common for tents, standalone curtains, and other such oddities to have one of these. These will count for adjacency purposes, so long as they are not permeable.
                     cv[7] = furn->has_flag( TFLAG_NO_SCENT ) || furn->has_flag( TFLAG_BLOCK_WIND );
                     cv[2] = !side || side->outside_cache[side_tile.x()][side_tile.y()];
