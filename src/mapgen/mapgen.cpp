@@ -375,6 +375,7 @@ class mapgen_factory {
 private:
     std::map<std::string, mapgen_basic_container> mapgens_;
     bool any_direct_lua_generator_ = false;
+    std::optional<std::set<std::string>> usages_;
 
 public:
     /// Collect all the possible and expected keys that may get used with @ref pick.
@@ -400,9 +401,15 @@ public:
     }
 
 public:
+    /// @ref get_usages as the data checks saw it, kept until the data is reset.
+    auto usages() -> const std::set<std::string>& { // *NOPAD*
+        if (!usages_) { usages_ = get_usages(); }
+        return *usages_;
+    }
     void reset() {
         mapgens_.clear();
         any_direct_lua_generator_ = false;
+        usages_.reset();
     }
     /// @see mapgen_basic_container::setup
     void setup() {
@@ -423,12 +430,9 @@ public:
         }
     }
     void check_consistency() {
-        // Cache all strings that may get looked up here so we don't have to go through
-        // all the sources for them upon each loop.
-        const std::set<std::string> usages = get_usages();
         for (std::pair<const std::string, mapgen_basic_container>& omw : mapgens_) {
             omw.second.check_consistency(omw.first);
-            if (!usages.contains(omw.first)) {
+            if (!usages().contains(omw.first)) {
                 debugmsg("Mapgen %s is not used by anything!", omw.first);
             }
         }
@@ -6412,7 +6416,7 @@ auto check_ids(const JsonObject& entry, const JsonObject& object) -> void {
     // The loader registers no mapgen of weight 0 and drops the one for "null".
     const auto registered = entry.get_int("weight", 1000) > 0 && !entry.get_bool("disabled", false);
     if (registered && entry.has_member("om_terrain")) {
-        const auto usages = mapgen_factory::get_usages();
+        const auto& usages = oter_mapgen.usages();
         const auto unused = [&](const std::string& name) {
             return name != "null" && !usages.contains(name);
         };
