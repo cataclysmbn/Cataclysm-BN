@@ -1023,6 +1023,93 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the editor adds a placement over the selection and deletes it, each one undo step",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file(nlohmann::ordered_json::parse(
+        R"({"place_monster": [{"monster": "mon_zombie", "x": [3, 5], "y": 7}]})"));
+    auto step = 0;
+    const auto placed = [](const ec::screen_view& screen) {
+        return body<ec::list_body>(part(screen, "editor:placements")).rows
+             | std::views::transform(&ec::row::id) | std::ranges::to<std::vector>();
+    };
+    const auto field =
+        [](const ec::screen_view& screen, const std::string& form, const std::string& id) {
+            const auto& fields = body<ec::form_body>(part(screen, form)).fields;
+            const auto found = std::ranges::find(fields, id, &ec::form_field::id);
+            REQUIRE(found != fields.end());
+            return *found;
+        };
+    const auto set = [](const std::string& id, const std::string& text) {
+        return invoke("editor:place_set", {.row = id, .text = text});
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK(field(screen, "editor:place", "kind").type == "select");
+                CHECK(std::ranges::contains(
+                    field(screen, "editor:place", "kind").options, std::string("place_items"),
+                    &ec::form_option::id));
+                CHECK_FALSE(has_affordance(screen, "editor:placement_delete"));
+                return invoke("editor:tool", {.row = "tool:select"});
+            case 2:
+                return invoke("editor:paint", {.row = "square:2,3"});
+            case 3:
+                return invoke("editor:paint", {.row = "square:4,6"});
+            case 4:
+                // The selection is where a new placement lands.
+                CHECK(field(screen, "editor:place", "x").value == "2-4");
+                CHECK(field(screen, "editor:place", "y").value == "3-6");
+                return set("kind", "place_items");
+            case 5:
+                return set("value", R"({"item": "no_such_group"})");
+            case 6:
+                return invoke("editor:place_apply");
+            case 7:
+                CHECK(
+                    body<ec::text_body>(part(screen, "editor:notice")).markup.find("no_such_group")
+                    != std::string::npos);
+                CHECK(placed(screen).size() == 1);
+                return set("value", R"({"item": "SUS_tools", "chance": 50})");
+            case 8:
+                return invoke("editor:place_apply");
+            case 9:
+                CHECK(placed(screen)
+                      == std::vector<
+                          std::string>{"placement:place_monster:0", "placement:place_items:0"});
+                // The new placement is picked, so it moves and deletes like any other.
+                CHECK(field(screen, "editor:move", "x").value == "2-4");
+                CHECK(field(screen, "editor:move", "y").value == "3-6");
+                CHECK(saved(screen) == "No");
+                return invoke("editor:placement_delete");
+            case 10:
+                CHECK(placed(screen) == std::vector<std::string>{"placement:place_monster:0"});
+                CHECK_FALSE(has_affordance(screen, "editor:placement_delete"));
+                return invoke("editor:undo");
+            case 11:
+                CHECK(placed(screen).size() == 2);
+                return invoke("editor:undo");
+            case 12:
+                CHECK(placed(screen).size() == 1);
+                CHECK(saved(screen) == "Yes");
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 13);
+    CHECK(read_file(file.path) == file.text);
+}
+
+TEST_CASE(
     "the editor's catalog finds what a legend can name and puts it in the legend form",
     "[editor_session][engine_client_component]") {
     const auto guard = screen_guard{};
