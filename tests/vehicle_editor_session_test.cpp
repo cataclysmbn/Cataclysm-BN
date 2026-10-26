@@ -215,6 +215,12 @@ TEST_CASE(
                 CHECK(cell(screen, "mount:0,0").selected);
                 CHECK(messages(screen).empty());
                 CHECK_FALSE(affordance(screen, "vehicle:undo").enabled);
+                CHECK(
+                    affordance(screen, "vehicle:undo").keys == std::vector<std::string>{"CTRL+Z"});
+                CHECK(
+                    affordance(screen, "vehicle:redo").keys == std::vector<std::string>{"CTRL+Y"});
+                CHECK(
+                    affordance(screen, "vehicle:save").keys == std::vector<std::string>{"CTRL+S"});
                 CHECK(refused(state, "vehicle:mount", {.row = "mount:3,0"}));
                 return invoke("vehicle:mount", {.row = "mount:1,0"});
             }
@@ -536,6 +542,10 @@ TEST_CASE(
             case 2:
                 CHECK(title(screen) == "Bicycle");
                 CHECK_FALSE(affordance(screen, "vehicle:undo").enabled);
+                CHECK(
+                    affordance(screen, "vehicle:undo").keys == std::vector<std::string>{"CTRL+Z"});
+                CHECK(
+                    affordance(screen, "vehicle:redo").keys == std::vector<std::string>{"CTRL+Y"});
                 return invoke("vehicle:mount", {.row = "mount:1,0"});
             case 3:
                 plain = labels(screen);
