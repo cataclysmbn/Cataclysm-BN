@@ -1399,7 +1399,8 @@ auto submap::rebuild_absorption_cache( const map &m, const tripoint_bub_sm &grid
                 const auto &furn = get_furn( sm_tile ).obj();
                 // Rather common for tents, standalone curtains, and other such oddities to have one of these. These will count for adjacency purposes, so long as they are not permeable.
                 cv[7] = furn.has_flag( TFLAG_NO_SCENT ) || furn.has_flag( TFLAG_BLOCK_WIND );
-                cv[2] = m.is_outside( tile );
+                // outside_cache was rebuilt above; reading it directly skips a map-wide submap lookup per tile.
+                cv[2] = outside_cache[sm_tile.x()][sm_tile.y()];
                 cv[3] = ( !at_max_zlev ) ? ( above->floor_cache[tidx] != 0 ) : false;
                 // There are something like 5 pieces of furniture with the reduce scent flag, and most of them are cardboard walls that are also permeable. Fine to not check that.
                 cv[4] = ter.has_flag( TFLAG_PERMEABLE ) || ter.has_flag( TFLAG_REDUCE_SCENT ) ||
