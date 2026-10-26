@@ -134,3 +134,29 @@ TEST_CASE(
     CHECK_FALSE(doc.undo());
     CHECK(doc.text() == entry);
 }
+
+TEST_CASE(
+    "the placements wholly inside a rectangle are taken relative to its corner",
+    "[editor_mapgen]") {
+    const auto doc = editor::document::parse("placed.json", entry).value();
+    const auto inside =
+        editor::placements_inside(doc, 0, {.x = {.min = 1, .max = 6}, .y = {.min = 2, .max = 4}});
+    REQUIRE(inside.size() == 1);
+    CHECK(inside[0].kind == "place_items");
+    CHECK(inside[0].x == editor::placement_range{.min = 1, .max = 4});
+    CHECK(inside[0].y == editor::placement_range{.min = 1, .max = 1});
+    CHECK(editor::placements_inside(doc, 0, {.x = {.min = 3, .max = 6}, .y = {.min = 0, .max = 9}})
+              .empty());
+}
+
+TEST_CASE("a placement turns and mirrors with the clip it is in", "[editor_mapgen]") {
+    const auto placed = editor::
+        placement{.kind = "place_items", .x = {.min = 1, .max = 2}, .y = {.min = 0, .max = 0}};
+    // A clip three squares wide and two tall.
+    const auto size = editor::clip_size{.columns = 3, .rows = 2};
+    const auto turned = editor::turned(placed, size);
+    CHECK(turned.x == editor::placement_range{.min = 1, .max = 1});
+    CHECK(turned.y == editor::placement_range{.min = 1, .max = 2});
+    CHECK(editor::mirrored_x(placed, size).x == editor::placement_range{.min = 0, .max = 1});
+    CHECK(editor::mirrored_y(placed, size).y == editor::placement_range{.min = 1, .max = 1});
+}

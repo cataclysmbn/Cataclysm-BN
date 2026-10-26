@@ -93,6 +93,29 @@ struct placement_at {
 /// Removes a placement as one undo step, and its array when it was the last.
 auto remove_placement(document& doc, const placement_at& at) -> std::expected<void, std::string>;
 
+struct placement_area {
+    placement_range x;
+    placement_range y;
+};
+
+/// The placements of object `object` of `doc` wholly inside `area`, moved so its top-left square
+/// is 0,0.
+auto placements_inside(const document& doc, std::size_t object, const placement_area& area)
+    -> std::vector<placement>;
+
+/// The squares of a clip.
+struct clip_size {
+    int columns = 0;
+    int rows = 0;
+};
+
+/// `placed`, in a clip of `size`, turned a quarter clockwise with it.
+auto turned(const placement& placed, const clip_size& size) -> placement;
+/// `placed`, in a clip of `size`, mirrored left to right with it.
+auto mirrored_x(const placement& placed, const clip_size& size) -> placement;
+/// `placed`, in a clip of `size`, mirrored top to bottom with it.
+auto mirrored_y(const placement& placed, const clip_size& size) -> placement;
+
 struct field_edit {
     std::size_t object = 0;
     /// RFC 6901 pointer into the entry.

@@ -69,6 +69,10 @@ auto copy_region(const symbol_grid& grid, const point& from, const point& to) ->
 
 /// `clip` turned a quarter clockwise.
 auto rotated(const symbol_grid& clip) -> symbol_grid;
+/// `clip` mirrored left to right.
+auto mirrored_x(const symbol_grid& clip) -> symbol_grid;
+/// `clip` mirrored top to bottom.
+auto mirrored_y(const symbol_grid& clip) -> symbol_grid;
 
 struct paste_options {
     std::size_t object = 0;

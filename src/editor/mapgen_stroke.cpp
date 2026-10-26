@@ -217,6 +217,10 @@ auto rotated(const symbol_grid& clip) -> symbol_grid {
     return turned;
 }
 
+auto mirrored_x(const symbol_grid& /*clip*/) -> symbol_grid { return {}; }
+
+auto mirrored_y(const symbol_grid& /*clip*/) -> symbol_grid { return {}; }
+
 auto paste(document& doc, const paste_options& options) -> std::expected<std::size_t, std::string> {
     if (options.object >= doc.objects().size()) {
         return std::unexpected("no object " + std::to_string(options.object));

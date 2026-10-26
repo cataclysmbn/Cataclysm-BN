@@ -169,3 +169,10 @@ TEST_CASE("rotating a clip turns it a quarter clockwise", "[editor_mapgen]") {
     CHECK(editor::rotated(editor::rotated(editor::rotated(editor::rotated(clip)))) == clip);
     CHECK(editor::rotated({}).empty());
 }
+
+TEST_CASE("mirroring a clip flips it left to right or top to bottom", "[editor_mapgen]") {
+    const auto clip = editor::symbol_grid{{"a", "b", "c"}, {"d", "e", "f"}};
+    CHECK(editor::mirrored_x(clip) == editor::symbol_grid{{"c", "b", "a"}, {"f", "e", "d"}});
+    CHECK(editor::mirrored_y(clip) == editor::symbol_grid{{"d", "e", "f"}, {"a", "b", "c"}});
+    CHECK(editor::mirrored_x(editor::mirrored_x(clip)) == clip);
+}

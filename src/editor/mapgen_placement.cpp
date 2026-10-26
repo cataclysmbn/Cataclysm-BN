@@ -104,6 +104,18 @@ auto remove_placement(document& doc, const placement_at& at) -> std::expected<vo
         {.object = at.object, .pointer = last ? kind.to_string() : (kind / at.index).to_string()});
 }
 
+auto placements_inside(
+    const document& /*doc*/, const std::size_t /*object*/, const placement_area& /*area*/)
+    -> std::vector<placement> {
+    return {};
+}
+
+auto turned(const placement& placed, const clip_size& /*size*/) -> placement { return placed; }
+
+auto mirrored_x(const placement& placed, const clip_size& /*size*/) -> placement { return placed; }
+
+auto mirrored_y(const placement& placed, const clip_size& /*size*/) -> placement { return placed; }
+
 auto set_field(document& doc, const field_edit& edit) -> std::expected<void, std::string> {
     if (edit.object >= doc.objects().size()) {
         return std::unexpected("no object " + std::to_string(edit.object));
