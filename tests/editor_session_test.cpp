@@ -818,6 +818,72 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the editor refuses a symbol the rows would use without terrain under it",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file(nlohmann::ordered_json{{"furniture", {{"C", "f_chair"}}}});
+    auto step = 0;
+    const auto set = [](const std::string& id, const std::string& text) {
+        return invoke("editor:mapping_set", {.row = id, .text = text});
+    };
+    const auto notice = [](const ec::screen_view& screen) {
+        return body<ec::text_body>(part(screen, "editor:notice")).markup;
+    };
+    const auto bare = [](const ec::screen_view& screen) {
+        return body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty()
+            && saved(screen) == "Yes";
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                return set("symbol", "x");
+            case 2:
+                return set("layer", "furniture");
+            case 3:
+                return set("value", "f_chair");
+            case 4:
+                return invoke("editor:mapping_apply");
+            case 5:
+                CHECK(notice(screen)
+                      == "x has no terrain under it: map its terrain first, or set fill_ter.");
+                CHECK(bare(screen));
+                return set("symbol", ".");
+            case 6:
+                return set("layer", "terrain");
+            case 7:
+                return set("value", "");
+            case 8:
+                return invoke("editor:mapping_apply");
+            case 9:
+                CHECK(notice(screen)
+                      == ". has no terrain under it: map its terrain first, or set fill_ter.");
+                CHECK(bare(screen));
+                return invoke("editor:symbol", {.row = "symbol:C"});
+            case 10:
+                return invoke("editor:paint", {.row = "square:2,3"});
+            case 11:
+                CHECK(notice(screen)
+                      == "C has no terrain under it: map its terrain first, or set fill_ter.");
+                CHECK(cell(screen, 2, 3).glyph == ".");
+                CHECK(bare(screen));
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 12);
+    CHECK(read_file(file.path) == file.text);
+}
+
+TEST_CASE(
     "the editor's legend form adds, changes and removes a mapping as undo steps",
     "[editor_session][engine_client_component]") {
     const auto guard = screen_guard{};
