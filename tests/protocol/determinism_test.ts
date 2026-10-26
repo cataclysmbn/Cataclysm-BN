@@ -9,7 +9,7 @@
  * BN_BINARY=out/build/linux-full/cataclysm-bn-tiles deno test --allow-read --allow-write \
  *   --allow-run --allow-env tests/protocol/determinism_test.ts
  */
-import { assert, assertEquals } from "@std/assert"
+import { assert, assertEquals, assertNotEquals } from "@std/assert"
 import { atMainMenu, itemRows } from "./mirror.ts"
 import { Session } from "./session.ts"
 import { Client, schemaHash } from "./stdio_client.ts"
@@ -93,8 +93,8 @@ Deno.test("determinism: a log of the engine parses and rejects a foreign header"
   assert(thrown, "a foreign header is refused")
 })
 
-async function makeProfile(): Promise<string> {
-  const profile = await Deno.makeTempDir({ prefix: "bn-determinism-" })
+async function makeProfile(path?: string): Promise<string> {
+  const profile = path ?? await Deno.makeTempDir({ prefix: "bn-determinism-" })
   await Deno.mkdir(`${profile}/config`, { recursive: true })
   await Deno.writeTextFile(
     `${profile}/config/options.json`,
@@ -314,8 +314,12 @@ async function drive(
 }
 
 /** The recording played with no client: no stdin, no protocol. */
-async function playBack(binary: string, replay: string): Promise<StateRecord[]> {
-  const profile = await makeProfile()
+async function playBack(
+  binary: string,
+  replay: string,
+  at?: string,
+): Promise<StateRecord[]> {
+  const profile = await makeProfile(at)
   const log = `${profile}/state.jsonl`
   const status = await new Deno.Command(binary, {
     args: [
@@ -333,7 +337,7 @@ async function playBack(binary: string, replay: string): Promise<StateRecord[]> 
   const said = new TextDecoder().decode(status.stderr).split("\n").slice(-20).join("\n")
   assert(status.success, `playback exit ${status.code}:\n${said}`)
   const records = parseStateLog(await Deno.readTextFile(log))
-  await Deno.remove(profile, { recursive: true })
+  if (!at) await Deno.remove(profile, { recursive: true })
   return records
 }
 
@@ -393,5 +397,152 @@ Deno.test({
       for (const run of [a, b]) await Deno.remove(run.profile, { recursive: true })
       assertEquals(found, undefined, `pair ${pair} of unrecorded runs`)
     }
+  },
+})
+
+/** From the title screen into the editor of `entry` with the default mods; the session on the editor's world. */
+async function enterEditor(client: Client, entry: string): Promise<Session> {
+  await client.result("bn.hello", {
+    versions: ["0.2"],
+    schema: schemaHash,
+    client: { name: "determinism-test", version: "1" },
+  })
+  let session = new Session(client)
+  await session.start()
+  await session.acknowledge(() => atMainMenu(session.mirror))
+  await session.choose("Editor")
+  await session.choose(entry)
+  await session.run({ kind: "invoke", affordance_id: "QUIT" })
+  assertEquals(await session.pick("Yes"), "interrupted")
+  assertEquals((await client.note()).method, "bn.resync")
+  session = new Session(client)
+  await session.start()
+  return session
+}
+
+/** The editor's component `id` on the top screen. */
+const part = (session: Session, id: string): Value => {
+  const find = (node: Value): Value =>
+    !node
+      ? undefined
+      : node.id === id
+      ? node
+      : [node.child, ...(node.children ?? [])].map(find).find(
+        Boolean,
+      )
+  return find(session.mirror.interaction.stack.at(-1).root)
+}
+
+type EditorPlay = (session: Session, profile: string) => Promise<void>
+
+/**
+ * `play` in an editor of `entry` recorded in a profile at `profile`, then the recording replayed headless
+ * in a fresh profile at the same path. Returns the files `files` names of both, which a replay must
+ * make equal.
+ */
+async function recordAndReplayEditor(
+  binary: string,
+  entry: string,
+  play: EditorPlay,
+  files: string[],
+) {
+  const profile = await makeProfile()
+  const recording = `${profile}.jsonl`
+  const client = new Client(binary, [
+    "--seed",
+    seed,
+    ...profileArgs(profile),
+    "--replay-record",
+    recording,
+  ])
+  try {
+    await play(await enterEditor(client, entry), profile)
+    await client.close()
+  } catch (error) {
+    client.kill()
+    throw error
+  }
+  const read = (path: string) => Deno.readFile(`${profile}/${path}`)
+  const recorded = await Promise.all(files.map(read))
+  await Deno.remove(profile, { recursive: true })
+  await makeProfile(profile)
+  await playBack(binary, recording, profile)
+  const replayed = await Promise.all(files.map(read))
+  await Deno.remove(profile, { recursive: true })
+  const lines = (await Deno.readTextFile(recording)).split("\n").filter(Boolean).map((line) =>
+    JSON.parse(line)
+  )
+  await Deno.remove(recording)
+  return { recorded, replayed, targets: lines.map((line) => line.interaction?.target_id) }
+}
+
+Deno.test({
+  name: "determinism: a recorded map editor session replays to the same saved file",
+  ignore: !binary,
+  async fn() {
+    const source = `${Deno.cwd()}/data/json/mapgen/house/2storymodern06.json`
+    const saved = "mods/replay/house.json"
+    const { recorded, replayed, targets } = await recordAndReplayEditor(
+      binary!,
+      "Map editor",
+      async (session, profile) => {
+        const invoke = (affordance_id: string, args: Value = {}) =>
+          session.run({ kind: "invoke", affordance_id, args })
+        await invoke("editor:open", { text: source })
+        await invoke("editor:symbol", { row: "symbol:#" })
+        await invoke("editor:paint", { row: "square:2,3" })
+        await invoke("editor:paint", { row: "square:3,3" })
+        await invoke("editor:undo")
+        await invoke("editor:paint", { row: "square:4,3" })
+        await invoke("editor:save_as", { text: `${profile}/${saved}` })
+        assertEquals(part(session, "editor:document").stats[0].value, "Yes")
+        await invoke("QUIT")
+      },
+      [saved],
+    )
+    for (const id of ["open", "symbol", "paint", "undo", "save_as"]) {
+      assert(targets.includes(`editor:${id}`), `editor:${id} is in the recording`)
+    }
+    assert(recorded[0].length > 0, "a file was saved")
+    assertNotEquals(
+      new TextDecoder().decode(recorded[0]),
+      await Deno.readTextFile(source),
+      "the strokes changed the file",
+    )
+    assertEquals(replayed[0], recorded[0])
+  },
+})
+
+Deno.test({
+  name: "determinism: a recorded vehicle editor session replays to the same saved file",
+  ignore: !binary,
+  async fn() {
+    const saved = "mods/replay/vehicle.json"
+    const { recorded, replayed, targets } = await recordAndReplayEditor(
+      binary!,
+      "Vehicle editor",
+      async (session, profile) => {
+        const invoke = (affordance_id: string, args: Value = {}) =>
+          session.run({ kind: "invoke", affordance_id, args })
+        const removeLast = () =>
+          invoke("vehicle:remove", { row: part(session, "vehicle:stack").rows.at(-1).id })
+        await invoke("vehicle:open", { row: "prototype:2seater2" })
+        const parts = part(session, "vehicle:stack").rows.length
+        await removeLast()
+        await removeLast()
+        await invoke("vehicle:undo")
+        await removeLast()
+        assertEquals(part(session, "vehicle:stack").rows.length, parts - 2)
+        await invoke("vehicle:save_as", { text: `${profile}/${saved}` })
+        assertEquals(part(session, "vehicle:document").stats[0].value, "Yes")
+        await invoke("QUIT")
+      },
+      [saved],
+    )
+    for (const id of ["open", "remove", "undo", "save_as"]) {
+      assert(targets.includes(`vehicle:${id}`), `vehicle:${id} is in the recording`)
+    }
+    assert(recorded[0].length > 0, "a file was saved")
+    assertEquals(replayed[0], recorded[0])
   },
 })
