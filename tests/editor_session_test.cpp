@@ -1839,6 +1839,56 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the editor stamps pasted mapgen text into the world and takes it back",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    auto step = 0;
+    const auto omt = get_avatar().abs_omt_pos();
+    const auto live = [&] {
+        return get_map().ter(abs_to_bub(project_to<coords::ms>(omt) + tripoint_rel_ms(4, 5, 0)));
+    };
+    const auto before = live();
+    auto walls = nlohmann::ordered_json{
+        {"type", "mapgen"},
+        {"method", "json"},
+        {"om_terrain", "field"},
+        {"object",
+         {{"rows", std::vector<std::string>(24, std::string(24, '#'))},
+          {"terrain", {{"#", "t_wall"}}}}}};
+    const auto notice = [](const ec::screen_view& screen) {
+        const auto* const found = ec::find_component(*screen.root, "editor:notice");
+        return found ? body<ec::text_body>(*found).markup : std::string();
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:import", {.text = "{ not json"});
+            case 1:
+                CHECK_FALSE(notice(screen).empty());
+                CHECK(live() == before);
+                return invoke("editor:import", {.text = walls.dump()});
+            case 2:
+                CHECK(notice(screen).empty());
+                CHECK(live() == ter_id("t_wall"));
+                CHECK(affordance(screen, "editor:unstamp").enabled);
+                return invoke("editor:unstamp");
+            case 3:
+                CHECK(live() == before);
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 4);
+    editor::reset_editor_session();
+}
+
+TEST_CASE(
     "the editor applies the entry to the game, stamps it into the world, takes it back and tests it",
     "[editor_session][engine_client_component]") {
     const auto guard = screen_guard{};
