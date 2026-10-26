@@ -169,3 +169,14 @@ TEST_CASE("an exported overmap square places its items and monsters", "[editor_m
     }));
     editor::swap_stamp(*stamped);
 }
+
+TEST_CASE("an exported pet stays friendly", "[editor_mapgen]") {
+    clear_all_state();
+    const auto omt = get_avatar().abs_omt_pos();
+    spawn_test_monster("mon_dog", abs_to_bub(abs_at(omt, point(12, 2)))).friendly = -1;
+    const auto exported = editor::export_region(omt, point_rel_omt(1, 1));
+    REQUIRE(exported);
+    CHECK((*exported)["object"]["place_monster"]
+          == nlohmann::ordered_json::parse(
+              R"([{"monster":"mon_dog","x":12,"y":2,"friendly":true}])"));
+}
