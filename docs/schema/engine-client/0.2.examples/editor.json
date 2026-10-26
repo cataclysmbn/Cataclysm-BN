@@ -108,6 +108,22 @@
               "submit": "editor:new_apply"
             },
             {
+              "id": "editor:export_options",
+              "kind": "form",
+              "affordances": [
+                "editor:export_palette"
+              ],
+              "fields": [
+                {
+                  "id": "palette",
+                  "label": "Export palette",
+                  "value": "",
+                  "type": "text"
+                }
+              ],
+              "submit": "editor:export_palette"
+            },
+            {
               "id": "editor:browser",
               "kind": "list",
               "affordances": [
@@ -713,6 +729,18 @@
               }
             },
             "expect": "screen"
+          },
+          {
+            "id": "editor:export_palette",
+            "label": "Export palette",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {
+                "field_id": "palette"
+              }
+            },
+            "expect": "boundary"
           },
           {
             "id": "editor:browser_open",
@@ -2875,6 +2903,22 @@
               "submit": "editor:new_apply"
             },
             {
+              "id": "editor:export_options",
+              "kind": "form",
+              "affordances": [
+                "editor:export_palette"
+              ],
+              "fields": [
+                {
+                  "id": "palette",
+                  "label": "Export palette",
+                  "value": "",
+                  "type": "text"
+                }
+              ],
+              "submit": "editor:export_palette"
+            },
+            {
               "id": "editor:browser",
               "kind": "list",
               "affordances": [
@@ -3492,6 +3536,18 @@
               }
             },
             "expect": "screen"
+          },
+          {
+            "id": "editor:export_palette",
+            "label": "Export palette",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {
+                "field_id": "palette"
+              }
+            },
+            "expect": "boundary"
           },
           {
             "id": "editor:browser_open",
@@ -6147,6 +6203,22 @@
               "submit": "editor:new_apply"
             },
             {
+              "id": "editor:export_options",
+              "kind": "form",
+              "affordances": [
+                "editor:export_palette"
+              ],
+              "fields": [
+                {
+                  "id": "palette",
+                  "label": "Export palette",
+                  "value": "",
+                  "type": "text"
+                }
+              ],
+              "submit": "editor:export_palette"
+            },
+            {
               "id": "editor:browser",
               "kind": "list",
               "affordances": [
@@ -6764,6 +6836,18 @@
               }
             },
             "expect": "screen"
+          },
+          {
+            "id": "editor:export_palette",
+            "label": "Export palette",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {
+                "field_id": "palette"
+              }
+            },
+            "expect": "boundary"
           },
           {
             "id": "editor:browser_open",
@@ -9289,6 +9373,22 @@
               "submit": "editor:new_apply"
             },
             {
+              "id": "editor:export_options",
+              "kind": "form",
+              "affordances": [
+                "editor:export_palette"
+              ],
+              "fields": [
+                {
+                  "id": "palette",
+                  "label": "Export palette",
+                  "value": "",
+                  "type": "text"
+                }
+              ],
+              "submit": "editor:export_palette"
+            },
+            {
               "id": "editor:browser",
               "kind": "list",
               "affordances": [
@@ -9906,6 +10006,18 @@
               }
             },
             "expect": "screen"
+          },
+          {
+            "id": "editor:export_palette",
+            "label": "Export palette",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {
+                "field_id": "palette"
+              }
+            },
+            "expect": "boundary"
           },
           {
             "id": "editor:browser_open",
@@ -26186,6 +26298,22 @@
               "submit": "editor:new_apply"
             },
             {
+              "id": "editor:export_options",
+              "kind": "form",
+              "affordances": [
+                "editor:export_palette"
+              ],
+              "fields": [
+                {
+                  "id": "palette",
+                  "label": "Export palette",
+                  "value": "",
+                  "type": "text"
+                }
+              ],
+              "submit": "editor:export_palette"
+            },
+            {
               "id": "editor:browser",
               "kind": "list",
               "affordances": [
@@ -26803,6 +26931,18 @@
               }
             },
             "expect": "screen"
+          },
+          {
+            "id": "editor:export_palette",
+            "label": "Export palette",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {
+                "field_id": "palette"
+              }
+            },
+            "expect": "boundary"
           },
           {
             "id": "editor:browser_open",
