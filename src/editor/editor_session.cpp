@@ -118,6 +118,8 @@ constexpr auto mirror_y_id = "editor:mirror_y";
 constexpr auto export_id = "editor:export";
 constexpr auto export_width_id = "editor:export_width";
 constexpr auto export_height_id = "editor:export_height";
+constexpr auto export_palette_id = "editor:export_palette";
+constexpr auto export_options_id = "editor:export_options";
 constexpr auto copy_id = "editor:copy";
 constexpr auto rotate_id = "editor:rotate";
 constexpr auto cut_id = "editor:cut";
@@ -537,6 +539,8 @@ struct session {
     new_mapgen made;
     /// How many overmap squares an export spans east and south, centred on the avatar's.
     point_rel_omt export_size = point_rel_omt(1, 1);
+    /// The palette whose symbols an export reuses; none when empty.
+    std::string export_palette;
     /// The entry as it stands in the live world, while it is there.
     std::optional<stamp> stamped = std::nullopt;
     /// The files the browser lists; read again after a file is made.
@@ -1828,6 +1832,10 @@ auto session_view(const session& state) -> ec::screen_view {
          .args = {
              .count =
                  ec::count_shape{.min = 1, .max = max_export, .initial = state.export_size.y()}}}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = export_palette_id,
+         .label = _("Export palette"),
+         .args = {.text = ec::text_shape{.field_id = "palette"}}}));
     const auto listed = state.browser_entries();
     affordances.push_back(ec::invoke_affordance(
         {.id = browser_open_id, .label = _("Open"), .args = row_of(browser_id)}));
@@ -1937,6 +1945,13 @@ auto session_view(const session& state) -> ec::screen_view {
         }
     }
     parts.push_back(new_file_form(state));
+    parts.push_back(ec::component{
+        .id = export_options_id,
+        .affordances = {export_palette_id},
+        .body = ec::form_body{
+            .fields =
+                {{.id = "palette", .label = _("Export palette"), .value = state.export_palette}},
+            .submit = export_palette_id}});
     parts.push_back(browser_list(state, listed));
     if (!state.notice.empty()) {
         parts.push_back(
@@ -2016,7 +2031,7 @@ auto run_editor_session() -> void {
                         return export_region(
                             get_avatar().abs_omt_pos()
                                 - point_rel_omt((size.x() - 1) / 2, (size.y() - 1) / 2),
-                            size);
+                            size, state.export_palette);
                     })
                     .and_then([&](const nlohmann::ordered_json& entry) {
                         return write_new_file(path, nlohmann::ordered_json::array({entry}));
@@ -2033,6 +2048,8 @@ auto run_editor_session() -> void {
                 id == export_width_id
                     ? point_rel_omt(count, state.export_size.y())
                     : point_rel_omt(state.export_size.x(), count);
+        } else if (id == export_palette_id) {
+            state.export_palette = invoked->args.text.value_or("");
         } else if (id == browser_open_id) {
             state.open(std::string(row_rest(row, "file").value_or("")));
         } else if (id == browser_filter_id) {

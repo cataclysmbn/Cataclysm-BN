@@ -1,11 +1,13 @@
 #include "editor/mapgen_export.h"
 
+#include "editor/mapgen_legend.h"
 #include "game.h"
 #include "game_constants.h"
 #include "item.h"
 #include "map/field.h"
 #include "map/map.h"
 #include "map/mapbuffer.h"
+#include "map/mapdata.h"
 #include "map/submap.h"
 #include "monster.h"
 #include "mtype.h"
@@ -16,7 +18,9 @@
 
 #include <algorithm>
 #include <map>
+#include <optional>
 #include <ranges>
+#include <set>
 #include <tuple>
 #include <vector>
 
@@ -43,6 +47,57 @@ struct kind {
              < std::tuple(other.ter.to_i(), other.furn.to_i(), other.trap.to_i(), other.fields);
     }
 };
+
+/// What a palette lends an export: a symbol for each kind of square one of its symbols maps
+/// alone, and every symbol it maps, which the export's own symbols leave to it.
+struct lent_symbols {
+    std::map<kind, char> reused;
+    std::set<std::string> taken;
+};
+
+/// The kind of square that `symbol` maps alone, terrain and at most furniture and a trap, each
+/// a plain id; none when it maps anything else.
+auto plain_kind(const legend_symbol& symbol) -> std::optional<kind> {
+    auto found = kind{.ter = ter_id(), .furn = furn_id("f_null"), .trap = tr_null};
+    auto has_terrain = false;
+    for (const auto& line : symbol.lines) {
+        const auto value = nlohmann::ordered_json::parse(line.value, nullptr, false);
+        if (!value.is_string()) { return std::nullopt; }
+        const auto id = value.get<std::string>();
+        if (line.layer == "terrain" && ter_str_id(id).is_valid()) {
+            found.ter = ter_str_id(id).id();
+            has_terrain = true;
+        } else if (line.layer == "furniture" && furn_str_id(id).is_valid()) {
+            found.furn = furn_str_id(id).id();
+        } else if (line.layer == "traps" && trap_str_id(id).is_valid()) {
+            found.trap = trap_str_id(id).id();
+        } else {
+            return std::nullopt;
+        }
+    }
+    return has_terrain ? std::optional(found) : std::nullopt;
+}
+
+auto lent_by(const std::string& palette) -> std::expected<lent_symbols, std::string> {
+    auto lent = lent_symbols{};
+    if (palette.empty()) { return lent; }
+    if (!palette_id(palette).is_valid()) {
+        return std::unexpected("the game has no palette " + palette);
+    }
+    const auto legend = mapgen_legend(nlohmann::ordered_json{
+        {"type", "palette"},
+        {"id", "editor:export"},
+        {"palettes",
+         nlohmann::ordered_json::array(
+             {palette})}}.dump());
+    if (!legend) { return std::unexpected(legend.error()); }
+    for (const auto& symbol : *legend) {
+        lent.taken.insert(symbol.symbol);
+        const auto found = symbol.symbol.size() == 1 ? plain_kind(symbol) : std::nullopt;
+        if (found) { lent.reused.emplace(*found, symbol.symbol[0]); }
+    }
+    return lent;
+}
 
 /// A `place_item` entry per kind of item on the square at `x`, `y`, in the order they lie there.
 auto items_at(const location_vector<item>& items, int x, int y)
@@ -71,8 +126,11 @@ auto fields_of(const field& on) -> std::vector<laid_field> {
 
 } // namespace
 
-auto export_region(const tripoint_abs_omt& at, const point_rel_omt& size)
+auto export_region(
+    const tripoint_abs_omt& at, const point_rel_omt& size, const std::string& palette)
     -> std::expected<nlohmann::ordered_json, std::string> {
+    const auto lent = lent_by(palette);
+    if (!lent) { return std::unexpected(lent.error()); }
     auto& here = get_map();
     const auto base = project_to<coords::sm>(at);
     auto kinds = std::vector<std::vector<kind>>{};
@@ -102,17 +160,26 @@ auto export_region(const tripoint_abs_omt& at, const point_rel_omt& size)
     std::ranges::stable_sort(ordered, [&](const kind& a, const kind& b) {
         return counts[a] > counts[b];
     });
-    if (ordered.size() > symbols.size()) {
-        return std::unexpected("the overmap squares hold too many kinds of squares");
-    }
+    auto own =
+        symbols | std::views::filter([&](const char symbol) {
+            return !lent->taken.contains(std::string(1, symbol));
+        });
+    auto next = own.begin();
     auto terrain = nlohmann::ordered_json::object();
     auto furniture = nlohmann::ordered_json::object();
     auto traps = nlohmann::ordered_json::object();
     auto fields = nlohmann::ordered_json::object();
     auto symbol_of = std::map<kind, char>{};
-    for (const auto& [index, entry] : ordered | std::views::enumerate) {
-        const auto symbol = std::string(1, symbols[index]);
-        symbol_of[entry] = symbols[index];
+    for (const auto& entry : ordered) {
+        if (const auto reused = lent->reused.find(entry); reused != lent->reused.end()) {
+            symbol_of[entry] = reused->second;
+            continue;
+        }
+        if (next == own.end()) {
+            return std::unexpected("the overmap squares hold too many kinds of squares");
+        }
+        const auto symbol = std::string(1, *next);
+        symbol_of[entry] = *next++;
         terrain[symbol] = entry.ter.id().str();
         if (entry.furn != furn_id("f_null")) { furniture[symbol] = entry.furn.id().str(); }
         if (entry.trap != tr_null) { traps[symbol] = entry.trap.id().str(); }
@@ -132,7 +199,9 @@ auto export_region(const tripoint_abs_omt& at, const point_rel_omt& size)
             row | std::views::transform([&](const kind& entry) { return symbol_of[entry]; })
             | std::ranges::to<std::string>());
     }
-    auto object = nlohmann::ordered_json{{"rows", rows}, {"terrain", terrain}};
+    auto object = nlohmann::ordered_json{{"rows", rows}};
+    if (!palette.empty()) { object["palettes"] = nlohmann::ordered_json::array({palette}); }
+    object["terrain"] = terrain;
     if (!furniture.empty()) { object["furniture"] = furniture; }
     if (!traps.empty()) { object["traps"] = traps; }
     if (!fields.empty()) { object["fields"] = fields; }
