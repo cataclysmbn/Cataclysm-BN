@@ -147,8 +147,10 @@ auto export_region(const tripoint_abs_omt& at, const point_rel_omt& size)
         g->all_monsters() | std::views::filter(inside)
         | std::views::transform([&](const monster& mon) {
               const auto offset = mon.abs_pos() - corner;
-              return nlohmann::ordered_json{
+              auto entry = nlohmann::ordered_json{
                   {"monster", mon.type->id.str()}, {"x", offset.x()}, {"y", offset.y()}};
+              if (mon.friendly != 0) { entry["friendly"] = true; }
+              return entry;
           })
         | std::ranges::to<std::vector>();
     std::ranges::sort(monsters, {}, [](const nlohmann::ordered_json& entry) {
