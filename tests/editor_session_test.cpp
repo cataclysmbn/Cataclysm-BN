@@ -2676,6 +2676,93 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the editor applies a nested chunk on each save and on each reload from disk",
+    "[editor_session][editor_mapgen]") {
+    const auto guard = screen_guard{};
+    const auto name = std::string("editor_session_test_saved");
+    const auto file = mod_file{};
+    const auto write_chunk = [&](const std::string& terrain) {
+        auto entries = nlohmann::ordered_json::parse(file.text);
+        entries.push_back(
+            {{"type", "mapgen"},
+             {"method", "json"},
+             {"nested_mapgen_id", name},
+             {"object", {{"mapgensize", {1, 1}}, {"rows", {"#"}}, {"terrain", {{"#", terrain}}}}}});
+        auto out = std::ofstream(file.path, std::ios::binary | std::ios::trunc);
+        out << format_json(entries.dump()).value();
+    };
+    write_chunk("t_wall");
+    const auto restore_mapgen = restore_on_out_of_scope<bool>(disable_mapgen);
+    disable_mapgen = false;
+    // What the game places for the chunk, outside the editor's stand-ins.
+    const auto placed = [&] {
+        auto rows = nlohmann::ordered_json::array();
+        for (auto y = 0; y < 24; ++y) { rows.push_back(std::string(24, '.')); }
+        const auto parent = nlohmann::ordered_json{
+            {"type", "mapgen"},
+            {"method", "json"},
+            {"om_terrain", "house_04"},
+            {"object",
+             {{"rows", rows},
+              {"terrain", {{".", "t_floor"}}},
+              {"place_nested", {{{"chunks", {name}}, {"x", 0}, {"y", 0}}}}}}};
+        const auto shown =
+            editor::preview_mapgen(parent.dump(), {.at = get_avatar().abs_omt_pos()});
+        REQUIRE(shown);
+        return shown->squares.front().ter;
+    };
+    const auto stat = [](const ec::screen_view& screen, const std::string& key) {
+        const auto& stats = body<ec::panel_body>(part(screen, "editor:document")).stats;
+        const auto found = std::ranges::find(stats, key, &ec::panel_stat::key);
+        return found == stats.end() ? std::string{} : found->value;
+    };
+    const auto set = [](const std::string& id, const std::string& text) {
+        return invoke("editor:mapping_set", {.row = id, .text = text});
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                return invoke("editor:object", {.row = "object:1"});
+            case 2:
+                CHECK(stat(screen, "apply_on_save") == "Off");
+                return invoke("editor:apply");
+            case 3:
+                // A chunk is applied as the game's chunk of its id.
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                CHECK(placed() == "t_wall");
+                return invoke("editor:apply_on_save");
+            case 4:
+                CHECK(stat(screen, "apply_on_save") == "On");
+                return set("symbol", "#");
+            case 5:
+                return set("value", "t_dirt");
+            case 6:
+                return invoke("editor:mapping_apply");
+            case 7:
+                CHECK(placed() == "t_wall");
+                return invoke("editor:save");
+            case 8:
+                CHECK(placed() == "t_dirt");
+                write_chunk("t_rock_floor");
+                return invoke("editor:object", {.row = "object:1"});
+            case 9:
+                CHECK(placed() == "t_rock_floor");
+                return act("QUIT");
+            default:
+                return answer("Leave without saving");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 10);
+}
+
+TEST_CASE(
     "the editor applies and stamps a mapgen with the palettes of its own file",
     "[editor_session][editor_palette]") {
     const auto guard = screen_guard{};
