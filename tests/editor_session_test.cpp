@@ -2555,6 +2555,73 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "a mapgen previews the nested chunks of its own file as they are edited",
+    "[editor_session][editor_mapgen]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file(nlohmann::ordered_json::parse(
+        R"({"place_nested": [{"chunks": ["editor_session_test_chunk"], "x": 2, "y": 6}]})"));
+    {
+        auto entries = nlohmann::ordered_json::parse(file.text);
+        entries.push_back(nlohmann::ordered_json::parse(R"({
+            "type": "mapgen",
+            "method": "json",
+            "nested_mapgen_id": "editor_session_test_chunk",
+            "object": {"mapgensize": [1, 1], "rows": ["#"], "terrain": {"#": "t_wall"}}
+          })"));
+        auto out = std::ofstream(file.path, std::ios::binary | std::ios::trunc);
+        out << format_json(entries.dump()).value();
+    }
+    const auto restore_mapgen = restore_on_out_of_scope<bool>(disable_mapgen);
+    disable_mapgen = false;
+    const auto shown = [](const ec::screen_view& screen, const int x, const int y) {
+        const auto& preview = body<ec::grid_body>(part(screen, "editor:preview"));
+        const auto found =
+            std::ranges::find(preview.cells, ec::grid_point{x, y}, &ec::grid_cell::at);
+        REQUIRE(found != preview.cells.end());
+        REQUIRE_FALSE(found->looks.empty());
+        return preview.looks.at(found->looks.front()).id;
+    };
+    const auto set = [](const std::string& id, const std::string& text) {
+        return invoke("editor:mapping_set", {.row = id, .text = text});
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
+                return invoke("editor:preview", {.count = 1});
+            case 2:
+                CHECK(shown(screen, 2, 6) == "t_wall");
+                CHECK(shown(screen, 3, 6) == "t_floor");
+                return invoke("editor:object", {.row = "object:1"});
+            case 3:
+                return set("symbol", "#");
+            case 4:
+                return set("value", "t_dirt");
+            case 5:
+                return invoke("editor:mapping_apply");
+            case 6:
+                return invoke("editor:object", {.row = "object:0"});
+            case 7:
+                CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
+                CHECK(shown(screen, 2, 6) == "t_dirt");
+                return invoke("editor:undo");
+            case 8:
+                return act("QUIT");
+            default:
+                return answer("Leave without saving");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 9);
+}
+
+TEST_CASE(
     "the editor applies and stamps a mapgen with the palettes of its own file",
     "[editor_session][editor_palette]") {
     const auto guard = screen_guard{};
