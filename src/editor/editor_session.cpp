@@ -1191,6 +1191,14 @@ auto legend_rows(const session& state) -> std::vector<ec::row> {
                            {.key = line.layer, .label = line.layer, .value = line.value});
                    }
                }
+               // A symbol the rows never use, or one they use that nothing maps, is flagged after
+               // what it places.
+               if (!entry.used || entry.lines.empty()) {
+                   columns.push_back(
+                       {.key = "use",
+                        .label = _("Use"),
+                        .value = entry.used ? _("Undefined") : _("Unused")});
+               }
                auto sources =
                    entry.lines | std::views::transform(&legend_line::source)
                    | std::views::filter([](const auto& source) { return !source.empty(); })
