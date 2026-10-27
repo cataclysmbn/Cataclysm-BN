@@ -31,6 +31,7 @@
 #    include <fstream>
 #    include <nlohmann/json.hpp>
 #    include <ranges>
+#    include <set>
 #    include <sstream>
 #    include <string>
 #    include <variant>
@@ -465,6 +466,57 @@ TEST_CASE(
     });
     editor::run_vehicle_editor();
     CHECK(step == 6);
+}
+
+TEST_CASE(
+    "the vehicle editor's turned design covers the squares the spawned vehicle covers",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    clear_map();
+    const auto cleanup = on_out_of_scope([] { clear_vehicles(); });
+    const auto at = get_avatar().bub_pos() + tripoint_rel_ms(8, 0, 0);
+    auto shown = std::set<std::pair<int, int>>{};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:filter", {.text = "car"});
+            case 1:
+                return invoke("vehicle:open", {.row = "prototype:car"});
+            case 2:
+                return invoke("vehicle:tool", {.row = "tool:spawn"});
+            case 3:
+                return invoke("vehicle:spawn_set", {.row = "facing", .text = "30"});
+            case 4:
+                for (const auto& cell : body<ec::grid_body>(part(screen, "vehicle:turned")).cells) {
+                    shown.emplace(cell.at.x, cell.at.y);
+                }
+                return invoke("vehicle:spawn");
+            case 5:
+                CHECK_FALSE(ec::find_component(*screen.root, "vehicle:notice"));
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    REQUIRE(step == 6);
+    const auto spawned = get_map().veh_at(at);
+    REQUIRE(spawned);
+    const auto& veh = spawned->vehicle();
+    auto covered = std::vector<point>{};
+    for (auto index = 0; index < veh.part_count(); ++index) {
+        covered.push_back(veh.bub_part_location(index).xy().raw());
+    }
+    const auto min_x = std::ranges::min(covered | std::views::transform(&point::x));
+    const auto min_y = std::ranges::min(covered | std::views::transform(&point::y));
+    const auto squares =
+        covered
+        | std::views::transform([&](const point& p) { return std::pair{p.x - min_x, p.y - min_y}; })
+        | std::ranges::to<std::set>();
+    CHECK(shown == squares);
 }
 
 TEST_CASE(
