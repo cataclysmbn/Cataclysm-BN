@@ -864,18 +864,35 @@ auto special_canvas(const session& state) -> ec::component {
     const auto& value = state.doc->objects()[state.object].value;
     const auto squares = special_squares(value);
     const auto connections = special_connections(value);
-    const auto drawing = state.special_tool->kind.has_value();
-    const auto room = point(drawing ? 1 : 0, drawing ? 1 : 0);
+    const auto drawing = state.special_tool->kind.has_value() && !state.drawing_refusal();
+    // Where a connection joins counts, so that it shows beside the squares.
+    auto points =
+        squares | std::views::transform(&special_square::at) | std::ranges::to<std::vector>();
+    std::ranges::copy(
+        connections | std::views::transform(&special_connection::at), std::back_inserter(points));
+    if (points.empty() && !drawing) {
+        return {.id = canvas_id, .body = ec::grid_body{.role = "canvas"}};
+    }
     const auto xs =
-        squares | std::views::transform([](const auto& square) { return square.at.x(); })
+        points | std::views::transform([](const auto& at) { return at.x(); })
         | std::ranges::to<std::vector>();
     const auto ys =
-        squares | std::views::transform([](const auto& square) { return square.at.y(); })
+        points | std::views::transform([](const auto& at) { return at.y(); })
         | std::ranges::to<std::vector>();
+    // While drawing, a square of room around it, as far as an overmap reaches.
+    const auto room = point(drawing ? 1 : 0, drawing ? 1 : 0);
+    const auto reach = OMAPX - 1;
+    const auto clamp = [&](const point& at) {
+        return point(std::clamp(at.x, -reach, reach), std::clamp(at.y, -reach, reach));
+    };
     const auto min =
-        squares.empty() ? point_zero : point(std::ranges::min(xs), std::ranges::min(ys)) - room;
+        points.empty()
+            ? point_zero
+            : clamp(point(std::ranges::min(xs), std::ranges::min(ys)) - room);
     const auto max =
-        squares.empty() ? point_zero : point(std::ranges::max(xs), std::ranges::max(ys)) + room;
+        points.empty()
+            ? point_zero
+            : clamp(point(std::ranges::max(xs), std::ranges::max(ys)) + room);
     auto palette = ec::look_palette{};
     auto cells = std::vector<ec::grid_cell>{};
     for (auto y = min.y; y <= max.y; ++y) {

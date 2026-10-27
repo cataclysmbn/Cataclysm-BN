@@ -79,25 +79,25 @@ auto editor::square_patch(
     const nlohmann::ordered_json& value, const tripoint_rel_omt& at, const std::string& overmap)
     -> nlohmann::ordered_json {
     const auto listed = value.contains("overmaps") && value["overmaps"].is_array();
-    const auto found =
+    // Every entry of the square, last first so that removing one leaves the others' indexes.
+    const auto named =
         listed
-            ? std::ranges::find_if(
-                  value["overmaps"],
-                  [&](const auto& entry) {
-                      const auto square = square_of(entry);
-                      return square && square->at == at;
-                  })
-            : value.end();
-    const auto pointer =
-        !listed || found == value["overmaps"].end()
-            ? std::string()
-            : "/overmaps/" + std::to_string(found - value["overmaps"].begin());
-    const auto placed = nlohmann::ordered_json{{"point", json_point(at)}, {"overmap", overmap}};
+            ? std::views::iota(std::size_t{0}, value["overmaps"].size()) | std::views::reverse
+                  | std::views::filter([&](const std::size_t index) {
+                        const auto square = square_of(value["overmaps"][index]);
+                        return square && square->at == at;
+                    })
+                  | std::ranges::to<std::vector>()
+            : std::vector<std::size_t>{};
+    const auto path = [](const std::size_t index) { return "/overmaps/" + std::to_string(index); };
     if (overmap.empty()) {
-        if (pointer.empty()) { return nlohmann::ordered_json::array(); }
-        return nlohmann::ordered_json::array({{{"op", "remove"}, {"path", pointer}}});
+        return named | std::views::transform([&](const std::size_t index) {
+                   return nlohmann::ordered_json{{"op", "remove"}, {"path", path(index)}};
+               })
+             | std::ranges::to<nlohmann::ordered_json>();
     }
-    if (pointer.empty()) {
+    if (named.empty()) {
+        const auto placed = nlohmann::ordered_json{{"point", json_point(at)}, {"overmap", overmap}};
         return nlohmann::ordered_json::array(
             {listed
                  ? nlohmann::ordered_json{{"op", "add"}, {"path", "/overmaps/-"}, {"value", placed}}
@@ -106,9 +106,14 @@ auto editor::square_patch(
                        {"path", "/overmaps"},
                        {"value", nlohmann::ordered_json::array({placed})}}});
     }
-    if ((*found)["overmap"] == overmap) { return nlohmann::ordered_json::array(); }
-    return nlohmann::ordered_json::array(
-        {{{"op", "replace"}, {"path", pointer + "/overmap"}, {"value", overmap}}});
+    return named | std::views::filter([&](const std::size_t index) {
+               return value["overmaps"][index]["overmap"] != overmap;
+           })
+         | std::views::transform([&](const std::size_t index) {
+               return nlohmann::ordered_json{
+                   {"op", "replace"}, {"path", path(index) + "/overmap"}, {"value", overmap}};
+           })
+         | std::ranges::to<nlohmann::ordered_json>();
 }
 
 auto editor::special_connections(const nlohmann::ordered_json& value)
@@ -132,16 +137,21 @@ auto editor::connection_patch(
     const nlohmann::ordered_json& value, const tripoint_rel_omt& at, const std::string& connection)
     -> nlohmann::ordered_json {
     const auto listed = value.contains("connections") && value["connections"].is_array();
-    if (listed) {
-        const auto& connections = value["connections"];
-        const auto found = std::ranges::find_if(connections, [&](const auto& entry) {
-            return point_of(entry, "point") == at;
-        });
-        if (found != connections.end()) {
-            return nlohmann::ordered_json::array(
-                {{{"op", "remove"},
-                  {"path", "/connections/" + std::to_string(found - connections.begin())}}});
-        }
+    // Every connection there, last first so that removing one leaves the others' indexes.
+    const auto there =
+        listed
+            ? std::views::iota(std::size_t{0}, value["connections"].size()) | std::views::reverse
+                  | std::views::filter([&](const std::size_t index) {
+                        return point_of(value["connections"][index], "point") == at;
+                    })
+                  | std::ranges::to<std::vector>()
+            : std::vector<std::size_t>{};
+    if (!there.empty()) {
+        return there | std::views::transform([](const std::size_t index) {
+                   return nlohmann::ordered_json{
+                       {"op", "remove"}, {"path", "/connections/" + std::to_string(index)}};
+               })
+             | std::ranges::to<nlohmann::ordered_json>();
     }
     auto joined = nlohmann::ordered_json{{"point", json_point(at)}, {"connection", connection}};
     const auto squares = special_squares(value);

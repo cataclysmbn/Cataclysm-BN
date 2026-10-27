@@ -491,6 +491,11 @@ struct session {
     /// Puts back what the stamp replaced.
     auto unstamp() -> void;
 
+    /// Why the special's squares cannot be drawn on; none when they can.
+    auto drawing_refusal() const -> std::optional<std::string>;
+    /// Clears the catalog's filter and page when the entry shown, which was a special or not as
+    /// `was_special` says, is now of the other kind, whose catalog lists other things.
+    auto forget_catalog_of(bool was_special) -> void;
     /// Draws, erases or connects the special's square `at` on the level shown, as the tool picked
     /// does.
     auto paint_square(const point& at) -> void;

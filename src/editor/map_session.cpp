@@ -20,6 +20,7 @@
 #include "editor/special_grid.h"
 #include "engine_client_world.h"
 #include "game.h"
+#include "game_constants.h"
 #include "json_formatter.h"
 #include "map/mapdata.h"
 #include "overmap/omdata.h"
@@ -32,6 +33,7 @@
 #include <algorithm>
 #include <cctype>
 #include <charconv>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <map>
@@ -326,6 +328,11 @@ auto session::on_special() const -> bool {
 
 auto session::level_beside(const int dz) const -> std::optional<int> {
     if (!on_special()) { return std::nullopt; }
+    // Drawing reaches levels the special has no squares on yet.
+    if (special_tool->kind && !drawing_refusal()) {
+        const auto next = special_level + (dz > 0 ? 1 : -1);
+        return next >= -OVERMAP_DEPTH && next <= OVERMAP_HEIGHT ? std::optional(next) : std::nullopt;
+    }
     const auto levels = special_levels(doc->objects()[object].value);
     if (dz > 0) {
         const auto found = std::ranges::upper_bound(levels, special_level);
@@ -413,6 +420,13 @@ auto session::reload_levels() -> void {
     std::ranges::for_each(beside, read_legend, &neighbour_square::other);
 }
 
+auto session::forget_catalog_of(const bool was_special) -> void {
+    // The catalog lists overmap terrains for a special and what a mapgen places otherwise.
+    if (was_special == on_special()) { return; }
+    catalog_filter.clear();
+    catalog_page = 0;
+}
+
 auto session::open_square(const point& at) -> void {
     if (!on_special()) { return; }
     const auto squares = special_squares(doc->objects()[object].value);
@@ -422,7 +436,9 @@ auto session::open_square(const point& at) -> void {
 }
 
 auto session::show_object(const std::size_t index) -> void {
+    const auto was_special = on_special();
     object = index;
+    forget_catalog_of(was_special);
     special_level = ground_level(special_levels(doc->objects()[index].value));
     anchor.reset();
     selected.reset();
@@ -571,6 +587,7 @@ auto session::open(const std::string& name) -> void {
         notice = opened.error();
         return;
     }
+    const auto was_special = on_special();
     doc = std::move(*opened);
     remember_document({.editor = "map", .name = path.generic_string(), .mods = loaded_mods()});
     anchor.reset();
@@ -579,6 +596,7 @@ auto session::open(const std::string& name) -> void {
     picked.reset();
     const auto found = entries();
     object = found.empty() ? doc->objects().size() : found.front();
+    forget_catalog_of(was_special);
     special_level = found.empty() ? 0 : ground_level(special_levels(doc->objects()[object].value));
     notice =
         found.empty()
@@ -998,10 +1016,29 @@ auto session::unstamp() -> void {
     stamped.reset();
 }
 
-auto session::paint_square(const point& at) -> void {
+auto session::drawing_refusal() const -> std::optional<std::string> {
     const auto& value = doc->objects()[object].value;
     if (!is_fixed(value)) {
-        notice = _("A mutable special has no squares to draw; edit its fields.");
+        return _("A mutable special has no squares to draw; edit its fields.");
+    }
+    if (value.contains("copy-from") || value.contains("abstract")) {
+        return _(
+            "A special that copies another, or is abstract, takes its squares from the game's data; edit its fields.");
+    }
+    if (value.contains("overmaps") && !value["overmaps"].is_array()) {
+        return _("Its overmaps are no list of squares; edit its fields.");
+    }
+    return std::nullopt;
+}
+
+auto session::paint_square(const point& at) -> void {
+    const auto& value = doc->objects()[object].value;
+    if (const auto refused = drawing_refusal()) {
+        notice = *refused;
+        return;
+    }
+    if (std::max(std::abs(at.x), std::abs(at.y)) >= OMAPX) {
+        notice = _("A special reaches no farther than an overmap.");
         return;
     }
     const auto erasing = special_tool->id == std::string("tool:erase");
