@@ -29,6 +29,7 @@
 #include "options.h"
 #include "output.h"
 #include "string_formatter.h"
+#include "string_utils.h"
 #include "string_id.h"
 #include "translations.h"
 #include "ui.h"
@@ -1118,8 +1119,10 @@ void show_bionics_ui( Character &who )
                 continue;
             }
             if( !bionic_chars.valid( newch ) ) {
+                const auto allowed = bionic_chars.get_allowed_chars();
                 popup( _( "Invalid bionic letter.  Only those characters are valid:\n\n%s" ),
-                       bionic_chars.get_allowed_chars() );
+                join( allowed | std::views::transform( []( const char c ) { return std::string( 1, c ); } )
+                | std::ranges::to<std::vector>(), " " ) );
                 continue;
             }
             bionic *otmp = bionic_by_invlet( bionics, newch );
