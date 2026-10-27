@@ -8926,22 +8926,9 @@ detached_ptr<item> Character::dispose_item( detached_ptr<item> &&obj, const std:
         }
     }
 
-    int w = utf8_width( menu.text, true ) + 4;
-    for( const auto &e : opts ) {
-        w = std::max( w, utf8_width( e.prompt, true ) + 4 );
-    }
-    for( auto &e : opts ) {
-        e.prompt += std::string( w - utf8_width( e.prompt, true ), ' ' );
-    }
-
-    menu.text.insert( 0, 2, ' ' ); // add space for UI hotkeys
-    menu.text += std::string( w + 2 - utf8_width( menu.text, true ), ' ' );
-    menu.text += _( " | Moves  " );
-
     for( const auto &[i, e] : std::views::enumerate( opts ) ) {
-        menu.addentry( static_cast<int>( i ), e.enabled, e.invlet,
-                       string_format( e.enabled ? "%s | %-7d" : "%s |",
-                                      e.prompt, e.moves ) );
+        menu.entries.emplace_back( static_cast<int>( i ), e.enabled, e.invlet, e.prompt, "",
+                                   e.enabled ? string_format( vgettext( "%d move", "%d moves", e.moves ), e.moves ) : "" );
     }
 
     menu.query();
