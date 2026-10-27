@@ -75,6 +75,7 @@
               "affordances": [
                 "vehicle:source"
               ],
+              "slot": "canvas",
               "tabs": [
                 {
                   "id": "source:prototypes",
@@ -248,7 +249,8 @@
             "label": "Paste vehicle",
             "keys": [],
             "enabled": true,
-            "expect": "screen"
+            "expect": "screen",
+            "group": "World"
           },
           {
             "id": "QUIT",
@@ -300,6 +302,7 @@
               "affordances": [
                 "vehicle:source"
               ],
+              "slot": "outline",
               "tabs": [
                 {
                   "id": "source:prototypes",
@@ -420,6 +423,7 @@
             {
               "id": "vehicle:document",
               "kind": "panel",
+              "slot": "canvas",
               "title": "Bicycle",
               "subtitle": "data/json/vehicles/bikes.json",
               "stats": [
@@ -678,6 +682,7 @@
               "affordances": [
                 "vehicle:tool"
               ],
+              "slot": "inspector",
               "tabs": [
                 {
                   "id": "tool:mount",
@@ -881,7 +886,8 @@
             "label": "Paste vehicle",
             "keys": [],
             "enabled": true,
-            "expect": "screen"
+            "expect": "screen",
+            "group": "World"
           },
           {
             "id": "vehicle:tool",
@@ -948,7 +954,8 @@
             "label": "Spawn",
             "keys": [],
             "enabled": true,
-            "expect": "screen"
+            "expect": "screen",
+            "group": "World"
           },
           {
             "id": "vehicle:undo",
@@ -958,7 +965,8 @@
             ],
             "enabled": false,
             "denial": "Not available now.",
-            "expect": "screen"
+            "expect": "screen",
+            "group": "Edit"
           },
           {
             "id": "vehicle:redo",
@@ -968,7 +976,8 @@
             ],
             "enabled": false,
             "denial": "Not available now.",
-            "expect": "screen"
+            "expect": "screen",
+            "group": "Edit"
           },
           {
             "id": "vehicle:save",
@@ -978,7 +987,8 @@
             ],
             "enabled": false,
             "denial": "Not available now.",
-            "expect": "screen"
+            "expect": "screen",
+            "group": "File"
           },
           {
             "id": "vehicle:save_as",
@@ -988,7 +998,8 @@
             "args": {
               "text": {}
             },
-            "expect": "boundary"
+            "expect": "boundary",
+            "group": "File"
           },
           {
             "id": "QUIT",
@@ -1246,6 +1257,7 @@
               "affordances": [
                 "vehicle:source"
               ],
+              "slot": "outline",
               "tabs": [
                 {
                   "id": "source:prototypes",
@@ -1299,6 +1311,7 @@
             {
               "id": "vehicle:live",
               "kind": "panel",
+              "slot": "canvas",
               "title": "Bicycle",
               "stats": [
                 {
@@ -1550,6 +1563,7 @@
               "affordances": [
                 "vehicle:tool"
               ],
+              "slot": "inspector",
               "tabs": [
                 {
                   "id": "tool:mount",
@@ -1717,7 +1731,8 @@
             "label": "Paste vehicle",
             "keys": [],
             "enabled": true,
-            "expect": "screen"
+            "expect": "screen",
+            "group": "World"
           },
           {
             "id": "vehicle:tool",
@@ -1784,7 +1799,8 @@
               "CTRL+Z"
             ],
             "enabled": true,
-            "expect": "screen"
+            "expect": "screen",
+            "group": "Edit"
           },
           {
             "id": "vehicle:redo",
@@ -1794,14 +1810,16 @@
             ],
             "enabled": false,
             "denial": "Not available now.",
-            "expect": "screen"
+            "expect": "screen",
+            "group": "Edit"
           },
           {
             "id": "vehicle:done",
             "label": "Done",
             "keys": [],
             "enabled": true,
-            "expect": "screen"
+            "expect": "screen",
+            "group": "World"
           },
           {
             "id": "QUIT",

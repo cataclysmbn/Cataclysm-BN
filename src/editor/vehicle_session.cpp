@@ -9,6 +9,7 @@
 #include "editor/session_file.h"
 #include "editor/session_page.h"
 #include "editor/vehicle_design.h"
+#include "editor/workspace.h"
 #include "engine_client_component.h"
 #include "engine_client_world.h"
 #include "input.h"
@@ -894,7 +895,7 @@ auto part_form(const session& state) -> std::optional<ec::component> {
         .body = ec::form_body{.fields = std::move(fields)}};
 }
 
-auto session_view(const session& state) -> ec::screen_view {
+auto parts_view(const session& state) -> ec::screen_view {
     const auto row_of = [](const char* const component) {
         return ec::arg_shape{.row = ec::row_shape{.component_id = component}};
     };
@@ -1281,6 +1282,32 @@ auto session_view(const session& state) -> ec::screen_view {
         .affordances = std::move(affordances),
         .focus_component = grid_id,
         .focus_row = point_row("mount", state.cursor)};
+}
+
+/// The screen with what each part is for, and the menu of each action that is no part's own: with
+/// nothing open, the vehicles to open are the page.
+auto session_view(const session& state) -> ec::screen_view {
+    const auto file = std::string(_("File"));
+    const auto edit = std::string(_("Edit"));
+    const auto world = std::string(_("World"));
+    auto view = parts_view(state);
+    lay_out(
+        view,
+        {.slots =
+             {{sources_id, state.live || state.doc ? "outline" : "canvas"},
+              {"vehicle:document", "canvas"},
+              {"vehicle:live", "canvas"},
+              {tools_id, "inspector"},
+              {"vehicle:notice", "log"}},
+         .groups =
+             {{save_id, file},
+              {save_as_id, file},
+              {undo_id, edit},
+              {redo_id, edit},
+              {spawn_id, world},
+              {paste_id, world},
+              {done_id, world}}});
+    return view;
 }
 
 auto kept_session = std::optional<session>{};
