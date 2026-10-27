@@ -2551,8 +2551,8 @@ void overmap_special::load(const JsonObject& jo, const std::string& src) {
             break;
         }
         default:
-            jo.throw_error(
-                string_format("subtype %s not implemented", io::enum_to_string(subtype_)));
+            // A subtype the reader could not read has no name to print.
+            jo.throw_error("subtype not implemented", "subtype");
     }
 
     if (jo.has_array("place_nested")) {
@@ -2703,6 +2703,11 @@ auto editor::check_special(const std::string_view text) -> std::vector<loader_me
             auto in = std::istringstream(std::string(text));
             auto jsin = JsonIn(in, "editor");
             const auto entry = jsin.get_object();
+            // What a special copies or leaves abstract only the game's whole data completes.
+            if (entry.has_member("copy-from") || entry.has_member("abstract")) {
+                entry.allow_omitted_members();
+                return;
+            }
             auto special = overmap_special{};
             special.id = overmap_special_id(entry.get_string("id"));
             special.load(entry, mod_management::get_default_core_content_pack().str());
