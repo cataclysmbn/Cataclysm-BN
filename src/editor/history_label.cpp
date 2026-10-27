@@ -30,7 +30,14 @@ auto step_label(const document_edit& edit) -> std::string {
     }
     const auto had = edit.before.is_object() && edit.before.contains(member);
     const auto has = edit.after.is_object() && edit.after.contains(member);
-    const auto verb = !had ? _("Add") : !has ? _("Remove") : _("Change");
+    // An entry of a list is added or removed by the patch's own verb.
+    const auto op = edit.patch[0].value("op", "");
+    const auto entry = tokens.size() == 2 && index(tokens[1]) && op != "replace";
+    const auto verb =
+        entry  ? (op == "add" ? _("Add") : _("Remove"))
+        : !had ? _("Add")
+        : !has ? _("Remove")
+               : _("Change");
     return words.empty() ? verb : string_format(pgettext("editor history", "%s %s"), verb, words);
 }
 
