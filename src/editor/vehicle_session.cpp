@@ -143,7 +143,7 @@ struct session {
     spawn_options spawning;
     /// The tab of the left column: `prototypes` or `world`.
     std::string source_tab = "prototypes";
-    /// The tab of the right column: `mount`, `install`, `part`, `vehicle`, `spawn` or `json`.
+    /// The tab of the right column: `mount`, `part`, `vehicle`, `cargo`, `spawn` or `json`.
     std::string tool_tab = "mount";
     /// The world's vehicle edited in place, the part picked on it, and its saved states before
     /// each change to undo and after each undone one to redo.

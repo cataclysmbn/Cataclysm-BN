@@ -2,7 +2,7 @@
  * @module
  * The vehicle editor from the main menu: the Editor tab's vehicle editor entry starts the editor world and opens
  * the vehicle editor at once; it opens a prototype by its id, shows the vehicle the game builds from it, installs
- * a part on a mount from the install tab, refuses one the game would not mount, undoes the install, spawns the
+ * a part on a mount from the parts palette, refuses one the game would not mount, undoes the install, spawns the
  * prototype and leaves for the map beside it, comes back through the map editor, edits the spawned vehicle in place
  * from the world tab, copies and pastes it with its state, and leaves for the map editor.
  */

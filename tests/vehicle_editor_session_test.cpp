@@ -229,6 +229,8 @@ TEST_CASE(
                 CHECK(
                     affordance(screen, "vehicle:save").keys == std::vector<std::string>{"CTRL+S"});
                 CHECK(refused(state, "vehicle:mount", {.row = "mount:3,0"}));
+                // The parts are a palette, no tab of their own.
+                CHECK(refused(state, "vehicle:tool", {.row = "tool:install"}));
                 return invoke("vehicle:mount", {.row = "mount:1,0"});
             }
             case 3:
