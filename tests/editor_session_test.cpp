@@ -2588,8 +2588,9 @@ TEST_CASE(
                 return invoke("editor:open", {.text = file.path.string()});
             case 1:
                 CHECK_FALSE(affordance(screen, "editor:unstamp").enabled);
-                // Testing stamps first, so it needs no stamp.
-                CHECK(affordance(screen, "editor:test").enabled);
+                // Outside the editor's own world, testing needs a stamp: it never writes over the
+                // player's map unasked.
+                CHECK_FALSE(affordance(screen, "editor:test").enabled);
                 CHECK_FALSE(stamped(screen));
                 return invoke("editor:paint", {.row = "square:2,3"});
             case 2:
