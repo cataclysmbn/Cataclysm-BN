@@ -1,6 +1,42 @@
 # Digital media
 
-## Recipe groups
+Digital files are items stored inside USB drives, SD cards, or a reader.
+The e-ink tablet and laptop's **Download data from storage media** action copies files into
+its internal storage. **Browse digital files** offers information and
+item actions for installed files.
+
+## Files and readers
+
+- `DIGITAL`: the item is a file. It can only be placed in digital storage, and
+  requires installation on a powered reader to activate it.
+- `DIGITAL_STORAGE`: the item accepts digital contents and rejects physical
+  contents. Dropping the media does not spill its files.
+- `DIGITAL_READER`: installed files can supply recipe references and be used
+  while the device has sufficient power for one use. Readers should also have
+  `DIGITAL_STORAGE` and a tool battery configuration.
+- `DIGITAL_MUSIC`: the file contains music tracks for the reader's playlist.
+- `DIGITAL_PHOTOS`: the file is a photo album the reader can display.
+
+Non-book files can derive from `software`. Override `container` to `"null"`
+when defining files intended for a media contents group; otherwise the software
+base wraps spawned files in a USB drive. Existing JSON or Lua `use_action`s are
+available through **Run**. Actions receive the file as their item and retain
+their normal cost and behavior. The tablet additionally charges one device use
+for its browse operation. Destructive actions can therefore remove their file;
+actions intended to be repeatable should not consume it.
+
+## Recipe reference files
+
+Reference files are `GENERIC` items, separate from instructional `BOOK` files.
+They supply crafting recipes through a powered reader without teaching a skill
+or memorizing a recipe. The 3D printing infographic archive is one example.
+Choose **View recipes** in its file menu to inspect the available recipes.
+
+Point a file at a JSON group using its properties:
+
+```json
+"properties": [ [ "digital_recipe_group", "my_recipe_references" ] ]
+```
 
 Fixed groups list recipes and an optional skill level required to consult them:
 
@@ -37,11 +73,113 @@ or other selections from the same group.
 
 When `difficulty_chance_offset` is present, each matching recipe has a
 one-in-`max(1, difficulty + offset)` chance to enter the pool before selection.
-Omit this field to include every matching candidate. The built-in cooking group uses food recipes of difficulty 0–3 with offset 0;
-the scientific group uses difficulty 3 and above with offset 1, matching the
-legacy random recipe filters.
+Omit this field to include every matching candidate. The standard cooking
+archive uses food recipes of difficulty 0–3 with offset 0; the scientific
+archive uses difficulty 3 and above with offset 1, matching the old random
+recipe filters. Item-group entries control how often these files appear.
 
-`initialize_digital_recipe_file` resolves an item's `digital_recipe_group`
-property once and stores the result in its `DIGITAL_RECIPES` variable.
-`digital_file_recipes` reads that cached result. An empty result is retained
-too, rather than rerolled on every access.
+Selections are generated once when the file enters storage and are saved in
+the file. Downloading and loading the file retain that selection.
+An empty result is retained too, rather than rerolled on every access.
+
+## Generating content
+
+Media can name an ordinary item group using the `digital_content` property:
+
+```json
+"properties": [ [ "digital_content", "my_digital_content" ] ]
+```
+
+The tablet rolls this group on the first access to the media, then stores the
+result as real item contents. Use collection probabilities, distributions, and
+nested groups as usual. Every generated top-level item must be `DIGITAL` and
+must not be wrapped in a physical container. Already initialized legacy SD cards
+keep their original contents rather than receiving another loot roll.
+
+`digital_encryption_chance` is a one-in-N chance, and `digital_encrypted_type`
+names the item to convert to when that roll succeeds. The encrypted type can
+select a different content group. These properties replace the former C++
+SD-card loot and encryption rolls.
+
+For predetermined contents, use existing item-group modifiers instead:
+
+```json
+{ "item": "mobile_memory_card_used", "contents-item": "digital_3d_printing_guide" }
+```
+
+Files are copied without consuming the source. Identical copies are skipped;
+file identity and item variables are preserved, so copying a photo album again
+does not reset the viewer's cooldown. Encryption prevents downloading until
+the SD card is decrypted. Formatting or triggering a card's data-erasure
+protection deletes its files.
+
+An SD card containing files or camera data is labeled **used** after downloading.
+It is labeled **clean** only when no data remains. Copying files preserves the
+source card's data. Old saves with populated cards labeled clean are repaired
+when loaded.
+
+## Music and photos
+
+The `digital_collection` abstract supplies `CAN_HAVE_CHARGES`, which preserves
+track and photo counts during saving and loading.
+
+These collections are ordinary `GENERIC` digital items. Their item-group
+`charges` field specifies the number of tracks or photos, including random ranges:
+
+```json
+{
+  "id": "my_media_files",
+  "type": "item_group",
+  "subtype": "collection",
+  "entries": [
+    { "item": "digital_music_collection", "prob": 35, "charges": [5, 15] },
+    { "item": "digital_photo_album", "prob": 75, "charges": [5, 30] }
+  ]
+}
+```
+
+Music collections set `digital_music_morale_cap` in their `properties`. The
+playing collection's morale cap is limited by its own track count. The `digital_builtin_music` group defines the preloaded collection on
+existing reader devices. Music flavor text is in the
+existing `<music_description>` snippet category, including its genre and
+instrument templates. `digital_music_cooldown_seconds` sets the pause between
+listening sessions (five minutes for the standard collection). Stopping playback
+preserves every track, and the reader menu remains available during playback.
+Each collection has its own cooldown for each listener. Listening to one does
+not block another or reduce its morale reward. Use **Browse digital files → Listen**
+to choose a collection. The general music action automatically picks an available
+collection. Copies of the same file share a cooldown, even on another reader.
+
+Photo albums configure their viewing behavior through these integer properties:
+
+| Property                                                 | Meaning                               |
+| -------------------------------------------------------- | ------------------------------------- |
+| `digital_photos_cooldown_seconds`                        | Pause between viewings of this album  |
+| `digital_photos_moves_min`, `digital_photos_moves_max`   | Move cost per use                     |
+| `digital_photos_morale_min`, `digital_photos_morale_max` | Morale gained per use                 |
+| `digital_photos_morale_cap`                              | Maximum photo morale                  |
+| `digital_photos_snippets`                                | Snippet category for viewing messages |
+| `digital_photos_unaffected_snippets`                     | Snippet category used for psychopaths |
+
+Use **Browse digital files → View photos** or the reader's photos menu to
+view an album. Viewing preserves its photo count and starts the JSON-configured
+cooldown (ten minutes for the standard album). It can be viewed again once the
+cooldown expires. Cooldowns are tracked per viewer and file identity, so copying
+the same album to another reader does not reset them. Music also remains
+available for repeated playback.
+
+## First-pass limits
+
+Media capacity is not measured in bytes. The tablet imports supported USB drives and SD cards directly;
+format compatibility is not modeled yet. Other media, such as DVDs, can later
+use the same flags and content groups without adding media-specific file types. Files must be copied into a reader
+before use; an adjacent USB or SD card alone supplies no recipe references.
+
+Old `MC_PHOTOS`, `MC_MUSIC`, `EIPC_PHOTOS`, and `EIPC_MUSIC` counters are
+converted into collection items once, preserving their counts. Legacy recipe
+tokens (`MC_RECIPE`) become cooking or scientific reference files using the
+JSON groups above. Existing tablet recipe references remain readable for save
+compatibility. Camera snapshots and
+monster-photo collections retain their existing per-photo metadata and import
+path. Existing mission-terminal downloads retain their original behavior,
+including overwriting the chosen USB drive.

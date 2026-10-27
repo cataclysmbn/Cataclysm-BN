@@ -595,6 +595,8 @@
     "color": "white",
     "name": { "str": "USB drive" },
     "description": "A USB thumb drive.  Useful for holding software.",
+    "container_data": { "contains": "1 ml" },
+    "flags": [ "DIGITAL_STORAGE" ],
     "price": "100 USD",
     "price_postapoc": "10 cent",
     "material": "plastic",
@@ -1947,7 +1949,13 @@
     "price": "10 USD",
     "price_postapoc": "10 cent",
     "material": "plastic",
-    "flags": [ "MC_MOBILE", "MC_RANDOM_STUFF", "MC_MAY_BE_ENCRYPTED", "MC_TURN_USED" ],
+    "properties": [
+      [ "digital_content", "digital_content_personal" ],
+      [ "digital_encryption_chance", "8" ],
+      [ "digital_encrypted_type", "mobile_memory_card_encrypted" ]
+    ],
+    "container_data": { "contains": "1 ml" },
+    "flags": [ "DIGITAL_STORAGE", "MC_MOBILE", "MC_RANDOM_STUFF", "MC_MAY_BE_ENCRYPTED", "MC_TURN_USED" ],
     "weight": "5 g",
     "volume": "2 ml",
     "category": "valuables"
@@ -1962,10 +1970,19 @@
     "price": "5 USD",
     "price_postapoc": "10 cent",
     "material": "plastic",
-    "flags": [ "MC_MOBILE", "MC_USED" ],
+    "container_data": { "contains": "1 ml" },
+    "flags": [ "DIGITAL_STORAGE", "MC_MOBILE", "MC_USED" ],
     "weight": "5 g",
     "volume": "1 ml",
     "category": "valuables"
+  },
+  {
+    "type": "GENERIC",
+    "id": "mobile_memory_card_data",
+    "copy-from": "mobile_memory_card_used",
+    "name": { "str": "SD-Memory card (used)", "str_pl": "SD-Memory cards (used)" },
+    "description": "This memory card contains stored data.  Copying its files to another device does not erase them from the card.",
+    "flags": [ "DIGITAL_STORAGE", "MC_MOBILE", "MC_USED", "MC_HAS_DATA" ]
   },
   {
     "type": "GENERIC",
@@ -1977,7 +1994,9 @@
     "price": "20 USD",
     "price_postapoc": "10 cent",
     "material": "plastic",
-    "flags": [ "MC_MOBILE", "MC_ENCRYPTED", "MC_TURN_USED" ],
+    "properties": [ [ "digital_content", "digital_content_encrypted" ] ],
+    "container_data": { "contains": "1 ml" },
+    "flags": [ "DIGITAL_STORAGE", "MC_MOBILE", "MC_ENCRYPTED", "MC_TURN_USED" ],
     "weight": "5 g",
     "volume": "1 ml",
     "category": "valuables"
@@ -1992,7 +2011,9 @@
     "price": "100 USD",
     "price_postapoc": "1 USD",
     "material": "plastic",
-    "flags": [ "MC_MOBILE", "MC_ENCRYPTED", "MC_TURN_USED", "MC_SCIENCE_STUFF" ],
+    "properties": [ [ "digital_content", "digital_content_science" ] ],
+    "container_data": { "contains": "1 ml" },
+    "flags": [ "DIGITAL_STORAGE", "MC_MOBILE", "MC_ENCRYPTED", "MC_TURN_USED", "MC_SCIENCE_STUFF" ],
     "weight": "5 g",
     "volume": "1 ml",
     "category": "valuables"

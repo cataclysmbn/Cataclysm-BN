@@ -1,0 +1,24 @@
+[
+  {
+    "type": "snippet",
+    "category": "digital_personal_photos",
+    "text": [
+      "You used to have a dog like this…",
+      "Ha-ha!  An amusing cat photo.",
+      "Excellent pictures of nature.",
+      "Food photos… your stomach rumbles!",
+      "Some very interesting travel photos.",
+      "Pictures of a concert of popular band.",
+      "Photos of someone's luxurious house.",
+      "A folder full of colorful cartoon ponies.  Someone spent hours drawing all these little horses.",
+      "Photos of a furry convention.  The elaborate costumes must have been hot to wear.",
+      "Anime screenshots and fan art, carefully sorted into folders.  You wonder how the series ended.",
+      "You feel nostalgic as you stare at the photo."
+    ]
+  },
+  {
+    "type": "snippet",
+    "category": "digital_unaffected_photos",
+    "text": [ "Wasted time, these pictures do not provoke your senses." ]
+  }
+]

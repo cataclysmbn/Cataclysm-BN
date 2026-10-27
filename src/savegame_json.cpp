@@ -27,6 +27,8 @@
 #include "creature.h"
 #include "creature_tracker.h"
 #include "debug.h"
+#include "digital_media.h"
+#include "digital_recipes.h"
 #include "drop_token.h"
 #include "effect.h"
 #include "enum_conversions.h"
@@ -2948,6 +2950,9 @@ void item::deserialize( JsonIn &jsin )
         kills = std::make_unique<kill_tracker>( false );
         data.read( "item_kill_tracker", kills );
     }
+
+    initialize_digital_recipe_file( *this );
+    refresh_memory_card_state( *this );
 
     if( data.has_member( "id" ) ) {
         safe_reference<item>::id_type id;

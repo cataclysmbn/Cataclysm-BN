@@ -28,6 +28,7 @@
 #include "craft_command.h"
 #include "creature.h"
 #include "damage.h"
+#include "digital_media.h"
 #include "debug.h"
 #include "detached_ptr.h"
 #include "disease.h"
@@ -8773,6 +8774,11 @@ bool Character::invoke_item( item *used, const std::string &method, const tripoi
         return false;
     }
 
+    if( is_digital_file( *actually_used ) && !digital_reader_for( *this, *actually_used ) ) {
+        add_msg_if_player( m_info, _( "You need to install this file on a powered reader first." ) );
+        return false;
+    }
+
     int charges_used = actually_used->type->invoke( *this->as_player(), *actually_used, pt, method );
     if( charges_used == 0 ) {
         return false;
@@ -13128,6 +13134,13 @@ recipe_subset Character::get_recipes_from_books( const inventory &crafting_inv,
 
     for( const auto &stack : crafting_inv.const_slice() ) {
         const item &candidate = *stack->front();
+
+        const auto digital_recipes = digital_recipe_references( candidate, *this );
+        if( filter ) {
+            res.include_if( digital_recipes, filter );
+        } else {
+            res.include( digital_recipes );
+        }
 
         for( std::pair<const recipe *, int> recipe_entry :
              candidate.get_available_recipes( *this ) ) {

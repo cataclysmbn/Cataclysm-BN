@@ -23,6 +23,8 @@
 #include "creature.h"
 #include "damage.h"
 #include "debug.h"
+#include "digital_media.h"
+#include "digital_recipes.h"
 #include "distribution_grid.h"
 #include "effect.h" // for weed_msg
 #include "enums.h"
@@ -3908,32 +3910,8 @@ int iuse::tazer2( player *p, item *it, bool b, const tripoint_bub_ms &pos )
 
 static std::string get_music_description()
 {
-    const std::array<std::string, 5> descriptions = {{
-            translate_marker( "a sweet guitar solo!" ),
-            translate_marker( "a funky bassline." ),
-            translate_marker( "some amazing vocals." ),
-            translate_marker( "some pumping bass." ),
-            translate_marker( "dramatic classical music." )
-        }
-    };
-
-    if( one_in( 50 ) ) {
-        return _( "some bass-heavy post-glam speed polka." );
-    }
-
-    size_t i = static_cast<size_t>( rng( 0, descriptions.size() * 2 ) );
-    if( i < descriptions.size() ) {
-        return _( descriptions[i] );
-    }
-    // Not one of the hard-coded versions, let's apply a random string made up
-    // of snippets {a, b, c}, but only a 50% chance
-    // Actual chance = 24.5% of being selected
-    if( one_in( 2 ) ) {
-        return SNIPPET.expand( SNIPPET.random_from_category( "<music_description>" ).value_or(
-                                   translation() ).translated() );
-    }
-
-    return _( "a sweet guitar solo!" );
+    return SNIPPET.expand( SNIPPET.random_from_category( "<music_description>" ).value_or(
+                               translation() ).translated() );
 }
 
 void iuse::play_music( player &p, const tripoint_bub_ms &source, const int volume,
@@ -3978,9 +3956,22 @@ int iuse::mp3_on( player *p, item *it, bool t, const tripoint_bub_ms &pos )
     if( t ) { // Normal use
         if( p->has_item( *it ) ) {
             // mp3 player in inventory, we can listen
-            play_music( *p, pos, 40, 20 );
+            if( it->has_flag( flag_id( "DIGITAL_READER" ) ) ) {
+                initialize_digital_media( *it );
+                if( digital_music_playing( *it ).songs == 0 && !digital_music_ready( *p, *it ) ) {
+                    return 0;
+                }
+                play_music( *p, pos, 40, std::max( digital_music_playing( *it ).morale_cap,
+                                                   p->get_morale( MORALE_MUSIC ) ) );
+            } else {
+                play_music( *p, pos, 40, 20 );
+            }
         }
     } else { // Turning it off
+        if( it->has_flag( flag_id( "DIGITAL_READER" ) ) ) {
+            finish_digital_music( *p, *it );
+            it->erase_var( "EIPC_MUSIC_ON" );
+        }
         // Creatively make it so that the reversion isn't hard-coded
         // There's *probably* a better way to do this, but this works
         std::string active_item = it->typeId().str();
@@ -5899,164 +5890,14 @@ int iuse::robotcontrol( player *p, item *it, bool, const tripoint_bub_ms & )
     return 0;
 }
 
-static void init_memory_card_with_random_stuff( item &it )
-{
-    if( it.has_flag( flag_MC_MOBILE ) && ( it.has_flag( flag_MC_RANDOM_STUFF ) ||
-                                           it.has_flag( flag_MC_SCIENCE_STUFF ) ) && !( it.has_flag( flag_MC_USED ) ||
-                                                   it.has_flag( flag_MC_HAS_DATA ) ) ) {
-
-        it.set_flag( flag_MC_HAS_DATA );
-
-        bool encrypted = false;
-
-        if( it.has_flag( flag_MC_MAY_BE_ENCRYPTED ) && one_in( 8 ) ) {
-            it.convert( itype_id( it.typeId().str() + "_encrypted" ) );
-        }
-
-        //some special cards can contain "MC_ENCRYPTED" flag
-        if( it.has_flag( flag_MC_ENCRYPTED ) ) {
-            encrypted = true;
-        }
-
-        int data_chance = 2;
-
-        //encrypted memory cards often contain data
-        if( encrypted && !one_in( 3 ) ) {
-            data_chance--;
-        }
-
-        //just empty memory card
-        if( !one_in( data_chance ) ) {
-            return;
-        }
-
-        //add someone's personal photos
-        if( one_in( data_chance ) ) {
-
-            //decrease chance to more data
-            data_chance++;
-
-            if( encrypted && one_in( 3 ) ) {
-                data_chance--;
-            }
-
-            const int duckfaces_count = rng( 5, 30 );
-            it.set_var( "MC_PHOTOS", duckfaces_count );
-        }
-        //decrease chance to music and other useful data
-        data_chance++;
-        if( encrypted && one_in( 2 ) ) {
-            data_chance--;
-        }
-
-        if( one_in( data_chance ) ) {
-            data_chance++;
-
-            if( encrypted && one_in( 3 ) ) {
-                data_chance--;
-            }
-
-            const int new_songs_count = rng( 5, 15 );
-            it.set_var( "MC_MUSIC", new_songs_count );
-        }
-        data_chance++;
-        if( encrypted && one_in( 2 ) ) {
-            data_chance--;
-        }
-
-        if( one_in( data_chance ) ) {
-            it.set_var( "MC_RECIPE", "SIMPLE" );
-        }
-
-        if( it.has_flag( flag_MC_SCIENCE_STUFF ) ) {
-            it.set_var( "MC_RECIPE", "SCIENCE" );
-        }
-    }
-}
-
 static bool einkpc_download_memory_card( player &p, item &eink, item &mc )
 {
-    bool something_downloaded = false;
-    if( mc.get_var( "MC_PHOTOS", 0 ) > 0 ) {
-        something_downloaded = true;
-
-        int new_photos = mc.get_var( "MC_PHOTOS", 0 );
-        mc.erase_var( "MC_PHOTOS" );
-
-        p.add_msg_if_player( m_good, vgettext( "You download %d new photo into internal memory.",
-                                               "You download %d new photos into internal memory.", new_photos ), new_photos );
-
-        const int old_photos = eink.get_var( "EIPC_PHOTOS", 0 );
-        eink.set_var( "EIPC_PHOTOS", old_photos + new_photos );
+    const auto copied_files = download_digital_files( eink, mc, p );
+    auto something_downloaded = copied_files > 0;
+    if( copied_files > 0 ) {
+        p.add_msg_if_player( m_good, vgettext( "You copy %d digital file onto the tablet.",
+                                               "You copy %d digital files onto the tablet.", copied_files ), copied_files );
     }
-
-    if( mc.get_var( "MC_MUSIC", 0 ) > 0 ) {
-        something_downloaded = true;
-
-        int new_songs = mc.get_var( "MC_MUSIC", 0 );
-        mc.erase_var( "MC_MUSIC" );
-
-        p.add_msg_if_player( m_good, vgettext( "You download %d new song into internal memory.",
-                                               "You download %d new songs into internal memory.", new_songs ), new_songs );
-
-        const int old_songs = eink.get_var( "EIPC_MUSIC", 0 );
-        eink.set_var( "EIPC_MUSIC", old_songs + new_songs );
-    }
-
-    if( !mc.get_var( "MC_RECIPE" ).empty() ) {
-        const bool science = mc.get_var( "MC_RECIPE" ) == "SCIENCE";
-
-        mc.erase_var( "MC_RECIPE" );
-
-        std::vector<const recipe *> candidates;
-
-        for( const auto &e : recipe_dict ) {
-            const auto &r = e.second;
-            if( r.never_learn ) {
-                continue;
-            }
-            if( science ) {
-                if( r.difficulty >= 3 && one_in( r.difficulty + 1 ) ) {
-                    candidates.push_back( &r );
-                }
-            } else {
-                if( r.category == "CC_FOOD" ) {
-                    if( r.difficulty <= 3 && one_in( r.difficulty ) ) {
-                        candidates.push_back( &r );
-                    }
-                }
-
-            }
-
-        }
-
-        if( !candidates.empty() ) {
-
-            const recipe *r = random_entry( candidates );
-            const recipe_id &rident = r->ident();
-
-            const auto old_recipes = eink.get_var( "EIPC_RECIPES" );
-            if( old_recipes.empty() ) {
-                something_downloaded = true;
-                eink.set_var( "EIPC_RECIPES", "," + rident.str() + "," );
-
-                p.add_msg_if_player( m_good, _( "You download a recipe for %s into the tablet's memory." ),
-                                     r->result_name() );
-            } else {
-                if( old_recipes.find( "," + rident.str() + "," ) == std::string::npos ) {
-                    something_downloaded = true;
-                    eink.set_var( "EIPC_RECIPES", old_recipes + rident.str() + "," );
-
-                    p.add_msg_if_player( m_good, _( "You download a recipe for %s into the tablet's memory." ),
-                                         r->result_name() );
-                } else {
-                    p.add_msg_if_player( m_good, _( "Your tablet already has a recipe for %s." ),
-                                         r->result_name() );
-                }
-            }
-        }
-    }
-
     if( mc.has_var( "MC_EXTENDED_PHOTOS" ) ) {
         std::vector<extended_photo_def> extended_photos;
         try {
@@ -6113,11 +5954,7 @@ static bool einkpc_download_memory_card( player &p, item &eink, item &mc )
         }
     }
 
-    if( mc.has_flag( flag_MC_TURN_USED ) ) {
-        mc.clear_vars();
-        mc.unset_flags();
-        mc.convert( itype_mobile_memory_card_used );
-    }
+    finish_memory_card_download( mc );
 
     if( !something_downloaded ) {
         p.add_msg_if_player( m_info, _( "This memory card does not contain any new data." ) );
@@ -6139,17 +5976,96 @@ static std::string photo_quality_name( const int index )
     return _( names[index] );
 }
 
+namespace
+{
+auto digital_recipes_on_device( const item &reader ) -> std::set<recipe_id>
+{
+    auto result = std::set<recipe_id> {};
+    for( const auto *file : reader.contents.all_items_top() ) {
+        if( is_digital_file( *file ) ) {
+            for( const auto &entry : digital_file_recipes( *file ) ) {
+                result.insert( entry.recipe );
+            }
+        }
+    }
+    return result;
+}
+
+auto browse_digital_files( player &who, item &reader, const bool photos_only = false ) -> void
+{
+    auto files = std::vector<item *> {};
+    auto menu = uilist{};
+    menu.text = _( "Files on device:" );
+    for( auto *file : reader.contents.all_items_top() ) {
+        if( is_digital_file( *file ) &&
+            ( !photos_only || file->has_flag( flag_id( "DIGITAL_PHOTOS" ) ) ) ) {
+            menu.addentry( static_cast<int>( files.size() ), true, MENU_AUTOASSIGN, file->type_name() );
+            files.push_back( file );
+        }
+    }
+    if( files.empty() ) {
+        who.add_msg_if_player( m_info, _( "There are no digital files on this device." ) );
+        return;
+    }
+    menu.query();
+    if( menu.ret < 0 || menu.ret >= static_cast<int>( files.size() ) ) {
+        return;
+    }
+    auto *file = files[menu.ret];
+    auto actions = uilist{};
+    actions.text = file->type_name();
+    actions.addentry( 0, true, 'i', _( "File information" ) );
+    actions.addentry( 2, file->has_use(), 'a', _( "Run" ) );
+    const auto photo_wait = digital_photo_cooldown_remaining( who, *file );
+    actions.addentry( 3, file->has_flag( flag_id( "DIGITAL_PHOTOS" ) ) && file->charges > 0 &&
+                      photo_wait <= 0_turns, 'p', photo_wait > 0_turns ?
+                      string_format( _( "View photos (available in %s)" ), to_string( photo_wait ) ) :
+                      _( "View photos" ) );
+    const auto music_wait = digital_music_cooldown_remaining( who, *file );
+    actions.addentry( 4, file->has_flag( flag_id( "DIGITAL_MUSIC" ) ) && file->charges > 0 &&
+                      music_wait <= 0_turns, 'm', music_wait > 0_turns ?
+                      string_format( _( "Listen (available in %s)" ), to_string( music_wait ) ) :
+                      _( "Listen" ) );
+    const auto recipes = digital_file_recipes( *file );
+    actions.addentry( 6, !recipes.empty(), 'v', _( "View recipes" ) );
+    actions.query();
+    if( actions.ret == 0 ) {
+        popup( "%s", file->type->description.translated() );
+    } else if( actions.ret == 2 ) {
+        who.invoke_item( file );
+    } else if( actions.ret == 3 ) {
+        view_digital_photos( who, *file );
+    } else if( actions.ret == 4 ) {
+        listen_to_digital_music( who, reader, *file );
+    } else if( actions.ret == 6 ) {
+        auto recipe_menu = uilist{};
+        recipe_menu.text = _( "Recipes in file:" );
+        for( const auto &entry : recipes ) {
+            recipe_menu.addentry( MENU_AUTOASSIGN, true, -1, entry.recipe->result_name() );
+        }
+        recipe_menu.query();
+    }
+}
+} // namespace
+
 int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos )
 {
+    initialize_digital_media( *it );
     if( t ) {
+        if( it->type->can_use( "MP3_ON" ) ) {
+            return 0;
+        }
         if( !it->get_var( "EIPC_MUSIC_ON" ).empty() && ( it->ammo_remaining() > 0 ) ) {
             if( action_time_scale::once_every_this_tick( 5_minutes ) ) {
                 it->ammo_consume( 1, p->bub_pos() );
             }
 
             //the more varied music, the better max mood.
-            const int songs = it->get_var( "EIPC_MUSIC", 0 );
-            play_music( *p, pos, 60, std::min( 25, songs ) );
+            if( digital_music_playing( *it ).songs == 0 && !digital_music_ready( *p, *it ) ) {
+                return 0;
+            }
+            const auto music = digital_music_playing( *it );
+            play_music( *p, pos, 60, std::max( music.morale_cap, p->get_morale( MORALE_MUSIC ) ) );
         } else {
             it->deactivate();
             it->erase_var( "EIPC_MUSIC_ON" );
@@ -6163,7 +6079,8 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
     } else if( !p->is_npc() ) {
 
         enum {
-            ei_invalid, ei_photo, ei_music, ei_recipe, ei_uploaded_photos, ei_monsters, ei_download, ei_decrypt
+            ei_invalid, ei_photo, ei_music, ei_recipe, ei_uploaded_photos, ei_monsters, ei_download, ei_decrypt,
+            ei_files
         };
 
         if( p->is_underwater() ) {
@@ -6185,14 +6102,14 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
 
         amenu.text = _( "Choose menu option:" );
 
-        const int photos = it->get_var( "EIPC_PHOTOS", 0 );
+        const auto photos = digital_photos_on( *it );
         if( photos > 0 ) {
             amenu.addentry( ei_photo, true, 'p', _( "Unsorted photos [%d]" ), photos );
         } else {
             amenu.addentry( ei_photo, false, 'p', _( "No photos on device" ) );
         }
 
-        const int songs = it->get_var( "EIPC_MUSIC", 0 );
+        const auto songs = digital_music_on( *it ).songs;
         if( songs > 0 ) {
             if( it->is_active() ) {
                 amenu.addentry( ei_music, true, 'm', _( "Turn music off" ) );
@@ -6203,7 +6120,8 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
             amenu.addentry( ei_music, false, 'm', _( "No music on device" ) );
         }
 
-        if( !it->get_var( "EIPC_RECIPES" ).empty() ) {
+        const auto digital_recipes = digital_recipes_on_device( *it );
+        if( !it->get_var( "EIPC_RECIPES" ).empty() || !digital_recipes.empty() ) {
             amenu.addentry( ei_recipe, true, 'r', _( "View recipes on E-ink screen" ) );
         }
 
@@ -6217,7 +6135,8 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
             amenu.addentry( ei_monsters, false, 'y', _( "Collection of monsters is empty" ) );
         }
 
-        amenu.addentry( ei_download, true, 'w', _( "Download data from memory card" ) );
+        amenu.addentry( ei_files, true, 'f', _( "Browse digital files" ) );
+        amenu.addentry( ei_download, true, 'w', _( "Download data from storage media" ) );
 
         /** @EFFECT_COMPUTER >2 allows decrypting memory cards more easily */
         if( p->get_skill_level( skill_computer ) > 2 ) {
@@ -6230,61 +6149,26 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
 
         const int choice = amenu.ret;
 
+        if( choice == ei_files ) {
+            browse_digital_files( *p, *it );
+            return it->type->charges_to_use();
+        }
+
         if( ei_photo == choice ) {
-
-            const int photos = it->get_var( "EIPC_PHOTOS", 0 );
-            const int viewed = std::min( photos, rng( 10, 30 ) );
-            const int count = photos - viewed;
-            if( count == 0 ) {
-                it->erase_var( "EIPC_PHOTOS" );
-            } else {
-                it->set_var( "EIPC_PHOTOS", count );
-            }
-
-            p->moves -= to_moves<int>( rng( 3_seconds, 7_seconds ) );
-
-            if( p->has_trait( trait_PSYCHOPATH ) ) {
-                p->add_msg_if_player( m_info, _( "Wasted time, these pictures do not provoke your senses." ) );
-            } else {
-                p->add_morale( MORALE_PHOTOS, rng( 15, 30 ), 100 );
-
-                const int random_photo = rng( 1, 20 );
-                switch( random_photo ) {
-                    case 1:
-                        p->add_msg_if_player( m_good, _( "You used to have a dog like this…" ) );
-                        break;
-                    case 2:
-                        p->add_msg_if_player( m_good, _( "Ha-ha!  An amusing cat photo." ) );
-                        break;
-                    case 3:
-                        p->add_msg_if_player( m_good, _( "Excellent pictures of nature." ) );
-                        break;
-                    case 4:
-                        p->add_msg_if_player( m_good, _( "Food photos… your stomach rumbles!" ) );
-                        break;
-                    case 5:
-                        p->add_msg_if_player( m_good, _( "Some very interesting travel photos." ) );
-                        break;
-                    case 6:
-                        p->add_msg_if_player( m_good, _( "Pictures of a concert of popular band." ) );
-                        break;
-                    case 7:
-                        p->add_msg_if_player( m_good, _( "Photos of someone's luxurious house." ) );
-                        break;
-                    default:
-                        p->add_msg_if_player( m_good, _( "You feel nostalgic as you stare at the photo." ) );
-                        break;
-                }
-            }
-
+            browse_digital_files( *p, *it, true );
             return it->type->charges_to_use();
         }
 
         if( ei_music == choice ) {
 
+            if( !it->is_active() && !digital_music_ready( *p, *it ) ) {
+                return 0;
+            }
+
             p->moves -= 30;
 
             if( it->is_active() ) {
+                finish_digital_music( *p, *it );
                 // Turn music off - revert to original type
                 const std::optional<itype_id> revert_to = it->type->tool->revert_to;
                 if( revert_to.has_value() ) {
@@ -6303,6 +6187,9 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
                         dynamic_cast<const iuse_music_player *>( music_it->second.get_actor_ptr() );
                     if( music_actor ) {
                         music_type = music_actor->target;
+                    } else if( const auto *transform_actor =
+                                   dynamic_cast<const iuse_transform *>( music_it->second.get_actor_ptr() ) ) {
+                        music_type = transform_actor->target;
                     }
                 }
 
@@ -6328,22 +6215,16 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
 
             rmenu.text = _( "List recipes:" );
 
-            std::vector<recipe_id> candidate_recipes;
-            std::istringstream f( it->get_var( "EIPC_RECIPES" ) );
-            std::string s;
-            int k = 0;
-            while( getline( f, s, ',' ) ) {
-
-                if( s.empty() ) {
-                    continue;
+            auto candidate_recipes = digital_recipes;
+            auto legacy = std::istringstream( it->get_var( "EIPC_RECIPES" ) );
+            auto token = std::string{};
+            while( getline( legacy, token, ',' ) ) {
+                if( !token.empty() && recipe_id( token ).is_valid() ) {
+                    candidate_recipes.insert( recipe_id( token ) );
                 }
-
-                candidate_recipes.emplace_back( s );
-
-                const auto &recipe = *candidate_recipes.back();
-                if( recipe ) {
-                    rmenu.addentry( k++, true, -1, recipe.result_name( /*decorated=*/true ) );
-                }
+            }
+            for( const auto &id : candidate_recipes ) {
+                rmenu.addentry( MENU_AUTOASSIGN, true, -1, id->result_name( /*decorated=*/true ) );
             }
 
             rmenu.query();
@@ -6399,10 +6280,11 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
 
         avatar *you = p->as_avatar();
         item *loc = nullptr;
-        auto filter = []( const item & it ) {
-            return it.has_flag( flag_MC_MOBILE );
+        auto filter = [it]( const item & media ) {
+            return &media != it && ( media.has_flag( flag_MC_MOBILE ) ||
+                                     media.has_flag( flag_id( "DIGITAL_STORAGE" ) ) );
         };
-        const std::string title = _( "Insert memory card" );
+        const std::string title = _( "Insert storage media" );
 
         if( ei_download == choice ) {
 
@@ -6417,18 +6299,18 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
             }
             item &mc = *loc;
 
-            if( !mc.has_flag( flag_MC_MOBILE ) ) {
+            if( !mc.has_flag( flag_MC_MOBILE ) && !mc.has_flag( flag_id( "DIGITAL_STORAGE" ) ) ) {
                 p->add_msg_if_player( m_info, _( "This is not a compatible memory card." ) );
                 return it->type->charges_to_use();
             }
 
-            init_memory_card_with_random_stuff( mc );
+            initialize_digital_media( mc );
 
             if( mc.has_flag( flag_MC_ENCRYPTED ) ) {
                 p->add_msg_if_player( m_info, _( "This memory card is encrypted." ) );
                 return it->type->charges_to_use();
             }
-            if( !mc.has_flag( flag_MC_HAS_DATA ) ) {
+            if( !mc.has_flag( flag_MC_HAS_DATA ) && mc.contents.empty() ) {
                 p->add_msg_if_player( m_info, _( "This memory card does not contain any new data." ) );
                 return it->type->charges_to_use();
             }
@@ -6454,7 +6336,7 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
                 return it->type->charges_to_use();
             }
 
-            init_memory_card_with_random_stuff( mc );
+            initialize_digital_media( mc );
 
             if( !mc.has_flag( flag_MC_ENCRYPTED ) ) {
                 p->add_msg_if_player( m_info, _( "This memory card is not encrypted." ) );
@@ -6473,6 +6355,8 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
                 p->practice( skill_computer, rng( 5, 10 ) );
                 p->add_msg_if_player( m_good, _( "You successfully decrypted content on %s!" ),
                                       mc.tname() );
+                mc.unset_flag( flag_MC_ENCRYPTED );
+                mc.convert( itype_mobile_memory_card );
                 einkpc_download_memory_card( *p, *it, mc );
             } else {
                 if( success > -10 || one_in( 5 ) ) {
@@ -6481,6 +6365,7 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
                     p->add_msg_if_player( m_bad,
                                           _( "You tripped the firmware protection, and the card deleted its data!" ) );
                     mc.clear_vars();
+                    mc.contents.clear_items();
                     mc.unset_flags();
                     mc.convert( itype_mobile_memory_card_used );
                 }
@@ -7610,7 +7495,7 @@ int iuse::camera( player *p, item *it, bool, const tripoint_bub_ms & )
             return it->type->charges_to_use();
         }
 
-        init_memory_card_with_random_stuff( mc );
+        initialize_digital_media( mc );
 
         if( mc.has_flag( flag_MC_ENCRYPTED ) ) {
             if( !query_yn( _( "This memory card is encrypted.  Format and clear data?" ) ) ) {
@@ -7624,6 +7509,7 @@ int iuse::camera( player *p, item *it, bool, const tripoint_bub_ms & )
         }
 
         mc.convert( itype_mobile_memory_card );
+        mc.contents.clear_items();
         mc.clear_vars();
         mc.unset_flags();
         mc.set_flag( flag_MC_HAS_DATA );

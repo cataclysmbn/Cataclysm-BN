@@ -1,4 +1,5 @@
 #include "iuse_actor.h"
+#include "digital_media.h"
 
 #include "action.h"
 #include "action_time_scale.h"
@@ -274,6 +275,11 @@ int iuse_transform::use( player &p, item &it, bool t, const tripoint_bub_ms &pos
 {
     if( t ) {
         return 0; // invoked from active item processing, do nothing.
+    }
+
+    if( it.has_flag( flag_id( "DIGITAL_READER" ) ) && target->can_use( "MP3_ON" ) &&
+        !digital_music_ready( p, it ) ) {
+        return 0;
     }
 
     const bool possess = p.has_item( it ) ||
@@ -6463,6 +6469,10 @@ int iuse_music_player::use( player &p, item &it, bool t, const tripoint_bub_ms &
 {
     if( t ) {
         return 0; // invoked from active item processing, do nothing.
+    }
+
+    if( it.has_flag( flag_id( "DIGITAL_READER" ) ) && !digital_music_ready( p, it ) ) {
+        return 0;
     }
 
     const bool possess = p.has_item( it ) ||
