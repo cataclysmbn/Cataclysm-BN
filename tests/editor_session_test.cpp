@@ -4878,4 +4878,65 @@ TEST_CASE("the editor places no special that copies another", "[editor_session][
     editor::reset_editor_session();
 }
 
+TEST_CASE(
+    "the editor lists a built-in or Lua mapgen read-only with where it is declared and defined",
+    "[editor_session][editor_mapgen]") {
+    const auto guard = screen_guard{};
+    const auto restore_mapgen = restore_on_out_of_scope<bool>(disable_mapgen);
+    disable_mapgen = false;
+    const auto rows = [](const ec::screen_view& screen) {
+        return body<ec::list_body>(part(screen, "editor:code_mapgens")).rows;
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open_oter", {.text = "lake_shore"});
+            case 1: {
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                const auto shown = rows(screen);
+                REQUIRE(shown.size() == 1);
+                CHECK(shown[0].label == "Built-in mapgen lake_shore");
+                CHECK(shown[0].description.find("overmap_terrain_waterbody.json:2")
+                      != std::string::npos);
+                CHECK_FALSE(has_affordance(screen, "editor:paint"));
+                return invoke("editor:open_oter", {.text = "slimepit"});
+            }
+            case 2: {
+                const auto shown = rows(screen);
+                REQUIRE(shown.size() == 1);
+                CHECK(shown[0].label == "Lua mapgen slimepit");
+                // Where the JSON names it, and where Lua defines the function.
+                CHECK(shown[0].description.find("mapgen/slimepit.json:2") != std::string::npos);
+                CHECK(shown[0].description.find("preload.lua:43") != std::string::npos);
+                return invoke(
+                    "editor:open",
+                    {.text =
+                         (std::filesystem::path(PATH_INFO::datadir()) / "json/mapgen/slimepit.json")
+                             .string()});
+            }
+            case 3: {
+                // A file of code mapgens opens on them rather than on nothing.
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                const auto shown = rows(screen);
+                REQUIRE(shown.size() == 1);
+                CHECK(shown[0].label == "Lua mapgen slimepit");
+                return invoke("editor:open_oter", {.text = "2StoryModern06_1_north"});
+            }
+            case 4:
+                // A JSON mapgen leaves the list.
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:code_mapgens"));
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 5);
+}
+
 #endif // CATA_MCP
