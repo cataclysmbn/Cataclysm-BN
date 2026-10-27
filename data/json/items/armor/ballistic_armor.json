@@ -272,7 +272,8 @@
     "coverage": 85,
     "encumbrance": 10,
     "warmth": 0,
-    "material_thickness": 6,
+    "material_thickness": 3,
+    "resistance": { "bullet": 18 },
     "flags": [ "OUTER", "ALLOWS_WINGS", "ARMOR_PLATE", "COMPACT" ]
   },
   {
