@@ -74,6 +74,8 @@ public:
         across_ = across;
     }
     auto end_group() -> void { grouping_ = false; }
+    /// Whether a group begun is not ended yet.
+    auto grouping() const -> bool { return grouping_; }
     auto undo() -> bool;
     auto redo() -> bool;
     auto can_undo() const -> bool { return !done_.empty(); }

@@ -435,6 +435,25 @@ auto legend_rows(const session& state) -> std::vector<ec::row> {
          | std::ranges::to<std::vector>();
 }
 
+/// Whether the canvas drags a stroke, and whether one is open.
+struct stroke_state {
+    bool drags = false;
+    bool open = false;
+};
+/// Begin while the canvas drags a stroke; End then, and while one is open, so that a tool changed
+/// mid-drag still closes it.
+auto stroke_affordances(std::vector<ec::affordance>& affordances, const stroke_state& stroke)
+    -> void {
+    if (stroke.drags) {
+        affordances.push_back(
+            ec::invoke_affordance({.id = stroke_begin_id, .label = _("Begin stroke")}));
+    }
+    if (stroke.drags || stroke.open) {
+        affordances.push_back(
+            ec::invoke_affordance({.id = stroke_end_id, .label = _("End stroke")}));
+    }
+}
+
 /// What `edit` did, in words: the member of the object it changed, and whether that member was
 /// added, removed or changed, which the patch's own verb does not tell, since setting a member
 /// adds it.
@@ -893,12 +912,9 @@ auto drawing_affordances(const session& state) -> std::vector<ec::affordance> {
              .label = _("Move placement"),
              .args = {.row = ec::row_shape{.component_id = canvas_id}, .text = ec::text_shape{}}}));
     }
-    if (state.current->kind == shape_kind::point) {
-        affordances.push_back(
-            ec::invoke_affordance({.id = stroke_begin_id, .label = _("Begin stroke")}));
-        affordances.push_back(
-            ec::invoke_affordance({.id = stroke_end_id, .label = _("End stroke")}));
-    }
+    stroke_affordances(
+        affordances,
+        {.drags = state.current->kind == shape_kind::point, .open = state.doc->grouping()});
     affordances.push_back(ec::invoke_affordance(
         {.id = extract_palette_id,
          .label = _("Extract legend to palette"),
@@ -1272,12 +1288,10 @@ auto session_view(const session& state) -> ec::screen_view {
                     {.id = paint_id, .label = _("Draw"), .args = row_of(canvas_id)}));
                 affordances.push_back(ec::invoke_affordance(
                     {.id = tool_id, .label = _("Tool"), .args = row_of(tools_id)}));
-                if (state.special_tool->kind.has_value() && !state.drawing_refusal()) {
-                    affordances.push_back(
-                        ec::invoke_affordance({.id = stroke_begin_id, .label = _("Begin stroke")}));
-                    affordances.push_back(
-                        ec::invoke_affordance({.id = stroke_end_id, .label = _("End stroke")}));
-                }
+                stroke_affordances(
+                    affordances,
+                    {.drags = state.special_tool->kind.has_value() && !state.drawing_refusal(),
+                     .open = doc.grouping()});
             } else if (state.on_oter()) {
                 const auto mapgens = state.terrain_mapgens();
                 if (!mapgens.empty()) {
