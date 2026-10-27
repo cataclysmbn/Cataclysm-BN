@@ -337,6 +337,8 @@ struct list_options {
     std::string filter = {};
     /// The affordance that sets the filter text, listed among the component's.
     std::string search = {};
+    /// The affordance that turns its pages, listed among the component's.
+    std::string page = {};
 };
 /// A list over `rows`, with the column header they use.
 auto list( list_options options ) -> component;

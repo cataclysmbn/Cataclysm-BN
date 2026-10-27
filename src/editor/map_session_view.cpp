@@ -618,7 +618,8 @@ auto catalog_list(
          .activate = catalog_pick_id,
          .filterable = true,
          .filter = state.catalog_filter,
-         .search = catalog_filter_id});
+         .search = catalog_filter_id,
+         .page = catalog_page_id});
 }
 
 auto mapping_parts(
@@ -816,7 +817,8 @@ auto browser_list(const session& state, const std::vector<std::filesystem::path>
          .activate = browser_open_id,
          .filterable = true,
          .filter = state.browser_filter,
-         .search = browser_filter_id});
+         .search = browser_filter_id,
+         .page = browser_page_id});
 }
 
 /// The affordances that pick what to draw with and draw; a palette only picks its symbol.

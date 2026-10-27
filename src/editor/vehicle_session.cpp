@@ -962,7 +962,8 @@ auto parts_view(const session& state) -> ec::screen_view {
                         .activate = open_id,
                         .filterable = true,
                         .filter = state.filter,
-                        .search = filter_id})}));
+                        .search = filter_id,
+                        .page = page_id})}));
     affordances.push_back(
         ec::invoke_affordance({.id = source_id, .label = _("Show"), .args = row_of(sources_id)}));
     if (state.source_tab == "world") {
@@ -1063,7 +1064,8 @@ auto parts_view(const session& state) -> ec::screen_view {
              .activate = install_id,
              .filterable = true,
              .filter = state.part_filter,
-             .search = part_filter_id});
+             .search = part_filter_id,
+             .page = part_page_id});
     };
     const auto document_stack = [&] {
         const auto design = design_parts(state.prototype());
