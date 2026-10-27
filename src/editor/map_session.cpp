@@ -726,6 +726,15 @@ auto session::clip_size_now() const -> clip_size {
 auto session::copy() -> void {
     const auto grid = symbols_of(*doc, object);
     clip = copy_region(grid, selected->from, selected->to);
+    clip_legend =
+        legend | std::views::filter([&](const legend_symbol& entry) {
+            return !entry.lines.empty()
+                && std::ranges::contains(clip | std::views::join, entry.symbol);
+        })
+        | std::views::transform([](const legend_symbol& entry) {
+              return std::pair{entry.symbol, entry.lines};
+          })
+        | std::ranges::to<std::map>();
     const auto low =
         point(std::max(std::min(selected->from.x, selected->to.x), 0),
               std::max(std::min(selected->from.y, selected->to.y), 0));
@@ -763,9 +772,34 @@ auto session::cut() -> void {
 auto session::paste_at(const point& at) -> void {
     doc->begin_group();
     const auto depth = doc->depth();
-    auto done =
-        editor::paste(*doc, {.object = object, .clip = clip, .at = at})
-            .transform([](std::size_t /*changed*/) {});
+    const auto mapped = [](const legend_line& line) { return std::pair{line.layer, line.value}; };
+    auto done = std::expected<void, std::string>{};
+    // A symbol the entry lacks comes with what it placed where it was copied; one it maps keeps
+    // that meaning.
+    auto kept = std::vector<std::string>{};
+    for (const auto& [glyph, lines] : clip_legend) {
+        const auto own = std::ranges::find(legend, glyph, &legend_symbol::symbol);
+        if (own != legend.end() && !own->lines.empty()) {
+            if (!std::ranges::equal(own->lines, lines, {}, mapped, mapped)) {
+                kept.push_back(glyph);
+            }
+            continue;
+        }
+        for (const auto& line : lines) {
+            if (!done) { break; }
+            const auto parsed = nlohmann::ordered_json::parse(line.value, nullptr, false);
+            done = set_legend(
+                *doc,
+                {.object = object,
+                 .layer = line.layer,
+                 .symbol = glyph,
+                 .value = parsed.is_discarded() ? nlohmann::ordered_json(line.value) : parsed});
+        }
+    }
+    if (done) {
+        done = editor::paste(*doc, {.object = object, .clip = clip, .at = at})
+                   .transform([](std::size_t /*changed*/) {});
+    }
     for (const auto& entry : clip_placed) {
         if (!done) { break; }
         done = add_placement(
@@ -778,7 +812,13 @@ auto session::paste_at(const point& at) -> void {
     }
     doc->end_group();
     if (!done && doc->depth() > depth) { doc->undo(); }
-    notice = done ? "" : done.error();
+    notice =
+        !done ? done.error()
+        : kept.empty()
+            ? ""
+            : string_format(_("Pasted symbols keep what this entry maps them to: %s"),
+                            kept | std::views::join_with(std::string_view(", "))
+                                | std::ranges::to<std::string>());
     reload();
 }
 

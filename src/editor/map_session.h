@@ -303,6 +303,8 @@ struct session {
     symbol_grid clip;
     /// The placements wholly inside what was copied, relative to its top-left square.
     std::vector<placement> clip_placed;
+    /// What the copied symbols place, as the entry they were copied from maps them.
+    std::map<std::string, std::vector<legend_line>> clip_legend;
     /// The square a placement or a diagnostic that was picked names.
     std::optional<point> focus = std::nullopt;
     /// The placement picked last, which the move form moves.
