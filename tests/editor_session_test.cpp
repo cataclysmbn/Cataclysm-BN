@@ -3214,13 +3214,15 @@ TEST_CASE(
     CHECK(g->uquit == QUIT_NOSAVED);
 }
 
-TEST_CASE("the editor over a running game is a screen over it", "[editor_session][gamemode]") {
+TEST_CASE(
+    "the editor over a running game is the whole view too and closes to the game",
+    "[editor_session][gamemode]") {
     const auto guard = screen_guard{};
     auto step = 0;
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
         const auto screen = ec::top_screen(captured());
         ++step;
-        CHECK(screen.role == "screen");
+        CHECK(screen.role == "workspace");
         return act("QUIT");
     });
     editor::run_editor_session();
@@ -5248,6 +5250,7 @@ TEST_CASE(
                 CHECK(slot_of(screen, "editor:browser") == "canvas");
                 CHECK(slot_of(screen, "editor:new") == "inspector");
                 CHECK(slot_of(screen, "editor:file") == "outline");
+                CHECK(part(screen, "editor:new").label == "New file");
                 CHECK(affordance(screen, "editor:vehicle").group == "World");
                 return invoke("editor:open", {.text = file.path.string()});
             case 1:
@@ -5260,6 +5263,11 @@ TEST_CASE(
                 CHECK(slot_of(screen, "editor:diagnostics") == "log");
                 CHECK(slot_of(screen, "editor:history") == "log");
                 CHECK(slot_of(screen, "editor:document") == "status");
+                // The parts of the columns are headed by what they hold.
+                CHECK(part(screen, "editor:legend").label == "Legend");
+                CHECK(part(screen, "editor:objects").label == "Entries");
+                CHECK(part(screen, "editor:browser").label == "Files");
+                CHECK(part(screen, "editor:history").label == "History");
                 CHECK(affordance(screen, "editor:save").group == "File");
                 CHECK(affordance(screen, "editor:export").group == "File");
                 CHECK(affordance(screen, "editor:undo").group == "Edit");

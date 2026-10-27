@@ -1146,6 +1146,8 @@ TEST_CASE(
                 CHECK(slot_of(screen, "vehicle:sources") == "outline");
                 CHECK(slot_of(screen, "vehicle:document") == "canvas");
                 CHECK(slot_of(screen, "vehicle:tools") == "inspector");
+                CHECK(part(screen, "vehicle:sources").label == "Vehicles");
+                CHECK(ec::top_screen(captured()).role == "workspace");
                 CHECK(affordance(screen, "vehicle:save").group == "File");
                 CHECK(affordance(screen, "vehicle:save_as").group == "File");
                 CHECK(affordance(screen, "vehicle:undo").group == "Edit");
