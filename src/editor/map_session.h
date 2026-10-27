@@ -373,6 +373,8 @@ struct session {
     const catalog_use* catalog = catalog_uses.data();
     std::string catalog_filter;
     std::size_t catalog_page = 0;
+    /// Whether the catalog's filter and page are those of a special's.
+    bool catalog_of_special = false;
 
     /// The files whose path holds the filter, ignoring case.
     auto browser_entries() const -> std::vector<std::filesystem::path>;
@@ -494,9 +496,6 @@ struct session {
 
     /// Why the special's squares cannot be drawn on; none when they can.
     auto drawing_refusal() const -> std::optional<std::string>;
-    /// Clears the catalog's filter and page when the entry shown, which was a special or not as
-    /// `was_special` says, is now of the other kind, whose catalog lists other things.
-    auto forget_catalog_of(bool was_special) -> void;
     /// Draws, erases or connects the special's square `at` on the level shown, as the tool picked
     /// does.
     auto paint_square(const point& at) -> void;

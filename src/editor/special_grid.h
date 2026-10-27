@@ -29,7 +29,7 @@ auto is_special(const nlohmann::ordered_json& value) -> bool;
 /// Whether the entry places squares it lists, rather than growing a mutable special.
 auto is_fixed(const nlohmann::ordered_json& value) -> bool;
 
-/// The levels a fixed special or building places squares on, lowest first.
+/// The levels a fixed special or building places squares or connections on, lowest first.
 auto special_levels(const nlohmann::ordered_json& value) -> std::vector<int>;
 
 /// The level of `levels` the editor shows first: the lowest from the ground up, else the highest.

@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <iterator>
 #include <optional>
 #include <ranges>
 
@@ -52,6 +53,11 @@ auto editor::special_levels(const nlohmann::ordered_json& value) -> std::vector<
         special_squares(value)
         | std::views::transform([](const special_square& square) { return square.at.z(); })
         | std::ranges::to<std::vector>();
+    std::ranges::copy(
+        special_connections(value) | std::views::transform([](const special_connection& joined) {
+            return joined.at.z();
+        }),
+        std::back_inserter(levels));
     std::ranges::sort(levels);
     const auto [last, end] = std::ranges::unique(levels);
     levels.erase(last, end);

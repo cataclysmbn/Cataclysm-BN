@@ -442,13 +442,6 @@ auto session::reload_levels() -> void {
     std::ranges::for_each(beside, read_legend, &neighbour_square::other);
 }
 
-auto session::forget_catalog_of(const bool was_special) -> void {
-    // The catalog lists overmap terrains for a special and what a mapgen places otherwise.
-    if (was_special == on_special()) { return; }
-    catalog_filter.clear();
-    catalog_page = 0;
-}
-
 auto session::open_square(const point& at) -> void {
     if (!on_special()) { return; }
     const auto squares = special_squares(doc->objects()[object].value);
@@ -458,9 +451,7 @@ auto session::open_square(const point& at) -> void {
 }
 
 auto session::show_object(const std::size_t index) -> void {
-    const auto was_special = on_special();
     object = index;
-    forget_catalog_of(was_special);
     special_level = ground_level(special_levels(doc->objects()[index].value));
     anchor.reset();
     selected.reset();
@@ -479,6 +470,11 @@ auto session::reload() -> void {
     beside.clear();
     other_legends.clear();
     if (!doc || object >= doc->objects().size()) { return; }
+    // The catalog lists overmap terrains for a special and what a mapgen places otherwise.
+    if (std::exchange(catalog_of_special, on_special()) != on_special()) {
+        catalog_filter.clear();
+        catalog_page = 0;
+    }
     const auto text = doc->objects()[object].value.dump();
     if (on_special()) {
         diagnostics =
@@ -609,7 +605,6 @@ auto session::open(const std::string& name) -> void {
         notice = opened.error();
         return;
     }
-    const auto was_special = on_special();
     doc = std::move(*opened);
     remember_document({.editor = "map", .name = path.generic_string(), .mods = loaded_mods()});
     anchor.reset();
@@ -618,7 +613,6 @@ auto session::open(const std::string& name) -> void {
     picked.reset();
     const auto found = entries();
     object = found.empty() ? doc->objects().size() : found.front();
-    forget_catalog_of(was_special);
     special_level = found.empty() ? 0 : ground_level(special_levels(doc->objects()[object].value));
     notice =
         found.empty()
@@ -1069,6 +1063,18 @@ auto session::paint_square(const point& at) -> void {
         return;
     }
     const auto square = tripoint_rel_omt(at.x, at.y, special_level);
+    // A connection already there is taken away whatever it sits on.
+    if (special_tool->id == std::string("tool:connect")
+        && !std::ranges::contains(special_connections(value), square, &special_connection::at)) {
+        if (special_connection.empty()) {
+            notice = _("Name the overmap connection to join.");
+            return;
+        }
+        if (std::ranges::contains(special_squares(value), square, &special_square::at)) {
+            notice = _("A connection joins beside the special's squares, not on one.");
+            return;
+        }
+    }
     const auto patch =
         special_tool->id == std::string("tool:connect")
             ? connection_patch(value, square, special_connection)
