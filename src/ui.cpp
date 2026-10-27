@@ -1191,6 +1191,26 @@ void uilist::query( bool loop, int timeout )
 /**
  * the list as the client sees it
  */
+namespace
+{
+/// `columns` and, when the entry has one, the second column native draws after its text, colored by its first tag.
+auto with_second_column( std::vector<game_client::interaction_column> columns,
+                         const std::string &ctxt ) -> std::vector<game_client::interaction_column>
+{
+    if( ctxt.empty() ) {
+        return columns;
+    }
+    const auto start = ctxt.find( "<color_" );
+    const auto end = ctxt.find( '>', start );
+    columns.push_back( {
+        .key = "ctxt", .label = "", .value = remove_color_tags( ctxt ),
+.color = start == std::string::npos || end == std::string::npos ? std::string{} :
+        string_from_color( get_color_from_tag( ctxt.substr( start, end - start + 1 ) ).color ),
+    } );
+    return columns;
+}
+} // namespace
+
 auto uilist::as_interaction() const -> game_client::interaction_snapshot
 {
     auto snapshot = game_client::interaction_snapshot{
@@ -1238,10 +1258,10 @@ auto uilist::as_interaction() const -> game_client::interaction_snapshot
             .selectable = entry.enabled || allow_disabled,
             .selected = entry_index == selected,
             .highlighted = entry_index == selected,
-            .columns = details.columns | std::views::transform( []( const auto & column )
+            .columns = with_second_column( details.columns | std::views::transform( []( const auto & column )
             {
                 return game_client::interaction_column{ .key = column.key, .label = column.label, .value = column.value };
-            } ) | std::ranges::to<std::vector>(),
+            } ) | std::ranges::to<std::vector>(), entry.ctxt ),
             .favorite = details.favorite,
             .action_id = entry.action_id,
             .identity = details.identity.empty() ? identities[entry_index] : details.identity,
