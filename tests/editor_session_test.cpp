@@ -277,7 +277,7 @@ TEST_CASE(
                 CHECK(legend[0].selected);
                 CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
                 const auto& tools = body<ec::tabs_body>(part(screen, "editor:tools")).tabs;
-                REQUIRE(tools.size() == 10);
+                REQUIRE(tools.size() == 11);
                 CHECK(tools[0].id == "tool:point");
                 CHECK(tools[0].selected);
                 CHECK(saved(screen) == "Yes");
@@ -1628,6 +1628,9 @@ TEST_CASE(
                       == "editor:placement_span");
                 CHECK(body<ec::grid_body>(part(screen, "editor:canvas")).drag.empty());
                 CHECK(wire_part(state, "editor:canvas")["region_drag"] == "editor:placement_span");
+                CHECK_FALSE(std::ranges::contains(
+                    part(screen, "editor:canvas").affordances,
+                    std::string("editor:placement_span")));
                 CHECK(refused(state, "editor:placement_span", {.row = "placement:place_fields:0"}));
                 // A click picks the placement over the square.
                 return invoke("editor:paint", {.row = "square:4,7"});
@@ -2020,7 +2023,7 @@ TEST_CASE(
                 return invoke("editor:open", {.text = file.path.string()});
             case 1: {
                 const auto& tools = body<ec::tabs_body>(part(screen, "editor:tools")).tabs;
-                REQUIRE(tools.size() == 10);
+                REQUIRE(tools.size() == 11);
                 CHECK(tools[5].id == "tool:room");
                 CHECK(stat(screen, "inside") == "#");
                 CHECK(stat(screen, "brush") == "1");

@@ -1387,6 +1387,12 @@
                   "label": "Paste",
                   "selected": false,
                   "enabled": true
+                },
+                {
+                  "id": "tool:placements",
+                  "label": "Placements",
+                  "selected": false,
+                  "enabled": true
                 }
               ],
               "select": "editor:tool",

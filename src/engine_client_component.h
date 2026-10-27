@@ -213,6 +213,14 @@ struct grid_point {
     int y = 0;
     auto operator<=>( const grid_point & ) const = default; // *NOPAD*
 };
+/// A rectangle of a grid's squares from `from` to `to`, both inside it.
+struct grid_region {
+    std::string id = {};
+    grid_point from = {};
+    grid_point to = {};
+    std::string label = {};
+    bool selected = false;
+};
 struct grid_cell {
     grid_point at = {};
     std::string id = {};
@@ -246,6 +254,11 @@ struct grid_body {
     std::string drag_end = {};
     /// The squares a client outlines as one, such as an overmap square's; none while zero.
     grid_point block = {};
+    /// Rectangles of squares a client outlines over the cells, such as where a placement may land.
+    std::vector<grid_region> regions = {};
+    /// The affordance a client runs after dragging a region: its inside moves it, a corner
+    /// stretches it; empty for none.
+    std::string region_drag = {};
 };
 /// The looks of a grid, each once, which its cells name by index.
 struct look_palette {

@@ -311,8 +311,21 @@ auto canvas(const session& state) -> ec::component {
         height = std::max(height, cell.at.y + 1);
         cells.push_back(std::move(cell));
     }
+    const auto regions =
+        placements_of(*state.doc, state.object)
+        | std::views::transform([&](const placement& entry) {
+              return ec::grid_region{
+                  .id = placement_row(entry),
+                  .from = {entry.x.min + shift.x, entry.y.min + shift.y},
+                  .to = {entry.x.max + shift.x, entry.y.max + shift.y},
+                  .label = entry.kind,
+                  .selected = state.picked && placement_row(*state.picked) == placement_row(entry)};
+          })
+        | std::ranges::to<std::vector>();
+    const auto drags = state.current->region == region_use::placements;
     return {
         .id = canvas_id,
+        // The drag runs the placement's move; it is no command of the canvas to list.
         .affordances =
             opens ? std::vector<std::string>{paint_id, object_id}
                   : std::vector<std::string>{paint_id},
@@ -333,7 +346,9 @@ auto canvas(const session& state) -> ec::component {
             .drag_end = state.current->kind == shape_kind::point ? stroke_end_id : "",
             .block = object.contains("om_terrain")
                        ? ec::grid_point{SEEX * 2, SEEY * 2}
-                       : ec::grid_point{}}};
+                       : ec::grid_point{},
+            .regions = regions,
+            .region_drag = drags ? placement_span_id : ""}};
 }
 
 /// What a placement places, a `key: value` for each member: a string as it reads, anything else as
@@ -356,7 +371,7 @@ auto placement_rows(const session& state) -> std::vector<ec::row> {
                what.erase("x");
                what.erase("y");
                return ec::row{
-                   .id = string_format("placement:%s:%d", entry.kind, entry.index),
+                   .id = placement_row(entry),
                    .label = entry.kind,
                    .description = string_format("/object/%s/%d", entry.kind, entry.index),
                    .columns =
@@ -761,6 +776,12 @@ auto drawing_affordances(const session& state) -> std::vector<ec::affordance> {
         {.id = flip_y_id, .label = _("Flip down"), .enabled = !state.clip.empty()}));
     affordances.push_back(
         ec::invoke_affordance({.id = paint_id, .label = _("Draw"), .args = row_of(canvas_id)}));
+    if (state.current->region == region_use::placements) {
+        affordances.push_back(ec::invoke_affordance(
+            {.id = placement_span_id,
+             .label = _("Move placement"),
+             .args = {.row = ec::row_shape{.component_id = canvas_id}, .text = ec::text_shape{}}}));
+    }
     affordances.push_back(ec::invoke_affordance(
         {.id = level_up_id,
          .label = _("Level up"),

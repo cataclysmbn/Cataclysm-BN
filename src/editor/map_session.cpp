@@ -148,6 +148,7 @@ auto mapping_of(const catalog_use& use, const std::string& id) -> std::string {
 auto tool_label(const tool& value) -> std::string {
     if (value.region == region_use::select) { return _("Select"); }
     if (value.region == region_use::paste) { return _("Paste"); }
+    if (value.region == region_use::placements) { return _("Placements"); }
     if (!value.kind) { return _("Eyedropper"); }
     switch (*value.kind) {
         case shape_kind::point:
@@ -662,6 +663,40 @@ auto session::pick(const placement& entry) -> void {
     focus = square_named(field_pointer);
 }
 
+auto placement_row(const placement& entry) -> std::string {
+    return string_format("placement:%s:%d", entry.kind, entry.index);
+}
+
+auto session::span_placement(const std::string& row, const std::string& text) -> void {
+    const auto placed = placements_of(*doc, object);
+    const auto found = std::ranges::find(placed, row, placement_row);
+    if (found == placed.end()) { return; }
+    auto moves = std::array<int, 4>{};
+    auto rest = std::string_view(text);
+    for (auto& value : moves) {
+        const auto [end, error] = std::from_chars(rest.data(), rest.data() + rest.size(), value);
+        rest = std::string_view(end, rest.data() + rest.size());
+        if (error == std::errc{} && rest.starts_with(',') && &value != &moves.back()) {
+            rest.remove_prefix(1);
+        } else if (error != std::errc{} || &value != &moves.back() || !rest.empty()) {
+            notice = _(
+                "A placement moves by four whole numbers: how far its first and last squares "
+                "go east and south.");
+            return;
+        }
+    }
+    const auto x = placement_range{.min = found->x.min + moves[0], .max = found->x.max + moves[2]};
+    const auto y = placement_range{.min = found->y.min + moves[1], .max = found->y.max + moves[3]};
+    if (x.max < x.min || y.max < y.min) {
+        notice = _("A placement cannot end before it starts.");
+        return;
+    }
+    pick(*found);
+    move_x = range_text(x);
+    move_y = range_text(y);
+    move_picked();
+}
+
 auto session::move_picked() -> void {
     const auto x = range_read(move_x);
     const auto y = range_read(move_y);
@@ -840,6 +875,17 @@ auto session::paint(const point& at) -> void {
     }
     if (current->region == region_use::paste) {
         paste_at(at);
+        return;
+    }
+    if (current->region == region_use::placements) {
+        // The one listed last is drawn on top.
+        const auto placed = placements_of(*doc, object);
+        const auto found =
+            std::ranges::find_if(placed | std::views::reverse, [&](const auto& entry) {
+                return entry.x.min <= at.x && at.x <= entry.x.max && entry.y.min <= at.y
+                    && at.y <= entry.y.max;
+            });
+        if (found != std::ranges::rend(placed)) { pick(*found); }
         return;
     }
     if (!current->kind) {

@@ -61,6 +61,7 @@ inline constexpr auto catalog_page_id = "editor:catalog_page";
 inline constexpr auto catalog_pick_id = "editor:catalog_pick";
 inline constexpr auto placements_id = "editor:placements";
 inline constexpr auto placement_id = "editor:placement";
+inline constexpr auto placement_span_id = "editor:placement_span";
 inline constexpr auto diagnostic_id = "editor:diagnostic";
 inline constexpr auto mapping_set_id = "editor:mapping_set";
 inline constexpr auto mapping_apply_id = "editor:mapping_apply";
@@ -157,7 +158,7 @@ inline constexpr auto legend_layers = std::array{
     "remove_all"};
 
 /// What a tool that works on a region instead of a shape does with the square it is used on.
-enum class region_use { none, select, paste };
+enum class region_use { none, select, paste, placements };
 
 struct tool {
     std::string id;
@@ -179,6 +180,7 @@ inline const auto tools = std::array{
     tool{.id = "tool:pick", .kind = std::nullopt},
     tool{.id = "tool:select", .region = region_use::select},
     tool{.id = "tool:paste", .region = region_use::paste},
+    tool{.id = "tool:placements", .region = region_use::placements},
 };
 
 /// The corners of the rectangle the select tool marked.
@@ -254,6 +256,8 @@ auto tool_label(const tool& value) -> std::string;
 /// palette's id.
 auto entry_name(const nlohmann::ordered_json& value) -> std::string;
 auto range_text(const placement_range& range) -> std::string;
+/// The row that names `entry` in the placements list and the canvas.
+auto placement_row(const placement& entry) -> std::string;
 /// Whether a new file can be written at `made`; the error says why not.
 auto check_new_path(const std::string& made) -> std::expected<void, std::string>;
 /// Writes `entries` as the new file `made`; the error says why it was not written.
@@ -420,6 +424,9 @@ struct session {
     auto pick(const placement& entry) -> void;
 
     auto move_picked() -> void;
+    /// Moves the corners of the placement `row` names by `text`, `dx0,dy0,dx1,dy1`, as one step,
+    /// and picks it.
+    auto span_placement(const std::string& row, const std::string& text) -> void;
 
     auto clip_size_now() const -> clip_size;
 

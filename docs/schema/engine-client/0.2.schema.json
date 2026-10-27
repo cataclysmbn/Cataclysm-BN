@@ -6821,6 +6821,66 @@
           ],
           "additionalProperties": false,
           "description": "The `x` by `y` squares a client outlines as one, counted from the top-left, such as each overmap square of the map editor's canvas. Absent for none."
+        },
+        "regions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/opaque_id"
+              },
+              "from": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "integer"
+                  },
+                  "y": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "to": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "integer"
+                  },
+                  "y": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "label": {
+                "type": "string"
+              },
+              "selected": {
+                "const": true
+              }
+            },
+            "required": [
+              "id",
+              "from",
+              "to"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Rectangles of squares from `from` to `to`, both included, that a client outlines over the cells, such as where each placement of the map editor's entry may land; `selected` the picked one. Each `id` is a row the cells' affordances and `region_drag` may name. Absent for none."
+        },
+        "region_drag": {
+          "$ref": "#/$defs/opaque_id",
+          "description": "The affordance a client runs after a pointer drag of a region: pressed inside it the drag moves the whole region, pressed on a corner it moves that corner. The row is the region's `id` and the text how far its top-left and bottom-right squares moved east and south, `dx0,dy0,dx1,dy1`. Absent while regions are not dragged."
         }
       },
       "required": [

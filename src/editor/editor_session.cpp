@@ -246,10 +246,10 @@ auto run_editor_session() -> void {
             if (moved) { state.reload(); }
         } else if (id == placement_id) {
             const auto placed = placements_of(*state.doc, state.object);
-            const auto found = std::ranges::find(placed, row, [](const placement& entry) {
-                return string_format("placement:%s:%d", entry.kind, entry.index);
-            });
+            const auto found = std::ranges::find(placed, row, placement_row);
             if (found != placed.end()) { state.pick(*found); }
+        } else if (id == placement_span_id) {
+            state.span_placement(row, invoked->args.text.value_or(""));
         } else if (id == move_set_id) {
             (row == "x" ? state.move_x : state.move_y) = invoked->args.text.value_or("");
         } else if (id == move_apply_id && state.picked) {

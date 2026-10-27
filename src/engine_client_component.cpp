@@ -476,7 +476,7 @@ auto screen_of( const boundary_state &state, const slot &entry, const bool top )
         std::erase_if( registered, [&]( const affordance & offered_action ) {
             return std::ranges::any_of( result.affordances, [&]( const affordance & own ) {
                 return own.covers == offered_action.id && performs( own );
-            } )&& !std::ranges::contains( result.denials, offered_action.id, &denial::id );
+            } ) && !std::ranges::contains( result.denials, offered_action.id, &denial::id );
         } );
         for( const auto &[id, reason] : result.denials ) {
             const auto found = std::ranges::find( registered, id, &affordance::id );
@@ -543,6 +543,7 @@ auto collect_rows( const component &value, std::vector<std::string> &into ) -> b
         } else if constexpr( std::is_same_v<Body, grid_body> ) {
             std::ranges::transform( body.cells | std::views::filter( &grid_cell::enabled ),
                                     std::back_inserter( into ), &grid_cell::id );
+            std::ranges::transform( body.regions, std::back_inserter( into ), &grid_region::id );
         } else if constexpr( std::is_same_v<Body, form_body> ) {
             std::ranges::transform( body.fields, std::back_inserter( into ), &form_field::id );
         } else if constexpr( std::is_same_v<Body, map_body> ) {

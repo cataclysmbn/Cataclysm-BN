@@ -703,6 +703,17 @@ auto body_json( const grid_body &body, const bubble_frame & /*frame*/ ) -> json
     if( !body.drag_begin.empty() ) { result["drag_begin"] = body.drag_begin; }
     if( !body.drag_end.empty() ) { result["drag_end"] = body.drag_end; }
     if( body.block.x > 0 && body.block.y > 0 ) { result["block"] = {{"x", body.block.x}, {"y", body.block.y}}; }
+    if( !body.regions.empty() ) {
+        result["regions"] = json::array();
+        for( const auto &region : body.regions ) {
+            auto entry = json{{"id", region.id}, {"from", {{"x", region.from.x}, {"y", region.from.y}}},
+                {"to", {{"x", region.to.x}, {"y", region.to.y}}}};
+            if( !region.label.empty() ) { entry["label"] = region.label; }
+            if( region.selected ) { entry["selected"] = true; }
+            result["regions"].push_back( std::move( entry ) );
+        }
+    }
+    if( !body.region_drag.empty() ) { result["region_drag"] = body.region_drag; }
     return result;
 }
 auto body_json( const map_body &body, const bubble_frame &frame ) -> json

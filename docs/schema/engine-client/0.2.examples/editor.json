@@ -1121,6 +1121,12 @@
                   "label": "Paste",
                   "selected": false,
                   "enabled": true
+                },
+                {
+                  "id": "tool:placements",
+                  "label": "Placements",
+                  "selected": false,
+                  "enabled": true
                 }
               ],
               "select": "editor:tool",
@@ -1333,7 +1339,21 @@
                 "role": "canvas",
                 "drag": "trail",
                 "drag_begin": "editor:stroke_begin",
-                "drag_end": "editor:stroke_end"
+                "drag_end": "editor:stroke_end",
+                "regions": [
+                  {
+                    "id": "placement:place_monster:0",
+                    "from": {
+                      "x": 1,
+                      "y": 2
+                    },
+                    "to": {
+                      "x": 1,
+                      "y": 2
+                    },
+                    "label": "place_monster"
+                  }
+                ]
               }
             },
             {
@@ -4471,6 +4491,12 @@
                   "label": "Paste",
                   "selected": false,
                   "enabled": true
+                },
+                {
+                  "id": "tool:placements",
+                  "label": "Placements",
+                  "selected": false,
+                  "enabled": true
                 }
               ],
               "select": "editor:tool",
@@ -4689,7 +4715,21 @@
                   }
                 ],
                 "role": "canvas",
-                "drag": "span"
+                "drag": "span",
+                "regions": [
+                  {
+                    "id": "placement:place_monster:0",
+                    "from": {
+                      "x": 1,
+                      "y": 2
+                    },
+                    "to": {
+                      "x": 1,
+                      "y": 2
+                    },
+                    "label": "place_monster"
+                  }
+                ]
               }
             },
             {
@@ -7719,6 +7759,12 @@
                   "label": "Paste",
                   "selected": false,
                   "enabled": true
+                },
+                {
+                  "id": "tool:placements",
+                  "label": "Placements",
+                  "selected": false,
+                  "enabled": true
                 }
               ],
               "select": "editor:tool",
@@ -7933,7 +7979,22 @@
                   }
                 ],
                 "role": "canvas",
-                "drag": "span"
+                "drag": "span",
+                "regions": [
+                  {
+                    "id": "placement:place_monster:0",
+                    "from": {
+                      "x": 1,
+                      "y": 2
+                    },
+                    "to": {
+                      "x": 1,
+                      "y": 2
+                    },
+                    "label": "place_monster",
+                    "selected": true
+                  }
+                ]
               }
             },
             {
@@ -11343,6 +11404,12 @@
                 {
                   "id": "tool:paste",
                   "label": "Paste",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "tool:placements",
+                  "label": "Placements",
                   "selected": false,
                   "enabled": true
                 }
@@ -15986,7 +16053,21 @@
                 "block": {
                   "x": 24,
                   "y": 24
-                }
+                },
+                "regions": [
+                  {
+                    "id": "placement:place_items:0",
+                    "from": {
+                      "x": 3,
+                      "y": 3
+                    },
+                    "to": {
+                      "x": 3,
+                      "y": 3
+                    },
+                    "label": "place_items"
+                  }
+                ]
               }
             },
             {
