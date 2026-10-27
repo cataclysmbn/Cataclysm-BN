@@ -341,6 +341,11 @@ auto run_editor_session() -> void {
             state.apply_on_save = !state.apply_on_save;
         } else if (id == stamp_id) {
             state.stamp_here();
+        } else if (id == place_special_id) {
+            state.place_special();
+        } else if (id == test_id && state.on_special() && state.placed) {
+            g->place_player_overmap(*state.placed);
+            return;
         } else if (id == test_id && state.stamped) {
             // The avatar plays in the middle of the stamped square; the editor keeps its document.
             g->place_player(abs_to_bub(

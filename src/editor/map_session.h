@@ -111,6 +111,7 @@ inline constexpr auto apply_on_save_id = "editor:apply_on_save";
 inline constexpr auto stamp_id = "editor:stamp";
 inline constexpr auto unstamp_id = "editor:unstamp";
 inline constexpr auto test_id = "editor:test";
+inline constexpr auto place_special_id = "editor:place_special";
 inline constexpr auto max_brush = 9;
 /// The most overmap squares an export spans each way: what the loaded map holds around the avatar.
 inline constexpr auto max_export = 3;
@@ -366,6 +367,8 @@ struct session {
     std::string export_palette;
     /// The entry as it stands in the live world, while it is there.
     std::optional<stamp> stamped = std::nullopt;
+    /// Where the special was last placed in the world.
+    std::optional<tripoint_abs_omt> placed = std::nullopt;
     /// The files the browser lists; read again after a file is made.
     mutable std::optional<std::vector<std::filesystem::path>> files = std::nullopt;
     std::string browser_filter;
@@ -484,6 +487,9 @@ struct session {
 
     /// Generates the entry over the avatar's overmap square, in place of what the world has there.
     auto stamp_here() -> void;
+
+    /// Places the special in the world on new land near the avatar, as it stands in the document.
+    auto place_special() -> void;
 
     /// Stamps the pasted text: a mapgen entry, or the first mapgen of a file's array of entries.
     auto import_pasted() -> void;

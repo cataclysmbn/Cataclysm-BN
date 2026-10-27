@@ -2696,7 +2696,17 @@ void overmap_special::check_nested() const {
     }
 }
 
-auto editor::check_special(const std::string_view text) -> std::vector<loader_message> {
+namespace {
+
+/// A special or building entry as the game's loader completes it, unless it copies another or is
+/// abstract, and what the loader reported, in order.
+struct detached_special {
+    std::optional<overmap_special> special;
+    std::vector<editor::loader_message> messages;
+};
+
+auto load_detached_special(const std::string_view text) -> detached_special {
+    auto special = std::optional<overmap_special>{};
     auto thrown = std::optional<std::string>{};
     const auto said = capture_each_debugmsg_during([&] {
         try {
@@ -2708,20 +2718,70 @@ auto editor::check_special(const std::string_view text) -> std::vector<loader_me
                 entry.allow_omitted_members();
                 return;
             }
-            auto special = overmap_special{};
-            special.id = overmap_special_id(entry.get_string("id"));
-            special.load(entry, mod_management::get_default_core_content_pack().str());
-            special.finalize();
-            special.check_layout();
+            auto loaded = overmap_special{};
+            loaded.id = overmap_special_id(entry.get_string("id"));
+            loaded.load(entry, mod_management::get_default_core_content_pack().str());
+            loaded.finalize();
+            loaded.check_layout();
+            special = std::move(loaded);
         } catch (const JsonError& e) { thrown = e.what(); }
     });
-    auto result =
+    auto messages =
         said | std::views::transform([](const std::string& message) {
-            return loader_message{.text = message};
+            return editor::loader_message{.text = message};
         })
         | std::ranges::to<std::vector>();
-    if (thrown) { result.push_back({.text = *thrown}); }
-    return result;
+    if (thrown) { messages.push_back({.text = *thrown}); }
+    return {.special = std::move(special), .messages = std::move(messages)};
+}
+
+/// How far from the avatar, in overmap squares, a special is placed at most.
+constexpr auto special_search_radius = 30;
+
+} // namespace
+
+auto editor::check_special(const std::string_view text) -> std::vector<loader_message> {
+    return load_detached_special(text).messages;
+}
+
+auto editor::apply_special(const std::string_view text)
+    -> std::expected<overmap_special_id, std::string> {
+    auto loaded = load_detached_special(text);
+    if (!loaded.messages.empty()) { return std::unexpected(loaded.messages.front().text); }
+    if (!loaded.special) {
+        return std::unexpected(
+            std::string(_("A special that copies another is placed with the game's data only.")));
+    }
+    return specials.insert(*loaded.special).id;
+}
+
+auto editor::place_special_near(const overmap_special_id& id, const tripoint_abs_omt& center)
+    -> std::optional<tripoint_abs_omt> {
+    auto& buffer = ACTIVE_OVERMAP_BUFFER;
+    const auto points =
+        id->required_locations() | std::views::transform(&overmap_special_locations::p)
+        | std::ranges::to<std::vector>();
+    // Generated land keeps what was made there, so the special goes on land not made yet, all
+    // within one overmap as the overmap places it.
+    const auto fits = [&](const tripoint_abs_omt& origin) {
+        const auto om = project_to<coords::om>(origin.xy());
+        return std::ranges::all_of(points, [&](const tripoint_rel_omt& p) {
+            return project_to<coords::om>((origin + p).xy()) == om
+                && !buffer.is_omt_generated(origin + p);
+        });
+    };
+    for (const auto& raw :
+         closest_points_first(tripoint(center.raw().xy(), 0), special_search_radius)) {
+        const auto origin = tripoint_abs_omt(raw);
+        if (!fits(origin)) { continue; }
+        const auto used = buffer.place_special(*id, origin, om_direction::type::north, false, true);
+        if (!used) { return std::nullopt; }
+        std::ranges::for_each(*used, [&](const tripoint_abs_omt& at) {
+            buffer.set_seen(at, true);
+        });
+        return origin;
+    }
+    return std::nullopt;
 }
 
 // *** BEGIN overmap FUNCTIONS ***

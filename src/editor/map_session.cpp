@@ -1020,6 +1020,20 @@ auto session::stamp_here() -> void {
     stamp_text(doc->objects()[object].value.dump());
 }
 
+auto session::place_special() -> void {
+    const auto applied = apply_special(doc->objects()[object].value.dump());
+    if (!applied) {
+        notice = applied.error();
+        return;
+    }
+    const auto at = place_special_near(*applied, get_avatar().abs_omt_pos());
+    if (!at) {
+        notice = _("No land near you that is still to be generated holds the special.");
+        return;
+    }
+    placed = at;
+}
+
 auto session::import_pasted() -> void {
     const auto parsed = nlohmann::ordered_json::parse(import_text, nullptr, false);
     const auto found =

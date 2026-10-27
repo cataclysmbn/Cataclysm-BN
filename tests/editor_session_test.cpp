@@ -4808,6 +4808,8 @@ TEST_CASE(
 TEST_CASE(
     "the editor places the open special on new land near the avatar, and tests it there",
     "[editor_session][editor_special]") {
+    // The test walks the avatar off its map; later cases start on theirs, once the screen is back.
+    const auto walked_back = on_out_of_scope([] { clear_all_state(); });
     const auto guard = screen_guard{};
     const auto restore_mapgen = restore_on_out_of_scope<bool>(disable_mapgen);
     disable_mapgen = false;
@@ -4843,7 +4845,6 @@ TEST_CASE(
     CHECK(buffer.ter(at + tripoint_rel_omt(1, 0, 0)) == oter_id("field"));
     CHECK(buffer.ter(at + tripoint_rel_omt(0, 0, 1)) == oter_id("house_01_roof_north"));
     CHECK(buffer.overmap_special_at(at) == overmap_special_id("editor_session_test_special"));
-    g->place_player_overmap(omt);
     editor::reset_editor_session();
 }
 

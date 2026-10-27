@@ -2,8 +2,11 @@
 
 #include "coordinates.h"
 #include "editor/mapgen_check.h"
+#include "type_id.h"
 
+#include <expected>
 #include <nlohmann/json.hpp>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -61,5 +64,14 @@ auto connection_patch(
 /// Loads a special or building entry with the game's loader, finalizes and checks it as the game
 /// does after loading data, and registers nothing; what the loader reported, in order.
 auto check_special(std::string_view text) -> std::vector<loader_message>;
+
+/// Registers the special or building entry in `text` with the game in place of any of its id,
+/// as the loader completes it; what the loader said against it, if anything.
+auto apply_special(std::string_view text) -> std::expected<overmap_special_id, std::string>;
+
+/// Places the special `id` unturned on the nearest land around `center` whose overmap squares are
+/// all still to be generated, and shows them on the overmap; its origin, none when no land fits.
+auto place_special_near(const overmap_special_id& id, const tripoint_abs_omt& center)
+    -> std::optional<tripoint_abs_omt>;
 
 } // namespace editor

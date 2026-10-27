@@ -633,10 +633,16 @@ auto mapping_parts(
         ec::invoke_affordance({.id = mapping_apply_id, .label = _("Set mapping")}));
 }
 
-/// What puts the entry in the game: apply, stamp, test and the preview with its controls.
+/// What puts the entry in the game: apply, stamp, place, test and the preview with its controls.
 auto game_parts(
     const session& state, std::vector<ec::component>& parts,
     std::vector<ec::affordance>& affordances) -> void {
+    if (state.on_special()) {
+        affordances.push_back(
+            ec::invoke_affordance({.id = place_special_id, .label = _("Place in world")}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = test_id, .label = _("Test"), .enabled = state.placed.has_value()}));
+    }
     if (state.on_mapgen()) {
         affordances.push_back(ec::invoke_affordance({.id = apply_id, .label = _("Apply to game")}));
         affordances.push_back(
@@ -1176,8 +1182,8 @@ auto session_view(const session& state) -> ec::screen_view {
             if (!state.on_special()) {
                 std::ranges::move(drawing_affordances(state), std::back_inserter(affordances));
                 mapping_parts(state, parts, affordances);
-                game_parts(state, parts, affordances);
             }
+            game_parts(state, parts, affordances);
         }
     }
     parts.push_back(new_file_form(state));
