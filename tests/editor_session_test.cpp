@@ -4635,6 +4635,12 @@ TEST_CASE(
         REQUIRE(found != fields.end());
         return found->label;
     };
+    const auto value = [](const ec::screen_view& screen, const std::string& id) {
+        const auto& fields = body<ec::form_body>(part(screen, "editor:new")).fields;
+        const auto found = std::ranges::find(fields, id, &ec::form_field::id);
+        REQUIRE(found != fields.end());
+        return found->value;
+    };
     auto step = 0;
 
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
@@ -4647,6 +4653,8 @@ TEST_CASE(
             case 2:
                 CHECK(label(screen, "om_terrain") == "Special id");
                 CHECK(label(screen, "fill") == "Overmap terrain");
+                // A mapgen's terrain default gives way to an overmap terrain one.
+                CHECK(value(screen, "fill") == "field");
                 return invoke("editor:new_set", {.row = "om_terrain", .text = "Hunting Lodge"});
             case 3:
                 return invoke("editor:new_apply");
@@ -4656,15 +4664,19 @@ TEST_CASE(
                 return invoke(
                     "editor:new_set", {.row = "om_terrain", .text = "editor_session_test_new"});
             case 5:
-                return invoke("editor:new_apply");
+                return invoke("editor:new_set", {.row = "fill", .text = "vending_park_1"});
             case 6:
-                // The terrain field's t_floor is no overmap terrain.
-                CHECK(notice(screen) == "t_floor is no overmap terrain.");
+                return invoke("editor:new_apply");
+            case 7:
+                // Overmap terrains with rotations are named with one.
+                CHECK(
+                    notice(screen)
+                    == "vending_park_1 is no overmap terrain. Did you mean vending_park_1_north?");
                 CHECK_FALSE(std::filesystem::exists(made));
                 return invoke("editor:new_set", {.row = "fill", .text = "field"});
-            case 7:
+            case 8:
                 return invoke("editor:new_apply");
-            case 8: {
+            case 9: {
                 CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
                 const auto& objects = body<ec::list_body>(part(screen, "editor:objects")).rows;
                 REQUIRE(objects.size() == 1);
@@ -4673,12 +4685,12 @@ TEST_CASE(
                 CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
                 return invoke("editor:new_set", {.row = "path", .text = built.string()});
             }
-            case 9:
-                return invoke("editor:new_set", {.row = "kind", .text = "building"});
             case 10:
+                return invoke("editor:new_set", {.row = "kind", .text = "building"});
+            case 11:
                 CHECK(label(screen, "om_terrain") == "Building id");
                 return invoke("editor:new_apply");
-            case 11: {
+            case 12: {
                 const auto written = nlohmann::ordered_json::parse(read_file(built))[0];
                 CHECK(written["type"] == "city_building");
                 CHECK(editor::special_squares(written).size() == 1);
@@ -4692,7 +4704,7 @@ TEST_CASE(
     });
 
     editor::run_editor_session();
-    CHECK(step == 12);
+    CHECK(step == 13);
 }
 
 TEST_CASE(
