@@ -1397,6 +1397,102 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the editor outlines each placement on the canvas, and dragging one moves or stretches it in "
+    "one step",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file(nlohmann::ordered_json::parse(
+        R"({"place_monster": [{"monster": "mon_zombie", "x": [3, 5], "y": 7}],
+            "place_items": [{"item": "trash", "x": 10, "y": [2, 4], "chance": 50}]})"));
+    const auto region = [](const ec::screen_view& screen, const std::string& id) {
+        const auto& regions = body<ec::grid_body>(part(screen, "editor:canvas")).regions;
+        const auto found = std::ranges::find(regions, id, &ec::grid_region::id);
+        INFO(id);
+        REQUIRE(found != regions.end());
+        return *found;
+    };
+    const auto notice = [](const ec::screen_view& screen) {
+        return body<ec::text_body>(part(screen, "editor:notice")).markup;
+    };
+    const auto monster = std::string("placement:place_monster:0");
+    const auto items = std::string("placement:place_items:0");
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1: {
+                // The squares a placement may land on, as the loader reads its ranges.
+                CHECK(region(screen, monster).from == ec::grid_point{3, 7});
+                CHECK(region(screen, monster).to == ec::grid_point{5, 7});
+                CHECK(region(screen, monster).label == "place_monster");
+                CHECK_FALSE(region(screen, monster).selected);
+                CHECK(region(screen, items).from == ec::grid_point{10, 2});
+                CHECK(region(screen, items).to == ec::grid_point{10, 4});
+                const auto wire = wire_part(state, "editor:canvas");
+                CHECK(wire["regions"][0]
+                      == nlohmann::json::parse(
+                          R"({"id": "placement:place_monster:0", "from": {"x": 3, "y": 7},
+                              "to": {"x": 5, "y": 7}, "label": "place_monster"})"));
+                // Drawing tools draw; only the placements tool drags placements.
+                CHECK(body<ec::grid_body>(part(screen, "editor:canvas")).region_drag.empty());
+                return invoke("editor:tool", {.row = "tool:placements"});
+            }
+            case 2:
+                CHECK(body<ec::grid_body>(part(screen, "editor:canvas")).region_drag
+                      == "editor:placement_span");
+                CHECK(body<ec::grid_body>(part(screen, "editor:canvas")).drag.empty());
+                CHECK(wire_part(state, "editor:canvas")["region_drag"] == "editor:placement_span");
+                CHECK(refused(state, "editor:placement_span", {.row = "placement:place_fields:0"}));
+                // A click picks the placement over the square.
+                return invoke("editor:paint", {.row = "square:4,7"});
+            case 3:
+                CHECK(region(screen, monster).selected);
+                CHECK_FALSE(region(screen, items).selected);
+                return invoke("editor:placement_span", {.row = monster, .text = "2,1,2,1"});
+            case 4:
+                // Moved: both corners went two east and one south.
+                CHECK(region(screen, monster).from == ec::grid_point{5, 8});
+                CHECK(region(screen, monster).to == ec::grid_point{7, 8});
+                CHECK(saved(screen) == "No");
+                return invoke("editor:placement_span", {.row = items, .text = "0,0,3,-1"});
+            case 5:
+                // Stretched by its bottom-right corner, and picked.
+                CHECK(region(screen, items).from == ec::grid_point{10, 2});
+                CHECK(region(screen, items).to == ec::grid_point{13, 3});
+                CHECK(region(screen, items).selected);
+                return invoke("editor:placement_span", {.row = monster, .text = "0,0,-3,0"});
+            case 6:
+                CHECK(notice(screen) == "A placement cannot end before it starts.");
+                CHECK(region(screen, monster).to == ec::grid_point{7, 8});
+                return invoke("editor:placement_span", {.row = monster, .text = "1,1"});
+            case 7:
+                CHECK(notice(screen)
+                      == "A placement moves by four whole numbers: how far its first and last "
+                         "squares go east and south.");
+                return invoke("editor:undo");
+            case 8:
+                CHECK(region(screen, items).to == ec::grid_point{10, 4});
+                CHECK(region(screen, monster).to == ec::grid_point{7, 8});
+                return invoke("editor:undo");
+            case 9:
+                CHECK(region(screen, monster).from == ec::grid_point{3, 7});
+                CHECK(saved(screen) == "Yes");
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 10);
+}
+
+TEST_CASE(
     "the editor reloads a file changed on disk unless it is edited, and then says so",
     "[editor_session][engine_client_component]") {
     const auto guard = screen_guard{};
