@@ -113,8 +113,15 @@ void clear_fields(const int zlevel) {
 
 void clear_items(const int zlevel) {
     const int mapsize = g->m.getmapsize() * SEEX;
-    for (int x = 0; x < mapsize; ++x) {
-        for (int y = 0; y < mapsize; ++y) { g->m.i_clear(tripoint_bub_ms{x, y, zlevel}); }
+    for (int x = 0; x < mapsize; x += SEEX) {
+        for (int y = 0; y < mapsize; y += SEEY) {
+            const auto* const sm = g->m.get_submap_at(tripoint_bub_ms{x, y, zlevel});
+            for (const auto p : submap_tiles()) {
+                // i_clear() on an empty unlit square would only refresh its submap's indexes.
+                if (sm != nullptr && sm->get_items(p).empty() && sm->get_lum(p) == 0) { continue; }
+                g->m.i_clear(tripoint_bub_ms{x + p.x(), y + p.y(), zlevel});
+            }
+        }
     }
 }
 
