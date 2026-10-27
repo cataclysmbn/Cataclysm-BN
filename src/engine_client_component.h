@@ -84,6 +84,8 @@ struct affordance {
     /// The client may hold the key down with `bn.hold`, and the engine takes one step of it per input prompt
     /// until `bn.release`: only a step of the map, which is a registered action.
     bool holdable = false;
+    /// The menu of a workspace it sits in, localized, such as "File"; empty for none.
+    std::string group = {};
 };
 /// The expectation an invoke of `value` carries: its screen's when it takes no `row`, `rows`, `pos` or
 /// `text`, so a held key may queue behind another; the boundary's when it names rows or squares.
@@ -297,6 +299,9 @@ struct component {
     component_body body = text_body{};
     /// A split's parts; the one child of tabs and panel.
     std::vector<component> children = {};
+    /// What a part of a workspace's root is for: `tools`, `canvas`, `palette`, `outline`, `inspector`, `log` or
+    /// `status`; empty for none.
+    std::string slot = {};
 };
 /// The wire name of the component's kind.
 auto component_kind( const component &value ) -> std::string;
@@ -374,6 +379,7 @@ struct invoke_options {
     std::string role = {};
     /// The registered action it performs: see `affordance::covers`.
     std::string covers = {};
+    std::string group = {};
 };
 /// An affordance the screen runs itself: its loop reads the invoke with `invoked`.
 auto invoke_affordance( invoke_options options ) -> affordance;

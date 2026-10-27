@@ -303,7 +303,16 @@
           "description": "Of terrain and furniture: the game data's coverage, the percent of a person behind it that it covers; absent for none."
         },
         "form": {
-          "enum": ["door", "fence", "plant", "seat", "table", "bed", "fire", "gas"],
+          "enum": [
+            "door",
+            "fence",
+            "plant",
+            "seat",
+            "table",
+            "bed",
+            "fire",
+            "gas"
+          ],
           "description": "Of terrain, furniture and fields: what the thing stands as, from its game data. Terrain: door (DOOR or LOCKED, or it closes, and not WINDOW), plant (SHRUB, FLOWER, PLANT or YOUNG) or fence (THIN_OBSTACLE). Furniture: plant, bed (CAN_SIT and the comfort of a bed), seat (CAN_SIT) or table (FLAT_SURF). A field: fire (its type burns) or gas. Absent for anything else."
         },
         "tint": {
@@ -470,7 +479,16 @@
           "description": "Of terrain and furniture: the game data's coverage, the percent of a person behind it that it covers; absent for none."
         },
         "form": {
-          "enum": ["door", "fence", "plant", "seat", "table", "bed", "fire", "gas"],
+          "enum": [
+            "door",
+            "fence",
+            "plant",
+            "seat",
+            "table",
+            "bed",
+            "fire",
+            "gas"
+          ],
           "description": "Of terrain, furniture and fields: what the thing stands as, from its game data. Terrain: door (DOOR or LOCKED, or it closes, and not WINDOW), plant (SHRUB, FLOWER, PLANT or YOUNG) or fence (THIN_OBSTACLE). Furniture: plant, bed (CAN_SIT and the comfort of a bed), seat (CAN_SIT) or table (FLAT_SURF). A field: fire (its type burns) or gas. Absent for anything else."
         },
         "tint": {
@@ -5793,6 +5811,10 @@
           "type": "boolean",
           "description": "The affordance is a step of the map that the player can hold down: a client sends `bn.hold` when its key goes down and `bn.release` when it comes up, and does not invoke it for key repeats."
         },
+        "group": {
+          "$ref": "#/$defs/text",
+          "description": "The menu of a `workspace` screen it belongs in, in the player's language, such as File; absent for none. A client builds a menu bar from the groups in the order they first appear."
+        },
         "expect": {
           "enum": [
             "screen",
@@ -6175,6 +6197,9 @@
           },
           "description": "Ids of `screen.affordances` that act on this component."
         },
+        "slot": {
+          "$ref": "#/$defs/slot"
+        },
         "kind": {
           "const": "list"
         },
@@ -6267,6 +6292,9 @@
             "$ref": "#/$defs/opaque_id"
           },
           "description": "Ids of `screen.affordances` that act on this component."
+        },
+        "slot": {
+          "$ref": "#/$defs/slot"
         },
         "kind": {
           "const": "tabs"
@@ -6370,6 +6398,9 @@
           },
           "description": "Ids of `screen.affordances` that act on this component."
         },
+        "slot": {
+          "$ref": "#/$defs/slot"
+        },
         "kind": {
           "const": "split"
         },
@@ -6417,6 +6448,9 @@
             "$ref": "#/$defs/opaque_id"
           },
           "description": "Ids of `screen.affordances` that act on this component."
+        },
+        "slot": {
+          "$ref": "#/$defs/slot"
         },
         "kind": {
           "const": "panel"
@@ -6579,6 +6613,9 @@
           },
           "description": "Ids of `screen.affordances` that act on this component."
         },
+        "slot": {
+          "$ref": "#/$defs/slot"
+        },
         "kind": {
           "const": "form"
         },
@@ -6617,6 +6654,9 @@
             "$ref": "#/$defs/opaque_id"
           },
           "description": "Ids of `screen.affordances` that act on this component."
+        },
+        "slot": {
+          "$ref": "#/$defs/slot"
         },
         "kind": {
           "const": "text"
@@ -6665,6 +6705,9 @@
             "$ref": "#/$defs/opaque_id"
           },
           "description": "Ids of `screen.affordances` that act on this component."
+        },
+        "slot": {
+          "$ref": "#/$defs/slot"
         },
         "kind": {
           "const": "grid"
@@ -6915,6 +6958,9 @@
           },
           "description": "Ids of `screen.affordances` that act on this component."
         },
+        "slot": {
+          "$ref": "#/$defs/slot"
+        },
         "kind": {
           "const": "map"
         },
@@ -6986,6 +7032,9 @@
             "$ref": "#/$defs/opaque_id"
           },
           "description": "Ids of `screen.affordances` that act on this component."
+        },
+        "slot": {
+          "$ref": "#/$defs/slot"
         },
         "kind": {
           "const": "canvas"
@@ -7309,6 +7358,18 @@
       ],
       "additionalProperties": false,
       "description": "Something the avatar can do with a square now, in the order a menu lists it. Run it with the `tile_action` operation."
+    },
+    "slot": {
+      "enum": [
+        "tools",
+        "canvas",
+        "palette",
+        "outline",
+        "inspector",
+        "log",
+        "status"
+      ],
+      "description": "What a part of a `workspace` screen's root split is for, which a client lays out as it likes: `tools` the tools and their settings, `canvas` the document being edited, `palette` what the tools put down, `outline` the parts of the document, `inspector` the settings of what is picked, `log` messages and history, `status` a line of facts about the cursor and the document. A part without one counts as `inspector`."
     }
   }
 }
