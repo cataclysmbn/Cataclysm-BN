@@ -1,5 +1,6 @@
 #include "catch/catch.hpp"
 #include "editor/document.h"
+#include "editor/history_label.h"
 #include "json_formatter.h"
 
 #include <filesystem>
@@ -187,6 +188,40 @@ TEST_CASE("undoing or redoing ends an open group", "[editor_document]") {
     CHECK_FALSE(doc->grouping());
     REQUIRE(doc->edit(0, replace("d")));
     CHECK(doc->depth() == 3);
+}
+
+TEST_CASE("a history step names what it did to the object", "[editor_document]") {
+    const auto mapgen = ordered_json::parse(
+        R"({"object": {"rows": ["."], "place_monster": [{"x": 1}, {"x": 2}], "terrain": {".": "t_floor"}}})");
+    const auto edited = [&](const char* const patch) {
+        return editor::document_edit{
+            .patch = ordered_json::parse(patch),
+            .before = mapgen,
+            .after = mapgen.patch(ordered_json::parse(patch))};
+    };
+    CHECK(editor::step_label(edited(R"([{"op":"replace","path":"/object/rows/0","value":"#"}])"))
+          == "Change rows");
+    // An entry added to a list, or taken from it, is an addition or a removal, not a change.
+    CHECK(
+        editor::step_label(edited(R"([{"op":"add","path":"/object/place_monster/-","value":{}}])"))
+        == "Add place monster");
+    CHECK(editor::step_label(edited(R"([{"op":"remove","path":"/object/place_monster/0"}])"))
+          == "Remove place monster");
+    CHECK(editor::step_label(
+              edited(R"([{"op":"add","path":"/object/place_monster/0/chance","value":5}])"))
+          == "Change place monster");
+    CHECK(
+        editor::step_label(edited(R"([{"op":"add","path":"/object/terrain/#","value":"t_wall"}])"))
+        == "Add terrain #");
+    CHECK(
+        editor::step_label(edited(R"([{"op":"add","path":"/object/terrain/.","value":"t_dirt"}])"))
+        == "Change terrain .");
+    CHECK(
+        editor::step_label(
+            {.patch = ordered_json::parse(R"([{"op":"add","path":"","value":{}}])"),
+             .before = nullptr,
+             .after = ordered_json::object()})
+        == "Add");
 }
 
 TEST_CASE("a refused patch changes nothing and leaves no undo step", "[editor_document]") {
