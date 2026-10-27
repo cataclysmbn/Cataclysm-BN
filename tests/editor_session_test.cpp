@@ -1582,6 +1582,10 @@ TEST_CASE(
                 CHECK(entries(screen).total > 50);
                 CHECK(entries(screen).filterable);
                 CHECK(affordance(screen, "editor:catalog_page").args.count->max > 0);
+                // The pager belongs to the list it turns.
+                CHECK(std::ranges::contains(
+                    part(screen, "editor:catalog").affordances,
+                    std::string("editor:catalog_page")));
                 return invoke("editor:catalog_filter", {.text = "t_dirt"});
             }
             case 2: {
@@ -2632,6 +2636,9 @@ TEST_CASE(
                 CHECK(std::ranges::contains(
                     part(screen, "editor:browser").affordances,
                     std::string("editor:browser_filter")));
+                CHECK(std::ranges::contains(
+                    part(screen, "editor:browser").affordances,
+                    std::string("editor:browser_page")));
                 CHECK(files(screen).rows[0].label == "json/mapgen/house/2storymodern06.json");
                 CHECK(refused(state, "editor:browser_page", {.count = 1}));
                 return invoke("editor:browser_open", {.row = files(screen).rows[0].id});
