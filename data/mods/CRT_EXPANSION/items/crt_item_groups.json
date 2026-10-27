@@ -263,6 +263,6 @@
     "id": "NC_BANDIT_LEADER_cutting",
     "subtype": "distribution",
     "ammo": 100,
-    "entries": [ { "item": "blade_crt", "prob": 5 } ]
+    "entries": [ { "item": "blade_crt", "prob": 1 } ]
   }
 ]
