@@ -107,6 +107,13 @@ struct item_match {
     std::string id;
     std::string name;
 };
+
+/// A tab title without the brackets native draws around it to mark its shortcut.
+auto without_shortcut_brackets( std::string title ) -> std::string
+{
+    std::erase_if( title, []( const char c ) { return c == '[' || c == ']' || c == '<' || c == '>'; } );
+    return title;
+}
 } // namespace
 
 void user_interface::show()
@@ -325,7 +332,7 @@ void user_interface::show()
                 .tabs = tabs | enumerate | transform( [&]( const auto & entry )
                 {
                     const auto &[index, value] = entry;
-                    return ec::tab_entry{ .id = value.id, .label = value.title, .selected = static_cast<size_t>( index ) == iTab };
+                    return ec::tab_entry{ .id = value.id, .label = without_shortcut_brackets( value.title ), .selected = static_cast<size_t>( index ) == iTab };
                 } ) | std::ranges::to<std::vector>(),
                 .select = pickup_tab,
                 .child = ec::split( {
