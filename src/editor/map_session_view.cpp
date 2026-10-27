@@ -12,6 +12,7 @@
 #include "editor/session_file.h"
 #include "editor/session_page.h"
 #include "editor/special_grid.h"
+#include "editor/workspace.h"
 #include "engine_client_component.h"
 #include "engine_client_world.h"
 #include "game.h"
@@ -977,6 +978,79 @@ auto special_canvas(const session& state) -> ec::component {
 
 } // namespace
 
+namespace {
+/// What each part is for, and the menu of each action that is no part's own: with nothing open,
+/// the files to open are the page.
+auto layout(const session& state) -> workspace_layout {
+    const auto file = std::string(_("File"));
+    const auto edit = std::string(_("Edit"));
+    const auto view = std::string(_("View"));
+    const auto world = std::string(_("World"));
+    return {
+        .slots =
+            {{tools_id, "canvas"},
+             {legend_id, "palette"},
+             {mapping_id, "palette"},
+             {catalog_kinds_id, "palette"},
+             {catalog_id, "palette"},
+             {file_id, "outline"},
+             {objects_id, "outline"},
+             {placements_id, "outline"},
+             {terrains_id, "outline"},
+             {"editor:code_mapgens", "outline"},
+             {browser_id, state.doc ? "outline" : "canvas"},
+             {diagnostics_id, "log"},
+             {history_id, "log"},
+             {"editor:notice", "log"},
+             {"editor:status", "log"},
+             {"editor:document", "status"},
+             {field_id, "inspector"},
+             {move_id, "inspector"},
+             {place_id, "inspector"},
+             {pins_id, "inspector"},
+             {rotation_id, "inspector"},
+             {connection_id, "inspector"},
+             {"editor:preview", "inspector"},
+             {loot_id, "inspector"},
+             {new_id, "inspector"},
+             {export_options_id, "inspector"},
+             {import_form_id, "inspector"}},
+        .groups = {
+            {save_id, file},
+            {save_as_id, file},
+            {export_id, file},
+            {export_area_id, file},
+            {export_width_id, file},
+            {export_height_id, file},
+            {extract_palette_id, file},
+            {undo_id, edit},
+            {redo_id, edit},
+            {copy_id, edit},
+            {cut_id, edit},
+            {rotate_id, edit},
+            {flip_x_id, edit},
+            {flip_y_id, edit},
+            {brush_id, edit},
+            {mirror_x_id, edit},
+            {mirror_y_id, edit},
+            {placement_delete_id, edit},
+            {level_up_id, view},
+            {level_down_id, view},
+            {preview_id, view},
+            {reroll_id, view},
+            {apply_id, world},
+            {apply_on_save_id, world},
+            {stamp_id, world},
+            {unstamp_id, world},
+            {test_id, world},
+            {place_special_id, world},
+            {advance_id, world},
+            {open_here_id, world},
+            {open_oter_id, world},
+            {vehicle_id, world}}};
+}
+} // namespace
+
 auto session_view(const session& state) -> ec::screen_view {
     auto affordances = std::vector<ec::affordance>{ec::invoke_affordance(
         {.id = open_id, .label = _("Open"), .args = {.text = ec::text_shape{.field_id = path_id}}})};
@@ -1266,12 +1340,14 @@ auto session_view(const session& state) -> ec::screen_view {
         : state.on_oter() ? (state.terrain_mapgens().empty() ? objects_id : terrains_id)
         : state.doc       ? legend_id
                           : "";
-    return {
+    auto view = ec::screen_view{
         .title = _("Map Editor"),
         .root = ec::split({.id = "editor:body", .active = active, .children = std::move(parts)}),
         .affordances = std::move(affordances),
         .focus_component = active,
         .focus_row = state.focus ? point_row("square", *state.focus) : ""};
+    lay_out(view, layout(state));
+    return view;
 }
 
 } // namespace editor::map_editor

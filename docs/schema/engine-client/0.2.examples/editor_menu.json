@@ -1163,6 +1163,7 @@
                 "editor:open",
                 "editor:save_as"
               ],
+              "slot": "outline",
               "fields": [
                 {
                   "id": "path",
@@ -1176,6 +1177,7 @@
             {
               "id": "editor:document",
               "kind": "panel",
+              "slot": "status",
               "title": "profile/mods/editor_menu_scenario/chunk.json",
               "stats": [
                 {
@@ -1222,6 +1224,7 @@
               "affordances": [
                 "editor:object"
               ],
+              "slot": "outline",
               "columns": [],
               "rows": [
                 {
@@ -1245,6 +1248,7 @@
               "affordances": [
                 "editor:jump"
               ],
+              "slot": "log",
               "columns": [],
               "rows": [
                 {
@@ -1268,6 +1272,7 @@
               "affordances": [
                 "editor:tool"
               ],
+              "slot": "canvas",
               "tabs": [
                 {
                   "id": "tool:point",
@@ -1424,6 +1429,7 @@
               "affordances": [
                 "editor:symbol"
               ],
+              "slot": "palette",
               "columns": [
                 {
                   "key": "terrain",
@@ -1458,6 +1464,7 @@
               "affordances": [
                 "editor:diagnostic"
               ],
+              "slot": "log",
               "columns": [],
               "rows": [],
               "total": 0,
@@ -1470,6 +1477,7 @@
               "affordances": [
                 "editor:placement"
               ],
+              "slot": "outline",
               "columns": [],
               "rows": [],
               "total": 0,
@@ -1483,6 +1491,7 @@
                 "editor:place_set",
                 "editor:place_apply"
               ],
+              "slot": "inspector",
               "fields": [
                 {
                   "id": "kind",
@@ -1617,6 +1626,7 @@
                 "editor:field_set",
                 "editor:field_apply"
               ],
+              "slot": "inspector",
               "fields": [
                 {
                   "id": "pointer",
@@ -1641,6 +1651,7 @@
                 "editor:mapping_set",
                 "editor:mapping_apply"
               ],
+              "slot": "palette",
               "fields": [
                 {
                   "id": "symbol",
@@ -1780,6 +1791,7 @@
               "affordances": [
                 "editor:catalog_kind"
               ],
+              "slot": "palette",
               "tabs": [
                 {
                   "id": "catalog:terrain",
@@ -2931,6 +2943,7 @@
                 "editor:new_set",
                 "editor:new_apply"
               ],
+              "slot": "inspector",
               "fields": [
                 {
                   "id": "path",
@@ -2993,6 +3006,7 @@
               "affordances": [
                 "editor:export_palette"
               ],
+              "slot": "inspector",
               "fields": [
                 {
                   "id": "palette",
@@ -3010,6 +3024,7 @@
                 "editor:import_set",
                 "editor:import"
               ],
+              "slot": "inspector",
               "fields": [
                 {
                   "id": "import",
@@ -3028,6 +3043,7 @@
                 "editor:browser_open",
                 "editor:browser_filter"
               ],
+              "slot": "outline",
               "columns": [],
               "rows": [
                 {
@@ -3561,7 +3577,8 @@
                 "field_id": "path"
               }
             },
-            "expect": "boundary"
+            "expect": "boundary",
+            "group": "File"
           },
           {
             "id": "editor:new_set",
@@ -3591,14 +3608,16 @@
             "args": {
               "text": {}
             },
-            "expect": "boundary"
+            "expect": "boundary",
+            "group": "World"
           },
           {
             "id": "editor:open_here",
             "label": "Open mapgen here",
             "keys": [],
             "enabled": true,
-            "expect": "screen"
+            "expect": "screen",
+            "group": "World"
           },
           {
             "id": "editor:export",
@@ -3610,14 +3629,16 @@
                 "field_id": "path"
               }
             },
-            "expect": "boundary"
+            "expect": "boundary",
+            "group": "File"
           },
           {
             "id": "editor:export_area",
             "label": "Mark squares to export",
             "keys": [],
             "enabled": true,
-            "expect": "screen"
+            "expect": "screen",
+            "group": "File"
           },
           {
             "id": "editor:export_width",
@@ -3631,7 +3652,8 @@
                 "default": 1
               }
             },
-            "expect": "screen"
+            "expect": "screen",
+            "group": "File"
           },
           {
             "id": "editor:export_height",
@@ -3645,7 +3667,8 @@
                 "default": 1
               }
             },
-            "expect": "screen"
+            "expect": "screen",
+            "group": "File"
           },
           {
             "id": "editor:export_palette",
@@ -3665,7 +3688,8 @@
             "keys": [],
             "enabled": false,
             "denial": "Not available now.",
-            "expect": "screen"
+            "expect": "screen",
+            "group": "World"
           },
           {
             "id": "editor:advance",
@@ -3679,7 +3703,8 @@
                 "default": 60
               }
             },
-            "expect": "screen"
+            "expect": "screen",
+            "group": "World"
           },
           {
             "id": "editor:import_set",
@@ -3742,7 +3767,8 @@
             "label": "Vehicle editor",
             "keys": [],
             "enabled": true,
-            "expect": "screen"
+            "expect": "screen",
+            "group": "World"
           },
           {
             "id": "editor:object",
@@ -3764,7 +3790,8 @@
             ],
             "enabled": false,
             "denial": "Not available now.",
-            "expect": "screen"
+            "expect": "screen",
+            "group": "Edit"
           },
           {
             "id": "editor:redo",
@@ -3774,7 +3801,8 @@
             ],
             "enabled": false,
             "denial": "Not available now.",
-            "expect": "screen"
+            "expect": "screen",
+            "group": "Edit"
           },
           {
             "id": "editor:save",
@@ -3784,7 +3812,8 @@
             ],
             "enabled": false,
             "denial": "Not available now.",
-            "expect": "screen"
+            "expect": "screen",
+            "group": "File"
           },
           {
             "id": "editor:jump",
@@ -3870,7 +3899,8 @@
             ],
             "enabled": false,
             "denial": "No level above in this file.",
-            "expect": "screen"
+            "expect": "screen",
+            "group": "View"
           },
           {
             "id": "editor:level_down",
@@ -3880,7 +3910,8 @@
             ],
             "enabled": false,
             "denial": "No level below in this file.",
-            "expect": "screen"
+            "expect": "screen",
+            "group": "View"
           },
           {
             "id": "editor:tool",
@@ -3930,21 +3961,24 @@
                 "default": 1
               }
             },
-            "expect": "screen"
+            "expect": "screen",
+            "group": "Edit"
           },
           {
             "id": "editor:mirror_x",
             "label": "Mirror across",
             "keys": [],
             "enabled": true,
-            "expect": "screen"
+            "expect": "screen",
+            "group": "Edit"
           },
           {
             "id": "editor:mirror_y",
             "label": "Mirror down",
             "keys": [],
             "enabled": true,
-            "expect": "screen"
+            "expect": "screen",
+            "group": "Edit"
           },
           {
             "id": "editor:copy",
@@ -3954,7 +3988,8 @@
             ],
             "enabled": false,
             "denial": "Not available now.",
-            "expect": "screen"
+            "expect": "screen",
+            "group": "Edit"
           },
           {
             "id": "editor:cut",
@@ -3964,7 +3999,8 @@
             ],
             "enabled": false,
             "denial": "Not available now.",
-            "expect": "screen"
+            "expect": "screen",
+            "group": "Edit"
           },
           {
             "id": "editor:rotate",
@@ -3974,7 +4010,8 @@
             ],
             "enabled": false,
             "denial": "Not available now.",
-            "expect": "screen"
+            "expect": "screen",
+            "group": "Edit"
           },
           {
             "id": "editor:flip_x",
@@ -3984,7 +4021,8 @@
             ],
             "enabled": false,
             "denial": "Not available now.",
-            "expect": "screen"
+            "expect": "screen",
+            "group": "Edit"
           },
           {
             "id": "editor:flip_y",
@@ -3994,7 +4032,8 @@
             ],
             "enabled": false,
             "denial": "Not available now.",
-            "expect": "screen"
+            "expect": "screen",
+            "group": "Edit"
           },
           {
             "id": "editor:paint",
@@ -4030,7 +4069,8 @@
             "args": {
               "text": {}
             },
-            "expect": "boundary"
+            "expect": "boundary",
+            "group": "File"
           },
           {
             "id": "editor:catalog_filter",
@@ -4107,14 +4147,16 @@
               "F7"
             ],
             "enabled": true,
-            "expect": "screen"
+            "expect": "screen",
+            "group": "World"
           },
           {
             "id": "editor:apply_on_save",
             "label": "Apply on save",
             "keys": [],
             "enabled": true,
-            "expect": "screen"
+            "expect": "screen",
+            "group": "World"
           },
           {
             "id": "editor:stamp",
@@ -4123,7 +4165,8 @@
               "F6"
             ],
             "enabled": true,
-            "expect": "screen"
+            "expect": "screen",
+            "group": "World"
           },
           {
             "id": "editor:test",
@@ -4132,7 +4175,8 @@
               "F5"
             ],
             "enabled": true,
-            "expect": "screen"
+            "expect": "screen",
+            "group": "World"
           },
           {
             "id": "editor:preview",
@@ -4148,7 +4192,8 @@
                 "default": 1
               }
             },
-            "expect": "screen"
+            "expect": "screen",
+            "group": "View"
           },
           {
             "id": "editor:loot",
