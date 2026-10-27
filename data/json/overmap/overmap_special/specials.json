@@ -787,7 +787,8 @@
     "overmaps": [
       { "point": [ 0, 0, 0 ], "overmap": "mil_barracks_north" },
       { "point": [ 0, 0, 1 ], "overmap": "mil_barracks_roof_north" },
-      { "point": [ 0, 1, 0 ], "overmap": "mil_barracks_parking_north" }
+      { "point": [ 0, 1, 0 ], "overmap": "mil_barracks_parking_north" },
+      { "point": [ 0, 1, 1 ], "overmap": "mil_barracks_roof_2_north" }
     ],
     "connections": [ { "point": [ 0, 2, 0 ], "from": [ 0, 1, 0 ], "connection": "local_road" } ],
     "locations": [ "field", "forest" ],
