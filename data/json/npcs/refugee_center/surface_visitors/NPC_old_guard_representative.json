@@ -215,7 +215,7 @@
     "value": 300000,
     "start": {
       "assign_mission_target": { "om_terrain": "bandit_camp_1", "om_special": "bandit_camp", "reveal_radius": 1, "min_distance": 10 },
-      "update_mapgen": { "place_npcs": [ { "class": "bandit", "x": 17, "y": 9, "target": true } ] },
+      "update_mapgen": { "place_npcs": [ { "class": "bandit_leader", "x": 17, "y": 9, "target": true } ] },
       "effect": [
         { "u_buy_item": "ruger_redhawk" },
         { "u_buy_item": "44magnum", "count": 17 },
