@@ -19,6 +19,7 @@
 #include "editor/session_page.h"
 #include "editor/special_grid.h"
 #include "engine_client_world.h"
+#include "filesystem.h"
 #include "game.h"
 #include "game_constants.h"
 #include "json_formatter.h"
@@ -100,7 +101,25 @@ constexpr auto max_chunk = 24;
 /// The farthest `editor:placement_span` moves a corner, past any mapgen's rows.
 constexpr auto max_span_move = 1000;
 
-/// The JSON files of the game's data, its mods and the user's mods, in path order.
+/// Whether the JSON file at `path` holds an entry the editor edits.
+auto holds_editable(const std::filesystem::path& path) -> bool {
+    const auto text = read_entire_file(path.string());
+    // Most files name none of the types; only those that do are parsed.
+    if (!std::ranges::any_of(
+            std::array{"\"mapgen\"", "\"palette\"", "\"overmap_special\"", "\"city_building\"",
+                       "\"overmap_terrain\""},
+            [&](const char* type) { return text.contains(type); })) {
+        return false;
+    }
+    const auto parsed = nlohmann::ordered_json::parse(text, nullptr, false);
+    const auto editable = [](const nlohmann::ordered_json& value) {
+        return is_json_mapgen(value) || is_palette(value) || is_special(value) || is_oter(value);
+    };
+    return parsed.is_array() ? std::ranges::any_of(parsed, editable) : editable(parsed);
+}
+
+/// The JSON files of the game's data, its mods and the user's mods that hold an entry the editor
+/// edits, in path order.
 auto data_files() -> std::vector<std::filesystem::path> {
     auto files = std::vector<std::filesystem::path>{};
     for (const auto& root :
@@ -110,7 +129,8 @@ auto data_files() -> std::vector<std::filesystem::path> {
         auto error = std::error_code{};
         for (const auto& entry : std::filesystem::recursive_directory_iterator(
                  root, std::filesystem::directory_options::skip_permission_denied, error)) {
-            if (entry.is_regular_file(error) && entry.path().extension() == ".json") {
+            if (entry.is_regular_file(error) && entry.path().extension() == ".json"
+                && holds_editable(entry.path())) {
                 files.push_back(entry.path());
             }
         }
