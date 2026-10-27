@@ -4333,4 +4333,109 @@ TEST_CASE("a special's square is set, added or removed by a patch", "[editor_spe
     CHECK(editor::square_patch(value, tripoint_rel_omt(5, 5, 0), "").empty());
 }
 
+TEST_CASE(
+    "the editor lists a file's specials past values of other shapes and opens a special on the "
+    "level nearest the ground",
+    "[editor_session][editor_special]") {
+    const auto guard = screen_guard{};
+    auto entries = nlohmann::ordered_json::array(
+        {"a string", 5, {{"type", "overmap_special"}, {"id", "odd"}, {"subtype", 5}}});
+    auto cellar = special_levels()[0];
+    cellar["overmaps"] =
+        {{{"point", {0, 0, -2}}, {"overmap", "field"}},
+         {{"point", {0, 0, 1}}, {"overmap", "forest"}}};
+    entries.push_back(cellar);
+    const auto file = levels_file{entries};
+    const auto level = [](const ec::screen_view& screen) {
+        const auto& stats = body<ec::panel_body>(part(screen, "editor:document")).stats;
+        const auto found = std::ranges::find(stats, "level", &ec::panel_stat::key);
+        return found == stats.end() ? std::string("none") : found->value;
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK(body<ec::list_body>(part(screen, "editor:objects")).rows.size() == 2);
+                return invoke("editor:object", {.row = "object:3"});
+            case 2:
+                CHECK(level(screen) == "1");
+                CHECK(affordance(screen, "editor:level_down").enabled);
+                return invoke("editor:level_down");
+            case 3:
+                // The levels between that place nothing are passed over.
+                CHECK(level(screen) == "-2");
+                CHECK_FALSE(affordance(screen, "editor:level_down").enabled);
+                return invoke("editor:open", {.text = file.path.string()});
+            case 4:
+                return invoke("editor:object", {.row = "object:3"});
+            case 5:
+                CHECK(level(screen) == "1");
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 6);
+}
+
+TEST_CASE(
+    "a special that copies another is not checked alone, and its squares look as the overmap's",
+    "[editor_session][editor_special]") {
+    const auto guard = screen_guard{};
+    auto copied = special_levels()[0];
+    copied.erase("overmaps");
+    copied["copy-from"] = "Hunting Lodge";
+    auto shaped = special_levels()[0];
+    shaped["id"] = "editor_session_test_shaped";
+    shaped["overmaps"] =
+        {{{"point", {0, 0, 0}}, {"overmap", "road_ns"}},
+         {{"point", {1, 0, 0}}, {"overmap", "vending_park_1_north"}}};
+    const auto file = levels_file{nlohmann::ordered_json::array({copied, shaped})};
+    const auto look = [](const ec::screen_view& screen, const std::string& id) {
+        const auto& grid = body<ec::grid_body>(part(screen, "editor:canvas"));
+        const auto found = std::ranges::find(grid.cells, id, &ec::grid_cell::id);
+        REQUIRE(found != grid.cells.end());
+        REQUIRE(found->looks.size() == 1);
+        return grid.looks.at(found->looks.front());
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
+                return invoke("editor:object", {.row = "object:1"});
+            case 2: {
+                CHECK(look(screen, "square:0,0").subtile == "edge");
+                CHECK(look(screen, "square:1,0").looks_like
+                      == std::vector<std::string>{"small_storage_units"});
+                return act("QUIT");
+            }
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 3);
+}
+
+TEST_CASE("a special's square farther than an overmap reaches is left out", "[editor_special]") {
+    auto value = special_levels()[0];
+    value["overmaps"].push_back({{"point", {4000000000LL, 0, 0}}, {"overmap", "field"}});
+    value["overmaps"].push_back({{"point", {0, -OMAPY, 0}}, {"overmap", "field"}});
+    CHECK(editor::special_squares(value).size() == 3);
+}
+
 #endif // CATA_MCP
