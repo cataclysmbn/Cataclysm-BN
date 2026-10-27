@@ -4521,4 +4521,100 @@ TEST_CASE("a special's connection is added beside a square or removed", "[editor
               .empty());
 }
 
+TEST_CASE(
+    "drawing a special stays inside an overmap, reaches new levels and leaves copies alone",
+    "[editor_session][editor_special]") {
+    const auto guard = screen_guard{};
+    auto edge = special_levels()[0];
+    edge["overmaps"].push_back({{"point", {OMAPX - 1, 0, 0}}, {"overmap", "field"}});
+    auto copied = special_levels()[0];
+    copied.erase("overmaps");
+    copied["copy-from"] = "Hunting Lodge";
+    auto mapgen = house_levels()[1];
+    const auto file = levels_file{nlohmann::ordered_json::array({edge, copied, mapgen})};
+    const auto level = [](const ec::screen_view& screen) {
+        const auto& stats = body<ec::panel_body>(part(screen, "editor:document")).stats;
+        const auto found = std::ranges::find(stats, "level", &ec::panel_stat::key);
+        return found == stats.end() ? std::string("none") : found->value;
+    };
+    const auto has_cell = [](const ec::screen_view& screen, const std::string& id) {
+        return std::ranges::contains(
+            body<ec::grid_body>(part(screen, "editor:canvas")).cells, id, &ec::grid_cell::id);
+    };
+    const auto notice = [](const ec::screen_view& screen) {
+        return ec::find_component(*screen.root, "editor:notice") != nullptr;
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                return invoke("editor:catalog_filter", {.text = "forest_thick"});
+            case 2:
+                return invoke("editor:tool", {.row = "tool:point"});
+            case 3:
+                CHECK(has_cell(screen, string_format("square:%d,0", OMAPX - 1)));
+                CHECK_FALSE(has_cell(screen, string_format("square:%d,0", OMAPX)));
+                return invoke("editor:catalog_pick", {.row = "entry:forest_thick"});
+            case 4:
+                CHECK(std::ranges::contains(
+                    body<ec::panel_body>(part(screen, "editor:document")).stats, "forest_thick",
+                    &ec::panel_stat::value));
+                return invoke("editor:paint", {.row = string_format("square:%d,0", OMAPX)});
+            case 5:
+                CHECK(notice(screen));
+                CHECK_FALSE(
+                    body<ec::panel_body>(part(screen, "editor:document")).stats.front().value
+                    == "No");
+                return invoke("editor:level_up");
+            case 6:
+                CHECK(level(screen) == "1");
+                CHECK(affordance(screen, "editor:level_up").enabled);
+                return invoke("editor:level_up");
+            case 7:
+                // A drawing tool goes on to a level the special has not reached yet.
+                CHECK(level(screen) == "2");
+                return invoke("editor:paint", {.row = "square:0,0"});
+            case 8:
+                CHECK(body<ec::panel_body>(part(screen, "editor:document")).stats.front().value
+                      == "No");
+                CHECK(has_cell(screen, "square:0,0"));
+                return invoke("editor:catalog_filter", {.text = "zzz"});
+            case 9:
+                return invoke("editor:object", {.row = "object:1"});
+            case 10:
+                // The squares of a copy come from what it copies, which only the game's data has.
+                return invoke("editor:paint", {.row = "square:0,0"});
+            case 11:
+                CHECK(notice(screen));
+                return invoke("editor:object", {.row = "object:2"});
+            case 12:
+                // The mapgen's catalog does not keep the special's filter.
+                CHECK(body<ec::list_body>(part(screen, "editor:catalog")).filter.empty());
+                return act("QUIT");
+            case 13:
+                return answer("Leave without saving");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 14);
+}
+
+TEST_CASE("a special's squares named twice are all erased and all set", "[editor_special]") {
+    auto value = special_levels()[0];
+    value["overmaps"].push_back({{"point", {1, 0, 0}}, {"overmap", "forest"}});
+    const auto erased = value.patch(editor::square_patch(value, tripoint_rel_omt(1, 0, 0), ""));
+    CHECK(editor::special_squares(erased).size() == 2);
+    const auto set = editor::special_squares(
+        value.patch(editor::square_patch(value, tripoint_rel_omt(1, 0, 0), "forest_thick")));
+    CHECK(std::ranges::count(set, "forest_thick", &editor::special_square::overmap) == 2);
+}
+
 #endif // CATA_MCP
