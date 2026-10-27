@@ -151,6 +151,7 @@ auto mapping_of(const catalog_use& use, const std::string& id) -> std::string {
 auto tool_label(const tool& value) -> std::string {
     if (value.id == "tool:open") { return _("Open mapgen"); }
     if (value.id == "tool:erase") { return _("Eraser"); }
+    if (value.id == "tool:connect") { return _("Connect"); }
     if (value.region == region_use::select) { return _("Select"); }
     if (value.region == region_use::paste) { return _("Paste"); }
     if (value.region == region_use::placements) { return _("Placements"); }
@@ -1004,12 +1005,15 @@ auto session::paint_square(const point& at) -> void {
         return;
     }
     const auto erasing = special_tool->id == std::string("tool:erase");
-    if (!erasing && special_terrain.empty()) {
+    if (special_tool->id == std::string("tool:point") && special_terrain.empty()) {
         notice = _("Pick an overmap terrain in the catalog to draw with.");
         return;
     }
-    const auto patch = square_patch(
-        value, tripoint_rel_omt(at.x, at.y, special_level), erasing ? "" : special_terrain);
+    const auto square = tripoint_rel_omt(at.x, at.y, special_level);
+    const auto patch =
+        special_tool->id == std::string("tool:connect")
+            ? connection_patch(value, square, special_connection)
+            : square_patch(value, square, erasing ? "" : special_terrain);
     if (patch.empty()) { return; }
     if (const auto edited = doc->edit(object, patch); !edited) { notice = edited.error(); }
     reload();

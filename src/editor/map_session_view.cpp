@@ -20,6 +20,7 @@
 #include "map_perception.h"
 #include "output.h"
 #include "overmap/omdata.h"
+#include "overmap/overmap_connection.h"
 #include "overmap/overmapbuffer.h"
 #include "path_info.h"
 #include "regional_settings.h"
@@ -835,11 +836,34 @@ auto level_affordances(const session& state) -> std::vector<ec::affordance> {
              .denial = state.can_climb(-1) ? "" : _("No level below in this file.")})};
 }
 
+/// `cell` showing where a special joins `joined`: faded, as the terrain the connection lays.
+auto connection_cell(
+    ec::grid_cell cell, const special_connection& joined, ec::look_palette& palette)
+    -> ec::grid_cell {
+    const auto id = overmap_connection_id(joined.connection);
+    cell.label = string_format(_("%s connection"), joined.connection);
+    cell.glyph = "+";
+    cell.faded = true;
+    if (!id.is_valid() || !id->default_terrain.is_valid()) { return cell; }
+    const auto& terrain = id->default_terrain.obj();
+    cell.glyph = terrain.get_symbol();
+    cell.color = string_from_color(terrain.color);
+    cell.looks = palette.indexes(
+        {{.kind = "overmap_terrain",
+          .id = terrain.id.str(),
+          .glyph = cell.glyph,
+          .color = cell.color,
+          .looks_like = terrain.looks_like}});
+    return cell;
+}
+
 /// The overmap squares a special or building places on the level shown, over the rectangle of all
 /// its levels and, while drawing, a square of room around it; each opens its terrain's mapgen or
 /// runs the tool.
 auto special_canvas(const session& state) -> ec::component {
-    const auto squares = special_squares(state.doc->objects()[state.object].value);
+    const auto& value = state.doc->objects()[state.object].value;
+    const auto squares = special_squares(value);
+    const auto connections = special_connections(value);
     const auto drawing = state.special_tool->kind.has_value();
     const auto room = point(drawing ? 1 : 0, drawing ? 1 : 0);
     const auto xs =
@@ -858,6 +882,16 @@ auto special_canvas(const session& state) -> ec::component {
         for (auto x = min.x; x <= max.x; ++x) {
             const auto found = std::ranges::
                 find(squares, tripoint_rel_omt(x, y, state.special_level), &special_square::at);
+            const auto joined = std::ranges::find(
+                connections, tripoint_rel_omt(x, y, state.special_level), &special_connection::at);
+            if (found == squares.end() && joined != connections.end()) {
+                cells.push_back(connection_cell(
+                    {.at = {x - min.x, y - min.y},
+                     .id = point_row("square", point(x, y)),
+                     .affordance = drawing ? paint_id : ""},
+                    *joined, palette));
+                continue;
+            }
             if (found == squares.end() && !drawing) { continue; }
             auto cell = ec::grid_cell{
                 .at = {x - min.x, y - min.y},
@@ -1035,6 +1069,18 @@ auto session_view(const session& state) -> ec::screen_view {
                      .select = tool_id,
                      .child = special_canvas(state)}));
                 parts.push_back(catalog_list(state, state.catalog_entries(), affordances));
+                parts.push_back(ec::component{
+                    .id = connection_id,
+                    .affordances = {connection_set_id},
+                    .body = ec::form_body{
+                        .fields = {{.id = "connection",
+                                    .label = _("Connection"),
+                                    .value = state.special_connection}},
+                        .submit = connection_set_id}});
+                affordances.push_back(ec::invoke_affordance(
+                    {.id = connection_set_id,
+                     .label = _("Connection"),
+                     .args = {.text = ec::text_shape{}}}));
                 affordances.push_back(ec::invoke_affordance(
                     {.id = open_square_id,
                      .label = _("Open its mapgen"),

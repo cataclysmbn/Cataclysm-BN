@@ -9,22 +9,31 @@
 
 namespace {
 
-/// The square an entry of `overmaps` places; none for one of another shape.
-auto square_of(const nlohmann::ordered_json& entry) -> std::optional<editor::special_square> {
+/// The point an entry names as `key`; none for one out of an overmap's reach or of another shape.
+auto point_of(const nlohmann::ordered_json& entry, const char* const key)
+    -> std::optional<tripoint_rel_omt> {
     // An overmap is as far as a special can reach.
     const auto within = [](const nlohmann::ordered_json& coordinate) {
         return coordinate.is_number_integer() && coordinate.get<std::int64_t>() > -OMAPX
             && coordinate.get<std::int64_t>() < OMAPX;
     };
-    if (!entry.is_object() || !entry.contains("point") || !entry["point"].is_array()
-        || entry["point"].size() != 3 || !std::ranges::all_of(entry["point"], within)
-        || !entry.contains("overmap") || !entry["overmap"].is_string()) {
+    if (!entry.is_object() || !entry.contains(key) || !entry[key].is_array()
+        || entry[key].size() != 3 || !std::ranges::all_of(entry[key], within)) {
         return std::nullopt;
     }
-    const auto& at = entry["point"];
-    return editor::special_square{
-        .at = tripoint_rel_omt(at[0].get<int>(), at[1].get<int>(), at[2].get<int>()),
-        .overmap = entry["overmap"].get<std::string>()};
+    const auto& at = entry[key];
+    return tripoint_rel_omt(at[0].get<int>(), at[1].get<int>(), at[2].get<int>());
+}
+
+auto json_point(const tripoint_rel_omt& at) -> nlohmann::ordered_json {
+    return nlohmann::ordered_json::array({at.x(), at.y(), at.z()});
+}
+
+/// The square an entry of `overmaps` places; none for one of another shape.
+auto square_of(const nlohmann::ordered_json& entry) -> std::optional<editor::special_square> {
+    const auto at = point_of(entry, "point");
+    if (!at || !entry.contains("overmap") || !entry["overmap"].is_string()) { return std::nullopt; }
+    return editor::special_square{.at = *at, .overmap = entry["overmap"].get<std::string>()};
 }
 
 } // namespace
@@ -83,8 +92,7 @@ auto editor::square_patch(
         !listed || found == value["overmaps"].end()
             ? std::string()
             : "/overmaps/" + std::to_string(found - value["overmaps"].begin());
-    const auto placed =
-        nlohmann::ordered_json{{"point", {at.x(), at.y(), at.z()}}, {"overmap", overmap}};
+    const auto placed = nlohmann::ordered_json{{"point", json_point(at)}, {"overmap", overmap}};
     if (overmap.empty()) {
         if (pointer.empty()) { return nlohmann::ordered_json::array(); }
         return nlohmann::ordered_json::array({{{"op", "remove"}, {"path", pointer}}});
@@ -101,4 +109,54 @@ auto editor::square_patch(
     if ((*found)["overmap"] == overmap) { return nlohmann::ordered_json::array(); }
     return nlohmann::ordered_json::array(
         {{{"op", "replace"}, {"path", pointer + "/overmap"}, {"value", overmap}}});
+}
+
+auto editor::special_connections(const nlohmann::ordered_json& value)
+    -> std::vector<special_connection> {
+    if (!value.is_object() || !value.contains("connections") || !value["connections"].is_array()) {
+        return {};
+    }
+    return value["connections"] | std::views::filter([](const auto& entry) {
+               return point_of(entry, "point") && entry.contains("connection")
+                   && entry["connection"].is_string();
+           })
+         | std::views::transform([](const auto& entry) {
+               return special_connection{
+                   .at = *point_of(entry, "point"),
+                   .connection = entry["connection"].template get<std::string>()};
+           })
+         | std::ranges::to<std::vector>();
+}
+
+auto editor::connection_patch(
+    const nlohmann::ordered_json& value, const tripoint_rel_omt& at, const std::string& connection)
+    -> nlohmann::ordered_json {
+    const auto listed = value.contains("connections") && value["connections"].is_array();
+    if (listed) {
+        const auto& connections = value["connections"];
+        const auto found = std::ranges::find_if(connections, [&](const auto& entry) {
+            return point_of(entry, "point") == at;
+        });
+        if (found != connections.end()) {
+            return nlohmann::ordered_json::array(
+                {{{"op", "remove"},
+                  {"path", "/connections/" + std::to_string(found - connections.begin())}}});
+        }
+    }
+    auto joined = nlohmann::ordered_json{{"point", json_point(at)}, {"connection", connection}};
+    const auto squares = special_squares(value);
+    for (const auto& side : {point_north, point_east, point_south, point_west}) {
+        const auto from = at + tripoint_rel_omt(side.x, side.y, 0);
+        if (std::ranges::contains(squares, from, &special_square::at)) {
+            joined["from"] = json_point(from);
+            break;
+        }
+    }
+    return nlohmann::ordered_json::array(
+        {listed
+             ? nlohmann::ordered_json{{"op", "add"}, {"path", "/connections/-"}, {"value", joined}}
+             : nlohmann::ordered_json{
+                   {"op", "add"},
+                   {"path", "/connections"},
+                   {"value", nlohmann::ordered_json::array({joined})}}});
 }

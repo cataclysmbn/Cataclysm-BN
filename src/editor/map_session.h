@@ -100,6 +100,8 @@ inline constexpr auto open_here_id = "editor:open_here";
 inline constexpr auto level_up_id = "editor:level_up";
 inline constexpr auto level_down_id = "editor:level_down";
 inline constexpr auto open_square_id = "editor:open_square";
+inline constexpr auto connection_id = "editor:connection";
+inline constexpr auto connection_set_id = "editor:connection_set";
 inline constexpr auto browser_id = "editor:browser";
 inline constexpr auto browser_open_id = "editor:browser_open";
 inline constexpr auto browser_filter_id = "editor:browser_filter";
@@ -192,6 +194,7 @@ inline const auto special_tools = std::array{
     tool{.id = "tool:open", .hotkey = "o"},
     tool{.id = "tool:point", .kind = shape_kind::point, .hotkey = "b"},
     tool{.id = "tool:erase", .kind = shape_kind::point, .hotkey = "e"},
+    tool{.id = "tool:connect", .kind = shape_kind::point, .hotkey = "c"},
 };
 
 /// The corners of the rectangle the select tool marked.
@@ -297,6 +300,8 @@ struct session {
     const tool* special_tool = special_tools.data();
     /// The overmap terrain a special's squares are drawn with.
     std::string special_terrain;
+    /// The overmap connection the connect tool joins a special to.
+    std::string special_connection = "local_road";
     /// The overmap squares of the canvas entry over a level the file makes, the squares beside it
     /// the file makes, and the legends of the entries that make them.
     std::vector<stacked_square> below;
@@ -486,7 +491,8 @@ struct session {
     /// Puts back what the stamp replaced.
     auto unstamp() -> void;
 
-    /// Draws or erases the special's square `at` on the level shown, as the tool picked does.
+    /// Draws, erases or connects the special's square `at` on the level shown, as the tool picked
+    /// does.
     auto paint_square(const point& at) -> void;
 
     auto paint(const point& at) -> void;

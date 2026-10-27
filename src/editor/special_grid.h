@@ -17,6 +17,12 @@ struct special_square {
     std::string overmap;
 };
 
+/// Where a special joins an overmap connection, such as a road, to the squares beside it.
+struct special_connection {
+    tripoint_rel_omt at;
+    std::string connection;
+};
+
 /// Whether the entry is an overmap special or a building, which place overmap terrains.
 auto is_special(const nlohmann::ordered_json& value) -> bool;
 
@@ -37,6 +43,16 @@ auto special_squares(const nlohmann::ordered_json& value) -> std::vector<special
 /// nothing changes.
 auto square_patch(
     const nlohmann::ordered_json& value, const tripoint_rel_omt& at, const std::string& overmap)
+    -> nlohmann::ordered_json;
+
+/// The connections a special or building lists, with a point and a connection id.
+auto special_connections(const nlohmann::ordered_json& value) -> std::vector<special_connection>;
+
+/// The RFC 6902 patch that removes the special's connection at `at`, or else adds one of
+/// `connection` there, joined from a square of the special beside it, the first of north, east,
+/// south and west.
+auto connection_patch(
+    const nlohmann::ordered_json& value, const tripoint_rel_omt& at, const std::string& connection)
     -> nlohmann::ordered_json;
 
 /// Loads a special or building entry with the game's loader, finalizes and checks it as the game
