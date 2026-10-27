@@ -388,7 +388,9 @@ auto session::on_oter() const -> bool {
 
 auto session::terrain_mapgens() const -> std::vector<std::string> {
     if (!on_oter()) { return {}; }
-    const auto& id = doc->objects()[object].value["id"];
+    const auto& entry = doc->objects()[object].value;
+    if (!entry.contains("id")) { return {}; }
+    const auto& id = entry["id"];
     const auto types =
         id.is_string() ? std::vector{id.get<std::string>()}
         : id.is_array()
@@ -1096,7 +1098,10 @@ auto session::place_special() -> void {
 auto session::placed_here() const -> std::optional<tripoint_abs_omt> {
     if (!on_special() || !placed) { return std::nullopt; }
     const auto& entry = doc->objects()[object].value;
-    return entry.value("id", "") == placed->id ? std::optional(placed->at) : std::nullopt;
+    const auto named =
+        entry.contains("id") && entry["id"].is_string()
+        && entry["id"].get<std::string>() == placed->id;
+    return named ? std::optional(placed->at) : std::nullopt;
 }
 
 auto session::import_pasted() -> void {

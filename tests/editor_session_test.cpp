@@ -4886,6 +4886,48 @@ TEST_CASE("the editor tests only the special it placed", "[editor_session][edito
     editor::reset_editor_session();
 }
 
+TEST_CASE(
+    "the editor shows entries without a string id, placed or not",
+    "[editor_session][editor_special]") {
+    const auto guard = screen_guard{};
+    auto entries = special_levels();
+    entries.push_back({{"type", "overmap_terrain"}, {"name", "unnamed terrain"}});
+    const auto file = levels_file{entries};
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                return invoke("editor:place_special");
+            case 2:
+                return invoke("editor:field_set", {.row = "pointer", .text = "/id"});
+            case 3:
+                return invoke("editor:field_set", {.row = "value", .text = "5"});
+            case 4:
+                return invoke("editor:field_apply");
+            case 5:
+                // A special named by no string is refused, so the one placed stays open.
+                CHECK(ec::find_component(*screen.root, "editor:notice"));
+                CHECK(affordance(screen, "editor:test").enabled);
+                return invoke("editor:object", {.row = "object:1"});
+            case 6:
+                CHECK(body<ec::list_body>(part(screen, "editor:objects")).rows.size() == 2);
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:terrains"));
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 7);
+    editor::reset_editor_session();
+}
+
 TEST_CASE("the editor places no special that copies another", "[editor_session][editor_special]") {
     const auto guard = screen_guard{};
     auto entries = special_levels();
