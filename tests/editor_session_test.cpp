@@ -1369,12 +1369,18 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "a symbol pasted into a document whose legend lacks it is written without a notice",
+    "a paste brings the copied file's mapping of a symbol the target lacks, and keeps the target's "
+    "own mapping, saying so",
     "[editor_session][engine_client_component]") {
     const auto guard = screen_guard{};
     const auto from = mod_file(walled_rows(), "a.json");
     const auto into =
         mod_file(nlohmann::ordered_json::parse(R"({"terrain": {".": "t_floor"}})"), "b.json");
+    const auto other = mod_file(
+        nlohmann::ordered_json::parse(R"({"terrain": {".": "t_floor", "#": "t_rock"}})"), "c.json");
+    const auto notice = [](const ec::screen_view& screen) {
+        return body<ec::text_body>(part(screen, "editor:notice")).markup;
+    };
     auto step = 0;
 
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
@@ -1400,9 +1406,25 @@ TEST_CASE(
             case 8:
                 CHECK(walls(screen) == 3);
                 CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
-                return act("QUIT");
+                CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
+                return invoke("editor:undo");
             case 9:
-                return answer("Leave without saving");
+                // One undo takes back the squares and the mapping together.
+                CHECK(walls(screen) == 0);
+                CHECK(saved(screen) == "Yes");
+                return invoke("editor:redo");
+            case 10:
+                return invoke("editor:save");
+            case 11:
+                return invoke("editor:open", {.text = other.path.string()});
+            case 12:
+                return invoke("editor:paint", {.row = "square:4,4"});
+            case 13:
+                CHECK(walls(screen) == 3);
+                CHECK(notice(screen) == "Pasted symbols keep what this entry maps them to: #");
+                return invoke("editor:save");
+            case 14:
+                return act("QUIT");
             default:
                 FAIL("the editor outlived its exit");
                 return act("QUIT");
@@ -1410,7 +1432,11 @@ TEST_CASE(
     });
 
     editor::run_editor_session();
-    CHECK(step == 10);
+    CHECK(step == 15);
+    CHECK(object_of(into.path)["terrain"]
+          == nlohmann::ordered_json::parse(R"({".": "t_floor", "#": "t_wall"})"));
+    CHECK(object_of(other.path)["terrain"]
+          == nlohmann::ordered_json::parse(R"({".": "t_floor", "#": "t_rock"})"));
 }
 
 TEST_CASE(
