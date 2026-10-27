@@ -4438,4 +4438,87 @@ TEST_CASE("a special's square farther than an overmap reaches is left out", "[ed
     CHECK(editor::special_squares(value).size() == 3);
 }
 
+TEST_CASE(
+    "the editor's connect tool joins a special to a road beside it and parts them again",
+    "[editor_session][editor_special]") {
+    const auto guard = screen_guard{};
+    const auto file = levels_file{special_levels()};
+    const auto connections = [&] {
+        const auto saved = nlohmann::ordered_json::parse(read_file(file.path))[0];
+        return saved.value("connections", nlohmann::ordered_json::array());
+    };
+    const auto shown = [](const ec::screen_view& screen, const std::string& id) {
+        const auto& cells = body<ec::grid_body>(part(screen, "editor:canvas")).cells;
+        const auto found = std::ranges::find(cells, id, &ec::grid_cell::id);
+        REQUIRE(found != cells.end());
+        return *found;
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK(body<ec::form_body>(part(screen, "editor:connection")).fields.front().value
+                      == "local_road");
+                return invoke("editor:tool", {.row = "tool:connect"});
+            case 2:
+                return invoke("editor:paint", {.row = "square:-1,0"});
+            case 3:
+                CHECK(shown(screen, "square:-1,0").faded);
+                CHECK(shown(screen, "square:-1,0").label.find("local_road") != std::string::npos);
+                return invoke("editor:save");
+            case 4: {
+                const auto saved = connections();
+                REQUIRE(saved.size() == 1);
+                CHECK(saved[0]["point"] == nlohmann::ordered_json::array({-1, 0, 0}));
+                CHECK(saved[0]["connection"] == "local_road");
+                CHECK(saved[0]["from"] == nlohmann::ordered_json::array({0, 0, 0}));
+                return invoke("editor:paint", {.row = "square:-1,0"});
+            }
+            case 5:
+                CHECK_FALSE(shown(screen, "square:-1,0").faded);
+                return invoke("editor:connection_set", {.text = "no_such_connection"});
+            case 6:
+                return invoke("editor:paint", {.row = "square:2,0"});
+            case 7:
+                // The loader names a connection the game does not have.
+                CHECK(std::ranges::any_of(
+                    body<ec::list_body>(part(screen, "editor:diagnostics")).rows,
+                    [](const ec::row& row) {
+                        return row.label.find("no_such_connection") != std::string::npos;
+                    }));
+                return invoke("editor:save");
+            case 8:
+                CHECK(connections().size() == 1);
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 9);
+}
+
+TEST_CASE("a special's connection is added beside a square or removed", "[editor_special]") {
+    const auto value = special_levels()[0];
+    const auto added = value.patch(
+        editor::connection_patch(value, tripoint_rel_omt(0, 1, 0), "local_road"));
+    const auto joined = editor::special_connections(added);
+    REQUIRE(joined.size() == 1);
+    CHECK(joined[0].at == tripoint_rel_omt(0, 1, 0));
+    CHECK(added["connections"][0]["from"] == nlohmann::ordered_json::array({0, 0, 0}));
+    // A square with no square of the special beside it has no side to join from.
+    const auto alone = value.patch(
+        editor::connection_patch(value, tripoint_rel_omt(5, 5, 0), "local_road"));
+    CHECK_FALSE(alone["connections"][0].contains("from"));
+    CHECK(editor::special_connections(
+              added.patch(editor::connection_patch(added, tripoint_rel_omt(0, 1, 0), "local_road")))
+              .empty());
+}
+
 #endif // CATA_MCP
