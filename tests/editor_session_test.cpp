@@ -2304,6 +2304,9 @@ TEST_CASE(
                 CHECK(history(screen).size() == 2);
                 CHECK(history(screen)[1].selected);
                 CHECK(history(screen)[0].description == "Saved");
+                // A step says what it changed in words, not as a JSON pointer.
+                CHECK(history(screen)[0].label == "Opened");
+                CHECK(history(screen)[1].label == "Change rows");
                 return invoke("editor:jump", {.row = "step:0"});
             case 6:
                 CHECK(walls(screen) == 0);
