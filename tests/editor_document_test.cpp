@@ -167,6 +167,28 @@ TEST_CASE(
     CHECK(doc->depth() == 1);
 }
 
+TEST_CASE("undoing or redoing ends an open group", "[editor_document]") {
+    auto doc = editor::document::parse("three.json", three_objects);
+    REQUIRE(doc);
+    const auto replace = [](const std::string& value) {
+        return ordered_json::array({{{"op", "replace"}, {"path", "/id"}, {"value", value}}});
+    };
+    doc->begin_group();
+    REQUIRE(doc->edit(0, replace("a")));
+    REQUIRE(doc->undo());
+    // The step the group folded into is gone, so an edit after it starts a step of its own.
+    REQUIRE_FALSE(doc->grouping());
+    REQUIRE(doc->edit(0, replace("b")));
+    CHECK(doc->depth() == 1);
+    doc->begin_group();
+    REQUIRE(doc->edit(0, replace("c")));
+    REQUIRE(doc->undo());
+    REQUIRE(doc->redo());
+    CHECK_FALSE(doc->grouping());
+    REQUIRE(doc->edit(0, replace("d")));
+    CHECK(doc->depth() == 3);
+}
+
 TEST_CASE("a refused patch changes nothing and leaves no undo step", "[editor_document]") {
     auto doc = editor::document::parse("three.json", three_objects);
     REQUIRE(doc);
