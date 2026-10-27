@@ -1515,7 +1515,7 @@ TEST_CASE(
     const auto context = input_context("TEST_WORKSPACE");
     const auto scope = ec::screen_scope(
         context, "test",
-        {.role = "workspace", .view = [](const auto&) {
+        {.role = "workspace", .view = [](const auto& /*state*/) {
              return ec::screen_view{
                  .root = ec::split(
                      {.id = "split:root",
@@ -1532,9 +1532,11 @@ TEST_CASE(
     CHECK_FALSE(children[1].contains("slot"));
     const auto& affordances = screen["affordances"];
     const auto of = [&](const std::string& id) {
-        return *std::ranges::find_if(affordances, [&](const nlohmann::json& entry) {
+        const auto found = std::ranges::find_if(affordances, [&](const nlohmann::json& entry) {
             return entry["id"].get<std::string>() == id;
         });
+        REQUIRE(found != affordances.end());
+        return *found;
     };
     CHECK(of("own:save")["group"] == "File");
     CHECK_FALSE(of("own:loose").contains("group"));
