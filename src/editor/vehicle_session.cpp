@@ -47,6 +47,7 @@ namespace ec = engine_client;
 
 constexpr auto prototypes_id = "vehicle:prototypes";
 constexpr auto grid_id = "vehicle:grid";
+constexpr auto turned_id = "vehicle:turned";
 constexpr auto stack_id = "vehicle:stack";
 constexpr auto parts_id = "vehicle:parts";
 constexpr auto field_id = "vehicle:field";
@@ -695,6 +696,54 @@ auto grid_of(const vehicle* const veh, std::vector<point> mounts, const point& c
             .role = "canvas"}};
 }
 
+/// The squares the vehicle `veh` covers on the map when it faces `facing` degrees clockwise from
+/// east, as the game turns it, each showing the part shown on the mount that lands there.
+auto turned_grid(const vehicle& veh, const int facing) -> ec::component {
+    const auto dir = units::from_degrees(facing);
+    const auto pivot = veh.pivot_point();
+    struct landed {
+        point at;
+        int part;
+    };
+    auto squares = std::vector<landed>{};
+    for (auto index = 0; index < veh.part_count(); ++index) {
+        if (veh.cpart(index).removed) { continue; }
+        const auto mount = veh.cpart(index).mount;
+        const auto shown = veh.part_displayed_at(mount);
+        if (shown < 0 || std::ranges::contains(squares, shown, &landed::part)) { continue; }
+        auto at = point_rel_ms{};
+        veh.coord_translate(dir, pivot, mount, at);
+        squares.push_back({.at = at.raw(), .part = shown});
+    }
+    if (squares.empty()) { return {.id = turned_id, .body = ec::grid_body{}}; }
+    const auto [min_x, max_x] = std::ranges::minmax(
+        squares | std::views::transform([](const landed& square) { return square.at.x; }));
+    const auto [min_y, max_y] = std::ranges::minmax(
+        squares | std::views::transform([](const landed& square) { return square.at.y; }));
+    auto palette = ec::look_palette{};
+    const auto cells =
+        squares | std::views::transform([&](const landed& square) {
+            const auto relative = to_degrees(
+                normalize(veh.part_display_direction(square.part) - veh.face.dir()));
+            return ec::grid_cell{
+                .at = {square.at.x - min_x, square.at.y - min_y},
+                .glyph = std::string(1, veh.part_sym(square.part)),
+                .label = remove_color_tags(veh.cpart(square.part).name(false)),
+                .color = string_from_color(veh.part_color(square.part)),
+                .looks = palette.indexes({engine_client::world::vehicle_part_appearance(
+                    veh, square.part, static_cast<int>(std::round(relative + facing)) % 360)})};
+        })
+        | std::ranges::to<std::vector>();
+    return {
+        .id = turned_id,
+        .label = _("Facing"),
+        .body = ec::grid_body{
+            .cols = max_x - min_x + 1,
+            .rows = max_y - min_y + 1,
+            .cells = cells,
+            .looks = std::move(palette.looks)}};
+}
+
 /// The parts the world's vehicle has on the picked mount, in the order the game installed them.
 auto live_stack(const session& state) -> ec::component {
     const auto& veh = *state.live;
@@ -1087,7 +1136,7 @@ auto session_view(const session& state) -> ec::screen_view {
                  .selection = "single"});
         }
         if (tab == "spawn") {
-            return {
+            auto form = ec::component{
                 .id = spawn_form_id,
                 .affordances = {spawn_set_id, spawn_id},
                 .body = ec::form_body{
@@ -1112,6 +1161,11 @@ auto session_view(const session& state) -> ec::screen_view {
                                       {.id = "-1", .label = _("Lightly damaged")},
                                       {.id = "1", .label = _("Disabled")}}}},
                     .submit = spawn_id}};
+            if (!state.built.blueprint) { return form; }
+            return ec::split(
+                {.id = "vehicle:spawn",
+                 .children = {std::move(form),
+                              turned_grid(*state.built.blueprint, state.spawning.facing)}});
         }
         if (tab == "json") {
             return {
