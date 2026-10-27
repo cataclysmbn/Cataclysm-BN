@@ -24,6 +24,7 @@
 #include "json_formatter.h"
 #include "map/mapdata.h"
 #include "overmap/omdata.h"
+#include "overmap/overmap_special.h"
 #include "path_info.h"
 #include "player_activity.h"
 #include "string_formatter.h"
@@ -31,6 +32,7 @@
 #include "type_id.h"
 
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <charconv>
 #include <cstdlib>
@@ -211,11 +213,31 @@ auto write_new_file(const std::string& made, const nlohmann::ordered_json& entri
 
 auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string> {
     if (auto checked = check_new_path(made.path); !checked) { return checked; }
-    if (made.kind != "mapgen" && made.kind != "nested" && made.kind != "palette") {
-        return std::unexpected(_("A new file holds a mapgen, a nested chunk or a palette."));
+    if (!std::ranges::
+            contains(std::array{"mapgen", "nested", "palette", "special", "building"}, made.kind)) {
+        return std::unexpected(_(
+            "A new file holds a mapgen, a nested chunk, a palette, an overmap special or a "
+            "building."));
     }
     if (made.om_terrain.empty()) {
         return std::unexpected(_("A mapgen names its overmap terrain."));
+    }
+    if (made.kind == "special" || made.kind == "building") {
+        // Buildings are specials to the loader, which keeps one of an id.
+        if (overmap_special_id(made.om_terrain).is_valid()) {
+            return std::unexpected(string_format(
+                _("%s names an overmap special or building already."), made.om_terrain));
+        }
+        if (!oter_str_id(made.fill).is_valid()) {
+            return std::unexpected(string_format(_("%s is no overmap terrain."), made.fill));
+        }
+        auto entry = nlohmann::ordered_json{
+            {"type", made.kind == "special" ? "overmap_special" : "city_building"},
+            {"id", made.om_terrain},
+            {"overmaps", {{{"point", {0, 0, 0}}, {"overmap", made.fill}}}},
+            {"locations", {"land"}}};
+        if (made.kind == "special") { entry["occurrences"] = {0, 1}; }
+        return write_new_file(made.path, nlohmann::ordered_json::array({entry}));
     }
     if (!ter_str_id(made.fill).is_valid()) {
         return std::unexpected(string_format(_("%s is no terrain."), made.fill));

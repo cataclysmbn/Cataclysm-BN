@@ -3026,6 +3026,14 @@
                     {
                       "id": "palette",
                       "label": "Palette"
+                    },
+                    {
+                      "id": "special",
+                      "label": "Overmap special"
+                    },
+                    {
+                      "id": "building",
+                      "label": "Building"
                     }
                   ]
                 },

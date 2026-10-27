@@ -244,14 +244,15 @@ inline const auto catalog_uses = std::array{
 
 
 /// What the new mapgen form writes: a file of the user mods holding one mapgen of an overmap
-/// terrain, one nested chunk of that id, its squares all one terrain, or one palette of that id
-/// mapping a symbol to that terrain.
+/// terrain, one nested chunk of that id, its squares all one terrain, one palette of that id
+/// mapping a symbol to that terrain, or one overmap special or building of that id placing an
+/// overmap terrain on one square.
 struct new_mapgen {
     std::string path;
     /// The id of the overmap terrain, of the chunk or of the palette.
     std::string om_terrain;
     std::string fill = "t_floor";
-    /// `mapgen`, `nested` or `palette`.
+    /// `mapgen`, `nested`, `palette`, `special` or `building`.
     std::string kind = "mapgen";
     /// The side of a nested chunk, in squares.
     std::string size = "4";

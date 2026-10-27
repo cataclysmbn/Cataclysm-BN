@@ -726,16 +726,27 @@ auto new_file_form(const session& state) -> ec::component {
                  {.id = "om_terrain",
                   .label = state.made.kind == "palette" ? _("Palette id")
                          : state.made.kind == "nested"  ? _("Chunk id")
-                                                        : _("Overmap terrain"),
+                         : state.made.kind == "special" ? _("Special id")
+                         : state.made.kind == "building"
+                             ? _("Building id")
+                             : _("Overmap terrain"),
                   .value = state.made.om_terrain},
-                 {.id = "fill", .label = _("Terrain"), .value = state.made.fill},
+                 {.id = "fill",
+                  // A special's first square places an overmap terrain.
+                  .label = state.made.kind == "special" || state.made.kind == "building"
+                             ? _("Overmap terrain")
+                             : _("Terrain"),
+                  .value = state.made.fill},
                  {.id = "kind",
                   .label = _("Kind"),
                   .value = state.made.kind,
                   .type = "select",
-                  .options = {{.id = "mapgen", .label = _("Mapgen")},
-                              {.id = "nested", .label = _("Nested chunk")},
-                              {.id = "palette", .label = _("Palette")}}},
+                  .options =
+                      {{.id = "mapgen", .label = _("Mapgen")},
+                       {.id = "nested", .label = _("Nested chunk")},
+                       {.id = "palette", .label = _("Palette")},
+                       {.id = "special", .label = _("Overmap special")},
+                       {.id = "building", .label = _("Building")}}},
                  {.id = "size", .label = _("Chunk size"), .value = state.made.size}},
             .submit = new_apply_id}};
 }
