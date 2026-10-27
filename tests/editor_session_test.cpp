@@ -90,11 +90,13 @@ auto read_file(const std::filesystem::path& path) -> std::string {
 
 /// A mod file of one 24x24 mapgen of floor with a wall symbol, removed when the test ends.
 struct mod_file {
-    std::filesystem::path path =
-        std::filesystem::path(PATH_INFO::user_moddir()) / "editor_session_test" / "floor.json";
+    std::filesystem::path path;
     std::string text;
 
-    explicit mod_file(const nlohmann::ordered_json& extra = nlohmann::ordered_json::object()) {
+    explicit mod_file(
+        const nlohmann::ordered_json& extra = nlohmann::ordered_json::object(),
+        const std::string& name = "floor.json")
+        : path(std::filesystem::path(PATH_INFO::user_moddir()) / "editor_session_test" / name) {
         auto rows = nlohmann::ordered_json::array();
         for (auto row = 0; row < 24; ++row) { rows.push_back(std::string(24, '.')); }
         const auto entry = nlohmann::ordered_json::array(
@@ -1229,6 +1231,186 @@ TEST_CASE(
     editor::run_editor_session();
     CHECK(step == 14);
     CHECK(read_file(file.path) == file.text);
+}
+
+namespace {
+/// Rows of 24 floor squares with a wall at columns 1 to 3 of row 1, and a monster on the middle
+/// one.
+auto walled_rows() -> nlohmann::ordered_json {
+    auto rows = nlohmann::ordered_json::array();
+    for (auto row = 0; row < 24; ++row) {
+        rows.push_back(
+            row == 1 ? "." + std::string(3, '#') + std::string(20, '.') : std::string(24, '.'));
+    }
+    return {{"rows", rows},
+            {"place_monster",
+             nlohmann::ordered_json::parse(R"([{"monster": "mon_zombie", "x": 2, "y": 1}])")}};
+}
+auto object_of(const std::filesystem::path& path) -> nlohmann::ordered_json {
+    return nlohmann::ordered_json::parse(read_file(path))[0]["object"];
+}
+auto placement_rows(const ec::screen_view& screen) {
+    return body<ec::list_body>(part(screen, "editor:placements")).rows;
+}
+} // namespace
+
+TEST_CASE(
+    "a copy from one document pastes into another opened later, with its placements, as one undo",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto from = mod_file(walled_rows(), "a.json");
+    const auto into = mod_file(nlohmann::ordered_json::object(), "b.json");
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = from.path.string()});
+            case 1:
+                return invoke("editor:tool", {.row = "tool:select"});
+            case 2:
+                return invoke("editor:paint", {.row = "square:1,1"});
+            case 3:
+                return invoke("editor:paint", {.row = "square:3,2"});
+            case 4:
+                return invoke("editor:copy");
+            case 5:
+                return invoke("editor:open", {.text = into.path.string()});
+            case 6:
+                // The other document has no walls and no placements; the clipboard stays.
+                CHECK(walls(screen) == 0);
+                CHECK(placement_rows(screen).empty());
+                CHECK(affordance(screen, "editor:rotate").enabled);
+                return invoke("editor:tool", {.row = "tool:paste"});
+            case 7:
+                return invoke("editor:paint", {.row = "square:10,10"});
+            case 8:
+                CHECK(walls(screen) == 3);
+                CHECK(cell(screen, 10, 10).glyph == "#");
+                CHECK(cell(screen, 12, 10).glyph == "#");
+                REQUIRE(placement_rows(screen).size() == 1);
+                CHECK(placement_rows(screen)[0].columns[0].value == "11");
+                CHECK(placement_rows(screen)[0].columns[1].value == "10");
+                return invoke("editor:undo");
+            case 9:
+                CHECK(walls(screen) == 0);
+                CHECK(placement_rows(screen).empty());
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 10);
+    CHECK(read_file(from.path) == from.text);
+    CHECK(read_file(into.path) == into.text);
+}
+
+TEST_CASE(
+    "a cut in one document stays cut there and pastes into another opened later",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto from = mod_file(walled_rows(), "a.json");
+    const auto into = mod_file(nlohmann::ordered_json::object(), "b.json");
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = from.path.string()});
+            case 1:
+                return invoke("editor:tool", {.row = "tool:select"});
+            case 2:
+                return invoke("editor:paint", {.row = "square:1,1"});
+            case 3:
+                return invoke("editor:paint", {.row = "square:3,2"});
+            case 4:
+                return invoke("editor:inside", {.row = "symbol:."});
+            case 5:
+                return invoke("editor:cut");
+            case 6:
+                CHECK(walls(screen) == 0);
+                CHECK(placement_rows(screen).empty());
+                return invoke("editor:save");
+            case 7:
+                return invoke("editor:open", {.text = into.path.string()});
+            case 8:
+                return invoke("editor:tool", {.row = "tool:paste"});
+            case 9:
+                return invoke("editor:paint", {.row = "square:5,5"});
+            case 10:
+                CHECK(walls(screen) == 3);
+                CHECK(cell(screen, 5, 5).glyph == "#");
+                REQUIRE(placement_rows(screen).size() == 1);
+                CHECK(placement_rows(screen)[0].columns[0].value == "6");
+                CHECK(placement_rows(screen)[0].columns[1].value == "5");
+                return act("QUIT");
+            case 11:
+                return answer("Leave without saving");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 12);
+    // The first document keeps the cut: its wall row is floor again and its monster is gone.
+    const auto left = object_of(from.path);
+    CHECK(left["rows"][1].get<std::string>() == std::string(24, '.'));
+    CHECK_FALSE(left.contains("place_monster"));
+    CHECK(read_file(into.path) == into.text);
+}
+
+TEST_CASE(
+    "a symbol pasted into a document whose legend lacks it is written without a notice",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto from = mod_file(walled_rows(), "a.json");
+    const auto into =
+        mod_file(nlohmann::ordered_json::parse(R"({"terrain": {".": "t_floor"}})"), "b.json");
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = from.path.string()});
+            case 1:
+                return invoke("editor:tool", {.row = "tool:select"});
+            case 2:
+                return invoke("editor:paint", {.row = "square:1,1"});
+            case 3:
+                return invoke("editor:paint", {.row = "square:3,1"});
+            case 4:
+                return invoke("editor:copy");
+            case 5:
+                return invoke("editor:open", {.text = into.path.string()});
+            case 6:
+                return invoke("editor:tool", {.row = "tool:paste"});
+            case 7:
+                return invoke("editor:paint", {.row = "square:4,4"});
+            case 8:
+                CHECK(walls(screen) == 3);
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                return act("QUIT");
+            case 9:
+                return answer("Leave without saving");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 10);
 }
 
 TEST_CASE(
