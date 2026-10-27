@@ -2521,7 +2521,9 @@ int manualnoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &
     if( t ) {
         return 0;
     }
-    if( it.type->charges_to_use() != 0 && it.charges < it.type->charges_to_use() ) {
+    const auto charges_required = is_digital_file( it ) && !it.is_tool() ? 0 :
+                                  it.type->charges_to_use();
+    if( charges_required != 0 && it.charges < charges_required ) {
         p.add_msg_if_player( _( no_charges_message ) );
         return 0;
     }
@@ -2543,13 +2545,15 @@ int manualnoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &
         }
         p.add_msg_if_player( _( use_message ) );
     }
-    return it.type->charges_to_use();
+    return charges_required;
 }
 
 ret_val<bool> manualnoise_actor::can_use( const Character &, const item &it, bool,
         const tripoint_bub_ms & ) const
 {
-    if( it.charges < it.type->charges_to_use() ) {
+    const auto charges_required = is_digital_file( it ) && !it.is_tool() ? 0 :
+                                  it.type->charges_to_use();
+    if( charges_required != 0 && it.charges < charges_required ) {
         return ret_val<bool>::make_failure( _( "This tool doesn't have enough charges." ) );
     }
 

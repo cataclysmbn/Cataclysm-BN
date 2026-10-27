@@ -54,6 +54,15 @@
     "use_action": { "type": "transform", "target": "test_digital_instruction", "moves": 0, "msg": "You open the lesson." }
   },
   {
+    "id": "test_digital_charged_program",
+    "copy-from": "digital_hello_world",
+    "type": "TOOL",
+    "name": { "str": "test charged program" },
+    "initial_charges": 1,
+    "max_charges": 1,
+    "charges_per_use": 1
+  },
+  {
     "id": "test_digital_photo_album",
     "copy-from": "digital_collection",
     "type": "GENERIC",

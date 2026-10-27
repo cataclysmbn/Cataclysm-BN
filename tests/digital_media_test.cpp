@@ -202,6 +202,44 @@ TEST_CASE("digital_item_actions_require_installation", "[digital_media][iuse]") 
     CHECK(installed_file.typeId() == itype_id("test_digital_instruction"));
 }
 
+TEST_CASE("hello_world_runs_repeatedly_using_a_powered_reader", "[digital_media][iuse]") {
+    auto dummy = avatar{};
+    auto device = item::spawn("eink_tablet_pc");
+    auto& reader = *device;
+    reader.ammo_set(itype_id("battery"), 10);
+    auto executable = item::spawn("digital_hello_world");
+    auto& file = *executable;
+    REQUIRE(file.charges == 0);
+    reader.put_in(std::move(executable));
+    dummy.i_add(std::move(device));
+    const auto* action = file.get_use("manualnoise");
+    REQUIRE(action != nullptr);
+    CHECK(action->can_call(dummy, file, false, dummy.bub_pos()).success());
+
+    const auto original_moves = dummy.moves;
+    dummy.invoke_item(&file, "manualnoise");
+    CHECK(dummy.moves == original_moves - 100);
+    dummy.invoke_item(&file, "manualnoise");
+    CHECK(dummy.moves == original_moves - 200);
+    CHECK(file.charges == 0);
+    CHECK(file.typeId() == itype_id("digital_hello_world"));
+    CHECK(reader.contents.num_item_stacks() == 1);
+
+    reader.ammo_unset();
+    dummy.invoke_item(&file, "manualnoise");
+    CHECK(dummy.moves == original_moves - 200);
+}
+
+TEST_CASE("digital_tool_actions_keep_explicit_charge_requirements", "[digital_media][iuse]") {
+    auto dummy = avatar{};
+    const auto tool = item::spawn("test_digital_charged_program");
+    const auto* action = tool->get_use("manualnoise");
+    REQUIRE(action != nullptr);
+    CHECK(action->can_call(dummy, *tool, false, dummy.bub_pos()).success());
+    tool->ammo_unset();
+    CHECK_FALSE(action->can_call(dummy, *tool, false, dummy.bub_pos()).success());
+}
+
 TEST_CASE("digital_study_uses_the_reader", "[digital_media][reading]") {
     clear_all_state();
     const auto cleanup = on_out_of_scope([]() { clear_all_state(); });

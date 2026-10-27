@@ -50,6 +50,12 @@ their normal cost and behavior. The tablet additionally charges one device use
 for its browse operation. Destructive actions can therefore remove their file;
 actions intended to be repeatable should not consume it.
 
+`digital_hello_world` (`hello_world.exe`) is a minimal executable example found
+on personal SD cards. Copy it to a powered reader and choose **Browse digital
+files → hello_world.exe → Run** to print **Hello, world!**. Its JSON
+`manualnoise` action uses `noise: 0` to display a message silently. The file is
+preserved and can be run repeatedly.
+
 ## Recipe reference files
 
 Reference files are `GENERIC` items, separate from instructional `BOOK` files.
