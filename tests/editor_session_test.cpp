@@ -1464,7 +1464,7 @@ TEST_CASE(
             case 2:
                 return invoke("editor:paint", {.row = "square:0,1"});
             case 3:
-                return invoke("editor:paint", {.row = "square:3,1"});
+                return invoke("editor:paint", {.row = "square:1,1"});
             case 4:
                 return invoke("editor:copy");
             case 5:
@@ -1472,7 +1472,7 @@ TEST_CASE(
             case 6:
                 return invoke("editor:tool", {.row = "tool:paste"});
             case 7:
-                // Only the `.` lands; the walls fall past the last column.
+                // Only the `.` lands; the wall falls past the last column.
                 return invoke("editor:paint", {.row = "square:23,4"});
             case 8:
                 CHECK(walls(screen) == 0);

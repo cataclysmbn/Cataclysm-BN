@@ -245,8 +245,16 @@ struct session {
         }
         const auto kept_cursor = cursor;
         const auto kept_pointer = field_pointer;
-        open_file(doc->path(), prototype().value("id", ""));
-        if (!notice.empty()) { return; }
+        const auto path = doc->path();
+        const auto id = prototype().value("id", "");
+        open_file(path, id);
+        if (!notice.empty()) {
+            // Nothing is edited, so a file that lost the prototype closes it.
+            doc.reset();
+            notice =
+                string_format(_("%s changed on disk and no longer defines %s."), path.string(), id);
+            return;
+        }
         cursor = kept_cursor;
         field_pointer = kept_pointer;
         reload();

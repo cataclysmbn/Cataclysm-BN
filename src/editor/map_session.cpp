@@ -69,6 +69,8 @@ auto editable_place(const std::filesystem::path& path) -> bool {
 }
 
 constexpr auto max_chunk = 24;
+/// The farthest `editor:placement_span` moves a corner, past any mapgen's rows.
+constexpr auto max_span_move = 1000;
 
 /// The JSON files of the game's data, its mods and the user's mods, in path order.
 auto data_files() -> std::vector<std::filesystem::path> {
@@ -685,6 +687,12 @@ auto session::span_placement(const std::string& row, const std::string& text) ->
             return;
         }
     }
+    if (std::ranges::any_of(moves, [](const int value) {
+            return std::abs(value) > max_span_move;
+        })) {
+        notice = string_format(_("A placement moves at most %d squares."), max_span_move);
+        return;
+    }
     const auto x = placement_range{.min = found->x.min + moves[0], .max = found->x.max + moves[2]};
     const auto y = placement_range{.min = found->y.min + moves[1], .max = found->y.max + moves[3]};
     if (x.max < x.min || y.max < y.min) {
@@ -770,31 +778,61 @@ auto session::cut() -> void {
 }
 
 auto session::paste_at(const point& at) -> void {
-    doc->begin_group();
-    const auto depth = doc->depth();
+    // Only symbols that land on the rows matter here; the rest of the clipboard falls past them.
+    const auto grid = symbols_of(*doc, object);
+    auto landing = std::set<std::string>{};
+    for (auto y = 0; y < static_cast<int>(clip.size()); ++y) {
+        for (auto x = 0; x < static_cast<int>(clip[y].size()); ++x) {
+            const auto to = at + point(x, y);
+            if (to.y >= 0 && to.y < static_cast<int>(grid.size()) && to.x >= 0
+                && to.x < static_cast<int>(grid[to.y].size())) {
+                landing.insert(clip[y][x]);
+            }
+        }
+    }
     const auto mapped = [](const legend_line& line) { return std::pair{line.layer, line.value}; };
-    auto done = std::expected<void, std::string>{};
-    // A symbol the entry lacks comes with what it placed where it was copied; one it maps keeps
-    // that meaning.
+    // A symbol the entry maps or uses keeps its meaning here; one it lacks comes with what it
+    // placed where it was copied, unless that reads the parameters it had there.
     auto kept = std::vector<std::string>{};
+    auto brought = std::vector<std::pair<std::string, legend_line>>{};
+    auto reading = std::vector<std::string>{};
     for (const auto& [glyph, lines] : clip_legend) {
+        if (!landing.contains(glyph)) { continue; }
         const auto own = std::ranges::find(legend, glyph, &legend_symbol::symbol);
-        if (own != legend.end() && !own->lines.empty()) {
+        if (own != legend.end()) {
             if (!std::ranges::equal(own->lines, lines, {}, mapped, mapped)) {
                 kept.push_back(glyph);
             }
             continue;
         }
-        for (const auto& line : lines) {
-            if (!done) { break; }
-            const auto parsed = nlohmann::ordered_json::parse(line.value, nullptr, false);
-            done = set_legend(
-                *doc,
-                {.object = object,
-                 .layer = line.layer,
-                 .symbol = glyph,
-                 .value = parsed.is_discarded() ? nlohmann::ordered_json(line.value) : parsed});
+        if (std::ranges::any_of(lines, [](const legend_line& line) {
+                return reads_parameter(nlohmann::ordered_json::parse(line.value, nullptr, false));
+            })) {
+            reading.push_back(glyph);
+            continue;
         }
+        for (const auto& line : lines) { brought.emplace_back(glyph, line); }
+    }
+    if (!reading.empty()) {
+        notice = string_format(
+            _("These symbols read parameters of the entry they were copied from; map them here "
+              "first: %s"),
+            reading | std::views::join_with(std::string_view(", "))
+                | std::ranges::to<std::string>());
+        return;
+    }
+    doc->begin_group();
+    const auto depth = doc->depth();
+    auto done = std::expected<void, std::string>{};
+    for (const auto& [glyph, line] : brought) {
+        if (!done) { break; }
+        const auto parsed = nlohmann::ordered_json::parse(line.value, nullptr, false);
+        done = set_legend(
+            *doc,
+            {.object = object,
+             .layer = line.layer,
+             .symbol = glyph,
+             .value = parsed.is_discarded() ? nlohmann::ordered_json(line.value) : parsed});
     }
     if (done) {
         done = editor::paste(*doc, {.object = object, .clip = clip, .at = at})
