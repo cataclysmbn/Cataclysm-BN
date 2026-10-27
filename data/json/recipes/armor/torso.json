@@ -721,19 +721,6 @@
     "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "SAW_M", "level": 1 } ]
   },
   {
-    "result": "dragonskin",
-    "type": "recipe",
-    "category": "CC_ARMOR",
-    "subcategory": "CSC_ARMOR_TORSO",
-    "skill_used": "tailor",
-    "difficulty": 5,
-    "time": "2 h",
-    "reversible": true,
-    "decomp_learn": 4,
-    "autolearn": true,
-    "components": [ [ [ "dragonskinempty", 1 ] ], [ [ "ceramicdisks", 8 ] ] ]
-  },
-  {
     "result": "peacoat",
     "type": "recipe",
     "category": "CC_ARMOR",

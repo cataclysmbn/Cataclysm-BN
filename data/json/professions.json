@@ -2470,7 +2470,6 @@
           "webbing_belt",
           "canteen",
           "wetsuit_hood",
-          "dragonskin",
           "tac_helmet",
           "wetsuit_gloves",
           "socks",
@@ -2483,7 +2482,8 @@
         "entries": [
           { "group": "charged_two_way_radio" },
           { "item": "diveknife", "container-item": "wristsheath" },
-          { "item": "chestrig", "contents-group": "army_mags_mp5" },
+          { "item": "ballistic_vest_esapi", "contents-group": "army_mags_mp5" },
+          { "item": "dragonskin_ballistic_plate" },
           {
             "item": "hk_mp5sd",
             "ammo-item": "9mm",

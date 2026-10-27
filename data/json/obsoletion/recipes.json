@@ -2380,5 +2380,10 @@
     "result": "oldguard_armor_superalloy",
     "type": "recipe",
     "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "dragonskin",
+    "obsolete": true
   }
 ]

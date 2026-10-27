@@ -41,8 +41,7 @@
     "subtype": "distribution",
     "entries": [
       { "item": "null", "prob": 10 },
-      { "item": "kevlar", "prob": 10 },
-      { "item": "dragonskin", "prob": 10 },
+      { "item": "kevlar", "prob": 20 },
       { "group": "military_ballistic_vests_and_plates", "prob": 40 }
     ]
   },
