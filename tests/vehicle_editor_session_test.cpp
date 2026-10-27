@@ -674,6 +674,7 @@ TEST_CASE(
                 return invoke("vehicle:pick", {.row = light(screen).id});
             case 5:
                 CHECK(light(screen).selected);
+                CHECK(light(screen).look.has_value());
                 return invoke("vehicle:tool", {.row = "tool:part"});
             case 6:
                 return invoke("vehicle:live_set", {.row = "name", .text = "Mine"});
@@ -1183,6 +1184,12 @@ TEST_CASE("the vehicle editor's parts show what they are", "[editor_vehicle]") {
                 REQUIRE_FALSE(rows.empty());
                 CHECK(std::ranges::all_of(rows, [](const ec::row& row) {
                     return row.look && "vpart:" + row.look->id.value_or("") == row.id;
+                }));
+                // So do the parts already on the mount.
+                const auto& stack = body<ec::list_body>(part(screen, "vehicle:stack")).rows;
+                REQUIRE_FALSE(stack.empty());
+                CHECK(std::ranges::all_of(stack, [](const ec::row& row) {
+                    return row.look.has_value();
                 }));
                 return act("QUIT");
             }
