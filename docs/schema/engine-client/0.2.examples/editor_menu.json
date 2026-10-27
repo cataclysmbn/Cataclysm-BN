@@ -1455,7 +1455,15 @@
                       "label": "terrain",
                       "value": "\"t_floor\""
                     }
-                  ]
+                  ],
+                  "look": {
+                    "kind": "terrain",
+                    "id": "t_floor",
+                    "glyph": ".",
+                    "color": "c_cyan",
+                    "name": "wooden floor",
+                    "subtile": "center"
+                  }
                 }
               ],
               "total": 1,
@@ -1908,7 +1916,18 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_adobe_brick_floor",
+                      "glyph": ".",
+                      "color": "c_brown",
+                      "name": "adobe floor",
+                      "looks_like": [
+                        "t_thconc_floor"
+                      ],
+                      "subtile": "center"
+                    }
                   },
                   {
                     "id": "entry:t_adobe_brick_floor_noroof",
@@ -1929,7 +1948,18 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_adobe_brick_floor_noroof",
+                      "glyph": ".",
+                      "color": "c_brown",
+                      "name": "adobe floor",
+                      "looks_like": [
+                        "t_thconc_floor"
+                      ],
+                      "subtile": "center"
+                    }
                   },
                   {
                     "id": "entry:t_adobe_brick_wall",
@@ -1950,7 +1980,20 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_adobe_brick_wall",
+                      "glyph": "─",
+                      "color": "c_brown",
+                      "name": "adobe wall",
+                      "looks_like": [
+                        "t_brick_wall"
+                      ],
+                      "subtile": "center",
+                      "wall": true,
+                      "coverage": 100
+                    }
                   },
                   {
                     "id": "entry:t_adobe_brick_wall_halfway",
@@ -1971,7 +2014,19 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_adobe_brick_wall_halfway",
+                      "glyph": "#",
+                      "color": "c_brown",
+                      "name": "half-built adobe wall",
+                      "looks_like": [
+                        "t_brick_wall_halfway"
+                      ],
+                      "subtile": "center",
+                      "coverage": 60
+                    }
                   },
                   {
                     "id": "entry:t_airbridge_metal",
@@ -1992,7 +2047,18 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_airbridge_metal",
+                      "glyph": "#",
+                      "color": "c_dark_gray",
+                      "name": "metal bridge",
+                      "looks_like": [
+                        "t_grate"
+                      ],
+                      "subtile": "center"
+                    }
                   },
                   {
                     "id": "entry:t_airbridge_wood",
@@ -2013,7 +2079,18 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_airbridge_wood",
+                      "glyph": "#",
+                      "color": "c_brown",
+                      "name": "crude plank bridge",
+                      "looks_like": [
+                        "t_grate"
+                      ],
+                      "subtile": "center"
+                    }
                   },
                   {
                     "id": "entry:t_alluvial_deposit",
@@ -2034,7 +2111,20 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_alluvial_deposit",
+                      "glyph": "*",
+                      "color": "c_brown",
+                      "name": "alluvial deposit",
+                      "looks_like": [
+                        "t_bog_iron",
+                        "t_claymound",
+                        "t_dirtmound"
+                      ],
+                      "subtile": "center"
+                    }
                   },
                   {
                     "id": "entry:t_atm",
@@ -2055,7 +2145,16 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_atm",
+                      "glyph": "&",
+                      "color": "c_magenta",
+                      "name": "ATM",
+                      "subtile": "center",
+                      "coverage": 55
+                    }
                   },
                   {
                     "id": "entry:t_backboard",
@@ -2076,7 +2175,19 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_backboard",
+                      "glyph": "7",
+                      "color": "c_red",
+                      "name": "backboard",
+                      "looks_like": [
+                        "t_chainfence"
+                      ],
+                      "subtile": "center",
+                      "wall": true
+                    }
                   },
                   {
                     "id": "entry:t_backboard_in",
@@ -2097,7 +2208,20 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_backboard_in",
+                      "glyph": "7",
+                      "color": "c_red",
+                      "name": "backboard",
+                      "looks_like": [
+                        "t_backboard",
+                        "t_chainfence"
+                      ],
+                      "subtile": "center",
+                      "wall": true
+                    }
                   },
                   {
                     "id": "entry:t_ballistic_door_glass_c",
@@ -2118,7 +2242,22 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_ballistic_door_glass_c",
+                      "glyph": "+",
+                      "color": "c_light_cyan",
+                      "name": "closed ballistic glass door",
+                      "looks_like": [
+                        "t_reinforced_door_glass_c",
+                        "t_door_glass_c",
+                        "t_door_c"
+                      ],
+                      "subtile": "center",
+                      "wall": true,
+                      "form": "door"
+                    }
                   },
                   {
                     "id": "entry:t_ballistic_door_glass_o",
@@ -2139,7 +2278,21 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_ballistic_door_glass_o",
+                      "glyph": "'",
+                      "color": "c_light_cyan",
+                      "name": "open ballistic glass door",
+                      "looks_like": [
+                        "t_reinforced_door_glass_o",
+                        "t_door_glass_o",
+                        "t_door_o"
+                      ],
+                      "subtile": "center",
+                      "form": "door"
+                    }
                   },
                   {
                     "id": "entry:t_ballistic_glass",
@@ -2160,7 +2313,19 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_ballistic_glass",
+                      "glyph": "─",
+                      "color": "c_light_cyan",
+                      "name": "ballistic glass",
+                      "looks_like": [
+                        "t_reinforced_glass"
+                      ],
+                      "subtile": "center",
+                      "wall": true
+                    }
                   },
                   {
                     "id": "entry:t_bark_wall_broken",
@@ -2181,7 +2346,16 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_bark_wall_broken",
+                      "glyph": "&",
+                      "color": "c_brown",
+                      "name": "broken bark wall",
+                      "subtile": "center",
+                      "wall": true
+                    }
                   },
                   {
                     "id": "entry:t_bark_wall_chipped",
@@ -2202,7 +2376,17 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_bark_wall_chipped",
+                      "glyph": "─",
+                      "color": "c_brown",
+                      "name": "chipped bark wall",
+                      "subtile": "center",
+                      "wall": true,
+                      "coverage": 100
+                    }
                   },
                   {
                     "id": "entry:t_barkfloor",
@@ -2223,7 +2407,15 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_barkfloor",
+                      "glyph": ".",
+                      "color": "c_cyan",
+                      "name": "bark",
+                      "subtile": "center"
+                    }
                   },
                   {
                     "id": "entry:t_barndoor",
@@ -2244,7 +2436,16 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_barndoor",
+                      "glyph": "|",
+                      "color": "c_brown",
+                      "name": "rope and pulley",
+                      "subtile": "center",
+                      "form": "fence"
+                    }
                   },
                   {
                     "id": "entry:t_bars",
@@ -2265,7 +2466,17 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_bars",
+                      "glyph": "\"",
+                      "color": "c_light_gray",
+                      "name": "metal bars",
+                      "subtile": "center",
+                      "wall": true,
+                      "form": "fence"
+                    }
                   },
                   {
                     "id": "entry:t_bog_iron",
@@ -2286,7 +2497,19 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_bog_iron",
+                      "glyph": "*",
+                      "color": "c_brown",
+                      "name": "bog iron",
+                      "looks_like": [
+                        "t_claymound",
+                        "t_dirtmound"
+                      ],
+                      "subtile": "center"
+                    }
                   },
                   {
                     "id": "entry:t_bramble_door_c",
@@ -2307,7 +2530,18 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_bramble_door_c",
+                      "glyph": "+",
+                      "color": "c_brown",
+                      "name": "closed bramble roots",
+                      "subtile": "center",
+                      "wall": true,
+                      "coverage": 95,
+                      "form": "door"
+                    }
                   },
                   {
                     "id": "entry:t_bramble_door_o",
@@ -2328,7 +2562,16 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_bramble_door_o",
+                      "glyph": "'",
+                      "color": "c_brown",
+                      "name": "open bramble roots",
+                      "subtile": "center",
+                      "form": "door"
+                    }
                   },
                   {
                     "id": "entry:t_brick_wall",
@@ -2349,7 +2592,17 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_brick_wall",
+                      "glyph": "─",
+                      "color": "c_brown",
+                      "name": "brick wall",
+                      "subtile": "center",
+                      "wall": true,
+                      "coverage": 100
+                    }
                   },
                   {
                     "id": "entry:t_brick_wall_halfway",
@@ -2370,7 +2623,16 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_brick_wall_halfway",
+                      "glyph": "#",
+                      "color": "c_brown",
+                      "name": "half-built brick wall",
+                      "subtile": "center",
+                      "coverage": 60
+                    }
                   },
                   {
                     "id": "entry:t_bridge",
@@ -2391,7 +2653,18 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_bridge",
+                      "glyph": "#",
+                      "color": "c_yellow",
+                      "name": "walkway",
+                      "looks_like": [
+                        "t_pavement"
+                      ],
+                      "subtile": "center"
+                    }
                   },
                   {
                     "id": "entry:t_buffer_stop",
@@ -2412,7 +2685,15 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_buffer_stop",
+                      "glyph": "S",
+                      "color": "c_brown",
+                      "name": "buffer stop",
+                      "subtile": "center"
+                    }
                   },
                   {
                     "id": "entry:t_bulk_tank",
@@ -2433,7 +2714,20 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_bulk_tank",
+                      "glyph": "O",
+                      "color": "c_light_gray",
+                      "name": "bulk tank",
+                      "looks_like": [
+                        "f_standing_tank"
+                      ],
+                      "subtile": "center",
+                      "wall": true,
+                      "coverage": 85
+                    }
                   },
                   {
                     "id": "entry:t_bulkhead_floor",
@@ -2454,7 +2748,18 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_bulkhead_floor",
+                      "glyph": "#",
+                      "color": "c_light_gray",
+                      "name": "bulkhead",
+                      "looks_like": [
+                        "t_metal_floor"
+                      ],
+                      "subtile": "center"
+                    }
                   },
                   {
                     "id": "entry:t_bulkhead_floor_underwater",
@@ -2475,7 +2780,18 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_bulkhead_floor_underwater",
+                      "glyph": "#",
+                      "color": "c_light_gray",
+                      "name": "underwater bulkhead",
+                      "looks_like": [
+                        "t_metal_floor"
+                      ],
+                      "subtile": "center"
+                    }
                   },
                   {
                     "id": "entry:t_bulkhead_floor_underwater_no_roof",
@@ -2496,7 +2812,18 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_bulkhead_floor_underwater_no_roof",
+                      "glyph": "#",
+                      "color": "c_light_gray",
+                      "name": "underwater bulkhead",
+                      "looks_like": [
+                        "t_metal_floor"
+                      ],
+                      "subtile": "center"
+                    }
                   },
                   {
                     "id": "entry:t_bulkhead_roof",
@@ -2517,7 +2844,21 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_bulkhead_roof",
+                      "glyph": "#",
+                      "color": "c_light_gray",
+                      "name": "bulkhead",
+                      "looks_like": [
+                        "t_metal_flat_roof",
+                        "t_flat_roof",
+                        "t_concrete",
+                        "t_pavement"
+                      ],
+                      "subtile": "center"
+                    }
                   },
                   {
                     "id": "entry:t_card_fp",
@@ -2538,7 +2879,19 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_card_fp",
+                      "glyph": "6",
+                      "color": "c_pink",
+                      "name": "card reader",
+                      "looks_like": [
+                        "t_card_science"
+                      ],
+                      "subtile": "center",
+                      "wall": true
+                    }
                   },
                   {
                     "id": "entry:t_card_industrial",
@@ -2559,7 +2912,19 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_card_industrial",
+                      "glyph": "6",
+                      "color": "c_pink",
+                      "name": "card reader",
+                      "looks_like": [
+                        "t_card_science"
+                      ],
+                      "subtile": "center",
+                      "wall": true
+                    }
                   },
                   {
                     "id": "entry:t_card_military",
@@ -2580,7 +2945,16 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_card_military",
+                      "glyph": "6",
+                      "color": "c_pink",
+                      "name": "card reader",
+                      "subtile": "center",
+                      "wall": true
+                    }
                   },
                   {
                     "id": "entry:t_card_reader_broken",
@@ -2601,7 +2975,16 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_card_reader_broken",
+                      "glyph": "6",
+                      "color": "c_light_gray",
+                      "name": "broken card reader",
+                      "subtile": "center",
+                      "wall": true
+                    }
                   },
                   {
                     "id": "entry:t_card_robofac",
@@ -2622,7 +3005,16 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_card_robofac",
+                      "glyph": "6",
+                      "color": "c_pink",
+                      "name": "card reader",
+                      "subtile": "center",
+                      "wall": true
+                    }
                   },
                   {
                     "id": "entry:t_card_science",
@@ -2643,7 +3035,16 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_card_science",
+                      "glyph": "6",
+                      "color": "c_pink",
+                      "name": "card reader",
+                      "subtile": "center",
+                      "wall": true
+                    }
                   },
                   {
                     "id": "entry:t_carpet_concrete",
@@ -2664,7 +3065,18 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_carpet_concrete",
+                      "glyph": ".",
+                      "color": "c_light_gray",
+                      "name": "industrial carpet",
+                      "looks_like": [
+                        "t_carpet_red"
+                      ],
+                      "subtile": "center"
+                    }
                   },
                   {
                     "id": "entry:t_carpet_green",
@@ -2685,7 +3097,18 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_carpet_green",
+                      "glyph": ".",
+                      "color": "c_green",
+                      "name": "green carpet",
+                      "looks_like": [
+                        "t_carpet_red"
+                      ],
+                      "subtile": "center"
+                    }
                   },
                   {
                     "id": "entry:t_carpet_metal",
@@ -2706,7 +3129,19 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_carpet_metal",
+                      "glyph": ".",
+                      "color": "c_white",
+                      "name": "bunker carpet",
+                      "looks_like": [
+                        "t_carpet_yellow",
+                        "t_carpet_red"
+                      ],
+                      "subtile": "center"
+                    }
                   },
                   {
                     "id": "entry:t_carpet_purple",
@@ -2727,7 +3162,18 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_carpet_purple",
+                      "glyph": ".",
+                      "color": "c_magenta",
+                      "name": "purple carpet",
+                      "looks_like": [
+                        "t_carpet_red"
+                      ],
+                      "subtile": "center"
+                    }
                   },
                   {
                     "id": "entry:t_carpet_red",
@@ -2748,7 +3194,15 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_carpet_red",
+                      "glyph": ".",
+                      "color": "c_red",
+                      "name": "red carpet",
+                      "subtile": "center"
+                    }
                   },
                   {
                     "id": "entry:t_carpet_yellow",
@@ -2769,7 +3223,18 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_carpet_yellow",
+                      "glyph": ".",
+                      "color": "c_yellow",
+                      "name": "yellow carpet",
+                      "looks_like": [
+                        "t_carpet_red"
+                      ],
+                      "subtile": "center"
+                    }
                   },
                   {
                     "id": "entry:t_centrifuge",
@@ -2790,7 +3255,16 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_centrifuge",
+                      "glyph": "{",
+                      "color": "c_magenta",
+                      "name": "broken centrifuge",
+                      "subtile": "center",
+                      "coverage": 30
+                    }
                   },
                   {
                     "id": "entry:t_chainfence",
@@ -2811,7 +3285,16 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_chainfence",
+                      "glyph": "─",
+                      "color": "c_cyan",
+                      "name": "chain link fence",
+                      "subtile": "center",
+                      "form": "fence"
+                    }
                   },
                   {
                     "id": "entry:t_chainfence_posts",
@@ -2832,7 +3315,16 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_chainfence_posts",
+                      "glyph": "#",
+                      "color": "c_cyan",
+                      "name": "metal post",
+                      "subtile": "center",
+                      "form": "fence"
+                    }
                   },
                   {
                     "id": "entry:t_chaingate_c",
@@ -2853,7 +3345,16 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_chaingate_c",
+                      "glyph": "+",
+                      "color": "c_cyan",
+                      "name": "closed wire gate",
+                      "subtile": "center",
+                      "form": "door"
+                    }
                   },
                   {
                     "id": "entry:t_chaingate_l",
@@ -2874,7 +3375,16 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_chaingate_l",
+                      "glyph": "+",
+                      "color": "c_cyan",
+                      "name": "locked wire gate",
+                      "subtile": "center",
+                      "form": "door"
+                    }
                   },
                   {
                     "id": "entry:t_chaingate_o",
@@ -2895,7 +3405,16 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_chaingate_o",
+                      "glyph": ".",
+                      "color": "c_cyan",
+                      "name": "open wire gate",
+                      "subtile": "center",
+                      "form": "door"
+                    }
                   },
                   {
                     "id": "entry:t_chickenwire_fence",
@@ -2916,7 +3435,18 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_chickenwire_fence",
+                      "glyph": "─",
+                      "color": "c_brown",
+                      "name": "chickenwire fence",
+                      "looks_like": [
+                        "t_chainfence"
+                      ],
+                      "subtile": "center"
+                    }
                   },
                   {
                     "id": "entry:t_chickenwire_fence_post",
@@ -2937,7 +3467,19 @@
                         "label": "Mod",
                         "value": "bn"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "terrain",
+                      "id": "t_chickenwire_fence_post",
+                      "glyph": "#",
+                      "color": "c_brown",
+                      "name": "chickenwire fence post",
+                      "looks_like": [
+                        "t_fence_post"
+                      ],
+                      "subtile": "center",
+                      "form": "fence"
+                    }
                   }
                 ],
                 "total": 812,

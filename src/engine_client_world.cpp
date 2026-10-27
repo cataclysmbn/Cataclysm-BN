@@ -1,4 +1,5 @@
 #include "engine_client_world.h"
+#include "engine_client_part_type.h"
 
 #include <algorithm>
 #include <array>
@@ -1127,6 +1128,8 @@ auto vehicle_part_appearance( const vehicle &veh, const int part, const int degr
 {
     return part_look( veh, part, false, degrees );
 }
+
+auto vehicle_part_type_appearance( const vpart_info &info ) -> look { return vehicle_part_look( info, 0, 270 ); }
 
 auto set_tint_ids( std::set<std::string> ids ) -> void
 {

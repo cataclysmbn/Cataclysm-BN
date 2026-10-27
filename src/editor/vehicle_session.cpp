@@ -11,6 +11,7 @@
 #include "editor/vehicle_design.h"
 #include "editor/workspace.h"
 #include "engine_client_component.h"
+#include "engine_client_part_type.h"
 #include "engine_client_world.h"
 #include "input.h"
 #include "item_group.h"
@@ -1049,11 +1050,12 @@ auto parts_view(const session& state) -> ec::screen_view {
                              .label = info->name(),
                              .denial = mounts ? std::string{} : _("It cannot be mounted here."),
                              .enabled = mounts,
-                             .columns = {
-                                 {.key = "id",
-                                  .label = _("ID"),
-                                  .value = info->get_id().str(),
-                                  .color = ""}}};
+                             .columns =
+                                 {{.key = "id",
+                                   .label = _("ID"),
+                                   .value = info->get_id().str(),
+                                   .color = ""}},
+                             .look = engine_client::world::vehicle_part_type_appearance(*info)};
                      })
                    | std::ranges::to<std::vector>(),
              .total = shown.total,

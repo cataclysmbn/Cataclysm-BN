@@ -389,6 +389,7 @@ auto placement_rows(const session& state) -> std::vector<ec::row> {
 }
 
 auto legend_rows(const session& state) -> std::vector<ec::row> {
+    const auto looks = symbol_looks(state.doc->objects()[state.object].value, state.legend);
     return state.legend | std::views::transform([&](const legend_symbol& entry) {
                auto columns = std::vector<game_client::interaction_column>{};
                for (const auto& line : entry.lines) {
@@ -423,7 +424,10 @@ auto legend_rows(const session& state) -> std::vector<ec::row> {
                        sources.empty() ? std::string{}
                                        : string_format(_("From %s"), enumerate_as_string(sources)),
                    .selected = entry.symbol == state.symbol,
-                   .columns = std::move(columns)};
+                   .columns = std::move(columns),
+                   .look = looks.at(entry.symbol).empty()
+                             ? std::nullopt
+                             : std::optional(looks.at(entry.symbol).back())};
            })
          | std::ranges::to<std::vector>();
 }
@@ -558,6 +562,25 @@ auto placement_forms(
         ec::invoke_affordance({.id = place_apply_id, .label = _("Add placement")}));
 }
 
+/// What a catalog entry of `kind` named `id` shows on the map, for what has a look of its own.
+auto catalog_look(const catalog_kind kind, const std::string& id)
+    -> std::optional<engine_client::look> {
+    namespace world = engine_client::world;
+    if (kind == catalog_kind::terrain && ter_str_id(id).is_valid()) {
+        return world::terrain_appearance(ter_str_id(id).id());
+    }
+    if (kind == catalog_kind::furniture && furn_str_id(id).is_valid()) {
+        return world::furniture_appearance(furn_str_id(id).id());
+    }
+    if (kind == catalog_kind::trap && trap_str_id(id).is_valid()) {
+        return world::trap_appearance(trap_str_id(id).obj());
+    }
+    if (kind == catalog_kind::item && itype_id(id).is_valid()) {
+        return world::item_appearance(*item::spawn_temporary(itype_id(id), calendar::turn));
+    }
+    return std::nullopt;
+}
+
 /// The legend form and the catalog that fills it.
 /// The catalog's page of `found`, with the affordances that filter, page and pick it.
 auto catalog_list(
@@ -574,14 +597,18 @@ auto catalog_list(
         {.id = catalog_pick_id, .label = _("Use"), .args = row_of(catalog_id)}));
     return ec::list(
         {.id = catalog_id,
-         .rows = found.entries | std::views::transform([](const catalog_entry& entry) {
-                     return ec::row{
-                         .id = "entry:" + entry.id,
-                         .label = entry.name,
-                         .columns = {{.key = "id", .label = _("ID"), .value = entry.id},
-                                     {.key = "mod", .label = _("Mod"), .value = entry.mod}}};
-                 })
-               | std::ranges::to<std::vector>(),
+         .rows =
+             found.entries | std::views::transform([&](const catalog_entry& entry) {
+                 return ec::row{
+                     .id = "entry:" + entry.id,
+                     .label = entry.name,
+                     .columns = {{.key = "id", .label = _("ID"), .value = entry.id},
+                                 {.key = "mod", .label = _("Mod"), .value = entry.mod}},
+                     .look = catalog_look(
+                         state.on_special() ? catalog_kind::overmap_terrain : state.catalog->kind,
+                         entry.id)};
+             })
+             | std::ranges::to<std::vector>(),
          .total = found.total,
          .offset = state.catalog_page * page_size,
          .selection = "single",

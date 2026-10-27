@@ -759,7 +759,16 @@
                         "label": "ID",
                         "value": "headlight"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "vehicle_part",
+                      "id": "headlight",
+                      "glyph": "*",
+                      "color": "c_white",
+                      "name": "headlight",
+                      "tile": "vp_headlight",
+                      "subtile": "center"
+                    }
                   },
                   {
                     "id": "vpart:headlight_reinforced",
@@ -775,7 +784,19 @@
                         "label": "ID",
                         "value": "headlight_reinforced"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "vehicle_part",
+                      "id": "headlight_reinforced",
+                      "glyph": "*",
+                      "color": "c_light_blue",
+                      "name": "reinforced headlight",
+                      "tile": "vp_headlight_reinforced",
+                      "looks_like": [
+                        "vp_headlight"
+                      ],
+                      "subtile": "center"
+                    }
                   },
                   {
                     "id": "vpart:motorcycle_headlight",
@@ -791,7 +812,16 @@
                         "label": "ID",
                         "value": "motorcycle_headlight"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "vehicle_part",
+                      "id": "motorcycle_headlight",
+                      "glyph": "*",
+                      "color": "c_white",
+                      "name": "motorcycle headlight",
+                      "tile": "vp_motorcycle_headlight",
+                      "subtile": "center"
+                    }
                   },
                   {
                     "id": "vpart:wide_headlight",
@@ -807,7 +837,19 @@
                         "label": "ID",
                         "value": "wide_headlight"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "vehicle_part",
+                      "id": "wide_headlight",
+                      "glyph": "*",
+                      "color": "c_white",
+                      "name": "wide angle headlight",
+                      "tile": "vp_wide_headlight",
+                      "looks_like": [
+                        "vp_headlight"
+                      ],
+                      "subtile": "center"
+                    }
                   },
                   {
                     "id": "vpart:wide_headlight_reinforced",
@@ -823,7 +865,20 @@
                         "label": "ID",
                         "value": "wide_headlight_reinforced"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "vehicle_part",
+                      "id": "wide_headlight_reinforced",
+                      "glyph": "*",
+                      "color": "c_light_blue",
+                      "name": "reinforced wide-angle headlight",
+                      "tile": "vp_wide_headlight_reinforced",
+                      "looks_like": [
+                        "vp_wide_headlight",
+                        "vp_headlight"
+                      ],
+                      "subtile": "center"
+                    }
                   }
                 ],
                 "total": 5,
@@ -1115,7 +1170,16 @@
             "label": "ID",
             "value": "xlframe_vertical"
           }
-        ]
+        ],
+        "look": {
+          "kind": "vehicle_part",
+          "id": "xlframe_vertical",
+          "glyph": "│",
+          "color": "c_light_gray",
+          "name": "extra light frame",
+          "tile": "vp_xlframe_vertical",
+          "subtile": "center"
+        }
       }
     },
     {
