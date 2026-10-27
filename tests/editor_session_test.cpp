@@ -1790,6 +1790,10 @@ TEST_CASE(
                 CHECK(affordance(screen, "editor:rotate").keys == std::vector<std::string>{"z"});
                 CHECK(affordance(screen, "editor:flip_x").keys == std::vector<std::string>{"x"});
                 CHECK(affordance(screen, "editor:flip_y").keys == std::vector<std::string>{"y"});
+                CHECK(affordance(screen, "editor:test").keys == std::vector<std::string>{"F5"});
+                CHECK(affordance(screen, "editor:stamp").keys == std::vector<std::string>{"F6"});
+                CHECK(affordance(screen, "editor:apply").keys == std::vector<std::string>{"F7"});
+                CHECK(affordance(screen, "editor:preview").keys == std::vector<std::string>{"F8"});
                 return act("QUIT");
             }
             default:
@@ -4825,6 +4829,9 @@ TEST_CASE(
                 return invoke("editor:open", {.text = file.path.string()});
             case 1:
                 CHECK_FALSE(affordance(screen, "editor:test").enabled);
+                CHECK(affordance(screen, "editor:place_special").keys
+                      == std::vector<std::string>{"F6"});
+                CHECK(affordance(screen, "editor:test").keys == std::vector<std::string>{"F5"});
                 return invoke("editor:place_special");
             case 2:
                 CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
