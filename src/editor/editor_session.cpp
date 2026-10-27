@@ -1,5 +1,6 @@
 #include "editor/editor_session.h"
 
+#include "action.h"
 #include "all_enum_values.h"
 #include "avatar.h"
 #include "editor/catalog.h"
@@ -17,8 +18,10 @@
 #include "engine_client_world.h"
 #include "enums.h"
 #include "game.h"
+#include "game_constants.h"
 #include "input.h"
 #include "item.h"
+#include "map/map.h"
 #include "overmap/overmapbuffer.h"
 #include "player_activity.h"
 #include "string_formatter.h"
@@ -30,6 +33,8 @@
 #include <algorithm>
 #include <array>
 #include <cstdint>
+#include <expected>
+#include <filesystem>
 #include <memory>
 #include <optional>
 #include <string>
@@ -49,6 +54,30 @@ auto kept_session = std::optional<session>{};
 auto first = std::optional<recent_document>{};
 /// When the turns the editor lets pass began, while they pass.
 auto advancing = std::optional<time_point>{};
+
+/// What `editor:export` writes to `path`: the squares the player marked, as the mapgen of whole
+/// overmap squares when they are that and else as a nested chunk named after the file, or the
+/// overmap squares around the avatar's.
+auto export_to(const session& state, const std::string& path)
+    -> std::expected<nlohmann::ordered_json, std::string> {
+    constexpr auto side = 2 * SEEX;
+    if (const auto& area = state.export_area) {
+        const auto omt = project_to<coords::omt>(area->corner);
+        if (project_to<coords::ms>(omt) == area->corner && area->size.x() % side == 0
+            && area->size.y() % side == 0) {
+            return export_region(
+                omt, point_rel_omt(area->size.x() / side, area->size.y() / side),
+                state.export_palette);
+        }
+        return export_chunk(
+            area->corner, area->size, state.export_palette,
+            std::filesystem::path(path).stem().string());
+    }
+    const auto size = state.export_size;
+    return export_region(
+        get_avatar().abs_omt_pos() - point_rel_omt((size.x() - 1) / 2, (size.y() - 1) / 2), size,
+        state.export_palette);
+}
 
 } // namespace
 
@@ -118,13 +147,7 @@ auto run_editor_session() -> void {
             const auto path = invoked->args.text.value_or("");
             const auto exported =
                 check_new_path(path)
-                    .and_then([&] {
-                        const auto size = state.export_size;
-                        return export_region(
-                            get_avatar().abs_omt_pos()
-                                - point_rel_omt((size.x() - 1) / 2, (size.y() - 1) / 2),
-                            size, state.export_palette);
-                    })
+                    .and_then([&] { return export_to(state, path); })
                     .and_then([&](const nlohmann::ordered_json& entry) {
                         return write_new_file(path, nlohmann::ordered_json::array({entry}));
                     });
@@ -133,7 +156,15 @@ auto run_editor_session() -> void {
             } else {
                 state.notice = exported.error();
             }
+        } else if (id == export_area_id) {
+            if (const auto area = choose_area(_("Export which squares?"), {}, false)) {
+                const auto corner = bub_to_abs(area->first);
+                state.export_area = export_squares{
+                    .corner = corner,
+                    .size = (bub_to_abs(area->second) - corner).xy() + point_rel_ms(1, 1)};
+            }
         } else if (id == export_width_id || id == export_height_id) {
+            state.export_area.reset();
             const auto count = static_cast<int>(
                 std::clamp<std::int64_t>(invoked->args.count.value_or(1), 1, max_export));
             state.export_size =

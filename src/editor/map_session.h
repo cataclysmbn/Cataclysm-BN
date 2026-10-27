@@ -81,6 +81,7 @@ inline constexpr auto brush_id = "editor:brush";
 inline constexpr auto mirror_x_id = "editor:mirror_x";
 inline constexpr auto mirror_y_id = "editor:mirror_y";
 inline constexpr auto export_id = "editor:export";
+inline constexpr auto export_area_id = "editor:export_area";
 inline constexpr auto export_width_id = "editor:export_width";
 inline constexpr auto export_height_id = "editor:export_height";
 inline constexpr auto export_palette_id = "editor:export_palette";
@@ -268,6 +269,12 @@ struct new_mapgen {
     std::string size = "4";
 };
 
+/// Squares of the live world: the north-west one and how many east and south.
+struct export_squares {
+    tripoint_abs_ms corner;
+    point_rel_ms size;
+};
+
 struct diagnostic {
     std::string text;
     std::string pointer;
@@ -372,6 +379,8 @@ struct session {
     new_mapgen made;
     /// How many overmap squares an export spans east and south, centred on the avatar's.
     point_rel_omt export_size = point_rel_omt(1, 1);
+    /// The squares of the live world the player marked to export instead, until a size is set.
+    std::optional<export_squares> export_area = std::nullopt;
     /// The palette whose symbols an export reuses; none when empty.
     std::string export_palette;
     /// The entry as it stands in the live world, while it is there.

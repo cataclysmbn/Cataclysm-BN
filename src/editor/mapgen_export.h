@@ -16,4 +16,10 @@ auto export_region(
     const tripoint_abs_omt& at, const point_rel_omt& size, const std::string& palette)
     -> std::expected<nlohmann::ordered_json, std::string>;
 
+/// The nested chunk `id` of the live map's squares from `corner`, `size` squares east and south,
+/// made as `export_region` makes an overmap square's mapgen; the error says why not.
+auto export_chunk(
+    const tripoint_abs_ms& corner, const point_rel_ms& size, const std::string& palette,
+    const std::string& id) -> std::expected<nlohmann::ordered_json, std::string>;
+
 } // namespace editor

@@ -1012,8 +1012,13 @@ auto session_view(const session& state) -> ec::screen_view {
         ec::invoke_affordance({.id = open_here_id, .label = _("Open mapgen here")}));
     affordances.push_back(ec::invoke_affordance(
         {.id = export_id,
-         .label = _("Export mapgen here"),
+         .label = state.export_area
+                    ? string_format(_("Export %dx%d squares"), state.export_area->size.x(),
+                                    state.export_area->size.y())
+                    : _("Export mapgen here"),
          .args = {.text = ec::text_shape{.field_id = path_id}}}));
+    affordances.push_back(
+        ec::invoke_affordance({.id = export_area_id, .label = _("Mark squares to export")}));
     affordances.push_back(ec::invoke_affordance(
         {.id = export_width_id,
          .label = _("Export width"),

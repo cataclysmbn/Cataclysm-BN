@@ -130,28 +130,27 @@ auto fields_of(const field& on) -> std::vector<laid_field> {
          | std::ranges::to<std::vector>();
 }
 
-} // namespace
-
-auto export_region(
-    const tripoint_abs_omt& at, const point_rel_omt& size, const std::string& palette)
+/// The JSON mapgen object of the live map's squares from `corner`, `size` squares east and south.
+auto export_object(
+    const tripoint_abs_ms& corner, const point_rel_ms& size, const std::string& palette)
     -> std::expected<nlohmann::ordered_json, std::string> {
     const auto named = trim(palette);
     const auto lent = lent_by(named);
     if (!lent) { return std::unexpected(lent.error()); }
     auto& here = get_map();
-    const auto base = project_to<coords::sm>(at);
     auto kinds = std::vector<std::vector<kind>>{};
     auto counts = std::map<kind, std::size_t>{};
     auto placed_items = nlohmann::ordered_json::array();
-    for (auto y = 0; y < 2 * SEEY * size.y(); ++y) {
+    for (auto y = 0; y < size.y(); ++y) {
         auto& row = kinds.emplace_back();
-        for (auto x = 0; x < 2 * SEEX * size.x(); ++x) {
-            const auto* const sm = here.get_mapbuffer().lookup_submap_in_memory(
-                base + point_rel_sm(x / SEEX, y / SEEY));
+        for (auto x = 0; x < size.x(); ++x) {
+            auto in_sm = tripoint_abs_sm{};
+            auto local = point_sm_ms{};
+            std::tie(in_sm, local) = project_remain<coords::sm>(corner + tripoint_rel_ms(x, y, 0));
+            const auto* const sm = here.get_mapbuffer().lookup_submap_in_memory(in_sm);
             if (sm == nullptr) {
-                return std::unexpected("the overmap squares are not all loaded in the map");
+                return std::unexpected("the squares are not all loaded in the map");
             }
-            const auto local = point_sm_ms(x % SEEX, y % SEEY);
             row.push_back(
                 {.ter = sm->get_ter(local),
                  .furn = sm->get_furn(local),
@@ -183,7 +182,7 @@ auto export_region(
             continue;
         }
         if (next == own.end()) {
-            return std::unexpected("the overmap squares hold too many kinds of squares");
+            return std::unexpected("the squares hold too many kinds of squares");
         }
         const auto symbol = std::string(1, *next);
         symbol_of[entry] = *next++;
@@ -213,11 +212,10 @@ auto export_region(
     if (!traps.empty()) { object["traps"] = traps; }
     if (!fields.empty()) { object["fields"] = fields; }
     if (!placed_items.empty()) { object["place_item"] = placed_items; }
-    const auto corner = project_to<coords::ms>(at);
     const auto inside = [&](const monster& mon) {
         const auto offset = mon.abs_pos() - corner;
-        return offset.z() == 0 && offset.x() >= 0 && offset.y() >= 0
-            && offset.x() < 2 * SEEX * size.x() && offset.y() < 2 * SEEY * size.y();
+        return offset.z() == 0 && offset.x() >= 0 && offset.y() >= 0 && offset.x() < size.x()
+            && offset.y() < size.y();
     };
     auto monsters =
         g->all_monsters() | std::views::filter(inside)
@@ -235,8 +233,8 @@ auto export_region(
     if (!monsters.empty()) { object["place_monster"] = monsters; }
     const auto offset_of = [&](const tripoint_abs_ms& pos) -> std::optional<point> {
         const auto offset = pos - corner;
-        if (offset.z() != 0 || offset.x() < 0 || offset.y() < 0 || offset.x() >= 2 * SEEX * size.x()
-            || offset.y() >= 2 * SEEY * size.y()) {
+        if (offset.z() != 0 || offset.x() < 0 || offset.y() < 0 || offset.x() >= size.x()
+            || offset.y() >= size.y()) {
             return std::nullopt;
         }
         return point(offset.x(), offset.y());
@@ -268,7 +266,19 @@ auto export_region(
         npcs.push_back({{"class", guy.idz}, {"x", offset->x}, {"y", offset->y}});
     }
     if (!npcs.empty()) { object["place_npcs"] = npcs; }
-    auto& overmap = get_overmapbuffer(here.get_bound_dimension());
+    return object;
+}
+
+} // namespace
+
+auto export_region(
+    const tripoint_abs_omt& at, const point_rel_omt& size, const std::string& palette)
+    -> std::expected<nlohmann::ordered_json, std::string> {
+    const auto object = export_object(
+        project_to<coords::ms>(at), point_rel_ms(2 * SEEX * size.x(), 2 * SEEY * size.y()),
+        palette);
+    if (!object) { return std::unexpected(object.error()); }
+    auto& overmap = get_overmapbuffer(get_map().get_bound_dimension());
     const auto name = [&](const tripoint_abs_omt& omt) {
         return nlohmann::ordered_json(overmap.ter(omt)->get_type_id().str());
     };
@@ -281,7 +291,18 @@ auto export_region(
         {"type", "mapgen"},
         {"method", "json"},
         {"om_terrain", size == point_rel_omt(1, 1) ? name(at) : om_terrain},
-        {"object", object}};
+        {"object", *object}};
+}
+
+auto export_chunk(
+    const tripoint_abs_ms& corner, const point_rel_ms& size, const std::string& palette,
+    const std::string& id) -> std::expected<nlohmann::ordered_json, std::string> {
+    const auto object = export_object(corner, size, palette);
+    if (!object) { return std::unexpected(object.error()); }
+    auto sized = nlohmann::ordered_json{{"mapgensize", {size.x(), size.y()}}};
+    sized.update(*object);
+    return nlohmann::ordered_json{
+        {"type", "mapgen"}, {"method", "json"}, {"nested_mapgen_id", id}, {"object", sized}};
 }
 
 } // namespace editor
