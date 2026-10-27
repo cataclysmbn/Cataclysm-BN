@@ -618,6 +618,7 @@ TEST_CASE(
             const auto& form = body<ec::form_body>(part(screen, "bionics:letter"));
             REQUIRE(form.fields.size() == 1);
             CHECK(form.fields.front().type == "key");
+            CHECK(form.fields.front().description.starts_with("a b c"));
             CHECK(form.submit == "bionics:letter:set");
             CHECK(text_of(screen, "bionics:letter:message").find("enter new letter")
                   != std::string::npos);
