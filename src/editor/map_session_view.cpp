@@ -435,27 +435,37 @@ auto legend_rows(const session& state) -> std::vector<ec::row> {
          | std::ranges::to<std::vector>();
 }
 
-/// A row per state of the document, the original first: a step is named by the edit it did, and
-/// the row of the saved state says so.
-/// What `edit` did, in words: its first operation's verb and the member of the object it changed.
+/// What `edit` did, in words: the member of the object it changed, and whether that member was
+/// added, removed or changed, which the patch's own verb does not tell, since setting a member
+/// adds it.
 auto step_label(const document_edit& edit) -> std::string {
-    const auto& operation = edit.patch[0];
-    auto pointer = nlohmann::ordered_json::json_pointer(operation.value("path", ""));
+    auto pointer = nlohmann::ordered_json::json_pointer(edit.patch[0].value("path", ""));
     auto tokens = std::vector<std::string>{};
     for (; !pointer.empty(); pointer.pop_back()) { tokens.insert(tokens.begin(), pointer.back()); }
     // A mapgen's members sit under its `object`.
-    if (tokens.size() > 1 && tokens.front() == "object") { tokens.erase(tokens.begin()); }
-    const auto numeric = [](const std::string& token) {
-        return !token.empty() && token.find_first_not_of("0123456789") == std::string::npos;
+    auto member = nlohmann::ordered_json::json_pointer{};
+    if (tokens.size() > 1 && tokens.front() == "object") {
+        member /= tokens.front();
+        tokens.erase(tokens.begin());
+    }
+    const auto index = [](const std::string& token) {
+        return token == "-" || token.find_first_not_of("0123456789") == std::string::npos;
     };
-    auto member = tokens.empty() ? std::string{} : tokens.front();
-    std::ranges::replace(member, '_', ' ');
-    if (tokens.size() > 1 && !numeric(tokens[1])) { member += " " + tokens[1]; }
-    const auto op = operation.value("op", "");
-    const auto verb = op == "add" ? _("Add") : op == "remove" ? _("Remove") : _("Change");
-    return member.empty() ? verb : string_format(pgettext("editor history", "%s %s"), verb, member);
+    auto words = tokens.empty() ? std::string{} : tokens.front();
+    std::ranges::replace(words, '_', ' ');
+    if (!tokens.empty()) { member /= tokens.front(); }
+    if (tokens.size() > 1 && !index(tokens[1])) {
+        words += " " + tokens[1];
+        member /= tokens[1];
+    }
+    const auto had = edit.before.is_object() && edit.before.contains(member);
+    const auto has = edit.after.is_object() && edit.after.contains(member);
+    const auto verb = !had ? _("Add") : !has ? _("Remove") : _("Change");
+    return words.empty() ? verb : string_format(pgettext("editor history", "%s %s"), verb, words);
 }
 
+/// A row per state of the document, the original first: a step is named by the edit it did, and
+/// the row of the saved state says so.
 auto history_rows(const document& doc) -> std::vector<ec::row> {
     const auto steps = doc.history();
     auto rows = std::vector<ec::row>{};
