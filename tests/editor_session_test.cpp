@@ -4706,8 +4706,13 @@ TEST_CASE(
                 return invoke("editor:new_set", {.row = "kind", .text = "building"});
             case 11:
                 CHECK(label(screen, "om_terrain") == "Building id");
+                // The form starts over after the special was made.
+                CHECK(value(screen, "om_terrain").empty());
+                return invoke(
+                    "editor:new_set", {.row = "om_terrain", .text = "editor_session_test_new"});
+            case 12:
                 return invoke("editor:new_apply");
-            case 12: {
+            case 13: {
                 const auto written = nlohmann::ordered_json::parse(read_file(built))[0];
                 CHECK(written["type"] == "city_building");
                 CHECK(editor::special_squares(written).size() == 1);
@@ -4721,7 +4726,7 @@ TEST_CASE(
     });
 
     editor::run_editor_session();
-    CHECK(step == 13);
+    CHECK(step == 14);
 }
 
 TEST_CASE(
