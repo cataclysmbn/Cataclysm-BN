@@ -1696,6 +1696,9 @@ TEST_CASE(
                 return invoke("editor:field_apply");
             case 11:
                 CHECK(placed(screen)[2].value == "monster: mon_zombie, chance: 50");
+                // A member set on a placement changes the placement, though the patch adds it.
+                CHECK(body<ec::list_body>(part(screen, "editor:history")).rows.back().label
+                      == "Change place monster");
                 return invoke("editor:field_set", {.row = "value", .text = R"("fifty")"});
             case 12:
                 return invoke("editor:field_apply");
