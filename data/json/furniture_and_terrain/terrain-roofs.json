@@ -271,6 +271,7 @@
   {
     "type": "terrain",
     "id": "t_treetop",
+    "looks_like": "t_tree",
     "name": "treetop",
     "description": "The upper branches of a tree.  There's just enough room to perch here.",
     "symbol": "#",
@@ -282,6 +283,7 @@
   {
     "type": "terrain",
     "id": "t_treetop_evergreen",
+    "looks_like": "t_tree_pine",
     "name": "treetop",
     "description": "The upper branches of a tree.  There's just enough room to perch here.",
     "symbol": "#",
@@ -293,6 +295,7 @@
   {
     "type": "terrain",
     "id": "t_treetop_dead",
+    "looks_like": "t_tree_dead",
     "name": "dead treetop",
     "description": "The bare upper branches of a dead tree.  There's just enough room to perch here.",
     "symbol": "#",
