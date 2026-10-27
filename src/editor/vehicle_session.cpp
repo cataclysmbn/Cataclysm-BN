@@ -1031,7 +1031,6 @@ auto parts_view(const session& state) -> ec::screen_view {
     // vehicle and its spawning.
     auto tabs = std::vector<ec::tab_entry>{
         tab_of("tool:mount", _("Mount"), state.tool_tab),
-        tab_of("tool:install", _("Install"), state.tool_tab),
         tab_of("tool:part", _("Part"), state.tool_tab),
         tab_of("tool:vehicle", _("Vehicle"), state.tool_tab)};
     if (!state.live) {
@@ -1088,7 +1087,6 @@ auto parts_view(const session& state) -> ec::screen_view {
     };
     const auto tool = [&]() -> ec::component {
         const auto& tab = state.tool_tab;
-        if (tab == "install") { return installable(); }
         if (state.live) {
             return tab == "part" || tab == "vehicle" ? live_form(state) : live_stack(state);
         }
@@ -1200,6 +1198,7 @@ auto parts_view(const session& state) -> ec::screen_view {
     };
     parts.push_back(
         ec::tabs({.id = tools_id, .tabs = std::move(tabs), .select = tool_id, .child = tool()}));
+    parts.push_back(installable());
     affordances.push_back(
         ec::invoke_affordance({.id = tool_id, .label = _("Tool"), .args = row_of(tools_id)}));
     affordances.push_back(
@@ -1214,14 +1213,13 @@ auto parts_view(const session& state) -> ec::screen_view {
        ec::invoke_affordance({.id = pick_id, .label = _("Edit"), .args = row_of(stack_id)}));
     on("mount",
        ec::invoke_affordance({.id = remove_id, .label = _("Remove"), .args = row_of(stack_id)}));
-    on("install",
-       ec::invoke_affordance({.id = install_id, .label = _("Install"), .args = row_of(parts_id)}));
-    on("install",
-       page_affordance(
-           {.id = part_page_id,
-            .label = _("Parts page"),
-            .total = state.parts().total,
-            .page = state.part_page}));
+    affordances.push_back(
+        ec::invoke_affordance({.id = install_id, .label = _("Install"), .args = row_of(parts_id)}));
+    affordances.push_back(page_affordance(
+        {.id = part_page_id,
+         .label = _("Parts page"),
+         .total = state.parts().total,
+         .page = state.part_page}));
     if (state.live) {
         for (const auto* const tab : {"part", "vehicle"}) {
             on(tab,
@@ -1301,6 +1299,7 @@ auto session_view(const session& state) -> ec::screen_view {
               {"vehicle:document", {.slot = "canvas"}},
               {"vehicle:live", {.slot = "canvas"}},
               {tools_id, {.slot = "inspector", .label = _("Design")}},
+              {parts_id, {.slot = "palette", .label = _("Parts")}},
               {"vehicle:notice", {.slot = "log"}}},
          .groups =
              {{save_id, file},
@@ -1309,7 +1308,8 @@ auto session_view(const session& state) -> ec::screen_view {
               {redo_id, edit},
               {spawn_id, world},
               {paste_id, world},
-              {done_id, world}}});
+              {done_id, world}},
+         .menus = {file, edit, world}});
     return view;
 }
 
@@ -1400,7 +1400,6 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
         } else if (id == part_filter_id) {
             state.part_filter = text;
             state.part_page = 0;
-            state.tool_tab = "install";
         } else if (id == part_page_id) {
             state.part_page = static_cast<std::size_t>(invoked->args.count.value_or(0));
         } else if (state.live) {

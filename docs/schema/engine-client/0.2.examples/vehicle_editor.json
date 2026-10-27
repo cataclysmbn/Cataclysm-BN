@@ -198,6 +198,14 @@
         },
         "affordances": [
           {
+            "id": "vehicle:paste",
+            "label": "Paste vehicle",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen",
+            "group": "World"
+          },
+          {
             "id": "vehicle:source",
             "label": "Show",
             "keys": [],
@@ -244,14 +252,6 @@
               }
             },
             "expect": "screen"
-          },
-          {
-            "id": "vehicle:paste",
-            "label": "Paste vehicle",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen",
-            "group": "World"
           },
           {
             "id": "QUIT",
@@ -690,12 +690,6 @@
                 {
                   "id": "tool:mount",
                   "label": "Mount",
-                  "selected": false,
-                  "enabled": true
-                },
-                {
-                  "id": "tool:install",
-                  "label": "Install",
                   "selected": true,
                   "enabled": true
                 },
@@ -732,165 +726,270 @@
               ],
               "select": "vehicle:tool",
               "child": {
-                "id": "vehicle:parts",
+                "id": "vehicle:stack",
                 "kind": "list",
                 "affordances": [
-                  "vehicle:install",
-                  "vehicle:part_filter"
+                  "vehicle:pick"
                 ],
-                "columns": [
-                  {
-                    "key": "id",
-                    "label": "ID"
-                  }
-                ],
+                "columns": [],
                 "rows": [
                   {
-                    "id": "vpart:headlight",
-                    "label": "headlight",
-                    "description": "",
+                    "id": "part:4",
+                    "label": "extra light frame",
+                    "description": "/parts/1/parts/0",
                     "denial": "",
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "headlight"
-                      }
-                    ],
-                    "look": {
-                      "kind": "vehicle_part",
-                      "id": "headlight",
-                      "glyph": "*",
-                      "color": "c_white",
-                      "name": "headlight",
-                      "tile": "vp_headlight",
-                      "subtile": "center"
-                    }
+                    "columns": []
                   },
                   {
-                    "id": "vpart:headlight_reinforced",
-                    "label": "reinforced headlight",
-                    "description": "",
+                    "id": "part:5",
+                    "label": "light wheel mount (steerable)",
+                    "description": "/parts/1/parts/1",
                     "denial": "",
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "headlight_reinforced"
-                      }
-                    ],
-                    "look": {
-                      "kind": "vehicle_part",
-                      "id": "headlight_reinforced",
-                      "glyph": "*",
-                      "color": "c_light_blue",
-                      "name": "reinforced headlight",
-                      "tile": "vp_headlight_reinforced",
-                      "looks_like": [
-                        "vp_headlight"
-                      ],
-                      "subtile": "center"
-                    }
+                    "columns": []
                   },
                   {
-                    "id": "vpart:motorcycle_headlight",
-                    "label": "motorcycle headlight",
-                    "description": "",
+                    "id": "part:6",
+                    "label": "bicycle wheel",
+                    "description": "/parts/1/parts/2",
                     "denial": "",
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "motorcycle_headlight"
-                      }
-                    ],
-                    "look": {
-                      "kind": "vehicle_part",
-                      "id": "motorcycle_headlight",
-                      "glyph": "*",
-                      "color": "c_white",
-                      "name": "motorcycle headlight",
-                      "tile": "vp_motorcycle_headlight",
-                      "subtile": "center"
-                    }
-                  },
-                  {
-                    "id": "vpart:wide_headlight",
-                    "label": "wide angle headlight",
-                    "description": "",
-                    "denial": "",
-                    "enabled": true,
-                    "selectable": true,
-                    "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "wide_headlight"
-                      }
-                    ],
-                    "look": {
-                      "kind": "vehicle_part",
-                      "id": "wide_headlight",
-                      "glyph": "*",
-                      "color": "c_white",
-                      "name": "wide angle headlight",
-                      "tile": "vp_wide_headlight",
-                      "looks_like": [
-                        "vp_headlight"
-                      ],
-                      "subtile": "center"
-                    }
-                  },
-                  {
-                    "id": "vpart:wide_headlight_reinforced",
-                    "label": "reinforced wide-angle headlight",
-                    "description": "",
-                    "denial": "",
-                    "enabled": true,
-                    "selectable": true,
-                    "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "wide_headlight_reinforced"
-                      }
-                    ],
-                    "look": {
-                      "kind": "vehicle_part",
-                      "id": "wide_headlight_reinforced",
-                      "glyph": "*",
-                      "color": "c_light_blue",
-                      "name": "reinforced wide-angle headlight",
-                      "tile": "vp_wide_headlight_reinforced",
-                      "looks_like": [
-                        "vp_wide_headlight",
-                        "vp_headlight"
-                      ],
-                      "subtile": "center"
-                    }
+                    "columns": []
                   }
                 ],
-                "total": 5,
+                "total": 3,
                 "selection": "single",
-                "activate": "vehicle:install",
-                "filterable": true,
-                "filter": "headlight"
+                "activate": "vehicle:pick"
               }
+            },
+            {
+              "id": "vehicle:parts",
+              "kind": "list",
+              "label": "Parts",
+              "affordances": [
+                "vehicle:install",
+                "vehicle:part_filter"
+              ],
+              "slot": "palette",
+              "columns": [
+                {
+                  "key": "id",
+                  "label": "ID"
+                }
+              ],
+              "rows": [
+                {
+                  "id": "vpart:headlight",
+                  "label": "headlight",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "headlight"
+                    }
+                  ],
+                  "look": {
+                    "kind": "vehicle_part",
+                    "id": "headlight",
+                    "glyph": "*",
+                    "color": "c_white",
+                    "name": "headlight",
+                    "tile": "vp_headlight",
+                    "subtile": "center"
+                  }
+                },
+                {
+                  "id": "vpart:headlight_reinforced",
+                  "label": "reinforced headlight",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "headlight_reinforced"
+                    }
+                  ],
+                  "look": {
+                    "kind": "vehicle_part",
+                    "id": "headlight_reinforced",
+                    "glyph": "*",
+                    "color": "c_light_blue",
+                    "name": "reinforced headlight",
+                    "tile": "vp_headlight_reinforced",
+                    "looks_like": [
+                      "vp_headlight"
+                    ],
+                    "subtile": "center"
+                  }
+                },
+                {
+                  "id": "vpart:motorcycle_headlight",
+                  "label": "motorcycle headlight",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "motorcycle_headlight"
+                    }
+                  ],
+                  "look": {
+                    "kind": "vehicle_part",
+                    "id": "motorcycle_headlight",
+                    "glyph": "*",
+                    "color": "c_white",
+                    "name": "motorcycle headlight",
+                    "tile": "vp_motorcycle_headlight",
+                    "subtile": "center"
+                  }
+                },
+                {
+                  "id": "vpart:wide_headlight",
+                  "label": "wide angle headlight",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "wide_headlight"
+                    }
+                  ],
+                  "look": {
+                    "kind": "vehicle_part",
+                    "id": "wide_headlight",
+                    "glyph": "*",
+                    "color": "c_white",
+                    "name": "wide angle headlight",
+                    "tile": "vp_wide_headlight",
+                    "looks_like": [
+                      "vp_headlight"
+                    ],
+                    "subtile": "center"
+                  }
+                },
+                {
+                  "id": "vpart:wide_headlight_reinforced",
+                  "label": "reinforced wide-angle headlight",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "wide_headlight_reinforced"
+                    }
+                  ],
+                  "look": {
+                    "kind": "vehicle_part",
+                    "id": "wide_headlight_reinforced",
+                    "glyph": "*",
+                    "color": "c_light_blue",
+                    "name": "reinforced wide-angle headlight",
+                    "tile": "vp_wide_headlight_reinforced",
+                    "looks_like": [
+                      "vp_wide_headlight",
+                      "vp_headlight"
+                    ],
+                    "subtile": "center"
+                  }
+                }
+              ],
+              "total": 5,
+              "selection": "single",
+              "activate": "vehicle:install",
+              "filterable": true,
+              "filter": "headlight"
             }
           ]
         },
         "affordances": [
+          {
+            "id": "vehicle:save",
+            "label": "Save",
+            "keys": [
+              "CTRL+S"
+            ],
+            "enabled": false,
+            "denial": "Not available now.",
+            "expect": "screen",
+            "group": "File"
+          },
+          {
+            "id": "vehicle:save_as",
+            "label": "Save as",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {}
+            },
+            "expect": "boundary",
+            "group": "File"
+          },
+          {
+            "id": "vehicle:undo",
+            "label": "Undo",
+            "keys": [
+              "CTRL+Z"
+            ],
+            "enabled": false,
+            "denial": "Not available now.",
+            "expect": "screen",
+            "group": "Edit"
+          },
+          {
+            "id": "vehicle:redo",
+            "label": "Redo",
+            "keys": [
+              "CTRL+Y"
+            ],
+            "enabled": false,
+            "denial": "Not available now.",
+            "expect": "screen",
+            "group": "Edit"
+          },
+          {
+            "id": "vehicle:paste",
+            "label": "Paste vehicle",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen",
+            "group": "World"
+          },
+          {
+            "id": "vehicle:spawn",
+            "label": "Spawn",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen",
+            "group": "World"
+          },
           {
             "id": "vehicle:source",
             "label": "Show",
@@ -940,14 +1039,6 @@
             "expect": "screen"
           },
           {
-            "id": "vehicle:paste",
-            "label": "Paste vehicle",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen",
-            "group": "World"
-          },
-          {
             "id": "vehicle:tool",
             "label": "Tool",
             "keys": [],
@@ -982,6 +1073,30 @@
             "expect": "boundary"
           },
           {
+            "id": "vehicle:pick",
+            "label": "Edit",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "vehicle:stack"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "vehicle:remove",
+            "label": "Remove",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "vehicle:stack"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
             "id": "vehicle:install",
             "label": "Install",
             "keys": [],
@@ -1008,56 +1123,28 @@
             "expect": "screen"
           },
           {
-            "id": "vehicle:spawn",
-            "label": "Spawn",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen",
-            "group": "World"
-          },
-          {
-            "id": "vehicle:undo",
-            "label": "Undo",
-            "keys": [
-              "CTRL+Z"
-            ],
-            "enabled": false,
-            "denial": "Not available now.",
-            "expect": "screen",
-            "group": "Edit"
-          },
-          {
-            "id": "vehicle:redo",
-            "label": "Redo",
-            "keys": [
-              "CTRL+Y"
-            ],
-            "enabled": false,
-            "denial": "Not available now.",
-            "expect": "screen",
-            "group": "Edit"
-          },
-          {
-            "id": "vehicle:save",
-            "label": "Save",
-            "keys": [
-              "CTRL+S"
-            ],
-            "enabled": false,
-            "denial": "Not available now.",
-            "expect": "screen",
-            "group": "File"
-          },
-          {
-            "id": "vehicle:save_as",
-            "label": "Save as",
+            "id": "vehicle:earlier",
+            "label": "Earlier",
             "keys": [],
             "enabled": true,
             "args": {
-              "text": {}
+              "row": {
+                "component_id": "vehicle:stack"
+              }
             },
-            "expect": "boundary",
-            "group": "File"
+            "expect": "boundary"
+          },
+          {
+            "id": "vehicle:later",
+            "label": "Later",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "vehicle:stack"
+              }
+            },
+            "expect": "boundary"
           },
           {
             "id": "QUIT",
@@ -1641,12 +1728,6 @@
                   "enabled": true
                 },
                 {
-                  "id": "tool:install",
-                  "label": "Install",
-                  "selected": false,
-                  "enabled": true
-                },
-                {
                   "id": "tool:part",
                   "label": "Part",
                   "selected": false,
@@ -1742,10 +1823,205 @@
                 "selection": "single",
                 "activate": "vehicle:pick"
               }
+            },
+            {
+              "id": "vehicle:parts",
+              "kind": "list",
+              "label": "Parts",
+              "affordances": [
+                "vehicle:install",
+                "vehicle:part_filter"
+              ],
+              "slot": "palette",
+              "columns": [
+                {
+                  "key": "id",
+                  "label": "ID"
+                }
+              ],
+              "rows": [
+                {
+                  "id": "vpart:headlight",
+                  "label": "headlight",
+                  "description": "",
+                  "denial": "It cannot be mounted here.",
+                  "enabled": false,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "headlight"
+                    }
+                  ],
+                  "look": {
+                    "kind": "vehicle_part",
+                    "id": "headlight",
+                    "glyph": "*",
+                    "color": "c_white",
+                    "name": "headlight",
+                    "tile": "vp_headlight",
+                    "subtile": "center"
+                  }
+                },
+                {
+                  "id": "vpart:headlight_reinforced",
+                  "label": "reinforced headlight",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "headlight_reinforced"
+                    }
+                  ],
+                  "look": {
+                    "kind": "vehicle_part",
+                    "id": "headlight_reinforced",
+                    "glyph": "*",
+                    "color": "c_light_blue",
+                    "name": "reinforced headlight",
+                    "tile": "vp_headlight_reinforced",
+                    "looks_like": [
+                      "vp_headlight"
+                    ],
+                    "subtile": "center"
+                  }
+                },
+                {
+                  "id": "vpart:motorcycle_headlight",
+                  "label": "motorcycle headlight",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "motorcycle_headlight"
+                    }
+                  ],
+                  "look": {
+                    "kind": "vehicle_part",
+                    "id": "motorcycle_headlight",
+                    "glyph": "*",
+                    "color": "c_white",
+                    "name": "motorcycle headlight",
+                    "tile": "vp_motorcycle_headlight",
+                    "subtile": "center"
+                  }
+                },
+                {
+                  "id": "vpart:wide_headlight",
+                  "label": "wide angle headlight",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "wide_headlight"
+                    }
+                  ],
+                  "look": {
+                    "kind": "vehicle_part",
+                    "id": "wide_headlight",
+                    "glyph": "*",
+                    "color": "c_white",
+                    "name": "wide angle headlight",
+                    "tile": "vp_wide_headlight",
+                    "looks_like": [
+                      "vp_headlight"
+                    ],
+                    "subtile": "center"
+                  }
+                },
+                {
+                  "id": "vpart:wide_headlight_reinforced",
+                  "label": "reinforced wide-angle headlight",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "wide_headlight_reinforced"
+                    }
+                  ],
+                  "look": {
+                    "kind": "vehicle_part",
+                    "id": "wide_headlight_reinforced",
+                    "glyph": "*",
+                    "color": "c_light_blue",
+                    "name": "reinforced wide-angle headlight",
+                    "tile": "vp_wide_headlight_reinforced",
+                    "looks_like": [
+                      "vp_wide_headlight",
+                      "vp_headlight"
+                    ],
+                    "subtile": "center"
+                  }
+                }
+              ],
+              "total": 5,
+              "selection": "single",
+              "activate": "vehicle:install",
+              "filterable": true,
+              "filter": "headlight"
             }
           ]
         },
         "affordances": [
+          {
+            "id": "vehicle:undo",
+            "label": "Undo",
+            "keys": [
+              "CTRL+Z"
+            ],
+            "enabled": true,
+            "expect": "screen",
+            "group": "Edit"
+          },
+          {
+            "id": "vehicle:redo",
+            "label": "Redo",
+            "keys": [
+              "CTRL+Y"
+            ],
+            "enabled": false,
+            "denial": "Not available now.",
+            "expect": "screen",
+            "group": "Edit"
+          },
+          {
+            "id": "vehicle:paste",
+            "label": "Paste vehicle",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen",
+            "group": "World"
+          },
+          {
+            "id": "vehicle:done",
+            "label": "Done",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen",
+            "group": "World"
+          },
           {
             "id": "vehicle:source",
             "label": "Show",
@@ -1794,14 +2070,6 @@
               }
             },
             "expect": "boundary"
-          },
-          {
-            "id": "vehicle:paste",
-            "label": "Paste vehicle",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen",
-            "group": "World"
           },
           {
             "id": "vehicle:tool",
@@ -1862,33 +2130,30 @@
             "expect": "boundary"
           },
           {
-            "id": "vehicle:undo",
-            "label": "Undo",
-            "keys": [
-              "CTRL+Z"
-            ],
-            "enabled": true,
-            "expect": "screen",
-            "group": "Edit"
-          },
-          {
-            "id": "vehicle:redo",
-            "label": "Redo",
-            "keys": [
-              "CTRL+Y"
-            ],
-            "enabled": false,
-            "denial": "Not available now.",
-            "expect": "screen",
-            "group": "Edit"
-          },
-          {
-            "id": "vehicle:done",
-            "label": "Done",
+            "id": "vehicle:install",
+            "label": "Install",
             "keys": [],
             "enabled": true,
-            "expect": "screen",
-            "group": "World"
+            "args": {
+              "row": {
+                "component_id": "vehicle:parts"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "vehicle:part_page",
+            "label": "Parts page",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "count": {
+                "min": 0,
+                "max": 0,
+                "default": 0
+              }
+            },
+            "expect": "screen"
           },
           {
             "id": "QUIT",
