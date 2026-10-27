@@ -370,6 +370,10 @@ TEST_CASE(
             case 2:
                 CHECK(drag() == "span");
                 CHECK_FALSE(wire_part(state, "editor:canvas").contains("drag_begin"));
+                // A stroke is offered only where the canvas names it.
+                CHECK(std::ranges::none_of(screen.affordances, [](const auto& entry) {
+                    return entry.id == "editor:stroke_begin" || entry.id == "editor:stroke_end";
+                }));
                 return invoke("editor:tool", {.row = "tool:fill"});
             case 3:
                 CHECK(drag().empty());
