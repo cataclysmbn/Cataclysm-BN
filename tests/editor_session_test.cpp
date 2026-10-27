@@ -1440,6 +1440,111 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "a paste keeps the meaning of a symbol the target uses unmapped, and maps only symbols that "
+    "land",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto from = mod_file(walled_rows(), "a.json");
+    // Its squares are grass by `fill_ter`; `.` maps nothing.
+    const auto into = mod_file(
+        nlohmann::ordered_json::parse(R"({"fill_ter": "t_grass", "terrain": {"x": "t_floor"}})"),
+        "b.json");
+    const auto notice = [](const ec::screen_view& screen) {
+        return body<ec::text_body>(part(screen, "editor:notice")).markup;
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = from.path.string()});
+            case 1:
+                return invoke("editor:tool", {.row = "tool:select"});
+            case 2:
+                return invoke("editor:paint", {.row = "square:0,1"});
+            case 3:
+                return invoke("editor:paint", {.row = "square:3,1"});
+            case 4:
+                return invoke("editor:copy");
+            case 5:
+                return invoke("editor:open", {.text = into.path.string()});
+            case 6:
+                return invoke("editor:tool", {.row = "tool:paste"});
+            case 7:
+                // Only the `.` lands; the walls fall past the last column.
+                return invoke("editor:paint", {.row = "square:23,4"});
+            case 8:
+                CHECK(walls(screen) == 0);
+                CHECK(notice(screen) == "Pasted symbols keep what this entry maps them to: .");
+                return invoke("editor:save");
+            case 9:
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 10);
+    CHECK(object_of(into.path)["terrain"] == nlohmann::ordered_json::parse(R"({"x": "t_floor"})"));
+}
+
+TEST_CASE(
+    "a paste refuses symbols whose copied mapping reads the copied entry's parameters",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    auto object = walled_rows();
+    object["parameters"] = nlohmann::ordered_json::parse(
+        R"({"wall": {"type": "ter_str_id", "default": {"distribution": [["t_wall", 1]]}}})");
+    object["terrain"] = nlohmann::ordered_json::parse(
+        R"({".": "t_floor", "#": {"param": "wall"}})");
+    const auto from = mod_file(object, "a.json");
+    const auto into =
+        mod_file(nlohmann::ordered_json::parse(R"({"terrain": {".": "t_floor"}})"), "b.json");
+    const auto notice = [](const ec::screen_view& screen) {
+        return body<ec::text_body>(part(screen, "editor:notice")).markup;
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = from.path.string()});
+            case 1:
+                return invoke("editor:tool", {.row = "tool:select"});
+            case 2:
+                return invoke("editor:paint", {.row = "square:1,1"});
+            case 3:
+                return invoke("editor:paint", {.row = "square:3,1"});
+            case 4:
+                return invoke("editor:copy");
+            case 5:
+                return invoke("editor:open", {.text = into.path.string()});
+            case 6:
+                return invoke("editor:tool", {.row = "tool:paste"});
+            case 7:
+                return invoke("editor:paint", {.row = "square:4,4"});
+            case 8:
+                CHECK(walls(screen) == 0);
+                CHECK(saved(screen) == "Yes");
+                CHECK(notice(screen)
+                      == "These symbols read parameters of the entry they were copied from; map "
+                         "them here first: #");
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 9);
+}
+
+TEST_CASE(
     "the editor's catalog finds what a legend can name and puts it in the legend form",
     "[editor_session][engine_client_component]") {
     const auto guard = screen_guard{};
@@ -1774,12 +1879,17 @@ TEST_CASE(
                 CHECK(notice(screen)
                       == "A placement moves by four whole numbers: how far its first and last "
                          "squares go east and south.");
-                return invoke("editor:undo");
+                return invoke(
+                    "editor:placement_span", {.row = monster, .text = "2147483647,0,2147483647,0"});
             case 8:
-                CHECK(region(screen, items).to == ec::grid_point{10, 4});
+                CHECK(notice(screen) == "A placement moves at most 1000 squares.");
                 CHECK(region(screen, monster).to == ec::grid_point{7, 8});
                 return invoke("editor:undo");
             case 9:
+                CHECK(region(screen, items).to == ec::grid_point{10, 4});
+                CHECK(region(screen, monster).to == ec::grid_point{7, 8});
+                return invoke("editor:undo");
+            case 10:
                 CHECK(region(screen, monster).from == ec::grid_point{3, 7});
                 CHECK(saved(screen) == "Yes");
                 return act("QUIT");
@@ -1790,7 +1900,7 @@ TEST_CASE(
     });
 
     editor::run_editor_session();
-    CHECK(step == 10);
+    CHECK(step == 11);
 }
 
 TEST_CASE(

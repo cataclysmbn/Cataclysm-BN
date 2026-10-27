@@ -1041,7 +1041,19 @@ TEST_CASE(
                     notice(screen)
                     == saved_as.string() + " changed on disk; saving would overwrite that change.");
                 return invoke("vehicle:undo");
-            case 7:
+            case 7: {
+                // The file no longer defines the prototype: the clean document is closed.
+                auto out = std::ofstream(saved_as, std::ios::binary | std::ios::trunc);
+                out << "[]";
+                return invoke("vehicle:tool", {.row = "tool:mount"});
+            }
+            case 8:
+                CHECK(notice(screen)
+                      == saved_as.string() + " changed on disk and no longer defines bicycle.");
+                CHECK_FALSE(ec::find_component(*screen.root, "vehicle:document"));
+                return invoke("vehicle:filter", {.text = "bicycle"});
+            case 9:
+                CHECK_FALSE(ec::find_component(*screen.root, "vehicle:notice"));
                 return act("QUIT");
             default:
                 FAIL("the vehicle editor outlived its exit");
@@ -1049,7 +1061,7 @@ TEST_CASE(
         }
     });
     editor::run_vehicle_editor();
-    CHECK(step == 8);
+    CHECK(step == 10);
 }
 
 #endif
