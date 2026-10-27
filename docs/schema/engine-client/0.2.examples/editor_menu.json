@@ -1884,7 +1884,8 @@
                 "kind": "list",
                 "affordances": [
                   "editor:catalog_pick",
-                  "editor:catalog_filter"
+                  "editor:catalog_filter",
+                  "editor:catalog_page"
                 ],
                 "columns": [
                   {
@@ -3597,7 +3598,8 @@
               "label": "Files",
               "affordances": [
                 "editor:browser_open",
-                "editor:browser_filter"
+                "editor:browser_filter",
+                "editor:browser_page"
               ],
               "slot": "outline",
               "columns": [],

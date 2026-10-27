@@ -775,7 +775,8 @@ auto live_stack(const session& state) -> ec::component {
                          .id = index_row("part", index),
                          .label = part.info().name(),
                          .selected = index == state.live_part,
-                         .columns = std::move(columns)};
+                         .columns = std::move(columns),
+                         .look = engine_client::world::vehicle_part_appearance(veh, index, 270)};
                  })
                | std::ranges::to<std::vector>(),
          .selection = "single",
@@ -1072,7 +1073,11 @@ auto parts_view(const session& state) -> ec::screen_view {
                              .id = index_row("part", index),
                              .label = id.is_valid() ? id->name() : part.part,
                              .description = part.pointer,
-                             .selected = state.field_pointer == part.pointer};
+                             .selected = state.field_pointer == part.pointer,
+                             .look = id.is_valid()
+                                       ? std::optional{engine_client::world::
+                                                           vehicle_part_type_appearance(*id)}
+                                       : std::nullopt};
                      })
                    | std::ranges::to<std::vector>(),
              .selection = "single",

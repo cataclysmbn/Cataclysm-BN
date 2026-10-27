@@ -163,7 +163,8 @@
               "label": "Files",
               "affordances": [
                 "editor:browser_open",
-                "editor:browser_filter"
+                "editor:browser_filter",
+                "editor:browser_page"
               ],
               "slot": "canvas",
               "columns": [],
@@ -1942,7 +1943,8 @@
                 "kind": "list",
                 "affordances": [
                   "editor:catalog_pick",
-                  "editor:catalog_filter"
+                  "editor:catalog_filter",
+                  "editor:catalog_page"
                 ],
                 "columns": [
                   {
@@ -3655,7 +3657,8 @@
               "label": "Files",
               "affordances": [
                 "editor:browser_open",
-                "editor:browser_filter"
+                "editor:browser_filter",
+                "editor:browser_page"
               ],
               "slot": "outline",
               "columns": [],
@@ -5996,7 +5999,8 @@
                 "kind": "list",
                 "affordances": [
                   "editor:catalog_pick",
-                  "editor:catalog_filter"
+                  "editor:catalog_filter",
+                  "editor:catalog_page"
                 ],
                 "columns": [
                   {
@@ -7709,7 +7713,8 @@
               "label": "Files",
               "affordances": [
                 "editor:browser_open",
-                "editor:browser_filter"
+                "editor:browser_filter",
+                "editor:browser_page"
               ],
               "slot": "outline",
               "columns": [],
@@ -8778,20 +8783,6 @@
               }
             },
             "expect": "boundary"
-          },
-          {
-            "id": "editor:stroke_begin",
-            "label": "Begin stroke",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "editor:stroke_end",
-            "label": "End stroke",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
           },
           {
             "id": "editor:catalog_filter",
@@ -9915,7 +9906,8 @@
                 "kind": "list",
                 "affordances": [
                   "editor:catalog_pick",
-                  "editor:catalog_filter"
+                  "editor:catalog_filter",
+                  "editor:catalog_page"
                 ],
                 "columns": [
                   {
@@ -11628,7 +11620,8 @@
               "label": "Files",
               "affordances": [
                 "editor:browser_open",
-                "editor:browser_filter"
+                "editor:browser_filter",
+                "editor:browser_page"
               ],
               "slot": "outline",
               "columns": [],
@@ -12724,20 +12717,6 @@
               }
             },
             "expect": "boundary"
-          },
-          {
-            "id": "editor:stroke_begin",
-            "label": "Begin stroke",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "editor:stroke_end",
-            "label": "End stroke",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
           },
           {
             "id": "editor:catalog_filter",
@@ -18612,7 +18591,8 @@
                 "kind": "list",
                 "affordances": [
                   "editor:catalog_pick",
-                  "editor:catalog_filter"
+                  "editor:catalog_filter",
+                  "editor:catalog_page"
                 ],
                 "columns": [
                   {
@@ -29309,7 +29289,8 @@
               "label": "Files",
               "affordances": [
                 "editor:browser_open",
-                "editor:browser_filter"
+                "editor:browser_filter",
+                "editor:browser_page"
               ],
               "slot": "outline",
               "columns": [],
@@ -30388,20 +30369,6 @@
               }
             },
             "expect": "boundary"
-          },
-          {
-            "id": "editor:stroke_begin",
-            "label": "Begin stroke",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "editor:stroke_end",
-            "label": "End stroke",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
           },
           {
             "id": "editor:catalog_filter",

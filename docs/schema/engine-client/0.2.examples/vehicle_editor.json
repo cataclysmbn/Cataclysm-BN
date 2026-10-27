@@ -97,7 +97,8 @@
                 "kind": "list",
                 "affordances": [
                   "vehicle:open",
-                  "vehicle:filter"
+                  "vehicle:filter",
+                  "vehicle:page"
                 ],
                 "columns": [
                   {
@@ -325,7 +326,8 @@
                 "kind": "list",
                 "affordances": [
                   "vehicle:open",
-                  "vehicle:filter"
+                  "vehicle:filter",
+                  "vehicle:page"
                 ],
                 "columns": [
                   {
@@ -741,7 +743,16 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": []
+                    "columns": [],
+                    "look": {
+                      "kind": "vehicle_part",
+                      "id": "xlframe_vertical",
+                      "glyph": "│",
+                      "color": "c_light_gray",
+                      "name": "extra light frame",
+                      "tile": "vp_xlframe_vertical",
+                      "subtile": "center"
+                    }
                   },
                   {
                     "id": "part:5",
@@ -751,7 +762,19 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": []
+                    "columns": [],
+                    "look": {
+                      "kind": "vehicle_part",
+                      "id": "wheel_mount_light_steerable",
+                      "glyph": "-",
+                      "color": "c_light_gray",
+                      "name": "light wheel mount (steerable)",
+                      "tile": "vp_wheel_mount_light_steerable",
+                      "looks_like": [
+                        "vp_wheel_mount_light"
+                      ],
+                      "subtile": "center"
+                    }
                   },
                   {
                     "id": "part:6",
@@ -761,7 +784,19 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": []
+                    "columns": [],
+                    "look": {
+                      "kind": "vehicle_part",
+                      "id": "wheel_bicycle",
+                      "glyph": "|",
+                      "color": "c_dark_gray",
+                      "name": "bicycle wheel",
+                      "tile": "vp_wheel_bicycle",
+                      "looks_like": [
+                        "vp_wheel"
+                      ],
+                      "subtile": "center"
+                    }
                   }
                 ],
                 "total": 3,
@@ -775,7 +810,8 @@
               "label": "Parts",
               "affordances": [
                 "vehicle:install",
-                "vehicle:part_filter"
+                "vehicle:part_filter",
+                "vehicle:part_page"
               ],
               "slot": "palette",
               "columns": [
@@ -1768,7 +1804,19 @@
                         "label": "Health %",
                         "value": "100"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "vehicle_part",
+                      "id": "wheel_bicycle",
+                      "glyph": "|",
+                      "color": "c_dark_gray",
+                      "name": "bicycle wheel",
+                      "tile": "vp_wheel_bicycle",
+                      "looks_like": [
+                        "vp_wheel"
+                      ],
+                      "subtile": "center"
+                    }
                   },
                   {
                     "id": "part:5",
@@ -1784,7 +1832,19 @@
                         "label": "Health %",
                         "value": "100"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "vehicle_part",
+                      "id": "wheel_bicycle",
+                      "glyph": "|",
+                      "color": "c_dark_gray",
+                      "name": "bicycle wheel",
+                      "tile": "vp_wheel_bicycle",
+                      "looks_like": [
+                        "vp_wheel"
+                      ],
+                      "subtile": "center"
+                    }
                   },
                   {
                     "id": "part:6",
@@ -1800,7 +1860,19 @@
                         "label": "Health %",
                         "value": "100"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "vehicle_part",
+                      "id": "wheel_bicycle",
+                      "glyph": "|",
+                      "color": "c_dark_gray",
+                      "name": "bicycle wheel",
+                      "tile": "vp_wheel_bicycle",
+                      "looks_like": [
+                        "vp_wheel"
+                      ],
+                      "subtile": "center"
+                    }
                   },
                   {
                     "id": "part:11",
@@ -1816,7 +1888,19 @@
                         "label": "Health %",
                         "value": "100"
                       }
-                    ]
+                    ],
+                    "look": {
+                      "kind": "vehicle_part",
+                      "id": "wheel_bicycle",
+                      "glyph": "|",
+                      "color": "c_dark_gray",
+                      "name": "bicycle wheel",
+                      "tile": "vp_wheel_bicycle",
+                      "looks_like": [
+                        "vp_wheel"
+                      ],
+                      "subtile": "center"
+                    }
                   }
                 ],
                 "total": 4,
@@ -1830,7 +1914,8 @@
               "label": "Parts",
               "affordances": [
                 "vehicle:install",
-                "vehicle:part_filter"
+                "vehicle:part_filter",
+                "vehicle:part_page"
               ],
               "slot": "palette",
               "columns": [
