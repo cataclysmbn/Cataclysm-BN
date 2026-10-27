@@ -150,6 +150,8 @@ public:
     void finalize();
     void finalize_mapgen_parameters();
     void check() const;
+    /// What `check` checks but the nested specials, which only a special the game has can place.
+    void check_layout() const;
     std::vector<overmap_special_connection> connections;
 
     /**
@@ -160,6 +162,7 @@ public:
     auto can_spawn_in_dimension(const dimension_id& dim_id, bool dim_inherits_base) const -> bool;
 
 private:
+    void check_nested() const;
     /// Dimension IDs this special is restricted to.  Empty = primary dimension only.
     std::vector<std::string> dimensions_;
     overmap_special_subtype subtype_;

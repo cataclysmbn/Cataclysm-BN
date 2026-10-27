@@ -99,6 +99,7 @@ inline constexpr auto open_oter_id = "editor:open_oter";
 inline constexpr auto open_here_id = "editor:open_here";
 inline constexpr auto level_up_id = "editor:level_up";
 inline constexpr auto level_down_id = "editor:level_down";
+inline constexpr auto open_square_id = "editor:open_square";
 inline constexpr auto browser_id = "editor:browser";
 inline constexpr auto browser_open_id = "editor:browser_open";
 inline constexpr auto browser_filter_id = "editor:browser_filter";
@@ -283,6 +284,8 @@ struct session {
     std::optional<int> level = std::nullopt;
     std::optional<std::size_t> level_up = std::nullopt;
     std::optional<std::size_t> level_down = std::nullopt;
+    /// The level of an overmap special or building the canvas shows.
+    int special_level = 0;
     /// The overmap squares of the canvas entry over a level the file makes, the squares beside it
     /// the file makes, and the legends of the entries that make them.
     std::vector<stacked_square> below;
@@ -362,13 +365,20 @@ struct session {
 
     auto catalog_entries() const -> editor::catalog_page;
 
-    /// The objects the editor edits: JSON mapgens and palettes.
+    /// The objects the editor edits: JSON mapgens, palettes, overmap specials and buildings.
     auto entries() const -> std::vector<std::size_t>;
     /// The palettes and nested chunks of the file, which stand in for the game's while a mapgen of
     /// it is read.
     auto stand_in_texts() const -> std::vector<std::string>;
     /// Whether the object edited is a mapgen, which has rows to draw on and a preview.
     auto on_mapgen() const -> bool;
+    /// Whether the object edited is an overmap special or a building, which places overmap squares.
+    auto on_special() const -> bool;
+    /// Whether the canvas can show the level `dz` above: another entry's, or the special's own.
+    auto can_climb(int dz) const -> bool;
+    auto climb(int dz) -> void;
+    /// Opens the mapgen of the overmap terrain the special places at `at` on the level shown.
+    auto open_square(const point& at) -> void;
 
     /// The options the entry is previewed with over the avatar's overmap square.
     auto preview_options_of(unsigned int with_seed) const -> preview_options;

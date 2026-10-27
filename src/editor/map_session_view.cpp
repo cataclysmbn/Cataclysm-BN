@@ -11,12 +11,14 @@
 #include "editor/row_id.h"
 #include "editor/session_file.h"
 #include "editor/session_page.h"
+#include "editor/special_grid.h"
 #include "engine_client_component.h"
 #include "engine_client_world.h"
 #include "game.h"
 #include "item.h"
 #include "map/mapdata.h"
 #include "output.h"
+#include "overmap/omdata.h"
 #include "overmap/overmapbuffer.h"
 #include "path_info.h"
 #include "regional_settings.h"
@@ -490,6 +492,10 @@ auto document_stats(const session& state) -> std::vector<ec::panel_stat> {
                 {.key = "seed", .label = _("Seed"), .value = std::to_string(*state.seed)});
         }
     }
+    if (state.on_special()) {
+        stats.push_back(
+            {.key = "level", .label = _("Level"), .value = std::to_string(state.special_level)});
+    }
     // The stamp stays in the world whichever entry is open.
     if (state.stamped) {
         stats.push_back({.key = "stamped", .label = _("Stamped"), .value = _("Yes")});
@@ -791,18 +797,6 @@ auto drawing_affordances(const session& state) -> std::vector<ec::affordance> {
              .label = _("Move placement"),
              .args = {.row = ec::row_shape{.component_id = canvas_id}, .text = ec::text_shape{}}}));
     }
-    affordances.push_back(ec::invoke_affordance(
-        {.id = level_up_id,
-         .label = _("Level up"),
-         .keys = {"<"},
-         .enabled = state.level_up.has_value(),
-         .denial = state.level_up ? "" : _("No level above in this file.")}));
-    affordances.push_back(ec::invoke_affordance(
-        {.id = level_down_id,
-         .label = _("Level down"),
-         .keys = {">"},
-         .enabled = state.level_down.has_value(),
-         .denial = state.level_down ? "" : _("No level below in this file.")}));
     affordances.push_back(
         ec::invoke_affordance({.id = stroke_begin_id, .label = _("Begin stroke")}));
     affordances.push_back(ec::invoke_affordance({.id = stroke_end_id, .label = _("End stroke")}));
@@ -811,6 +805,74 @@ auto drawing_affordances(const session& state) -> std::vector<ec::affordance> {
          .label = _("Extract legend to palette"),
          .args = {.text = ec::text_shape{}}}));
     return affordances;
+}
+
+auto level_affordances(const session& state) -> std::vector<ec::affordance> {
+    return {
+        ec::invoke_affordance(
+            {.id = level_up_id,
+             .label = _("Level up"),
+             .keys = {"<"},
+             .enabled = state.can_climb(1),
+             .denial = state.can_climb(1) ? "" : _("No level above in this file.")}),
+        ec::invoke_affordance(
+            {.id = level_down_id,
+             .label = _("Level down"),
+             .keys = {">"},
+             .enabled = state.can_climb(-1),
+             .denial = state.can_climb(-1) ? "" : _("No level below in this file.")})};
+}
+
+/// The overmap squares a special or building places on the level shown, over the rectangle of all
+/// its levels; each opens its terrain's mapgen.
+auto special_canvas(const session& state) -> ec::component {
+    const auto squares = special_squares(state.doc->objects()[state.object].value);
+    if (squares.empty()) { return {.id = canvas_id, .body = ec::grid_body{.role = "canvas"}}; }
+    const auto [min_x, max_x] = std::ranges::minmax(
+        squares
+        | std::views::transform([](const special_square& square) { return square.at.x(); }));
+    const auto [min_y, max_y] = std::ranges::minmax(
+        squares
+        | std::views::transform([](const special_square& square) { return square.at.y(); }));
+    auto palette = ec::look_palette{};
+    const auto cells =
+        squares | std::views::filter([&](const special_square& square) {
+            return square.at.z() == state.special_level;
+        })
+        | std::views::transform([&](const special_square& square) {
+              const auto at = point(square.at.x(), square.at.y());
+              const auto id = oter_str_id(square.overmap);
+              auto cell = ec::grid_cell{
+                  .at = {at.x - min_x, at.y - min_y},
+                  .id = point_row("square", at),
+                  .glyph = "?",
+                  .label = square.overmap,
+                  .affordance = open_square_id};
+              if (id.is_valid()) {
+                  const auto& terrain = id.obj();
+                  cell.glyph = terrain.get_symbol();
+                  cell.label = terrain.get_name();
+                  cell.color = string_from_color(terrain.get_color());
+                  cell.looks = palette.indexes(
+                      {{.kind = "overmap_terrain",
+                        .id = terrain.get_type_id().str(),
+                        .name = terrain.get_name(),
+                        .glyph = cell.glyph,
+                        .color = cell.color,
+                        .rotation = terrain.get_rotation()}});
+              }
+              return cell;
+          })
+        | std::ranges::to<std::vector>();
+    return {
+        .id = canvas_id,
+        .affordances = {open_square_id},
+        .body = ec::grid_body{
+            .cols = max_x - min_x + 1,
+            .rows = max_y - min_y + 1,
+            .cells = cells,
+            .looks = std::move(palette.looks),
+            .role = "canvas"}};
 }
 
 } // namespace
@@ -932,11 +994,19 @@ auto session_view(const session& state) -> ec::screen_view {
                      .select = tool_id,
                      .child = canvas(state)}));
             }
-            parts.push_back(ec::list(
-                {.id = legend_id,
-                 .rows = legend_rows(state),
-                 .selection = "single",
-                 .activate = symbol_id}));
+            if (state.on_special()) {
+                parts.push_back(special_canvas(state));
+                affordances.push_back(ec::invoke_affordance(
+                    {.id = open_square_id,
+                     .label = _("Open its mapgen"),
+                     .args = row_of(canvas_id)}));
+            } else {
+                parts.push_back(ec::list(
+                    {.id = legend_id,
+                     .rows = legend_rows(state),
+                     .selection = "single",
+                     .activate = symbol_id}));
+            }
             parts.push_back(ec::list(
                 {.id = diagnostics_id,
                  .rows = state.diagnostics | std::views::enumerate
@@ -980,9 +1050,12 @@ auto session_view(const session& state) -> ec::screen_view {
                  .args =
                      {.row = ec::row_shape{.component_id = field_id}, .text = ec::text_shape{}}}));
             affordances.push_back(ec::invoke_affordance({.id = field_apply_id, .label = _("Set")}));
-            std::ranges::move(drawing_affordances(state), std::back_inserter(affordances));
-            mapping_parts(state, parts, affordances);
-            game_parts(state, parts, affordances);
+            std::ranges::move(level_affordances(state), std::back_inserter(affordances));
+            if (!state.on_special()) {
+                std::ranges::move(drawing_affordances(state), std::back_inserter(affordances));
+                mapping_parts(state, parts, affordances);
+                game_parts(state, parts, affordances);
+            }
         }
     }
     parts.push_back(new_file_form(state));
@@ -1013,7 +1086,10 @@ auto session_view(const session& state) -> ec::screen_view {
             {.id = "editor:status", .body = ec::text_body{.markup = state.status, .tone = "good"}});
     }
     // A palette has no canvas; its legend is what it edits.
-    const auto* const active = state.on_mapgen() ? canvas_id : state.doc ? legend_id : "";
+    const auto* const active =
+        state.on_mapgen() || state.on_special() ? canvas_id
+        : state.doc                             ? legend_id
+                                                : "";
     return {
         .title = _("Map Editor"),
         .root = ec::split({.id = "editor:body", .active = active, .children = std::move(parts)}),

@@ -17,6 +17,7 @@
 #include "editor/recent_documents.h"
 #include "editor/session_file.h"
 #include "editor/session_page.h"
+#include "editor/special_grid.h"
 #include "engine_client_world.h"
 #include "game.h"
 #include "json_formatter.h"
@@ -298,7 +299,7 @@ auto session::entries() const -> std::vector<std::size_t> {
     return std::views::iota(std::size_t{0}, doc->objects().size())
          | std::views::filter([&](const auto index) {
                const auto& value = doc->objects()[index].value;
-               return is_json_mapgen(value) || is_palette(value);
+               return is_json_mapgen(value) || is_palette(value) || is_special(value);
            })
          | std::ranges::to<std::vector>();
 }
@@ -314,6 +315,27 @@ auto session::stand_in_texts() const -> std::vector<std::string> {
 
 auto session::on_mapgen() const -> bool {
     return doc && object < doc->objects().size() && is_json_mapgen(doc->objects()[object].value);
+}
+
+auto session::on_special() const -> bool {
+    return doc && object < doc->objects().size() && is_special(doc->objects()[object].value);
+}
+
+auto session::can_climb(const int dz) const -> bool {
+    if (!on_special()) { return (dz > 0 ? level_up : level_down).has_value(); }
+    return std::ranges::contains(
+        special_squares(doc->objects()[object].value), special_level + dz,
+        [](const special_square& square) { return square.at.z(); });
+}
+
+auto session::climb(const int dz) -> void {
+    if (!can_climb(dz)) { return; }
+    if (on_special()) {
+        special_level += dz;
+        reload();
+    } else {
+        show_object(*(dz > 0 ? level_up : level_down));
+    }
 }
 
 auto session::preview_options_of(const unsigned int with_seed) const -> preview_options {
@@ -379,8 +401,17 @@ auto session::reload_levels() -> void {
     std::ranges::for_each(beside, read_legend, &neighbour_square::other);
 }
 
+auto session::open_square(const point& at) -> void {
+    if (!on_special()) { return; }
+    const auto squares = special_squares(doc->objects()[object].value);
+    const auto found = std::ranges::
+        find(squares, tripoint_rel_omt(at.x, at.y, special_level), &special_square::at);
+    if (found != squares.end()) { open_mapgen_of(found->overmap); }
+}
+
 auto session::show_object(const std::size_t index) -> void {
     object = index;
+    special_level = 0;
     anchor.reset();
     selected.reset();
     focus.reset();
@@ -398,8 +429,19 @@ auto session::reload() -> void {
     beside.clear();
     other_legends.clear();
     if (!doc || object >= doc->objects().size()) { return; }
-    const auto stand_ins = file_stand_ins(stand_in_texts());
     const auto text = doc->objects()[object].value.dump();
+    if (on_special()) {
+        diagnostics =
+            check_special(text) | std::views::transform([](const loader_message& message) {
+                return diagnostic{.text = message.text};
+            })
+            | std::ranges::to<std::vector>();
+        preview.reset();
+        parameters.clear();
+        loot.reset();
+        return;
+    }
+    const auto stand_ins = file_stand_ins(stand_in_texts());
     legend = mapgen_legend(text).value_or(std::vector<legend_symbol>{});
     reload_levels();
     diagnostics =
@@ -522,7 +564,11 @@ auto session::open(const std::string& name) -> void {
     picked.reset();
     const auto found = entries();
     object = found.empty() ? doc->objects().size() : found.front();
-    notice = found.empty() ? string_format(_("%s holds no JSON mapgen or palette."), name) : "";
+    notice =
+        found.empty()
+            ? string_format(
+                  _("%s holds no JSON mapgen, palette, overmap special or building."), name)
+            : "";
     reload();
     mapping_symbol = symbol;
 }

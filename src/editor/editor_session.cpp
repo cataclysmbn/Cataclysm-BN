@@ -192,9 +192,9 @@ auto run_editor_session() -> void {
         } else if (id == object_id) {
             if (const auto index = row_index(row, "object")) { state.show_object(*index); }
         } else if (id == level_up_id || id == level_down_id) {
-            if (const auto index = id == level_up_id ? state.level_up : state.level_down) {
-                state.show_object(*index);
-            }
+            state.climb(id == level_up_id ? 1 : -1);
+        } else if (id == open_square_id) {
+            if (const auto at = row_point(row, "square")) { state.open_square(*at); }
         } else if (id == tool_id) {
             const auto found = std::ranges::find(tools, row, &tool::id);
             if (found != tools.end()) {

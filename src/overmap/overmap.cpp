@@ -10,7 +10,9 @@
 #include "character_id.h"
 #include "cube_direction.h" // IWYU pragma: associated
 #include "debug.h"
+#include "debug_log_capture.h"
 #include "distribution.h"
+#include "editor/special_grid.h"
 #include "enum_conversions.h"
 #include "flood_fill.h"
 #include "fluid_grid.h"
@@ -29,6 +31,7 @@
 #include "mapgen/mapgen_functions.h"
 #include "math_defines.h"
 #include "messages.h"
+#include "mod_manager.h"
 #include "mongroup.h"
 #include "monster.h"
 #include "mtype.h"
@@ -76,6 +79,7 @@
 #include <point.h>
 #include <ranges>
 #include <set>
+#include <sstream>
 #include <tuple>
 #include <unordered_set>
 #include <vector>
@@ -2624,6 +2628,11 @@ void overmap_special::finalize_mapgen_parameters() {
 }
 
 void overmap_special::check() const {
+    check_layout();
+    check_nested();
+}
+
+void overmap_special::check_layout() const {
     data_->check(string_format("overmap special %s", id.str()));
 
     for (const auto& elem : connections) {
@@ -2657,7 +2666,9 @@ void overmap_special::check() const {
             }
         }
     }
+}
 
+void overmap_special::check_nested() const {
     // Make sure nested specials doesn't loop back to parents
     std::function<std::optional<
         overmap_special_id>(const overmap_special_id, std::unordered_set<overmap_special_id>)>
@@ -2683,6 +2694,29 @@ void overmap_special::check() const {
         debugmsg("In overmap special \"%s\", nested special \"%s\" places itself recursively.", id,
                  *recurse);
     }
+}
+
+auto editor::check_special(const std::string_view text) -> std::vector<loader_message> {
+    auto thrown = std::optional<std::string>{};
+    const auto said = capture_each_debugmsg_during([&] {
+        try {
+            auto in = std::istringstream(std::string(text));
+            auto jsin = JsonIn(in, "editor");
+            const auto entry = jsin.get_object();
+            auto special = overmap_special{};
+            special.id = overmap_special_id(entry.get_string("id"));
+            special.load(entry, mod_management::get_default_core_content_pack().str());
+            special.finalize();
+            special.check_layout();
+        } catch (const JsonError& e) { thrown = e.what(); }
+    });
+    auto result =
+        said | std::views::transform([](const std::string& message) {
+            return loader_message{.text = message};
+        })
+        | std::ranges::to<std::vector>();
+    if (thrown) { result.push_back({.text = *thrown}); }
+    return result;
 }
 
 // *** BEGIN overmap FUNCTIONS ***
