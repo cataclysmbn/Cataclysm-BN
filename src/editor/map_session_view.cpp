@@ -642,7 +642,7 @@ auto game_parts(
         affordances.push_back(
             ec::invoke_affordance({.id = place_special_id, .label = _("Place in world")}));
         affordances.push_back(ec::invoke_affordance(
-            {.id = test_id, .label = _("Test"), .enabled = state.placed.has_value()}));
+            {.id = test_id, .label = _("Test"), .enabled = state.placed_here().has_value()}));
     }
     if (state.on_mapgen()) {
         affordances.push_back(ec::invoke_affordance({.id = apply_id, .label = _("Apply to game")}));

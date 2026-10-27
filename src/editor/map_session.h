@@ -247,6 +247,12 @@ inline const auto catalog_uses = std::array{
 };
 
 
+/// A special the editor placed in the world.
+struct placed_special {
+    std::string id;
+    tripoint_abs_omt at;
+};
+
 /// What the new mapgen form writes: a file of the user mods holding one mapgen of an overmap
 /// terrain, one nested chunk of that id, its squares all one terrain, one palette of that id
 /// mapping a symbol to that terrain, or one overmap special or building of that id placing an
@@ -372,8 +378,8 @@ struct session {
     std::optional<stamp> stamped = std::nullopt;
     /// The built-in and Lua mapgens last looked up or found in the file opened, read-only.
     std::vector<code_mapgen> code_mapgens;
-    /// Where the special was last placed in the world.
-    std::optional<tripoint_abs_omt> placed = std::nullopt;
+    /// The special last placed in the world, and its origin there.
+    std::optional<placed_special> placed = std::nullopt;
     /// The files the browser lists; read again after a file is made.
     mutable std::optional<std::vector<std::filesystem::path>> files = std::nullopt;
     std::string browser_filter;
@@ -403,6 +409,8 @@ struct session {
     auto on_special() const -> bool;
     /// Whether the object edited is an overmap terrain, which the game draws its squares with.
     auto on_oter() const -> bool;
+    /// Where the special edited was placed in the world; none when it was not, or another was.
+    auto placed_here() const -> std::optional<tripoint_abs_omt>;
     /// The mapgen ids the overmap terrain edited is made with, of the types the game knows.
     auto terrain_mapgens() const -> std::vector<std::string>;
     /// Whether the canvas can show the level `dz` above: another entry's, or the special's own.

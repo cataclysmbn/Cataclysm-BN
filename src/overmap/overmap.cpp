@@ -2807,24 +2807,13 @@ auto editor::apply_special(const std::string_view text)
 auto editor::place_special_near(const overmap_special_id& id, const tripoint_abs_omt& center)
     -> std::optional<tripoint_abs_omt> {
     auto& buffer = ACTIVE_OVERMAP_BUFFER;
-    const auto points =
-        id->required_locations() | std::views::transform(&overmap_special_locations::p)
-        | std::ranges::to<std::vector>();
-    // Generated land keeps what was made there, so the special goes on land not made yet, all
-    // within one overmap as the overmap places it.
-    const auto fits = [&](const tripoint_abs_omt& origin) {
-        const auto om = project_to<coords::om>(origin.xy());
-        return std::ranges::all_of(points, [&](const tripoint_rel_omt& p) {
-            return project_to<coords::om>((origin + p).xy()) == om
-                && !buffer.is_omt_generated(origin + p);
-        });
-    };
+    // Generated land keeps what was made there, so the special goes where the game would place it
+    // on land not made yet.
     for (const auto& raw :
          closest_points_first(tripoint(center.raw().xy(), 0), special_search_radius)) {
         const auto origin = tripoint_abs_omt(raw);
-        if (!fits(origin)) { continue; }
-        const auto used = buffer.place_special(*id, origin, om_direction::type::north, false, true);
-        if (!used) { return std::nullopt; }
+        const auto used = buffer.place_special(*id, origin, om_direction::type::north, true, false);
+        if (!used) { continue; }
         std::ranges::for_each(*used, [&](const tripoint_abs_omt& at) {
             buffer.set_seen(at, true);
         });

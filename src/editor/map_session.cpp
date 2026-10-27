@@ -1079,6 +1079,7 @@ auto session::stamp_here() -> void {
 }
 
 auto session::place_special() -> void {
+    if (!on_special()) { return; }
     const auto applied = apply_special(doc->objects()[object].value.dump());
     if (!applied) {
         notice = applied.error();
@@ -1089,7 +1090,13 @@ auto session::place_special() -> void {
         notice = _("No land near you that is still to be generated holds the special.");
         return;
     }
-    placed = at;
+    placed = placed_special{.id = applied->str(), .at = *at};
+}
+
+auto session::placed_here() const -> std::optional<tripoint_abs_omt> {
+    if (!on_special() || !placed) { return std::nullopt; }
+    const auto& entry = doc->objects()[object].value;
+    return entry.value("id", "") == placed->id ? std::optional(placed->at) : std::nullopt;
 }
 
 auto session::import_pasted() -> void {

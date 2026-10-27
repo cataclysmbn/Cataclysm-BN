@@ -77,8 +77,9 @@ auto terrain_mapgen_ids(const std::string& type_id) -> std::vector<std::string>;
 /// as the loader completes it; what the loader said against it, if anything.
 auto apply_special(std::string_view text) -> std::expected<overmap_special_id, std::string>;
 
-/// Places the special `id` unturned on the nearest land around `center` whose overmap squares are
-/// all still to be generated, and shows them on the overmap; its origin, none when no land fits.
+/// Places the special `id` unturned on the nearest land around `center` where the game would place
+/// it and whose overmap squares are all still to be generated, and shows them on the overmap; its
+/// origin, none when no land fits.
 auto place_special_near(const overmap_special_id& id, const tripoint_abs_omt& center)
     -> std::optional<tripoint_abs_omt>;
 

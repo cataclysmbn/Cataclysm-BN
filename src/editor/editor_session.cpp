@@ -347,8 +347,8 @@ auto run_editor_session() -> void {
             state.stamp_here();
         } else if (id == place_special_id) {
             state.place_special();
-        } else if (id == test_id && state.on_special() && state.placed) {
-            g->place_player_overmap(*state.placed);
+        } else if (id == test_id && state.placed_here()) {
+            g->place_player_overmap(*state.placed_here());
             return;
         } else if (id == test_id && state.stamped) {
             // The avatar plays in the middle of the stamped square; the editor keeps its document.

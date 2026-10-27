@@ -612,6 +612,8 @@ namespace {
 
 /// What JSON named a built-in or Lua mapgen, and where.
 struct code_mapgen_origin {
+    /// The function itself, so that another one at its address once it is freed is not it.
+    std::weak_ptr<mapgen_function> function;
     std::string method;
     std::string name;
     json_source_location where;
@@ -623,8 +625,8 @@ auto code_mapgen_origins = std::map<const mapgen_function*, code_mapgen_origin>{
 auto code_mapgen_named(
     const JsonObject& jio, const std::string& method, const std::string& name,
     std::shared_ptr<mapgen_function> function) -> std::shared_ptr<mapgen_function> {
-    code_mapgen_origins[function.get()] =
-        code_mapgen_origin{.method = method, .name = name, .where = jio.get_source_location()};
+    code_mapgen_origins[function.get()] = code_mapgen_origin{
+        .function = function, .method = method, .name = name, .where = jio.get_source_location()};
     return function;
 }
 
@@ -6759,7 +6761,9 @@ auto editor::source_line(const std::string& path, const int offset) -> std::stri
 
 auto editor::code_mapgens_of(const std::string& mapgen_id) -> std::vector<code_mapgen> {
     return oter_mapgen.functions(mapgen_id) | std::views::filter([](const auto& function) {
-               return code_mapgen_origins.contains(function.get());
+               const auto found = code_mapgen_origins.find(function.get());
+               return found != code_mapgen_origins.end()
+                   && found->second.function.lock() == function;
            })
          | std::views::transform([](const auto& function) {
                const auto& origin = code_mapgen_origins.at(function.get());
