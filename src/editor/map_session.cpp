@@ -149,6 +149,8 @@ auto mapping_of(const catalog_use& use, const std::string& id) -> std::string {
 }
 
 auto tool_label(const tool& value) -> std::string {
+    if (value.id == "tool:open") { return _("Open mapgen"); }
+    if (value.id == "tool:erase") { return _("Eraser"); }
     if (value.region == region_use::select) { return _("Select"); }
     if (value.region == region_use::paste) { return _("Paste"); }
     if (value.region == region_use::placements) { return _("Placements"); }
@@ -288,7 +290,7 @@ auto session::open_mapgen_of(const std::string& name) -> void {
 
 auto session::catalog_entries() const -> editor::catalog_page {
     return search_catalog(
-        {.kind = catalog->kind,
+        {.kind = on_special() ? catalog_kind::overmap_terrain : catalog->kind,
          .filter = catalog_filter,
          .page = catalog_page,
          .page_size = page_size});
@@ -982,7 +984,33 @@ auto session::unstamp() -> void {
     stamped.reset();
 }
 
+auto session::paint_square(const point& at) -> void {
+    const auto& value = doc->objects()[object].value;
+    if (value.value("subtype", "fixed") != "fixed") {
+        notice = _("A mutable special has no squares to draw; edit its fields.");
+        return;
+    }
+    const auto erasing = special_tool->id == std::string("tool:erase");
+    if (!erasing && special_terrain.empty()) {
+        notice = _("Pick an overmap terrain in the catalog to draw with.");
+        return;
+    }
+    const auto patch = square_patch(
+        value, tripoint_rel_omt(at.x, at.y, special_level), erasing ? "" : special_terrain);
+    if (patch.empty()) { return; }
+    if (const auto edited = doc->edit(object, patch); !edited) { notice = edited.error(); }
+    reload();
+}
+
 auto session::paint(const point& at) -> void {
+    if (on_special()) {
+        if (special_tool->kind) {
+            paint_square(at);
+        } else {
+            open_square(at);
+        }
+        return;
+    }
     const auto grid = symbols_of(*doc, object);
     if (current->region == region_use::select) {
         selected = anchor ? std::optional(selection{.from = *anchor, .to = at}) : std::nullopt;

@@ -4032,18 +4032,6 @@
             "expect": "boundary"
           },
           {
-            "id": "editor:catalog_kind",
-            "label": "Kind",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "editor:catalog_kinds"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
             "id": "editor:catalog_filter",
             "label": "Filter",
             "keys": [],
@@ -4075,6 +4063,18 @@
             "args": {
               "row": {
                 "component_id": "editor:catalog"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:catalog_kind",
+            "label": "Kind",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:catalog_kinds"
               }
             },
             "expect": "boundary"
@@ -7443,18 +7443,6 @@
             "expect": "boundary"
           },
           {
-            "id": "editor:catalog_kind",
-            "label": "Kind",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "editor:catalog_kinds"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
             "id": "editor:catalog_filter",
             "label": "Filter",
             "keys": [],
@@ -7486,6 +7474,18 @@
             "args": {
               "row": {
                 "component_id": "editor:catalog"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:catalog_kind",
+            "label": "Kind",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:catalog_kinds"
               }
             },
             "expect": "boundary"
@@ -10753,18 +10753,6 @@
             "expect": "boundary"
           },
           {
-            "id": "editor:catalog_kind",
-            "label": "Kind",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "editor:catalog_kinds"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
             "id": "editor:catalog_filter",
             "label": "Filter",
             "keys": [],
@@ -10796,6 +10784,18 @@
             "args": {
               "row": {
                 "component_id": "editor:catalog"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:catalog_kind",
+            "label": "Kind",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:catalog_kinds"
               }
             },
             "expect": "boundary"
@@ -27776,18 +27776,6 @@
             "expect": "boundary"
           },
           {
-            "id": "editor:catalog_kind",
-            "label": "Kind",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "editor:catalog_kinds"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
             "id": "editor:catalog_filter",
             "label": "Filter",
             "keys": [],
@@ -27819,6 +27807,18 @@
             "args": {
               "row": {
                 "component_id": "editor:catalog"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:catalog_kind",
+            "label": "Kind",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:catalog_kinds"
               }
             },
             "expect": "boundary"

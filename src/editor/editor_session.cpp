@@ -195,6 +195,9 @@ auto run_editor_session() -> void {
             state.climb(id == level_up_id ? 1 : -1);
         } else if (id == open_square_id) {
             if (const auto at = row_point(row, "square")) { state.open_square(*at); }
+        } else if (id == tool_id && state.on_special()) {
+            const auto found = std::ranges::find(special_tools, row, &tool::id);
+            if (found != special_tools.end()) { state.special_tool = &*found; }
         } else if (id == tool_id) {
             const auto found = std::ranges::find(tools, row, &tool::id);
             if (found != tools.end()) {
@@ -293,7 +296,9 @@ auto run_editor_session() -> void {
             const auto found = std::ranges::find(entries, row, [](const catalog_entry& entry) {
                 return "entry:" + entry.id;
             });
-            if (found != entries.end()) {
+            if (found != entries.end() && state.on_special()) {
+                state.special_terrain = found->id;
+            } else if (found != entries.end()) {
                 state.mapping_layer = state.catalog->layer;
                 state.mapping_value = mapping_of(*state.catalog, found->id);
             }

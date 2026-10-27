@@ -495,6 +495,10 @@ auto document_stats(const session& state) -> std::vector<ec::panel_stat> {
     if (state.on_special()) {
         stats.push_back(
             {.key = "level", .label = _("Level"), .value = std::to_string(state.special_level)});
+        if (!state.special_terrain.empty()) {
+            stats.push_back(
+                {.key = "terrain", .label = _("Terrain"), .value = state.special_terrain});
+        }
     }
     // The stamp stays in the world whichever entry is open.
     if (state.stamped) {
@@ -551,6 +555,38 @@ auto placement_forms(
 }
 
 /// The legend form and the catalog that fills it.
+/// The catalog's page of `found`, with the affordances that filter, page and pick it.
+auto catalog_list(
+    const session& state, const catalog_page& found, std::vector<ec::affordance>& affordances)
+    -> ec::component {
+    affordances.push_back(ec::invoke_affordance(
+        {.id = catalog_filter_id, .label = _("Filter"), .args = {.text = ec::text_shape{}}}));
+    affordances.push_back(page_affordance(
+        {.id = catalog_page_id,
+         .label = _("Page"),
+         .total = found.total,
+         .page = state.catalog_page}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = catalog_pick_id, .label = _("Use"), .args = row_of(catalog_id)}));
+    return ec::list(
+        {.id = catalog_id,
+         .rows = found.entries | std::views::transform([](const catalog_entry& entry) {
+                     return ec::row{
+                         .id = "entry:" + entry.id,
+                         .label = entry.name,
+                         .columns = {{.key = "id", .label = _("ID"), .value = entry.id},
+                                     {.key = "mod", .label = _("Mod"), .value = entry.mod}}};
+                 })
+               | std::ranges::to<std::vector>(),
+         .total = found.total,
+         .offset = state.catalog_page * page_size,
+         .selection = "single",
+         .activate = catalog_pick_id,
+         .filterable = true,
+         .filter = state.catalog_filter,
+         .search = catalog_filter_id});
+}
+
 auto mapping_parts(
     const session& state, std::vector<ec::component>& parts,
     std::vector<ec::affordance>& affordances) -> void {
@@ -584,34 +620,9 @@ auto mapping_parts(
                  })
                | std::ranges::to<std::vector>(),
          .select = catalog_kind_id,
-         .child = ec::list(
-             {.id = catalog_id,
-              .rows = found.entries | std::views::transform([](const catalog_entry& entry) {
-                          return ec::row{
-                              .id = "entry:" + entry.id,
-                              .label = entry.name,
-                              .columns = {{.key = "id", .label = _("ID"), .value = entry.id},
-                                          {.key = "mod", .label = _("Mod"), .value = entry.mod}}};
-                      })
-                    | std::ranges::to<std::vector>(),
-              .total = found.total,
-              .offset = state.catalog_page * page_size,
-              .selection = "single",
-              .activate = catalog_pick_id,
-              .filterable = true,
-              .filter = state.catalog_filter,
-              .search = catalog_filter_id})}));
+         .child = catalog_list(state, found, affordances)}));
     affordances.push_back(ec::invoke_affordance(
         {.id = catalog_kind_id, .label = _("Kind"), .args = row_of(catalog_kinds_id)}));
-    affordances.push_back(ec::invoke_affordance(
-        {.id = catalog_filter_id, .label = _("Filter"), .args = {.text = ec::text_shape{}}}));
-    affordances.push_back(page_affordance(
-        {.id = catalog_page_id,
-         .label = _("Page"),
-         .total = found.total,
-         .page = state.catalog_page}));
-    affordances.push_back(ec::invoke_affordance(
-        {.id = catalog_pick_id, .label = _("Use"), .args = row_of(catalog_id)}));
     affordances.push_back(ec::invoke_affordance(
         {.id = mapping_set_id,
          .label = _("Value"),
@@ -824,55 +835,63 @@ auto level_affordances(const session& state) -> std::vector<ec::affordance> {
 }
 
 /// The overmap squares a special or building places on the level shown, over the rectangle of all
-/// its levels; each opens its terrain's mapgen.
+/// its levels and, while drawing, a square of room around it; each opens its terrain's mapgen or
+/// runs the tool.
 auto special_canvas(const session& state) -> ec::component {
     const auto squares = special_squares(state.doc->objects()[state.object].value);
-    if (squares.empty()) { return {.id = canvas_id, .body = ec::grid_body{.role = "canvas"}}; }
-    const auto [min_x, max_x] = std::ranges::minmax(
-        squares
-        | std::views::transform([](const special_square& square) { return square.at.x(); }));
-    const auto [min_y, max_y] = std::ranges::minmax(
-        squares
-        | std::views::transform([](const special_square& square) { return square.at.y(); }));
-    auto palette = ec::look_palette{};
-    const auto cells =
-        squares | std::views::filter([&](const special_square& square) {
-            return square.at.z() == state.special_level;
-        })
-        | std::views::transform([&](const special_square& square) {
-              const auto at = point(square.at.x(), square.at.y());
-              const auto id = oter_str_id(square.overmap);
-              auto cell = ec::grid_cell{
-                  .at = {at.x - min_x, at.y - min_y},
-                  .id = point_row("square", at),
-                  .glyph = "?",
-                  .label = square.overmap,
-                  .affordance = open_square_id};
-              if (id.is_valid()) {
-                  const auto& terrain = id.obj();
-                  cell.glyph = terrain.get_symbol();
-                  cell.label = terrain.get_name();
-                  cell.color = string_from_color(terrain.get_color());
-                  cell.looks = palette.indexes(
-                      {{.kind = "overmap_terrain",
-                        .id = terrain.get_type_id().str(),
-                        .name = terrain.get_name(),
-                        .glyph = cell.glyph,
-                        .color = cell.color,
-                        .rotation = terrain.get_rotation()}});
-              }
-              return cell;
-          })
+    const auto drawing = state.special_tool->kind.has_value();
+    const auto room = point(drawing ? 1 : 0, drawing ? 1 : 0);
+    const auto xs =
+        squares | std::views::transform([](const auto& square) { return square.at.x(); })
         | std::ranges::to<std::vector>();
+    const auto ys =
+        squares | std::views::transform([](const auto& square) { return square.at.y(); })
+        | std::ranges::to<std::vector>();
+    const auto min =
+        squares.empty() ? point_zero : point(std::ranges::min(xs), std::ranges::min(ys)) - room;
+    const auto max =
+        squares.empty() ? point_zero : point(std::ranges::max(xs), std::ranges::max(ys)) + room;
+    auto palette = ec::look_palette{};
+    auto cells = std::vector<ec::grid_cell>{};
+    for (auto y = min.y; y <= max.y; ++y) {
+        for (auto x = min.x; x <= max.x; ++x) {
+            const auto found = std::ranges::
+                find(squares, tripoint_rel_omt(x, y, state.special_level), &special_square::at);
+            if (found == squares.end() && !drawing) { continue; }
+            auto cell = ec::grid_cell{
+                .at = {x - min.x, y - min.y},
+                .id = point_row("square", point(x, y)),
+                .glyph = found == squares.end() ? " " : "?",
+                .label = found == squares.end() ? "" : found->overmap,
+                .affordance = drawing ? paint_id : open_square_id};
+            if (found != squares.end() && oter_str_id(found->overmap).is_valid()) {
+                const auto& terrain = oter_str_id(found->overmap).obj();
+                cell.glyph = terrain.get_symbol();
+                cell.label = terrain.get_name();
+                cell.color = string_from_color(terrain.get_color());
+                cell.looks = palette.indexes(
+                    {{.kind = "overmap_terrain",
+                      .id = terrain.get_type_id().str(),
+                      .name = terrain.get_name(),
+                      .glyph = cell.glyph,
+                      .color = cell.color,
+                      .rotation = terrain.get_rotation()}});
+            }
+            cells.push_back(std::move(cell));
+        }
+    }
     return {
         .id = canvas_id,
-        .affordances = {open_square_id},
+        .affordances = {drawing ? paint_id : open_square_id},
         .body = ec::grid_body{
-            .cols = max_x - min_x + 1,
-            .rows = max_y - min_y + 1,
-            .cells = cells,
+            .cols = max.x - min.x + 1,
+            .rows = max.y - min.y + 1,
+            .cells = std::move(cells),
             .looks = std::move(palette.looks),
-            .role = "canvas"}};
+            .role = "canvas",
+            .drag = drawing ? "trail" : "",
+            .drag_begin = drawing ? stroke_begin_id : "",
+            .drag_end = drawing ? stroke_end_id : ""}};
 }
 
 } // namespace
@@ -995,12 +1014,33 @@ auto session_view(const session& state) -> ec::screen_view {
                      .child = canvas(state)}));
             }
             if (state.on_special()) {
-                parts.push_back(special_canvas(state));
+                parts.push_back(ec::tabs(
+                    {.id = tools_id,
+                     .tabs = special_tools | std::views::transform([&](const tool& entry) {
+                                 return ec::tab_entry{
+                                     .id = entry.id,
+                                     .label = tool_label(entry),
+                                     .selected = &entry == state.special_tool,
+                                     .hotkey = entry.hotkey};
+                             })
+                           | std::ranges::to<std::vector>(),
+                     .select = tool_id,
+                     .child = special_canvas(state)}));
+                parts.push_back(catalog_list(state, state.catalog_entries(), affordances));
                 affordances.push_back(ec::invoke_affordance(
                     {.id = open_square_id,
                      .label = _("Open its mapgen"),
                      .args = row_of(canvas_id)}));
+                affordances.push_back(ec::invoke_affordance(
+                    {.id = paint_id, .label = _("Draw"), .args = row_of(canvas_id)}));
+                affordances.push_back(ec::invoke_affordance(
+                    {.id = tool_id, .label = _("Tool"), .args = row_of(tools_id)}));
+                affordances.push_back(
+                    ec::invoke_affordance({.id = stroke_begin_id, .label = _("Begin stroke")}));
+                affordances.push_back(
+                    ec::invoke_affordance({.id = stroke_end_id, .label = _("End stroke")}));
             } else {
+
                 parts.push_back(ec::list(
                     {.id = legend_id,
                      .rows = legend_rows(state),

@@ -186,6 +186,14 @@ inline const auto tools = std::array{
     tool{.id = "tool:placements", .region = region_use::placements, .hotkey = "p"},
 };
 
+/// The tools of an overmap special's canvas: open a square's mapgen, draw squares with the terrain
+/// picked, or erase them.
+inline const auto special_tools = std::array{
+    tool{.id = "tool:open", .hotkey = "o"},
+    tool{.id = "tool:point", .kind = shape_kind::point, .hotkey = "b"},
+    tool{.id = "tool:erase", .kind = shape_kind::point, .hotkey = "e"},
+};
+
 /// The corners of the rectangle the select tool marked.
 struct selection {
     point from;
@@ -286,6 +294,9 @@ struct session {
     std::optional<std::size_t> level_down = std::nullopt;
     /// The level of an overmap special or building the canvas shows.
     int special_level = 0;
+    const tool* special_tool = special_tools.data();
+    /// The overmap terrain a special's squares are drawn with.
+    std::string special_terrain;
     /// The overmap squares of the canvas entry over a level the file makes, the squares beside it
     /// the file makes, and the legends of the entries that make them.
     std::vector<stacked_square> below;
@@ -472,6 +483,9 @@ struct session {
 
     /// Puts back what the stamp replaced.
     auto unstamp() -> void;
+
+    /// Draws or erases the special's square `at` on the level shown, as the tool picked does.
+    auto paint_square(const point& at) -> void;
 
     auto paint(const point& at) -> void;
 };
