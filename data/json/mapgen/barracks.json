@@ -1,0 +1,143 @@
+[
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "mil_barracks" ],
+    "object": {
+      "rows": [
+        ".L.....................L",
+        ".###+###.###+###.###+###",
+        ".#@@ @@#.#R  hT#.#@@ @@#",
+        ".#t   t#.#R  hT#.#t   t#",
+        ".#@@ @@#.#R   Y#.#@@ @@#",
+        ".#t   t#.#R  hT#.#t   t#",
+        ".#@@ @@#.#R  hT#.#@@ @@#",
+        ".#t   t#.#R  hT#.#t   t#",
+        ".#@@ @@#.#R  hT#.#@@ @@#",
+        ".#t   t#.#R   Y#.#t   t#",
+        ".#t@ @@#.#R  hT#.#@@ @@#",
+        ".#t   t#.#H FhT#.#t   t#",
+        ".#@@ @@#.#H  hT#.#@@ @@#",
+        ".#t   t#.#H  hT#.#t   t#",
+        ".#@@ @@#.#H   Y#.#@@ @@#",
+        ".#t   t#.#H  hT#.#t   t#",
+        ".#@@ @@#.#H  hT#.#@@ @@#",
+        ".#t   t#.#H  ###.#t   t#",
+        ".#@@ @@#.#H  *&#.#@@ @@#",
+        ".#t   t#.#H  ###.#t   t#",
+        ".#@@ @@#.#H  *&#.#@@ @@#",
+        ".###+###.###+###.###+###",
+        ".L,,,,,,,,,,,,,,,,,,,,,L",
+        ".,,,,,,,,,,,,,,,,,,,,,,."
+      ],
+      "fill_ter": "t_thconc_floor",
+      "terrain": {
+        ".": "t_region_groundcover",
+        "#": "t_wall_metal",
+        "L": "t_railroad_rubble",
+        "+": [ "t_door_metal_o", "t_door_metal_c" ],
+        "*": "t_door_c",
+        ",": "t_railroad_rubble"
+      },
+      "furniture": { "t": "f_locker", "R": "f_rack", "H": "f_rack", "@": "f_bunkbed", "h": "f_chair", "T": "f_table", "Y": "f_trashcan" },
+      "items": {
+        "@": { "item": "army_bed", "chance": 60, "repeat": [ 1, 2 ] },
+        "T": { "item": "dining", "chance": 50 },
+        "H": [
+          { "item": "guns_rifle_milspec", "chance": 75, "repeat": [ 1, 4 ] },
+          { "item": "clothing_military_distribution", "chance": 50, "repeat": [ 1, 4 ] },
+          { "item": "infantry_common_gear", "chance": 50, "repeat": [ 1, 4 ] },
+          { "item": "tools_gunsmith", "chance": 50 },
+          { "item": "sopmod", "chance": 15, "repeat": [ 1, 2 ] },
+          { "item": "grenades", "chance": 10, "repeat": [ 1, 4 ] },
+          { "item": "guns_launcher_milspec", "chance": 10 },
+          { "item": "ammo_milspec", "chance": 75, "repeat": [ 1, 4 ] },
+          { "item": "mags_milspec", "chance": 75, "repeat": [ 1, 4 ] }
+        ],
+        "R": { "item": "mil_food", "chance": 70, "repeat": [ 1, 8 ] },
+        "t": { "item": "army_personal_locker", "chance": 75, "repeat": [ 1, 2 ] },
+        "Y": { "item": "trash_cart", "chance": 50 },
+        "&": { "item": "SUS_toilet", "chance": 50 }
+      },
+      "toilets": { "&": {  } },
+      "monster": {
+        "L": { "monster": "mon_turret_searchlight", "chance": 100 },
+        " ": { "group": "GROUP_MIL_BASE", "chance": 10 },
+        "F": { "monster": "mon_feral_soldier_shotgun" }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": "mil_barracks_roof",
+    "object": {
+      "fill_ter": "t_flat_roof",
+      "rows": [
+        "                        ",
+        " ....... ....... .......",
+        " ....... ....... .......",
+        " ....... ....... .......",
+        " ....... ....... .......",
+        " ....... ....... .......",
+        " ....... ....... .......",
+        " ....... ....... .......",
+        " ....... ....... .......",
+        " ....... ....... .......",
+        " ....... ....... .......",
+        " ....... ....... .......",
+        " ....... ....... .......",
+        " ....... ....... .......",
+        " ....... ....... .......",
+        " ....... ....... .......",
+        " ....... ....... .......",
+        " ....... ....... .......",
+        " ....... ....... .......",
+        " ....... ....... .......",
+        " ....... ....... .......",
+        " ....... ....... .......",
+        "                        ",
+        "                        "
+      ],
+      "palettes": [ "roof_palette" ],
+      "terrain": { ".": "t_metal_flat_roof" }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "mil_barracks_parking" ],
+    "object": {
+      "rows": [
+        ".,,,,,,,,,,,,,,,,,,,,,,,",
+        ".,,,,,,,,,,,,,,,,,,,,,,,",
+        ".,,,,,,,,,,,L,,,,,,,,,,,",
+        ".,,,,,,,,,,,,,,,,,,,,,,,",
+        ".,,,,,,,,,,,,,,,,,,,,,,,",
+        ".,,,,,,,,,,,,,,,,,,,,,,,",
+        ".,,À,,,,,,,À,,,,,,À,,,,,",
+        ".,,,,,,,,,,,,,,,,,,,,,,,",
+        ".,,,,,,,,,,,,,,,,,,,,,,,",
+        ".,,,,,,,,,,,,,,,,,,,,,,,",
+        ".,,,,,,,,,,,,,,,,,,,,,,,",
+        ".,,,,,,,,,,,,,,,,,,,,,,,",
+        ".,,,,,,,,,,,,,,,,,,,,,,,",
+        ".,,,,,,,,,,,,,,,,,,,,,,,",
+        "...__________________...",
+        "...__________________...",
+        "...__________________...",
+        "...__________________...",
+        "...__________________...",
+        "...__________________...",
+        "...__________________...",
+        "...__________________...",
+        "...__________________...",
+        "...__________________..."
+      ],
+      "fill_ter": "t_railroad_rubble",
+      "terrain": { ".": "t_region_groundcover", "_": "t_pavement", ",": [ [ "t_railroad_rubble", 9 ], [ "t_region_soil", 1 ] ] },
+      "vehicles": { "À": { "vehicle": "military_vehicles", "chance": 75, "rotation": 270 } },
+      "monster": { ",": { "group": "GROUP_MIL_BASE", "chance": 2 }, "L": { "monster": "mon_feral_soldier_rifle" } }
+    }
+  }
+]
