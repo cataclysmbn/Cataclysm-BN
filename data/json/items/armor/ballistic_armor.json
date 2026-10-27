@@ -73,7 +73,7 @@
   {
     "id": "ballistic_vest_light",
     "type": "ARMOR",
-    "name": { "str": "light ballistic vest" },
+    "name": { "str": "plate carrier" },
     "description": "A low profile, lightweight plate carrier.  It offers almost no soft armor protection on its own, and does not fully cover the torso.  It has pouches for ballistic armor plates: with mild steel plates it will protect against 9x19mm rounds, hardened steel will protect against .357 Magnum, and ceramic plates will protect against 5.56x45mm rounds.  It has four pouches capable of carrying magazines.",
     "weight": "1 kg",
     "volume": "4 L",
