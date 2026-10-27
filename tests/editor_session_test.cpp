@@ -4849,6 +4849,43 @@ TEST_CASE(
     editor::reset_editor_session();
 }
 
+TEST_CASE("the editor tests only the special it placed", "[editor_session][editor_special]") {
+    const auto guard = screen_guard{};
+    auto entries = special_levels();
+    auto other = entries[0];
+    other["id"] = "editor_session_test_other";
+    entries.push_back(other);
+    const auto file = levels_file{entries};
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                return invoke("editor:place_special");
+            case 2:
+                CHECK(affordance(screen, "editor:test").enabled);
+                return invoke("editor:object", {.row = "object:1"});
+            case 3:
+                // The other special was not placed, so there is nothing of it to test.
+                CHECK_FALSE(affordance(screen, "editor:test").enabled);
+                return invoke("editor:object", {.row = "object:0"});
+            case 4:
+                CHECK(affordance(screen, "editor:test").enabled);
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 5);
+    editor::reset_editor_session();
+}
+
 TEST_CASE("the editor places no special that copies another", "[editor_session][editor_special]") {
     const auto guard = screen_guard{};
     auto entries = special_levels();
