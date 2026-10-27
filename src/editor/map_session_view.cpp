@@ -639,26 +639,33 @@ auto game_parts(
     const session& state, std::vector<ec::component>& parts,
     std::vector<ec::affordance>& affordances) -> void {
     if (state.on_special()) {
-        affordances.push_back(
-            ec::invoke_affordance({.id = place_special_id, .label = _("Place in world")}));
         affordances.push_back(ec::invoke_affordance(
-            {.id = test_id, .label = _("Test"), .enabled = state.placed_here().has_value()}));
+            {.id = place_special_id, .label = _("Place in world"), .keys = {"F6"}}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = test_id,
+             .label = _("Test"),
+             .keys = {"F5"},
+             .enabled = state.placed_here().has_value()}));
     }
     if (state.on_mapgen()) {
-        affordances.push_back(ec::invoke_affordance({.id = apply_id, .label = _("Apply to game")}));
+        affordances.push_back(
+            ec::invoke_affordance({.id = apply_id, .label = _("Apply to game"), .keys = {"F7"}}));
         affordances.push_back(
             ec::invoke_affordance({.id = apply_on_save_id, .label = _("Apply on save")}));
-        affordances.push_back(ec::invoke_affordance({.id = stamp_id, .label = _("Stamp")}));
+        affordances.push_back(
+            ec::invoke_affordance({.id = stamp_id, .label = _("Stamp"), .keys = {"F6"}}));
         affordances.push_back(ec::invoke_affordance(
-            {.id = test_id, .label = _("Test"), .enabled = state.stamped.has_value()}));
+            {.id = test_id,
+             .label = _("Test"),
+             .keys = {"F5"},
+             .enabled = state.stamped.has_value()}));
         affordances.push_back(ec::invoke_affordance(
             {.id = preview_id,
              .label = _("Preview"),
-             .args = {
-                 .count = ec::count_shape{
-                     .min = 1,
-                     .max = std::numeric_limits<unsigned int>::max(),
-                     .initial = state.seed.value_or(1)}}}));
+             .args = {.count = ec::count_shape{.min = 1,
+                                               .max = std::numeric_limits<unsigned int>::max(),
+                                               .initial = state.seed.value_or(1)}},
+             .keys = {"F8"}}));
         affordances.push_back(ec::invoke_affordance(
             {.id = loot_id, .label = _("What can spawn here"), .args = row_of(canvas_id)}));
         if (state.seed) {
