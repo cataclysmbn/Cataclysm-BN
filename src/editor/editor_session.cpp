@@ -174,6 +174,15 @@ auto run_editor_session() -> void {
             run_vehicle_editor();
         } else if (id == new_set_id) {
             const auto text = invoked->args.text.value_or("");
+            if (row == "kind") {
+                // An untouched fill follows the kind between terrains and overmap terrains.
+                const auto fill_of = [](const std::string& kind) {
+                    return kind == "special" || kind == "building" ? "field" : "t_floor";
+                };
+                if (state.made.fill == fill_of(state.made.kind)) {
+                    state.made.fill = fill_of(text);
+                }
+            }
             (row == "path"         ? state.made.path
              : row == "om_terrain" ? state.made.om_terrain
              : row == "kind"       ? state.made.kind

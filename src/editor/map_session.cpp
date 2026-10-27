@@ -229,7 +229,11 @@ auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string> {
                 _("%s names an overmap special or building already."), made.om_terrain));
         }
         if (!oter_str_id(made.fill).is_valid()) {
-            return std::unexpected(string_format(_("%s is no overmap terrain."), made.fill));
+            return std::unexpected(
+                oter_str_id(made.fill + "_north").is_valid()
+                    ? string_format(
+                          _("%1$s is no overmap terrain. Did you mean %1$s_north?"), made.fill)
+                    : string_format(_("%s is no overmap terrain."), made.fill));
         }
         auto entry = nlohmann::ordered_json{
             {"type", made.kind == "special" ? "overmap_special" : "city_building"},
