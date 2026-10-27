@@ -1,6 +1,7 @@
 #include "color.h"
 #include "editor/catalog.h"
 #include "editor/document.h"
+#include "editor/editor_access.h"
 #include "editor/map_session.h"
 #include "editor/mapgen_legend.h"
 #include "editor/mapgen_legend_edit.h"
@@ -733,8 +734,12 @@ auto game_parts(
             ec::invoke_affordance({.id = apply_on_save_id, .label = _("Apply on save")}));
         affordances.push_back(
             ec::invoke_affordance({.id = stamp_id, .label = _("Stamp"), .keys = {"F6"}}));
-        affordances.push_back(
-            ec::invoke_affordance({.id = test_id, .label = _("Test"), .keys = {"F5"}}));
+        // In the editor's own world testing stamps first; in a player's, only what was stamped.
+        affordances.push_back(ec::invoke_affordance(
+            {.id = test_id,
+             .label = _("Test"),
+             .keys = {"F5"},
+             .enabled = in_editor_game() || state.stamped.has_value()}));
         affordances.push_back(ec::invoke_affordance(
             {.id = preview_id,
              .label = _("Preview"),

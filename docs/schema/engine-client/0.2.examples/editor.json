@@ -4490,7 +4490,8 @@
             "keys": [
               "F5"
             ],
-            "enabled": true,
+            "enabled": false,
+            "denial": "Not available now.",
             "expect": "screen",
             "group": "World"
           },
@@ -8544,7 +8545,8 @@
             "keys": [
               "F5"
             ],
-            "enabled": true,
+            "enabled": false,
+            "denial": "Not available now.",
             "expect": "screen",
             "group": "World"
           },
@@ -12458,7 +12460,8 @@
             "keys": [
               "F5"
             ],
-            "enabled": true,
+            "enabled": false,
+            "denial": "Not available now.",
             "expect": "screen",
             "group": "World"
           },
@@ -30130,7 +30133,8 @@
             "keys": [
               "F5"
             ],
-            "enabled": true,
+            "enabled": false,
+            "denial": "Not available now.",
             "expect": "screen",
             "group": "World"
           },

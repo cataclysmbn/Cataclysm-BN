@@ -385,8 +385,8 @@ auto run_editor_session() -> void {
         } else if (id == test_id && state.placed_here()) {
             g->place_player_overmap(*state.placed_here());
             return;
-        } else if (id == test_id && (state.stamped || state.on_mapgen())) {
-            // Nothing stamped yet: the mapgen goes where the avatar is first.
+        } else if (id == test_id && (state.stamped || (state.on_mapgen() && in_editor_game()))) {
+            // Nothing stamped yet in the editor's world: the mapgen goes where the avatar is first.
             if (!state.stamped) { state.stamp_here(); }
             if (state.stamped) {
                 // The avatar plays in the middle of the stamped square; the editor keeps its
