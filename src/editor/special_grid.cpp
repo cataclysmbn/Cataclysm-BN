@@ -139,6 +139,14 @@ auto editor::special_connections(const nlohmann::ordered_json& value)
          | std::ranges::to<std::vector>();
 }
 
+auto editor::has_connection(const nlohmann::ordered_json& value, const tripoint_rel_omt& at)
+    -> bool {
+    return value.contains("connections") && value["connections"].is_array()
+        && std::ranges::any_of(value["connections"], [&](const auto& entry) {
+               return point_of(entry, "point") == at;
+           });
+}
+
 auto editor::connection_patch(
     const nlohmann::ordered_json& value, const tripoint_rel_omt& at, const std::string& connection)
     -> nlohmann::ordered_json {

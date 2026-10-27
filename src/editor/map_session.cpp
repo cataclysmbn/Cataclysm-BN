@@ -548,12 +548,20 @@ auto session::watch() -> void {
 auto session::reopen() -> bool {
     const auto kept = object;
     const auto kept_level = special_level;
+    const auto kept_of_special = catalog_of_special;
+    const auto kept_filter = catalog_filter;
+    const auto kept_page = catalog_page;
     open(doc->path().string());
     if (!std::ranges::contains(entries(), kept)) { return false; }
     object = kept;
     const auto levels = special_levels(doc->objects()[object].value);
     special_level = std::ranges::contains(levels, kept_level) ? kept_level : ground_level(levels);
     reload();
+    // The file's first entry may have shown another catalog on the way.
+    if (catalog_of_special == kept_of_special) {
+        catalog_filter = kept_filter;
+        catalog_page = kept_page;
+    }
     return true;
 }
 
@@ -1068,8 +1076,7 @@ auto session::paint_square(const point& at) -> void {
     }
     const auto square = tripoint_rel_omt(at.x, at.y, special_level);
     // A connection already there is taken away whatever it sits on.
-    if (special_tool->id == std::string("tool:connect")
-        && !std::ranges::contains(special_connections(value), square, &special_connection::at)) {
+    if (special_tool->id == std::string("tool:connect") && !has_connection(value, square)) {
         if (special_connection.empty()) {
             notice = _("Name the overmap connection to join.");
             return;

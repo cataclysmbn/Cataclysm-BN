@@ -48,6 +48,9 @@ auto square_patch(
 /// The connections a special or building lists, with a point and a connection id.
 auto special_connections(const nlohmann::ordered_json& value) -> std::vector<special_connection>;
 
+/// Whether the special lists a connection at `at`, named or not.
+auto has_connection(const nlohmann::ordered_json& value, const tripoint_rel_omt& at) -> bool;
+
 /// The RFC 6902 patch that removes the special's connection at `at`, or else adds one of
 /// `connection` there, joined from a square of the special beside it, the first of north, east,
 /// south and west.
