@@ -57,6 +57,25 @@ auto is_json_mapgen(const nlohmann::ordered_json& value) -> bool {
         && value.value("method", "") == "json";
 }
 
+/// The built-in or Lua mapgen an entry names, where `path` holds it from byte `begin`; none
+/// for any other entry.
+auto code_mapgen_in(const nlohmann::ordered_json& value, const std::string& path, std::size_t begin)
+    -> std::optional<code_mapgen> {
+    if (!value.is_object() || value.value("type", "") != "mapgen") { return std::nullopt; }
+    const auto method = value.value("method", "");
+    const auto name =
+        method == "builtin" ? value.value("name", "")
+        : method == "lua"
+            ? value.value("luamethod", "")
+            : std::string{};
+    if (name.empty()) { return std::nullopt; }
+    return code_mapgen{
+        .method = method,
+        .name = name,
+        .declared = source_line(path, static_cast<int>(begin)),
+        .defined = method == "lua" ? lua_mapgen_defined_at(name) : std::nullopt};
+}
+
 auto is_palette(const nlohmann::ordered_json& value) -> bool {
     return value.is_object() && value.value("type", "") == "palette";
 }
@@ -299,9 +318,15 @@ auto session::browser_entries() const -> std::vector<std::filesystem::path> {
 
 auto session::open_mapgen_of(const std::string& name) -> void {
     const auto id = oter_str_id(name);
-    const auto source = mapgen_source_of(id.is_valid() ? id.obj().get_mapgen_id() : name);
+    const auto mapgen_id = id.is_valid() ? id.obj().get_mapgen_id() : name;
+    const auto source = mapgen_source_of(mapgen_id);
     if (!source) {
-        notice = string_format(_("%s has no mapgen in a file of the game or of your mods."), name);
+        // Code has no squares to draw; where it is declared and defined is what there is to show.
+        code_mapgens = code_mapgens_of(mapgen_id);
+        if (code_mapgens.empty()) {
+            notice =
+                string_format(_("%s has no mapgen in a file of the game or of your mods."), name);
+        }
         return;
     }
     open(source->path);
@@ -624,10 +649,17 @@ auto session::open(const std::string& name) -> void {
     focus.reset();
     picked.reset();
     const auto found = entries();
+    code_mapgens =
+        doc->objects() | std::views::transform([&](const document_object& entry) {
+            return code_mapgen_in(entry.value, path.string(), entry.begin);
+        })
+        | std::views::filter([](const auto& code) { return code.has_value(); })
+        | std::views::transform([](const auto& code) { return *code; })
+        | std::ranges::to<std::vector>();
     object = found.empty() ? doc->objects().size() : found.front();
     special_level = found.empty() ? 0 : ground_level(special_levels(doc->objects()[object].value));
     notice =
-        found.empty()
+        found.empty() && code_mapgens.empty()
             ? string_format(
                   _("%s holds no JSON mapgen, palette, overmap special or building."), name)
             : "";

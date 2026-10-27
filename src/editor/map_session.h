@@ -6,6 +6,7 @@
 #include "editor/mapgen_levels.h"
 #include "editor/mapgen_placement.h"
 #include "editor/mapgen_preview.h"
+#include "editor/mapgen_source.h"
 #include "editor/mapgen_stamp.h"
 #include "editor/mapgen_stroke.h"
 #include "engine_client_component.h"
@@ -367,6 +368,8 @@ struct session {
     std::string export_palette;
     /// The entry as it stands in the live world, while it is there.
     std::optional<stamp> stamped = std::nullopt;
+    /// The built-in and Lua mapgens last looked up or found in the file opened, read-only.
+    std::vector<code_mapgen> code_mapgens;
     /// Where the special was last placed in the world.
     std::optional<tripoint_abs_omt> placed = std::nullopt;
     /// The files the browser lists; read again after a file is made.

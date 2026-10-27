@@ -28,6 +28,7 @@
 #include "editor/mapgen_preview.h"
 #include "editor/mapgen_source.h"
 #include "enums.h"
+#include "filesystem.h"
 #include "fluid_grid.h"
 #include "game.h"
 #include "game_constants.h"
@@ -329,6 +330,12 @@ public:
         assert(*ptr);
         return *ptr;
     }
+    /// Every function of the container, before or after setup.
+    auto functions() const -> std::vector<std::shared_ptr<mapgen_function>> {
+        auto all = mapgens_;
+        weights_.apply([&](const std::shared_ptr<mapgen_function>& ptr) { all.push_back(ptr); });
+        return all;
+    }
     auto has_direct_lua_generator() const -> bool {
         auto found = false;
         weights_.apply([&](const std::shared_ptr<mapgen_function>& ptr) {
@@ -465,6 +472,13 @@ public:
         if (iter == mapgens_.end()) { return nullptr; }
         return iter->second.pick(hardcoded_weight);
     }
+    /// @see mapgen_basic_container::functions
+    auto functions(const std::string& key) const -> std::vector<std::shared_ptr<mapgen_function>> {
+        const auto iter = mapgens_.find(key);
+        return iter == mapgens_.end()
+                 ? std::vector<std::shared_ptr<mapgen_function>>{}
+                 : iter->second.functions();
+    }
     auto has_direct_lua_generator(const std::string& key) const -> bool {
         const auto iter = mapgens_.find(disable_mapgen ? "test" : key);
         if (iter == mapgens_.end()) { return false; }
@@ -594,6 +608,28 @@ static void set_mapgen_defer(
 /*
  * load a single mapgen json structure; this can be inside an overmap_terrain, or on it's own.
  */
+namespace {
+
+/// What JSON named a built-in or Lua mapgen, and where.
+struct code_mapgen_origin {
+    std::string method;
+    std::string name;
+    json_source_location where;
+};
+
+/// The built-in and Lua mapgens loaded, by function, until the data is reset.
+auto code_mapgen_origins = std::map<const mapgen_function*, code_mapgen_origin>{};
+
+auto code_mapgen_named(
+    const JsonObject& jio, const std::string& method, const std::string& name,
+    std::shared_ptr<mapgen_function> function) -> std::shared_ptr<mapgen_function> {
+    code_mapgen_origins[function.get()] =
+        code_mapgen_origin{.method = method, .name = name, .where = jio.get_source_location()};
+    return function;
+}
+
+} // namespace
+
 auto load_mapgen_function(
     const JsonObject& jio, const point_rel_omt& offset, const point_rel_omt& total)
     -> std::shared_ptr<mapgen_function> {
@@ -605,7 +641,9 @@ auto load_mapgen_function(
     const std::string mgtype = jio.get_string("method");
     if (mgtype == "builtin") {
         if (const building_gen_pointer ptr = get_mapgen_cfunction(jio.get_string("name"))) {
-            return std::make_shared<mapgen_function_builtin>(ptr, mgweight);
+            return code_mapgen_named(
+                jio, mgtype, jio.get_string("name"),
+                std::make_shared<mapgen_function_builtin>(ptr, mgweight));
         } else {
             jio.throw_error("function does not exist", "name");
         }
@@ -622,7 +660,8 @@ auto load_mapgen_function(
             jio.throw_error(R"(mapgen with method "lua" must define string "luamethod")");
         }
         std::string luamethod = jio.get_string("luamethod");
-        return std::make_shared<mapgen_function_lua>(luamethod, mgweight);
+        return code_mapgen_named(
+            jio, mgtype, luamethod, std::make_shared<mapgen_function_lua>(luamethod, mgweight));
     } else {
         jio.throw_error(R"(invalid value: must be "builtin" or "json")", "method");
     }
@@ -719,6 +758,7 @@ void load_mapgen(const JsonObject& jo) {
 
 void reset_mapgens() {
     oter_mapgen.reset();
+    code_mapgen_origins.clear();
     nested_mapgen.clear();
     update_mapgen.clear();
 }
@@ -6708,6 +6748,32 @@ auto editor::mapgen_source_of(const std::string& mapgen_id) -> std::optional<map
     if (json == nullptr || !json->source_location().path) { return std::nullopt; }
     return mapgen_source{
         .path = *json->source_location().path, .offset = json->source_location().offset};
+}
+
+auto editor::source_line(const std::string& path, const int offset) -> std::string {
+    const auto text = read_entire_file(path);
+    const auto end = std::min(static_cast<std::size_t>(std::max(offset, 0)), text.size());
+    const auto line = std::ranges::count(text.substr(0, end), '\n') + 1;
+    return string_format("%s:%d", path, line);
+}
+
+auto editor::code_mapgens_of(const std::string& mapgen_id) -> std::vector<code_mapgen> {
+    return oter_mapgen.functions(mapgen_id) | std::views::filter([](const auto& function) {
+               return code_mapgen_origins.contains(function.get());
+           })
+         | std::views::transform([](const auto& function) {
+               const auto& origin = code_mapgen_origins.at(function.get());
+               return code_mapgen{
+                   .method = origin.method,
+                   .name = origin.name,
+                   .declared =
+                       origin.where.path
+                           ? std::optional(source_line(*origin.where.path, origin.where.offset))
+                           : std::nullopt,
+                   .defined =
+                       origin.method == "lua" ? lua_mapgen_defined_at(origin.name) : std::nullopt};
+           })
+         | std::ranges::to<std::vector>();
 }
 
 auto editor::nested_mapgen_ids() -> std::vector<std::string> {

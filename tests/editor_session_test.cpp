@@ -4899,7 +4899,7 @@ TEST_CASE(
                 const auto shown = rows(screen);
                 REQUIRE(shown.size() == 1);
                 CHECK(shown[0].label == "Built-in mapgen lake_shore");
-                CHECK(shown[0].description.find("overmap_terrain_waterbody.json:2")
+                CHECK(shown[0].description.find("overmap_terrain_waterbody.json:11")
                       != std::string::npos);
                 CHECK_FALSE(has_affordance(screen, "editor:paint"));
                 return invoke("editor:open_oter", {.text = "slimepit"});

@@ -25,6 +25,7 @@
 #include "path_info.h"
 #include "regional_settings.h"
 #include "string_formatter.h"
+#include "string_utils.h"
 #include "translations.h"
 #include "trap.h"
 #include "type_id.h"
@@ -1205,6 +1206,27 @@ auto session_view(const session& state) -> ec::screen_view {
                   .multiline = true}},
             .submit = import_id}});
     parts.push_back(browser_list(state, listed));
+    if (!state.code_mapgens.empty()) {
+        parts.push_back(ec::list(
+            {.id = "editor:code_mapgens",
+             .rows =
+                 std::views::iota(std::size_t{0}, state.code_mapgens.size())
+                 | std::views::transform([&](const std::size_t index) {
+                       const auto& code = state.code_mapgens[index];
+                       const auto where =
+                           std::array{code.declared, code.defined}
+                           | std::views::filter([](const auto& at) { return at.has_value(); })
+                           | std::views::transform([](const auto& at) { return *at; })
+                           | std::ranges::to<std::vector>();
+                       return ec::row{
+                           .id = string_format("code:%d", index),
+                           .label = string_format(
+                               code.method == "lua" ? _("Lua mapgen %s") : _("Built-in mapgen %s"),
+                               code.name),
+                           .description = join(where, "\n")};
+                   })
+                 | std::ranges::to<std::vector>()}));
+    }
     if (!state.notice.empty()) {
         parts.push_back(
             {.id = "editor:notice", .body = ec::text_body{.markup = state.notice, .tone = "bad"}});
