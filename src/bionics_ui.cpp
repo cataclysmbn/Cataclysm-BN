@@ -46,6 +46,13 @@ bionic_chars( "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ\"#&()*+./:;@
 
 namespace
 {
+/// The valid letters one apart from the next, so a line of them wraps between letters.
+auto spaced_bionic_chars() -> std::string
+{
+    return join( bionic_chars.get_allowed_chars() | std::views::transform( []( const char c ) { return std::string( 1, c ); } )
+    | std::ranges::to<std::vector>(), " " );
+}
+
 enum bionic_tab_mode {
     TAB_ACTIVE,
     TAB_PASSIVE
@@ -812,7 +819,7 @@ auto reassign_bionic_letter( const bionic &bio ) -> int
                     .id = letter_id, .affordances = { letter_set_id }, .body = ec::form_body{
                         .fields = { {
                                 .id = letter_key_id, .label = _( "Manual (shortcut)" ),
-                                .description = bionic_chars.get_allowed_chars(), .type = "key"
+                                .description = spaced_bionic_chars(), .type = "key"
                             }
                         },
                         .submit = letter_set_id } } ) } ),
@@ -1119,10 +1126,8 @@ void show_bionics_ui( Character &who )
                 continue;
             }
             if( !bionic_chars.valid( newch ) ) {
-                const auto allowed = bionic_chars.get_allowed_chars();
                 popup( _( "Invalid bionic letter.  Only those characters are valid:\n\n%s" ),
-                join( allowed | std::views::transform( []( const char c ) { return std::string( 1, c ); } )
-                | std::ranges::to<std::vector>(), " " ) );
+                       spaced_bionic_chars() );
                 continue;
             }
             bionic *otmp = bionic_by_invlet( bionics, newch );
