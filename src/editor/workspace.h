@@ -5,6 +5,7 @@
 #include <functional>
 #include <map>
 #include <string>
+#include <vector>
 
 namespace editor {
 
@@ -18,9 +19,11 @@ struct workspace_part {
 struct workspace_layout {
     std::map<std::string, workspace_part, std::less<>> slots;
     std::map<std::string, std::string, std::less<>> groups;
+    /// The menus in the order the menu bar has them.
+    std::vector<std::string> menus = {};
 };
 /// Names the slot and heading of each part of the root split and the menu of each affordance that
-/// `layout` lists.
+/// `layout` lists, the affordances of each menu after those of the menus before it.
 auto lay_out(engine_client::screen_view& view, const workspace_layout& layout) -> void;
 
 } // namespace editor

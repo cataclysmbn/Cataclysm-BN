@@ -1453,7 +1453,7 @@
                     {
                       "key": "terrain",
                       "label": "terrain",
-                      "value": "\"t_floor\""
+                      "value": "t_floor"
                     }
                   ],
                   "look": {
@@ -4112,18 +4112,6 @@
         },
         "affordances": [
           {
-            "id": "editor:open",
-            "label": "Open",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "text": {
-                "field_id": "path"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
             "id": "editor:save_as",
             "label": "Save as",
             "keys": [],
@@ -4135,45 +4123,6 @@
             },
             "expect": "boundary",
             "group": "File"
-          },
-          {
-            "id": "editor:new_set",
-            "label": "New file",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "editor:new"
-              },
-              "text": {}
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "editor:new_apply",
-            "label": "Create",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "editor:vehicle",
-            "label": "Vehicle editor",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "text": {}
-            },
-            "expect": "boundary",
-            "group": "World"
-          },
-          {
-            "id": "editor:open_here",
-            "label": "Open mapgen here",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen",
-            "group": "World"
           },
           {
             "id": "editor:export",
@@ -4227,116 +4176,26 @@
             "group": "File"
           },
           {
-            "id": "editor:export_palette",
-            "label": "Export palette",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "text": {
-                "field_id": "palette"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "editor:unstamp",
-            "label": "Take back stamp",
-            "keys": [],
+            "id": "editor:save",
+            "label": "Save",
+            "keys": [
+              "CTRL+S"
+            ],
             "enabled": false,
             "denial": "Not available now.",
             "expect": "screen",
-            "group": "World"
+            "group": "File"
           },
           {
-            "id": "editor:advance",
-            "label": "Let turns pass",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "count": {
-                "min": 1,
-                "max": 3600,
-                "default": 60
-              }
-            },
-            "expect": "screen",
-            "group": "World"
-          },
-          {
-            "id": "editor:import_set",
-            "label": "Mapgen to stamp",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "editor:import_form"
-              },
-              "text": {}
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "editor:import",
-            "label": "Stamp text",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "editor:browser_open",
-            "label": "Open",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "editor:browser"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "editor:browser_filter",
-            "label": "Filter files",
+            "id": "editor:extract_palette",
+            "label": "Extract legend to palette",
             "keys": [],
             "enabled": true,
             "args": {
               "text": {}
             },
-            "expect": "boundary"
-          },
-          {
-            "id": "editor:browser_page",
-            "label": "Files page",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "count": {
-                "min": 0,
-                "max": 18,
-                "default": 0
-              }
-            },
-            "expect": "screen"
-          },
-          {
-            "id": "editor:vehicle",
-            "label": "Vehicle editor",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen",
-            "group": "World"
-          },
-          {
-            "id": "editor:object",
-            "label": "Edit",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "editor:objects"
-              }
-            },
-            "expect": "boundary"
+            "expect": "boundary",
+            "group": "File"
           },
           {
             "id": "editor:undo",
@@ -4359,151 +4218,6 @@
             "denial": "Not available now.",
             "expect": "screen",
             "group": "Edit"
-          },
-          {
-            "id": "editor:save",
-            "label": "Save",
-            "keys": [
-              "CTRL+S"
-            ],
-            "enabled": false,
-            "denial": "Not available now.",
-            "expect": "screen",
-            "group": "File"
-          },
-          {
-            "id": "editor:jump",
-            "label": "Go to step",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "editor:history"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "editor:diagnostic",
-            "label": "Show",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "editor:diagnostics"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "editor:placement",
-            "label": "Show",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "editor:placements"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "editor:place_set",
-            "label": "Value",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "editor:place"
-              },
-              "text": {}
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "editor:place_apply",
-            "label": "Add placement",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "editor:field_set",
-            "label": "Value",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "editor:field"
-              },
-              "text": {}
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "editor:field_apply",
-            "label": "Set",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen"
-          },
-          {
-            "id": "editor:level_up",
-            "label": "Level up",
-            "keys": [
-              "<"
-            ],
-            "enabled": false,
-            "denial": "No level above in this file.",
-            "expect": "screen",
-            "group": "View"
-          },
-          {
-            "id": "editor:level_down",
-            "label": "Level down",
-            "keys": [
-              ">"
-            ],
-            "enabled": false,
-            "denial": "No level below in this file.",
-            "expect": "screen",
-            "group": "View"
-          },
-          {
-            "id": "editor:tool",
-            "label": "Tool",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "editor:tools"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "editor:symbol",
-            "label": "Symbol",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "editor:legend"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
-            "id": "editor:inside",
-            "label": "Inside",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "editor:legend"
-              }
-            },
-            "expect": "boundary"
           },
           {
             "id": "editor:brush",
@@ -4592,6 +4306,358 @@
             "group": "Edit"
           },
           {
+            "id": "editor:level_up",
+            "label": "Level up",
+            "keys": [
+              "<"
+            ],
+            "enabled": false,
+            "denial": "No level above in this file.",
+            "expect": "screen",
+            "group": "View"
+          },
+          {
+            "id": "editor:level_down",
+            "label": "Level down",
+            "keys": [
+              ">"
+            ],
+            "enabled": false,
+            "denial": "No level below in this file.",
+            "expect": "screen",
+            "group": "View"
+          },
+          {
+            "id": "editor:preview",
+            "label": "Preview",
+            "keys": [
+              "F8"
+            ],
+            "enabled": true,
+            "args": {
+              "count": {
+                "min": 1,
+                "max": 4294967295,
+                "default": 1
+              }
+            },
+            "expect": "screen",
+            "group": "View"
+          },
+          {
+            "id": "editor:open_oter",
+            "label": "Open overmap terrain",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {}
+            },
+            "expect": "boundary",
+            "group": "World"
+          },
+          {
+            "id": "editor:open_here",
+            "label": "Open mapgen here",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen",
+            "group": "World"
+          },
+          {
+            "id": "editor:unstamp",
+            "label": "Take back stamp",
+            "keys": [],
+            "enabled": false,
+            "denial": "Not available now.",
+            "expect": "screen",
+            "group": "World"
+          },
+          {
+            "id": "editor:advance",
+            "label": "Let turns pass",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "count": {
+                "min": 1,
+                "max": 3600,
+                "default": 60
+              }
+            },
+            "expect": "screen",
+            "group": "World"
+          },
+          {
+            "id": "editor:vehicle",
+            "label": "Vehicle editor",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen",
+            "group": "World"
+          },
+          {
+            "id": "editor:apply",
+            "label": "Apply to game",
+            "keys": [
+              "F7"
+            ],
+            "enabled": true,
+            "expect": "screen",
+            "group": "World"
+          },
+          {
+            "id": "editor:apply_on_save",
+            "label": "Apply on save",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen",
+            "group": "World"
+          },
+          {
+            "id": "editor:stamp",
+            "label": "Stamp",
+            "keys": [
+              "F6"
+            ],
+            "enabled": true,
+            "expect": "screen",
+            "group": "World"
+          },
+          {
+            "id": "editor:test",
+            "label": "Test",
+            "keys": [
+              "F5"
+            ],
+            "enabled": true,
+            "expect": "screen",
+            "group": "World"
+          },
+          {
+            "id": "editor:open",
+            "label": "Open",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {
+                "field_id": "path"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:new_set",
+            "label": "New file",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:new"
+              },
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:new_apply",
+            "label": "Create",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:export_palette",
+            "label": "Export palette",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {
+                "field_id": "palette"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:import_set",
+            "label": "Mapgen to stamp",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:import_form"
+              },
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:import",
+            "label": "Stamp text",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:browser_open",
+            "label": "Open",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:browser"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:browser_filter",
+            "label": "Filter files",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:browser_page",
+            "label": "Files page",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "count": {
+                "min": 0,
+                "max": 18,
+                "default": 0
+              }
+            },
+            "expect": "screen"
+          },
+          {
+            "id": "editor:object",
+            "label": "Edit",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:objects"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:jump",
+            "label": "Go to step",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:history"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:diagnostic",
+            "label": "Show",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:diagnostics"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:placement",
+            "label": "Show",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:placements"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:place_set",
+            "label": "Value",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:place"
+              },
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:place_apply",
+            "label": "Add placement",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:field_set",
+            "label": "Value",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:field"
+              },
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:field_apply",
+            "label": "Set",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:tool",
+            "label": "Tool",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:tools"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:symbol",
+            "label": "Symbol",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:legend"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:inside",
+            "label": "Inside",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:legend"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
             "id": "editor:paint",
             "label": "Draw",
             "keys": [],
@@ -4616,17 +4682,6 @@
             "keys": [],
             "enabled": true,
             "expect": "screen"
-          },
-          {
-            "id": "editor:extract_palette",
-            "label": "Extract legend to palette",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "text": {}
-            },
-            "expect": "boundary",
-            "group": "File"
           },
           {
             "id": "editor:catalog_filter",
@@ -4695,61 +4750,6 @@
             "keys": [],
             "enabled": true,
             "expect": "screen"
-          },
-          {
-            "id": "editor:apply",
-            "label": "Apply to game",
-            "keys": [
-              "F7"
-            ],
-            "enabled": true,
-            "expect": "screen",
-            "group": "World"
-          },
-          {
-            "id": "editor:apply_on_save",
-            "label": "Apply on save",
-            "keys": [],
-            "enabled": true,
-            "expect": "screen",
-            "group": "World"
-          },
-          {
-            "id": "editor:stamp",
-            "label": "Stamp",
-            "keys": [
-              "F6"
-            ],
-            "enabled": true,
-            "expect": "screen",
-            "group": "World"
-          },
-          {
-            "id": "editor:test",
-            "label": "Test",
-            "keys": [
-              "F5"
-            ],
-            "enabled": true,
-            "expect": "screen",
-            "group": "World"
-          },
-          {
-            "id": "editor:preview",
-            "label": "Preview",
-            "keys": [
-              "F8"
-            ],
-            "enabled": true,
-            "args": {
-              "count": {
-                "min": 1,
-                "max": 4294967295,
-                "default": 1
-              }
-            },
-            "expect": "screen",
-            "group": "View"
           },
           {
             "id": "editor:loot",

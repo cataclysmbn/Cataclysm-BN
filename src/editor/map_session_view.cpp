@@ -396,11 +396,13 @@ auto legend_rows(const session& state) -> std::vector<ec::row> {
                for (const auto& line : entry.lines) {
                    const auto found = std::ranges::
                        find(columns, line.layer, &game_client::interaction_column::key);
+                   // An id named alone reads as itself rather than as JSON text.
+                   const auto parsed = nlohmann::ordered_json::parse(line.value, nullptr, false);
+                   const auto value = parsed.is_string() ? parsed.get<std::string>() : line.value;
                    if (found != columns.end()) {
-                       found->value += ", " + line.value;
+                       found->value += ", " + value;
                    } else {
-                       columns.push_back(
-                           {.key = line.layer, .label = line.layer, .value = line.value});
+                       columns.push_back({.key = line.layer, .label = line.layer, .value = value});
                    }
                }
                // A symbol the rows never use, or one they use that nothing maps, is flagged after
@@ -1044,39 +1046,40 @@ auto layout(const session& state) -> workspace_layout {
              {new_id, {.slot = "inspector", .label = _("New file")}},
              {export_options_id, {.slot = "inspector", .label = _("Export")}},
              {import_form_id, {.slot = "inspector", .label = _("Stamp mapgen text")}}},
-        .groups = {
-            {save_id, file},
-            {save_as_id, file},
-            {export_id, file},
-            {export_area_id, file},
-            {export_width_id, file},
-            {export_height_id, file},
-            {extract_palette_id, file},
-            {undo_id, edit},
-            {redo_id, edit},
-            {copy_id, edit},
-            {cut_id, edit},
-            {rotate_id, edit},
-            {flip_x_id, edit},
-            {flip_y_id, edit},
-            {brush_id, edit},
-            {mirror_x_id, edit},
-            {mirror_y_id, edit},
-            {placement_delete_id, edit},
-            {level_up_id, view},
-            {level_down_id, view},
-            {preview_id, view},
-            {reroll_id, view},
-            {apply_id, world},
-            {apply_on_save_id, world},
-            {stamp_id, world},
-            {unstamp_id, world},
-            {test_id, world},
-            {place_special_id, world},
-            {advance_id, world},
-            {open_here_id, world},
-            {open_oter_id, world},
-            {vehicle_id, world}}};
+        .groups =
+            {{save_id, file},
+             {save_as_id, file},
+             {export_id, file},
+             {export_area_id, file},
+             {export_width_id, file},
+             {export_height_id, file},
+             {extract_palette_id, file},
+             {undo_id, edit},
+             {redo_id, edit},
+             {copy_id, edit},
+             {cut_id, edit},
+             {rotate_id, edit},
+             {flip_x_id, edit},
+             {flip_y_id, edit},
+             {brush_id, edit},
+             {mirror_x_id, edit},
+             {mirror_y_id, edit},
+             {placement_delete_id, edit},
+             {level_up_id, view},
+             {level_down_id, view},
+             {preview_id, view},
+             {reroll_id, view},
+             {apply_id, world},
+             {apply_on_save_id, world},
+             {stamp_id, world},
+             {unstamp_id, world},
+             {test_id, world},
+             {place_special_id, world},
+             {advance_id, world},
+             {open_here_id, world},
+             {open_oter_id, world},
+             {vehicle_id, world}},
+        .menus = {file, edit, view, world}};
 }
 } // namespace
 

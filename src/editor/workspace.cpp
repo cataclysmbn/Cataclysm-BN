@@ -1,5 +1,7 @@
 #include "editor/workspace.h"
 
+#include <algorithm>
+
 namespace editor {
 
 auto lay_out(engine_client::screen_view& view, const workspace_layout& layout) -> void {
@@ -15,6 +17,11 @@ auto lay_out(engine_client::screen_view& view, const workspace_layout& layout) -
         const auto found = layout.groups.find(affordance.id);
         affordance.group = found == layout.groups.end() ? std::string{} : found->second;
     }
+    const auto rank = [&](const engine_client::affordance& entry) {
+        return std::ranges::
+            distance(layout.menus.begin(), std::ranges::find(layout.menus, entry.group));
+    };
+    std::ranges::stable_sort(view.affordances, std::less{}, rank);
 }
 
 } // namespace editor
