@@ -166,6 +166,35 @@ auto download_digital_files( item &reader, item &media, const Character &who ) -
     return copied;
 }
 
+auto is_clean_digital_card( const item &media ) -> bool
+{
+    return media.has_flag( flag_MC_MOBILE ) && media.has_flag( flag_MC_USED ) &&
+           media.has_flag( flag_id( "DIGITAL_STORAGE" ) ) && !media.has_flag( flag_MC_ENCRYPTED ) &&
+           !memory_card_has_data( media );
+}
+
+auto upload_digital_files( const Character &who, const digital_file_upload_options &opts ) -> int
+{
+    namespace ranges = std::ranges;
+    if( &opts.source == &opts.destination || !who.has_item( opts.source ) ||
+        !digital_reader_ready( opts.source, who ) || !is_clean_digital_card( opts.destination ) ) {
+        return 0;
+    }
+    if( opts.file != nullptr ) {
+        if( !ranges::contains( opts.source.contents.all_items_top(), opts.file ) ) {
+            return 0;
+        }
+        return copy_digital_file( *opts.file, opts.destination ) ? 1 : 0;
+    }
+    auto copied = 0;
+    for( auto *file : opts.source.contents.all_items_top() ) {
+        if( copy_digital_file( *file, opts.destination ) ) {
+            ++copied;
+        }
+    }
+    return copied;
+}
+
 auto migrate_legacy_digital_media( item &media ) -> void
 {
     struct legacy_counter {

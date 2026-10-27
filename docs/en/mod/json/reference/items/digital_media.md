@@ -5,6 +5,14 @@ The e-ink tablet and laptop's **Download data from storage media** action copies
 its internal storage. **Browse digital files** offers information, study, and
 item actions for installed files.
 
+**Copy files to SD card** copies all installed files onto a clean SD card.
+For a single file, choose **Browse digital files → file → Copy to SD card**.
+The reader must be powered. The destination becomes a used card, while the
+original files stay on the reader. Copies preserve their entry counts, metadata,
+and file identities, including shared cooldowns. The card can then be imported
+onto another reader. Populated and encrypted cards are excluded from the
+destination picker.
+
 ## Files and readers
 
 - `DIGITAL`: the item is a file. It can only be placed in digital storage, and
@@ -110,7 +118,7 @@ archive uses difficulty 3 and above with offset 1, matching the old random
 recipe filters. Item-group entries control how often these files appear.
 
 Selections are generated once when the file enters storage and are saved in
-the file. Downloading and loading the file retain that selection.
+the file. Downloading, exporting, and loading the file retain that selection.
 An empty result is retained too, rather than rerolled on every access.
 
 ## Generating content

@@ -5991,6 +5991,32 @@ auto digital_recipes_on_device( const item &reader ) -> std::set<recipe_id>
     return result;
 }
 
+auto export_files_to_sd_card( player &who, item &reader, item *file = nullptr ) -> bool
+{
+    auto *you = who.as_avatar();
+    if( you == nullptr ) {
+        return false;
+    }
+    auto *card = game_menus::inv::titled_filter_menu( is_clean_digital_card, *you,
+                 _( "Choose a clean SD card" ) );
+    if( card == nullptr ) {
+        return false;
+    }
+    const auto copied = upload_digital_files( who, {
+        .source = reader,
+        .destination = *card,
+        .file = file
+    } );
+    if( copied == 0 ) {
+        who.add_msg_if_player( m_info, _( "You couldn't copy any files to that SD card." ) );
+        return false;
+    }
+    who.mod_moves( -to_moves<int>( 2_seconds ) );
+    who.add_msg_if_player( m_good, vgettext( "You copy %d file onto the SD card.",
+                           "You copy %d files onto the SD card.", copied ), copied );
+    return true;
+}
+
 auto browse_digital_files( player &who, item &reader, const bool photos_only = false ) -> void
 {
     auto files = std::vector<item *> {};
@@ -6027,6 +6053,7 @@ auto browse_digital_files( player &who, item &reader, const bool photos_only = f
                       music_wait <= 0_turns, 'm', music_wait > 0_turns ?
                       string_format( _( "Listen (available in %s)" ), to_string( music_wait ) ) :
                       _( "Listen" ) );
+    actions.addentry( 5, true, 'c', _( "Copy to SD card" ) );
     const auto recipes = digital_file_recipes( *file );
     actions.addentry( 6, !recipes.empty(), 'v', _( "View recipes" ) );
     actions.query();
@@ -6042,6 +6069,8 @@ auto browse_digital_files( player &who, item &reader, const bool photos_only = f
         view_digital_photos( who, *file );
     } else if( actions.ret == 4 ) {
         listen_to_digital_music( who, reader, *file );
+    } else if( actions.ret == 5 ) {
+        export_files_to_sd_card( who, reader, file );
     } else if( actions.ret == 6 ) {
         auto recipe_menu = uilist{};
         recipe_menu.text = _( "Recipes in file:" );
@@ -6085,7 +6114,7 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
 
         enum {
             ei_invalid, ei_photo, ei_music, ei_recipe, ei_uploaded_photos, ei_monsters, ei_download, ei_decrypt,
-            ei_files
+            ei_files, ei_export
         };
 
         if( p->is_underwater() ) {
@@ -6142,6 +6171,9 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
 
         amenu.addentry( ei_files, true, 'f', _( "Browse digital files" ) );
         amenu.addentry( ei_download, true, 'w', _( "Download data from storage media" ) );
+        const auto has_files = std::ranges::any_of( it->contents.all_items_top(),
+        []( const auto * file ) { return is_digital_file( *file ); } );
+        amenu.addentry( ei_export, has_files, 'e', _( "Copy files to SD card" ) );
 
         /** @EFFECT_COMPUTER >2 allows decrypting memory cards more easily */
         if( p->get_skill_level( skill_computer ) > 2 ) {
@@ -6153,6 +6185,10 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
         amenu.query();
 
         const int choice = amenu.ret;
+
+        if( choice == ei_export ) {
+            return export_files_to_sd_card( *p, *it ) ? it->type->charges_to_use() : 0;
+        }
 
         if( choice == ei_files ) {
             browse_digital_files( *p, *it );

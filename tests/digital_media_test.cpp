@@ -96,6 +96,92 @@ TEST_CASE("digital_files_are_copied_and_encryption_is_respected", "[digital_medi
     CHECK(download_digital_files(*reader, *media, dummy) == 0);
 }
 
+TEST_CASE("reader_files_can_be_copied_onto_a_clean_sd_card", "[digital_media]") {
+    auto dummy = avatar{};
+    auto source = item::spawn("test_digital_multimedia_media");
+    initialize_digital_media(*source);
+    auto device = item::spawn("eink_tablet_pc");
+    auto& reader = *device;
+    reader.ammo_set(itype_id("battery"), 10);
+    REQUIRE(download_digital_files(reader, *source, dummy) == 2);
+    dummy.i_add(std::move(device));
+    auto card = item::spawn("mobile_memory_card_used");
+    REQUIRE(is_clean_digital_card(*card));
+
+    CHECK(upload_digital_files(dummy, {.source = reader, .destination = *card}) == 2);
+    CHECK(card->typeId() == itype_id("mobile_memory_card_data"));
+    CHECK_FALSE(is_clean_digital_card(*card));
+    CHECK(digital_music_on(*card).songs == 9);
+    CHECK(digital_photos_on(*card) == 7);
+    CHECK(digital_music_on(reader).songs == 9);
+    CHECK(digital_photos_on(reader) == 7);
+    CHECK(upload_digital_files(dummy, {.source = reader, .destination = *card}) == 0);
+    CHECK(card->contents.num_item_stacks() == 2);
+
+    auto empty_card = item::spawn("mobile_memory_card_used");
+    reader.ammo_unset();
+    CHECK(upload_digital_files(dummy, {.source = reader, .destination = *empty_card}) == 0);
+    CHECK(is_clean_digital_card(*empty_card));
+}
+
+TEST_CASE("exporting_a_selected_file_preserves_identity_and_metadata", "[digital_media]") {
+    auto dummy = avatar{};
+    auto device = item::spawn("eink_tablet_pc");
+    auto& reader = *device;
+    reader.ammo_set(itype_id("battery"), 10);
+    auto original = item::spawn("test_digital_instruction");
+    original->set_var("test_content", "preserved");
+    auto& file = *original;
+    reader.put_in(std::move(original));
+    dummy.i_add(std::move(device));
+    auto card = item::spawn("mobile_memory_card_used");
+    REQUIRE(
+        upload_digital_files(dummy, {.source = reader, .destination = *card, .file = &file}) == 1);
+    REQUIRE(card->contents.num_item_stacks() == 1);
+    CHECK(reader.contents.num_item_stacks() == 1);
+    const auto& exported = card->contents.front();
+    CHECK(exported.typeId() == file.typeId());
+    CHECK(exported.get_var("DIGITAL_FILE_ID") == file.get_var("DIGITAL_FILE_ID"));
+    CHECK(exported.get_var("test_content") == "preserved");
+
+    auto other_reader = item::spawn("eink_tablet_pc");
+    other_reader->ammo_set(itype_id("battery"), 10);
+    REQUIRE(download_digital_files(*other_reader, *card, dummy) == 1);
+    CHECK(other_reader->contents.front().get_var("DIGITAL_FILE_ID")
+          == file.get_var("DIGITAL_FILE_ID"));
+    CHECK(card->contents.num_item_stacks() == 1);
+}
+
+TEST_CASE("sd_card_exports_reject_invalid_destinations_and_uninstalled_files", "[digital_media]") {
+    auto dummy = avatar{};
+    auto device = item::spawn("eink_tablet_pc");
+    auto& reader = *device;
+    reader.ammo_set(itype_id("battery"), 10);
+    reader.put_in(item::spawn("test_digital_instruction"));
+    dummy.i_add(std::move(device));
+    auto card = item::spawn("mobile_memory_card_used");
+
+    SECTION("encrypted cards are not writable") {
+        card->set_flag(flag_MC_ENCRYPTED);
+        CHECK_FALSE(is_clean_digital_card(*card));
+        CHECK(upload_digital_files(dummy, {.source = reader, .destination = *card}) == 0);
+        CHECK(card->contents.empty());
+    }
+    SECTION("existing camera data is preserved") {
+        card->set_var("MC_EXTENDED_PHOTOS", "existing camera data");
+        CHECK_FALSE(is_clean_digital_card(*card));
+        CHECK(upload_digital_files(dummy, {.source = reader, .destination = *card}) == 0);
+        CHECK(card->get_var("MC_EXTENDED_PHOTOS") == "existing camera data");
+    }
+    SECTION("files must be installed on the source reader") {
+        const auto elsewhere = item::spawn("test_digital_instruction");
+        CHECK(upload_digital_files(
+                  dummy, {.source = reader, .destination = *card, .file = &*elsewhere})
+              == 0);
+        CHECK(is_clean_digital_card(*card));
+    }
+}
+
 TEST_CASE("digital_recipe_references_require_a_powered_reader", "[digital_media][recipes]") {
     auto dummy = avatar{};
     dummy.set_skill_level(skill_id("electronics"), 1);
@@ -161,6 +247,38 @@ TEST_CASE(
     dummy.set_skill_level(skill_id("electronics"), 1);
     reader.ammo_unset();
     CHECK_FALSE(dummy.get_recipes_from_books(inv).contains(recipe));
+}
+
+TEST_CASE(
+    "random_recipe_files_keep_their_selection_when_copied_and_saved",
+    "[digital_media][recipes][savegame]") {
+    auto dummy = avatar{};
+    auto device = item::spawn("eink_tablet_pc");
+    auto& reader = *device;
+    reader.ammo_set(itype_id("battery"), 10);
+    auto reference = item::spawn("test_digital_random_reference");
+    auto& file = *reference;
+    reader.put_in(std::move(reference));
+    const auto recipes = digital_file_recipes(file);
+    REQUIRE(recipes.size() == 1);
+    CHECK(recipes.front().recipe == recipe_id("test_soldering_iron_digital_media"));
+    CHECK(recipes.front().skill_level == 3);
+    const auto selection = file.get_var("DIGITAL_RECIPES");
+    initialize_digital_recipe_file(file);
+    CHECK(file.get_var("DIGITAL_RECIPES") == selection);
+    dummy.i_add(std::move(device));
+    auto card = item::spawn("mobile_memory_card_used");
+    REQUIRE(
+        upload_digital_files(dummy, {.source = reader, .destination = *card, .file = &file}) == 1);
+    CHECK(card->contents.front().get_var("DIGITAL_RECIPES") == selection);
+    auto output = std::ostringstream{};
+    auto writer = JsonOut(output);
+    card->serialize(writer);
+    auto input = std::istringstream(output.str());
+    auto parser = JsonIn(input);
+    const auto loaded = item::spawn(parser);
+    REQUIRE(loaded->contents.num_item_stacks() == 1);
+    CHECK(loaded->contents.front().get_var("DIGITAL_RECIPES") == selection);
 }
 
 TEST_CASE("both_legacy_recipe_tokens_migrate_to_reference_files", "[digital_media][recipes]") {

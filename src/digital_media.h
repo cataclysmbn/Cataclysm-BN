@@ -14,6 +14,12 @@ struct digital_music_summary {
     int morale_cap = 0;
 };
 
+struct digital_file_upload_options {
+    item &source;
+    item &destination;
+    item *file = nullptr;
+};
+
 using digital_reader_reference = std::optional<std::reference_wrapper<item>>;
 
 /// Digital files are only usable while installed on a powered reader.
@@ -27,6 +33,9 @@ auto refresh_memory_card_state( item &media ) -> void;
 auto finish_memory_card_download( item &media ) -> void;
 /// Copy files without consuming the source or duplicating identical files.
 auto download_digital_files( item &reader, item &media, const Character &who ) -> int;
+auto is_clean_digital_card( const item &media ) -> bool;
+/// Copy one selected file, or all files, from a powered reader to a clean SD card.
+auto upload_digital_files( const Character &who, const digital_file_upload_options &opts ) -> int;
 /// Convert old photo/music counters to files without changing their quantities.
 auto migrate_legacy_digital_media( item &media ) -> void;
 auto digital_music_on( const item &reader ) -> digital_music_summary;
