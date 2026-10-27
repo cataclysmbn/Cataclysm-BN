@@ -11,11 +11,13 @@
 #include "map/submap.h"
 #include "monster.h"
 #include "mtype.h"
+#include "npc.h"
 #include "overmap/omdata.h"
 #include "overmap/overmapbuffer.h"
 #include "string_utils.h"
 #include "trap.h"
 #include "type_id.h"
+#include "vehicle/vehicle.h"
 
 #include <algorithm>
 #include <map>
@@ -231,6 +233,37 @@ auto export_region(
         return std::tuple(entry["y"].get<int>(), entry["x"].get<int>());
     });
     if (!monsters.empty()) { object["place_monster"] = monsters; }
+    const auto offset_of = [&](const tripoint_abs_ms& pos) -> std::optional<point> {
+        const auto offset = pos - corner;
+        if (offset.z() != 0 || offset.x() < 0 || offset.y() < 0 || offset.x() >= 2 * SEEX * size.x()
+            || offset.y() >= 2 * SEEY * size.y()) {
+            return std::nullopt;
+        }
+        return point(offset.x(), offset.y());
+    };
+    // A vehicle and an NPC go in by the prototype the game spawns them from, as designs: those
+    // without one are left out.
+    auto vehicles = nlohmann::ordered_json::array();
+    for (const auto& wrapped : here.get_vehicles()) {
+        const auto& veh = *wrapped.v;
+        const auto offset = offset_of(veh.abs_ms_location());
+        if (!offset || !veh.type.is_valid() || veh.type.is_null()) { continue; }
+        vehicles.push_back(
+            {{"vehicle", veh.type.str()},
+             {"x", offset->x},
+             {"y", offset->y},
+             {"rotation", static_cast<int>(std::lround(to_degrees(veh.face.dir())))},
+             {"chance", 100},
+             {"status", 0}});
+    }
+    if (!vehicles.empty()) { object["place_vehicles"] = vehicles; }
+    auto npcs = nlohmann::ordered_json::array();
+    for (const auto& guy : g->all_npcs()) {
+        const auto offset = offset_of(guy.abs_pos());
+        if (!offset || !npc_template_id(guy.idz).is_valid()) { continue; }
+        npcs.push_back({{"class", guy.idz}, {"x", offset->x}, {"y", offset->y}});
+    }
+    if (!npcs.empty()) { object["place_npcs"] = npcs; }
     auto& overmap = get_overmapbuffer(here.get_bound_dimension());
     const auto name = [&](const tripoint_abs_omt& omt) {
         return nlohmann::ordered_json(overmap.ter(omt)->get_type_id().str());
