@@ -2648,17 +2648,19 @@ TEST_CASE(
                 const auto kind = std::ranges::find(fields, "kind", &ec::form_field::id);
                 REQUIRE(kind != fields.end());
                 CHECK(kind->value == "mapgen");
-                CHECK(kind->options.size() == 3);
+                CHECK(kind->options.size() == 5);
                 return invoke("editor:new_set", {.row = "path", .text = made.string()});
             }
             case 1:
                 return invoke("editor:new_set", {.row = "om_terrain", .text = "editor_test_chunk"});
             case 2:
-                return invoke("editor:new_set", {.row = "kind", .text = "special"});
+                return invoke("editor:new_set", {.row = "kind", .text = "vehicle"});
             case 3:
                 return invoke("editor:new_apply");
             case 4:
-                CHECK(notice(screen) == "A new file holds a mapgen, a nested chunk or a palette.");
+                CHECK(notice(screen)
+                      == "A new file holds a mapgen, a nested chunk, a palette, an overmap special "
+                         "or a building.");
                 CHECK_FALSE(std::filesystem::exists(made));
                 return invoke("editor:new_set", {.row = "kind", .text = "nested"});
             case 5:
@@ -4615,6 +4617,82 @@ TEST_CASE("a special's squares named twice are all erased and all set", "[editor
     const auto set = editor::special_squares(
         value.patch(editor::square_patch(value, tripoint_rel_omt(1, 0, 0), "forest_thick")));
     CHECK(std::ranges::count(set, "forest_thick", &editor::special_square::overmap) == 2);
+}
+
+TEST_CASE(
+    "the editor creates an overmap special or a building file and opens it on its square",
+    "[editor_session][editor_special]") {
+    const auto guard = screen_guard{};
+    const auto folder = mod_file{};
+    const auto made = folder.path.parent_path() / "special.json";
+    const auto built = folder.path.parent_path() / "building.json";
+    const auto notice = [](const ec::screen_view& screen) {
+        return body<ec::text_body>(part(screen, "editor:notice")).markup;
+    };
+    const auto label = [](const ec::screen_view& screen, const std::string& id) {
+        const auto& fields = body<ec::form_body>(part(screen, "editor:new")).fields;
+        const auto found = std::ranges::find(fields, id, &ec::form_field::id);
+        REQUIRE(found != fields.end());
+        return found->label;
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:new_set", {.row = "path", .text = made.string()});
+            case 1:
+                return invoke("editor:new_set", {.row = "kind", .text = "special"});
+            case 2:
+                CHECK(label(screen, "om_terrain") == "Special id");
+                CHECK(label(screen, "fill") == "Overmap terrain");
+                return invoke("editor:new_set", {.row = "om_terrain", .text = "Hunting Lodge"});
+            case 3:
+                return invoke("editor:new_apply");
+            case 4:
+                CHECK(notice(screen)
+                      == "Hunting Lodge names an overmap special or building already.");
+                return invoke(
+                    "editor:new_set", {.row = "om_terrain", .text = "editor_session_test_new"});
+            case 5:
+                return invoke("editor:new_apply");
+            case 6:
+                // The terrain field's t_floor is no overmap terrain.
+                CHECK(notice(screen) == "t_floor is no overmap terrain.");
+                CHECK_FALSE(std::filesystem::exists(made));
+                return invoke("editor:new_set", {.row = "fill", .text = "field"});
+            case 7:
+                return invoke("editor:new_apply");
+            case 8: {
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                const auto& objects = body<ec::list_body>(part(screen, "editor:objects")).rows;
+                REQUIRE(objects.size() == 1);
+                CHECK(objects[0].label == "editor_session_test_new");
+                CHECK(cell(screen, 0, 0).label == oter_str_id("field")->get_name());
+                CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
+                return invoke("editor:new_set", {.row = "path", .text = built.string()});
+            }
+            case 9:
+                return invoke("editor:new_set", {.row = "kind", .text = "building"});
+            case 10:
+                CHECK(label(screen, "om_terrain") == "Building id");
+                return invoke("editor:new_apply");
+            case 11: {
+                const auto written = nlohmann::ordered_json::parse(read_file(built))[0];
+                CHECK(written["type"] == "city_building");
+                CHECK(editor::special_squares(written).size() == 1);
+                CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
+                return act("QUIT");
+            }
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 12);
 }
 
 #endif // CATA_MCP
