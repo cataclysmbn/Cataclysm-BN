@@ -1770,23 +1770,23 @@ TEST_CASE(
                 CHECK(
                     keys
                     == std::map<std::string, std::string>{
-                        {"tool:point", "B"},
-                        {"tool:line", "L"},
-                        {"tool:rect", "R"},
-                        {"tool:rect_filled", "U"},
-                        {"tool:ellipse", "O"},
-                        {"tool:room", "M"},
-                        {"tool:fill", "F"},
-                        {"tool:pick", "I"},
-                        {"tool:select", "S"},
-                        {"tool:paste", "V"},
-                        {"tool:placements", "P"}});
-                CHECK(wire_part(state, "editor:tools")["tabs"][0]["hotkey"] == "B");
+                        {"tool:point", "b"},
+                        {"tool:line", "l"},
+                        {"tool:rect", "r"},
+                        {"tool:rect_filled", "u"},
+                        {"tool:ellipse", "o"},
+                        {"tool:room", "m"},
+                        {"tool:fill", "f"},
+                        {"tool:pick", "i"},
+                        {"tool:select", "s"},
+                        {"tool:paste", "v"},
+                        {"tool:placements", "p"}});
+                CHECK(wire_part(state, "editor:tools")["tabs"][0]["hotkey"] == "b");
                 CHECK(affordance(screen, "editor:copy").keys == std::vector<std::string>{"CTRL+C"});
                 CHECK(affordance(screen, "editor:cut").keys == std::vector<std::string>{"CTRL+X"});
-                CHECK(affordance(screen, "editor:rotate").keys == std::vector<std::string>{"Z"});
-                CHECK(affordance(screen, "editor:flip_x").keys == std::vector<std::string>{"X"});
-                CHECK(affordance(screen, "editor:flip_y").keys == std::vector<std::string>{"Y"});
+                CHECK(affordance(screen, "editor:rotate").keys == std::vector<std::string>{"z"});
+                CHECK(affordance(screen, "editor:flip_x").keys == std::vector<std::string>{"x"});
+                CHECK(affordance(screen, "editor:flip_y").keys == std::vector<std::string>{"y"});
                 return act("QUIT");
             }
             default:

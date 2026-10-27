@@ -775,14 +775,14 @@ auto drawing_affordances(const session& state) -> std::vector<ec::affordance> {
          .keys = {"CTRL+X"},
          .enabled = state.selected.has_value()}));
     affordances.push_back(ec::invoke_affordance(
-        {.id = rotate_id, .label = _("Rotate"), .keys = {"Z"}, .enabled = !state.clip.empty()}));
+        {.id = rotate_id, .label = _("Rotate"), .keys = {"z"}, .enabled = !state.clip.empty()}));
     affordances.push_back(ec::invoke_affordance(
         {.id = flip_x_id,
          .label = _("Flip across"),
-         .keys = {"X"},
+         .keys = {"x"},
          .enabled = !state.clip.empty()}));
     affordances.push_back(ec::invoke_affordance(
-        {.id = flip_y_id, .label = _("Flip down"), .keys = {"Y"}, .enabled = !state.clip.empty()}));
+        {.id = flip_y_id, .label = _("Flip down"), .keys = {"y"}, .enabled = !state.clip.empty()}));
     affordances.push_back(
         ec::invoke_affordance({.id = paint_id, .label = _("Draw"), .args = row_of(canvas_id)}));
     if (state.current->region == region_use::placements) {

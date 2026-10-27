@@ -172,17 +172,17 @@ struct tool {
 };
 
 inline const auto tools = std::array{
-    tool{.id = "tool:point", .kind = shape_kind::point, .hotkey = "B"},
-    tool{.id = "tool:line", .kind = shape_kind::line, .spans = true, .hotkey = "L"},
-    tool{.id = "tool:rect", .kind = shape_kind::rect, .spans = true, .hotkey = "R"},
-    tool{.id = "tool:rect_filled", .kind = shape_kind::rect_filled, .spans = true, .hotkey = "U"},
-    tool{.id = "tool:ellipse", .kind = shape_kind::ellipse, .spans = true, .hotkey = "O"},
-    tool{.id = "tool:room", .kind = shape_kind::room, .spans = true, .hotkey = "M"},
-    tool{.id = "tool:fill", .kind = shape_kind::fill, .hotkey = "F"},
-    tool{.id = "tool:pick", .kind = std::nullopt, .hotkey = "I"},
-    tool{.id = "tool:select", .region = region_use::select, .hotkey = "S"},
-    tool{.id = "tool:paste", .region = region_use::paste, .hotkey = "V"},
-    tool{.id = "tool:placements", .region = region_use::placements, .hotkey = "P"},
+    tool{.id = "tool:point", .kind = shape_kind::point, .hotkey = "b"},
+    tool{.id = "tool:line", .kind = shape_kind::line, .spans = true, .hotkey = "l"},
+    tool{.id = "tool:rect", .kind = shape_kind::rect, .spans = true, .hotkey = "r"},
+    tool{.id = "tool:rect_filled", .kind = shape_kind::rect_filled, .spans = true, .hotkey = "u"},
+    tool{.id = "tool:ellipse", .kind = shape_kind::ellipse, .spans = true, .hotkey = "o"},
+    tool{.id = "tool:room", .kind = shape_kind::room, .spans = true, .hotkey = "m"},
+    tool{.id = "tool:fill", .kind = shape_kind::fill, .hotkey = "f"},
+    tool{.id = "tool:pick", .kind = std::nullopt, .hotkey = "i"},
+    tool{.id = "tool:select", .region = region_use::select, .hotkey = "s"},
+    tool{.id = "tool:paste", .region = region_use::paste, .hotkey = "v"},
+    tool{.id = "tool:placements", .region = region_use::placements, .hotkey = "p"},
 };
 
 /// The corners of the rectangle the select tool marked.
