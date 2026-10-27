@@ -13,6 +13,7 @@
 #    include "editor/editor_session.h"
 #    include "editor/mapgen_levels.h"
 #    include "editor/mapgen_preview.h"
+#    include "editor/mapgen_source.h"
 #    include "editor/recent_documents.h"
 #    include "editor/special_grid.h"
 #    include "engine_client_component.h"
@@ -4937,6 +4938,80 @@ TEST_CASE(
 
     editor::run_editor_session();
     CHECK(step == 5);
+}
+
+TEST_CASE(
+    "the editor opens an overmap terrain entry, checks it alone and opens its terrains' mapgens",
+    "[editor_session][editor_special]") {
+    const auto guard = screen_guard{};
+    const auto restore_mapgen = restore_on_out_of_scope<bool>(disable_mapgen);
+    disable_mapgen = false;
+    const auto file = levels_file{nlohmann::ordered_json::array(
+        {{{"type", "overmap_terrain"},
+          {"id", "editor_session_test_oter"},
+          {"name", "test terrain"},
+          {"color", "red"},
+          {"flags", {"NO_SUCH_FLAG"}}}})};
+    const auto data = std::filesystem::path(PATH_INFO::datadir()) / "json/overmap/overmap_terrain";
+    const auto path = [](const ec::screen_view& screen) {
+        return body<ec::form_body>(part(screen, "editor:file")).fields.front().value;
+    };
+    const auto rows = [](const ec::screen_view& screen, const std::string& id) {
+        return body<ec::list_body>(part(screen, id)).rows;
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1: {
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                REQUIRE(rows(screen, "editor:objects").size() == 1);
+                CHECK(rows(screen, "editor:objects")[0].label == "editor_session_test_oter");
+                // What the loader says against the entry: no symbol, an unknown flag.
+                const auto said = rows(screen, "editor:diagnostics");
+                CHECK(std::ranges::any_of(said, [](const ec::row& row) {
+                    return row.label.find("NO_SUCH_FLAG") != std::string::npos;
+                }));
+                CHECK_FALSE(has_affordance(screen, "editor:paint"));
+                // A terrain the game does not know yet has no mapgen to open.
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:legend"));
+                return invoke(
+                    "editor:open", {.text = (data / "overmap_terrain_waterbody.json").string()});
+            }
+            case 2:
+                // Checking an entry registers none of its mapgens again.
+                CHECK(editor::code_mapgens_of("lake_shore").size() == 1);
+                CHECK(rows(screen, "editor:diagnostics").empty());
+                return invoke(
+                    "editor:open", {.text = (data / "overmap_terrain_residential.json").string()});
+            case 3: {
+                const auto objects = rows(screen, "editor:objects");
+                const auto houses = std::ranges::find_if(objects, [](const ec::row& row) {
+                    return row.label.find("house_01") != std::string::npos;
+                });
+                REQUIRE(houses != objects.end());
+                return invoke("editor:object", {.row = houses->id});
+            }
+            case 4: {
+                const auto terrains = rows(screen, "editor:terrains");
+                CHECK(
+                    std::ranges::contains(terrains, std::string("terrain:house_01"), &ec::row::id));
+                return invoke("editor:open_terrain", {.row = "terrain:house_01"});
+            }
+            case 5:
+                CHECK(path(screen).ends_with("mapgen/house/house01.json"));
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 6);
 }
 
 #endif // CATA_MCP
