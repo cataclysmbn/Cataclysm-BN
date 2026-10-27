@@ -14,6 +14,7 @@
 #include "trap.h"
 #include "type_id.h"
 #include "units.h"
+#include "vehicle/vehicle.h"
 
 #include <algorithm>
 #include <nlohmann/json.hpp>
@@ -202,6 +203,36 @@ TEST_CASE(
               R"([{"vehicle":"bicycle","x":2,"y":20,"rotation":90,"chance":100,"status":0}])"));
     CHECK(object["place_npcs"]
           == nlohmann::ordered_json::parse(R"([{"class":"test_talker","x":20,"y":3}])"));
+}
+
+TEST_CASE(
+    "an exported vehicle stands where its origin mount is, and a vehicle without a design is left "
+    "out",
+    "[editor_mapgen]") {
+    clear_all_state();
+    const auto omt = get_avatar().abs_omt_pos();
+    auto& here = get_map();
+    auto* const car = here.add_vehicle(
+        vproto_id("car"), abs_to_bub(abs_at(omt, point(10, 10))), 90_degrees, 0, 0);
+    REQUIRE(car != nullptr);
+    // A driven vehicle turns about a pivot other than its origin mount.
+    car->set_pivot(tripoint_mnt_veh(1, 1, 0));
+    const auto origin = car->mount_to_abs(tripoint_mnt_veh::zero()) - abs_at(omt, point_zero);
+    REQUIRE(car->abs_ms_location() != car->mount_to_abs(tripoint_mnt_veh::zero()));
+    REQUIRE(here.add_vehicle(
+        vproto_id("custom"), abs_to_bub(abs_at(omt, point(2, 2))), 0_degrees, 0, 0));
+    const auto exported = editor::export_region(omt, point_rel_omt(1, 1), "");
+    clear_vehicles();
+    REQUIRE(exported);
+    CHECK(
+        (*exported)["object"]["place_vehicles"]
+        == nlohmann::ordered_json::array(
+            {{{"vehicle", "car"},
+              {"x", origin.x()},
+              {"y", origin.y()},
+              {"rotation", 90},
+              {"chance", 100},
+              {"status", 0}}}));
 }
 
 TEST_CASE(
