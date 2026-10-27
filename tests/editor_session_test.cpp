@@ -1605,6 +1605,58 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the editor's tools and clipboard commands carry the keys image editors use",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1: {
+                const auto& tabs = body<ec::tabs_body>(part(screen, "editor:tools")).tabs;
+                const auto keys =
+                    tabs | std::views::transform([](const ec::tab_entry& tab) {
+                        return std::pair{tab.id, tab.hotkey};
+                    })
+                    | std::ranges::to<std::map>();
+                CHECK(
+                    keys
+                    == std::map<std::string, std::string>{
+                        {"tool:point", "B"},
+                        {"tool:line", "L"},
+                        {"tool:rect", "R"},
+                        {"tool:rect_filled", "U"},
+                        {"tool:ellipse", "O"},
+                        {"tool:room", "M"},
+                        {"tool:fill", "F"},
+                        {"tool:pick", "I"},
+                        {"tool:select", "S"},
+                        {"tool:paste", "V"},
+                        {"tool:placements", "P"}});
+                CHECK(wire_part(state, "editor:tools")["tabs"][0]["hotkey"] == "B");
+                CHECK(affordance(screen, "editor:copy").keys == std::vector<std::string>{"CTRL+C"});
+                CHECK(affordance(screen, "editor:cut").keys == std::vector<std::string>{"CTRL+X"});
+                CHECK(affordance(screen, "editor:rotate").keys == std::vector<std::string>{"Z"});
+                CHECK(affordance(screen, "editor:flip_x").keys == std::vector<std::string>{"X"});
+                CHECK(affordance(screen, "editor:flip_y").keys == std::vector<std::string>{"Y"});
+                return act("QUIT");
+            }
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 2);
+}
+
+TEST_CASE(
     "the editor outlines each placement on the canvas, and dragging one moves or stretches it in "
     "one step",
     "[editor_session][engine_client_component]") {
