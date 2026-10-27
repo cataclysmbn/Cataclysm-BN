@@ -14,6 +14,7 @@
 #    include "editor/mapgen_levels.h"
 #    include "editor/mapgen_preview.h"
 #    include "editor/recent_documents.h"
+#    include "editor/special_grid.h"
 #    include "engine_client_component.h"
 #    include "engine_client_contract.h"
 #    include "game.h"
@@ -4108,6 +4109,136 @@ TEST_CASE(
 
     editor::run_editor_session();
     CHECK(step == 3);
+}
+
+auto special_levels() -> nlohmann::ordered_json {
+    const auto square = [](const int x, const int y, const int z, const std::string& name) {
+        return nlohmann::ordered_json{{"point", {x, y, z}}, {"overmap", name}};
+    };
+    return nlohmann::ordered_json::array(
+        {{{"type", "overmap_special"},
+          {"id", "editor_session_test_special"},
+          {"overmaps",
+           {square(0, 0, 0, "house_01_north"), square(1, 0, 0, "field"),
+            square(0, 0, 1, "house_01_roof_north")}},
+          {"locations", {"land"}},
+          {"occurrences", {0, 1}}}});
+}
+
+TEST_CASE(
+    "an overmap special opens on the overmap squares of one level, each opening its mapgen",
+    "[editor_session][editor_special]") {
+    const auto guard = screen_guard{};
+    const auto restore_mapgen = restore_on_out_of_scope<bool>(disable_mapgen);
+    disable_mapgen = false;
+    const auto file = levels_file{special_levels()};
+    const auto level = [](const ec::screen_view& screen) {
+        const auto& stats = body<ec::panel_body>(part(screen, "editor:document")).stats;
+        const auto found = std::ranges::find(stats, "level", &ec::panel_stat::key);
+        return found == stats.end() ? std::string("none") : found->value;
+    };
+    const auto look = [](const ec::screen_view& screen, const int x, const int y) {
+        const auto& grid = body<ec::grid_body>(part(screen, "editor:canvas"));
+        const auto& shown = cell(screen, x, y);
+        return shown.looks.empty()
+                 ? std::string()
+                 : grid.looks.at(shown.looks.front()).id.value_or("");
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1: {
+                const auto& grid = body<ec::grid_body>(part(screen, "editor:canvas"));
+                CHECK(grid.cols == 2);
+                CHECK(grid.rows == 1);
+                CHECK(level(screen) == "0");
+                CHECK(look(screen, 0, 0) == "house_01");
+                CHECK(look(screen, 1, 0) == "field");
+                CHECK(cell(screen, 0, 0).glyph == oter_str_id("house_01_north")->get_symbol());
+                CHECK(cell(screen, 0, 0).affordance == "editor:open_square");
+                CHECK(cell(screen, 0, 0).id == "square:0,0");
+                CHECK(affordance(screen, "editor:level_up").enabled);
+                CHECK_FALSE(affordance(screen, "editor:level_down").enabled);
+                // A special has no rows to draw on.
+                CHECK_FALSE(has_affordance(screen, "editor:paint"));
+                return invoke("editor:level_up");
+            }
+            case 2:
+                CHECK(level(screen) == "1");
+                CHECK(look(screen, 0, 0) == "house_01_roof");
+                // The special places nothing east of the roof.
+                CHECK(body<ec::grid_body>(part(screen, "editor:canvas")).cells.size() == 1);
+                CHECK_FALSE(affordance(screen, "editor:level_up").enabled);
+                return invoke("editor:open_square", {.row = "square:0,0"});
+            case 3: {
+                const auto& entries = body<ec::list_body>(part(screen, "editor:objects")).rows;
+                const auto selected = std::ranges::find_if(entries, &ec::row::selected);
+                REQUIRE(selected != entries.end());
+                CHECK(selected->label.find("house_01_roof") != std::string::npos);
+                return act("QUIT");
+            }
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 4);
+}
+
+TEST_CASE(
+    "the editor reports a special's unknown terrain and a connection over its own square",
+    "[editor_session][editor_special]") {
+    const auto guard = screen_guard{};
+    const auto restore_mapgen = restore_on_out_of_scope<bool>(disable_mapgen);
+    disable_mapgen = false;
+    auto entries = special_levels();
+    entries[0]["overmaps"].push_back({{"point", {0, 1, 0}}, {"overmap", "no_such_terrain_north"}});
+    entries[0]["connections"] = {{{"point", {1, 0, 0}}, {"connection", "local_road"}}};
+    const auto file = levels_file{entries};
+    const auto said = [](const ec::screen_view& screen) {
+        return body<ec::list_body>(part(screen, "editor:diagnostics")).rows
+             | std::views::transform(&ec::row::label) | std::ranges::to<std::vector>();
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1: {
+                const auto messages = said(screen);
+                CHECK(std::ranges::any_of(messages, [](const std::string& text) {
+                    return text.find("no_such_terrain_north") != std::string::npos;
+                }));
+                CHECK(std::ranges::any_of(messages, [](const std::string& text) {
+                    return text.find("overwrites terrain") != std::string::npos;
+                }));
+
+                return act("QUIT");
+            }
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 2);
+}
+
+TEST_CASE("a special's square names its terrain and turn", "[editor_special]") {
+    const auto squares = editor::special_squares(special_levels()[0]);
+    REQUIRE(squares.size() == 3);
+    CHECK(squares[0].at == tripoint_rel_omt(0, 0, 0));
+    CHECK(squares[0].overmap == "house_01_north");
+    CHECK(squares[2].at == tripoint_rel_omt(0, 0, 1));
 }
 
 #endif // CATA_MCP
