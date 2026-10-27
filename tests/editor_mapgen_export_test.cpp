@@ -9,9 +9,11 @@
 #include "monster.h"
 #include "overmap/omdata.h"
 #include "overmap/overmapbuffer.h"
+#include "player_helpers.h"
 #include "state_helpers.h"
 #include "trap.h"
 #include "type_id.h"
+#include "units.h"
 
 #include <algorithm>
 #include <nlohmann/json.hpp>
@@ -179,6 +181,27 @@ TEST_CASE("an exported pet stays friendly", "[editor_mapgen]") {
     CHECK((*exported)["object"]["place_monster"]
           == nlohmann::ordered_json::parse(
               R"([{"monster":"mon_dog","x":12,"y":2,"friendly":true}])"));
+}
+
+TEST_CASE(
+    "an exported overmap square places its vehicles and NPCs by their prototypes",
+    "[editor_mapgen]") {
+    clear_all_state();
+    const auto omt = get_avatar().abs_omt_pos();
+    auto& here = get_map();
+    REQUIRE(here.add_vehicle(
+        vproto_id("bicycle"), abs_to_bub(abs_at(omt, point(2, 20))), 90_degrees, 0, 0));
+    spawn_npc(abs_to_bub(abs_at(omt, point(20, 3))), "test_talker");
+    const auto exported = editor::export_region(omt, point_rel_omt(1, 1), "");
+    clear_vehicles();
+    REQUIRE(exported);
+    const auto& object = (*exported)["object"];
+    // The design and where it stands, not its state: it spawns intact.
+    CHECK(object["place_vehicles"]
+          == nlohmann::ordered_json::parse(
+              R"([{"vehicle":"bicycle","x":2,"y":20,"rotation":90,"chance":100,"status":0}])"));
+    CHECK(object["place_npcs"]
+          == nlohmann::ordered_json::parse(R"([{"class":"test_talker","x":20,"y":3}])"));
 }
 
 TEST_CASE(
