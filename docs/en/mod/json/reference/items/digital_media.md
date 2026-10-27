@@ -2,13 +2,13 @@
 
 Digital files are items stored inside USB drives, SD cards, or a reader.
 The e-ink tablet and laptop's **Download data from storage media** action copies files into
-its internal storage. **Browse digital files** offers information and
+its internal storage. **Browse digital files** offers information, study, and
 item actions for installed files.
 
 ## Files and readers
 
 - `DIGITAL`: the item is a file. It can only be placed in digital storage, and
-  requires installation on a powered reader to activate it.
+  requires installation on a powered reader to study or activate it.
 - `DIGITAL_STORAGE`: the item accepts digital contents and rejects physical
   contents. Dropping the media does not spill its files.
 - `DIGITAL_READER`: installed files can supply recipe references and be used
@@ -16,6 +16,31 @@ item actions for installed files.
   `DIGITAL_STORAGE` and a tool battery configuration.
 - `DIGITAL_MUSIC`: the file contains music tracks for the reader's playlist.
 - `DIGITAL_PHOTOS`: the file is a photo album the reader can display.
+
+Derive instructional files from `digital_instruction`, a `BOOK` abstract with
+zero mass and volume and the `DIGITAL`, `IRREMOVABLE`, and `NO_DROP` flags:
+
+```json
+{
+  "id": "my_cooking_lesson",
+  "copy-from": "digital_instruction",
+  "type": "BOOK",
+  "name": { "str": "cooking tutorial" },
+  "description": "A saved lesson in basic kitchen techniques.",
+  "skill": "cooking",
+  "required_level": 0,
+  "max_level": 3,
+  "time": "20 m",
+  "fun": 1
+}
+```
+
+Associate recipes through their existing `book_learn` field, using the digital
+item ID as the book ID. Installed instructional files supply recipe references
+from a powered reader without permanently teaching them. Studying uses the
+normal book activity, including skill limits and the recipe-learning option,
+and consumes one device use per minute. Losing the device or its power stops
+the activity.
 
 Non-book files can derive from `software`. Override `container` to `"null"`
 when defining files intended for a media contents group; otherwise the software
@@ -104,7 +129,7 @@ SD-card loot and encryption rolls.
 For predetermined contents, use existing item-group modifiers instead:
 
 ```json
-{ "item": "mobile_memory_card_used", "contents-item": "digital_3d_printing_guide" }
+{ "item": "mobile_memory_card_used", "contents-item": "digital_cooking_show" }
 ```
 
 Files are copied without consuming the source. Identical copies are skipped;

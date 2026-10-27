@@ -6,6 +6,7 @@
     "entries": [
       { "item": "digital_photo_album", "prob": 25, "charges": [ 5, 30 ] },
       { "item": "digital_music_collection", "prob": 12, "charges": [ 5, 15 ] },
+      { "item": "digital_cooking_show", "prob": 12 },
       { "item": "digital_3d_printing_guide", "prob": 2 },
       { "item": "digital_cooking_recipe_archive", "prob": 5 }
     ]
@@ -28,6 +29,7 @@
     "entries": [
       { "item": "digital_photo_album", "prob": 75, "charges": [ 5, 30 ] },
       { "item": "digital_music_collection", "prob": 35, "charges": [ 5, 15 ] },
+      { "item": "digital_cooking_show", "prob": 30 },
       { "item": "digital_3d_printing_guide", "prob": 10 },
       { "item": "digital_cooking_recipe_archive", "prob": 15 }
     ]

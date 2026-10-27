@@ -202,6 +202,61 @@ TEST_CASE("digital_item_actions_require_installation", "[digital_media][iuse]") 
     CHECK(installed_file.typeId() == itype_id("test_digital_instruction"));
 }
 
+TEST_CASE("digital_study_uses_the_reader", "[digital_media][reading]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    set_time(calendar::turn_zero + 12_hours);
+    auto& dummy = get_avatar();
+    clear_character(dummy);
+    auto device = item::spawn("eink_tablet_pc");
+    auto& reader = *device;
+    reader.ammo_set(itype_id("battery"), 10);
+    reader.put_in(item::spawn("test_digital_instruction"));
+    auto& file = reader.contents.front();
+    dummy.i_add(std::move(device));
+    REQUIRE(digital_reader_for(dummy, file));
+
+    REQUIRE(dummy.read(&file, true));
+    REQUIRE_FALSE(dummy.activity->is_null());
+    SECTION("losing power stops study") {
+        reader.ammo_unset();
+        activity_handlers::read_do_turn(&*dummy.activity, &dummy);
+        CHECK(dummy.activity->is_null());
+        CHECK_FALSE(digital_reader_for(dummy, file));
+        CHECK_FALSE(dummy.knows_recipe(&recipe_id("test_soldering_iron_digital_media").obj()));
+    }
+    SECTION("losing the device stops study") {
+        const auto removed = reader.detach();
+        activity_handlers::read_do_turn(&*dummy.activity, &dummy);
+        CHECK(dummy.activity->is_null());
+        CHECK_FALSE(digital_reader_for(dummy, file));
+    }
+    SECTION("UPS power can supply an empty reader") {
+        reader.ammo_unset();
+        reader.set_flag(flag_USE_UPS);
+        auto supply = item::spawn("UPS_off", calendar::turn, 10);
+        auto& ups = *supply;
+        dummy.i_add(std::move(supply));
+        REQUIRE(digital_reader_for(dummy, file));
+        calendar::turn += 1_minutes;
+        activity_handlers::read_do_turn(&*dummy.activity, &dummy);
+        CHECK_FALSE(dummy.activity->is_null());
+        CHECK(ups.ammo_remaining() == 9);
+        CHECK(reader.ammo_remaining() == 0);
+    }
+    SECTION("a complete lesson trains skills and consumes battery power") {
+        for (auto turns = 0; turns < 300 && !dummy.activity->is_null(); ++turns) {
+            calendar::turn += 1_turns;
+            dummy.moves = 100;
+            dummy.activity->do_turn(dummy);
+        }
+        CHECK(dummy.activity->is_null());
+        CHECK(dummy.get_skill_level_object(skill_id("electronics")).exercise() > 0);
+        CHECK(reader.ammo_remaining() < 10);
+        CHECK(reader.ammo_remaining() > 0);
+    }
+}
+
 TEST_CASE("digital_media_spawns_with_json_defined_contents", "[digital_media][item_group]") {
     const auto media =
         item_group::items_from(item_group_id("test_preloaded_digital_media"), calendar::turn_zero);

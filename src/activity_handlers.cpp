@@ -36,6 +36,7 @@
 #include "crafting_quality.h"
 #include "creature.h"
 #include "damage.h"
+#include "digital_media.h"
 #include "debug.h"
 // TODO (https://github.com/cataclysmbn/Cataclysm-BN/issues/1612):
 // Remove that include after implementing repair_activity_actor.
@@ -3426,6 +3427,19 @@ void activity_handlers::butcher_do_turn( player_activity *act, player *p )
 
 void activity_handlers::read_do_turn( player_activity *act, player *p )
 {
+    if( !act->targets.empty() && act->targets.front() &&
+        is_digital_file( *act->targets.front() ) ) {
+        const auto reader = digital_reader_for( *p, *act->targets.front() );
+        if( !reader ) {
+            p->add_msg_if_player( m_bad, _( "Your reader is no longer available.  You stop studying." ) );
+            act->set_to_null();
+            return;
+        }
+        if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
+            auto &device = reader->get();
+            p->consume_charges( device, device.type->charges_to_use() );
+        }
+    }
     if( p->is_player() ) {
         if( !act->str_values.empty() && act->str_values[0] == "martial_art" && one_in( 3 ) ) {
             if( act->values.empty() ) {

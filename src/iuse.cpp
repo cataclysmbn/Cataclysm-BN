@@ -6015,6 +6015,7 @@ auto browse_digital_files( player &who, item &reader, const bool photos_only = f
     auto actions = uilist{};
     actions.text = file->type_name();
     actions.addentry( 0, true, 'i', _( "File information" ) );
+    actions.addentry( 1, file->is_book(), 'r', _( "Study" ) );
     actions.addentry( 2, file->has_use(), 'a', _( "Run" ) );
     const auto photo_wait = digital_photo_cooldown_remaining( who, *file );
     actions.addentry( 3, file->has_flag( flag_id( "DIGITAL_PHOTOS" ) ) && file->charges > 0 &&
@@ -6031,6 +6032,10 @@ auto browse_digital_files( player &who, item &reader, const bool photos_only = f
     actions.query();
     if( actions.ret == 0 ) {
         popup( "%s", file->type->description.translated() );
+    } else if( actions.ret == 1 ) {
+        if( auto *you = who.as_avatar() ) {
+            you->read( file );
+        }
     } else if( actions.ret == 2 ) {
         who.invoke_item( file );
     } else if( actions.ret == 3 ) {

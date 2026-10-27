@@ -12,6 +12,17 @@
     "intelligence": 6
   },
   {
+    "id": "digital_cooking_show",
+    "copy-from": "digital_instruction",
+    "type": "BOOK",
+    "name": { "str": "cooking show: pantry basics" },
+    "description": "A saved episode of a cooking show.  The host explains basic kitchen techniques and demonstrates making seasoned rice for sushi.",
+    "skill": "cooking",
+    "required_level": 0,
+    "max_level": 3,
+    "fun": 1
+  },
+  {
     "id": "digital_3d_printing_guide",
     "copy-from": "digital_collection",
     "type": "GENERIC",
