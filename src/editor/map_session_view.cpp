@@ -863,9 +863,12 @@ auto drawing_affordances(const session& state) -> std::vector<ec::affordance> {
              .label = _("Move placement"),
              .args = {.row = ec::row_shape{.component_id = canvas_id}, .text = ec::text_shape{}}}));
     }
-    affordances.push_back(
-        ec::invoke_affordance({.id = stroke_begin_id, .label = _("Begin stroke")}));
-    affordances.push_back(ec::invoke_affordance({.id = stroke_end_id, .label = _("End stroke")}));
+    if (state.current->kind == shape_kind::point) {
+        affordances.push_back(
+            ec::invoke_affordance({.id = stroke_begin_id, .label = _("Begin stroke")}));
+        affordances.push_back(
+            ec::invoke_affordance({.id = stroke_end_id, .label = _("End stroke")}));
+    }
     affordances.push_back(ec::invoke_affordance(
         {.id = extract_palette_id,
          .label = _("Extract legend to palette"),
@@ -1239,10 +1242,12 @@ auto session_view(const session& state) -> ec::screen_view {
                     {.id = paint_id, .label = _("Draw"), .args = row_of(canvas_id)}));
                 affordances.push_back(ec::invoke_affordance(
                     {.id = tool_id, .label = _("Tool"), .args = row_of(tools_id)}));
-                affordances.push_back(
-                    ec::invoke_affordance({.id = stroke_begin_id, .label = _("Begin stroke")}));
-                affordances.push_back(
-                    ec::invoke_affordance({.id = stroke_end_id, .label = _("End stroke")}));
+                if (state.special_tool->kind.has_value() && !state.drawing_refusal()) {
+                    affordances.push_back(
+                        ec::invoke_affordance({.id = stroke_begin_id, .label = _("Begin stroke")}));
+                    affordances.push_back(
+                        ec::invoke_affordance({.id = stroke_end_id, .label = _("End stroke")}));
+                }
             } else if (state.on_oter()) {
                 const auto mapgens = state.terrain_mapgens();
                 if (!mapgens.empty()) {
