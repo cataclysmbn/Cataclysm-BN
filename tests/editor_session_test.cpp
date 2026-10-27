@@ -1605,6 +1605,44 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the editor opens a mapgen of an overmap terrain the game lacks and says so among the "
+    "diagnostics",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    {
+        auto entries = nlohmann::ordered_json::parse(file.text);
+        entries[0]["om_terrain"] = "zz_no_such_terrain";
+        auto out = std::ofstream(file.path, std::ios::binary | std::ios::trunc);
+        out << entries.dump(2);
+    }
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1: {
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                CHECK(walls(screen) == 0);
+                const auto& rows = body<ec::list_body>(part(screen, "editor:diagnostics")).rows;
+                CHECK(std::ranges::any_of(rows, [](const ec::row& row) {
+                    return row.label.contains("zz_no_such_terrain");
+                }));
+                return act("QUIT");
+            }
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 2);
+}
+
+TEST_CASE(
     "the editor's tools and clipboard commands carry the keys image editors use",
     "[editor_session][engine_client_component]") {
     const auto guard = screen_guard{};
