@@ -1294,11 +1294,12 @@ auto session_view(const session& state) -> ec::screen_view {
     lay_out(
         view,
         {.slots =
-             {{sources_id, state.live || state.doc ? "outline" : "canvas"},
-              {"vehicle:document", "canvas"},
-              {"vehicle:live", "canvas"},
-              {tools_id, "inspector"},
-              {"vehicle:notice", "log"}},
+             {{sources_id,
+               {.slot = state.live || state.doc ? "outline" : "canvas", .label = _("Vehicles")}},
+              {"vehicle:document", {.slot = "canvas"}},
+              {"vehicle:live", {.slot = "canvas"}},
+              {tools_id, {.slot = "inspector", .label = _("Design")}},
+              {"vehicle:notice", {.slot = "log"}}},
          .groups =
              {{save_id, file},
               {save_as_id, file},

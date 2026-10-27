@@ -72,6 +72,7 @@
             {
               "id": "vehicle:sources",
               "kind": "tabs",
+              "label": "Vehicles",
               "affordances": [
                 "vehicle:source"
               ],
@@ -299,6 +300,7 @@
             {
               "id": "vehicle:sources",
               "kind": "tabs",
+              "label": "Vehicles",
               "affordances": [
                 "vehicle:source"
               ],
@@ -679,6 +681,7 @@
             {
               "id": "vehicle:tools",
               "kind": "tabs",
+              "label": "Design",
               "affordances": [
                 "vehicle:tool"
               ],
@@ -1254,6 +1257,7 @@
             {
               "id": "vehicle:sources",
               "kind": "tabs",
+              "label": "Vehicles",
               "affordances": [
                 "vehicle:source"
               ],
@@ -1560,6 +1564,7 @@
             {
               "id": "vehicle:tools",
               "kind": "tabs",
+              "label": "Design",
               "affordances": [
                 "vehicle:tool"
               ],

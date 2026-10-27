@@ -1159,6 +1159,7 @@
             {
               "id": "editor:file",
               "kind": "form",
+              "label": "Open",
               "affordances": [
                 "editor:open",
                 "editor:save_as"
@@ -1221,6 +1222,7 @@
             {
               "id": "editor:objects",
               "kind": "list",
+              "label": "Entries",
               "affordances": [
                 "editor:object"
               ],
@@ -1245,6 +1247,7 @@
             {
               "id": "editor:history",
               "kind": "list",
+              "label": "History",
               "affordances": [
                 "editor:jump"
               ],
@@ -1426,6 +1429,7 @@
             {
               "id": "editor:legend",
               "kind": "list",
+              "label": "Legend",
               "affordances": [
                 "editor:symbol"
               ],
@@ -1461,6 +1465,7 @@
             {
               "id": "editor:diagnostics",
               "kind": "list",
+              "label": "Problems",
               "affordances": [
                 "editor:diagnostic"
               ],
@@ -1474,6 +1479,7 @@
             {
               "id": "editor:placements",
               "kind": "list",
+              "label": "Placements",
               "affordances": [
                 "editor:placement"
               ],
@@ -1487,6 +1493,7 @@
             {
               "id": "editor:place",
               "kind": "form",
+              "label": "Add placement",
               "affordances": [
                 "editor:place_set",
                 "editor:place_apply"
@@ -1622,6 +1629,7 @@
             {
               "id": "editor:field",
               "kind": "form",
+              "label": "JSON value",
               "affordances": [
                 "editor:field_set",
                 "editor:field_apply"
@@ -1647,6 +1655,7 @@
             {
               "id": "editor:mapping",
               "kind": "form",
+              "label": "Mapping",
               "affordances": [
                 "editor:mapping_set",
                 "editor:mapping_apply"
@@ -1788,6 +1797,7 @@
             {
               "id": "editor:catalog_kinds",
               "kind": "tabs",
+              "label": "Catalog",
               "affordances": [
                 "editor:catalog_kind"
               ],
@@ -2939,6 +2949,7 @@
             {
               "id": "editor:new",
               "kind": "form",
+              "label": "New file",
               "affordances": [
                 "editor:new_set",
                 "editor:new_apply"
@@ -3003,6 +3014,7 @@
             {
               "id": "editor:export_options",
               "kind": "form",
+              "label": "Export",
               "affordances": [
                 "editor:export_palette"
               ],
@@ -3020,6 +3032,7 @@
             {
               "id": "editor:import_form",
               "kind": "form",
+              "label": "Stamp mapgen text",
               "affordances": [
                 "editor:import_set",
                 "editor:import"
@@ -3039,6 +3052,7 @@
             {
               "id": "editor:browser",
               "kind": "list",
+              "label": "Files",
               "affordances": [
                 "editor:browser_open",
                 "editor:browser_filter"

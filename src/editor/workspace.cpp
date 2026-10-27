@@ -3,15 +3,17 @@
 namespace editor {
 
 auto lay_out(engine_client::screen_view& view, const workspace_layout& layout) -> void {
-    const auto named = [](const auto& names, const std::string& id) {
-        const auto found = names.find(id);
-        return found == names.end() ? std::string{} : found->second;
-    };
     if (view.root) {
-        for (auto& part : view.root->children) { part.slot = named(layout.slots, part.id); }
+        for (auto& part : view.root->children) {
+            const auto found = layout.slots.find(part.id);
+            if (found == layout.slots.end()) { continue; }
+            part.slot = found->second.slot;
+            if (part.label.empty()) { part.label = found->second.label; }
+        }
     }
     for (auto& affordance : view.affordances) {
-        affordance.group = named(layout.groups, affordance.id);
+        const auto found = layout.groups.find(affordance.id);
+        affordance.group = found == layout.groups.end() ? std::string{} : found->second;
     }
 }
 
