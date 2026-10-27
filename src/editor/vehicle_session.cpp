@@ -708,7 +708,8 @@ auto grid_of(const vehicle* const veh, std::vector<point> mounts, const point& c
 /// east, as the game turns it, each showing the part shown on the mount that lands there.
 auto turned_grid(const vehicle& veh, const int facing) -> ec::component {
     const auto dir = units::from_degrees(facing);
-    const auto pivot = veh.pivot_point();
+    // The game spawns a vehicle turning it about its (0,0) mount, which lands on the spawn square.
+    const auto pivot = tripoint_mnt_veh::zero();
     struct landed {
         point at;
         int part;
