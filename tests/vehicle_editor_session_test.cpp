@@ -929,4 +929,73 @@ TEST_CASE(
     CHECK(recent.front().name == "bicycle");
 }
 
+TEST_CASE(
+    "the vehicle editor reloads a file changed on disk unless it is edited, and then says so",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto saved_as =
+        std::filesystem::path(PATH_INFO::user_moddir()) / "vehicle_editor_disk" / "bicycle.json";
+    std::filesystem::remove_all(saved_as.parent_path());
+    const auto cleanup = on_out_of_scope([&] {
+        std::filesystem::remove_all(saved_as.parent_path());
+    });
+    // The file as another program writes it: the prototype named `name` instead.
+    const auto write_outside = [&](const std::string& name) {
+        auto value = nlohmann::ordered_json::parse(read_file(saved_as));
+        for (auto& entry : value) {
+            if (entry.value("id", "") == "bicycle") { entry["name"] = name; }
+        }
+        auto out = std::ofstream(saved_as, std::ios::binary | std::ios::trunc);
+        out << value.dump(2);
+    };
+    const auto title = [](const ec::screen_view& screen) {
+        return body<ec::panel_body>(part(screen, "vehicle:document")).title;
+    };
+    const auto notice = [](const ec::screen_view& screen) {
+        return body<ec::text_body>(part(screen, "vehicle:notice")).markup;
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:filter", {.text = "bicycle"});
+            case 1:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 2:
+                return invoke("vehicle:save_as", {.text = saved_as.string()});
+            case 3:
+                CHECK(stat(screen, "saved").value == "Yes");
+                write_outside("Outside bicycle");
+                return invoke("vehicle:tool", {.row = "tool:vehicle"});
+            case 4:
+                CHECK(title(screen) == "Outside bicycle");
+                CHECK(notice(screen) == saved_as.string() + " changed on disk and was reloaded.");
+                CHECK(stat(screen, "saved").value == "Yes");
+                return invoke("vehicle:prop_set", {.row = "name", .text = "Edited bicycle"});
+            case 5:
+                CHECK(title(screen) == "Edited bicycle");
+                CHECK_FALSE(ec::find_component(*screen.root, "vehicle:notice"));
+                write_outside("Other bicycle");
+                return invoke("vehicle:tool", {.row = "tool:mount"});
+            case 6:
+                // An edited document keeps its edit, and the change on disk is not overwritten
+                // unasked.
+                CHECK(title(screen) == "Edited bicycle");
+                CHECK(
+                    notice(screen)
+                    == saved_as.string() + " changed on disk; saving would overwrite that change.");
+                return invoke("vehicle:undo");
+            case 7:
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 8);
+}
+
 #endif
