@@ -161,6 +161,14 @@ TEST_CASE("the next test case starts with the map where the run started", "[map]
     CHECK(get_map().get_abs_sub() == point_abs_sm::zero());
 }
 
+TEST_CASE("every treetop terrain looks like the tree it tops", "[map][looks_like]") {
+    for (const auto& tree : ter_t::get_all()) {
+        if (!tree.has_flag(TFLAG_TREE) || tree.roof.is_null()) { continue; }
+        CAPTURE(tree.id.str(), tree.roof.str());
+        CHECK_FALSE(tree.roof->looks_like.empty());
+    }
+}
+
 TEST_CASE("mapgen_water_fixtures_are_already_plumbed", "[mapgen][fluid_grid][regression]") {
     clear_all_state();
     const auto cleanup = on_out_of_scope([] { clear_all_state(); });
