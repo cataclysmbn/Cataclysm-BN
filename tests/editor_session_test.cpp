@@ -2979,6 +2979,61 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the editor exports the squares the player marks in the world as a nested chunk",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto folder = mod_file{};
+    const auto made = folder.path.parent_path() / "marked.json";
+    const auto export_label = [](const ec::screen_view& screen) {
+        return affordance(screen, "editor:export").label;
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                CHECK(export_label(screen) == "Export mapgen here");
+                return invoke("editor:export_area");
+            // The game's own area selection: the first corner on the avatar, the second 2 east and
+            // 1 south.
+            case 1:
+                return act("CONFIRM");
+            case 2:
+                return act("RIGHT");
+            case 3:
+                return act("RIGHT");
+            case 4:
+                return act("DOWN");
+            case 5:
+                return act("CONFIRM");
+            case 6:
+                CHECK(export_label(screen) == "Export 3x2 squares");
+                return invoke("editor:export", {.text = made.string()});
+            case 7: {
+                const auto& canvas = body<ec::grid_body>(part(screen, "editor:canvas"));
+                CHECK(canvas.cols == 3);
+                CHECK(canvas.rows == 2);
+                // The overmap square size goes back to the squares around the avatar.
+                return invoke("editor:export_width", {.count = 1});
+            }
+            case 8:
+                CHECK(export_label(screen) == "Export mapgen here");
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 9);
+    const auto written = nlohmann::ordered_json::parse(read_file(made));
+    CHECK(written[0]["nested_mapgen_id"] == "marked");
+    CHECK(written[0]["object"]["mapgensize"] == nlohmann::ordered_json::array({3, 2}));
+}
+
+TEST_CASE(
     "the editor exports the overmap square under the avatar to a new file and opens it",
     "[editor_session][engine_client_component]") {
     const auto guard = screen_guard{};

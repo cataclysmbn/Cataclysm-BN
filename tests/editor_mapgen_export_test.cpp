@@ -1,5 +1,6 @@
 #include "avatar.h"
 #include "catch/catch.hpp"
+#include "editor/mapgen_check.h"
 #include "editor/mapgen_export.h"
 #include "editor/mapgen_stamp.h"
 #include "item.h"
@@ -137,6 +138,39 @@ TEST_CASE("an exported region of overmap squares stamps back as one entry", "[ed
     REQUIRE(stamped);
     CHECK(here.ter(abs_to_bub(abs_at(east, point(3, 5)))) == ter_id("t_wall"));
     editor::swap_stamp(*stamped);
+}
+
+TEST_CASE(
+    "exported squares that cross a submap edge become a nested chunk of their size",
+    "[editor_mapgen]") {
+    clear_all_state();
+    const auto omt = get_avatar().abs_omt_pos();
+    auto& here = get_map();
+    for (auto y = 4; y < 7; ++y) {
+        for (auto x = 10; x < 15; ++x) {
+            here.ter_set(abs_to_bub(abs_at(omt, point(x, y))), ter_id("t_floor"));
+            here.furn_set(abs_to_bub(abs_at(omt, point(x, y))), furn_id("f_null"));
+        }
+    }
+    here.ter_set(abs_to_bub(abs_at(omt, point(13, 6))), ter_id("t_wall"));
+    // Just outside the squares: left out.
+    here.ter_set(abs_to_bub(abs_at(omt, point(15, 6))), ter_id("t_wall"));
+
+    const auto exported =
+        editor::export_chunk(abs_at(omt, point(10, 4)), point_rel_ms(5, 3), "", "zz_chunk");
+    REQUIRE(exported);
+    const auto& entry = *exported;
+    CHECK(entry["type"] == "mapgen");
+    CHECK(entry["nested_mapgen_id"] == "zz_chunk");
+    CHECK_FALSE(entry.contains("om_terrain"));
+    const auto& object = entry["object"];
+    CHECK(object["mapgensize"] == nlohmann::ordered_json::array({5, 3}));
+    REQUIRE(object["rows"].size() == 3);
+    CHECK(object["rows"][0].get<std::string>().size() == 5);
+    const auto wall = symbol_at(object, point(3, 2));
+    CHECK(object["terrain"][wall] == "t_wall");
+    CHECK(symbol_at(object, point(4, 2)) == symbol_at(object, point(0, 0)));
+    CHECK(editor::check_mapgen(entry.dump()).empty());
 }
 
 TEST_CASE("an exported overmap square places its items and monsters", "[editor_mapgen]") {
