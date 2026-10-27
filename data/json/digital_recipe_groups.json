@@ -1,0 +1,17 @@
+[
+  {
+    "type": "digital_recipe_group",
+    "id": "digital_3d_printing",
+    "recipes": [ { "id": "3d_printer_basic", "skill_level": 7 } ]
+  },
+  {
+    "type": "digital_recipe_group",
+    "id": "digital_simple_recipes",
+    "random_recipes": { "count": 1, "category": "CC_FOOD", "min_difficulty": 0, "max_difficulty": 3, "difficulty_chance_offset": 0 }
+  },
+  {
+    "type": "digital_recipe_group",
+    "id": "digital_science_recipes",
+    "random_recipes": { "count": 1, "min_difficulty": 3, "difficulty_chance_offset": 1 }
+  }
+]

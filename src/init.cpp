@@ -83,6 +83,7 @@
 #include "profession.h"
 #include "recipe_dictionary.h"
 #include "recipe_groups.h"
+#include "digital_recipes.h"
 #include "regional_settings.h"
 #include "requirements.h"
 #include "rotatable_symbols.h"
@@ -418,6 +419,7 @@ void DynamicDataLoader::initialize()
     add( "uncraft", &recipe_dictionary::load_uncraft );
     add( "nested_category", &recipe_dictionary::load_nested_category );
     add( "recipe_group",  &recipe_group::load );
+    add( "digital_recipe_group", &load_digital_recipe_group );
 
     add( "tool_quality", &quality::load_static );
     add( "technique", &load_technique );
@@ -658,6 +660,7 @@ void DynamicDataLoader::unload_data()
     quality::reset();
     recipe_dictionary::reset();
     recipe_group::reset();
+    reset_digital_recipe_groups();
     requirement_data::reset();
     reset_effect_types();
     reset_furn_ter();
@@ -772,6 +775,7 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
             { _( "Constructions" ), &constructions::finalize },
             { _( "Crafting recipes" ), &recipe_dictionary::finalize },
             { _( "Recipe groups" ), &recipe_group::check },
+            { _( "Digital recipe groups" ), &check_digital_recipe_groups },
             { _( "Martial arts" ), &finialize_martial_arts },
             { _( "NPC classes" ), &npc_class::finalize_all },
             { _( "Missions" ), &mission_type::finalize },

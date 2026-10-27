@@ -37,6 +37,7 @@
 #include "input.h"
 #include "item.h"
 #include "item_contents.h"
+#include "digital_recipes.h"
 #include "item_group.h"
 #include "iuse_actor.h"
 #include "json.h"
@@ -1301,6 +1302,11 @@ void Item_factory::check_definitions() const
             if( !e.is_valid() ) {
                 msg += string_format( "item %s has unknown emit source %s\n", type->id.c_str(), e.c_str() );
             }
+        }
+
+        if( const auto group = type->properties.find( "digital_recipe_group" );
+            group != type->properties.end() && !digital_recipe_group_exists( group->second ) ) {
+            msg += string_format( "invalid digital_recipe_group %s\n", group->second );
         }
 
         for( const auto &f : type->faults ) {
