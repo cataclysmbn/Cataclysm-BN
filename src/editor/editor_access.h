@@ -14,9 +14,6 @@ auto allow_editor_this_session(bool allowed) -> void;
 /// Whether the game is the main menu's editor game, which is there only for the editors.
 auto in_editor_game() -> bool;
 
-/// The role of an editor's screen: the whole view in the editor game, else a screen over the game.
-auto editor_screen_role() -> std::string;
-
 /// Ends the editor game, back to the main menu; does nothing in any other game.
 auto end_editor_game() -> void;
 

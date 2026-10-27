@@ -239,7 +239,7 @@ TEST_CASE(
         REQUIRE(screen.kind == "editor");
         switch (step++) {
             case 0:
-                CHECK(screen.role == "screen");
+                CHECK(screen.role == "workspace");
                 CHECK(screen.title == "Map Editor");
                 // Nothing is open: only opening and leaving are offered.
                 CHECK(affordance(screen, "editor:open").args.text->field_id == "path");

@@ -1354,7 +1354,7 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
     if (!prototype.empty()) { state.open(prototype); }
     const auto screen = ec::screen_scope(
         ctxt, "vehicle_editor",
-        {.role = editor_screen_role(),
+        {.role = "workspace",
          .view = [&](const ec::boundary_state& /*boundary*/) { return session_view(state); }});
     while (true) {
         ui_manager::redraw();

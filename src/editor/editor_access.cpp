@@ -24,8 +24,6 @@ auto allow_editor_this_session(const bool allowed) -> void { session_allowed = a
 
 auto in_editor_game() -> bool { return g->gametype() == special_game_type::EDITOR; }
 
-auto editor_screen_role() -> std::string { return in_editor_game() ? "workspace" : "screen"; }
-
 auto end_editor_game() -> void {
     if (!in_editor_game()) { return; }
     get_avatar().set_moves(0);
