@@ -438,14 +438,13 @@ auto session::reload() -> void {
 
 auto session::watch() -> void {
     if (!doc || !doc->changed_on_disk()) { return; }
-    const auto name = doc->path().string();
     if (doc->dirty()) {
-        notice = string_format(_("%s changed on disk; saving would overwrite that change."), name);
+        notice = changed_on_disk_notice(*doc);
         return;
     }
     const auto kept = reopen();
     if (notice.empty()) {
-        notice = string_format(_("%s changed on disk and was reloaded."), name);
+        notice = changed_on_disk_notice(*doc);
         // Another entry shown in place of a gone one was not what was being applied.
         if (kept && apply_on_save && on_mapgen()) { apply(); }
     }

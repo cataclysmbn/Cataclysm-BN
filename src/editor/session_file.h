@@ -21,6 +21,9 @@ auto save_document(document& doc) -> std::expected<void, std::string>;
 auto save_document_as(document& doc, const std::filesystem::path& path)
     -> std::expected<void, std::string>;
 
+/// What to say of `doc`'s file changed on disk: kept with its edit, or read again.
+auto changed_on_disk_notice(const document& doc) -> std::string;
+
 /// What the player answers to leaving a file with unsaved changes.
 enum class leave_answer { save, discard, stay };
 auto ask_leave() -> leave_answer;

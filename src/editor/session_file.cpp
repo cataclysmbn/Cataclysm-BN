@@ -35,6 +35,13 @@ auto is_mod_file(const std::filesystem::path& path) -> bool {
     return path.extension() == ".json" && inside(path, PATH_INFO::user_moddir());
 }
 
+auto changed_on_disk_notice(const document& doc) -> std::string {
+    const auto name = doc.path().string();
+    return doc.dirty()
+             ? string_format(_("%s changed on disk; saving would overwrite that change."), name)
+             : string_format(_("%s changed on disk and was reloaded."), name);
+}
+
 auto save_document(document& doc) -> std::expected<void, std::string> { return told(doc.save()); }
 
 auto save_document_as(document& doc, const std::filesystem::path& path)

@@ -235,6 +235,23 @@ struct session {
         reload();
     }
 
+    /// Reads the file again when it changed on disk and holds no edit; says so either way.
+    auto watch() -> void {
+        if (!doc || !doc->changed_on_disk()) { return; }
+        if (doc->dirty()) {
+            notice = changed_on_disk_notice(*doc);
+            return;
+        }
+        const auto kept_cursor = cursor;
+        const auto kept_pointer = field_pointer;
+        open_file(doc->path(), prototype().value("id", ""));
+        if (!notice.empty()) { return; }
+        cursor = kept_cursor;
+        field_pointer = kept_pointer;
+        reload();
+        notice = changed_on_disk_notice(*doc);
+    }
+
     /// Replaces the prototype by `next` as one undo step.
     auto change(const std::expected<nlohmann::ordered_json, std::string>& next) -> void {
         if (!next) {
@@ -1261,6 +1278,7 @@ auto run_vehicle_editor(const std::string& prototype) -> void {
         const auto row = invoked->args.row.value_or("");
         const auto text = invoked->args.text.value_or("");
         state.notice.clear();
+        state.watch();
         if (id == source_id || id == tool_id) {
             const auto tab = row.substr(row.find(':') + 1);
             (id == source_id ? state.source_tab : state.tool_tab) = tab;
