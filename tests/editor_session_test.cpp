@@ -392,6 +392,42 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "a stroke begun with the pencil can end after the tool changed",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                return invoke("editor:stroke_begin");
+            case 2:
+                return invoke("editor:tool", {.row = "tool:rect"});
+            case 3:
+                // A hotkey mid-drag must not leave the stroke open, folding later edits into it.
+                CHECK(affordance(screen, "editor:stroke_end").enabled);
+                return invoke("editor:stroke_end");
+            case 4:
+                CHECK(std::ranges::none_of(screen.affordances, [](const auto& entry) {
+                    return entry.id == "editor:stroke_end";
+                }));
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 5);
+}
+
+TEST_CASE(
     "a pencil trail between stroke begin and end is one undo step",
     "[editor_session][engine_client_component]") {
     const auto guard = screen_guard{};
