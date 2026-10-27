@@ -12,4 +12,12 @@ struct part_list_label {
     std::string close;
 };
 
-auto part_list_label_of(const vehicle& veh, int part, bool detail) -> part_list_label;
+struct part_list_label_options {
+    /// Fuel stores name their contents' amount.
+    bool detail = false;
+    /// The name starts with the durability symbol.
+    bool health_bar = true;
+};
+
+auto part_list_label_of(const vehicle& veh, int part, const part_list_label_options& opts)
+    -> part_list_label;

@@ -8989,7 +8989,7 @@ auto vehicle_facts( const optional_vpart_position &vp ) -> std::vector<fact>
     facts.push_back( { .kind = "vehicle", .text = vp->vehicle().name, .color = c_white } );
     const auto mounted = vp->vehicle().parts_at_relative( vp->mount(), true );
     for( const auto &[index, part] : std::views::enumerate( mounted ) ) {
-        const auto label = part_list_label_of( vp->vehicle(), part, false );
+        const auto label = part_list_label_of( vp->vehicle(), part, {} );
         facts.push_back( { .kind = "vehicle_part", .text = label.open + label.name + label.close,
                            .detail = index != 0 ? std::string{} : vp->is_inside() ? _( "Interior" ) : _( "Exterior" ) } );
     }

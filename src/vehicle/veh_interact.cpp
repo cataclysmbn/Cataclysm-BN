@@ -899,7 +899,7 @@ auto veh_interact::screen_of() -> ec::screen_view {
 
     auto parts_here_rows = std::vector<ec::row>{};
     for (const auto part : parts_here) {
-        const auto label = part_list_label_of(*veh, part, true);
+        const auto label = part_list_label_of(*veh, part, {.detail = true, .health_bar = false});
         parts_here_rows.push_back(
             {.id = part_identity(*veh, part),
              .label = remove_color_tags(label.name),

@@ -151,9 +151,11 @@ auto vehicle::part_color(const int p, const bool exact) const -> nc_color {
     }
 }
 
-auto part_list_label_of(const vehicle& veh, const int part, const bool detail) -> part_list_label {
+auto part_list_label_of(const vehicle& veh, const int part, const part_list_label_options& opts)
+    -> part_list_label {
+    const auto detail = opts.detail;
     const vehicle_part& vp = veh.cpart(part);
-    std::string partname = vp.name();
+    std::string partname = vp.name(opts.health_bar);
 
     if (vp.is_fuel_store() && !vp.ammo_current().is_null()) {
         if (detail) {
@@ -216,7 +218,7 @@ auto vehicle::print_part_list(
             break;
         }
 
-        const auto label = part_list_label_of(*this, pl[i], detail);
+        const auto label = part_list_label_of(*this, pl[i], {.detail = detail});
         const std::string& partname = label.name;
         const std::string& left_sym = label.open;
         const std::string& right_sym = label.close;
