@@ -195,7 +195,7 @@ auto run_editor_session() -> void {
             state.import_pasted();
         } else if (id == export_palette_id) {
             state.export_palette = invoked->args.text.value_or("");
-        } else if (id == browser_open_id) {
+        } else if (id == browser_open_id || id == recent_open_id) {
             state.open(std::string(row_rest(row, "file").value_or("")));
         } else if (id == browser_filter_id) {
             state.browser_filter = invoked->args.text.value_or("");

@@ -8,6 +8,7 @@
 #include "editor/mapgen_placement.h"
 #include "editor/mapgen_preview.h"
 #include "editor/mapgen_stroke.h"
+#include "editor/recent_documents.h"
 #include "editor/row_id.h"
 #include "editor/session_file.h"
 #include "editor/session_page.h"
@@ -1026,6 +1027,7 @@ auto layout(const session& state) -> workspace_layout {
              {terrains_id, {.slot = "outline", .label = _("Mapgens")}},
              {"editor:code_mapgens", {.slot = "outline", .label = _("Mapgens in code")}},
              {browser_id, {.slot = state.doc ? "outline" : "canvas", .label = _("Files")}},
+             {recent_id, {.slot = "canvas", .label = _("Recent")}},
              {diagnostics_id, {.slot = "log", .label = _("Problems")}},
              {history_id, {.slot = "log", .label = _("History")}},
              {"editor:notice", {.slot = "log"}},
@@ -1331,6 +1333,24 @@ auto session_view(const session& state) -> ec::screen_view {
                   .value = state.import_text,
                   .multiline = true}},
             .submit = import_id}});
+    if (!state.doc) {
+        const auto recent =
+            recent_documents()
+            | std::views::filter([](const recent_document& entry) { return entry.editor == "map"; })
+            | std::ranges::to<std::vector>();
+        if (!recent.empty()) {
+            parts.push_back(ec::list(
+                {.id = recent_id,
+                 .rows = recent | std::views::transform([](const recent_document& entry) {
+                             return ec::row{.id = "file:" + entry.name, .label = entry.name};
+                         })
+                       | std::ranges::to<std::vector>(),
+                 .selection = "single",
+                 .activate = recent_open_id}));
+            affordances.push_back(ec::invoke_affordance(
+                {.id = recent_open_id, .label = _("Open"), .args = row_of(recent_id)}));
+        }
+    }
     parts.push_back(browser_list(state, listed));
     if (!state.code_mapgens.empty()) {
         parts.push_back(ec::list(
