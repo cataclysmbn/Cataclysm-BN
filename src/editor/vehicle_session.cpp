@@ -3,6 +3,7 @@
 #include "avatar.h"
 #include "editor/catalog.h"
 #include "editor/document.h"
+#include "editor/editor_access.h"
 #include "editor/recent_documents.h"
 #include "editor/row_id.h"
 #include "editor/session_file.h"
@@ -594,17 +595,20 @@ struct session {
         }
     }
 
-    /// Puts the design in the game in place of its prototype and spawns it east of the avatar.
-    auto spawn() -> void {
+    /// Puts the design in the game in place of its prototype and spawns it east of the avatar; true
+    /// when it is there.
+    auto spawn() -> bool {
         const auto applied = apply_design(prototype().dump());
         if (!applied) {
             notice = applied.error();
-            return;
+            return false;
         }
         const auto at = get_avatar().bub_pos() + tripoint_rel_ms(spawn_distance, 0, 0);
         if (!spawn_design(*applied, at, spawning)) {
             notice = _("Something is in the way of the vehicle there.");
+            return false;
         }
+        return true;
     }
 
     auto set_spawning(const std::string& field, const std::string& text) -> void {
@@ -1314,7 +1318,7 @@ auto live_invoke(
 
 auto reset_vehicle_editor() -> void { kept_session.reset(); }
 
-auto run_vehicle_editor(const std::string& prototype) -> void {
+auto run_vehicle_editor(const std::string& prototype) -> bool {
     auto ctxt = input_context("EDITOR");
     ctxt.register_action("QUIT");
     ctxt.register_action("HELP_KEYBINDINGS");
@@ -1323,7 +1327,7 @@ auto run_vehicle_editor(const std::string& prototype) -> void {
     if (!prototype.empty()) { state.open(prototype); }
     const auto screen = ec::screen_scope(
         ctxt, "vehicle_editor",
-        {.role = "screen",
+        {.role = editor_screen_role(),
          .view = [&](const ec::boundary_state& /*boundary*/) { return session_view(state); }});
     while (true) {
         ui_manager::redraw();
@@ -1333,7 +1337,7 @@ auto run_vehicle_editor(const std::string& prototype) -> void {
         if (!invoked) {
             if (action == "QUIT" && state.leave()) {
                 state.live = nullptr;
-                return;
+                return false;
             }
             continue;
         }
@@ -1423,8 +1427,10 @@ auto run_vehicle_editor(const std::string& prototype) -> void {
             state.save_as(text);
         } else if (id == spawn_set_id) {
             state.set_spawning(row, text);
-        } else if (id == spawn_id) {
-            state.spawn();
+        } else if (id == spawn_id && state.spawn() && in_editor_game()) {
+            // The editor game shows no world behind the editor: the avatar goes to try it.
+            state.live = nullptr;
+            return true;
         }
     }
 }

@@ -654,11 +654,8 @@ auto game_parts(
             ec::invoke_affordance({.id = apply_on_save_id, .label = _("Apply on save")}));
         affordances.push_back(
             ec::invoke_affordance({.id = stamp_id, .label = _("Stamp"), .keys = {"F6"}}));
-        affordances.push_back(ec::invoke_affordance(
-            {.id = test_id,
-             .label = _("Test"),
-             .keys = {"F5"},
-             .enabled = state.stamped.has_value()}));
+        affordances.push_back(
+            ec::invoke_affordance({.id = test_id, .label = _("Test"), .keys = {"F5"}}));
         affordances.push_back(ec::invoke_affordance(
             {.id = preview_id,
              .label = _("Preview"),

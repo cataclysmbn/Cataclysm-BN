@@ -2802,9 +2802,10 @@
           "enum": [
             "map",
             "screen",
-            "dialog"
+            "dialog",
+            "workspace"
           ],
-          "description": "`map`: the running game. `dialog`: a question over it that the player answers and leaves. `screen`: a place of its own, such as a menu or a manager."
+          "description": "`map`: the running game. `dialog`: a question over it that the player answers and leaves. `screen`: a place of its own, such as a menu or a manager. `workspace`: a place that is the whole view, such as the main menu's editors: the running game under it is no part of it and is not shown."
         },
         "title": {
           "$ref": "#/$defs/text"

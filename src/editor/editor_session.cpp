@@ -104,7 +104,7 @@ auto reopens_after_waiting() -> bool {
 auto run_editor_session() -> void {
     const auto opening = std::exchange(first, std::nullopt);
     if (opening && opening->editor == "vehicle") {
-        run_vehicle_editor(opening->name);
+        if (!run_vehicle_editor(opening->name)) { end_editor_game(); }
         return;
     }
     auto ctxt = input_context("EDITOR");
@@ -115,7 +115,7 @@ auto run_editor_session() -> void {
     if (opening) { state.open(opening->name); }
     const auto screen = ec::screen_scope(
         ctxt, "editor",
-        {.role = "screen",
+        {.role = editor_screen_role(),
          .view = [&](const ec::boundary_state& /*boundary*/) { return session_view(state); }});
     while (true) {
         ui_manager::redraw();
@@ -124,6 +124,7 @@ auto run_editor_session() -> void {
         if (!invoked) {
             if (action == "QUIT" && state.leave()) {
                 state.status.clear();
+                end_editor_game();
                 return;
             }
             continue;
@@ -202,7 +203,7 @@ auto run_editor_session() -> void {
         } else if (id == browser_page_id) {
             state.browser_page = static_cast<std::size_t>(invoked->args.count.value_or(0));
         } else if (id == vehicle_id) {
-            run_vehicle_editor();
+            if (run_vehicle_editor()) { return; }
         } else if (id == new_set_id) {
             const auto text = invoked->args.text.value_or("");
             if (row == "kind") {
@@ -384,11 +385,16 @@ auto run_editor_session() -> void {
         } else if (id == test_id && state.placed_here()) {
             g->place_player_overmap(*state.placed_here());
             return;
-        } else if (id == test_id && state.stamped) {
-            // The avatar plays in the middle of the stamped square; the editor keeps its document.
-            g->place_player(abs_to_bub(
-                project_to<coords::ms>(state.stamped->at) + tripoint_rel_ms(SEEX, SEEY, 0)));
-            return;
+        } else if (id == test_id && (state.stamped || state.on_mapgen())) {
+            // Nothing stamped yet: the mapgen goes where the avatar is first.
+            if (!state.stamped) { state.stamp_here(); }
+            if (state.stamped) {
+                // The avatar plays in the middle of the stamped square; the editor keeps its
+                // document.
+                g->place_player(abs_to_bub(
+                    project_to<coords::ms>(state.stamped->at) + tripoint_rel_ms(SEEX, SEEY, 0)));
+                return;
+            }
         } else if (id == save_id) {
             state.save();
         } else if (id == save_as_id) {

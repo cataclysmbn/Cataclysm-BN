@@ -1143,70 +1143,11 @@
       }
     },
     {
-      "name": "map editor of the main menu left for the map, request",
-      "def": "submit_params",
-      "value": {
-        "epoch": "epoch-2",
-        "expect": {
-          "screen_id": "screen:6"
-        },
-        "operation": {
-          "kind": "invoke",
-          "affordance_id": "QUIT"
-        }
-      }
-    },
-    {
-      "name": "map editor of the main menu left for the map, receipt",
-      "def": "submit_result",
-      "value": {
-        "epoch": "epoch-2",
-        "command_id": "command:2",
-        "stage": "received",
-        "stage_text": "Received."
-      }
-    },
-    {
-      "name": "map editor of the main menu left for the map, validated",
-      "def": "command_notification",
-      "value": {
-        "epoch": "epoch-2",
-        "command_id": "command:2",
-        "stage": "validated",
-        "stage_text": "Accepted."
-      }
-    },
-    {
-      "name": "map editor of the main menu left for the map, executing",
-      "def": "command_notification",
-      "value": {
-        "epoch": "epoch-2",
-        "command_id": "command:2",
-        "stage": "executing",
-        "stage_text": "Under way."
-      }
-    },
-    {
-      "name": "map editor of the main menu left for the map, completed",
-      "def": "command_notification",
-      "value": {
-        "epoch": "epoch-2",
-        "command_id": "command:2",
-        "stage": "completed",
-        "stage_text": "Done.",
-        "at": {
-          "epoch": "epoch-2",
-          "sequence": "6",
-          "revision": "2"
-        }
-      }
-    },
-    {
-      "name": "map editor reopened on the document it was left with",
+      "name": "map editor of the main menu with a document open",
       "def": "screen",
       "value": {
-        "screen_id": "screen:7",
-        "role": "screen",
+        "screen_id": "screen:6",
+        "role": "workspace",
         "kind": "editor",
         "title": "Map Editor",
         "root": {
@@ -3090,8 +3031,8 @@
               "columns": [],
               "rows": [
                 {
-                  "id": "file:data/json/achievements.json",
-                  "label": "json/achievements.json",
+                  "id": "file:data/json/mapgen/Bastion_Fort.json",
+                  "label": "json/mapgen/Bastion_Fort.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3100,8 +3041,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/ammo_effects.json",
-                  "label": "json/ammo_effects.json",
+                  "id": "file:data/json/mapgen/Glassblower.json",
+                  "label": "json/mapgen/Glassblower.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3110,8 +3051,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/ammo_effects_simple.json",
-                  "label": "json/ammo_effects_simple.json",
+                  "id": "file:data/json/mapgen/Metalworker.json",
+                  "label": "json/mapgen/Metalworker.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3120,8 +3061,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/anatomy.json",
-                  "label": "json/anatomy.json",
+                  "id": "file:data/json/mapgen/Pottery_Sewing_Shops.json",
+                  "label": "json/mapgen/Pottery_Sewing_Shops.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3130,8 +3071,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/artifact/debug_artifacts.json",
-                  "label": "json/artifact/debug_artifacts.json",
+                  "id": "file:data/json/mapgen/abandoned01.json",
+                  "label": "json/mapgen/abandoned01.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3140,8 +3081,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/ascii_arts.json",
-                  "label": "json/ascii_arts.json",
+                  "id": "file:data/json/mapgen/abandoned_barn.json",
+                  "label": "json/mapgen/abandoned_barn.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3150,8 +3091,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/base_weather.json",
-                  "label": "json/base_weather.json",
+                  "id": "file:data/json/mapgen/abandoned_shopping_plaza.json",
+                  "label": "json/mapgen/abandoned_shopping_plaza.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3160,8 +3101,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/bionics.json",
-                  "label": "json/bionics.json",
+                  "id": "file:data/json/mapgen/abandoned_textile_mill/abandoned_textile_mill_a.json",
+                  "label": "json/mapgen/abandoned_textile_mill/abandoned_textile_mill_a.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3170,8 +3111,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/body_parts.json",
-                  "label": "json/body_parts.json",
+                  "id": "file:data/json/mapgen/abandoned_textile_mill/abandoned_textile_mill_b.json",
+                  "label": "json/mapgen/abandoned_textile_mill/abandoned_textile_mill_b.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3180,8 +3121,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/client_shortcuts.json",
-                  "label": "json/client_shortcuts.json",
+                  "id": "file:data/json/mapgen/abandoned_warehouse.json",
+                  "label": "json/mapgen/abandoned_warehouse.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3190,8 +3131,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/clothing_mods.json",
-                  "label": "json/clothing_mods.json",
+                  "id": "file:data/json/mapgen/abstorefront.json",
+                  "label": "json/mapgen/abstorefront.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3200,8 +3141,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/construction/construct.json",
-                  "label": "json/construction/construct.json",
+                  "id": "file:data/json/mapgen/aftershock/augmentation_clinic.json",
+                  "label": "json/mapgen/aftershock/augmentation_clinic.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3210,8 +3151,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/construction/construct_deco.json",
-                  "label": "json/construction/construct_deco.json",
+                  "id": "file:data/json/mapgen/aftershock/municipal_microreactor.json",
+                  "label": "json/mapgen/aftershock/municipal_microreactor.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3220,8 +3161,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/construction/construct_dig.json",
-                  "label": "json/construction/construct_dig.json",
+                  "id": "file:data/json/mapgen/aircraft_carrier/aircraft_carrier_nested_maps.json",
+                  "label": "json/mapgen/aircraft_carrier/aircraft_carrier_nested_maps.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3230,8 +3171,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/construction/construct_farm_wood.json",
-                  "label": "json/construction/construct_farm_wood.json",
+                  "id": "file:data/json/mapgen/aircraft_carrier/aircraft_carrier_z-1.json",
+                  "label": "json/mapgen/aircraft_carrier/aircraft_carrier_z-1.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3240,8 +3181,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/construction/construct_furn.json",
-                  "label": "json/construction/construct_furn.json",
+                  "id": "file:data/json/mapgen/aircraft_carrier/aircraft_carrier_z0.json",
+                  "label": "json/mapgen/aircraft_carrier/aircraft_carrier_z0.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3250,8 +3191,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/construction/construct_other.json",
-                  "label": "json/construction/construct_other.json",
+                  "id": "file:data/json/mapgen/aircraft_carrier/aircraft_carrier_z1.json",
+                  "label": "json/mapgen/aircraft_carrier/aircraft_carrier_z1.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3260,8 +3201,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/construction/construct_recreation.json",
-                  "label": "json/construction/construct_recreation.json",
+                  "id": "file:data/json/mapgen/aircraft_carrier/aircraft_carrier_z2.json",
+                  "label": "json/mapgen/aircraft_carrier/aircraft_carrier_z2.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3270,8 +3211,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/construction/construct_reinforce.json",
-                  "label": "json/construction/construct_reinforce.json",
+                  "id": "file:data/json/mapgen/aircraft_carrier/aircraft_carrier_z3.json",
+                  "label": "json/mapgen/aircraft_carrier/aircraft_carrier_z3.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3280,8 +3221,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/construction/construct_repair.json",
-                  "label": "json/construction/construct_repair.json",
+                  "id": "file:data/json/mapgen/airliner.json",
+                  "label": "json/mapgen/airliner.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3290,8 +3231,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/construction/construct_windows.json",
-                  "label": "json/construction/construct_windows.json",
+                  "id": "file:data/json/mapgen/airport/s_airport_private.json",
+                  "label": "json/mapgen/airport/s_airport_private.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3300,8 +3241,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/construction/construct_workshop.json",
-                  "label": "json/construction/construct_workshop.json",
+                  "id": "file:data/json/mapgen/airport/s_airport_runway_private.json",
+                  "label": "json/mapgen/airport/s_airport_runway_private.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3310,8 +3251,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/construction_category.json",
-                  "label": "json/construction_category.json",
+                  "id": "file:data/json/mapgen/animalpound.json",
+                  "label": "json/mapgen/animalpound.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3320,8 +3261,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/construction_group.json",
-                  "label": "json/construction_group.json",
+                  "id": "file:data/json/mapgen/animalshelter.json",
+                  "label": "json/mapgen/animalshelter.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3330,8 +3271,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/debug_spells.json",
-                  "label": "json/debug_spells.json",
+                  "id": "file:data/json/mapgen/antique_store.json",
+                  "label": "json/mapgen/antique_store.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3340,8 +3281,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/deconstruction.json",
-                  "label": "json/deconstruction.json",
+                  "id": "file:data/json/mapgen/apartment_con.json",
+                  "label": "json/mapgen/apartment_con.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3350,8 +3291,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/default_blacklist.json",
-                  "label": "json/default_blacklist.json",
+                  "id": "file:data/json/mapgen/apartment_con_new.json",
+                  "label": "json/mapgen/apartment_con_new.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3360,8 +3301,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/disease.json",
-                  "label": "json/disease.json",
+                  "id": "file:data/json/mapgen/apartment_mod.json",
+                  "label": "json/mapgen/apartment_mod.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3370,8 +3311,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/dreams.json",
-                  "label": "json/dreams.json",
+                  "id": "file:data/json/mapgen/apartment_mod_new.json",
+                  "label": "json/mapgen/apartment_mod_new.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3380,8 +3321,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/effects.json",
-                  "label": "json/effects.json",
+                  "id": "file:data/json/mapgen/arcade.json",
+                  "label": "json/mapgen/arcade.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3390,8 +3331,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/emit.json",
-                  "label": "json/emit.json",
+                  "id": "file:data/json/mapgen/art_gallery.json",
+                  "label": "json/mapgen/art_gallery.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3400,8 +3341,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/enchantment_conditions.json",
-                  "label": "json/enchantment_conditions.json",
+                  "id": "file:data/json/mapgen/bakery.json",
+                  "label": "json/mapgen/bakery.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3410,8 +3351,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/enchantment_flags.json",
-                  "label": "json/enchantment_flags.json",
+                  "id": "file:data/json/mapgen/bandit_cabin.json",
+                  "label": "json/mapgen/bandit_cabin.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3420,8 +3361,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/enchantment_values.json",
-                  "label": "json/enchantment_values.json",
+                  "id": "file:data/json/mapgen/bandit_camp.json",
+                  "label": "json/mapgen/bandit_camp.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3430,8 +3371,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/enchantment_vision.json",
-                  "label": "json/enchantment_vision.json",
+                  "id": "file:data/json/mapgen/bandit_garage.json",
+                  "label": "json/mapgen/bandit_garage.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3440,8 +3381,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/enchantments.json",
-                  "label": "json/enchantments.json",
+                  "id": "file:data/json/mapgen/bank.json",
+                  "label": "json/mapgen/bank.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3450,8 +3391,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/external_tileset/AFS_external.json",
-                  "label": "json/external_tileset/AFS_external.json",
+                  "id": "file:data/json/mapgen/bar.json",
+                  "label": "json/mapgen/bar.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3460,8 +3401,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/external_tileset/External_Tileset_DP_Facial_Hair.json",
-                  "label": "json/external_tileset/External_Tileset_DP_Facial_Hair.json",
+                  "id": "file:data/json/mapgen/basement/basement_bionic.json",
+                  "label": "json/mapgen/basement/basement_bionic.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3470,8 +3411,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/external_tileset/External_Tileset_DP_Hair.json",
-                  "label": "json/external_tileset/External_Tileset_DP_Hair.json",
+                  "id": "file:data/json/mapgen/basement/basement_chem.json",
+                  "label": "json/mapgen/basement/basement_chem.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3480,8 +3421,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/external_tileset/External_Tileset_DP_Normal.json",
-                  "label": "json/external_tileset/External_Tileset_DP_Normal.json",
+                  "id": "file:data/json/mapgen/basement/basement_game.json",
+                  "label": "json/mapgen/basement/basement_game.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3490,8 +3431,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/external_tileset/External_Tileset_DP_Skin.json",
-                  "label": "json/external_tileset/External_Tileset_DP_Skin.json",
+                  "id": "file:data/json/mapgen/basement/basement_guns.json",
+                  "label": "json/mapgen/basement/basement_guns.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3500,8 +3441,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/external_tileset/External_Tileset_DP_Tall.json",
-                  "label": "json/external_tileset/External_Tileset_DP_Tall.json",
+                  "id": "file:data/json/mapgen/basement/basement_lab_stairs.json",
+                  "label": "json/mapgen/basement/basement_lab_stairs.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3510,8 +3451,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/external_tileset/External_Tileset_DP_dmd.json",
-                  "label": "json/external_tileset/External_Tileset_DP_dmd.json",
+                  "id": "file:data/json/mapgen/basement/basement_messed.json",
+                  "label": "json/mapgen/basement/basement_messed.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3520,8 +3461,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/external_tileset/External_Tileset_DP_eyes.json",
-                  "label": "json/external_tileset/External_Tileset_DP_eyes.json",
+                  "id": "file:data/json/mapgen/basement/basement_meth.json",
+                  "label": "json/mapgen/basement/basement_meth.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3530,8 +3471,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/external_tileset/External_Tileset_DP_terrain_normal.json",
-                  "label": "json/external_tileset/External_Tileset_DP_terrain_normal.json",
+                  "id": "file:data/json/mapgen/basement/basement_survival.json",
+                  "label": "json/mapgen/basement/basement_survival.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3540,8 +3481,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/external_tileset/Tankmod/mod_tileset.json",
-                  "label": "json/external_tileset/Tankmod/mod_tileset.json",
+                  "id": "file:data/json/mapgen/basement/basement_weed.json",
+                  "label": "json/mapgen/basement/basement_weed.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3550,8 +3491,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/external_tileset/armor.json",
-                  "label": "json/external_tileset/armor.json",
+                  "id": "file:data/json/mapgen/basement/basements.json",
+                  "label": "json/mapgen/basement/basements.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3560,8 +3501,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/external_tileset/bike_parts.json",
-                  "label": "json/external_tileset/bike_parts.json",
+                  "id": "file:data/json/mapgen/bike_shop.json",
+                  "label": "json/mapgen/bike_shop.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3570,8 +3511,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/external_tileset/bodyhaircolourable.json",
-                  "label": "json/external_tileset/bodyhaircolourable.json",
+                  "id": "file:data/json/mapgen/billboard.json",
+                  "label": "json/mapgen/billboard.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3580,8 +3521,8 @@
                   "columns": []
                 },
                 {
-                  "id": "file:data/json/external_tileset/cats.json",
-                  "label": "json/external_tileset/cats.json",
+                  "id": "file:data/json/mapgen/bowling_alley.json",
+                  "label": "json/mapgen/bowling_alley.json",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -3590,7 +3531,7 @@
                   "columns": []
                 }
               ],
-              "total": 2953,
+              "total": 934,
               "selection": "single",
               "activate": "editor:browser_open",
               "filterable": true
@@ -3790,7 +3731,7 @@
             "args": {
               "count": {
                 "min": 0,
-                "max": 59,
+                "max": 18,
                 "default": 0
               }
             },
@@ -4190,8 +4131,7 @@
             "keys": [
               "F5"
             ],
-            "enabled": false,
-            "denial": "Not available now.",
+            "enabled": true,
             "expect": "screen"
           },
           {
@@ -4250,6 +4190,62 @@
           "component_id": "editor:canvas"
         },
         "context": "EDITOR"
+      }
+    },
+    {
+      "name": "map editor of the main menu left for the main menu, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "screen_id": "screen:6"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "QUIT"
+        }
+      }
+    },
+    {
+      "name": "map editor of the main menu left for the main menu, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "received",
+        "stage_text": "Received."
+      }
+    },
+    {
+      "name": "map editor of the main menu left for the main menu, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "validated",
+        "stage_text": "Accepted."
+      }
+    },
+    {
+      "name": "map editor of the main menu left for the main menu, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "executing",
+        "stage_text": "Under way."
+      }
+    },
+    {
+      "name": "map editor of the main menu left for the main menu, interrupted",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "interrupted",
+        "stage_text": "Interrupted.",
+        "error": "stale_epoch",
+        "error_text": "The world changed."
       }
     }
   ],

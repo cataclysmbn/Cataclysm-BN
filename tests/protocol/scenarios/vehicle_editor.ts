@@ -3,8 +3,8 @@
  * The vehicle editor from the main menu: the Editor tab's vehicle editor entry starts the editor world and opens
  * the vehicle editor at once; it opens a prototype by its id, shows the vehicle the game builds from it, installs
  * a part on a mount from the install tab, refuses one the game would not mount, undoes the install, spawns the
- * prototype, edits the spawned vehicle in place from the world tab, copies and pastes it with its state, and leaves
- * for the map.
+ * prototype and leaves for the map beside it, comes back through the map editor, edits the spawned vehicle in place
+ * from the world tab, copies and pastes it with its state, and leaves for the map editor.
  */
 import { assert, assertEquals } from "@std/assert"
 import { Engine, type Scenario, type Value } from "./driver.ts"
@@ -77,8 +77,17 @@ export const vehicleEditor: Scenario = {
       )
       assertEquals(stack(engine.top()), before)
 
+      // The editor world is shown only to try a vehicle: spawning leaves for the map beside it.
       const spawned = await engine.invoke("vehicle:spawn")
       rec.command("prototype spawned beside the avatar", spawned)
+      assertEquals(engine.top().role, "map")
+      assertEquals(
+        (await engine.submit({ kind: "action", action_id: "editor" })).stages.at(-1),
+        "completed",
+      )
+      await engine.follow(() => engine.top().kind === "editor")
+      assertEquals((await engine.invoke("editor:vehicle")).stages.at(-1), "completed")
+      assertEquals(engine.top().kind, "vehicle_editor")
       assertEquals(
         (await engine.invoke("vehicle:source", { row: "source:world" })).stages.at(-1),
         "completed",
@@ -114,6 +123,6 @@ export const vehicleEditor: Scenario = {
       rec.command("world vehicle pasted with its state beside the avatar", pasted)
       assertEquals(world().length, 2)
       assertEquals((await engine.invoke("QUIT")).stages.at(-1), "completed")
-      assertEquals(engine.top().role, "map")
+      assertEquals(engine.top().kind, "editor")
     }),
 }

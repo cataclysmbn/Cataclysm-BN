@@ -412,7 +412,7 @@ struct screen_view {
     std::string screen_id = {};
     /// What screen this is, the same at every opening and in every language; empty for a read without a scope.
     std::string kind = {};
-    /// `map`, `screen` or `dialog`.
+    /// `map`, `screen`, `dialog` or `workspace`.
     std::string role = "dialog";
     std::string context = {};
     std::string title = {};

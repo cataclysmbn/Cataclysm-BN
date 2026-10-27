@@ -61,7 +61,7 @@
       "def": "screen",
       "value": {
         "screen_id": "screen:4",
-        "role": "screen",
+        "role": "workspace",
         "kind": "vehicle_editor",
         "title": "Vehicle Editor",
         "root": {
@@ -285,7 +285,7 @@
       "def": "screen",
       "value": {
         "screen_id": "screen:4",
-        "role": "screen",
+        "role": "workspace",
         "kind": "vehicle_editor",
         "title": "Vehicle Editor",
         "root": {
@@ -1170,7 +1170,7 @@
         "epoch": "epoch-2",
         "expect": {
           "boundary_id": "boundary:2",
-          "revision": "13"
+          "revision": "15"
         },
         "operation": {
           "kind": "invoke",
@@ -1221,8 +1221,8 @@
         "stage_text": "Done.",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "18",
-          "revision": "14"
+          "sequence": "20",
+          "revision": "16"
         }
       }
     },
@@ -1230,8 +1230,8 @@
       "name": "vehicle editor editing a world vehicle in place",
       "def": "screen",
       "value": {
-        "screen_id": "screen:4",
-        "role": "screen",
+        "screen_id": "screen:6",
+        "role": "workspace",
         "kind": "vehicle_editor",
         "title": "Vehicle Editor",
         "root": {
@@ -1840,7 +1840,7 @@
       "value": {
         "epoch": "epoch-2",
         "expect": {
-          "screen_id": "screen:4"
+          "screen_id": "screen:6"
         },
         "operation": {
           "kind": "invoke",
@@ -1888,8 +1888,8 @@
         "stage_text": "Done.",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "22",
-          "revision": "18"
+          "sequence": "24",
+          "revision": "20"
         }
       }
     }

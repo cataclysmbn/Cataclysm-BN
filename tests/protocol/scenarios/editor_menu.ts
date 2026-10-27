@@ -1,12 +1,13 @@
 /**
  * @module
  * The map editor from the main menu: the Editor tab's map editor entry starts a world of its own without a
- * character and opens the editor at once; leaving shows the map, and the editor action comes back to the
- * document that was open.
+ * character and opens the editor as the whole view at once; leaving ends that world and returns to the main
+ * menu.
  */
-import { assert, assertEquals } from "@std/assert"
+import { assertEquals } from "@std/assert"
 import { Engine, type Scenario, type Value } from "./driver.ts"
 import { walk } from "./inventory.ts"
+import { atMainMenu } from "../mirror.ts"
 
 const part = (screen: Value, id: string) => walk(screen.root).find((entry) => entry.id === id)
 const path = (screen: Value) => part(screen, "editor:file").fields[0].value
@@ -58,26 +59,20 @@ export const editorMenu: Scenario = {
       rec.command("map editor started from the main menu with the chosen mods", started)
       await engine.follow(() => engine.stale)
       await engine.subscribe()
-      // No character is made: the editor is the first screen of the new world.
+      // No character is made: the editor is the whole view of the new world.
       await engine.acknowledge(() => engine.top().kind === "editor")
-      assertEquals(engine.mirror.interaction.stack.at(-2).role, "map")
+      assertEquals(engine.top().role, "workspace")
       assertEquals(path(engine.top()), "")
 
       assertEquals((await engine.invoke("editor:open", { text: file })).stages.at(-1), "completed")
       assertEquals(path(engine.top()), file)
+      rec.accept("map editor of the main menu with a document open", "screen", engine.top())
+      // Leaving ends the editor's world, so the command ends with it and the main menu comes back.
       const left = await engine.invoke("QUIT")
-      assertEquals(left.stages.at(-1), "completed")
-      rec.command("map editor of the main menu left for the map", left)
-      assertEquals(engine.top().role, "map")
-      const offered = engine.top().affordances.find((entry: Value) => entry.id === "editor")
-      assert(offered.enabled, "the editor world's avatar has the Debug Editor trait")
-
-      const back = await engine.submit({ kind: "action", action_id: "editor" })
-      assertEquals(back.stages.at(-1), "completed")
-      await engine.follow(() => engine.top().kind === "editor")
-      assertEquals(path(engine.top()), file)
-      rec.accept("map editor reopened on the document it was left with", "screen", engine.top())
-      assertEquals((await engine.invoke("QUIT")).stages.at(-1), "completed")
-      assertEquals(engine.top().role, "map")
+      assertEquals(left.stages.at(-1), "interrupted")
+      rec.command("map editor of the main menu left for the main menu", left)
+      await engine.follow(() => engine.stale)
+      await engine.subscribe()
+      await engine.acknowledge(() => atMainMenu(engine.mirror))
     }),
 }
