@@ -1117,3 +1117,47 @@ TEST_CASE(
 }
 
 #endif
+
+namespace {
+/// The slot of the part `id` of the screen's root split.
+auto slot_of(const ec::screen_view& screen, const std::string& id) -> std::string {
+    REQUIRE(screen.root);
+    const auto found = std::ranges::find(screen.root->children, id, &ec::component::id);
+    INFO(id);
+    REQUIRE(found != screen.root->children.end());
+    return found->slot;
+}
+} // namespace
+
+TEST_CASE(
+    "the vehicle editor names what each part is for and the menu of each action",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                // Nothing is open: the prototypes to open are the page.
+                CHECK(slot_of(screen, "vehicle:sources") == "canvas");
+                CHECK(affordance(screen, "vehicle:paste").group == "World");
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                CHECK(slot_of(screen, "vehicle:sources") == "outline");
+                CHECK(slot_of(screen, "vehicle:document") == "canvas");
+                CHECK(slot_of(screen, "vehicle:tools") == "inspector");
+                CHECK(affordance(screen, "vehicle:save").group == "File");
+                CHECK(affordance(screen, "vehicle:save_as").group == "File");
+                CHECK(affordance(screen, "vehicle:undo").group == "Edit");
+                CHECK(affordance(screen, "vehicle:spawn").group == "World");
+                // What a part runs on its rows sits in no menu.
+                CHECK(affordance(screen, "vehicle:mount").group.empty());
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 2);
+}

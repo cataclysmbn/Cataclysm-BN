@@ -5222,3 +5222,63 @@ TEST_CASE(
 }
 
 #endif // CATA_MCP
+
+namespace {
+/// The slot of the part `id` of the screen's root split.
+auto slot_of(const ec::screen_view& screen, const std::string& id) -> std::string {
+    REQUIRE(screen.root);
+    const auto found = std::ranges::find(screen.root->children, id, &ec::component::id);
+    INFO(id);
+    REQUIRE(found != screen.root->children.end());
+    return found->slot;
+}
+} // namespace
+
+TEST_CASE(
+    "the map editor names what each part is for and the menu of each action", "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                // Nothing is open: the files to open are the page, with the form that makes one.
+                CHECK(slot_of(screen, "editor:browser") == "canvas");
+                CHECK(slot_of(screen, "editor:new") == "inspector");
+                CHECK(slot_of(screen, "editor:file") == "outline");
+                CHECK(affordance(screen, "editor:vehicle").group == "World");
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK(slot_of(screen, "editor:tools") == "canvas");
+                CHECK(slot_of(screen, "editor:legend") == "palette");
+                CHECK(slot_of(screen, "editor:catalog_kinds") == "palette");
+                CHECK(slot_of(screen, "editor:objects") == "outline");
+                CHECK(slot_of(screen, "editor:browser") == "outline");
+                CHECK(slot_of(screen, "editor:field") == "inspector");
+                CHECK(slot_of(screen, "editor:diagnostics") == "log");
+                CHECK(slot_of(screen, "editor:history") == "log");
+                CHECK(slot_of(screen, "editor:document") == "status");
+                CHECK(affordance(screen, "editor:save").group == "File");
+                CHECK(affordance(screen, "editor:export").group == "File");
+                CHECK(affordance(screen, "editor:undo").group == "Edit");
+                CHECK(affordance(screen, "editor:brush").group == "Edit");
+                CHECK(affordance(screen, "editor:level_up").group == "View");
+                CHECK(affordance(screen, "editor:preview").group == "View");
+                CHECK(affordance(screen, "editor:test").group == "World");
+                CHECK(affordance(screen, "editor:stamp").group == "World");
+                // What a part runs on its rows, and the drag's own steps, sit in no menu.
+                CHECK(affordance(screen, "editor:paint").group.empty());
+                CHECK(affordance(screen, "editor:stroke_begin").group.empty());
+                CHECK(affordance(screen, "editor:catalog_pick").group.empty());
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 2);
+}
