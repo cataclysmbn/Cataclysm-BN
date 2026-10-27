@@ -4163,8 +4163,6 @@ TEST_CASE(
                 CHECK(cell(screen, 0, 0).id == "square:0,0");
                 CHECK(affordance(screen, "editor:level_up").enabled);
                 CHECK_FALSE(affordance(screen, "editor:level_down").enabled);
-                // A special has no rows to draw on.
-                CHECK_FALSE(has_affordance(screen, "editor:paint"));
                 return invoke("editor:level_up");
             }
             case 2:
@@ -4239,6 +4237,100 @@ TEST_CASE("a special's square names its terrain and turn", "[editor_special]") {
     CHECK(squares[0].at == tripoint_rel_omt(0, 0, 0));
     CHECK(squares[0].overmap == "house_01_north");
     CHECK(squares[2].at == tripoint_rel_omt(0, 0, 1));
+}
+
+TEST_CASE(
+    "the editor draws a special's squares with an overmap terrain from the catalog and erases them",
+    "[editor_session][editor_special]") {
+    const auto guard = screen_guard{};
+    const auto file = levels_file{special_levels()};
+    const auto shown = [](const ec::screen_view& screen, const std::string& id) {
+        const auto& cells = body<ec::grid_body>(part(screen, "editor:canvas")).cells;
+        const auto found = std::ranges::find(cells, id, &ec::grid_cell::id);
+        return found == cells.end() ? std::string("none") : found->label;
+    };
+    const auto stat = [](const ec::screen_view& screen, const std::string& key) {
+        const auto& stats = body<ec::panel_body>(part(screen, "editor:document")).stats;
+        const auto found = std::ranges::find(stats, key, &ec::panel_stat::key);
+        return found == stats.end() ? std::string("none") : found->value;
+    };
+    const auto squares = [&] {
+        return editor::special_squares(nlohmann::ordered_json::parse(read_file(file.path))[0]);
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                // Drawing with nothing picked says what to pick.
+                return invoke("editor:tool", {.row = "tool:point"});
+            case 2:
+                CHECK(cell(screen, 1, 1).affordance == "editor:paint");
+                // One square of room around the special to draw new squares on.
+                CHECK(body<ec::grid_body>(part(screen, "editor:canvas")).cols == 4);
+                CHECK(shown(screen, "square:-1,0") == "");
+                return invoke("editor:paint", {.row = "square:2,0"});
+            case 3:
+                CHECK(ec::find_component(*screen.root, "editor:notice"));
+                return invoke("editor:catalog_filter", {.text = "forest_thick"});
+            case 4:
+                return invoke("editor:catalog_pick", {.row = "entry:forest_thick"});
+            case 5:
+                CHECK(stat(screen, "terrain") == "forest_thick");
+                return invoke("editor:paint", {.row = "square:2,0"});
+            case 6:
+                CHECK(shown(screen, "square:2,0") == oter_str_id("forest_thick")->get_name());
+                return invoke("editor:paint", {.row = "square:1,0"});
+            case 7:
+                CHECK(shown(screen, "square:1,0") == oter_str_id("forest_thick")->get_name());
+                return invoke("editor:undo");
+            case 8:
+                CHECK(shown(screen, "square:1,0") == oter_str_id("field")->get_name());
+                return invoke("editor:tool", {.row = "tool:erase"});
+            case 9:
+                return invoke("editor:paint", {.row = "square:1,0"});
+            case 10:
+                CHECK(shown(screen, "square:1,0") == "");
+                return invoke("editor:save");
+            case 11: {
+                const auto saved = squares();
+                CHECK(saved.size() == 3);
+                CHECK(
+                    std::ranges::contains(saved, "forest_thick", &editor::special_square::overmap));
+                CHECK_FALSE(
+                    std::ranges::contains(saved, "field", &editor::special_square::overmap));
+                return invoke("editor:tool", {.row = "tool:open"});
+            }
+            case 12:
+                CHECK(cell(screen, 0, 0).affordance == "editor:open_square");
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 13);
+}
+
+TEST_CASE("a special's square is set, added or removed by a patch", "[editor_special]") {
+    const auto value = special_levels()[0];
+    const auto apply = [&](const nlohmann::ordered_json& patch) {
+        return editor::special_squares(value.patch(patch));
+    };
+    const auto set = editor::square_patch(value, tripoint_rel_omt(1, 0, 0), "forest");
+    CHECK(apply(set)[1].overmap == "forest");
+    const auto added = editor::square_patch(value, tripoint_rel_omt(-1, 2, 1), "forest");
+    REQUIRE(apply(added).size() == 4);
+    CHECK(apply(added)[3].at == tripoint_rel_omt(-1, 2, 1));
+    const auto removed = editor::square_patch(value, tripoint_rel_omt(0, 0, 1), "");
+    CHECK(apply(removed).size() == 2);
+    CHECK(editor::square_patch(value, tripoint_rel_omt(1, 0, 0), "field").empty());
+    CHECK(editor::square_patch(value, tripoint_rel_omt(5, 5, 0), "").empty());
 }
 
 #endif // CATA_MCP
