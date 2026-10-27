@@ -2644,6 +2644,9 @@ TEST_CASE(
                 return invoke("editor:browser_open", {.row = files(screen).rows[0].id});
             case 4:
                 CHECK(path(screen).ends_with("mapgen/house/2storymodern06.json"));
+                // The heading names the file as a modder finds it in the game's directory.
+                CHECK(body<ec::panel_body>(part(screen, "editor:document")).title
+                      == "data/json/mapgen/house/2storymodern06.json");
                 return invoke("editor:browser_filter", {.text = "no such path at all"});
             case 5:
                 CHECK(files(screen).rows.empty());
