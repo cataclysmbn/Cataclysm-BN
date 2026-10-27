@@ -44,7 +44,8 @@ void wipe_map_terrain() {
         const ter_id terrain = z == 0 ? t_grass : z < 0 ? t_rock : t_open_air;
         for (int x = 0; x < mapsize; x += SEEX) {
             for (int y = 0; y < mapsize; y += SEEY) {
-                // Only tiles that differ need the costly set(); most are already wiped.
+                // Only tiles that differ need the costly set(), which also marks their level's
+                // caches dirty; a level left as it was keeps caches that already match it.
                 const auto* const sm = g->m.get_submap_at(tripoint_bub_ms{x, y, z});
                 for (const auto p : submap_tiles()) {
                     if (sm != nullptr && sm->get_ter(p) == terrain && sm->get_furn(p) == f_null) {
@@ -54,8 +55,6 @@ void wipe_map_terrain() {
                 }
             }
         }
-        // Skipped tiles were not set(), so mark the level dirty as set() would have.
-        g->m.invalidate_map_cache(z);
     }
     clear_vehicles();
     g->m.invalidate_map_cache(0);
