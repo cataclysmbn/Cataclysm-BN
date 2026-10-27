@@ -599,7 +599,13 @@
     "//": "Ballistic vests and ballistic plates one might see in a military stockpile",
     "subtype": "collection",
     "entries": [
-      { "distribution": [ { "item": "ballistic_vest_esapi", "prob": 75 }, { "item": "ballistic_vest_heavy", "prob": 25 } ] },
+      {
+        "distribution": [
+          { "item": "ballistic_vest_light", "prob": 10 },
+          { "item": "ballistic_vest_esapi", "prob": 50 },
+          { "item": "ballistic_vest_heavy", "prob": 40 }
+        ]
+      },
       {
         "distribution": [
           { "item": "null", "prob": 25 },
