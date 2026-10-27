@@ -1508,3 +1508,34 @@ TEST_CASE("a pane titled as its screen goes untitled", "[engine_client_component
     CHECK(body<ec::panel_body>(find(view, "pane:same")).title.empty());
     CHECK(body<ec::panel_body>(find(view, "pane:other")).title == "Engine");
 }
+
+TEST_CASE(
+    "a workspace's parts name their place and its affordances their menu on the wire",
+    "[engine_client_component]") {
+    const auto context = input_context("TEST_WORKSPACE");
+    const auto scope = ec::screen_scope(
+        context, "test",
+        {.role = "workspace", .view = [](const auto&) {
+             return ec::screen_view{
+                 .root = ec::split(
+                     {.id = "split:root",
+                      .children = ec::children_of(ec::component{.id = "tools", .slot = "tools"},
+                                                  ec::component{.id = "loose"})}),
+                 .affordances =
+                     {ec::invoke_affordance({.id = "own:save", .group = "File"}),
+                      ec::invoke_affordance({.id = "own:loose"})}};
+         }});
+    const auto input = client::input_context_scope(context, "TEST_WORKSPACE");
+    const auto screen = wire(map_only())["stack"].back();
+    const auto& children = screen["root"]["children"];
+    CHECK(children[0]["slot"] == "tools");
+    CHECK_FALSE(children[1].contains("slot"));
+    const auto& affordances = screen["affordances"];
+    const auto of = [&](const std::string& id) {
+        return *std::ranges::find_if(affordances, [&](const nlohmann::json& entry) {
+            return entry["id"].get<std::string>() == id;
+        });
+    };
+    CHECK(of("own:save")["group"] == "File");
+    CHECK_FALSE(of("own:loose").contains("group"));
+}
