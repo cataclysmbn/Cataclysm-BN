@@ -1066,67 +1066,78 @@
                   "id": "tool:point",
                   "label": "Pencil",
                   "selected": true,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "B"
                 },
                 {
                   "id": "tool:line",
                   "label": "Line",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "L"
                 },
                 {
                   "id": "tool:rect",
                   "label": "Rectangle",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "R"
                 },
                 {
                   "id": "tool:rect_filled",
                   "label": "Filled rectangle",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "U"
                 },
                 {
                   "id": "tool:ellipse",
                   "label": "Ellipse",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "O"
                 },
                 {
                   "id": "tool:room",
                   "label": "Room",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "M"
                 },
                 {
                   "id": "tool:fill",
                   "label": "Fill",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "F"
                 },
                 {
                   "id": "tool:pick",
                   "label": "Eyedropper",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "I"
                 },
                 {
                   "id": "tool:select",
                   "label": "Select",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "S"
                 },
                 {
                   "id": "tool:paste",
                   "label": "Paste",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "V"
                 },
                 {
                   "id": "tool:placements",
                   "label": "Placements",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "P"
                 }
               ],
               "select": "editor:tool",
@@ -3917,7 +3928,9 @@
           {
             "id": "editor:copy",
             "label": "Copy",
-            "keys": [],
+            "keys": [
+              "CTRL+C"
+            ],
             "enabled": false,
             "denial": "Not available now.",
             "expect": "screen"
@@ -3925,7 +3938,9 @@
           {
             "id": "editor:cut",
             "label": "Cut",
-            "keys": [],
+            "keys": [
+              "CTRL+X"
+            ],
             "enabled": false,
             "denial": "Not available now.",
             "expect": "screen"
@@ -3933,7 +3948,9 @@
           {
             "id": "editor:rotate",
             "label": "Rotate",
-            "keys": [],
+            "keys": [
+              "Z"
+            ],
             "enabled": false,
             "denial": "Not available now.",
             "expect": "screen"
@@ -3941,7 +3958,9 @@
           {
             "id": "editor:flip_x",
             "label": "Flip across",
-            "keys": [],
+            "keys": [
+              "X"
+            ],
             "enabled": false,
             "denial": "Not available now.",
             "expect": "screen"
@@ -3949,7 +3968,9 @@
           {
             "id": "editor:flip_y",
             "label": "Flip down",
-            "keys": [],
+            "keys": [
+              "Y"
+            ],
             "enabled": false,
             "denial": "Not available now.",
             "expect": "screen"
@@ -4436,67 +4457,78 @@
                   "id": "tool:point",
                   "label": "Pencil",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "B"
                 },
                 {
                   "id": "tool:line",
                   "label": "Line",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "L"
                 },
                 {
                   "id": "tool:rect",
                   "label": "Rectangle",
                   "selected": true,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "R"
                 },
                 {
                   "id": "tool:rect_filled",
                   "label": "Filled rectangle",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "U"
                 },
                 {
                   "id": "tool:ellipse",
                   "label": "Ellipse",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "O"
                 },
                 {
                   "id": "tool:room",
                   "label": "Room",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "M"
                 },
                 {
                   "id": "tool:fill",
                   "label": "Fill",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "F"
                 },
                 {
                   "id": "tool:pick",
                   "label": "Eyedropper",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "I"
                 },
                 {
                   "id": "tool:select",
                   "label": "Select",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "S"
                 },
                 {
                   "id": "tool:paste",
                   "label": "Paste",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "V"
                 },
                 {
                   "id": "tool:placements",
                   "label": "Placements",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "P"
                 }
               ],
               "select": "editor:tool",
@@ -7307,7 +7339,9 @@
           {
             "id": "editor:copy",
             "label": "Copy",
-            "keys": [],
+            "keys": [
+              "CTRL+C"
+            ],
             "enabled": false,
             "denial": "Not available now.",
             "expect": "screen"
@@ -7315,7 +7349,9 @@
           {
             "id": "editor:cut",
             "label": "Cut",
-            "keys": [],
+            "keys": [
+              "CTRL+X"
+            ],
             "enabled": false,
             "denial": "Not available now.",
             "expect": "screen"
@@ -7323,7 +7359,9 @@
           {
             "id": "editor:rotate",
             "label": "Rotate",
-            "keys": [],
+            "keys": [
+              "Z"
+            ],
             "enabled": false,
             "denial": "Not available now.",
             "expect": "screen"
@@ -7331,7 +7369,9 @@
           {
             "id": "editor:flip_x",
             "label": "Flip across",
-            "keys": [],
+            "keys": [
+              "X"
+            ],
             "enabled": false,
             "denial": "Not available now.",
             "expect": "screen"
@@ -7339,7 +7379,9 @@
           {
             "id": "editor:flip_y",
             "label": "Flip down",
-            "keys": [],
+            "keys": [
+              "Y"
+            ],
             "enabled": false,
             "denial": "Not available now.",
             "expect": "screen"
@@ -7704,67 +7746,78 @@
                   "id": "tool:point",
                   "label": "Pencil",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "B"
                 },
                 {
                   "id": "tool:line",
                   "label": "Line",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "L"
                 },
                 {
                   "id": "tool:rect",
                   "label": "Rectangle",
                   "selected": true,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "R"
                 },
                 {
                   "id": "tool:rect_filled",
                   "label": "Filled rectangle",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "U"
                 },
                 {
                   "id": "tool:ellipse",
                   "label": "Ellipse",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "O"
                 },
                 {
                   "id": "tool:room",
                   "label": "Room",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "M"
                 },
                 {
                   "id": "tool:fill",
                   "label": "Fill",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "F"
                 },
                 {
                   "id": "tool:pick",
                   "label": "Eyedropper",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "I"
                 },
                 {
                   "id": "tool:select",
                   "label": "Select",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "S"
                 },
                 {
                   "id": "tool:paste",
                   "label": "Paste",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "V"
                 },
                 {
                   "id": "tool:placements",
                   "label": "Placements",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "P"
                 }
               ],
               "select": "editor:tool",
@@ -10596,7 +10649,9 @@
           {
             "id": "editor:copy",
             "label": "Copy",
-            "keys": [],
+            "keys": [
+              "CTRL+C"
+            ],
             "enabled": false,
             "denial": "Not available now.",
             "expect": "screen"
@@ -10604,7 +10659,9 @@
           {
             "id": "editor:cut",
             "label": "Cut",
-            "keys": [],
+            "keys": [
+              "CTRL+X"
+            ],
             "enabled": false,
             "denial": "Not available now.",
             "expect": "screen"
@@ -10612,7 +10669,9 @@
           {
             "id": "editor:rotate",
             "label": "Rotate",
-            "keys": [],
+            "keys": [
+              "Z"
+            ],
             "enabled": false,
             "denial": "Not available now.",
             "expect": "screen"
@@ -10620,7 +10679,9 @@
           {
             "id": "editor:flip_x",
             "label": "Flip across",
-            "keys": [],
+            "keys": [
+              "X"
+            ],
             "enabled": false,
             "denial": "Not available now.",
             "expect": "screen"
@@ -10628,7 +10689,9 @@
           {
             "id": "editor:flip_y",
             "label": "Flip down",
-            "keys": [],
+            "keys": [
+              "Y"
+            ],
             "enabled": false,
             "denial": "Not available now.",
             "expect": "screen"
@@ -11351,67 +11414,78 @@
                   "id": "tool:point",
                   "label": "Pencil",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "B"
                 },
                 {
                   "id": "tool:line",
                   "label": "Line",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "L"
                 },
                 {
                   "id": "tool:rect",
                   "label": "Rectangle",
                   "selected": true,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "R"
                 },
                 {
                   "id": "tool:rect_filled",
                   "label": "Filled rectangle",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "U"
                 },
                 {
                   "id": "tool:ellipse",
                   "label": "Ellipse",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "O"
                 },
                 {
                   "id": "tool:room",
                   "label": "Room",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "M"
                 },
                 {
                   "id": "tool:fill",
                   "label": "Fill",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "F"
                 },
                 {
                   "id": "tool:pick",
                   "label": "Eyedropper",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "I"
                 },
                 {
                   "id": "tool:select",
                   "label": "Select",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "S"
                 },
                 {
                   "id": "tool:paste",
                   "label": "Paste",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "V"
                 },
                 {
                   "id": "tool:placements",
                   "label": "Placements",
                   "selected": false,
-                  "enabled": true
+                  "enabled": true,
+                  "hotkey": "P"
                 }
               ],
               "select": "editor:tool",
@@ -27598,7 +27672,9 @@
           {
             "id": "editor:copy",
             "label": "Copy",
-            "keys": [],
+            "keys": [
+              "CTRL+C"
+            ],
             "enabled": false,
             "denial": "Not available now.",
             "expect": "screen"
@@ -27606,7 +27682,9 @@
           {
             "id": "editor:cut",
             "label": "Cut",
-            "keys": [],
+            "keys": [
+              "CTRL+X"
+            ],
             "enabled": false,
             "denial": "Not available now.",
             "expect": "screen"
@@ -27614,7 +27692,9 @@
           {
             "id": "editor:rotate",
             "label": "Rotate",
-            "keys": [],
+            "keys": [
+              "Z"
+            ],
             "enabled": false,
             "denial": "Not available now.",
             "expect": "screen"
@@ -27622,7 +27702,9 @@
           {
             "id": "editor:flip_x",
             "label": "Flip across",
-            "keys": [],
+            "keys": [
+              "X"
+            ],
             "enabled": false,
             "denial": "Not available now.",
             "expect": "screen"
@@ -27630,7 +27712,9 @@
           {
             "id": "editor:flip_y",
             "label": "Flip down",
-            "keys": [],
+            "keys": [
+              "Y"
+            ],
             "enabled": false,
             "denial": "Not available now.",
             "expect": "screen"

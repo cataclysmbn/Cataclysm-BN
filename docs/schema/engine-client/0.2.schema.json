@@ -6294,6 +6294,10 @@
               "unread": {
                 "type": "boolean",
                 "description": "Something in the tab is new to the player."
+              },
+              "hotkey": {
+                "type": "string",
+                "description": "The key that shows the tab, which a client runs the tabs' `select` affordance with; absent for none."
               }
             },
             "required": [

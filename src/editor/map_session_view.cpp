@@ -765,15 +765,24 @@ auto drawing_affordances(const session& state) -> std::vector<ec::affordance> {
     affordances.push_back(ec::invoke_affordance({.id = mirror_x_id, .label = _("Mirror across")}));
     affordances.push_back(ec::invoke_affordance({.id = mirror_y_id, .label = _("Mirror down")}));
     affordances.push_back(ec::invoke_affordance(
-        {.id = copy_id, .label = _("Copy"), .enabled = state.selected.has_value()}));
+        {.id = copy_id,
+         .label = _("Copy"),
+         .keys = {"CTRL+C"},
+         .enabled = state.selected.has_value()}));
     affordances.push_back(ec::invoke_affordance(
-        {.id = cut_id, .label = _("Cut"), .enabled = state.selected.has_value()}));
+        {.id = cut_id,
+         .label = _("Cut"),
+         .keys = {"CTRL+X"},
+         .enabled = state.selected.has_value()}));
     affordances.push_back(ec::invoke_affordance(
-        {.id = rotate_id, .label = _("Rotate"), .enabled = !state.clip.empty()}));
+        {.id = rotate_id, .label = _("Rotate"), .keys = {"Z"}, .enabled = !state.clip.empty()}));
     affordances.push_back(ec::invoke_affordance(
-        {.id = flip_x_id, .label = _("Flip across"), .enabled = !state.clip.empty()}));
+        {.id = flip_x_id,
+         .label = _("Flip across"),
+         .keys = {"X"},
+         .enabled = !state.clip.empty()}));
     affordances.push_back(ec::invoke_affordance(
-        {.id = flip_y_id, .label = _("Flip down"), .enabled = !state.clip.empty()}));
+        {.id = flip_y_id, .label = _("Flip down"), .keys = {"Y"}, .enabled = !state.clip.empty()}));
     affordances.push_back(
         ec::invoke_affordance({.id = paint_id, .label = _("Draw"), .args = row_of(canvas_id)}));
     if (state.current->region == region_use::placements) {
@@ -916,7 +925,8 @@ auto session_view(const session& state) -> ec::screen_view {
                                  return ec::tab_entry{
                                      .id = entry.id,
                                      .label = tool_label(entry),
-                                     .selected = &entry == state.current};
+                                     .selected = &entry == state.current,
+                                     .hotkey = entry.hotkey};
                              })
                            | std::ranges::to<std::vector>(),
                      .select = tool_id,

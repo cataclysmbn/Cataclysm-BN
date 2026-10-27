@@ -167,20 +167,22 @@ struct tool {
     /// Whether it takes two squares, the first of them its anchor.
     bool spans = false;
     region_use region = region_use::none;
+    /// The key that picks it, as image editors have it.
+    const char* hotkey = "";
 };
 
 inline const auto tools = std::array{
-    tool{.id = "tool:point", .kind = shape_kind::point},
-    tool{.id = "tool:line", .kind = shape_kind::line, .spans = true},
-    tool{.id = "tool:rect", .kind = shape_kind::rect, .spans = true},
-    tool{.id = "tool:rect_filled", .kind = shape_kind::rect_filled, .spans = true},
-    tool{.id = "tool:ellipse", .kind = shape_kind::ellipse, .spans = true},
-    tool{.id = "tool:room", .kind = shape_kind::room, .spans = true},
-    tool{.id = "tool:fill", .kind = shape_kind::fill},
-    tool{.id = "tool:pick", .kind = std::nullopt},
-    tool{.id = "tool:select", .region = region_use::select},
-    tool{.id = "tool:paste", .region = region_use::paste},
-    tool{.id = "tool:placements", .region = region_use::placements},
+    tool{.id = "tool:point", .kind = shape_kind::point, .hotkey = "B"},
+    tool{.id = "tool:line", .kind = shape_kind::line, .spans = true, .hotkey = "L"},
+    tool{.id = "tool:rect", .kind = shape_kind::rect, .spans = true, .hotkey = "R"},
+    tool{.id = "tool:rect_filled", .kind = shape_kind::rect_filled, .spans = true, .hotkey = "U"},
+    tool{.id = "tool:ellipse", .kind = shape_kind::ellipse, .spans = true, .hotkey = "O"},
+    tool{.id = "tool:room", .kind = shape_kind::room, .spans = true, .hotkey = "M"},
+    tool{.id = "tool:fill", .kind = shape_kind::fill, .hotkey = "F"},
+    tool{.id = "tool:pick", .kind = std::nullopt, .hotkey = "I"},
+    tool{.id = "tool:select", .region = region_use::select, .hotkey = "S"},
+    tool{.id = "tool:paste", .region = region_use::paste, .hotkey = "V"},
+    tool{.id = "tool:placements", .region = region_use::placements, .hotkey = "P"},
 };
 
 /// The corners of the rectangle the select tool marked.

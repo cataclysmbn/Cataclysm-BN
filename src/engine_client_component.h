@@ -148,6 +148,8 @@ struct tab_entry {
     std::string denial = {};
     /// Something in the tab is new to the player.
     bool unread = false;
+    /// The key that shows the tab; empty when it has none.
+    std::string hotkey = {};
 };
 /// The selected tab's content is the component's one child.
 struct tabs_body {

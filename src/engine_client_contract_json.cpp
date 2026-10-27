@@ -616,6 +616,7 @@ auto body_json( const tabs_body &body, const bubble_frame & /*frame*/ ) -> json
         auto entry = json{{"id", tab.id}, {"label", tab.label}, {"selected", tab.selected}, {"enabled", tab.enabled}};
         if( !tab.denial.empty() ) { entry["denial"] = tab.denial; }
         if( tab.unread ) { entry["unread"] = true; }
+        if( !tab.hotkey.empty() ) { entry["hotkey"] = tab.hotkey; }
         tabs.push_back( std::move( entry ) );
     }
     auto result = json{{"tabs", std::move( tabs )}};
