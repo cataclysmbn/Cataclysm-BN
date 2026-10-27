@@ -437,23 +437,12 @@ auto legend_rows(const session& state) -> std::vector<ec::row> {
          | std::ranges::to<std::vector>();
 }
 
-/// Whether the canvas drags a stroke, and whether one is open.
-struct stroke_state {
-    bool drags = false;
-    bool open = false;
-};
-/// Begin while the canvas drags a stroke; End then, and while one is open, so that a tool changed
-/// mid-drag still closes it.
-auto stroke_affordances(std::vector<ec::affordance>& affordances, const stroke_state& stroke)
-    -> void {
-    if (stroke.drags) {
-        affordances.push_back(
-            ec::invoke_affordance({.id = stroke_begin_id, .label = _("Begin stroke")}));
-    }
-    if (stroke.drags || stroke.open) {
-        affordances.push_back(
-            ec::invoke_affordance({.id = stroke_end_id, .label = _("End stroke")}));
-    }
+/// Begin and End of a stroke, while the canvas drags one.
+auto stroke_affordances(std::vector<ec::affordance>& affordances, const bool drags) -> void {
+    if (!drags) { return; }
+    affordances.push_back(
+        ec::invoke_affordance({.id = stroke_begin_id, .label = _("Begin stroke")}));
+    affordances.push_back(ec::invoke_affordance({.id = stroke_end_id, .label = _("End stroke")}));
 }
 
 /// A row per state of the document, the original first: a step is named by the edit it did, and
@@ -889,9 +878,7 @@ auto drawing_affordances(const session& state) -> std::vector<ec::affordance> {
              .label = _("Move placement"),
              .args = {.row = ec::row_shape{.component_id = canvas_id}, .text = ec::text_shape{}}}));
     }
-    stroke_affordances(
-        affordances,
-        {.drags = state.current->kind == shape_kind::point, .open = state.doc->grouping()});
+    stroke_affordances(affordances, state.current->kind == shape_kind::point);
     affordances.push_back(ec::invoke_affordance(
         {.id = extract_palette_id,
          .label = _("Extract legend to palette"),
@@ -1266,9 +1253,7 @@ auto session_view(const session& state) -> ec::screen_view {
                 affordances.push_back(ec::invoke_affordance(
                     {.id = tool_id, .label = _("Tool"), .args = row_of(tools_id)}));
                 stroke_affordances(
-                    affordances,
-                    {.drags = state.special_tool->kind.has_value() && !state.drawing_refusal(),
-                     .open = doc.grouping()});
+                    affordances, state.special_tool->kind.has_value() && !state.drawing_refusal());
             } else if (state.on_oter()) {
                 const auto mapgens = state.terrain_mapgens();
                 if (!mapgens.empty()) {
@@ -1409,6 +1394,14 @@ auto session_view(const session& state) -> ec::screen_view {
     if (!state.status.empty()) {
         parts.push_back(
             {.id = "editor:status", .body = ec::text_body{.markup = state.status, .tone = "good"}});
+    }
+    // A stroke left open by a tool or view changed mid-drag can still be ended.
+    if (state.doc && state.doc->grouping()
+        && std::ranges::none_of(affordances, [](const ec::affordance& entry) {
+               return entry.id == stroke_end_id;
+           })) {
+        affordances.push_back(
+            ec::invoke_affordance({.id = stroke_end_id, .label = _("End stroke")}));
     }
     // A palette has no canvas; its legend is what it edits.
     const auto* const active =
