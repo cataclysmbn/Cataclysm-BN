@@ -17,13 +17,13 @@
           "tabs": [
             {
               "id": "global",
-              "label": "[<Global>]",
+              "label": "Global",
               "selected": true,
               "enabled": true
             },
             {
               "id": "character",
-              "label": "[<Character>]",
+              "label": "Character",
               "selected": false,
               "enabled": true
             }
@@ -477,13 +477,13 @@
           "tabs": [
             {
               "id": "global",
-              "label": "[<Global>]",
+              "label": "Global",
               "selected": true,
               "enabled": true
             },
             {
               "id": "character",
-              "label": "[<Character>]",
+              "label": "Character",
               "selected": false,
               "enabled": true
             }
@@ -1460,13 +1460,13 @@
           "tabs": [
             {
               "id": "global",
-              "label": "[<Global>]",
+              "label": "Global",
               "selected": false,
               "enabled": true
             },
             {
               "id": "character",
-              "label": "[<Character>]",
+              "label": "Character",
               "selected": true,
               "enabled": true
             }

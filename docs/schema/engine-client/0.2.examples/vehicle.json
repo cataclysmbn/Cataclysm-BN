@@ -205,7 +205,7 @@
                     "rows": [
                       {
                         "id": "part:0,0,0:xlframe_vertical_2:0",
-                        "label": "|| extra light frame",
+                        "label": "extra light frame",
                         "description": "",
                         "denial": "",
                         "enabled": true,
@@ -218,11 +218,11 @@
                             "value": "100%"
                           }
                         ],
-                        "markup": "[|| extra light frame]"
+                        "markup": "[extra light frame]"
                       },
                       {
                         "id": "part:0,0,0:horn_bicycle:0",
-                        "label": "|| bicycle horn",
+                        "label": "bicycle horn",
                         "description": "",
                         "denial": "",
                         "enabled": true,
@@ -235,11 +235,11 @@
                             "value": "100%"
                           }
                         ],
-                        "markup": "-|| bicycle horn-"
+                        "markup": "-bicycle horn-"
                       },
                       {
                         "id": "part:0,0,0:saddle_pedal:0",
-                        "label": "|| saddle",
+                        "label": "saddle",
                         "description": "",
                         "denial": "",
                         "enabled": true,
@@ -252,11 +252,11 @@
                             "value": "100%"
                           }
                         ],
-                        "markup": "-|| saddle-"
+                        "markup": "-saddle-"
                       },
                       {
                         "id": "part:0,0,0:foot_pedals:0",
-                        "label": "|| foot pedals",
+                        "label": "foot pedals",
                         "description": "",
                         "denial": "",
                         "enabled": true,
@@ -269,7 +269,7 @@
                             "value": "100%"
                           }
                         ],
-                        "markup": "-|| foot pedals-"
+                        "markup": "-foot pedals-"
                       }
                     ],
                     "total": 4,
@@ -866,7 +866,7 @@
                     "rows": [
                       {
                         "id": "part:0,0,0:xlframe_vertical_2:0",
-                        "label": "|| extra light frame",
+                        "label": "extra light frame",
                         "description": "",
                         "denial": "",
                         "enabled": true,
@@ -879,11 +879,11 @@
                             "value": "100%"
                           }
                         ],
-                        "markup": "[|| extra light frame]"
+                        "markup": "[extra light frame]"
                       },
                       {
                         "id": "part:0,0,0:horn_bicycle:0",
-                        "label": "|| bicycle horn",
+                        "label": "bicycle horn",
                         "description": "",
                         "denial": "",
                         "enabled": true,
@@ -896,11 +896,11 @@
                             "value": "100%"
                           }
                         ],
-                        "markup": "-|| bicycle horn-"
+                        "markup": "-bicycle horn-"
                       },
                       {
                         "id": "part:0,0,0:saddle_pedal:0",
-                        "label": "|| saddle",
+                        "label": "saddle",
                         "description": "",
                         "denial": "",
                         "enabled": true,
@@ -913,11 +913,11 @@
                             "value": "100%"
                           }
                         ],
-                        "markup": "-|| saddle-"
+                        "markup": "-saddle-"
                       },
                       {
                         "id": "part:0,0,0:foot_pedals:0",
-                        "label": "|| foot pedals",
+                        "label": "foot pedals",
                         "description": "",
                         "denial": "",
                         "enabled": true,
@@ -930,7 +930,7 @@
                             "value": "100%"
                           }
                         ],
-                        "markup": "-|| foot pedals-"
+                        "markup": "-foot pedals-"
                       }
                     ],
                     "total": 4,
