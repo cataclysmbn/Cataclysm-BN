@@ -32,6 +32,7 @@
 #    include "overmap/omdata.h"
 #    include "overmap/overmap_special.h"
 #    include "overmap/overmapbuffer.h"
+#    include "overmap/overmapbuffer_registry.h"
 #    include "path_info.h"
 #    include "player_activity.h"
 #    include "point.h"
@@ -4802,6 +4803,78 @@ TEST_CASE(
 
     editor::run_editor_session();
     CHECK(step == 18);
+}
+
+TEST_CASE(
+    "the editor places the open special on new land near the avatar, and tests it there",
+    "[editor_session][editor_special]") {
+    const auto guard = screen_guard{};
+    const auto restore_mapgen = restore_on_out_of_scope<bool>(disable_mapgen);
+    disable_mapgen = false;
+    const auto file = levels_file{special_levels()};
+    const auto omt = get_avatar().abs_omt_pos();
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK_FALSE(affordance(screen, "editor:test").enabled);
+                return invoke("editor:place_special");
+            case 2:
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                CHECK(affordance(screen, "editor:test").enabled);
+                return invoke("editor:test");
+            default:
+                FAIL("the editor outlived its test");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 3);
+    const auto at = get_avatar().abs_omt_pos();
+    auto& buffer = ACTIVE_OVERMAP_BUFFER;
+    // Land the avatar already walked keeps what was made there.
+    CHECK(at != omt);
+    CHECK(buffer.ter(at) == oter_id("house_01_north"));
+    CHECK(buffer.ter(at + tripoint_rel_omt(1, 0, 0)) == oter_id("field"));
+    CHECK(buffer.ter(at + tripoint_rel_omt(0, 0, 1)) == oter_id("house_01_roof_north"));
+    CHECK(buffer.overmap_special_at(at) == overmap_special_id("editor_session_test_special"));
+    g->place_player_overmap(omt);
+    editor::reset_editor_session();
+}
+
+TEST_CASE("the editor places no special that copies another", "[editor_session][editor_special]") {
+    const auto guard = screen_guard{};
+    auto entries = special_levels();
+    entries[0]["copy-from"] = "Hunting Lodge";
+    const auto file = levels_file{entries};
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                return invoke("editor:place_special");
+            case 2:
+                CHECK(body<ec::text_body>(part(screen, "editor:notice")).markup
+                      == "A special that copies another is placed with the game's data only.");
+                CHECK_FALSE(affordance(screen, "editor:test").enabled);
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 3);
+    editor::reset_editor_session();
 }
 
 #endif // CATA_MCP
