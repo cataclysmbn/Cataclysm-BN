@@ -2600,7 +2600,7 @@ TEST_CASE(
             case 0:
                 // The browser lists the data files a page at a time, 50 of them.
                 CHECK(files(screen).rows.size() == 50);
-                CHECK(files(screen).total > 1000);
+                CHECK(files(screen).total > 50);
                 CHECK(files(screen).rows[0].id.starts_with("file:"));
                 return invoke("editor:open_oter", {.text = "no_such_overmap_terrain"});
             case 1:
@@ -2644,6 +2644,36 @@ TEST_CASE(
 
     editor::run_editor_session();
     CHECK(step == 6);
+}
+
+TEST_CASE(
+    "the editor's browser lists only the files holding what it edits",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    {
+        auto out = std::ofstream(file.path.parent_path() / "items.json", std::ios::binary);
+        out << R"([{"type": "GENERIC", "id": "editor_session_test_item", "name": "thing"}])";
+    }
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:browser_filter", {.text = "editor_session_test"});
+            case 1: {
+                const auto& rows = body<ec::list_body>(part(screen, "editor:browser")).rows;
+                REQUIRE(rows.size() == 1);
+                CHECK(rows[0].id == "file:" + file.path.generic_string());
+                return act("QUIT");
+            }
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 2);
 }
 
 TEST_CASE(
@@ -3120,12 +3150,13 @@ TEST_CASE("game time does not pass while the map editor is open", "[editor_sessi
 }
 
 TEST_CASE(
-    "the main-menu editor game opens the editor first, leaves to the map and comes back",
+    "the main-menu editor game is the whole view, tests in the world and closes to the main menu",
     "[editor_session][gamemode]") {
     // Put back after the screen guard, whose test mode keeps clearing the avatar from prompting.
     const auto origin = get_map().get_abs_sub();
     const auto name = get_avatar().name;
     const auto restore = on_out_of_scope([&] {
+        g->uquit = QUIT_NO;
         g->load_map(origin);
         get_primary_overmapbuffer().clear();
         clear_all_state();
@@ -3137,33 +3168,38 @@ TEST_CASE(
     auto mode = get_special_game(special_game_type::EDITOR);
     REQUIRE(mode->init());
     get_avatar().set_moves(100);
-    const auto at = get_avatar().abs_pos();
     auto step = 0;
 
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
         const auto screen = ec::top_screen(captured());
         switch (step++) {
             case 0:
-                // The map was not asked for input first.
+                // The map was not asked for input first, and the editor is all there is to see.
                 CHECK(screen.kind == "editor");
+                CHECK(screen.role == "workspace");
                 return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                // Testing needs no stamp first: it stamps the mapgen where the avatar is.
+                CHECK(affordance(screen, "editor:test").enabled);
+                return invoke("editor:test", {});
             default:
+                FAIL("the editor outlived its test");
                 return act("QUIT");
         }
     });
     handle_action(std::move(mode));
     CHECK(step == 2);
+    CHECK(g->uquit == QUIT_NO);
+    // The avatar plays the stamped mapgen.
+    CHECK(get_map().ter(get_avatar().bub_pos()) == ter_str_id("t_floor"));
 
-    // Left, the editor shows the map where the avatar stands; the editor action comes back to the
-    // same document.
+    // The editor comes back to the same document, and closing it ends the editor game.
     step = 0;
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
         const auto screen = ec::top_screen(captured());
         switch (step++) {
             case 0:
-                CHECK(screen.role == "map");
-                return act("editor");
-            case 1:
+                CHECK(screen.role == "workspace");
                 CHECK(body<ec::form_body>(part(screen, "editor:file")).fields.front().value
                       == file.path.generic_string());
                 return act("QUIT");
@@ -3172,10 +3208,23 @@ TEST_CASE(
                 return act("QUIT");
         }
     });
-    handle_action(std::make_unique<special_game>());
-    CHECK(step == 2);
-    CHECK(get_avatar().get_moves() == 100);
-    CHECK(get_avatar().abs_pos() == at);
+    handle_action(get_special_game(special_game_type::EDITOR));
+    CHECK(step == 1);
+    CHECK(g->uquit == QUIT_NOSAVED);
+}
+
+TEST_CASE("the editor over a running game is a screen over it", "[editor_session][gamemode]") {
+    const auto guard = screen_guard{};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        ++step;
+        CHECK(screen.role == "screen");
+        return act("QUIT");
+    });
+    editor::run_editor_session();
+    CHECK(step == 1);
+    CHECK(g->uquit == QUIT_NO);
 }
 
 TEST_CASE(
