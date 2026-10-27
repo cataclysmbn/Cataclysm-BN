@@ -276,7 +276,7 @@ TEST_CASE(
                 const auto& legend = body<ec::list_body>(part(screen, "editor:legend")).rows;
                 REQUIRE(legend.size() == 2);
                 CHECK(legend[0].id == "symbol:#");
-                CHECK(legend[0].columns.front().value == "\"t_wall\"");
+                CHECK(legend[0].columns.front().value == "t_wall");
                 CHECK(legend[0].selected);
                 CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
                 const auto& tools = body<ec::tabs_body>(part(screen, "editor:tools")).tabs;
@@ -2018,7 +2018,7 @@ TEST_CASE(
                 CHECK(cell(screen, 23, 23).glyph == ".");
                 const auto& legend = body<ec::list_body>(part(screen, "editor:legend")).rows;
                 REQUIRE(legend.size() == 1);
-                CHECK(legend[0].columns.front().value == "\"t_dirt\"");
+                CHECK(legend[0].columns.front().value == "t_dirt");
                 CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
                 CHECK(saved(screen) == "Yes");
                 // The form starts over for the next file: what it named is not typed after.
@@ -2786,7 +2786,7 @@ TEST_CASE(
             case 1:
                 CHECK(messages(screen).empty());
                 CHECK(line(screen, "x").description == "From editor_session_test_palette");
-                CHECK(line(screen, "x").columns.front().value == R"("t_dirt")");
+                CHECK(line(screen, "x").columns.front().value == "t_dirt");
                 return invoke("editor:object", {.row = "object:1"});
             case 2:
                 return invoke("editor:mapping_set", {.row = "symbol", .text = "x"});
@@ -2798,7 +2798,7 @@ TEST_CASE(
                 return invoke("editor:object", {.row = "object:0"});
             case 6:
                 // The mapgen reads the palette as edited, before it is saved.
-                CHECK(line(screen, "x").columns.front().value == R"("t_grass")");
+                CHECK(line(screen, "x").columns.front().value == "t_grass");
                 CHECK(messages(screen).empty());
                 return act("QUIT");
             case 7:
@@ -3352,9 +3352,9 @@ TEST_CASE(
                 CHECK(
                     lines(screen)
                     == std::vector<std::string>{
-                        R"(symbol:# "t_wall" From editor_session_test_extracted)",
-                        R"(symbol:. "t_floor" From editor_session_test_extracted)",
-                        R"(symbol:c "f_chair" From editor_session_test_extracted)"});
+                        R"(symbol:# t_wall From editor_session_test_extracted)",
+                        R"(symbol:. t_floor From editor_session_test_extracted)",
+                        R"(symbol:c f_chair From editor_session_test_extracted)"});
                 CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
                 const auto& objects = body<ec::list_body>(part(screen, "editor:objects")).rows;
                 REQUIRE(objects.size() == 2);

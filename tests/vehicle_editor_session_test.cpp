@@ -1173,7 +1173,7 @@ TEST_CASE("the vehicle editor's parts show what they are", "[editor_vehicle]") {
             case 0:
                 return invoke("vehicle:open", {.row = "prototype:bicycle"});
             case 1:
-                return invoke("vehicle:tool", {.row = "tool:install"});
+                return invoke("vehicle:mount", {.row = "mount:0,0"});
             case 2: {
                 const auto& rows = body<ec::list_body>(part(screen, "vehicle:parts")).rows;
                 REQUIRE_FALSE(rows.empty());
@@ -1189,4 +1189,42 @@ TEST_CASE("the vehicle editor's parts show what they are", "[editor_vehicle]") {
     });
     editor::run_vehicle_editor();
     CHECK(step == 3);
+}
+
+TEST_CASE(
+    "the vehicle editor keeps its parts in a palette beside the mount it installs on",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto tabs = [](const ec::screen_view& screen) {
+        return body<ec::tabs_body>(part(screen, "vehicle:tools")).tabs
+             | std::views::transform(&ec::tab_entry::id) | std::ranges::to<std::vector>();
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                CHECK(slot_of(screen, "vehicle:parts") == "palette");
+                CHECK(part(screen, "vehicle:parts").label == "Parts");
+                CHECK_FALSE(std::ranges::contains(tabs(screen), std::string("tool:install")));
+                return invoke("vehicle:mount", {.row = "mount:1,0"});
+            case 2:
+                return invoke("vehicle:install", {.row = "vpart:headlight"});
+            case 3:
+                // The palette and the mount's stack stay, ready for the next part.
+                CHECK(has_affordance(screen, "vehicle:install"));
+                CHECK(body<ec::tabs_body>(part(screen, "vehicle:tools")).tabs.front().selected);
+                CHECK(std::ranges::contains(
+                    body<ec::list_body>(part(screen, "vehicle:stack")).rows
+                        | std::views::transform(&ec::row::label),
+                    std::string("headlight")));
+                return invoke("vehicle:undo");
+            default:
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step >= 5);
 }
