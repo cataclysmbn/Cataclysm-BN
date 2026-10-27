@@ -1,6 +1,9 @@
 #include "editor/special_grid.h"
 
+#include "game_constants.h"
+
 #include <algorithm>
+#include <cstdint>
 #include <optional>
 #include <ranges>
 
@@ -8,9 +11,13 @@ namespace {
 
 /// The square an entry of `overmaps` places; none for one of another shape.
 auto square_of(const nlohmann::ordered_json& entry) -> std::optional<editor::special_square> {
+    // An overmap is as far as a special can reach.
+    const auto within = [](const nlohmann::ordered_json& coordinate) {
+        return coordinate.is_number_integer() && coordinate.get<std::int64_t>() > -OMAPX
+            && coordinate.get<std::int64_t>() < OMAPX;
+    };
     if (!entry.is_object() || !entry.contains("point") || !entry["point"].is_array()
-        || entry["point"].size() != 3
-        || !std::ranges::all_of(entry["point"], &nlohmann::ordered_json::is_number_integer)
+        || entry["point"].size() != 3 || !std::ranges::all_of(entry["point"], within)
         || !entry.contains("overmap") || !entry["overmap"].is_string()) {
         return std::nullopt;
     }
@@ -23,13 +30,34 @@ auto square_of(const nlohmann::ordered_json& entry) -> std::optional<editor::spe
 } // namespace
 
 auto editor::is_special(const nlohmann::ordered_json& value) -> bool {
-    const auto type = value.value("type", "");
-    return type == "overmap_special" || type == "city_building";
+    return value.is_object() && value.contains("type")
+        && (value["type"] == "overmap_special" || value["type"] == "city_building");
+}
+
+auto editor::is_fixed(const nlohmann::ordered_json& value) -> bool {
+    return value.is_object() && (!value.contains("subtype") || value["subtype"] == "fixed");
+}
+
+auto editor::special_levels(const nlohmann::ordered_json& value) -> std::vector<int> {
+    auto levels =
+        special_squares(value)
+        | std::views::transform([](const special_square& square) { return square.at.z(); })
+        | std::ranges::to<std::vector>();
+    std::ranges::sort(levels);
+    const auto [last, end] = std::ranges::unique(levels);
+    levels.erase(last, end);
+    return levels;
+}
+
+auto editor::ground_level(const std::vector<int>& levels) -> int {
+    if (levels.empty()) { return 0; }
+    // The lowest level from the ground up, else the highest under it.
+    const auto above = std::ranges::lower_bound(levels, 0);
+    return above != levels.end() ? *above : levels.back();
 }
 
 auto editor::special_squares(const nlohmann::ordered_json& value) -> std::vector<special_square> {
-    if (value.value("subtype", "fixed") != "fixed" || !value.contains("overmaps")
-        || !value["overmaps"].is_array()) {
+    if (!is_fixed(value) || !value.contains("overmaps") || !value["overmaps"].is_array()) {
         return {};
     }
     return value["overmaps"] | std::views::transform(square_of)

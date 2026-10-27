@@ -323,17 +323,26 @@ auto session::on_special() const -> bool {
     return doc && object < doc->objects().size() && is_special(doc->objects()[object].value);
 }
 
+auto session::level_beside(const int dz) const -> std::optional<int> {
+    if (!on_special()) { return std::nullopt; }
+    const auto levels = special_levels(doc->objects()[object].value);
+    if (dz > 0) {
+        const auto found = std::ranges::upper_bound(levels, special_level);
+        return found == levels.end() ? std::nullopt : std::optional(*found);
+    }
+    const auto found = std::ranges::lower_bound(levels, special_level);
+    return found == levels.begin() ? std::nullopt : std::optional(*std::prev(found));
+}
+
 auto session::can_climb(const int dz) const -> bool {
     if (!on_special()) { return (dz > 0 ? level_up : level_down).has_value(); }
-    return std::ranges::contains(
-        special_squares(doc->objects()[object].value), special_level + dz,
-        [](const special_square& square) { return square.at.z(); });
+    return level_beside(dz).has_value();
 }
 
 auto session::climb(const int dz) -> void {
     if (!can_climb(dz)) { return; }
     if (on_special()) {
-        special_level += dz;
+        special_level = *level_beside(dz);
         reload();
     } else {
         show_object(*(dz > 0 ? level_up : level_down));
@@ -413,7 +422,7 @@ auto session::open_square(const point& at) -> void {
 
 auto session::show_object(const std::size_t index) -> void {
     object = index;
-    special_level = 0;
+    special_level = ground_level(special_levels(doc->objects()[index].value));
     anchor.reset();
     selected.reset();
     focus.reset();
@@ -499,9 +508,12 @@ auto session::watch() -> void {
 
 auto session::reopen() -> bool {
     const auto kept = object;
+    const auto kept_level = special_level;
     open(doc->path().string());
     if (!std::ranges::contains(entries(), kept)) { return false; }
     object = kept;
+    const auto levels = special_levels(doc->objects()[object].value);
+    special_level = std::ranges::contains(levels, kept_level) ? kept_level : ground_level(levels);
     reload();
     return true;
 }
@@ -566,6 +578,7 @@ auto session::open(const std::string& name) -> void {
     picked.reset();
     const auto found = entries();
     object = found.empty() ? doc->objects().size() : found.front();
+    special_level = found.empty() ? 0 : ground_level(special_levels(doc->objects()[object].value));
     notice =
         found.empty()
             ? string_format(
@@ -986,7 +999,7 @@ auto session::unstamp() -> void {
 
 auto session::paint_square(const point& at) -> void {
     const auto& value = doc->objects()[object].value;
-    if (value.value("subtype", "fixed") != "fixed") {
+    if (!is_fixed(value)) {
         notice = _("A mutable special has no squares to draw; edit its fields.");
         return;
     }

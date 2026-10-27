@@ -17,6 +17,7 @@
 #include "game.h"
 #include "item.h"
 #include "map/mapdata.h"
+#include "map_perception.h"
 #include "output.h"
 #include "overmap/omdata.h"
 #include "overmap/overmapbuffer.h"
@@ -869,13 +870,20 @@ auto special_canvas(const session& state) -> ec::component {
                 cell.glyph = terrain.get_symbol();
                 cell.label = terrain.get_name();
                 cell.color = string_from_color(terrain.get_color());
+                // As the overmap's tiles show it.
+                auto rotation = 0;
+                auto subtile = 0;
+                terrain.get_rotation_and_subtile(rotation, subtile);
+                const auto shape = map_perception::multitile_key(subtile);
                 cell.looks = palette.indexes(
                     {{.kind = "overmap_terrain",
                       .id = terrain.get_type_id().str(),
                       .name = terrain.get_name(),
                       .glyph = cell.glyph,
                       .color = cell.color,
-                      .rotation = terrain.get_rotation()}});
+                      .looks_like = terrain.get_type_id()->looks_like,
+                      .subtile = shape.empty() ? std::nullopt : std::optional(shape),
+                      .rotation = rotation}});
             }
             cells.push_back(std::move(cell));
         }

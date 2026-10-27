@@ -387,6 +387,8 @@ struct session {
     auto on_special() const -> bool;
     /// Whether the canvas can show the level `dz` above: another entry's, or the special's own.
     auto can_climb(int dz) const -> bool;
+    /// The special's nearest level above, or below, the one shown that it places squares on.
+    auto level_beside(int dz) const -> std::optional<int>;
     auto climb(int dz) -> void;
     /// Opens the mapgen of the overmap terrain the special places at `at` on the level shown.
     auto open_square(const point& at) -> void;

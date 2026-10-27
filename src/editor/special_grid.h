@@ -20,6 +20,15 @@ struct special_square {
 /// Whether the entry is an overmap special or a building, which place overmap terrains.
 auto is_special(const nlohmann::ordered_json& value) -> bool;
 
+/// Whether the entry places squares it lists, rather than growing a mutable special.
+auto is_fixed(const nlohmann::ordered_json& value) -> bool;
+
+/// The levels a fixed special or building places squares on, lowest first.
+auto special_levels(const nlohmann::ordered_json& value) -> std::vector<int>;
+
+/// The level of `levels` the editor shows first: the lowest from the ground up, else the highest.
+auto ground_level(const std::vector<int>& levels) -> int;
+
 /// The squares of a fixed special or a building, as it lists them; none for a mutable special.
 auto special_squares(const nlohmann::ordered_json& value) -> std::vector<special_square>;
 
