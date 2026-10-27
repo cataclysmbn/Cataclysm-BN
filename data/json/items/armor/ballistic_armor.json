@@ -89,7 +89,8 @@
     "coverage": 85,
     "encumbrance": 2,
     "warmth": 5,
-    "material_thickness": 3,
+    "material_thickness": 1,
+    "resistance": { "bullet": 8 },
     "use_action": {
       "type": "holster",
       "holster_prompt": "Stash ammo",
@@ -211,7 +212,8 @@
     "coverage": 85,
     "encumbrance": 15,
     "warmth": 0,
-    "material_thickness": 7,
+    "material_thickness": 4,
+    "resistance": { "bullet": 48 },
     "flags": [ "OUTER", "ALLOWS_WINGS", "ARMOR_PLATE", "COMPACT" ]
   },
   {
@@ -233,7 +235,8 @@
     "coverage": 85,
     "encumbrance": 10,
     "warmth": 0,
-    "material_thickness": 6,
+    "material_thickness": 4,
+    "resistance": { "bullet": 28 },
     "flags": [ "OUTER", "ALLOWS_WINGS", "ARMOR_PLATE", "COMPACT" ]
   },
   {
@@ -247,11 +250,11 @@
     "price_postapoc": "25 USD",
     "material": [ "superalloy" ],
     "color": "light_cyan",
+    "resistance": { "bullet": 28 },
     "encumbrance": 5
   },
   {
     "id": "scrap_ballistic_plate",
-    "copy-from": "steel_ballistic_plate",
     "type": "ARMOR",
     "name": { "str": "scrap ballistic plates" },
     "description": "Pieces of scrap metal crudely cut, taped, and bent into the shape of polygonal ballistic plates, wrapped in rags to cover the sharp edges.  When paired with a proper vest it will just barely protect against .223 Remington, and won't stop armor-piercing 5.56x45mm rounds or anything stronger, but it's better than nothing.  Must be worn in a plate carrier.",
@@ -259,7 +262,18 @@
     "volume": "5380 ml",
     "price": "10 USD",
     "price_postapoc": "2 USD",
-    "material": [ "iron" ]
+    "to_hit": -3,
+    "bashing": 6,
+    "material": [ "iron" ],
+    "looks_like": "esbi_plate",
+    "symbol": ",",
+    "color": "white",
+    "covers": [ "torso" ],
+    "coverage": 85,
+    "encumbrance": 10,
+    "warmth": 0,
+    "material_thickness": 6,
+    "flags": [ "OUTER", "ALLOWS_WINGS", "ARMOR_PLATE", "COMPACT" ]
   },
   {
     "id": "oldguard_armor",
