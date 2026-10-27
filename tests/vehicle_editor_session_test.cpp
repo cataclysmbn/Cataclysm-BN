@@ -414,6 +414,60 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the vehicle editor shows the design turned to the facing it spawns with",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto turned = [](const ec::screen_view& screen) {
+        return body<ec::grid_body>(part(screen, "vehicle:turned"));
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:filter", {.text = "bicycle"});
+            case 1:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 2:
+                // Only the spawn tab shows it.
+                CHECK_FALSE(ec::find_component(*screen.root, "vehicle:turned"));
+                return invoke("vehicle:tool", {.row = "tool:spawn"});
+            case 3: {
+                // Facing east, the three mounts lie in a row as on the mount grid.
+                const auto grid = turned(screen);
+                CHECK(grid.cols == 3);
+                CHECK(grid.rows == 1);
+                CHECK(grid.cells.size() == 3);
+                CHECK(std::ranges::all_of(grid.cells, [](const ec::grid_cell& cell) {
+                    return !cell.looks.empty() && cell.affordance.empty();
+                }));
+                return invoke("vehicle:spawn_set", {.row = "facing", .text = "90"});
+            }
+            case 4: {
+                // Facing south, they stand in a column.
+                const auto grid = turned(screen);
+                CHECK(grid.cols == 1);
+                CHECK(grid.rows == 3);
+                CHECK(grid.cells.size() == 3);
+                return invoke("vehicle:spawn_set", {.row = "facing", .text = "45"});
+            }
+            case 5: {
+                const auto grid = turned(screen);
+                CHECK(grid.cols == 3);
+                CHECK(grid.rows == 3);
+                CHECK(grid.cells.size() == 3);
+                return act("QUIT");
+            }
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 6);
+}
+
+TEST_CASE(
     "the vehicle editor exports a world vehicle's design to a new mod file and opens it",
     "[editor_vehicle][engine_client_component]") {
     const auto guard = screen_guard{};
