@@ -221,6 +221,8 @@ auto document::record(document_edit edit) -> void {
 
 auto document::undo() -> bool {
     if (done_.empty()) { return false; }
+    // The step a group folds into is no longer the last done.
+    end_group();
     auto step = std::move(done_.back());
     done_.pop_back();
     for (const auto& edit : step.edits | std::views::reverse) {
@@ -237,6 +239,7 @@ auto document::undo() -> bool {
 
 auto document::redo() -> bool {
     if (undone_.empty()) { return false; }
+    end_group();
     auto step = std::move(undone_.back());
     undone_.pop_back();
     for (const auto& edit : step.edits) {
