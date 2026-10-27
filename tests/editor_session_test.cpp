@@ -2021,9 +2021,20 @@ TEST_CASE(
                 CHECK(legend[0].columns.front().value == "\"t_dirt\"");
                 CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
                 CHECK(saved(screen) == "Yes");
-                return invoke("editor:new_apply");
+                // The form starts over for the next file: what it named is not typed after.
+                const auto& fields = body<ec::form_body>(part(screen, "editor:new")).fields;
+                const auto value = [&](const std::string& id) {
+                    return std::ranges::find(fields, id, &ec::form_field::id)->value;
+                };
+                CHECK(value("path").empty());
+                CHECK(value("om_terrain").empty());
+                return invoke("editor:new_set", {.row = "path", .text = made.string()});
             }
             case 9:
+                return invoke("editor:new_set", {.row = "om_terrain", .text = "house_04"});
+            case 10:
+                return invoke("editor:new_apply");
+            case 11:
                 CHECK(notice(screen) == made.string() + " already exists.");
                 return act("QUIT");
             default:
@@ -2033,7 +2044,7 @@ TEST_CASE(
     });
 
     editor::run_editor_session();
-    CHECK(step == 10);
+    CHECK(step == 12);
     const auto written = nlohmann::ordered_json::parse(read_file(made));
     CHECK(written[0]["om_terrain"] == "house_04");
     CHECK(written[0]["object"]["terrain"]["."] == "t_dirt");
