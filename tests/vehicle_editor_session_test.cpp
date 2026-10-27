@@ -1163,3 +1163,30 @@ TEST_CASE(
     editor::run_vehicle_editor();
     CHECK(step == 2);
 }
+
+TEST_CASE("the vehicle editor's parts show what they are", "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                return invoke("vehicle:tool", {.row = "tool:install"});
+            case 2: {
+                const auto& rows = body<ec::list_body>(part(screen, "vehicle:parts")).rows;
+                REQUIRE_FALSE(rows.empty());
+                CHECK(std::ranges::all_of(rows, [](const ec::row& row) {
+                    return row.look && "vpart:" + row.look->id.value_or("") == row.id;
+                }));
+                return act("QUIT");
+            }
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 3);
+}

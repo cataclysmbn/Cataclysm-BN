@@ -5290,3 +5290,48 @@ TEST_CASE(
     editor::run_editor_session();
     CHECK(step == 2);
 }
+
+TEST_CASE("the editor's legend and catalog show what they place", "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    const auto row_of =
+        [](const ec::screen_view& screen, const std::string& list, const std::string& id) {
+            const auto& rows = body<ec::list_body>(part(screen, list)).rows;
+            const auto found = std::ranges::find(rows, id, &ec::row::id);
+            INFO(id);
+            REQUIRE(found != rows.end());
+            return *found;
+        };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1: {
+                const auto floor = row_of(screen, "editor:legend", "symbol:.");
+                REQUIRE(floor.look);
+                CHECK(floor.look->id == "t_floor");
+                const auto& terrains = body<ec::list_body>(part(screen, "editor:catalog")).rows;
+                REQUIRE_FALSE(terrains.empty());
+                CHECK(std::ranges::all_of(terrains, [](const ec::row& row) {
+                    return row.look && "entry:" + row.look->id.value_or("") == row.id;
+                }));
+                return invoke("editor:catalog_kind", {.row = "catalog:furniture"});
+            }
+            case 2: {
+                const auto& furniture = body<ec::list_body>(part(screen, "editor:catalog")).rows;
+                REQUIRE_FALSE(furniture.empty());
+                CHECK(std::ranges::all_of(furniture, [](const ec::row& row) {
+                    return row.look && "entry:" + row.look->id.value_or("") == row.id;
+                }));
+                return act("QUIT");
+            }
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 3);
+}
