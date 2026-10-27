@@ -2,6 +2,7 @@
 
 #include "../src/map/map.h"
 #include "../src/map/submap_load_manager.h"
+#include "avatar.h"
 #include "calendar.h"
 #include "cata_arena.h"
 #include "game.h"
@@ -63,7 +64,17 @@ auto clear_states(const enum_bitset<test_state>& states) -> void {
         if (normalized_states.test(state::vehicle)) { clear_vehicles(); }
     }
 
-    if (normalized_states.test(state::time)) { set_time(calendar::turn_zero); }
+    if (normalized_states.test(state::time) && normalized_states.test(state::map)) {
+        // clear_map() brought every cache but the lightmap up to date, and the lightmap rebuilds
+        // itself when the time changes its light; set_time() would rebuild the level again.
+        calendar::turn = calendar::turn_zero;
+        g->reset_light_level();
+        const auto z = g->u.bub_pos().z();
+        g->m.build_map_cache(z);
+        g->m.update_visibility_cache(z);
+    } else if (normalized_states.test(state::time)) {
+        set_time(calendar::turn_zero);
+    }
     if (normalized_states.test(state::name)) { Name::clear(); }
     if (normalized_states.test(state::arena)) { cleanup_arenas(); }
 }
