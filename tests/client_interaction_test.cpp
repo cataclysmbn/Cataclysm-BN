@@ -4907,4 +4907,60 @@ TEST_CASE("semantic replay repeats a uilist key invoke", "[client][interaction][
     replay::finish();
 }
 
+TEST_CASE(
+    "a menu entry's second column reaches the client as a column of its row",
+    "[client][interaction][mcp]") {
+    const auto guard = interaction_test_guard{};
+    auto menu = uilist{};
+    menu.entries.emplace_back(0, true, 'a', "Drop item", "", "<color_light_red>25 moves</color>");
+    menu.entries.emplace_back(1, true, 'b', "Wear item", "", "");
+    menu.filterlist();
+    const auto choices = menu.as_interaction().choices;
+    REQUIRE(choices.size() == 2);
+    REQUIRE(choices[0].columns.size() == 1);
+    CHECK(choices[0].columns[0].key == "ctxt");
+    CHECK(choices[0].columns[0].value == "25 moves");
+    CHECK(choices[0].columns[0].color == string_from_color(c_light_red));
+    CHECK(choices[1].columns.empty());
+}
+
+TEST_CASE(
+    "the unwield prompt names each way plainly with its moves in a column",
+    "[client][interaction][mcp]") {
+    auto& you = get_avatar();
+    // Before the guard turns test mode off: clearing eats, which asks.
+    clear_character(you, false);
+    const auto guard = interaction_test_guard{};
+    you.wield(item::spawn("glock_19", calendar::start_of_cataclysm, 0));
+    auto choices = std::vector<game_client::interaction_choice>{};
+    auto reads = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        REQUIRE(reads++ == 0);
+        const auto& asked = game_client::current_interaction();
+        choices = asked.choices;
+        const auto way =
+            std::ranges::find(choices, true, &game_client::interaction_choice::selectable);
+        REQUIRE(way != choices.end());
+        return resolve({
+            .input_id = asked.input_id,
+            .operation = game_client::interaction_operation::choose,
+            .target_id = way->id,
+        });
+    });
+    CHECK(you.unwield());
+    REQUIRE_FALSE(choices.empty());
+    CHECK(choices[0].label == "Store in inventory");
+    for (const auto& choice : choices) {
+        CAPTURE(choice.label);
+        CHECK(choice.label.find('|') == std::string::npos);
+        CHECK(choice.label == trim(choice.label));
+    }
+    // A way the avatar can take shows its moves; one it cannot has none to show.
+    for (const auto& choice : choices) {
+        CAPTURE(choice.label);
+        REQUIRE(choice.columns.size() == (choice.selectable ? 1 : 0));
+        if (choice.selectable) { CHECK(choice.columns[0].value.ends_with(" moves")); }
+    }
+}
+
 #endif // CATA_MCP
