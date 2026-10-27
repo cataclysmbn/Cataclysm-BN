@@ -1546,5 +1546,19 @@
     "autolearn": true,
     "using": [ [ "blacksmithing_intermediate", 48 ] ],
     "components": [ [ [ "hard_steel_armor", 24 ], [ "hard_plate", 2 ] ] ]
+  },
+  {
+    "result": "ballistic_vest_light",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_TORSO",
+    "skill_used": "tailor",
+    "difficulty": 4,
+    "time": "40 m",
+    "reversible": true,
+    "decomp_learn": 3,
+    "autolearn": true,
+    "using": [ [ "sewing_standard", 22 ] ],
+    "components": [ [ [ "nylon", 18 ] ] ]
   }
 ]
