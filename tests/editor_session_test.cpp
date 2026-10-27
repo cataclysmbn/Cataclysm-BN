@@ -5276,6 +5276,16 @@ TEST_CASE(
                 CHECK(affordance(screen, "editor:preview").group == "View");
                 CHECK(affordance(screen, "editor:test").group == "World");
                 CHECK(affordance(screen, "editor:stamp").group == "World");
+                {
+                    // The menus come in the order editors have them.
+                    auto menus = std::vector<std::string>{};
+                    for (const auto& entry : screen.affordances) {
+                        if (!entry.group.empty() && !std::ranges::contains(menus, entry.group)) {
+                            menus.push_back(entry.group);
+                        }
+                    }
+                    CHECK(menus == std::vector<std::string>{"File", "Edit", "View", "World"});
+                }
                 // What a part runs on its rows, and the drag's own steps, sit in no menu.
                 CHECK(affordance(screen, "editor:paint").group.empty());
                 CHECK(affordance(screen, "editor:stroke_begin").group.empty());
@@ -5312,6 +5322,11 @@ TEST_CASE("the editor's legend and catalog show what they place", "[editor_sessi
                 const auto floor = row_of(screen, "editor:legend", "symbol:.");
                 REQUIRE(floor.look);
                 CHECK(floor.look->id == "t_floor");
+                // An id the legend names alone reads as the id, not as JSON text.
+                const auto terrain = std::ranges::
+                    find(floor.columns, "terrain", &game_client::interaction_column::key);
+                REQUIRE(terrain != floor.columns.end());
+                CHECK(terrain->value == "t_floor");
                 const auto& terrains = body<ec::list_body>(part(screen, "editor:catalog")).rows;
                 REQUIRE_FALSE(terrains.empty());
                 CHECK(std::ranges::all_of(terrains, [](const ec::row& row) {
