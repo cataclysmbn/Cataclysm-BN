@@ -204,6 +204,10 @@ auto run_editor_session() -> void {
             state.climb(id == level_up_id ? 1 : -1);
         } else if (id == connection_set_id) {
             state.special_connection = invoked->args.text.value_or("");
+        } else if (id == open_terrain_id) {
+            if (const auto name = row_rest(row, "terrain")) {
+                state.open_mapgen_of(std::string(*name));
+            }
         } else if (id == open_square_id) {
             if (const auto at = row_point(row, "square")) { state.open_square(*at); }
         } else if (id == tool_id && state.on_special()) {

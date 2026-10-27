@@ -689,6 +689,13 @@ auto is_ot_match(const std::string& name, const oter_id& oter, const ot_match_ty
     }
 }
 
+namespace {
+
+/// Whether an overmap terrain loads for the editor's check alone, so that it registers nothing.
+auto loading_detached_oter = false;
+
+} // namespace
+
 /*
  * load mapgen functions from an overmap_terrain json entry
  * suffix is for roads/subways/etc which have "_straight", "_curved", "_tee", "_four_way" function
@@ -744,7 +751,9 @@ void oter_type_t::load(const JsonObject& jo, const std::string& src) {
 
     optional(jo, was_loaded, "connect_group", connect_group, string_reader{});
 
-    if (map_label.has_value()) {
+    if (loading_detached_oter) {
+        // The check registers no label or mapgen of the game's.
+    } else if (map_label.has_value()) {
         overmap_labels::set_label(id, map_label);
     } else if (jo.has_member("copy-from")) {
         auto copy_from_id = oter_type_str_id(jo.get_string("copy-from"));
@@ -757,7 +766,7 @@ void oter_type_t::load(const JsonObject& jo, const std::string& src) {
         }
 
         for (const auto& elem : om_lines::mapgen_suffixes) {
-            load_overmap_terrain_mapgens(jo, id.str(), elem);
+            if (!loading_detached_oter) { load_overmap_terrain_mapgens(jo, id.str(), elem); }
         }
 
         if (symbol == NULL_UNICODE) {
@@ -775,7 +784,7 @@ void oter_type_t::load(const JsonObject& jo, const std::string& src) {
             debugmsg("sym is defined as number instead of string for overmap_terrain %s (%s)",
                      id.c_str(), name);
         }
-        load_overmap_terrain_mapgens(jo, id.str());
+        if (!loading_detached_oter) { load_overmap_terrain_mapgens(jo, id.str()); }
     }
 }
 
@@ -2742,6 +2751,46 @@ constexpr auto special_search_radius = 30;
 
 auto editor::check_special(const std::string_view text) -> std::vector<loader_message> {
     return load_detached_special(text).messages;
+}
+
+auto editor::check_oter(const std::string_view text) -> std::vector<loader_message> {
+    auto thrown = std::optional<std::string>{};
+    const auto detached = restore_on_out_of_scope(loading_detached_oter);
+    loading_detached_oter = true;
+    const auto said = capture_each_debugmsg_during([&] {
+        try {
+            auto in = std::istringstream(std::string(text));
+            auto jsin = JsonIn(in, "editor");
+            const auto entry = jsin.get_object();
+            // What an entry copies or leaves abstract only the game's whole data completes.
+            if (entry.has_member("copy-from") || entry.has_member("abstract")) {
+                entry.allow_omitted_members();
+                return;
+            }
+            auto loaded = oter_type_t{};
+            loaded.id = oter_type_str_id(
+                entry.has_array("id")
+                    ? entry.get_array("id").get_string(0)
+                    : entry.get_string("id"));
+            loaded.load(entry, mod_management::get_default_core_content_pack().str());
+        } catch (const JsonError& e) { thrown = e.what(); }
+    });
+    auto messages =
+        said | std::views::transform([](const std::string& message) {
+            return loader_message{.text = message};
+        })
+        | std::ranges::to<std::vector>();
+    if (thrown) { messages.push_back({.text = *thrown}); }
+    return messages;
+}
+
+auto editor::terrain_mapgen_ids(const std::string& type_id) -> std::vector<std::string> {
+    const auto type = oter_type_str_id(type_id);
+    if (!type.is_valid()) { return {}; }
+    if (!type->is_linear()) { return {type_id}; }
+    return om_lines::mapgen_suffixes
+         | std::views::transform([&](const std::string& suffix) { return type_id + suffix; })
+         | std::ranges::to<std::vector>();
 }
 
 auto editor::apply_special(const std::string_view text)

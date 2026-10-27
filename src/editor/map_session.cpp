@@ -76,6 +76,10 @@ auto code_mapgen_in(const nlohmann::ordered_json& value, const std::string& path
         .defined = method == "lua" ? lua_mapgen_defined_at(name) : std::nullopt};
 }
 
+auto is_oter(const nlohmann::ordered_json& value) -> bool {
+    return value.is_object() && value.value("type", "") == "overmap_terrain";
+}
+
 auto is_palette(const nlohmann::ordered_json& value) -> bool {
     return value.is_object() && value.value("type", "") == "palette";
 }
@@ -355,7 +359,8 @@ auto session::entries() const -> std::vector<std::size_t> {
     return std::views::iota(std::size_t{0}, doc->objects().size())
          | std::views::filter([&](const auto index) {
                const auto& value = doc->objects()[index].value;
-               return is_json_mapgen(value) || is_palette(value) || is_special(value);
+               return is_json_mapgen(value) || is_palette(value) || is_special(value)
+                   || is_oter(value);
            })
          | std::ranges::to<std::vector>();
 }
@@ -375,6 +380,26 @@ auto session::on_mapgen() const -> bool {
 
 auto session::on_special() const -> bool {
     return doc && object < doc->objects().size() && is_special(doc->objects()[object].value);
+}
+
+auto session::on_oter() const -> bool {
+    return doc && object < doc->objects().size() && is_oter(doc->objects()[object].value);
+}
+
+auto session::terrain_mapgens() const -> std::vector<std::string> {
+    if (!on_oter()) { return {}; }
+    const auto& id = doc->objects()[object].value["id"];
+    const auto types =
+        id.is_string() ? std::vector{id.get<std::string>()}
+        : id.is_array()
+            ? id | std::views::filter(&nlohmann::ordered_json::is_string)
+                  | std::views::transform([](const auto& type) {
+                        return type.template get<std::string>();
+                    })
+                  | std::ranges::to<std::vector>()
+            : std::vector<std::string>{};
+    return types | std::views::transform(&terrain_mapgen_ids) | std::views::join
+         | std::ranges::to<std::vector>();
 }
 
 auto session::level_beside(const int dz) const -> std::optional<int> {
@@ -505,11 +530,12 @@ auto session::reload() -> void {
         catalog_page = 0;
     }
     const auto text = doc->objects()[object].value.dump();
-    if (on_special()) {
+    if (on_special() || on_oter()) {
         diagnostics =
-            check_special(text) | std::views::transform([](const loader_message& message) {
-                return diagnostic{.text = message.text};
-            })
+            (on_special() ? check_special(text) : check_oter(text))
+            | std::views::transform([](const loader_message& message) {
+                  return diagnostic{.text = message.text};
+              })
             | std::ranges::to<std::vector>();
         preview.reset();
         parameters.clear();

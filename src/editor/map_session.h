@@ -101,6 +101,8 @@ inline constexpr auto open_here_id = "editor:open_here";
 inline constexpr auto level_up_id = "editor:level_up";
 inline constexpr auto level_down_id = "editor:level_down";
 inline constexpr auto open_square_id = "editor:open_square";
+inline constexpr auto terrains_id = "editor:terrains";
+inline constexpr auto open_terrain_id = "editor:open_terrain";
 inline constexpr auto connection_id = "editor:connection";
 inline constexpr auto connection_set_id = "editor:connection_set";
 inline constexpr auto browser_id = "editor:browser";
@@ -399,6 +401,10 @@ struct session {
     auto on_mapgen() const -> bool;
     /// Whether the object edited is an overmap special or a building, which places overmap squares.
     auto on_special() const -> bool;
+    /// Whether the object edited is an overmap terrain, which the game draws its squares with.
+    auto on_oter() const -> bool;
+    /// The mapgen ids the overmap terrain edited is made with, of the types the game knows.
+    auto terrain_mapgens() const -> std::vector<std::string>;
     /// Whether the canvas can show the level `dz` above: another entry's, or the special's own.
     auto can_climb(int dz) const -> bool;
     /// The special's nearest level above, or below, the one shown that it places squares on.

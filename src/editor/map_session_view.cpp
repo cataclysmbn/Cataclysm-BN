@@ -1128,6 +1128,22 @@ auto session_view(const session& state) -> ec::screen_view {
                     ec::invoke_affordance({.id = stroke_begin_id, .label = _("Begin stroke")}));
                 affordances.push_back(
                     ec::invoke_affordance({.id = stroke_end_id, .label = _("End stroke")}));
+            } else if (state.on_oter()) {
+                const auto mapgens = state.terrain_mapgens();
+                if (!mapgens.empty()) {
+                    parts.push_back(ec::list(
+                        {.id = terrains_id,
+                         .rows = mapgens | std::views::transform([](const std::string& name) {
+                                     return ec::row{.id = "terrain:" + name, .label = name};
+                                 })
+                               | std::ranges::to<std::vector>(),
+                         .selection = "single",
+                         .activate = open_terrain_id}));
+                    affordances.push_back(ec::invoke_affordance(
+                        {.id = open_terrain_id,
+                         .label = _("Open its mapgen"),
+                         .args = row_of(terrains_id)}));
+                }
             } else {
 
                 parts.push_back(ec::list(
@@ -1180,7 +1196,7 @@ auto session_view(const session& state) -> ec::screen_view {
                      {.row = ec::row_shape{.component_id = field_id}, .text = ec::text_shape{}}}));
             affordances.push_back(ec::invoke_affordance({.id = field_apply_id, .label = _("Set")}));
             std::ranges::move(level_affordances(state), std::back_inserter(affordances));
-            if (!state.on_special()) {
+            if (!state.on_special() && !state.on_oter()) {
                 std::ranges::move(drawing_affordances(state), std::back_inserter(affordances));
                 mapping_parts(state, parts, affordances);
             }
@@ -1238,8 +1254,9 @@ auto session_view(const session& state) -> ec::screen_view {
     // A palette has no canvas; its legend is what it edits.
     const auto* const active =
         state.on_mapgen() || state.on_special() ? canvas_id
-        : state.doc                             ? legend_id
-                                                : "";
+        : state.on_oter() ? (state.terrain_mapgens().empty() ? objects_id : terrains_id)
+        : state.doc       ? legend_id
+                          : "";
     return {
         .title = _("Map Editor"),
         .root = ec::split({.id = "editor:body", .active = active, .children = std::move(parts)}),

@@ -65,6 +65,14 @@ auto connection_patch(
 /// does after loading data, and registers nothing; what the loader reported, in order.
 auto check_special(std::string_view text) -> std::vector<loader_message>;
 
+/// Loads an overmap terrain entry with the game's loader, registering no label, mapgen or terrain
+/// of it; what the loader reported, in order.
+auto check_oter(std::string_view text) -> std::vector<loader_message>;
+
+/// The mapgen ids the game makes the overmap terrain type `type_id` with: the id itself, or one
+/// per line shape of a linear terrain; none for a type the game does not know.
+auto terrain_mapgen_ids(const std::string& type_id) -> std::vector<std::string>;
+
 /// Registers the special or building entry in `text` with the game in place of any of its id,
 /// as the loader completes it; what the loader said against it, if anything.
 auto apply_special(std::string_view text) -> std::expected<overmap_special_id, std::string>;
