@@ -5335,3 +5335,41 @@ TEST_CASE("the editor's legend and catalog show what they place", "[editor_sessi
     editor::run_editor_session();
     CHECK(step == 3);
 }
+
+TEST_CASE("the editor's start page offers the map files opened lately", "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    const auto forget = [] { std::filesystem::remove(editor::recent_documents_file()); };
+    forget();
+    const auto cleanup = on_out_of_scope([&] {
+        forget();
+        editor::reset_editor_session();
+    });
+    editor::remember_document({.editor = "vehicle", .name = "bicycle"});
+    editor::remember_document({.editor = "map", .name = file.path.generic_string()});
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0: {
+                // Only the map editor's documents, newest first, beside the files to open.
+                CHECK(slot_of(screen, "editor:recent") == "canvas");
+                CHECK(part(screen, "editor:recent").label == "Recent");
+                const auto& rows = body<ec::list_body>(part(screen, "editor:recent")).rows;
+                REQUIRE(rows.size() == 1);
+                CHECK(rows[0].id == "file:" + file.path.generic_string());
+                return invoke("editor:recent_open", {.row = rows[0].id});
+            }
+            case 1:
+                CHECK(body<ec::form_body>(part(screen, "editor:file")).fields.front().value
+                      == file.path.generic_string());
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:recent"));
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 2);
+}
