@@ -4713,11 +4713,15 @@ TEST_CASE(
     const auto guard = screen_guard{};
     const auto restore_mapgen = restore_on_out_of_scope<bool>(disable_mapgen);
     disable_mapgen = false;
-    auto entries = special_levels();
-    entries[0]["connections"] =
-        {{{"point", {0, 0, -1}}, {"connection", "local_road"}},
-         {{"point", {1, 0, 0}}, {"connection", "local_road"}}};
+    auto special = special_levels()[0];
+    // The connection on a square names nothing, as a hand-written one may.
+    special["connections"] =
+        {{{"point", {0, 0, -1}}, {"connection", "local_road"}}, {{"point", {1, 0, 0}}}};
+    // A mapgen comes first, so that the file reopens on an entry of another catalog.
+    auto entries = house_levels();
+    entries.push_back(special);
     const auto file = levels_file{entries};
+    const auto special_row = "object:" + std::to_string(entries.size() - 1);
     const auto level = [](const ec::screen_view& screen) {
         const auto& stats = body<ec::panel_body>(part(screen, "editor:document")).stats;
         const auto found = std::ranges::find(stats, "level", &ec::panel_stat::key);
@@ -4737,52 +4741,56 @@ TEST_CASE(
             case 0:
                 return invoke("editor:open", {.text = file.path.string()});
             case 1:
+                return invoke("editor:object", {.row = special_row});
+            case 2:
                 // A level with only a connection on it is a level of the special.
                 CHECK(affordance(screen, "editor:level_down").enabled);
                 return invoke("editor:tool", {.row = "tool:connect"});
-            case 2:
-                return invoke("editor:paint", {.row = "square:0,0"});
             case 3:
+                return invoke("editor:paint", {.row = "square:0,0"});
+            case 4:
                 CHECK(notice(screen));
                 CHECK(saved(screen) == "Yes");
                 return invoke("editor:connection_set", {.text = ""});
-            case 4:
-                return invoke("editor:paint", {.row = "square:2,0"});
             case 5:
+                return invoke("editor:paint", {.row = "square:2,0"});
+            case 6:
                 CHECK(notice(screen));
                 CHECK(saved(screen) == "Yes");
                 // A connection that sits on a square is taken away all the same.
                 return invoke("editor:paint", {.row = "square:1,0"});
-            case 6:
+            case 7:
                 CHECK_FALSE(notice(screen));
                 CHECK(saved(screen) == "No");
                 return invoke("editor:connection_set", {.text = "local_road"});
-            case 7:
-                return invoke("editor:level_up");
             case 8:
                 return invoke("editor:level_up");
             case 9:
+                return invoke("editor:level_up");
+            case 10:
                 CHECK(level(screen) == "2");
                 return invoke("editor:paint", {.row = "square:1,0"});
-            case 10:
+            case 11:
+                return invoke("editor:catalog_filter", {.text = "zzz"});
+            case 12:
                 return invoke("editor:save");
-            case 11: {
+            case 13: {
                 // The file changes on disk; the editor reads it again on the level it showed.
                 auto out = std::ofstream(file.path, std::ios::binary | std::ios::app);
                 out << "\n";
-                return invoke("editor:catalog_filter", {.text = "zzz"});
-            }
-            case 12:
-                CHECK(level(screen) == "2");
                 return invoke("editor:tool", {.row = "tool:open"});
-            case 13:
-                return invoke("editor:level_down");
+            }
             case 14:
+                CHECK(level(screen) == "2");
+                // The special's catalog keeps its filter over the reload.
+                CHECK(body<ec::list_body>(part(screen, "editor:catalog")).filter == "zzz");
                 return invoke("editor:level_down");
             case 15:
+                return invoke("editor:level_down");
+            case 16:
                 CHECK(level(screen) == "0");
                 return invoke("editor:open_square", {.row = "square:0,0"});
-            case 16:
+            case 17:
                 // The mapgen's catalog does not keep the special's filter.
                 CHECK(body<ec::list_body>(part(screen, "editor:catalog")).filter.empty());
                 return act("QUIT");
@@ -4793,7 +4801,7 @@ TEST_CASE(
     });
 
     editor::run_editor_session();
-    CHECK(step == 17);
+    CHECK(step == 18);
 }
 
 #endif // CATA_MCP
