@@ -590,6 +590,9 @@ TEST_CASE(
                 CHECK(tabs.tabs[0].selected);
                 CHECK(tabs.tabs[1].id == "character");
                 CHECK_FALSE(tabs.tabs[1].selected);
+                // The native shortcut brackets stay in the native draw.
+                CHECK(tabs.tabs[0].label == "Global");
+                CHECK(tabs.tabs[1].label == "Character");
                 // A row is a rule by the number the session gave it, with its state.
                 ids = ids_of(screen, "autopickup:rules");
                 REQUIRE(ids.size() == 3);

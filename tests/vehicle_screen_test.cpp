@@ -28,6 +28,7 @@
 #    include "state_helpers.h"
 #    include "units_utility.h"
 #    include "vehicle/vehicle.h"
+#    include "vehicle/vehicle_part.h"
 
 #    include <algorithm>
 #    include <nlohmann/json.hpp>
@@ -434,6 +435,31 @@ TEST_CASE(
         const auto mass = std::ranges::find(stats, "mass", &ec::panel_stat::key);
         REQUIRE(mass != stats.end());
         CHECK(mass->value.find(' ') == std::string::npos);
+        return act("QUIT");
+    });
+    static_cast<void>(veh_interact::run(*fixture.veh, tripoint_mnt_veh::zero()));
+}
+
+TEST_CASE(
+    "a vehicle part row names the part without the health bar its column shows",
+    "[vehicle_screen][engine_client_component]") {
+    auto fixture = bicycle_fixture{};
+    const auto names =
+        std::views::iota(0, fixture.veh->part_count())
+        | std::views::transform([&](const int index) {
+              return remove_color_tags(fixture.veh->part(index).name(false));
+          })
+        | std::ranges::to<std::vector>();
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        const auto& all = rows(screen, "vehicle:parts");
+        REQUIRE_FALSE(all.empty());
+        for (const auto& row : all) {
+            CAPTURE(row.label);
+            CHECK(std::ranges::any_of(names, [&](const std::string& name) {
+                return row.label.starts_with(name);
+            }));
+        }
         return act("QUIT");
     });
     static_cast<void>(veh_interact::run(*fixture.veh, tripoint_mnt_veh::zero()));
