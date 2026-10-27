@@ -246,8 +246,12 @@ auto export_region(
     auto vehicles = nlohmann::ordered_json::array();
     for (const auto& wrapped : here.get_vehicles()) {
         const auto& veh = *wrapped.v;
-        const auto offset = offset_of(veh.abs_ms_location());
-        if (!offset || !veh.type.is_valid() || veh.type.is_null()) { continue; }
+        // Mapgen sets a vehicle down by its origin mount; a driven one turns about another pivot.
+        const auto offset = offset_of(veh.mount_to_abs(tripoint_mnt_veh::zero()));
+        if (!offset || !veh.type.is_valid() || veh.type.is_null() || veh.type == vproto_id("none")
+            || veh.type == vproto_id("custom")) {
+            continue;
+        }
         vehicles.push_back(
             {{"vehicle", veh.type.str()},
              {"x", offset->x},
