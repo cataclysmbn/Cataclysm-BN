@@ -4695,4 +4695,93 @@ TEST_CASE(
     CHECK(step == 12);
 }
 
+TEST_CASE(
+    "the connect tool joins only beside a special, and the editor keeps the level drawn on",
+    "[editor_session][editor_special]") {
+    const auto guard = screen_guard{};
+    const auto restore_mapgen = restore_on_out_of_scope<bool>(disable_mapgen);
+    disable_mapgen = false;
+    auto entries = special_levels();
+    entries[0]["connections"] =
+        {{{"point", {0, 0, -1}}, {"connection", "local_road"}},
+         {{"point", {1, 0, 0}}, {"connection", "local_road"}}};
+    const auto file = levels_file{entries};
+    const auto level = [](const ec::screen_view& screen) {
+        const auto& stats = body<ec::panel_body>(part(screen, "editor:document")).stats;
+        const auto found = std::ranges::find(stats, "level", &ec::panel_stat::key);
+        return found == stats.end() ? std::string("none") : found->value;
+    };
+    const auto notice = [](const ec::screen_view& screen) {
+        return ec::find_component(*screen.root, "editor:notice") != nullptr;
+    };
+    const auto saved = [](const ec::screen_view& screen) {
+        return body<ec::panel_body>(part(screen, "editor:document")).stats.front().value;
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                // A level with only a connection on it is a level of the special.
+                CHECK(affordance(screen, "editor:level_down").enabled);
+                return invoke("editor:tool", {.row = "tool:connect"});
+            case 2:
+                return invoke("editor:paint", {.row = "square:0,0"});
+            case 3:
+                CHECK(notice(screen));
+                CHECK(saved(screen) == "Yes");
+                return invoke("editor:connection_set", {.text = ""});
+            case 4:
+                return invoke("editor:paint", {.row = "square:2,0"});
+            case 5:
+                CHECK(notice(screen));
+                CHECK(saved(screen) == "Yes");
+                // A connection that sits on a square is taken away all the same.
+                return invoke("editor:paint", {.row = "square:1,0"});
+            case 6:
+                CHECK_FALSE(notice(screen));
+                CHECK(saved(screen) == "No");
+                return invoke("editor:connection_set", {.text = "local_road"});
+            case 7:
+                return invoke("editor:level_up");
+            case 8:
+                return invoke("editor:level_up");
+            case 9:
+                CHECK(level(screen) == "2");
+                return invoke("editor:paint", {.row = "square:1,0"});
+            case 10:
+                return invoke("editor:save");
+            case 11: {
+                // The file changes on disk; the editor reads it again on the level it showed.
+                auto out = std::ofstream(file.path, std::ios::binary | std::ios::app);
+                out << "\n";
+                return invoke("editor:catalog_filter", {.text = "zzz"});
+            }
+            case 12:
+                CHECK(level(screen) == "2");
+                return invoke("editor:tool", {.row = "tool:open"});
+            case 13:
+                return invoke("editor:level_down");
+            case 14:
+                return invoke("editor:level_down");
+            case 15:
+                CHECK(level(screen) == "0");
+                return invoke("editor:open_square", {.row = "square:0,0"});
+            case 16:
+                // The mapgen's catalog does not keep the special's filter.
+                CHECK(body<ec::list_body>(part(screen, "editor:catalog")).filter.empty());
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 17);
+}
+
 #endif // CATA_MCP
