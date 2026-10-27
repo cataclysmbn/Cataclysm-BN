@@ -31,6 +31,13 @@ auto inside(const std::filesystem::path& path, const std::string& root) -> bool 
     return !error && !relative.empty() && *relative.begin() != "..";
 }
 
+auto shown_path(const std::filesystem::path& path) -> std::string {
+    const auto game = (std::filesystem::absolute(PATH_INFO::datadir()) / "..").lexically_normal();
+    const auto relative = std::filesystem::absolute(path).lexically_normal().lexically_proximate(
+        game);
+    return (relative.empty() || *relative.begin() == ".." ? path : relative).generic_string();
+}
+
 auto is_mod_file(const std::filesystem::path& path) -> bool {
     return path.extension() == ".json" && inside(path, PATH_INFO::user_moddir());
 }

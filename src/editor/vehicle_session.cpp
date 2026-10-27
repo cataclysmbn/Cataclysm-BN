@@ -100,15 +100,6 @@ constexpr auto item_chance_id = "vehicle:item_chance";
 constexpr auto spawn_distance = 8;
 
 
-/// `path` from the game's directory, the one that holds `data`, when it lies inside it, as a
-/// modder finds it there.
-auto shown_path(const std::filesystem::path& path) -> std::string {
-    const auto game = (std::filesystem::absolute(PATH_INFO::datadir()) / "..").lexically_normal();
-    const auto relative = std::filesystem::absolute(path).lexically_normal().lexically_proximate(
-        game);
-    return (relative.empty() || *relative.begin() == ".." ? path : relative).generic_string();
-}
-
 /// The file a copied vehicle waits in, outside every world so that another world can paste it.
 /// The trimmed entries of a comma-separated list, as a JSON array; none when it lists nothing.
 auto listed(const std::string& text) -> std::optional<nlohmann::ordered_json> {

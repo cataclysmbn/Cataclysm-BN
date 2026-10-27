@@ -1169,7 +1169,7 @@ auto session_view(const session& state) -> ec::screen_view {
         const auto& doc = *state.doc;
         parts.push_back(ec::panel(
             {.id = "editor:document",
-             .title = doc.path().generic_string(),
+             .title = shown_path(doc.path()),
              .stats = document_stats(state)}));
         const auto entries = state.entries();
         parts.push_back(ec::list(

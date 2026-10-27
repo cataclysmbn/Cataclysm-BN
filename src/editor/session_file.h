@@ -12,6 +12,9 @@ namespace editor {
 
 /// Whether `path` lies inside `root`.
 auto inside(const std::filesystem::path& path, const std::string& root) -> bool;
+/// `path` from the game's directory, the one that holds `data`, when it lies inside it, as a
+/// modder finds it there.
+auto shown_path(const std::filesystem::path& path) -> std::string;
 /// Whether `path` is a .json file in the player's mods, the only place the editors make files.
 auto is_mod_file(const std::filesystem::path& path) -> bool;
 
