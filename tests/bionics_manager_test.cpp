@@ -606,8 +606,10 @@ TEST_CASE(
         if (screen.context == "POPUP_WAIT" && !has_part(screen, "bionics:letter")) {
             REQUIRE(invalid);
             REQUIRE(phase == 3);
-            CHECK(client::current_interaction().message.find("Invalid bionic letter")
-                  != std::string::npos);
+            const auto message = client::current_interaction().message;
+            CHECK(message.find("Invalid bionic letter") != std::string::npos);
+            // One letter apart from the next, so the list wraps between letters.
+            CHECK(message.find("a b c") != std::string::npos);
             ++phase;
             return action("QUIT");
         }
