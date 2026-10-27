@@ -5100,7 +5100,7 @@
                 },
                 {
                   "id": "step:1",
-                  "label": "/object/rows/0",
+                  "label": "Change rows",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -5110,7 +5110,7 @@
                 },
                 {
                   "id": "step:2",
-                  "label": "/object/terrain/x",
+                  "label": "Add terrain x",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -9018,7 +9018,7 @@
                 },
                 {
                   "id": "step:1",
-                  "label": "/object/rows/0",
+                  "label": "Change rows",
                   "description": "",
                   "denial": "",
                   "enabled": true,
@@ -9028,7 +9028,7 @@
                 },
                 {
                   "id": "step:2",
-                  "label": "/object/terrain/x",
+                  "label": "Add terrain x",
                   "description": "",
                   "denial": "",
                   "enabled": true,

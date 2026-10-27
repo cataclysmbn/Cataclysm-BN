@@ -437,14 +437,32 @@ auto legend_rows(const session& state) -> std::vector<ec::row> {
 
 /// A row per state of the document, the original first: a step is named by the edit it did, and
 /// the row of the saved state says so.
+/// What `edit` did, in words: its first operation's verb and the member of the object it changed.
+auto step_label(const document_edit& edit) -> std::string {
+    const auto& operation = edit.patch[0];
+    auto pointer = nlohmann::ordered_json::json_pointer(operation.value("path", ""));
+    auto tokens = std::vector<std::string>{};
+    for (; !pointer.empty(); pointer.pop_back()) { tokens.insert(tokens.begin(), pointer.back()); }
+    // A mapgen's members sit under its `object`.
+    if (tokens.size() > 1 && tokens.front() == "object") { tokens.erase(tokens.begin()); }
+    const auto numeric = [](const std::string& token) {
+        return !token.empty() && token.find_first_not_of("0123456789") == std::string::npos;
+    };
+    auto member = tokens.empty() ? std::string{} : tokens.front();
+    std::ranges::replace(member, '_', ' ');
+    if (tokens.size() > 1 && !numeric(tokens[1])) { member += " " + tokens[1]; }
+    const auto op = operation.value("op", "");
+    const auto verb = op == "add" ? _("Add") : op == "remove" ? _("Remove") : _("Change");
+    return member.empty() ? verb : string_format(pgettext("editor history", "%s %s"), verb, member);
+}
+
 auto history_rows(const document& doc) -> std::vector<ec::row> {
     const auto steps = doc.history();
     auto rows = std::vector<ec::row>{};
     for (const auto depth : std::views::iota(std::size_t{0}, steps.size() + 1)) {
         auto row = ec::row{
             .id = index_row("step", depth),
-            .label =
-                depth == 0 ? _("Opened") : steps[depth - 1].edits.back().patch[0].value("path", ""),
+            .label = depth == 0 ? _("Opened") : step_label(steps[depth - 1].edits.back()),
             .selected = depth == doc.depth()};
         if (doc.saved_depth() == depth) { row.description = _("Saved"); }
         rows.push_back(std::move(row));
