@@ -783,6 +783,20 @@
   },
   {
     "type": "overmap_special",
+    "id": "mil_barracks",
+    "overmaps": [
+      { "point": [ 0, 0, 0 ], "overmap": "mil_barracks_north" },
+      { "point": [ 0, 0, 1 ], "overmap": "mil_barracks_roof_north" },
+      { "point": [ 0, 1, 0 ], "overmap": "mil_barracks_parking_north" }
+    ],
+    "connections": [ { "point": [ 0, 2, 0 ], "from": [ 0, 1, 0 ], "connection": "local_road" } ],
+    "locations": [ "field", "forest" ],
+    "city_distance": [ 0, 10 ],
+    "occurrences": [ 35, 100 ],
+    "flags": [ "MILITARY", "UNIQUE", "ELECTRIC_GRID" ]
+  },
+  {
+    "type": "overmap_special",
     "id": "Missile Silo",
     "overmaps": [
       { "point": [ 0, 0, 0 ], "overmap": "silo" },
