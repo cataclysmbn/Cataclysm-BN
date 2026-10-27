@@ -3672,6 +3672,13 @@
             "expect": "boundary"
           },
           {
+            "id": "editor:export_area",
+            "label": "Mark squares to export",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
             "id": "editor:export_width",
             "label": "Export width",
             "keys": [],
