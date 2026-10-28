@@ -222,10 +222,11 @@ TEST_CASE(
                     > 0);
                 // Its three mounts in a row, and two rings of free mounts around them.
                 const auto& grid = body<ec::grid_body>(part(screen, "vehicle:grid"));
-                CHECK(grid.cols == 7);
-                CHECK(grid.rows == 5);
+                // Room to build around its three mounts in a row, the vehicle in the middle.
+                CHECK(grid.cols == 21);
+                CHECK(grid.rows == 15);
                 CHECK(grid.role == "canvas");
-                CHECK(cell(screen, "mount:-1,0").at == ec::grid_point{2, 2});
+                CHECK(cell(screen, "mount:-1,0").at == ec::grid_point{9, 7});
                 REQUIRE(cell(screen, "mount:1,0").looks.size() == 3);
                 CHECK(grid.looks.at(cell(screen, "mount:1,0").looks.back()).kind == "vehicle_part");
                 CHECK(cell(screen, "mount:2,0").looks.empty());
