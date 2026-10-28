@@ -38,6 +38,7 @@
 #    include "player_activity.h"
 #    include "point.h"
 #    include "state_helpers.h"
+#    include "translations.h"
 #    include "type_id.h"
 #    include "world.h"
 #    include "worldfactory.h"
@@ -4651,7 +4652,9 @@ TEST_CASE(
             case 4:
                 return invoke("editor:catalog_pick", {.row = "entry:forest_thick"});
             case 5:
-                CHECK(stat(screen, "terrain") == "forest_thick");
+                // The terrain is named as the game names it, its id telling it from the others.
+                CHECK(stat(screen, "terrain")
+                      == oter_str_id("forest_thick")->get_name() + " (forest_thick)");
                 return invoke("editor:paint", {.row = "square:2,0"});
             case 6:
                 CHECK(shown(screen, "square:2,0") == oter_str_id("forest_thick")->get_name());
@@ -4832,15 +4835,24 @@ TEST_CASE(
         switch (step++) {
             case 0:
                 return invoke("editor:open", {.text = file.path.string()});
-            case 1:
-                CHECK(body<ec::form_body>(part(screen, "editor:connection")).fields.front().value
-                      == "local_road");
+            case 1: {
+                const auto& field =
+                    body<ec::form_body>(part(screen, "editor:connection")).fields.front();
+                CHECK(field.value == "local_road");
+                // The connections to pick from are named by the terrain they lay.
+                CHECK(field.type == "select");
+                const auto road =
+                    std::ranges::find(field.options, "local_road", &ec::form_option::id);
+                REQUIRE(road != field.options.end());
+                CHECK(road->label == _(oter_type_str_id("road")->name));
                 return invoke("editor:tool", {.row = "tool:connect"});
+            }
             case 2:
                 return invoke("editor:paint", {.row = "square:-1,0"});
             case 3:
                 CHECK(shown(screen, "square:-1,0").faded);
-                CHECK(shown(screen, "square:-1,0").label.find("local_road") != std::string::npos);
+                CHECK(shown(screen, "square:-1,0").label
+                      == _(oter_type_str_id("road")->name) + " connection");
                 return invoke("editor:save");
             case 4: {
                 const auto saved = connections();
