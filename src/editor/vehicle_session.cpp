@@ -247,12 +247,19 @@ auto place_clear(
     return std::unexpected(_("There is no room for the vehicle near you."));
 }
 
-/// Where `veh` stands from the avatar, as "8 squares east".
-auto from_avatar(const vehicle& veh) -> std::string {
+/// What the editor says after it spawned or, `pasted`, pasted `veh`: its name, how far and which
+/// way it stands from the avatar.
+auto placed_sentence(const bool pasted, const vehicle& veh) -> std::string {
     const auto here = get_avatar().bub_pos().xy().raw();
     const auto at = veh.bub_ms_location().xy().raw();
-    return string_format(
-        _("%d squares %s"), rl_dist(here, at), direction_name(direction_from(here, at)));
+    const auto distance = rl_dist(here, at);
+    const auto* const format =
+        pasted
+            ? vgettext("Pasted %1$s %2$d square %3$s of you.",
+                       "Pasted %1$s %2$d squares %3$s of you.", distance)
+            : vgettext("Spawned %1$s %2$d square %3$s of you.",
+                       "Spawned %1$s %2$d squares %3$s of you.", distance);
+    return string_format(format, veh.name, distance, direction_name(direction_from(here, at)));
 }
 
 auto copied_vehicle_file() -> std::filesystem::path {
@@ -877,7 +884,7 @@ struct session {
         if (!placed) {
             notice = placed.error();
         } else {
-            said = string_format(_("Pasted %s %s of you."), (*placed)->name, from_avatar(**placed));
+            said = placed_sentence(true, **placed);
         }
     }
 
@@ -1103,7 +1110,7 @@ struct session {
             notice = spawned.error();
             return false;
         }
-        said = string_format(_("Spawned %s %s of you."), (*spawned)->name, from_avatar(**spawned));
+        said = placed_sentence(false, **spawned);
         return true;
     }
 
