@@ -1202,6 +1202,45 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "picking a legend row puts that symbol's mapping in the legend form",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file(nlohmann::ordered_json{{"furniture", {{"C", "f_chair"}}}});
+    const auto form = [](const ec::screen_view& screen) {
+        return body<ec::form_body>(part(screen, "editor:mapping")).fields
+             | std::views::transform(&ec::form_field::value) | std::ranges::to<std::vector>();
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                return invoke("editor:mapping_set", {.row = "layer", .text = "monsters"});
+            case 2:
+                return invoke(
+                    "editor:mapping_set", {.row = "value", .text = R"({"monster":"mon_zombie"})"});
+            case 3:
+                return invoke("editor:symbol", {.row = "symbol:#"});
+            case 4:
+                CHECK(form(screen) == std::vector<std::string>{"#", "terrain", "t_wall"});
+                return invoke("editor:symbol", {.row = "symbol:C"});
+            case 5:
+                CHECK(form(screen) == std::vector<std::string>{"C", "furniture", "f_chair"});
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 6);
+}
+
+TEST_CASE(
     "the editor's legend form adds, changes and removes a mapping as undo steps",
     "[editor_session][engine_client_component]") {
     const auto guard = screen_guard{};
