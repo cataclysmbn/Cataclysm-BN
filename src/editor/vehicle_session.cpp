@@ -1212,7 +1212,6 @@ auto parts_view(const session& state) -> ec::screen_view {
          .title = state.live ? state.live->name
                              : state.prototype().value("name", state.prototype().value("id", "")),
          .stats = std::move(status)}));
-    if (veh) { parts.push_back(ec::panel({.id = performance_id, .stats = design_stats(*veh)})); }
     if (!state.live && !state.built.messages.empty()) {
         parts.push_back(ec::list(
             {.id = problems_id,
@@ -1506,6 +1505,8 @@ auto parts_view(const session& state) -> ec::screen_view {
     };
     parts.push_back(
         ec::tabs({.id = tools_id, .tabs = std::move(tabs), .select = tool_id, .child = tool()}));
+    // The vehicle's figures, under the design they follow from.
+    if (veh) { parts.push_back(ec::panel({.id = performance_id, .stats = design_stats(*veh)})); }
     parts.push_back(installable());
     affordances.push_back(
         ec::invoke_affordance({.id = tool_id, .label = _("Tab"), .args = row_of(tools_id)}));
