@@ -1241,3 +1241,322 @@ TEST_CASE(
     editor::run_vehicle_editor();
     CHECK(step >= 5);
 }
+
+namespace {
+/// Whether a part of the screen offers `entry`: a part's own affordance, a row's or a cell's.
+auto offered_by_part(const ec::component& value, const ec::affordance& entry) -> bool {
+    const auto by_cell = [&] {
+        const auto* const grid = std::get_if<ec::grid_body>(&value.body);
+        return grid && std::ranges::contains(grid->cells, entry.id, &ec::grid_cell::affordance);
+    };
+    return std::ranges::contains(value.affordances, entry.id) || by_cell()
+        || (entry.args.row && entry.args.row->component_id == value.id)
+        || std::ranges::any_of(value.children, [&](const ec::component& child) {
+               return offered_by_part(child, entry);
+           });
+}
+auto labels(const ec::screen_view& screen, const std::string& id) -> std::vector<std::string> {
+    return rows(screen, id) | std::views::transform(&ec::row::label)
+         | std::ranges::to<std::vector>();
+}
+auto notice_of(const ec::screen_view& screen) -> std::string {
+    const auto* const found = ec::find_component(*screen.root, "vehicle:notice");
+    return found ? body<ec::text_body>(*found).markup : std::string{};
+}
+} // namespace
+
+TEST_CASE(
+    "the vehicle editor keeps the file on the status line, the vehicle's performance in the "
+    "inspector and its canvas tools in the tools column",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1: {
+                CHECK(slot_of(screen, "vehicle:document") == "status");
+                CHECK(body<ec::panel_body>(part(screen, "vehicle:document")).title == "Bicycle");
+                CHECK(stat(screen, "file").value.starts_with("data/json/vehicles/"));
+                CHECK(stat(screen, "saved").value == "Yes");
+                CHECK(stat(screen, "mount").value == "0,0");
+                // The status line holds no performance figures; the inspector does.
+                CHECK_FALSE(std::ranges::contains(
+                    body<ec::panel_body>(part(screen, "vehicle:document")).stats, "mass",
+                    &ec::panel_stat::key));
+                CHECK(slot_of(screen, "vehicle:grid") == "canvas");
+                CHECK(slot_of(screen, "vehicle:performance") == "inspector");
+                CHECK(std::ranges::contains(
+                    body<ec::panel_body>(part(screen, "vehicle:performance")).stats, "mass",
+                    &ec::panel_stat::key));
+                CHECK(slot_of(screen, "vehicle:canvas_tools") == "tools");
+                const auto& tools = rows(screen, "vehicle:canvas_tools");
+                CHECK((tools | std::views::transform(&ec::row::id) | std::ranges::to<std::vector>())
+                      == std::vector<std::string>{
+                          "canvas_tool:select", "canvas_tool:install", "canvas_tool:remove"});
+                CHECK(tools.front().selected);
+                CHECK((tools | std::views::transform(&ec::row::hotkey)
+                       | std::ranges::to<std::vector>())
+                      == std::vector<std::string>{"s", "i", "e"});
+                // The design tabs say what they hold.
+                CHECK(
+                    (body<ec::tabs_body>(part(screen, "vehicle:tools")).tabs
+                     | std::views::transform(&ec::tab_entry::label)
+                     | std::ranges::to<std::vector>())
+                    == std::vector<std::string>{
+                        "Parts here", "Part settings", "Name and flags", "Items here", "Test spawn",
+                        "Raw JSON"});
+                // Every action that names no row is in a menu, and the menus are in order.
+                for (const auto& entry : screen.affordances) {
+                    if (!entry.role.empty()) { continue; }
+                    INFO(entry.id);
+                    CHECK((!entry.group.empty() || offered_by_part(*screen.root, entry)));
+                }
+                auto menus = std::vector<std::string>{};
+                for (const auto& entry : screen.affordances) {
+                    if (!entry.group.empty() && !std::ranges::contains(menus, entry.group)) {
+                        menus.push_back(entry.group);
+                    }
+                }
+                CHECK(menus == std::vector<std::string>{"File", "Edit", "View", "World"});
+                CHECK(affordance(screen, "vehicle:new").keys == std::vector<std::string>{"CTRL+N"});
+                CHECK(
+                    affordance(screen, "vehicle:save_as").keys == std::vector<std::string>{"F12"});
+                CHECK(affordance(screen, "vehicle:show:mount").group == "View");
+                CHECK(
+                    affordance(screen, "vehicle:show:json").keys == std::vector<std::string>{"6"});
+                CHECK(affordance(screen, "vehicle:tool_install").group == "Edit");
+                CHECK(affordance(screen, "vehicle:tool_install").keys
+                      == std::vector<std::string>{"i"});
+                CHECK(affordance(screen, "vehicle:spawn").keys == std::vector<std::string>{"F5"});
+                // The top part of the mount is picked, and Remove names it.
+                const auto& stack = rows(screen, "vehicle:stack");
+                REQUIRE_FALSE(stack.empty());
+                CHECK(stack.back().selected);
+                CHECK(affordance(screen, "vehicle:remove").label == "Remove " + stack.back().label);
+                CHECK(affordance(screen, "vehicle:remove").keys
+                      == std::vector<std::string>{"DELETE"});
+                CHECK(affordance(screen, "vehicle:remove").group == "Edit");
+                CHECK(std::ranges::contains(
+                    part(screen, "vehicle:stack").affordances, std::string("vehicle:remove")));
+                return invoke("vehicle:mount", {.row = "mount:1,0"});
+            }
+            case 2:
+                // The select tool only moves the cursor.
+                CHECK(stat(screen, "mount").value == "1,0");
+                CHECK(stat(screen, "saved").value == "Yes");
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 3);
+}
+
+TEST_CASE(
+    "the vehicle editor installs the chosen part where the grid is clicked and says why a mount "
+    "refuses it",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                return invoke("vehicle:part_filter", {.text = "headlight"});
+            case 2:
+                // Choosing a part from the palette installs nothing yet.
+                CHECK(body<ec::list_body>(part(screen, "vehicle:parts")).activate
+                      == "vehicle:choose");
+                return invoke("vehicle:choose", {.row = "vpart:headlight"});
+            case 3:
+                CHECK(stat(screen, "saved").value == "Yes");
+                CHECK(row(screen, "vehicle:canvas_tools", "canvas_tool:install").selected);
+                CHECK(row(screen, "vehicle:canvas_tools", "canvas_tool:install").label
+                      == "Install headlight");
+                CHECK(row(screen, "vehicle:parts", "vpart:headlight").selected);
+                // East of the rear wheel nothing holds a headlight up.
+                return invoke("vehicle:mount", {.row = "mount:2,0"});
+            case 4:
+                CHECK(notice_of(screen).find("frame") != std::string::npos);
+                CHECK(stat(screen, "saved").value == "Yes");
+                CHECK(rows(screen, "vehicle:stack").empty());
+                return invoke("vehicle:mount", {.row = "mount:1,0"});
+            case 5:
+                CHECK(notice_of(screen).empty());
+                CHECK(labels(screen, "vehicle:stack").back() == "headlight");
+                CHECK(rows(screen, "vehicle:stack").back().selected);
+                CHECK(affordance(screen, "vehicle:remove").label == "Remove headlight");
+                // A second headlight on the same mount: the game's rule, in words.
+                return invoke("vehicle:mount", {.row = "mount:1,0"});
+            case 6:
+                CHECK(notice_of(screen) == "This mount already has headlight.");
+                CHECK(std::ranges::count(labels(screen, "vehicle:stack"), "headlight") == 1);
+                return invoke("vehicle:tool_remove");
+            case 7:
+                CHECK(row(screen, "vehicle:canvas_tools", "canvas_tool:remove").selected);
+                return invoke("vehicle:mount", {.row = "mount:1,0"});
+            case 8:
+                // The remove tool takes the mount's top part off.
+                CHECK_FALSE(std::ranges::contains(labels(screen, "vehicle:stack"), "headlight"));
+                CHECK(stat(screen, "saved").value == "Yes");
+                CHECK(affordance(screen, "vehicle:undo").enabled);
+                return invoke("vehicle:undo");
+            case 9:
+                CHECK(labels(screen, "vehicle:stack").back() == "headlight");
+                return invoke("vehicle:undo");
+            case 10:
+                CHECK(stat(screen, "saved").value == "Yes");
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 11);
+}
+
+TEST_CASE(
+    "the vehicle editor removes and reorders the picked part, which its buttons name",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                return invoke("vehicle:mount", {.row = "mount:1,0"});
+            case 2:
+                // The frame holds the rest: picking it and removing it is refused, saying why.
+                return invoke("vehicle:pick", {.row = rows(screen, "vehicle:stack").front().id});
+            case 3:
+                CHECK(rows(screen, "vehicle:stack").front().selected);
+                CHECK(affordance(screen, "vehicle:remove").label
+                      == "Remove " + rows(screen, "vehicle:stack").front().label);
+                CHECK(affordance(screen, "vehicle:earlier").label
+                      == "Move " + rows(screen, "vehicle:stack").front().label + " up");
+                CHECK_FALSE(affordance(screen, "vehicle:earlier").enabled);
+                return invoke("vehicle:remove");
+            case 4:
+                CHECK_FALSE(notice_of(screen).empty());
+                CHECK(stat(screen, "saved").value == "Yes");
+                return invoke("vehicle:later");
+            case 5: {
+                // The moved part stays picked.
+                const auto& stack = rows(screen, "vehicle:stack");
+                CHECK(stack[1].selected);
+                CHECK(affordance(screen, "vehicle:earlier").enabled);
+                return invoke("vehicle:undo");
+            }
+            case 6:
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 7);
+}
+
+TEST_CASE(
+    "the vehicle editor starts a new vehicle in a file of the player's mods", "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto made =
+        std::filesystem::path(PATH_INFO::user_moddir()) / "vehicle_editor_new" / "go_cart.json";
+    std::filesystem::remove_all(made.parent_path());
+    const auto cleanup = on_out_of_scope([&] { std::filesystem::remove_all(made.parent_path()); });
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                CHECK(affordance(screen, "vehicle:new").group == "File");
+                return invoke("vehicle:new", {.text = "/tmp/go_cart.json"});
+            case 1:
+                CHECK(notice_of(screen).find("your mods") != std::string::npos);
+                return invoke("vehicle:new", {.text = made.string()});
+            case 2:
+                CHECK(body<ec::panel_body>(part(screen, "vehicle:document")).title == "go_cart");
+                CHECK(stat(screen, "saved").value == "Yes");
+                CHECK(std::filesystem::exists(made));
+                return invoke("vehicle:part_filter", {.text = "headlight"});
+            case 3:
+                return invoke("vehicle:choose", {.row = "vpart:headlight"});
+            case 4:
+                return invoke("vehicle:mount", {.row = "mount:0,0"});
+            case 5:
+                // The first part of a vehicle is its frame.
+                CHECK(notice_of(screen).find("frame") != std::string::npos);
+                return invoke("vehicle:part_filter", {.text = "xlframe_vertical"});
+            case 6:
+                return invoke("vehicle:choose", {.row = "vpart:xlframe_vertical"});
+            case 7:
+                return invoke("vehicle:mount", {.row = "mount:0,0"});
+            case 8:
+                CHECK(notice_of(screen).empty());
+                CHECK(rows(screen, "vehicle:stack").size() == 1);
+                return invoke("vehicle:save");
+            case 9:
+                CHECK(stat(screen, "saved").value == "Yes");
+                // A file that is there already is not overwritten.
+                return invoke("vehicle:new", {.text = made.string()});
+            case 10:
+                CHECK(notice_of(screen) == "That file already exists; nothing was saved.");
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 11);
+    const auto saved = nlohmann::ordered_json::parse(read_file(made));
+    REQUIRE(saved.size() == 1);
+    CHECK(saved[0]["id"] == "go_cart");
+    CHECK(saved[0]["parts"].dump().find("xlframe_vertical") != std::string::npos);
+}
+
+TEST_CASE("the vehicle editor turns the spawn facing a quarter at a time", "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto facing = [](const ec::screen_view& screen) {
+        return body<ec::form_body>(part(screen, "vehicle:spawn_form")).fields.front().value;
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                CHECK(affordance(screen, "vehicle:turn_cw").keys == std::vector<std::string>{"r"});
+                CHECK(affordance(screen, "vehicle:turn_ccw").keys == std::vector<std::string>{"R"});
+                return invoke("vehicle:turn_cw");
+            case 2:
+                // The facing shows at once.
+                CHECK(body<ec::tabs_body>(part(screen, "vehicle:tools")).tabs[4].selected);
+                CHECK(facing(screen) == "90");
+                return invoke("vehicle:turn_ccw");
+            case 3:
+                CHECK(facing(screen) == "0");
+                return invoke("vehicle:turn_ccw");
+            case 4:
+                CHECK(facing(screen) == "270");
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 5);
+}
