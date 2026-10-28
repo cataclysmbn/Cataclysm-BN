@@ -235,7 +235,9 @@ auto names_in(const nlohmann::ordered_json& name) -> std::vector<std::string> {
 
 auto entry_name(const nlohmann::ordered_json& value) -> std::string {
     for (const auto* const key : {"om_terrain", "nested_mapgen_id", "update_mapgen_id", "id"}) {
-        if (value.contains(key)) { return join(names_in(value[key]), ", "); }
+        if (!value.contains(key)) { continue; }
+        const auto names = join(names_in(value[key]), ", ");
+        return names.empty() ? _("(unnamed)") : names;
     }
     return _("(unnamed)");
 }
