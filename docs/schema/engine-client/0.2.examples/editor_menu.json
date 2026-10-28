@@ -1168,7 +1168,7 @@
               "fields": [
                 {
                   "id": "path",
-                  "label": "File",
+                  "label": "Path",
                   "value": "profile/mods/editor_menu_scenario/chunk.json",
                   "type": "text"
                 }
@@ -3510,7 +3510,7 @@
               "fields": [
                 {
                   "id": "path",
-                  "label": "New file",
+                  "label": "Path",
                   "value": "",
                   "type": "text"
                 },
@@ -4268,7 +4268,7 @@
               "CTRL+C"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Mark squares with the Select tool first.",
             "expect": "screen",
             "group": "Edit"
           },
@@ -4279,7 +4279,7 @@
               "CTRL+X"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Mark squares with the Select tool first.",
             "expect": "screen",
             "group": "Edit"
           },
@@ -4290,7 +4290,7 @@
               "z"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Copy or cut squares first.",
             "expect": "screen",
             "group": "Edit"
           },
@@ -4301,7 +4301,7 @@
               "x"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Copy or cut squares first.",
             "expect": "screen",
             "group": "Edit"
           },
@@ -4312,7 +4312,7 @@
               "y"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Copy or cut squares first.",
             "expect": "screen",
             "group": "Edit"
           },
@@ -4388,7 +4388,7 @@
             "label": "Take back stamp",
             "keys": [],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Nothing is stamped.",
             "expect": "screen",
             "group": "World"
           },
