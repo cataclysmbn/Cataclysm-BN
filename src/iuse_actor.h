@@ -415,12 +415,18 @@ class place_monster_iuse : public iuse_actor
         std::set<skill_id> skills;
         /** The monster will be spawned in as a pet. False by default. Can be empty. */
         bool is_pet = false;
+        /// If set, failing to program the monster turns the item into this instead of
+        /// spawning a hostile monster.
+        itype_id failure_result = itype_id::NULL_ID();
+        /// Shown when programming failed and the item turned into `failure_result`. Can be empty.
+        std::string failure_msg;
 
         place_monster_iuse() : iuse_actor( "place_monster" ) { }
         ~place_monster_iuse() override = default;
         void load( const JsonObject &obj ) override;
         int use( player &, item &, bool, const tripoint_bub_ms & ) const override;
         std::unique_ptr<iuse_actor> clone() const override;
+        auto check() const -> std::string override;
 };
 
 /**

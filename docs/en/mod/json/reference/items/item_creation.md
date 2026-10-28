@@ -958,6 +958,8 @@ All object defined use actions support the following two types.
     "difficulty": 4, // difficulty for programming it (manhacks have 4, turrets 6, ...)
     "hostile_msg": "It's hostile!", // (optional) message when programming the monster failed and it's hostile.
     "friendly_msg": "Good!", // (optional) message when the monster is programmed properly and it's friendly.
+    "failure_result": "broken_manhack", // (optional) if programming fails, the item turns into this instead of spawning a hostile monster.
+    "failure_msg": "It fizzles!", // (optional) message when programming failed and the item turned into failure_result.
     "place_randomly": true, // if true: places the monster randomly around the player, if false: let the player decide where to put it (default: false)
     "skill1": "throw", // Id of a skill, higher skill level means more likely to place a friendly monster.
     "skill2": "unarmed", // Another id, just like the skill1. Both entries are optional.

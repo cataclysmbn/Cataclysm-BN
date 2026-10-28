@@ -1217,12 +1217,22 @@ void place_monster_iuse::load( const JsonObject &obj )
     obj.read( "moves", moves );
     obj.read( "place_randomly", place_randomly );
     obj.read( "is_pet", is_pet );
+    obj.read( "failure_result", failure_result );
+    obj.read( "failure_msg", failure_msg );
     if( obj.has_array( "skills" ) ) {
         JsonArray skills_ja = obj.get_array( "skills" );
         for( JsonValue s : skills_ja ) {
             skills.emplace( s.get_string() );
         }
     }
+}
+
+auto place_monster_iuse::check() const -> std::string
+{
+    if( !failure_result.is_null() && !failure_result.is_valid() ) {
+        return string_format( "invalid failure_result %s\n", failure_result.str() );
+    }
+    return "";
 }
 
 int place_monster_iuse::use( player &p, item &it, bool, const tripoint_bub_ms &pos ) const
@@ -1236,6 +1246,30 @@ int place_monster_iuse::use( player &p, item &it, bool, const tripoint_bub_ms &p
         spawn_id = mtype_id( it.get_var( "place_monster_override" ) );
         // currently cant use this to tame an otherwise untameable animal
         diff_mod = 999;
+    }
+
+    const auto skill_offset = std::ranges::fold_left( skills, 0, [&p]( int sum, const skill_id & sk ) {
+        return sum + p.get_skill_level( sk );
+    } );
+    /** @EFFECT_INT increases chance of a placed turret being friendly */
+    const auto failed_roll = rng( 0, p.int_cur ) + skill_offset <
+                             rng( 0, 2 * ( difficulty * diff_mod ) );
+    /** Full-on pets also auto-succeed if we've already succeeded before deactivating it */
+    const auto programming_failed = ( failed_roll && !it.has_flag( flag_SPAWN_FRIENDLY ) ) ||
+                                    it.has_flag( flag_SPAWN_HOSTILE );
+
+    if( programming_failed && !failure_result.is_null() ) {
+        if( !it.is_active() ) {
+            p.moves -= moves;
+        }
+        if( failure_msg.empty() ) {
+            p.add_msg_if_player( m_bad, _( "The %s sparks and goes dead." ), it.tname() );
+        } else {
+            p.add_msg_if_player( m_bad, "%s", _( failure_msg ) );
+        }
+        it.deactivate();
+        it.convert( failure_result );
+        return 0;
     }
 
     if( it.has_flag( flag_RADIO_MOD ) ) {
@@ -1323,14 +1357,7 @@ int place_monster_iuse::use( player &p, item &it, bool, const tripoint_bub_ms &p
             }
         }
     }
-    int skill_offset = 0;
-    for( const skill_id &sk : skills ) {
-        skill_offset += p.get_skill_level( sk );
-    }
-    /** @EFFECT_INT increases chance of a placed turret being friendly */
-    /** Full-on pets also auto-succeed if we've already succeeded before deactivating it */
-    if( ( rng( 0, p.int_cur ) + skill_offset < rng( 0, 2 * ( difficulty * diff_mod ) ) &&
-          !it.has_flag( flag_SPAWN_FRIENDLY ) ) || it.has_flag( flag_SPAWN_HOSTILE ) ) {
+    if( programming_failed ) {
         if( hostile_msg.empty() ) {
             p.add_msg_if_player( m_bad, _( "The %s scans you and makes angry beeping noises!" ),
                                  newmon.name() );
