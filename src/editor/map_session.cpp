@@ -488,6 +488,18 @@ auto session::roll_loot_in(const selection& squares) -> void {
          .runs = loot_runs});
     if (rolled) {
         loot = *rolled;
+        const auto count =
+            (std::abs(squares.to.x - squares.from.x) + 1)
+            * (std::abs(squares.to.y - squares.from.y) + 1);
+        const auto where =
+            count == 1 ? std::string(_("the square marked"))
+                       : string_format(_("the %d squares marked"), count);
+        status =
+            loot->empty()
+                ? string_format(_("Nothing can spawn in %s."), where)
+                : string_format(vgettext("%1$d kind of item can spawn in %2$s.",
+                                         "%1$d kinds of items can spawn in %2$s.", loot->size()),
+                                loot->size(), where);
     } else {
         notice = rolled.error();
     }
