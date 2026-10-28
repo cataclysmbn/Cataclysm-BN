@@ -2340,8 +2340,18 @@ TEST_CASE(
             case 7:
                 CHECK(notice_of(screen).empty());
                 CHECK(field(screen, "fuel").value == "25");
-                return invoke("vehicle:show:mount");
+                return invoke("vehicle:live_set", {.row = "fuel", .text = "0"});
             case 8:
+                CHECK(notice_of(screen).empty());
+                CHECK(field(screen, "fuel").value == "0");
+                // An emptied turret loads the rounds it held again.
+                return invoke("vehicle:live_set", {.row = "fuel", .text = "10"});
+            case 9:
+                CHECK(notice_of(screen).empty());
+                CHECK(field(screen, "fuel").value == "10");
+                CHECK(field(screen, "fuel_type").value == "556");
+                return invoke("vehicle:show:mount");
+            case 10:
                 CHECK(gun(screen).columns.size() == 2);
                 return act("QUIT");
             default:
@@ -2350,7 +2360,7 @@ TEST_CASE(
         }
     });
     editor::run_vehicle_editor();
-    CHECK(step == 9);
+    CHECK(step == 11);
 }
 
 TEST_CASE(
