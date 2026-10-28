@@ -3090,4 +3090,59 @@ TEST_CASE(
     CHECK(step == 4);
 }
 
+TEST_CASE(
+    "the vehicle editor says what an install or removal did and how to fix one it refuses",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto status = [](const ec::screen_view& screen) {
+        const auto* const found = ec::find_component(*screen.root, "vehicle:status");
+        if (found == nullptr) { return std::string{}; }
+        CHECK(body<ec::text_body>(*found).tone == "good");
+        return body<ec::text_body>(*found).markup;
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                // The names of the parts on a square, bottom up, for a client to show on hover.
+                CHECK(cell(screen, "mount:1,0").label.starts_with("extra light frame, "));
+                CHECK(cell(screen, "mount:2,0").label.empty());
+                return invoke("vehicle:choose", {.row = "vpart:headlight"});
+            case 2:
+                return invoke("vehicle:mount", {.row = "mount:2,0"});
+            case 3:
+                CHECK(notice_of(screen).ends_with("install a frame here first."));
+                CHECK(status(screen).empty());
+                return invoke("vehicle:mount", {.row = "mount:1,0"});
+            case 4:
+                // The refusal gives way to what the install did.
+                CHECK(notice_of(screen).empty());
+                CHECK(status(screen) == "Installed headlight at 1,0.");
+                return invoke("vehicle:tool_remove");
+            case 5:
+                return invoke("vehicle:mount", {.row = "mount:1,0"});
+            case 6:
+                CHECK(status(screen) == "Removed headlight at 1,0.");
+                return invoke("vehicle:part_filter", {.text = "wheel"});
+            case 7:
+                return invoke("vehicle:choose", {.row = "vpart:wheel"});
+            case 8:
+                return invoke("vehicle:mount", {.row = "mount:0,0"});
+            case 9:
+                // A part another must hold up names that part and what to do.
+                CHECK(notice_of(screen).contains("wheel hub assembly"));
+                CHECK(notice_of(screen).ends_with("install one here first."));
+                CHECK(status(screen).empty());
+                return act("QUIT");
+            default:
+                return answer("Leave without saving");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step >= 10);
+}
+
 #endif // CATA_MCP
