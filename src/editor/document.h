@@ -84,6 +84,8 @@ public:
     auto redo() -> bool;
     auto can_undo() const -> bool { return !done_.empty(); }
     auto can_redo() const -> bool { return !undone_.empty(); }
+    /// How many steps are done or undone.
+    auto step_count() const -> std::size_t { return done_.size() + undone_.size(); }
     /// The steps done, oldest first, then the steps undone, the next redo first.
     auto history() const -> std::vector<document_step>;
     /// How many steps are done now.

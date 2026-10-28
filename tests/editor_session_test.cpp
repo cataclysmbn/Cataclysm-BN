@@ -6088,8 +6088,10 @@ TEST_CASE(
                 return invoke("editor:open", {.text = file.path.string()});
             case 1:
                 CHECK(tab(screen, "tool:point").enabled);
-                return invoke("editor:object", {.row = "object:2"});
+                return invoke("editor:tool", {.row = "tool:select"});
             case 2:
+                return invoke("editor:object", {.row = "object:2"});
+            case 3:
                 // The update mapgen only places chunks: there is nothing to draw, and it says so.
                 CHECK_FALSE(tab(screen, "tool:point").enabled);
                 CHECK(tab(screen, "tool:point").denial.find("rows") != std::string::npos);
@@ -6098,6 +6100,10 @@ TEST_CASE(
                 // The tool shown is one that works on it.
                 CHECK(tab(screen, "tool:placements").selected);
                 CHECK_FALSE(tab(screen, "tool:point").selected);
+                return invoke("editor:object", {.row = "object:0"});
+            case 4:
+                // Back on rows, the tool the player had is back.
+                CHECK(tab(screen, "tool:select").selected);
                 return act("QUIT");
             default:
                 FAIL("the editor outlived its exit");
@@ -6105,7 +6111,7 @@ TEST_CASE(
         }
     });
     editor::run_editor_session();
-    CHECK(step == 3);
+    CHECK(step == 5);
     editor::reset_editor_session();
 }
 
@@ -6118,6 +6124,15 @@ TEST_CASE(
     const auto notice = [](const ec::screen_view& screen) {
         const auto* const found = ec::find_component(*screen.root, "editor:notice");
         return found ? body<ec::text_body>(*found).markup : std::string();
+    };
+    const auto status = [](const ec::screen_view& screen) {
+        const auto* const found = ec::find_component(*screen.root, "editor:status");
+        return found ? body<ec::text_body>(*found).markup : std::string();
+    };
+    const auto stat = [](const ec::screen_view& screen, const std::string& key) {
+        const auto& stats = body<ec::panel_body>(part(screen, "editor:document")).stats;
+        const auto found = std::ranges::find(stats, key, &ec::panel_stat::key);
+        return found == stats.end() ? std::string{} : found->value;
     };
 
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
@@ -6135,10 +6150,24 @@ TEST_CASE(
                 const auto& toggle = affordance(screen, "editor:apply_on_save");
                 CHECK_FALSE(toggle.enabled);
                 CHECK(toggle.denial == affordance(screen, "editor:apply").denial);
-                return invoke("editor:save");
+                return invoke("editor:apply_on_save");
             }
             case 4:
+                // The toggle is turned away as it is shown, and stays as it was.
+                CHECK(notice(screen) == affordance(screen, "editor:apply").denial);
+                CHECK(stat(screen, "apply_on_save") == "On");
+                return invoke("editor:mapping_set", {.row = "symbol", .text = "x"});
+            case 5:
+                return invoke("editor:mapping_set", {.row = "value", .text = "t_floor"});
+            case 6:
+                return invoke("editor:mapping_apply");
+            case 7:
+                REQUIRE(affordance(screen, "editor:save").enabled);
+                return invoke("editor:save");
+            case 8:
                 CHECK(notice(screen).empty());
+                CHECK(status(screen).find("generates") == std::string::npos);
+                CHECK_FALSE(affordance(screen, "editor:save").enabled);
                 return act("QUIT");
             default:
                 FAIL("the editor outlived its exit");
@@ -6146,7 +6175,7 @@ TEST_CASE(
         }
     });
     editor::run_editor_session();
-    CHECK(step == 5);
+    CHECK(step == 9);
     editor::reset_editor_session();
 }
 
@@ -6203,11 +6232,42 @@ TEST_CASE(
             case 3:
                 // Picking a tool changes nothing the refusal was about.
                 CHECK(notice(screen) == refused);
-                return invoke("editor:extract_palette", {.text = "editor_session_test_kept"});
+                return invoke("editor:mapping_apply");
             case 4:
+                // A new refusal replaces the old one.
+                CHECK_FALSE(notice(screen).empty());
+                CHECK(notice(screen) != refused);
+                return invoke("editor:mapping_set", {.row = "symbol", .text = "x"});
+            case 5:
+                // Changing what the form says is acting on the refusal.
+                CHECK(notice(screen).empty());
+                return invoke("editor:extract_palette", {.text = "cabin_palette"});
+            case 6:
+                CHECK(notice(screen) == refused);
+                return invoke("editor:extract_palette", {.text = "editor_session_test_kept"});
+            case 7:
+                CHECK(notice(screen).empty());
+                return invoke("editor:new_set", {.row = "path", .text = file.path.string()});
+            case 8:
+                return invoke("editor:new_apply");
+            case 9:
+                REQUIRE_FALSE(notice(screen).empty());
+                return invoke("editor:new_set", {.row = "path", .text = "elsewhere.json"});
+            case 10:
+                // The field that was refused is changed, so its refusal goes.
                 CHECK(notice(screen).empty());
                 return invoke("editor:undo");
-            case 5:
+            case 11: {
+                auto out = std::ofstream(file.path, std::ios::binary | std::ios::app);
+                out << "\n";
+                return invoke("editor:catalog_page", {.count = 0});
+            }
+            case 12:
+                REQUIRE(notice(screen).find("changed on disk") != std::string::npos);
+                return invoke("editor:open", {.text = file.path.string()});
+            case 13:
+                // Opening the file again shows it as it is, so the notice about it goes.
+                CHECK(notice(screen).empty());
                 return act("QUIT");
             default:
                 FAIL("the editor outlived its exit");
@@ -6215,7 +6275,7 @@ TEST_CASE(
         }
     });
     editor::run_editor_session();
-    CHECK(step == 6);
+    CHECK(step == 14);
     editor::reset_editor_session();
 }
 
