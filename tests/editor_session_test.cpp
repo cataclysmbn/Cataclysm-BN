@@ -6088,8 +6088,10 @@ TEST_CASE(
                 return invoke("editor:open", {.text = file.path.string()});
             case 1:
                 CHECK(tab(screen, "tool:point").enabled);
-                return invoke("editor:object", {.row = "object:2"});
+                return invoke("editor:tool", {.row = "tool:select"});
             case 2:
+                return invoke("editor:object", {.row = "object:2"});
+            case 3:
                 // The update mapgen only places chunks: there is nothing to draw, and it says so.
                 CHECK_FALSE(tab(screen, "tool:point").enabled);
                 CHECK(tab(screen, "tool:point").denial.find("rows") != std::string::npos);
@@ -6098,6 +6100,10 @@ TEST_CASE(
                 // The tool shown is one that works on it.
                 CHECK(tab(screen, "tool:placements").selected);
                 CHECK_FALSE(tab(screen, "tool:point").selected);
+                return invoke("editor:object", {.row = "object:0"});
+            case 4:
+                // Back on rows, the tool the player had is back.
+                CHECK(tab(screen, "tool:select").selected);
                 return act("QUIT");
             default:
                 FAIL("the editor outlived its exit");
@@ -6105,7 +6111,7 @@ TEST_CASE(
         }
     });
     editor::run_editor_session();
-    CHECK(step == 3);
+    CHECK(step == 5);
     editor::reset_editor_session();
 }
 
