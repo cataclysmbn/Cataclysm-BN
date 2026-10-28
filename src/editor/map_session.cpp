@@ -415,8 +415,10 @@ auto session::open_mapgen_of(const std::string& name) -> void {
     const auto opened =
         oter_str_id(name).is_valid() || mapgen_id == name ? std::string{}
         : named.named > 1
-            ? string_format(_("%1$d overmap terrains are named %2$s; opened %3$s."), named.named,
-                            name, mapgen_id)
+            ? string_format(
+                  vgettext("%1$d overmap terrain is named %2$s; opened %3$s.",
+                           "%1$d overmap terrains are named %2$s; opened %3$s.", named.named),
+                  named.named, name, mapgen_id)
             : string_format(_("Opened %1$s, the mapgen of %2$s."), mapgen_id, name);
     const auto source = mapgen_source_of(mapgen_id);
     if (!source) {
