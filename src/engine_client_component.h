@@ -248,6 +248,9 @@ struct grid_cell {
     std::vector<int> looks = {};
     /// Whether it shows another level, which a client draws faded.
     bool faded = false;
+    /// Why the tool in hand cannot act on the cell, which a client draws dimmed and shows on hover;
+    /// the cell still takes a click. Empty when it can.
+    std::string refused = {};
 };
 struct grid_body {
     int cols = 0;

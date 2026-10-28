@@ -1408,11 +1408,19 @@ struct session {
     }
 };
 
-/// The mounts of `frame` and any of `mounts` or the picked one outside it, a cell each, west to
-/// east and north to south as its blueprint reads, each showing every part of the vehicle `veh`
-/// on it.
-auto grid_of(const vehicle* const veh, const mount_frame& frame, const point& cursor)
-    -> ec::component {
+/// What the canvas shows.
+struct grid_options {
+    const vehicle* veh = nullptr;
+    mount_frame frame;
+    point cursor;
+    /// The part the install tool holds, whose refusals the squares show; none for another tool.
+    std::optional<vpart_id> held;
+};
+/// The mounts of `frame` and the picked one outside it, a cell each, west to east and north to
+/// south as its blueprint reads, each showing every part of the vehicle `veh` on it and why the
+/// part held cannot go there.
+auto grid_of(const grid_options& options) -> ec::component {
+    const auto& [veh, frame, cursor, held] = options;
     const auto low = point(std::min(frame.low.x, cursor.x), std::min(frame.low.y, cursor.y));
     const auto high = point(std::max(frame.high.x, cursor.x), std::max(frame.high.y, cursor.y));
     auto palette = ec::look_palette{};
@@ -1425,7 +1433,8 @@ auto grid_of(const vehicle* const veh, const mount_frame& frame, const point& cu
                 .id = point_row("mount", at),
                 .glyph = " ",
                 .affordance = mount_id,
-                .selected = at == cursor};
+                .selected = at == cursor,
+                .refused = veh && held ? mount_refusal(*veh, at, *held).value_or("") : ""};
             const auto shown = veh ? veh->part_displayed_at(tripoint_mnt_veh(x, y, 0)) : -1;
             if (shown >= 0) {
                 cell.glyph = std::string(1, veh->part_sym(shown));
@@ -1932,7 +1941,14 @@ auto parts_view(const session& state) -> ec::screen_view {
                                        : _("Remove tool"),
              .keys = {entry.hotkey}}));
     }
-    parts.push_back(grid_of(veh, state.frame, state.cursor));
+    const auto held = vpart_id(state.brush);
+    parts.push_back(grid_of(
+        {.veh = veh,
+         .frame = state.frame,
+         .cursor = state.cursor,
+         .held = state.canvas_tool == "install" && held.is_valid()
+                   ? std::optional(held)
+                   : std::nullopt}));
     // The design column: what the picked mount holds, the settings of the picked part and the
     // vehicle's, its cargo and spawning, and its JSON.
     const auto settings =
