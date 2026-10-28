@@ -278,13 +278,6 @@ auto placed_sentence(const bool pasted, const vehicle& veh) -> std::string {
     return string_format(format, veh.name, distance, direction_name(direction_from(here, at)));
 }
 
-/// `base`, else `base_2`, `base_3` and on: the first name whose file the player's mods lack.
-auto free_name(const std::string& base) -> std::string {
-    return editor::free_name(base, [](const std::string& name) {
-        return std::filesystem::exists(in_mods(name));
-    });
-}
-
 auto copied_vehicle_file() -> std::filesystem::path {
     return std::filesystem::path(PATH_INFO::user_dir()) / "vehicle_copy.json";
 }
@@ -458,10 +451,14 @@ struct session {
     }
 
     /// The file a new design suggests: `base` in the mod folder of the open file, else in
-    /// my_mod, with a number when that file is there.
+    /// my_mod, with a number when that file is there or the open design, unsaved, takes it.
     auto suggested(const std::string& base) const -> std::string {
         const auto folder = doc ? mod_folder_name(doc->path()) : std::nullopt;
-        return free_name(folder.value_or("my_mod") + "/" + base);
+        return free_name(folder.value_or("my_mod") + "/" + base, [&](const std::string& name) {
+            const auto path = in_mods(name);
+            return std::filesystem::exists(path)
+                || (doc && path.lexically_normal() == doc->path().lexically_normal());
+        });
     }
 
     /// Reads the file again when it changed on disk and holds no edit; says so either way.
@@ -906,6 +903,11 @@ struct session {
             return;
         }
         if (!leave()) { return; }
+        // Saving the design it left may have made that file.
+        if (std::filesystem::exists(path)) {
+            notice = _("That file already exists; nothing was saved.");
+            return;
+        }
         const auto design = nlohmann::ordered_json::array({prototype_of(path.stem().string())});
         auto made = document::create(path, format_json(design.dump()).value_or(design.dump(2)));
         if (!made) {
