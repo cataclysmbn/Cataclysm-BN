@@ -3469,164 +3469,234 @@
               ]
             },
             {
-              "id": "vehicle:parts",
-              "kind": "list",
+              "id": "vehicle:part_groups",
+              "kind": "tabs",
               "label": "Parts",
               "affordances": [
-                "vehicle:choose",
-                "vehicle:part_filter",
-                "vehicle:part_page"
+                "vehicle:part_group"
               ],
               "slot": "palette",
-              "columns": [
+              "tabs": [
                 {
-                  "key": "id",
-                  "label": "ID"
+                  "id": "group:0",
+                  "label": "Frames",
+                  "selected": true,
+                  "enabled": true
+                },
+                {
+                  "id": "group:1",
+                  "label": "Wheels & hubs",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "group:2",
+                  "label": "Engines & motors",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "group:3",
+                  "label": "Fuel & batteries",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "group:4",
+                  "label": "Seats & controls",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "group:5",
+                  "label": "Doors & windows",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "group:6",
+                  "label": "Lights",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "group:7",
+                  "label": "Storage",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "group:8",
+                  "label": "Weapons",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "group:9",
+                  "label": "Other",
+                  "selected": false,
+                  "enabled": true
                 }
               ],
-              "rows": [
-                {
-                  "id": "vpart:headlight",
-                  "label": "headlight",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "headlight"
-                    }
-                  ],
-                  "look": {
-                    "kind": "vehicle_part",
-                    "id": "headlight",
-                    "glyph": "*",
-                    "color": "c_white",
-                    "name": "headlight",
-                    "tile": "vp_headlight",
-                    "subtile": "center"
+              "select": "vehicle:part_group",
+              "child": {
+                "id": "vehicle:parts",
+                "kind": "list",
+                "affordances": [
+                  "vehicle:choose",
+                  "vehicle:part_filter",
+                  "vehicle:part_page"
+                ],
+                "columns": [
+                  {
+                    "key": "id",
+                    "label": "ID"
                   }
-                },
-                {
-                  "id": "vpart:headlight_reinforced",
-                  "label": "reinforced headlight",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "headlight_reinforced"
-                    }
-                  ],
-                  "look": {
-                    "kind": "vehicle_part",
-                    "id": "headlight_reinforced",
-                    "glyph": "*",
-                    "color": "c_light_blue",
-                    "name": "reinforced headlight",
-                    "tile": "vp_headlight_reinforced",
-                    "looks_like": [
-                      "vp_headlight"
+                ],
+                "rows": [
+                  {
+                    "id": "vpart:headlight",
+                    "label": "headlight",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "headlight"
+                      }
                     ],
-                    "subtile": "center"
-                  }
-                },
-                {
-                  "id": "vpart:motorcycle_headlight",
-                  "label": "motorcycle headlight",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "motorcycle_headlight"
+                    "look": {
+                      "kind": "vehicle_part",
+                      "id": "headlight",
+                      "glyph": "*",
+                      "color": "c_white",
+                      "name": "headlight",
+                      "tile": "vp_headlight",
+                      "subtile": "center"
                     }
-                  ],
-                  "look": {
-                    "kind": "vehicle_part",
-                    "id": "motorcycle_headlight",
-                    "glyph": "*",
-                    "color": "c_white",
-                    "name": "motorcycle headlight",
-                    "tile": "vp_motorcycle_headlight",
-                    "subtile": "center"
-                  }
-                },
-                {
-                  "id": "vpart:wide_headlight",
-                  "label": "wide angle headlight",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "wide_headlight"
-                    }
-                  ],
-                  "look": {
-                    "kind": "vehicle_part",
-                    "id": "wide_headlight",
-                    "glyph": "*",
-                    "color": "c_white",
-                    "name": "wide angle headlight",
-                    "tile": "vp_wide_headlight",
-                    "looks_like": [
-                      "vp_headlight"
+                  },
+                  {
+                    "id": "vpart:headlight_reinforced",
+                    "label": "reinforced headlight",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "headlight_reinforced"
+                      }
                     ],
-                    "subtile": "center"
-                  }
-                },
-                {
-                  "id": "vpart:wide_headlight_reinforced",
-                  "label": "reinforced wide-angle headlight",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "wide_headlight_reinforced"
+                    "look": {
+                      "kind": "vehicle_part",
+                      "id": "headlight_reinforced",
+                      "glyph": "*",
+                      "color": "c_light_blue",
+                      "name": "reinforced headlight",
+                      "tile": "vp_headlight_reinforced",
+                      "looks_like": [
+                        "vp_headlight"
+                      ],
+                      "subtile": "center"
                     }
-                  ],
-                  "look": {
-                    "kind": "vehicle_part",
-                    "id": "wide_headlight_reinforced",
-                    "glyph": "*",
-                    "color": "c_light_blue",
-                    "name": "reinforced wide-angle headlight",
-                    "tile": "vp_wide_headlight_reinforced",
-                    "looks_like": [
-                      "vp_wide_headlight",
-                      "vp_headlight"
+                  },
+                  {
+                    "id": "vpart:motorcycle_headlight",
+                    "label": "motorcycle headlight",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "motorcycle_headlight"
+                      }
                     ],
-                    "subtile": "center"
+                    "look": {
+                      "kind": "vehicle_part",
+                      "id": "motorcycle_headlight",
+                      "glyph": "*",
+                      "color": "c_white",
+                      "name": "motorcycle headlight",
+                      "tile": "vp_motorcycle_headlight",
+                      "subtile": "center"
+                    }
+                  },
+                  {
+                    "id": "vpart:wide_headlight",
+                    "label": "wide angle headlight",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "wide_headlight"
+                      }
+                    ],
+                    "look": {
+                      "kind": "vehicle_part",
+                      "id": "wide_headlight",
+                      "glyph": "*",
+                      "color": "c_white",
+                      "name": "wide angle headlight",
+                      "tile": "vp_wide_headlight",
+                      "looks_like": [
+                        "vp_headlight"
+                      ],
+                      "subtile": "center"
+                    }
+                  },
+                  {
+                    "id": "vpart:wide_headlight_reinforced",
+                    "label": "reinforced wide-angle headlight",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "wide_headlight_reinforced"
+                      }
+                    ],
+                    "look": {
+                      "kind": "vehicle_part",
+                      "id": "wide_headlight_reinforced",
+                      "glyph": "*",
+                      "color": "c_light_blue",
+                      "name": "reinforced wide-angle headlight",
+                      "tile": "vp_wide_headlight_reinforced",
+                      "looks_like": [
+                        "vp_wide_headlight",
+                        "vp_headlight"
+                      ],
+                      "subtile": "center"
+                    }
                   }
-                }
-              ],
-              "total": 5,
-              "selection": "single",
-              "activate": "vehicle:choose",
-              "filterable": true,
-              "filter": "headlight",
-              "empty": "No part matches “headlight”."
+                ],
+                "total": 5,
+                "selection": "single",
+                "activate": "vehicle:choose",
+                "filterable": true,
+                "filter": "headlight",
+                "empty": "No part matches “headlight”."
+              }
             }
           ]
         },
@@ -4007,6 +4077,18 @@
             "args": {
               "row": {
                 "component_id": "vehicle:parts"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "vehicle:part_group",
+            "label": "Category",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "vehicle:part_groups"
               }
             },
             "expect": "boundary"
@@ -4504,7 +4586,8 @@
                   "id": "mount:-10,-7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 1,
@@ -4512,7 +4595,8 @@
                   "id": "mount:-9,-7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 2,
@@ -4520,7 +4604,8 @@
                   "id": "mount:-8,-7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 3,
@@ -4528,7 +4613,8 @@
                   "id": "mount:-7,-7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 4,
@@ -4536,7 +4622,8 @@
                   "id": "mount:-6,-7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 5,
@@ -4544,7 +4631,8 @@
                   "id": "mount:-5,-7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 6,
@@ -4552,7 +4640,8 @@
                   "id": "mount:-4,-7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 7,
@@ -4560,7 +4649,8 @@
                   "id": "mount:-3,-7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 8,
@@ -4568,7 +4658,8 @@
                   "id": "mount:-2,-7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 9,
@@ -4576,7 +4667,8 @@
                   "id": "mount:-1,-7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 10,
@@ -4584,7 +4676,8 @@
                   "id": "mount:0,-7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 11,
@@ -4592,7 +4685,8 @@
                   "id": "mount:1,-7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 12,
@@ -4600,7 +4694,8 @@
                   "id": "mount:2,-7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 13,
@@ -4608,7 +4703,8 @@
                   "id": "mount:3,-7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 14,
@@ -4616,7 +4712,8 @@
                   "id": "mount:4,-7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 15,
@@ -4624,7 +4721,8 @@
                   "id": "mount:5,-7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 16,
@@ -4632,7 +4730,8 @@
                   "id": "mount:6,-7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 17,
@@ -4640,7 +4739,8 @@
                   "id": "mount:7,-7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 18,
@@ -4648,7 +4748,8 @@
                   "id": "mount:8,-7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 19,
@@ -4656,7 +4757,8 @@
                   "id": "mount:9,-7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 20,
@@ -4664,7 +4766,8 @@
                   "id": "mount:10,-7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 0,
@@ -4672,7 +4775,8 @@
                   "id": "mount:-10,-6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 1,
@@ -4680,7 +4784,8 @@
                   "id": "mount:-9,-6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 2,
@@ -4688,7 +4793,8 @@
                   "id": "mount:-8,-6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 3,
@@ -4696,7 +4802,8 @@
                   "id": "mount:-7,-6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 4,
@@ -4704,7 +4811,8 @@
                   "id": "mount:-6,-6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 5,
@@ -4712,7 +4820,8 @@
                   "id": "mount:-5,-6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 6,
@@ -4720,7 +4829,8 @@
                   "id": "mount:-4,-6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 7,
@@ -4728,7 +4838,8 @@
                   "id": "mount:-3,-6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 8,
@@ -4736,7 +4847,8 @@
                   "id": "mount:-2,-6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 9,
@@ -4744,7 +4856,8 @@
                   "id": "mount:-1,-6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 10,
@@ -4752,7 +4865,8 @@
                   "id": "mount:0,-6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 11,
@@ -4760,7 +4874,8 @@
                   "id": "mount:1,-6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 12,
@@ -4768,7 +4883,8 @@
                   "id": "mount:2,-6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 13,
@@ -4776,7 +4892,8 @@
                   "id": "mount:3,-6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 14,
@@ -4784,7 +4901,8 @@
                   "id": "mount:4,-6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 15,
@@ -4792,7 +4910,8 @@
                   "id": "mount:5,-6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 16,
@@ -4800,7 +4919,8 @@
                   "id": "mount:6,-6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 17,
@@ -4808,7 +4928,8 @@
                   "id": "mount:7,-6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 18,
@@ -4816,7 +4937,8 @@
                   "id": "mount:8,-6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 19,
@@ -4824,7 +4946,8 @@
                   "id": "mount:9,-6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 20,
@@ -4832,7 +4955,8 @@
                   "id": "mount:10,-6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 0,
@@ -4840,7 +4964,8 @@
                   "id": "mount:-10,-5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 1,
@@ -4848,7 +4973,8 @@
                   "id": "mount:-9,-5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 2,
@@ -4856,7 +4982,8 @@
                   "id": "mount:-8,-5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 3,
@@ -4864,7 +4991,8 @@
                   "id": "mount:-7,-5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 4,
@@ -4872,7 +5000,8 @@
                   "id": "mount:-6,-5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 5,
@@ -4880,7 +5009,8 @@
                   "id": "mount:-5,-5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 6,
@@ -4888,7 +5018,8 @@
                   "id": "mount:-4,-5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 7,
@@ -4896,7 +5027,8 @@
                   "id": "mount:-3,-5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 8,
@@ -4904,7 +5036,8 @@
                   "id": "mount:-2,-5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 9,
@@ -4912,7 +5045,8 @@
                   "id": "mount:-1,-5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 10,
@@ -4920,7 +5054,8 @@
                   "id": "mount:0,-5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 11,
@@ -4928,7 +5063,8 @@
                   "id": "mount:1,-5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 12,
@@ -4936,7 +5072,8 @@
                   "id": "mount:2,-5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 13,
@@ -4944,7 +5081,8 @@
                   "id": "mount:3,-5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 14,
@@ -4952,7 +5090,8 @@
                   "id": "mount:4,-5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 15,
@@ -4960,7 +5099,8 @@
                   "id": "mount:5,-5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 16,
@@ -4968,7 +5108,8 @@
                   "id": "mount:6,-5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 17,
@@ -4976,7 +5117,8 @@
                   "id": "mount:7,-5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 18,
@@ -4984,7 +5126,8 @@
                   "id": "mount:8,-5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 19,
@@ -4992,7 +5135,8 @@
                   "id": "mount:9,-5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 20,
@@ -5000,7 +5144,8 @@
                   "id": "mount:10,-5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 0,
@@ -5008,7 +5153,8 @@
                   "id": "mount:-10,-4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 1,
@@ -5016,7 +5162,8 @@
                   "id": "mount:-9,-4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 2,
@@ -5024,7 +5171,8 @@
                   "id": "mount:-8,-4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 3,
@@ -5032,7 +5180,8 @@
                   "id": "mount:-7,-4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 4,
@@ -5040,7 +5189,8 @@
                   "id": "mount:-6,-4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 5,
@@ -5048,7 +5198,8 @@
                   "id": "mount:-5,-4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 6,
@@ -5056,7 +5207,8 @@
                   "id": "mount:-4,-4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 7,
@@ -5064,7 +5216,8 @@
                   "id": "mount:-3,-4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 8,
@@ -5072,7 +5225,8 @@
                   "id": "mount:-2,-4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 9,
@@ -5080,7 +5234,8 @@
                   "id": "mount:-1,-4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 10,
@@ -5088,7 +5243,8 @@
                   "id": "mount:0,-4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 11,
@@ -5096,7 +5252,8 @@
                   "id": "mount:1,-4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 12,
@@ -5104,7 +5261,8 @@
                   "id": "mount:2,-4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 13,
@@ -5112,7 +5270,8 @@
                   "id": "mount:3,-4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 14,
@@ -5120,7 +5279,8 @@
                   "id": "mount:4,-4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 15,
@@ -5128,7 +5288,8 @@
                   "id": "mount:5,-4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 16,
@@ -5136,7 +5297,8 @@
                   "id": "mount:6,-4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 17,
@@ -5144,7 +5306,8 @@
                   "id": "mount:7,-4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 18,
@@ -5152,7 +5315,8 @@
                   "id": "mount:8,-4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 19,
@@ -5160,7 +5324,8 @@
                   "id": "mount:9,-4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 20,
@@ -5168,7 +5333,8 @@
                   "id": "mount:10,-4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 0,
@@ -5176,7 +5342,8 @@
                   "id": "mount:-10,-3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 1,
@@ -5184,7 +5351,8 @@
                   "id": "mount:-9,-3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 2,
@@ -5192,7 +5360,8 @@
                   "id": "mount:-8,-3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 3,
@@ -5200,7 +5369,8 @@
                   "id": "mount:-7,-3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 4,
@@ -5208,7 +5378,8 @@
                   "id": "mount:-6,-3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 5,
@@ -5216,7 +5387,8 @@
                   "id": "mount:-5,-3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 6,
@@ -5224,7 +5396,8 @@
                   "id": "mount:-4,-3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 7,
@@ -5232,7 +5405,8 @@
                   "id": "mount:-3,-3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 8,
@@ -5240,7 +5414,8 @@
                   "id": "mount:-2,-3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 9,
@@ -5248,7 +5423,8 @@
                   "id": "mount:-1,-3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 10,
@@ -5256,7 +5432,8 @@
                   "id": "mount:0,-3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 11,
@@ -5264,7 +5441,8 @@
                   "id": "mount:1,-3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 12,
@@ -5272,7 +5450,8 @@
                   "id": "mount:2,-3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 13,
@@ -5280,7 +5459,8 @@
                   "id": "mount:3,-3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 14,
@@ -5288,7 +5468,8 @@
                   "id": "mount:4,-3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 15,
@@ -5296,7 +5477,8 @@
                   "id": "mount:5,-3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 16,
@@ -5304,7 +5486,8 @@
                   "id": "mount:6,-3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 17,
@@ -5312,7 +5495,8 @@
                   "id": "mount:7,-3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 18,
@@ -5320,7 +5504,8 @@
                   "id": "mount:8,-3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 19,
@@ -5328,7 +5513,8 @@
                   "id": "mount:9,-3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 20,
@@ -5336,7 +5522,8 @@
                   "id": "mount:10,-3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 0,
@@ -5344,7 +5531,8 @@
                   "id": "mount:-10,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 1,
@@ -5352,7 +5540,8 @@
                   "id": "mount:-9,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 2,
@@ -5360,7 +5549,8 @@
                   "id": "mount:-8,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 3,
@@ -5368,7 +5558,8 @@
                   "id": "mount:-7,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 4,
@@ -5376,7 +5567,8 @@
                   "id": "mount:-6,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 5,
@@ -5384,7 +5576,8 @@
                   "id": "mount:-5,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 6,
@@ -5392,7 +5585,8 @@
                   "id": "mount:-4,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 7,
@@ -5400,7 +5594,8 @@
                   "id": "mount:-3,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 8,
@@ -5408,7 +5603,8 @@
                   "id": "mount:-2,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 9,
@@ -5416,7 +5612,8 @@
                   "id": "mount:-1,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 10,
@@ -5424,7 +5621,8 @@
                   "id": "mount:0,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 11,
@@ -5432,7 +5630,8 @@
                   "id": "mount:1,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 12,
@@ -5440,7 +5639,8 @@
                   "id": "mount:2,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 13,
@@ -5448,7 +5648,8 @@
                   "id": "mount:3,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 14,
@@ -5456,7 +5657,8 @@
                   "id": "mount:4,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 15,
@@ -5464,7 +5666,8 @@
                   "id": "mount:5,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 16,
@@ -5472,7 +5675,8 @@
                   "id": "mount:6,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 17,
@@ -5480,7 +5684,8 @@
                   "id": "mount:7,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 18,
@@ -5488,7 +5693,8 @@
                   "id": "mount:8,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 19,
@@ -5496,7 +5702,8 @@
                   "id": "mount:9,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 20,
@@ -5504,7 +5711,8 @@
                   "id": "mount:10,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 0,
@@ -5512,7 +5720,8 @@
                   "id": "mount:-10,-1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 1,
@@ -5520,7 +5729,8 @@
                   "id": "mount:-9,-1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 2,
@@ -5528,7 +5738,8 @@
                   "id": "mount:-8,-1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 3,
@@ -5536,7 +5747,8 @@
                   "id": "mount:-7,-1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 4,
@@ -5544,7 +5756,8 @@
                   "id": "mount:-6,-1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 5,
@@ -5552,7 +5765,8 @@
                   "id": "mount:-5,-1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 6,
@@ -5560,7 +5774,8 @@
                   "id": "mount:-4,-1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 7,
@@ -5568,7 +5783,8 @@
                   "id": "mount:-3,-1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 8,
@@ -5576,7 +5792,8 @@
                   "id": "mount:-2,-1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 9,
@@ -5584,7 +5801,8 @@
                   "id": "mount:-1,-1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 10,
@@ -5592,7 +5810,8 @@
                   "id": "mount:0,-1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 11,
@@ -5600,7 +5819,8 @@
                   "id": "mount:1,-1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 12,
@@ -5608,7 +5828,8 @@
                   "id": "mount:2,-1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 13,
@@ -5616,7 +5837,8 @@
                   "id": "mount:3,-1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 14,
@@ -5624,7 +5846,8 @@
                   "id": "mount:4,-1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 15,
@@ -5632,7 +5855,8 @@
                   "id": "mount:5,-1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 16,
@@ -5640,7 +5864,8 @@
                   "id": "mount:6,-1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 17,
@@ -5648,7 +5873,8 @@
                   "id": "mount:7,-1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 18,
@@ -5656,7 +5882,8 @@
                   "id": "mount:8,-1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 19,
@@ -5664,7 +5891,8 @@
                   "id": "mount:9,-1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 20,
@@ -5672,7 +5900,8 @@
                   "id": "mount:10,-1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 0,
@@ -5680,7 +5909,8 @@
                   "id": "mount:-10,0",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 1,
@@ -5688,7 +5918,8 @@
                   "id": "mount:-9,0",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 2,
@@ -5696,7 +5927,8 @@
                   "id": "mount:-8,0",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 3,
@@ -5704,7 +5936,8 @@
                   "id": "mount:-7,0",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 4,
@@ -5712,7 +5945,8 @@
                   "id": "mount:-6,0",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 5,
@@ -5720,7 +5954,8 @@
                   "id": "mount:-5,0",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 6,
@@ -5728,7 +5963,8 @@
                   "id": "mount:-4,0",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 7,
@@ -5736,7 +5972,8 @@
                   "id": "mount:-3,0",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 8,
@@ -5744,7 +5981,8 @@
                   "id": "mount:-2,0",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 9,
@@ -5793,7 +6031,8 @@
                     8,
                     9,
                     10
-                  ]
+                  ],
+                  "refused": "This mount already has headlight."
                 },
                 {
                   "x": 12,
@@ -5801,7 +6040,8 @@
                   "id": "mount:2,0",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 13,
@@ -5809,7 +6049,8 @@
                   "id": "mount:3,0",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 14,
@@ -5817,7 +6058,8 @@
                   "id": "mount:4,0",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 15,
@@ -5825,7 +6067,8 @@
                   "id": "mount:5,0",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 16,
@@ -5833,7 +6076,8 @@
                   "id": "mount:6,0",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 17,
@@ -5841,7 +6085,8 @@
                   "id": "mount:7,0",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 18,
@@ -5849,7 +6094,8 @@
                   "id": "mount:8,0",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 19,
@@ -5857,7 +6103,8 @@
                   "id": "mount:9,0",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 20,
@@ -5865,7 +6112,8 @@
                   "id": "mount:10,0",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 0,
@@ -5873,7 +6121,8 @@
                   "id": "mount:-10,1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 1,
@@ -5881,7 +6130,8 @@
                   "id": "mount:-9,1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 2,
@@ -5889,7 +6139,8 @@
                   "id": "mount:-8,1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 3,
@@ -5897,7 +6148,8 @@
                   "id": "mount:-7,1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 4,
@@ -5905,7 +6157,8 @@
                   "id": "mount:-6,1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 5,
@@ -5913,7 +6166,8 @@
                   "id": "mount:-5,1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 6,
@@ -5921,7 +6175,8 @@
                   "id": "mount:-4,1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 7,
@@ -5929,7 +6184,8 @@
                   "id": "mount:-3,1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 8,
@@ -5937,7 +6193,8 @@
                   "id": "mount:-2,1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 9,
@@ -5945,7 +6202,8 @@
                   "id": "mount:-1,1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 10,
@@ -5953,7 +6211,8 @@
                   "id": "mount:0,1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 11,
@@ -5961,7 +6220,8 @@
                   "id": "mount:1,1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 12,
@@ -5969,7 +6229,8 @@
                   "id": "mount:2,1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 13,
@@ -5977,7 +6238,8 @@
                   "id": "mount:3,1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 14,
@@ -5985,7 +6247,8 @@
                   "id": "mount:4,1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 15,
@@ -5993,7 +6256,8 @@
                   "id": "mount:5,1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 16,
@@ -6001,7 +6265,8 @@
                   "id": "mount:6,1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 17,
@@ -6009,7 +6274,8 @@
                   "id": "mount:7,1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 18,
@@ -6017,7 +6283,8 @@
                   "id": "mount:8,1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 19,
@@ -6025,7 +6292,8 @@
                   "id": "mount:9,1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 20,
@@ -6033,7 +6301,8 @@
                   "id": "mount:10,1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 0,
@@ -6041,7 +6310,8 @@
                   "id": "mount:-10,2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 1,
@@ -6049,7 +6319,8 @@
                   "id": "mount:-9,2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 2,
@@ -6057,7 +6328,8 @@
                   "id": "mount:-8,2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 3,
@@ -6065,7 +6337,8 @@
                   "id": "mount:-7,2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 4,
@@ -6073,7 +6346,8 @@
                   "id": "mount:-6,2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 5,
@@ -6081,7 +6355,8 @@
                   "id": "mount:-5,2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 6,
@@ -6089,7 +6364,8 @@
                   "id": "mount:-4,2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 7,
@@ -6097,7 +6373,8 @@
                   "id": "mount:-3,2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 8,
@@ -6105,7 +6382,8 @@
                   "id": "mount:-2,2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 9,
@@ -6113,7 +6391,8 @@
                   "id": "mount:-1,2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 10,
@@ -6121,7 +6400,8 @@
                   "id": "mount:0,2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 11,
@@ -6129,7 +6409,8 @@
                   "id": "mount:1,2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 12,
@@ -6137,7 +6418,8 @@
                   "id": "mount:2,2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 13,
@@ -6145,7 +6427,8 @@
                   "id": "mount:3,2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 14,
@@ -6153,7 +6436,8 @@
                   "id": "mount:4,2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 15,
@@ -6161,7 +6445,8 @@
                   "id": "mount:5,2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 16,
@@ -6169,7 +6454,8 @@
                   "id": "mount:6,2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 17,
@@ -6177,7 +6463,8 @@
                   "id": "mount:7,2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 18,
@@ -6185,7 +6472,8 @@
                   "id": "mount:8,2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 19,
@@ -6193,7 +6481,8 @@
                   "id": "mount:9,2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 20,
@@ -6201,7 +6490,8 @@
                   "id": "mount:10,2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 0,
@@ -6209,7 +6499,8 @@
                   "id": "mount:-10,3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 1,
@@ -6217,7 +6508,8 @@
                   "id": "mount:-9,3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 2,
@@ -6225,7 +6517,8 @@
                   "id": "mount:-8,3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 3,
@@ -6233,7 +6526,8 @@
                   "id": "mount:-7,3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 4,
@@ -6241,7 +6535,8 @@
                   "id": "mount:-6,3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 5,
@@ -6249,7 +6544,8 @@
                   "id": "mount:-5,3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 6,
@@ -6257,7 +6553,8 @@
                   "id": "mount:-4,3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 7,
@@ -6265,7 +6562,8 @@
                   "id": "mount:-3,3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 8,
@@ -6273,7 +6571,8 @@
                   "id": "mount:-2,3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 9,
@@ -6281,7 +6580,8 @@
                   "id": "mount:-1,3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 10,
@@ -6289,7 +6589,8 @@
                   "id": "mount:0,3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 11,
@@ -6297,7 +6598,8 @@
                   "id": "mount:1,3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 12,
@@ -6305,7 +6607,8 @@
                   "id": "mount:2,3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 13,
@@ -6313,7 +6616,8 @@
                   "id": "mount:3,3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 14,
@@ -6321,7 +6625,8 @@
                   "id": "mount:4,3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 15,
@@ -6329,7 +6634,8 @@
                   "id": "mount:5,3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 16,
@@ -6337,7 +6643,8 @@
                   "id": "mount:6,3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 17,
@@ -6345,7 +6652,8 @@
                   "id": "mount:7,3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 18,
@@ -6353,7 +6661,8 @@
                   "id": "mount:8,3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 19,
@@ -6361,7 +6670,8 @@
                   "id": "mount:9,3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 20,
@@ -6369,7 +6679,8 @@
                   "id": "mount:10,3",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 0,
@@ -6377,7 +6688,8 @@
                   "id": "mount:-10,4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 1,
@@ -6385,7 +6697,8 @@
                   "id": "mount:-9,4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 2,
@@ -6393,7 +6706,8 @@
                   "id": "mount:-8,4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 3,
@@ -6401,7 +6715,8 @@
                   "id": "mount:-7,4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 4,
@@ -6409,7 +6724,8 @@
                   "id": "mount:-6,4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 5,
@@ -6417,7 +6733,8 @@
                   "id": "mount:-5,4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 6,
@@ -6425,7 +6742,8 @@
                   "id": "mount:-4,4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 7,
@@ -6433,7 +6751,8 @@
                   "id": "mount:-3,4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 8,
@@ -6441,7 +6760,8 @@
                   "id": "mount:-2,4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 9,
@@ -6449,7 +6769,8 @@
                   "id": "mount:-1,4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 10,
@@ -6457,7 +6778,8 @@
                   "id": "mount:0,4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 11,
@@ -6465,7 +6787,8 @@
                   "id": "mount:1,4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 12,
@@ -6473,7 +6796,8 @@
                   "id": "mount:2,4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 13,
@@ -6481,7 +6805,8 @@
                   "id": "mount:3,4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 14,
@@ -6489,7 +6814,8 @@
                   "id": "mount:4,4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 15,
@@ -6497,7 +6823,8 @@
                   "id": "mount:5,4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 16,
@@ -6505,7 +6832,8 @@
                   "id": "mount:6,4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 17,
@@ -6513,7 +6841,8 @@
                   "id": "mount:7,4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 18,
@@ -6521,7 +6850,8 @@
                   "id": "mount:8,4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 19,
@@ -6529,7 +6859,8 @@
                   "id": "mount:9,4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 20,
@@ -6537,7 +6868,8 @@
                   "id": "mount:10,4",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 0,
@@ -6545,7 +6877,8 @@
                   "id": "mount:-10,5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 1,
@@ -6553,7 +6886,8 @@
                   "id": "mount:-9,5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 2,
@@ -6561,7 +6895,8 @@
                   "id": "mount:-8,5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 3,
@@ -6569,7 +6904,8 @@
                   "id": "mount:-7,5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 4,
@@ -6577,7 +6913,8 @@
                   "id": "mount:-6,5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 5,
@@ -6585,7 +6922,8 @@
                   "id": "mount:-5,5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 6,
@@ -6593,7 +6931,8 @@
                   "id": "mount:-4,5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 7,
@@ -6601,7 +6940,8 @@
                   "id": "mount:-3,5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 8,
@@ -6609,7 +6949,8 @@
                   "id": "mount:-2,5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 9,
@@ -6617,7 +6958,8 @@
                   "id": "mount:-1,5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 10,
@@ -6625,7 +6967,8 @@
                   "id": "mount:0,5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 11,
@@ -6633,7 +6976,8 @@
                   "id": "mount:1,5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 12,
@@ -6641,7 +6985,8 @@
                   "id": "mount:2,5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 13,
@@ -6649,7 +6994,8 @@
                   "id": "mount:3,5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 14,
@@ -6657,7 +7003,8 @@
                   "id": "mount:4,5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 15,
@@ -6665,7 +7012,8 @@
                   "id": "mount:5,5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 16,
@@ -6673,7 +7021,8 @@
                   "id": "mount:6,5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 17,
@@ -6681,7 +7030,8 @@
                   "id": "mount:7,5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 18,
@@ -6689,7 +7039,8 @@
                   "id": "mount:8,5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 19,
@@ -6697,7 +7048,8 @@
                   "id": "mount:9,5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 20,
@@ -6705,7 +7057,8 @@
                   "id": "mount:10,5",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 0,
@@ -6713,7 +7066,8 @@
                   "id": "mount:-10,6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 1,
@@ -6721,7 +7075,8 @@
                   "id": "mount:-9,6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 2,
@@ -6729,7 +7084,8 @@
                   "id": "mount:-8,6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 3,
@@ -6737,7 +7093,8 @@
                   "id": "mount:-7,6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 4,
@@ -6745,7 +7102,8 @@
                   "id": "mount:-6,6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 5,
@@ -6753,7 +7111,8 @@
                   "id": "mount:-5,6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 6,
@@ -6761,7 +7120,8 @@
                   "id": "mount:-4,6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 7,
@@ -6769,7 +7129,8 @@
                   "id": "mount:-3,6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 8,
@@ -6777,7 +7138,8 @@
                   "id": "mount:-2,6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 9,
@@ -6785,7 +7147,8 @@
                   "id": "mount:-1,6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 10,
@@ -6793,7 +7156,8 @@
                   "id": "mount:0,6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 11,
@@ -6801,7 +7165,8 @@
                   "id": "mount:1,6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 12,
@@ -6809,7 +7174,8 @@
                   "id": "mount:2,6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 13,
@@ -6817,7 +7183,8 @@
                   "id": "mount:3,6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 14,
@@ -6825,7 +7192,8 @@
                   "id": "mount:4,6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 15,
@@ -6833,7 +7201,8 @@
                   "id": "mount:5,6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 16,
@@ -6841,7 +7210,8 @@
                   "id": "mount:6,6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 17,
@@ -6849,7 +7219,8 @@
                   "id": "mount:7,6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 18,
@@ -6857,7 +7228,8 @@
                   "id": "mount:8,6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 19,
@@ -6865,7 +7237,8 @@
                   "id": "mount:9,6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 20,
@@ -6873,7 +7246,8 @@
                   "id": "mount:10,6",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 0,
@@ -6881,7 +7255,8 @@
                   "id": "mount:-10,7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 1,
@@ -6889,7 +7264,8 @@
                   "id": "mount:-9,7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 2,
@@ -6897,7 +7273,8 @@
                   "id": "mount:-8,7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 3,
@@ -6905,7 +7282,8 @@
                   "id": "mount:-7,7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 4,
@@ -6913,7 +7291,8 @@
                   "id": "mount:-6,7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 5,
@@ -6921,7 +7300,8 @@
                   "id": "mount:-5,7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 6,
@@ -6929,7 +7309,8 @@
                   "id": "mount:-4,7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 7,
@@ -6937,7 +7318,8 @@
                   "id": "mount:-3,7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 8,
@@ -6945,7 +7327,8 @@
                   "id": "mount:-2,7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 9,
@@ -6953,7 +7336,8 @@
                   "id": "mount:-1,7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 10,
@@ -6961,7 +7345,8 @@
                   "id": "mount:0,7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 11,
@@ -6969,7 +7354,8 @@
                   "id": "mount:1,7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 12,
@@ -6977,7 +7363,8 @@
                   "id": "mount:2,7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 13,
@@ -6985,7 +7372,8 @@
                   "id": "mount:3,7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 14,
@@ -6993,7 +7381,8 @@
                   "id": "mount:4,7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 15,
@@ -7001,7 +7390,8 @@
                   "id": "mount:5,7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 16,
@@ -7009,7 +7399,8 @@
                   "id": "mount:6,7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 17,
@@ -7017,7 +7408,8 @@
                   "id": "mount:7,7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 18,
@@ -7025,7 +7417,8 @@
                   "id": "mount:8,7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 19,
@@ -7033,7 +7426,8 @@
                   "id": "mount:9,7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 },
                 {
                   "x": 20,
@@ -7041,7 +7435,8 @@
                   "id": "mount:10,7",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
-                  "enabled": true
+                  "enabled": true,
+                  "refused": "Headlight goes on a frame: install a frame here first."
                 }
               ],
               "looks": [
@@ -7389,164 +7784,234 @@
               ]
             },
             {
-              "id": "vehicle:parts",
-              "kind": "list",
+              "id": "vehicle:part_groups",
+              "kind": "tabs",
               "label": "Parts",
               "affordances": [
-                "vehicle:choose",
-                "vehicle:part_filter",
-                "vehicle:part_page"
+                "vehicle:part_group"
               ],
               "slot": "palette",
-              "columns": [
+              "tabs": [
                 {
-                  "key": "id",
-                  "label": "ID"
-                }
-              ],
-              "rows": [
+                  "id": "group:0",
+                  "label": "Frames",
+                  "selected": false,
+                  "enabled": true
+                },
                 {
-                  "id": "vpart:headlight",
-                  "label": "headlight",
-                  "description": "This mount already has headlight.",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
+                  "id": "group:1",
+                  "label": "Wheels & hubs",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "group:2",
+                  "label": "Engines & motors",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "group:3",
+                  "label": "Fuel & batteries",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "group:4",
+                  "label": "Seats & controls",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "group:5",
+                  "label": "Doors & windows",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "group:6",
+                  "label": "Lights",
                   "selected": true,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "headlight"
-                    }
-                  ],
-                  "look": {
-                    "kind": "vehicle_part",
-                    "id": "headlight",
-                    "glyph": "*",
-                    "color": "c_white",
-                    "name": "headlight",
-                    "tile": "vp_headlight",
-                    "subtile": "center"
-                  }
+                  "enabled": true
                 },
                 {
-                  "id": "vpart:headlight_reinforced",
-                  "label": "reinforced headlight",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
+                  "id": "group:7",
+                  "label": "Storage",
                   "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "headlight_reinforced"
-                    }
-                  ],
-                  "look": {
-                    "kind": "vehicle_part",
-                    "id": "headlight_reinforced",
-                    "glyph": "*",
-                    "color": "c_light_blue",
-                    "name": "reinforced headlight",
-                    "tile": "vp_headlight_reinforced",
-                    "looks_like": [
-                      "vp_headlight"
-                    ],
-                    "subtile": "center"
-                  }
+                  "enabled": true
                 },
                 {
-                  "id": "vpart:motorcycle_headlight",
-                  "label": "motorcycle headlight",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
+                  "id": "group:8",
+                  "label": "Weapons",
                   "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "motorcycle_headlight"
-                    }
-                  ],
-                  "look": {
-                    "kind": "vehicle_part",
-                    "id": "motorcycle_headlight",
-                    "glyph": "*",
-                    "color": "c_white",
-                    "name": "motorcycle headlight",
-                    "tile": "vp_motorcycle_headlight",
-                    "subtile": "center"
-                  }
+                  "enabled": true
                 },
                 {
-                  "id": "vpart:wide_headlight",
-                  "label": "wide angle headlight",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
+                  "id": "group:9",
+                  "label": "Other",
                   "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "wide_headlight"
-                    }
-                  ],
-                  "look": {
-                    "kind": "vehicle_part",
-                    "id": "wide_headlight",
-                    "glyph": "*",
-                    "color": "c_white",
-                    "name": "wide angle headlight",
-                    "tile": "vp_wide_headlight",
-                    "looks_like": [
-                      "vp_headlight"
-                    ],
-                    "subtile": "center"
-                  }
-                },
-                {
-                  "id": "vpart:wide_headlight_reinforced",
-                  "label": "reinforced wide-angle headlight",
-                  "description": "",
-                  "denial": "",
-                  "enabled": true,
-                  "selectable": true,
-                  "selected": false,
-                  "columns": [
-                    {
-                      "key": "id",
-                      "label": "ID",
-                      "value": "wide_headlight_reinforced"
-                    }
-                  ],
-                  "look": {
-                    "kind": "vehicle_part",
-                    "id": "wide_headlight_reinforced",
-                    "glyph": "*",
-                    "color": "c_light_blue",
-                    "name": "reinforced wide-angle headlight",
-                    "tile": "vp_wide_headlight_reinforced",
-                    "looks_like": [
-                      "vp_wide_headlight",
-                      "vp_headlight"
-                    ],
-                    "subtile": "center"
-                  }
+                  "enabled": true
                 }
               ],
-              "total": 5,
-              "selection": "single",
-              "activate": "vehicle:choose",
-              "filterable": true,
-              "filter": "headlight",
-              "empty": "No part matches “headlight”."
+              "select": "vehicle:part_group",
+              "child": {
+                "id": "vehicle:parts",
+                "kind": "list",
+                "affordances": [
+                  "vehicle:choose",
+                  "vehicle:part_filter",
+                  "vehicle:part_page"
+                ],
+                "columns": [
+                  {
+                    "key": "id",
+                    "label": "ID"
+                  }
+                ],
+                "rows": [
+                  {
+                    "id": "vpart:headlight",
+                    "label": "headlight",
+                    "description": "This mount already has headlight.",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": true,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "headlight"
+                      }
+                    ],
+                    "look": {
+                      "kind": "vehicle_part",
+                      "id": "headlight",
+                      "glyph": "*",
+                      "color": "c_white",
+                      "name": "headlight",
+                      "tile": "vp_headlight",
+                      "subtile": "center"
+                    }
+                  },
+                  {
+                    "id": "vpart:headlight_reinforced",
+                    "label": "reinforced headlight",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "headlight_reinforced"
+                      }
+                    ],
+                    "look": {
+                      "kind": "vehicle_part",
+                      "id": "headlight_reinforced",
+                      "glyph": "*",
+                      "color": "c_light_blue",
+                      "name": "reinforced headlight",
+                      "tile": "vp_headlight_reinforced",
+                      "looks_like": [
+                        "vp_headlight"
+                      ],
+                      "subtile": "center"
+                    }
+                  },
+                  {
+                    "id": "vpart:motorcycle_headlight",
+                    "label": "motorcycle headlight",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "motorcycle_headlight"
+                      }
+                    ],
+                    "look": {
+                      "kind": "vehicle_part",
+                      "id": "motorcycle_headlight",
+                      "glyph": "*",
+                      "color": "c_white",
+                      "name": "motorcycle headlight",
+                      "tile": "vp_motorcycle_headlight",
+                      "subtile": "center"
+                    }
+                  },
+                  {
+                    "id": "vpart:wide_headlight",
+                    "label": "wide angle headlight",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "wide_headlight"
+                      }
+                    ],
+                    "look": {
+                      "kind": "vehicle_part",
+                      "id": "wide_headlight",
+                      "glyph": "*",
+                      "color": "c_white",
+                      "name": "wide angle headlight",
+                      "tile": "vp_wide_headlight",
+                      "looks_like": [
+                        "vp_headlight"
+                      ],
+                      "subtile": "center"
+                    }
+                  },
+                  {
+                    "id": "vpart:wide_headlight_reinforced",
+                    "label": "reinforced wide-angle headlight",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "wide_headlight_reinforced"
+                      }
+                    ],
+                    "look": {
+                      "kind": "vehicle_part",
+                      "id": "wide_headlight_reinforced",
+                      "glyph": "*",
+                      "color": "c_light_blue",
+                      "name": "reinforced wide-angle headlight",
+                      "tile": "vp_wide_headlight_reinforced",
+                      "looks_like": [
+                        "vp_wide_headlight",
+                        "vp_headlight"
+                      ],
+                      "subtile": "center"
+                    }
+                  }
+                ],
+                "total": 5,
+                "selection": "single",
+                "activate": "vehicle:choose",
+                "filterable": true,
+                "filter": "headlight",
+                "empty": "No part matches “headlight”."
+              }
             }
           ]
         },
@@ -7835,6 +8300,18 @@
             "args": {
               "row": {
                 "component_id": "vehicle:parts"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "vehicle:part_group",
+            "label": "Category",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "vehicle:part_groups"
               }
             },
             "expect": "boundary"
