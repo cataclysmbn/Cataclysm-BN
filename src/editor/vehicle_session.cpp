@@ -1995,7 +1995,7 @@ auto session_view(const session& state) -> ec::screen_view {
               {history_id, {.slot = "log", .label = _("History")}},
               {"vehicle:notice", {.slot = "log"}},
               {"vehicle:status", {.slot = "log"}},
-              {item_kinds_id, {.slot = "palette", .label = _("Items")}}},
+              {item_kinds_id, {.slot = "palette", .label = _("Items to add")}}},
          .groups = std::move(groups),
          .menus = {file, edit, view_menu, world}});
     return view;

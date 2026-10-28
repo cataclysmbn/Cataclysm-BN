@@ -1987,7 +1987,7 @@ TEST_CASE(
                 return invoke("vehicle:show:cargo");
             case 3:
                 CHECK(slot_of(screen, "vehicle:item_kinds") == "palette");
-                CHECK(part(screen, "vehicle:item_kinds").label == "Items");
+                CHECK(part(screen, "vehicle:item_kinds").label == "Items to add");
                 CHECK(body<ec::list_body>(part(screen, "vehicle:item_catalog")).total > 1000);
                 return invoke("vehicle:item_filter", {.text = "flashlight"});
             case 4:

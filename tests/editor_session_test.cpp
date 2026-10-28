@@ -5685,7 +5685,7 @@ TEST_CASE(
                 CHECK(slot_of(screen, "editor:browser") == "canvas");
                 CHECK(slot_of(screen, "editor:new") == "inspector");
                 CHECK(slot_of(screen, "editor:file") == "outline");
-                CHECK(part(screen, "editor:new").label == "New file");
+                CHECK(part(screen, "editor:new").label == "New mapgen file");
                 // A field is named by what it asks, not by the heading of its form.
                 for (const auto* const form : {"editor:new", "editor:file"}) {
                     INFO(form);
