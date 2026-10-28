@@ -5916,4 +5916,37 @@ TEST_CASE(
     editor::reset_editor_session();
 }
 
+TEST_CASE(
+    "the editor's entries say what kind each is and number only the same kind of a name",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = kinds_file{};
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1: {
+                const auto& rows = body<ec::list_body>(part(screen, "editor:objects")).rows;
+                REQUIRE(rows.size() == 3);
+                CHECK(rows[0].description == "Overmap terrain mapgen");
+                // A chunk and the update mapgen of its name are two entries, not two of one.
+                CHECK(rows[1].label == "editor_test_chunk");
+                CHECK(rows[1].description == "Nested chunk");
+                CHECK(rows[2].label == "editor_test_chunk");
+                CHECK(rows[2].description == "Update mapgen");
+                return act("QUIT");
+            }
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 2);
+    editor::reset_editor_session();
+}
+
 #endif // CATA_MCP
