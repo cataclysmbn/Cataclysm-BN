@@ -2999,33 +2999,36 @@ TEST_CASE(
             case 1:
                 return invoke("vehicle:show:json");
             case 2:
-                return invoke("vehicle:field_set", {.row = "value", .text = "{ broken"});
+                // Opening picks the top part, so the form points at it until told otherwise.
+                return invoke("vehicle:field_set", {.row = "pointer", .text = "/name"});
             case 3:
-                return invoke("vehicle:field_apply");
+                return invoke("vehicle:field_set", {.row = "value", .text = "{ broken"});
             case 4:
+                return invoke("vehicle:field_apply");
+            case 5:
                 CHECK(notice_of(screen).contains("JSON"));
                 CHECK(name(screen) == "Bicycle");
                 CHECK(stat(screen, "saved").value == "Yes");
                 // A bare word is still a string.
                 return invoke("vehicle:field_set", {.row = "value", .text = "Bike"});
-            case 5:
-                return invoke("vehicle:field_apply");
             case 6:
+                return invoke("vehicle:field_apply");
+            case 7:
                 CHECK(name(screen) == "Bike");
                 return invoke("vehicle:show:vehicle");
-            case 7:
-                return invoke("vehicle:prop_set", {.row = "flags", .text = "NOT_A_FLAG"});
             case 8:
+                return invoke("vehicle:prop_set", {.row = "flags", .text = "NOT_A_FLAG"});
+            case 9:
                 CHECK(notice_of(screen).contains("NOT_A_FLAG"));
                 CHECK(form_field(screen, "vehicle:props", "flags").value.empty());
                 return invoke("vehicle:prop_set", {.row = "flags", .text = "VEHICLE_LOCKED"});
-            case 9:
+            case 10:
                 CHECK(notice_of(screen).empty());
                 CHECK(form_field(screen, "vehicle:props", "flags").value == "VEHICLE_LOCKED");
                 return invoke("vehicle:undo");
-            case 10:
-                return invoke("vehicle:undo");
             case 11:
+                return invoke("vehicle:undo");
+            case 12:
                 return act("QUIT");
             default:
                 FAIL("the vehicle editor outlived its exit");
@@ -3033,7 +3036,7 @@ TEST_CASE(
         }
     });
     editor::run_vehicle_editor();
-    CHECK(step == 12);
+    CHECK(step == 13);
 }
 
 TEST_CASE(
