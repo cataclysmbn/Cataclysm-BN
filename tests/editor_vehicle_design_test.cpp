@@ -556,6 +556,8 @@ TEST_CASE(
         CHECK_FALSE(part.has_flag("PROTRUSION"));
         CHECK_FALSE(part.has_flag("EXTENDABLE"));
         CHECK_FALSE(part.has_flag("ENGINE"));
+        CHECK_FALSE(part.has_flag("ANIMAL_CTRL"));
+        CHECK_FALSE(part.has_flag("PROPELLER"));
     }
     CHECK(category("frame_vertical") == editor::part_category::frames);
     CHECK(category("seed_drill_advanced") == editor::part_category::other);
