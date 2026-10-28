@@ -6086,7 +6086,7 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
 {
     initialize_digital_media( *it );
     if( t ) {
-        if( it->type->can_use( "MP3_ON" ) ) {
+        if( it->type->can_use( "MP3_ON" ) || it->get_var( "EIPC_MUSIC_ON" ).empty() ) {
             return 0;
         }
         if( !it->get_var( "EIPC_MUSIC_ON" ).empty() && ( it->ammo_remaining() > 0 ) ) {
@@ -6143,9 +6143,11 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
             amenu.addentry( ei_photo, false, 'p', _( "No photos on device" ) );
         }
 
+        const auto playing = it->type->can_use( "MP3_ON" ) ||
+                             !it->get_var( "EIPC_MUSIC_ON" ).empty();
         const auto songs = digital_music_on( *it ).songs;
         if( songs > 0 ) {
-            if( it->is_active() ) {
+            if( playing ) {
                 amenu.addentry( ei_music, true, 'm', _( "Turn music off" ) );
             } else {
                 amenu.addentry( ei_music, true, 'm', _( "Turn music on [%d]" ), songs );
@@ -6201,51 +6203,23 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
         }
 
         if( ei_music == choice ) {
-
-            if( !it->is_active() && !digital_music_ready( *p, *it ) ) {
-                return 0;
-            }
-
-            p->moves -= 30;
-
-            if( it->is_active() ) {
-                finish_digital_music( *p, *it );
-                // Turn music off - revert to original type
-                const std::optional<itype_id> revert_to = it->type->tool->revert_to;
-                if( revert_to.has_value() ) {
-                    it->convert( revert_to.value() );
+            if( playing ) {
+                if( it->type->can_use( "MP3_ON" ) ) {
+                    p->invoke_item( it, "MP3_ON" );
+                } else {
+                    finish_digital_music( *p, *it );
+                    it->deactivate();
+                    it->erase_var( "EIPC_MUSIC_ON" );
                 }
-                it->deactivate();
-                it->erase_var( "EIPC_MUSIC_ON" );
-
-                p->add_msg_if_player( m_info, _( "You turned off music on your %s." ), it->tname() );
-            } else {
-                // Turn music on - find music_player action's target if it exists
-                itype_id music_type;
-                const auto music_it = it->type->use_methods.find( "music_player" );
-                if( music_it != it->type->use_methods.end() ) {
-                    const iuse_music_player *music_actor =
-                        dynamic_cast<const iuse_music_player *>( music_it->second.get_actor_ptr() );
-                    if( music_actor ) {
-                        music_type = music_actor->target;
-                    } else if( const auto *transform_actor =
-                                   dynamic_cast<const iuse_transform *>( music_it->second.get_actor_ptr() ) ) {
-                        music_type = transform_actor->target;
+            } else if( digital_music_ready( *p, *it ) ) {
+                const auto selected = it->get_var( "DIGITAL_SELECTED_MUSIC" );
+                for( auto *file : it->contents.all_items_top() ) {
+                    if( file->get_var( "DIGITAL_FILE_ID" ) == selected ) {
+                        listen_to_digital_music( *p, *it, *file );
+                        break;
                     }
                 }
-
-                // Transform to music variant if found
-                if( !music_type.is_empty() && music_type.is_valid() ) {
-                    it->convert( music_type );
-                }
-
-                it->activate();
-                it->set_var( "EIPC_MUSIC_ON", "1" );
-
-                p->add_msg_if_player( m_info, _( "You turned on music on your %s." ), it->tname() );
-
             }
-
             return it->type->charges_to_use();
         }
 

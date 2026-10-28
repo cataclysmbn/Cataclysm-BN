@@ -9,6 +9,7 @@
     "price_postapoc": "2500 USD",
     "material": [ "superalloy", "aluminum" ],
     "use_action": [
+      "EINKTABLETPC",
       {
         "target": "afs_wraitheon_smartphone_flashlight",
         "msg": "You activate the flashlight app.",
@@ -48,22 +49,25 @@
     "type": "TOOL",
     "name": { "str": "Wraitheon executive's smartphone - music", "str_pl": "Wraitheon executive's smartphones - music" },
     "description": "This phone is playing music, steadily raising your morale.  You can't hear anything else while you're listening.",
-    "revert_to": "afs_atomic_smartphone",
-    "use_action": [ "MP3_ON" ],
-    "flags": [ "WATCH", "TRADER_AVOID", "ALARMCLOCK", "NO_UNLOAD", "NO_RELOAD" ]
+    "revert_to": "afs_wraitheon_smartphone",
+    "use_action": [ "EINKTABLETPC", "MP3_ON" ],
+    "flags": [ "WATCH", "TRADER_AVOID", "ALARMCLOCK", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ]
   },
   {
     "id": "afs_wraitheon_smartphone_flashlight",
     "copy-from": "afs_atomic_smartphone_flashlight",
     "type": "TOOL",
     "name": { "str": "Executive's smartphone - Flashlight", "str_pl": "Executive's smartphones - Flashlight" },
-    "revert_to": "afs_atomic_smartphone",
-    "use_action": {
-      "target": "afs_wraitheon_smartphone",
-      "msg": "You deactivate the flashlight app.",
-      "menu_text": "Turn off flashlight",
-      "type": "transform"
-    }
+    "revert_to": "afs_wraitheon_smartphone",
+    "use_action": [
+      "EINKTABLETPC",
+      {
+        "target": "afs_wraitheon_smartphone",
+        "msg": "You deactivate the flashlight app.",
+        "menu_text": "Turn off flashlight",
+        "type": "transform"
+      }
+    ]
   },
   {
     "id": "afs_chain_wrench",

@@ -10,6 +10,7 @@
 #include "item.h"
 #include "item_contents.h"
 #include "item_group.h"
+#include "itype.h"
 #include "iuse.h"
 #include "json.h"
 #include "map_helpers.h"
@@ -34,7 +35,8 @@ TEST_CASE("digital_storage_accepts_files_only", "[digital_media][item]") {
         "laptop_screen_lit", "laptop_music", "control_laptop", "control_laptop_screen_lit",
         "control_laptop_music", "wrist_comp_budget", "wrist_comp_budget_flashlight",
         "wrist_comp_budget_music", "wrist_comp_control", "wrist_comp_control_flashlight",
-        "wrist_comp_control_music");
+        "wrist_comp_control_music", "smart_phone", "smart_phone_music", "smart_phone_flashlight",
+        "afs_atomic_smartphone", "afs_atomic_smartphone_music", "afs_atomic_smartphone_flashlight");
     const auto media = item::spawn(media_id);
     const auto file = item::spawn("test_digital_instruction");
     const auto rock = item::spawn("test_rock");
@@ -322,7 +324,10 @@ TEST_CASE("digital_item_actions_require_installation", "[digital_media][iuse]") 
 
 TEST_CASE("hello_world_runs_repeatedly_using_a_powered_reader", "[digital_media][iuse]") {
     auto dummy = avatar{};
-    auto device = item::spawn("eink_tablet_pc");
+    const auto reader_id =
+        GENERATE("eink_tablet_pc", "laptop", "control_laptop", "smart_phone", "wrist_comp_budget",
+                 "wrist_comp_control");
+    auto device = item::spawn(reader_id);
     auto& reader = *device;
     reader.ammo_set(itype_id("battery"), 10);
     auto executable = item::spawn("digital_hello_world");
@@ -656,4 +661,77 @@ TEST_CASE("legacy_photo_and_music_counters_migrate_without_losing_metadata", "[d
     CHECK(digital_photos_on(*reader) == 11);
     CHECK(digital_music_on(*reader).songs == 13);
     CHECK(reader->contents.num_item_stacks() == 2);
+}
+
+TEST_CASE(
+    "readers_generate_personal_files_once_and_keep_them_across_modes", "[digital_media][iuse]") {
+    const auto base =
+        GENERATE("laptop", "control_laptop", "wrist_comp_budget", "wrist_comp_control",
+                 "smart_phone", "afs_atomic_smartphone", "eink_tablet_pc");
+    auto dummy = avatar{};
+    auto device = item::spawn(base);
+    auto& reader = *device;
+    reader.ammo_set(itype_id("battery"), 100);
+    const auto group = item_group_id(reader.get_property_string("digital_content"));
+    const auto possible = item_group::every_possible_item_from(group);
+    const auto personal = item_group::every_possible_item_from(
+        item_group_id("digital_content_personal"));
+    for (const auto* type : personal) { CHECK(possible.contains(type)); }
+    initialize_digital_media(reader);
+    REQUIRE(reader.has_var("DIGITAL_INITIALIZED"));
+    REQUIRE(digital_music_on(reader).songs >= 20);
+    const auto count = reader.contents.num_item_stacks();
+    const auto music = reader.contents.all_items_top();
+    const auto found = std::ranges::find_if(music, [](const auto* file) {
+        return file->has_flag(flag_id("DIGITAL_MUSIC"));
+    });
+    REQUIRE(found != music.end());
+    auto& collection = **found;
+    const auto identity = collection.get_var("DIGITAL_FILE_ID");
+    dummy.i_add(std::move(device));
+
+    if (reader.type->can_use("transform")) {
+        dummy.invoke_item(&reader, "transform");
+        REQUIRE(reader.is_active());
+        reader.type->tick(dummy, reader, dummy.bub_pos());
+        CHECK(reader.is_active());
+        CHECK(reader.get_use("EINKTABLETPC") != nullptr);
+        CHECK(digital_reader_ready(reader, dummy));
+        CHECK(digital_reader_for(dummy, collection));
+    }
+    REQUIRE(listen_to_digital_music(dummy, reader, collection));
+    CHECK(reader.type->can_use("MP3_ON"));
+    CHECK(reader.get_use("EINKTABLETPC") != nullptr);
+    dummy.invoke_item(&reader, "MP3_ON");
+    CHECK(reader.typeId() == itype_id(base));
+    CHECK_FALSE(reader.is_active());
+    initialize_digital_media(reader);
+    CHECK(reader.contents.num_item_stacks() == count);
+    CHECK(collection.get_var("DIGITAL_FILE_ID") == identity);
+
+    auto output = std::ostringstream{};
+    auto writer = JsonOut(output);
+    reader.serialize(writer);
+    auto input = std::istringstream(output.str());
+    auto parser = JsonIn(input);
+    auto loaded = item::spawn(parser);
+    initialize_digital_media(*loaded);
+    CHECK(loaded->contents.num_item_stacks() == count);
+    CHECK(digital_music_on(*loaded).songs == digital_music_on(reader).songs);
+    CHECK(digital_photos_on(*loaded) == digital_photos_on(reader));
+}
+
+TEST_CASE("downloading_initializes_unopened_media_once", "[digital_media]") {
+    auto dummy = avatar{};
+    auto reader = item::spawn("eink_tablet_pc");
+    reader->ammo_set(itype_id("battery"), 100);
+    auto media = item::spawn("test_digital_media");
+    CHECK(download_digital_files(*reader, *media, dummy) == 1);
+    CHECK(download_digital_files(*reader, *media, dummy) == 0);
+    CHECK(media->contents.num_item_stacks() == 1);
+
+    auto encrypted = item::spawn("test_digital_media_encrypting");
+    CHECK(download_digital_files(*reader, *encrypted, dummy) == 0);
+    CHECK(encrypted->has_flag(flag_MC_ENCRYPTED));
+    CHECK(reader->contents.num_item_stacks() == 1);
 }

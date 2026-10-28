@@ -1,5 +1,11 @@
 [
   {
+    "id": "digital_content_reader",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [ { "group": "digital_builtin_music" }, { "group": "digital_content_personal" } ]
+  },
+  {
     "id": "digital_content_personal",
     "type": "item_group",
     "subtype": "collection",

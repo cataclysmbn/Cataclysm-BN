@@ -156,7 +156,10 @@ auto download_digital_files( item &reader, item &media, const Character &who ) -
         return 0;
     }
     migrate_legacy_digital_media( reader );
-    migrate_legacy_digital_media( media );
+    initialize_digital_media( media );
+    if( media.has_flag( flag_MC_ENCRYPTED ) ) {
+        return 0;
+    }
     auto copied = 0;
     for( auto *file : media.contents.all_items_top() ) {
         if( copy_digital_file( *file, reader ) ) {
@@ -327,6 +330,12 @@ auto listen_to_digital_music( player &who, item &reader, item &file ) -> bool
         who.add_msg_if_player( m_info, _( "You recently listened to this collection.  Try again in %s." ),
                                to_string( remaining ) );
         return false;
+    }
+    const auto playing = reader.type->can_use( "MP3_ON" ) ||
+                         !reader.get_var( "EIPC_MUSIC_ON" ).empty();
+    if( reader.is_active() && !playing && reader.type->tool->revert_to ) {
+        reader.convert( *reader.type->tool->revert_to );
+        reader.deactivate();
     }
     if( reader.is_active() ) {
         if( reader.get_var( "DIGITAL_SELECTED_MUSIC" ) == file.get_var( "DIGITAL_FILE_ID" ) ) {

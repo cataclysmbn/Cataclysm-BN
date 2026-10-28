@@ -152,8 +152,16 @@
     "type": "TOOL",
     "name": { "str": "control laptop - lit screen", "str_pl": "control laptops - lit screen" },
     "power_draw": 5000,
-    "revert_to": "laptop",
-    "use_action": { "target": "control_laptop", "msg": "You stop lighting up the screen.", "menu_text": "Turn off", "type": "transform" },
+    "revert_to": "control_laptop",
+    "use_action": [
+      "EINKTABLETPC",
+      {
+        "target": "control_laptop",
+        "msg": "You stop lighting up the screen.",
+        "menu_text": "Turn off",
+        "type": "transform"
+      }
+    ],
     "flags": [ "WATCH", "LIGHT_20", "TRADER_AVOID", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ],
     "relic_data": { "passive_effects": [ { "id": "DRONE_CAM" } ] }
   },
@@ -225,7 +233,7 @@
       "EINKTABLETPC",
       "RADGLOVE"
     ],
-    "properties": [ [ "digital_content", "digital_builtin_music" ] ],
+    "properties": [ [ "digital_content", "digital_content_reader" ] ],
     "flags": [
       "WATCH",
       "ALARMCLOCK",
@@ -282,6 +290,7 @@
     "power_draw": 1500,
     "revert_to": "wrist_comp_budget",
     "use_action": [
+      "EINKTABLETPC",
       {
         "target": "wrist_comp_budget",
         "msg": "You deactivate the flashlight.",
@@ -388,6 +397,7 @@
     "power_draw": 1500,
     "revert_to": "wrist_comp_control",
     "use_action": [
+      "EINKTABLETPC",
       {
         "target": "wrist_comp_control",
         "msg": "You deactivate the flashlight app.",
@@ -466,7 +476,7 @@
       },
       "TOGGLE_UPS_CHARGING"
     ],
-    "properties": [ [ "digital_content", "digital_builtin_music" ] ],
+    "properties": [ [ "digital_content", "digital_content_reader" ] ],
     "flags": [ "WATCH", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ]
   },
   {
@@ -634,7 +644,7 @@
       },
       "TOGGLE_UPS_CHARGING"
     ],
-    "properties": [ [ "digital_content", "digital_builtin_music" ] ],
+    "properties": [ [ "digital_content", "digital_content_reader" ] ],
     "flags": [ "WATCH", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ]
   },
   {
@@ -654,7 +664,10 @@
     "name": { "str": "laptop computer - lit screen", "str_pl": "laptop computers - lit screen" },
     "power_draw": 5000,
     "revert_to": "laptop",
-    "use_action": { "target": "laptop", "msg": "You stop lighting up the screen.", "menu_text": "Turn off", "type": "transform" },
+    "use_action": [
+      "EINKTABLETPC",
+      { "target": "laptop", "msg": "You stop lighting up the screen.", "menu_text": "Turn off", "type": "transform" }
+    ],
     "flags": [ "WATCH", "LIGHT_20", "TRADER_AVOID", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ]
   },
   {
@@ -773,6 +786,7 @@
     "max_charges": 200,
     "charges_per_use": 1,
     "use_action": [
+      "EINKTABLETPC",
       {
         "target": "smart_phone_flashlight",
         "msg": "You activate the flashlight app.",
@@ -810,7 +824,8 @@
       "PORTABLE_GAME",
       "TOGGLE_UPS_CHARGING"
     ],
-    "flags": [ "WATCH", "ALARMCLOCK", "RECHARGE", "NO_UNLOAD", "NO_RELOAD" ]
+    "properties": [ [ "digital_content", "digital_content_reader" ] ],
+    "flags": [ "WATCH", "ALARMCLOCK", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ]
   },
   {
     "id": "smart_phone_music",
@@ -820,8 +835,8 @@
     "description": "This phone is playing music, steadily raising your morale.  You can't hear anything else while you're listening.",
     "power_draw": 7000,
     "revert_to": "smart_phone",
-    "use_action": [ "MP3_ON" ],
-    "flags": [ "WATCH", "TRADER_AVOID", "ALARMCLOCK", "RECHARGE", "NO_UNLOAD", "NO_RELOAD" ],
+    "use_action": [ "EINKTABLETPC", "MP3_ON" ],
+    "flags": [ "WATCH", "TRADER_AVOID", "ALARMCLOCK", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ],
     "magazine_well": "250 ml"
   },
   {
@@ -831,13 +846,26 @@
     "name": { "str": "smartphone - Flashlight", "str_pl": "smartphones - Flashlight" },
     "power_draw": 5000,
     "revert_to": "smart_phone",
-    "use_action": {
-      "target": "smart_phone",
-      "msg": "You deactivate the flashlight app.",
-      "menu_text": "Turn off flashlight",
-      "type": "transform"
-    },
-    "flags": [ "WATCH", "LIGHT_20", "TRADER_AVOID", "ALARMCLOCK", "RECHARGE", "NO_UNLOAD", "NO_RELOAD" ]
+    "use_action": [
+      "EINKTABLETPC",
+      {
+        "target": "smart_phone",
+        "msg": "You deactivate the flashlight app.",
+        "menu_text": "Turn off flashlight",
+        "type": "transform"
+      }
+    ],
+    "flags": [
+      "WATCH",
+      "LIGHT_20",
+      "TRADER_AVOID",
+      "ALARMCLOCK",
+      "RECHARGE",
+      "NO_UNLOAD",
+      "NO_RELOAD",
+      "DIGITAL_STORAGE",
+      "DIGITAL_READER"
+    ]
   },
   {
     "id": "afs_atomic_smartphone",
@@ -853,6 +881,7 @@
     "symbol": ";",
     "color": "light_green",
     "use_action": [
+      "EINKTABLETPC",
       {
         "target": "afs_atomic_smartphone_flashlight",
         "msg": "You activate the flashlight app.",
@@ -885,7 +914,8 @@
         "menu_text": "Listen to music"
       }
     ],
-    "flags": [ "WATCH", "ALARMCLOCK", "NO_UNLOAD", "NO_RELOAD" ]
+    "properties": [ [ "digital_content", "digital_content_reader" ] ],
+    "flags": [ "WATCH", "ALARMCLOCK", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ]
   },
   {
     "id": "afs_atomic_smartphone_music",
@@ -894,8 +924,8 @@
     "name": { "str": "atomic smartphone - music", "str_pl": "atomic smartphones - music" },
     "description": "This phone is playing music, steadily raising your morale.  You can't hear anything else while you're listening.",
     "revert_to": "afs_atomic_smartphone",
-    "use_action": [ "MP3_ON" ],
-    "flags": [ "WATCH", "TRADER_AVOID", "ALARMCLOCK", "NO_UNLOAD", "NO_RELOAD" ]
+    "use_action": [ "EINKTABLETPC", "MP3_ON" ],
+    "flags": [ "WATCH", "TRADER_AVOID", "ALARMCLOCK", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ]
   },
   {
     "id": "afs_atomic_smartphone_flashlight",
@@ -903,13 +933,16 @@
     "type": "TOOL",
     "name": { "str": "atomic smartphone - Flashlight", "str_pl": "atomic smartphones - Flashlight" },
     "revert_to": "afs_atomic_smartphone",
-    "use_action": {
-      "target": "afs_atomic_smartphone",
-      "msg": "You deactivate the flashlight app.",
-      "menu_text": "Turn off flashlight",
-      "type": "transform"
-    },
-    "flags": [ "WATCH", "LIGHT_25", "TRADER_AVOID", "ALARMCLOCK", "NO_UNLOAD", "NO_RELOAD" ]
+    "use_action": [
+      "EINKTABLETPC",
+      {
+        "target": "afs_atomic_smartphone",
+        "msg": "You deactivate the flashlight app.",
+        "menu_text": "Turn off flashlight",
+        "type": "transform"
+      }
+    ],
+    "flags": [ "WATCH", "LIGHT_25", "TRADER_AVOID", "ALARMCLOCK", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ]
   },
   {
     "id": "UPS_off",
