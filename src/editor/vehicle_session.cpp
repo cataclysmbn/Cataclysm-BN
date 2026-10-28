@@ -45,6 +45,7 @@
 #include <optional>
 #include <ranges>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -703,8 +704,11 @@ struct session {
                 }
             } else {
                 const auto parsed = nlohmann::ordered_json::parse(field_value, nullptr, false);
-                // Bare text is a string; text that starts as JSON does is meant as JSON.
-                if (parsed.is_discarded() && field_value.find_first_of("{[\"") == 0) {
+                // Bare text is a string; text that starts as JSON does, after any space, is meant
+                // as JSON.
+                const auto start = field_value.find_first_not_of(" \t\r\n");
+                if (parsed.is_discarded() && start != std::string::npos
+                    && std::string_view("{[\"").contains(field_value[start])) {
                     notice =
                         string_format(_("%s is no JSON value; nothing was changed."), field_value);
                     return;
