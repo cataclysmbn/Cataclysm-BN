@@ -3289,4 +3289,59 @@ TEST_CASE(
     CHECK(step >= 8);
 }
 
+TEST_CASE(
+    "the vehicle editor shows the picked part's settings under the mount's parts, the usual "
+    "fuels first",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                return invoke("vehicle:choose", {.row = "vpart:tank_small"});
+            case 2:
+                return invoke("vehicle:mount", {.row = "mount:-1,0"});
+            case 3: {
+                // The tank just installed is picked, its fuel right under the mount's parts.
+                CHECK(body<ec::tabs_body>(part(screen, "vehicle:tools")).tabs.front().selected);
+                CHECK(rows(screen, "vehicle:stack").back().selected);
+                const auto& fields = body<ec::form_body>(part(screen, "vehicle:part_form")).fields;
+                const auto fuel = std::ranges::find(fields, "fuel", &ec::form_field::id);
+                REQUIRE(fuel != fields.end());
+                const auto ids =
+                    fuel->options | std::views::transform(&ec::form_option::id)
+                    | std::ranges::to<std::vector>();
+                REQUIRE(ids.size() > 20);
+                CHECK(ids.front().empty());
+                const auto place = [&](const std::string& id) {
+                    return std::ranges::find(ids, id) - ids.begin();
+                };
+                // The fuels the game's vehicles fill tanks with lead, then the rest.
+                CHECK(place("gasoline") < 8);
+                CHECK(place("diesel") < 8);
+                CHECK(place("water_clean") < static_cast<std::ptrdiff_t>(ids.size()));
+                CHECK(std::ranges::all_of(fuel->options, [](const ec::form_option& option) {
+                    return !option.label.empty();
+                }));
+                CHECK(has_affordance(screen, "vehicle:part_set"));
+                return invoke("vehicle:part_set", {.row = "fuel", .text = "diesel"});
+            }
+            case 4: {
+                const auto& fields = body<ec::form_body>(part(screen, "vehicle:part_form")).fields;
+                const auto fuel = std::ranges::find(fields, "fuel", &ec::form_field::id);
+                REQUIRE(fuel != fields.end());
+                CHECK(fuel->value == "diesel");
+                return act("QUIT");
+            }
+            default:
+                return answer("Leave without saving");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step >= 5);
+}
+
 #endif // CATA_MCP
