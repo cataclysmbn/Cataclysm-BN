@@ -726,7 +726,12 @@ auto catalog_list(
          .filterable = true,
          .filter = state.catalog_filter,
          .search = catalog_filter_id,
-         .page = catalog_page_id});
+         .page = catalog_page_id,
+         .empty =
+             state.catalog_filter.empty()
+                 ? _("The catalog has nothing of this kind.")
+                 //~ %s is the text the player searched the catalog for.
+                 : string_format(_("Nothing in the catalog matches “%s”."), state.catalog_filter)});
 }
 
 auto mapping_parts(
@@ -780,10 +785,14 @@ auto game_parts(
     std::vector<ec::affordance>& affordances) -> void {
     if (state.on_special()) {
         affordances.push_back(ec::invoke_affordance(
-            {.id = place_special_id, .label = _("Place in world"), .keys = {"F6"}}));
+            {.id = place_special_id,
+             .label = _("Place in world"),
+             .description = _("Places the special on land near you that is not generated yet."),
+             .keys = {"F6"}}));
         affordances.push_back(ec::invoke_affordance(
             {.id = test_id,
              .label = _("Test"),
+             .description = _("Takes you to where the special was placed, to play there."),
              .keys = {"F5"},
              .enabled = state.placed_here().has_value(),
              .denial = state.placed_here() ? "" : _("Place the special in the world first.")}));
@@ -794,17 +803,26 @@ auto game_parts(
         affordances.push_back(ec::invoke_affordance(
             {.id = apply_id,
              .label = _("Apply to game"),
+             .description = _(
+                 "The game makes this terrain's new squares with this entry from now on. "
+                 "Squares already made and the file stay as they are."),
              .keys = {"F7"},
              .enabled = !state.on_update(),
              .denial = state.on_update() ? *refused : ""}));
         affordances.push_back(ec::invoke_affordance(
             {.id = apply_on_save_id,
              .label = _("Apply on save"),
+             .description = _(
+                 "Switches whether each save of the file also applies the entry to "
+                 "the game, as Apply to game does."),
              .enabled = !state.on_update(),
              .denial = state.on_update() ? *refused : ""}));
         affordances.push_back(ec::invoke_affordance(
             {.id = stamp_id,
              .label = _("Stamp"),
+             .description = _(
+                 "Generates the entry now over the overmap square you stand on, "
+                 "replacing what is there. Take back stamp undoes it."),
              .keys = {"F6"},
              .enabled = squared,
              .denial = refused.value_or("")}));
@@ -813,6 +831,9 @@ auto game_parts(
         affordances.push_back(ec::invoke_affordance(
             {.id = test_id,
              .label = _("Test"),
+             .description = _(
+                 "Puts you in the middle of the stamped entry to play there; in the "
+                 "editor's own world it stamps the entry first."),
              .keys = {"F5"},
              .enabled = testable,
              .denial = testable ? ""
@@ -891,7 +912,8 @@ auto game_parts(
                               {.key = "mean",
                                .label = _("Average"),
                                .value = string_format("%.2f", share.mean)}}};
-                 }) | std::ranges::to<std::vector>()}));
+                 }) | std::ranges::to<std::vector>(),
+                 .empty = _("Nothing can spawn on the marked squares.")}));
         }
     }
 }
@@ -949,7 +971,10 @@ auto new_file_form(const session& state) -> ec::component {
                  {.id = "size",
                   .label = _("Chunk size"),
                   .description = _("The side of a nested chunk, in squares."),
-                  .value = state.made.size}},
+                  .value = state.made.size,
+                  .type = "integer",
+                  .min = 1,
+                  .max = max_chunk}},
             .submit = new_apply_id}};
 }
 
@@ -978,7 +1003,11 @@ auto browser_list(const session& state, const std::vector<browser_entry>& listed
          .filterable = true,
          .filter = state.browser_filter,
          .search = browser_filter_id,
-         .page = browser_page_id});
+         .page = browser_page_id,
+         .empty = state.browser_filter.empty()
+                    ? _("No data file is there to edit.")
+                    //~ %s is the text the player searched the data files for.
+                    : string_format(_("No file holds “%s”."), state.browser_filter)});
 }
 
 /// The affordances that pick what to draw with and draw; a palette only picks its symbol.
@@ -1042,6 +1071,9 @@ auto drawing_affordances(const session& state) -> std::vector<ec::affordance> {
     affordances.push_back(ec::invoke_affordance(
         {.id = extract_palette_id,
          .label = _("Extract legend to palette"),
+         .description = _(
+             "Moves the entry's symbols into a new palette in this file, which the "
+             "entry then uses."),
          .args = {.text = ec::text_shape{.initial = state.free_palette_id()}}}));
     return affordances;
 }
@@ -1241,6 +1273,8 @@ auto layout(const session& state) -> workspace_layout {
     const auto edit = std::string(_("Edit"));
     const auto view = std::string(_("View"));
     const auto world = std::string(_("World"));
+    // While a document is open, the start page folds away beside it.
+    const auto opened = state.doc.has_value();
     return {
         .slots =
             {{tools_id, {.slot = "canvas"}},
@@ -1248,12 +1282,13 @@ auto layout(const session& state) -> workspace_layout {
              {mapping_id, {.slot = "palette", .label = _("Mapping")}},
              {catalog_kinds_id, {.slot = "palette", .label = _("Catalog")}},
              {catalog_id, {.slot = "palette", .label = _("Catalog")}},
-             {file_id, {.slot = "outline", .label = _("File path")}},
+             {file_id, {.slot = "outline", .label = _("File path"), .collapsed = opened}},
              {objects_id, {.slot = "outline", .label = _("Entries")}},
              {placements_id, {.slot = "outline", .label = _("Placed by this entry")}},
              {terrains_id, {.slot = "outline", .label = _("Mapgens")}},
              {"editor:code_mapgens", {.slot = "outline", .label = _("Mapgens in code")}},
-             {browser_id, {.slot = state.doc ? "outline" : "canvas", .label = _("Files")}},
+             {browser_id,
+              {.slot = opened ? "outline" : "canvas", .label = _("Files"), .collapsed = opened}},
              {recent_id, {.slot = "canvas", .label = _("Recent")}},
              {diagnostics_id, {.slot = "log", .label = _("Problems")}},
              {history_id, {.slot = "log", .label = _("History")}},
@@ -1268,9 +1303,10 @@ auto layout(const session& state) -> workspace_layout {
              {connection_id, {.slot = "inspector", .label = _("Connect tool")}},
              {"editor:preview", {.slot = "inspector", .label = _("Generated map")}},
              {loot_id, {.slot = "inspector", .label = _("Spawn chances")}},
-             {new_id, {.slot = "inspector", .label = _("New mapgen file")}},
+             {new_id, {.slot = "inspector", .label = _("New mapgen file"), .collapsed = opened}},
              {export_options_id, {.slot = "inspector", .label = _("Export")}},
-             {import_form_id, {.slot = "inspector", .label = _("Stamp mapgen text")}}},
+             {import_form_id,
+              {.slot = "inspector", .label = _("Stamp mapgen text"), .collapsed = opened}}},
         .groups =
             {{save_id, file},
              {save_as_id, file},
@@ -1335,17 +1371,26 @@ auto session_view(const session& state) -> ec::screen_view {
         {.id = open_oter_id,
          .label = _("Open overmap terrain"),
          .args = {.text = ec::text_shape{}}}));
-    affordances.push_back(
-        ec::invoke_affordance({.id = open_here_id, .label = _("Open mapgen here")}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = open_here_id,
+         .label = _("Open mapgen here"),
+         .description = _("Opens the mapgen of the overmap square you stand on.")}));
     affordances.push_back(ec::invoke_affordance(
         {.id = export_id,
          .label = state.export_area
                     ? string_format(_("Export %dx%d squares"), state.export_area->size.x(),
                                     state.export_area->size.y())
                     : _("Export mapgen here"),
+         .description = _(
+             "Writes the map around you, or the marked squares, as a mapgen in a "
+             "new file and opens it."),
          .args = {.text = ec::text_shape{.field_id = path_id}}}));
-    affordances.push_back(
-        ec::invoke_affordance({.id = export_area_id, .label = _("Mark squares to export")}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = export_area_id,
+         .label = _("Mark squares to export"),
+         .description = _(
+             "Picks a rectangle of squares on the map for Export to write instead "
+             "of whole overmap squares.")}));
     affordances.push_back(ec::invoke_affordance(
         {.id = export_set_id,
          .label = _("Value"),
@@ -1354,6 +1399,7 @@ auto session_view(const session& state) -> ec::screen_view {
     affordances.push_back(ec::invoke_affordance(
         {.id = unstamp_id,
          .label = _("Take back stamp"),
+         .description = _("Puts back what the stamp replaced in the world."),
          .enabled = state.stamped.has_value(),
          .denial = state.stamped ? "" : _("Nothing is stamped.")}));
     affordances.push_back(ec::invoke_affordance(
@@ -1387,7 +1433,8 @@ auto session_view(const session& state) -> ec::screen_view {
             {.id = objects_id,
              .rows = entry_rows(state, entries),
              .selection = "single",
-             .activate = object_id}));
+             .activate = object_id,
+             .empty = _("The file holds no entry.")}));
         affordances.push_back(ec::invoke_affordance(
             {.id = object_id, .label = _("Edit"), .args = row_of(objects_id)}));
         std::ranges::
@@ -1397,9 +1444,13 @@ auto session_view(const session& state) -> ec::screen_view {
             {.id = history_id,
              .rows = step_rows(document_steps(doc)),
              .selection = "single",
-             .activate = jump_id}));
+             .activate = jump_id,
+             .empty = _("No edits yet.")}));
         affordances.push_back(ec::invoke_affordance(
-            {.id = jump_id, .label = _("Go to step"), .args = row_of(history_id)}));
+            {.id = jump_id,
+             .label = _("Go to step"),
+             .args = row_of(history_id),
+             .role = "select"}));
         if (std::ranges::contains(entries, state.object)) {
             if (state.on_mapgen()) {
                 // An entry without rows, such as an update mapgen placing chunks, has no squares to
@@ -1486,7 +1537,8 @@ auto session_view(const session& state) -> ec::screen_view {
                     {.id = legend_id,
                      .rows = legend_rows(state),
                      .selection = "single",
-                     .activate = symbol_id}));
+                     .activate = symbol_id,
+                     .empty = _("No symbol is mapped yet.")}));
             }
             parts.push_back(ec::list(
                 {.id = diagnostics_id,
@@ -1501,7 +1553,8 @@ auto session_view(const session& state) -> ec::screen_view {
                          })
                        | std::ranges::to<std::vector>(),
                  .selection = "single",
-                 .activate = diagnostic_id}));
+                 .activate = diagnostic_id,
+                 .empty = _("No problems.")}));
             affordances.push_back(ec::invoke_affordance(
                 {.id = diagnostic_id, .label = _("Show"), .args = row_of(diagnostics_id)}));
             if (state.on_mapgen()) {
@@ -1509,7 +1562,8 @@ auto session_view(const session& state) -> ec::screen_view {
                     {.id = placements_id,
                      .rows = placement_rows(state),
                      .selection = "single",
-                     .activate = placement_id}));
+                     .activate = placement_id,
+                     .empty = _("This entry places nothing.")}));
                 affordances.push_back(ec::invoke_affordance(
                     {.id = placement_id, .label = _("Show"), .args = row_of(placements_id)}));
             }

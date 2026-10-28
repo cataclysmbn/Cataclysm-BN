@@ -100,7 +100,6 @@ auto editable_place(const std::filesystem::path& path) -> bool {
         && (inside(path, PATH_INFO::datadir()) || inside(path, PATH_INFO::user_moddir()));
 }
 
-constexpr auto max_chunk = 24;
 /// The farthest `editor:placement_span` moves a corner, past any mapgen's rows.
 constexpr auto max_span_move = 1000;
 

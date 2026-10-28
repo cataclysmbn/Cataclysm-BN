@@ -1547,10 +1547,25 @@ auto parts_view(const session& state) -> ec::screen_view {
          .select = source_id,
          .child =
              state.source_tab == "world"
-                 ? ec::list({.id = world_id,
-                             .rows = world_rows,
-                             .selection = "single",
-                             .activate = edit_id})
+                 ? ec::list(
+                       {.id = world_id,
+                        .rows = vehicles | std::views::enumerate
+                              | std::views::transform([&](const auto& entry) {
+                                    const auto& [index, placed] = entry;
+                                    return ec::row{
+                                        .id = index_row("world", index),
+                                        .label = placed.v->name,
+                                        .columns = {
+                                            {.key = "distance",
+                                             .label = _("Distance"),
+                                             .value = std::to_string(
+                                                 rl_dist(here.raw(), placed.pos.raw())),
+                                             .color = ""}}};
+                                })
+                              | std::ranges::to<std::vector>(),
+                        .selection = "single",
+                        .activate = edit_id,
+                        .empty = _("No vehicle is near you.")})
                  : ec::list(
                        {.id = prototypes_id,
                         .rows =
@@ -1574,7 +1589,11 @@ auto parts_view(const session& state) -> ec::screen_view {
                         .filterable = true,
                         .filter = state.filter,
                         .search = filter_id,
-                        .page = page_id})}));
+                        .page = page_id,
+                        .empty = state.filter.empty()
+                                   ? _("No vehicle prototype is loaded.")
+                                   //~ %s is the text the player searched the prototypes for.
+                                   : string_format(_("No vehicle matches “%s”."), state.filter)})}));
     affordances.push_back(
         ec::invoke_affordance({.id = source_id, .label = _("Show"), .args = row_of(sources_id)}));
     if (state.source_tab == "world") {
@@ -1583,19 +1602,27 @@ auto parts_view(const session& state) -> ec::screen_view {
         affordances.push_back(ec::invoke_affordance(
             {.id = export_id,
              .label = _("Export design"),
-             .args = {.row = ec::row_shape{.component_id = world_id},
-                      .text = ec::text_shape{.initial = state.suggested("my_vehicle")}},
+             .description = _(
+                 "Writes the vehicle's design as a prototype in a new file of your "
+                 "mods and opens it."),
+             .args = text_of(world_id),
              .enabled = none.empty(),
              .denial = none}));
         affordances.push_back(ec::invoke_affordance(
             {.id = copy_id,
              .label = _("Copy vehicle"),
+             .description = _(
+                 "Keeps the vehicle with all its state, so Paste vehicle puts it in "
+                 "any world."),
              .args = row_of(world_id),
              .enabled = none.empty(),
              .denial = none}));
         affordances.push_back(ec::invoke_affordance(
             {.id = edit_id,
              .label = _("Edit in place"),
+             .description = _(
+                 "Edits the vehicle where it stands in the world; each change "
+                 "takes effect at once."),
              .args = row_of(world_id),
              .enabled = none.empty(),
              .denial = none}));
@@ -1607,8 +1634,11 @@ auto parts_view(const session& state) -> ec::screen_view {
         affordances.push_back(page_affordance(
             {.id = page_id, .label = _("Page"), .total = found.total, .page = state.page}));
     }
-    affordances.push_back(
-        ec::invoke_affordance({.id = paste_id, .label = _("Paste vehicle"), .keys = {"CTRL+V"}}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = paste_id,
+         .label = _("Paste vehicle"),
+         .description = _("Puts an exact copy of the copied vehicle south of you."),
+         .keys = {"CTRL+V"}}));
     affordances.push_back(ec::invoke_affordance(
         {.id = new_id,
          .label = _("New vehicle"),
@@ -1673,7 +1703,8 @@ auto parts_view(const session& state) -> ec::screen_view {
         {.id = history_id,
          .rows = step_rows(state.history()),
          .selection = "single",
-         .activate = jump_id}));
+         .activate = jump_id,
+         .empty = _("No edits yet.")}));
     affordances.push_back(ec::invoke_affordance(
         {.id = jump_id, .label = _("Go to step"), .args = row_of(history_id), .role = "select"}));
     // The canvas tools, and the mounts they act on.
@@ -1788,7 +1819,11 @@ auto parts_view(const session& state) -> ec::screen_view {
              .filterable = true,
              .filter = state.part_filter,
              .search = part_filter_id,
-             .page = part_page_id});
+             .page = part_page_id,
+             .empty = state.part_filter.empty()
+                        ? _("No vehicle part is loaded.")
+                        //~ %s is the text the player searched the vehicle parts for.
+                        : string_format(_("No part matches “%s”."), state.part_filter)});
     };
     // Remove and the moves act on the picked part, which they name.
     const auto stack_actions = [&] {
@@ -1844,7 +1879,8 @@ auto parts_view(const session& state) -> ec::screen_view {
                      })
                    | std::ranges::to<std::vector>(),
              .selection = "single",
-             .activate = pick_id});
+             .activate = pick_id,
+             .empty = _("This mount holds no part.")});
     };
     const auto tool = [&]() -> ec::component {
         const auto& tab = shown_tab;
@@ -1977,7 +2013,11 @@ auto parts_view(const session& state) -> ec::screen_view {
                   .filterable = true,
                   .filter = state.item_filter,
                   .search = item_filter_id,
-                  .page = item_page_id})}));
+                  .page = item_page_id,
+                  .empty = state.item_filter.empty()
+                             ? _("Nothing of this kind is loaded.")
+                             //~ %s is the text the player searched the items for.
+                             : string_format(_("Nothing matches “%s”."), state.item_filter)})}));
         affordances.push_back(ec::invoke_affordance(
             {.id = item_kind_id, .label = _("Show"), .args = row_of(item_kinds_id)}));
         affordances.push_back(ec::invoke_affordance(
@@ -2023,8 +2063,11 @@ auto parts_view(const session& state) -> ec::screen_view {
                  .can_undo = !state.live_undo.empty(),
                  .can_redo = !state.live_redo.empty()}),
             std::back_inserter(affordances));
-        affordances.push_back(
-            ec::invoke_affordance({.id = done_id, .label = _("Done"), .keys = {"CTRL+D"}}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = done_id,
+             .label = _("Done"),
+             .description = _("Stops editing the vehicle in place; its changes stay in the world."),
+             .keys = {"CTRL+D"}}));
     } else {
         const auto& doc = *state.doc;
         on("vehicle",
@@ -2052,8 +2095,13 @@ auto parts_view(const session& state) -> ec::screen_view {
         on("spawn",
            ec::invoke_affordance(
                {.id = spawn_set_id, .label = _("Value"), .args = text_of(spawn_form_id)}));
-        affordances.push_back(
-            ec::invoke_affordance({.id = spawn_id, .label = _("Spawn"), .keys = {"F5"}}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = spawn_id,
+             .label = _("Spawn"),
+             .description = _(
+                 "Puts this design in the game in place of its prototype and "
+                 "spawns it east of you."),
+             .keys = {"F5"}}));
         affordances.push_back(
             ec::invoke_affordance({.id = turn_cw_id, .label = _("Turn clockwise"), .keys = {"r"}}));
         affordances.push_back(ec::invoke_affordance(

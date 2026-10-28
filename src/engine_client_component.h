@@ -71,6 +71,8 @@ enum class invoke_kind {
 struct affordance {
     std::string id = {};
     std::string label = {};
+    /// One line on what it does, localized, for a tooltip or a menu; empty when the label says it all.
+    std::string description = {};
     std::vector<std::string> keys = {};
     bool enabled = true;
     std::string denial = {};
@@ -143,6 +145,8 @@ struct list_body {
     bool filterable = false;
     /// The filter text the list holds; empty when it shows every row.
     std::string filter = {};
+    /// What the list says while it has no rows, localized; empty for nothing.
+    std::string empty = {};
 };
 struct tab_entry {
     std::string id = {};
@@ -306,6 +310,8 @@ struct component {
     /// What a part of a workspace's root is for: `tools`, `canvas`, `palette`, `outline`, `inspector`, `log` or
     /// `status`; empty for none.
     std::string slot = {};
+    /// The part starts folded to its heading, which the player unfolds.
+    bool collapsed = false;
 };
 /// The wire name of the component's kind.
 auto component_kind( const component &value ) -> std::string;
@@ -343,6 +349,8 @@ struct list_options {
     std::string search = {};
     /// The affordance that turns its pages, listed among the component's.
     std::string page = {};
+    /// What the list says while it has no rows; empty for nothing.
+    std::string empty = {};
 };
 /// A list over `rows`, with the column header they use.
 auto list( list_options options ) -> component;
@@ -378,6 +386,8 @@ auto tabs( tabs_options options ) -> component;
 struct invoke_options {
     std::string id = {};
     std::string label = {};
+    /// See `affordance::description`.
+    std::string description = {};
     arg_shape args = {};
     std::vector<std::string> keys = {};
     bool enabled = true;

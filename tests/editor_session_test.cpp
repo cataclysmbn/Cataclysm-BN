@@ -49,6 +49,7 @@
 #    include "worldfactory.h"
 
 #    include <algorithm>
+#    include <array>
 #    include <filesystem>
 #    include <fstream>
 #    include <functional>
@@ -6813,6 +6814,134 @@ TEST_CASE(
     editor::run_editor_session();
     CHECK(step == 2);
     editor::reset_editor_session();
+}
+
+
+TEST_CASE(
+    "the map editor explains its world actions, says what its empty lists mean and folds the "
+    "start page while a file is open",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    const auto start_page =
+        std::array{"editor:file", "editor:new", "editor:import_form", "editor:browser"};
+    const auto description = [](const ec::boundary_state& state, const std::string& id) {
+        const auto listed =
+            nlohmann::json::parse(ec::serialize_interaction_boundary(state))["stack"]
+                .back()["affordances"];
+        const auto found = std::ranges::find_if(listed, [&](const nlohmann::json& entry) {
+            return entry.value("id", "") == id;
+        });
+        INFO(id);
+        REQUIRE(found != listed.end());
+        return found->value("description", "");
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                // The start page is the page: nothing on it is folded.
+                for (const auto* const id : start_page) {
+                    INFO(id);
+                    CHECK_FALSE(wire_part(state, id).contains("collapsed"));
+                }
+                return invoke("editor:browser_filter", {.text = "zzqx_no_such_id"});
+            case 1:
+                CHECK(body<ec::list_body>(part(screen, "editor:browser")).rows.empty());
+                CHECK(wire_part(state, "editor:browser").value("empty", "")
+                      == "No file holds “zzqx_no_such_id”.");
+                return invoke("editor:browser_filter", {.text = ""});
+            case 2:
+                CHECK(wire_part(state, "editor:browser").value("empty", "").find("zzqx")
+                      == std::string::npos);
+                return invoke("editor:open", {.text = file.path.string()});
+            case 3: {
+                // A file is open: the start page folds away beside it, the document does not.
+                for (const auto* const id : start_page) {
+                    INFO(id);
+                    CHECK(wire_part(state, id).value("collapsed", false));
+                }
+                CHECK_FALSE(wire_part(state, "editor:canvas").contains("collapsed"));
+                CHECK_FALSE(wire_part(state, "editor:legend").contains("collapsed"));
+                // Each world action says what it does, apart from the others.
+                const auto world = std::
+                    array{"editor:apply", "editor:apply_on_save", "editor:stamp", "editor:test"};
+                auto said = std::vector<std::string>{};
+                for (const auto* const id : world) {
+                    said.push_back(description(state, id));
+                    INFO(id);
+                    CHECK_FALSE(said.back().empty());
+                }
+                std::ranges::sort(said);
+                CHECK(std::ranges::adjacent_find(said) == said.end());
+                for (const auto* const id :
+                     {"editor:export", "editor:export_area", "editor:unstamp",
+                      "editor:extract_palette"}) {
+                    INFO(id);
+                    CHECK_FALSE(description(state, id).empty());
+                }
+                // A label that says it all needs no more.
+                CHECK(description(state, "editor:undo").empty());
+                // The floor places nothing.
+                CHECK(body<ec::list_body>(part(screen, "editor:placements")).rows.empty());
+                CHECK_FALSE(wire_part(state, "editor:placements").value("empty", "").empty());
+                return invoke("editor:catalog_filter", {.text = "zzqx_no_such_id"});
+            }
+            case 4:
+                CHECK(body<ec::list_body>(part(screen, "editor:catalog")).rows.empty());
+                CHECK(wire_part(state, "editor:catalog").value("empty", "").find("zzqx_no_such_id")
+                      != std::string::npos);
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 5);
+}
+
+TEST_CASE(
+    "the map editor's history jumps on one click and its chunk size takes only what Create does",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0: {
+                const auto& fields = body<ec::form_body>(part(screen, "editor:new")).fields;
+                const auto size = std::ranges::find(fields, "size", &ec::form_field::id);
+                REQUIRE(size != fields.end());
+                CHECK(size->type == "integer");
+                CHECK(size->min == 1);
+                CHECK(size->max == 24);
+                CHECK(refusal(state, "editor:new_set", {.row = "size", .text = "25"})
+                      == "Chunk size takes a whole number from 1 to 24.");
+                CHECK(refusal(state, "editor:new_set", {.row = "size", .text = "0"})
+                      == "Chunk size takes a whole number from 1 to 24.");
+                CHECK(refusal(state, "editor:new_set", {.row = "size", .text = "12"}).empty());
+                return invoke("editor:open", {.text = file.path.string()});
+            }
+            case 1:
+                // A client picks a history row with one click, which is the jump.
+                CHECK(affordance(screen, "editor:jump").role == "select");
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 2);
 }
 
 #endif // CATA_MCP

@@ -5779,6 +5779,10 @@
           "$ref": "#/$defs/text",
           "description": "The native action name (`input_context::get_action_name`) or the screen's own word; never invented by the adapter."
         },
+        "description": {
+          "$ref": "#/$defs/text",
+          "description": "One line on what it does, in the player's language, for a client to show as its tooltip or beside it in a menu. Absent: the label says it all."
+        },
         "keys": {
           "type": "array",
           "items": {
@@ -6203,6 +6207,10 @@
         "slot": {
           "$ref": "#/$defs/slot"
         },
+        "collapsed": {
+          "type": "boolean",
+          "description": "The part starts folded to its heading on a `workspace` screen: a client shows the heading and unfolds the part when the player opens it. Absent: it starts unfolded."
+        },
         "kind": {
           "const": "list"
         },
@@ -6266,6 +6274,10 @@
         "filter": {
           "type": "string",
           "description": "The filter text the list holds. Absent: it holds none."
+        },
+        "empty": {
+          "$ref": "#/$defs/text",
+          "description": "What the list says while it has no rows, in the player's language, naming the filter text when one leaves none. Absent: a client shows nothing in its place."
         }
       },
       "required": [
@@ -6298,6 +6310,10 @@
         },
         "slot": {
           "$ref": "#/$defs/slot"
+        },
+        "collapsed": {
+          "type": "boolean",
+          "description": "The part starts folded to its heading on a `workspace` screen: a client shows the heading and unfolds the part when the player opens it. Absent: it starts unfolded."
         },
         "kind": {
           "const": "tabs"
@@ -6404,6 +6420,10 @@
         "slot": {
           "$ref": "#/$defs/slot"
         },
+        "collapsed": {
+          "type": "boolean",
+          "description": "The part starts folded to its heading on a `workspace` screen: a client shows the heading and unfolds the part when the player opens it. Absent: it starts unfolded."
+        },
         "kind": {
           "const": "split"
         },
@@ -6454,6 +6474,10 @@
         },
         "slot": {
           "$ref": "#/$defs/slot"
+        },
+        "collapsed": {
+          "type": "boolean",
+          "description": "The part starts folded to its heading on a `workspace` screen: a client shows the heading and unfolds the part when the player opens it. Absent: it starts unfolded."
         },
         "kind": {
           "const": "panel"
@@ -6642,6 +6666,10 @@
         "slot": {
           "$ref": "#/$defs/slot"
         },
+        "collapsed": {
+          "type": "boolean",
+          "description": "The part starts folded to its heading on a `workspace` screen: a client shows the heading and unfolds the part when the player opens it. Absent: it starts unfolded."
+        },
         "kind": {
           "const": "form"
         },
@@ -6683,6 +6711,10 @@
         },
         "slot": {
           "$ref": "#/$defs/slot"
+        },
+        "collapsed": {
+          "type": "boolean",
+          "description": "The part starts folded to its heading on a `workspace` screen: a client shows the heading and unfolds the part when the player opens it. Absent: it starts unfolded."
         },
         "kind": {
           "const": "text"
@@ -6734,6 +6766,10 @@
         },
         "slot": {
           "$ref": "#/$defs/slot"
+        },
+        "collapsed": {
+          "type": "boolean",
+          "description": "The part starts folded to its heading on a `workspace` screen: a client shows the heading and unfolds the part when the player opens it. Absent: it starts unfolded."
         },
         "kind": {
           "const": "grid"
@@ -6987,6 +7023,10 @@
         "slot": {
           "$ref": "#/$defs/slot"
         },
+        "collapsed": {
+          "type": "boolean",
+          "description": "The part starts folded to its heading on a `workspace` screen: a client shows the heading and unfolds the part when the player opens it. Absent: it starts unfolded."
+        },
         "kind": {
           "const": "map"
         },
@@ -7061,6 +7101,10 @@
         },
         "slot": {
           "$ref": "#/$defs/slot"
+        },
+        "collapsed": {
+          "type": "boolean",
+          "description": "The part starts folded to its heading on a `workspace` screen: a client shows the heading and unfolds the part when the player opens it. Absent: it starts unfolded."
         },
         "kind": {
           "const": "canvas"

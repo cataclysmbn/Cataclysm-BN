@@ -543,6 +543,7 @@ auto to_json( const arg_shape &shape ) -> json
 auto to_json( const affordance &value ) -> json
 {
     auto result = json{{"id", value.id}, {"label", value.label}, {"keys", value.keys}, {"enabled", value.enabled}};
+    if( !value.description.empty() ) { result["description"] = value.description; }
     if( !value.denial.empty() ) { result["denial"] = value.denial; }
     if( !value.role.empty() ) { result["role"] = value.role; }
     if( auto args = to_json( value.args ); !args.empty() ) { result["args"] = std::move( args ); }
@@ -610,6 +611,7 @@ auto body_json( const list_body &body, const bubble_frame & /*frame*/ ) -> json
     if( !body.activate.empty() ) { result["activate"] = body.activate; }
     if( body.filterable ) { result["filterable"] = true; }
     if( !body.filter.empty() ) { result["filter"] = body.filter; }
+    if( !body.empty.empty() ) { result["empty"] = body.empty; }
     return result;
 }
 auto body_json( const tabs_body &body, const bubble_frame & /*frame*/ ) -> json
@@ -750,6 +752,7 @@ auto to_json( const component &value, const bubble_frame &frame ) -> json
     if( !value.label.empty() ) { result["label"] = value.label; }
     if( !value.affordances.empty() ) { result["affordances"] = value.affordances; }
     if( !value.slot.empty() ) { result["slot"] = value.slot; }
+    if( value.collapsed ) { result["collapsed"] = true; }
     result.update( std::visit( [&]( const auto & body ) { return body_json( body, frame ); },
     value.body ) );
     const auto kind = component_kind( value );

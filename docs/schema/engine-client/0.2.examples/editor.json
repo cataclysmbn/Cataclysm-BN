@@ -122,7 +122,9 @@
                   "label": "Chunk size",
                   "description": "The side of a nested chunk, in squares.",
                   "value": "4",
-                  "type": "text"
+                  "type": "integer",
+                  "min": 1,
+                  "max": 24
                 }
               ],
               "submit": "editor:new_apply"
@@ -699,7 +701,8 @@
               "total": 934,
               "selection": "single",
               "activate": "editor:browser_open",
-              "filterable": true
+              "filterable": true,
+              "empty": "No data file is there to edit."
             }
           ]
         },
@@ -709,6 +712,7 @@
             "label": "Export mapgen here",
             "keys": [],
             "enabled": true,
+            "description": "Writes the map around you, or the marked squares, as a mapgen in a new file and opens it.",
             "args": {
               "text": {
                 "field_id": "path"
@@ -722,6 +726,7 @@
             "label": "Mark squares to export",
             "keys": [],
             "enabled": true,
+            "description": "Picks a rectangle of squares on the map for Export to write instead of whole overmap squares.",
             "expect": "screen",
             "group": "File"
           },
@@ -741,6 +746,7 @@
             "label": "Open mapgen here",
             "keys": [],
             "enabled": true,
+            "description": "Opens the mapgen of the overmap square you stand on.",
             "expect": "screen",
             "group": "World"
           },
@@ -749,6 +755,7 @@
             "label": "Take back stamp",
             "keys": [],
             "enabled": false,
+            "description": "Puts back what the stamp replaced in the world.",
             "denial": "Nothing is stamped.",
             "expect": "screen",
             "group": "World"
@@ -990,6 +997,7 @@
                 "editor:save_as"
               ],
               "slot": "outline",
+              "collapsed": true,
               "fields": [
                 {
                   "id": "path",
@@ -1067,7 +1075,8 @@
               ],
               "total": 1,
               "selection": "single",
-              "activate": "editor:object"
+              "activate": "editor:object",
+              "empty": "The file holds no entry."
             },
             {
               "id": "editor:history",
@@ -1092,7 +1101,8 @@
               ],
               "total": 1,
               "selection": "single",
-              "activate": "editor:jump"
+              "activate": "editor:jump",
+              "empty": "No edits yet."
             },
             {
               "id": "editor:tools",
@@ -1503,7 +1513,8 @@
               ],
               "total": 2,
               "selection": "single",
-              "activate": "editor:symbol"
+              "activate": "editor:symbol",
+              "empty": "No symbol is mapped yet."
             },
             {
               "id": "editor:diagnostics",
@@ -1517,7 +1528,8 @@
               "rows": [],
               "total": 0,
               "selection": "single",
-              "activate": "editor:diagnostic"
+              "activate": "editor:diagnostic",
+              "empty": "No problems."
             },
             {
               "id": "editor:placements",
@@ -1571,7 +1583,8 @@
               ],
               "total": 1,
               "selection": "single",
-              "activate": "editor:placement"
+              "activate": "editor:placement",
+              "empty": "This entry places nothing."
             },
             {
               "id": "editor:place",
@@ -3561,7 +3574,8 @@
                 "total": 812,
                 "selection": "single",
                 "activate": "editor:catalog_pick",
-                "filterable": true
+                "filterable": true,
+                "empty": "The catalog has nothing of this kind."
               }
             },
             {
@@ -3573,6 +3587,7 @@
                 "editor:new_apply"
               ],
               "slot": "inspector",
+              "collapsed": true,
               "fields": [
                 {
                   "id": "path",
@@ -3632,7 +3647,9 @@
                   "label": "Chunk size",
                   "description": "The side of a nested chunk, in squares.",
                   "value": "4",
-                  "type": "text"
+                  "type": "integer",
+                  "min": 1,
+                  "max": 24
                 }
               ],
               "submit": "editor:new_apply"
@@ -3682,6 +3699,7 @@
                 "editor:import"
               ],
               "slot": "inspector",
+              "collapsed": true,
               "fields": [
                 {
                   "id": "import",
@@ -3703,6 +3721,7 @@
                 "editor:browser_page"
               ],
               "slot": "outline",
+              "collapsed": true,
               "columns": [],
               "rows": [
                 {
@@ -4209,7 +4228,8 @@
               "total": 934,
               "selection": "single",
               "activate": "editor:browser_open",
-              "filterable": true
+              "filterable": true,
+              "empty": "No data file is there to edit."
             }
           ]
         },
@@ -4243,6 +4263,7 @@
             "label": "Export mapgen here",
             "keys": [],
             "enabled": true,
+            "description": "Writes the map around you, or the marked squares, as a mapgen in a new file and opens it.",
             "args": {
               "text": {
                 "field_id": "path"
@@ -4256,6 +4277,7 @@
             "label": "Mark squares to export",
             "keys": [],
             "enabled": true,
+            "description": "Picks a rectangle of squares on the map for Export to write instead of whole overmap squares.",
             "expect": "screen",
             "group": "File"
           },
@@ -4264,6 +4286,7 @@
             "label": "Extract legend to palette",
             "keys": [],
             "enabled": true,
+            "description": "Moves the entry's symbols into a new palette in this file, which the entry then uses.",
             "args": {
               "text": {
                 "default": "editor_scenario_chunk_palette"
@@ -4445,6 +4468,7 @@
             "label": "Open mapgen here",
             "keys": [],
             "enabled": true,
+            "description": "Opens the mapgen of the overmap square you stand on.",
             "expect": "screen",
             "group": "World"
           },
@@ -4453,6 +4477,7 @@
             "label": "Take back stamp",
             "keys": [],
             "enabled": false,
+            "description": "Puts back what the stamp replaced in the world.",
             "denial": "Nothing is stamped.",
             "expect": "screen",
             "group": "World"
@@ -4487,6 +4512,7 @@
               "F7"
             ],
             "enabled": true,
+            "description": "The game makes this terrain's new squares with this entry from now on. Squares already made and the file stay as they are.",
             "expect": "screen",
             "group": "World"
           },
@@ -4495,6 +4521,7 @@
             "label": "Apply on save",
             "keys": [],
             "enabled": true,
+            "description": "Switches whether each save of the file also applies the entry to the game, as Apply to game does.",
             "expect": "screen",
             "group": "World"
           },
@@ -4505,6 +4532,7 @@
               "F6"
             ],
             "enabled": false,
+            "description": "Generates the entry now over the overmap square you stand on, replacing what is there. Take back stamp undoes it.",
             "denial": "A nested chunk goes on a map with the mapgen that places it; open that mapgen to stamp, test or preview it.",
             "expect": "screen",
             "group": "World"
@@ -4516,6 +4544,7 @@
               "F5"
             ],
             "enabled": false,
+            "description": "Puts you in the middle of the stamped entry to play there; in the editor's own world it stamps the entry first.",
             "denial": "A nested chunk goes on a map with the mapgen that places it; open that mapgen to stamp, test or preview it.",
             "expect": "screen",
             "group": "World"
@@ -4638,6 +4667,7 @@
             "label": "Go to step",
             "keys": [],
             "enabled": true,
+            "role": "select",
             "args": {
               "row": {
                 "component_id": "editor:history"
@@ -5014,6 +5044,7 @@
                 "editor:save_as"
               ],
               "slot": "outline",
+              "collapsed": true,
               "fields": [
                 {
                   "id": "path",
@@ -5091,7 +5122,8 @@
               ],
               "total": 1,
               "selection": "single",
-              "activate": "editor:object"
+              "activate": "editor:object",
+              "empty": "The file holds no entry."
             },
             {
               "id": "editor:history",
@@ -5136,7 +5168,8 @@
               ],
               "total": 3,
               "selection": "single",
-              "activate": "editor:jump"
+              "activate": "editor:jump",
+              "empty": "No edits yet."
             },
             {
               "id": "editor:tools",
@@ -5587,7 +5620,8 @@
               ],
               "total": 3,
               "selection": "single",
-              "activate": "editor:symbol"
+              "activate": "editor:symbol",
+              "empty": "No symbol is mapped yet."
             },
             {
               "id": "editor:diagnostics",
@@ -5601,7 +5635,8 @@
               "rows": [],
               "total": 0,
               "selection": "single",
-              "activate": "editor:diagnostic"
+              "activate": "editor:diagnostic",
+              "empty": "No problems."
             },
             {
               "id": "editor:placements",
@@ -5655,7 +5690,8 @@
               ],
               "total": 1,
               "selection": "single",
-              "activate": "editor:placement"
+              "activate": "editor:placement",
+              "empty": "This entry places nothing."
             },
             {
               "id": "editor:place",
@@ -7645,7 +7681,8 @@
                 "total": 812,
                 "selection": "single",
                 "activate": "editor:catalog_pick",
-                "filterable": true
+                "filterable": true,
+                "empty": "The catalog has nothing of this kind."
               }
             },
             {
@@ -7657,6 +7694,7 @@
                 "editor:new_apply"
               ],
               "slot": "inspector",
+              "collapsed": true,
               "fields": [
                 {
                   "id": "path",
@@ -7716,7 +7754,9 @@
                   "label": "Chunk size",
                   "description": "The side of a nested chunk, in squares.",
                   "value": "4",
-                  "type": "text"
+                  "type": "integer",
+                  "min": 1,
+                  "max": 24
                 }
               ],
               "submit": "editor:new_apply"
@@ -7766,6 +7806,7 @@
                 "editor:import"
               ],
               "slot": "inspector",
+              "collapsed": true,
               "fields": [
                 {
                   "id": "import",
@@ -7787,6 +7828,7 @@
                 "editor:browser_page"
               ],
               "slot": "outline",
+              "collapsed": true,
               "columns": [],
               "rows": [
                 {
@@ -8293,7 +8335,8 @@
               "total": 934,
               "selection": "single",
               "activate": "editor:browser_open",
-              "filterable": true
+              "filterable": true,
+              "empty": "No data file is there to edit."
             }
           ]
         },
@@ -8326,6 +8369,7 @@
             "label": "Export mapgen here",
             "keys": [],
             "enabled": true,
+            "description": "Writes the map around you, or the marked squares, as a mapgen in a new file and opens it.",
             "args": {
               "text": {
                 "field_id": "path"
@@ -8339,6 +8383,7 @@
             "label": "Mark squares to export",
             "keys": [],
             "enabled": true,
+            "description": "Picks a rectangle of squares on the map for Export to write instead of whole overmap squares.",
             "expect": "screen",
             "group": "File"
           },
@@ -8347,6 +8392,7 @@
             "label": "Extract legend to palette",
             "keys": [],
             "enabled": true,
+            "description": "Moves the entry's symbols into a new palette in this file, which the entry then uses.",
             "args": {
               "text": {
                 "default": "editor_scenario_chunk_palette"
@@ -8527,6 +8573,7 @@
             "label": "Open mapgen here",
             "keys": [],
             "enabled": true,
+            "description": "Opens the mapgen of the overmap square you stand on.",
             "expect": "screen",
             "group": "World"
           },
@@ -8535,6 +8582,7 @@
             "label": "Take back stamp",
             "keys": [],
             "enabled": false,
+            "description": "Puts back what the stamp replaced in the world.",
             "denial": "Nothing is stamped.",
             "expect": "screen",
             "group": "World"
@@ -8569,6 +8617,7 @@
               "F7"
             ],
             "enabled": true,
+            "description": "The game makes this terrain's new squares with this entry from now on. Squares already made and the file stay as they are.",
             "expect": "screen",
             "group": "World"
           },
@@ -8577,6 +8626,7 @@
             "label": "Apply on save",
             "keys": [],
             "enabled": true,
+            "description": "Switches whether each save of the file also applies the entry to the game, as Apply to game does.",
             "expect": "screen",
             "group": "World"
           },
@@ -8587,6 +8637,7 @@
               "F6"
             ],
             "enabled": false,
+            "description": "Generates the entry now over the overmap square you stand on, replacing what is there. Take back stamp undoes it.",
             "denial": "A nested chunk goes on a map with the mapgen that places it; open that mapgen to stamp, test or preview it.",
             "expect": "screen",
             "group": "World"
@@ -8598,6 +8649,7 @@
               "F5"
             ],
             "enabled": false,
+            "description": "Puts you in the middle of the stamped entry to play there; in the editor's own world it stamps the entry first.",
             "denial": "A nested chunk goes on a map with the mapgen that places it; open that mapgen to stamp, test or preview it.",
             "expect": "screen",
             "group": "World"
@@ -8720,6 +8772,7 @@
             "label": "Go to step",
             "keys": [],
             "enabled": true,
+            "role": "select",
             "args": {
               "row": {
                 "component_id": "editor:history"
@@ -8960,6 +9013,7 @@
                 "editor:save_as"
               ],
               "slot": "outline",
+              "collapsed": true,
               "fields": [
                 {
                   "id": "path",
@@ -9037,7 +9091,8 @@
               ],
               "total": 1,
               "selection": "single",
-              "activate": "editor:object"
+              "activate": "editor:object",
+              "empty": "The file holds no entry."
             },
             {
               "id": "editor:history",
@@ -9082,7 +9137,8 @@
               ],
               "total": 3,
               "selection": "single",
-              "activate": "editor:jump"
+              "activate": "editor:jump",
+              "empty": "No edits yet."
             },
             {
               "id": "editor:tools",
@@ -9482,7 +9538,8 @@
               ],
               "total": 2,
               "selection": "single",
-              "activate": "editor:symbol"
+              "activate": "editor:symbol",
+              "empty": "No symbol is mapped yet."
             },
             {
               "id": "editor:diagnostics",
@@ -9496,7 +9553,8 @@
               "rows": [],
               "total": 0,
               "selection": "single",
-              "activate": "editor:diagnostic"
+              "activate": "editor:diagnostic",
+              "empty": "No problems."
             },
             {
               "id": "editor:placements",
@@ -9550,7 +9608,8 @@
               ],
               "total": 1,
               "selection": "single",
-              "activate": "editor:placement"
+              "activate": "editor:placement",
+              "empty": "This entry places nothing."
             },
             {
               "id": "editor:move",
@@ -11565,7 +11624,8 @@
                 "total": 812,
                 "selection": "single",
                 "activate": "editor:catalog_pick",
-                "filterable": true
+                "filterable": true,
+                "empty": "The catalog has nothing of this kind."
               }
             },
             {
@@ -11577,6 +11637,7 @@
                 "editor:new_apply"
               ],
               "slot": "inspector",
+              "collapsed": true,
               "fields": [
                 {
                   "id": "path",
@@ -11636,7 +11697,9 @@
                   "label": "Chunk size",
                   "description": "The side of a nested chunk, in squares.",
                   "value": "4",
-                  "type": "text"
+                  "type": "integer",
+                  "min": 1,
+                  "max": 24
                 }
               ],
               "submit": "editor:new_apply"
@@ -11686,6 +11749,7 @@
                 "editor:import"
               ],
               "slot": "inspector",
+              "collapsed": true,
               "fields": [
                 {
                   "id": "import",
@@ -11707,6 +11771,7 @@
                 "editor:browser_page"
               ],
               "slot": "outline",
+              "collapsed": true,
               "columns": [],
               "rows": [
                 {
@@ -12213,7 +12278,8 @@
               "total": 934,
               "selection": "single",
               "activate": "editor:browser_open",
-              "filterable": true
+              "filterable": true,
+              "empty": "No data file is there to edit."
             }
           ]
         },
@@ -12246,6 +12312,7 @@
             "label": "Export mapgen here",
             "keys": [],
             "enabled": true,
+            "description": "Writes the map around you, or the marked squares, as a mapgen in a new file and opens it.",
             "args": {
               "text": {
                 "field_id": "path"
@@ -12259,6 +12326,7 @@
             "label": "Mark squares to export",
             "keys": [],
             "enabled": true,
+            "description": "Picks a rectangle of squares on the map for Export to write instead of whole overmap squares.",
             "expect": "screen",
             "group": "File"
           },
@@ -12267,6 +12335,7 @@
             "label": "Extract legend to palette",
             "keys": [],
             "enabled": true,
+            "description": "Moves the entry's symbols into a new palette in this file, which the entry then uses.",
             "args": {
               "text": {
                 "default": "editor_scenario_chunk_palette"
@@ -12454,6 +12523,7 @@
             "label": "Open mapgen here",
             "keys": [],
             "enabled": true,
+            "description": "Opens the mapgen of the overmap square you stand on.",
             "expect": "screen",
             "group": "World"
           },
@@ -12462,6 +12532,7 @@
             "label": "Take back stamp",
             "keys": [],
             "enabled": false,
+            "description": "Puts back what the stamp replaced in the world.",
             "denial": "Nothing is stamped.",
             "expect": "screen",
             "group": "World"
@@ -12496,6 +12567,7 @@
               "F7"
             ],
             "enabled": true,
+            "description": "The game makes this terrain's new squares with this entry from now on. Squares already made and the file stay as they are.",
             "expect": "screen",
             "group": "World"
           },
@@ -12504,6 +12576,7 @@
             "label": "Apply on save",
             "keys": [],
             "enabled": true,
+            "description": "Switches whether each save of the file also applies the entry to the game, as Apply to game does.",
             "expect": "screen",
             "group": "World"
           },
@@ -12514,6 +12587,7 @@
               "F6"
             ],
             "enabled": false,
+            "description": "Generates the entry now over the overmap square you stand on, replacing what is there. Take back stamp undoes it.",
             "denial": "A nested chunk goes on a map with the mapgen that places it; open that mapgen to stamp, test or preview it.",
             "expect": "screen",
             "group": "World"
@@ -12525,6 +12599,7 @@
               "F5"
             ],
             "enabled": false,
+            "description": "Puts you in the middle of the stamped entry to play there; in the editor's own world it stamps the entry first.",
             "denial": "A nested chunk goes on a map with the mapgen that places it; open that mapgen to stamp, test or preview it.",
             "expect": "screen",
             "group": "World"
@@ -12647,6 +12722,7 @@
             "label": "Go to step",
             "keys": [],
             "enabled": true,
+            "role": "select",
             "args": {
               "row": {
                 "component_id": "editor:history"
@@ -13271,6 +13347,7 @@
                 "editor:save_as"
               ],
               "slot": "outline",
+              "collapsed": true,
               "fields": [
                 {
                   "id": "path",
@@ -13358,7 +13435,8 @@
               ],
               "total": 1,
               "selection": "single",
-              "activate": "editor:object"
+              "activate": "editor:object",
+              "empty": "The file holds no entry."
             },
             {
               "id": "editor:history",
@@ -13383,7 +13461,8 @@
               ],
               "total": 1,
               "selection": "single",
-              "activate": "editor:jump"
+              "activate": "editor:jump",
+              "empty": "No edits yet."
             },
             {
               "id": "editor:tools",
@@ -18201,7 +18280,8 @@
               ],
               "total": 2,
               "selection": "single",
-              "activate": "editor:symbol"
+              "activate": "editor:symbol",
+              "empty": "No symbol is mapped yet."
             },
             {
               "id": "editor:diagnostics",
@@ -18215,7 +18295,8 @@
               "rows": [],
               "total": 0,
               "selection": "single",
-              "activate": "editor:diagnostic"
+              "activate": "editor:diagnostic",
+              "empty": "No problems."
             },
             {
               "id": "editor:placements",
@@ -18269,7 +18350,8 @@
               ],
               "total": 1,
               "selection": "single",
-              "activate": "editor:placement"
+              "activate": "editor:placement",
+              "empty": "This entry places nothing."
             },
             {
               "id": "editor:place",
@@ -20259,7 +20341,8 @@
                 "total": 812,
                 "selection": "single",
                 "activate": "editor:catalog_pick",
-                "filterable": true
+                "filterable": true,
+                "empty": "The catalog has nothing of this kind."
               }
             },
             {
@@ -29244,7 +29327,8 @@
                 }
               ],
               "total": 74,
-              "selection": "single"
+              "selection": "single",
+              "empty": "Nothing can spawn on the marked squares."
             },
             {
               "id": "editor:new",
@@ -29255,6 +29339,7 @@
                 "editor:new_apply"
               ],
               "slot": "inspector",
+              "collapsed": true,
               "fields": [
                 {
                   "id": "path",
@@ -29314,7 +29399,9 @@
                   "label": "Chunk size",
                   "description": "The side of a nested chunk, in squares.",
                   "value": "4",
-                  "type": "text"
+                  "type": "integer",
+                  "min": 1,
+                  "max": 24
                 }
               ],
               "submit": "editor:new_apply"
@@ -29364,6 +29451,7 @@
                 "editor:import"
               ],
               "slot": "inspector",
+              "collapsed": true,
               "fields": [
                 {
                   "id": "import",
@@ -29385,6 +29473,7 @@
                 "editor:browser_page"
               ],
               "slot": "outline",
+              "collapsed": true,
               "columns": [],
               "rows": [
                 {
@@ -29891,7 +29980,8 @@
               "total": 935,
               "selection": "single",
               "activate": "editor:browser_open",
-              "filterable": true
+              "filterable": true,
+              "empty": "No data file is there to edit."
             },
             {
               "id": "editor:status",
@@ -29932,6 +30022,7 @@
             "label": "Export mapgen here",
             "keys": [],
             "enabled": true,
+            "description": "Writes the map around you, or the marked squares, as a mapgen in a new file and opens it.",
             "args": {
               "text": {
                 "field_id": "path"
@@ -29945,6 +30036,7 @@
             "label": "Mark squares to export",
             "keys": [],
             "enabled": true,
+            "description": "Picks a rectangle of squares on the map for Export to write instead of whole overmap squares.",
             "expect": "screen",
             "group": "File"
           },
@@ -29953,6 +30045,7 @@
             "label": "Extract legend to palette",
             "keys": [],
             "enabled": true,
+            "description": "Moves the entry's symbols into a new palette in this file, which the entry then uses.",
             "args": {
               "text": {
                 "default": "house_04_palette"
@@ -30138,6 +30231,7 @@
             "label": "Open mapgen here",
             "keys": [],
             "enabled": true,
+            "description": "Opens the mapgen of the overmap square you stand on.",
             "expect": "screen",
             "group": "World"
           },
@@ -30146,6 +30240,7 @@
             "label": "Take back stamp",
             "keys": [],
             "enabled": false,
+            "description": "Puts back what the stamp replaced in the world.",
             "denial": "Nothing is stamped.",
             "expect": "screen",
             "group": "World"
@@ -30180,6 +30275,7 @@
               "F7"
             ],
             "enabled": true,
+            "description": "The game makes this terrain's new squares with this entry from now on. Squares already made and the file stay as they are.",
             "expect": "screen",
             "group": "World"
           },
@@ -30188,6 +30284,7 @@
             "label": "Apply on save",
             "keys": [],
             "enabled": true,
+            "description": "Switches whether each save of the file also applies the entry to the game, as Apply to game does.",
             "expect": "screen",
             "group": "World"
           },
@@ -30198,6 +30295,7 @@
               "F6"
             ],
             "enabled": true,
+            "description": "Generates the entry now over the overmap square you stand on, replacing what is there. Take back stamp undoes it.",
             "expect": "screen",
             "group": "World"
           },
@@ -30208,6 +30306,7 @@
               "F5"
             ],
             "enabled": false,
+            "description": "Puts you in the middle of the stamped entry to play there; in the editor's own world it stamps the entry first.",
             "denial": "Stamp the entry first: Test plays what was stamped.",
             "expect": "screen",
             "group": "World"
@@ -30330,6 +30429,7 @@
             "label": "Go to step",
             "keys": [],
             "enabled": true,
+            "role": "select",
             "args": {
               "row": {
                 "component_id": "editor:history"

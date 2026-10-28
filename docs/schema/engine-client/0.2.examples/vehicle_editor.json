@@ -192,7 +192,8 @@
                 "selection": "single",
                 "activate": "vehicle:open",
                 "filterable": true,
-                "filter": "bicycle"
+                "filter": "bicycle",
+                "empty": "No vehicle matches “bicycle”."
               }
             }
           ]
@@ -240,6 +241,7 @@
               "CTRL+V"
             ],
             "enabled": true,
+            "description": "Puts an exact copy of the copied vehicle south of you.",
             "expect": "screen",
             "group": "World"
           },
@@ -458,7 +460,8 @@
                 "selection": "single",
                 "activate": "vehicle:open",
                 "filterable": true,
-                "filter": "bicycle"
+                "filter": "bicycle",
+                "empty": "No vehicle matches “bicycle”."
               }
             },
             {
@@ -508,7 +511,8 @@
               ],
               "total": 1,
               "selection": "single",
-              "activate": "vehicle:jump"
+              "activate": "vehicle:jump",
+              "empty": "No edits yet."
             },
             {
               "id": "vehicle:canvas_tools",
@@ -1149,7 +1153,8 @@
                 ],
                 "total": 3,
                 "selection": "single",
-                "activate": "vehicle:pick"
+                "activate": "vehicle:pick",
+                "empty": "This mount holds no part."
               }
             },
             {
@@ -1343,7 +1348,8 @@
               "selection": "single",
               "activate": "vehicle:choose",
               "filterable": true,
-              "filter": "headlight"
+              "filter": "headlight",
+              "empty": "No part matches “headlight”."
             }
           ]
         },
@@ -1560,6 +1566,7 @@
               "CTRL+V"
             ],
             "enabled": true,
+            "description": "Puts an exact copy of the copied vehicle south of you.",
             "expect": "screen",
             "group": "World"
           },
@@ -1570,6 +1577,7 @@
               "F5"
             ],
             "enabled": true,
+            "description": "Puts this design in the game in place of its prototype and spawns it east of you.",
             "expect": "screen",
             "group": "World"
           },
@@ -2063,7 +2071,8 @@
                 ],
                 "total": 1,
                 "selection": "single",
-                "activate": "vehicle:edit"
+                "activate": "vehicle:edit",
+                "empty": "No vehicle is near you."
               }
             },
             {
@@ -2112,7 +2121,8 @@
               ],
               "total": 2,
               "selection": "single",
-              "activate": "vehicle:jump"
+              "activate": "vehicle:jump",
+              "empty": "No edits yet."
             },
             {
               "id": "vehicle:canvas_tools",
@@ -2982,7 +2992,8 @@
               "selection": "single",
               "activate": "vehicle:choose",
               "filterable": true,
-              "filter": "headlight"
+              "filter": "headlight",
+              "empty": "No part matches “headlight”."
             }
           ]
         },
@@ -3120,6 +3131,7 @@
               "CTRL+V"
             ],
             "enabled": true,
+            "description": "Puts an exact copy of the copied vehicle south of you.",
             "expect": "screen",
             "group": "World"
           },
@@ -3130,6 +3142,7 @@
               "CTRL+D"
             ],
             "enabled": true,
+            "description": "Stops editing the vehicle in place; its changes stay in the world.",
             "expect": "screen",
             "group": "World"
           },
@@ -3150,6 +3163,7 @@
             "label": "Export design",
             "keys": [],
             "enabled": true,
+            "description": "Writes the vehicle's design as a prototype in a new file of your mods and opens it.",
             "args": {
               "row": {
                 "component_id": "vehicle:world"
@@ -3165,6 +3179,7 @@
             "label": "Copy vehicle",
             "keys": [],
             "enabled": true,
+            "description": "Keeps the vehicle with all its state, so Paste vehicle puts it in any world.",
             "args": {
               "row": {
                 "component_id": "vehicle:world"
@@ -3177,6 +3192,7 @@
             "label": "Edit in place",
             "keys": [],
             "enabled": true,
+            "description": "Edits the vehicle where it stands in the world; each change takes effect at once.",
             "args": {
               "row": {
                 "component_id": "vehicle:world"
