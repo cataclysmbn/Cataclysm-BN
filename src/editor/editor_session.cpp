@@ -311,8 +311,7 @@ auto run_editor_session() -> void {
         } else if (id == extract_palette_id) {
             state.extract_palette(invoked->args.text.value_or(""));
         } else if (id == undo_id || id == redo_id) {
-            const auto moved = id == undo_id ? state.doc->undo() : state.doc->redo();
-            if (moved) { state.reload(); }
+            state.step_history(id == undo_id);
         } else if (id == placement_id) {
             const auto placed = placements_of(*state.doc, state.object);
             const auto found = std::ranges::find(placed, row, placement_row);

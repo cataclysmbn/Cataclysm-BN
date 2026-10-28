@@ -4,6 +4,7 @@
 #include "catacharset.h"
 #include "editor/catalog.h"
 #include "editor/document.h"
+#include "editor/history_label.h"
 #include "editor/json_pointer.h"
 #include "editor/mapgen_check.h"
 #include "editor/mapgen_legend.h"
@@ -643,6 +644,28 @@ auto session::show_object(const std::size_t index) -> void {
     selected.reset();
     focus.reset();
     picked.reset();
+    reload();
+}
+
+auto session::step_history(const bool back) -> void {
+    const auto steps = doc->history();
+    const auto depth = doc->depth();
+    if (back ? depth == 0 : depth >= steps.size()) { return; }
+    const auto& step = steps[back ? depth - 1 : depth];
+    if (!(back ? doc->undo() : doc->redo())) { return; }
+    status = string_format(back ? _("Undid: %s") : _("Redid: %s"), step_label(step.edits.back()));
+    // An entry an undo removed is gone; the one it changed otherwise is what to look at.
+    const auto changed = std::ranges::find_if(step.edits, [&](const document_edit& edit) {
+        return edit.object < doc->objects().size();
+    });
+    if (changed != step.edits.end()
+        && !std::ranges::contains(step.edits, object, &document_edit::object)) {
+        show_object(changed->object);
+        return;
+    }
+    if (object >= doc->objects().size() && !doc->objects().empty()) {
+        object = doc->objects().size() - 1;
+    }
     reload();
 }
 

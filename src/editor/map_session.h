@@ -452,6 +452,9 @@ struct session {
 
     /// Puts the file's entry `index` on the canvas.
     auto show_object(std::size_t index) -> void;
+    /// Undoes the last step, or redoes the next one when `!back`, shows the entry it changed and
+    /// says what it did.
+    auto step_history(bool back) -> void;
 
     /// What the loader makes of the object now: its legend and what it reports.
     auto reload() -> void;
