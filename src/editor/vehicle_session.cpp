@@ -1894,7 +1894,8 @@ auto parts_view(const session& state) -> ec::screen_view {
         if (shown_tab == tab) { affordances.push_back(std::move(value)); }
     };
     on("mount",
-       ec::invoke_affordance({.id = pick_id, .label = _("Pick"), .args = row_of(stack_id)}));
+       ec::invoke_affordance(
+           {.id = pick_id, .label = _("Pick"), .args = row_of(stack_id), .role = "select"}));
     std::ranges::copy(stack_actions, std::back_inserter(affordances));
     if (state.live) {
         for (const auto* const tab : {"part", "vehicle"}) {
