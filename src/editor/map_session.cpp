@@ -670,6 +670,7 @@ auto session::apply() -> void {
             : std::expected<void, std::string>(std::unexpect, diagnostics.front().text);
     if (applied) {
         stand_ins.keep_chunks();
+        status = string_format(_("The game generates %s with this entry now."), entry_name(entry));
     } else {
         notice = applied.error();
     }
@@ -1110,6 +1111,7 @@ auto session::set_picked_field() -> void {
 auto session::stamp_here() -> void {
     const auto stand_ins = file_stand_ins(stand_in_texts());
     stamp_text(doc->objects()[object].value.dump());
+    if (stamped && notice.empty()) { status = _("Stamped over the overmap square you stand on."); }
 }
 
 auto session::place_special() -> void {
@@ -1125,6 +1127,7 @@ auto session::place_special() -> void {
         return;
     }
     placed = placed_special{.id = applied->str(), .at = *at};
+    status = string_format(_("Placed %s nearby; Test takes you there."), applied->str());
 }
 
 auto session::placed_here() const -> std::optional<tripoint_abs_omt> {

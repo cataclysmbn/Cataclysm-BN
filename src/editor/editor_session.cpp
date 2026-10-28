@@ -187,8 +187,9 @@ auto run_editor_session() -> void {
             get_avatar().assign_activity(std::move(wait), false);
             advancing = calendar::turn;
             return;
-        } else if (id == unstamp_id) {
+        } else if (id == unstamp_id && state.stamped) {
             state.unstamp();
+            state.status = _("Put back what the stamp replaced.");
         } else if (id == import_set_id) {
             state.import_text = invoked->args.text.value_or("");
         } else if (id == import_id) {
