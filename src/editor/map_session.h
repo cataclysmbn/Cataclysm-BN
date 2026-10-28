@@ -275,6 +275,7 @@ struct new_mapgen {
 struct export_squares {
     tripoint_abs_ms corner;
     point_rel_ms size;
+    auto operator==(const export_squares&) const -> bool = default; // *NOPAD*
 };
 
 struct diagnostic {

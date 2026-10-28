@@ -18,6 +18,7 @@
 #    include "editor/mapgen_source.h"
 #    include "editor/recent_documents.h"
 #    include "editor/special_grid.h"
+#    include "editor_heading_names.h"
 #    include "engine_client_component.h"
 #    include "engine_client_contract.h"
 #    include "game.h"
@@ -39,6 +40,7 @@
 #    include "path_info.h"
 #    include "player_activity.h"
 #    include "point.h"
+#    include "rng.h"
 #    include "state_helpers.h"
 #    include "translations.h"
 #    include "type_id.h"
@@ -48,6 +50,7 @@
 #    include <algorithm>
 #    include <filesystem>
 #    include <fstream>
+#    include <functional>
 #    include <memory>
 #    include <nlohmann/json.hpp>
 #    include <ranges>
@@ -3902,16 +3905,26 @@ TEST_CASE(
 
     editor::run_editor_session();
     CHECK(step == 3);
+    // The overmap square has no map extras and the dice are fixed, so whatever terrain the earlier
+    // tests left there or however they rolled, nothing but the mapgen lands on it.
+    const auto at = tripoint_abs_omt(60, 60, 0);
+    auto& overmap = get_overmapbuffer(get_map().get_bound_dimension());
+    const auto was = overmap.ter(at);
+    overmap.ter_set(at, oter_str_id("crater").id());
+    const auto restore_terrain = on_out_of_scope([&] { overmap.ter_set(at, was); });
     auto buffer = mapbuffer{};
     buffer.set_dimension_id(get_map().get_bound_dimension());
     auto constructor = mapgen_constructor(buffer);
     const auto picked = pick_mapgen_func("house_04");
     REQUIRE(picked);
-    REQUIRE(
-        constructor
-            .generate(tripoint_abs_omt(60, 60, 0), calendar::turn,
-                      {.use_selected_mapgen = true, .selected_mapgen = picked})
-            .is_generated());
+    {
+        const auto seeded = rng_deterministic_task_scope(1);
+        REQUIRE(
+            constructor
+                .generate(at, calendar::turn,
+                          {.use_selected_mapgen = true, .selected_mapgen = picked})
+                .is_generated());
+    }
     CHECK(constructor.ter(point_omt_ms(2, 6)) == ter_id("t_wall"));
     CHECK(constructor.ter(point_omt_ms(3, 6)) == ter_id("t_floor"));
 }
@@ -5672,7 +5685,7 @@ TEST_CASE(
                 CHECK(slot_of(screen, "editor:browser") == "canvas");
                 CHECK(slot_of(screen, "editor:new") == "inspector");
                 CHECK(slot_of(screen, "editor:file") == "outline");
-                CHECK(part(screen, "editor:new").label == "New file");
+                CHECK(part(screen, "editor:new").label == "New mapgen file");
                 // A field is named by what it asks, not by the heading of its form.
                 for (const auto* const form : {"editor:new", "editor:file"}) {
                     INFO(form);
@@ -6276,6 +6289,171 @@ TEST_CASE(
     });
     editor::run_editor_session();
     CHECK(step == 14);
+    editor::reset_editor_session();
+}
+
+namespace {
+/// Opens the kinds file, has an export refused, sends `changes` one by one and tells whether the
+/// refusal is gone after them.
+auto refusal_gone_after(const std::vector<std::function<input_event()>>& changes) -> bool {
+    const auto guard = screen_guard{};
+    const auto file = kinds_file{};
+    auto step = std::size_t{0};
+    auto gone = false;
+    const auto notice = [](const ec::screen_view& screen) {
+        const auto* const found = ec::find_component(*screen.root, "editor:notice");
+        return found ? body<ec::text_body>(*found).markup : std::string();
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        const auto at = step++;
+        if (at == 0) { return invoke("editor:open", {.text = file.path.string()}); }
+        if (at == 1) { return invoke("editor:export", {.text = "/tmp/editor_export_test.json"}); }
+        if (at == 2) { REQUIRE_FALSE(notice(screen).empty()); }
+        if (at - 2 < changes.size()) { return changes[at - 2](); }
+        gone = notice(screen).empty();
+        return act("QUIT");
+    });
+    editor::run_editor_session();
+    editor::reset_editor_session();
+    return gone;
+}
+} // namespace
+
+TEST_CASE(
+    "the editor drops a refusal once the player changes the export size",
+    "[editor_session][engine_client_component]") {
+    CHECK(refusal_gone_after({[] { return invoke("editor:export_width", {.count = 2}); }}));
+    CHECK(refusal_gone_after({[] { return invoke("editor:export_height", {.count = 3}); }}));
+}
+
+TEST_CASE(
+    "the editor drops a refusal once the player marks the squares to export",
+    "[editor_session][engine_client_component]") {
+    CHECK(refusal_gone_after(
+        {[] { return invoke("editor:export_area"); }, [] { return act("CONFIRM"); },
+         [] { return act("RIGHT"); }, [] { return act("DOWN"); }, [] { return act("CONFIRM"); }}));
+}
+
+TEST_CASE(
+    "the editor drops a refusal once the player flips applying on save",
+    "[editor_session][engine_client_component]") {
+    CHECK(refusal_gone_after({[] { return invoke("editor:apply_on_save"); }}));
+}
+
+TEST_CASE(
+    "the map editor names no heading like an action or a tool",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = kinds_file{};
+    const auto restore_mapgen = restore_on_out_of_scope<bool>(disable_mapgen);
+    disable_mapgen = false;
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        INFO(step);
+        CHECK(headings_named_like_actions(screen) == std::vector<std::string>{});
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                return invoke("editor:preview", {.count = 1});
+            case 2:
+                return invoke("editor:tool", {.row = "tool:select"});
+            case 3:
+            case 4:
+                return invoke("editor:paint", {.row = "square:3,3"});
+            case 5:
+                return invoke("editor:loot");
+            case 6:
+                // The preview and what can spawn are shown, under their headings.
+                CHECK(ec::find_component(*screen.root, "editor:preview"));
+                CHECK(ec::find_component(*screen.root, "editor:loot"));
+                return invoke("editor:tool", {.row = "tool:placements"});
+            case 7:
+                return invoke("editor:object", {.row = "object:1"});
+            case 8:
+                return invoke("editor:object", {.row = "object:2"});
+            case 9:
+                return invoke("editor:placement", {.row = "placement:place_nested:0"});
+            case 10:
+                CHECK(ec::find_component(*screen.root, "editor:move"));
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 11);
+    editor::reset_editor_session();
+}
+
+TEST_CASE(
+    "the map editor heads a special's connection form in the inspector",
+    "[editor_session][editor_special][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = levels_file{special_levels()};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK(slot_of(screen, "editor:connection") == "inspector");
+                CHECK_FALSE(part(screen, "editor:connection").label.empty());
+                CHECK(headings_named_like_actions(screen) == std::vector<std::string>{});
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 2);
+    editor::reset_editor_session();
+}
+
+TEST_CASE(
+    "the map editor's help lists the keys of its actions and tools",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = kinds_file{};
+    auto step = 0;
+    /// The keys the help lists for the row named `label`; empty when it lists no such row.
+    const auto keys_of = [](const ec::screen_view& screen, const std::string& label) {
+        const auto& rows = body<ec::list_body>(part(screen, "keybindings:actions")).rows;
+        const auto found = std::ranges::find(rows, label, &ec::row::label);
+        if (found == rows.end()) { return std::string{}; }
+        const auto keys =
+            std::ranges::find(found->columns, "keys", &game_client::interaction_column::key);
+        return keys == found->columns.end() ? std::string{} : keys->value;
+    };
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                return act("HELP_KEYBINDINGS");
+            case 2:
+                REQUIRE(screen.context == "HELP_KEYBINDINGS");
+                CHECK(keys_of(screen, "Undo") == "CTRL+Z");
+                CHECK(keys_of(screen, "Redo") == "CTRL+Y");
+                CHECK(keys_of(screen, "Pencil") == "b");
+                return act("QUIT");
+            case 3:
+                CHECK(screen.kind == "editor");
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 4);
     editor::reset_editor_session();
 }
 

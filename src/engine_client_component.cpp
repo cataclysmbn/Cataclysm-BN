@@ -1,4 +1,5 @@
 #include "engine_client_component.h"
+#include "engine_client_screen_keys.h"
 
 #include "action.h"
 #include "client_input.h"
@@ -679,6 +680,35 @@ screen_scope::~screen_scope()
     auto &screens = live_screens();
     const auto found = std::ranges::find( screens, serial_, &live_screen::serial );
     if( found != screens.end() ) { screens.erase( found ); }
+}
+
+namespace
+{
+/// The keys of the tabs in `value` and the parts inside it, added to `keys`.
+auto add_tab_keys( const component &value, std::vector<screen_key> &keys ) -> void
+{
+    if( const auto *const body = std::get_if<tabs_body>( &value.body ) ) {
+        for( const auto &tab : body->tabs ) {
+            if( !tab.hotkey.empty() ) { keys.push_back( { .label = tab.label, .keys = { tab.hotkey } } ); }
+        }
+    }
+    for( const auto &child : value.children ) { add_tab_keys( child, keys ); }
+}
+} // namespace
+
+auto screen_keys( const input_context &context ) -> std::vector<screen_key>
+{
+    const auto &screens = live_screens();
+    const auto found = std::ranges::find( screens | std::views::reverse, &context,
+                                          &live_screen::context );
+    if( found == ( screens | std::views::reverse ).end() || !found->view ) { return {}; }
+    const auto view = found->view( boundary_state{} );
+    auto keys = view.affordances
+    | std::views::filter( []( const affordance & entry ) { return !entry.keys.empty(); } )
+    | std::views::transform( []( const affordance & entry ) { return screen_key{ .label = entry.label, .keys = entry.keys }; } )
+    | std::ranges::to<std::vector>();
+    if( view.root ) { add_tab_keys( *view.root, keys ); }
+    return keys;
 }
 
 auto interaction_stack( const boundary_state &state ) -> std::vector<screen_view>

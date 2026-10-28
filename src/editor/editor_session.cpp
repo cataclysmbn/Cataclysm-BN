@@ -92,6 +92,9 @@ struct session_footprint {
     std::optional<std::size_t> saved;
     bool stamped = false;
     bool placed = false;
+    point_rel_omt export_size;
+    std::optional<export_squares> export_area;
+    bool apply_on_save = false;
     std::vector<std::string> inputs;
     auto operator==(const session_footprint&) const -> bool = default; // *NOPAD*
 };
@@ -107,6 +110,9 @@ auto footprint(const session& state) -> session_footprint {
         .saved = state.doc ? state.doc->saved_depth() : std::nullopt,
         .stamped = state.stamped.has_value(),
         .placed = state.placed.has_value(),
+        .export_size = state.export_size,
+        .export_area = state.export_area,
+        .apply_on_save = state.apply_on_save,
         .inputs = {
             state.made.path,       state.made.om_terrain,
             state.made.fill,       state.made.kind,

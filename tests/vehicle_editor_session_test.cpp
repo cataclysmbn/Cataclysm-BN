@@ -13,6 +13,7 @@
 #    include "editor/recent_documents.h"
 #    include "editor/vehicle_design.h"
 #    include "editor/vehicle_session.h"
+#    include "editor_heading_names.h"
 #    include "engine_client_component.h"
 #    include "engine_client_contract.h"
 #    include "json_formatter.h"
@@ -37,6 +38,7 @@
 #    include <sstream>
 #    include <string>
 #    include <variant>
+#    include <vector>
 
 namespace {
 namespace ec = engine_client;
@@ -1985,7 +1987,7 @@ TEST_CASE(
                 return invoke("vehicle:show:cargo");
             case 3:
                 CHECK(slot_of(screen, "vehicle:item_kinds") == "palette");
-                CHECK(part(screen, "vehicle:item_kinds").label == "Items");
+                CHECK(part(screen, "vehicle:item_kinds").label == "Items to add");
                 CHECK(body<ec::list_body>(part(screen, "vehicle:item_catalog")).total > 1000);
                 return invoke("vehicle:item_filter", {.text = "flashlight"});
             case 4:
@@ -2456,6 +2458,107 @@ TEST_CASE(
     });
     editor::run_vehicle_editor();
     CHECK(step == 2);
+}
+
+namespace {
+/// Why the command lifecycle turns away an invoke of `affordance` with `args` at `state`, as the
+/// client reads it; empty when it takes the invoke.
+auto refusal(
+    const ec::boundary_state& state, const std::string& affordance, const ec::invoke_args& args)
+    -> std::string {
+    class authority final: public ec::command_authority {
+    public:
+        auto current_permissions() const -> ec::command_permissions override {
+            return {.accepts_interaction_commands = true, .accepts_registered_actions = true};
+        }
+    };
+    const auto owner = authority{};
+    auto lifecycle = ec::command_lifecycle{state.epoch, owner};
+    const auto submitted = lifecycle.submit(
+        {.epoch = state.epoch,
+         .expect = {.revision = 1, .boundary_id = state.id},
+         .operation = ec::invoke_operation{.affordance_id = affordance, .args = args}});
+    REQUIRE(submitted);
+    if (lifecycle.validate({.epoch = state.epoch, .sequence = 1, .revision = 1}, state, {80, 24})) {
+        return {};
+    }
+    const auto result = lifecycle.result(submitted->command_id);
+    REQUIRE(result);
+    REQUIRE(result->failure == ec::error::invalid_arguments);
+    return result->message;
+}
+} // namespace
+
+TEST_CASE(
+    "the vehicle editor turns away a spawn value out of its bounds, naming the field and them",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                return invoke("vehicle:show:spawn");
+            case 2:
+                CHECK(refusal(state, "vehicle:spawn_set", {.row = "facing", .text = "400"})
+                      == "Facing takes a whole number from 0 to 359.");
+                CHECK(refusal(state, "vehicle:spawn_set", {.row = "fuel", .text = "-1"})
+                      == "Fuel % takes a whole number from 0 to 100.");
+                CHECK(refusal(state, "vehicle:spawn_set", {.row = "facing", .text = "90"}).empty());
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 3);
+}
+
+TEST_CASE(
+    "the vehicle editor's picking of a part on a mount is a selection",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                return invoke("vehicle:show:mount");
+            case 2:
+                CHECK(affordance(screen, "vehicle:pick").role == "select");
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 3);
+}
+
+TEST_CASE(
+    "the vehicle editor names no heading like an action or a tab",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto tabs =
+        std::vector<std::string>{"mount", "part", "vehicle", "cargo", "spawn", "json"};
+    auto step = std::size_t{0};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        const auto at = step++;
+        INFO(at);
+        CHECK(headings_named_like_actions(screen) == std::vector<std::string>{});
+        if (at == 0) { return invoke("vehicle:open", {.row = "prototype:bicycle"}); }
+        if (at - 1 < tabs.size()) { return invoke("vehicle:show:" + tabs[at - 1]); }
+        return act("QUIT");
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == tabs.size() + 2);
 }
 
 #endif // CATA_MCP

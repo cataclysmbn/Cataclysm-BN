@@ -2057,7 +2057,7 @@
         "stage": "rejected",
         "stage_text": "Refused.",
         "error": "invalid_arguments",
-        "error_text": "That needs other details."
+        "error_text": "Safe mode proximity distance takes a whole number from 0 to 60."
       }
     },
     {

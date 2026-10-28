@@ -39,7 +39,7 @@
             {
               "id": "editor:file",
               "kind": "form",
-              "label": "Open",
+              "label": "File path",
               "affordances": [
                 "editor:open"
               ],
@@ -57,7 +57,7 @@
             {
               "id": "editor:new",
               "kind": "form",
-              "label": "New file",
+              "label": "New mapgen file",
               "affordances": [
                 "editor:new_set",
                 "editor:new_apply"
@@ -987,7 +987,7 @@
             {
               "id": "editor:file",
               "kind": "form",
-              "label": "Open",
+              "label": "File path",
               "affordances": [
                 "editor:open",
                 "editor:save_as"
@@ -1525,7 +1525,7 @@
             {
               "id": "editor:placements",
               "kind": "list",
-              "label": "Placements",
+              "label": "Placed by this entry",
               "affordances": [
                 "editor:placement"
               ],
@@ -1579,7 +1579,7 @@
             {
               "id": "editor:place",
               "kind": "form",
-              "label": "Add placement",
+              "label": "New placement",
               "affordances": [
                 "editor:place_set",
                 "editor:place_apply"
@@ -3570,7 +3570,7 @@
             {
               "id": "editor:new",
               "kind": "form",
-              "label": "New file",
+              "label": "New mapgen file",
               "affordances": [
                 "editor:new_set",
                 "editor:new_apply"
@@ -5012,7 +5012,7 @@
             {
               "id": "editor:file",
               "kind": "form",
-              "label": "Open",
+              "label": "File path",
               "affordances": [
                 "editor:open",
                 "editor:save_as"
@@ -5610,7 +5610,7 @@
             {
               "id": "editor:placements",
               "kind": "list",
-              "label": "Placements",
+              "label": "Placed by this entry",
               "affordances": [
                 "editor:placement"
               ],
@@ -5664,7 +5664,7 @@
             {
               "id": "editor:place",
               "kind": "form",
-              "label": "Add placement",
+              "label": "New placement",
               "affordances": [
                 "editor:place_set",
                 "editor:place_apply"
@@ -7655,7 +7655,7 @@
             {
               "id": "editor:new",
               "kind": "form",
-              "label": "New file",
+              "label": "New mapgen file",
               "affordances": [
                 "editor:new_set",
                 "editor:new_apply"
@@ -8959,7 +8959,7 @@
             {
               "id": "editor:file",
               "kind": "form",
-              "label": "Open",
+              "label": "File path",
               "affordances": [
                 "editor:open",
                 "editor:save_as"
@@ -9506,7 +9506,7 @@
             {
               "id": "editor:placements",
               "kind": "list",
-              "label": "Placements",
+              "label": "Placed by this entry",
               "affordances": [
                 "editor:placement"
               ],
@@ -9560,7 +9560,7 @@
             {
               "id": "editor:move",
               "kind": "form",
-              "label": "Move placement",
+              "label": "Placement position",
               "affordances": [
                 "editor:move_set",
                 "editor:move_apply"
@@ -9585,7 +9585,7 @@
             {
               "id": "editor:place",
               "kind": "form",
-              "label": "Add placement",
+              "label": "New placement",
               "affordances": [
                 "editor:place_set",
                 "editor:place_apply"
@@ -11576,7 +11576,7 @@
             {
               "id": "editor:new",
               "kind": "form",
-              "label": "New file",
+              "label": "New mapgen file",
               "affordances": [
                 "editor:new_set",
                 "editor:new_apply"
@@ -13271,7 +13271,7 @@
             {
               "id": "editor:file",
               "kind": "form",
-              "label": "Open",
+              "label": "File path",
               "affordances": [
                 "editor:open",
                 "editor:save_as"
@@ -18226,7 +18226,7 @@
             {
               "id": "editor:placements",
               "kind": "list",
-              "label": "Placements",
+              "label": "Placed by this entry",
               "affordances": [
                 "editor:placement"
               ],
@@ -18280,7 +18280,7 @@
             {
               "id": "editor:place",
               "kind": "form",
-              "label": "Add placement",
+              "label": "New placement",
               "affordances": [
                 "editor:place_set",
                 "editor:place_apply"
@@ -20271,7 +20271,7 @@
             {
               "id": "editor:rotation",
               "kind": "list",
-              "label": "Turn",
+              "label": "Preview facing",
               "affordances": [
                 "editor:turn"
               ],
@@ -20357,7 +20357,7 @@
             {
               "id": "editor:preview",
               "kind": "grid",
-              "label": "Preview",
+              "label": "Generated map",
               "slot": "inspector",
               "cols": 24,
               "rows": 24,
@@ -27307,7 +27307,7 @@
             {
               "id": "editor:loot",
               "kind": "list",
-              "label": "What can spawn here",
+              "label": "Spawn chances",
               "slot": "inspector",
               "columns": [
                 {
@@ -29255,7 +29255,7 @@
             {
               "id": "editor:new",
               "kind": "form",
-              "label": "New file",
+              "label": "New mapgen file",
               "affordances": [
                 "editor:new_set",
                 "editor:new_apply"

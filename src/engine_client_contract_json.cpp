@@ -5,6 +5,7 @@
 #include "string_formatter.h"
 #include "translations.h"
 
+#include <cmath>
 #include <nlohmann/json.hpp>
 #include <ranges>
 
@@ -664,8 +665,12 @@ auto body_json( const form_body &body, const bubble_frame & /*frame*/ ) -> json
             entry["options"] = json::array();
             for( const auto &option : field.options ) { entry["options"].push_back( {{"id", option.id}, {"label", option.label}} ); }
         }
-        if( field.min ) { entry["min"] = *field.min; }
-        if( field.max ) { entry["max"] = *field.max; }
+        // A whole-number field's bounds are whole numbers.
+        const auto bound = [&]( const double value ) {
+            return field.type == "integer" ? json( std::llround( value ) ) : json( value );
+        };
+        if( field.min ) { entry["min"] = bound( *field.min ); }
+        if( field.max ) { entry["max"] = bound( *field.max ); }
         fields.push_back( std::move( entry ) );
     }
     auto result = json{{"fields", std::move( fields )}};

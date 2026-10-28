@@ -1894,7 +1894,8 @@ auto parts_view(const session& state) -> ec::screen_view {
         if (shown_tab == tab) { affordances.push_back(std::move(value)); }
     };
     on("mount",
-       ec::invoke_affordance({.id = pick_id, .label = _("Pick"), .args = row_of(stack_id)}));
+       ec::invoke_affordance(
+           {.id = pick_id, .label = _("Pick"), .args = row_of(stack_id), .role = "select"}));
     std::ranges::copy(stack_actions, std::back_inserter(affordances));
     if (state.live) {
         for (const auto* const tab : {"part", "vehicle"}) {
@@ -1994,7 +1995,7 @@ auto session_view(const session& state) -> ec::screen_view {
               {history_id, {.slot = "log", .label = _("History")}},
               {"vehicle:notice", {.slot = "log"}},
               {"vehicle:status", {.slot = "log"}},
-              {item_kinds_id, {.slot = "palette", .label = _("Items")}}},
+              {item_kinds_id, {.slot = "palette", .label = _("Items to add")}}},
          .groups = std::move(groups),
          .menus = {file, edit, view_menu, world}});
     return view;
