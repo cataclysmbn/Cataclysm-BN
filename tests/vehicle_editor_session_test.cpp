@@ -1253,13 +1253,15 @@ TEST_CASE(
             case 0:
                 return invoke("vehicle:open", {.row = "prototype:bicycle"});
             case 1:
-                CHECK(slot_of(screen, "vehicle:parts") == "palette");
-                CHECK(part(screen, "vehicle:parts").label == "Parts");
+                CHECK(slot_of(screen, "vehicle:part_groups") == "palette");
+                CHECK(part(screen, "vehicle:part_groups").label == "Parts");
                 CHECK_FALSE(std::ranges::contains(tabs(screen), std::string("tool:install")));
-                return invoke("vehicle:choose", {.row = "vpart:headlight"});
+                return invoke("vehicle:part_filter", {.text = "headlight"});
             case 2:
-                return invoke("vehicle:mount", {.row = "mount:1,0"});
+                return invoke("vehicle:choose", {.row = "vpart:headlight"});
             case 3:
+                return invoke("vehicle:mount", {.row = "mount:1,0"});
+            case 4:
                 // The palette and the mount's stack stay, ready for the next part.
                 CHECK(has_affordance(screen, "vehicle:choose"));
                 CHECK(body<ec::tabs_body>(part(screen, "vehicle:tools")).tabs.front().selected);
@@ -1273,7 +1275,7 @@ TEST_CASE(
         }
     });
     editor::run_vehicle_editor();
-    CHECK(step >= 5);
+    CHECK(step >= 6);
 }
 
 namespace {
@@ -3194,22 +3196,13 @@ TEST_CASE("the vehicle editor says where it saved the design", "[editor_vehicle]
 }
 
 TEST_CASE(
-    "the vehicle editor's palette groups one row per part under its category, and a filter "
-    "lists every shape by a name of its own",
+    "the vehicle editor's palette shows one row per part, and a filter lists every shape by a "
+    "name of its own",
     "[editor_vehicle]") {
     const auto guard = screen_guard{};
     const auto ids = [](const ec::screen_view& screen) {
         return rows(screen, "vehicle:parts") | std::views::transform(&ec::row::id)
              | std::ranges::to<std::vector>();
-    };
-    /// The heading a row of the palette stands under.
-    const auto heading_of = [](const ec::screen_view& screen, const std::string& id) {
-        auto heading = std::string{};
-        for (const auto& entry : rows(screen, "vehicle:parts")) {
-            if (entry.header) { heading = entry.label; }
-            if (entry.id == id) { return heading; }
-        }
-        return std::string{};
     };
     auto step = 0;
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
@@ -3219,45 +3212,22 @@ TEST_CASE(
                 return invoke("vehicle:open", {.row = "prototype:bicycle"});
             case 1: {
                 const auto& list = body<ec::list_body>(part(screen, "vehicle:parts"));
-                // Every part kind at once, under the headings of what they are for.
-                CHECK(list.total == list.rows.size());
-                CHECK(list.offset == 0);
                 REQUIRE_FALSE(list.rows.empty());
-                CHECK(list.rows.front().header);
-                CHECK(list.rows.front().label == "Frames");
-                const auto headings =
-                    list.rows | std::views::filter(&ec::row::header)
-                    | std::views::transform(&ec::row::label) | std::ranges::to<std::vector>();
-                CHECK(
-                    headings
-                    == std::vector<std::string>{
-                        "Frames", "Wheels & hubs", "Engines & motors", "Fuel & batteries",
-                        "Seats & controls", "Doors & windows", "Lights", "Storage", "Weapons",
-                        "Other"});
-                CHECK(std::ranges::none_of(
-                    list.rows | std::views::filter(&ec::row::header), &ec::row::selectable));
                 // The shapes of a frame are one row, the shape the game's vehicles use most.
                 CHECK(std::ranges::contains(ids(screen), std::string("vpart:frame_vertical")));
                 CHECK_FALSE(std::ranges::contains(ids(screen), std::string("vpart:frame_cross")));
                 CHECK_FALSE(
                     std::ranges::contains(ids(screen), std::string("vpart:frame_horizontal")));
-                CHECK(heading_of(screen, "vpart:frame_vertical") == "Frames");
-                CHECK(heading_of(screen, "vpart:wheel") == "Wheels & hubs");
-                CHECK(heading_of(screen, "vpart:wheel_mount_medium") == "Wheels & hubs");
-                CHECK(heading_of(screen, "vpart:tank") == "Fuel & batteries");
-                CHECK(heading_of(screen, "vpart:headlight") == "Lights");
                 // No two rows read the same.
                 auto labels =
-                    list.rows
-                    | std::views::filter([](const ec::row& entry) { return !entry.header; })
-                    | std::views::transform(&ec::row::label) | std::ranges::to<std::vector>();
+                    list.rows | std::views::transform(&ec::row::label)
+                    | std::ranges::to<std::vector>();
                 std::ranges::sort(labels);
                 CHECK(std::ranges::adjacent_find(labels) == labels.end());
                 return invoke("vehicle:part_filter", {.text = "frame_"});
             }
             case 2: {
                 // A filter lists every part that matches, each shape by a name of its own.
-                CHECK(std::ranges::none_of(rows(screen, "vehicle:parts"), &ec::row::header));
                 CHECK(row(screen, "vehicle:parts", "vpart:frame_horizontal").label
                       == "frame (horizontal)");
                 CHECK(row(screen, "vehicle:parts", "vpart:frame_horizontal_2").label
