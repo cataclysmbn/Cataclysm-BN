@@ -2864,7 +2864,7 @@ TEST_CASE(
         switch (step++) {
             case 0:
                 CHECK(waited(screen) == "5 turns passed.");
-                return invoke("editor:export_width", {.count = 1});
+                return invoke("editor:export_set", {.row = "width", .text = "1"});
             case 1:
                 CHECK(waited(screen).empty());
                 return act("QUIT");
@@ -3525,15 +3525,28 @@ TEST_CASE(
         const auto screen = ec::top_screen(captured());
         switch (step++) {
             case 0:
-                return invoke("editor:export_width", {.count = 2});
+                // The export's size is fields of its form, not actions of the File menu.
+                CHECK_FALSE(has_affordance(screen, "editor:export_width"));
+                CHECK_FALSE(has_affordance(screen, "editor:export_height"));
+                CHECK(affordance(screen, "editor:export_set").group.empty());
+                return invoke("editor:export_set", {.row = "width", .text = "2"});
             case 1:
-                return invoke("editor:export_height", {.count = 3});
+                return invoke("editor:export_set", {.row = "height", .text = "3"});
             case 2:
-                return invoke("editor:export_palette", {.text = "lab_workspace_palette"});
-            case 3:
-                CHECK(body<ec::form_body>(part(screen, "editor:export_options")).fields[0].value
-                      == "lab_workspace_palette");
+                return invoke(
+                    "editor:export_set", {.row = "palette", .text = "lab_workspace_palette"});
+            case 3: {
+                const auto& fields =
+                    body<ec::form_body>(part(screen, "editor:export_options")).fields;
+                REQUIRE(fields.size() == 3);
+                CHECK(fields[0].value == "lab_workspace_palette");
+                CHECK(fields[1].id == "width");
+                CHECK(fields[1].type == "integer");
+                CHECK(fields[1].value == "2");
+                CHECK(fields[2].id == "height");
+                CHECK(fields[2].value == "3");
                 return invoke("editor:export", {.text = made.string()});
+            }
             case 4: {
                 const auto& canvas = body<ec::grid_body>(part(screen, "editor:canvas"));
                 CHECK(canvas.cols == 48);
@@ -3599,7 +3612,7 @@ TEST_CASE(
                 CHECK(canvas.cols == 3);
                 CHECK(canvas.rows == 2);
                 // The overmap square size goes back to the squares around the avatar.
-                return invoke("editor:export_width", {.count = 1});
+                return invoke("editor:export_set", {.row = "width", .text = "1"});
             }
             case 8:
                 CHECK(export_label(screen) == "Export mapgen here");
@@ -6508,8 +6521,12 @@ auto refusal_gone_after(const std::vector<std::function<input_event()>>& changes
 TEST_CASE(
     "the editor drops a refusal once the player changes the export size",
     "[editor_session][engine_client_component]") {
-    CHECK(refusal_gone_after({[] { return invoke("editor:export_width", {.count = 2}); }}));
-    CHECK(refusal_gone_after({[] { return invoke("editor:export_height", {.count = 3}); }}));
+    CHECK(refusal_gone_after({[] {
+        return invoke("editor:export_set", {.row = "width", .text = "2"});
+    }}));
+    CHECK(refusal_gone_after({[] {
+        return invoke("editor:export_set", {.row = "height", .text = "3"});
+    }}));
 }
 
 TEST_CASE(
