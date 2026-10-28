@@ -1236,6 +1236,8 @@ auto session::paint(const point& at) -> void {
     }
     const auto grid = symbols_of(*doc, object);
     if (current->region == region_use::select) {
+        // What was counted over the squares marked before no longer stands.
+        loot.reset();
         selected = anchor ? std::optional(selection{.from = *anchor, .to = at}) : std::nullopt;
         anchor = anchor ? std::nullopt : std::optional(at);
         if (selected) {
