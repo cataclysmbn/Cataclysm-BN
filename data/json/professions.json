@@ -9381,6 +9381,7 @@
           "pants_army",
           "tshirt",
           "tac_fullhelmet",
+          "gloves_liner",
           "gloves_tactical",
           "socks",
           "boots_combat",
@@ -9403,7 +9404,6 @@
             "item": "m9",
             "ammo-item": "9mm",
             "charges": 15,
-            "container-item": "holster",
             "custom-flags": [ "auto_wield" ]
           },
           { "item": "9mm", "charges": 5 }
