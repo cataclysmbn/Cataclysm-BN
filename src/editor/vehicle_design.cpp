@@ -424,11 +424,12 @@ auto set_part_fuel(vehicle& veh, const int index, const part_fuel& fuel)
         return std::unexpected(_("This part holds no fuel."));
     }
     if (fuel.amount < 0) { return std::unexpected(_("That value is out of range.")); }
+    // What it holds now outranks whatever it held before it was last emptied.
+    const auto holding = part.ammo_remaining() > 0;
+    if (holding) { part.get_base().erase_var(emptied_of); }
     if (fuel.amount == 0) {
         // What it held is what a later fill that names nothing fills it with.
-        if (!part.ammo_current().is_null()) {
-            part.get_base().set_var(emptied_of, part.ammo_current().str());
-        }
+        if (holding) { part.get_base().set_var(emptied_of, part.ammo_current().str()); }
         // A turret's rounds are its gun's, which the part does not empty.
         if (part.is_turret()) {
             part.get_base().ammo_unset();
@@ -443,6 +444,7 @@ auto set_part_fuel(vehicle& veh, const int index, const part_fuel& fuel)
     const auto emptied = itype_id(part.get_base().get_var(emptied_of, ""));
     const auto type =
         chosen(named)     ? named
+        : holding         ? part.ammo_current()
         : chosen(emptied) ? emptied
         : part.is_tank()  ? part.info().fuel_type
         : chosen(part.info().default_ammo)
