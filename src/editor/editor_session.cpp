@@ -81,6 +81,31 @@ auto export_to(const session& state, const std::string& path)
         state.export_palette);
 }
 
+/// What the player's actions change: the file open, its entry shown and its steps, and what the
+/// editor put in the world.
+struct session_footprint {
+    std::string path;
+    std::size_t object = 0;
+    std::size_t steps = 0;
+    std::size_t depth = 0;
+    std::optional<std::size_t> saved;
+    bool stamped = false;
+    bool placed = false;
+    auto operator==(const session_footprint&) const -> bool = default; // *NOPAD*
+};
+
+/// What the next action may change, to tell whether it changed anything.
+auto footprint(const session& state) -> session_footprint {
+    return {
+        .path = state.doc ? state.doc->path().string() : "",
+        .object = state.object,
+        .steps = state.doc ? state.doc->history().size() : 0,
+        .depth = state.doc ? state.doc->depth() : 0,
+        .saved = state.doc ? state.doc->saved_depth() : std::nullopt,
+        .stamped = state.stamped.has_value(),
+        .placed = state.placed.has_value()};
+}
+
 } // namespace
 
 auto open_map_editor() -> void {
@@ -146,8 +171,16 @@ auto run_editor_session() -> void {
         }
         const auto& id = invoked->affordance_id;
         const auto row = invoked->args.row.value_or("");
-        state.notice.clear();
+        // A notice stays until an action changes something, goes right or brings a notice of its
+        // own.
+        const auto before = footprint(state);
+        auto kept = std::exchange(state.notice, {});
         state.status.clear();
+        const auto keep = [&] {
+            if (state.notice.empty() && state.status.empty() && footprint(state) == before) {
+                state.notice = std::move(kept);
+            }
+        };
         state.watch();
         if (id == open_id) {
             state.open(invoked->args.text.value_or(""));
@@ -248,6 +281,7 @@ auto run_editor_session() -> void {
                 state.notice = made.error();
             }
         } else if (!state.doc) {
+            keep();
             continue;
         } else if (id == object_id) {
             if (const auto index = row_index(row, "object")) { state.show_object(*index); }
@@ -418,6 +452,7 @@ auto run_editor_session() -> void {
         } else if (id == save_as_id) {
             state.save_as(invoked->args.text.value_or(""));
         }
+        keep();
     }
 }
 
