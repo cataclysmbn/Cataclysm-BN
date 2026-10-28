@@ -247,18 +247,22 @@ auto refused_mount(const vehicle& veh, const point& at, const vpart_id& id)
     const auto name = part.name();
     const auto here = veh.parts_at_relative(mount, false);
     const auto info = [&](const int index) -> const vpart_info& { return veh.part_info(index); };
-    const auto structural = [&](const point& square) {
-        return std::ranges::any_of(
-            veh.parts_at_relative(tripoint_mnt_veh(square.x, square.y, 0), false),
-            [&](const int index) {
-                return info(index).location == "structure" || info(index).has_flag("EXTENDABLE");
-            });
+    const auto square = [&](const point& step) {
+        return tripoint_mnt_veh(at.x + step.x, at.y + step.y, 0);
     };
+    constexpr auto around =
+        std::array{point_zero, point_east, point_south, point_west, point_north};
+    const auto touch_refusal = string_format(_("%s must touch the vehicle's frame."), name);
     if (part.has_flag("NOINSTALL")) { return string_format(_("%s cannot be installed."), name); }
-    if (part.has_flag("EXTENDABLE") && !here.empty()) {
-        return string_format(_("%s needs an empty mount of its own."), name);
+    // The game's own order of its rules, so that the reason given is the one that refuses it.
+    if (part.has_flag("EXTENDABLE")) {
+        if (!here.empty()) { return string_format(_("%s needs an empty mount of its own."), name); }
+        if (veh.part_count() > 0) {
+            // It touches a frame or another extendable part, else the game would mount it.
+            return touch_refusal;
+        }
     }
-    if (here.empty() && part.location != "structure" && !part.has_flag("EXTENDABLE")) {
+    if (here.empty() && part.location != "structure") {
         return string_format(_("%s goes on a frame: install a frame here first."), name);
     }
     if (!here.empty()) {
@@ -279,11 +283,19 @@ auto refused_mount(const vehicle& veh, const point& at, const vpart_id& id)
             return string_format(_("This mount already holds cargo in %s."), other.name());
         }
     }
-    if (veh.part_count() > 0
-        && std::ranges::none_of(
-            std::array{point_zero, point_east, point_south, point_west, point_north},
-            [&](const point& step) { return structural(at + step); })) {
-        return string_format(_("%s must touch the vehicle's frame."), name);
+    // As vehicle::has_structural_part: a frame, not a protrusion.
+    const auto structural = [&](const point& step) {
+        return std::ranges::any_of(veh.parts_at_relative(square(step), false), [&](const int index) {
+            return info(index).location == "structure" && !info(index).has_flag("PROTRUSION");
+        });
+    };
+    // As vehicle::is_structural_part_removed: a frame being taken off lets the rest stay put.
+    const auto frame_removed =
+        std::ranges::any_of(std::views::iota(0, veh.part_count()), [&](const int index) {
+            return veh.cpart(index).removed && info(index).location == "structure";
+        });
+    if (veh.part_count() > 0 && !frame_removed && std::ranges::none_of(around, structural)) {
+        return touch_refusal;
     }
     if (auto conflict = std::string{}; veh.has_engine_conflict(&part, conflict)) {
         return string_format(
@@ -306,6 +318,43 @@ auto refused_mount(const vehicle& veh, const point& at, const vpart_id& id)
                  : string_format(
                        _("%1$s needs a part such as %2$s on this mount."), name, example->name());
     }
+    // The first part on the mount that `has` takes, by name.
+    const auto with_flag = [&](const auto& has) -> std::optional<std::string> {
+        const auto found = std::ranges::find_if(here, [&](const int index) {
+            return has(info(index));
+        });
+        return found == here.end() ? std::nullopt : std::optional(info(*found).name());
+    };
+    const auto mirror = [](const vpart_info& entry) {
+        return entry.has_flag("VISION") && !entry.has_flag("CAMERA");
+    };
+    if (mirror(part)) {
+        if (const auto blocking = with_flag([](const vpart_info& entry) {
+                return entry.has_flag("OPAQUE");
+            })) {
+            return string_format(_("%1$s needs a clear view, which %2$s blocks."), name, *blocking);
+        }
+    }
+    if (part.has_flag("OPAQUE")) {
+        if (const auto seeing = with_flag(mirror)) {
+            return string_format(_("%1$s would block the view of %2$s."), name, *seeing);
+        }
+    }
+    if (part.has_flag("TURRET_MOUNT")) {
+        if (const auto mount = with_flag([](const vpart_info& entry) {
+                return entry.has_flag("TURRET_MOUNT");
+            })) {
+            return string_format(_("This mount already has a turret mount, %s."), *mount);
+        }
+    }
+    if (part.has_flag("TURRET_CONTROLS") || part.has_flag("LASER_DESIGNATOR")) {
+        if (const auto manual = with_flag([](const vpart_info& entry) {
+                return entry.has_flag("MANUAL");
+            })) {
+            return string_format(_("%1$s cannot work %2$s, which is fired by hand."), name, *manual);
+        }
+    }
+    if (here.empty()) { return string_format(_("%s cannot go on this mount."), name); }
     const auto names =
         here | std::views::transform([&](const int index) { return info(index).name(); })
         | std::ranges::to<std::vector>();

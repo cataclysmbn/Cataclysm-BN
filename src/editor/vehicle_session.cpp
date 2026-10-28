@@ -419,6 +419,10 @@ struct session {
         if (const auto here = parts_here(); !here.empty()) {
             field_pointer = design_parts(prototype())[here.back()].pointer;
             field_value = value_at(field_pointer);
+        } else if (picked_part()) {
+            // A part of another mount stays picked no longer, nor one an index now names anew.
+            field_pointer = "/name";
+            field_value = value_at(field_pointer);
         }
     }
 
@@ -496,6 +500,24 @@ struct session {
         pick_top();
     }
 
+    /// Shows the tab `key` of the vehicles column or of the design column, when it has one.
+    auto show(const std::string& key) -> void {
+        if (key == "prototypes" || key == "world") {
+            source_tab = key;
+        } else if (
+            std::ranges::contains(
+                design_tabs | std::views::take(shown_tab_count())
+                    | std::views::transform(&design_tab::key),
+                std::string_view(key))) {
+            tool_tab = key;
+        }
+    }
+
+    /// How many tabs the design column has: a world's vehicle edited in place has fewer.
+    auto shown_tab_count() const -> std::size_t {
+        return live ? live_tab_count : design_tabs.size();
+    }
+
     /// Turns the facing the vehicle spawns with by quarters clockwise, and shows it.
     auto turn(const int quarters) -> void {
         spawning.facing = ((spawning.facing + 90 * quarters) % 360 + 360) % 360;
@@ -563,7 +585,7 @@ struct session {
     /// for `ammo_types`, either end of `ammo_qty` for `ammo_min` and `ammo_max`, text for the
     /// rest; empty removes it.
     auto set_part(const std::string& key, const std::string& text) -> void {
-        const auto index = picked_part();
+        const auto index = picked_here();
         if (!index) {
             notice = _("Pick a part first.");
             return;
@@ -1156,7 +1178,7 @@ auto tab_of(const char* const id, const std::string& label, const std::string& s
 /// The prototype part the field form points at, with the members a modder sets on it: the fuel
 /// of a tank, the ammunition of a turret.
 auto part_form(const session& state) -> std::optional<ec::component> {
-    const auto index = state.picked_part();
+    const auto index = state.picked_here();
     if (!index) { return std::nullopt; }
     const auto design = design_parts(state.prototype());
     const auto id = vpart_id(design[*index].part);
@@ -1409,11 +1431,14 @@ auto parts_view(const session& state) -> ec::screen_view {
         : state.live || picked
             ? std::string(_("The picked part has nothing to set."))
             : std::string(_("Pick a part under Parts here first."));
-    const auto shown_tabs =
-        design_tabs | std::views::take(state.live ? live_tab_count : design_tabs.size());
-    // A tab that has nothing to show shows the mount's parts instead.
+    const auto shown_tabs = design_tabs | std::views::take(state.shown_tab_count());
+    // A tab that has nothing to show, or that the vehicle lacks, shows the mount's parts instead.
     const auto shown_tab =
-        state.tool_tab == "part" && !settings ? std::string("mount") : state.tool_tab;
+        (state.tool_tab == "part" && !settings)
+                || !std::ranges::contains(shown_tabs | std::views::transform(&design_tab::key),
+                                          std::string_view(state.tool_tab))
+            ? std::string("mount")
+            : state.tool_tab;
     auto tabs =
         shown_tabs | std::views::transform([&](const design_tab& entry) {
             const auto key = std::string_view(entry.key);
@@ -1822,11 +1847,9 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
         state.watch();
         const auto tool = std::ranges::find(canvas_tools, id, &canvas_tool::affordance);
         if (id == source_id || id == tool_id) {
-            const auto tab = row.substr(row.find(':') + 1);
-            (id == source_id ? state.source_tab : state.tool_tab) = tab;
+            state.show(row.substr(row.find(':') + 1));
         } else if (id.starts_with(show_prefix)) {
-            const auto tab = id.substr(show_prefix.size());
-            (tab == "prototypes" || tab == "world" ? state.source_tab : state.tool_tab) = tab;
+            state.show(id.substr(show_prefix.size()));
         } else if (id == canvas_tool_id) {
             state.canvas_tool = std::string(row_rest(row, "canvas_tool").value_or("select"));
         } else if (tool != canvas_tools.end()) {
@@ -1852,15 +1875,18 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
             state.paste_vehicle();
         } else if (id == edit_id) {
             if (const auto index = row_index(row, "world")) { state.edit_vehicle(*index); }
-        } else if (id == mount_id) {
-            if (const auto at = row_point(row, "mount")) { state.click(*at); }
-        } else if (id == remove_id) {
-            state.remove_picked();
         } else if (id == part_filter_id) {
             state.part_filter = text;
             state.part_page = 0;
         } else if (id == part_page_id) {
             state.part_page = static_cast<std::size_t>(invoked->args.count.value_or(0));
+        } else if (!state.live && !state.doc) {
+            // Nothing is open to act on.
+            continue;
+        } else if (id == mount_id) {
+            if (const auto at = row_point(row, "mount")) { state.click(*at); }
+        } else if (id == remove_id) {
+            state.remove_picked();
         } else if (state.live) {
             live_invoke(state, id, row, text);
         } else if (!state.doc) {
