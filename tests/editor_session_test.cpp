@@ -5489,6 +5489,11 @@ TEST_CASE(
                 CHECK(slot_of(screen, "editor:new") == "inspector");
                 CHECK(slot_of(screen, "editor:file") == "outline");
                 CHECK(part(screen, "editor:new").label == "New file");
+                // A field is named by what it asks, not by the heading of its form.
+                for (const auto* const form : {"editor:new", "editor:file"}) {
+                    INFO(form);
+                    CHECK(body<ec::form_body>(part(screen, form)).fields.front().label == "Path");
+                }
                 CHECK(affordance(screen, "editor:vehicle").group == "World");
                 return invoke("editor:open", {.text = file.path.string()});
             case 1:
