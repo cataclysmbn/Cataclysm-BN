@@ -877,8 +877,8 @@ TEST_CASE(
                 // The log says what the count found, wherever the list is drawn.
                 REQUIRE(first.size() > 1);
                 CHECK(body<ec::text_body>(part(screen, "editor:status")).markup
-                      == std::to_string(first.size())
-                             + " kinds of items can spawn in the square marked.");
+                      == "1 square marked. " + std::to_string(first.size())
+                             + " kinds of items can spawn there.");
                 for (const auto& row : rows(screen)) {
                     CHECK(itype_id(row.id.substr(std::string_view("loot:").size())).is_valid());
                     CHECK(row.columns.size() == 3);
@@ -896,7 +896,7 @@ TEST_CASE(
             case 10:
                 CHECK(rows(screen).empty());
                 CHECK(body<ec::text_body>(part(screen, "editor:status")).markup
-                      == "Nothing can spawn in the 9 squares marked.");
+                      == "9 squares marked: nothing can spawn there.");
                 return act("QUIT");
             default:
                 FAIL("the editor outlived its exit");
