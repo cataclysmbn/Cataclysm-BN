@@ -3118,6 +3118,38 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the file browser finds a file by the overmap terrain an entry of it makes",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    const auto row_id = "file:" + file.path.generic_string();
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        const auto& rows = body<ec::list_body>(part(screen, "editor:browser")).rows;
+        const auto found = std::ranges::find(rows, row_id, &ec::row::id);
+        switch (step++) {
+            case 0:
+                // The file's path does not hold the id.
+                REQUIRE_FALSE(file.path.generic_string().contains("house_04"));
+                return invoke("editor:browser_filter", {.text = "HOUSE_04"});
+            case 1:
+                REQUIRE(found != rows.end());
+                // The row says what in the file matched.
+                CHECK(found->description.contains("house_04"));
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 2);
+}
+
+TEST_CASE(
     "the editor opens the mapgen of an overmap terrain named by its type, building or name",
     "[editor_session][engine_client_component]") {
     const auto guard = screen_guard{};
