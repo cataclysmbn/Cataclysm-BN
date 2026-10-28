@@ -323,7 +323,13 @@ auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string> {
     }
     const auto rows = std::vector<std::string>(side, std::string(side, '.'));
     auto object = nlohmann::ordered_json{{"rows", rows}, {"terrain", {{".", made.fill}}}};
-    if (nested) { object["mapgensize"] = {side, side}; }
+    // A chunk keeps the map under a symbol nothing maps; a mapgen fills it, so a new symbol needs
+    // no terrain of its own.
+    if (nested) {
+        object["mapgensize"] = {side, side};
+    } else {
+        object["fill_ter"] = made.fill;
+    }
     const auto entry = nlohmann::ordered_json::array(
         {{{"type", "mapgen"},
           {"method", "json"},
@@ -946,7 +952,9 @@ auto session::bare(const std::string& glyph, const bool own) const -> std::optio
         });
     if (!entry.contains("om_terrain") || filled || under) { return std::nullopt; }
     return string_format(
-        _("%s has no terrain under it: map its terrain first, or set fill_ter."), glyph);
+        _("%s has no terrain under it: map its terrain first, or set /object/fill_ter in the JSON "
+          "value form."),
+        glyph);
 }
 
 auto session::apply_mapping() -> void {
