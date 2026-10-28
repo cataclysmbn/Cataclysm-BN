@@ -3419,4 +3419,45 @@ TEST_CASE(
     CHECK(second[0]["name"] == "Bicycle");
 }
 
+TEST_CASE(
+    "the vehicle editor's canvas removes the top part of a square on its secondary click",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto status = [](const ec::screen_view& screen) {
+        const auto* const found = ec::find_component(*screen.root, "vehicle:status");
+        return found ? body<ec::text_body>(*found).markup : std::string{};
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1: {
+                // The canvas names it for a client to bind its right click to.
+                const auto wire = nlohmann::json::parse(ec::serialize_interaction_boundary(state));
+                CHECK(wire.dump().contains(R"("secondary":"vehicle:clear")"));
+                CHECK(affordance(screen, "vehicle:clear").args.row->component_id == "vehicle:grid");
+                return invoke("vehicle:clear", {.row = "mount:1,0"});
+            }
+            case 2:
+                // Whatever tool is in hand.
+                CHECK(picked_tool(screen) == "canvas_tool:select");
+                CHECK(cell(screen, "mount:1,0").selected);
+                CHECK(rows(screen, "vehicle:stack").size() == 2);
+                CHECK(status(screen).starts_with("Removed "));
+                CHECK(status(screen).ends_with(" at 1,0."));
+                return invoke("vehicle:clear", {.row = "mount:3,0"});
+            case 3:
+                CHECK(notice_of(screen) == "This mount has no part to remove.");
+                return act("QUIT");
+            default:
+                return answer("Leave without saving");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step >= 4);
+}
+
 #endif // CATA_MCP
