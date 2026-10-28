@@ -1,7 +1,10 @@
 #pragma once
 
 #include <functional>
+#include <map>
 #include <optional>
+
+#include "type_id.h"
 
 class Character;
 class item;
@@ -38,6 +41,13 @@ auto is_clean_digital_card( const item &media ) -> bool;
 auto upload_digital_files( const Character &who, const digital_file_upload_options &opts ) -> int;
 /// Convert old photo/music counters to files without changing their quantities.
 auto migrate_legacy_digital_media( item &media ) -> void;
+/// The device's own captured photos, separate from imported collections.
+auto camera_photo_collection( item &camera ) -> item &; // *NOPAD*
+auto find_camera_photo_collection( item &camera ) -> digital_reader_reference;
+/// Finish a capture, updating its count and copy identity so newer versions can be copied.
+auto update_camera_photo_collection( item &camera, int count ) -> void;
+/// Best available photograph of each monster across all collections on a device.
+auto digital_monster_photos( const item &reader ) -> std::map<mtype_id, int>;
 auto digital_music_on( const item &reader ) -> digital_music_summary;
 auto digital_music_playing( const item &reader ) -> digital_music_summary;
 auto digital_photos_on( const item &reader ) -> int;

@@ -83,6 +83,13 @@
     ]
   },
   {
+    "id": "digital_camera_photo_collection",
+    "copy-from": "digital_collection",
+    "type": "GENERIC",
+    "name": { "str": "camera photo collection" },
+    "description": "A collection of photographs taken with a camera, including notes on photographed creatures.  Open it on a powered reader to revisit individual photos or browse the monster collection."
+  },
+  {
     "id": "digital_cooking_recipe_archive",
     "copy-from": "digital_collection",
     "type": "GENERIC",

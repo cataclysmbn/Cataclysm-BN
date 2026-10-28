@@ -24,11 +24,7 @@
     "copy-from": "test_digital_media",
     "type": "GENERIC",
     "name": { "str": "test encrypting media" },
-    "properties": [
-      [ "digital_content", "test_digital_content" ],
-      [ "digital_encryption_chance", "1" ],
-      [ "digital_encrypted_type", "mobile_memory_card_encrypted" ]
-    ]
+    "properties": [ [ "digital_encryption_chance", "1" ], [ "digital_encrypted_type", "mobile_memory_card_encrypted" ] ]
   },
   {
     "id": "test_digital_content",

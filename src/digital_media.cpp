@@ -9,6 +9,7 @@
 #include "item_contents.h"
 #include "item_group.h"
 #include "itype.h"
+#include "json.h"
 #include "recipe.h"
 #include "recipe_dictionary.h"
 #include "rng.h"
@@ -23,7 +24,10 @@
 #include <array>
 #include <climits>
 #include <cstdint>
+#include <cstdlib>
+#include <string_view>
 #include <string>
+#include <sstream>
 
 namespace
 {
@@ -223,6 +227,23 @@ auto migrate_legacy_digital_media( item &media ) -> void
         }
         media.erase_var( counter.variable );
     }
+    if( media.has_var( "CAMERA_EXTENDED_PHOTOS" ) || media.has_var( "CAMERA_NPC_PHOTOS" ) ||
+        media.has_var( "CAMERA_MONSTER_PHOTOS" ) ) {
+        auto &album = camera_photo_collection( media );
+        auto count = 0;
+        for( const auto *key : { "CAMERA_EXTENDED_PHOTOS", "CAMERA_NPC_PHOTOS", "CAMERA_MONSTER_PHOTOS" } ) {
+            if( media.has_var( key ) ) {
+                album.set_var( key, media.get_var( key ) );
+                if( std::string_view( key ) != "CAMERA_MONSTER_PHOTOS" && !media.get_var( key ).empty() ) {
+                    auto input = std::istringstream( media.get_var( key ) );
+                    auto json = JsonIn( input );
+                    count += json.get_array().size();
+                }
+                media.erase_var( key );
+            }
+        }
+        album.charges = count;
+    }
     const auto recipe_token = media.get_var( "MC_RECIPE" );
     if( !recipe_token.empty() ) {
         auto file = item::spawn( recipe_token == "SCIENCE" ? "digital_science_recipe_archive" :
@@ -233,6 +254,68 @@ auto migrate_legacy_digital_media( item &media ) -> void
         media.erase_var( "MC_RECIPE" );
         media.set_var( "DIGITAL_INITIALIZED", 1 );
     }
+}
+
+auto find_camera_photo_collection( item &camera ) -> digital_reader_reference
+{
+    const auto identity = camera.get_var( "CAMERA_COLLECTION_ID" );
+    for( auto *file : camera.contents.all_items_top() ) {
+        if( !identity.empty() && file->get_var( "DIGITAL_FILE_ID" ) == identity ) {
+            return std::ref( *file );
+        }
+    }
+    return std::nullopt;
+}
+
+auto camera_photo_collection( item &camera ) -> item & // *NOPAD*
+{
+    if( const auto file = find_camera_photo_collection( camera ) ) {
+        return file->get();
+    }
+    auto file = item::spawn( "digital_camera_photo_collection", camera.birthday() );
+    identify_digital_file( *file );
+    camera.set_var( "CAMERA_COLLECTION_ID", file->get_var( "DIGITAL_FILE_ID" ) );
+    auto &result = *file;
+    camera.put_in( std::move( file ) );
+    return result;
+}
+
+auto update_camera_photo_collection( item &camera, const int count ) -> void
+{
+    auto &file = camera_photo_collection( camera );
+    file.charges = count;
+    file.erase_var( "DIGITAL_FILE_ID" );
+    identify_digital_file( file );
+    camera.set_var( "CAMERA_COLLECTION_ID", file.get_var( "DIGITAL_FILE_ID" ) );
+}
+
+auto digital_monster_photos( const item &reader ) -> std::map<mtype_id, int>
+{
+    auto result = std::map<mtype_id, int> {};
+    const auto append = [&result]( const auto & data ) {
+        auto input = std::istringstream( data );
+        auto token = std::string{};
+        while( std::getline( input, token, ',' ) ) {
+            if( token.empty() ) {
+                continue;
+            }
+            const auto id = mtype_id( token );
+            if( !std::getline( input, token, ',' ) ) {
+                break;
+            }
+            if( id.is_valid() ) {
+                result[id] = std::max( result[id], std::clamp( std::atoi( token.c_str() ), 0, 5 ) );
+            }
+        }
+    };
+    append( reader.get_var( "EINK_MONSTER_PHOTOS" ) );
+    append( reader.get_var( "CAMERA_MONSTER_PHOTOS" ) );
+    for( const auto *file : reader.contents.all_items_top() ) {
+        if( is_digital_file( *file ) ) {
+            append( file->get_var( "CAMERA_MONSTER_PHOTOS" ) );
+        }
+    }
+    return result;
 }
 
 auto digital_music_on( const item &reader ) -> digital_music_summary

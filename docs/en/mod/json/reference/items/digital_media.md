@@ -225,6 +225,14 @@ Old `MC_PHOTOS`, `MC_MUSIC`, `EIPC_PHOTOS`, and `EIPC_MUSIC` counters are
 converted into collection items once, preserving their counts. Legacy recipe
 tokens (`MC_RECIPE`) become cooking or scientific reference files using the JSON
 groups above. Existing tablet recipe references remain readable for save
-compatibility. Camera snapshots and monster-photo collections retain their
-existing per-photo metadata and import path. Existing mission-terminal downloads
-retain their original behavior, including overwriting the chosen USB drive.
+compatibility. Camera captures are stored in a `digital_camera_photo_collection`
+file on the camera or phone. **Camera photos** and **Browse digital files →
+Browse captured photos** reopen the individual photographs with their original
+descriptions and quality. The computer's monster collection includes creatures
+recorded in these files, including photographs taken with the same device.
+Camera exports copy the collection onto a clean SD card; newer captures can be
+exported again without changing previously copied files. Legacy camera photos
+migrate into a collection when the device is used. Older tablet and SD-card
+photo metadata remains readable through its existing import path. Existing
+mission-terminal downloads retain their original behavior, including overwriting
+the chosen USB drive.

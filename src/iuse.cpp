@@ -6017,6 +6017,27 @@ auto export_files_to_sd_card( player &who, item &reader, item *file = nullptr ) 
     return true;
 }
 
+auto show_monster_collection( const item &reader ) -> void
+{
+    const auto photos = digital_monster_photos( reader );
+    auto menu = uilist{};
+    auto descriptions = std::vector<std::string> {};
+    menu.text = _( "Your collection of monsters:" );
+    for( const auto &[id, quality] : photos ) {
+        const auto specimen = monster( id );
+        menu.addentry( static_cast<int>( descriptions.size() ), true, MENU_AUTOASSIGN,
+                       string_format( "%s [%s]", specimen.name(), photo_quality_name( quality ) ) );
+        descriptions.push_back( specimen.type->get_description() );
+    }
+    while( true ) {
+        menu.query();
+        if( menu.ret < 0 || menu.ret >= static_cast<int>( descriptions.size() ) ) {
+            return;
+        }
+        popup( "%s", descriptions[menu.ret] );
+    }
+}
+
 auto browse_digital_files( player &who, item &reader, const bool photos_only = false ) -> void
 {
     auto files = std::vector<item *> {};
@@ -6056,6 +6077,10 @@ auto browse_digital_files( player &who, item &reader, const bool photos_only = f
     actions.addentry( 5, true, 'c', _( "Copy to SD card" ) );
     const auto recipes = digital_file_recipes( *file );
     actions.addentry( 6, !recipes.empty(), 'v', _( "View recipes" ) );
+    actions.addentry( 7, file->has_var( "CAMERA_EXTENDED_PHOTOS" ) ||
+                      file->has_var( "CAMERA_NPC_PHOTOS" ), 'l', _( "Browse captured photos" ) );
+    actions.addentry( 8, file->has_var( "CAMERA_MONSTER_PHOTOS" ), 'z',
+                      _( "Your collection of monsters" ) );
     actions.query();
     if( actions.ret == 0 ) {
         popup( "%s", file->type->description.translated() );
@@ -6071,6 +6096,10 @@ auto browse_digital_files( player &who, item &reader, const bool photos_only = f
         listen_to_digital_music( who, reader, *file );
     } else if( actions.ret == 5 ) {
         export_files_to_sd_card( who, reader, file );
+    } else if( actions.ret == 7 ) {
+        show_photo_selection( who, *file, "CAMERA_EXTENDED_PHOTOS" );
+    } else if( actions.ret == 8 ) {
+        show_monster_collection( *file );
     } else if( actions.ret == 6 ) {
         auto recipe_menu = uilist{};
         recipe_menu.text = _( "Recipes in file:" );
@@ -6136,10 +6165,17 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
 
         amenu.text = _( "Choose menu option:" );
 
+        const auto stored_files = it->contents.all_items_top();
+        const auto has_captured_photos = std::ranges::any_of( stored_files, []( const auto * file ) {
+            return file->has_var( "CAMERA_EXTENDED_PHOTOS" ) || file->has_var( "CAMERA_NPC_PHOTOS" );
+        } );
+        const auto has_camera_photos = !it->get_var( "EIPC_EXTENDED_PHOTOS" ).empty() ||
+                                       has_captured_photos;
+
         const auto photos = digital_photos_on( *it );
         if( photos > 0 ) {
-            amenu.addentry( ei_photo, true, 'p', _( "Unsorted photos [%d]" ), photos );
-        } else {
+            amenu.addentry( ei_photo, true, 'p', _( "Personal photo albums [%d photos]" ), photos );
+        } else if( !has_camera_photos ) {
             amenu.addentry( ei_photo, false, 'p', _( "No photos on device" ) );
         }
 
@@ -6161,11 +6197,11 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
             amenu.addentry( ei_recipe, true, 'r', _( "View recipes on E-ink screen" ) );
         }
 
-        if( !it->get_var( "EIPC_EXTENDED_PHOTOS" ).empty() ) {
-            amenu.addentry( ei_uploaded_photos, true, 'l', _( "Your photos" ) );
+        if( has_camera_photos ) {
+            amenu.addentry( ei_uploaded_photos, true, 'l', _( "Camera photos" ) );
         }
 
-        if( !it->get_var( "EINK_MONSTER_PHOTOS" ).empty() ) {
+        if( !digital_monster_photos( *it ).empty() ) {
             amenu.addentry( ei_monsters, true, 'y', _( "Your collection of monsters" ) );
         } else {
             amenu.addentry( ei_monsters, false, 'y', _( "Collection of monsters is empty" ) );
@@ -6253,43 +6289,7 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
         }
 
         if( ei_monsters == choice ) {
-
-            uilist pmenu;
-
-            pmenu.text = _( "Your collection of monsters:" );
-
-            std::vector<mtype_id> monster_photos;
-
-            std::istringstream f( it->get_var( "EINK_MONSTER_PHOTOS" ) );
-            std::string s;
-            int k = 0;
-            while( getline( f, s, ',' ) ) {
-                if( s.empty() ) {
-                    continue;
-                }
-                monster_photos.emplace_back( s );
-                std::string menu_str;
-                const monster dummy( monster_photos.back() );
-                menu_str = dummy.name();
-                getline( f, s, ',' );
-                char *chq = s.data();
-                const int quality = atoi( chq );
-                menu_str += " [" + photo_quality_name( quality ) + "]";
-                pmenu.addentry( k++, true, -1, menu_str.c_str() );
-            }
-
-            int choice;
-            do {
-                pmenu.query();
-                choice = pmenu.ret;
-
-                if( choice < 0 ) {
-                    break;
-                }
-
-                const monster dummy( monster_photos[choice] );
-                popup( dummy.type->get_description() );
-            } while( true );
+            show_monster_collection( *it );
             return it->type->charges_to_use();
         }
 
@@ -7164,7 +7164,7 @@ static bool show_photo_selection( player &p, item &it, const std::string &var_na
     }
 
     uilist pmenu;
-    pmenu.text = _( "Photos saved on camera:" );
+    pmenu.text = _( "Saved photos:" );
 
     std::vector<std::string> descriptions;
     std::vector<extended_photo_def> extended_photos;
@@ -7181,6 +7181,20 @@ static bool show_photo_selection( player &p, item &it, const std::string &var_na
         }
     } catch( const JsonError &e ) {
         debugmsg( "Error migrating old photo format: %s", e.c_str() );
+    }
+
+    if( var_name == "EIPC_EXTENDED_PHOTOS" ) {
+        for( auto *file : it.contents.all_items_top() ) {
+            if( !is_digital_file( *file ) ) {
+                continue;
+            }
+            try {
+                item_read_extended_photos( *file, extended_photos, "CAMERA_EXTENDED_PHOTOS", true );
+                item_read_extended_photos( *file, extended_photos, "CAMERA_NPC_PHOTOS", true );
+            } catch( const JsonError &e ) {
+                debugmsg( "Error reading captured photos: %s", e.c_str() );
+            }
+        }
     }
 
     int k = 0;
@@ -7237,12 +7251,17 @@ static bool show_photo_selection( player &p, item &it, const std::string &var_na
 
 int iuse::camera( player *p, item *it, bool, const tripoint_bub_ms & )
 {
+    migrate_legacy_digital_media( *it );
+    const auto saved_collection = find_camera_photo_collection( *it );
+    auto *collection = saved_collection ? &saved_collection->get() : nullptr;
     enum {c_shot, c_photos, c_monsters, c_upload};
 
     // CAMERA_NPC_PHOTOS is old save variable
-    bool found_extended_photos = !it->get_var( "CAMERA_NPC_PHOTOS" ).empty() ||
-                                 !it->get_var( "CAMERA_EXTENDED_PHOTOS" ).empty();
-    bool found_monster_photos = !it->get_var( "CAMERA_MONSTER_PHOTOS" ).empty();
+    const auto found_extended_photos = collection &&
+                                       ( !collection->get_var( "CAMERA_NPC_PHOTOS" ).empty() ||
+                                         !collection->get_var( "CAMERA_EXTENDED_PHOTOS" ).empty() );
+    const auto found_monster_photos = collection &&
+                                      !collection->get_var( "CAMERA_MONSTER_PHOTOS" ).empty();
 
     uilist amenu;
     amenu.text = _( "What to do with camera?" );
@@ -7290,12 +7309,10 @@ int iuse::camera( player *p, item *it, bool, const tripoint_bub_ms & )
         se.variant = "camera_shutter";
         sounds::sound( se );
 
-        for( std::vector<tripoint_bub_ms>::iterator point_it = trajectory.begin();
-             point_it != trajectory.end();
-             ++point_it ) {
-            const auto trajectory_point = *point_it;
-            if( point_it != trajectory.end() ) {
-                const auto next_point = *( point_it + 1 ); // Trajectory ends on last visible tile
+        for( auto index = size_t{ 0 }; index < trajectory.size(); ++index ) {
+            const auto trajectory_point = trajectory[index];
+            if( index + 1 < trajectory.size() ) {
+                const auto next_point = trajectory[index + 1]; // Trajectory ends on last visible tile
                 if( !g->m.sees( p->bub_pos(), next_point, rl_dist( p->bub_pos(), next_point ) + 3 ) ) {
                     p->add_msg_if_player( _( "You have the wrong camera focus." ) );
                     incorrect_focus = true;
@@ -7365,10 +7382,13 @@ int iuse::camera( player *p, item *it, bool, const tripoint_bub_ms & )
                                            character_vec );
                 photo.quality = photo_quality;
 
+                auto &album = camera_photo_collection( *it );
                 try {
-                    item_read_extended_photos( *it, extended_photos, "CAMERA_EXTENDED_PHOTOS" );
+                    item_read_extended_photos( album, extended_photos, "CAMERA_EXTENDED_PHOTOS" );
+                    item_read_extended_photos( album, extended_photos, "CAMERA_NPC_PHOTOS", true );
+                    album.erase_var( "CAMERA_NPC_PHOTOS" );
                     extended_photos.push_back( photo );
-                    item_write_extended_photos( *it, extended_photos, "CAMERA_EXTENDED_PHOTOS" );
+                    item_write_extended_photos( album, extended_photos, "CAMERA_EXTENDED_PHOTOS" );
                 } catch( const JsonError &e ) {
                     debugmsg( "Error when adding new photo (loaded photos = %i): %s", extended_photos.size(),
                               e.c_str() );
@@ -7416,8 +7436,9 @@ int iuse::camera( player *p, item *it, bool, const tripoint_bub_ms & )
                     }
                 }
                 if( !monster_vec.empty() ) {
-                    item_save_monsters( *p, *it, monster_vec, photo_quality );
+                    item_save_monsters( *p, album, monster_vec, photo_quality );
                 }
+                update_camera_photo_collection( *it, static_cast<int>( extended_photos.size() ) );
                 return it->type->charges_to_use();
             }
         }
@@ -7425,7 +7446,7 @@ int iuse::camera( player *p, item *it, bool, const tripoint_bub_ms & )
     }
 
     if( c_photos == choice ) {
-        show_photo_selection( *p, *it, "CAMERA_EXTENDED_PHOTOS" );
+        show_photo_selection( *p, *collection, "CAMERA_EXTENDED_PHOTOS" );
         return it->type->charges_to_use();
     }
 
@@ -7434,111 +7455,20 @@ int iuse::camera( player *p, item *it, bool, const tripoint_bub_ms & )
             p->add_msg_if_player( _( "You can't see the camera screen, you're blind." ) );
             return 0;
         }
-        uilist pmenu;
-
-        pmenu.text = _( "Your collection of monsters:" );
-
-        std::vector<mtype_id> monster_photos;
-        std::vector<std::string> descriptions;
-
-        std::istringstream f_mon( it->get_var( "CAMERA_MONSTER_PHOTOS" ) );
-        std::string s;
-        int k = 0;
-        while( getline( f_mon, s, ',' ) ) {
-
-            if( s.empty() ) {
-                continue;
-            }
-
-            monster_photos.emplace_back( s );
-
-            std::string menu_str;
-
-            const monster dummy( monster_photos.back() );
-            menu_str = dummy.name();
-            descriptions.push_back( dummy.type->get_description() );
-
-            getline( f_mon, s, ',' );
-            char *chq = s.data();
-            const int quality = atoi( chq );
-
-            menu_str += " [" + photo_quality_name( quality ) + "]";
-
-            pmenu.addentry( k++, true, -1, menu_str.c_str() );
-        }
-
-        int choice;
-        do {
-            pmenu.query();
-            choice = pmenu.ret;
-
-            if( choice < 0 ) {
-                break;
-            }
-
-            popup( "%s", descriptions[choice].c_str() );
-
-        } while( true );
-
+        show_monster_collection( *collection );
         return it->type->charges_to_use();
     }
 
     if( c_upload == choice ) {
-
         if( p->is_blind() ) {
             p->add_msg_if_player( _( "You can't see the camera screen, you're blind." ) );
             return 0;
         }
-
-        p->moves -= to_moves<int>( 2_seconds );
-
-        avatar *you = p->as_avatar();
-        item *loc = nullptr;
-        if( you != nullptr ) {
-            loc = game_menus::inv::titled_filter_menu( []( const item & it ) {
-                return it.has_flag( flag_MC_MOBILE );
-            }, *you, _( "Insert memory card" ) );
-        }
-        if( !loc ) {
-            p->add_msg_if_player( m_info, _( "You do not have that item!" ) );
-            return it->type->charges_to_use();
-        }
-        item &mc = *loc;
-
-        if( !mc.has_flag( flag_MC_MOBILE ) ) {
-            p->add_msg_if_player( m_info, _( "This is not a compatible memory card." ) );
-            return it->type->charges_to_use();
-        }
-
-        initialize_digital_media( mc );
-
-        if( mc.has_flag( flag_MC_ENCRYPTED ) ) {
-            if( !query_yn( _( "This memory card is encrypted.  Format and clear data?" ) ) ) {
-                return it->type->charges_to_use();
-            }
-        }
-        if( mc.has_flag( flag_MC_HAS_DATA ) ) {
-            if( !query_yn( _( "Are you sure you want to clear the old data on the card?" ) ) ) {
-                return it->type->charges_to_use();
-            }
-        }
-
-        mc.convert( itype_mobile_memory_card );
-        mc.contents.clear_items();
-        mc.clear_vars();
-        mc.unset_flags();
-        mc.set_flag( flag_MC_HAS_DATA );
-
-        mc.set_var( "MC_MONSTER_PHOTOS", it->get_var( "CAMERA_MONSTER_PHOTOS" ) );
-        mc.set_var( "MC_EXTENDED_PHOTOS", it->get_var( "CAMERA_EXTENDED_PHOTOS" ) );
-        p->add_msg_if_player( m_info,
-                              _( "You upload your photos and monster collection to memory card." ) );
-
-        return it->type->charges_to_use();
+        return export_files_to_sd_card( *p, *it, collection ) ? it->type->charges_to_use() : 0;
     }
-
-    return it->type->charges_to_use();
+    return 0;
 }
+
 
 int iuse::ehandcuffs( player *p, item *it, bool t, const tripoint_bub_ms &pos )
 {

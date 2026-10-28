@@ -671,7 +671,7 @@ TEST_CASE(
     auto dummy = avatar{};
     auto device = item::spawn(base);
     auto& reader = *device;
-    reader.ammo_set(itype_id("battery"), 100);
+    if (!reader.ammo_types().empty()) { reader.ammo_set(itype_id("battery"), 100); }
     const auto group = item_group_id(reader.get_property_string("digital_content"));
     const auto possible = item_group::every_possible_item_from(group);
     const auto personal = item_group::every_possible_item_from(
@@ -734,4 +734,89 @@ TEST_CASE("downloading_initializes_unopened_media_once", "[digital_media]") {
     CHECK(download_digital_files(*reader, *encrypted, dummy) == 0);
     CHECK(encrypted->has_flag(flag_MC_ENCRYPTED));
     CHECK(reader->contents.num_item_stacks() == 1);
+}
+
+TEST_CASE(
+    "camera_photos_become_browsable_files_on_the_same_device",
+    "[digital_media][camera][savegame]") {
+    const auto device_id = GENERATE("camera", "camera_pro", "smart_phone", "wrist_comp_budget");
+    auto device = item::spawn(device_id);
+    CHECK_FALSE(find_camera_photo_collection(*device));
+    const auto photo_key = GENERATE("CAMERA_EXTENDED_PHOTOS", "CAMERA_NPC_PHOTOS");
+    const auto photos = std::string(
+        R"([{"quality":5,"name":"zombie","description":"A zombie selfie."}])");
+    device->set_var(photo_key, photos);
+    device->set_var("CAMERA_MONSTER_PHOTOS", ",mon_zombie,5,");
+    migrate_legacy_digital_media(*device);
+    REQUIRE_FALSE(device->has_var(photo_key));
+    REQUIRE_FALSE(device->has_var("CAMERA_MONSTER_PHOTOS"));
+    auto album = find_camera_photo_collection(*device);
+    REQUIRE(album);
+    CHECK(is_digital_file(album->get()));
+    CHECK(device->can_contain(album->get()));
+    CHECK(album->get().charges == 1);
+    CHECK(album->get().get_var(photo_key) == photos);
+    CHECK(digital_monster_photos(*device).at(mtype_id("mon_zombie")) == 5);
+    const auto identity = album->get().get_var("DIGITAL_FILE_ID");
+    migrate_legacy_digital_media(*device);
+    CHECK(device->contents.num_item_stacks() == 1);
+    CHECK(find_camera_photo_collection(*device)->get().get_var("DIGITAL_FILE_ID") == identity);
+
+    auto output = std::ostringstream{};
+    auto writer = JsonOut(output);
+    device->serialize(writer);
+    auto input = std::istringstream(output.str());
+    auto parser = JsonIn(input);
+    auto loaded = item::spawn(parser);
+    migrate_legacy_digital_media(*loaded);
+    album = find_camera_photo_collection(*loaded);
+    REQUIRE(album);
+    CHECK(album->get().charges == 1);
+    CHECK(album->get().get_var(photo_key) == photos);
+    CHECK(digital_monster_photos(*loaded).at(mtype_id("mon_zombie")) == 5);
+}
+
+TEST_CASE(
+    "captured_photo_collections_can_be_revisited_and_copied_after_new_captures",
+    "[digital_media][camera]") {
+    auto dummy = avatar{};
+    auto device = item::spawn("camera_pro");
+    auto& camera = *device;
+    camera.ammo_set(itype_id("battery"), 100);
+    dummy.i_add(std::move(device));
+    auto& album = camera_photo_collection(camera);
+    const auto first = std::string(
+        R"([{"quality":3,"name":"zombie","description":"A distant zombie."}])");
+    album.set_var("CAMERA_EXTENDED_PHOTOS", first);
+    album.set_var("CAMERA_MONSTER_PHOTOS", ",mon_zombie,3,");
+    update_camera_photo_collection(camera, 1);
+    const auto original = album.get_var("DIGITAL_FILE_ID");
+    auto card = item::spawn("mobile_memory_card_used");
+    REQUIRE(
+        upload_digital_files(dummy, {.source = camera, .destination = *card, .file = &album}) == 1);
+    auto reader = item::spawn("eink_tablet_pc");
+    reader->ammo_set(itype_id("battery"), 100);
+    REQUIRE(download_digital_files(*reader, *card, dummy) == 1);
+    CHECK(reader->contents.front().get_var("CAMERA_EXTENDED_PHOTOS") == first);
+    CHECK(digital_monster_photos(*reader).at(mtype_id("mon_zombie")) == 3);
+    CHECK(album.charges == 1);
+    CHECK(album.get_var("CAMERA_EXTENDED_PHOTOS") == first);
+    CHECK(download_digital_files(*reader, *card, dummy) == 0);
+
+    const auto second = std::string(
+        R"([{"quality":3,"name":"zombie","description":"A distant zombie."},{"quality":5,"name":"zombie","description":"A zombie selfie."}])");
+    album.set_var("CAMERA_EXTENDED_PHOTOS", second);
+    album.set_var("CAMERA_MONSTER_PHOTOS", ",mon_zombie,5,");
+    update_camera_photo_collection(camera, 2);
+    CHECK(album.get_var("DIGITAL_FILE_ID") != original);
+    CHECK(camera.contents.num_item_stacks() == 1);
+    auto next_card = item::spawn("mobile_memory_card_used");
+    REQUIRE(
+        upload_digital_files(dummy, {.source = camera, .destination = *next_card, .file = &album})
+        == 1);
+    REQUIRE(download_digital_files(*reader, *next_card, dummy) == 1);
+    CHECK(digital_monster_photos(*reader).at(mtype_id("mon_zombie")) == 5);
+    CHECK(reader->contents.back().get_var("CAMERA_EXTENDED_PHOTOS") == second);
+    CHECK(album.charges == 2);
+    CHECK(card->contents.front().get_var("CAMERA_EXTENDED_PHOTOS") == first);
 }
