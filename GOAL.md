@@ -256,5 +256,5 @@ btw added low priority objective
 
 - [x] make tests faster
 - [x] Fully functional map editor
-- [x] Fully functional vehicle editor
+- [ ] Fully functional vehicle editor
 - [ ] 2d client that has good UI
