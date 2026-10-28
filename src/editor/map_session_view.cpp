@@ -506,14 +506,18 @@ auto legend_rows(const session& state) -> std::vector<ec::row> {
         state.legend | std::views::transform([&](const legend_symbol& entry) {
             auto columns = symbol_columns(object, entry);
             // A symbol the rows never use, or one they use that nothing maps, is flagged: the
-            // loader fills the latter with the entry's fill terrain.
+            // loader fills the latter with the entry's fill terrain, and a chunk or update mapgen
+            // leaves the map under it as it is.
             if (state.on_mapgen() && (!entry.used || entry.lines.empty())) {
                 columns.push_back(
                     {.key = "use",
                      .label = _("Use"),
-                     .value = !entry.used ? _("Unused")
-                            : fill        ? _("Fill")
-                                          : _("Undefined")});
+                     .value =
+                         !entry.used ? _("Unused")
+                         : fill      ? _("Fill")
+                         : state.square_refusal()
+                             ? _("Keeps the map")
+                             : _("Undefined")});
             }
             auto sources =
                 entry.lines | std::views::transform(&legend_line::source)
