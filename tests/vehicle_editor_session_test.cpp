@@ -3145,4 +3145,39 @@ TEST_CASE(
     CHECK(step >= 10);
 }
 
+TEST_CASE("the vehicle editor says where it saved the design", "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto folder = std::filesystem::path(PATH_INFO::user_moddir()) / "vehicle_editor_saved";
+    std::filesystem::remove_all(folder);
+    const auto cleanup = on_out_of_scope([&] { std::filesystem::remove_all(folder); });
+    const auto status = [](const ec::screen_view& screen) {
+        return body<ec::text_body>(part(screen, "vehicle:status")).markup;
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                return invoke("vehicle:save_as", {.text = "vehicle_editor_saved/bike"});
+            case 2:
+                CHECK(status(screen) == "Saved vehicle_editor_saved/bike.json.");
+                return invoke("vehicle:show:vehicle");
+            case 3:
+                return invoke("vehicle:prop_set", {.row = "name", .text = "Bike"});
+            case 4:
+                return invoke("vehicle:save");
+            case 5:
+                CHECK(status(screen) == "Saved vehicle_editor_saved/bike.json.");
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 6);
+}
+
 #endif // CATA_MCP
