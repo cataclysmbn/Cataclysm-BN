@@ -1304,6 +1304,10 @@ TEST_CASE(
                     &ec::panel_stat::key));
                 CHECK(slot_of(screen, "vehicle:grid") == "canvas");
                 CHECK(slot_of(screen, "vehicle:performance") == "inspector");
+                // The figures come under the design they follow from.
+                CHECK(std::ranges::find(screen.root->children, "vehicle:tools", &ec::component::id)
+                      < std::ranges::
+                          find(screen.root->children, "vehicle:performance", &ec::component::id));
                 CHECK(std::ranges::contains(
                     body<ec::panel_body>(part(screen, "vehicle:performance")).stats, "mass",
                     &ec::panel_stat::key));
