@@ -302,6 +302,8 @@ auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string>;
 
 struct session {
     std::optional<document> doc = std::nullopt;
+    /// How many times a file was opened, or read again, so far.
+    std::size_t openings = 0;
     /// What the last command did not do, and why; empty when it did.
     std::string notice;
     /// What went right, said until the next affordance.

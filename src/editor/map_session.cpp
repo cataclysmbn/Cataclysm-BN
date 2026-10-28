@@ -839,6 +839,7 @@ auto session::open(const std::string& name) -> void {
         return;
     }
     doc = std::move(*opened);
+    ++openings;
     remember_document({.editor = "map", .name = path.generic_string(), .mods = loaded_mods()});
     anchor.reset();
     selected.reset();

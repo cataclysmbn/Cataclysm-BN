@@ -81,16 +81,18 @@ auto export_to(const session& state, const std::string& path)
         state.export_palette);
 }
 
-/// What the player's actions change: the file open, its entry shown and its steps, and what the
-/// editor put in the world.
+/// What the player's actions change: the file open and each opening of it, its entry shown and its
+/// steps, what the editor put in the world, and what the player wrote in its forms.
 struct session_footprint {
     std::string path;
+    std::size_t openings = 0;
     std::size_t object = 0;
     std::size_t steps = 0;
     std::size_t depth = 0;
     std::optional<std::size_t> saved;
     bool stamped = false;
     bool placed = false;
+    std::vector<std::string> inputs;
     auto operator==(const session_footprint&) const -> bool = default; // *NOPAD*
 };
 
@@ -98,12 +100,24 @@ struct session_footprint {
 auto footprint(const session& state) -> session_footprint {
     return {
         .path = state.doc ? state.doc->path().string() : "",
+        .openings = state.openings,
         .object = state.object,
         .steps = state.doc ? state.doc->step_count() : 0,
         .depth = state.doc ? state.doc->depth() : 0,
         .saved = state.doc ? state.doc->saved_depth() : std::nullopt,
         .stamped = state.stamped.has_value(),
-        .placed = state.placed.has_value()};
+        .placed = state.placed.has_value(),
+        .inputs = {
+            state.made.path,       state.made.om_terrain,
+            state.made.fill,       state.made.kind,
+            state.made.size,       state.import_text,
+            state.export_palette,  state.move_x,
+            state.move_y,          state.place_kind,
+            state.place_x,         state.place_y,
+            state.place_value,     state.field_pointer,
+            state.field_value,     state.mapping_symbol,
+            state.mapping_layer,   state.mapping_value,
+            state.special_terrain, state.special_connection}};
 }
 
 } // namespace
