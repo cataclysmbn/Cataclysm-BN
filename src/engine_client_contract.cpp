@@ -7,6 +7,7 @@
 #include "avatar.h"
 #include "client_input.h"
 #include "client_memory.h"
+#include "catacharset.h"
 #include "client_interaction_validation.h"
 #include "game.h"
 #include "input.h"
@@ -515,7 +516,9 @@ auto offers( const form_field &field, const std::string &value ) -> bool
         return result.ec == std::errc{} &&result.ptr == end &&std::isfinite( number ) &&
                ( !field.min || number >= *field.min ) &&( !field.max || number <= *field.max );
     }
-    return field.max_length < 0 || static_cast<int>( value.size() ) <= field.max_length;
+    // A text is as long as the characters the map rows split it into: a letter with its combining marks is one.
+    return field.max_length < 0 ||
+           static_cast<int>( utf8_display_split( value ).size() ) <= field.max_length;
 }
 
 /// What `field` takes, as the sentence that turns away a value it does not.
