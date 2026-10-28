@@ -478,6 +478,18 @@ TEST_CASE("a tank's fuel is set to an amount of what it holds", "[editor_vehicle
     REQUIRE(editor::set_part_fuel(*veh, tank, {.fuel = none, .amount = 10}).has_value());
     CHECK(veh->cpart(tank).ammo_current().str() == fuel);
     CHECK(veh->cpart(tank).ammo_remaining() == 10);
+    // What it held before never wins over what it holds now, filled some other way.
+    REQUIRE(editor::set_part_fuel(*veh, tank, {.fuel = fuel, .amount = 0}).has_value());
+    REQUIRE(editor::set_part_fuel(*veh, tank, {.fuel = "", .amount = 0}).has_value());
+    veh->part(tank).ammo_set(itype_id("water_clean"), 50);
+    REQUIRE(editor::set_part_fuel(*veh, tank, {.fuel = "", .amount = 20}).has_value());
+    CHECK(veh->cpart(tank).ammo_current().str() == "water_clean");
+    CHECK(veh->cpart(tank).ammo_remaining() == 20);
+    // Emptied some other way, it names no fuel left over from before.
+    veh->part(tank).ammo_unset();
+    const auto refilled = editor::set_part_fuel(*veh, tank, {.fuel = "", .amount = 20});
+    REQUIRE_FALSE(refilled.has_value());
+    CHECK(refilled.error() == "Choose the Fuel type first.");
     CHECK_FALSE(editor::set_part_fuel(*veh, tank, {.fuel = "rock", .amount = 10}).has_value());
     CHECK_FALSE(editor::set_part_fuel(*veh, 0, {.fuel = fuel, .amount = 10}).has_value());
 }
