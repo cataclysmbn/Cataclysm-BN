@@ -381,6 +381,8 @@ TEST_CASE(
             const auto no = std::ranges::
                 find(snapshot.choices, "NO", &game_client::interaction_choice::action_id);
             REQUIRE(no != snapshot.choices.end());
+            // Saving a world's mods is asked like every Save changes?: no first.
+            CHECK(no->selected);
             auto input = game_client::input_command{};
             input.interaction = game_client::interaction_command{
                 .input_id = snapshot.input_id,
