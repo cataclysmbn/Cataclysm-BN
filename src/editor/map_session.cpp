@@ -706,9 +706,14 @@ auto session::reload() -> void {
         loot.reset();
         return;
     }
-    // An entry without rows is edited by its placements alone, so that tool is the one shown.
+    // An entry without rows is edited by its placements alone, so that tool is the one shown until
+    // an entry with rows gives back the one the player had.
     if (on_mapgen() && !has_rows() && current->region != region_use::placements) {
+        unforced = current;
         current = &*std::ranges::find(tools, region_use::placements, &tool::region);
+        anchor.reset();
+    } else if (on_mapgen() && has_rows() && unforced != nullptr) {
+        current = std::exchange(unforced, nullptr);
         anchor.reset();
     }
     const auto stand_ins = file_stand_ins(stand_in_texts());

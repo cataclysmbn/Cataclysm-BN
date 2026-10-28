@@ -318,6 +318,7 @@ auto run_editor_session() -> void {
             if (found != tools.end()
                 && (!state.on_mapgen() || state.has_rows()
                     || found->region == region_use::placements)) {
+                state.unforced = nullptr;
                 state.current = &*found;
                 state.anchor.reset();
             }

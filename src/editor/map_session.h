@@ -339,6 +339,9 @@ struct session {
     /// Whether saving the file, or reading it again after it changed on disk, applies the entry.
     bool apply_on_save = false;
     const tool* current = tools.data();
+    /// The tool the player had when an entry without rows put the placements tool in its place;
+    /// given back on an entry with rows.
+    const tool* unforced = nullptr;
     std::optional<point> anchor = std::nullopt;
     /// The region the select tool marked, which `editor:copy` copies.
     std::optional<selection> selected = std::nullopt;
