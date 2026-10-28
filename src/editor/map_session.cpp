@@ -29,6 +29,7 @@
 #include "path_info.h"
 #include "player_activity.h"
 #include "string_formatter.h"
+#include "string_utils.h"
 #include "translations.h"
 #include "type_id.h"
 
@@ -222,11 +223,19 @@ auto tool_label(const tool& value) -> std::string {
     return {};
 }
 
+namespace {
+/// The names in a name or a list of them, nested as a mapgen of several overmap squares has it.
+auto names_in(const nlohmann::ordered_json& name) -> std::vector<std::string> {
+    if (name.is_string()) { return {name.get<std::string>()}; }
+    if (!name.is_array()) { return {name.dump()}; }
+    return name | std::views::transform(names_in) | std::views::join
+         | std::ranges::to<std::vector>();
+}
+} // namespace
+
 auto entry_name(const nlohmann::ordered_json& value) -> std::string {
     for (const auto* const key : {"om_terrain", "nested_mapgen_id", "update_mapgen_id", "id"}) {
-        if (!value.contains(key)) { continue; }
-        const auto& name = value[key];
-        return name.is_string() ? name.get<std::string>() : name.dump();
+        if (value.contains(key)) { return join(names_in(value[key]), ", "); }
     }
     return _("(unnamed)");
 }
