@@ -3180,4 +3180,113 @@ TEST_CASE("the vehicle editor says where it saved the design", "[editor_vehicle]
     CHECK(step == 6);
 }
 
+TEST_CASE(
+    "the vehicle editor's palette groups one row per part under its category, and a filter "
+    "lists every shape by a name of its own",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto ids = [](const ec::screen_view& screen) {
+        return rows(screen, "vehicle:parts") | std::views::transform(&ec::row::id)
+             | std::ranges::to<std::vector>();
+    };
+    /// The heading a row of the palette stands under.
+    const auto heading_of = [](const ec::screen_view& screen, const std::string& id) {
+        auto heading = std::string{};
+        for (const auto& entry : rows(screen, "vehicle:parts")) {
+            if (entry.header) { heading = entry.label; }
+            if (entry.id == id) { return heading; }
+        }
+        return std::string{};
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1: {
+                const auto& list = body<ec::list_body>(part(screen, "vehicle:parts"));
+                // Every part kind at once, under the headings of what they are for.
+                CHECK(list.total == list.rows.size());
+                CHECK(list.offset == 0);
+                REQUIRE_FALSE(list.rows.empty());
+                CHECK(list.rows.front().header);
+                CHECK(list.rows.front().label == "Frames");
+                const auto headings =
+                    list.rows | std::views::filter(&ec::row::header)
+                    | std::views::transform(&ec::row::label) | std::ranges::to<std::vector>();
+                CHECK(
+                    headings
+                    == std::vector<std::string>{
+                        "Frames", "Wheels & hubs", "Engines & motors", "Fuel & batteries",
+                        "Seats & controls", "Doors & windows", "Lights", "Storage", "Weapons",
+                        "Other"});
+                CHECK(std::ranges::none_of(
+                    list.rows | std::views::filter(&ec::row::header), &ec::row::selectable));
+                // The shapes of a frame are one row, the shape the game's vehicles use most.
+                CHECK(std::ranges::contains(ids(screen), std::string("vpart:frame_vertical")));
+                CHECK_FALSE(std::ranges::contains(ids(screen), std::string("vpart:frame_cross")));
+                CHECK_FALSE(
+                    std::ranges::contains(ids(screen), std::string("vpart:frame_horizontal")));
+                CHECK(heading_of(screen, "vpart:frame_vertical") == "Frames");
+                CHECK(heading_of(screen, "vpart:wheel") == "Wheels & hubs");
+                CHECK(heading_of(screen, "vpart:wheel_mount_medium") == "Wheels & hubs");
+                CHECK(heading_of(screen, "vpart:tank") == "Fuel & batteries");
+                CHECK(heading_of(screen, "vpart:headlight") == "Lights");
+                // No two rows read the same.
+                auto labels =
+                    list.rows
+                    | std::views::filter([](const ec::row& entry) { return !entry.header; })
+                    | std::views::transform(&ec::row::label) | std::ranges::to<std::vector>();
+                std::ranges::sort(labels);
+                CHECK(std::ranges::adjacent_find(labels) == labels.end());
+                return invoke("vehicle:part_filter", {.text = "frame_"});
+            }
+            case 2: {
+                // A filter lists every part that matches, each shape by a name of its own.
+                CHECK(std::ranges::none_of(rows(screen, "vehicle:parts"), &ec::row::header));
+                CHECK(row(screen, "vehicle:parts", "vpart:frame_horizontal").label
+                      == "frame (horizontal)");
+                CHECK(row(screen, "vehicle:parts", "vpart:frame_horizontal_2").label
+                      == "frame (horizontal_2)");
+                CHECK(has_affordance(screen, "vehicle:part_page"));
+                return invoke("vehicle:mount", {.row = "mount:1,0"});
+            }
+            case 3:
+                return invoke("vehicle:pick", {.row = rows(screen, "vehicle:stack").front().id});
+            case 4:
+                return invoke("vehicle:show:part");
+            case 5: {
+                // The picked frame's shape is a setting of its own.
+                const auto& fields = body<ec::form_body>(part(screen, "vehicle:part_form")).fields;
+                const auto shape = std::ranges::find(fields, "shape", &ec::form_field::id);
+                REQUIRE(shape != fields.end());
+                CHECK(shape->type == "select");
+                CHECK(shape->value == "xlframe_vertical");
+                const auto horizontal =
+                    std::ranges::find(shape->options, "xlframe_horizontal", &ec::form_option::id);
+                REQUIRE(horizontal != shape->options.end());
+                CHECK(horizontal->label == "extra light frame (horizontal)");
+                return invoke("vehicle:part_set", {.row = "shape", .text = "xlframe_horizontal"});
+            }
+            case 6: {
+                CHECK(notice_of(screen).empty());
+                const auto& fields = body<ec::form_body>(part(screen, "vehicle:part_form")).fields;
+                const auto shape = std::ranges::find(fields, "shape", &ec::form_field::id);
+                REQUIRE(shape != fields.end());
+                CHECK(shape->value == "xlframe_horizontal");
+                // A shape of another part is none of this one's.
+                return invoke("vehicle:part_set", {.row = "shape", .text = "frame_vertical"});
+            }
+            case 7:
+                CHECK_FALSE(notice_of(screen).empty());
+                return act("QUIT");
+            default:
+                return answer("Leave without saving");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step >= 8);
+}
+
 #endif // CATA_MCP
