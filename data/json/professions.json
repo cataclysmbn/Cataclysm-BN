@@ -9400,12 +9400,7 @@
           { "item": "e_tool", "container-item": "webbing_belt" },
           { "item": "knife_combat", "container-item": "sheath" },
           { "item": "grenadebandolier", "contents-item": [ "grenade", "grenade" ] },
-          {
-            "item": "m9",
-            "ammo-item": "9mm",
-            "charges": 15,
-            "custom-flags": [ "auto_wield" ]
-          },
+          { "item": "m9", "ammo-item": "9mm", "charges": 15, "custom-flags": [ "auto_wield" ] },
           { "item": "9mm", "charges": 5 }
         ]
       },
