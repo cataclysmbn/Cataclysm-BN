@@ -797,7 +797,8 @@ auto game_parts(
             {.id = test_id,
              .label = _("Test"),
              .keys = {"F5"},
-             .enabled = state.placed_here().has_value()}));
+             .enabled = state.placed_here().has_value(),
+             .denial = state.placed_here() ? "" : _("Place the special in the world first.")}));
     }
     if (state.on_mapgen()) {
         affordances.push_back(
@@ -807,11 +808,13 @@ auto game_parts(
         affordances.push_back(
             ec::invoke_affordance({.id = stamp_id, .label = _("Stamp"), .keys = {"F6"}}));
         // In the editor's own world testing stamps first; in a player's, only what was stamped.
+        const auto testable = in_editor_game() || state.stamped.has_value();
         affordances.push_back(ec::invoke_affordance(
             {.id = test_id,
              .label = _("Test"),
              .keys = {"F5"},
-             .enabled = in_editor_game() || state.stamped.has_value()}));
+             .enabled = testable,
+             .denial = testable ? "" : _("Stamp the entry first: Test plays what was stamped.")}));
         affordances.push_back(ec::invoke_affordance(
             {.id = preview_id,
              .label = _("Preview"),
@@ -965,25 +968,38 @@ auto drawing_affordances(const session& state) -> std::vector<ec::affordance> {
          .args = {.count = ec::count_shape{.min = 1, .max = max_brush, .initial = state.brush}}}));
     affordances.push_back(ec::invoke_affordance({.id = mirror_x_id, .label = _("Mirror across")}));
     affordances.push_back(ec::invoke_affordance({.id = mirror_y_id, .label = _("Mirror down")}));
+    const auto unmarked = state.selected ? "" : _("Mark squares with the Select tool first.");
+    const auto unclipped = state.clip.empty() ? _("Copy or cut squares first.") : "";
     affordances.push_back(ec::invoke_affordance(
         {.id = copy_id,
          .label = _("Copy"),
          .keys = {"CTRL+C"},
-         .enabled = state.selected.has_value()}));
+         .enabled = state.selected.has_value(),
+         .denial = unmarked}));
     affordances.push_back(ec::invoke_affordance(
         {.id = cut_id,
          .label = _("Cut"),
          .keys = {"CTRL+X"},
-         .enabled = state.selected.has_value()}));
+         .enabled = state.selected.has_value(),
+         .denial = unmarked}));
     affordances.push_back(ec::invoke_affordance(
-        {.id = rotate_id, .label = _("Rotate"), .keys = {"z"}, .enabled = !state.clip.empty()}));
+        {.id = rotate_id,
+         .label = _("Rotate"),
+         .keys = {"z"},
+         .enabled = !state.clip.empty(),
+         .denial = unclipped}));
     affordances.push_back(ec::invoke_affordance(
         {.id = flip_x_id,
          .label = _("Flip across"),
          .keys = {"x"},
-         .enabled = !state.clip.empty()}));
+         .enabled = !state.clip.empty(),
+         .denial = unclipped}));
     affordances.push_back(ec::invoke_affordance(
-        {.id = flip_y_id, .label = _("Flip down"), .keys = {"y"}, .enabled = !state.clip.empty()}));
+        {.id = flip_y_id,
+         .label = _("Flip down"),
+         .keys = {"y"},
+         .enabled = !state.clip.empty(),
+         .denial = unclipped}));
     affordances.push_back(
         ec::invoke_affordance({.id = paint_id, .label = _("Draw"), .args = row_of(canvas_id)}));
     if (state.current->region == region_use::placements) {
@@ -1290,7 +1306,10 @@ auto session_view(const session& state) -> ec::screen_view {
          .label = _("Export palette"),
          .args = {.text = ec::text_shape{.field_id = "palette"}}}));
     affordances.push_back(ec::invoke_affordance(
-        {.id = unstamp_id, .label = _("Take back stamp"), .enabled = state.stamped.has_value()}));
+        {.id = unstamp_id,
+         .label = _("Take back stamp"),
+         .enabled = state.stamped.has_value(),
+         .denial = state.stamped ? "" : _("Nothing is stamped.")}));
     affordances.push_back(ec::invoke_affordance(
         {.id = advance_id,
          .label = _("Let turns pass"),
