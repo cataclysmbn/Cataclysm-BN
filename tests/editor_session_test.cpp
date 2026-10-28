@@ -6059,4 +6059,42 @@ TEST_CASE(
     editor::reset_editor_session();
 }
 
+TEST_CASE(
+    "the editor turns away drawing on an entry without rows, saying why",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = kinds_file{};
+    auto step = 0;
+    const auto tab = [](const ec::screen_view& screen, const std::string& id) {
+        const auto& tabs = body<ec::tabs_body>(part(screen, "editor:tools")).tabs;
+        const auto found = std::ranges::find(tabs, id, &ec::tab_entry::id);
+        REQUIRE(found != tabs.end());
+        return *found;
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK(tab(screen, "tool:point").enabled);
+                return invoke("editor:object", {.row = "object:2"});
+            case 2:
+                // The update mapgen only places chunks: there is nothing to draw, and it says so.
+                CHECK_FALSE(tab(screen, "tool:point").enabled);
+                CHECK(tab(screen, "tool:point").denial.find("rows") != std::string::npos);
+                CHECK_FALSE(tab(screen, "tool:select").enabled);
+                CHECK(tab(screen, "tool:placements").enabled);
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 3);
+    editor::reset_editor_session();
+}
+
 #endif // CATA_MCP
