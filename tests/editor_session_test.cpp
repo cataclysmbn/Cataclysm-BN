@@ -216,6 +216,18 @@ auto walls(const ec::screen_view& screen) -> std::size_t {
 auto saved(const ec::screen_view& screen) -> std::string {
     return body<ec::panel_body>(part(screen, "editor:document")).stats.front().value;
 }
+/// The value of the row's column `key`, empty when it has none.
+auto column_value(const ec::row& row, const std::string& key) -> std::string {
+    const auto found = std::ranges::find(row.columns, key, &game_client::interaction_column::key);
+    return found == row.columns.end() ? std::string{} : found->value;
+}
+/// What a legend row places first, by name.
+auto placed_value(const ec::row& row) -> std::string {
+    const auto found = std::ranges::find_if(row.columns, [](const auto& column) {
+        return column.key != "use" && column.key != "id" && !column.value.empty();
+    });
+    return found == row.columns.end() ? std::string{} : found->value;
+}
 /// Whether invoking the affordance with the arguments is refused as invalid.
 auto refused(
     const ec::boundary_state& state, const std::string& affordance, const ec::invoke_args& args)
@@ -276,7 +288,7 @@ TEST_CASE(
                 const auto& legend = body<ec::list_body>(part(screen, "editor:legend")).rows;
                 REQUIRE(legend.size() == 2);
                 CHECK(legend[0].id == "symbol:#");
-                CHECK(legend[0].columns.front().value == "t_wall");
+                CHECK(column_value(legend[0], "terrain") == "plastered wooden wall");
                 CHECK(legend[0].selected);
                 CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
                 const auto& tools = body<ec::tabs_body>(part(screen, "editor:tools")).tabs;
@@ -974,6 +986,13 @@ TEST_CASE(
                 CHECK(column(screen, "symbol:#", "items") == "Item groups=SUS_tools");
                 CHECK(column(screen, "symbol:#", "id") == "ID=t_dirt, t_grass, SUS_tools");
                 CHECK(column(screen, "symbol:C", "furniture") == "Furniture=chair");
+                // Every row has the same columns: the flag first, the ids last.
+                for (const auto& each : body<ec::list_body>(part(screen, "editor:legend")).rows) {
+                    CHECK(
+                        (each.columns | std::views::transform(&game_client::interaction_column::key)
+                         | std::ranges::to<std::vector>())
+                        == std::vector<std::string>{"use", "terrain", "furniture", "items", "id"});
+                }
                 // A region's stand-in reads as what the default region puts there most.
                 CHECK(column(screen, "symbol:%", "terrain").starts_with("Terrain="));
                 CHECK(column(screen, "symbol:%", "terrain").find("pseudo") == std::string::npos);
@@ -1016,11 +1035,7 @@ TEST_CASE(
                 const auto labels =
                     body<ec::list_body>(part(screen, "editor:catalog")).rows
                     | std::views::transform(&ec::row::label) | std::ranges::to<std::vector>();
-                CHECK(
-                    labels
-                    == std::vector<std::string>{
-                        "adobe floor (t_adobe_brick_floor)",
-                        "adobe floor (t_adobe_brick_floor_noroof)"});
+                CHECK(labels == std::vector<std::string>{"adobe floor", "adobe floor (noroof)"});
                 return invoke("editor:catalog_filter", {.text = "t_grass"});
             }
             case 3:
@@ -1155,7 +1170,7 @@ TEST_CASE(
                 return invoke("editor:mapping_apply");
             case 6: {
                 const auto& rows = body<ec::list_body>(part(screen, "editor:legend")).rows;
-                CHECK(rows[2].columns.front().value == "dirt, grass");
+                CHECK(column_value(rows[2], "terrain") == "dirt, grass");
                 return set("layer", "terrains");
             }
             case 7:
@@ -2193,7 +2208,7 @@ TEST_CASE(
                 CHECK(cell(screen, 23, 23).glyph == ".");
                 const auto& legend = body<ec::list_body>(part(screen, "editor:legend")).rows;
                 REQUIRE(legend.size() == 1);
-                CHECK(legend[0].columns.front().value == "t_dirt");
+                CHECK(column_value(legend[0], "terrain") == "dirt");
                 CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
                 CHECK(saved(screen) == "Yes");
                 // The form starts over for the next file: what it named is not typed after.
@@ -2444,7 +2459,7 @@ TEST_CASE(
                 const auto& tools = body<ec::tabs_body>(part(screen, "editor:tools")).tabs;
                 REQUIRE(tools.size() == 11);
                 CHECK(tools[5].id == "tool:room");
-                CHECK(stat(screen, "inside") == "#");
+                CHECK(stat(screen, "inside") == "# plastered wooden wall");
                 CHECK(stat(screen, "brush") == "1");
                 CHECK(stat(screen, "mirror_x") == "Off");
                 CHECK(affordance(screen, "editor:undo").keys == std::vector<std::string>{"CTRL+Z"});
@@ -2971,7 +2986,7 @@ TEST_CASE(
             case 1:
                 CHECK(messages(screen).empty());
                 CHECK(line(screen, "x").description == "From editor_session_test_palette");
-                CHECK(line(screen, "x").columns.front().value == "t_dirt");
+                CHECK(column_value(line(screen, "x"), "terrain") == "dirt");
                 return invoke("editor:object", {.row = "object:1"});
             case 2:
                 return invoke("editor:mapping_set", {.row = "symbol", .text = "x"});
@@ -2983,7 +2998,7 @@ TEST_CASE(
                 return invoke("editor:object", {.row = "object:0"});
             case 6:
                 // The mapgen reads the palette as edited, before it is saved.
-                CHECK(line(screen, "x").columns.front().value == "t_grass");
+                CHECK(column_value(line(screen, "x"), "terrain") == "grass");
                 CHECK(messages(screen).empty());
                 return act("QUIT");
             case 7:
@@ -3511,7 +3526,7 @@ TEST_CASE(
     const auto lines = [](const ec::screen_view& screen) {
         return body<ec::list_body>(part(screen, "editor:legend")).rows
              | std::views::transform([](const ec::row& row) {
-                   return row.id + " " + row.columns.front().value + " " + row.description;
+                   return row.id + " " + placed_value(row) + " " + row.description;
                })
              | std::ranges::to<std::vector>();
     };
@@ -3537,9 +3552,9 @@ TEST_CASE(
                 CHECK(
                     lines(screen)
                     == std::vector<std::string>{
-                        R"(symbol:# t_wall From editor_session_test_extracted)",
-                        R"(symbol:. t_floor From editor_session_test_extracted)",
-                        R"(symbol:c f_chair From editor_session_test_extracted)"});
+                        R"(symbol:# plastered wooden wall From editor_session_test_extracted)",
+                        R"(symbol:. wooden floor From editor_session_test_extracted)",
+                        R"(symbol:c chair From editor_session_test_extracted)"});
                 CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
                 const auto& objects = body<ec::list_body>(part(screen, "editor:objects")).rows;
                 REQUIRE(objects.size() == 2);
@@ -5507,11 +5522,11 @@ TEST_CASE("the editor's legend and catalog show what they place", "[editor_sessi
                 const auto floor = row_of(screen, "editor:legend", "symbol:.");
                 REQUIRE(floor.look);
                 CHECK(floor.look->id == "t_floor");
-                // An id the legend names alone reads as the id, not as JSON text.
+                // An id the legend names alone reads as its name, not as JSON text.
                 const auto terrain = std::ranges::
                     find(floor.columns, "terrain", &game_client::interaction_column::key);
                 REQUIRE(terrain != floor.columns.end());
-                CHECK(terrain->value == "t_floor");
+                CHECK(terrain->value == "wooden floor");
                 const auto& terrains = body<ec::list_body>(part(screen, "editor:catalog")).rows;
                 REQUIRE_FALSE(terrains.empty());
                 CHECK(std::ranges::all_of(terrains, [](const ec::row& row) {
