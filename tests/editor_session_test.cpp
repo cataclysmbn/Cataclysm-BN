@@ -6459,7 +6459,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "the map editor's symbol takes one character, however many bytes it is, and says so in the singular",
+    "the map editor's symbol takes one cell of a map row, however many bytes it is, and says so in the singular",
     "[editor_session][engine_client_component]") {
     const auto guard = screen_guard{};
     const auto file = kinds_file{};
@@ -6478,6 +6478,8 @@ TEST_CASE(
                 // A letter and its combining accent are one character as the map rows split them.
                 CHECK(symbol("e\u0301").empty());
                 CHECK(symbol("\u00e9a") == "Symbol takes at most 1 character.");
+                // A wide letter fills two cells of a map row.
+                CHECK(symbol("\u6f22") == "Symbol takes at most 1 character.");
                 return act("QUIT");
             }
             default:
