@@ -277,6 +277,9 @@ struct grid_body {
     /// The affordance a client runs with a cell's id as the row on a secondary click of that cell,
     /// such as a right click; empty for none.
     std::string secondary = {};
+    /// `trail` for a secondary drag, such as a right drag, whose every crossed square runs
+    /// `secondary`, between `drag_begin` and `drag_end`; empty for none.
+    std::string secondary_drag = {};
 };
 /// The looks of a grid, each once, which its cells name by index.
 struct look_palette {

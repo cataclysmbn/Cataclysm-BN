@@ -6999,6 +6999,12 @@
         "secondary": {
           "$ref": "#/$defs/opaque_id",
           "description": "The affordance a client runs on a secondary click of a cell, such as a right click, with the cell's `id` as the row, as the vehicle editor's canvas removes the top part of a square. Absent for none."
+        },
+        "secondary_drag": {
+          "enum": [
+            "trail"
+          ],
+          "description": "`trail` when a secondary drag, such as a right drag, runs `secondary` on every square it crosses, each once, with `drag_begin` sent before and `drag_end` after, so the drag is one step. Absent for none: a secondary click only."
         }
       },
       "required": [
