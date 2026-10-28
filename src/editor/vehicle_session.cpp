@@ -2013,6 +2013,12 @@ auto parts_view(const session& state) -> ec::screen_view {
              .denial = enabled ? std::string{} : settings_denial}));
     }
     const auto palette = state.parts();
+    // The parts on the picked mount.
+    const auto on_mount =
+        veh ? veh->parts_at_relative(mount, false) | std::views::transform([&](const int index) {
+                  return veh->part_info(index).get_id();
+              }) | std::ranges::to<std::vector>()
+            : std::vector<vpart_id>{};
     // The categories of parts are tabs, as Factorio's item groups.
     const auto installable = [&] {
         return ec::tabs(
@@ -2031,10 +2037,11 @@ auto parts_view(const session& state) -> ec::screen_view {
                               const auto& info = *entry.part;
                               // Whether it fits the picked mount, and why not, as the game
                               // rules; for the part in hand only when the last action brought
-                              // no news of its own.
+                              // no news of its own and it is not on that mount already.
                               const auto news = !state.said.empty() || !state.notice.empty();
+                              const auto there = std::ranges::contains(on_mount, info.get_id());
                               const auto refused =
-                                  veh && !(entry.held && news)
+                                  veh && !(entry.held && (news || there))
                                       ? mount_refusal(*veh, state.cursor, info.get_id())
                                       : std::nullopt;
                               return ec::row{
