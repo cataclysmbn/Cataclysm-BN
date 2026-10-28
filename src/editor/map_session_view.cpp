@@ -1111,6 +1111,29 @@ auto special_canvas(const session& state) -> ec::component {
 } // namespace
 
 namespace {
+/// A row per entry of the file, by name; entries of the same name, such as the variants the game
+/// picks among by weight, are told apart by their place among them.
+auto entry_rows(const session& state, const std::vector<std::size_t>& entries)
+    -> std::vector<ec::row> {
+    const auto& objects = state.doc->objects();
+    const auto names =
+        entries
+        | std::views::transform([&](const auto index) { return entry_name(objects[index].value); })
+        | std::ranges::to<std::vector>();
+    return std::views::zip(entries, names) | std::views::enumerate
+         | std::views::transform([&](const auto& numbered) {
+               const auto& [at, entry] = numbered;
+               const auto& [index, name] = entry;
+               const auto same = std::ranges::count(names, name);
+               const auto place = std::ranges::count(names | std::views::take(at + 1), name);
+               return ec::row{
+                   .id = index_row("object", index),
+                   .label = same > 1 ? string_format(_("%s (%d of %d)"), name, place, same) : name,
+                   .selected = index == state.object};
+           })
+         | std::ranges::to<std::vector>();
+}
+
 /// What each part is for, and the menu of each action that is no part's own: with nothing open,
 /// the files to open are the page.
 auto layout(const session& state) -> workspace_layout {
@@ -1272,13 +1295,7 @@ auto session_view(const session& state) -> ec::screen_view {
         const auto entries = state.entries();
         parts.push_back(ec::list(
             {.id = objects_id,
-             .rows = entries | std::views::transform([&](const auto index) {
-                         return ec::row{
-                             .id = index_row("object", index),
-                             .label = entry_name(doc.objects()[index].value),
-                             .selected = index == state.object};
-                     })
-                   | std::ranges::to<std::vector>(),
+             .rows = entry_rows(state, entries),
              .selection = "single",
              .activate = object_id}));
         affordances.push_back(ec::invoke_affordance(
