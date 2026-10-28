@@ -3054,4 +3054,40 @@ TEST_CASE(
     CHECK(step == 2);
 }
 
+TEST_CASE(
+    "the vehicle editor folds its list of vehicles while a design or a world vehicle is open",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    clear_map();
+    const auto cleanup_vehicles = on_out_of_scope([] { clear_vehicles(); });
+    REQUIRE(editor::spawn_design(
+        vproto_id("bicycle"), get_avatar().bub_pos() + tripoint_rel_ms(8, 0, 0), {}));
+    const auto folded = [](const ec::screen_view& screen) {
+        return part(screen, "vehicle:sources").collapsed;
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                // Nothing is open: the vehicles to open are the page.
+                CHECK_FALSE(folded(screen));
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                CHECK(folded(screen));
+                return invoke("vehicle:source", {.row = "source:world"});
+            case 2:
+                return invoke("vehicle:edit", {.row = "world:0"});
+            case 3:
+                CHECK(folded(screen));
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 4);
+}
+
 #endif // CATA_MCP
