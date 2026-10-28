@@ -326,7 +326,8 @@ TEST_CASE(
                 CHECK(affordance(screen, "editor:redo").enabled);
                 return invoke("editor:symbol", {.row = "symbol:."});
             case 8:
-                CHECK(body<ec::panel_body>(part(screen, "editor:document")).stats[1].value == ".");
+                CHECK(body<ec::panel_body>(part(screen, "editor:document")).stats[1].value
+                      == ". wooden floor");
                 return invoke("editor:save");
             case 9:
                 CHECK(saved(screen) == "Yes");
@@ -840,11 +841,23 @@ TEST_CASE(
                 return invoke("editor:open", {.text = file.path.string()});
             case 1:
                 CHECK_FALSE(ec::find_component(*screen.root, "editor:loot"));
-                CHECK(affordance(screen, "editor:loot").args.row->component_id == "editor:canvas");
+                // It sits in the View menu and counts over the squares the select tool marked.
+                CHECK(affordance(screen, "editor:loot").group == "View");
+                CHECK_FALSE(affordance(screen, "editor:loot").args.row);
+                CHECK_FALSE(affordance(screen, "editor:loot").enabled);
+                CHECK(affordance(screen, "editor:loot").denial
+                      == "Mark squares with the Select tool first.");
                 return invoke("editor:preview", {.count = 5});
             case 2:
-                return invoke("editor:loot", {.row = "square:3,3"});
+                return invoke("editor:tool", {.row = "tool:select"});
             case 3:
+                return invoke("editor:paint", {.row = "square:3,3"});
+            case 4:
+                return invoke("editor:paint", {.row = "square:3,3"});
+            case 5:
+                CHECK(affordance(screen, "editor:loot").enabled);
+                return invoke("editor:loot");
+            case 6:
                 first = lines(screen);
                 REQUIRE_FALSE(first.empty());
                 for (const auto& row : rows(screen)) {
@@ -852,12 +865,16 @@ TEST_CASE(
                     CHECK(row.columns.size() == 3);
                 }
                 // The same seed rolls the same list.
-                return invoke("editor:loot", {.row = "square:3,3"});
-            case 4:
+                return invoke("editor:loot");
+            case 7:
                 CHECK(lines(screen) == first);
-                // A square nothing spawns on has an empty list.
-                return invoke("editor:loot", {.row = "square:10,10"});
-            case 5:
+                return invoke("editor:paint", {.row = "square:10,10"});
+            case 8:
+                return invoke("editor:paint", {.row = "square:12,12"});
+            case 9:
+                // Squares nothing spawns on have an empty list.
+                return invoke("editor:loot");
+            case 10:
                 CHECK(rows(screen).empty());
                 return act("QUIT");
             default:
@@ -867,7 +884,7 @@ TEST_CASE(
     });
 
     editor::run_editor_session();
-    CHECK(step == 6);
+    CHECK(step == 11);
 }
 
 TEST_CASE(
@@ -896,7 +913,8 @@ TEST_CASE(
                 return invoke("editor:open", {.text = file.path.string()});
             case 1:
                 CHECK(use(screen, "symbol:C") == "Unused");
-                CHECK(use(screen, "symbol:z") == "Undefined");
+                // The loader puts the entry's fill terrain where nothing maps a symbol.
+                CHECK(use(screen, "symbol:z") == "Fill");
                 CHECK(use(screen, "symbol:.").empty());
                 CHECK(use(screen, "symbol:#") == "Unused");
                 return act("QUIT");
@@ -908,6 +926,116 @@ TEST_CASE(
 
     editor::run_editor_session();
     CHECK(step == 2);
+}
+
+TEST_CASE(
+    "the editor's legend names what a symbol places, its ids beside, and shows a space",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    auto rows = nlohmann::ordered_json::array({" %" + std::string(22, '.')});
+    for (auto row = 1; row < 24; ++row) { rows.push_back(std::string(24, '.')); }
+    const auto file = mod_file(
+        {{"rows", rows},
+         {"fill_ter", "t_floor"},
+         {"terrain",
+          {{".", nlohmann::ordered_json::array({"t_dirt", "t_grass"})},
+           {"#", nlohmann::ordered_json::parse(R"([["t_dirt", 3], "t_grass"])")},
+           {"%", "t_region_groundcover_urban"}}},
+         {"furniture", {{"C", "f_chair"}}},
+         {"items", {{"#", {{"item", "SUS_tools"}, {"chance", 30}}}}}});
+    auto step = 0;
+    const auto row = [](const ec::screen_view& screen, const std::string& id) -> ec::row {
+        const auto& rows = body<ec::list_body>(part(screen, "editor:legend")).rows;
+        const auto found = std::ranges::find(rows, id, &ec::row::id);
+        REQUIRE(found != rows.end());
+        return *found;
+    };
+    const auto column = [&](const ec::screen_view& screen, const std::string& id,
+                            const std::string& key) {
+        const auto columns = row(screen, id).columns;
+        const auto found = std::ranges::find(columns, key, &game_client::interaction_column::key);
+        return found == columns.end() ? std::string("(none)") : found->label + "=" + found->value;
+    };
+    const auto stat = [](const ec::screen_view& screen, const std::string& key) {
+        const auto& stats = body<ec::panel_body>(part(screen, "editor:document")).stats;
+        const auto found = std::ranges::find(stats, key, &ec::panel_stat::key);
+        return found == stats.end() ? std::string("(none)") : found->value;
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK(column(screen, "symbol:.", "terrain") == "Terrain=dirt, grass");
+                CHECK(column(screen, "symbol:.", "id") == "ID=t_dirt, t_grass");
+                CHECK(column(screen, "symbol:#", "terrain") == "Terrain=dirt x3, grass");
+                CHECK(column(screen, "symbol:#", "items") == "Item groups=SUS_tools");
+                CHECK(column(screen, "symbol:#", "id") == "ID=t_dirt, t_grass, SUS_tools");
+                CHECK(column(screen, "symbol:C", "furniture") == "Furniture=chair");
+                // A region's stand-in reads as what the default region puts there most.
+                CHECK(column(screen, "symbol:%", "terrain").starts_with("Terrain="));
+                CHECK(column(screen, "symbol:%", "terrain").find("pseudo") == std::string::npos);
+                // A space draws the fill terrain, and reads as a visible mark.
+                CHECK(row(screen, "symbol: ").label == "\u2423");
+                CHECK(column(screen, "symbol: ", "use") == "Use=Fill");
+                CHECK(column(screen, "symbol: ", "terrain") == "Terrain=wooden floor");
+                // What is drawn with reads by its mark and what it places.
+                CHECK(stat(screen, "symbol") == "\u2423 wooden floor");
+                CHECK(stat(screen, "inside") == "\u2423 wooden floor");
+                return invoke("editor:symbol", {.row = "symbol:C"});
+            case 2:
+                CHECK(stat(screen, "symbol") == "C chair");
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 3);
+}
+
+TEST_CASE(
+    "the editor's catalog tells apart entries of the same name",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                return invoke("editor:catalog_filter", {.text = "t_adobe_brick_floor"});
+            case 2: {
+                const auto labels =
+                    body<ec::list_body>(part(screen, "editor:catalog")).rows
+                    | std::views::transform(&ec::row::label) | std::ranges::to<std::vector>();
+                CHECK(
+                    labels
+                    == std::vector<std::string>{
+                        "adobe floor (t_adobe_brick_floor)",
+                        "adobe floor (t_adobe_brick_floor_noroof)"});
+                return invoke("editor:catalog_filter", {.text = "t_grass"});
+            }
+            case 3:
+                // A name only one entry has stays as it is.
+                CHECK(body<ec::list_body>(part(screen, "editor:catalog")).rows.front().label
+                      == "grass");
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 4);
 }
 
 TEST_CASE(
@@ -1027,7 +1155,7 @@ TEST_CASE(
                 return invoke("editor:mapping_apply");
             case 6: {
                 const auto& rows = body<ec::list_body>(part(screen, "editor:legend")).rows;
-                CHECK(rows[2].columns.front().value == R"(["t_dirt","t_grass"])");
+                CHECK(rows[2].columns.front().value == "dirt, grass");
                 return set("layer", "terrains");
             }
             case 7:
