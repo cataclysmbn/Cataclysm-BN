@@ -75,6 +75,29 @@ auto install_part(
     const nlohmann::ordered_json& prototype, const vehicle& blueprint, const part_install& install)
     -> std::expected<nlohmann::ordered_json, std::string>;
 
+/// The mounts a stroke installs one part on.
+struct stroke_install {
+    std::vector<point> mounts;
+    std::string part;
+};
+/// How a stroke went: the mounts that took the part, those that refused it, and why the first of
+/// them did.
+struct stroke_tally {
+    int installed = 0;
+    int refused = 0;
+    std::string reason = {};
+};
+struct stroke_design {
+    nlohmann::ordered_json prototype;
+    stroke_tally tally;
+};
+
+/// The prototype with the part installed on each mount of the stroke the game takes it on, again
+/// and again while one more does, so that frames spread from the frame there is; a mount that
+/// already has the part is left as it is. Its `blueprint` is drawn again.
+auto install_parts(const nlohmann::ordered_json& prototype, const stroke_install& install)
+    -> std::expected<stroke_design, std::string>;
+
 /// The prototype without the part `index` of `design_parts`, its `blueprint` drawn again; the
 /// error says why it stays.
 auto remove_part(
@@ -139,6 +162,10 @@ auto mount_refusals(const vehicle& veh, const vpart_id& id)
 /// the part's index, or why the game would not mount it.
 auto install_live_part(vehicle& veh, const part_install& install)
     -> std::expected<int, std::string>;
+
+/// `install_parts` on the world's vehicle, at once, without the game's requirements.
+auto install_live_parts(vehicle& veh, const stroke_install& install)
+    -> std::expected<stroke_tally, std::string>;
 
 /// Removes the world's vehicle's part `index` at once; the error says why it stays.
 auto remove_live_part(vehicle& veh, int index) -> std::expected<void, std::string>;

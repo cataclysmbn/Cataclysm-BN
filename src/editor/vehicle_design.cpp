@@ -615,20 +615,12 @@ auto add_part_cargo(vehicle& veh, const int index, const std::string& item_id)
     return {};
 }
 
-auto install_part(
-    const nlohmann::ordered_json& prototype, const vehicle& blueprint, const part_install& install)
-    -> std::expected<nlohmann::ordered_json, std::string> {
-    const auto id = vpart_id(install.part);
-    if (!id.is_valid()) {
-        return std::unexpected(string_format(_("%s is no vehicle part."), install.part));
-    }
-    if (auto refused = mount_refusal(blueprint, install.mount, id)) {
-        return std::unexpected(std::move(*refused));
-    }
-    auto next = prototype;
-    auto& parts = next["parts"];
+namespace {
+
+/// Lists the part after the parts already at its mount, in the entry that lists them.
+auto append_part(nlohmann::ordered_json& prototype, const part_install& install) -> void {
+    auto& parts = prototype["parts"];
     if (!parts.is_array()) { parts = nlohmann::ordered_json::array(); }
-    // The parts go after those already at the mount, in the entry that lists them.
     const auto found = std::ranges::find_if(parts | std::views::reverse, [&](const auto& entry) {
         return int_of(entry, "x") == install.mount.x && int_of(entry, "y") == install.mount.y
             && int_of(entry, "z") == 0 && entry.contains("parts") && entry["parts"].is_array();
@@ -641,7 +633,89 @@ auto install_part(
              {"y", install.mount.y},
              {"parts", nlohmann::ordered_json::array({install.part})}});
     }
+}
+
+/// Installs the part on each mount of `veh` the stroke names that takes it, passing over them
+/// while one more does; `placed` hears of each mount it went on.
+auto spread(
+    vehicle& veh, const stroke_install& install, const std::function<void(const point&)>& placed)
+    -> std::expected<stroke_tally, std::string> {
+    const auto id = vpart_id(install.part);
+    if (!id.is_valid()) {
+        return std::unexpected(string_format(_("%s is no vehicle part."), install.part));
+    }
+    const auto mount_of = [](const point& at) { return tripoint_mnt_veh(at.x, at.y, 0); };
+    auto pending =
+        install.mounts | std::views::filter([&](const point& at) {
+            return std::ranges::
+                none_of(veh.parts_at_relative(mount_of(at), false), [&](const int index) {
+                    return veh.part_info(index).get_id() == id;
+                });
+        })
+        | std::ranges::to<std::vector>();
+    auto tally = stroke_tally{};
+    for (auto spreading = true; spreading;) {
+        spreading = false;
+        auto left = std::vector<point>{};
+        for (const auto& at : pending) {
+            if (veh.can_mount(mount_of(at), id) && veh.install_part(mount_of(at), id) >= 0) {
+                placed(at);
+                ++tally.installed;
+                spreading = true;
+            } else {
+                left.push_back(at);
+            }
+        }
+        pending = std::move(left);
+    }
+    tally.refused = static_cast<int>(pending.size());
+    if (!pending.empty()) {
+        const auto& at = pending.front();
+        tally.reason =
+            mount_refusal(veh, at, id)
+                .value_or(
+                    string_format(_("%s cannot be mounted at %d,%d."), id->name(), at.x, at.y));
+    }
+    return tally;
+}
+
+} // namespace
+
+auto install_part(
+    const nlohmann::ordered_json& prototype, const vehicle& blueprint, const part_install& install)
+    -> std::expected<nlohmann::ordered_json, std::string> {
+    const auto id = vpart_id(install.part);
+    if (!id.is_valid()) {
+        return std::unexpected(string_format(_("%s is no vehicle part."), install.part));
+    }
+    if (auto refused = mount_refusal(blueprint, install.mount, id)) {
+        return std::unexpected(std::move(*refused));
+    }
+    auto next = prototype;
+    append_part(next, install);
     return redrawn(std::move(next));
+}
+
+auto install_parts(const nlohmann::ordered_json& prototype, const stroke_install& install)
+    -> std::expected<stroke_design, std::string> {
+    const auto built = build_design(prototype.dump());
+    if (!built.blueprint) {
+        return std::unexpected(
+            _("The game cannot build this prototype; fix what it reports first."));
+    }
+    auto next = prototype;
+    return spread(*built.blueprint, install,
+                  [&](const point& at) { append_part(next, {.mount = at, .part = install.part}); })
+        .transform([&](const stroke_tally& tally) {
+            return stroke_design{.prototype = redrawn(std::move(next)), .tally = tally};
+        });
+}
+
+auto install_live_parts(vehicle& veh, const stroke_install& install)
+    -> std::expected<stroke_tally, std::string> {
+    const auto tally = spread(veh, install, [](const point& /*at*/) {});
+    if (tally && tally->installed > 0) { get_map().add_vehicle_to_cache(&veh); }
+    return tally;
 }
 
 auto remove_part(
