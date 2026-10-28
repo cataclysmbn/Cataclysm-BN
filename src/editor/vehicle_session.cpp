@@ -129,6 +129,9 @@ constexpr auto spawn_distance = 8;
 constexpr auto spawn_search = 6;
 /// How many free mounts the grid shows around the vehicle when it is first drawn or has to grow.
 constexpr auto grid_margin = 2;
+/// The fewest mounts across and down the grid shows a vehicle in, room to build it out.
+constexpr auto grid_cols = 21;
+constexpr auto grid_rows = 15;
 
 /// The mounts the grid shows, from its north-west corner to its south-east one.
 struct mount_frame {
@@ -149,6 +152,15 @@ auto frame_around(const std::vector<point>& points, const int margin) -> mount_f
 auto part_name(const std::string& id) -> std::string {
     const auto part = vpart_id(id);
     return part.is_valid() ? part->name() : id;
+}
+
+/// `frame` widened about its middle to at least `grid_cols` by `grid_rows` mounts.
+auto roomy(mount_frame frame) -> mount_frame {
+    const auto wide = std::max(0, grid_cols - (frame.high.x - frame.low.x + 1));
+    const auto tall = std::max(0, grid_rows - (frame.high.y - frame.low.y + 1));
+    frame.low = point(frame.low.x - wide / 2, frame.low.y - tall / 2);
+    frame.high = point(frame.high.x + wide - wide / 2, frame.high.y + tall - tall / 2);
+    return frame;
 }
 
 /// One change of a world's vehicle edited in place: its saved state on the other side of it, and
@@ -1198,9 +1210,9 @@ struct session {
              | std::ranges::to<std::vector>();
     }
 
-    /// Fits the grid to the vehicle shown: a margin of free mounts around it when it is first
-    /// drawn; after that it grows, never shrinks or moves, when the vehicle or the picked mount
-    /// leaves no free mount at its edge.
+    /// Fits the grid to the vehicle shown: a margin of free mounts around it, and room to build
+    /// it out, when it is first drawn; after that it grows, never shrinks or moves, when the
+    /// vehicle or the picked mount leaves no free mount at its edge.
     auto fit_frame() -> void {
         if (!live && !doc) { return; }
         auto points = mounts();
@@ -1218,7 +1230,7 @@ struct session {
             live ? std::string("live") : doc->path().string() + "#" + prototype().value("id", "");
         if (shown != framed) {
             framed = shown;
-            frame = around(grid_margin);
+            frame = roomy(around(grid_margin));
             return;
         }
         const auto needed = around(1);
