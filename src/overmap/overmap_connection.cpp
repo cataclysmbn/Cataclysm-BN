@@ -232,6 +232,8 @@ void check_consistency() { connections.check(); }
 
 void reset() { connections.reset(); }
 
+auto get_all() -> const std::vector<overmap_connection>& { return connections.get_all(); }
+
 auto guess_for(const oter_id& oter) -> overmap_connection_id {
     const auto& all = connections.get_all();
     const auto iter = std::ranges::find_if(all, [&oter](const overmap_connection& elem) {

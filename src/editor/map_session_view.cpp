@@ -85,6 +85,29 @@ auto pin_options(const std::vector<std::string>& values) -> std::vector<ec::form
     return options;
 }
 
+/// An overmap connection as a player knows it: by the terrain it lays; else its id.
+auto connection_name(const std::string& id) -> std::string {
+    const auto connection = overmap_connection_id(id);
+    return connection.is_valid() && connection->default_terrain.is_valid()
+             ? _(connection->default_terrain->name)
+             : id;
+}
+
+/// An overmap terrain as the game names it, with the id that tells it from others of its name.
+auto overmap_terrain_name(const std::string& id) -> std::string {
+    const auto terrain = oter_str_id(id);
+    return terrain.is_valid() ? string_format("%s (%s)", terrain->get_name(), id) : id;
+}
+
+/// The overmap connections a special can join, each named by the terrain it lays.
+auto connection_options() -> std::vector<ec::form_option> {
+    return overmap_connections::get_all() | std::views::transform([](const auto& connection) {
+               return ec::form_option{
+                   .id = connection.id.str(), .label = connection_name(connection.id.str())};
+           })
+         | std::ranges::to<std::vector>();
+}
+
 /// What the game generates from the entry, a square per cell: its furniture, else its terrain.
 auto preview_grid(const mapgen_preview& shown) -> ec::component {
     auto cells = std::vector<ec::grid_cell>{};
@@ -600,7 +623,9 @@ auto document_stats(const session& state) -> std::vector<ec::panel_stat> {
             {.key = "level", .label = _("Level"), .value = std::to_string(state.special_level)});
         if (!state.special_terrain.empty()) {
             stats.push_back(
-                {.key = "terrain", .label = _("Terrain"), .value = state.special_terrain});
+                {.key = "terrain",
+                 .label = _("Terrain"),
+                 .value = overmap_terrain_name(state.special_terrain)});
         }
     }
     // The stamp stays in the world whichever entry is open.
@@ -996,7 +1021,7 @@ auto connection_cell(
     ec::grid_cell cell, const special_connection& joined, ec::look_palette& palette)
     -> ec::grid_cell {
     const auto id = overmap_connection_id(joined.connection);
-    cell.label = string_format(_("%s connection"), joined.connection);
+    cell.label = string_format(_("%s connection"), connection_name(joined.connection));
     cell.glyph = "+";
     cell.faded = true;
     if (!id.is_valid() || !id->default_terrain.is_valid()) { return cell; }
@@ -1343,9 +1368,12 @@ auto session_view(const session& state) -> ec::screen_view {
                     .id = connection_id,
                     .affordances = {connection_set_id},
                     .body = ec::form_body{
-                        .fields = {{.id = "connection",
-                                    .label = _("Connection"),
-                                    .value = state.special_connection}},
+                        .fields =
+                            {{.id = "connection",
+                              .label = _("Connection"),
+                              .value = state.special_connection,
+                              .type = "select",
+                              .options = connection_options()}},
                         .submit = connection_set_id}});
                 affordances.push_back(ec::invoke_affordance(
                     {.id = connection_set_id,

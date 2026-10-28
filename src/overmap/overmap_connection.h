@@ -92,6 +92,9 @@ void finalize();
 void check_consistency();
 void reset();
 
+/// Every overmap connection the game loaded.
+auto get_all() -> const std::vector<overmap_connection>&; // *NOPAD*
+
 auto guess_for(const oter_type_id& oter) -> overmap_connection_id;
 auto guess_for(const oter_id& oter) -> overmap_connection_id;
 
