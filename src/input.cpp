@@ -12,6 +12,7 @@ std::list<input_context *> input_context::input_context_stack;
 #include "client_interaction.h"
 #include "engine_client_component.h"
 #include "engine_client_contract.h"
+#include "engine_client_screen_keys.h"
 
 #include <algorithm>
 #include <cctype>
@@ -1132,6 +1133,8 @@ static const std::map<fallback_action, int> fallback_keys = {
 action_id input_context::display_menu( const bool permit_execute_action )
 {
     action_id action_to_execute = ACTION_NULL;
+    // The keys the screen open on this context gives its own actions, listed after its registered ones.
+    const auto own_keys = ec::screen_keys( *this );
 
     // Shamelessly stolen from help.cpp
     input_context ctxt( "HELP_KEYBINDINGS" );
@@ -1325,6 +1328,17 @@ action_id input_context::display_menu( const bool permit_execute_action )
                     }
                 },
                 .color = string_from_color( color ),
+            } );
+        }
+        for( const auto &[index, key] : std::views::enumerate( own_keys ) )
+        {
+            if( !filter_phrase.empty() && !lcmatch( key.label, filter_phrase ) ) { continue; }
+            rows.push_back( {
+                .id = "screen_key:" + std::to_string( index ), .label = key.label, .selectable = false,
+                .columns = { { .key = "keys", .label = _( "Keys" ), .value = join( key.keys, ", " ), .color = {} },
+                    { .key = "scope", .label = _( "Scope" ), .value = _( "This screen" ), .color = {} }
+                },
+                .color = string_from_color( local_key ),
             } );
         }
         const auto focus_row = cursor < rows.size() ? rows[cursor].id : std::string{};
