@@ -1039,6 +1039,7 @@ struct session {
             return;
         }
         const auto name = live->cpart(live_part).info().name();
+        const auto turret = live->cpart(live_part).is_turret();
         if (field == "cargo") {
             const auto type = itype_id(text);
             live_change(
@@ -1049,8 +1050,8 @@ struct session {
         if (field == "fuel_type") {
             const auto type = itype_id(text);
             live_change(
-                string_format(
-                    _("Fill %s with %s"), name, type.is_valid() ? item::nname(type) : text),
+                string_format(turret ? _("Load %s with %s") : _("Fill %s with %s"), name,
+                              type.is_valid() ? item::nname(type) : text),
                 [&](vehicle& veh) {
                     return set_part_fuel(
                         veh, live_part,
@@ -1070,11 +1071,14 @@ struct session {
             live_change(string_format(_("Set health of %s to %d%%"), name, value),
                         [&](vehicle& veh) { return set_part_health(veh, live_part, value); });
         } else if (field == "fuel") {
-            live_change(string_format(_("Set fuel of %s to %d"), name, value), [&](vehicle& veh) {
-                return set_part_fuel(
-                    veh, live_part,
-                    {.fuel = veh.part(live_part).ammo_current().str(), .amount = value});
-            });
+            live_change(
+                string_format(
+                    turret ? _("Set rounds of %s to %d") : _("Set fuel of %s to %d"), name, value),
+                [&](vehicle& veh) {
+                    return set_part_fuel(
+                        veh, live_part,
+                        {.fuel = veh.part(live_part).ammo_current().str(), .amount = value});
+                });
         }
     }
 
@@ -1258,10 +1262,10 @@ auto live_stack(const session& state) -> ec::component {
                       .value = std::to_string(
                           static_cast<int>(std::round(part.health_percent() * 100))),
                       .color = ""}};
-                 if (part.is_fuel_store(false)) {
+                 if (part.is_fuel_store(false) || part.is_turret()) {
                      columns.push_back(
                          {.key = "fuel",
-                          .label = _("Fuel"),
+                          .label = part.is_turret() ? _("Rounds") : _("Fuel"),
                           .value = std::to_string(part.ammo_remaining()),
                           .color = ""});
                  }
@@ -1292,16 +1296,16 @@ auto live_form(const session& state, const bool part_fields) -> ec::component {
              .type = "integer",
              .min = 0,
              .max = 100});
-        if (part.is_fuel_store(false)) {
+        if (part.is_fuel_store(false) || part.is_turret()) {
             fields.push_back(
                 {.id = "fuel",
-                 .label = _("Fuel"),
+                 .label = part.is_turret() ? _("Rounds") : _("Fuel"),
                  .value = std::to_string(part.ammo_remaining()),
                  .type = "integer",
                  .min = 0});
             fields.push_back(
                 {.id = "fuel_type",
-                 .label = _("Fuel type"),
+                 .label = part.is_turret() ? _("Ammunition") : _("Fuel type"),
                  .value =
                      part.ammo_current().is_null() ? std::string{} : part.ammo_current().str()});
         }

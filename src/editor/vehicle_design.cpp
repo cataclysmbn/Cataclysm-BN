@@ -416,14 +416,21 @@ auto set_part_fuel(vehicle& veh, const int index, const part_fuel& fuel)
     -> std::expected<void, std::string> {
     if (index < 0 || index >= veh.part_count()) { return std::unexpected(_("No such part.")); }
     auto& part = veh.part(index);
-    if (!part.is_fuel_store(false)) { return std::unexpected(_("This part holds no fuel.")); }
+    if (!part.is_fuel_store(false) && !part.is_turret()) {
+        return std::unexpected(_("This part holds no fuel."));
+    }
     if (fuel.amount < 0) { return std::unexpected(_("That value is out of range.")); }
     if (fuel.amount == 0) {
-        part.ammo_unset();
+        // A turret's rounds are its gun's, which the part does not empty.
+        if (part.is_turret()) {
+            part.get_base().ammo_unset();
+        } else {
+            part.ammo_unset();
+        }
         return {};
     }
     const auto type = itype_id(fuel.fuel);
-    // A tank holds a liquid, a battery or magazine the ammunition its item takes.
+    // A tank holds a liquid, a battery, magazine or turret the ammunition its item takes.
     const auto holds =
         type.is_valid()
         && (part.is_tank() ? type->phase >= LIQUID
