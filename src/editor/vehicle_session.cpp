@@ -2436,7 +2436,9 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
     ctxt.register_action("QUIT");
     ctxt.register_action("HELP_KEYBINDINGS");
     auto& state = kept_session ? *kept_session : kept_session.emplace();
+    // What it said on an earlier visit is old news.
     state.notice.clear();
+    state.said.clear();
     if (!prototype.empty()) { state.open(prototype); }
     const auto screen = ec::screen_scope(
         ctxt, "vehicle_editor",
@@ -2583,9 +2585,16 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
         } else if (id == spawn_id && state.spawn() && in_editor_game()) {
             // The editor game shows no world behind the editor: the avatar goes to try it, and the
             // editor opens on this one again.
-            //~ %1$s says where the vehicle spawned; %2$s how to open the editor, as "Press ~".
-            add_msg(m_info, to_translation("%1$s %2$s to go back to the vehicle editor."),
-                    state.said, press_x(ACTION_EDITOR));
+            if (const auto key = press_x_if_bound(ACTION_EDITOR)) {
+                //~ %1$s says where the vehicle spawned; %2$s how to open the editor, as "Press ~".
+                add_msg(m_info, to_translation("%1$s %2$s to go back to the vehicle editor."),
+                        state.said, *key);
+            } else {
+                //~ %s says where the vehicle spawned.
+                add_msg(m_info,
+                        to_translation("%s The Map Editor action goes back to the vehicle editor."),
+                        state.said);
+            }
             return_to_vehicle_editor();
             state.live = nullptr;
             return true;
