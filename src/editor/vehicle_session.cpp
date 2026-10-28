@@ -1056,14 +1056,15 @@ struct session {
 
     /// Starts a vehicle on a frame in a new file of the user mods, with the install tool and a
     /// frame in hand: `text` is its name, which the file and the id follow, or the path of that
-    /// file, whose stem names it.
+    /// .json file, whose stem names it.
     auto new_vehicle(const std::string& text) -> void {
         const auto name = trim(text);
         if (name.empty()) {
             notice = _("A new vehicle needs a name.");
             return;
         }
-        const auto is_path = name.contains('/') || name.contains('\\') || name.ends_with(".json");
+        // A name may hold any character; only a file name says where the file goes.
+        const auto is_path = name.ends_with(".json");
         const auto frame = usual_frame();
         const auto made =
             create(is_path ? name : suggested(id_of(name), true), [&](const std::string& id) {
@@ -1076,7 +1077,7 @@ struct session {
                 }
                 return nlohmann::ordered_json{
                     {"type", "vehicle"},
-                    {"id", id},
+                    {"id", id_of(id)},
                     {"name", is_path ? id : name},
                     {"parts", std::move(parts)}};
             });
