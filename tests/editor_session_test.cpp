@@ -6390,4 +6390,30 @@ TEST_CASE(
     editor::reset_editor_session();
 }
 
+TEST_CASE(
+    "the map editor heads a special's connection form in the inspector",
+    "[editor_session][editor_special][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = levels_file{special_levels()};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK(slot_of(screen, "editor:connection") == "inspector");
+                CHECK_FALSE(part(screen, "editor:connection").label.empty());
+                CHECK(headings_named_like_actions(screen) == std::vector<std::string>{});
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 2);
+    editor::reset_editor_session();
+}
+
 #endif // CATA_MCP
