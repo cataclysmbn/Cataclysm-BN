@@ -1530,15 +1530,15 @@ TEST_CASE(
             case 3:
                 return invoke("vehicle:choose", {.row = "vpart:headlight"});
             case 4:
-                return invoke("vehicle:mount", {.row = "mount:0,0"});
+                return invoke("vehicle:mount", {.row = "mount:1,0"});
             case 5:
-                // The first part of a vehicle is its frame.
+                // Beside the frame it starts with, a vehicle grows by another frame first.
                 CHECK(notice_of(screen).find("frame") != std::string::npos);
                 return invoke("vehicle:part_filter", {.text = "xlframe_vertical"});
             case 6:
                 return invoke("vehicle:choose", {.row = "vpart:xlframe_vertical"});
             case 7:
-                return invoke("vehicle:mount", {.row = "mount:0,0"});
+                return invoke("vehicle:mount", {.row = "mount:1,0"});
             case 8:
                 CHECK(notice_of(screen).empty());
                 CHECK(rows(screen, "vehicle:stack").size() == 1);
@@ -2448,10 +2448,16 @@ TEST_CASE(
         const auto screen = ec::top_screen(captured());
         switch (step++) {
             case 0:
-                CHECK(initial(screen, "vehicle:new") == "my_mod/my_vehicle_2");
+                // New asks for a name, whose file is free.
+                CHECK(initial(screen, "vehicle:new") == "My vehicle");
                 return invoke("vehicle:open", {.row = "prototype:bicycle"});
             case 1:
                 CHECK(initial(screen, "vehicle:save_as") == "my_mod/bicycle");
+                return invoke("vehicle:new", {.text = initial(screen, "vehicle:new")});
+            case 2:
+                CHECK(stat(screen, "file").value.ends_with("my_mod/my_vehicle_2.json"));
+                return invoke("vehicle:save");
+            case 3:
                 return act("QUIT");
             default:
                 FAIL("the vehicle editor outlived its exit");
@@ -2459,7 +2465,7 @@ TEST_CASE(
         }
     });
     editor::run_vehicle_editor();
-    CHECK(step == 2);
+    CHECK(step == 4);
 }
 
 TEST_CASE(
@@ -2597,14 +2603,9 @@ TEST_CASE(
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
         const auto screen = ec::top_screen(captured());
         switch (step++) {
-            case 0: {
-                // The suggested file is in a mod's folder, never loose in the mods.
-                const auto& text = affordance(screen, "vehicle:new").args.text;
-                REQUIRE(text.has_value());
-                CHECK(text->initial.find('/') != std::string::npos);
+            case 0:
                 // A file loose in the mods is no mod's, so no world would load it.
-                return invoke("vehicle:new", {.text = "flat_vehicle"});
-            }
+                return invoke("vehicle:new", {.text = (mods / "flat_vehicle.json").string()});
             case 1:
                 CHECK(notice_of(screen).contains("folder"));
                 CHECK_FALSE(std::filesystem::exists(mods / "flat_vehicle.json"));
@@ -2765,8 +2766,8 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "the vehicle editor starts with the select tool on a design it opens or starts and on a world "
-    "vehicle it edits in place",
+    "the vehicle editor starts with the select tool on a design it opens and on a world vehicle it "
+    "edits in place, and with the install tool on one it starts",
     "[editor_vehicle][engine_client_component]") {
     const auto guard = screen_guard{};
     clear_map();
@@ -2794,7 +2795,8 @@ TEST_CASE(
             case 4:
                 return invoke("vehicle:new", {.text = "vehicle_editor_tool/kart"});
             case 5:
-                CHECK(picked_tool(screen) == "canvas_tool:select");
+                // A new design starts with a frame in hand.
+                CHECK(picked_tool(screen) == "canvas_tool:install");
                 return invoke("vehicle:tool_install");
             case 6:
                 return invoke("vehicle:source", {.row = "source:world"});
@@ -2987,11 +2989,6 @@ TEST_CASE(
     const auto folder = std::filesystem::path(PATH_INFO::user_moddir()) / "vehicle_editor_twice";
     std::filesystem::remove_all(folder);
     const auto cleanup = on_out_of_scope([&] { std::filesystem::remove_all(folder); });
-    const auto initial = [](const ec::screen_view& screen, const std::string& id) {
-        const auto& text = affordance(screen, id).args.text;
-        REQUIRE(text.has_value());
-        return text->initial;
-    };
     auto step = 0;
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
         const auto screen = ec::top_screen(captured());
@@ -2999,9 +2996,7 @@ TEST_CASE(
             case 0:
                 return invoke("vehicle:new", {.text = "vehicle_editor_twice/my_vehicle"});
             case 1:
-                // The unsaved design takes my_vehicle.json though the file is not there yet.
                 CHECK_FALSE(std::filesystem::exists(folder / "my_vehicle.json"));
-                CHECK(initial(screen, "vehicle:new") == "vehicle_editor_twice/my_vehicle_2");
                 return invoke("vehicle:new", {.text = "vehicle_editor_twice/my_vehicle"});
             case 2:
                 CHECK(screen.kind == "uilist");
@@ -3018,14 +3013,29 @@ TEST_CASE(
             case 6:
                 CHECK_FALSE(notice_of(screen).contains("changed on disk"));
                 CHECK(stat(screen, "saved").value == "Yes");
+                // A name's file goes beside the open one, past the file there.
+                return invoke("vehicle:new", {.text = "My vehicle"});
+            case 7:
+                CHECK(
+                    stat(screen, "file").value.ends_with("vehicle_editor_twice/my_vehicle_2.json"));
+                return invoke("vehicle:new", {.text = "My vehicle"});
+            case 8:
+                return answer("Leave without saving");
+            case 9:
+                // The unsaved design takes my_vehicle_2.json though the file is not there yet.
+                CHECK_FALSE(std::filesystem::exists(folder / "my_vehicle_2.json"));
+                CHECK(
+                    stat(screen, "file").value.ends_with("vehicle_editor_twice/my_vehicle_3.json"));
                 return act("QUIT");
+            case 10:
+                return answer("Leave without saving");
             default:
                 FAIL("the vehicle editor outlived its exit");
                 return act("QUIT");
         }
     });
     editor::run_vehicle_editor();
-    CHECK(step == 7);
+    CHECK(step == 11);
 }
 
 TEST_CASE(

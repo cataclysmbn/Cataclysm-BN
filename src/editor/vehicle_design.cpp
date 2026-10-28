@@ -1096,4 +1096,17 @@ auto usual_tank_fuels() -> std::vector<itype_id> {
     return fuels;
 }
 
+auto usual_frame() -> std::optional<vpart_id> {
+    const auto uses = part_uses();
+    const auto frames =
+        uses | std::views::filter([](const auto& entry) {
+            return entry.first.is_valid() && entry.first->location == "structure"
+                && !entry.first->has_flag("PROTRUSION");
+        })
+        | std::ranges::to<std::vector>();
+    if (frames.empty()) { return std::nullopt; }
+    return std::ranges::max_element(frames, {}, [](const auto& entry) { return entry.second; })
+        ->first;
+}
+
 } // namespace editor

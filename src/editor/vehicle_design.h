@@ -220,6 +220,10 @@ auto part_labels(const std::vector<const vpart_info*>& parts) -> std::vector<std
 /// The liquids the game's prototypes fill their parts with, most often first.
 auto usual_tank_fuels() -> std::vector<itype_id>;
 
+/// The frame the game's prototypes install most, which a new design starts with; none when they
+/// install none.
+auto usual_frame() -> std::optional<vpart_id>;
+
 /// The data file of the loaded mods that defines the prototype `id` last, as the game loads them.
 auto prototype_file(const std::string& id) -> std::optional<std::filesystem::path>;
 

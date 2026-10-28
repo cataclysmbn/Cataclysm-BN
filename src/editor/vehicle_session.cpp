@@ -36,6 +36,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cctype>
 #include <charconv>
 #include <filesystem>
 #include <fstream>
@@ -222,6 +223,22 @@ auto in_mods(const std::string& name) -> std::filesystem::path {
     }
     if (!path.has_extension()) { path += ".json"; }
     return path;
+}
+
+/// An id made of the vehicle name `name`: its letters and digits in lower case, words joined by
+/// `_`; `my_vehicle` when it has none of them.
+auto id_of(const std::string& name) -> std::string {
+    auto id = std::string{};
+    for (const auto letter : name) {
+        const auto lower = static_cast<char>(std::tolower(static_cast<unsigned char>(letter)));
+        if ((lower >= 'a' && lower <= 'z') || (lower >= '0' && lower <= '9')) {
+            id += lower;
+        } else if (!id.empty() && !id.ends_with('_')) {
+            id += '_';
+        }
+    }
+    while (id.ends_with('_')) { id.pop_back(); }
+    return id.empty() ? std::string("my_vehicle") : id;
 }
 
 /// The file at `path` as the player names it: from the player's mods when it is in them.
@@ -504,13 +521,15 @@ struct session {
     }
 
     /// The file a new design suggests: `base` in the mod folder of the open file, else in
-    /// my_mod, with a number when that file is there or the open design, unsaved, takes it.
-    auto suggested(const std::string& base) const -> std::string {
+    /// my_mod, with a number when that file is there or the open design, unsaved, takes it, or,
+    /// for a `new_id`, the game has a prototype of that id.
+    auto suggested(const std::string& base, const bool new_id = false) const -> std::string {
         const auto folder = doc ? mod_folder_name(doc->path()) : std::nullopt;
         return free_name(folder.value_or("my_mod") + "/" + base, [&](const std::string& name) {
             const auto path = in_mods(name);
             return std::filesystem::exists(path)
-                || (doc && path.lexically_normal() == doc->path().lexically_normal());
+                || (doc && path.lexically_normal() == doc->path().lexically_normal())
+                || (new_id && vproto_id(path.stem().string()).is_valid());
         });
     }
 
@@ -953,41 +972,43 @@ struct session {
     }
 
     /// Opens the prototype a new design makes, whose id is the file's name, for the new file
-    /// `name` of the player's mods, which saving writes; `write` writes it at once.
+    /// `name` of the player's mods, which saving writes; `write` writes it at once. Whether it
+    /// opened it.
     auto create(
         const std::string& name,
         const std::function<auto(const std::string&)->nlohmann::ordered_json>& prototype_of,
-        const bool write = false) -> void {
+        const bool write = false) -> bool {
         const auto path = in_mods(name);
         if (!is_mod_file(path)) {
             notice = string_format(
                 _("A new design goes in a new .json file in your mods, %s, inside a mod's folder "
                   "such as my_mod/."),
                 PATH_INFO::user_moddir());
-            return;
+            return false;
         }
         if (std::filesystem::exists(path)) {
             notice = _("That file already exists; nothing was saved.");
-            return;
+            return false;
         }
         if (const auto checked = check_mod_folder(path); !checked) {
             notice = checked.error();
-            return;
+            return false;
         }
-        if (!leave()) { return; }
+        if (!leave()) { return false; }
         // Saving the design it left may have made that file.
         if (std::filesystem::exists(path)) {
             notice = _("That file already exists; nothing was saved.");
-            return;
+            return false;
         }
         const auto design = nlohmann::ordered_json::array({prototype_of(path.stem().string())});
         auto made = document::create(path, format_json(design.dump()).value_or(design.dump(2)));
         if (!made) {
             notice = made.error();
-            return;
+            return false;
         }
         take(std::move(*made), 0);
         if (write) { save(); }
+        return true;
     }
 
     /// Writes the design of the world's vehicle `index` as a prototype in a new file of the user
@@ -1000,15 +1021,36 @@ struct session {
             true);
     }
 
-    /// Starts a vehicle with no parts in a new file of the user mods, named after the file.
-    auto new_vehicle(const std::string& name) -> void {
-        create(name, [](const std::string& id) {
-            return nlohmann::ordered_json{
-                {"type", "vehicle"},
-                {"id", id},
-                {"name", id},
-                {"parts", nlohmann::ordered_json::array()}};
-        });
+    /// Starts a vehicle on a frame in a new file of the user mods, with the install tool and a
+    /// frame in hand: `text` is its name, which the file and the id follow, or the path of that
+    /// file, whose stem names it.
+    auto new_vehicle(const std::string& text) -> void {
+        const auto name = trim(text);
+        if (name.empty()) {
+            notice = _("A new vehicle needs a name.");
+            return;
+        }
+        const auto is_path = name.contains('/') || name.contains('\\') || name.ends_with(".json");
+        const auto frame = usual_frame();
+        const auto made =
+            create(is_path ? name : suggested(id_of(name), true), [&](const std::string& id) {
+                auto parts = nlohmann::ordered_json::array();
+                if (frame) {
+                    parts.push_back(
+                        {{"x", 0},
+                         {"y", 0},
+                         {"parts", nlohmann::ordered_json::array({frame->str()})}});
+                }
+                return nlohmann::ordered_json{
+                    {"type", "vehicle"},
+                    {"id", id},
+                    {"name", is_path ? id : name},
+                    {"parts", std::move(parts)}};
+            });
+        if (!made || !frame) { return; }
+        canvas_tool = "install";
+        brush = frame->str();
+        said = _("Pick a part on the left, then click a square next to the frame.");
     }
 
     /// Keeps the world's vehicle `index` with its whole state in a file of the user directory, so
@@ -1755,7 +1797,8 @@ auto parts_view(const session& state) -> ec::screen_view {
     affordances.push_back(ec::invoke_affordance(
         {.id = new_id,
          .label = _("New vehicle"),
-         .args = {.text = ec::text_shape{.initial = state.suggested("my_vehicle")}},
+         .description = _("Starts a vehicle of that name on a frame, in a new file of your mods."),
+         .args = {.text = ec::text_shape{.initial = _("My vehicle")}},
          .keys = {"CTRL+N"}}));
     affordances.push_back(ec::invoke_affordance(
         {.id = std::string(show_prefix) + "prototypes", .label = _("Prototypes"), .keys = {"p"}}));
