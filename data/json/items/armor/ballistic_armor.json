@@ -26,23 +26,24 @@
   {
     "id": "dragonskin",
     "type": "ARMOR",
-    "name": { "str": "dragon skin vest" },
-    "description": "A modernized flexible bullet-resistant vest.  Instead of ceramic it uses overlapping carbon fiber disks, bonded to a kevlar backing.  More durable and covers gaps normal ballistic plates leave exposed, but only protects against rounds up to 5.56x46mm.  It has four pouches capable of carrying magazines.",
+    "name": { "str": "lamellar ballistic vest" },
+    "description": "A flexible bullet-resistant vest based on the failed \"dragon skin\" design from decades ago, made from a composite of overlapping superalloy plates sandwiched between layers of kevlar.  More durable and covers gaps normal ballistic plates leave exposed, but only protects against rounds up to 5.56x46mm.  It has four pouches capable of carrying magazines.",
     "weight": "2860 g",
     "volume": "6 L",
     "price": "1900 USD",
     "price_postapoc": "60 USD",
     "to_hit": -3,
     "bashing": 6,
-    "material": [ "carbon_fiber", "kevlar" ],
+    "material": [ "superalloy", "kevlar" ],
     "symbol": "[",
     "looks_like": "kevlar",
     "color": "light_red",
     "covers": [ "torso" ],
     "coverage": 100,
-    "encumbrance": 18,
+    "encumbrance": 15,
     "warmth": 12,
     "material_thickness": 6,
+    "environmental_protection": 2,
     "resistance": { "bullet": 70 },
     "use_action": {
       "type": "holster",
@@ -54,7 +55,7 @@
       "draw_cost": 60,
       "flags": [ "MAG_COMPACT" ]
     },
-    "flags": [ "OUTER", "ALLOWS_WINGS" ]
+    "flags": [ "STURDY", "OUTER", "ALLOWS_WINGS" ]
   },
   {
     "id": "ballistic_vest_light",
