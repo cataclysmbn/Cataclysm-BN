@@ -1145,7 +1145,8 @@ auto special_canvas(const session& state) -> ec::component {
             if (found != squares.end() && oter_str_id(found->overmap).is_valid()) {
                 const auto& terrain = oter_str_id(found->overmap).obj();
                 cell.glyph = terrain.get_symbol();
-                cell.label = terrain.get_name();
+                // Squares of one name, as a big special has, are told apart by their ids.
+                cell.label = overmap_terrain_name(found->overmap);
                 cell.color = string_from_color(terrain.get_color());
                 // As the overmap's tiles show it.
                 auto rotation = 0;

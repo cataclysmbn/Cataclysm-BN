@@ -5066,13 +5066,15 @@ TEST_CASE(
                       == oter_str_id("forest_thick")->get_name() + " (forest_thick)");
                 return invoke("editor:paint", {.row = "square:2,0"});
             case 6:
-                CHECK(shown(screen, "square:2,0") == oter_str_id("forest_thick")->get_name());
+                CHECK(shown(screen, "square:2,0")
+                      == oter_str_id("forest_thick")->get_name() + " (forest_thick)");
                 return invoke("editor:paint", {.row = "square:1,0"});
             case 7:
-                CHECK(shown(screen, "square:1,0") == oter_str_id("forest_thick")->get_name());
+                CHECK(shown(screen, "square:1,0")
+                      == oter_str_id("forest_thick")->get_name() + " (forest_thick)");
                 return invoke("editor:undo");
             case 8:
-                CHECK(shown(screen, "square:1,0") == oter_str_id("field")->get_name());
+                CHECK(shown(screen, "square:1,0") == oter_str_id("field")->get_name() + " (field)");
                 return invoke("editor:tool", {.row = "tool:erase"});
             case 9:
                 return invoke("editor:paint", {.row = "square:1,0"});
