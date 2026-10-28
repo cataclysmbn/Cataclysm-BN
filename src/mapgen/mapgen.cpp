@@ -199,7 +199,7 @@ auto mapgen_constructor::generate(
         ZoneScopedN("generate_extras");
         const auto& region_extras = omap.get_settings(omt_pos).region_extras;
         const auto extra_it = region_extras.find(terrain_type->get_extras());
-        if (extra_it != region_extras.end()) {
+        if (draw_options.map_extras && extra_it != region_extras.end()) {
             const map_extras& ex = extra_it->second;
             if (ex.chance > 0 && one_in(ex.chance)) {
                 const std::string* extra = ex.values.pick();

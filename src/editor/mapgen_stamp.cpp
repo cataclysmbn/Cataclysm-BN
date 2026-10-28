@@ -110,7 +110,9 @@ auto stamp_mapgen(const std::string_view text, const preview_options& options)
             const auto seeded = rng_deterministic_task_scope(options.seed + index);
             constructor.generate(
                 square_at(stamped, index), calendar::turn,
-                {.use_selected_mapgen = true, .selected_mapgen = loaded->functions[index]});
+                {.use_selected_mapgen = true,
+                 .selected_mapgen = loaded->functions[index],
+                 .map_extras = false});
         }
         for (const auto index : squares) { overmap.ter_set(square_at(stamped, index), old[index]); }
         // What the stamp holds is the entry's terrain, which swapping puts in the overmap.
