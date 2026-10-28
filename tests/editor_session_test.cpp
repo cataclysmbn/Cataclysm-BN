@@ -3918,6 +3918,42 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "extracting a legend to a palette suggests a palette id no palette has",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    const auto suggested = [](const ec::screen_view& screen) {
+        const auto& args = affordance(screen, "editor:extract_palette").args;
+        REQUIRE(args.text);
+        return args.text->initial;
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK(suggested(screen) == "house_04_palette");
+                return invoke("editor:extract_palette", {.text = suggested(screen)});
+            case 2:
+                // The file has that palette now.
+                CHECK(suggested(screen) == "house_04_palette_2");
+                return invoke("editor:undo");
+            case 3:
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 4);
+}
+
+TEST_CASE(
     "the editor extracts a mapgen's own legend to a palette of its file as one undo step",
     "[editor_session][editor_palette]") {
     const auto guard = screen_guard{};
