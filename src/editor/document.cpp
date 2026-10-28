@@ -307,14 +307,27 @@ auto document::text() const -> std::string {
     return out;
 }
 
+auto document::create(const std::filesystem::path& path, std::string text)
+    -> std::expected<document, std::string> {
+    auto made = parse(path, std::move(text));
+    if (made) {
+        made->saved_.clear();
+        made->saved_depth_.reset();
+    }
+    return made;
+}
+
 auto document::changed_on_disk() const -> bool {
     return read_text(path_).value_or(std::string{}) != saved_;
 }
 
 auto document::save() -> std::expected<void, save_error> {
     if (changed_on_disk()) { return std::unexpected(save_error::changed_on_disk); }
+    // A document created for a new file makes its folders.
+    auto made = std::error_code{};
+    std::filesystem::create_directories(path_.parent_path(), made);
     auto bytes = text();
-    if (!write_text(path_, bytes)) { return std::unexpected(save_error::unwritable); }
+    if (made || !write_text(path_, bytes)) { return std::unexpected(save_error::unwritable); }
     saved_ = std::move(bytes);
     saved_depth_ = done_.size();
     return {};

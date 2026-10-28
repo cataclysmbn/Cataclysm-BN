@@ -1,5 +1,6 @@
 #include "editor/recent_documents.h"
 
+#include "editor/session_file.h"
 #include "mod_manager.h"
 #include "path_info.h"
 #include "world.h"
@@ -64,6 +65,14 @@ auto loaded_mods() -> std::vector<mod_id> {
     return world_generator->active_world
              ? world_generator->active_world->info->active_mod_order
              : std::vector<mod_id>{mod_management::get_default_core_content_pack()};
+}
+
+auto mods_for(const std::filesystem::path& path) -> std::vector<mod_id> {
+    auto mods = loaded_mods();
+    if (const auto own = mod_of(path); own && !std::ranges::contains(mods, *own)) {
+        mods.push_back(*own);
+    }
+    return mods;
 }
 
 } // namespace editor

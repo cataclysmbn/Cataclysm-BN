@@ -207,7 +207,7 @@
             "enabled": true,
             "args": {
               "text": {
-                "default": "my_vehicle"
+                "default": "my_mod/my_vehicle"
               }
             },
             "expect": "boundary",
@@ -1357,7 +1357,7 @@
             "enabled": true,
             "args": {
               "text": {
-                "default": "my_vehicle"
+                "default": "my_mod/my_vehicle"
               }
             },
             "expect": "boundary",
@@ -1383,7 +1383,7 @@
             "enabled": true,
             "args": {
               "text": {
-                "default": "bicycle"
+                "default": "my_mod/bicycle"
               }
             },
             "expect": "boundary",
@@ -1646,6 +1646,7 @@
             "label": "Go to step",
             "keys": [],
             "enabled": true,
+            "role": "select",
             "args": {
               "row": {
                 "component_id": "vehicle:history"
@@ -1658,6 +1659,7 @@
             "label": "Use",
             "keys": [],
             "enabled": true,
+            "role": "select",
             "args": {
               "row": {
                 "component_id": "vehicle:canvas_tools"
@@ -2030,6 +2032,10 @@
                   {
                     "key": "distance",
                     "label": "Distance"
+                  },
+                  {
+                    "key": "direction",
+                    "label": "Direction"
                   }
                 ],
                 "rows": [
@@ -2040,12 +2046,17 @@
                     "denial": "",
                     "enabled": true,
                     "selectable": true,
-                    "selected": false,
+                    "selected": true,
                     "columns": [
                       {
                         "key": "distance",
                         "label": "Distance",
-                        "value": "8"
+                        "value": "8 squares"
+                      },
+                      {
+                        "key": "direction",
+                        "label": "Direction",
+                        "value": "east"
                       }
                     ]
                   }
@@ -2985,7 +2996,7 @@
             "enabled": true,
             "args": {
               "text": {
-                "default": "my_vehicle"
+                "default": "my_mod/my_vehicle"
               }
             },
             "expect": "boundary",
@@ -3143,7 +3154,9 @@
               "row": {
                 "component_id": "vehicle:world"
               },
-              "text": {}
+              "text": {
+                "default": "my_mod/my_vehicle"
+              }
             },
             "expect": "boundary"
           },
@@ -3176,6 +3189,7 @@
             "label": "Go to step",
             "keys": [],
             "enabled": true,
+            "role": "select",
             "args": {
               "row": {
                 "component_id": "vehicle:history"
@@ -3188,6 +3202,7 @@
             "label": "Use",
             "keys": [],
             "enabled": true,
+            "role": "select",
             "args": {
               "row": {
                 "component_id": "vehicle:canvas_tools"

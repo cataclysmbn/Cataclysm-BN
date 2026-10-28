@@ -55,6 +55,10 @@ public:
     /// The same from text, as if read from `path`.
     static auto parse(const std::filesystem::path& path, std::string text)
         -> std::expected<document, std::string>;
+    /// A document of `text` for the file at `path`, which does not exist yet: it is unsaved until
+    /// saving writes it.
+    static auto create(const std::filesystem::path& path, std::string text)
+        -> std::expected<document, std::string>;
 
     auto path() const -> const std::filesystem::path& { return path_; }              // *NOPAD*
     auto objects() const -> const std::vector<document_object>& { return objects_; } // *NOPAD*

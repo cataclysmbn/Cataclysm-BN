@@ -2337,14 +2337,16 @@ TEST_CASE(
                 CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
                 CHECK(saved(screen) == "Yes");
                 // The form starts over for the next file: what it named is not typed after, and
-                // its path is the next free file of the user mods.
+                // its path is the next free file of the user mods, in a mod's folder.
                 const auto& fields = body<ec::form_body>(part(screen, "editor:new")).fields;
                 const auto value = [&](const std::string& id) {
                     return std::ranges::find(fields, id, &ec::form_field::id)->value;
                 };
-                CHECK(value("path")
-                      == (std::filesystem::path(PATH_INFO::user_moddir()) / "new_mapgen.json")
-                             .string());
+                CHECK(
+                    value("path")
+                    == (std::filesystem::path(PATH_INFO::user_moddir()) / "my_mod"
+                        / "new_mapgen.json")
+                           .string());
                 CHECK(value("om_terrain").empty());
                 return invoke("editor:new_set", {.row = "path", .text = made.string()});
             }
@@ -2369,20 +2371,21 @@ TEST_CASE(
 }
 
 namespace {
-/// Files directly in the user mods, removed when the test ends.
+/// Files in the my_mod folder of the user mods, removed with it when the test ends.
 struct loose_mod_files {
     std::vector<std::filesystem::path> paths;
-    ~loose_mod_files() {
-        for (const auto& path : paths) { std::filesystem::remove(path); }
-    }
+    ~loose_mod_files() { std::filesystem::remove_all(paths.front().parent_path()); }
 };
 } // namespace
 
 TEST_CASE(
-    "the new-file form suggests a free file in the user mods and marks what it needs",
+    "the new-file form suggests a free file in a mod folder of the user mods and marks what it "
+    "needs",
     "[editor_session][engine_client_component]") {
     const auto guard = screen_guard{};
-    const auto mods = std::filesystem::path(PATH_INFO::user_moddir());
+    // A file loose in the mods is no mod's, so the suggestion is in a mod's folder.
+    const auto mods = std::filesystem::path(PATH_INFO::user_moddir()) / "my_mod";
+    std::filesystem::remove_all(mods);
     const auto files = loose_mod_files{
         {mods / "new_mapgen.json", mods / "new_mapgen_2.json", mods / "new_mapgen_3.json"}};
     std::filesystem::create_directories(mods);

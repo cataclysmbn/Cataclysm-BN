@@ -9,6 +9,7 @@
 #include "flag.h"
 #include "fstream_utils.h"
 #include "item.h"
+#include "item_factory.h"
 #include "itype.h"
 #include "json.h"
 #include "map/map.h"
@@ -27,9 +28,13 @@
 
 #include <algorithm>
 #include <array>
+#include <charconv>
 #include <fstream>
+#include <functional>
 #include <ranges>
+#include <set>
 #include <sstream>
+#include <tuple>
 
 namespace editor {
 namespace {
@@ -137,6 +142,58 @@ struct read_design {
     std::vector<loader_message> messages;
 };
 
+/// The JSON pointer of the innermost member of `value` whose text in `value.dump()` holds the byte
+/// `offset` of it, or the byte right after it.
+auto pointer_at(const nlohmann::ordered_json& value, const std::size_t offset) -> std::string {
+    if (!value.is_structured()) { return {}; }
+    // After the opening bracket; each member after the comma of the one before.
+    auto at = std::size_t{1};
+    for (const auto& entry : value.items()) {
+        const auto start =
+            at + (value.is_object() ? nlohmann::ordered_json(entry.key()).dump().size() + 1 : 0);
+        const auto end = start + entry.value().dump().size();
+        if (offset <= end) {
+            auto key = std::string{};
+            for (const auto ch : entry.key()) {
+                key += ch == '~' ? std::string("~0")
+                     : ch == '/' ? std::string("~1")
+                                 : std::string(1, ch);
+            }
+            return "/" + key + (offset >= start ? pointer_at(entry.value(), offset - start) : "");
+        }
+        at = end + 1;
+    }
+    return {};
+}
+
+/// What the loader threw reading `text`, a prototype's JSON as `dump()` writes it, on one line:
+/// the pointer of the member it stopped at and what it said there.
+auto thrown_text(const std::string_view thrown, const std::string_view text) -> std::string {
+    constexpr auto header = std::string_view("Json error: ");
+    const auto at = thrown.find(header);
+    // The place leads as "<source>:<line>:<column>: ".
+    const auto colon = at == std::string_view::npos ? at : thrown.find(": ", at + header.size());
+    if (colon == std::string_view::npos) { return plain_loader_text(thrown); }
+    const auto place = thrown.substr(at + header.size(), colon - at - header.size());
+    auto said = std::string(thrown.substr(colon + 2));
+    // The text around the place is quoted after a blank line.
+    said = said.substr(0, said.find("\n\n"));
+    std::ranges::replace(said, '\n', ' ');
+    auto column = 0;
+    const auto mark = place.rfind(':');
+    const auto read =
+        mark != std::string_view::npos
+        && std::from_chars(place.data() + mark + 1, place.data() + place.size(), column).ec
+               == std::errc{};
+    const auto parsed = nlohmann::ordered_json::parse(text, nullptr, false);
+    const auto pointer =
+        read && column > 0 && !parsed.is_discarded()
+            ? pointer_at(parsed, static_cast<std::size_t>(column - 1))
+            : std::string{};
+    //~ %1$s is the JSON pointer of the member the loader stopped at, %2$s what it said.
+    return pointer.empty() ? said : string_format(_("%1$s: %2$s"), pointer, said);
+}
+
 auto read(const std::string_view text) -> read_design {
     auto result = read_design{};
     auto thrown = std::optional<std::string>{};
@@ -159,7 +216,7 @@ auto read(const std::string_view text) -> read_design {
         })
         | std::ranges::to<std::vector>();
     if (thrown) {
-        result.messages.push_back({.text = *thrown});
+        result.messages.push_back({.text = thrown_text(*thrown, text)});
         result.prototype.reset();
     }
     return result;
@@ -411,6 +468,51 @@ auto set_part_health(vehicle& veh, const int index, const int percent)
     auto& part = veh.part(index);
     veh.set_hp(part, part.info().durability * percent / 100);
     return {};
+}
+
+namespace {
+
+/// The game's item types that `holds`, by name.
+auto items_by_name(const std::function<auto(const itype&)->bool>& holds) -> std::vector<itype_id> {
+    struct named {
+        std::string name;
+        itype_id id;
+    };
+    auto found =
+        item_controller->all() | std::views::filter([&](const itype* type) { return holds(*type); })
+        | std::views::transform([](const itype* type) {
+              return named{.name = item::nname(type->get_id()), .id = type->get_id()};
+          })
+        | std::ranges::to<std::vector>();
+    std::ranges::sort(found, {}, [](const named& entry) { return std::tie(entry.name, entry.id); });
+    return found | std::views::transform(&named::id) | std::ranges::to<std::vector>();
+}
+
+/// The rounds of the ammunition types `types`, by name.
+auto rounds_of(const std::set<ammotype>& types) -> std::vector<itype_id> {
+    return items_by_name([&](const itype& type) {
+        return type.ammo && types.contains(type.ammo->type);
+    });
+}
+
+} // namespace
+
+auto tank_fuels() -> std::vector<itype_id> {
+    return items_by_name([](const itype& type) { return type.phase >= LIQUID; });
+}
+
+auto turret_rounds(const vpart_id& id) -> std::vector<itype_id> {
+    if (!id.is_valid() || !id->has_flag("TURRET") || !id->item.is_valid() || !id->item->gun) {
+        return {};
+    }
+    return rounds_of(id->item->gun->ammo);
+}
+
+auto part_fuels(const vehicle& veh, const int index) -> std::vector<itype_id> {
+    if (index < 0 || index >= veh.part_count()) { return {}; }
+    const auto& part = veh.cpart(index);
+    if (!part.is_fuel_store(false) && !part.is_turret()) { return {}; }
+    return part.is_tank() ? tank_fuels() : rounds_of(part.get_base().ammo_types());
 }
 
 /// The item variable of a part's base naming what the part held before it was emptied.

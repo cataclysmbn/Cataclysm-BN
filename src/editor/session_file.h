@@ -2,6 +2,7 @@
 
 #include "editor/document.h"
 #include "engine_client_component.h"
+#include "type_id.h"
 
 #include <expected>
 #include <filesystem>
@@ -16,13 +17,15 @@ auto inside(const std::filesystem::path& path, const std::string& root) -> bool;
 /// `path` from the game's directory, the one that holds `data`, when it lies inside it, as a
 /// modder finds it there.
 auto shown_path(const std::filesystem::path& path) -> std::string;
-/// Whether `path` is a .json file in the player's mods, the only place the editors make files.
+/// Whether `path` is a .json file in a folder of the player's mods, the only place the editors
+/// make files: a file loose in the mods is no mod's, so no world loads it.
 auto is_mod_file(const std::filesystem::path& path) -> bool;
 /// `base`, else `base_2`, `base_3` and on: the first name not `taken`.
 auto free_name(const std::string& base, const std::function<bool(const std::string&)>& taken)
     -> std::string;
 
-/// Writes `doc`; the error is what to tell the player.
+/// Writes `doc` and makes the folder of the player's mods it is in a mod; the error is what to
+/// tell the player.
 auto save_document(document& doc) -> std::expected<void, std::string>;
 /// Writes `doc` to a new file in the player's mods, which it is from then on.
 auto save_document_as(document& doc, const std::filesystem::path& path)

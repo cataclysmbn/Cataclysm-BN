@@ -1411,7 +1411,7 @@ TEST_CASE(
         const auto& denied = affordance(view, "editor");
         CHECK(denied.label == "Map Editor");
         CHECK_FALSE(denied.enabled);
-        CHECK(denied.denial == "You need the Debug Editor trait.");
+        CHECK(denied.denial.starts_with("You need the Debug Editor trait: open the debug menu"));
     }
     you.set_mutation(trait);
     {

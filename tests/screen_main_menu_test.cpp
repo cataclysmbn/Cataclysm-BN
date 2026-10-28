@@ -16,6 +16,8 @@
 #    include "main_menu.h"
 #    include "map/map.h"
 #    include "mod_manager.h"
+#    include "options_helpers.h"
+#    include "path_info.h"
 #    include "state_helpers.h"
 #    include "type_id.h"
 #    include "world.h"
@@ -23,6 +25,7 @@
 
 #    include <algorithm>
 #    include <filesystem>
+#    include <fstream>
 #    include <memory>
 #    include <ranges>
 #    include <sstream>
@@ -435,6 +438,120 @@ TEST_CASE(
     CHECK(get_avatar().abs_pos() == expected);
     // It opens the editor once, then asks for inputs as any game does.
     CHECK_FALSE(mode->next_action());
+}
+
+TEST_CASE(
+    "the editor's mod picker says to turn on the mod with the player's files and asks with yes "
+    "first",
+    "[client][interaction][mcp][screens][main_menu][editor][editor_vehicle]") {
+    clear_all_state();
+    const auto restore = menu_restore{};
+    const auto guard = screen_guard{};
+    // The prompt reads a click, so a capital letter is no part of its question.
+    const auto capitals = override_option("FORCE_CAPITAL_YN", "true");
+    auto stage = 0;
+    open_stack(
+        [&] { main_menu{}.opening_screen(); },
+        [&](const auto& /*snapshot*/, const auto& top) {
+            switch (stage++) {
+                case 0:
+                    return invoke_event(top, "menu:tab", {.row = "editor"});
+                case 1:
+                    return invoke_event(top, "menu:entry", {.row = "editor:vehicle"});
+                case 2: {
+                    REQUIRE(top.context == "MODMANAGER_DIALOG");
+                    const auto* const header =
+                        ec::find_component(*top.root, "worldgen:mods:header");
+                    REQUIRE(header != nullptr);
+                    const auto& notes = body<ec::panel_body>(*header).stats;
+                    CHECK(std::ranges::any_of(notes, [](const ec::panel_stat& note) {
+                        return note.label.contains("your files");
+                    }));
+                    return run_action("QUIT");
+                }
+                case 3: {
+                    REQUIRE(top.context == "YESNO");
+                    const auto* const message = ec::find_component(*top.root, "text:message");
+                    REQUIRE(message != nullptr);
+                    CHECK(
+                        body<ec::text_body>(*message).markup == "Open the editor with these mods?");
+                    const auto* const choices = ec::find_component(*top.root, "list:choices");
+                    REQUIRE(choices != nullptr);
+                    const auto& rows = body<ec::list_body>(*choices).rows;
+                    const auto yes = std::ranges::find(rows, "option:YES", &ec::row::id);
+                    REQUIRE(yes != rows.end());
+                    // Esc then Enter opens the editor.
+                    CHECK(yes->selected);
+                    return run_action("NO");
+                }
+                case 4:
+                    return invoke_event(top, "menu:tab", {.row = "quit"});
+                case 5:
+                    return run_action("YES");
+                default:
+                    FAIL("unexpected extra screen " << top.context);
+            }
+            return input_event{};
+        });
+    CHECK(stage == 6);
+}
+
+TEST_CASE(
+    "the main menu reopens a document of a mod the editor made after the game started with that "
+    "mod",
+    "[client][interaction][mcp][screens][main_menu][editor][editor_vehicle]") {
+    clear_all_state();
+    const auto folder = std::filesystem::path(PATH_INFO::user_moddir()) / "vehicle_editor_reopen";
+    const auto forget = [&] {
+        std::filesystem::remove(editor::recent_documents_file());
+        std::filesystem::remove_all(folder);
+        world_generator->get_mod_manager().refresh_mod_list();
+    };
+    forget();
+    const auto cleanup = on_out_of_scope(forget);
+    // As the editor leaves a mod it made: its folder, its modinfo.json and the file.
+    std::filesystem::create_directories(folder);
+    std::ofstream(folder / "modinfo.json")
+        << R"([{"type":"MOD_INFO","id":"vehicle_editor_reopen","name":"vehicle_editor_reopen",)"
+           R"("category":"content","dependencies":["bn"]}])";
+    std::ofstream(folder / "kart.json")
+        << R"([{"type":"vehicle","id":"kart","name":"kart","parts":[]}])";
+    const auto core = mod_management::get_default_core_content_pack();
+    editor::remember_document(
+        {.editor = "vehicle", .name = "kart", .mods = {core, mod_id("vehicle_editor_reopen")}});
+    const auto restore = menu_restore{};
+    const auto guard = screen_guard{};
+    auto stage = 0;
+    open_stack([&] { main_menu{}.opening_screen(); },
+               [&](const auto& /*snapshot*/, const auto& top) {
+                   switch (stage++) {
+                       case 0:
+                           return invoke_event(top, "menu:tab", {.row = "editor"});
+                       case 1:
+                           return invoke_event(top, "menu:entry", {.row = "editor:recent:0"});
+                       case 2: {
+                           REQUIRE(top.context == "MODMANAGER_DIALOG");
+                           const auto* const active =
+                               ec::find_component(*top.root, "worldgen:mods:active:rows");
+                           REQUIRE(active != nullptr);
+                           CHECK(std::ranges::contains(
+                               body<ec::list_body>(*active).rows, "active:vehicle_editor_reopen",
+                               &ec::row::id));
+                           return run_action("QUIT");
+                       }
+                       case 3:
+                           CHECK(top.context == "YESNO");
+                           return run_action("NO");
+                       case 4:
+                           return invoke_event(top, "menu:tab", {.row = "quit"});
+                       case 5:
+                           return run_action("YES");
+                       default:
+                           FAIL("unexpected extra screen " << top.context);
+                   }
+                   return input_event{};
+               });
+    CHECK(stage == 6);
 }
 
 #endif // CATA_MCP

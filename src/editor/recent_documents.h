@@ -3,6 +3,7 @@
 #include "type_id.h"
 
 #include <cstddef>
+#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -31,5 +32,8 @@ auto recent_documents() -> std::vector<recent_document>;
 auto remember_document(const recent_document& opened) -> void;
 /// The mods of the world the game runs, or the core content pack outside one.
 auto loaded_mods() -> std::vector<mod_id>;
+/// `loaded_mods`, and last the mod whose folder holds the file at `path`, so that opening it
+/// again loads the mod.
+auto mods_for(const std::filesystem::path& path) -> std::vector<mod_id>;
 
 } // namespace editor

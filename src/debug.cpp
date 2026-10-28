@@ -714,6 +714,8 @@ void realDebugmsg( const char *filename, const char *line, const char *funcname,
     if( capturing ) {
         captured += text;
         if( captured_each != nullptr ) { captured_each->push_back( text ); }
+        // Whoever captures it says it in its own words: a prompt would raise it a second time.
+        return;
     } else {
         if( !rep_folder.test( filename, line, funcname, text ) ) {
             *detail::realDebugLog( debug_level, DC::DebugMsg, filename, line, funcname ) << text;

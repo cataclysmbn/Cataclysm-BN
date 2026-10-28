@@ -32,6 +32,7 @@
 #include "output.h"
 #include "path_info.h"
 #include "point.h"
+#include "popup.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_input_popup.h"
@@ -947,8 +948,8 @@ void worldfactory::edit_active_world_mods( WORLDINFO *world )
     }
 }
 
-auto worldfactory::pick_mods( const std::vector<mod_id> &initial,
-                              const std::string &question ) -> std::optional<std::vector<mod_id>>
+auto worldfactory::pick_mods( const std::vector<mod_id> &initial, const std::string &question,
+                              const std::string &heading ) -> std::optional<std::vector<mod_id>>
 {
     // set up window
     catacurses::window wf_win;
@@ -970,10 +971,24 @@ auto worldfactory::pick_mods( const std::vector<mod_id> &initial,
 
     auto accepted = false;
     auto mods = initial;
-    show_modselection_window( wf_win, mods, [&accepted, &question]() {
-        accepted = query_yn( "%s", question );
-        return true;
-    }, nullptr, true );
+    show_modselection_window( wf_win, mods, {
+        .on_quit = [&accepted, &question]()
+        {
+            // The player chose the mods already, so Enter takes them.
+            accepted = query_popup()
+            .context( "YESNO" )
+            .message( "%s", question )
+            .option( "YES" )
+            .option( "NO" )
+            .cursor( 0 )
+            .query()
+            .action == "YES";
+            return true;
+        },
+        .on_backtab = nullptr,
+        .standalone = true,
+        .heading = heading
+    } );
 
     return accepted ? std::optional( mods ) : std::nullopt;
 }
@@ -982,14 +997,13 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
         const std::function<bool()> &on_quit )
 {
     if( const auto step = pending_world_step() ) { return step; }
-    return show_modselection_window( win, world->active_mod_order, on_quit, on_quit, false );
+    return show_modselection_window( win, world->active_mod_order, {
+        .on_quit = on_quit, .on_backtab = on_quit, .standalone = false
+    } );
 }
 
 int worldfactory::show_modselection_window( const catacurses::window &win,
-        std::vector<mod_id> &active_mod_order,
-        const std::function<bool()> &on_quit,
-        const std::function<bool()> &on_backtab,
-        bool standalone )
+        std::vector<mod_id> &active_mod_order, const modselection_options &options )
 {
     {
         std::vector<mod_id> tmp_mod_order;
@@ -1009,7 +1023,7 @@ int worldfactory::show_modselection_window( const catacurses::window &win,
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "NEXT_CATEGORY_TAB" );
     ctxt.register_action( "PREV_CATEGORY_TAB" );
-    if( !standalone ) {
+    if( !options.standalone ) {
         ctxt.register_action( "NEXT_TAB" );
         ctxt.register_action( "PREV_TAB" );
     }
@@ -1208,12 +1222,15 @@ int worldfactory::show_modselection_window( const catacurses::window &win,
     };
 
     ui.on_redraw( [&]( const ui_adaptor & ) {
-        if( standalone ) {
+        if( options.standalone ) {
             draw_empty_worldgen_tabs( win );
         } else {
             draw_worldgen_tabs( win, 0 );
         }
-        draw_modselection_borders( win, ctxt, standalone );
+        draw_modselection_borders( win, ctxt, options.standalone );
+        if( !options.heading.empty() ) {
+            fold_and_print( win, point( 2, 1 ), getmaxx( win ) - 4, c_white, options.heading );
+        }
 
         // Redraw headers
         for( size_t i = 0; i < headers.size(); ++i ) {
@@ -1342,6 +1359,9 @@ int worldfactory::show_modselection_window( const catacurses::window &win,
             active.push_back( note_of( "none", _( "--NO ACTIVE MODS--" ) ) );
         }
         auto notes = std::vector<ec::panel_stat> {};
+        if( !options.heading.empty() ) {
+            notes.push_back( note_of( "heading", options.heading ) );
+        }
         if( !current_filter.empty() ) {
             notes.push_back( note_of( "filter", string_format( _( "Filter: %s" ), current_filter ) ) );
         }
@@ -1363,7 +1383,7 @@ int worldfactory::show_modselection_window( const catacurses::window &win,
         const auto &focused = active_header == 0 ? current_tab.mods : active_mod_order;
         const auto line = active_header == 0 ? cursel[0] : cursel[1];
         return worldgen_view( {
-            .tab = standalone ? std::string() : "mods", .id = "worldgen:mods", .title = _( "Mods" ), .parts = std::move( parts ),
+            .tab = options.standalone ? std::string() : "mods", .id = "worldgen:mods", .title = _( "Mods" ), .parts = std::move( parts ),
             .affordances = {
                 pick_affordance( "worldgen:mods:add", ctxt.get_action_name( "CONFIRM" ), "worldgen:mods:available:rows" ),
                 pick_affordance( "worldgen:mods:remove", ctxt.get_action_name( "CONFIRM" ), "worldgen:mods:active:rows" ),
@@ -1488,7 +1508,7 @@ int worldfactory::show_modselection_window( const catacurses::window &win,
             }
         } else if( action == "NEXT_TAB" ) {
             tab_output = 1;
-        } else if( action == "PREV_TAB" && ( !on_backtab || on_backtab() ) ) {
+        } else if( action == "PREV_TAB" && ( !options.on_backtab || options.on_backtab() ) ) {
             tab_output = -1;
         } else if( action == "SAVE_DEFAULT_MODS" ) {
             if( query_yn( _( "Save list of active mods as default mod list?" ) ) ) {
@@ -1502,7 +1522,7 @@ int worldfactory::show_modselection_window( const catacurses::window &win,
             if( const MOD_INFORMATION *selmod = get_selected_mod() ) {
                 popup( "%s", mman_ui->get_information( selmod ) );
             }
-        } else if( action == "QUIT" && ( !on_quit || on_quit() ) ) {
+        } else if( action == "QUIT" && ( !options.on_quit || options.on_quit() ) ) {
             tab_output = -999;
         } else if( action == "FILTER" ) {
             set_filter();

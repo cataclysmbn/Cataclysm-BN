@@ -197,6 +197,21 @@ auto list_text(const nlohmann::ordered_json& value) -> std::string {
          | std::views::join_with(std::string_view(", ")) | std::ranges::to<std::string>();
 }
 
+/// The choices of a field that names one of `items`, by name; the one it names now leads when it
+/// is none of them, so that the field shows it.
+auto item_options(const std::vector<itype_id>& items, const std::string& current)
+    -> std::vector<ec::form_option> {
+    auto options =
+        items | std::views::transform([](const itype_id& id) {
+            return ec::form_option{.id = id.str(), .label = item::nname(id)};
+        })
+        | std::ranges::to<std::vector>();
+    if (!current.empty() && !std::ranges::contains(options, current, &ec::form_option::id)) {
+        options.insert(options.begin(), {.id = current, .label = current});
+    }
+    return options;
+}
+
 /// The file a name the player typed stands for: a relative one outside the player's mods is in
 /// them, and one with no extension a .json file.
 auto in_mods(const std::string& name) -> std::filesystem::path {
@@ -388,6 +403,11 @@ struct session {
             notice = string_format(_("No data file of the loaded mods defines %s."), id);
             return;
         }
+        if (doc && doc->path() == *path && prototype().value("id", "") == id) {
+            // It is open already, with whatever it has unsaved.
+            live = nullptr;
+            return;
+        }
         open_file(*path, id);
     }
 
@@ -407,13 +427,40 @@ struct session {
             notice = string_format(_("No data file of the loaded mods defines %s."), id);
             return;
         }
-        object = static_cast<std::size_t>(found - objects.begin());
-        doc = std::move(*opened);
-        remember_document({.editor = "vehicle", .name = id, .mods = loaded_mods()});
+        // Before the document moves, which takes `objects` with it.
+        const auto index = static_cast<std::size_t>(found - objects.begin());
+        if (!leave()) { return; }
+        take(std::move(*opened), index);
+    }
+
+    /// Edits the prototype `index` of `opened` from now on, with the select tool.
+    auto take(document opened, const std::size_t index) -> void {
+        live = nullptr;
+        object = index;
+        doc = std::move(opened);
+        remember();
         cursor = point{};
         field_pointer = "/name";
+        canvas_tool = "select";
         reload();
         pick_top();
+    }
+
+    /// Puts the open design first among the documents the main menu offers again, once its file
+    /// is there, with the mod that holds it.
+    auto remember() const -> void {
+        if (!std::filesystem::exists(doc->path())) { return; }
+        remember_document(
+            {.editor = "vehicle",
+             .name = prototype().value("id", ""),
+             .mods = mods_for(doc->path())});
+    }
+
+    /// The file a new design suggests: `base` in the mod folder of the open file, else in
+    /// my_mod, with a number when that file is there.
+    auto suggested(const std::string& base) const -> std::string {
+        const auto folder = doc ? mod_folder_name(doc->path()) : std::nullopt;
+        return free_name(folder.value_or("my_mod") + "/" + base);
     }
 
     /// Reads the file again when it changed on disk and holds no edit; says so either way.
@@ -425,6 +472,7 @@ struct session {
         }
         const auto kept_cursor = cursor;
         const auto kept_pointer = field_pointer;
+        const auto kept_tool = canvas_tool;
         const auto path = doc->path();
         const auto id = prototype().value("id", "");
         open_file(path, id);
@@ -437,6 +485,7 @@ struct session {
         }
         cursor = kept_cursor;
         field_pointer = kept_pointer;
+        canvas_tool = kept_tool;
         reload();
         notice = changed_on_disk_notice(*doc);
     }
@@ -654,6 +703,12 @@ struct session {
                 }
             } else {
                 const auto parsed = nlohmann::ordered_json::parse(field_value, nullptr, false);
+                // Bare text is a string; text that starts as JSON does is meant as JSON.
+                if (parsed.is_discarded() && field_value.find_first_of("{[\"") == 0) {
+                    notice =
+                        string_format(_("%s is no JSON value; nothing was changed."), field_value);
+                    return;
+                }
                 next[at] = parsed.is_discarded() ? nlohmann::ordered_json(field_value) : parsed;
             }
         } catch (const nlohmann::ordered_json::exception& /*error*/) {
@@ -675,6 +730,18 @@ struct session {
         if (text.empty() && !optional) {
             notice = _("A prototype keeps its name and id.");
             return;
+        }
+        if (field == "flags") {
+            const auto names = listed(text).value_or(nlohmann::ordered_json::array());
+            const auto unknown =
+                std::ranges::find_if(names, [](const nlohmann::ordered_json& name) {
+                    return !flag_id(name.get<std::string>()).is_valid();
+                });
+            if (unknown != names.end()) {
+                notice =
+                    string_format(_("%s is no flag the game knows."), unknown->get<std::string>());
+                return;
+            }
         }
         auto next = prototype();
         const auto value =
@@ -721,6 +788,11 @@ struct session {
         }
         if (key == "ammo_min" || key == "ammo_max") {
             set_ammo_qty(*index, key == "ammo_max", text);
+            return;
+        }
+        if (key == "fuel" && !text.empty()
+            && !std::ranges::contains(tank_fuels(), itype_id(text))) {
+            notice = string_format(_("%s is no liquid a tank holds."), text);
             return;
         }
         auto value = std::optional<nlohmann::ordered_json>{};
@@ -811,16 +883,17 @@ struct session {
         change(next);
     }
 
-    /// Writes the prototype a new design makes, whose id is the file's name, in the new file
-    /// `name` of the player's mods, and opens it.
+    /// Opens the prototype a new design makes, whose id is the file's name, for the new file
+    /// `name` of the player's mods, which saving writes; `write` writes it at once.
     auto create(
         const std::string& name,
-        const std::function<auto(const std::string&)->nlohmann::ordered_json>& prototype_of)
-        -> void {
+        const std::function<auto(const std::string&)->nlohmann::ordered_json>& prototype_of,
+        const bool write = false) -> void {
         const auto path = in_mods(name);
         if (!is_mod_file(path)) {
             notice = string_format(
-                _("A new design goes in a new .json file in your mods, %s."),
+                _("A new design goes in a new .json file in your mods, %s, inside a mod's folder "
+                  "such as my_mod/."),
                 PATH_INFO::user_moddir());
             return;
         }
@@ -828,19 +901,15 @@ struct session {
             notice = _("That file already exists; nothing was saved.");
             return;
         }
-        const auto id = path.stem().string();
-        const auto design = nlohmann::ordered_json::array({prototype_of(id)});
-        auto error = std::error_code{};
-        std::filesystem::create_directories(path.parent_path(), error);
-        auto out = std::ofstream(path, std::ios::binary);
-        out << format_json(design.dump()).value_or(design.dump(2));
-        if (error || !out.flush()) {
-            notice = _("The file could not be written.");
+        if (!leave()) { return; }
+        const auto design = nlohmann::ordered_json::array({prototype_of(path.stem().string())});
+        auto made = document::create(path, format_json(design.dump()).value_or(design.dump(2)));
+        if (!made) {
+            notice = made.error();
             return;
         }
-        out.close();
-        live = nullptr;
-        open_file(path, id);
+        take(std::move(*made), 0);
+        if (write) { save(); }
     }
 
     /// Writes the design of the world's vehicle `index` as a prototype in a new file of the user
@@ -848,7 +917,9 @@ struct session {
     auto export_vehicle(const std::size_t index, const std::string& name) -> void {
         const auto vehicles = get_map().get_vehicles();
         if (index >= vehicles.size()) { return; }
-        create(name, [&](const std::string& id) { return export_design(*vehicles[index].v, id); });
+        create(
+            name, [&](const std::string& id) { return export_design(*vehicles[index].v, id); },
+            true);
     }
 
     /// Starts a vehicle with no parts in a new file of the user mods, named after the file.
@@ -900,6 +971,7 @@ struct session {
         const auto vehicles = get_map().get_vehicles();
         if (index >= vehicles.size()) { return; }
         live = vehicles[index].v;
+        canvas_tool = "select";
         framed.clear();
         cursor = point{};
         live_part = -1;
@@ -1154,9 +1226,15 @@ struct session {
         return result.has_value();
     }
 
-    auto save() -> bool { return told(save_document(*doc)); }
+    auto save() -> bool {
+        if (!told(save_document(*doc))) { return false; }
+        remember();
+        return true;
+    }
 
-    auto save_as(const std::string& name) -> void { told(save_document_as(*doc, in_mods(name))); }
+    auto save_as(const std::string& name) -> void {
+        if (told(save_document_as(*doc, in_mods(name)))) { remember(); }
+    }
 
     /// Whether to leave: at once with nothing unsaved, else as the player answers.
     auto leave() -> bool {
@@ -1317,11 +1395,14 @@ auto live_form(const session& state, const bool part_fields) -> ec::component {
                  .value = std::to_string(part.ammo_remaining()),
                  .type = "integer",
                  .min = 0});
+            const auto current =
+                part.ammo_current().is_null() ? std::string{} : part.ammo_current().str();
             fields.push_back(
                 {.id = "fuel_type",
                  .label = part.is_turret() ? _("Ammunition") : _("Fuel type"),
-                 .value =
-                     part.ammo_current().is_null() ? std::string{} : part.ammo_current().str()});
+                 .value = current,
+                 .type = "select",
+                 .options = item_options(part_fuels(veh, state.live_part), current)});
         }
         if (veh.part_flag(state.live_part, VPFLAG_CARGO)) {
             fields.push_back({.id = "cargo", .label = _("Add item"), .value = ""});
@@ -1351,7 +1432,14 @@ auto part_form(const session& state) -> std::optional<ec::component> {
     };
     auto fields = std::vector<ec::form_field>{};
     if (id.is_valid() && id->has_flag(VPFLAG_FLUIDTANK)) {
-        fields.push_back({.id = "fuel", .label = _("Fuel"), .value = value("fuel")});
+        auto options = item_options(tank_fuels(), value("fuel"));
+        options.insert(options.begin(), {.id = "", .label = _("None")});
+        fields.push_back(
+            {.id = "fuel",
+             .label = _("Fuel"),
+             .value = value("fuel"),
+             .type = "select",
+             .options = std::move(options)});
     }
     if (id.is_valid() && id->has_flag("TURRET")) {
         fields.push_back(
@@ -1422,7 +1510,35 @@ auto parts_view(const session& state) -> ec::screen_view {
     }
     const auto found = state.prototypes();
     const auto vehicles = get_map().get_vehicles();
-    const auto here = get_avatar().bub_pos();
+    const auto here = get_avatar().bub_pos().xy().raw();
+    // The world's vehicles nearest first, the nearest picked, each with how far and which way it
+    // stands, which tells apart two of one name.
+    const auto distance_of = [&](const std::size_t index) {
+        return rl_dist(here, vehicles[index].pos.xy().raw());
+    };
+    auto nearest =
+        std::views::iota(std::size_t{0}, vehicles.size()) | std::ranges::to<std::vector>();
+    std::ranges::stable_sort(nearest, {}, distance_of);
+    auto world_rows =
+        nearest | std::views::transform([&](const std::size_t index) {
+            const auto at = vehicles[index].pos.xy().raw();
+            const auto distance = distance_of(index);
+            return ec::row{
+                .id = index_row("world", index),
+                .label = vehicles[index].v->name,
+                .columns = {
+                    {.key = "distance",
+                     .label = _("Distance"),
+                     .value = string_format(vgettext("%d square", "%d squares", distance), distance),
+                     .color = ""},
+                    {.key = "direction",
+                     .label = _("Direction"),
+                     .value =
+                         distance == 0 ? std::string{} : direction_name(direction_from(here, at)),
+                     .color = ""}}};
+        })
+        | std::ranges::to<std::vector>();
+    if (!world_rows.empty()) { world_rows.front().selected = true; }
     // The left column: the prototypes to open, or the world's vehicles to export, copy or edit.
     parts.push_back(ec::tabs(
         {.id = sources_id,
@@ -1431,24 +1547,10 @@ auto parts_view(const session& state) -> ec::screen_view {
          .select = source_id,
          .child =
              state.source_tab == "world"
-                 ? ec::list(
-                       {.id = world_id,
-                        .rows = vehicles | std::views::enumerate
-                              | std::views::transform([&](const auto& entry) {
-                                    const auto& [index, placed] = entry;
-                                    return ec::row{
-                                        .id = index_row("world", index),
-                                        .label = placed.v->name,
-                                        .columns = {
-                                            {.key = "distance",
-                                             .label = _("Distance"),
-                                             .value = std::to_string(
-                                                 rl_dist(here.raw(), placed.pos.raw())),
-                                             .color = ""}}};
-                                })
-                              | std::ranges::to<std::vector>(),
-                        .selection = "single",
-                        .activate = edit_id})
+                 ? ec::list({.id = world_id,
+                             .rows = world_rows,
+                             .selection = "single",
+                             .activate = edit_id})
                  : ec::list(
                        {.id = prototypes_id,
                         .rows =
@@ -1481,7 +1583,8 @@ auto parts_view(const session& state) -> ec::screen_view {
         affordances.push_back(ec::invoke_affordance(
             {.id = export_id,
              .label = _("Export design"),
-             .args = text_of(world_id),
+             .args = {.row = ec::row_shape{.component_id = world_id},
+                      .text = ec::text_shape{.initial = state.suggested("my_vehicle")}},
              .enabled = none.empty(),
              .denial = none}));
         affordances.push_back(ec::invoke_affordance(
@@ -1509,17 +1612,22 @@ auto parts_view(const session& state) -> ec::screen_view {
     affordances.push_back(ec::invoke_affordance(
         {.id = new_id,
          .label = _("New vehicle"),
-         .args = {.text = ec::text_shape{.initial = free_name("my_vehicle")}},
+         .args = {.text = ec::text_shape{.initial = state.suggested("my_vehicle")}},
          .keys = {"CTRL+N"}}));
     affordances.push_back(ec::invoke_affordance(
         {.id = std::string(show_prefix) + "prototypes", .label = _("Prototypes"), .keys = {"p"}}));
     affordances.push_back(ec::invoke_affordance(
         {.id = std::string(show_prefix) + "world", .label = _("World vehicles"), .keys = {"w"}}));
     if (!state.live && !state.doc) {
-        return {.title = _("Vehicle Editor"),
-                .root = ec::split({.id = "vehicle:body", .children = std::move(parts)}),
-                .affordances = std::move(affordances),
-                .focus_component = state.source_tab == "world" ? world_id : prototypes_id};
+        return {
+            .title = _("Vehicle Editor"),
+            .root = ec::split({.id = "vehicle:body", .children = std::move(parts)}),
+            .affordances = std::move(affordances),
+            .focus_component = state.source_tab == "world" ? world_id : prototypes_id,
+            .focus_row =
+                state.source_tab == "world" && !world_rows.empty()
+                    ? world_rows.front().id
+                    : std::string{}};
     }
     const auto* const veh = state.live ? state.live : state.built.blueprint.get();
     const auto mount = tripoint_mnt_veh(state.cursor.x, state.cursor.y, 0);
@@ -1545,15 +1653,20 @@ auto parts_view(const session& state) -> ec::screen_view {
                              : state.prototype().value("name", state.prototype().value("id", "")),
          .stats = std::move(status)}));
     if (!state.live && !state.built.messages.empty()) {
-        parts.push_back(ec::list(
-            {.id = problems_id,
-             .rows = state.built.messages | std::views::enumerate
-                   | std::views::transform([](const auto& entry) {
-                         const auto& [index, message] = entry;
-                         return ec::row{.id = index_row("message", index), .label = message.text};
-                     })
-                   | std::ranges::to<std::vector>(),
-             .selection = "none"}));
+        auto problems =
+            state.built.messages | std::views::enumerate
+            | std::views::transform([](const auto& entry) {
+                  const auto& [index, message] = entry;
+                  return ec::row{.id = index_row("message", index), .label = message.text};
+              })
+            | std::ranges::to<std::vector>();
+        if (!state.built.blueprint && state.doc->can_undo()) {
+            problems.push_back(
+                {.id = "message:undo",
+                 .label = _("Undo puts the prototype back as it was before this change.")});
+        }
+        parts.push_back(
+            ec::list({.id = problems_id, .rows = std::move(problems), .selection = "none"}));
     }
     // Every step of the open document or of the vehicle edited in place, to go back to.
     parts.push_back(ec::list(
@@ -1562,7 +1675,7 @@ auto parts_view(const session& state) -> ec::screen_view {
          .selection = "single",
          .activate = jump_id}));
     affordances.push_back(ec::invoke_affordance(
-        {.id = jump_id, .label = _("Go to step"), .args = row_of(history_id)}));
+        {.id = jump_id, .label = _("Go to step"), .args = row_of(history_id), .role = "select"}));
     // The canvas tools, and the mounts they act on.
     parts.push_back(ec::list(
         {.id = canvas_tools_id,
@@ -1584,7 +1697,10 @@ auto parts_view(const session& state) -> ec::screen_view {
          .selection = "single",
          .activate = canvas_tool_id}));
     affordances.push_back(ec::invoke_affordance(
-        {.id = canvas_tool_id, .label = _("Use"), .args = row_of(canvas_tools_id)}));
+        {.id = canvas_tool_id,
+         .label = _("Use"),
+         .args = row_of(canvas_tools_id),
+         .role = "select"}));
     for (const auto& entry : canvas_tools) {
         const auto key = std::string_view(entry.key);
         affordances.push_back(ec::invoke_affordance(
@@ -1949,7 +2065,8 @@ auto parts_view(const session& state) -> ec::screen_view {
             {.id = save_as_id,
              .label = _("Save as"),
              .args =
-                 {.text = ec::text_shape{.initial = free_name(state.prototype().value("id", ""))}},
+                 {.text = ec::
+                      text_shape{.initial = state.suggested(state.prototype().value("id", ""))}},
              .keys = {"F12"}}));
     }
     return {
@@ -2076,7 +2193,6 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
         } else if (id == new_id) {
             state.new_vehicle(text);
         } else if (id == open_id) {
-            state.live = nullptr;
             state.open(std::string(row_rest(row, "prototype").value_or("")));
         } else if (id == filter_id) {
             state.filter = text;

@@ -79,10 +79,10 @@ class worldfactory
         static void draw_worldgen_tabs( const catacurses::window &w, size_t current );
         void show_active_world_mods( const std::vector<mod_id> &world_mods );
         void edit_active_world_mods( WORLDINFO *world );
-        /// The mod list screen, started from `initial`; the mods chosen, or nothing when `question` was
-        /// answered no.
-        auto pick_mods( const std::vector<mod_id> &initial,
-                        const std::string &question ) -> std::optional<std::vector<mod_id>>;
+        /// The mod list screen, started from `initial` and saying `heading` first; the mods chosen,
+        /// or nothing when `question`, which offers yes first, was answered no.
+        auto pick_mods( const std::vector<mod_id> &initial, const std::string &question,
+        const std::string &heading = {} ) -> std::optional<std::vector<mod_id>>;
 
         void convert_to_v2( const std::string &worldname );
 
@@ -99,10 +99,16 @@ class worldfactory
         int show_worldgen_tab_confirm( const catacurses::window &win, WORLDINFO *world,
                                        const std::function<bool()> &on_quit );
 
+        /// How the mod list screen runs: what Esc and the previous tab key do, whether it stands
+        /// alone outside world creation, and the line it says first.
+        struct modselection_options {
+            std::function<bool()> on_quit;
+            std::function<bool()> on_backtab;
+            bool standalone = false;
+            std::string heading;
+        };
         int show_modselection_window( const catacurses::window &win, std::vector<mod_id> &active_mod_order,
-                                      const std::function<bool()> &on_quit,
-                                      const std::function<bool()> &on_backtab,
-                                      bool standalone );
+                                      const modselection_options &options );
         void draw_modselection_borders( const catacurses::window &win, const input_context &ctxtp,
                                         bool standalone );
         static void draw_empty_worldgen_tabs( const catacurses::window &w );

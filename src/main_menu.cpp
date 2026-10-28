@@ -1202,6 +1202,8 @@ auto main_menu::editor_tab( const std::string &id ) -> bool
     if( id == "save" ) {
         return open_save_in_editor();
     }
+    // The editors make a mod of the folder they save a new file in, which the game learns of here.
+    world_generator->get_mod_manager().refresh_mod_list();
     const auto recent = editor::recent_documents();
     auto index = std::size_t{ 0 };
     const auto reopened = std::sscanf( id.c_str(), "recent:%zu", &index ) == 1 && index < recent.size()
@@ -1211,7 +1213,8 @@ auto main_menu::editor_tab( const std::string &id ) -> bool
                       ? reopened->mods | std::views::filter( &mod_id::is_valid ) | std::ranges::to<std::vector>()
                       : std::vector<mod_id> {};
     const auto initial = kept.empty() ? world_generator->get_mod_manager().get_default_mods() : kept;
-    const auto mods = world_generator->pick_mods( initial, _( "Open the editor with these mods?" ) );
+    const auto mods = world_generator->pick_mods( initial, _( "Open the editor with these mods?" ),
+                      _( "Turn on the mod that holds your files, then press Esc." ) );
     if( !mods || !start_special_game( special_game_type::EDITOR, *mods ) ) {
         return false;
     }
