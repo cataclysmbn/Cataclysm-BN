@@ -5825,4 +5825,95 @@ TEST_CASE("the editor names an entry whose name is empty as unnamed", "[editor_s
     CHECK(editor::map_editor::entry_name({{"om_terrain", {"a", "b"}}}) == "a, b");
 }
 
+namespace {
+/// A mod file of a mapgen of an overmap terrain, a nested chunk and an update mapgen, in that
+/// order, removed with its directory when it ends.
+struct kinds_file {
+    std::filesystem::path path =
+        std::filesystem::path(PATH_INFO::user_moddir()) / "editor_session_test" / "kinds.json";
+
+    kinds_file() {
+        const auto rows = [](const int side) {
+            return std::vector<std::string>(side, std::string(side, '.'));
+        };
+        const auto entries = nlohmann::ordered_json::array(
+            {{{"type", "mapgen"},
+              {"method", "json"},
+              {"om_terrain", "house_04"},
+              {"object", {{"rows", rows(24)}, {"terrain", {{".", "t_floor"}}}}}},
+             {{"type", "mapgen"},
+              {"method", "json"},
+              {"nested_mapgen_id", "editor_test_chunk"},
+              {"object",
+               {{"mapgensize", {4, 4}}, {"rows", rows(4)}, {"terrain", {{".", "t_floor"}}}}}},
+             {{"type", "mapgen"},
+              {"method", "json"},
+              {"update_mapgen_id", "editor_test_chunk"},
+              {"object",
+               {{"place_nested", {{{"chunks", {"editor_test_chunk"}}, {"x", 0}, {"y", 0}}}}}}}});
+        std::filesystem::create_directories(path.parent_path());
+        auto out = std::ofstream(path, std::ios::binary | std::ios::trunc);
+        out << format_json(entries.dump()).value();
+    }
+    ~kinds_file() { std::filesystem::remove_all(path.parent_path()); }
+    kinds_file(const kinds_file&) = delete;
+    auto operator=(const kinds_file&) -> kinds_file& = delete;
+};
+} // namespace
+
+TEST_CASE(
+    "the editor turns away putting a nested chunk or an update mapgen in the world, saying why",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = kinds_file{};
+    auto step = 0;
+    const auto notice = [](const ec::screen_view& screen) {
+        const auto* const found = ec::find_component(*screen.root, "editor:notice");
+        return found ? body<ec::text_body>(*found).markup : std::string();
+    };
+    const auto off = [](const ec::screen_view& screen, const std::string& id) {
+        const auto& found = affordance(screen, id);
+        return !found.enabled && !found.denial.empty();
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK(affordance(screen, "editor:stamp").enabled);
+                CHECK(affordance(screen, "editor:preview").enabled);
+                return invoke("editor:preview", {.count = 1});
+            case 2:
+                CHECK(notice(screen).empty());
+                return invoke("editor:object", {.row = "object:1"});
+            case 3:
+                // A chunk is placed by a mapgen: the game takes it, the world and a preview do not.
+                CHECK(notice(screen).empty());
+                CHECK(affordance(screen, "editor:apply").enabled);
+                CHECK(off(screen, "editor:stamp"));
+                CHECK(off(screen, "editor:preview"));
+                CHECK(off(screen, "editor:test"));
+                CHECK(affordance(screen, "editor:stamp").denial.find("chunk") != std::string::npos);
+                return invoke("editor:object", {.row = "object:2"});
+            case 4:
+                CHECK(notice(screen).empty());
+                CHECK(off(screen, "editor:apply"));
+                CHECK(off(screen, "editor:stamp"));
+                CHECK(off(screen, "editor:preview"));
+                CHECK(off(screen, "editor:test"));
+                CHECK(
+                    affordance(screen, "editor:stamp").denial.find("update") != std::string::npos);
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 5);
+    editor::reset_editor_session();
+}
+
 #endif // CATA_MCP
