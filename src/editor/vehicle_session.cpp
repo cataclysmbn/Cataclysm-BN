@@ -224,6 +224,14 @@ auto in_mods(const std::string& name) -> std::filesystem::path {
     return path;
 }
 
+/// The file at `path` as the player names it: from the player's mods when it is in them.
+auto mods_path(const std::filesystem::path& path) -> std::string {
+    if (!inside(path, PATH_INFO::user_moddir())) { return shown_path(path); }
+    return std::filesystem::weakly_canonical(path)
+        .lexically_relative(std::filesystem::weakly_canonical(PATH_INFO::user_moddir()))
+        .generic_string();
+}
+
 /// The squares at least `spawn_distance` from the avatar around the one `toward` it, nearest that
 /// one first.
 auto spawn_spots(const tripoint_rel_ms& toward) -> std::vector<tripoint_bub_ms> {
@@ -1245,12 +1253,19 @@ struct session {
 
     auto save() -> bool {
         if (!told(save_document(*doc))) { return false; }
-        remember();
+        saved();
         return true;
     }
 
     auto save_as(const std::string& name) -> void {
-        if (told(save_document_as(*doc, in_mods(name)))) { remember(); }
+        if (told(save_document_as(*doc, in_mods(name)))) { saved(); }
+    }
+
+    /// Remembers the file just written and says where it is.
+    auto saved() -> void {
+        remember();
+        //~ %s is the file the vehicle editor wrote, such as my_mod/my_vehicle.json.
+        said = string_format(_("Saved %s."), mods_path(doc->path()));
     }
 
     /// Whether to leave: at once with nothing unsaved, else as the player answers.
