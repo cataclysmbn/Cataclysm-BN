@@ -2891,6 +2891,82 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "a room painted in a new field mapgen stands in the world after stamping and testing it",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    // Removes the folder the new file goes in.
+    const auto folder = mod_file{};
+    const auto made = folder.path.parent_path() / "room.json";
+    const auto omt = get_avatar().abs_omt_pos();
+    const auto live = [&](const int x, const int y) {
+        return get_map().ter(abs_to_bub(project_to<coords::ms>(omt) + tripoint_rel_ms(x, y, 0)));
+    };
+    const auto set = [](const std::string& id, const std::string& text) {
+        return invoke("editor:mapping_set", {.row = id, .text = text});
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:new_set", {.row = "path", .text = made.string()});
+            case 1:
+                return invoke("editor:new_set", {.row = "om_terrain", .text = "field"});
+            case 2:
+                return invoke("editor:new_set", {.row = "fill", .text = "t_floor"});
+            case 3:
+                return invoke("editor:new_apply");
+            case 4:
+                return set("symbol", "#");
+            case 5:
+                return set("layer", "terrain");
+            case 6:
+                return set("value", "t_brick_wall");
+            case 7:
+                return invoke("editor:mapping_apply");
+            case 8:
+                return invoke("editor:symbol", {.row = "symbol:#"});
+            case 9:
+                return invoke("editor:tool", {.row = "tool:room"});
+            case 10:
+                return invoke("editor:paint", {.row = "square:4,4"});
+            case 11:
+                return invoke("editor:paint", {.row = "square:16,14"});
+            case 12:
+                CHECK(cell(screen, 4, 4).glyph == "#");
+                CHECK(cell(screen, 16, 14).glyph == "#");
+                CHECK(cell(screen, 8, 8).glyph == ".");
+                return invoke("editor:save");
+            case 13:
+                CHECK(saved(screen) == "Yes");
+                return invoke("editor:stamp");
+            case 14:
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                return invoke("editor:test");
+            default:
+                FAIL("the editor outlived its test");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 15);
+    // The walls and the floor the modder drew are what the world holds, square by square.
+    for (const auto& wall :
+         {point(4, 4), point(16, 4), point(4, 14), point(16, 14), point(10, 4), point(4, 9),
+          point(16, 9), point(10, 14)}) {
+        INFO(wall);
+        CHECK(live(wall.x, wall.y).id().str() == "t_brick_wall");
+    }
+    for (const auto& floor : {point(0, 0), point(8, 8), point(12, 10), point(23, 23)}) {
+        INFO(floor);
+        CHECK(live(floor.x, floor.y).id().str() == "t_floor");
+    }
+    editor::reset_editor_session();
+}
+
+TEST_CASE(
     "the editor opens the mapgen of an overmap terrain, and any data file from its browser",
     "[editor_session][engine_client_component]") {
     const auto guard = screen_guard{};

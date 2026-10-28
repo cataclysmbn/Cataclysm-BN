@@ -95,7 +95,9 @@ auto preview_mapgen(const std::string_view text, const preview_options& options)
                 const auto seeded = rng_deterministic_task_scope(options.seed + index);
                 constructor.generate(
                     at, calendar::turn,
-                    {.use_selected_mapgen = true, .selected_mapgen = loaded->functions[index]});
+                    {.use_selected_mapgen = true,
+                     .selected_mapgen = loaded->functions[index],
+                     .map_extras = false});
             }
             for (const auto p : constructor.points_on_zlevel()) {
                 const auto x = square.x() * SEEX * 2 + p.x();

@@ -38,6 +38,8 @@ struct mapgen_generate_options {
     bool worker_safe = false;
     bool use_selected_mapgen = false;
     std::shared_ptr<mapgen_function> selected_mapgen;
+    /// Whether the region's map extras of the overmap terrain may land over what the mapgen drew.
+    bool map_extras = true;
 };
 
 class mapgen_constructor {
