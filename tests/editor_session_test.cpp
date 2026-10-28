@@ -1018,6 +1018,37 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the editor tells apart entries of a file that have the same name",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open",
+                              {.text = PATH_INFO::datadir() + "json/mapgen/house/2Story01.json"});
+            case 1: {
+                const auto labels =
+                    body<ec::list_body>(part(screen, "editor:objects")).rows
+                    | std::views::transform(&ec::row::label) | std::ranges::to<std::vector>();
+                REQUIRE(labels.size() >= 2);
+                CHECK(labels[0] == "2Story01_1 (1 of 2)");
+                CHECK(labels[1] == "2Story01_1 (2 of 2)");
+                return act("QUIT");
+            }
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 2);
+}
+
+TEST_CASE(
     "the editor's catalog tells apart entries of the same name",
     "[editor_session][engine_client_component]") {
     const auto guard = screen_guard{};
