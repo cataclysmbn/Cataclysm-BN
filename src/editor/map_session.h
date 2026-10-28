@@ -518,6 +518,9 @@ struct session {
     /// The id `editor:extract_palette` suggests: the entry's first id and `_palette`, numbered
     /// past the palettes the game and the file have.
     auto free_palette_id() const -> std::string;
+    /// The file Export suggests: `exported_mapgen.json` in the open file's mod folder, else in
+    /// my_mod, numbered past the files there and the open file itself.
+    auto free_export_path() const -> std::string;
 
     /// Draws with `picked` and puts its mapping in the legend form: the layer it places on top,
     /// its own mapping before a palette's, and what it places there; terrain and nothing for a

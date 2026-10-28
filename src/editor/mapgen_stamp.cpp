@@ -74,15 +74,6 @@ auto stamp_mapgen(const std::string_view text, const preview_options& options)
             }
         }
         stamped.grid = loaded->grid;
-        auto terrains = std::vector<oter_id>{};
-        for (const auto& name : loaded->om_terrains) {
-            const auto terrain = overmap_terrain(name, options.direction);
-            if (!terrain) {
-                failed = string_format(_("No overmap terrain is named %s."), name);
-                return;
-            }
-            terrains.push_back(*terrain);
-        }
         auto& here = get_map();
         auto& overmap = get_overmapbuffer(here.get_bound_dimension());
         const auto squares = std::views::iota(std::size_t{0}, loaded->functions.size());
@@ -98,6 +89,13 @@ auto stamp_mapgen(const std::string_view text, const preview_options& options)
         const auto old =
             squares | std::views::transform([&](const auto index) {
                 return overmap.ter(square_at(stamped, index));
+            })
+            | std::ranges::to<std::vector>();
+        // An entry whose terrain is not defined is generated over the terrain already there.
+        const auto terrains =
+            squares | std::views::transform([&](const auto index) {
+                return overmap_terrain(loaded->om_terrains[index], options.direction)
+                    .value_or(old[index]);
             })
             | std::ranges::to<std::vector>();
         for (const auto index : squares) {
