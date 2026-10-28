@@ -39,6 +39,8 @@ struct count_shape {
 struct text_shape {
     /// Empty: the field the invoke's `row` names.
     std::string field_id = {};
+    /// The text a client puts in the box when it asks for one; empty for none.
+    std::string initial = {};
 };
 struct pos_shape {
     /// `square` or `overmap`.

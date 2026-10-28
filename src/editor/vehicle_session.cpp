@@ -32,6 +32,7 @@
 #include "vehicle/veh_type.h"
 #include "vehicle/vehicle.h"
 #include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
 
 #include <algorithm>
 #include <array>
@@ -119,6 +120,8 @@ constexpr auto item_pick_id = "vehicle:item_pick";
 
 /// How far east of the avatar a spawned vehicle stands, clear of it.
 constexpr auto spawn_distance = 8;
+/// How far around the square a vehicle goes to first it looks for room.
+constexpr auto spawn_search = 6;
 /// How many free mounts the grid shows around the vehicle when it is first drawn or has to grow.
 constexpr auto grid_margin = 2;
 
@@ -205,9 +208,88 @@ auto in_mods(const std::string& name) -> std::filesystem::path {
     return path;
 }
 
+/// The squares at least `spawn_distance` from the avatar around the one `toward` it, nearest that
+/// one first.
+auto spawn_spots(const tripoint_rel_ms& toward) -> std::vector<tripoint_bub_ms> {
+    const auto here = get_avatar().bub_pos();
+    const auto first = here + toward;
+    auto spots = std::vector<tripoint_bub_ms>{};
+    for (auto dy = -spawn_search; dy <= spawn_search; ++dy) {
+        for (auto dx = -spawn_search; dx <= spawn_search; ++dx) {
+            const auto at = first + tripoint_rel_ms(dx, dy, 0);
+            if (square_dist(at.raw(), here.raw()) >= spawn_distance) { spots.push_back(at); }
+        }
+    }
+    std::ranges::stable_sort(spots, {}, [&](const tripoint_bub_ms& at) {
+        return rl_dist(at.raw(), first.raw());
+    });
+    return spots;
+}
+
+/// Places a vehicle by `place` on the first of `spawn_spots(toward)` where it fits clear of the
+/// avatar; none where it fits nowhere, or the error of `place` other than that.
+auto place_clear(
+    const tripoint_rel_ms& toward,
+    const std::function<auto(const tripoint_bub_ms&)->std::expected<vehicle*, std::string>>& place)
+    -> std::expected<vehicle*, std::string> {
+    const auto in_the_way = std::string(_("Something is in the way of the vehicle there."));
+    const auto avatar_at = get_avatar().bub_pos();
+    for (const auto& at : spawn_spots(toward)) {
+        const auto placed = place(at);
+        if (!placed && placed.error() != in_the_way) { return placed; }
+        if (!placed) { continue; }
+        if (veh_pointer_or_null(get_map().veh_at(avatar_at)) == *placed) {
+            get_map().destroy_vehicle(*placed);
+            continue;
+        }
+        return placed;
+    }
+    return std::unexpected(_("There is no room for the vehicle near you."));
+}
+
+/// What the editor says after it spawned or, `pasted`, pasted `veh`: its name, how far and which
+/// way it stands from the avatar.
+auto placed_sentence(const bool pasted, const vehicle& veh) -> std::string {
+    const auto here = get_avatar().bub_pos().xy().raw();
+    const auto at = veh.bub_ms_location().xy().raw();
+    const auto distance = rl_dist(here, at);
+    const auto* const format =
+        pasted
+            ? vgettext("Pasted %1$s %2$d square %3$s of you.",
+                       "Pasted %1$s %2$d squares %3$s of you.", distance)
+            : vgettext("Spawned %1$s %2$d square %3$s of you.",
+                       "Spawned %1$s %2$d squares %3$s of you.", distance);
+    return string_format(format, veh.name, distance, direction_name(direction_from(here, at)));
+}
+
+/// `base`, else `base_2`, `base_3` and on: the first name whose file the player's mods lack.
+auto free_name(const std::string& base) -> std::string {
+    auto name = base;
+    for (auto count = 2; std::filesystem::exists(in_mods(name)); ++count) {
+        name = base + "_" + std::to_string(count);
+    }
+    return name;
+}
+
 auto copied_vehicle_file() -> std::filesystem::path {
     return std::filesystem::path(PATH_INFO::user_dir()) / "vehicle_copy.json";
 }
+
+/// What the player's actions can change: the design open and its steps, the world's vehicle edited
+/// in place and its steps, how a vehicle spawns, what a click on the grid does, and whether the
+/// world was told something.
+struct session_footprint {
+    std::string design;
+    std::size_t steps = 0;
+    std::size_t depth = 0;
+    std::optional<std::size_t> saved;
+    const vehicle* live = nullptr;
+    std::array<int, 3> spawning{};
+    std::string tool;
+    std::string brush;
+    bool said = false;
+    auto operator==(const session_footprint&) const -> bool = default; // *NOPAD*
+};
 
 struct session {
     std::optional<document> doc = std::nullopt;
@@ -566,7 +648,12 @@ struct session {
                         _("The prototype has nothing at %s to remove."), field_pointer);
                     return;
                 }
-                next.at(parent).erase(at.back());
+                // `contains` took the index of a list as a number within it.
+                if (auto& holder = next.at(parent); holder.is_array()) {
+                    holder.erase(static_cast<std::size_t>(std::stoull(at.back())));
+                } else {
+                    holder.erase(at.back());
+                }
             } else {
                 const auto parsed = nlohmann::ordered_json::parse(field_value, nullptr, false);
                 next[at] = parsed.is_discarded() ? nlohmann::ordered_json(field_value) : parsed;
@@ -696,10 +783,13 @@ struct session {
              | std::ranges::to<std::vector>();
     }
 
-    /// Adds a spawn of the item or item group `id` on the picked mount, every time.
-    auto add_item(const std::string& id) -> void {
-        const auto group = item_group::group_is_defined(item_group_id(id));
-        if (!group && !itype_id(id).is_valid()) {
+    /// Adds a spawn of the item or item group `id` on the picked mount, every time; `kind` says
+    /// which, else an id that names an item group stands for the group.
+    auto add_item(const std::string& id, const std::optional<catalog_kind> kind = std::nullopt)
+        -> void {
+        const auto defined_group = item_group::group_is_defined(item_group_id(id));
+        const auto group = kind ? *kind == catalog_kind::item_group : defined_group;
+        if (group ? !defined_group : !itype_id(id).is_valid()) {
             notice = _("No item or item group has that id.");
             return;
         }
@@ -796,12 +886,14 @@ struct session {
             return;
         }
         const auto state = std::string(std::istreambuf_iterator<char>(in), {});
-        const auto at = get_avatar().bub_pos() + tripoint_rel_ms(0, spawn_distance, 0);
-        if (const auto placed = place_vehicle_state(state, at); !placed) {
+        const auto placed =
+            place_clear(tripoint_rel_ms(0, spawn_distance, 0), [&](const tripoint_bub_ms& at) {
+                return place_vehicle_state(state, at);
+            });
+        if (!placed) {
             notice = placed.error();
         } else {
-            said = string_format(
-                _("Pasted %s %d squares south of you."), (*placed)->name, spawn_distance);
+            said = placed_sentence(true, **placed);
         }
     }
 
@@ -867,6 +959,21 @@ struct session {
             copy(live_redo | std::views::reverse | std::views::transform(&live_step::label),
                  std::back_inserter(labels));
         return {.labels = std::move(labels), .depth = live_undo.size()};
+    }
+
+    /// What the next action may change, to tell whether it changed anything.
+    auto footprint() const -> session_footprint {
+        const auto steps = live || doc ? history() : history_steps{};
+        return {
+            .design = doc ? doc->path().string() + "#" + prototype().value("id", "") : "",
+            .steps = steps.labels.size(),
+            .depth = steps.depth,
+            .saved = steps.saved,
+            .live = live,
+            .spawning = {spawning.facing, spawning.fuel, spawning.condition},
+            .tool = canvas_tool,
+            .brush = brush,
+            .said = !said.empty()};
     }
 
     /// Undoes or redoes until `depth` steps are done.
@@ -948,6 +1055,7 @@ struct session {
             return;
         }
         const auto name = live->cpart(live_part).info().name();
+        const auto turret = live->cpart(live_part).is_turret();
         if (field == "cargo") {
             const auto type = itype_id(text);
             live_change(
@@ -958,8 +1066,8 @@ struct session {
         if (field == "fuel_type") {
             const auto type = itype_id(text);
             live_change(
-                string_format(
-                    _("Fill %s with %s"), name, type.is_valid() ? item::nname(type) : text),
+                string_format(turret ? _("Load %s with %s") : _("Fill %s with %s"), name,
+                              type.is_valid() ? item::nname(type) : text),
                 [&](vehicle& veh) {
                     return set_part_fuel(
                         veh, live_part,
@@ -979,11 +1087,14 @@ struct session {
             live_change(string_format(_("Set health of %s to %d%%"), name, value),
                         [&](vehicle& veh) { return set_part_health(veh, live_part, value); });
         } else if (field == "fuel") {
-            live_change(string_format(_("Set fuel of %s to %d"), name, value), [&](vehicle& veh) {
-                return set_part_fuel(
-                    veh, live_part,
-                    {.fuel = veh.part(live_part).ammo_current().str(), .amount = value});
-            });
+            live_change(
+                string_format(
+                    turret ? _("Set rounds of %s to %d") : _("Set fuel of %s to %d"), name, value),
+                [&](vehicle& veh) {
+                    return set_part_fuel(
+                        veh, live_part,
+                        {.fuel = veh.part(live_part).ammo_current().str(), .amount = value});
+                });
         }
     }
 
@@ -995,14 +1106,20 @@ struct session {
             notice = applied.error();
             return false;
         }
-        const auto at = get_avatar().bub_pos() + tripoint_rel_ms(spawn_distance, 0, 0);
-        const auto* const spawned = spawn_design(*applied, at, spawning);
+        const auto spawned = place_clear(
+            tripoint_rel_ms(spawn_distance, 0, 0),
+            [&](const tripoint_bub_ms& at) -> std::expected<vehicle*, std::string> {
+                auto* const placed = spawn_design(*applied, at, spawning);
+                if (!placed) {
+                    return std::unexpected(_("Something is in the way of the vehicle there."));
+                }
+                return placed;
+            });
         if (!spawned) {
-            notice = _("Something is in the way of the vehicle there.");
+            notice = spawned.error();
             return false;
         }
-        said =
-            string_format(_("Spawned %s %d squares east of you."), spawned->name, spawn_distance);
+        said = placed_sentence(false, **spawned);
         return true;
     }
 
@@ -1161,10 +1278,10 @@ auto live_stack(const session& state) -> ec::component {
                       .value = std::to_string(
                           static_cast<int>(std::round(part.health_percent() * 100))),
                       .color = ""}};
-                 if (part.is_fuel_store(false)) {
+                 if (part.is_fuel_store(false) || part.is_turret()) {
                      columns.push_back(
                          {.key = "fuel",
-                          .label = _("Fuel"),
+                          .label = part.is_turret() ? _("Rounds") : _("Fuel"),
                           .value = std::to_string(part.ammo_remaining()),
                           .color = ""});
                  }
@@ -1195,16 +1312,16 @@ auto live_form(const session& state, const bool part_fields) -> ec::component {
              .type = "integer",
              .min = 0,
              .max = 100});
-        if (part.is_fuel_store(false)) {
+        if (part.is_fuel_store(false) || part.is_turret()) {
             fields.push_back(
                 {.id = "fuel",
-                 .label = _("Fuel"),
+                 .label = part.is_turret() ? _("Rounds") : _("Fuel"),
                  .value = std::to_string(part.ammo_remaining()),
                  .type = "integer",
                  .min = 0});
             fields.push_back(
                 {.id = "fuel_type",
-                 .label = _("Fuel type"),
+                 .label = part.is_turret() ? _("Ammunition") : _("Fuel type"),
                  .value =
                      part.ammo_current().is_null() ? std::string{} : part.ammo_current().str()});
         }
@@ -1361,12 +1478,26 @@ auto parts_view(const session& state) -> ec::screen_view {
     affordances.push_back(
         ec::invoke_affordance({.id = source_id, .label = _("Show"), .args = row_of(sources_id)}));
     if (state.source_tab == "world") {
+        const auto none =
+            vehicles.empty() ? std::string(_("No vehicle is near you.")) : std::string{};
         affordances.push_back(ec::invoke_affordance(
-            {.id = export_id, .label = _("Export design"), .args = text_of(world_id)}));
+            {.id = export_id,
+             .label = _("Export design"),
+             .args = text_of(world_id),
+             .enabled = none.empty(),
+             .denial = none}));
         affordances.push_back(ec::invoke_affordance(
-            {.id = copy_id, .label = _("Copy vehicle"), .args = row_of(world_id)}));
+            {.id = copy_id,
+             .label = _("Copy vehicle"),
+             .args = row_of(world_id),
+             .enabled = none.empty(),
+             .denial = none}));
         affordances.push_back(ec::invoke_affordance(
-            {.id = edit_id, .label = _("Edit in place"), .args = row_of(world_id)}));
+            {.id = edit_id,
+             .label = _("Edit in place"),
+             .args = row_of(world_id),
+             .enabled = none.empty(),
+             .denial = none}));
     } else {
         affordances.push_back(ec::invoke_affordance(
             {.id = open_id, .label = _("Open"), .args = row_of(prototypes_id)}));
@@ -1380,7 +1511,7 @@ auto parts_view(const session& state) -> ec::screen_view {
     affordances.push_back(ec::invoke_affordance(
         {.id = new_id,
          .label = _("New vehicle"),
-         .args = {.text = ec::text_shape{}},
+         .args = {.text = ec::text_shape{.initial = free_name("my_vehicle")}},
          .keys = {"CTRL+N"}}));
     affordances.push_back(ec::invoke_affordance(
         {.id = std::string(show_prefix) + "prototypes", .label = _("Prototypes"), .keys = {"p"}}));
@@ -1781,7 +1912,8 @@ auto parts_view(const session& state) -> ec::screen_view {
              .label = _("Redo"),
              .keys = {"CTRL+Y"},
              .enabled = !state.live_redo.empty()}));
-        affordances.push_back(ec::invoke_affordance({.id = done_id, .label = _("Done")}));
+        affordances.push_back(
+            ec::invoke_affordance({.id = done_id, .label = _("Done"), .keys = {"CTRL+D"}}));
     } else {
         const auto& doc = *state.doc;
         on("vehicle",
@@ -1821,7 +1953,8 @@ auto parts_view(const session& state) -> ec::screen_view {
         affordances.push_back(ec::invoke_affordance(
             {.id = save_as_id,
              .label = _("Save as"),
-             .args = {.text = ec::text_shape{}},
+             .args =
+                 {.text = ec::text_shape{.initial = free_name(state.prototype().value("id", ""))}},
              .keys = {"F12"}}));
     }
     return {
@@ -1928,8 +2061,10 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
         const auto& id = invoked->affordance_id;
         const auto row = invoked->args.row.value_or("");
         const auto text = invoked->args.text.value_or("");
-        state.notice.clear();
+        // A notice stays until an action changes something or brings a notice of its own.
         state.said.clear();
+        const auto before = state.footprint();
+        auto kept = std::exchange(state.notice, {});
         state.watch();
         const auto tool = std::ranges::find(canvas_tools, id, &canvas_tool::affordance);
         if (id == source_id || id == tool_id) {
@@ -1968,7 +2103,6 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
             state.part_page = static_cast<std::size_t>(invoked->args.count.value_or(0));
         } else if (!state.live && !state.doc) {
             // Nothing is open to act on.
-            continue;
         } else if (id == mount_id) {
             if (const auto at = row_point(row, "mount")) { state.click(*at); }
         } else if (id == remove_id) {
@@ -1976,7 +2110,7 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
         } else if (state.live) {
             live_invoke(state, id, row, text);
         } else if (!state.doc) {
-            continue;
+            // The vehicle edited in place left the map.
         } else if (id == pick_id) {
             if (const auto index = row_index(row, "part")) {
                 const auto design = design_parts(state.prototype());
@@ -2006,8 +2140,11 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
         } else if (id == item_page_id) {
             state.item_page = static_cast<std::size_t>(invoked->args.count.value_or(0));
         } else if (id == item_pick_id) {
-            state.add_item(std::string(
-                row_rest(row, "item").or_else([&] { return row_rest(row, "group"); }).value_or("")));
+            if (const auto item = row_rest(row, "item")) {
+                state.add_item(std::string(*item), catalog_kind::item);
+            } else if (const auto group = row_rest(row, "group")) {
+                state.add_item(std::string(*group), catalog_kind::item_group);
+            }
         } else if (id == item_remove_id || id == item_chance_id) {
             if (const auto index = row_index(row, "item")) {
                 state.edit_item(
@@ -2043,6 +2180,7 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
             state.live = nullptr;
             return true;
         }
+        if (state.notice.empty() && state.footprint() == before) { state.notice = std::move(kept); }
     }
 }
 

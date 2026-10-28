@@ -467,3 +467,48 @@ TEST_CASE("a tank's fuel is set to an amount of what it holds", "[editor_vehicle
     CHECK_FALSE(editor::set_part_fuel(*veh, tank, {.fuel = "rock", .amount = 10}).has_value());
     CHECK_FALSE(editor::set_part_fuel(*veh, 0, {.fuel = fuel, .amount = 10}).has_value());
 }
+
+TEST_CASE("a step names a reorder only when it keeps every mounted part", "[editor_vehicle]") {
+    const auto before = core_prototype("bicycle");
+    const auto label = [&](const ordered_json& after) {
+        return editor::design_step_label(
+            {.object = 0,
+             .patch = ordered_json::diff(before, after),
+             .before = before,
+             .after = after});
+    };
+    auto without_front = before;
+    without_front["parts"].erase(1);
+    CHECK(label(without_front) == "Remove 3 parts");
+    auto with_two = before;
+    with_two["parts"].push_back({{"x", 2}, {"y", 0}, {"parts", {"xlframe_vertical", "headlight"}}});
+    CHECK(label(with_two) == "Install 2 parts");
+    auto reordered = before;
+    std::swap(reordered["parts"][0]["parts"][2], reordered["parts"][0]["parts"][3]);
+    CHECK(label(reordered) == "Reorder parts at 0,0");
+    // A part traded for another is no reorder.
+    auto traded = before;
+    traded["parts"][0]["parts"][2] = "horn_car";
+    CHECK(label(traded).find("Reorder") == std::string::npos);
+}
+
+TEST_CASE("a turret is loaded with rounds it fires and emptied", "[editor_vehicle]") {
+    clear_map();
+    const auto cleanup = on_out_of_scope([] { clear_vehicles(); });
+    auto* const veh = editor::spawn_design(
+        vproto_id("armored_car"), tripoint_bub_ms(30, 30, 0), {.facing = 0, .fuel = 50});
+    REQUIRE(veh != nullptr);
+    const auto all = std::views::iota(0, veh->part_count());
+    const auto found = std::ranges::find_if(all, [&](const int index) {
+        return veh->cpart(index).is_turret();
+    });
+    REQUIRE(found != all.end());
+    const auto turret = *found;
+    REQUIRE(editor::set_part_fuel(*veh, turret, {.fuel = "556", .amount = 20}).has_value());
+    CHECK(veh->cpart(turret).ammo_current().str() == "556");
+    CHECK(veh->cpart(turret).ammo_remaining() == 20);
+    REQUIRE(editor::set_part_fuel(*veh, turret, {.fuel = "556", .amount = 0}).has_value());
+    CHECK(veh->cpart(turret).ammo_remaining() == 0);
+    // A machine gun fires no pistol rounds.
+    CHECK_FALSE(editor::set_part_fuel(*veh, turret, {.fuel = "9mm", .amount = 10}).has_value());
+}

@@ -16,6 +16,8 @@
 #    include "engine_client_component.h"
 #    include "engine_client_contract.h"
 #    include "json_formatter.h"
+#    include "locale_fixture.h"
+#    include "locale_scope.h"
 #    include "map/map.h"
 #    include "map_helpers.h"
 #    include "output.h"
@@ -405,11 +407,11 @@ TEST_CASE(
                 return invoke("vehicle:spawn");
             case 9:
                 CHECK_FALSE(ec::find_component(*screen.root, "vehicle:notice"));
-                // A second one has the first in its way.
+                // A second one goes beside the first, which is in its way.
                 return invoke("vehicle:spawn");
             case 10:
-                CHECK(body<ec::text_body>(part(screen, "vehicle:notice")).markup
-                      == "Something is in the way of the vehicle there.");
+                CHECK_FALSE(ec::find_component(*screen.root, "vehicle:notice"));
+                CHECK(get_map().get_vehicles().size() == 2);
                 return invoke("vehicle:undo");
             case 11:
                 return act("QUIT");
@@ -619,8 +621,9 @@ TEST_CASE(
                 return invoke("vehicle:paste");
             }
             case 5:
-                CHECK(body<ec::text_body>(part(screen, "vehicle:notice")).markup
-                      == "Something is in the way of the vehicle there.");
+                // The second copy goes beside the first, which is in its way.
+                CHECK_FALSE(ec::find_component(*screen.root, "vehicle:notice"));
+                CHECK(rows(screen, "vehicle:world").size() == 3);
                 return act("QUIT");
             default:
                 FAIL("the vehicle editor outlived its exit");
@@ -716,6 +719,8 @@ TEST_CASE(
                 return invoke("vehicle:redo");
             case 15:
                 CHECK(labels(screen).size() == plain.size() + 1);
+                CHECK(
+                    affordance(screen, "vehicle:done").keys == std::vector<std::string>{"CTRL+D"});
                 return invoke("vehicle:done");
             case 16:
                 CHECK(ec::find_component(*screen.root, "vehicle:live") == nullptr);
@@ -1127,7 +1132,9 @@ TEST_CASE(
                 CHECK_FALSE(ec::find_component(*screen.root, "vehicle:document"));
                 return invoke("vehicle:filter", {.text = "bicycle"});
             case 9:
-                CHECK_FALSE(ec::find_component(*screen.root, "vehicle:notice"));
+                // Filtering changes nothing, so the notice stays.
+                CHECK(notice(screen)
+                      == saved_as.string() + " changed on disk and no longer defines bicycle.");
                 return act("QUIT");
             default:
                 FAIL("the vehicle editor outlived its exit");
@@ -2085,4 +2092,354 @@ TEST_CASE("the vehicle editor says what it did to the world's vehicles", "[edito
     });
     editor::run_vehicle_editor();
     CHECK(step == 7);
+}
+
+TEST_CASE(
+    "the vehicle editor adds the item a palette row names even when a group has its id",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                return invoke("vehicle:mount", {.row = "mount:-1,0"});
+            case 2:
+                return invoke("vehicle:show:cargo");
+            case 3:
+                return invoke("vehicle:item_filter", {.text = "beer"});
+            case 4:
+                // `beer` is an item and an item group both.
+                return invoke("vehicle:item_pick", {.row = "item:beer"});
+            case 5:
+                REQUIRE(rows(screen, "vehicle:items").size() == 1);
+                CHECK(row(screen, "vehicle:items", "item:0").description.empty());
+                return invoke("vehicle:item_kind", {.row = "kind:item_group"});
+            case 6:
+                return invoke("vehicle:item_pick", {.row = "group:beer"});
+            case 7:
+                REQUIRE(rows(screen, "vehicle:items").size() == 2);
+                CHECK(row(screen, "vehicle:items", "item:1").description == "Item group");
+                return invoke("vehicle:undo");
+            case 8:
+                return invoke("vehicle:undo");
+            case 9:
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 10);
+}
+
+TEST_CASE(
+    "the vehicle editor's raw JSON removes a list entry by its index and names the step",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto last_step = [](const ec::screen_view& screen) {
+        return body<ec::list_body>(part(screen, "vehicle:history")).rows.back().label;
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                return invoke("vehicle:show:json");
+            case 2:
+                // The front wheel's mount: a frame, a wheel mount and a wheel.
+                return invoke("vehicle:field_set", {.row = "pointer", .text = "/parts/1"});
+            case 3:
+                return invoke("vehicle:field_set", {.row = "value", .text = ""});
+            case 4:
+                return invoke("vehicle:field_apply");
+            case 5:
+                CHECK(notice_of(screen).empty());
+                CHECK(stat(screen, "saved").value == "No");
+                CHECK(last_step(screen) == "Remove 3 parts");
+                return invoke("vehicle:field_set", {.row = "pointer", .text = "/parts/9"});
+            case 6:
+                return invoke("vehicle:field_set", {.row = "value", .text = ""});
+            case 7:
+                return invoke("vehicle:field_apply");
+            case 8:
+                CHECK(notice_of(screen) == "The prototype has nothing at /parts/9 to remove.");
+                return invoke("vehicle:undo");
+            case 9:
+                CHECK(stat(screen, "saved").value == "Yes");
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 10);
+}
+
+TEST_CASE(
+    "the vehicle editor keeps a refusal in view until an action changes something",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto refusal = std::string("A pointer starts with /, as /name does.");
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                return invoke("vehicle:show:json");
+            case 2:
+                return invoke("vehicle:field_set", {.row = "pointer", .text = "name"});
+            case 3:
+                return invoke("vehicle:field_apply");
+            case 4:
+                CHECK(notice_of(screen) == refusal);
+                // Looking around changes nothing.
+                return invoke("vehicle:show:mount");
+            case 5:
+                CHECK(notice_of(screen) == refusal);
+                return invoke("vehicle:mount", {.row = "mount:0,0"});
+            case 6:
+                CHECK(notice_of(screen) == refusal);
+                return invoke("vehicle:part_filter", {.text = "light"});
+            case 7:
+                CHECK(notice_of(screen) == refusal);
+                return invoke("vehicle:prop_set", {.row = "name", .text = ""});
+            case 8:
+                // A new refusal takes its place.
+                CHECK(notice_of(screen) == "A prototype keeps its name and id.");
+                return invoke("vehicle:prop_set", {.row = "name", .text = "Kept"});
+            case 9:
+                CHECK(notice_of(screen).empty());
+                return invoke("vehicle:undo");
+            case 10:
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 11);
+}
+
+TEST_CASE(
+    "the vehicle editor spawns and pastes at the nearest clear place when walls stand at the first",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    clear_map();
+    const auto cleanup_vehicles = on_out_of_scope([] { clear_vehicles(); });
+    const auto copied = std::filesystem::path(PATH_INFO::user_dir()) / "vehicle_copy.json";
+    std::filesystem::remove(copied);
+    const auto cleanup = on_out_of_scope([&] {
+        std::filesystem::remove(copied);
+        clear_map();
+    });
+    const auto here = get_avatar().bub_pos();
+    // Walls on the squares a bicycle would cover 8 east and 8 south of the avatar.
+    for (const auto& first : {tripoint_rel_ms(8, 0, 0), tripoint_rel_ms(0, 8, 0)}) {
+        for (auto dx = -2; dx <= 2; ++dx) {
+            for (auto dy = -2; dy <= 2; ++dy) {
+                get_map().ter_set(here + first + tripoint_rel_ms(dx, dy, 0), ter_id("t_wall"));
+            }
+        }
+    }
+    const auto status = [](const ec::screen_view& screen) {
+        const auto* const found = ec::find_component(*screen.root, "vehicle:status");
+        return found ? body<ec::text_body>(*found).markup : std::string{};
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:source", {.row = "source:world"});
+            case 1:
+                // Nothing near to act on: the world's actions say so.
+                CHECK_FALSE(affordance(screen, "vehicle:edit").enabled);
+                CHECK(affordance(screen, "vehicle:edit").denial == "No vehicle is near you.");
+                CHECK_FALSE(affordance(screen, "vehicle:copy").enabled);
+                CHECK_FALSE(affordance(screen, "vehicle:export").enabled);
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 2:
+                return invoke("vehicle:spawn");
+            case 3:
+                CHECK(notice_of(screen).empty());
+                CHECK(status(screen).starts_with("Spawned Bicycle "));
+                CHECK(get_map().get_vehicles().size() == 1);
+                return invoke("vehicle:source", {.row = "source:world"});
+            case 4:
+                CHECK(affordance(screen, "vehicle:edit").enabled);
+                return invoke("vehicle:copy", {.row = "world:0"});
+            case 5:
+                return invoke("vehicle:paste");
+            case 6:
+                CHECK(notice_of(screen).empty());
+                CHECK(status(screen).starts_with("Pasted Bicycle "));
+                CHECK(get_map().get_vehicles().size() == 2);
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 7);
+}
+
+TEST_CASE(
+    "the vehicle editor loads a world turret in place with the rounds it fires",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    clear_map();
+    const auto cleanup_vehicles = on_out_of_scope([] { clear_vehicles(); });
+    REQUIRE(editor::spawn_design(
+        vproto_id("armored_car"), get_avatar().bub_pos() + tripoint_rel_ms(10, 0, 0), {}));
+    const auto gun = [](const ec::screen_view& screen) {
+        const auto& stack = rows(screen, "vehicle:stack");
+        const auto found = std::ranges::find(stack, "mounted M249", &ec::row::label);
+        REQUIRE(found != stack.end());
+        return *found;
+    };
+    const auto field = [](const ec::screen_view& screen, const std::string& id) {
+        const auto& fields = body<ec::form_body>(part(screen, "vehicle:live_form")).fields;
+        const auto found = std::ranges::find(fields, id, &ec::form_field::id);
+        INFO(id);
+        REQUIRE(found != fields.end());
+        return *found;
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:source", {.row = "source:world"});
+            case 1:
+                return invoke("vehicle:edit", {.row = "world:0"});
+            case 2:
+                return invoke("vehicle:mount", {.row = "mount:-3,1"});
+            case 3:
+                return invoke("vehicle:pick", {.row = gun(screen).id});
+            case 4:
+                return invoke("vehicle:show:part");
+            case 5:
+                CHECK(field(screen, "fuel").label == "Rounds");
+                CHECK(field(screen, "fuel_type").label == "Ammunition");
+                return invoke("vehicle:live_set", {.row = "fuel_type", .text = "556"});
+            case 6:
+                CHECK(notice_of(screen).empty());
+                CHECK(field(screen, "fuel_type").value == "556");
+                return invoke("vehicle:live_set", {.row = "fuel", .text = "25"});
+            case 7:
+                CHECK(notice_of(screen).empty());
+                CHECK(field(screen, "fuel").value == "25");
+                return invoke("vehicle:show:mount");
+            case 8:
+                CHECK(gun(screen).columns.size() == 2);
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 9);
+}
+
+TEST_CASE(
+    "the vehicle editor says where it spawned and pasted in one sentence a language translates "
+    "whole",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    clear_map();
+    const auto cleanup_vehicles = on_out_of_scope([] { clear_vehicles(); });
+    const auto copied = std::filesystem::path(PATH_INFO::user_dir()) / "vehicle_copy.json";
+    std::filesystem::remove(copied);
+    const auto cleanup = on_out_of_scope([&] { std::filesystem::remove(copied); });
+    const auto fixture = locale_fixture::korean_catalogue{
+        {{locale_fixture::plural(
+              "Spawned %1$s %2$d square %3$s of you.", "Spawned %1$s %2$d squares %3$s of you."),
+          locale_fixture::plural("S1 %3$s %2$d %1$s", "SN %3$s %2$d %1$s")},
+         {locale_fixture::plural(
+              "Pasted %1$s %2$d square %3$s of you.", "Pasted %1$s %2$d squares %3$s of you."),
+          locale_fixture::plural("P1 %3$s %2$d %1$s", "PN %3$s %2$d %1$s")}}};
+    const auto status = [](const ec::screen_view& screen) {
+        const auto* const found = ec::find_component(*screen.root, "vehicle:status");
+        return found ? body<ec::text_body>(*found).markup : std::string{};
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                return invoke("vehicle:spawn");
+            case 2:
+                CHECK(status(screen).starts_with("SN "));
+                CHECK(status(screen).ends_with(" 8 Bicycle"));
+                return invoke("vehicle:source", {.row = "source:world"});
+            case 3:
+                return invoke("vehicle:copy", {.row = "world:0"});
+            case 4:
+                return invoke("vehicle:paste");
+            case 5:
+                CHECK(status(screen).starts_with("PN "));
+                CHECK(status(screen).ends_with(" 8 Bicycle"));
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    {
+        const auto scope = localization::locale_scope{locale_fixture::korean};
+        editor::run_vehicle_editor();
+    }
+    CHECK(step == 6);
+}
+
+TEST_CASE(
+    "the vehicle editor fills in a free file name of the user's mods for New vehicle and Save as",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto mods = std::filesystem::path(PATH_INFO::user_moddir());
+    std::filesystem::create_directories(mods);
+    std::filesystem::remove(mods / "my_vehicle.json");
+    std::filesystem::remove(mods / "my_vehicle_2.json");
+    std::filesystem::remove(mods / "bicycle.json");
+    // A file the name would take already exists.
+    std::ofstream(mods / "my_vehicle.json") << "[]";
+    const auto cleanup = on_out_of_scope([&] {
+        std::filesystem::remove(mods / "my_vehicle.json");
+    });
+    const auto initial = [](const ec::screen_view& screen, const std::string& id) {
+        const auto& text = affordance(screen, id).args.text;
+        REQUIRE(text.has_value());
+        return text->initial;
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                CHECK(initial(screen, "vehicle:new") == "my_vehicle_2");
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                CHECK(initial(screen, "vehicle:save_as") == "bicycle");
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 2);
 }

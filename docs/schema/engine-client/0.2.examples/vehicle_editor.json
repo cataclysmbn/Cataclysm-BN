@@ -206,7 +206,9 @@
             ],
             "enabled": true,
             "args": {
-              "text": {}
+              "text": {
+                "default": "my_vehicle"
+              }
             },
             "expect": "boundary",
             "group": "File"
@@ -1354,7 +1356,9 @@
             ],
             "enabled": true,
             "args": {
-              "text": {}
+              "text": {
+                "default": "my_vehicle"
+              }
             },
             "expect": "boundary",
             "group": "File"
@@ -1378,7 +1382,9 @@
             ],
             "enabled": true,
             "args": {
-              "text": {}
+              "text": {
+                "default": "bicycle"
+              }
             },
             "expect": "boundary",
             "group": "File"
@@ -2977,7 +2983,9 @@
             ],
             "enabled": true,
             "args": {
-              "text": {}
+              "text": {
+                "default": "my_vehicle"
+              }
             },
             "expect": "boundary",
             "group": "File"
@@ -3106,7 +3114,9 @@
           {
             "id": "vehicle:done",
             "label": "Done",
-            "keys": [],
+            "keys": [
+              "CTRL+D"
+            ],
             "enabled": true,
             "expect": "screen",
             "group": "World"

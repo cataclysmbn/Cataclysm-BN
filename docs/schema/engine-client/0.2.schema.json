@@ -5725,11 +5725,14 @@
           "properties": {
             "field_id": {
               "$ref": "#/$defs/opaque_id"
+            },
+            "default": {
+              "type": "string"
             }
           },
           "required": [],
           "additionalProperties": false,
-          "description": "A string for that form field. Without `field_id` the field is the one `row` names."
+          "description": "A string for that form field. Without `field_id` the field is the one `row` names. `default` is the text a client puts in the box when it asks for one, which the player may change."
         },
         "pos": {
           "type": "object",
