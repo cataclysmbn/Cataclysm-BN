@@ -303,7 +303,8 @@ struct session {
     /// The prototype's object in `doc`.
     std::size_t object = 0;
     std::string notice;
-    /// What the last action did to the world, when it did something the editor does not show.
+    /// What the last action did, when it did something the editor does not show by itself: to
+    /// the world, or a part installed or removed.
     std::string said;
     /// What the items palette lists: items or item groups, those that match the filter, and the
     /// page shown.
@@ -488,31 +489,32 @@ struct session {
         notice = changed_on_disk_notice(*doc);
     }
 
-    /// Replaces the prototype by `next` as one undo step.
-    auto change(const std::expected<nlohmann::ordered_json, std::string>& next) -> void {
+    /// Replaces the prototype by `next` as one undo step; whether it did.
+    auto change(const std::expected<nlohmann::ordered_json, std::string>& next) -> bool {
         if (!next) {
             notice = next.error();
-            return;
+            return false;
         }
         const auto edited = doc->edit(object, nlohmann::ordered_json::diff(prototype(), *next));
         if (!edited) { notice = edited.error(); }
         reload();
+        return edited.has_value();
     }
 
-    auto install(const std::string& part) -> void {
+    auto install(const std::string& part) -> bool {
         if (!built.blueprint) {
             notice = _("The game cannot build this prototype; fix what it reports first.");
-            return;
+            return false;
         }
-        change(install_part(prototype(), *built.blueprint, {.mount = cursor, .part = part}));
+        return change(install_part(prototype(), *built.blueprint, {.mount = cursor, .part = part}));
     }
 
-    auto remove(const std::size_t index) -> void {
+    auto remove(const std::size_t index) -> bool {
         if (!built.blueprint) {
             notice = _("The game cannot build this prototype; fix what it reports first.");
-            return;
+            return false;
         }
-        change(remove_part(prototype(), *built.blueprint, index));
+        return change(remove_part(prototype(), *built.blueprint, index));
     }
 
     /// The indexes in `design_parts` of the prototype's parts on the picked mount, in the order
@@ -589,17 +591,16 @@ struct session {
     }
 
     auto remove_picked() -> void {
-        if (live) {
-            if (std::ranges::contains(live_here(), live_part)) {
-                live_change(at_mount(_("Remove %s at %d,%d"), live->cpart(live_part).info().name()),
-                            [&](vehicle& veh) { return remove_live_part(veh, live_part); });
-            } else {
-                notice = _("This mount has no part to remove.");
-            }
-        } else if (const auto index = picked_here()) {
-            remove(*index);
-        } else {
-            notice = _("This mount has no part to remove.");
+        const auto name = picked_name();
+        const auto removed =
+            !name  ? false
+            : live ? live_change(at_mount(_("Remove %s at %d,%d"), *name),
+                                 [&](vehicle& veh) { return remove_live_part(veh, live_part); })
+                   : remove(*picked_here());
+        if (!name) { notice = _("This mount has no part to remove."); }
+        if (removed) {
+            //~ What the vehicle editor did: the part's name and the mount it was on.
+            said = at_mount(_("Removed %s at %d,%d."), *name);
         }
         if (notice.empty()) { pick_top(); }
     }
@@ -636,13 +637,17 @@ struct session {
         }
         if (canvas_tool == "install" && brush.empty()) {
             notice = _("Choose a part from the Parts palette first.");
-        } else if (canvas_tool == "install" && live) {
-            live_change(at_mount(_("Install %s at %d,%d"), part_name(brush)), [&](vehicle& veh) {
-                return install_live_part(veh, {.mount = cursor, .part = brush})
-                    .transform([](const int /*index*/) {});
-            });
-        } else if (canvas_tool == "install") {
-            install(brush);
+        } else if (
+            canvas_tool == "install"
+            && (live ? live_change(
+                           at_mount(_("Install %s at %d,%d"), part_name(brush)),
+                           [&](vehicle& veh) {
+                               return install_live_part(veh, {.mount = cursor, .part = brush})
+                                   .transform([](const int /*index*/) {});
+                           })
+                     : install(brush))) {
+            //~ What the vehicle editor did: the part's name and the mount it is on.
+            said = at_mount(_("Installed %s at %d,%d."), part_name(brush));
         }
         pick_top();
     }
@@ -999,17 +1004,19 @@ struct session {
         }
     }
 
-    /// Runs `edit` on the vehicle edited in place as one undo step, which `label` names.
+    /// Runs `edit` on the vehicle edited in place as one undo step, which `label` names; whether
+    /// it did.
     auto live_change(
         const std::string& label,
-        const std::function<auto(vehicle&)->std::expected<void, std::string>>& edit) -> void {
+        const std::function<auto(vehicle&)->std::expected<void, std::string>>& edit) -> bool {
         auto before = vehicle_state(*live);
         if (const auto done = edit(*live); !done) {
             notice = done.error();
-            return;
+            return false;
         }
         live_undo.push_back({.state = std::move(before), .label = label});
         live_redo.clear();
+        return true;
     }
 
     /// Puts the vehicle edited in place back to the last state of `from`, keeping the current one

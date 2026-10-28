@@ -372,9 +372,12 @@ auto refused_mount(const vehicle& veh, const point& at, const vpart_id& id)
             return candidate.has_flag(needed) && !candidate.has_flag("NOINSTALL");
         });
         return example == all.end()
-                 ? string_format(_("%1$s needs a part with %2$s on this mount."), name, needed)
+                 ? string_format(
+                       _("%1$s needs a part with %2$s on this mount: install one here first."),
+                       name, needed)
                  : string_format(
-                       _("%1$s needs a part such as %2$s on this mount."), name, example->name());
+                       _("%1$s needs a part such as %2$s on this mount: install one here first."),
+                       name, example->name());
     }
     // The first part on the mount that `has` takes, by name.
     const auto with_flag = [&](const auto& has) -> std::optional<std::string> {
