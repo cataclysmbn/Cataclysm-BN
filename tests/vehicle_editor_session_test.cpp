@@ -405,11 +405,11 @@ TEST_CASE(
                 return invoke("vehicle:spawn");
             case 9:
                 CHECK_FALSE(ec::find_component(*screen.root, "vehicle:notice"));
-                // A second one has the first in its way.
+                // A second one goes beside the first, which is in its way.
                 return invoke("vehicle:spawn");
             case 10:
-                CHECK(body<ec::text_body>(part(screen, "vehicle:notice")).markup
-                      == "Something is in the way of the vehicle there.");
+                CHECK_FALSE(ec::find_component(*screen.root, "vehicle:notice"));
+                CHECK(get_map().get_vehicles().size() == 2);
                 return invoke("vehicle:undo");
             case 11:
                 return act("QUIT");
@@ -619,8 +619,9 @@ TEST_CASE(
                 return invoke("vehicle:paste");
             }
             case 5:
-                CHECK(body<ec::text_body>(part(screen, "vehicle:notice")).markup
-                      == "Something is in the way of the vehicle there.");
+                // The second copy goes beside the first, which is in its way.
+                CHECK_FALSE(ec::find_component(*screen.root, "vehicle:notice"));
+                CHECK(rows(screen, "vehicle:world").size() == 3);
                 return act("QUIT");
             default:
                 FAIL("the vehicle editor outlived its exit");

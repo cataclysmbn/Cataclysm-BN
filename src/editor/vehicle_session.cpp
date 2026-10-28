@@ -32,6 +32,7 @@
 #include "vehicle/veh_type.h"
 #include "vehicle/vehicle.h"
 #include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
 
 #include <algorithm>
 #include <array>
@@ -119,6 +120,8 @@ constexpr auto item_pick_id = "vehicle:item_pick";
 
 /// How far east of the avatar a spawned vehicle stands, clear of it.
 constexpr auto spawn_distance = 8;
+/// How far around the square a vehicle goes to first it looks for room.
+constexpr auto spawn_search = 6;
 /// How many free mounts the grid shows around the vehicle when it is first drawn or has to grow.
 constexpr auto grid_margin = 2;
 
@@ -203,6 +206,53 @@ auto in_mods(const std::string& name) -> std::filesystem::path {
     }
     if (!path.has_extension()) { path += ".json"; }
     return path;
+}
+
+/// The squares at least `spawn_distance` from the avatar around the one `toward` it, nearest that
+/// one first.
+auto spawn_spots(const tripoint_rel_ms& toward) -> std::vector<tripoint_bub_ms> {
+    const auto here = get_avatar().bub_pos();
+    const auto first = here + toward;
+    auto spots = std::vector<tripoint_bub_ms>{};
+    for (auto dy = -spawn_search; dy <= spawn_search; ++dy) {
+        for (auto dx = -spawn_search; dx <= spawn_search; ++dx) {
+            const auto at = first + tripoint_rel_ms(dx, dy, 0);
+            if (square_dist(at.raw(), here.raw()) >= spawn_distance) { spots.push_back(at); }
+        }
+    }
+    std::ranges::stable_sort(spots, {}, [&](const tripoint_bub_ms& at) {
+        return rl_dist(at.raw(), first.raw());
+    });
+    return spots;
+}
+
+/// Places a vehicle by `place` on the first of `spawn_spots(toward)` where it fits clear of the
+/// avatar; none where it fits nowhere, or the error of `place` other than that.
+auto place_clear(
+    const tripoint_rel_ms& toward,
+    const std::function<auto(const tripoint_bub_ms&)->std::expected<vehicle*, std::string>>& place)
+    -> std::expected<vehicle*, std::string> {
+    const auto in_the_way = std::string(_("Something is in the way of the vehicle there."));
+    const auto avatar_at = get_avatar().bub_pos();
+    for (const auto& at : spawn_spots(toward)) {
+        const auto placed = place(at);
+        if (!placed && placed.error() != in_the_way) { return placed; }
+        if (!placed) { continue; }
+        if (veh_pointer_or_null(get_map().veh_at(avatar_at)) == *placed) {
+            get_map().destroy_vehicle(*placed);
+            continue;
+        }
+        return placed;
+    }
+    return std::unexpected(_("There is no room for the vehicle near you."));
+}
+
+/// Where `veh` stands from the avatar, as "8 squares east".
+auto from_avatar(const vehicle& veh) -> std::string {
+    const auto here = get_avatar().bub_pos().xy().raw();
+    const auto at = veh.bub_ms_location().xy().raw();
+    return string_format(
+        _("%d squares %s"), rl_dist(here, at), direction_name(direction_from(here, at)));
 }
 
 auto copied_vehicle_file() -> std::filesystem::path {
@@ -820,12 +870,14 @@ struct session {
             return;
         }
         const auto state = std::string(std::istreambuf_iterator<char>(in), {});
-        const auto at = get_avatar().bub_pos() + tripoint_rel_ms(0, spawn_distance, 0);
-        if (const auto placed = place_vehicle_state(state, at); !placed) {
+        const auto placed =
+            place_clear(tripoint_rel_ms(0, spawn_distance, 0), [&](const tripoint_bub_ms& at) {
+                return place_vehicle_state(state, at);
+            });
+        if (!placed) {
             notice = placed.error();
         } else {
-            said = string_format(
-                _("Pasted %s %d squares south of you."), (*placed)->name, spawn_distance);
+            said = string_format(_("Pasted %s %s of you."), (*placed)->name, from_avatar(**placed));
         }
     }
 
@@ -1034,14 +1086,20 @@ struct session {
             notice = applied.error();
             return false;
         }
-        const auto at = get_avatar().bub_pos() + tripoint_rel_ms(spawn_distance, 0, 0);
-        const auto* const spawned = spawn_design(*applied, at, spawning);
+        const auto spawned = place_clear(
+            tripoint_rel_ms(spawn_distance, 0, 0),
+            [&](const tripoint_bub_ms& at) -> std::expected<vehicle*, std::string> {
+                auto* const placed = spawn_design(*applied, at, spawning);
+                if (!placed) {
+                    return std::unexpected(_("Something is in the way of the vehicle there."));
+                }
+                return placed;
+            });
         if (!spawned) {
-            notice = _("Something is in the way of the vehicle there.");
+            notice = spawned.error();
             return false;
         }
-        said =
-            string_format(_("Spawned %s %d squares east of you."), spawned->name, spawn_distance);
+        said = string_format(_("Spawned %s %s of you."), (*spawned)->name, from_avatar(**spawned));
         return true;
     }
 
@@ -1400,12 +1458,26 @@ auto parts_view(const session& state) -> ec::screen_view {
     affordances.push_back(
         ec::invoke_affordance({.id = source_id, .label = _("Show"), .args = row_of(sources_id)}));
     if (state.source_tab == "world") {
+        const auto none =
+            vehicles.empty() ? std::string(_("No vehicle is near you.")) : std::string{};
         affordances.push_back(ec::invoke_affordance(
-            {.id = export_id, .label = _("Export design"), .args = text_of(world_id)}));
+            {.id = export_id,
+             .label = _("Export design"),
+             .args = text_of(world_id),
+             .enabled = none.empty(),
+             .denial = none}));
         affordances.push_back(ec::invoke_affordance(
-            {.id = copy_id, .label = _("Copy vehicle"), .args = row_of(world_id)}));
+            {.id = copy_id,
+             .label = _("Copy vehicle"),
+             .args = row_of(world_id),
+             .enabled = none.empty(),
+             .denial = none}));
         affordances.push_back(ec::invoke_affordance(
-            {.id = edit_id, .label = _("Edit in place"), .args = row_of(world_id)}));
+            {.id = edit_id,
+             .label = _("Edit in place"),
+             .args = row_of(world_id),
+             .enabled = none.empty(),
+             .denial = none}));
     } else {
         affordances.push_back(ec::invoke_affordance(
             {.id = open_id, .label = _("Open"), .args = row_of(prototypes_id)}));
