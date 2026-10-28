@@ -2808,6 +2808,18 @@ TEST_CASE(
                 // Outside the editor's own world, testing needs a stamp: it never writes over the
                 // player's map unasked.
                 CHECK_FALSE(affordance(screen, "editor:test").enabled);
+                // What is off says why.
+                CHECK(affordance(screen, "editor:test").denial
+                      == "Stamp the entry first: Test plays what was stamped.");
+                CHECK(affordance(screen, "editor:unstamp").denial == "Nothing is stamped.");
+                CHECK(affordance(screen, "editor:copy").denial
+                      == "Mark squares with the Select tool first.");
+                CHECK(affordance(screen, "editor:cut").denial
+                      == "Mark squares with the Select tool first.");
+                for (const auto* const id : {"editor:rotate", "editor:flip_x", "editor:flip_y"}) {
+                    INFO(id);
+                    CHECK(affordance(screen, id).denial == "Copy or cut squares first.");
+                }
                 CHECK_FALSE(stamped(screen));
                 return invoke("editor:paint", {.row = "square:2,3"});
             case 2:
@@ -5274,6 +5286,8 @@ TEST_CASE(
                 return invoke("editor:open", {.text = file.path.string()});
             case 1:
                 CHECK_FALSE(affordance(screen, "editor:test").enabled);
+                CHECK(affordance(screen, "editor:test").denial
+                      == "Place the special in the world first.");
                 CHECK(affordance(screen, "editor:place_special").keys
                       == std::vector<std::string>{"F6"});
                 CHECK(affordance(screen, "editor:test").keys == std::vector<std::string>{"F5"});
