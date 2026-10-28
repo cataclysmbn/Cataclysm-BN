@@ -60,7 +60,7 @@ title: 엔진/클라이언트 프로토콜 0.2
 - `screen`: `{screen_id}`. 그 화면이 맨 위인 동안만 유효하며, 아니면 `stale_screen`으로 거부된다. 엔진은 명령이 실행 중일 때 이런 제출을 최대 8개(hello 결과의 `limits.screen_queue`) 대기시키고 차례가 되면 각각 검증한다. 키를 누르고 있어도 계속 움직이고, 이미 닫힌 팝업을 향한 키는 거부된다.
 - `boundary`: `{boundary_id, revision}`, 기존과 같다. 명령이 실행 중이면 `command_busy`로 실패한다.
 
-affordance와 맞지 않는 형식은 `invalid_arguments`다.
+affordance와 맞지 않는 형식은 `invalid_arguments`다. affordance의 `args.text`에는 `default`가 있을 수 있으며, 클라이언트가 입력란을 띄울 때 미리 넣고 플레이어가 고칠 수 있는 텍스트다. 차량 에디터가 New vehicle과 Save as에 제안하는 비어 있는 파일 이름이 그 예다.
 
 꺼져 있지만 고를 수 있는 affordance, 행, 탭, 격자 칸에는 항상 `denial`이 있다. 화면이 준 이유를 플레이어의 언어로 담고, 없으면 지금은 쓸 수 없다는 말을 담는다. 클라이언트는 이것을 이유로 보여 주고 자기 말을 덧붙이지 않는다.
 

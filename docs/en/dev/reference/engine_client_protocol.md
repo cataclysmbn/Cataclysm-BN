@@ -60,7 +60,7 @@ Every interaction boundary (snapshot header and events) carries `stack`, next to
 - `screen`: `{screen_id}`, valid while that screen is on top, else the command is rejected with `stale_screen`. The engine keeps up to 8 of these waiting (`limits.screen_queue` in the hello result) while a command runs and validates each when it takes its turn, so a held key keeps moving and keys aimed at a popup that has closed are rejected.
 - `boundary`: `{boundary_id, revision}`, as before. While a command runs the submit fails with `command_busy`.
 
-A form that does not match the affordance is `invalid_arguments`.
+A form that does not match the affordance is `invalid_arguments`. An affordance's `args.text` may carry `default`, the text a client puts in the box when it asks for one and the player may change, such as the free file name the vehicle editor suggests for New vehicle and Save as.
 
 An affordance, row, tab or grid cell that is off and can be picked always carries a `denial`: the screen's reason in the player's language, else that it is not available now. A client shows it as the reason and adds none of its own.
 

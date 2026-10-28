@@ -60,7 +60,7 @@ title: エンジン/クライアントプロトコル 0.2
 - `screen`: `{screen_id}`。その画面が最上位の間だけ有効で、そうでなければ `stale_screen` で拒否される。エンジンはコマンドの実行中、この種の送信を最大 8 件(hello 結果の `limits.screen_queue`)待たせ、順番が来たときに個別に検証する。キーを押し続けても動き続け、閉じたポップアップ宛てのキーは拒否される。
 - `boundary`: `{boundary_id, revision}`。従来どおり。コマンドの実行中は `command_busy` で失敗する。
 
-affordance に合わない形式は `invalid_arguments` である。
+affordance に合わない形式は `invalid_arguments` である。affordance の `args.text` は `default` を持つことがあり、クライアントが入力欄を出すときにあらかじめ入れ、プレイヤーが変えられるテキストである。車両エディタが New vehicle と Save as に提案する空いたファイル名がその例である。
 
 オフだが選べる affordance、行、タブ、グリッドのセルには必ず `denial` がある。画面が示した理由をプレイヤーの言語で持ち、なければ今は使えないことを示す。クライアントはこれを理由として表示し、独自の言葉を足さない。
 
