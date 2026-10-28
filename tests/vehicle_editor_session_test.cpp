@@ -3344,4 +3344,66 @@ TEST_CASE(
     CHECK(step >= 5);
 }
 
+TEST_CASE(
+    "the vehicle editor starts a new vehicle by its name with a frame and the frame in hand",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto folder = std::filesystem::path(PATH_INFO::user_moddir()) / "my_mod";
+    std::filesystem::remove_all(folder);
+    const auto cleanup = on_out_of_scope([&] { std::filesystem::remove_all(folder); });
+    const auto status = [](const ec::screen_view& screen) {
+        const auto* const found = ec::find_component(*screen.root, "vehicle:status");
+        return found ? body<ec::text_body>(*found).markup : std::string{};
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0: {
+                // New asks for a name, not a file.
+                const auto& text = affordance(screen, "vehicle:new").args.text;
+                REQUIRE(text.has_value());
+                CHECK(text->initial == "My vehicle");
+                return invoke("vehicle:new", {.text = "Go kart"});
+            }
+            case 1:
+                CHECK(body<ec::panel_body>(part(screen, "vehicle:document")).title == "Go kart");
+                CHECK(stat(screen, "file").value.ends_with("my_mod/go_kart.json"));
+                // A frame to build on, the install tool and a frame in hand, and what to do.
+                CHECK(rows(screen, "vehicle:stack").size() == 1);
+                CHECK(cell(screen, "mount:0,0").label == "frame");
+                CHECK(picked_tool(screen) == "canvas_tool:install");
+                CHECK(row(screen, "vehicle:parts", "vpart:frame_vertical").selected);
+                CHECK(status(screen)
+                      == "Pick a part on the left, then click a square next to "
+                         "the frame.");
+                return invoke("vehicle:mount", {.row = "mount:1,0"});
+            case 2:
+                CHECK(status(screen) == "Installed frame at 1,0.");
+                return invoke("vehicle:save");
+            case 3:
+                // A name the game's own vehicle has gets an id of its own.
+                return invoke("vehicle:new", {.text = "Bicycle"});
+            case 4:
+                CHECK(stat(screen, "file").value.ends_with("my_mod/bicycle_2.json"));
+                return invoke("vehicle:save");
+            case 5:
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 6);
+    const auto saved = nlohmann::ordered_json::parse(read_file(folder / "go_kart.json"));
+    REQUIRE(saved.size() == 1);
+    CHECK(saved[0]["id"] == "go_kart");
+    CHECK(saved[0]["name"] == "Go kart");
+    CHECK(editor::design_parts(saved[0]).size() == 2);
+    const auto second = nlohmann::ordered_json::parse(read_file(folder / "bicycle_2.json"));
+    CHECK(second[0]["id"] == "bicycle_2");
+    CHECK(second[0]["name"] == "Bicycle");
+}
+
 #endif // CATA_MCP
