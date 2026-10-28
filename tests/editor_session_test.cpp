@@ -5845,7 +5845,9 @@ struct kinds_file {
               {"method", "json"},
               {"nested_mapgen_id", "editor_test_chunk"},
               {"object",
-               {{"mapgensize", {4, 4}}, {"rows", rows(4)}, {"terrain", {{".", "t_floor"}}}}}},
+               {{"mapgensize", {4, 4}},
+                {"rows", rows(4)},
+                {"terrain", {{".", "t_floor"}, {"#", "t_wall"}}}}}},
              {{"type", "mapgen"},
               {"method", "json"},
               {"update_mapgen_id", "editor_test_chunk"},
@@ -5946,6 +5948,62 @@ TEST_CASE(
     });
     editor::run_editor_session();
     CHECK(step == 2);
+    editor::reset_editor_session();
+}
+
+TEST_CASE(
+    "the editor's undo and redo show the entry they changed and say what they did",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = kinds_file{};
+    auto step = 0;
+    const auto selected = [](const ec::screen_view& screen) {
+        const auto& rows = body<ec::list_body>(part(screen, "editor:objects")).rows;
+        const auto found = std::ranges::find_if(rows, &ec::row::selected);
+        return found == rows.end() ? std::string() : found->id;
+    };
+    const auto status = [](const ec::screen_view& screen) {
+        const auto* const found = ec::find_component(*screen.root, "editor:status");
+        return found ? body<ec::text_body>(*found).markup : std::string();
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                return invoke("editor:object", {.row = "object:1"});
+            case 2:
+                return invoke("editor:symbol", {.row = "symbol:#"});
+            case 3:
+                return invoke("editor:paint", {.row = "square:1,1"});
+            case 4:
+                CHECK(affordance(screen, "editor:undo").enabled);
+                return invoke("editor:object", {.row = "object:0"});
+            case 5:
+                return invoke("editor:undo");
+            case 6:
+                // The chunk painted is shown again, so the player sees what came back.
+                CHECK(selected(screen) == "object:1");
+                CHECK(status(screen).starts_with("Undid: "));
+                return invoke("editor:object", {.row = "object:0"});
+            case 7:
+                return invoke("editor:redo");
+            case 8:
+                CHECK(selected(screen) == "object:1");
+                CHECK(status(screen).starts_with("Redid: "));
+                // Undone again, so that leaving asks nothing.
+                return invoke("editor:undo");
+            case 9:
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 10);
     editor::reset_editor_session();
 }
 
