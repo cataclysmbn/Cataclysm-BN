@@ -3,6 +3,7 @@
 #include "calendar.h"
 #include "debug_log_capture.h"
 #include "editor/history_label.h"
+#include "editor/mapgen_check.h"
 #include "editor/recent_documents.h"
 #include "engine_client_vehicle_look.h"
 #include "flag.h"
@@ -214,7 +215,7 @@ auto place_vehicle_state(const std::string& state, const tripoint_bub_ms& at)
         deserialize(*copy, saved.dump());
     } catch (const JsonError& error) {
         here.destroy_vehicle(copy);
-        return std::unexpected(std::string(error.what()));
+        return std::unexpected(plain_loader_text(error.what()));
     }
     const auto blocked = std::ranges::any_of(copy->get_all_parts(), [&](const auto& part) {
         return !here.inbounds(part.pos()) || here.impassable(part.pos())
