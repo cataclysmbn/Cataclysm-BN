@@ -117,6 +117,8 @@ inline constexpr auto unstamp_id = "editor:unstamp";
 inline constexpr auto test_id = "editor:test";
 inline constexpr auto place_special_id = "editor:place_special";
 inline constexpr auto max_brush = 9;
+/// The widest side a new nested chunk can have.
+inline constexpr auto max_chunk = 24;
 /// The most overmap squares an export spans each way: what the loaded map holds around the avatar.
 inline constexpr auto max_export = 3;
 /// The most turns the editor lets pass at once: an hour.

@@ -10,6 +10,7 @@ auto lay_out(engine_client::screen_view& view, const workspace_layout& layout) -
             const auto found = layout.slots.find(part.id);
             if (found == layout.slots.end()) { continue; }
             part.slot = found->second.slot;
+            part.collapsed = found->second.collapsed;
             if (part.label.empty()) { part.label = found->second.label; }
         }
     }

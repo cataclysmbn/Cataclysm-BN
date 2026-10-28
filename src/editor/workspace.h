@@ -15,6 +15,8 @@ struct workspace_part {
     std::string slot;
     /// The heading of a part that has none of its own, localized; empty for none.
     std::string label = {};
+    /// The part starts folded to its heading.
+    bool collapsed = false;
 };
 struct workspace_layout {
     std::map<std::string, workspace_part, std::less<>> slots;
