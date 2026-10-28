@@ -3,6 +3,7 @@
 #include "calendar.h"
 #include "debug_log_capture.h"
 #include "editor/recent_documents.h"
+#include "flag.h"
 #include "fstream_utils.h"
 #include "item.h"
 #include "itype.h"
@@ -11,6 +12,7 @@
 #include "mod_manager.h"
 #include "output.h"
 #include "string_formatter.h"
+#include "string_utils.h"
 #include "translations.h"
 #include "units_utility.h"
 #include "vehicle/veh_prototype_build.h"
@@ -21,6 +23,7 @@
 #include "vehicle/vpart_range.h"
 
 #include <algorithm>
+#include <array>
 #include <fstream>
 #include <ranges>
 #include <sstream>
@@ -230,6 +233,91 @@ auto restore_vehicle_state(vehicle& veh, const std::string& state)
     return place_vehicle_state(state, at);
 }
 
+namespace {
+/// Why the game would not mount the part, as the first rule `vehicle::can_mount` checks that it
+/// breaks reads; none when it would mount it.
+auto refused_mount(const vehicle& veh, const point& at, const vpart_id& id)
+    -> std::optional<std::string> {
+    const auto mount = tripoint_mnt_veh(at.x, at.y, 0);
+    if (veh.can_mount(mount, id)) { return std::nullopt; }
+    if (!id.is_valid()) { return string_format(_("%s is no vehicle part."), id.str()); }
+    const auto& part = *id;
+    const auto name = part.name();
+    const auto here = veh.parts_at_relative(mount, false);
+    const auto info = [&](const int index) -> const vpart_info& { return veh.part_info(index); };
+    const auto structural = [&](const point& square) {
+        return std::ranges::any_of(
+            veh.parts_at_relative(tripoint_mnt_veh(square.x, square.y, 0), false),
+            [&](const int index) {
+                return info(index).location == "structure" || info(index).has_flag("EXTENDABLE");
+            });
+    };
+    if (part.has_flag("NOINSTALL")) { return string_format(_("%s cannot be installed."), name); }
+    if (part.has_flag("EXTENDABLE") && !here.empty()) {
+        return string_format(_("%s needs an empty mount of its own."), name);
+    }
+    if (here.empty() && part.location != "structure" && !part.has_flag("EXTENDABLE")) {
+        return string_format(_("%s goes on a frame: install a frame here first."), name);
+    }
+    if (!here.empty()) {
+        const auto& base = info(here.front());
+        if (std::ranges::any_of(std::array{"ANIMAL_CTRL", "PROTRUSION", "NOCOLLIDE", "EXTENDABLE"},
+                                [&](const char* const flag) { return base.has_flag(flag); })) {
+            return string_format(_("%s fills this mount: nothing else goes on it."), base.name());
+        }
+    }
+    for (const auto index : here) {
+        const auto& other = info(index);
+        if (other.get_id() == id) { return string_format(_("This mount already has %s."), name); }
+        if (!part.location.empty() && part.location == other.location) {
+            return string_format(
+                _("%1$s goes where %2$s already is on this mount."), name, other.name());
+        }
+        if (part.has_flag("CARGO") && other.has_flag("CARGO")) {
+            return string_format(_("This mount already holds cargo in %s."), other.name());
+        }
+    }
+    if (veh.part_count() > 0
+        && std::ranges::none_of(
+            std::array{point_zero, point_east, point_south, point_west, point_north},
+            [&](const point& step) { return structural(at + step); })) {
+        return string_format(_("%s must touch the vehicle's frame."), name);
+    }
+    if (auto conflict = std::string{}; veh.has_engine_conflict(&part, conflict)) {
+        return string_format(
+            _("%1$s cannot go with the vehicle's other %2$s engine."), name, conflict);
+    }
+    for (const auto& flag : part.get_flags()) {
+        const auto needed = json_flag::get(flag).requires_flag();
+        if (needed.empty() || std::ranges::any_of(here, [&](const int index) {
+                return info(index).has_flag(needed);
+            })) {
+            continue;
+        }
+        // A part that has the flag, by name, for a designer who does not know the flag.
+        const auto& all = vpart_info::get_all();
+        const auto example = std::ranges::find_if(all, [&](const vpart_info& candidate) {
+            return candidate.has_flag(needed) && !candidate.has_flag("NOINSTALL");
+        });
+        return example == all.end()
+                 ? string_format(_("%1$s needs a part with %2$s on this mount."), name, needed)
+                 : string_format(
+                       _("%1$s needs a part such as %2$s on this mount."), name, example->name());
+    }
+    const auto names =
+        here | std::views::transform([&](const int index) { return info(index).name(); })
+        | std::ranges::to<std::vector>();
+    return string_format(_("%1$s cannot share this mount with %2$s."), name, join(names, ", "));
+}
+} // namespace
+
+auto mount_refusal(const vehicle& veh, const point& at, const vpart_id& id)
+    -> std::optional<std::string> {
+    return refused_mount(veh, at, id).transform([](std::string text) {
+        return capitalize_letter(text);
+    });
+}
+
 auto install_live_part(vehicle& veh, const part_install& install)
     -> std::expected<int, std::string> {
     const auto id = vpart_id(install.part);
@@ -237,9 +325,8 @@ auto install_live_part(vehicle& veh, const part_install& install)
         return std::unexpected(string_format(_("%s is no vehicle part."), install.part));
     }
     const auto mount = tripoint_mnt_veh(install.mount.x, install.mount.y, 0);
-    if (!veh.can_mount(mount, id)) {
-        return std::unexpected(string_format(
-            _("%s cannot be mounted at %d,%d."), id->name(), install.mount.x, install.mount.y));
+    if (auto refused = mount_refusal(veh, install.mount, id)) {
+        return std::unexpected(std::move(*refused));
     }
     const auto index = veh.install_part(mount, id);
     if (index < 0) {
@@ -319,9 +406,8 @@ auto install_part(
     if (!id.is_valid()) {
         return std::unexpected(string_format(_("%s is no vehicle part."), install.part));
     }
-    if (!blueprint.can_mount(tripoint_mnt_veh(install.mount.x, install.mount.y, 0), id)) {
-        return std::unexpected(string_format(
-            _("%s cannot be mounted at %d,%d."), id->name(), install.mount.x, install.mount.y));
+    if (auto refused = mount_refusal(blueprint, install.mount, id)) {
+        return std::unexpected(std::move(*refused));
     }
     auto next = prototype;
     auto& parts = next["parts"];

@@ -149,12 +149,11 @@ auto stat(const ec::screen_view& screen, const std::string& key) -> const ec::pa
     REQUIRE(found != stats.end());
     return *found;
 }
-/// What the game said building the open prototype, as the document panel lists it.
-auto messages(const ec::screen_view& screen) -> std::vector<ec::panel_stat> {
-    return body<ec::panel_body>(part(screen, "vehicle:document")).stats
-         | std::views::filter([](const ec::panel_stat& entry) {
-               return entry.key.starts_with("message:");
-           })
+/// What the game said building the open prototype, as the problems list has it.
+auto messages(const ec::screen_view& screen) -> std::vector<std::string> {
+    const auto* const found = ec::find_component(*screen.root, "vehicle:problems");
+    if (found == nullptr) { return {}; }
+    return body<ec::list_body>(*found).rows | std::views::transform(&ec::row::label)
          | std::ranges::to<std::vector>();
 }
 auto refused(
@@ -191,7 +190,7 @@ TEST_CASE(
                 CHECK(screen.title == "Vehicle Editor");
                 // Nothing is open: the prototypes are listed, nothing to edit yet.
                 CHECK(body<ec::list_body>(part(screen, "vehicle:prototypes")).total > 300);
-                CHECK_FALSE(has_affordance(screen, "vehicle:install"));
+                CHECK_FALSE(has_affordance(screen, "vehicle:choose"));
                 CHECK(affordance(screen, "QUIT").role == "cancel");
                 return invoke("vehicle:filter", {.text = "bicycle"});
             case 1:
@@ -205,10 +204,15 @@ TEST_CASE(
             case 2: {
                 CHECK(body<ec::panel_body>(part(screen, "vehicle:document")).title == "Bicycle");
                 // The file as a modder finds it in the game's directory.
-                CHECK(body<ec::panel_body>(part(screen, "vehicle:document"))
-                          .subtitle.starts_with("data/json/vehicles/"));
+                CHECK(stat(screen, "file").value.starts_with("data/json/vehicles/"));
                 CHECK(stat(screen, "saved").value == "Yes");
-                CHECK(std::stoi(stat(screen, "mass").value) > 0);
+                CHECK(
+                    std::stoi(
+                        std::ranges::find(
+                            body<ec::panel_body>(part(screen, "vehicle:performance")).stats, "mass",
+                            &ec::panel_stat::key)
+                            ->value)
+                    > 0);
                 // Its three mounts in a row, and a ring of free mounts around them.
                 const auto& grid = body<ec::grid_body>(part(screen, "vehicle:grid"));
                 CHECK(grid.cols == 5);
@@ -244,53 +248,57 @@ TEST_CASE(
                     part(screen, "vehicle:parts").affordances, std::string("vehicle:part_filter")));
                 CHECK(std::ranges::contains(
                     part(screen, "vehicle:parts").affordances, std::string("vehicle:part_page")));
-                // A second frame is not mountable here, as the game says.
-                CHECK_FALSE(row(screen, "vehicle:parts", "vpart:xlframe_vertical").enabled);
-                CHECK_FALSE(row(screen, "vehicle:parts", "vpart:xlframe_vertical").denial.empty());
+                // A second frame is not mountable here, as the game says, and why.
+                CHECK_FALSE(
+                    row(screen, "vehicle:parts", "vpart:xlframe_vertical").description.empty());
                 return invoke("vehicle:part_filter", {.text = "headlight"});
             case 5:
-                CHECK(row(screen, "vehicle:parts", "vpart:headlight").enabled);
-                return invoke("vehicle:install", {.row = "vpart:headlight"});
+                CHECK(row(screen, "vehicle:parts", "vpart:headlight").description.empty());
+                return invoke("vehicle:choose", {.row = "vpart:headlight"});
             case 6:
+                return invoke("vehicle:mount", {.row = "mount:1,0"});
+            case 7:
                 CHECK(rows(screen, "vehicle:stack").size() == 4);
                 CHECK(rows(screen, "vehicle:stack").back().label == "headlight");
                 CHECK(stat(screen, "saved").value == "No");
                 CHECK(affordance(screen, "vehicle:undo").enabled);
                 return invoke("vehicle:undo");
-            case 7:
+            case 8:
                 CHECK(rows(screen, "vehicle:stack").size() == 3);
                 CHECK(stat(screen, "saved").value == "Yes");
                 return invoke("vehicle:redo");
-            case 8:
+            case 9:
                 CHECK(rows(screen, "vehicle:stack").size() == 4);
                 // The raw form of the JSON is a tab of its own, out of the way, and so is what
                 // sets it.
                 CHECK_FALSE(has_affordance(screen, "vehicle:field_set"));
                 return invoke("vehicle:tool", {.row = "tool:json"});
-            case 9:
-                return invoke("vehicle:field_set", {.row = "pointer", .text = "/name"});
             case 10:
+                return invoke("vehicle:field_set", {.row = "pointer", .text = "/name"});
+            case 11:
                 CHECK(body<ec::form_body>(part(screen, "vehicle:field")).fields[1].value
                       == "Bicycle");
                 return invoke("vehicle:field_set", {.row = "value", .text = "Lit bicycle"});
-            case 11:
-                return invoke("vehicle:field_apply");
             case 12:
+                return invoke("vehicle:field_apply");
+            case 13:
                 CHECK(
                     body<ec::panel_body>(part(screen, "vehicle:document")).title == "Lit bicycle");
                 return invoke("vehicle:tool", {.row = "tool:mount"});
-            case 13:
-                return invoke("vehicle:remove", {.row = rows(screen, "vehicle:stack").front().id});
             case 14:
+                return invoke("vehicle:pick", {.row = rows(screen, "vehicle:stack").front().id});
+            case 15:
+                return invoke("vehicle:remove");
+            case 16:
                 // The frame holds the wheel: the game's reason, and nothing removed.
                 CHECK_FALSE(body<ec::text_body>(part(screen, "vehicle:notice")).markup.empty());
                 CHECK(rows(screen, "vehicle:stack").size() == 4);
                 return invoke("vehicle:save_as", {.text = "/tmp/bicycle.json"});
-            case 15:
+            case 17:
                 CHECK(body<ec::text_body>(part(screen, "vehicle:notice")).markup.find("your mods")
                       != std::string::npos);
                 return invoke("vehicle:save_as", {.text = saved_as.string()});
-            case 16:
+            case 18:
                 CHECK(stat(screen, "saved").value == "Yes");
                 return act("QUIT");
             default:
@@ -300,7 +308,7 @@ TEST_CASE(
     });
 
     editor::run_vehicle_editor();
-    CHECK(step == 17);
+    CHECK(step == 19);
     // The game's own file is as it was; the copy holds the change in the data style.
     CHECK(read_file(*source) == before);
     const auto text = read_file(saved_as);
@@ -389,11 +397,11 @@ TEST_CASE(
             case 5:
                 CHECK(
                     body<ec::form_body>(part(screen, "vehicle:spawn_form")).fields[1].value == "0");
-                return invoke("vehicle:mount", {.row = "mount:1,0"});
-            case 6:
                 return invoke("vehicle:part_filter", {.text = "headlight"});
+            case 6:
+                return invoke("vehicle:choose", {.row = "vpart:headlight"});
             case 7:
-                return invoke("vehicle:install", {.row = "vpart:headlight"});
+                return invoke("vehicle:mount", {.row = "mount:1,0"});
             case 8:
                 return invoke("vehicle:spawn");
             case 9:
@@ -669,44 +677,48 @@ TEST_CASE(
                 return invoke("vehicle:mount", {.row = "mount:1,0"});
             case 3:
                 plain = labels(screen);
-                return invoke("vehicle:install", {.row = "vpart:headlight"});
+                return invoke("vehicle:choose", {.row = "vpart:headlight"});
             case 4:
+                return invoke("vehicle:mount", {.row = "mount:1,0"});
+            case 5:
                 CHECK(labels(screen).size() == plain.size() + 1);
                 CHECK(affordance(screen, "vehicle:undo").enabled);
-                return invoke("vehicle:pick", {.row = light(screen).id});
-            case 5:
+                // The part just installed is picked.
                 CHECK(light(screen).selected);
                 CHECK(light(screen).look.has_value());
-                return invoke("vehicle:tool", {.row = "tool:part"});
+                return invoke("vehicle:tool", {.row = "tool:vehicle"});
             case 6:
                 return invoke("vehicle:live_set", {.row = "name", .text = "Mine"});
             case 7:
                 CHECK(title(screen) == "Mine");
-                return invoke("vehicle:live_set", {.row = "health", .text = "50"});
+                return invoke("vehicle:tool", {.row = "tool:part"});
             case 8:
-                return invoke("vehicle:install", {.row = "vpart:xlframe_vertical"});
+                return invoke("vehicle:live_set", {.row = "health", .text = "50"});
             case 9:
-                CHECK(body<ec::text_body>(part(screen, "vehicle:notice"))
-                          .markup.find("cannot be mounted")
+                return invoke("vehicle:choose", {.row = "vpart:xlframe_vertical"});
+            case 10:
+                return invoke("vehicle:mount", {.row = "mount:1,0"});
+            case 11:
+                CHECK(body<ec::text_body>(part(screen, "vehicle:notice")).markup.find("frame")
                       != std::string::npos);
                 // A refused install leaves the mount's parts in view.
                 CHECK(light(screen).columns[0].value == "50");
                 return invoke("vehicle:undo");
-            case 10:
+            case 12:
                 CHECK(light(screen).columns[0].value == "100");
                 return invoke("vehicle:undo");
-            case 11:
+            case 13:
                 CHECK(title(screen) == "Bicycle");
                 return invoke("vehicle:undo");
-            case 12:
+            case 14:
                 CHECK(labels(screen) == plain);
                 CHECK(rows(screen, "vehicle:world").size() == 1);
                 CHECK(affordance(screen, "vehicle:redo").enabled);
                 return invoke("vehicle:redo");
-            case 13:
+            case 15:
                 CHECK(labels(screen).size() == plain.size() + 1);
                 return invoke("vehicle:done");
-            case 14:
+            case 16:
                 CHECK(ec::find_component(*screen.root, "vehicle:live") == nullptr);
                 return act("QUIT");
             default:
@@ -715,7 +727,7 @@ TEST_CASE(
         }
     });
     editor::run_vehicle_editor();
-    CHECK(step == 15);
+    CHECK(step == 17);
     const auto edited = get_map().veh_at(at);
     REQUIRE(edited);
     CHECK(edited->vehicle().name == "Bicycle");
@@ -741,16 +753,21 @@ TEST_CASE(
             case 2:
                 before = labels(screen);
                 REQUIRE(before.size() == 4);
-                return invoke("vehicle:earlier", {.row = "part:2"});
+                return invoke("vehicle:pick", {.row = "part:2"});
             case 3:
+                return invoke("vehicle:earlier");
+            case 4:
                 CHECK(labels(screen)
                       == std::vector<std::string>{before[0], before[2], before[1], before[3]});
-                return invoke("vehicle:later", {.row = "part:3"});
-            case 4:
+                return invoke("vehicle:pick", {.row = "part:3"});
+            case 5:
+                CHECK_FALSE(affordance(screen, "vehicle:later").enabled);
+                return invoke("vehicle:later");
+            case 6:
                 CHECK(body<ec::text_body>(part(screen, "vehicle:notice")).markup
                       == "The part is already at that end of its mount.");
                 return invoke("vehicle:undo");
-            case 5:
+            case 7:
                 CHECK(labels(screen) == before);
                 return act("QUIT");
             default:
@@ -759,7 +776,7 @@ TEST_CASE(
         }
     });
     editor::run_vehicle_editor();
-    CHECK(step == 6);
+    CHECK(step == 8);
 }
 
 TEST_CASE(
@@ -776,8 +793,7 @@ TEST_CASE(
         };
     const auto tank = [](const ec::screen_view& screen) {
         const auto& stack = rows(screen, "vehicle:stack");
-        const auto found =
-            std::ranges::find(stack, std::string("/parts/18/parts/2"), &ec::row::description);
+        const auto found = std::ranges::find(stack, vpart_id("tank")->name(), &ec::row::label);
         REQUIRE(found != stack.end());
         return found->id;
     };
@@ -868,8 +884,8 @@ TEST_CASE(
     };
     const auto turret = [](const ec::screen_view& screen) {
         const auto& stack = rows(screen, "vehicle:stack");
-        const auto found =
-            std::ranges::find(stack, std::string("/parts/0/parts/3"), &ec::row::description);
+        // The fourth part the prototype lists, `/parts/0/parts/3`.
+        const auto found = std::ranges::find(stack, std::string("part:3"), &ec::row::id);
         REQUIRE(found != stack.end());
         return found->id;
     };
@@ -1151,7 +1167,7 @@ TEST_CASE(
                 return invoke("vehicle:open", {.row = "prototype:bicycle"});
             case 1:
                 CHECK(slot_of(screen, "vehicle:sources") == "outline");
-                CHECK(slot_of(screen, "vehicle:document") == "canvas");
+                CHECK(slot_of(screen, "vehicle:grid") == "canvas");
                 CHECK(slot_of(screen, "vehicle:tools") == "inspector");
                 CHECK(part(screen, "vehicle:sources").label == "Vehicles");
                 CHECK(ec::top_screen(captured()).role == "workspace");
@@ -1222,12 +1238,12 @@ TEST_CASE(
                 CHECK(slot_of(screen, "vehicle:parts") == "palette");
                 CHECK(part(screen, "vehicle:parts").label == "Parts");
                 CHECK_FALSE(std::ranges::contains(tabs(screen), std::string("tool:install")));
-                return invoke("vehicle:mount", {.row = "mount:1,0"});
+                return invoke("vehicle:choose", {.row = "vpart:headlight"});
             case 2:
-                return invoke("vehicle:install", {.row = "vpart:headlight"});
+                return invoke("vehicle:mount", {.row = "mount:1,0"});
             case 3:
                 // The palette and the mount's stack stay, ready for the next part.
-                CHECK(has_affordance(screen, "vehicle:install"));
+                CHECK(has_affordance(screen, "vehicle:choose"));
                 CHECK(body<ec::tabs_body>(part(screen, "vehicle:tools")).tabs.front().selected);
                 CHECK(std::ranges::contains(
                     body<ec::list_body>(part(screen, "vehicle:stack")).rows
@@ -1405,7 +1421,6 @@ TEST_CASE(
             case 8:
                 // The remove tool takes the mount's top part off.
                 CHECK_FALSE(std::ranges::contains(labels(screen, "vehicle:stack"), "headlight"));
-                CHECK(stat(screen, "saved").value == "Yes");
                 CHECK(affordance(screen, "vehicle:undo").enabled);
                 return invoke("vehicle:undo");
             case 9:
@@ -1559,4 +1574,40 @@ TEST_CASE("the vehicle editor turns the spawn facing a quarter at a time", "[edi
     });
     editor::run_vehicle_editor();
     CHECK(step == 5);
+}
+
+TEST_CASE(
+    "the vehicle editor lists what the game says of a prototype it cannot build as it is",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                CHECK(ec::find_component(*screen.root, "vehicle:problems") == nullptr);
+                return invoke("vehicle:show:json");
+            case 2:
+                return invoke("vehicle:field_set", {.row = "pointer", .text = "/parts/0/parts/0"});
+            case 3:
+                return invoke("vehicle:field_set", {.row = "value", .text = "no_such_part"});
+            case 4:
+                return invoke("vehicle:field_apply");
+            case 5:
+                CHECK(slot_of(screen, "vehicle:problems") == "log");
+                CHECK(part(screen, "vehicle:problems").label == "Problems");
+                CHECK_FALSE(messages(screen).empty());
+                return invoke("vehicle:undo");
+            case 6:
+                CHECK(messages(screen).empty());
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 7);
 }
