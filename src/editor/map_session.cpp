@@ -349,9 +349,72 @@ auto session::browser_entries() const -> std::vector<std::filesystem::path> {
     }) | std::ranges::to<std::vector>();
 }
 
+namespace {
+/// The mapgen ids that make what `name` names, as the game finds a square's mapgen; `named` counts
+/// the overmap terrain types a name the overmap shows names.
+struct named_mapgens {
+    std::vector<std::string> ids;
+    std::size_t named = 0;
+};
+
+/// An overmap terrain, its type without a direction, a special or building by its squares from its
+/// origin on, or the name the overmap shows, each ignoring case.
+auto mapgens_named(const std::string& name) -> named_mapgens {
+    if (const auto id = oter_str_id(name); id.is_valid()) { return {.ids = {id->get_mapgen_id()}}; }
+    if (oter_type_str_id(name).is_valid()) { return {.ids = terrain_mapgen_ids(name)}; }
+    if (const auto special = overmap_special_id(name); special.is_valid()) {
+        auto terrains = special->all_terrains();
+        const auto& origin = special->get_terrain_at(tripoint_rel_omt(0, 0, 0));
+        std::ranges::stable_partition(terrains, [&](const auto& terrain) {
+            return terrain == origin;
+        });
+        return {
+            .ids = terrains | std::views::filter(&oter_str_id::is_valid)
+                 | std::views::transform([](const auto& terrain) {
+                       return terrain->get_mapgen_id();
+                   })
+                 | std::ranges::to<std::vector>()};
+    }
+    const auto lower = [](std::string text) {
+        std::ranges::transform(text, text.begin(), [](const unsigned char c) {
+            return static_cast<char>(std::tolower(c));
+        });
+        return text;
+    };
+    const auto wanted = lower(name);
+    auto types =
+        overmap_terrains::get_all() | std::views::filter([&](const oter_t& terrain) {
+            return lower(terrain.get_name()) == wanted
+                || lower(terrain.get_type_id()->name) == wanted;
+        })
+        | std::views::transform([](const oter_t& terrain) { return terrain.get_type_id().str(); })
+        | std::ranges::to<std::vector>();
+    std::ranges::sort(types);
+    const auto [last, end] = std::ranges::unique(types);
+    types.erase(last, end);
+    return {.ids = types | std::views::transform(&terrain_mapgen_ids) | std::views::join
+                 | std::ranges::to<std::vector>(),
+            .named = types.size()};
+}
+} // namespace
+
 auto session::open_mapgen_of(const std::string& name) -> void {
-    const auto id = oter_str_id(name);
-    const auto mapgen_id = id.is_valid() ? id.obj().get_mapgen_id() : name;
+    const auto named = mapgens_named(name);
+    const auto made = std::ranges::find_if(named.ids, [](const std::string& id) {
+        return mapgen_source_of(id).has_value() || !code_mapgens_of(id).empty();
+    });
+    const auto mapgen_id =
+        made != named.ids.end() ? *made
+        : named.ids.empty()
+            ? name
+            : named.ids.front();
+    // What a type, building or shown name opened is said, since the file names another id.
+    const auto opened =
+        oter_str_id(name).is_valid() || mapgen_id == name ? std::string{}
+        : named.named > 1
+            ? string_format(_("%1$d overmap terrains are named %2$s; opened %3$s."), named.named,
+                            name, mapgen_id)
+            : string_format(_("Opened %1$s, the mapgen of %2$s."), mapgen_id, name);
     const auto source = mapgen_source_of(mapgen_id);
     if (!source) {
         // Code has no squares to draw; where it is declared and defined is what there is to show.
@@ -359,11 +422,14 @@ auto session::open_mapgen_of(const std::string& name) -> void {
         if (code_mapgens.empty()) {
             notice =
                 string_format(_("%s has no mapgen in a file of the game or of your mods."), name);
+        } else {
+            status = opened;
         }
         return;
     }
     open(source->path);
     if (!doc || !notice.empty()) { return; }
+    status = opened;
     const auto& objects = doc->objects();
     const auto found = std::ranges::find_if(objects, [&](const document_object& entry) {
         return entry.begin <= static_cast<std::size_t>(source->offset)

@@ -2961,6 +2961,8 @@ TEST_CASE(
     "the editor opens the mapgen of an overmap terrain named by its type, building or name",
     "[editor_session][engine_client_component]") {
     const auto guard = screen_guard{};
+    const auto restore_mapgen = restore_on_out_of_scope<bool>(disable_mapgen);
+    disable_mapgen = false;
     auto step = 0;
     const auto path = [](const ec::screen_view& screen) {
         return body<ec::form_body>(part(screen, "editor:file")).fields.front().value;
