@@ -9,6 +9,10 @@ namespace editor {
 /// keeping the open document and the view for the next visit.
 auto run_editor_session() -> void;
 
+/// Opens the map editor in a game, as the map's Map Editor button and the debug menu do: says why
+/// not without the Debug Editor trait; the native frontends open the map editor they have.
+auto open_map_editor() -> void;
+
 /// Forgets the document and view the editor keeps between visits, for a new game.
 auto reset_editor_session() -> void;
 

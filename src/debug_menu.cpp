@@ -125,6 +125,7 @@ extern std::map<std::string, weighted_int_list<std::shared_ptr<mapgen_function_j
 
 #include "client_presentation.h"
 #include "client_display.h"
+#include "editor/editor_session.h"
 
 namespace debug_menu
 {
@@ -208,7 +209,8 @@ enum debug_menu_index {
     DEBUG_RELOAD_TILES,
     DEBUG_SWAP_CHAR,
     DEBUG_DUMP_TILES,
-    DEBUG_DISPLAY_TILESET_NO_VFX
+    DEBUG_DISPLAY_TILESET_NO_VFX,
+    DEBUG_EDIT_SQUARES
 };
 
 class mission_debug
@@ -327,7 +329,7 @@ static int spawning_uilist()
 
 static int map_uilist()
 {
-    const std::vector<uilist_entry> uilist_initializer = {
+    std::vector<uilist_entry> uilist_initializer = {
         { uilist_entry( DEBUG_REVEAL_MAP, true, 'r', _( "Reveal map" ) ) },
         { uilist_entry( DEBUG_REPRODUCE_AREA, true, 'R', _( "Reproduce in Area" ) ) },
         { uilist_entry( DEBUG_ERASE_ITEMS_AREA, true, 'e', _( "Erase items in Area" ) ) },
@@ -344,6 +346,12 @@ static int map_uilist()
         { uilist_entry( DEBUG_MAP_EXTRA, true, 'm', _( "Spawn map extra" ) ) },
         { uilist_entry( DEBUG_NESTED_MAPGEN, true, 'n', _( "Spawn nested mapgen" ) ) },
     };
+    // A protocol client's map editor edits mapgen files; the editor of the squares around the
+    // avatar stays beside it under its own name.
+    if( game_client::has_protocol_client() ) {
+        uilist_initializer.insert( std::next( uilist_initializer.begin(), 6 ),
+                                   uilist_entry( DEBUG_EDIT_SQUARES, true, 'E', _( "Edit squares here" ) ) );
+    }
 
     return uilist( _( "Map…" ), uilist_initializer );
 }
@@ -1773,6 +1781,14 @@ void debug()
             break;
 
         case DEBUG_MAP_EDITOR:
+            if( game_client::has_protocol_client() ) {
+                editor::open_map_editor();
+            } else {
+                g->look_debug();
+            }
+            break;
+
+        case DEBUG_EDIT_SQUARES:
             g->look_debug();
             break;
 
