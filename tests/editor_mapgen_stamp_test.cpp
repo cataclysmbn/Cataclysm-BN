@@ -90,6 +90,24 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "a stamp of a mapgen whose overmap terrain is undefined is generated over the terrain there",
+    "[editor_mapgen]") {
+    clear_all_state();
+    const auto omt = get_avatar().abs_omt_pos();
+    const auto was = get_overmapbuffer(get_map().get_bound_dimension()).ter(omt);
+    REQUIRE_FALSE(oter_str_id("editor_undefined_hut").is_valid());
+
+    auto stamped =
+        editor::stamp_mapgen(entry_with_wall("editor_undefined_hut", point(2, 3)), {.at = omt});
+    REQUIRE(stamped);
+    CHECK(live_ter(omt, point(2, 3)) == ter_id("t_wall"));
+    CHECK(get_overmapbuffer(get_map().get_bound_dimension()).ter(omt) == was);
+
+    editor::swap_stamp(*stamped);
+    CHECK(live_ter(omt, point(2, 3)) != ter_id("t_wall"));
+}
+
+TEST_CASE(
     "applying a mapgen makes it the only one the game generates for its terrain",
     "[editor_mapgen]") {
     clear_all_state();

@@ -4037,6 +4037,42 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "export suggests a file no file and not the open one has, in the open file's mod",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    const auto folder = file.path.parent_path();
+    const auto suggested = [](const ec::screen_view& screen) {
+        const auto& args = affordance(screen, "editor:export").args;
+        REQUIRE(args.text);
+        return args.text->initial;
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK(suggested(screen) != file.path.string());
+                CHECK(std::filesystem::path(suggested(screen)).parent_path() == folder);
+                std::ofstream(folder / "exported_mapgen.json") << "[]";
+                return invoke("editor:undo");
+            case 2:
+                CHECK(suggested(screen) == (folder / "exported_mapgen_2.json").string());
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 3);
+}
+
+TEST_CASE(
     "the editor extracts a mapgen's own legend to a palette of its file as one undo step",
     "[editor_session][editor_palette]") {
     const auto guard = screen_guard{};
