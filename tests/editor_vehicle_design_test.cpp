@@ -544,3 +544,43 @@ TEST_CASE("a turret is loaded with rounds it fires and emptied", "[editor_vehicl
     // A machine gun fires no pistol rounds.
     CHECK_FALSE(editor::set_part_fuel(*veh, turret, {.fuel = "9mm", .amount = 10}).has_value());
 }
+
+TEST_CASE(
+    "the vehicle editor files only frames under Frames, and every working part by what it does",
+    "[editor_vehicle]") {
+    const auto category = [](const char* const id) { return editor::category_of(*vpart_id(id)); };
+    for (const auto& part : vpart_info::get_all()) {
+        if (editor::category_of(part) != editor::part_category::frames) { continue; }
+        INFO(part.get_id().str());
+        CHECK(part.location == "structure");
+        CHECK_FALSE(part.has_flag("PROTRUSION"));
+        CHECK_FALSE(part.has_flag("EXTENDABLE"));
+        CHECK_FALSE(part.has_flag("ENGINE"));
+    }
+    CHECK(category("frame_vertical") == editor::part_category::frames);
+    CHECK(category("seed_drill_advanced") == editor::part_category::other);
+    CHECK(category("ram_steel") == editor::part_category::other);
+    CHECK(category("jet_thruster") == editor::part_category::engines);
+    CHECK(category("tank_30gal_drum") == editor::part_category::fuel);
+}
+
+TEST_CASE(
+    "the vehicle editor names parts of one name apart without saying a word of the name again",
+    "[editor_vehicle]") {
+    const auto parts = std::vector<const vpart_info*>{
+        &*vpart_id("wheel_mount_light_steerable"), &*vpart_id("wheel_mount_light_steerable_wood"),
+        &*vpart_id("frame_vertical"), &*vpart_id("frame_horizontal")};
+    const auto labels = editor::part_labels(parts);
+    CHECK(labels[0] == "light wheel mount (steerable)");
+    CHECK(labels[1] == "light wheel mount (steerable) (wood)");
+    CHECK(labels[2] == "frame (vertical)");
+    CHECK(labels[3] == "frame (horizontal)");
+    // Every label of a palette reads differently.
+    const auto& all = vpart_info::get_all();
+    const auto every = editor::part_labels(
+        all | std::views::transform([](const vpart_info& part) { return &part; })
+        | std::ranges::to<std::vector>());
+    auto sorted = every;
+    std::ranges::sort(sorted);
+    CHECK(std::ranges::adjacent_find(sorted) == sorted.end());
+}
