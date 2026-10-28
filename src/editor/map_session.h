@@ -278,6 +278,18 @@ struct export_squares {
     auto operator==(const export_squares&) const -> bool = default; // *NOPAD*
 };
 
+/// A JSON file the browser lists, with the ids of the entries the editor edits in it.
+struct data_file {
+    std::filesystem::path path;
+    std::vector<std::string> ids;
+};
+/// A file the browser shows, with the ids of its entries that the filter matched when its path
+/// did not.
+struct browser_entry {
+    std::filesystem::path path;
+    std::vector<std::string> matched = {};
+};
+
 struct diagnostic {
     std::string text;
     std::string pointer;
@@ -287,8 +299,10 @@ auto catalog_label(const catalog_use& use) -> std::string;
 /// The mapping of `use`'s layer that places `id`, as the legend form writes it.
 auto mapping_of(const catalog_use& use, const std::string& id) -> std::string;
 auto tool_label(const tool& value) -> std::string;
-/// What names an entry: a mapgen's overmap terrain, or the id it is nested or updated by; a
-/// palette's id.
+/// The ids that name an entry: a mapgen's overmap terrains, or the id it is nested or updated by;
+/// a palette's, special's or overmap terrain's id.
+auto entry_ids(const nlohmann::ordered_json& value) -> std::vector<std::string>;
+/// What names an entry: its ids, joined by commas.
 auto entry_name(const nlohmann::ordered_json& value) -> std::string;
 auto range_text(const placement_range& range) -> std::string;
 /// The row that names `entry` in the placements list and the canvas.
@@ -400,8 +414,8 @@ struct session {
     std::vector<code_mapgen> code_mapgens;
     /// The special last placed in the world, and its origin there.
     std::optional<placed_special> placed = std::nullopt;
-    /// The files the browser lists; read again after a file is made.
-    mutable std::optional<std::vector<std::filesystem::path>> files = std::nullopt;
+    /// The files the browser lists, read once; a file the editor opens or writes is read again.
+    mutable std::optional<std::vector<data_file>> files = std::nullopt;
     std::string browser_filter;
     std::size_t browser_page = 0;
     const catalog_use* catalog = catalog_uses.data();
@@ -410,8 +424,11 @@ struct session {
     /// Whether the catalog's filter and page are those of a special's.
     bool catalog_of_special = false;
 
-    /// The files whose path holds the filter, ignoring case.
-    auto browser_entries() const -> std::vector<std::filesystem::path>;
+    /// The files whose path, or an entry's id or overmap terrain name, holds the filter, ignoring
+    /// case.
+    auto browser_entries() const -> std::vector<browser_entry>;
+    /// Reads the file at `path` again into the files the browser lists, while it lists them.
+    auto refresh_file(const std::filesystem::path& path) -> void;
 
     /// Opens the mapgen the game registered for an overmap terrain, on the entry that holds it.
     auto open_mapgen_of(const std::string& name) -> void;

@@ -104,27 +104,34 @@ constexpr auto max_chunk = 24;
 /// The farthest `editor:placement_span` moves a corner, past any mapgen's rows.
 constexpr auto max_span_move = 1000;
 
-/// Whether the JSON file at `path` holds an entry the editor edits.
-auto holds_editable(const std::filesystem::path& path) -> bool {
+/// The JSON file at `path` with the ids of the entries the editor edits in it; none when it holds
+/// no such entry.
+auto editable_file(const std::filesystem::path& path) -> std::optional<data_file> {
     const auto text = read_entire_file(path.string());
     // Most files name none of the types; only those that do are parsed.
     if (!std::ranges::any_of(
             std::array{"\"mapgen\"", "\"palette\"", "\"overmap_special\"", "\"city_building\"",
                        "\"overmap_terrain\""},
             [&](const char* type) { return text.contains(type); })) {
-        return false;
+        return std::nullopt;
     }
     const auto parsed = nlohmann::ordered_json::parse(text, nullptr, false);
     const auto editable = [](const nlohmann::ordered_json& value) {
         return is_json_mapgen(value) || is_palette(value) || is_special(value) || is_oter(value);
     };
-    return parsed.is_array() ? std::ranges::any_of(parsed, editable) : editable(parsed);
+    const auto entries = parsed.is_array() ? parsed : nlohmann::ordered_json::array({parsed});
+    auto edited = entries | std::views::filter(editable) | std::views::common;
+    if (std::ranges::empty(edited)) { return std::nullopt; }
+    return data_file{
+        .path = path,
+        .ids = edited | std::views::transform(entry_ids) | std::views::join
+             | std::ranges::to<std::vector>()};
 }
 
 /// The JSON files of the game's data, its mods and the user's mods that hold an entry the editor
 /// edits, in path order.
-auto data_files() -> std::vector<std::filesystem::path> {
-    auto files = std::vector<std::filesystem::path>{};
+auto data_files() -> std::vector<data_file> {
+    auto files = std::vector<data_file>{};
     for (const auto& root :
          {std::filesystem::path(PATH_INFO::datadir()) / "json",
           std::filesystem::path(PATH_INFO::datadir()) / "mods",
@@ -132,14 +139,20 @@ auto data_files() -> std::vector<std::filesystem::path> {
         auto error = std::error_code{};
         for (const auto& entry : std::filesystem::recursive_directory_iterator(
                  root, std::filesystem::directory_options::skip_permission_denied, error)) {
-            if (entry.is_regular_file(error) && entry.path().extension() == ".json"
-                && holds_editable(entry.path())) {
-                files.push_back(entry.path());
-            }
+            if (!entry.is_regular_file(error) || entry.path().extension() != ".json") { continue; }
+            if (auto file = editable_file(entry.path())) { files.push_back(std::move(*file)); }
         }
     }
-    std::ranges::sort(files);
+    std::ranges::sort(files, {}, &data_file::path);
     return files;
+}
+
+/// `text` in lower case, as a filter compares it.
+auto lower(std::string text) -> std::string {
+    std::ranges::transform(text, text.begin(), [](const unsigned char c) {
+        return static_cast<char>(std::tolower(c));
+    });
+    return text;
 }
 
 /// The range `range_text` wrote: a number or two joined by a dash, the smaller first.
@@ -235,13 +248,16 @@ auto names_in(const nlohmann::ordered_json& name) -> std::vector<std::string> {
 }
 } // namespace
 
-auto entry_name(const nlohmann::ordered_json& value) -> std::string {
+auto entry_ids(const nlohmann::ordered_json& value) -> std::vector<std::string> {
     for (const auto* const key : {"om_terrain", "nested_mapgen_id", "update_mapgen_id", "id"}) {
-        if (!value.contains(key)) { continue; }
-        const auto names = join(names_in(value[key]), ", ");
-        return names.empty() ? _("(unnamed)") : names;
+        if (value.contains(key)) { return names_in(value[key]); }
     }
-    return _("(unnamed)");
+    return {};
+}
+
+auto entry_name(const nlohmann::ordered_json& value) -> std::string {
+    const auto names = join(entry_ids(value), ", ");
+    return names.empty() ? _("(unnamed)") : names;
 }
 
 auto check_new_path(const std::string& made) -> std::expected<void, std::string> {
@@ -356,18 +372,42 @@ auto range_text(const placement_range& range) -> std::string {
              : string_format("%d-%d", range.min, range.max);
 }
 
-auto session::browser_entries() const -> std::vector<std::filesystem::path> {
+auto session::browser_entries() const -> std::vector<browser_entry> {
     if (!files) { files = data_files(); }
-    const auto lower = [](std::string text) {
-        std::ranges::transform(text, text.begin(), [](const unsigned char c) {
-            return static_cast<char>(std::tolower(c));
-        });
-        return text;
-    };
     const auto wanted = lower(browser_filter);
-    return *files | std::views::filter([&](const std::filesystem::path& path) {
-        return lower(path.generic_string()).contains(wanted);
-    }) | std::ranges::to<std::vector>();
+    // An id matches by itself or by the name the overmap shows for the terrain it is.
+    const auto matches = [&](const std::string& id) {
+        const auto terrain = oter_type_str_id(id);
+        return lower(id).contains(wanted)
+            || (terrain.is_valid() && lower(_(terrain->name)).contains(wanted));
+    };
+    auto result = std::vector<browser_entry>{};
+    for (const auto& file : *files) {
+        if (lower(file.path.generic_string()).contains(wanted)) {
+            result.push_back({.path = file.path});
+            continue;
+        }
+        auto matched = file.ids | std::views::filter(matches) | std::ranges::to<std::vector>();
+        if (!matched.empty()) {
+            result.push_back({.path = file.path, .matched = std::move(matched)});
+        }
+    }
+    return result;
+}
+
+auto session::refresh_file(const std::filesystem::path& path) -> void {
+    if (!files) { return; }
+    // The file is listed as the browser found it, whichever way it was named.
+    auto error = std::error_code{};
+    const auto found = std::ranges::find_if(*files, [&](const data_file& file) {
+        return std::filesystem::equivalent(file.path, path, error);
+    });
+    const auto listed = found == files->end() ? path : found->path;
+    if (found != files->end()) { files->erase(found); }
+    if (auto file = editable_file(listed)) {
+        files->insert(
+            std::ranges::upper_bound(*files, listed, {}, &data_file::path), std::move(*file));
+    }
 }
 
 namespace {
@@ -814,6 +854,7 @@ auto session::save_as(const std::string& name) -> void { written(save_document_a
 
 auto session::written(const std::expected<void, std::string>& result) -> bool {
     if (told(result) && applies_on_save()) { apply(); }
+    if (result) { refresh_file(doc->path()); }
     return result.has_value();
 }
 
@@ -862,6 +903,7 @@ auto session::open(const std::string& name) -> void {
         return;
     }
     doc = std::move(*opened);
+    refresh_file(path);
     ++openings;
     remember_document({.editor = "map", .name = path.generic_string(), .mods = loaded_mods()});
     anchor.reset();

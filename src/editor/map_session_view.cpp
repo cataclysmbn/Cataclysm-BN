@@ -954,20 +954,21 @@ auto new_file_form(const session& state) -> ec::component {
 }
 
 /// The page of data files shown.
-auto browser_list(const session& state, const std::vector<std::filesystem::path>& listed)
-    -> ec::component {
+auto browser_list(const session& state, const std::vector<browser_entry>& listed) -> ec::component {
     const auto shown =
         std::views::drop(listed, state.browser_page * page_size) | std::views::take(page_size);
     const auto data = std::filesystem::path(PATH_INFO::datadir());
     return ec::list(
         {.id = browser_id,
          .rows =
-             shown | std::views::transform([&](const std::filesystem::path& path) {
+             shown | std::views::transform([&](const browser_entry& entry) {
+                 const auto& path = entry.path;
                  return ec::row{
                      .id = "file:" + path.generic_string(),
                      .label =
                          (inside(path, PATH_INFO::datadir()) ? path.lexically_relative(data) : path)
-                             .generic_string()};
+                             .generic_string(),
+                     .description = join(entry.matched, ", ")};
              })
              | std::ranges::to<std::vector>(),
          .total = listed.size(),
