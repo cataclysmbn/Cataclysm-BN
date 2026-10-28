@@ -18,6 +18,7 @@
 #    include "editor/mapgen_source.h"
 #    include "editor/recent_documents.h"
 #    include "editor/special_grid.h"
+#    include "editor_heading_names.h"
 #    include "engine_client_component.h"
 #    include "engine_client_contract.h"
 #    include "game.h"
@@ -6339,6 +6340,54 @@ TEST_CASE(
     "the editor drops a refusal once the player flips applying on save",
     "[editor_session][engine_client_component]") {
     CHECK(refusal_gone_after({[] { return invoke("editor:apply_on_save"); }}));
+}
+
+TEST_CASE(
+    "the map editor names no heading like an action or a tool",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = kinds_file{};
+    const auto restore_mapgen = restore_on_out_of_scope<bool>(disable_mapgen);
+    disable_mapgen = false;
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        INFO(step);
+        CHECK(headings_named_like_actions(screen) == std::vector<std::string>{});
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                return invoke("editor:preview", {.count = 1});
+            case 2:
+                return invoke("editor:tool", {.row = "tool:select"});
+            case 3:
+            case 4:
+                return invoke("editor:paint", {.row = "square:3,3"});
+            case 5:
+                return invoke("editor:loot");
+            case 6:
+                // The preview and what can spawn are shown, under their headings.
+                CHECK(ec::find_component(*screen.root, "editor:preview"));
+                CHECK(ec::find_component(*screen.root, "editor:loot"));
+                return invoke("editor:tool", {.row = "tool:placements"});
+            case 7:
+                return invoke("editor:object", {.row = "object:1"});
+            case 8:
+                return invoke("editor:object", {.row = "object:2"});
+            case 9:
+                return invoke("editor:placement", {.row = "placement:place_nested:0"});
+            case 10:
+                CHECK(ec::find_component(*screen.root, "editor:move"));
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 11);
+    editor::reset_editor_session();
 }
 
 #endif // CATA_MCP

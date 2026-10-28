@@ -13,6 +13,7 @@
 #    include "editor/recent_documents.h"
 #    include "editor/vehicle_design.h"
 #    include "editor/vehicle_session.h"
+#    include "editor_heading_names.h"
 #    include "engine_client_component.h"
 #    include "engine_client_contract.h"
 #    include "json_formatter.h"
@@ -37,6 +38,7 @@
 #    include <sstream>
 #    include <string>
 #    include <variant>
+#    include <vector>
 
 namespace {
 namespace ec = engine_client;
@@ -2537,6 +2539,26 @@ TEST_CASE(
     });
     editor::run_vehicle_editor();
     CHECK(step == 3);
+}
+
+TEST_CASE(
+    "the vehicle editor names no heading like an action or a tab",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto tabs =
+        std::vector<std::string>{"mount", "part", "vehicle", "cargo", "spawn", "json"};
+    auto step = std::size_t{0};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        const auto at = step++;
+        INFO(at);
+        CHECK(headings_named_like_actions(screen) == std::vector<std::string>{});
+        if (at == 0) { return invoke("vehicle:open", {.row = "prototype:bicycle"}); }
+        if (at - 1 < tabs.size()) { return invoke("vehicle:show:" + tabs[at - 1]); }
+        return act("QUIT");
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == tabs.size() + 2);
 }
 
 #endif // CATA_MCP
