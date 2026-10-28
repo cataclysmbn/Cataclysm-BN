@@ -57,8 +57,11 @@ auto in_a_mod(const std::vector<std::filesystem::path>& folders) -> bool {
 /// The first folder below `folder` that holds a mod; none when none does.
 auto mod_below(const std::filesystem::path& folder) -> std::optional<std::filesystem::path> {
     auto error = std::error_code{};
-    for (const auto& entry : std::filesystem::recursive_directory_iterator(folder, error)) {
-        if (entry.path().filename() == "modinfo.json") { return entry.path().parent_path(); }
+    auto entry = std::filesystem::recursive_directory_iterator(
+        folder, std::filesystem::directory_options::skip_permission_denied, error);
+    for (; !error && entry != std::filesystem::recursive_directory_iterator{};
+         entry.increment(error)) {
+        if (entry->path().filename() == "modinfo.json") { return entry->path().parent_path(); }
     }
     return std::nullopt;
 }
@@ -175,6 +178,14 @@ auto changed_on_disk_notice(const document& doc) -> std::string {
 }
 
 auto save_document(document& doc) -> std::expected<void, std::string> {
+    // A file already there keeps its folder: refusing would only lose the edit.
+    if (std::filesystem::exists(doc.path())) {
+        return told(doc.save()).and_then([&] {
+            return check_mod_folder(doc.path())
+                     ? make_mod_of(doc.path())
+                     : std::expected<void, std::string>{};
+        });
+    }
     return check_mod_folder(doc.path()).and_then([&] { return told(doc.save()); }).and_then([&] {
         return make_mod_of(doc.path());
     });

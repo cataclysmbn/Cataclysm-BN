@@ -26,6 +26,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <sys/stat.h>
+#include <thread>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -133,15 +134,18 @@ static bool capturing = false;
 static std::string captured;
 /** The captured debug messages one by one, while capture_each_debugmsg_during runs. */
 static std::vector<std::string> *captured_each = nullptr;
+/** The thread that runs capture_each_debugmsg_during. */
+static std::thread::id captured_each_thread;
 static std::ostringstream captured_log;
 
 namespace
 {
-/// Whether this thread's debug messages go one by one to capture_each_debugmsg_during; a worker
+/// Whether this thread's debug messages go one by one to capture_each_debugmsg_during; another
 /// thread's are not its own.
 auto capturing_each_here() -> bool
 {
-    return capturing && captured_each != nullptr && !is_pool_worker_thread();
+    return capturing && captured_each != nullptr
+           && captured_each_thread == std::this_thread::get_id();
 }
 } // namespace
 
@@ -238,7 +242,11 @@ auto capture_each_debugmsg_during( const std::function < auto()->void > &func ) 
 std::vector<std::string>
 {
     auto each = std::vector<std::string> {};
-    const auto restore = on_out_of_scope( [previous = std::exchange( captured_each, &each )] { captured_each = previous; } );
+    const auto restore = on_out_of_scope( [previous = std::exchange( captured_each, &each ),
+             thread = std::exchange( captured_each_thread, std::this_thread::get_id() )] {
+        captured_each = previous;
+        captured_each_thread = thread;
+    } );
     capture_debugmsg capture;
     func();
     return each;
