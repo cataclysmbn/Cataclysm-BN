@@ -1675,7 +1675,7 @@ auto parts_view(const session& state) -> ec::screen_view {
          .selection = "single",
          .activate = jump_id}));
     affordances.push_back(ec::invoke_affordance(
-        {.id = jump_id, .label = _("Go to step"), .args = row_of(history_id)}));
+        {.id = jump_id, .label = _("Go to step"), .args = row_of(history_id), .role = "select"}));
     // The canvas tools, and the mounts they act on.
     parts.push_back(ec::list(
         {.id = canvas_tools_id,
@@ -1697,7 +1697,10 @@ auto parts_view(const session& state) -> ec::screen_view {
          .selection = "single",
          .activate = canvas_tool_id}));
     affordances.push_back(ec::invoke_affordance(
-        {.id = canvas_tool_id, .label = _("Use"), .args = row_of(canvas_tools_id)}));
+        {.id = canvas_tool_id,
+         .label = _("Use"),
+         .args = row_of(canvas_tools_id),
+         .role = "select"}));
     for (const auto& entry : canvas_tools) {
         const auto key = std::string_view(entry.key);
         affordances.push_back(ec::invoke_affordance(
