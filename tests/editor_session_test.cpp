@@ -2336,12 +2336,15 @@ TEST_CASE(
                 CHECK(column_value(legend[0], "terrain") == "dirt");
                 CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
                 CHECK(saved(screen) == "Yes");
-                // The form starts over for the next file: what it named is not typed after.
+                // The form starts over for the next file: what it named is not typed after, and
+                // its path is the next free file of the user mods.
                 const auto& fields = body<ec::form_body>(part(screen, "editor:new")).fields;
                 const auto value = [&](const std::string& id) {
                     return std::ranges::find(fields, id, &ec::form_field::id)->value;
                 };
-                CHECK(value("path").empty());
+                CHECK(value("path")
+                      == (std::filesystem::path(PATH_INFO::user_moddir()) / "new_mapgen.json")
+                             .string());
                 CHECK(value("om_terrain").empty());
                 return invoke("editor:new_set", {.row = "path", .text = made.string()});
             }
@@ -2363,6 +2366,65 @@ TEST_CASE(
     const auto written = nlohmann::ordered_json::parse(read_file(made));
     CHECK(written[0]["om_terrain"] == "house_04");
     CHECK(written[0]["object"]["terrain"]["."] == "t_dirt");
+}
+
+namespace {
+/// Files directly in the user mods, removed when the test ends.
+struct loose_mod_files {
+    std::vector<std::filesystem::path> paths;
+    ~loose_mod_files() {
+        for (const auto& path : paths) { std::filesystem::remove(path); }
+    }
+};
+} // namespace
+
+TEST_CASE(
+    "the new-file form suggests a free file in the user mods and marks the id it needs",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto mods = std::filesystem::path(PATH_INFO::user_moddir());
+    const auto files = loose_mod_files{
+        {mods / "new_mapgen.json", mods / "new_mapgen_2.json", mods / "new_mapgen_3.json"}};
+    std::filesystem::create_directories(mods);
+    std::ofstream(files.paths[0]) << "[]";
+    const auto value = [](const ec::screen_view& screen, const std::string& id) {
+        const auto& fields = body<ec::form_body>(part(screen, "editor:new")).fields;
+        return std::ranges::find(fields, id, &ec::form_field::id)->value;
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0: {
+                // A file already there is passed over.
+                CHECK(value(screen, "path") == files.paths[1].string());
+                const auto fields = wire_part(state, "editor:new")["fields"];
+                REQUIRE(fields.is_array());
+                for (const auto& field : fields) {
+                    INFO(field.dump());
+                    CHECK_FALSE(field.value("description", "").empty());
+                    CHECK(field.value("required", false) == (field["id"] == "om_terrain"));
+                }
+                return invoke("editor:new_set", {.row = "om_terrain", .text = "house_04"});
+            }
+            case 1:
+                return invoke("editor:new_apply");
+            case 2:
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                CHECK(body<ec::form_body>(part(screen, "editor:file")).fields.front().value
+                      == files.paths[1].generic_string());
+                CHECK(value(screen, "path") == files.paths[2].string());
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 3);
 }
 
 TEST_CASE(
