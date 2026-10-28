@@ -135,6 +135,16 @@ static std::string captured;
 static std::vector<std::string> *captured_each = nullptr;
 static std::ostringstream captured_log;
 
+namespace
+{
+/// Whether this thread's debug messages go one by one to capture_each_debugmsg_during; a worker
+/// thread's are not its own.
+auto capturing_each_here() -> bool
+{
+    return capturing && captured_each != nullptr && !is_pool_worker_thread();
+}
+} // namespace
+
 #if defined(BACKTRACE)
 namespace
 {
@@ -711,11 +721,15 @@ void realDebugmsg( const char *filename, const char *line, const char *funcname,
     assert( line != nullptr );
     assert( funcname != nullptr );
 
+    if( capturing_each_here() ) {
+        captured_each->push_back( text );
+        // Whoever captures it says it in its own words, so no prompt raises it a second time, but
+        // debug.log still keeps it.
+        *detail::realDebugLog( debug_level, DC::DebugMsg, filename, line, funcname ) << text;
+        return;
+    }
     if( capturing ) {
         captured += text;
-        if( captured_each != nullptr ) { captured_each->push_back( text ); }
-        // Whoever captures it says it in its own words: a prompt would raise it a second time.
-        return;
     } else {
         if( !rep_folder.test( filename, line, funcname, text ) ) {
             *detail::realDebugLog( debug_level, DC::DebugMsg, filename, line, funcname ) << text;
@@ -1771,15 +1785,19 @@ detail::DebugLogGuard::~DebugLogGuard()
 detail::DebugLogGuard detail::realDebugLog( DL lev, DC cl, const char *filename,
         const char *line, const char *funcname )
 {
+    // A debug message captured one by one is expected, so it goes to the log as it is.
+    const auto captured_each_line = cl == DC::DebugMsg && capturing_each_here();
     if( lev == DL::Error ) {
         auto lock = std::unique_lock<std::mutex>( g_debug_log_mutex );
         if( capturing_errors ) {
             return DebugLogGuard( captured_errors, std::move( lock ) );
         }
-        error_observed = true;
+        if( !captured_each_line ) {
+            error_observed = true;
+        }
     }
 
-    if( capturing && cl == DC::DebugMsg ) {
+    if( capturing && cl == DC::DebugMsg && !captured_each_line ) {
         return DebugLogGuard( captured_log );
     }
 

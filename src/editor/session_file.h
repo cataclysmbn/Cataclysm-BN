@@ -20,6 +20,17 @@ auto shown_path(const std::filesystem::path& path) -> std::string;
 /// Whether `path` is a .json file in a folder of the player's mods, the only place the editors
 /// make files: a file loose in the mods is no mod's, so no world loads it.
 auto is_mod_file(const std::filesystem::path& path) -> bool;
+/// The name of the top folder of the player's mods that holds the file at `path`; none outside
+/// them or loose in them.
+auto mod_folder_name(const std::filesystem::path& path) -> std::optional<std::string>;
+/// The mod whose folder in the player's mods holds the file at `path`; none outside every mod.
+auto mod_of(const std::filesystem::path& path) -> std::optional<mod_id>;
+/// Whether the file at `path` may make its folder of the player's mods a mod: refused, with what to
+/// tell the player, when that folder's name is no mod id or another mod's, or a mod lies below it.
+auto check_mod_folder(const std::filesystem::path& path) -> std::expected<void, std::string>;
+/// Makes the folder of the player's mods that holds the file at `path` a mod of that folder's
+/// name, unless a mod holds it already; the error is what to tell the player.
+auto make_mod_of(const std::filesystem::path& path) -> std::expected<void, std::string>;
 /// `base`, else `base_2`, `base_3` and on: the first name not `taken`.
 auto free_name(const std::string& base, const std::function<bool(const std::string&)>& taken)
     -> std::string;

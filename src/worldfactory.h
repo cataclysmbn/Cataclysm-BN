@@ -79,10 +79,17 @@ class worldfactory
         static void draw_worldgen_tabs( const catacurses::window &w, size_t current );
         void show_active_world_mods( const std::vector<mod_id> &world_mods );
         void edit_active_world_mods( WORLDINFO *world );
-        /// The mod list screen, started from `initial` and saying `heading` first; the mods chosen,
-        /// or nothing when `question`, which offers yes first, was answered no.
-        auto pick_mods( const std::vector<mod_id> &initial, const std::string &question,
-        const std::string &heading = {} ) -> std::optional<std::vector<mod_id>>;
+        /// What the mod list screen asks on leaving and says first.
+        struct pick_mods_options {
+            std::string question;
+            std::string heading;
+            /// Whether the question offers yes first, else it is asked as every yes or no question is.
+            bool yes_first = false;
+        };
+        /// The mod list screen, started from `initial`; the mods chosen, or nothing when the
+        /// question was answered no.
+        auto pick_mods( const std::vector<mod_id> &initial,
+                        const pick_mods_options &options ) -> std::optional<std::vector<mod_id>>;
 
         void convert_to_v2( const std::string &worldname );
 

@@ -1,8 +1,11 @@
 #include "catch/catch.hpp"
 #include "debug.h"
 #include "debug_log_capture.h"
+#include "thread_pool.h"
 
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 TEST_CASE("expected error logs do not poison the test run", "[debug]") {
     const auto already_observed = debug_has_error_been_observed();
@@ -34,4 +37,21 @@ TEST_CASE("nested error log captures preserve the outer capture", "[debug]") {
         DebugLog(DL::Error, DC::Main) << "outer expected failure";
     });
     CHECK(errors == "outer expected failure\n");
+}
+
+TEST_CASE("a debug message an editor captures still reaches the debug log", "[debug]") {
+    auto each = std::vector<std::string>{};
+    const auto errors = capture_debug_errors_during([&]() {
+        each = capture_each_debugmsg_during([]() { debugmsg("captured marker"); });
+    });
+    CHECK(each == std::vector<std::string>{"captured marker"});
+    CHECK(errors.contains("captured marker"));
+}
+
+TEST_CASE("an editor's capture takes no worker thread's debug message", "[debug]") {
+    auto pool = cata_thread_pool{1};
+    const auto each = capture_each_debugmsg_during([&]() {
+        pool.submit_returning([]() { debugmsg("worker marker"); }).get();
+    });
+    CHECK(each.empty());
 }
