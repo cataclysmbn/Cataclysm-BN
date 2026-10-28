@@ -1552,8 +1552,8 @@ TEST_CASE(
                 return invoke("vehicle:new", {.text = made.string()});
             case 10:
                 CHECK(notice_of(screen) == "That file already exists; nothing was saved.");
-                // A name alone is a file of that name in the player's mods.
-                return invoke("vehicle:new", {.text = "vehicle_editor_new/hand_cart"});
+                // A file name alone is a file of that name in the player's mods.
+                return invoke("vehicle:new", {.text = "vehicle_editor_new/hand_cart.json"});
             case 11:
                 CHECK(body<ec::panel_body>(part(screen, "vehicle:document")).title == "hand_cart");
                 CHECK_FALSE(std::filesystem::exists(made.parent_path() / "hand_cart.json"));
@@ -2612,7 +2612,7 @@ TEST_CASE(
             case 1:
                 CHECK(notice_of(screen).contains("folder"));
                 CHECK_FALSE(std::filesystem::exists(mods / "flat_vehicle.json"));
-                return invoke("vehicle:new", {.text = "vehicle_editor_mod/kart"});
+                return invoke("vehicle:new", {.text = "vehicle_editor_mod/kart.json"});
             case 2:
                 CHECK(body<ec::panel_body>(part(screen, "vehicle:document")).title == "kart");
                 // Nothing is written until the player saves.
@@ -2681,7 +2681,7 @@ TEST_CASE(
                 return answer("Stay");
             case 5:
                 CHECK(title(screen) == "Unsaved");
-                return invoke("vehicle:new", {.text = "vehicle_editor_ask/kart"});
+                return invoke("vehicle:new", {.text = "vehicle_editor_ask/kart.json"});
             case 6:
                 CHECK(kinds.back() == "uilist");
                 return answer("Stay");
@@ -2796,7 +2796,7 @@ TEST_CASE(
                 CHECK(picked_tool(screen) == "canvas_tool:select");
                 return invoke("vehicle:tool_install");
             case 4:
-                return invoke("vehicle:new", {.text = "vehicle_editor_tool/kart"});
+                return invoke("vehicle:new", {.text = "vehicle_editor_tool/kart.json"});
             case 5:
                 // A new design starts with a frame in hand.
                 CHECK(picked_tool(screen) == "canvas_tool:install");
@@ -2997,10 +2997,10 @@ TEST_CASE(
         const auto screen = ec::top_screen(captured());
         switch (step++) {
             case 0:
-                return invoke("vehicle:new", {.text = "vehicle_editor_twice/my_vehicle"});
+                return invoke("vehicle:new", {.text = "vehicle_editor_twice/my_vehicle.json"});
             case 1:
                 CHECK_FALSE(std::filesystem::exists(folder / "my_vehicle.json"));
-                return invoke("vehicle:new", {.text = "vehicle_editor_twice/my_vehicle"});
+                return invoke("vehicle:new", {.text = "vehicle_editor_twice/my_vehicle.json"});
             case 2:
                 CHECK(screen.kind == "uilist");
                 return answer("Save and leave");
@@ -3053,7 +3053,7 @@ TEST_CASE(
         const auto screen = ec::top_screen(captured());
         switch (step++) {
             case 0:
-                return invoke("vehicle:new", {.text = "bn/kart"});
+                return invoke("vehicle:new", {.text = "bn/kart.json"});
             case 1:
                 // bn is the game's own mod: a mod of that id would stand in for it.
                 CHECK(notice_of(screen).contains("bn_2"));
@@ -3371,6 +3371,18 @@ TEST_CASE(
                 CHECK(stat(screen, "file").value.ends_with("my_mod/bicycle_2.json"));
                 return invoke("vehicle:save");
             case 5:
+                // A slash in a name is part of the name.
+                return invoke("vehicle:new", {.text = "AC/DC van"});
+            case 6:
+                CHECK(stat(screen, "file").value.ends_with("my_mod/ac_dc_van.json"));
+                return invoke("vehicle:save");
+            case 7:
+                // A file named outright gives an id the game reads too.
+                return invoke("vehicle:new", {.text = "my_mod/Fast Car.json"});
+            case 8:
+                CHECK(stat(screen, "file").value.ends_with("my_mod/Fast Car.json"));
+                return invoke("vehicle:save");
+            case 9:
                 return act("QUIT");
             default:
                 FAIL("the vehicle editor outlived its exit");
@@ -3378,7 +3390,7 @@ TEST_CASE(
         }
     });
     editor::run_vehicle_editor();
-    CHECK(step == 6);
+    CHECK(step == 10);
     const auto saved = nlohmann::ordered_json::parse(read_file(folder / "go_kart.json"));
     REQUIRE(saved.size() == 1);
     CHECK(saved[0]["id"] == "go_kart");
@@ -3387,6 +3399,11 @@ TEST_CASE(
     const auto second = nlohmann::ordered_json::parse(read_file(folder / "bicycle_2.json"));
     CHECK(second[0]["id"] == "bicycle_2");
     CHECK(second[0]["name"] == "Bicycle");
+    const auto van = nlohmann::ordered_json::parse(read_file(folder / "ac_dc_van.json"));
+    CHECK(van[0]["id"] == "ac_dc_van");
+    CHECK(van[0]["name"] == "AC/DC van");
+    const auto car = nlohmann::ordered_json::parse(read_file(folder / "Fast Car.json"));
+    CHECK(car[0]["id"] == "fast_car");
 }
 
 TEST_CASE(
@@ -3584,8 +3601,8 @@ TEST_CASE(
             case 3:
                 // East of the rear wheel nothing holds a headlight up, and the square says so.
                 CHECK(refused(state, "mount:2,0").contains("frame"));
-                // Far from the frame too.
-                CHECK_FALSE(refused(state, "mount:-5,0").empty());
+                // Far from the frame, where a frame would not hold either, it says so.
+                CHECK(refused(state, "mount:-5,0").contains("touch the vehicle's frame"));
                 // A frame takes it.
                 CHECK_FALSE(none_refused(state));
                 CHECK(std::ranges::any_of(wire_cells(state), [](const nlohmann::json& entry) {
@@ -3607,6 +3624,65 @@ TEST_CASE(
     });
     editor::run_vehicle_editor();
     CHECK(step >= 6);
+}
+
+TEST_CASE(
+    "the vehicle editor's palette shows the first page of a category it turns to by itself",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto folder = std::filesystem::path(PATH_INFO::user_moddir()) / "my_mod";
+    std::filesystem::remove_all(folder);
+    const auto cleanup = on_out_of_scope([&] { std::filesystem::remove_all(folder); });
+    const auto list = [](const ec::screen_view& screen) -> const ec::list_body& {
+        return body<ec::list_body>(part(screen, "vehicle:parts"));
+    };
+    /// The tab of the category with the most parts but frames, the first.
+    auto biggest = std::string{};
+    auto most = std::size_t{0};
+    auto tabs = std::vector<std::string>{};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        if (step == 0) {
+            ++step;
+            return invoke("vehicle:open", {.row = "prototype:bicycle"});
+        }
+        const auto at = step++ - 1;
+        if (at == 0) {
+            tabs = body<ec::tabs_body>(part(screen, "vehicle:part_groups")).tabs
+                 | std::views::transform(&ec::tab_entry::id) | std::ranges::to<std::vector>();
+        }
+        // Visits every category to find the biggest.
+        if (at > 1 && at <= static_cast<int>(tabs.size()) && list(screen).total > most) {
+            most = list(screen).total;
+            biggest = tabs[at - 1];
+        }
+        if (at < static_cast<int>(tabs.size())) {
+            return invoke("vehicle:part_group", {.row = tabs[at]});
+        }
+        if (at == static_cast<int>(tabs.size())) {
+            REQUIRE(most > 50);
+            return invoke("vehicle:part_group", {.row = biggest});
+        }
+        if (at == static_cast<int>(tabs.size()) + 1) {
+            // Its last page.
+            return invoke(
+                "vehicle:part_page", {.count = static_cast<int>((list(screen).total - 1) / 50)});
+        }
+        if (at == static_cast<int>(tabs.size()) + 2) {
+            CHECK(list(screen).offset > 0);
+            // A new vehicle puts a frame in hand, whose category shows from its first page.
+            return invoke("vehicle:new", {.text = "Page van"});
+        }
+        if (at == static_cast<int>(tabs.size()) + 3) {
+            CHECK(list(screen).offset == 0);
+            CHECK_FALSE(list(screen).rows.empty());
+            return act("QUIT");
+        }
+        return answer("Leave without saving");
+    });
+    editor::run_vehicle_editor();
+    CHECK(step >= static_cast<int>(tabs.size()) + 5);
 }
 
 #endif // CATA_MCP
