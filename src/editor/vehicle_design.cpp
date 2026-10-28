@@ -28,6 +28,7 @@
 
 #include <algorithm>
 #include <array>
+#include <charconv>
 #include <fstream>
 #include <functional>
 #include <ranges>
@@ -141,6 +142,58 @@ struct read_design {
     std::vector<loader_message> messages;
 };
 
+/// The JSON pointer of the innermost member of `value` whose text in `value.dump()` holds the byte
+/// `offset` of it, or the byte right after it.
+auto pointer_at(const nlohmann::ordered_json& value, const std::size_t offset) -> std::string {
+    if (!value.is_structured()) { return {}; }
+    // After the opening bracket; each member after the comma of the one before.
+    auto at = std::size_t{1};
+    for (const auto& entry : value.items()) {
+        const auto start =
+            at + (value.is_object() ? nlohmann::ordered_json(entry.key()).dump().size() + 1 : 0);
+        const auto end = start + entry.value().dump().size();
+        if (offset <= end) {
+            auto key = std::string{};
+            for (const auto ch : entry.key()) {
+                key += ch == '~' ? std::string("~0")
+                     : ch == '/' ? std::string("~1")
+                                 : std::string(1, ch);
+            }
+            return "/" + key + (offset >= start ? pointer_at(entry.value(), offset - start) : "");
+        }
+        at = end + 1;
+    }
+    return {};
+}
+
+/// What the loader threw reading `text`, a prototype's JSON as `dump()` writes it, on one line:
+/// the pointer of the member it stopped at and what it said there.
+auto thrown_text(const std::string_view thrown, const std::string_view text) -> std::string {
+    constexpr auto header = std::string_view("Json error: ");
+    const auto at = thrown.find(header);
+    // The place leads as "<source>:<line>:<column>: ".
+    const auto colon = at == std::string_view::npos ? at : thrown.find(": ", at + header.size());
+    if (colon == std::string_view::npos) { return plain_loader_text(thrown); }
+    const auto place = thrown.substr(at + header.size(), colon - at - header.size());
+    auto said = std::string(thrown.substr(colon + 2));
+    // The text around the place is quoted after a blank line.
+    said = said.substr(0, said.find("\n\n"));
+    std::ranges::replace(said, '\n', ' ');
+    auto column = 0;
+    const auto mark = place.rfind(':');
+    const auto read =
+        mark != std::string_view::npos
+        && std::from_chars(place.data() + mark + 1, place.data() + place.size(), column).ec
+               == std::errc{};
+    const auto parsed = nlohmann::ordered_json::parse(text, nullptr, false);
+    const auto pointer =
+        read && column > 0 && !parsed.is_discarded()
+            ? pointer_at(parsed, static_cast<std::size_t>(column - 1))
+            : std::string{};
+    //~ %1$s is the JSON pointer of the member the loader stopped at, %2$s what it said.
+    return pointer.empty() ? said : string_format(_("%1$s: %2$s"), pointer, said);
+}
+
 auto read(const std::string_view text) -> read_design {
     auto result = read_design{};
     auto thrown = std::optional<std::string>{};
@@ -163,7 +216,7 @@ auto read(const std::string_view text) -> read_design {
         })
         | std::ranges::to<std::vector>();
     if (thrown) {
-        result.messages.push_back({.text = *thrown});
+        result.messages.push_back({.text = thrown_text(*thrown, text)});
         result.prototype.reset();
     }
     return result;

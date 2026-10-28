@@ -1577,15 +1577,20 @@ auto parts_view(const session& state) -> ec::screen_view {
                              : state.prototype().value("name", state.prototype().value("id", "")),
          .stats = std::move(status)}));
     if (!state.live && !state.built.messages.empty()) {
-        parts.push_back(ec::list(
-            {.id = problems_id,
-             .rows = state.built.messages | std::views::enumerate
-                   | std::views::transform([](const auto& entry) {
-                         const auto& [index, message] = entry;
-                         return ec::row{.id = index_row("message", index), .label = message.text};
-                     })
-                   | std::ranges::to<std::vector>(),
-             .selection = "none"}));
+        auto problems =
+            state.built.messages | std::views::enumerate
+            | std::views::transform([](const auto& entry) {
+                  const auto& [index, message] = entry;
+                  return ec::row{.id = index_row("message", index), .label = message.text};
+              })
+            | std::ranges::to<std::vector>();
+        if (!state.built.blueprint && state.doc->can_undo()) {
+            problems.push_back(
+                {.id = "message:undo",
+                 .label = _("Undo puts the prototype back as it was before this change.")});
+        }
+        parts.push_back(
+            ec::list({.id = problems_id, .rows = std::move(problems), .selection = "none"}));
     }
     // Every step of the open document or of the vehicle edited in place, to go back to.
     parts.push_back(ec::list(
