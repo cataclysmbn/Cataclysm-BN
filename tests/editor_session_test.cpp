@@ -7051,9 +7051,18 @@ TEST_CASE(
                 const auto& said = body<ec::text_body>(*status).markup;
                 CHECK(said.contains("Spawned Bicycle"));
                 CHECK(said.contains("World > Edit in place"));
-                return act("QUIT");
+                // The prototype stays open; nothing is edited in place.
+                CHECK(ec::find_component(*screen.root, "vehicle:document") != nullptr);
+                CHECK(ec::find_component(*screen.root, "vehicle:live") == nullptr);
+                return invoke("vehicle:source", {.row = "source:world"});
             }
             case 5:
+                return invoke("vehicle:edit", {.row = "world:0"});
+            case 6:
+                // The spawned vehicle is there to edit in place.
+                CHECK(ec::find_component(*screen.root, "vehicle:live") != nullptr);
+                return act("QUIT");
+            case 7:
                 return act("QUIT");
             default:
                 FAIL("the editor outlived its exit");
@@ -7063,8 +7072,9 @@ TEST_CASE(
     handle_action(std::move(mode));
     CHECK(
         kinds
-        == std::vector<
-            std::string>{"editor", "vehicle_editor", "vehicle_editor", "vehicle_editor", "editor"});
+        == std::vector<std::string>{
+            "editor", "vehicle_editor", "vehicle_editor", "vehicle_editor", "vehicle_editor",
+            "vehicle_editor", "editor"});
 }
 
 #endif // CATA_MCP
