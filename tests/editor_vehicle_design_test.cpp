@@ -575,6 +575,13 @@ TEST_CASE(
     CHECK(labels[1] == "light wheel mount (steerable) (wood)");
     CHECK(labels[2] == "frame (vertical)");
     CHECK(labels[3] == "frame (horizontal)");
+    // Only a whole word of the name goes unsaid: "a" and "ab" are no words of "frame".
+    auto short_word = *vpart_id("frame_vertical");
+    short_word.id = vpart_id("frame_a");
+    auto longer_word = short_word;
+    longer_word.id = vpart_id("frame_ab");
+    CHECK(editor::part_labels({&short_word, &longer_word})
+          == std::vector<std::string>{"frame (a)", "frame (ab)"});
     // Every label of a palette reads differently.
     const auto& all = vpart_info::get_all();
     const auto every = editor::part_labels(
