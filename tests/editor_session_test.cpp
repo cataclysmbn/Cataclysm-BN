@@ -48,6 +48,7 @@
 #    include <algorithm>
 #    include <filesystem>
 #    include <fstream>
+#    include <functional>
 #    include <memory>
 #    include <nlohmann/json.hpp>
 #    include <ranges>
@@ -6277,6 +6278,56 @@ TEST_CASE(
     editor::run_editor_session();
     CHECK(step == 14);
     editor::reset_editor_session();
+}
+
+namespace {
+/// Opens the kinds file, has an export refused, sends `changes` one by one and tells whether the
+/// refusal is gone after them.
+auto refusal_gone_after(const std::vector<std::function<input_event()>>& changes) -> bool {
+    const auto guard = screen_guard{};
+    const auto file = kinds_file{};
+    auto step = std::size_t{0};
+    auto gone = false;
+    const auto notice = [](const ec::screen_view& screen) {
+        const auto* const found = ec::find_component(*screen.root, "editor:notice");
+        return found ? body<ec::text_body>(*found).markup : std::string();
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        const auto at = step++;
+        if (at == 0) { return invoke("editor:open", {.text = file.path.string()}); }
+        if (at == 1) { return invoke("editor:export", {.text = "/tmp/editor_export_test.json"}); }
+        if (at == 2) { REQUIRE_FALSE(notice(screen).empty()); }
+        if (at - 2 < changes.size()) { return changes[at - 2](); }
+        gone = notice(screen).empty();
+        return act("QUIT");
+    });
+    editor::run_editor_session();
+    editor::reset_editor_session();
+    return gone;
+}
+} // namespace
+
+TEST_CASE(
+    "the editor drops a refusal once the player changes the export size",
+    "[editor_session][engine_client_component]") {
+    CHECK(refusal_gone_after({[] { return invoke("editor:export_width", {.count = 2}); }}));
+    CHECK(refusal_gone_after({[] { return invoke("editor:export_height", {.count = 3}); }}));
+}
+
+TEST_CASE(
+    "the editor drops a refusal once the player marks the squares to export",
+    "[editor_session][engine_client_component]") {
+    CHECK(refusal_gone_after(
+        {[] { return invoke("editor:export_area"); }, [] { return act("CONFIRM"); },
+         [] { return act("RIGHT"); }, [] { return act("DOWN"); }, [] { return act("CONFIRM"); }}));
+}
+
+TEST_CASE(
+    "the editor drops a refusal once the player flips applying on save",
+    "[editor_session][engine_client_component]") {
+    CHECK(refusal_gone_after({[] { return invoke("editor:apply_on_save"); }}));
 }
 
 #endif // CATA_MCP
