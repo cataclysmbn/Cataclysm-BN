@@ -565,7 +565,9 @@ auto takes( const form_field &field ) -> std::string
         return string_format( _( "%s takes one of its choices." ), name );
     }
     //~ A form field turns away a text: %1$s is the field's name, %2$d how many characters it takes at most.
-    return string_format( _( "%1$s takes at most %2$d characters." ), name, field.max_length );
+    return string_format( vgettext( "%1$s takes at most %2$d character.",
+                                    "%1$s takes at most %2$d characters.",
+                                    field.max_length ), name, field.max_length );
 }
 
 /// The field of the form `shape` names by row whose value `args` gives and it does not take; nullptr
