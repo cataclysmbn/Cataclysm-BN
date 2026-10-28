@@ -1058,6 +1058,36 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the editor names an entry of a list of overmap terrains by those terrains",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke(
+                    "editor:open", {.text = PATH_INFO::datadir() + "json/mapgen/shelter.json"});
+            case 1:
+                CHECK(body<ec::list_body>(part(screen, "editor:objects")).rows.front().label
+                      == "shelter");
+                return invoke("editor:apply");
+            case 2:
+                CHECK(std::get<ec::text_body>(part(screen, "editor:status").body).markup
+                      == "The game generates shelter with this entry now.");
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 3);
+}
+
+TEST_CASE(
     "the editor's catalog tells apart entries of the same name",
     "[editor_session][engine_client_component]") {
     const auto guard = screen_guard{};
