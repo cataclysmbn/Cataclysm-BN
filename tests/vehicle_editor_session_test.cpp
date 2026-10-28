@@ -1151,8 +1151,6 @@ TEST_CASE(
     CHECK(step == 10);
 }
 
-#endif
-
 namespace {
 /// The slot of the part `id` of the screen's root split.
 auto slot_of(const ec::screen_view& screen, const std::string& id) -> std::string {
@@ -2459,3 +2457,5 @@ TEST_CASE(
     editor::run_vehicle_editor();
     CHECK(step == 2);
 }
+
+#endif // CATA_MCP
