@@ -475,6 +475,25 @@ auto session::on_mapgen() const -> bool {
     return doc && object < doc->objects().size() && is_json_mapgen(doc->objects()[object].value);
 }
 
+auto session::on_update() const -> bool {
+    return on_mapgen() && doc->objects()[object].value.contains("update_mapgen_id");
+}
+
+auto session::square_refusal() const -> std::optional<std::string> {
+    if (!on_mapgen()) { return std::nullopt; }
+    if (doc->objects()[object].value.contains("nested_mapgen_id")) {
+        return _(
+            "A nested chunk goes on a map with the mapgen that places it; open that mapgen to "
+            "stamp, test or preview it.");
+    }
+    if (on_update()) {
+        return _(
+            "An update mapgen changes squares the game made already, when a mission or event "
+            "runs it; it is not stamped, applied, tested or previewed.");
+    }
+    return std::nullopt;
+}
+
 auto session::on_special() const -> bool {
     return doc && object < doc->objects().size() && is_special(doc->objects()[object].value);
 }
@@ -667,7 +686,7 @@ auto session::reload() -> void {
     preview.reset();
     parameters.clear();
     loot.reset();
-    if (seed && on_mapgen()) {
+    if (seed && on_mapgen() && !square_refusal()) {
         if (const auto loaded = load_detached_mapgens(text)) {
             for (const auto& function : loaded->functions) {
                 for (auto& choice : parameters_of(*function)) {

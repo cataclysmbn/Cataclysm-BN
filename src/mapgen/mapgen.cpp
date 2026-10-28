@@ -6777,7 +6777,7 @@ auto editor::apply_mapgen(const std::string_view text) -> std::expected<void, st
     const auto loaded = load_detached_mapgens(text);
     if (!loaded) { return std::unexpected(loaded.error()); }
     if (loaded->functions.empty()) {
-        return std::unexpected(std::string("only an overmap terrain's mapgen can be applied"));
+        return std::unexpected(std::string(_("Only an overmap terrain's mapgen can be applied.")));
     }
     for (const auto index : std::views::iota(std::size_t{0}, loaded->functions.size())) {
         oter_mapgen.replace(loaded->om_terrains[index], loaded->functions[index]);

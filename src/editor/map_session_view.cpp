@@ -785,33 +785,50 @@ auto game_parts(
              .denial = state.placed_here() ? "" : _("Place the special in the world first.")}));
     }
     if (state.on_mapgen()) {
-        affordances.push_back(
-            ec::invoke_affordance({.id = apply_id, .label = _("Apply to game"), .keys = {"F7"}}));
+        const auto refused = state.square_refusal();
+        const auto squared = !refused.has_value();
+        affordances.push_back(ec::invoke_affordance(
+            {.id = apply_id,
+             .label = _("Apply to game"),
+             .keys = {"F7"},
+             .enabled = !state.on_update(),
+             .denial = state.on_update() ? *refused : ""}));
         affordances.push_back(
             ec::invoke_affordance({.id = apply_on_save_id, .label = _("Apply on save")}));
-        affordances.push_back(
-            ec::invoke_affordance({.id = stamp_id, .label = _("Stamp"), .keys = {"F6"}}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = stamp_id,
+             .label = _("Stamp"),
+             .keys = {"F6"},
+             .enabled = squared,
+             .denial = refused.value_or("")}));
         // In the editor's own world testing stamps first; in a player's, only what was stamped.
-        const auto testable = in_editor_game() || state.stamped.has_value();
+        const auto testable = squared && (in_editor_game() || state.stamped.has_value());
         affordances.push_back(ec::invoke_affordance(
             {.id = test_id,
              .label = _("Test"),
              .keys = {"F5"},
              .enabled = testable,
-             .denial = testable ? "" : _("Stamp the entry first: Test plays what was stamped.")}));
+             .denial = testable ? ""
+                     : refused  ? *refused
+                                : _("Stamp the entry first: Test plays what was stamped.")}));
         affordances.push_back(ec::invoke_affordance(
             {.id = preview_id,
              .label = _("Preview"),
              .args = {.count = ec::count_shape{.min = 1,
                                                .max = std::numeric_limits<unsigned int>::max(),
                                                .initial = state.seed.value_or(1)}},
-             .keys = {"F8"}}));
+             .keys = {"F8"},
+             .enabled = squared,
+             .denial = refused.value_or("")}));
+        const auto lootable = squared && state.selected.has_value();
         affordances.push_back(ec::invoke_affordance(
             {.id = loot_id,
              .label = _("What can spawn here"),
-             .enabled = state.selected.has_value(),
-             .denial = state.selected ? "" : _("Mark squares with the Select tool first.")}));
-        if (state.seed) {
+             .enabled = lootable,
+             .denial = lootable ? ""
+                     : refused  ? *refused
+                                : _("Mark squares with the Select tool first.")}));
+        if (state.seed && squared) {
             affordances.push_back(ec::invoke_affordance({.id = reroll_id, .label = _("Re-roll")}));
             affordances.push_back(ec::invoke_affordance(
                 {.id = turn_id, .label = _("Turn"), .args = row_of(rotation_id)}));
