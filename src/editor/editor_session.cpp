@@ -266,7 +266,10 @@ auto run_editor_session() -> void {
             if (found != special_tools.end()) { state.special_tool = &*found; }
         } else if (id == tool_id) {
             const auto found = std::ranges::find(tools, row, &tool::id);
-            if (found != tools.end()) {
+            // An entry without rows takes only the placements tool.
+            if (found != tools.end()
+                && (!state.on_mapgen() || state.has_rows()
+                    || found->region == region_use::placements)) {
                 state.current = &*found;
                 state.anchor.reset();
             }

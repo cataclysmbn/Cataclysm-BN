@@ -482,6 +482,13 @@ auto session::on_update() const -> bool {
     return on_mapgen() && doc->objects()[object].value.contains("update_mapgen_id");
 }
 
+auto session::has_rows() const -> bool {
+    if (!on_mapgen()) { return false; }
+    const auto& value = doc->objects()[object].value;
+    return value.contains("object") && value["object"].is_object()
+        && value["object"].contains("rows");
+}
+
 auto session::square_refusal() const -> std::optional<std::string> {
     if (!on_mapgen()) { return std::nullopt; }
     if (doc->objects()[object].value.contains("nested_mapgen_id")) {
@@ -698,6 +705,11 @@ auto session::reload() -> void {
         parameters.clear();
         loot.reset();
         return;
+    }
+    // An entry without rows is edited by its placements alone, so that tool is the one shown.
+    if (on_mapgen() && !has_rows() && current->region != region_use::placements) {
+        current = &*std::ranges::find(tools, region_use::placements, &tool::region);
+        anchor.reset();
     }
     const auto stand_ins = file_stand_ins(stand_in_texts());
     legend = mapgen_legend(text).value_or(std::vector<legend_symbol>{});

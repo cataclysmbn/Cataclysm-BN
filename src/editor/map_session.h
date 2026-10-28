@@ -424,6 +424,9 @@ struct session {
     /// Whether the entry edited is applied on save: a mapgen that is no update mapgen, which is
     /// never applied.
     auto applies_on_save() const -> bool { return apply_on_save && on_mapgen() && !on_update(); }
+    /// Whether the mapgen edited has rows to draw on; an update mapgen placing chunks has none,
+    /// only placements.
+    auto has_rows() const -> bool;
     /// Whether the object edited is an overmap special or a building, which places overmap squares.
     auto on_special() const -> bool;
     /// Whether the object edited is an overmap terrain, which the game draws its squares with.
