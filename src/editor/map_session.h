@@ -300,6 +300,9 @@ auto write_new_file(const std::string& made, const nlohmann::ordered_json& entri
     -> std::expected<void, std::string>;
 /// Writes `made`'s file; the error says why it was not written.
 auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string>;
+/// The path the new mapgen form suggests: the first `new_mapgen.json`, `new_mapgen_2.json` and on
+/// that the player's mods lack.
+auto free_new_path() -> std::string;
 
 struct session {
     std::optional<document> doc = std::nullopt;
@@ -384,7 +387,7 @@ struct session {
     std::string mapping_symbol;
     std::string mapping_layer = "terrain";
     std::string mapping_value;
-    new_mapgen made;
+    new_mapgen made = {.path = free_new_path()};
     /// How many overmap squares an export spans east and south, centred on the avatar's.
     point_rel_omt export_size = point_rel_omt(1, 1);
     /// The squares of the live world the player marked to export instead, until a size is set.

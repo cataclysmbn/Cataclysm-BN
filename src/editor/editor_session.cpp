@@ -293,8 +293,9 @@ auto run_editor_session() -> void {
         } else if (id == new_apply_id) {
             const auto made = create_mapgen(state.made);
             if (made) {
-                const auto path = std::exchange(state.made.path, {});
-                // The next file is named afresh; its kind, fill and size stay as chosen.
+                const auto path = std::exchange(state.made.path, free_new_path());
+                // The next file is named afresh, at the next free path; its kind, fill and size
+                // stay as chosen.
                 state.made.om_terrain.clear();
                 state.open(path);
             } else {

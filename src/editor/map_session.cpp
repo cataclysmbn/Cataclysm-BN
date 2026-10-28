@@ -339,6 +339,17 @@ auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string> {
     return write_new_file(made.path, entry);
 }
 
+auto free_new_path() -> std::string {
+    const auto mods = std::filesystem::path(PATH_INFO::user_moddir());
+    return (mods
+            / (free_name("new_mapgen",
+                         [&](const std::string& name) {
+                             return std::filesystem::exists(mods / (name + ".json"));
+                         })
+               + ".json"))
+        .string();
+}
+
 auto range_text(const placement_range& range) -> std::string {
     return range.min == range.max
              ? std::to_string(range.min)

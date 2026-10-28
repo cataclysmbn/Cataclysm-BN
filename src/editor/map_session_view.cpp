@@ -898,28 +898,46 @@ auto game_parts(
 
 /// The form that creates a new file.
 auto new_file_form(const session& state) -> ec::component {
+    const auto& kind = state.made.kind;
+    const auto special = kind == "special" || kind == "building";
     return ec::component{
         .id = new_id,
         .affordances = {new_set_id, new_apply_id},
         .body = ec::form_body{
             .fields =
-                {{.id = "path", .label = _("Path"), .value = state.made.path},
+                {{.id = "path",
+                  .label = _("Path"),
+                  .description = _("The new .json file, inside your mods."),
+                  .value = state.made.path,
+                  .required = true},
                  {.id = "om_terrain",
-                  .label = state.made.kind == "palette" ? _("Palette id")
-                         : state.made.kind == "nested"  ? _("Chunk id")
-                         : state.made.kind == "special" ? _("Special id")
-                         : state.made.kind == "building"
-                             ? _("Building id")
-                             : _("Overmap terrain"),
-                  .value = state.made.om_terrain},
+                  .label = kind == "palette"  ? _("Palette id")
+                         : kind == "nested"   ? _("Chunk id")
+                         : kind == "special"  ? _("Special id")
+                         : kind == "building" ? _("Building id")
+                                              : _("Overmap terrain"),
+                  .description =
+                      kind == "palette"  ? _("The id mapgens name the palette by.")
+                      : kind == "nested" ? _("The id mapgens place the chunk by.")
+                      : special          ? _("The id the game places it by.")
+                                         : _("The id of the overmap terrain the mapgen makes."),
+                  .value = state.made.om_terrain,
+                  .required = true},
                  {.id = "fill",
                   // A special's first square places an overmap terrain.
-                  .label = state.made.kind == "special" || state.made.kind == "building"
-                             ? _("Overmap terrain")
-                             : _("Terrain"),
-                  .value = state.made.fill},
+                  .label = special ? _("Overmap terrain") : _("Terrain"),
+                  .description =
+                      special             ? _("The overmap terrain of its first square.")
+                      : kind == "palette" ? _("The terrain its symbol . places.")
+                      : kind == "nested"
+                          ? _("The terrain of every square.")
+                          : _("The terrain of every square, and under any symbol that "
+                              "maps none."),
+                  .value = state.made.fill,
+                  .required = true},
                  {.id = "kind",
                   .label = _("Kind"),
+                  .description = _("What the file holds."),
                   .value = state.made.kind,
                   .type = "select",
                   .options =
@@ -928,7 +946,10 @@ auto new_file_form(const session& state) -> ec::component {
                        {.id = "palette", .label = _("Palette")},
                        {.id = "special", .label = _("Overmap special")},
                        {.id = "building", .label = _("Building")}}},
-                 {.id = "size", .label = _("Chunk size"), .value = state.made.size}},
+                 {.id = "size",
+                  .label = _("Chunk size"),
+                  .description = _("The side of a nested chunk, in squares."),
+                  .value = state.made.size}},
             .submit = new_apply_id}};
 }
 

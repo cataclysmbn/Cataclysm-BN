@@ -2379,7 +2379,7 @@ struct loose_mod_files {
 } // namespace
 
 TEST_CASE(
-    "the new-file form suggests a free file in the user mods and marks the id it needs",
+    "the new-file form suggests a free file in the user mods and marks what it needs",
     "[editor_session][engine_client_component]") {
     const auto guard = screen_guard{};
     const auto mods = std::filesystem::path(PATH_INFO::user_moddir());
@@ -2405,7 +2405,10 @@ TEST_CASE(
                 for (const auto& field : fields) {
                     INFO(field.dump());
                     CHECK_FALSE(field.value("description", "").empty());
-                    CHECK(field.value("required", false) == (field["id"] == "om_terrain"));
+                    // What Create refuses empty.
+                    CHECK(field.value("required", false)
+                          == (field["id"] == "path" || field["id"] == "om_terrain"
+                              || field["id"] == "fill"));
                 }
                 return invoke("editor:new_set", {.row = "om_terrain", .text = "house_04"});
             }
