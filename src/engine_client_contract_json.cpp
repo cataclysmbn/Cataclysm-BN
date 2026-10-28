@@ -725,6 +725,7 @@ auto body_json( const grid_body &body, const bubble_frame & /*frame*/ ) -> json
         }
     }
     if( !body.region_drag.empty() ) { result["region_drag"] = body.region_drag; }
+    if( !body.secondary.empty() ) { result["secondary"] = body.secondary; }
     return result;
 }
 auto body_json( const map_body &body, const bubble_frame &frame ) -> json

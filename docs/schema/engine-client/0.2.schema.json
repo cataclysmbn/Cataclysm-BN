@@ -6991,6 +6991,10 @@
         "region_drag": {
           "$ref": "#/$defs/opaque_id",
           "description": "The affordance a client runs after a pointer drag of a region: pressed inside it the drag moves the whole region, pressed on a corner it moves that corner. The row is the region's `id` and the text how far its top-left and bottom-right squares moved east and south, `dx0,dy0,dx1,dy1`. Absent while regions are not dragged."
+        },
+        "secondary": {
+          "$ref": "#/$defs/opaque_id",
+          "description": "The affordance a client runs on a secondary click of a cell, such as a right click, with the cell's `id` as the row, as the vehicle editor's canvas removes the top part of a square. Absent for none."
         }
       },
       "required": [

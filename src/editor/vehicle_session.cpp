@@ -76,6 +76,7 @@ constexpr auto page_id = "vehicle:page";
 constexpr auto mount_id = "vehicle:mount";
 constexpr auto pick_id = "vehicle:pick";
 constexpr auto remove_id = "vehicle:remove";
+constexpr auto clear_id = "vehicle:clear";
 constexpr auto earlier_id = "vehicle:earlier";
 constexpr auto later_id = "vehicle:later";
 constexpr auto choose_id = "vehicle:choose";
@@ -711,16 +712,23 @@ struct session {
         }
     }
 
+    /// Picks the mount `at` and removes the part on top of it, showing what is left.
+    auto clear(const point& at) -> void {
+        cursor = at;
+        tool_tab = "mount";
+        pick_top();
+        remove_picked();
+    }
+
     /// Picks the mount `at` and does there what the canvas tool does.
     auto click(const point& at) -> void {
+        if (canvas_tool == "remove") {
+            clear(at);
+            return;
+        }
         cursor = at;
         // What the click changes shows at once.
         if (canvas_tool != "select") { tool_tab = "mount"; }
-        if (canvas_tool == "remove") {
-            pick_top();
-            remove_picked();
-            return;
-        }
         if (canvas_tool == "install" && brush.empty()) {
             notice = _("Choose a part from the Parts palette first.");
         } else if (
@@ -1426,14 +1434,15 @@ auto grid_of(const vehicle* const veh, const mount_frame& frame, const point& cu
     }
     return {
         .id = grid_id,
-        .affordances = {mount_id},
+        .affordances = {mount_id, clear_id},
         .body = ec::grid_body{
             .cols = high.x - low.x + 1,
             .rows = high.y - low.y + 1,
             .cursor = ec::grid_point{cursor.x - low.x, cursor.y - low.y},
             .cells = std::move(cells),
             .looks = std::move(palette.looks),
-            .role = "canvas"}};
+            .role = "canvas",
+            .secondary = clear_id}};
 }
 
 /// The squares the vehicle `veh` covers on the map when it faces `facing` degrees clockwise from
@@ -2224,6 +2233,11 @@ auto parts_view(const session& state) -> ec::screen_view {
     affordances.push_back(
         ec::invoke_affordance({.id = mount_id, .label = _("Mount"), .args = row_of(grid_id)}));
     affordances.push_back(ec::invoke_affordance(
+        {.id = clear_id,
+         .label = _("Remove top part"),
+         .description = _("Removes the part on top of the square, whatever tool is in hand."),
+         .args = row_of(grid_id)}));
+    affordances.push_back(ec::invoke_affordance(
         {.id = part_filter_id, .label = _("Filter parts"), .args = {.text = ec::text_shape{}}}));
     affordances.push_back(
         ec::invoke_affordance({.id = choose_id, .label = _("Choose"), .args = row_of(parts_id)}));
@@ -2458,6 +2472,8 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
             // Nothing is open to act on.
         } else if (id == mount_id) {
             if (const auto at = row_point(row, "mount")) { state.click(*at); }
+        } else if (id == clear_id) {
+            if (const auto at = row_point(row, "mount")) { state.clear(*at); }
         } else if (id == remove_id) {
             state.remove_picked();
         } else if (state.live) {

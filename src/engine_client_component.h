@@ -271,6 +271,9 @@ struct grid_body {
     /// The affordance a client runs after dragging a region: its inside moves it, a corner
     /// stretches it; empty for none.
     std::string region_drag = {};
+    /// The affordance a client runs with a cell's id as the row on a secondary click of that cell,
+    /// such as a right click; empty for none.
+    std::string secondary = {};
 };
 /// The looks of a grid, each once, which its cells name by index.
 struct look_palette {
