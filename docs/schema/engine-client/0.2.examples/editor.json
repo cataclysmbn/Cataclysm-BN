@@ -1060,7 +1060,7 @@
                 {
                   "id": "object:0",
                   "label": "editor_scenario_chunk",
-                  "description": "",
+                  "description": "Nested chunk",
                   "denial": "",
                   "enabled": true,
                   "selectable": true,
@@ -4413,7 +4413,8 @@
             "keys": [
               "F8"
             ],
-            "enabled": true,
+            "enabled": false,
+            "denial": "A nested chunk goes on a map with the mapgen that places it; open that mapgen to stamp, test or preview it.",
             "args": {
               "count": {
                 "min": 1,
@@ -4429,7 +4430,7 @@
             "label": "What can spawn here",
             "keys": [],
             "enabled": false,
-            "denial": "Mark squares with the Select tool first.",
+            "denial": "A nested chunk goes on a map with the mapgen that places it; open that mapgen to stamp, test or preview it.",
             "expect": "screen",
             "group": "View"
           },
@@ -4508,7 +4509,8 @@
             "keys": [
               "F6"
             ],
-            "enabled": true,
+            "enabled": false,
+            "denial": "A nested chunk goes on a map with the mapgen that places it; open that mapgen to stamp, test or preview it.",
             "expect": "screen",
             "group": "World"
           },
@@ -4519,7 +4521,7 @@
               "F5"
             ],
             "enabled": false,
-            "denial": "Stamp the entry first: Test plays what was stamped.",
+            "denial": "A nested chunk goes on a map with the mapgen that places it; open that mapgen to stamp, test or preview it.",
             "expect": "screen",
             "group": "World"
           },
@@ -5083,7 +5085,7 @@
                 {
                   "id": "object:0",
                   "label": "editor_scenario_chunk",
-                  "description": "",
+                  "description": "Nested chunk",
                   "denial": "",
                   "enabled": true,
                   "selectable": true,
@@ -8494,7 +8496,8 @@
             "keys": [
               "F8"
             ],
-            "enabled": true,
+            "enabled": false,
+            "denial": "A nested chunk goes on a map with the mapgen that places it; open that mapgen to stamp, test or preview it.",
             "args": {
               "count": {
                 "min": 1,
@@ -8510,7 +8513,7 @@
             "label": "What can spawn here",
             "keys": [],
             "enabled": false,
-            "denial": "Mark squares with the Select tool first.",
+            "denial": "A nested chunk goes on a map with the mapgen that places it; open that mapgen to stamp, test or preview it.",
             "expect": "screen",
             "group": "View"
           },
@@ -8589,7 +8592,8 @@
             "keys": [
               "F6"
             ],
-            "enabled": true,
+            "enabled": false,
+            "denial": "A nested chunk goes on a map with the mapgen that places it; open that mapgen to stamp, test or preview it.",
             "expect": "screen",
             "group": "World"
           },
@@ -8600,7 +8604,7 @@
               "F5"
             ],
             "enabled": false,
-            "denial": "Stamp the entry first: Test plays what was stamped.",
+            "denial": "A nested chunk goes on a map with the mapgen that places it; open that mapgen to stamp, test or preview it.",
             "expect": "screen",
             "group": "World"
           },
@@ -9028,7 +9032,7 @@
                 {
                   "id": "object:0",
                   "label": "editor_scenario_chunk",
-                  "description": "",
+                  "description": "Nested chunk",
                   "denial": "",
                   "enabled": true,
                   "selectable": true,
@@ -12420,7 +12424,8 @@
             "keys": [
               "F8"
             ],
-            "enabled": true,
+            "enabled": false,
+            "denial": "A nested chunk goes on a map with the mapgen that places it; open that mapgen to stamp, test or preview it.",
             "args": {
               "count": {
                 "min": 1,
@@ -12436,7 +12441,7 @@
             "label": "What can spawn here",
             "keys": [],
             "enabled": false,
-            "denial": "Mark squares with the Select tool first.",
+            "denial": "A nested chunk goes on a map with the mapgen that places it; open that mapgen to stamp, test or preview it.",
             "expect": "screen",
             "group": "View"
           },
@@ -12515,7 +12520,8 @@
             "keys": [
               "F6"
             ],
-            "enabled": true,
+            "enabled": false,
+            "denial": "A nested chunk goes on a map with the mapgen that places it; open that mapgen to stamp, test or preview it.",
             "expect": "screen",
             "group": "World"
           },
@@ -12526,7 +12532,7 @@
               "F5"
             ],
             "enabled": false,
-            "denial": "Stamp the entry first: Test plays what was stamped.",
+            "denial": "A nested chunk goes on a map with the mapgen that places it; open that mapgen to stamp, test or preview it.",
             "expect": "screen",
             "group": "World"
           },
@@ -12998,8 +13004,8 @@
         "stage_text": "Done.",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "35",
-          "revision": "29"
+          "sequence": "34",
+          "revision": "28"
         }
       }
     },
@@ -13010,7 +13016,7 @@
         "epoch": "epoch-2",
         "expect": {
           "boundary_id": "boundary:3",
-          "revision": "31"
+          "revision": "30"
         },
         "operation": {
           "kind": "invoke",
@@ -13062,8 +13068,8 @@
         "stage_text": "Done.",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "38",
-          "revision": "32"
+          "sequence": "37",
+          "revision": "31"
         }
       }
     },
@@ -13074,7 +13080,7 @@
         "epoch": "epoch-2",
         "expect": {
           "boundary_id": "boundary:4",
-          "revision": "32"
+          "revision": "31"
         },
         "operation": {
           "kind": "invoke",
@@ -13125,8 +13131,8 @@
         "stage_text": "Done.",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "39",
-          "revision": "33"
+          "sequence": "38",
+          "revision": "32"
         }
       }
     },
@@ -13184,8 +13190,8 @@
         "stage_text": "Done.",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "41",
-          "revision": "35"
+          "sequence": "40",
+          "revision": "34"
         }
       }
     },
@@ -13243,8 +13249,8 @@
         "stage_text": "Done.",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "46",
-          "revision": "40"
+          "sequence": "45",
+          "revision": "39"
         }
       }
     },
@@ -13348,7 +13354,7 @@
                 {
                   "id": "object:0",
                   "label": "house_04",
-                  "description": "",
+                  "description": "Overmap terrain mapgen",
                   "denial": "",
                   "enabled": true,
                   "selectable": true,

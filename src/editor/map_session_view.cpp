@@ -506,14 +506,18 @@ auto legend_rows(const session& state) -> std::vector<ec::row> {
         state.legend | std::views::transform([&](const legend_symbol& entry) {
             auto columns = symbol_columns(object, entry);
             // A symbol the rows never use, or one they use that nothing maps, is flagged: the
-            // loader fills the latter with the entry's fill terrain.
+            // loader fills the latter with the entry's fill terrain, and a chunk or update mapgen
+            // leaves the map under it as it is.
             if (state.on_mapgen() && (!entry.used || entry.lines.empty())) {
                 columns.push_back(
                     {.key = "use",
                      .label = _("Use"),
-                     .value = !entry.used ? _("Unused")
-                            : fill        ? _("Fill")
-                                          : _("Undefined")});
+                     .value =
+                         !entry.used ? _("Unused")
+                         : fill      ? _("Fill")
+                         : state.square_refusal()
+                             ? _("Keeps the map")
+                             : _("Undefined")});
             }
             auto sources =
                 entry.lines | std::views::transform(&legend_line::source)
@@ -543,22 +547,6 @@ auto stroke_affordances(std::vector<ec::affordance>& affordances, const bool dra
     affordances.push_back(
         ec::invoke_affordance({.id = stroke_begin_id, .label = _("Begin stroke")}));
     affordances.push_back(ec::invoke_affordance({.id = stroke_end_id, .label = _("End stroke")}));
-}
-
-/// A row per state of the document, the original first: a step is named by the edit it did, and
-/// the row of the saved state says so.
-auto history_rows(const document& doc) -> std::vector<ec::row> {
-    const auto steps = doc.history();
-    auto rows = std::vector<ec::row>{};
-    for (const auto depth : std::views::iota(std::size_t{0}, steps.size() + 1)) {
-        auto row = ec::row{
-            .id = index_row("step", depth),
-            .label = depth == 0 ? _("Opened") : step_label(steps[depth - 1].edits.back()),
-            .selected = depth == doc.depth()};
-        if (doc.saved_depth() == depth) { row.description = _("Saved"); }
-        rows.push_back(std::move(row));
-    }
-    return rows;
 }
 
 /// The argument of an affordance that takes a row of .
@@ -801,33 +789,50 @@ auto game_parts(
              .denial = state.placed_here() ? "" : _("Place the special in the world first.")}));
     }
     if (state.on_mapgen()) {
-        affordances.push_back(
-            ec::invoke_affordance({.id = apply_id, .label = _("Apply to game"), .keys = {"F7"}}));
+        const auto refused = state.square_refusal();
+        const auto squared = !refused.has_value();
+        affordances.push_back(ec::invoke_affordance(
+            {.id = apply_id,
+             .label = _("Apply to game"),
+             .keys = {"F7"},
+             .enabled = !state.on_update(),
+             .denial = state.on_update() ? *refused : ""}));
         affordances.push_back(
             ec::invoke_affordance({.id = apply_on_save_id, .label = _("Apply on save")}));
-        affordances.push_back(
-            ec::invoke_affordance({.id = stamp_id, .label = _("Stamp"), .keys = {"F6"}}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = stamp_id,
+             .label = _("Stamp"),
+             .keys = {"F6"},
+             .enabled = squared,
+             .denial = refused.value_or("")}));
         // In the editor's own world testing stamps first; in a player's, only what was stamped.
-        const auto testable = in_editor_game() || state.stamped.has_value();
+        const auto testable = squared && (in_editor_game() || state.stamped.has_value());
         affordances.push_back(ec::invoke_affordance(
             {.id = test_id,
              .label = _("Test"),
              .keys = {"F5"},
              .enabled = testable,
-             .denial = testable ? "" : _("Stamp the entry first: Test plays what was stamped.")}));
+             .denial = testable ? ""
+                     : refused  ? *refused
+                                : _("Stamp the entry first: Test plays what was stamped.")}));
         affordances.push_back(ec::invoke_affordance(
             {.id = preview_id,
              .label = _("Preview"),
              .args = {.count = ec::count_shape{.min = 1,
                                                .max = std::numeric_limits<unsigned int>::max(),
                                                .initial = state.seed.value_or(1)}},
-             .keys = {"F8"}}));
+             .keys = {"F8"},
+             .enabled = squared,
+             .denial = refused.value_or("")}));
+        const auto lootable = squared && state.selected.has_value();
         affordances.push_back(ec::invoke_affordance(
             {.id = loot_id,
              .label = _("What can spawn here"),
-             .enabled = state.selected.has_value(),
-             .denial = state.selected ? "" : _("Mark squares with the Select tool first.")}));
-        if (state.seed) {
+             .enabled = lootable,
+             .denial = lootable ? ""
+                     : refused  ? *refused
+                                : _("Mark squares with the Select tool first.")}));
+        if (state.seed && squared) {
             affordances.push_back(ec::invoke_affordance({.id = reroll_id, .label = _("Re-roll")}));
             affordances.push_back(ec::invoke_affordance(
                 {.id = turn_id, .label = _("Turn"), .args = row_of(rotation_id)}));
@@ -1152,24 +1157,52 @@ auto special_canvas(const session& state) -> ec::component {
 } // namespace
 
 namespace {
-/// A row per entry of the file, by name; entries of the same name, such as the variants the game
-/// picks among by weight, are told apart by their place among them.
+/// What kind of entry `value` is, in words; empty for one the editor does not name.
+auto entry_kind(const nlohmann::ordered_json& value) -> std::string {
+    const auto type = value.is_object() ? value.value("type", "") : std::string{};
+    if (type == "mapgen") {
+        return value.contains("nested_mapgen_id") ? _("Nested chunk")
+             : value.contains("update_mapgen_id")
+                 ? _("Update mapgen")
+                 : _("Overmap terrain mapgen");
+    }
+    return type == "palette"         ? _("Palette")
+         : type == "overmap_special" ? _("Overmap special")
+         : type == "city_building"   ? _("City building")
+         : type == "overmap_terrain"
+             ? _("Overmap terrain")
+             : std::string{};
+}
+
+/// An entry's name and kind, which together tell entries apart.
+struct named_entry {
+    std::string name;
+    std::string kind;
+    auto operator==(const named_entry&) const -> bool = default; // *NOPAD*
+};
+
+/// A row per entry of the file, by name, saying its kind; entries of the same name and kind, such
+/// as the variants the game picks among by weight, are told apart by their place among them.
 auto entry_rows(const session& state, const std::vector<std::size_t>& entries)
     -> std::vector<ec::row> {
     const auto& objects = state.doc->objects();
     const auto names =
-        entries
-        | std::views::transform([&](const auto index) { return entry_name(objects[index].value); })
+        entries | std::views::transform([&](const auto index) {
+            return named_entry{
+                .name = entry_name(objects[index].value), .kind = entry_kind(objects[index].value)};
+        })
         | std::ranges::to<std::vector>();
     return std::views::zip(entries, names) | std::views::enumerate
          | std::views::transform([&](const auto& numbered) {
                const auto& [at, entry] = numbered;
-               const auto& [index, name] = entry;
-               const auto same = std::ranges::count(names, name);
-               const auto place = std::ranges::count(names | std::views::take(at + 1), name);
+               const auto& [index, named] = entry;
+               const auto same = std::ranges::count(names, named);
+               const auto place = std::ranges::count(names | std::views::take(at + 1), named);
                return ec::row{
                    .id = index_row("object", index),
-                   .label = same > 1 ? string_format(_("%s (%d of %d)"), name, place, same) : name,
+                   .label = same > 1 ? string_format(_("%s (%d of %d)"), named.name, place, same)
+                                     : named.name,
+                   .description = named.kind,
                    .selected = index == state.object};
            })
          | std::ranges::to<std::vector>();
@@ -1349,23 +1382,36 @@ auto session_view(const session& state) -> ec::screen_view {
                  std::back_inserter(affordances));
         parts.push_back(ec::list(
             {.id = history_id,
-             .rows = history_rows(doc),
+             .rows = step_rows(document_steps(doc)),
              .selection = "single",
              .activate = jump_id}));
         affordances.push_back(ec::invoke_affordance(
             {.id = jump_id, .label = _("Go to step"), .args = row_of(history_id)}));
         if (std::ranges::contains(entries, state.object)) {
             if (state.on_mapgen()) {
+                // An entry without rows, such as an update mapgen placing chunks, has no squares to
+                // draw or mark; its placements are what it places.
+                const auto& value = state.doc->objects()[state.object].value;
+                const auto rowless =
+                    !value.contains("object") || !value["object"].is_object()
+                    || !value["object"].contains("rows");
                 parts.push_back(ec::tabs(
                     {.id = tools_id,
-                     .tabs = tools | std::views::transform([&](const tool& entry) {
-                                 return ec::tab_entry{
-                                     .id = entry.id,
-                                     .label = tool_label(entry),
-                                     .selected = &entry == state.current,
-                                     .hotkey = entry.hotkey};
-                             })
-                           | std::ranges::to<std::vector>(),
+                     .tabs =
+                         tools | std::views::transform([&](const tool& entry) {
+                             const auto usable = !rowless || entry.region == region_use::placements;
+                             return ec::tab_entry{
+                                 .id = entry.id,
+                                 .label = tool_label(entry),
+                                 .selected = &entry == state.current,
+                                 .enabled = usable,
+                                 .denial =
+                                     usable ? ""
+                                            : _("The entry has no rows to draw on; edit its "
+                                                "placements."),
+                                 .hotkey = entry.hotkey};
+                         })
+                         | std::ranges::to<std::vector>(),
                      .select = tool_id,
                      .child = canvas(state)}));
             }

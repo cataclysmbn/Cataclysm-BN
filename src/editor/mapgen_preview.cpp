@@ -9,6 +9,8 @@
 #include "overmap/omdata.h"
 #include "overmap/overmapbuffer.h"
 #include "rng.h"
+#include "string_formatter.h"
+#include "translations.h"
 #include "trap.h"
 #include "vehicle/vpart_position.h"
 
@@ -47,7 +49,7 @@ auto preview_mapgen(const std::string_view text, const preview_options& options)
             return;
         }
         if (loaded->functions.empty()) {
-            failed = "only an overmap terrain's mapgen has a preview";
+            failed = _("Only an overmap terrain's mapgen has a preview.");
             return;
         }
         for (const auto& function : loaded->functions) {
@@ -69,7 +71,7 @@ auto preview_mapgen(const std::string_view text, const preview_options& options)
         for (const auto& name : loaded->om_terrains) {
             const auto terrain = overmap_terrain(name, options.direction);
             if (!terrain) {
-                failed = "no overmap terrain " + name;
+                failed = string_format(_("No overmap terrain is named %s."), name);
                 return;
             }
             terrains.push_back(*terrain);

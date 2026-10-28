@@ -416,6 +416,11 @@ struct session {
     auto stand_in_texts() const -> std::vector<std::string>;
     /// Whether the object edited is a mapgen, which has rows to draw on and a preview.
     auto on_mapgen() const -> bool;
+    /// Why the mapgen edited cannot be stamped, previewed or tested as an overmap square: a nested
+    /// chunk or an update mapgen; none for any other entry.
+    auto square_refusal() const -> std::optional<std::string>;
+    /// Whether the mapgen edited is an update mapgen, which the game runs on squares it made.
+    auto on_update() const -> bool;
     /// Whether the object edited is an overmap special or a building, which places overmap squares.
     auto on_special() const -> bool;
     /// Whether the object edited is an overmap terrain, which the game draws its squares with.
@@ -447,6 +452,9 @@ struct session {
 
     /// Puts the file's entry `index` on the canvas.
     auto show_object(std::size_t index) -> void;
+    /// Undoes the last step, or redoes the next one when `!back`, shows the entry it changed and
+    /// says what it did.
+    auto step_history(bool back) -> void;
 
     /// What the loader makes of the object now: its legend and what it reports.
     auto reload() -> void;

@@ -2,6 +2,7 @@
 
 #include "editor/document.h"
 #include "editor/mapgen_check.h"
+#include "editor/special_grid.h"
 
 #include <algorithm>
 #include <ranges>
@@ -29,7 +30,15 @@ auto written(const placement_range& range) -> ordered_json {
     return range.min == range.max ? ordered_json(range.min) : ordered_json{range.min, range.max};
 }
 
-auto texts(const std::vector<loader_message>& messages) -> std::vector<std::string> {
+/// What the game's loader of `value`'s type says of it.
+auto texts(const ordered_json& value) -> std::vector<std::string> {
+    const auto type = value.is_object() ? value.value("type", "") : std::string{};
+    const auto text = value.dump();
+    const auto messages =
+        type == "overmap_special" || type == "city_building" ? check_special(text)
+        : type == "overmap_terrain"
+            ? check_oter(text)
+            : check_mapgen(text);
     return messages | std::views::transform(&loader_message::text) | std::ranges::to<std::vector>();
 }
 
@@ -149,8 +158,8 @@ auto set_field(document& doc, const field_edit& edit) -> std::expected<void, std
     try {
         next = value.patch(patch);
     } catch (const ordered_json::exception& e) { return std::unexpected(std::string(e.what())); }
-    const auto before = texts(check_mapgen(value.dump()));
-    const auto after = texts(check_mapgen(next.dump()));
+    const auto before = texts(value);
+    const auto after = texts(next);
     const auto said = std::ranges::find_if(after, [&](const std::string& text) {
         return !std::ranges::contains(before, text);
     });

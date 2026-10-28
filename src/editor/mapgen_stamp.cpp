@@ -9,6 +9,8 @@
 #include "overmap/omdata.h"
 #include "overmap/overmapbuffer.h"
 #include "rng.h"
+#include "string_formatter.h"
+#include "translations.h"
 
 #include <array>
 #include <optional>
@@ -62,7 +64,7 @@ auto stamp_mapgen(const std::string_view text, const preview_options& options)
             return;
         }
         if (loaded->functions.empty()) {
-            failed = "only an overmap terrain's mapgen can be stamped";
+            failed = _("Only an overmap terrain's mapgen can be stamped.");
             return;
         }
         for (const auto& function : loaded->functions) {
@@ -76,7 +78,7 @@ auto stamp_mapgen(const std::string_view text, const preview_options& options)
         for (const auto& name : loaded->om_terrains) {
             const auto terrain = overmap_terrain(name, options.direction);
             if (!terrain) {
-                failed = "no overmap terrain " + name;
+                failed = string_format(_("No overmap terrain is named %s."), name);
                 return;
             }
             terrains.push_back(*terrain);
@@ -88,7 +90,7 @@ auto stamp_mapgen(const std::string_view text, const preview_options& options)
         for (const auto index : squares) {
             for (const auto& sm : submaps_of(square_at(stamped, index))) {
                 if (here.get_mapbuffer().lookup_submap_in_memory(sm) == nullptr) {
-                    failed = "the entry reaches past the loaded part of the map";
+                    failed = _("The entry reaches past the part of the map loaded around you.");
                     return;
                 }
             }

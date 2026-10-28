@@ -16,6 +16,11 @@ struct loader_message {
     std::optional<std::size_t> offset = std::nullopt;
 };
 
+/// What the game's loader said as a sentence for a player: without the "Json error:
+/// <source>:<line>: <column>: " that names its input, the text it quotes after, or the object a
+/// missing field is missing from; a line it names leads the sentence.
+auto plain_loader_text(std::string_view message) -> std::string;
+
 /// Loads one mapgen entry (`"type": "mapgen"`) from `text` with the game's own loader, finalizes
 /// and checks it as the game does after loading data, and registers nothing; what the loader
 /// reported, in order. A palette entry is loaded and added with every palette it names, as a

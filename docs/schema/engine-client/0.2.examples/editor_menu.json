@@ -1232,7 +1232,7 @@
                 {
                   "id": "object:0",
                   "label": "editor_menu_scenario_chunk",
-                  "description": "",
+                  "description": "Nested chunk",
                   "denial": "",
                   "enabled": true,
                   "selectable": true,
@@ -4344,7 +4344,8 @@
             "keys": [
               "F8"
             ],
-            "enabled": true,
+            "enabled": false,
+            "denial": "A nested chunk goes on a map with the mapgen that places it; open that mapgen to stamp, test or preview it.",
             "args": {
               "count": {
                 "min": 1,
@@ -4360,7 +4361,7 @@
             "label": "What can spawn here",
             "keys": [],
             "enabled": false,
-            "denial": "Mark squares with the Select tool first.",
+            "denial": "A nested chunk goes on a map with the mapgen that places it; open that mapgen to stamp, test or preview it.",
             "expect": "screen",
             "group": "View"
           },
@@ -4439,7 +4440,8 @@
             "keys": [
               "F6"
             ],
-            "enabled": true,
+            "enabled": false,
+            "denial": "A nested chunk goes on a map with the mapgen that places it; open that mapgen to stamp, test or preview it.",
             "expect": "screen",
             "group": "World"
           },
@@ -4449,7 +4451,8 @@
             "keys": [
               "F5"
             ],
-            "enabled": true,
+            "enabled": false,
+            "denial": "A nested chunk goes on a map with the mapgen that places it; open that mapgen to stamp, test or preview it.",
             "expect": "screen",
             "group": "World"
           },

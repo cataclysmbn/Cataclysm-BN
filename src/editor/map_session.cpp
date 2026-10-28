@@ -4,6 +4,7 @@
 #include "catacharset.h"
 #include "editor/catalog.h"
 #include "editor/document.h"
+#include "editor/history_label.h"
 #include "editor/json_pointer.h"
 #include "editor/mapgen_check.h"
 #include "editor/mapgen_legend.h"
@@ -235,7 +236,9 @@ auto names_in(const nlohmann::ordered_json& name) -> std::vector<std::string> {
 
 auto entry_name(const nlohmann::ordered_json& value) -> std::string {
     for (const auto* const key : {"om_terrain", "nested_mapgen_id", "update_mapgen_id", "id"}) {
-        if (value.contains(key)) { return join(names_in(value[key]), ", "); }
+        if (!value.contains(key)) { continue; }
+        const auto names = join(names_in(value[key]), ", ");
+        return names.empty() ? _("(unnamed)") : names;
     }
     return _("(unnamed)");
 }
@@ -349,9 +352,72 @@ auto session::browser_entries() const -> std::vector<std::filesystem::path> {
     }) | std::ranges::to<std::vector>();
 }
 
+namespace {
+/// The mapgen ids that make what `name` names, as the game finds a square's mapgen; `named` counts
+/// the overmap terrain types a name the overmap shows names.
+struct named_mapgens {
+    std::vector<std::string> ids;
+    std::size_t named = 0;
+};
+
+/// An overmap terrain, its type without a direction, a special or building by its squares from its
+/// origin on, or the name the overmap shows, each ignoring case.
+auto mapgens_named(const std::string& name) -> named_mapgens {
+    if (const auto id = oter_str_id(name); id.is_valid()) { return {.ids = {id->get_mapgen_id()}}; }
+    if (oter_type_str_id(name).is_valid()) { return {.ids = terrain_mapgen_ids(name)}; }
+    if (const auto special = overmap_special_id(name); special.is_valid()) {
+        auto terrains = special->all_terrains();
+        const auto& origin = special->get_terrain_at(tripoint_rel_omt(0, 0, 0));
+        std::ranges::stable_partition(terrains, [&](const auto& terrain) {
+            return terrain == origin;
+        });
+        return {
+            .ids = terrains | std::views::filter(&oter_str_id::is_valid)
+                 | std::views::transform([](const auto& terrain) {
+                       return terrain->get_mapgen_id();
+                   })
+                 | std::ranges::to<std::vector>()};
+    }
+    const auto lower = [](std::string text) {
+        std::ranges::transform(text, text.begin(), [](const unsigned char c) {
+            return static_cast<char>(std::tolower(c));
+        });
+        return text;
+    };
+    const auto wanted = lower(name);
+    auto types =
+        overmap_terrains::get_all() | std::views::filter([&](const oter_t& terrain) {
+            return lower(terrain.get_name()) == wanted
+                || lower(terrain.get_type_id()->name) == wanted;
+        })
+        | std::views::transform([](const oter_t& terrain) { return terrain.get_type_id().str(); })
+        | std::ranges::to<std::vector>();
+    std::ranges::sort(types);
+    const auto [last, end] = std::ranges::unique(types);
+    types.erase(last, end);
+    return {.ids = types | std::views::transform(&terrain_mapgen_ids) | std::views::join
+                 | std::ranges::to<std::vector>(),
+            .named = types.size()};
+}
+} // namespace
+
 auto session::open_mapgen_of(const std::string& name) -> void {
-    const auto id = oter_str_id(name);
-    const auto mapgen_id = id.is_valid() ? id.obj().get_mapgen_id() : name;
+    const auto named = mapgens_named(name);
+    const auto made = std::ranges::find_if(named.ids, [](const std::string& id) {
+        return mapgen_source_of(id).has_value() || !code_mapgens_of(id).empty();
+    });
+    const auto mapgen_id =
+        made != named.ids.end() ? *made
+        : named.ids.empty()
+            ? name
+            : named.ids.front();
+    // What a type, building or shown name opened is said, since the file names another id.
+    const auto opened =
+        oter_str_id(name).is_valid() || mapgen_id == name ? std::string{}
+        : named.named > 1
+            ? string_format(_("%1$d overmap terrains are named %2$s; opened %3$s."), named.named,
+                            name, mapgen_id)
+            : string_format(_("Opened %1$s, the mapgen of %2$s."), mapgen_id, name);
     const auto source = mapgen_source_of(mapgen_id);
     if (!source) {
         // Code has no squares to draw; where it is declared and defined is what there is to show.
@@ -359,11 +425,14 @@ auto session::open_mapgen_of(const std::string& name) -> void {
         if (code_mapgens.empty()) {
             notice =
                 string_format(_("%s has no mapgen in a file of the game or of your mods."), name);
+        } else {
+            status = opened;
         }
         return;
     }
     open(source->path);
     if (!doc || !notice.empty()) { return; }
+    status = opened;
     const auto& objects = doc->objects();
     const auto found = std::ranges::find_if(objects, [&](const document_object& entry) {
         return entry.begin <= static_cast<std::size_t>(source->offset)
@@ -405,6 +474,25 @@ auto session::stand_in_texts() const -> std::vector<std::string> {
 
 auto session::on_mapgen() const -> bool {
     return doc && object < doc->objects().size() && is_json_mapgen(doc->objects()[object].value);
+}
+
+auto session::on_update() const -> bool {
+    return on_mapgen() && doc->objects()[object].value.contains("update_mapgen_id");
+}
+
+auto session::square_refusal() const -> std::optional<std::string> {
+    if (!on_mapgen()) { return std::nullopt; }
+    if (doc->objects()[object].value.contains("nested_mapgen_id")) {
+        return _(
+            "A nested chunk goes on a map with the mapgen that places it; open that mapgen to "
+            "stamp, test or preview it.");
+    }
+    if (on_update()) {
+        return _(
+            "An update mapgen changes squares the game made already, when a mission or event "
+            "runs it; it is not stamped, applied, tested or previewed.");
+    }
+    return std::nullopt;
 }
 
 auto session::on_special() const -> bool {
@@ -559,6 +647,28 @@ auto session::show_object(const std::size_t index) -> void {
     reload();
 }
 
+auto session::step_history(const bool back) -> void {
+    const auto steps = doc->history();
+    const auto depth = doc->depth();
+    if (back ? depth == 0 : depth >= steps.size()) { return; }
+    const auto& step = steps[back ? depth - 1 : depth];
+    if (!(back ? doc->undo() : doc->redo())) { return; }
+    status = string_format(back ? _("Undid: %s") : _("Redid: %s"), step_label(step.edits.back()));
+    // An entry an undo removed is gone; the one it changed otherwise is what to look at.
+    const auto changed = std::ranges::find_if(step.edits, [&](const document_edit& edit) {
+        return edit.object < doc->objects().size();
+    });
+    if (changed != step.edits.end()
+        && !std::ranges::contains(step.edits, object, &document_edit::object)) {
+        show_object(changed->object);
+        return;
+    }
+    if (object >= doc->objects().size() && !doc->objects().empty()) {
+        object = doc->objects().size() - 1;
+    }
+    reload();
+}
+
 auto session::reload() -> void {
     legend.clear();
     diagnostics.clear();
@@ -599,7 +709,7 @@ auto session::reload() -> void {
     preview.reset();
     parameters.clear();
     loot.reset();
-    if (seed && on_mapgen()) {
+    if (seed && on_mapgen() && !square_refusal()) {
         if (const auto loaded = load_detached_mapgens(text)) {
             for (const auto& function : loaded->functions) {
                 for (auto& choice : parameters_of(*function)) {
@@ -1152,9 +1262,17 @@ auto session::placed_here() const -> std::optional<tripoint_abs_omt> {
 
 auto session::import_pasted() -> void {
     const auto parsed = nlohmann::ordered_json::parse(import_text, nullptr, false);
+    if (parsed.is_discarded()) {
+        notice = _("The pasted text is not JSON.");
+        return;
+    }
     const auto found =
         parsed.is_array() ? std::ranges::find_if(parsed, is_json_mapgen) : parsed.end();
-    stamp_text(parsed.is_array() && found != parsed.end() ? found->dump() : import_text);
+    if (parsed.is_array() && found == parsed.end()) {
+        notice = _("The pasted text holds no mapgen entry.");
+        return;
+    }
+    stamp_text(parsed.is_array() ? found->dump() : import_text);
     if (stamped && notice.empty()) { status = _("Stamped."); }
 }
 

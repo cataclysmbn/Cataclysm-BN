@@ -12,6 +12,7 @@
 #    include "cursesport.h"
 #    include "debug_menu.h"
 #    include "editor/editor_session.h"
+#    include "editor/map_session.h"
 #    include "editor/mapgen_levels.h"
 #    include "editor/mapgen_preview.h"
 #    include "editor/mapgen_source.h"
@@ -2752,22 +2753,38 @@ TEST_CASE(
                       == "{ not json");
                 CHECK(live() == before);
                 return invoke("editor:import");
-            case 2:
-                CHECK_FALSE(notice(screen).empty());
+            case 2: {
+                // The refusal says what is wrong in words, not as the loader names its input.
+                CHECK(notice(screen) == "The pasted text is not JSON.");
                 CHECK(live() == before);
+                auto methodless = walls;
+                methodless.erase("method");
+                return invoke("editor:import_set", {.row = "import", .text = methodless.dump()});
+            }
+            case 3:
+                return invoke("editor:import");
+            case 4:
+                CHECK(notice(screen) == "The \"method\" field is missing.");
+                CHECK(live() == before);
+                return invoke("editor:import_set",
+                              {.row = "import", .text = R"([{ "type": "palette", "id": "x" }])"});
+            case 5:
+                return invoke("editor:import");
+            case 6:
+                CHECK(notice(screen) == "The pasted text holds no mapgen entry.");
                 // A file's array of entries, as an export writes it, stamps its mapgen.
                 return invoke(
                     "editor:import_set",
                     {.row = "import", .text = nlohmann::ordered_json::array({walls}).dump()});
-            case 3:
+            case 7:
                 return invoke("editor:import");
-            case 4:
+            case 8:
                 CHECK(notice(screen).empty());
                 CHECK(body<ec::text_body>(part(screen, "editor:status")).markup == "Stamped.");
                 CHECK(live() == ter_id("t_wall"));
                 CHECK(affordance(screen, "editor:unstamp").enabled);
                 return invoke("editor:unstamp");
-            case 5:
+            case 9:
                 CHECK(live() == before);
                 return act("QUIT");
             default:
@@ -2777,7 +2794,7 @@ TEST_CASE(
     });
 
     editor::run_editor_session();
-    CHECK(step == 6);
+    CHECK(step == 10);
     editor::reset_editor_session();
 }
 
@@ -2939,6 +2956,57 @@ TEST_CASE(
 
     editor::run_editor_session();
     CHECK(step == 6);
+}
+
+TEST_CASE(
+    "the editor opens the mapgen of an overmap terrain named by its type, building or name",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto restore_mapgen = restore_on_out_of_scope<bool>(disable_mapgen);
+    disable_mapgen = false;
+    auto step = 0;
+    const auto path = [](const ec::screen_view& screen) {
+        return body<ec::form_body>(part(screen, "editor:file")).fields.front().value;
+    };
+    const auto notice = [](const ec::screen_view& screen) {
+        const auto* const found = ec::find_component(*screen.root, "editor:notice");
+        return found ? body<ec::text_body>(*found).markup : std::string();
+    };
+    const auto status = [](const ec::screen_view& screen) {
+        const auto* const found = ec::find_component(*screen.root, "editor:status");
+        return found ? body<ec::text_body>(*found).markup : std::string();
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                // A type without its direction, as the mapgen's om_terrain names it.
+                return invoke("editor:open_oter", {.text = "2StoryModern06_1"});
+            case 1:
+                CHECK(notice(screen).empty());
+                CHECK(path(screen).ends_with("mapgen/house/2storymodern06.json"));
+                // A building opens the mapgen of its ground square.
+                return invoke("editor:open_oter", {.text = "house_two_story_basement"});
+            case 2:
+                CHECK(notice(screen).empty());
+                CHECK(path(screen).ends_with("mapgen/house/house_2story.json"));
+                CHECK(status(screen).find("house_2story_base") != std::string::npos);
+                // The name the overmap shows opens the first terrain of that name.
+                return invoke("editor:open_oter", {.text = "house"});
+            case 3:
+                CHECK(notice(screen).empty());
+                CHECK(path(screen).find("mapgen/") != std::string::npos);
+                CHECK(status(screen).find("named house") != std::string::npos);
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 4);
+    editor::reset_editor_session();
 }
 
 TEST_CASE(
@@ -5570,8 +5638,6 @@ TEST_CASE(
     CHECK(step == 6);
 }
 
-#endif // CATA_MCP
-
 namespace {
 /// The slot of the part `id` of the screen's root split.
 auto slot_of(const ec::screen_view& screen, const std::string& id) -> std::string {
@@ -5750,3 +5816,285 @@ TEST_CASE("the editor's start page offers the map files opened lately", "[editor
     editor::run_editor_session();
     CHECK(step == 2);
 }
+
+TEST_CASE("the editor names an entry whose name is empty as unnamed", "[editor_session]") {
+    CHECK(editor::map_editor::entry_name({{"om_terrain", nlohmann::ordered_json::array()}})
+          == "(unnamed)");
+    const auto nested_empty = nlohmann::ordered_json::array({nlohmann::ordered_json::array()});
+    CHECK(editor::map_editor::entry_name({{"om_terrain", nested_empty}}) == "(unnamed)");
+    CHECK(editor::map_editor::entry_name({{"om_terrain", {"a", "b"}}}) == "a, b");
+}
+
+namespace {
+/// A mod file of a mapgen of an overmap terrain, a nested chunk and an update mapgen, in that
+/// order, removed with its directory when it ends.
+struct kinds_file {
+    std::filesystem::path path =
+        std::filesystem::path(PATH_INFO::user_moddir()) / "editor_session_test" / "kinds.json";
+
+    kinds_file() {
+        const auto rows = [](const int side) {
+            return std::vector<std::string>(side, std::string(side, '.'));
+        };
+        const auto entries = nlohmann::ordered_json::array(
+            {{{"type", "mapgen"},
+              {"method", "json"},
+              {"om_terrain", "house_04"},
+              {"object", {{"rows", rows(24)}, {"terrain", {{".", "t_floor"}}}}}},
+             {{"type", "mapgen"},
+              {"method", "json"},
+              {"nested_mapgen_id", "editor_test_chunk"},
+              {"object",
+               {{"mapgensize", {4, 4}},
+                {"rows", rows(4)},
+                {"terrain", {{".", "t_floor"}, {"#", "t_wall"}}}}}},
+             {{"type", "mapgen"},
+              {"method", "json"},
+              {"update_mapgen_id", "editor_test_chunk"},
+              {"object",
+               {{"place_nested", {{{"chunks", {"editor_test_chunk"}}, {"x", 0}, {"y", 0}}}}}}}});
+        std::filesystem::create_directories(path.parent_path());
+        auto out = std::ofstream(path, std::ios::binary | std::ios::trunc);
+        out << format_json(entries.dump()).value();
+    }
+    ~kinds_file() { std::filesystem::remove_all(path.parent_path()); }
+    kinds_file(const kinds_file&) = delete;
+    auto operator=(const kinds_file&) -> kinds_file& = delete;
+};
+} // namespace
+
+TEST_CASE(
+    "the editor turns away putting a nested chunk or an update mapgen in the world, saying why",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = kinds_file{};
+    auto step = 0;
+    const auto notice = [](const ec::screen_view& screen) {
+        const auto* const found = ec::find_component(*screen.root, "editor:notice");
+        return found ? body<ec::text_body>(*found).markup : std::string();
+    };
+    const auto off = [](const ec::screen_view& screen, const std::string& id) {
+        const auto& found = affordance(screen, id);
+        return !found.enabled && !found.denial.empty();
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK(affordance(screen, "editor:stamp").enabled);
+                CHECK(affordance(screen, "editor:preview").enabled);
+                return invoke("editor:preview", {.count = 1});
+            case 2:
+                CHECK(notice(screen).empty());
+                return invoke("editor:object", {.row = "object:1"});
+            case 3:
+                // A chunk is placed by a mapgen: the game takes it, the world and a preview do not.
+                CHECK(notice(screen).empty());
+                CHECK(affordance(screen, "editor:apply").enabled);
+                CHECK(off(screen, "editor:stamp"));
+                CHECK(off(screen, "editor:preview"));
+                CHECK(off(screen, "editor:test"));
+                CHECK(affordance(screen, "editor:stamp").denial.find("chunk") != std::string::npos);
+                return invoke("editor:object", {.row = "object:2"});
+            case 4:
+                CHECK(notice(screen).empty());
+                CHECK(off(screen, "editor:apply"));
+                CHECK(off(screen, "editor:stamp"));
+                CHECK(off(screen, "editor:preview"));
+                CHECK(off(screen, "editor:test"));
+                CHECK(
+                    affordance(screen, "editor:stamp").denial.find("update") != std::string::npos);
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 5);
+    editor::reset_editor_session();
+}
+
+TEST_CASE(
+    "the editor's entries say what kind each is and number only the same kind of a name",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = kinds_file{};
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1: {
+                const auto& rows = body<ec::list_body>(part(screen, "editor:objects")).rows;
+                REQUIRE(rows.size() == 3);
+                CHECK(rows[0].description == "Overmap terrain mapgen");
+                // A chunk and the update mapgen of its name are two entries, not two of one.
+                CHECK(rows[1].label == "editor_test_chunk");
+                CHECK(rows[1].description == "Nested chunk");
+                CHECK(rows[2].label == "editor_test_chunk");
+                CHECK(rows[2].description == "Update mapgen");
+                return act("QUIT");
+            }
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 2);
+    editor::reset_editor_session();
+}
+
+TEST_CASE(
+    "the editor's undo and redo show the entry they changed and say what they did",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = kinds_file{};
+    auto step = 0;
+    const auto selected = [](const ec::screen_view& screen) {
+        const auto& rows = body<ec::list_body>(part(screen, "editor:objects")).rows;
+        const auto found = std::ranges::find_if(rows, &ec::row::selected);
+        return found == rows.end() ? std::string() : found->id;
+    };
+    const auto status = [](const ec::screen_view& screen) {
+        const auto* const found = ec::find_component(*screen.root, "editor:status");
+        return found ? body<ec::text_body>(*found).markup : std::string();
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                return invoke("editor:object", {.row = "object:1"});
+            case 2:
+                return invoke("editor:symbol", {.row = "symbol:#"});
+            case 3:
+                return invoke("editor:paint", {.row = "square:1,1"});
+            case 4:
+                CHECK(affordance(screen, "editor:undo").enabled);
+                return invoke("editor:object", {.row = "object:0"});
+            case 5:
+                return invoke("editor:undo");
+            case 6:
+                // The chunk painted is shown again, so the player sees what came back.
+                CHECK(selected(screen) == "object:1");
+                CHECK(status(screen).starts_with("Undid: "));
+                return invoke("editor:object", {.row = "object:0"});
+            case 7:
+                return invoke("editor:redo");
+            case 8:
+                CHECK(selected(screen) == "object:1");
+                CHECK(status(screen).starts_with("Redid: "));
+                // Undone again, so that leaving asks nothing.
+                return invoke("editor:undo");
+            case 9:
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 10);
+    editor::reset_editor_session();
+}
+
+TEST_CASE(
+    "the editor's legend says a nested chunk's unmapped symbol keeps the map under it",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto path =
+        std::filesystem::path(PATH_INFO::user_moddir()) / "editor_session_test" / "chunk.json";
+    std::filesystem::create_directories(path.parent_path());
+    {
+        auto out = std::ofstream(path, std::ios::binary | std::ios::trunc);
+        out << format_json(
+                   nlohmann::ordered_json::array(
+                       {{{"type", "mapgen"},
+                         {"method", "json"},
+                         {"nested_mapgen_id", "editor_test_chunk"},
+                         {"object",
+                          {{"mapgensize", {2, 2}},
+                           {"rows", {"x.", ".."}},
+                           {"terrain", {{".", "t_floor"}}}}}}})
+                       .dump())
+                   .value();
+    }
+    const auto removed = on_out_of_scope([&] { std::filesystem::remove_all(path.parent_path()); });
+    auto step = 0;
+    const auto use_of = [](const ec::screen_view& screen, const std::string& symbol) {
+        const auto& rows = body<ec::list_body>(part(screen, "editor:legend")).rows;
+        const auto row = std::ranges::find(rows, "symbol:" + symbol, &ec::row::id);
+        REQUIRE(row != rows.end());
+        const auto use = std::ranges::
+            find(row->columns, std::string("use"), &game_client::interaction_column::key);
+        return use == row->columns.end() ? std::string() : use->value;
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = path.string()});
+            case 1:
+                // The game leaves the squares of such a symbol as the map around the chunk has
+                // them.
+                CHECK(use_of(screen, "x") == "Keeps the map");
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 2);
+    editor::reset_editor_session();
+}
+
+TEST_CASE(
+    "the editor turns away drawing on an entry without rows, saying why",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = kinds_file{};
+    auto step = 0;
+    const auto tab = [](const ec::screen_view& screen, const std::string& id) {
+        const auto& tabs = body<ec::tabs_body>(part(screen, "editor:tools")).tabs;
+        const auto found = std::ranges::find(tabs, id, &ec::tab_entry::id);
+        REQUIRE(found != tabs.end());
+        return *found;
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK(tab(screen, "tool:point").enabled);
+                return invoke("editor:object", {.row = "object:2"});
+            case 2:
+                // The update mapgen only places chunks: there is nothing to draw, and it says so.
+                CHECK_FALSE(tab(screen, "tool:point").enabled);
+                CHECK(tab(screen, "tool:point").denial.find("rows") != std::string::npos);
+                CHECK_FALSE(tab(screen, "tool:select").enabled);
+                CHECK(tab(screen, "tool:placements").enabled);
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 3);
+    editor::reset_editor_session();
+}
+
+#endif // CATA_MCP
