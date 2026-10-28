@@ -2405,3 +2405,41 @@ TEST_CASE(
     }
     CHECK(step == 6);
 }
+
+TEST_CASE(
+    "the vehicle editor fills in a free file name of the user's mods for New vehicle and Save as",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto mods = std::filesystem::path(PATH_INFO::user_moddir());
+    std::filesystem::create_directories(mods);
+    std::filesystem::remove(mods / "my_vehicle.json");
+    std::filesystem::remove(mods / "my_vehicle_2.json");
+    std::filesystem::remove(mods / "bicycle.json");
+    // A file the name would take already exists.
+    std::ofstream(mods / "my_vehicle.json") << "[]";
+    const auto cleanup = on_out_of_scope([&] {
+        std::filesystem::remove(mods / "my_vehicle.json");
+    });
+    const auto initial = [](const ec::screen_view& screen, const std::string& id) {
+        const auto& text = affordance(screen, id).args.text;
+        REQUIRE(text.has_value());
+        return text->initial;
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                CHECK(initial(screen, "vehicle:new") == "my_vehicle_2");
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                CHECK(initial(screen, "vehicle:save_as") == "bicycle");
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 2);
+}
