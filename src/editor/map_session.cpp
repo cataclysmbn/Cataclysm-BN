@@ -358,7 +358,8 @@ auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string> {
 }
 
 auto free_new_path() -> std::string {
-    const auto mods = std::filesystem::path(PATH_INFO::user_moddir());
+    // A file loose in the mods is no mod's, so the suggestion is in a mod's folder.
+    const auto mods = std::filesystem::path(PATH_INFO::user_moddir()) / "my_mod";
     return (mods
             / (free_name("new_mapgen",
                          [&](const std::string& name) {

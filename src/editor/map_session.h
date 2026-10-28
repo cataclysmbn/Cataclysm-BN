@@ -313,7 +313,7 @@ auto write_new_file(const std::string& made, const nlohmann::ordered_json& entri
 /// Writes `made`'s file; the error says why it was not written.
 auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string>;
 /// The path the new mapgen form suggests: the first `new_mapgen.json`, `new_mapgen_2.json` and on
-/// that the player's mods lack.
+/// that the my_mod folder of the player's mods lacks.
 auto free_new_path() -> std::string;
 
 struct session {
