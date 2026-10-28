@@ -10,6 +10,7 @@
 #    include "client_memory_scope.h"
 #    include "cursesdef.h"
 #    include "cursesport.h"
+#    include "debug_menu.h"
 #    include "editor/editor_session.h"
 #    include "editor/mapgen_levels.h"
 #    include "editor/mapgen_preview.h"
@@ -38,6 +39,7 @@
 #    include "player_activity.h"
 #    include "point.h"
 #    include "state_helpers.h"
+#    include "translations.h"
 #    include "type_id.h"
 #    include "world.h"
 #    include "worldfactory.h"
@@ -875,8 +877,8 @@ TEST_CASE(
                 // The log says what the count found, wherever the list is drawn.
                 REQUIRE(first.size() > 1);
                 CHECK(body<ec::text_body>(part(screen, "editor:status")).markup
-                      == std::to_string(first.size())
-                             + " kinds of items can spawn in the square marked.");
+                      == "1 square marked. " + std::to_string(first.size())
+                             + " kinds of items can spawn there.");
                 for (const auto& row : rows(screen)) {
                     CHECK(itype_id(row.id.substr(std::string_view("loot:").size())).is_valid());
                     CHECK(row.columns.size() == 3);
@@ -887,14 +889,18 @@ TEST_CASE(
                 CHECK(lines(screen) == first);
                 return invoke("editor:paint", {.row = "square:10,10"});
             case 8:
+                // Marking other squares takes the count of the old ones away.
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:loot"));
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:status"));
                 return invoke("editor:paint", {.row = "square:12,12"});
             case 9:
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:loot"));
                 // Squares nothing spawns on have an empty list.
                 return invoke("editor:loot");
             case 10:
                 CHECK(rows(screen).empty());
                 CHECK(body<ec::text_body>(part(screen, "editor:status")).markup
-                      == "Nothing can spawn in the 9 squares marked.");
+                      == "9 squares marked: nothing can spawn there.");
                 return act("QUIT");
             default:
                 FAIL("the editor outlived its exit");
@@ -1053,6 +1059,36 @@ TEST_CASE(
 
     editor::run_editor_session();
     CHECK(step == 2);
+}
+
+TEST_CASE(
+    "the editor names an entry of a list of overmap terrains by those terrains",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke(
+                    "editor:open", {.text = PATH_INFO::datadir() + "json/mapgen/shelter.json"});
+            case 1:
+                CHECK(body<ec::list_body>(part(screen, "editor:objects")).rows.front().label
+                      == "shelter");
+                return invoke("editor:apply");
+            case 2:
+                CHECK(std::get<ec::text_body>(part(screen, "editor:status").body).markup
+                      == "The game generates shelter with this entry now.");
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 3);
 }
 
 TEST_CASE(
@@ -2760,6 +2796,10 @@ TEST_CASE(
         const auto& stats = body<ec::panel_body>(part(screen, "editor:document")).stats;
         return std::ranges::contains(stats, std::string("stamped"), &ec::panel_stat::key);
     };
+    const auto status = [](const ec::screen_view& screen) {
+        const auto* const found = ec::find_component(*screen.root, "editor:status");
+        return found ? std::get<ec::text_body>(found->body).markup : std::string{};
+    };
 
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
         const auto state = captured();
@@ -2772,16 +2812,31 @@ TEST_CASE(
                 // Outside the editor's own world, testing needs a stamp: it never writes over the
                 // player's map unasked.
                 CHECK_FALSE(affordance(screen, "editor:test").enabled);
+                // What is off says why.
+                CHECK(affordance(screen, "editor:test").denial
+                      == "Stamp the entry first: Test plays what was stamped.");
+                CHECK(affordance(screen, "editor:unstamp").denial == "Nothing is stamped.");
+                CHECK(affordance(screen, "editor:copy").denial
+                      == "Mark squares with the Select tool first.");
+                CHECK(affordance(screen, "editor:cut").denial
+                      == "Mark squares with the Select tool first.");
+                for (const auto* const id : {"editor:rotate", "editor:flip_x", "editor:flip_y"}) {
+                    INFO(id);
+                    CHECK(affordance(screen, id).denial == "Copy or cut squares first.");
+                }
                 CHECK_FALSE(stamped(screen));
                 return invoke("editor:paint", {.row = "square:2,3"});
             case 2:
                 return invoke("editor:apply");
             case 3:
                 CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                // Each action of the World menu says what it did.
+                CHECK(status(screen) == "The game generates house_04 with this entry now.");
                 CHECK(live(2, 3) == before);
                 return invoke("editor:stamp");
             case 4:
                 CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                CHECK(status(screen) == "Stamped over the overmap square you stand on.");
                 CHECK(live(2, 3) == ter_id("t_wall"));
                 CHECK(live(3, 3) == ter_id("t_floor"));
                 CHECK(stamped(screen));
@@ -2789,6 +2844,7 @@ TEST_CASE(
                 return invoke("editor:unstamp");
             case 5:
                 CHECK(live(2, 3) == before);
+                CHECK(status(screen) == "Put back what the stamp replaced.");
                 CHECK_FALSE(stamped(screen));
                 return invoke("editor:stamp");
             case 6:
@@ -3386,6 +3442,39 @@ TEST_CASE("game time does not pass while the map editor is open", "[editor_sessi
     handle_action(std::make_unique<special_game>());
     CHECK(step == 5);
     CHECK(you.get_moves() == 100);
+}
+
+TEST_CASE(
+    "the debug menu's map editor opens the map editor, and its square editor stays beside it",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    get_avatar().set_mutation(trait_id("DEBUG_EDITOR"));
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return answer("Map…");
+            case 1: {
+                // The editor of the squares around the avatar is offered under its own name.
+                const auto snapshot = game_client::current_interaction({.limit = 200});
+                CHECK(std::ranges::contains(
+                    snapshot.choices, std::string("Edit squares here"),
+                    &game_client::interaction_choice::label));
+                return answer("Map editor");
+            }
+            case 2:
+                CHECK(screen.kind == "editor");
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    debug_menu::debug();
+    CHECK(step == 3);
 }
 
 TEST_CASE(
@@ -4643,7 +4732,9 @@ TEST_CASE(
             case 4:
                 return invoke("editor:catalog_pick", {.row = "entry:forest_thick"});
             case 5:
-                CHECK(stat(screen, "terrain") == "forest_thick");
+                // The terrain is named as the game names it, its id telling it from the others.
+                CHECK(stat(screen, "terrain")
+                      == oter_str_id("forest_thick")->get_name() + " (forest_thick)");
                 return invoke("editor:paint", {.row = "square:2,0"});
             case 6:
                 CHECK(shown(screen, "square:2,0") == oter_str_id("forest_thick")->get_name());
@@ -4824,15 +4915,24 @@ TEST_CASE(
         switch (step++) {
             case 0:
                 return invoke("editor:open", {.text = file.path.string()});
-            case 1:
-                CHECK(body<ec::form_body>(part(screen, "editor:connection")).fields.front().value
-                      == "local_road");
+            case 1: {
+                const auto& field =
+                    body<ec::form_body>(part(screen, "editor:connection")).fields.front();
+                CHECK(field.value == "local_road");
+                // The connections to pick from are named by the terrain they lay.
+                CHECK(field.type == "select");
+                const auto road =
+                    std::ranges::find(field.options, "local_road", &ec::form_option::id);
+                REQUIRE(road != field.options.end());
+                CHECK(road->label == _(oter_type_str_id("road")->name));
                 return invoke("editor:tool", {.row = "tool:connect"});
+            }
             case 2:
                 return invoke("editor:paint", {.row = "square:-1,0"});
             case 3:
                 CHECK(shown(screen, "square:-1,0").faded);
-                CHECK(shown(screen, "square:-1,0").label.find("local_road") != std::string::npos);
+                CHECK(shown(screen, "square:-1,0").label
+                      == _(oter_type_str_id("road")->name) + " connection");
                 return invoke("editor:save");
             case 4: {
                 const auto saved = connections();
@@ -4925,7 +5025,8 @@ TEST_CASE(
                 return invoke("editor:catalog_pick", {.row = "entry:forest_thick"});
             case 4:
                 CHECK(std::ranges::contains(
-                    body<ec::panel_body>(part(screen, "editor:document")).stats, "forest_thick",
+                    body<ec::panel_body>(part(screen, "editor:document")).stats,
+                    oter_str_id("forest_thick")->get_name() + " (forest_thick)",
                     &ec::panel_stat::value));
                 return invoke("editor:paint", {.row = string_format("square:%d,0", OMAPX)});
             case 5:
@@ -5190,14 +5291,22 @@ TEST_CASE(
                 return invoke("editor:open", {.text = file.path.string()});
             case 1:
                 CHECK_FALSE(affordance(screen, "editor:test").enabled);
+                CHECK(affordance(screen, "editor:test").denial
+                      == "Place the special in the world first.");
                 CHECK(affordance(screen, "editor:place_special").keys
                       == std::vector<std::string>{"F6"});
                 CHECK(affordance(screen, "editor:test").keys == std::vector<std::string>{"F5"});
                 return invoke("editor:place_special");
-            case 2:
+            case 2: {
                 CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                // Placing says where the special went and how to get there.
+                const auto* const said = ec::find_component(*screen.root, "editor:status");
+                REQUIRE(said);
+                CHECK(std::get<ec::text_body>(said->body).markup
+                      == "Placed editor_session_test_special nearby; Test takes you there.");
                 CHECK(affordance(screen, "editor:test").enabled);
                 return invoke("editor:test");
+            }
             default:
                 FAIL("the editor outlived its test");
                 return act("QUIT");
@@ -5489,6 +5598,11 @@ TEST_CASE(
                 CHECK(slot_of(screen, "editor:new") == "inspector");
                 CHECK(slot_of(screen, "editor:file") == "outline");
                 CHECK(part(screen, "editor:new").label == "New file");
+                // A field is named by what it asks, not by the heading of its form.
+                for (const auto* const form : {"editor:new", "editor:file"}) {
+                    INFO(form);
+                    CHECK(body<ec::form_body>(part(screen, form)).fields.front().label == "Path");
+                }
                 CHECK(affordance(screen, "editor:vehicle").group == "World");
                 return invoke("editor:open", {.text = file.path.string()});
             case 1:

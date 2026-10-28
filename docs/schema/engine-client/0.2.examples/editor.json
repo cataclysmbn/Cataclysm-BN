@@ -47,7 +47,7 @@
               "fields": [
                 {
                   "id": "path",
-                  "label": "File",
+                  "label": "Path",
                   "value": "",
                   "type": "text"
                 }
@@ -66,7 +66,7 @@
               "fields": [
                 {
                   "id": "path",
-                  "label": "New file",
+                  "label": "Path",
                   "value": "",
                   "type": "text"
                 },
@@ -753,7 +753,7 @@
             "label": "Take back stamp",
             "keys": [],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Nothing is stamped.",
             "expect": "screen",
             "group": "World"
           },
@@ -996,7 +996,7 @@
               "fields": [
                 {
                   "id": "path",
-                  "label": "File",
+                  "label": "Path",
                   "value": "profile/mods/editor_scenario/chunk.json",
                   "type": "text"
                 }
@@ -3579,7 +3579,7 @@
               "fields": [
                 {
                   "id": "path",
-                  "label": "New file",
+                  "label": "Path",
                   "value": "",
                   "type": "text"
                 },
@@ -4337,7 +4337,7 @@
               "CTRL+C"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Mark squares with the Select tool first.",
             "expect": "screen",
             "group": "Edit"
           },
@@ -4348,7 +4348,7 @@
               "CTRL+X"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Mark squares with the Select tool first.",
             "expect": "screen",
             "group": "Edit"
           },
@@ -4359,7 +4359,7 @@
               "z"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Copy or cut squares first.",
             "expect": "screen",
             "group": "Edit"
           },
@@ -4370,7 +4370,7 @@
               "x"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Copy or cut squares first.",
             "expect": "screen",
             "group": "Edit"
           },
@@ -4381,7 +4381,7 @@
               "y"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Copy or cut squares first.",
             "expect": "screen",
             "group": "Edit"
           },
@@ -4457,7 +4457,7 @@
             "label": "Take back stamp",
             "keys": [],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Nothing is stamped.",
             "expect": "screen",
             "group": "World"
           },
@@ -4519,7 +4519,7 @@
               "F5"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Stamp the entry first: Test plays what was stamped.",
             "expect": "screen",
             "group": "World"
           },
@@ -5019,7 +5019,7 @@
               "fields": [
                 {
                   "id": "path",
-                  "label": "File",
+                  "label": "Path",
                   "value": "profile/mods/editor_scenario/chunk.json",
                   "type": "text"
                 }
@@ -7662,7 +7662,7 @@
               "fields": [
                 {
                   "id": "path",
-                  "label": "New file",
+                  "label": "Path",
                   "value": "",
                   "type": "text"
                 },
@@ -8418,7 +8418,7 @@
               "CTRL+C"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Mark squares with the Select tool first.",
             "expect": "screen",
             "group": "Edit"
           },
@@ -8429,7 +8429,7 @@
               "CTRL+X"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Mark squares with the Select tool first.",
             "expect": "screen",
             "group": "Edit"
           },
@@ -8440,7 +8440,7 @@
               "z"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Copy or cut squares first.",
             "expect": "screen",
             "group": "Edit"
           },
@@ -8451,7 +8451,7 @@
               "x"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Copy or cut squares first.",
             "expect": "screen",
             "group": "Edit"
           },
@@ -8462,7 +8462,7 @@
               "y"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Copy or cut squares first.",
             "expect": "screen",
             "group": "Edit"
           },
@@ -8538,7 +8538,7 @@
             "label": "Take back stamp",
             "keys": [],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Nothing is stamped.",
             "expect": "screen",
             "group": "World"
           },
@@ -8600,7 +8600,7 @@
               "F5"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Stamp the entry first: Test plays what was stamped.",
             "expect": "screen",
             "group": "World"
           },
@@ -8964,7 +8964,7 @@
               "fields": [
                 {
                   "id": "path",
-                  "label": "File",
+                  "label": "Path",
                   "value": "profile/mods/editor_scenario/chunk.json",
                   "type": "text"
                 }
@@ -11581,7 +11581,7 @@
               "fields": [
                 {
                   "id": "path",
-                  "label": "New file",
+                  "label": "Path",
                   "value": "",
                   "type": "text"
                 },
@@ -12344,7 +12344,7 @@
               "CTRL+C"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Mark squares with the Select tool first.",
             "expect": "screen",
             "group": "Edit"
           },
@@ -12355,7 +12355,7 @@
               "CTRL+X"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Mark squares with the Select tool first.",
             "expect": "screen",
             "group": "Edit"
           },
@@ -12366,7 +12366,7 @@
               "z"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Copy or cut squares first.",
             "expect": "screen",
             "group": "Edit"
           },
@@ -12377,7 +12377,7 @@
               "x"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Copy or cut squares first.",
             "expect": "screen",
             "group": "Edit"
           },
@@ -12388,7 +12388,7 @@
               "y"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Copy or cut squares first.",
             "expect": "screen",
             "group": "Edit"
           },
@@ -12464,7 +12464,7 @@
             "label": "Take back stamp",
             "keys": [],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Nothing is stamped.",
             "expect": "screen",
             "group": "World"
           },
@@ -12526,7 +12526,7 @@
               "F5"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Stamp the entry first: Test plays what was stamped.",
             "expect": "screen",
             "group": "World"
           },
@@ -13274,7 +13274,7 @@
               "fields": [
                 {
                   "id": "path",
-                  "label": "File",
+                  "label": "Path",
                   "value": "profile/mods/editor_scenario/house.json",
                   "type": "text"
                 }
@@ -29258,7 +29258,7 @@
               "fields": [
                 {
                   "id": "path",
-                  "label": "New file",
+                  "label": "Path",
                   "value": "",
                   "type": "text"
                 },
@@ -29871,7 +29871,7 @@
               "id": "editor:status",
               "kind": "text",
               "slot": "log",
-              "markup": "74 kinds of items can spawn in the square marked.",
+              "markup": "1 square marked. 74 kinds of items can spawn there.",
               "tone": "good"
             }
           ]
@@ -30043,7 +30043,7 @@
               "z"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Copy or cut squares first.",
             "expect": "screen",
             "group": "Edit"
           },
@@ -30054,7 +30054,7 @@
               "x"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Copy or cut squares first.",
             "expect": "screen",
             "group": "Edit"
           },
@@ -30065,7 +30065,7 @@
               "y"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Copy or cut squares first.",
             "expect": "screen",
             "group": "Edit"
           },
@@ -30148,7 +30148,7 @@
             "label": "Take back stamp",
             "keys": [],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Nothing is stamped.",
             "expect": "screen",
             "group": "World"
           },
@@ -30210,7 +30210,7 @@
               "F5"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Stamp the entry first: Test plays what was stamped.",
             "expect": "screen",
             "group": "World"
           },

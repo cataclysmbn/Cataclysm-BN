@@ -3,6 +3,7 @@
 #include "action.h"
 #include "all_enum_values.h"
 #include "avatar.h"
+#include "client_display.h"
 #include "editor/catalog.h"
 #include "editor/document.h"
 #include "editor/editor_access.h"
@@ -22,6 +23,7 @@
 #include "input.h"
 #include "item.h"
 #include "map/map.h"
+#include "output.h"
 #include "overmap/overmapbuffer.h"
 #include "player_activity.h"
 #include "string_formatter.h"
@@ -80,6 +82,19 @@ auto export_to(const session& state, const std::string& path)
 }
 
 } // namespace
+
+auto open_map_editor() -> void {
+    if (const auto denial = editor_denial(); !denial.empty()) {
+        popup(denial);
+        return;
+    }
+    // A protocol client draws the editor; the native frontends keep the map editor they have.
+    if (game_client::has_protocol_client()) {
+        run_editor_session();
+    } else {
+        g->look_debug();
+    }
+}
 
 auto reset_editor_session() -> void {
     kept_session.reset();
@@ -187,8 +202,9 @@ auto run_editor_session() -> void {
             get_avatar().assign_activity(std::move(wait), false);
             advancing = calendar::turn;
             return;
-        } else if (id == unstamp_id) {
+        } else if (id == unstamp_id && state.stamped) {
             state.unstamp();
+            state.status = _("Put back what the stamp replaced.");
         } else if (id == import_set_id) {
             state.import_text = invoked->args.text.value_or("");
         } else if (id == import_id) {

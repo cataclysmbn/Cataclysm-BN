@@ -20,13 +20,14 @@ export const editmap: Scenario = {
       await engine.choose("entry:0")
       await engine.acknowledge(() => engine.mirror.interaction.interaction === null)
 
-      // Entries are numbered by position: Map is the seventh of the debug menu, the editor the sixth of Map.
+      // Entries are numbered by position: Map is the seventh of the debug menu, and its seventh, Edit squares
+      // here, the editor of the squares around the avatar, beside the map editor of mapgen files.
       assertEquals(
         (await engine.submit({ kind: "action", action_id: "debug" })).stages.at(-1),
         "completed",
       )
       assertEquals((await engine.choose("entry:6")).stages.at(-1), "completed")
-      assertEquals((await engine.choose("entry:5")).stages.at(-1), "completed")
+      assertEquals((await engine.choose("entry:6")).stages.at(-1), "completed")
       await engine.follow(() => engine.top().kind === "editmap")
       const editor = engine.top()
       assertEquals(roles(editor), ["selection"])

@@ -29,6 +29,7 @@
 #include "path_info.h"
 #include "player_activity.h"
 #include "string_formatter.h"
+#include "string_utils.h"
 #include "translations.h"
 #include "type_id.h"
 
@@ -222,11 +223,19 @@ auto tool_label(const tool& value) -> std::string {
     return {};
 }
 
+namespace {
+/// The names in a name or a list of them, nested as a mapgen of several overmap squares has it.
+auto names_in(const nlohmann::ordered_json& name) -> std::vector<std::string> {
+    if (name.is_string()) { return {name.get<std::string>()}; }
+    if (!name.is_array()) { return {name.dump()}; }
+    return name | std::views::transform(names_in) | std::views::join
+         | std::ranges::to<std::vector>();
+}
+} // namespace
+
 auto entry_name(const nlohmann::ordered_json& value) -> std::string {
     for (const auto* const key : {"om_terrain", "nested_mapgen_id", "update_mapgen_id", "id"}) {
-        if (!value.contains(key)) { continue; }
-        const auto& name = value[key];
-        return name.is_string() ? name.get<std::string>() : name.dump();
+        if (value.contains(key)) { return join(names_in(value[key]), ", "); }
     }
     return _("(unnamed)");
 }
@@ -491,15 +500,17 @@ auto session::roll_loot_in(const selection& squares) -> void {
         const auto count =
             (std::abs(squares.to.x - squares.from.x) + 1)
             * (std::abs(squares.to.y - squares.from.y) + 1);
-        const auto where =
-            count == 1 ? std::string(_("the square marked"))
-                       : string_format(_("the %d squares marked"), count);
+        // Each sentence translates whole, with one count to pick its plural by.
         status =
             loot->empty()
-                ? string_format(_("Nothing can spawn in %s."), where)
-                : string_format(vgettext("%1$d kind of item can spawn in %2$s.",
-                                         "%1$d kinds of items can spawn in %2$s.", loot->size()),
-                                loot->size(), where);
+                ? string_format(vgettext("%d square marked: nothing can spawn there.",
+                                         "%d squares marked: nothing can spawn there.", count),
+                                count)
+                : string_format(vgettext("%d square marked.", "%d squares marked.", count), count)
+                      + " "
+                      + string_format(vgettext("%d kind of item can spawn there.",
+                                               "%d kinds of items can spawn there.", loot->size()),
+                                      loot->size());
     } else {
         notice = rolled.error();
     }
@@ -670,6 +681,7 @@ auto session::apply() -> void {
             : std::expected<void, std::string>(std::unexpect, diagnostics.front().text);
     if (applied) {
         stand_ins.keep_chunks();
+        status = string_format(_("The game generates %s with this entry now."), entry_name(entry));
     } else {
         notice = applied.error();
     }
@@ -1110,6 +1122,7 @@ auto session::set_picked_field() -> void {
 auto session::stamp_here() -> void {
     const auto stand_ins = file_stand_ins(stand_in_texts());
     stamp_text(doc->objects()[object].value.dump());
+    if (stamped && notice.empty()) { status = _("Stamped over the overmap square you stand on."); }
 }
 
 auto session::place_special() -> void {
@@ -1125,6 +1138,7 @@ auto session::place_special() -> void {
         return;
     }
     placed = placed_special{.id = applied->str(), .at = *at};
+    status = string_format(_("Placed %s nearby; Test takes you there."), applied->str());
 }
 
 auto session::placed_here() const -> std::optional<tripoint_abs_omt> {
@@ -1222,6 +1236,8 @@ auto session::paint(const point& at) -> void {
     }
     const auto grid = symbols_of(*doc, object);
     if (current->region == region_use::select) {
+        // What was counted over the squares marked before no longer stands.
+        loot.reset();
         selected = anchor ? std::optional(selection{.from = *anchor, .to = at}) : std::nullopt;
         anchor = anchor ? std::nullopt : std::optional(at);
         if (selected) {

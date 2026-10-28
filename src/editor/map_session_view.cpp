@@ -85,6 +85,29 @@ auto pin_options(const std::vector<std::string>& values) -> std::vector<ec::form
     return options;
 }
 
+/// An overmap connection as a player knows it: by the terrain it lays; else its id.
+auto connection_name(const std::string& id) -> std::string {
+    const auto connection = overmap_connection_id(id);
+    return connection.is_valid() && connection->default_terrain.is_valid()
+             ? _(connection->default_terrain->name)
+             : id;
+}
+
+/// An overmap terrain as the game names it, with the id that tells it from others of its name.
+auto overmap_terrain_name(const std::string& id) -> std::string {
+    const auto terrain = oter_str_id(id);
+    return terrain.is_valid() ? string_format("%s (%s)", terrain->get_name(), id) : id;
+}
+
+/// The overmap connections a special can join, each named by the terrain it lays.
+auto connection_options() -> std::vector<ec::form_option> {
+    return overmap_connections::get_all() | std::views::transform([](const auto& connection) {
+               return ec::form_option{
+                   .id = connection.id.str(), .label = connection_name(connection.id.str())};
+           })
+         | std::ranges::to<std::vector>();
+}
+
 /// What the game generates from the entry, a square per cell: its furniture, else its terrain.
 auto preview_grid(const mapgen_preview& shown) -> ec::component {
     auto cells = std::vector<ec::grid_cell>{};
@@ -600,7 +623,9 @@ auto document_stats(const session& state) -> std::vector<ec::panel_stat> {
             {.key = "level", .label = _("Level"), .value = std::to_string(state.special_level)});
         if (!state.special_terrain.empty()) {
             stats.push_back(
-                {.key = "terrain", .label = _("Terrain"), .value = state.special_terrain});
+                {.key = "terrain",
+                 .label = _("Terrain"),
+                 .value = overmap_terrain_name(state.special_terrain)});
         }
     }
     // The stamp stays in the world whichever entry is open.
@@ -772,7 +797,8 @@ auto game_parts(
             {.id = test_id,
              .label = _("Test"),
              .keys = {"F5"},
-             .enabled = state.placed_here().has_value()}));
+             .enabled = state.placed_here().has_value(),
+             .denial = state.placed_here() ? "" : _("Place the special in the world first.")}));
     }
     if (state.on_mapgen()) {
         affordances.push_back(
@@ -782,11 +808,13 @@ auto game_parts(
         affordances.push_back(
             ec::invoke_affordance({.id = stamp_id, .label = _("Stamp"), .keys = {"F6"}}));
         // In the editor's own world testing stamps first; in a player's, only what was stamped.
+        const auto testable = in_editor_game() || state.stamped.has_value();
         affordances.push_back(ec::invoke_affordance(
             {.id = test_id,
              .label = _("Test"),
              .keys = {"F5"},
-             .enabled = in_editor_game() || state.stamped.has_value()}));
+             .enabled = testable,
+             .denial = testable ? "" : _("Stamp the entry first: Test plays what was stamped.")}));
         affordances.push_back(ec::invoke_affordance(
             {.id = preview_id,
              .label = _("Preview"),
@@ -867,7 +895,7 @@ auto new_file_form(const session& state) -> ec::component {
         .affordances = {new_set_id, new_apply_id},
         .body = ec::form_body{
             .fields =
-                {{.id = "path", .label = _("New file"), .value = state.made.path},
+                {{.id = "path", .label = _("Path"), .value = state.made.path},
                  {.id = "om_terrain",
                   .label = state.made.kind == "palette" ? _("Palette id")
                          : state.made.kind == "nested"  ? _("Chunk id")
@@ -940,25 +968,38 @@ auto drawing_affordances(const session& state) -> std::vector<ec::affordance> {
          .args = {.count = ec::count_shape{.min = 1, .max = max_brush, .initial = state.brush}}}));
     affordances.push_back(ec::invoke_affordance({.id = mirror_x_id, .label = _("Mirror across")}));
     affordances.push_back(ec::invoke_affordance({.id = mirror_y_id, .label = _("Mirror down")}));
+    const auto unmarked = state.selected ? "" : _("Mark squares with the Select tool first.");
+    const auto unclipped = state.clip.empty() ? _("Copy or cut squares first.") : "";
     affordances.push_back(ec::invoke_affordance(
         {.id = copy_id,
          .label = _("Copy"),
          .keys = {"CTRL+C"},
-         .enabled = state.selected.has_value()}));
+         .enabled = state.selected.has_value(),
+         .denial = unmarked}));
     affordances.push_back(ec::invoke_affordance(
         {.id = cut_id,
          .label = _("Cut"),
          .keys = {"CTRL+X"},
-         .enabled = state.selected.has_value()}));
+         .enabled = state.selected.has_value(),
+         .denial = unmarked}));
     affordances.push_back(ec::invoke_affordance(
-        {.id = rotate_id, .label = _("Rotate"), .keys = {"z"}, .enabled = !state.clip.empty()}));
+        {.id = rotate_id,
+         .label = _("Rotate"),
+         .keys = {"z"},
+         .enabled = !state.clip.empty(),
+         .denial = unclipped}));
     affordances.push_back(ec::invoke_affordance(
         {.id = flip_x_id,
          .label = _("Flip across"),
          .keys = {"x"},
-         .enabled = !state.clip.empty()}));
+         .enabled = !state.clip.empty(),
+         .denial = unclipped}));
     affordances.push_back(ec::invoke_affordance(
-        {.id = flip_y_id, .label = _("Flip down"), .keys = {"y"}, .enabled = !state.clip.empty()}));
+        {.id = flip_y_id,
+         .label = _("Flip down"),
+         .keys = {"y"},
+         .enabled = !state.clip.empty(),
+         .denial = unclipped}));
     affordances.push_back(
         ec::invoke_affordance({.id = paint_id, .label = _("Draw"), .args = row_of(canvas_id)}));
     if (state.current->region == region_use::placements) {
@@ -996,7 +1037,7 @@ auto connection_cell(
     ec::grid_cell cell, const special_connection& joined, ec::look_palette& palette)
     -> ec::grid_cell {
     const auto id = overmap_connection_id(joined.connection);
-    cell.label = string_format(_("%s connection"), joined.connection);
+    cell.label = string_format(_("%s connection"), connection_name(joined.connection));
     cell.glyph = "+";
     cell.faded = true;
     if (!id.is_valid() || !id->default_terrain.is_valid()) { return cell; }
@@ -1225,7 +1266,7 @@ auto session_view(const session& state) -> ec::screen_view {
                       : std::vector<std::string>{open_id},
         .body = ec::form_body{
             .fields = {{.id = path_id,
-                        .label = _("File"),
+                        .label = _("Path"),
                         .value = state.doc ? state.doc->path().generic_string() : ""}},
             .submit = open_id}});
     affordances.push_back(ec::invoke_affordance(
@@ -1265,7 +1306,10 @@ auto session_view(const session& state) -> ec::screen_view {
          .label = _("Export palette"),
          .args = {.text = ec::text_shape{.field_id = "palette"}}}));
     affordances.push_back(ec::invoke_affordance(
-        {.id = unstamp_id, .label = _("Take back stamp"), .enabled = state.stamped.has_value()}));
+        {.id = unstamp_id,
+         .label = _("Take back stamp"),
+         .enabled = state.stamped.has_value(),
+         .denial = state.stamped ? "" : _("Nothing is stamped.")}));
     affordances.push_back(ec::invoke_affordance(
         {.id = advance_id,
          .label = _("Let turns pass"),
@@ -1343,9 +1387,12 @@ auto session_view(const session& state) -> ec::screen_view {
                     .id = connection_id,
                     .affordances = {connection_set_id},
                     .body = ec::form_body{
-                        .fields = {{.id = "connection",
-                                    .label = _("Connection"),
-                                    .value = state.special_connection}},
+                        .fields =
+                            {{.id = "connection",
+                              .label = _("Connection"),
+                              .value = state.special_connection,
+                              .type = "select",
+                              .options = connection_options()}},
                         .submit = connection_set_id}});
                 affordances.push_back(ec::invoke_affordance(
                     {.id = connection_set_id,

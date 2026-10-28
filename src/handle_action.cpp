@@ -32,7 +32,6 @@
 #include "debug_menu.h"
 #include "diary.h"
 #include "distraction_manager.h"
-#include "editor/editor_access.h"
 #include "editor/editor_session.h"
 #include "engine_client_contract.h"
 #include "faction.h"
@@ -3075,16 +3074,7 @@ bool game::handle_action()
                 break;
 
             case ACTION_EDITOR:
-                if( const auto denial = editor::editor_denial(); !denial.empty() ) {
-                    popup( denial );
-                    break;
-                }
-                // A protocol client draws the editor; the native frontends keep the map editor they have.
-                if( game_client::has_protocol_client() ) {
-                    editor::run_editor_session();
-                } else {
-                    g->look_debug();
-                }
+                editor::open_map_editor();
                 break;
 
             case ACTION_LUA_CONSOLE:
