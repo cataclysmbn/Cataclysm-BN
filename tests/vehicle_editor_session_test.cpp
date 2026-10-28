@@ -567,7 +567,7 @@ TEST_CASE(
                 const auto& world = rows(screen, "vehicle:world");
                 REQUIRE(world.size() == 1);
                 CHECK(world[0].label == "Car");
-                CHECK(world[0].columns[0].value == "8");
+                CHECK(world[0].columns[0].value == "8 squares");
                 return invoke("vehicle:export", {.row = "world:0", .text = "/tmp/my_car.json"});
             }
             case 2:

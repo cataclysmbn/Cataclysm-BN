@@ -1510,7 +1510,35 @@ auto parts_view(const session& state) -> ec::screen_view {
     }
     const auto found = state.prototypes();
     const auto vehicles = get_map().get_vehicles();
-    const auto here = get_avatar().bub_pos();
+    const auto here = get_avatar().bub_pos().xy().raw();
+    // The world's vehicles nearest first, the nearest picked, each with how far and which way it
+    // stands, which tells apart two of one name.
+    const auto distance_of = [&](const std::size_t index) {
+        return rl_dist(here, vehicles[index].pos.xy().raw());
+    };
+    auto nearest =
+        std::views::iota(std::size_t{0}, vehicles.size()) | std::ranges::to<std::vector>();
+    std::ranges::stable_sort(nearest, {}, distance_of);
+    auto world_rows =
+        nearest | std::views::transform([&](const std::size_t index) {
+            const auto at = vehicles[index].pos.xy().raw();
+            const auto distance = distance_of(index);
+            return ec::row{
+                .id = index_row("world", index),
+                .label = vehicles[index].v->name,
+                .columns = {
+                    {.key = "distance",
+                     .label = _("Distance"),
+                     .value = string_format(vgettext("%d square", "%d squares", distance), distance),
+                     .color = ""},
+                    {.key = "direction",
+                     .label = _("Direction"),
+                     .value =
+                         distance == 0 ? std::string{} : direction_name(direction_from(here, at)),
+                     .color = ""}}};
+        })
+        | std::ranges::to<std::vector>();
+    if (!world_rows.empty()) { world_rows.front().selected = true; }
     // The left column: the prototypes to open, or the world's vehicles to export, copy or edit.
     parts.push_back(ec::tabs(
         {.id = sources_id,
@@ -1519,24 +1547,10 @@ auto parts_view(const session& state) -> ec::screen_view {
          .select = source_id,
          .child =
              state.source_tab == "world"
-                 ? ec::list(
-                       {.id = world_id,
-                        .rows = vehicles | std::views::enumerate
-                              | std::views::transform([&](const auto& entry) {
-                                    const auto& [index, placed] = entry;
-                                    return ec::row{
-                                        .id = index_row("world", index),
-                                        .label = placed.v->name,
-                                        .columns = {
-                                            {.key = "distance",
-                                             .label = _("Distance"),
-                                             .value = std::to_string(
-                                                 rl_dist(here.raw(), placed.pos.raw())),
-                                             .color = ""}}};
-                                })
-                              | std::ranges::to<std::vector>(),
-                        .selection = "single",
-                        .activate = edit_id})
+                 ? ec::list({.id = world_id,
+                             .rows = world_rows,
+                             .selection = "single",
+                             .activate = edit_id})
                  : ec::list(
                        {.id = prototypes_id,
                         .rows =
@@ -1569,7 +1583,8 @@ auto parts_view(const session& state) -> ec::screen_view {
         affordances.push_back(ec::invoke_affordance(
             {.id = export_id,
              .label = _("Export design"),
-             .args = text_of(world_id),
+             .args = {.row = ec::row_shape{.component_id = world_id},
+                      .text = ec::text_shape{.initial = state.suggested("my_vehicle")}},
              .enabled = none.empty(),
              .denial = none}));
         affordances.push_back(ec::invoke_affordance(
@@ -1604,10 +1619,15 @@ auto parts_view(const session& state) -> ec::screen_view {
     affordances.push_back(ec::invoke_affordance(
         {.id = std::string(show_prefix) + "world", .label = _("World vehicles"), .keys = {"w"}}));
     if (!state.live && !state.doc) {
-        return {.title = _("Vehicle Editor"),
-                .root = ec::split({.id = "vehicle:body", .children = std::move(parts)}),
-                .affordances = std::move(affordances),
-                .focus_component = state.source_tab == "world" ? world_id : prototypes_id};
+        return {
+            .title = _("Vehicle Editor"),
+            .root = ec::split({.id = "vehicle:body", .children = std::move(parts)}),
+            .affordances = std::move(affordances),
+            .focus_component = state.source_tab == "world" ? world_id : prototypes_id,
+            .focus_row =
+                state.source_tab == "world" && !world_rows.empty()
+                    ? world_rows.front().id
+                    : std::string{}};
     }
     const auto* const veh = state.live ? state.live : state.built.blueprint.get();
     const auto mount = tripoint_mnt_veh(state.cursor.x, state.cursor.y, 0);
