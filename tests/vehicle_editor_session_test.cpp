@@ -2515,4 +2515,28 @@ TEST_CASE(
     CHECK(step == 3);
 }
 
+TEST_CASE(
+    "the vehicle editor's picking of a part on a mount is a selection",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                return invoke("vehicle:show:mount");
+            case 2:
+                CHECK(affordance(screen, "vehicle:pick").role == "select");
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 3);
+}
+
 #endif // CATA_MCP
