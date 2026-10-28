@@ -6203,11 +6203,42 @@ TEST_CASE(
             case 3:
                 // Picking a tool changes nothing the refusal was about.
                 CHECK(notice(screen) == refused);
-                return invoke("editor:extract_palette", {.text = "editor_session_test_kept"});
+                return invoke("editor:mapping_apply");
             case 4:
+                // A new refusal replaces the old one.
+                CHECK_FALSE(notice(screen).empty());
+                CHECK(notice(screen) != refused);
+                return invoke("editor:mapping_set", {.row = "symbol", .text = "x"});
+            case 5:
+                // Changing what the form says is acting on the refusal.
+                CHECK(notice(screen).empty());
+                return invoke("editor:extract_palette", {.text = "cabin_palette"});
+            case 6:
+                CHECK(notice(screen) == refused);
+                return invoke("editor:extract_palette", {.text = "editor_session_test_kept"});
+            case 7:
+                CHECK(notice(screen).empty());
+                return invoke("editor:new_set", {.row = "path", .text = file.path.string()});
+            case 8:
+                return invoke("editor:new_apply");
+            case 9:
+                REQUIRE_FALSE(notice(screen).empty());
+                return invoke("editor:new_set", {.row = "path", .text = "elsewhere.json"});
+            case 10:
+                // The field that was refused is changed, so its refusal goes.
                 CHECK(notice(screen).empty());
                 return invoke("editor:undo");
-            case 5:
+            case 11: {
+                auto out = std::ofstream(file.path, std::ios::binary | std::ios::app);
+                out << "\n";
+                return invoke("editor:catalog_page", {.count = 0});
+            }
+            case 12:
+                REQUIRE(notice(screen).find("changed on disk") != std::string::npos);
+                return invoke("editor:open", {.text = file.path.string()});
+            case 13:
+                // Opening the file again shows it as it is, so the notice about it goes.
+                CHECK(notice(screen).empty());
                 return act("QUIT");
             default:
                 FAIL("the editor outlived its exit");
@@ -6215,7 +6246,7 @@ TEST_CASE(
         }
     });
     editor::run_editor_session();
-    CHECK(step == 6);
+    CHECK(step == 14);
     editor::reset_editor_session();
 }
 
