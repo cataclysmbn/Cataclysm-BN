@@ -2291,3 +2291,62 @@ TEST_CASE(
     editor::run_vehicle_editor();
     CHECK(step == 7);
 }
+
+TEST_CASE(
+    "the vehicle editor loads a world turret in place with the rounds it fires",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    clear_map();
+    const auto cleanup_vehicles = on_out_of_scope([] { clear_vehicles(); });
+    REQUIRE(editor::spawn_design(
+        vproto_id("armored_car"), get_avatar().bub_pos() + tripoint_rel_ms(10, 0, 0), {}));
+    const auto gun = [](const ec::screen_view& screen) {
+        const auto& stack = rows(screen, "vehicle:stack");
+        const auto found = std::ranges::find(stack, "mounted M249", &ec::row::label);
+        REQUIRE(found != stack.end());
+        return *found;
+    };
+    const auto field = [](const ec::screen_view& screen, const std::string& id) {
+        const auto& fields = body<ec::form_body>(part(screen, "vehicle:live_form")).fields;
+        const auto found = std::ranges::find(fields, id, &ec::form_field::id);
+        INFO(id);
+        REQUIRE(found != fields.end());
+        return *found;
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:source", {.row = "source:world"});
+            case 1:
+                return invoke("vehicle:edit", {.row = "world:0"});
+            case 2:
+                return invoke("vehicle:mount", {.row = "mount:-3,1"});
+            case 3:
+                return invoke("vehicle:pick", {.row = gun(screen).id});
+            case 4:
+                return invoke("vehicle:show:part");
+            case 5:
+                CHECK(field(screen, "fuel").label == "Rounds");
+                CHECK(field(screen, "fuel_type").label == "Ammunition");
+                return invoke("vehicle:live_set", {.row = "fuel_type", .text = "556"});
+            case 6:
+                CHECK(notice_of(screen).empty());
+                CHECK(field(screen, "fuel_type").value == "556");
+                return invoke("vehicle:live_set", {.row = "fuel", .text = "25"});
+            case 7:
+                CHECK(notice_of(screen).empty());
+                CHECK(field(screen, "fuel").value == "25");
+                return invoke("vehicle:show:mount");
+            case 8:
+                CHECK(gun(screen).columns.size() == 2);
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 9);
+}
