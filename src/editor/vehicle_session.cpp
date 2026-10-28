@@ -1533,7 +1533,19 @@ auto part_form(const session& state) -> std::optional<ec::component> {
                  | std::ranges::to<std::vector>()});
     }
     if (id.is_valid() && id->has_flag(VPFLAG_FLUIDTANK)) {
-        auto options = item_options(tank_fuels(), value("fuel"));
+        // The fuels the game's vehicles fill tanks with lead, then every other liquid.
+        const auto liquids = tank_fuels();
+        auto fuels =
+            usual_tank_fuels() | std::views::filter([&](const itype_id& fuel) {
+                return std::ranges::contains(liquids, fuel);
+            })
+            | std::ranges::to<std::vector>();
+        std::ranges::copy(
+            liquids | std::views::filter([&](const itype_id& fuel) {
+                return !std::ranges::contains(fuels, fuel);
+            }),
+            std::back_inserter(fuels));
+        auto options = item_options(fuels, value("fuel"));
         options.insert(options.begin(), {.id = "", .label = _("None")});
         fields.push_back(
             {.id = "fuel",
@@ -2085,6 +2097,14 @@ auto parts_view(const session& state) -> ec::screen_view {
                           .multiline = true}},
                     .submit = field_apply_id}};
         }
+        // The picked part's settings right under the parts it is among.
+        if (auto form = part_form(state)) {
+            return ec::split(
+                {.id = "vehicle:mount_parts",
+                 .relation = "detail",
+                 .active = stack_id,
+                 .children = ec::children_of(with_actions(document_stack()), std::move(*form))});
+        }
         return with_actions(document_stack());
     };
     parts.push_back(
@@ -2186,9 +2206,10 @@ auto parts_view(const session& state) -> ec::screen_view {
         on("vehicle",
            ec::invoke_affordance(
                {.id = prop_set_id, .label = _("Value"), .args = text_of(props_id)}));
-        on("part",
-           ec::invoke_affordance(
-               {.id = part_set_id, .label = _("Value"), .args = text_of(part_form_id)}));
+        if (shown_tab == "part" || (shown_tab == "mount" && settings)) {
+            affordances.push_back(ec::invoke_affordance(
+                {.id = part_set_id, .label = _("Value"), .args = text_of(part_form_id)}));
+        }
         on("cargo",
            ec::invoke_affordance(
                {.id = item_add_id, .label = _("Add item"), .args = {.text = ec::text_shape{}}}));

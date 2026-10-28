@@ -1084,4 +1084,16 @@ auto part_labels(const std::vector<const vpart_info*>& parts) -> std::vector<std
          | std::ranges::to<std::vector>();
 }
 
+auto usual_tank_fuels() -> std::vector<itype_id> {
+    auto filled = std::map<itype_id, int>{};
+    for (const auto& id : vehicle_prototype::get_all()) {
+        for (const auto& part : id->parts) {
+            if (!part.fuel.is_null()) { ++filled[part.fuel]; }
+        }
+    }
+    auto fuels = filled | std::views::keys | std::ranges::to<std::vector>();
+    std::ranges::stable_sort(fuels, std::greater{}, [&](const itype_id& id) { return filled[id]; });
+    return fuels;
+}
+
 } // namespace editor
