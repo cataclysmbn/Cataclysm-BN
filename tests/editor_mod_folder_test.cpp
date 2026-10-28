@@ -115,3 +115,37 @@ TEST_CASE(
     // The inner mod's own folder takes a new file.
     CHECK(editor::map_editor::check_new_path((pack / "inner" / "house.json").string()));
 }
+
+TEST_CASE(
+    "the editors save an edit to a file already in a folder that cannot be a mod",
+    "[editor_session][editor_vehicle]") {
+    const auto mods = std::filesystem::path(PATH_INFO::user_moddir());
+    const auto spaced = mods / "editor mod folder old";
+    const auto forget = [&] { std::filesystem::remove_all(spaced); };
+    forget();
+    const auto cleanup = on_out_of_scope(forget);
+    std::filesystem::create_directories(spaced);
+    std::ofstream(spaced / "house.json") << "[]";
+    auto doc = editor::document::open(spaced / "house.json");
+    REQUIRE(doc.has_value());
+    // The file is there already: refusing would only lose the edit.
+    CHECK(editor::save_document(*doc).has_value());
+    CHECK_FALSE(std::filesystem::exists(spaced / "modinfo.json"));
+}
+
+TEST_CASE(
+    "the editors look past a folder they cannot read for mods below a new mod's folder",
+    "[editor_session][editor_vehicle]") {
+    const auto mods = std::filesystem::path(PATH_INFO::user_moddir());
+    const auto top = mods / "editor_mod_folder_locked";
+    const auto forget = [&] {
+        std::filesystem::permissions(
+            top / "locked", std::filesystem::perms::owner_all, std::filesystem::perm_options::add);
+        std::filesystem::remove_all(top);
+    };
+    std::filesystem::remove_all(top);
+    std::filesystem::create_directories(top / "locked" / "deeper");
+    const auto cleanup = on_out_of_scope(forget);
+    std::filesystem::permissions(top / "locked", std::filesystem::perms::none);
+    CHECK(editor::map_editor::check_new_path((top / "house.json").string()));
+}

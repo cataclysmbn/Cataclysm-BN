@@ -5,6 +5,7 @@
 
 #include <stdexcept>
 #include <string>
+#include <thread>
 #include <vector>
 
 TEST_CASE("expected error logs do not poison the test run", "[debug]") {
@@ -52,6 +53,14 @@ TEST_CASE("an editor's capture takes no worker thread's debug message", "[debug]
     auto pool = cata_thread_pool{1};
     const auto each = capture_each_debugmsg_during([&]() {
         pool.submit_returning([]() { debugmsg("worker marker"); }).get();
+    });
+    CHECK(each.empty());
+}
+
+TEST_CASE("an editor's capture takes no other thread's debug message", "[debug]") {
+    const auto each = capture_each_debugmsg_during([]() {
+        auto other = std::thread([]() { debugmsg("other thread marker"); });
+        other.join();
     });
     CHECK(each.empty());
 }
