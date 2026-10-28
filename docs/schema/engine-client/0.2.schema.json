@@ -6585,10 +6585,12 @@
           "description": "The values a `select` field takes, by id."
         },
         "min": {
-          "type": "number"
+          "type": "number",
+          "description": "A whole number for an `integer` field."
         },
         "max": {
-          "type": "number"
+          "type": "number",
+          "description": "A whole number for an `integer` field."
         }
       },
       "required": [
@@ -6597,7 +6599,24 @@
         "value",
         "type"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "if": {
+        "properties": {
+          "type": {
+            "const": "integer"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "min": {
+            "type": "integer"
+          },
+          "max": {
+            "type": "integer"
+          }
+        }
+      }
     },
     "form": {
       "type": "object",
