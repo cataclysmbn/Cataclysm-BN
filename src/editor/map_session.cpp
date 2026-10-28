@@ -478,13 +478,13 @@ auto session::pin(const std::string& name, const std::string& value) -> void {
     notice = reason;
 }
 
-auto session::roll_loot_at(const point& at) -> void {
+auto session::roll_loot_in(const selection& squares) -> void {
     const auto stand_ins = file_stand_ins(stand_in_texts());
     const auto rolled = roll_loot(
         doc->objects()[object].value.dump(),
         {.preview = preview_options_of(seed.value_or(1)),
-         .from = {at.x, at.y},
-         .to = {at.x, at.y},
+         .from = {std::min(squares.from.x, squares.to.x), std::min(squares.from.y, squares.to.y)},
+         .to = {std::max(squares.from.x, squares.to.x), std::max(squares.from.y, squares.to.y)},
          .runs = loot_runs});
     if (rolled) {
         loot = *rolled;

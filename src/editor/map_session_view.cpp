@@ -795,7 +795,10 @@ auto game_parts(
                                                .initial = state.seed.value_or(1)}},
              .keys = {"F8"}}));
         affordances.push_back(ec::invoke_affordance(
-            {.id = loot_id, .label = _("What can spawn here"), .args = row_of(canvas_id)}));
+            {.id = loot_id,
+             .label = _("What can spawn here"),
+             .enabled = state.selected.has_value(),
+             .denial = state.selected ? "" : _("Mark squares with the Select tool first.")}));
         if (state.seed) {
             affordances.push_back(ec::invoke_affordance({.id = reroll_id, .label = _("Re-roll")}));
             affordances.push_back(ec::invoke_affordance(
@@ -1168,6 +1171,7 @@ auto layout(const session& state) -> workspace_layout {
              {level_down_id, view},
              {preview_id, view},
              {reroll_id, view},
+             {loot_id, view},
              {apply_id, world},
              {apply_on_save_id, world},
              {stamp_id, world},
