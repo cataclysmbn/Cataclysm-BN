@@ -3151,4 +3151,32 @@ TEST_CASE(
     CHECK(step == 7);
 }
 
+TEST_CASE(
+    "the vehicle editor makes no mod of a folder whose name is another mod's id",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto folder = std::filesystem::path(PATH_INFO::user_moddir()) / "bn";
+    std::filesystem::remove_all(folder);
+    const auto cleanup = on_out_of_scope([&] { std::filesystem::remove_all(folder); });
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:new", {.text = "bn/kart"});
+            case 1:
+                // bn is the game's own mod: a mod of that id would stand in for it.
+                CHECK(notice_of(screen).contains("bn_2"));
+                CHECK_FALSE(std::filesystem::exists(folder / "kart.json"));
+                CHECK_FALSE(std::filesystem::exists(folder / "modinfo.json"));
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 2);
+}
+
 #endif // CATA_MCP
