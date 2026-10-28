@@ -3,8 +3,9 @@
  * The vehicle editor from the main menu: the Editor tab's vehicle editor entry starts the editor world and opens
  * the vehicle editor at once; it opens a prototype by its id, shows the vehicle the game builds from it, chooses a
  * part from the parts palette and installs it on the mount clicked, says why a mount refuses another, undoes the
- * install, spawns the prototype and leaves for the map beside it, comes back through the map editor, edits the
- * spawned vehicle in place from the world tab, copies and pastes it with its state, and leaves for the map editor.
+ * install, spawns the prototype and leaves for the map beside it, comes back to the vehicle editor through the
+ * editor action, edits the spawned vehicle in place from the world tab, copies and pastes it with its state, and
+ * leaves for the map editor.
  */
 import { assert, assertEquals } from "@std/assert"
 import { Engine, type Scenario, type Value } from "./driver.ts"
@@ -88,9 +89,8 @@ export const vehicleEditor: Scenario = {
         (await engine.submit({ kind: "action", action_id: "editor" })).stages.at(-1),
         "completed",
       )
-      await engine.follow(() => engine.top().kind === "editor")
-      assertEquals((await engine.invoke("editor:vehicle")).stages.at(-1), "completed")
-      assertEquals(engine.top().kind, "vehicle_editor")
+      // The editor opens on the vehicle editor it left.
+      await engine.follow(() => engine.top().kind === "vehicle_editor")
       assertEquals(
         (await engine.invoke("vehicle:source", { row: "source:world" })).stages.at(-1),
         "completed",

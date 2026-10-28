@@ -1,10 +1,12 @@
 #include "editor/vehicle_session.h"
 
+#include "action.h"
 #include "avatar.h"
 #include "calendar.h"
 #include "editor/catalog.h"
 #include "editor/document.h"
 #include "editor/editor_access.h"
+#include "editor/editor_session.h"
 #include "editor/history_label.h"
 #include "editor/recent_documents.h"
 #include "editor/row_id.h"
@@ -22,6 +24,7 @@
 #include "json_formatter.h"
 #include "line.h"
 #include "map/map.h"
+#include "messages.h"
 #include "output.h"
 #include "path_info.h"
 #include "string_formatter.h"
@@ -2514,7 +2517,12 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
         } else if (id == spawn_set_id) {
             state.set_spawning(row, text);
         } else if (id == spawn_id && state.spawn() && in_editor_game()) {
-            // The editor game shows no world behind the editor: the avatar goes to try it.
+            // The editor game shows no world behind the editor: the avatar goes to try it, and the
+            // editor opens on this one again.
+            //~ %1$s says where the vehicle spawned; %2$s how to open the editor, as "Press ~".
+            add_msg(m_info, to_translation("%1$s %2$s to go back to the vehicle editor."),
+                    state.said, press_x(ACTION_EDITOR));
+            return_to_vehicle_editor();
             state.live = nullptr;
             return true;
         }

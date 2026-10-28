@@ -33,6 +33,7 @@
 #    include "map/mapdata.h"
 #    include "mapgen/mapgen_constructor.h"
 #    include "mapgen/mapgen_functions.h"
+#    include "message_feed.h"
 #    include "messages.h"
 #    include "options_helpers.h"
 #    include "output.h"
@@ -6996,6 +6997,7 @@ TEST_CASE(
     auto mode = get_special_game(special_game_type::EDITOR);
     REQUIRE(mode->init());
     get_avatar().set_moves(100);
+    Messages::clear_messages();
     auto kinds = std::vector<std::string>{};
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
         const auto screen = ec::top_screen(captured());
@@ -7015,10 +7017,10 @@ TEST_CASE(
     handle_action(std::move(mode));
     CHECK(kinds.size() == 3);
     // The map says where the vehicle is and how to get back to the vehicle editor.
-    const auto said = Messages::recent_messages(1);
+    const auto said = Messages::feed_since({});
     REQUIRE_FALSE(said.empty());
-    CHECK(said.back().second.contains("Spawned Bicycle"));
-    CHECK(said.back().second.contains("vehicle editor"));
+    CHECK(said.back().text.contains("Spawned Bicycle"));
+    CHECK(said.back().text.contains("vehicle editor"));
 
     // The editor opens on the vehicle editor again, and closing it shows the map editor.
     kinds.clear();
