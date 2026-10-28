@@ -2458,4 +2458,61 @@ TEST_CASE(
     CHECK(step == 2);
 }
 
+namespace {
+/// Why the command lifecycle turns away an invoke of `affordance` with `args` at `state`, as the
+/// client reads it; empty when it takes the invoke.
+auto refusal(
+    const ec::boundary_state& state, const std::string& affordance, const ec::invoke_args& args)
+    -> std::string {
+    class authority final: public ec::command_authority {
+    public:
+        auto current_permissions() const -> ec::command_permissions override {
+            return {.accepts_interaction_commands = true, .accepts_registered_actions = true};
+        }
+    };
+    const auto owner = authority{};
+    auto lifecycle = ec::command_lifecycle{state.epoch, owner};
+    const auto submitted = lifecycle.submit(
+        {.epoch = state.epoch,
+         .expect = {.revision = 1, .boundary_id = state.id},
+         .operation = ec::invoke_operation{.affordance_id = affordance, .args = args}});
+    REQUIRE(submitted);
+    if (lifecycle.validate({.epoch = state.epoch, .sequence = 1, .revision = 1}, state, {80, 24})) {
+        return {};
+    }
+    const auto result = lifecycle.result(submitted->command_id);
+    REQUIRE(result);
+    REQUIRE(result->failure == ec::error::invalid_arguments);
+    return result->message;
+}
+} // namespace
+
+TEST_CASE(
+    "the vehicle editor turns away a spawn value out of its bounds, naming the field and them",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                return invoke("vehicle:show:spawn");
+            case 2:
+                CHECK(refusal(state, "vehicle:spawn_set", {.row = "facing", .text = "400"})
+                      == "Facing takes a whole number from 0 to 359.");
+                CHECK(refusal(state, "vehicle:spawn_set", {.row = "fuel", .text = "-1"})
+                      == "Fuel % takes a whole number from 0 to 100.");
+                CHECK(refusal(state, "vehicle:spawn_set", {.row = "facing", .text = "90"}).empty());
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 3);
+}
+
 #endif // CATA_MCP
