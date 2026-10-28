@@ -1165,7 +1165,8 @@ TEST_CASE(
                 return invoke("editor:mapping_apply");
             case 5:
                 CHECK(notice(screen)
-                      == "x has no terrain under it: map its terrain first, or set fill_ter.");
+                      == "x has no terrain under it: map its terrain first, or set "
+                         "/object/fill_ter in the JSON value form.");
                 CHECK(bare(screen));
                 return set("symbol", ".");
             case 6:
@@ -1176,14 +1177,16 @@ TEST_CASE(
                 return invoke("editor:mapping_apply");
             case 9:
                 CHECK(notice(screen)
-                      == ". has no terrain under it: map its terrain first, or set fill_ter.");
+                      == ". has no terrain under it: map its terrain first, or set "
+                         "/object/fill_ter in the JSON value form.");
                 CHECK(bare(screen));
                 return invoke("editor:symbol", {.row = "symbol:C"});
             case 10:
                 return invoke("editor:paint", {.row = "square:2,3"});
             case 11:
                 CHECK(notice(screen)
-                      == "C has no terrain under it: map its terrain first, or set fill_ter.");
+                      == "C has no terrain under it: map its terrain first, or set "
+                         "/object/fill_ter in the JSON value form.");
                 CHECK(cell(screen, 2, 3).glyph == ".");
                 CHECK(bare(screen));
                 return act("QUIT");
@@ -2321,6 +2324,53 @@ TEST_CASE(
     const auto written = nlohmann::ordered_json::parse(read_file(made));
     CHECK(written[0]["om_terrain"] == "house_04");
     CHECK(written[0]["object"]["terrain"]["."] == "t_dirt");
+}
+
+TEST_CASE(
+    "a new mapgen file fills its squares with its terrain, so a new symbol takes furniture",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    // Removes the folder the new file goes in.
+    const auto folder = mod_file{};
+    const auto made = folder.path.parent_path() / "filled.json";
+    const auto set = [](const std::string& id, const std::string& text) {
+        return invoke("editor:mapping_set", {.row = id, .text = text});
+    };
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:new_set", {.row = "path", .text = made.string()});
+            case 1:
+                return invoke("editor:new_set", {.row = "om_terrain", .text = "house_04"});
+            case 2:
+                return invoke("editor:new_apply");
+            case 3:
+                return set("symbol", "b");
+            case 4:
+                return set("layer", "furniture");
+            case 5:
+                return set("value", "f_bed");
+            case 6:
+                return invoke("editor:mapping_apply");
+            case 7:
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                return invoke("editor:save");
+            case 8:
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 9);
+    const auto written = nlohmann::ordered_json::parse(read_file(made));
+    CHECK(written[0]["object"]["fill_ter"] == "t_floor");
+    CHECK(written[0]["object"]["furniture"]["b"] == "f_bed");
 }
 
 TEST_CASE(
