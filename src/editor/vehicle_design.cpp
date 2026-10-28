@@ -1000,14 +1000,26 @@ auto category_of(const vpart_info& part) -> part_category {
             return part.has_flag(flag);
         });
     };
-    if (part.location == "structure") { return part_category::frames; }
+    // A frame holds the rest up, as vehicle::has_structural_part takes it, and does nothing else.
+    if (part.location == "structure"
+        && !any({"PROTRUSION", "EXTENDABLE", "ENGINE", "ANIMAL_CTRL", "PROPELLER"})) {
+        return part_category::frames;
+    }
     if (part.location == "axle" || any({"WHEEL"})) { return part_category::wheels; }
     if (any({"TURRET", "TURRET_MOUNT", "TURRET_CONTROLS", "LASER_DESIGNATOR"})) {
         return part_category::weapons;
     }
-    if (any({"ENGINE", "ALTERNATOR"})) { return part_category::engines; }
+    if (any({"ENGINE", "ALTERNATOR", "PROPELLER", "ANIMAL_CTRL"})) {
+        return part_category::engines;
+    }
+    // Tools that work the ground or lift and appliances, however much they hold.
+    if (any({"PLANTER", "PLOW", "REAPER", "ROCKWHEEL", "ROADHEAD", "CRANE", "EXTRA_DRAG", "FRIDGE",
+             "FREEZER", "CRAFTER", "WORKBENCH", "AUTODOC", "AUTOCLAVE", "FAUCET", "SCOOP",
+             "CAPTURE_MONSTER_VEH"})) {
+        return part_category::other;
+    }
     if (part.location == "fuel_source" || part.location == "on_battery_mount"
-        || any({"FLUIDTANK", "BATTERY_MOUNT"})) {
+        || any({"FLUIDTANK", "BATTERY_MOUNT"}) || part.fuel_type == itype_id("battery")) {
         return part_category::fuel;
     }
     if (any({"SEAT", "SEATBELT", "BED", "CONTROLS", "CTRL_ELECTRONIC", "REMOTE_CONTROLS"})) {
