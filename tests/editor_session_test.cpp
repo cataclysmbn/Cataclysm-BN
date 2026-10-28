@@ -2752,22 +2752,38 @@ TEST_CASE(
                       == "{ not json");
                 CHECK(live() == before);
                 return invoke("editor:import");
-            case 2:
-                CHECK_FALSE(notice(screen).empty());
+            case 2: {
+                // The refusal says what is wrong in words, not as the loader names its input.
+                CHECK(notice(screen) == "The pasted text is not JSON.");
                 CHECK(live() == before);
+                auto methodless = walls;
+                methodless.erase("method");
+                return invoke("editor:import_set", {.row = "import", .text = methodless.dump()});
+            }
+            case 3:
+                return invoke("editor:import");
+            case 4:
+                CHECK(notice(screen) == "The \"method\" field is missing.");
+                CHECK(live() == before);
+                return invoke("editor:import_set",
+                              {.row = "import", .text = R"([{ "type": "palette", "id": "x" }])"});
+            case 5:
+                return invoke("editor:import");
+            case 6:
+                CHECK(notice(screen) == "The pasted text holds no mapgen entry.");
                 // A file's array of entries, as an export writes it, stamps its mapgen.
                 return invoke(
                     "editor:import_set",
                     {.row = "import", .text = nlohmann::ordered_json::array({walls}).dump()});
-            case 3:
+            case 7:
                 return invoke("editor:import");
-            case 4:
+            case 8:
                 CHECK(notice(screen).empty());
                 CHECK(body<ec::text_body>(part(screen, "editor:status")).markup == "Stamped.");
                 CHECK(live() == ter_id("t_wall"));
                 CHECK(affordance(screen, "editor:unstamp").enabled);
                 return invoke("editor:unstamp");
-            case 5:
+            case 9:
                 CHECK(live() == before);
                 return act("QUIT");
             default:
@@ -2777,7 +2793,7 @@ TEST_CASE(
     });
 
     editor::run_editor_session();
-    CHECK(step == 6);
+    CHECK(step == 10);
     editor::reset_editor_session();
 }
 
