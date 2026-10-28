@@ -37,7 +37,15 @@ struct history_ids {
     std::string redo;
     std::string save;
 };
-/// Undo, Redo and Save of `doc` with their keys, each enabled when it would do something.
+/// Undo and Redo with their keys, each enabled when it would do something and else saying why not.
+struct undo_options {
+    history_ids ids;
+    bool can_undo = false;
+    bool can_redo = false;
+};
+auto undo_affordances(const undo_options& options) -> std::vector<engine_client::affordance>;
+/// Undo, Redo and Save of `doc` with their keys, each enabled when it would do something and else
+/// saying why not.
 auto history_affordances(const document& doc, const history_ids& ids)
     -> std::vector<engine_client::affordance>;
 

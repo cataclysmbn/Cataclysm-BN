@@ -1902,16 +1902,12 @@ auto parts_view(const session& state) -> ec::screen_view {
                ec::invoke_affordance(
                    {.id = live_set_id, .label = _("Value"), .args = text_of(live_form_id)}));
         }
-        affordances.push_back(ec::invoke_affordance(
-            {.id = undo_id,
-             .label = _("Undo"),
-             .keys = {"CTRL+Z"},
-             .enabled = !state.live_undo.empty()}));
-        affordances.push_back(ec::invoke_affordance(
-            {.id = redo_id,
-             .label = _("Redo"),
-             .keys = {"CTRL+Y"},
-             .enabled = !state.live_redo.empty()}));
+        std::ranges::move(
+            undo_affordances(
+                {.ids = {.undo = undo_id, .redo = redo_id},
+                 .can_undo = !state.live_undo.empty(),
+                 .can_redo = !state.live_redo.empty()}),
+            std::back_inserter(affordances));
         affordances.push_back(
             ec::invoke_affordance({.id = done_id, .label = _("Done"), .keys = {"CTRL+D"}}));
     } else {
