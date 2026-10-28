@@ -1111,22 +1111,43 @@ auto part_catalog::shapes_of(const vpart_id& id) const -> std::vector<const vpar
 auto part_labels(const std::vector<const vpart_info*>& parts) -> std::vector<std::string> {
     auto named = std::map<std::string, std::vector<std::string>>{};
     for (const auto* const part : parts) { named[part->name()].push_back(part->get_id().str()); }
-    return parts | std::views::transform([&](const vpart_info* part) {
-               const auto name = part->name();
-               const auto& twins = named[name];
-               if (twins.size() < 2) { return name; }
-               // What the ids of one name share, up to its last `_`, tells none of them apart.
-               auto shared = std::string_view(twins.front());
-               for (const auto& other : twins) {
-                   shared = shared.substr(
-                       0, static_cast<std::size_t>(
-                              std::ranges::mismatch(shared, other).in1 - shared.begin()));
-               }
-               shared = shared.substr(0, shared.rfind('_') + 1);
-               //~ A vehicle part's name, and what tells it from another part of that name, such
-               //~ as "frame (horizontal)".
-               return string_format(
-                   _("%1$s (%2$s)"), name, part->get_id().str().substr(shared.size()));
+    /// What tells the id of `part` from the others of its name: the rest of it after what their
+    /// ids share up to its last `_`, less the words its name says already when `terse`.
+    const auto apart = [&](const vpart_info& part, const bool terse) {
+        const auto& twins = named[part.name()];
+        auto shared = std::string_view(twins.front());
+        for (const auto& other : twins) {
+            shared = shared.substr(
+                0, static_cast<std::size_t>(
+                       std::ranges::mismatch(shared, other).in1 - shared.begin()));
+        }
+        shared = shared.substr(0, shared.rfind('_') + 1);
+        const auto rest = part.get_id().str().substr(shared.size());
+        if (!terse) { return rest; }
+        return join(
+            rest | std::views::split('_') | std::views::transform([](const auto& word) {
+                return std::string(std::string_view(word));
+            }) | std::views::filter([&](const std::string& word) {
+                return !lcmatch(part.name(), word);
+            }) | std::ranges::to<std::vector>(),
+            "_");
+    };
+    const auto label = [](const vpart_info& part, const std::string& rest) {
+        //~ A vehicle part's name, and what tells it from another part of that name, such
+        //~ as "frame (horizontal)".
+        return rest.empty() ? part.name() : string_format(_("%1$s (%2$s)"), part.name(), rest);
+    };
+    const auto terse =
+        parts | std::views::transform([&](const vpart_info* part) {
+            return named[part->name()].size() < 2 ? part->name() : label(*part, apart(*part, true));
+        })
+        | std::ranges::to<std::vector>();
+    auto counts = std::map<std::string, int>{};
+    for (const auto& text : terse) { ++counts[text]; }
+    // Terse unless that makes two of one name read the same.
+    return std::views::zip(parts, terse) | std::views::transform([&](const auto& entry) {
+               const auto& [part, text] = entry;
+               return counts[text] > 1 ? label(*part, apart(*part, false)) : text;
            })
          | std::ranges::to<std::vector>();
 }
