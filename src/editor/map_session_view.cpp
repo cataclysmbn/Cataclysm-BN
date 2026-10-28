@@ -1389,16 +1389,29 @@ auto session_view(const session& state) -> ec::screen_view {
             {.id = jump_id, .label = _("Go to step"), .args = row_of(history_id)}));
         if (std::ranges::contains(entries, state.object)) {
             if (state.on_mapgen()) {
+                // An entry without rows, such as an update mapgen placing chunks, has no squares to
+                // draw or mark; its placements are what it places.
+                const auto& value = state.doc->objects()[state.object].value;
+                const auto rowless =
+                    !value.contains("object") || !value["object"].is_object()
+                    || !value["object"].contains("rows");
                 parts.push_back(ec::tabs(
                     {.id = tools_id,
-                     .tabs = tools | std::views::transform([&](const tool& entry) {
-                                 return ec::tab_entry{
-                                     .id = entry.id,
-                                     .label = tool_label(entry),
-                                     .selected = &entry == state.current,
-                                     .hotkey = entry.hotkey};
-                             })
-                           | std::ranges::to<std::vector>(),
+                     .tabs =
+                         tools | std::views::transform([&](const tool& entry) {
+                             const auto usable = !rowless || entry.region == region_use::placements;
+                             return ec::tab_entry{
+                                 .id = entry.id,
+                                 .label = tool_label(entry),
+                                 .selected = &entry == state.current,
+                                 .enabled = usable,
+                                 .denial =
+                                     usable ? ""
+                                            : _("The entry has no rows to draw on; edit its "
+                                                "placements."),
+                                 .hotkey = entry.hotkey};
+                         })
+                         | std::ranges::to<std::vector>(),
                      .select = tool_id,
                      .child = canvas(state)}));
             }
