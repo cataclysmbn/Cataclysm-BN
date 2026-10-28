@@ -1153,24 +1153,52 @@ auto special_canvas(const session& state) -> ec::component {
 } // namespace
 
 namespace {
-/// A row per entry of the file, by name; entries of the same name, such as the variants the game
-/// picks among by weight, are told apart by their place among them.
+/// What kind of entry `value` is, in words; empty for one the editor does not name.
+auto entry_kind(const nlohmann::ordered_json& value) -> std::string {
+    const auto type = value.is_object() ? value.value("type", "") : std::string{};
+    if (type == "mapgen") {
+        return value.contains("nested_mapgen_id") ? _("Nested chunk")
+             : value.contains("update_mapgen_id")
+                 ? _("Update mapgen")
+                 : _("Overmap terrain mapgen");
+    }
+    return type == "palette"         ? _("Palette")
+         : type == "overmap_special" ? _("Overmap special")
+         : type == "city_building"   ? _("City building")
+         : type == "overmap_terrain"
+             ? _("Overmap terrain")
+             : std::string{};
+}
+
+/// An entry's name and kind, which together tell entries apart.
+struct named_entry {
+    std::string name;
+    std::string kind;
+    auto operator==(const named_entry&) const -> bool = default; // *NOPAD*
+};
+
+/// A row per entry of the file, by name, saying its kind; entries of the same name and kind, such
+/// as the variants the game picks among by weight, are told apart by their place among them.
 auto entry_rows(const session& state, const std::vector<std::size_t>& entries)
     -> std::vector<ec::row> {
     const auto& objects = state.doc->objects();
     const auto names =
-        entries
-        | std::views::transform([&](const auto index) { return entry_name(objects[index].value); })
+        entries | std::views::transform([&](const auto index) {
+            return named_entry{
+                .name = entry_name(objects[index].value), .kind = entry_kind(objects[index].value)};
+        })
         | std::ranges::to<std::vector>();
     return std::views::zip(entries, names) | std::views::enumerate
          | std::views::transform([&](const auto& numbered) {
                const auto& [at, entry] = numbered;
-               const auto& [index, name] = entry;
-               const auto same = std::ranges::count(names, name);
-               const auto place = std::ranges::count(names | std::views::take(at + 1), name);
+               const auto& [index, named] = entry;
+               const auto same = std::ranges::count(names, named);
+               const auto place = std::ranges::count(names | std::views::take(at + 1), named);
                return ec::row{
                    .id = index_row("object", index),
-                   .label = same > 1 ? string_format(_("%s (%d of %d)"), name, place, same) : name,
+                   .label = same > 1 ? string_format(_("%s (%d of %d)"), named.name, place, same)
+                                     : named.name,
+                   .description = named.kind,
                    .selected = index == state.object};
            })
          | std::ranges::to<std::vector>();
