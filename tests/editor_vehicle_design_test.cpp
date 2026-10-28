@@ -380,6 +380,15 @@ TEST_CASE("a vehicle copied through its saved state is the same vehicle", "[edit
         CHECK(copy.error() == "That is no saved vehicle.");
         CHECK(here.get_vehicles().size() == vehicles);
     }
+    SECTION("a saved vehicle the loader refuses is refused in words") {
+        const auto copy = editor::
+            place_vehicle_state(R"({"parts": [], "velocity": "fast"})", tripoint_bub_ms(30, 50, 0));
+        REQUIRE_FALSE(copy.has_value());
+        CHECK_FALSE(copy.error().empty());
+        CHECK(copy.error().find("Json error") == std::string::npos);
+        CHECK(copy.error().find("<unknown source file>") == std::string::npos);
+        CHECK(here.get_vehicles().size() == vehicles);
+    }
 }
 
 TEST_CASE(
