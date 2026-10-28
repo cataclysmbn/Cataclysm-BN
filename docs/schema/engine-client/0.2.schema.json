@@ -6559,6 +6559,10 @@
           "type": "boolean",
           "description": "The text may run over several lines."
         },
+        "required": {
+          "type": "boolean",
+          "description": "The form's `submit` refuses while the field is empty, which a client may mark. Absent: false."
+        },
         "cursor": {
           "type": "integer",
           "minimum": 0,
