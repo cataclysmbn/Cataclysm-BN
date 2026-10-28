@@ -1,12 +1,9 @@
 #include "editor/vehicle_session.h"
 
-#include "action.h"
 #include "avatar.h"
 #include "calendar.h"
 #include "editor/catalog.h"
 #include "editor/document.h"
-#include "editor/editor_access.h"
-#include "editor/editor_session.h"
 #include "editor/history_label.h"
 #include "editor/recent_documents.h"
 #include "editor/row_id.h"
@@ -24,7 +21,6 @@
 #include "json_formatter.h"
 #include "line.h"
 #include "map/map.h"
-#include "messages.h"
 #include "output.h"
 #include "path_info.h"
 #include "string_formatter.h"
@@ -364,6 +360,7 @@ struct session {
     /// The category of parts the palette shows, as the player picked it; none for the one of the
     /// part in hand.
     std::optional<part_category> part_group;
+    part_catalog catalog;
     /// What the field form sets: a pointer into the prototype and a value as JSON or bare text;
     /// an empty value removes it.
     std::string field_pointer = "/name";
@@ -422,11 +419,19 @@ struct session {
     /// The category the palette shows: the one picked, else the part in hand's, else frames.
     auto shown_group() const -> part_category {
         if (part_group) { return *part_group; }
-        const auto shapes = part_shapes(vpart_id(brush));
+        const auto shapes = catalog.shapes_of(vpart_id(brush));
         return shapes.empty() ? part_category::frames : category_of(*shapes.front());
     }
+    /// Takes the part `id` in hand, and shows its category, from the first page when that is
+    /// another one.
+    auto hold(std::string id) -> void {
+        const auto before = shown_group();
+        brush = std::move(id);
+        part_group.reset();
+        if (part_filter.empty() && shown_group() != before) { part_page = 0; }
+    }
     auto parts() const -> part_page_entries {
-        const auto kinds = part_kinds();
+        const auto& kinds = catalog.kinds;
         auto groups =
             kinds | std::views::transform(&part_kind::category) | std::ranges::to<std::vector>();
         groups.erase(std::ranges::unique(groups).begin(), groups.end());
@@ -452,7 +457,9 @@ struct session {
         }
         // A row of a category stands for all the shapes of its part.
         const auto in_hand =
-            part_filter.empty() ? part_shapes(vpart_id(brush)) : std::vector<const vpart_info*>{};
+            part_filter.empty()
+                ? catalog.shapes_of(vpart_id(brush))
+                : std::vector<const vpart_info*>{};
         const auto labels = part_labels(found);
         const auto total = found.size();
         const auto first = std::min(total, part_page * page_size);
@@ -750,8 +757,14 @@ struct session {
                                    .transform([](const int /*index*/) {});
                            })
                      : install(brush))) {
-            //~ What the vehicle editor did: the part's name and the mount it is on.
-            said = at_mount(_("Installed %s at %d,%d."), part_name(brush));
+            const auto held = vpart_id(brush);
+            // A tank comes empty, which the part's settings change.
+            said = held.is_valid() && held->has_flag(VPFLAG_FLUIDTANK)
+                     //~ What the vehicle editor did: the part's name and the mount it is on.
+                     ? at_mount(_("Installed %s at %d,%d. Set its fuel under Fuel."),
+                                part_name(brush))
+                     //~ What the vehicle editor did: the part's name and the mount it is on.
+                     : at_mount(_("Installed %s at %d,%d."), part_name(brush));
         }
         pick_top();
     }
@@ -902,8 +915,8 @@ struct session {
         }
         if (key == "shape") {
             const auto current = design_parts(prototype())[*index].part;
-            if (!std::ranges::
-                    contains(part_shapes(vpart_id(current)), vpart_id(text), &vpart_info::get_id)) {
+            if (!std::ranges::contains(
+                    catalog.shapes_of(vpart_id(current)), vpart_id(text), &vpart_info::get_id)) {
                 //~ %1$s is the part id the player gave, %2$s the name of the part picked.
                 notice = string_format(_("%1$s is no shape of %2$s."), text, part_name(current));
                 return;
@@ -1056,15 +1069,16 @@ struct session {
 
     /// Starts a vehicle on a frame in a new file of the user mods, with the install tool and a
     /// frame in hand: `text` is its name, which the file and the id follow, or the path of that
-    /// file, whose stem names it.
+    /// .json file, whose stem names it.
     auto new_vehicle(const std::string& text) -> void {
         const auto name = trim(text);
         if (name.empty()) {
             notice = _("A new vehicle needs a name.");
             return;
         }
-        const auto is_path = name.contains('/') || name.contains('\\') || name.ends_with(".json");
-        const auto frame = usual_frame();
+        // A name may hold any character; only a file name says where the file goes.
+        const auto is_path = name.ends_with(".json");
+        const auto frame = catalog.frame;
         const auto made =
             create(is_path ? name : suggested(id_of(name), true), [&](const std::string& id) {
                 auto parts = nlohmann::ordered_json::array();
@@ -1076,15 +1090,14 @@ struct session {
                 }
                 return nlohmann::ordered_json{
                     {"type", "vehicle"},
-                    {"id", id},
+                    {"id", id_of(id)},
                     {"name", is_path ? id : name},
                     {"parts", std::move(parts)}};
             });
         if (!made || !frame) { return; }
         canvas_tool = "install";
-        brush = frame->str();
-        part_group.reset();
-        said = _("Pick a part on the left, then click a square next to the frame.");
+        hold(frame->str());
+        said = _("Pick a part under Parts, then click a square next to the frame.");
     }
 
     /// Keeps the world's vehicle `index` with its whole state in a file of the user directory, so
@@ -1324,13 +1337,12 @@ struct session {
         }
     }
 
-    /// Puts the design in the game in place of its prototype and spawns it east of the avatar; true
-    /// when it is there.
-    auto spawn() -> bool {
+    /// Puts the design in the game in place of its prototype and spawns it east of the avatar.
+    auto spawn() -> void {
         const auto applied = apply_design(prototype().dump());
         if (!applied) {
             notice = applied.error();
-            return false;
+            return;
         }
         const auto spawned = place_clear(
             tripoint_rel_ms(spawn_distance, 0, 0),
@@ -1343,10 +1355,12 @@ struct session {
             });
         if (!spawned) {
             notice = spawned.error();
-            return false;
+            return;
         }
-        said = placed_sentence(false, **spawned);
-        return true;
+        //~ %s says where the vehicle spawned.
+        said = string_format(
+            _("%s Vehicles > World > Edit in place changes it where it stands."),
+            placed_sentence(false, **spawned));
     }
 
     auto set_spawning(const std::string& field, const std::string& text) -> void {
@@ -1421,6 +1435,7 @@ struct grid_options {
 /// part held cannot go there.
 auto grid_of(const grid_options& options) -> ec::component {
     const auto& [veh, frame, cursor, held] = options;
+    const auto refusal = veh && held ? std::optional(mount_refusals(*veh, *held)) : std::nullopt;
     const auto low = point(std::min(frame.low.x, cursor.x), std::min(frame.low.y, cursor.y));
     const auto high = point(std::max(frame.high.x, cursor.x), std::max(frame.high.y, cursor.y));
     auto palette = ec::look_palette{};
@@ -1434,7 +1449,7 @@ auto grid_of(const grid_options& options) -> ec::component {
                 .glyph = " ",
                 .affordance = mount_id,
                 .selected = at == cursor,
-                .refused = veh && held ? mount_refusal(*veh, at, *held).value_or("") : ""};
+                .refused = refusal ? (*refusal)(at).value_or("") : ""};
             const auto shown = veh ? veh->part_displayed_at(tripoint_mnt_veh(x, y, 0)) : -1;
             if (shown >= 0) {
                 cell.glyph = std::string(1, veh->part_sym(shown));
@@ -1604,7 +1619,7 @@ auto part_form(const session& state) -> std::optional<ec::component> {
         return state.value_at(design[*index].pointer + "/" + key);
     };
     auto fields = std::vector<ec::form_field>{};
-    if (const auto shapes = part_shapes(id); shapes.size() > 1) {
+    if (const auto shapes = state.catalog.shapes_of(id); shapes.size() > 1) {
         fields.push_back(
             {.id = "shape",
              .label = _("Shape"),
@@ -1622,7 +1637,7 @@ auto part_form(const session& state) -> std::optional<ec::component> {
         // The fuels the game's vehicles fill tanks with lead, then every other liquid.
         const auto liquids = tank_fuels();
         auto fuels =
-            usual_tank_fuels() | std::views::filter([&](const itype_id& fuel) {
+            state.catalog.tank_fuels | std::views::filter([&](const itype_id& fuel) {
                 return std::ranges::contains(liquids, fuel);
             })
             | std::ranges::to<std::vector>();
@@ -2015,9 +2030,13 @@ auto parts_view(const session& state) -> ec::screen_view {
                  {.id = parts_id,
                   .rows = palette.shown | std::views::transform([&](const auto& entry) {
                               const auto& info = *entry.part;
-                              // Whether it fits the picked mount, and why not, as the game rules.
+                              // Whether it fits the picked mount, and why not, as the game
+                              // rules; for the part in hand only when the last action brought
+                              // no news of its own.
+                              const auto news = !state.said.empty() || !state.notice.empty();
                               const auto refused =
-                                  veh ? mount_refusal(*veh, state.cursor, info.get_id())
+                                  veh && !(entry.held && news)
+                                      ? mount_refusal(*veh, state.cursor, info.get_id())
                                       : std::nullopt;
                               return ec::row{
                                   .id = entry.id,
@@ -2436,7 +2455,10 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
     ctxt.register_action("QUIT");
     ctxt.register_action("HELP_KEYBINDINGS");
     auto& state = kept_session ? *kept_session : kept_session.emplace();
+    // What it said on an earlier visit is old news.
     state.notice.clear();
+    state.said.clear();
+    state.catalog = read_part_catalog();
     if (!prototype.empty()) { state.open(prototype); }
     const auto screen = ec::screen_scope(
         ctxt, "vehicle_editor",
@@ -2474,9 +2496,8 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
         } else if (tool != canvas_tools.end()) {
             state.canvas_tool = tool->key;
         } else if (id == choose_id) {
-            state.brush = std::string(row_rest(row, "vpart").value_or(""));
+            state.hold(std::string(row_rest(row, "vpart").value_or("")));
             state.canvas_tool = "install";
-            state.part_group.reset();
         } else if (id == new_id) {
             state.new_vehicle(text);
         } else if (id == open_id) {
@@ -2580,15 +2601,8 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
             state.save_as(text);
         } else if (id == spawn_set_id) {
             state.set_spawning(row, text);
-        } else if (id == spawn_id && state.spawn() && in_editor_game()) {
-            // The editor game shows no world behind the editor: the avatar goes to try it, and the
-            // editor opens on this one again.
-            //~ %1$s says where the vehicle spawned; %2$s how to open the editor, as "Press ~".
-            add_msg(m_info, to_translation("%1$s %2$s to go back to the vehicle editor."),
-                    state.said, press_x(ACTION_EDITOR));
-            return_to_vehicle_editor();
-            state.live = nullptr;
-            return true;
+        } else if (id == spawn_id) {
+            state.spawn();
         }
         if (state.notice.empty() && state.footprint() == before) { state.notice = std::move(kept); }
     }

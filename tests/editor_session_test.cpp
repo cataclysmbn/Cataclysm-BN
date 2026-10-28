@@ -33,7 +33,6 @@
 #    include "map/mapdata.h"
 #    include "mapgen/mapgen_constructor.h"
 #    include "mapgen/mapgen_functions.h"
-#    include "message_feed.h"
 #    include "messages.h"
 #    include "options_helpers.h"
 #    include "output.h"
@@ -7014,8 +7013,8 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "the vehicle editor of the editor game leaves to try a spawned vehicle, says how to come back, "
-    "and comes back to it",
+    "the vehicle editor of the editor game stays open after a spawn and says how to edit the "
+    "vehicle in place",
     "[editor_session][editor_vehicle][gamemode]") {
     const auto origin = get_map().get_abs_sub();
     const auto name = get_avatar().name;
@@ -7026,6 +7025,7 @@ TEST_CASE(
         clear_all_state();
         get_avatar().name = name;
         editor::reset_vehicle_editor();
+        editor::reset_editor_session();
     });
     const auto guard = screen_guard{};
     editor::reset_vehicle_editor();
@@ -7033,7 +7033,6 @@ TEST_CASE(
     auto mode = get_special_game(special_game_type::EDITOR);
     REQUIRE(mode->init());
     get_avatar().set_moves(100);
-    Messages::clear_messages();
     auto kinds = std::vector<std::string>{};
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
         const auto screen = ec::top_screen(captured());
@@ -7045,28 +7044,27 @@ TEST_CASE(
                 return invoke("vehicle:open", {.row = "prototype:bicycle"});
             case 3:
                 return invoke("vehicle:spawn");
+            case 4: {
+                // Where it went, and how to reach it from here.
+                const auto* const status = ec::find_component(*screen.root, "vehicle:status");
+                REQUIRE(status != nullptr);
+                const auto& said = body<ec::text_body>(*status).markup;
+                CHECK(said.contains("Spawned Bicycle"));
+                CHECK(said.contains("World > Edit in place"));
+                return act("QUIT");
+            }
+            case 5:
+                return act("QUIT");
             default:
-                FAIL("the editor outlived its spawn");
+                FAIL("the editor outlived its exit");
                 return act("QUIT");
         }
     });
     handle_action(std::move(mode));
-    CHECK(kinds.size() == 3);
-    // The map says where the vehicle is and how to get back to the vehicle editor.
-    const auto said = Messages::feed_since({});
-    REQUIRE_FALSE(said.empty());
-    CHECK(said.back().text.contains("Spawned Bicycle"));
-    CHECK(said.back().text.contains("vehicle editor"));
-
-    // The editor opens on the vehicle editor again, and closing it shows the map editor.
-    kinds.clear();
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        kinds.push_back(ec::top_screen(captured()).kind);
-        if (kinds.size() > 2) { FAIL("the editor outlived its exit"); }
-        return act("QUIT");
-    });
-    handle_action(get_special_game(special_game_type::EDITOR));
-    CHECK(kinds == std::vector<std::string>{"vehicle_editor", "editor"});
+    CHECK(
+        kinds
+        == std::vector<
+            std::string>{"editor", "vehicle_editor", "vehicle_editor", "vehicle_editor", "editor"});
 }
 
 #endif // CATA_MCP

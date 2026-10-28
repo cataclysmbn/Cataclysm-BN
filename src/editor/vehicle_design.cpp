@@ -296,10 +296,26 @@ auto restore_vehicle_state(vehicle& veh, const std::string& state)
 }
 
 namespace {
-/// Why the game would not mount the part, as the first rule `vehicle::can_mount` checks that it
-/// breaks reads; none when it would mount it.
-auto refused_mount(const vehicle& veh, const point& at, const vpart_id& id)
-    -> std::optional<std::string> {
+/// Whether a frame of the vehicle is being taken off, as vehicle::is_structural_part_removed,
+/// which lets the rest stay put.
+auto frame_removed(const vehicle& veh) -> bool {
+    return std::ranges::any_of(std::views::iota(0, veh.part_count()), [&](const int index) {
+        return veh.cpart(index).removed && veh.part_info(index).location == "structure";
+    });
+}
+
+/// The part a designer would mount on the vehicle, and what the vehicle's mounts share.
+struct mount_check {
+    const vehicle& veh;
+    vpart_id id;
+    /// Whether a frame of it is being taken off.
+    bool removing = false;
+};
+
+/// Why the game would not mount the part at `at`, as the first rule `vehicle::can_mount` checks
+/// that it breaks reads; none when it would mount it.
+auto refused_mount(const mount_check& check, const point& at) -> std::optional<std::string> {
+    const auto& [veh, id, removing] = check;
     const auto mount = tripoint_mnt_veh(at.x, at.y, 0);
     if (veh.can_mount(mount, id)) { return std::nullopt; }
     if (!id.is_valid()) { return string_format(_("%s is no vehicle part."), id.str()); }
@@ -322,8 +338,22 @@ auto refused_mount(const vehicle& veh, const point& at, const vpart_id& id)
             return touch_refusal;
         }
     }
+    // As vehicle::has_structural_part: a frame, not a protrusion.
+    const auto structural = [&](const point& step) {
+        return std::ranges::any_of(veh.parts_at_relative(square(step), false), [&](const int index) {
+            return info(index).location == "structure" && !info(index).has_flag("PROTRUSION");
+        });
+    };
+    const auto touches =
+        veh.part_count() == 0 || removing || std::ranges::any_of(around, structural);
     if (here.empty() && part.location != "structure") {
-        return string_format(_("%s goes on a frame: install a frame here first."), name);
+        // A frame here would be refused too, for not touching the vehicle's.
+        return touches
+                 ? string_format(_("%s goes on a frame: install a frame here first."), name)
+                 : string_format(
+                       _("%s goes on a frame, and a frame here would not touch the vehicle's "
+                         "frame."),
+                       name);
     }
     if (!here.empty()) {
         const auto& base = info(here.front());
@@ -343,20 +373,7 @@ auto refused_mount(const vehicle& veh, const point& at, const vpart_id& id)
             return string_format(_("This mount already holds cargo in %s."), other.name());
         }
     }
-    // As vehicle::has_structural_part: a frame, not a protrusion.
-    const auto structural = [&](const point& step) {
-        return std::ranges::any_of(veh.parts_at_relative(square(step), false), [&](const int index) {
-            return info(index).location == "structure" && !info(index).has_flag("PROTRUSION");
-        });
-    };
-    // As vehicle::is_structural_part_removed: a frame being taken off lets the rest stay put.
-    const auto frame_removed =
-        std::ranges::any_of(std::views::iota(0, veh.part_count()), [&](const int index) {
-            return veh.cpart(index).removed && info(index).location == "structure";
-        });
-    if (veh.part_count() > 0 && !frame_removed && std::ranges::none_of(around, structural)) {
-        return touch_refusal;
-    }
+    if (!touches) { return touch_refusal; }
     if (auto conflict = std::string{}; veh.has_engine_conflict(&part, conflict)) {
         return string_format(
             _("%1$s cannot go with the vehicle's other %2$s engine."), name, conflict);
@@ -425,11 +442,19 @@ auto refused_mount(const vehicle& veh, const point& at, const vpart_id& id)
 }
 } // namespace
 
+auto mount_refusals(const vehicle& veh, const vpart_id& id)
+    -> std::function<auto(const point&)->std::optional<std::string>> {
+    return [check = mount_check{.veh = veh, .id = id, .removing = frame_removed(veh)}](
+               const point& at) {
+        return refused_mount(check, at).transform([](std::string text) {
+            return capitalize_letter(text);
+        });
+    };
+}
+
 auto mount_refusal(const vehicle& veh, const point& at, const vpart_id& id)
     -> std::optional<std::string> {
-    return refused_mount(veh, at, id).transform([](std::string text) {
-        return capitalize_letter(text);
-    });
+    return mount_refusals(veh, id)(at);
 }
 
 auto install_live_part(vehicle& veh, const part_install& install)
@@ -950,18 +975,11 @@ auto design_step_label(const document_edit& edit) -> std::string {
 
 namespace {
 
-/// How many parts of each kind the game's prototypes install.
-auto part_uses() -> std::map<vpart_id, int> {
-    auto uses = std::map<vpart_id, int>{};
-    for (const auto& id : vehicle_prototype::get_all()) {
-        for (const auto& part : id->parts) { ++uses[part.part]; }
-    }
-    return uses;
-}
-
 /// What tells the shapes of one part apart from other parts, as the game's install menu groups
 /// them: their name and item.
-auto shape_key(const vpart_info& part) -> std::string { return part.name() + part.item.str(); }
+auto shape_key(const vpart_info& part) -> std::string {
+    return part.name() + '\n' + part.item.str();
+}
 
 /// `shapes` with the one the game's prototypes install most first, the game's order kept among
 /// equals.
@@ -982,14 +1000,26 @@ auto category_of(const vpart_info& part) -> part_category {
             return part.has_flag(flag);
         });
     };
-    if (part.location == "structure") { return part_category::frames; }
+    // A frame holds the rest up, as vehicle::has_structural_part takes it, and does nothing else.
+    if (part.location == "structure"
+        && !any({"PROTRUSION", "EXTENDABLE", "ENGINE", "ANIMAL_CTRL", "PROPELLER"})) {
+        return part_category::frames;
+    }
     if (part.location == "axle" || any({"WHEEL"})) { return part_category::wheels; }
     if (any({"TURRET", "TURRET_MOUNT", "TURRET_CONTROLS", "LASER_DESIGNATOR"})) {
         return part_category::weapons;
     }
-    if (any({"ENGINE", "ALTERNATOR"})) { return part_category::engines; }
+    if (any({"ENGINE", "ALTERNATOR", "PROPELLER", "ANIMAL_CTRL"})) {
+        return part_category::engines;
+    }
+    // Tools that work the ground or lift and appliances, however much they hold.
+    if (any({"PLANTER", "PLOW", "REAPER", "ROCKWHEEL", "ROADHEAD", "CRANE", "EXTRA_DRAG", "FRIDGE",
+             "FREEZER", "CRAFTER", "WORKBENCH", "AUTODOC", "AUTOCLAVE", "FAUCET", "SCOOP",
+             "CAPTURE_MONSTER_VEH"})) {
+        return part_category::other;
+    }
     if (part.location == "fuel_source" || part.location == "on_battery_mount"
-        || any({"FLUIDTANK", "BATTERY_MOUNT"})) {
+        || any({"FLUIDTANK", "BATTERY_MOUNT"}) || part.fuel_type == itype_id("battery")) {
         return part_category::fuel;
     }
     if (any({"SEAT", "SEATBELT", "BED", "CONTROLS", "CTRL_ELECTRONIC", "REMOTE_CONTROLS"})) {
@@ -1030,7 +1060,15 @@ auto category_name(const part_category category) -> std::string {
     return _("Other");
 }
 
-auto part_kinds() -> std::vector<part_kind> {
+auto read_part_catalog() -> part_catalog {
+    auto uses = std::map<vpart_id, int>{};
+    auto filled = std::map<itype_id, int>{};
+    for (const auto& id : vehicle_prototype::get_all()) {
+        for (const auto& part : id->parts) {
+            ++uses[part.part];
+            if (!part.fuel.is_null()) { ++filled[part.fuel]; }
+        }
+    }
     auto kinds = std::vector<part_kind>{};
     auto found = std::map<std::string, std::size_t>{};
     for (const auto& part : vpart_info::get_all()) {
@@ -1038,7 +1076,6 @@ auto part_kinds() -> std::vector<part_kind> {
         if (added) { kinds.emplace_back(); }
         kinds[at->second].shapes.push_back(&part);
     }
-    const auto uses = part_uses();
     for (auto& kind : kinds) {
         kind.shapes = most_used_first(std::move(kind.shapes), uses);
         kind.category = category_of(*kind.shapes.front());
@@ -1046,67 +1083,73 @@ auto part_kinds() -> std::vector<part_kind> {
     std::ranges::stable_sort(kinds, {}, [](const part_kind& kind) {
         return std::tuple(kind.category, kind.shapes.front()->name());
     });
-    return kinds;
-}
-
-auto part_shapes(const vpart_id& id) -> std::vector<const vpart_info*> {
-    if (!id.is_valid()) { return {}; }
-    const auto key = shape_key(*id);
-    return most_used_first(
-        vpart_info::get_all() | std::views::filter([&](const vpart_info& part) {
-            return shape_key(part) == key;
-        }) | std::views::transform([](const vpart_info& part) {
-            return &part;
-        }) | std::ranges::to<std::vector>(),
-        part_uses());
-}
-
-auto part_labels(const std::vector<const vpart_info*>& parts) -> std::vector<std::string> {
-    auto named = std::map<std::string, std::vector<std::string>>{};
-    for (const auto* const part : parts) { named[part->name()].push_back(part->get_id().str()); }
-    return parts | std::views::transform([&](const vpart_info* part) {
-               const auto name = part->name();
-               const auto& twins = named[name];
-               if (twins.size() < 2) { return name; }
-               // What the ids of one name share, up to its last `_`, tells none of them apart.
-               auto shared = std::string_view(twins.front());
-               for (const auto& other : twins) {
-                   shared = shared.substr(
-                       0, static_cast<std::size_t>(
-                              std::ranges::mismatch(shared, other).in1 - shared.begin()));
-               }
-               shared = shared.substr(0, shared.rfind('_') + 1);
-               //~ A vehicle part's name, and what tells it from another part of that name, such
-               //~ as "frame (horizontal)".
-               return string_format(
-                   _("%1$s (%2$s)"), name, part->get_id().str().substr(shared.size()));
-           })
-         | std::ranges::to<std::vector>();
-}
-
-auto usual_tank_fuels() -> std::vector<itype_id> {
-    auto filled = std::map<itype_id, int>{};
-    for (const auto& id : vehicle_prototype::get_all()) {
-        for (const auto& part : id->parts) {
-            if (!part.fuel.is_null()) { ++filled[part.fuel]; }
-        }
-    }
     auto fuels = filled | std::views::keys | std::ranges::to<std::vector>();
     std::ranges::stable_sort(fuels, std::greater{}, [&](const itype_id& id) { return filled[id]; });
-    return fuels;
-}
-
-auto usual_frame() -> std::optional<vpart_id> {
-    const auto uses = part_uses();
     const auto frames =
         uses | std::views::filter([](const auto& entry) {
             return entry.first.is_valid() && entry.first->location == "structure"
                 && !entry.first->has_flag("PROTRUSION");
         })
         | std::ranges::to<std::vector>();
-    if (frames.empty()) { return std::nullopt; }
-    return std::ranges::max_element(frames, {}, [](const auto& entry) { return entry.second; })
-        ->first;
+    return {
+        .kinds = std::move(kinds),
+        .tank_fuels = std::move(fuels),
+        .frame = frames.empty()
+                   ? std::nullopt
+                   : std::optional(std::ranges::max_element(frames, {}, [](const auto& entry) {
+                                       return entry.second;
+                                   })->first)};
+}
+
+auto part_catalog::shapes_of(const vpart_id& id) const -> std::vector<const vpart_info*> {
+    const auto found = std::ranges::find_if(kinds, [&](const part_kind& kind) {
+        return std::ranges::contains(kind.shapes, id, &vpart_info::get_id);
+    });
+    return found == kinds.end() ? std::vector<const vpart_info*>{} : found->shapes;
+}
+
+auto part_labels(const std::vector<const vpart_info*>& parts) -> std::vector<std::string> {
+    auto named = std::map<std::string, std::vector<std::string>>{};
+    for (const auto* const part : parts) { named[part->name()].push_back(part->get_id().str()); }
+    /// What tells the id of `part` from the others of its name: the rest of it after what their
+    /// ids share up to its last `_`, less the words its name says already when `terse`.
+    const auto apart = [&](const vpart_info& part, const bool terse) {
+        const auto& twins = named[part.name()];
+        auto shared = std::string_view(twins.front());
+        for (const auto& other : twins) {
+            shared = shared.substr(
+                0, static_cast<std::size_t>(
+                       std::ranges::mismatch(shared, other).in1 - shared.begin()));
+        }
+        shared = shared.substr(0, shared.rfind('_') + 1);
+        const auto rest = part.get_id().str().substr(shared.size());
+        if (!terse) { return rest; }
+        return join(
+            rest | std::views::split('_') | std::views::transform([](const auto& word) {
+                return std::string(std::string_view(word));
+            }) | std::views::filter([&](const std::string& word) {
+                return !lcmatch(part.name(), word);
+            }) | std::ranges::to<std::vector>(),
+            "_");
+    };
+    const auto label = [](const vpart_info& part, const std::string& rest) {
+        //~ A vehicle part's name, and what tells it from another part of that name, such
+        //~ as "frame (horizontal)".
+        return rest.empty() ? part.name() : string_format(_("%1$s (%2$s)"), part.name(), rest);
+    };
+    const auto terse =
+        parts | std::views::transform([&](const vpart_info* part) {
+            return named[part->name()].size() < 2 ? part->name() : label(*part, apart(*part, true));
+        })
+        | std::ranges::to<std::vector>();
+    auto counts = std::map<std::string, int>{};
+    for (const auto& text : terse) { ++counts[text]; }
+    // Terse unless that makes two of one name read the same.
+    return std::views::zip(parts, terse) | std::views::transform([&](const auto& entry) {
+               const auto& [part, text] = entry;
+               return counts[text] > 1 ? label(*part, apart(*part, false)) : text;
+           })
+         | std::ranges::to<std::vector>();
 }
 
 } // namespace editor
