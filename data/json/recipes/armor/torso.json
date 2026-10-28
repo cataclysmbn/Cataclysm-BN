@@ -717,7 +717,11 @@
     "time": "30 m",
     "autolearn": true,
     "using": [ [ "steel_standard", 8 ] ],
-    "components": [ [ [ "rag", 3 ] ], [ [ "duct_tape", 20 ], [ "medical_tape", 40 ] ] ],
+    "components": [
+      [ [ "steel_standard", 4, "LIST" ], [ "sheet_metal_small", 16 ] ],
+      [ [ "rag", 4 ] ],
+      [ [ "duct_tape", 20 ], [ "medical_tape", 40 ] ]
+    ],
     "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "SAW_M", "level": 1 } ]
   },
   {
