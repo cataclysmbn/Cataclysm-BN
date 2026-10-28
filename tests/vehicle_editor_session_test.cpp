@@ -3358,7 +3358,7 @@ TEST_CASE(
                 CHECK(picked_tool(screen) == "canvas_tool:install");
                 CHECK(row(screen, "vehicle:parts", "vpart:frame_vertical").selected);
                 CHECK(status(screen)
-                      == "Pick a part on the left, then click a square next to "
+                      == "Pick a part under Parts, then click a square next to "
                          "the frame.");
                 return invoke("vehicle:mount", {.row = "mount:1,0"});
             case 2:
@@ -3683,6 +3683,71 @@ TEST_CASE(
     });
     editor::run_vehicle_editor();
     CHECK(step >= static_cast<int>(tabs.size()) + 5);
+}
+
+TEST_CASE(
+    "the vehicle editor tells why the part in hand does not fit only when that is news, and asks "
+    "for a new tank's fuel",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto folder = std::filesystem::path(PATH_INFO::user_moddir()) / "my_mod";
+    std::filesystem::remove_all(folder);
+    const auto cleanup = on_out_of_scope([&] { std::filesystem::remove_all(folder); });
+    const auto status = [](const ec::screen_view& screen) {
+        const auto* const found = ec::find_component(*screen.root, "vehicle:status");
+        return found ? body<ec::text_body>(*found).markup : std::string{};
+    };
+    /// What the palette says of the part in hand at the picked mount.
+    const auto fit = [](const ec::screen_view& screen) {
+        const auto& rows = body<ec::list_body>(part(screen, "vehicle:parts")).rows;
+        const auto held = std::ranges::find(rows, true, &ec::row::selected);
+        REQUIRE(held != rows.end());
+        return held->description;
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:new", {.text = "Fit van"});
+            case 1:
+                return invoke("vehicle:mount", {.row = "mount:1,0"});
+            case 2:
+                // After an install, the frame in hand fits nowhere it just went: no news.
+                CHECK(status(screen) == "Installed frame at 1,0.");
+                CHECK(fit(screen).empty());
+                return invoke("vehicle:mount", {.row = "mount:1,0"});
+            case 3:
+                // A refused click says why once, as the status line's news.
+                CHECK_FALSE(notice_of(screen).empty());
+                CHECK(fit(screen).empty());
+                return invoke("vehicle:canvas_tool", {.row = "canvas_tool:select"});
+            case 4:
+                // Looking around, the palette says why the part in hand would not fit.
+                CHECK(fit(screen) == "This mount already has frame.");
+                return invoke("vehicle:part_filter", {.text = "tank_little"});
+            case 5:
+                return invoke("vehicle:choose", {.row = "vpart:tank_little"});
+            case 6:
+                return invoke("vehicle:mount", {.row = "mount:1,0"});
+            case 7:
+                // A tank comes empty: the status says where its fuel is set.
+                CHECK(status(screen).starts_with("Installed "));
+                CHECK(status(screen).ends_with(" Set its fuel under Fuel."));
+                return invoke("vehicle:part_filter", {.text = "headlight"});
+            case 8:
+                return invoke("vehicle:choose", {.row = "vpart:headlight"});
+            case 9:
+                return invoke("vehicle:mount", {.row = "mount:1,0"});
+            case 10:
+                CHECK(status(screen) == "Installed headlight at 1,0.");
+                return act("QUIT");
+            default:
+                return answer("Leave without saving");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step >= 11);
 }
 
 #endif // CATA_MCP
