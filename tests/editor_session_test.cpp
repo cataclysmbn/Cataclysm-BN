@@ -6007,4 +6007,56 @@ TEST_CASE(
     editor::reset_editor_session();
 }
 
+TEST_CASE(
+    "the editor's legend says a nested chunk's unmapped symbol keeps the map under it",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto path =
+        std::filesystem::path(PATH_INFO::user_moddir()) / "editor_session_test" / "chunk.json";
+    std::filesystem::create_directories(path.parent_path());
+    {
+        auto out = std::ofstream(path, std::ios::binary | std::ios::trunc);
+        out << format_json(
+                   nlohmann::ordered_json::array(
+                       {{{"type", "mapgen"},
+                         {"method", "json"},
+                         {"nested_mapgen_id", "editor_test_chunk"},
+                         {"object",
+                          {{"mapgensize", {2, 2}},
+                           {"rows", {"x.", ".."}},
+                           {"terrain", {{".", "t_floor"}}}}}}})
+                       .dump())
+                   .value();
+    }
+    const auto removed = on_out_of_scope([&] { std::filesystem::remove_all(path.parent_path()); });
+    auto step = 0;
+    const auto use_of = [](const ec::screen_view& screen, const std::string& symbol) {
+        const auto& rows = body<ec::list_body>(part(screen, "editor:legend")).rows;
+        const auto row = std::ranges::find(rows, "symbol:" + symbol, &ec::row::id);
+        REQUIRE(row != rows.end());
+        const auto use = std::ranges::
+            find(row->columns, std::string("use"), &game_client::interaction_column::key);
+        return use == row->columns.end() ? std::string() : use->value;
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = path.string()});
+            case 1:
+                // The game leaves the squares of such a symbol as the map around the chunk has
+                // them.
+                CHECK(use_of(screen, "x") == "Keeps the map");
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 2);
+    editor::reset_editor_session();
+}
+
 #endif // CATA_MCP
