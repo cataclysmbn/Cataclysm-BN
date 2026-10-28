@@ -912,7 +912,7 @@
   {
     "id": "dragonskinempty",
     "type": "MIGRATION",
-    "replace": "ballistic_vest_esapi"
+    "replace": "dragonskin"
   },
   {
     "id": "ballistic_vest_empty",
@@ -937,6 +937,6 @@
   {
     "id": "ceramicdisks",
     "type": "MIGRATION",
-    "replace": "dragonskin_ballistic_plate"
+    "replace": "dragonskin"
   }
 ]

@@ -2482,8 +2482,7 @@
         "entries": [
           { "group": "charged_two_way_radio" },
           { "item": "diveknife", "container-item": "wristsheath" },
-          { "item": "ballistic_vest_esapi", "contents-group": "army_mags_mp5" },
-          { "item": "dragonskin_ballistic_plate" },
+          { "item": "dragonskin", "contents-group": "army_mags_mp5" },
           {
             "item": "hk_mp5sd",
             "ammo-item": "9mm",

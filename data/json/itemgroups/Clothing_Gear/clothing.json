@@ -277,12 +277,9 @@
       { "item": "gloves_tactical", "prob": 60 },
       {
         "distribution": [
-          { "group": "military_ballistic_vests_and_plates", "prob": 75 },
-          {
-            "collection": [ { "item": "ballistic_vest_esapi" }, { "item": "dragonskin_ballistic_plate" } ],
-            "prob": 5
-          },
-          { "item": "kevlar", "prob": 15 },
+          { "group": "military_ballistic_vests_and_plates", "prob": 50 },
+          { "item": "dragonskin", "prob": 15 },
+          { "item": "kevlar", "prob": 5 },
           { "item": "exosuit_military", "prob": 5 }
         ],
         "prob": 90
@@ -347,11 +344,8 @@
       {
         "distribution": [
           { "group": "military_ballistic_vests_and_plates", "prob": 75 },
-          {
-            "collection": [ { "item": "ballistic_vest_esapi" }, { "item": "dragonskin_ballistic_plate" } ],
-            "prob": 5
-          },
-          { "item": "kevlar", "prob": 15 },
+          { "item": "dragonskin", "prob": 15 },
+          { "item": "kevlar", "prob": 5 },
           { "item": "exosuit_military", "prob": 5 }
         ],
         "prob": 90
@@ -560,6 +554,7 @@
     "subtype": "distribution",
     "entries": [
       { "item": "kevlar", "prob": 5 },
+      { "item": "dragonskin", "prob": 5 },
       { "group": "military_ballistic_vests_and_plates", "prob": 35 },
       { "item": "exosuit_military", "prob": 3 },
       { "item": "helmet_army", "prob": 30 },
@@ -611,8 +606,7 @@
           { "item": "null", "prob": 25 },
           { "item": "ceramic_ballistic_plate", "prob": 50 },
           { "item": "hard_ballistic_plate", "prob": 15 },
-          { "item": "super_ballistic_plate", "prob": 5 },
-          { "item": "dragonskin_ballistic_plate", "prob": 5 }
+          { "item": "super_ballistic_plate", "prob": 10 }
         ]
       }
     ]
@@ -2297,6 +2291,7 @@
       { "group": "clothing_tactical_torso", "prob": 20 },
       { "group": "clothing_soldier_shirt", "prob": 30 },
       [ "kevlar", 10 ],
+      [ "dragonskin", 5 ],
       { "group": "military_ballistic_vests_and_plates", "prob": 55 },
       [ "winter_jacket_army", 30 ],
       [ "vest", 15 ],
@@ -2576,7 +2571,8 @@
       [ "vest_leather_mod", 22 ],
       [ "bunker_coat", 6 ],
       [ "bookplate", 10 ],
-      { "group": "standard_ballistic_vests_and_plates", "prob": 10 },
+      { "group": "standard_ballistic_vests_and_plates", "prob": 9 },
+      [ "dragonskin", 1 ],
       [ "football_armor", 18 ],
       [ "chestguard_hard", 9 ],
       [ "motorbike_armor", 9 ],
