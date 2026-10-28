@@ -1541,3 +1541,38 @@ TEST_CASE(
     CHECK(of("own:save")["group"] == "File");
     CHECK_FALSE(of("own:loose").contains("group"));
 }
+
+TEST_CASE(
+    "a form's whole-number field carries whole-number bounds on the wire",
+    "[engine_client_component]") {
+    const auto context = input_context("TEST_FORM");
+    const auto scope = ec::screen_scope(
+        context, "test", {.view = [](const auto& /*state*/) {
+            return ec::screen_view{
+                .root = ec::component{
+                    .id = "form:own",
+                    .body = ec::form_body{
+                        .fields = {
+                            {.id = "facing",
+                             .label = "Facing",
+                             .value = "0",
+                             .type = "integer",
+                             .min = 0,
+                             .max = 359},
+                            {.id = "scale",
+                             .label = "Scale",
+                             .value = "1",
+                             .type = "float",
+                             .min = 0.5,
+                             .max = 2.5}}}}};
+        }});
+    const auto input = client::input_context_scope(context, "TEST_FORM");
+    const auto json = wire(map_only());
+    const auto& fields = json["stack"].back()["root"]["fields"];
+    REQUIRE(fields.size() == 2);
+    CHECK(fields[0]["min"].is_number_integer());
+    CHECK(fields[0]["max"].is_number_integer());
+    CHECK(fields[0]["max"] == 359);
+    CHECK(fields[1]["min"].is_number_float());
+    CHECK(fields[1]["min"] == 0.5);
+}
