@@ -1335,13 +1335,17 @@ TEST_CASE(
                     &ec::panel_stat::key));
                 CHECK(slot_of(screen, "vehicle:canvas_tools") == "tools");
                 const auto& tools = rows(screen, "vehicle:canvas_tools");
-                CHECK((tools | std::views::transform(&ec::row::id) | std::ranges::to<std::vector>())
-                      == std::vector<std::string>{
-                          "canvas_tool:select", "canvas_tool:install", "canvas_tool:remove"});
+                CHECK(
+                    (tools | std::views::transform(&ec::row::id) | std::ranges::to<std::vector>())
+                    == std::vector<std::string>{
+                        "canvas_tool:select", "canvas_tool:install", "canvas_tool:line",
+                        "canvas_tool:rect", "canvas_tool:rect_filled", "canvas_tool:fill",
+                        "canvas_tool:remove", "canvas_tool:pick", "canvas_tool:mirror_sides",
+                        "canvas_tool:mirror_ends"});
                 CHECK(tools.front().selected);
                 CHECK((tools | std::views::transform(&ec::row::hotkey)
                        | std::ranges::to<std::vector>())
-                      == std::vector<std::string>{"s", "i", "e"});
+                      == std::vector<std::string>{"s", "b", "l", "r", "u", "f", "e", "i", "", ""});
                 // The design tabs say what they hold.
                 CHECK(
                     (body<ec::tabs_body>(part(screen, "vehicle:tools")).tabs
@@ -1371,7 +1375,7 @@ TEST_CASE(
                     affordance(screen, "vehicle:show:json").keys == std::vector<std::string>{"6"});
                 CHECK(affordance(screen, "vehicle:tool_install").group == "Edit");
                 CHECK(affordance(screen, "vehicle:tool_install").keys
-                      == std::vector<std::string>{"i"});
+                      == std::vector<std::string>{"b"});
                 CHECK(affordance(screen, "vehicle:spawn").keys == std::vector<std::string>{"F5"});
                 // The top part of the mount is picked, and Remove names it.
                 const auto& stack = rows(screen, "vehicle:stack");
@@ -1420,8 +1424,7 @@ TEST_CASE(
             case 3:
                 CHECK(stat(screen, "saved").value == "Yes");
                 CHECK(row(screen, "vehicle:canvas_tools", "canvas_tool:install").selected);
-                CHECK(row(screen, "vehicle:canvas_tools", "canvas_tool:install").label
-                      == "Install headlight");
+                CHECK(row(screen, "vehicle:canvas_tools", "canvas_tool:install").label == "Pencil");
                 CHECK(row(screen, "vehicle:parts", "vpart:headlight").selected);
                 // East of the rear wheel nothing holds a headlight up.
                 return invoke("vehicle:mount", {.row = "mount:2,0"});
@@ -1588,8 +1591,8 @@ TEST_CASE("the vehicle editor turns the spawn facing a quarter at a time", "[edi
             case 0:
                 return invoke("vehicle:open", {.row = "prototype:bicycle"});
             case 1:
-                CHECK(affordance(screen, "vehicle:turn_cw").keys == std::vector<std::string>{"r"});
-                CHECK(affordance(screen, "vehicle:turn_ccw").keys == std::vector<std::string>{"R"});
+                CHECK(affordance(screen, "vehicle:turn_cw").keys == std::vector<std::string>{"t"});
+                CHECK(affordance(screen, "vehicle:turn_ccw").keys == std::vector<std::string>{"T"});
                 return invoke("vehicle:turn_cw");
             case 2:
                 // The facing shows at once.
@@ -3850,7 +3853,13 @@ auto walk(const std::vector<walk_step>& steps) -> std::size_t {
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
         const auto screen = ec::top_screen(captured());
         if (step < steps.size()) { return steps[step++](screen); }
-        return step++ == steps.size() ? act("QUIT") : answer("Leave without saving");
+        ++step;
+        // Unsaved changes ask first.
+        const auto asked = game_client::current_interaction({.limit = 200}).choices;
+        return std::ranges::contains(asked, std::string("Leave without saving"),
+                                     &game_client::interaction_choice::label)
+                 ? answer("Leave without saving")
+                 : act("QUIT");
     });
     editor::run_vehicle_editor();
     return std::min(step, steps.size());
@@ -3990,7 +3999,7 @@ TEST_CASE(
             const auto& palette = rows(screen, "vehicle:parts");
             const auto held = std::ranges::find(palette, true, &ec::row::selected);
             REQUIRE(held != palette.end());
-            CHECK(held->label.starts_with("frame"));
+            CHECK(held->label == "seat");
             return invoke("vehicle:tool_remove");
         },
         [&](const auto& screen) {
@@ -4002,8 +4011,9 @@ TEST_CASE(
         [](const auto&) { return mount_at(7, 1); },
         [](const auto&) { return invoke("vehicle:stroke_end"); },
         [&](const auto& screen) {
-            CHECK_FALSE(has_part(screen, 8, 1));
-            CHECK_FALSE(has_part(screen, 7, 1));
+            // The eraser takes the top part, the seat, of each square it crosses.
+            CHECK(cell(screen, "mount:8,1").label == "frame");
+            CHECK(cell(screen, "mount:7,1").label == "frame");
             CHECK(steps_done(screen) == before + 1);
             return invoke("vehicle:stroke_begin");
         },
@@ -4011,8 +4021,8 @@ TEST_CASE(
         [](const auto&) { return invoke("vehicle:clear", {.row = "mount:5,1"}); },
         [](const auto&) { return invoke("vehicle:stroke_end"); },
         [&](const auto& screen) {
-            CHECK_FALSE(has_part(screen, 6, 1));
-            CHECK_FALSE(has_part(screen, 5, 1));
+            CHECK(cell(screen, "mount:6,1").label == "frame");
+            CHECK(cell(screen, "mount:5,1").label == "frame");
             CHECK(steps_done(screen) == before + 2);
             return act("QUIT");
         },

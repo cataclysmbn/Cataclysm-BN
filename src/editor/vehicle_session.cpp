@@ -5,6 +5,7 @@
 #include "editor/catalog.h"
 #include "editor/document.h"
 #include "editor/history_label.h"
+#include "editor/mapgen_stroke.h"
 #include "editor/recent_documents.h"
 #include "editor/row_id.h"
 #include "editor/session_file.h"
@@ -80,6 +81,12 @@ constexpr auto later_id = "vehicle:later";
 constexpr auto choose_id = "vehicle:choose";
 constexpr auto canvas_tools_id = "vehicle:canvas_tools";
 constexpr auto canvas_tool_id = "vehicle:canvas_tool";
+constexpr auto stroke_begin_id = "vehicle:stroke_begin";
+constexpr auto stroke_end_id = "vehicle:stroke_end";
+constexpr auto mirror_sides_id = "vehicle:mirror_sides";
+constexpr auto mirror_ends_id = "vehicle:mirror_ends";
+constexpr auto view_cw_id = "vehicle:view_cw";
+constexpr auto view_ccw_id = "vehicle:view_ccw";
 constexpr auto performance_id = "vehicle:performance";
 constexpr auto problems_id = "vehicle:problems";
 constexpr auto new_id = "vehicle:new";
@@ -169,16 +176,73 @@ struct live_step {
     std::string label;
 };
 
-/// What a click on a mount of the grid does, the affordance that picks it and its key.
+/// What a click on a mount of the grid does, the affordance that picks it and its keys, as the
+/// map editor's tools have them; a tool that draws the part in hand has the shape it draws, which
+/// takes two mounts when it spans.
 struct canvas_tool {
     const char* key;
     const char* affordance;
     const char* hotkey;
+    const char* other_key = "";
+    std::optional<shape_kind> kind = std::nullopt;
+    bool spans = false;
 };
 constexpr auto canvas_tools = std::array{
     canvas_tool{.key = "select", .affordance = "vehicle:tool_select", .hotkey = "s"},
-    canvas_tool{.key = "install", .affordance = "vehicle:tool_install", .hotkey = "i"},
-    canvas_tool{.key = "remove", .affordance = "vehicle:tool_remove", .hotkey = "e"}};
+    canvas_tool{
+        .key = "install",
+        .affordance = "vehicle:tool_install",
+        .hotkey = "b",
+        .kind = shape_kind::point},
+    canvas_tool{
+        .key = "line",
+        .affordance = "vehicle:tool_line",
+        .hotkey = "l",
+        .kind = shape_kind::line,
+        .spans = true},
+    canvas_tool{
+        .key = "rect",
+        .affordance = "vehicle:tool_rect",
+        .hotkey = "r",
+        .kind = shape_kind::rect,
+        .spans = true},
+    canvas_tool{
+        .key = "rect_filled",
+        .affordance = "vehicle:tool_rect_filled",
+        .hotkey = "u",
+        .kind = shape_kind::rect_filled,
+        .spans = true},
+    canvas_tool{
+        .key = "fill", .affordance = "vehicle:tool_fill", .hotkey = "f", .kind = shape_kind::fill},
+    canvas_tool{.key = "remove", .affordance = "vehicle:tool_remove", .hotkey = "e"},
+    // Q as Factorio's pipette.
+    canvas_tool{.key = "pick", .affordance = "vehicle:tool_pick", .hotkey = "i", .other_key = "q"}};
+
+/// The name of the canvas tool `key`, as the map editor names its tools.
+auto canvas_tool_label(const std::string_view key) -> std::string {
+    if (key == "select") { return _("Select"); }
+    if (key == "install") { return _("Pencil"); }
+    if (key == "line") { return _("Line"); }
+    if (key == "rect") { return _("Rectangle"); }
+    if (key == "rect_filled") { return _("Filled rectangle"); }
+    if (key == "fill") { return _("Fill"); }
+    if (key == "remove") { return _("Eraser"); }
+    return _("Eyedropper");
+}
+
+/// Which way the front of the vehicle shows on the canvas turned `quarters` clockwise.
+auto front_label(const int quarters) -> std::string {
+    switch (quarters) {
+        case 1:
+            return _("Down");
+        case 2:
+            return _("Left");
+        case 3:
+            return _("Up");
+        default:
+            return _("Right");
+    }
+}
 
 /// The tabs of the design column, in order, with the key that shows each; a world's vehicle
 /// edited in place has the first three.
@@ -370,8 +434,19 @@ struct session {
     std::string source_tab = "prototypes";
     /// The tab of the right column: `mount`, `part`, `vehicle`, `cargo`, `spawn` or `json`.
     std::string tool_tab = "mount";
-    /// What a click on the grid does: `select`, `install` or `remove`.
+    /// What a click on the grid does: the key of one of `canvas_tools`.
     std::string canvas_tool = "select";
+    /// Where a tool that spans two mounts was first used, until its second.
+    std::optional<point> anchor;
+    /// Whether a drawing tool also draws side to side across the vehicle's middle, or end to
+    /// end, as the map editor's mirrors.
+    bool mirror_sides = false;
+    bool mirror_ends = false;
+    /// How many quarters clockwise the canvas is turned.
+    int view_quarters = 0;
+    /// Whether a stroke on the vehicle edited in place is open, and whether it has made its step.
+    bool live_stroke = false;
+    bool live_stroke_made = false;
     /// The part the install tool puts on a clicked mount; empty before one is chosen.
     std::string brush;
     /// The world's vehicle edited in place, the part picked on it, and its saved states before
@@ -605,14 +680,6 @@ struct session {
         return edited.has_value();
     }
 
-    auto install(const std::string& part) -> bool {
-        if (!built.blueprint) {
-            notice = _("The game cannot build this prototype; fix what it reports first.");
-            return false;
-        }
-        return change(install_part(prototype(), *built.blueprint, {.mount = cursor, .part = part}));
-    }
-
     auto remove(const std::size_t index) -> bool {
         if (!built.blueprint) {
             notice = _("The game cannot build this prototype; fix what it reports first.");
@@ -737,36 +804,224 @@ struct session {
         remove_picked();
     }
 
+    /// The canvas tool in hand.
+    auto tool() const -> const struct canvas_tool& { // *NOPAD*
+        const auto found = std::ranges::find_if(canvas_tools, [&](const struct canvas_tool& entry) {
+            return canvas_tool == entry.key;
+        });
+        return found != canvas_tools.end() ? *found : canvas_tools.front();
+    }
+
+    /// The vehicle the canvas shows.
+    auto shown_vehicle() const -> const vehicle* { return live ? live : built.blueprint.get(); }
+
+    /// The mounts the canvas shows, from its north-west corner to its south-east one.
+    auto canvas_bounds() const -> mount_frame {
+        return {.low = point(std::min(frame.low.x, cursor.x), std::min(frame.low.y, cursor.y)),
+                .high = point(std::max(frame.high.x, cursor.x), std::max(frame.high.y, cursor.y))};
+    }
+
+    /// `squares` and, for each mirror on, their images across the middle of the vehicle's
+    /// mounts, each once.
+    auto mirrored(std::vector<point> squares) const -> std::vector<point> {
+        const auto points = mounts();
+        const auto xs = points | std::views::transform(&point::x);
+        const auto ys = points | std::views::transform(&point::y);
+        // Twice the middle, so that an even span has it between mounts.
+        const auto twice =
+            points.empty()
+                ? point_zero
+                : point(std::ranges::min(xs) + std::ranges::max(xs),
+                        std::ranges::min(ys) + std::ranges::max(ys));
+        const auto drawn = squares.size();
+        for (auto index = std::size_t{0}; index < drawn; ++index) {
+            const auto at = squares[index];
+            if (mirror_ends) { squares.emplace_back(twice.x - at.x, at.y); }
+            if (mirror_sides) { squares.emplace_back(at.x, twice.y - at.y); }
+            if (mirror_ends && mirror_sides) {
+                squares.emplace_back(twice.x - at.x, twice.y - at.y);
+            }
+        }
+        std::ranges::sort(squares, [](const point& a, const point& b) {
+            return std::tie(a.y, a.x) < std::tie(b.y, b.x);
+        });
+        squares.erase(std::ranges::unique(squares).begin(), squares.end());
+        return squares;
+    }
+
+    /// The mounts the drawing tool in hand covers from the anchor to `at`, as the map editor's
+    /// shapes cover squares; a fill spreads over the mounts of the canvas that show the part
+    /// `at` shows, or none.
+    auto stroke_squares(const point& at) const -> std::vector<point> {
+        const auto bounds = canvas_bounds();
+        const auto* const veh = shown_vehicle();
+        auto grid = symbol_grid(
+            bounds.high.y - bounds.low.y + 1,
+            std::vector<std::string>(bounds.high.x - bounds.low.x + 1));
+        for (auto y = bounds.low.y; y <= bounds.high.y; ++y) {
+            for (auto x = bounds.low.x; x <= bounds.high.x; ++x) {
+                const auto shown = veh ? veh->part_displayed_at(tripoint_mnt_veh(x, y, 0)) : -1;
+                if (shown >= 0) {
+                    grid[y - bounds.low.y][x - bounds.low.x] = veh->part_info(shown).get_id().str();
+                }
+            }
+        }
+        const auto drawn = squares_of(
+            {.kind = tool().kind.value_or(shape_kind::point),
+             .from = anchor.value_or(at) - bounds.low,
+             .to = at - bounds.low},
+            grid);
+        return mirrored(
+            drawn | std::views::transform([&](const point& square) { return square + bounds.low; })
+            | std::ranges::to<std::vector>());
+    }
+
+    /// Whether a stroke is open, so that its changes make one step.
+    auto in_stroke() const -> bool { return live ? live_stroke : doc && doc->grouping(); }
+    auto begin_stroke() -> void {
+        if (live) {
+            live_stroke = true;
+            live_stroke_made = false;
+        } else if (doc) {
+            doc->begin_group();
+        }
+    }
+    auto end_stroke() -> void {
+        live_stroke = false;
+        if (doc) { doc->end_group(); }
+    }
+
+    /// Installs the part in hand on `squares` as one step, and says how it went.
+    auto install_stroke(const std::vector<point>& squares) -> void {
+        const auto name = part_name(brush);
+        auto tally = stroke_tally{};
+        const auto install = stroke_install{.mounts = squares, .part = brush};
+        // Why nothing went on: the first refusal, else every square has the part already.
+        const auto none = [&] {
+            if (tally.refused > 0) { return tally.reason; }
+            return squares.size() == 1
+                     ? string_format(_("This mount already has %s."), name)
+                     : string_format(_("Every square of the stroke already has %s."), name);
+        };
+        auto made = false;
+        if (live) {
+            made = live_change(
+                squares.size() == 1
+                    ? at_mount(_("Install %s at %d,%d"), name)
+                    : string_format(vgettext("Install %1$s on %2$d square",
+                                             "Install %1$s on %2$d squares", squares.size()),
+                                    name, static_cast<int>(squares.size())),
+                [&](vehicle& veh) -> std::expected<void, std::string> {
+                    const auto done = install_live_parts(veh, install);
+                    if (!done) { return std::unexpected(done.error()); }
+                    tally = *done;
+                    if (tally.installed == 0) { return std::unexpected(none()); }
+                    return {};
+                });
+        } else {
+            made = change(
+                install_parts(prototype(), install)
+                    .and_then([&](const stroke_design& done)
+                                  -> std::expected<nlohmann::ordered_json, std::string> {
+                        tally = done.tally;
+                        if (tally.installed == 0) { return std::unexpected(none()); }
+                        return done.prototype;
+                    }));
+        }
+        if (!made) { return; }
+        const auto held = vpart_id(brush);
+        // A tank comes empty, which the part's settings change.
+        const auto tank = held.is_valid() && held->has_flag(VPFLAG_FLUIDTANK);
+        if (squares.size() == 1) {
+            said = tank
+                     //~ What the vehicle editor did: the part's name and the mount it is on.
+                     ? at_mount(_("Installed %s at %d,%d. Set its fuel under Fuel."), name)
+                     //~ What the vehicle editor did: the part's name and the mount it is on.
+                     : at_mount(_("Installed %s at %d,%d."), name);
+            return;
+        }
+        //~ What a stroke of the vehicle editor did: the part's name and how many squares took it.
+        said = string_format(
+            vgettext("Installed %1$s on %2$d square.", "Installed %1$s on %2$d squares.",
+                     tally.installed),
+            name, tally.installed);
+        if (tally.refused > 0) {
+            //~ How many squares of a stroke would not take the part, and why the first would not.
+            said +=
+                " "
+                + string_format(
+                    vgettext("%1$d square refused: %2$s", "%1$d squares refused: %2$s",
+                             tally.refused),
+                    tally.refused, tally.reason);
+        }
+        if (tank) { said += " " + std::string(_("Set their fuel under Fuel.")); }
+    }
+
+    /// Removes the top part of the mount `at`, and of its mirror images that have one, as one
+    /// step.
+    auto erase(const point& at) -> void {
+        const auto open = !in_stroke();
+        if (open) { begin_stroke(); }
+        for (const auto& square : mirrored({at})) {
+            const auto* const veh = shown_vehicle();
+            if (square == at
+                || (veh
+                    && !veh->parts_at_relative(tripoint_mnt_veh(square.x, square.y, 0), false)
+                            .empty())) {
+                clear(square);
+            }
+        }
+        if (open) { end_stroke(); }
+        cursor = at;
+        pick_top();
+    }
+
+    /// Takes the part the mount `at` shows in hand, and the pencil to draw it, as Factorio's
+    /// pipette does.
+    auto eyedrop(const point& at) -> void {
+        cursor = at;
+        const auto* const veh = shown_vehicle();
+        const auto shown = veh ? veh->part_displayed_at(tripoint_mnt_veh(at.x, at.y, 0)) : -1;
+        if (shown < 0) {
+            notice = _("This mount has no part to take.");
+        } else {
+            hold(veh->part_info(shown).get_id().str());
+            canvas_tool = "install";
+        }
+        pick_top();
+    }
+
     /// Picks the mount `at` and does there what the canvas tool does.
     auto click(const point& at) -> void {
-        if (canvas_tool == "remove") {
-            clear(at);
+        const auto& used = tool();
+        if (used.key == std::string_view("remove")) {
+            erase(at);
+            return;
+        }
+        if (used.key == std::string_view("pick")) {
+            eyedrop(at);
             return;
         }
         cursor = at;
-        // What the click changes shows at once.
-        if (canvas_tool != "select") { tool_tab = "mount"; }
-        if (canvas_tool == "install" && brush.empty()) {
-            notice = _("Choose a part from the Parts palette first.");
-        } else if (
-            canvas_tool == "install"
-            && (live ? live_change(
-                           at_mount(_("Install %s at %d,%d"), part_name(brush)),
-                           [&](vehicle& veh) {
-                               return install_live_part(veh, {.mount = cursor, .part = brush})
-                                   .transform([](const int /*index*/) {});
-                           })
-                     : install(brush))) {
-            const auto held = vpart_id(brush);
-            // A tank comes empty, which the part's settings change.
-            said = held.is_valid() && held->has_flag(VPFLAG_FLUIDTANK)
-                     //~ What the vehicle editor did: the part's name and the mount it is on.
-                     ? at_mount(_("Installed %s at %d,%d. Set its fuel under Fuel."),
-                                part_name(brush))
-                     //~ What the vehicle editor did: the part's name and the mount it is on.
-                     : at_mount(_("Installed %s at %d,%d."), part_name(brush));
+        if (used.kind) {
+            // What the click changes shows at once.
+            tool_tab = "mount";
+            if (brush.empty()) {
+                notice = _("Choose a part from the Parts palette first.");
+            } else if (used.spans && !anchor) {
+                anchor = at;
+            } else {
+                const auto squares = stroke_squares(at);
+                anchor.reset();
+                install_stroke(squares);
+            }
         }
         pick_top();
+    }
+
+    /// Turns the canvas a quarter clockwise, or counterclockwise for a negative `quarters`.
+    auto turn_view(const int quarters) -> void {
+        view_quarters = ((view_quarters + quarters) % 4 + 4) % 4;
     }
 
     /// Shows the tab `key` of the vehicles column or of the design column, when it has one.
@@ -1165,7 +1420,11 @@ struct session {
             notice = done.error();
             return false;
         }
-        live_undo.push_back({.state = std::move(before), .label = label});
+        // A stroke is one step, the one its first change made.
+        if (!live_stroke || !live_stroke_made) {
+            live_undo.push_back({.state = std::move(before), .label = label});
+        }
+        live_stroke_made = live_stroke;
         live_redo.clear();
         return true;
     }
@@ -1426,24 +1685,45 @@ struct grid_options {
     const vehicle* veh = nullptr;
     mount_frame frame;
     point cursor;
-    /// The part the install tool holds, whose refusals the squares show; none for another tool.
+    /// The part a drawing tool holds, whose refusals the squares show; none for another tool.
     std::optional<vpart_id> held;
+    /// How a drag over the canvas uses the tool in hand, as the map editor's canvas has it.
+    std::string drag;
+    /// How many quarters clockwise the canvas is turned.
+    int quarters = 0;
 };
 /// The mounts of `frame` and the picked one outside it, a cell each, west to east and north to
 /// south as its blueprint reads, each showing every part of the vehicle `veh` on it and why the
 /// part held cannot go there.
 auto grid_of(const grid_options& options) -> ec::component {
-    const auto& [veh, frame, cursor, held] = options;
+    const auto& [veh, frame, cursor, held, drag, quarters] = options;
     const auto refusal = veh && held ? std::optional(mount_refusals(*veh, *held)) : std::nullopt;
     const auto low = point(std::min(frame.low.x, cursor.x), std::min(frame.low.y, cursor.y));
     const auto high = point(std::max(frame.high.x, cursor.x), std::max(frame.high.y, cursor.y));
+    const auto cols = high.x - low.x + 1;
+    const auto rows = high.y - low.y + 1;
+    // Where the mount `at` shows on the canvas turned: its front, east, turns south first.
+    const auto shown_at = [&](const point& at) -> ec::grid_point {
+        const auto dx = at.x - low.x;
+        const auto dy = at.y - low.y;
+        switch (quarters) {
+            case 1:
+                return {rows - 1 - dy, dx};
+            case 2:
+                return {cols - 1 - dx, rows - 1 - dy};
+            case 3:
+                return {dy, cols - 1 - dx};
+            default:
+                return {dx, dy};
+        }
+    };
     auto palette = ec::look_palette{};
     auto cells = std::vector<ec::grid_cell>{};
     for (auto y = low.y; y <= high.y; ++y) {
         for (auto x = low.x; x <= high.x; ++x) {
             const auto at = point(x, y);
             auto cell = ec::grid_cell{
-                .at = {x - low.x, y - low.y},
+                .at = shown_at(at),
                 .id = point_row("mount", at),
                 .glyph = " ",
                 .affordance = mount_id,
@@ -1461,22 +1741,27 @@ auto grid_of(const grid_options& options) -> ec::component {
                         | std::ranges::to<std::vector>(),
                     ", "));
                 cell.color = string_from_color(veh->part_color(shown));
-                cell.looks = palette.indexes(mount_looks(*veh, at, 0));
+                cell.looks = palette.indexes(mount_looks(*veh, at, 90 * quarters));
             }
             cells.push_back(std::move(cell));
         }
     }
     return {
         .id = grid_id,
-        .affordances = {mount_id, clear_id},
+        .affordances = {mount_id, clear_id, stroke_begin_id, stroke_end_id},
         .body = ec::grid_body{
-            .cols = high.x - low.x + 1,
-            .rows = high.y - low.y + 1,
-            .cursor = ec::grid_point{cursor.x - low.x, cursor.y - low.y},
+            .cols = quarters % 2 == 0 ? cols : rows,
+            .rows = quarters % 2 == 0 ? rows : cols,
+            .cursor = shown_at(cursor),
             .cells = std::move(cells),
             .looks = std::move(palette.looks),
             .role = "canvas",
-            .secondary = clear_id}};
+            .drag = drag,
+            // Every drag is one step, a secondary one erasing as it goes.
+            .drag_begin = stroke_begin_id,
+            .drag_end = stroke_end_id,
+            .secondary = clear_id,
+            .secondary_drag = "trail"}};
 }
 
 /// The squares the vehicle `veh` covers on the map when it faces `facing` degrees clockwise from
@@ -1891,6 +2176,8 @@ auto parts_view(const session& state) -> ec::screen_view {
         {.key = "mount",
          .label = _("Mount"),
          .value = string_format("%d,%d", state.cursor.x, state.cursor.y)});
+    status.push_back(
+        {.key = "front", .label = _("Front"), .value = front_label(state.view_quarters)});
     parts.push_back(ec::panel(
         {.id = state.live ? "vehicle:live" : "vehicle:document",
          .title = state.live ? state.live->name
@@ -1921,24 +2208,31 @@ auto parts_view(const session& state) -> ec::screen_view {
          .empty = _("No edits yet.")}));
     affordances.push_back(ec::invoke_affordance(
         {.id = jump_id, .label = _("Go to step"), .args = row_of(history_id), .role = "select"}));
-    // The canvas tools, and the mounts they act on.
+    // The canvas tools, the mirrors they draw with, and the mounts they act on.
+    const auto mirror_row = [](const char* const key, const std::string& label, const bool on) {
+        return ec::row{
+            .id = std::string("canvas_tool:") + key,
+            .label = label,
+            .columns = {
+                {.key = "state",
+                 .label = _("State"),
+                 .value = on ? _("On") : _("Off"),
+                 .color = ""}}};
+    };
+    auto tool_rows =
+        canvas_tools | std::views::transform([&](const canvas_tool& entry) {
+            return ec::row{
+                .id = std::string("canvas_tool:") + entry.key,
+                .label = canvas_tool_label(entry.key),
+                .hotkey = entry.hotkey,
+                .selected = state.canvas_tool == entry.key};
+        })
+        | std::ranges::to<std::vector>();
+    tool_rows.push_back(mirror_row("mirror_sides", _("Mirror left and right"), state.mirror_sides));
+    tool_rows.push_back(mirror_row("mirror_ends", _("Mirror front and back"), state.mirror_ends));
     parts.push_back(ec::list(
         {.id = canvas_tools_id,
-         .rows = canvas_tools | std::views::transform([&](const canvas_tool& entry) {
-                     const auto key = std::string_view(entry.key);
-                     const auto brush = vpart_id(state.brush);
-                     return ec::row{
-                         .id = std::string("canvas_tool:") + entry.key,
-                         .label =
-                             key == "select"   ? _("Select")
-                             : key == "remove" ? _("Remove")
-                             : brush.is_valid()
-                                 ? string_format(_("Install %s"), brush->name())
-                                 : std::string(_("Install")),
-                         .hotkey = entry.hotkey,
-                         .selected = state.canvas_tool == key};
-                 })
-               | std::ranges::to<std::vector>(),
+         .rows = std::move(tool_rows),
          .selection = "single",
          .activate = canvas_tool_id}));
     affordances.push_back(ec::invoke_affordance(
@@ -1947,22 +2241,34 @@ auto parts_view(const session& state) -> ec::screen_view {
          .args = row_of(canvas_tools_id),
          .role = "select"}));
     for (const auto& entry : canvas_tools) {
-        const auto key = std::string_view(entry.key);
+        auto keys = std::vector<std::string>{entry.hotkey};
+        if (*entry.other_key != '\0') { keys.emplace_back(entry.other_key); }
         affordances.push_back(ec::invoke_affordance(
-            {.id = entry.affordance,
-             .label = key == "select"  ? _("Select tool")
-                    : key == "install" ? _("Install tool")
-                                       : _("Remove tool"),
-             .keys = {entry.hotkey}}));
+            {.id = entry.affordance, .label = canvas_tool_label(entry.key), .keys = keys}));
     }
+    affordances.push_back(
+        ec::invoke_affordance({.id = mirror_sides_id, .label = _("Mirror left and right")}));
+    affordances.push_back(
+        ec::invoke_affordance({.id = mirror_ends_id, .label = _("Mirror front and back")}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = view_cw_id, .label = _("Turn view clockwise"), .keys = {"z"}}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = view_ccw_id, .label = _("Turn view counterclockwise"), .keys = {"Z"}}));
+    affordances.push_back(
+        ec::invoke_affordance({.id = stroke_begin_id, .label = _("Begin stroke")}));
+    affordances.push_back(ec::invoke_affordance({.id = stroke_end_id, .label = _("End stroke")}));
     const auto held = vpart_id(state.brush);
+    const auto& used = state.tool();
     parts.push_back(grid_of(
         {.veh = veh,
-         .frame = state.frame,
+         .frame = state.canvas_bounds(),
          .cursor = state.cursor,
-         .held = state.canvas_tool == "install" && held.is_valid()
-                   ? std::optional(held)
-                   : std::nullopt}));
+         .held = used.kind && held.is_valid() ? std::optional(held) : std::nullopt,
+         .drag = used.spans ? "span"
+               : used.kind == shape_kind::point || used.key == std::string_view("remove")
+                   ? "trail"
+                   : "",
+         .quarters = state.view_quarters}));
     // The design column: what the picked mount holds, the settings of the picked part and the
     // vehicle's, its cargo and spawning, and its JSON.
     const auto settings =
@@ -2364,9 +2670,9 @@ auto parts_view(const session& state) -> ec::screen_view {
                  "spawns it east of you."),
              .keys = {"F5"}}));
         affordances.push_back(
-            ec::invoke_affordance({.id = turn_cw_id, .label = _("Turn clockwise"), .keys = {"r"}}));
+            ec::invoke_affordance({.id = turn_cw_id, .label = _("Turn clockwise"), .keys = {"t"}}));
         affordances.push_back(ec::invoke_affordance(
-            {.id = turn_ccw_id, .label = _("Turn counterclockwise"), .keys = {"R"}}));
+            {.id = turn_ccw_id, .label = _("Turn counterclockwise"), .keys = {"T"}}));
         std::ranges::
             move(history_affordances(doc, {.undo = undo_id, .redo = redo_id, .save = save_id}),
                  std::back_inserter(affordances));
@@ -2400,6 +2706,10 @@ auto session_view(const session& state) -> ec::screen_view {
         {spawn_id, world}, {turn_cw_id, world}, {turn_ccw_id, world}, {paste_id, world},
         {done_id, world}};
     for (const auto& entry : canvas_tools) { groups.emplace(entry.affordance, edit); }
+    groups.emplace(mirror_sides_id, edit);
+    groups.emplace(mirror_ends_id, edit);
+    groups.emplace(view_cw_id, view_menu);
+    groups.emplace(view_ccw_id, view_menu);
     for (const auto& entry : view.affordances) {
         if (entry.id.starts_with(show_prefix)) { groups.emplace(entry.id, view_menu); }
     }
@@ -2497,13 +2807,28 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
             state.show(row.substr(row.find(':') + 1));
         } else if (id.starts_with(show_prefix)) {
             state.show(id.substr(show_prefix.size()));
-        } else if (id == canvas_tool_id) {
-            state.canvas_tool = std::string(row_rest(row, "canvas_tool").value_or("select"));
+        } else if (id == canvas_tool_id || id == mirror_sides_id || id == mirror_ends_id) {
+            const auto key =
+                id == canvas_tool_id
+                    ? std::string(row_rest(row, "canvas_tool").value_or("select"))
+                    : std::string(row_rest(id, "vehicle").value_or(""));
+            if (key == "mirror_sides") {
+                state.mirror_sides = !state.mirror_sides;
+            } else if (key == "mirror_ends") {
+                state.mirror_ends = !state.mirror_ends;
+            } else {
+                state.canvas_tool = key;
+                state.anchor.reset();
+            }
         } else if (tool != canvas_tools.end()) {
             state.canvas_tool = tool->key;
+            state.anchor.reset();
+        } else if (id == view_cw_id || id == view_ccw_id) {
+            state.turn_view(id == view_cw_id ? 1 : -1);
         } else if (id == choose_id) {
             state.hold(std::string(row_rest(row, "vpart").value_or("")));
-            state.canvas_tool = "install";
+            // A drawing tool in hand draws the part taken; another takes the pencil.
+            if (!state.tool().kind) { state.canvas_tool = "install"; }
         } else if (id == new_id) {
             state.new_vehicle(text);
         } else if (id == open_id) {
@@ -2536,7 +2861,11 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
         } else if (id == mount_id) {
             if (const auto at = row_point(row, "mount")) { state.click(*at); }
         } else if (id == clear_id) {
-            if (const auto at = row_point(row, "mount")) { state.clear(*at); }
+            if (const auto at = row_point(row, "mount")) { state.erase(*at); }
+        } else if (id == stroke_begin_id) {
+            state.begin_stroke();
+        } else if (id == stroke_end_id) {
+            state.end_stroke();
         } else if (id == remove_id) {
             state.remove_picked();
         } else if (state.live) {
