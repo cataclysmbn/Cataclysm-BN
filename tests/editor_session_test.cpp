@@ -39,6 +39,7 @@
 #    include "path_info.h"
 #    include "player_activity.h"
 #    include "point.h"
+#    include "rng.h"
 #    include "state_helpers.h"
 #    include "translations.h"
 #    include "type_id.h"
@@ -3903,16 +3904,26 @@ TEST_CASE(
 
     editor::run_editor_session();
     CHECK(step == 3);
+    // The overmap square has no map extras and the dice are fixed, so whatever terrain the earlier
+    // tests left there or however they rolled, nothing but the mapgen lands on it.
+    const auto at = tripoint_abs_omt(60, 60, 0);
+    auto& overmap = get_overmapbuffer(get_map().get_bound_dimension());
+    const auto was = overmap.ter(at);
+    overmap.ter_set(at, oter_str_id("crater").id());
+    const auto restore_terrain = on_out_of_scope([&] { overmap.ter_set(at, was); });
     auto buffer = mapbuffer{};
     buffer.set_dimension_id(get_map().get_bound_dimension());
     auto constructor = mapgen_constructor(buffer);
     const auto picked = pick_mapgen_func("house_04");
     REQUIRE(picked);
-    REQUIRE(
-        constructor
-            .generate(tripoint_abs_omt(60, 60, 0), calendar::turn,
-                      {.use_selected_mapgen = true, .selected_mapgen = picked})
-            .is_generated());
+    {
+        const auto seeded = rng_deterministic_task_scope(1);
+        REQUIRE(
+            constructor
+                .generate(at, calendar::turn,
+                          {.use_selected_mapgen = true, .selected_mapgen = picked})
+                .is_generated());
+    }
     CHECK(constructor.ter(point_omt_ms(2, 6)) == ter_id("t_wall"));
     CHECK(constructor.ter(point_omt_ms(3, 6)) == ter_id("t_floor"));
 }

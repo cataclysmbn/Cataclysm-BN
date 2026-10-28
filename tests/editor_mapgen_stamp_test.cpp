@@ -9,6 +9,7 @@
 #include "mapgen/mapgen_functions.h"
 #include "overmap/omdata.h"
 #include "overmap/overmapbuffer.h"
+#include "rng.h"
 #include "state_helpers.h"
 #include "type_id.h"
 
@@ -96,18 +97,27 @@ TEST_CASE(
     disable_mapgen = false;
     // A terrain of its own, so that no other test finds its mapgen replaced.
     const auto id = std::string("editor_apply_test");
+    // The overmap square has no map extras and the dice are fixed, so whatever terrain the earlier
+    // tests left there or however they rolled, nothing but the mapgen lands on it.
+    const auto at = tripoint_abs_omt(60, 60, 0);
+    auto& overmap = get_overmapbuffer(get_map().get_bound_dimension());
+    const auto was = overmap.ter(at);
+    overmap.ter_set(at, oter_str_id("crater").id());
+    const auto restore_terrain = on_out_of_scope([&] { overmap.ter_set(at, was); });
     const auto generated_wall = [&](const point& p) {
         auto buffer = mapbuffer{};
         buffer.set_dimension_id(get_map().get_bound_dimension());
         auto constructor = mapgen_constructor(buffer);
         const auto picked = pick_mapgen_func(id);
         REQUIRE(picked);
-        const auto at = tripoint_abs_omt(60, 60, 0);
-        REQUIRE(
-            constructor
-                .generate(at, calendar::turn,
-                          {.use_selected_mapgen = true, .selected_mapgen = picked})
-                .is_generated());
+        {
+            const auto seeded = rng_deterministic_task_scope(1);
+            REQUIRE(
+                constructor
+                    .generate(at, calendar::turn,
+                              {.use_selected_mapgen = true, .selected_mapgen = picked})
+                    .is_generated());
+        }
         return constructor.ter(point_omt_ms(p.x, p.y)) == ter_id("t_wall");
     };
 
