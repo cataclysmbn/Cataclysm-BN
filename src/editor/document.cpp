@@ -1,5 +1,6 @@
 #include "editor/document.h"
 
+#include "editor/mapgen_check.h"
 #include "json.h"
 #include "json_formatter.h"
 
@@ -159,7 +160,7 @@ auto document::parse(const std::filesystem::path& path, std::string text)
         } else {
             span_of_next();
         }
-    } catch (const JsonError& e) { return std::unexpected(std::string(e.what())); }
+    } catch (const JsonError& e) { return std::unexpected(plain_loader_text(e.what())); }
     try {
         for (const auto& [begin, end] : spans) {
             auto parsed = parse_object(std::string_view(original).substr(begin, end - begin));

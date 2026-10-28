@@ -1152,9 +1152,17 @@ auto session::placed_here() const -> std::optional<tripoint_abs_omt> {
 
 auto session::import_pasted() -> void {
     const auto parsed = nlohmann::ordered_json::parse(import_text, nullptr, false);
+    if (parsed.is_discarded()) {
+        notice = _("The pasted text is not JSON.");
+        return;
+    }
     const auto found =
         parsed.is_array() ? std::ranges::find_if(parsed, is_json_mapgen) : parsed.end();
-    stamp_text(parsed.is_array() && found != parsed.end() ? found->dump() : import_text);
+    if (parsed.is_array() && found == parsed.end()) {
+        notice = _("The pasted text holds no mapgen entry.");
+        return;
+    }
+    stamp_text(parsed.is_array() ? found->dump() : import_text);
     if (stamped && notice.empty()) { status = _("Stamped."); }
 }
 

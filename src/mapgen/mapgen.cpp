@@ -6599,10 +6599,14 @@ auto editor::check_mapgen(const std::string_view text) -> std::vector<loader_mes
     });
     auto messages =
         said | std::views::transform([&](const std::string& message) {
-            return editor::loader_message{.text = message, .offset = offset_named(message, text)};
+            return editor::loader_message{
+                .text = plain_loader_text(message), .offset = offset_named(message, text)};
         })
         | std::ranges::to<std::vector>();
-    if (thrown) { messages.push_back({.text = *thrown, .offset = offset_named(*thrown, text)}); }
+    if (thrown) {
+        messages.push_back(
+            {.text = plain_loader_text(*thrown), .offset = offset_named(*thrown, text)});
+    }
     return messages;
 }
 
@@ -6682,6 +6686,43 @@ editor::file_stand_ins::file_stand_ins(const std::vector<std::string>& texts) {
     });
 }
 
+auto editor::plain_loader_text(const std::string_view message) -> std::string {
+    constexpr auto header = std::string_view("Json error: ");
+    const auto at = message.find(header);
+    if (at == std::string_view::npos) { return std::string(message); }
+    auto rest = message.substr(at + header.size());
+    auto line = std::optional<int>{};
+    // The place leads as "<source>:<line>:<column>: " or "<source>:EOF: ".
+    if (const auto colon = rest.find(": "); colon != std::string_view::npos) {
+        const auto place = rest.substr(0, colon);
+        const auto column = place.rfind(':');
+        const auto row =
+            column == std::string_view::npos || column == 0
+                ? std::string_view::npos
+                : place.rfind(':', column - 1);
+        auto read = 0;
+        if (row != std::string_view::npos
+            && std::from_chars(place.data() + row + 1, place.data() + column, read).ec
+                   == std::errc{}) {
+            line = read;
+        }
+        rest.remove_prefix(colon + 2);
+    }
+    // The text around the place is quoted after a blank line.
+    rest = rest.substr(0, rest.find("\n\n"));
+    constexpr auto missing = std::string_view("missing required field \"");
+    if (rest.starts_with(missing)) {
+        const auto name =
+            rest.substr(missing.size(), rest.find('"', missing.size()) - missing.size());
+        return string_format(_("The \"%s\" field is missing."), name);
+    }
+    auto text = std::string(rest);
+    if (!text.empty()) {
+        text[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(text[0])));
+    }
+    return line ? string_format(_("Line %1$d: %2$s"), *line, text) : text;
+}
+
 auto editor::mapgen_legend(const std::string_view text)
     -> std::expected<std::vector<legend_symbol>, std::string> {
     auto symbols = std::map<std::string, legend_symbol>{};
@@ -6729,7 +6770,7 @@ auto editor::load_detached_mapgens(const std::string_view text)
         const auto object = entry.get_object("object");
         object.allow_omitted_members();
         return load_detached(entry, object);
-    } catch (const JsonError& e) { return std::unexpected(std::string(e.what())); }
+    } catch (const JsonError& e) { return std::unexpected(plain_loader_text(e.what())); }
 }
 
 auto editor::apply_mapgen(const std::string_view text) -> std::expected<void, std::string> {

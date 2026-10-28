@@ -2737,10 +2737,10 @@ auto load_detached_special(const std::string_view text) -> detached_special {
     });
     auto messages =
         said | std::views::transform([](const std::string& message) {
-            return editor::loader_message{.text = message};
+            return editor::loader_message{.text = editor::plain_loader_text(message)};
         })
         | std::ranges::to<std::vector>();
-    if (thrown) { messages.push_back({.text = *thrown}); }
+    if (thrown) { messages.push_back({.text = editor::plain_loader_text(*thrown)}); }
     return {.special = std::move(special), .messages = std::move(messages)};
 }
 
@@ -2777,10 +2777,10 @@ auto editor::check_oter(const std::string_view text) -> std::vector<loader_messa
     });
     auto messages =
         said | std::views::transform([](const std::string& message) {
-            return loader_message{.text = message};
+            return loader_message{.text = plain_loader_text(message)};
         })
         | std::ranges::to<std::vector>();
-    if (thrown) { messages.push_back({.text = *thrown}); }
+    if (thrown) { messages.push_back({.text = editor::plain_loader_text(*thrown)}); }
     return messages;
 }
 
