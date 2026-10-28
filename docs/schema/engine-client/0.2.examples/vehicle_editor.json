@@ -4074,6 +4074,7 @@
             "label": "Choose",
             "keys": [],
             "enabled": true,
+            "role": "select",
             "args": {
               "row": {
                 "component_id": "vehicle:parts"
@@ -8297,6 +8298,7 @@
             "label": "Choose",
             "keys": [],
             "enabled": true,
+            "role": "select",
             "args": {
               "row": {
                 "component_id": "vehicle:parts"
