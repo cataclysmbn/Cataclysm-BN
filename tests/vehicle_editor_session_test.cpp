@@ -1521,8 +1521,9 @@ TEST_CASE(
                 return invoke("vehicle:new", {.text = made.string()});
             case 2:
                 CHECK(body<ec::panel_body>(part(screen, "vehicle:document")).title == "go_cart");
-                CHECK(stat(screen, "saved").value == "Yes");
-                CHECK(std::filesystem::exists(made));
+                // Nothing is written until the player saves.
+                CHECK(stat(screen, "saved").value == "No");
+                CHECK_FALSE(std::filesystem::exists(made));
                 return invoke("vehicle:part_filter", {.text = "headlight"});
             case 3:
                 return invoke("vehicle:choose", {.row = "vpart:headlight"});
@@ -1550,7 +1551,7 @@ TEST_CASE(
                 return invoke("vehicle:new", {.text = "vehicle_editor_new/hand_cart"});
             case 11:
                 CHECK(body<ec::panel_body>(part(screen, "vehicle:document")).title == "hand_cart");
-                CHECK(std::filesystem::exists(made.parent_path() / "hand_cart.json"));
+                CHECK_FALSE(std::filesystem::exists(made.parent_path() / "hand_cart.json"));
                 return invoke("vehicle:save_as", {.text = "vehicle_editor_new/barrow"});
             case 12:
                 CHECK(std::filesystem::exists(made.parent_path() / "barrow.json"));
@@ -2429,16 +2430,12 @@ TEST_CASE(
     "the vehicle editor fills in a free file name of the user's mods for New vehicle and Save as",
     "[editor_vehicle]") {
     const auto guard = screen_guard{};
-    const auto mods = std::filesystem::path(PATH_INFO::user_moddir());
-    std::filesystem::create_directories(mods);
-    std::filesystem::remove(mods / "my_vehicle.json");
-    std::filesystem::remove(mods / "my_vehicle_2.json");
-    std::filesystem::remove(mods / "bicycle.json");
+    const auto folder = std::filesystem::path(PATH_INFO::user_moddir()) / "my_mod";
+    std::filesystem::remove_all(folder);
+    std::filesystem::create_directories(folder);
     // A file the name would take already exists.
-    std::ofstream(mods / "my_vehicle.json") << "[]";
-    const auto cleanup = on_out_of_scope([&] {
-        std::filesystem::remove(mods / "my_vehicle.json");
-    });
+    std::ofstream(folder / "my_vehicle.json") << "[]";
+    const auto cleanup = on_out_of_scope([&] { std::filesystem::remove_all(folder); });
     const auto initial = [](const ec::screen_view& screen, const std::string& id) {
         const auto& text = affordance(screen, id).args.text;
         REQUIRE(text.has_value());
@@ -2449,10 +2446,10 @@ TEST_CASE(
         const auto screen = ec::top_screen(captured());
         switch (step++) {
             case 0:
-                CHECK(initial(screen, "vehicle:new") == "my_vehicle_2");
+                CHECK(initial(screen, "vehicle:new") == "my_mod/my_vehicle_2");
                 return invoke("vehicle:open", {.row = "prototype:bicycle"});
             case 1:
-                CHECK(initial(screen, "vehicle:save_as") == "bicycle");
+                CHECK(initial(screen, "vehicle:save_as") == "my_mod/bicycle");
                 return act("QUIT");
             default:
                 FAIL("the vehicle editor outlived its exit");

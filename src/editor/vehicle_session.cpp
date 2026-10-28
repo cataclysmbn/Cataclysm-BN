@@ -405,6 +405,11 @@ struct session {
             notice = string_format(_("No data file of the loaded mods defines %s."), id);
             return;
         }
+        if (doc && doc->path() == *path && prototype().value("id", "") == id) {
+            // It is open already, with whatever it has unsaved.
+            live = nullptr;
+            return;
+        }
         open_file(*path, id);
     }
 
@@ -424,13 +429,38 @@ struct session {
             notice = string_format(_("No data file of the loaded mods defines %s."), id);
             return;
         }
-        object = static_cast<std::size_t>(found - objects.begin());
-        doc = std::move(*opened);
-        remember_document({.editor = "vehicle", .name = id, .mods = loaded_mods()});
+        if (!leave()) { return; }
+        take(std::move(*opened), static_cast<std::size_t>(found - objects.begin()));
+    }
+
+    /// Edits the prototype `index` of `opened` from now on, with the select tool.
+    auto take(document opened, const std::size_t index) -> void {
+        live = nullptr;
+        object = index;
+        doc = std::move(opened);
+        remember();
         cursor = point{};
         field_pointer = "/name";
+        canvas_tool = "select";
         reload();
         pick_top();
+    }
+
+    /// Puts the open design first among the documents the main menu offers again, once its file
+    /// is there, with the mod that holds it.
+    auto remember() const -> void {
+        if (!std::filesystem::exists(doc->path())) { return; }
+        remember_document(
+            {.editor = "vehicle",
+             .name = prototype().value("id", ""),
+             .mods = mods_for(doc->path())});
+    }
+
+    /// The file a new design suggests: `base` in the mod folder of the open file, else in
+    /// my_mod, with a number when that file is there.
+    auto suggested(const std::string& base) const -> std::string {
+        const auto folder = doc ? mod_folder_name(doc->path()) : std::nullopt;
+        return free_name(folder.value_or("my_mod") + "/" + base);
     }
 
     /// Reads the file again when it changed on disk and holds no edit; says so either way.
@@ -442,6 +472,7 @@ struct session {
         }
         const auto kept_cursor = cursor;
         const auto kept_pointer = field_pointer;
+        const auto kept_tool = canvas_tool;
         const auto path = doc->path();
         const auto id = prototype().value("id", "");
         open_file(path, id);
@@ -454,6 +485,7 @@ struct session {
         }
         cursor = kept_cursor;
         field_pointer = kept_pointer;
+        canvas_tool = kept_tool;
         reload();
         notice = changed_on_disk_notice(*doc);
     }
@@ -851,16 +883,17 @@ struct session {
         change(next);
     }
 
-    /// Writes the prototype a new design makes, whose id is the file's name, in the new file
-    /// `name` of the player's mods, and opens it.
+    /// Opens the prototype a new design makes, whose id is the file's name, for the new file
+    /// `name` of the player's mods, which saving writes; `write` writes it at once.
     auto create(
         const std::string& name,
-        const std::function<auto(const std::string&)->nlohmann::ordered_json>& prototype_of)
-        -> void {
+        const std::function<auto(const std::string&)->nlohmann::ordered_json>& prototype_of,
+        const bool write = false) -> void {
         const auto path = in_mods(name);
         if (!is_mod_file(path)) {
             notice = string_format(
-                _("A new design goes in a new .json file in your mods, %s."),
+                _("A new design goes in a new .json file in your mods, %s, inside a mod's folder "
+                  "such as my_mod/."),
                 PATH_INFO::user_moddir());
             return;
         }
@@ -868,19 +901,15 @@ struct session {
             notice = _("That file already exists; nothing was saved.");
             return;
         }
-        const auto id = path.stem().string();
-        const auto design = nlohmann::ordered_json::array({prototype_of(id)});
-        auto error = std::error_code{};
-        std::filesystem::create_directories(path.parent_path(), error);
-        auto out = std::ofstream(path, std::ios::binary);
-        out << format_json(design.dump()).value_or(design.dump(2));
-        if (error || !out.flush()) {
-            notice = _("The file could not be written.");
+        if (!leave()) { return; }
+        const auto design = nlohmann::ordered_json::array({prototype_of(path.stem().string())});
+        auto made = document::create(path, format_json(design.dump()).value_or(design.dump(2)));
+        if (!made) {
+            notice = made.error();
             return;
         }
-        out.close();
-        live = nullptr;
-        open_file(path, id);
+        take(std::move(*made), 0);
+        if (write) { save(); }
     }
 
     /// Writes the design of the world's vehicle `index` as a prototype in a new file of the user
@@ -888,7 +917,9 @@ struct session {
     auto export_vehicle(const std::size_t index, const std::string& name) -> void {
         const auto vehicles = get_map().get_vehicles();
         if (index >= vehicles.size()) { return; }
-        create(name, [&](const std::string& id) { return export_design(*vehicles[index].v, id); });
+        create(
+            name, [&](const std::string& id) { return export_design(*vehicles[index].v, id); },
+            true);
     }
 
     /// Starts a vehicle with no parts in a new file of the user mods, named after the file.
@@ -940,6 +971,7 @@ struct session {
         const auto vehicles = get_map().get_vehicles();
         if (index >= vehicles.size()) { return; }
         live = vehicles[index].v;
+        canvas_tool = "select";
         framed.clear();
         cursor = point{};
         live_part = -1;
@@ -1194,9 +1226,15 @@ struct session {
         return result.has_value();
     }
 
-    auto save() -> bool { return told(save_document(*doc)); }
+    auto save() -> bool {
+        if (!told(save_document(*doc))) { return false; }
+        remember();
+        return true;
+    }
 
-    auto save_as(const std::string& name) -> void { told(save_document_as(*doc, in_mods(name))); }
+    auto save_as(const std::string& name) -> void {
+        if (told(save_document_as(*doc, in_mods(name)))) { remember(); }
+    }
 
     /// Whether to leave: at once with nothing unsaved, else as the player answers.
     auto leave() -> bool {
@@ -1559,7 +1597,7 @@ auto parts_view(const session& state) -> ec::screen_view {
     affordances.push_back(ec::invoke_affordance(
         {.id = new_id,
          .label = _("New vehicle"),
-         .args = {.text = ec::text_shape{.initial = free_name("my_vehicle")}},
+         .args = {.text = ec::text_shape{.initial = state.suggested("my_vehicle")}},
          .keys = {"CTRL+N"}}));
     affordances.push_back(ec::invoke_affordance(
         {.id = std::string(show_prefix) + "prototypes", .label = _("Prototypes"), .keys = {"p"}}));
@@ -2004,7 +2042,8 @@ auto parts_view(const session& state) -> ec::screen_view {
             {.id = save_as_id,
              .label = _("Save as"),
              .args =
-                 {.text = ec::text_shape{.initial = free_name(state.prototype().value("id", ""))}},
+                 {.text = ec::
+                      text_shape{.initial = state.suggested(state.prototype().value("id", ""))}},
              .keys = {"F12"}}));
     }
     return {
@@ -2131,7 +2170,6 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
         } else if (id == new_id) {
             state.new_vehicle(text);
         } else if (id == open_id) {
-            state.live = nullptr;
             state.open(std::string(row_rest(row, "prototype").value_or("")));
         } else if (id == filter_id) {
             state.filter = text;

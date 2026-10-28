@@ -247,7 +247,9 @@ auto check_new_path(const std::string& made) -> std::expected<void, std::string>
     const auto path = std::filesystem::path(made);
     if (!is_mod_file(path)) {
         return std::unexpected(string_format(
-            _("A new file goes in your mods, %s, and ends in .json."), PATH_INFO::user_moddir()));
+            _("A new file goes in your mods, %s, inside a mod's folder such as my_mod/, and ends in "
+              ".json."),
+            PATH_INFO::user_moddir()));
     }
     if (std::filesystem::exists(path)) {
         return std::unexpected(string_format(_("%s already exists."), made));
@@ -263,7 +265,7 @@ auto write_new_file(const std::string& made, const nlohmann::ordered_json& entri
     auto out = std::ofstream(path, std::ios::binary);
     out << format_json(entries.dump()).value_or(entries.dump(2));
     if (error || !out.flush()) { return std::unexpected(_("The file could not be written.")); }
-    return {};
+    return make_mod_of(path);
 }
 
 auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string> {
@@ -845,7 +847,7 @@ auto session::open(const std::string& name) -> void {
     }
     doc = std::move(*opened);
     ++openings;
-    remember_document({.editor = "map", .name = path.generic_string(), .mods = loaded_mods()});
+    remember_document({.editor = "map", .name = path.generic_string(), .mods = mods_for(path)});
     anchor.reset();
     selected.reset();
     focus.reset();

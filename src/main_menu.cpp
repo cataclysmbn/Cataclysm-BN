@@ -1202,6 +1202,8 @@ auto main_menu::editor_tab( const std::string &id ) -> bool
     if( id == "save" ) {
         return open_save_in_editor();
     }
+    // The editors make a mod of the folder they save a new file in, which the game learns of here.
+    world_generator->get_mod_manager().refresh_mod_list();
     const auto recent = editor::recent_documents();
     auto index = std::size_t{ 0 };
     const auto reopened = std::sscanf( id.c_str(), "recent:%zu", &index ) == 1 && index < recent.size()
