@@ -747,7 +747,7 @@ auto session::watch() -> void {
     if (notice.empty()) {
         notice = changed_on_disk_notice(*doc);
         // Another entry shown in place of a gone one was not what was being applied.
-        if (kept && apply_on_save && on_mapgen()) { apply(); }
+        if (kept && applies_on_save()) { apply(); }
     }
 }
 
@@ -776,7 +776,7 @@ auto session::save() -> bool { return written(save_document(*doc)); }
 auto session::save_as(const std::string& name) -> void { written(save_document_as(*doc, name)); }
 
 auto session::written(const std::expected<void, std::string>& result) -> bool {
-    if (told(result) && apply_on_save && on_mapgen()) { apply(); }
+    if (told(result) && applies_on_save()) { apply(); }
     return result.has_value();
 }
 

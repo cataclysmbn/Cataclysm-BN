@@ -797,8 +797,11 @@ auto game_parts(
              .keys = {"F7"},
              .enabled = !state.on_update(),
              .denial = state.on_update() ? *refused : ""}));
-        affordances.push_back(
-            ec::invoke_affordance({.id = apply_on_save_id, .label = _("Apply on save")}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = apply_on_save_id,
+             .label = _("Apply on save"),
+             .enabled = !state.on_update(),
+             .denial = state.on_update() ? *refused : ""}));
         affordances.push_back(ec::invoke_affordance(
             {.id = stamp_id,
              .label = _("Stamp"),

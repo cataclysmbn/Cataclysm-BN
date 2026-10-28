@@ -421,6 +421,9 @@ struct session {
     auto square_refusal() const -> std::optional<std::string>;
     /// Whether the mapgen edited is an update mapgen, which the game runs on squares it made.
     auto on_update() const -> bool;
+    /// Whether the entry edited is applied on save: a mapgen that is no update mapgen, which is
+    /// never applied.
+    auto applies_on_save() const -> bool { return apply_on_save && on_mapgen() && !on_update(); }
     /// Whether the object edited is an overmap special or a building, which places overmap squares.
     auto on_special() const -> bool;
     /// Whether the object edited is an overmap terrain, which the game draws its squares with.
