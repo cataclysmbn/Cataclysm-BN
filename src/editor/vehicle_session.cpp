@@ -2152,11 +2152,13 @@ auto session_view(const session& state) -> ec::screen_view {
     for (const auto& entry : view.affordances) {
         if (entry.id.starts_with(show_prefix)) { groups.emplace(entry.id, view_menu); }
     }
+    const auto opened = state.live || state.doc;
     lay_out(
         view,
         {.slots =
              {{sources_id,
-               {.slot = state.live || state.doc ? "outline" : "canvas", .label = _("Vehicles")}},
+               // Folded out of the way of the vehicle open.
+               {.slot = opened ? "outline" : "canvas", .label = _("Vehicles"), .collapsed = opened}},
               {"vehicle:document", {.slot = "status"}},
               {"vehicle:live", {.slot = "status"}},
               {grid_id, {.slot = "canvas"}},
