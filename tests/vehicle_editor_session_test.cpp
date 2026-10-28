@@ -16,6 +16,8 @@
 #    include "engine_client_component.h"
 #    include "engine_client_contract.h"
 #    include "json_formatter.h"
+#    include "locale_fixture.h"
+#    include "locale_scope.h"
 #    include "map/map.h"
 #    include "map_helpers.h"
 #    include "output.h"
@@ -2349,4 +2351,57 @@ TEST_CASE(
     });
     editor::run_vehicle_editor();
     CHECK(step == 9);
+}
+
+TEST_CASE(
+    "the vehicle editor says where it spawned and pasted in one sentence a language translates "
+    "whole",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    clear_map();
+    const auto cleanup_vehicles = on_out_of_scope([] { clear_vehicles(); });
+    const auto copied = std::filesystem::path(PATH_INFO::user_dir()) / "vehicle_copy.json";
+    std::filesystem::remove(copied);
+    const auto cleanup = on_out_of_scope([&] { std::filesystem::remove(copied); });
+    const auto fixture = locale_fixture::korean_catalogue{
+        {{locale_fixture::plural(
+              "Spawned %1$s %2$d square %3$s of you.", "Spawned %1$s %2$d squares %3$s of you."),
+          locale_fixture::plural("S1 %3$s %2$d %1$s", "SN %3$s %2$d %1$s")},
+         {locale_fixture::plural(
+              "Pasted %1$s %2$d square %3$s of you.", "Pasted %1$s %2$d squares %3$s of you."),
+          locale_fixture::plural("P1 %3$s %2$d %1$s", "PN %3$s %2$d %1$s")}}};
+    const auto status = [](const ec::screen_view& screen) {
+        const auto* const found = ec::find_component(*screen.root, "vehicle:status");
+        return found ? body<ec::text_body>(*found).markup : std::string{};
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                return invoke("vehicle:spawn");
+            case 2:
+                CHECK(status(screen).starts_with("SN "));
+                CHECK(status(screen).ends_with(" 8 Bicycle"));
+                return invoke("vehicle:source", {.row = "source:world"});
+            case 3:
+                return invoke("vehicle:copy", {.row = "world:0"});
+            case 4:
+                return invoke("vehicle:paste");
+            case 5:
+                CHECK(status(screen).starts_with("PN "));
+                CHECK(status(screen).ends_with(" 8 Bicycle"));
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    {
+        const auto scope = localization::locale_scope{locale_fixture::korean};
+        editor::run_vehicle_editor();
+    }
+    CHECK(step == 6);
 }
