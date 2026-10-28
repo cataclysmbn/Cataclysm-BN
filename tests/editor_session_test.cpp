@@ -10,6 +10,7 @@
 #    include "client_memory_scope.h"
 #    include "cursesdef.h"
 #    include "cursesport.h"
+#    include "debug_menu.h"
 #    include "editor/editor_session.h"
 #    include "editor/mapgen_levels.h"
 #    include "editor/mapgen_preview.h"
@@ -3395,6 +3396,39 @@ TEST_CASE("game time does not pass while the map editor is open", "[editor_sessi
     handle_action(std::make_unique<special_game>());
     CHECK(step == 5);
     CHECK(you.get_moves() == 100);
+}
+
+TEST_CASE(
+    "the debug menu's map editor opens the map editor, and its square editor stays beside it",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    get_avatar().set_mutation(trait_id("DEBUG_EDITOR"));
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return answer("Map…");
+            case 1: {
+                // The editor of the squares around the avatar is offered under its own name.
+                const auto snapshot = game_client::current_interaction({.limit = 200});
+                CHECK(std::ranges::contains(
+                    snapshot.choices, std::string("Edit squares here"),
+                    &game_client::interaction_choice::label));
+                return answer("Map editor");
+            }
+            case 2:
+                CHECK(screen.kind == "editor");
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    debug_menu::debug();
+    CHECK(step == 3);
 }
 
 TEST_CASE(
