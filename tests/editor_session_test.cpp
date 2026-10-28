@@ -889,8 +889,12 @@ TEST_CASE(
                 CHECK(lines(screen) == first);
                 return invoke("editor:paint", {.row = "square:10,10"});
             case 8:
+                // Marking other squares takes the count of the old ones away.
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:loot"));
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:status"));
                 return invoke("editor:paint", {.row = "square:12,12"});
             case 9:
+                CHECK_FALSE(ec::find_component(*screen.root, "editor:loot"));
                 // Squares nothing spawns on have an empty list.
                 return invoke("editor:loot");
             case 10:
