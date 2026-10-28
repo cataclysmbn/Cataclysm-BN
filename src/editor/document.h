@@ -6,6 +6,7 @@
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace editor {
@@ -30,9 +31,11 @@ struct document_edit {
     nlohmann::ordered_json after;
 };
 
-/// One step of the history: its edits, in the order they were made.
+/// One step of the history: its edits, in the order they were made, and what the player did, when
+/// the group that made it names that; else its last edit says.
 struct document_step {
     std::vector<document_edit> edits;
+    std::string label;
 };
 
 enum class save_error {
@@ -67,11 +70,12 @@ public:
     /// takes no other.
     auto add(nlohmann::ordered_json value) -> std::expected<std::size_t, std::string>;
     /// Until `end_group`, the edits of one object fold into one undo step; `across`, the edits and
-    /// additions of every object do.
-    auto begin_group(const bool across = false) -> void {
+    /// additions of every object do. The step is named `label` when it is not empty.
+    auto begin_group(const bool across = false, std::string label = {}) -> void {
         grouping_ = true;
         grouped_ = false;
         across_ = across;
+        group_label_ = std::move(label);
     }
     auto end_group() -> void { grouping_ = false; }
     /// Whether a group begun is not ended yet.
@@ -114,6 +118,7 @@ private:
     bool grouping_ = false;
     bool grouped_ = false;
     bool across_ = false;
+    std::string group_label_;
 
     /// Records `edit` as a step of its own, or in the step of the open group.
     auto record(document_edit edit) -> void;

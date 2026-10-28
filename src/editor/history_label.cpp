@@ -43,13 +43,15 @@ auto step_label(const document_edit& edit) -> std::string {
     return words.empty() ? verb : string_format(pgettext("editor history", "%s %s"), verb, words);
 }
 
-auto document_steps(
-    const document& doc, const std::function<auto(const document_edit&)->std::string>& label)
-    -> history_steps {
+auto step_name(const document_step& step, const edit_label_t& label) -> std::string {
+    return step.label.empty() ? label(step.edits.back()) : step.label;
+}
+
+auto document_steps(const document& doc, const edit_label_t& label) -> history_steps {
     return {
         .labels =
             doc.history() | std::views::transform([&](const document_step& step) {
-                return label(step.edits.back());
+                return step_name(step, label);
             })
             | std::ranges::to<std::vector>(),
         .depth = doc.depth(),

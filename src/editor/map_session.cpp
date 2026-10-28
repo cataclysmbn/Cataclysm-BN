@@ -662,7 +662,7 @@ auto session::step_history(const bool back) -> void {
     if (back ? depth == 0 : depth >= steps.size()) { return; }
     const auto& step = steps[back ? depth - 1 : depth];
     if (!(back ? doc->undo() : doc->redo())) { return; }
-    status = string_format(back ? _("Undid: %s") : _("Redid: %s"), step_label(step.edits.back()));
+    status = string_format(back ? _("Undid: %s") : _("Redid: %s"), step_name(step));
     // An entry an undo removed is gone; the one it changed otherwise is what to look at.
     const auto changed = std::ranges::find_if(step.edits, [&](const document_edit& edit) {
         return edit.object < doc->objects().size();
@@ -910,7 +910,7 @@ auto session::extract_palette(const std::string& name) -> void {
                   {"op", "add"},
                   {"path", "/object/palettes"},
                   {"value", nlohmann::ordered_json::array({name})}});
-    doc->begin_group(true);
+    doc->begin_group(true, _("Extract palette"));
     const auto added = doc->add(std::move(palette));
     const auto edited = added ? doc->edit(object, patch) : std::unexpected(added.error());
     doc->end_group();
@@ -1095,7 +1095,7 @@ auto session::cut() -> void {
         return;
     }
     copy();
-    doc->begin_group();
+    doc->begin_group(false, _("Cut"));
     const auto filled = stroke(
         *doc,
         {.object = object,
@@ -1157,7 +1157,7 @@ auto session::paste_at(const point& at) -> void {
                 | std::ranges::to<std::string>());
         return;
     }
-    doc->begin_group();
+    doc->begin_group(false, _("Paste"));
     const auto depth = doc->depth();
     auto done = std::expected<void, std::string>{};
     for (const auto& [glyph, line] : brought) {
