@@ -5025,7 +5025,8 @@ TEST_CASE(
                 return invoke("editor:catalog_pick", {.row = "entry:forest_thick"});
             case 4:
                 CHECK(std::ranges::contains(
-                    body<ec::panel_body>(part(screen, "editor:document")).stats, "forest_thick",
+                    body<ec::panel_body>(part(screen, "editor:document")).stats,
+                    oter_str_id("forest_thick")->get_name() + " (forest_thick)",
                     &ec::panel_stat::value));
                 return invoke("editor:paint", {.row = string_format("square:%d,0", OMAPX)});
             case 5:
