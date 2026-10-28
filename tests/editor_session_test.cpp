@@ -12,6 +12,7 @@
 #    include "cursesport.h"
 #    include "debug_menu.h"
 #    include "editor/editor_session.h"
+#    include "editor/map_session.h"
 #    include "editor/mapgen_levels.h"
 #    include "editor/mapgen_preview.h"
 #    include "editor/mapgen_source.h"
@@ -5637,8 +5638,6 @@ TEST_CASE(
     CHECK(step == 6);
 }
 
-#endif // CATA_MCP
-
 namespace {
 /// The slot of the part `id` of the screen's root split.
 auto slot_of(const ec::screen_view& screen, const std::string& id) -> std::string {
@@ -5817,3 +5816,13 @@ TEST_CASE("the editor's start page offers the map files opened lately", "[editor
     editor::run_editor_session();
     CHECK(step == 2);
 }
+
+TEST_CASE("the editor names an entry whose name is empty as unnamed", "[editor_session]") {
+    CHECK(editor::map_editor::entry_name({{"om_terrain", nlohmann::ordered_json::array()}})
+          == "(unnamed)");
+    const auto nested_empty = nlohmann::ordered_json::array({nlohmann::ordered_json::array()});
+    CHECK(editor::map_editor::entry_name({{"om_terrain", nested_empty}}) == "(unnamed)");
+    CHECK(editor::map_editor::entry_name({{"om_terrain", {"a", "b"}}}) == "a, b");
+}
+
+#endif // CATA_MCP
