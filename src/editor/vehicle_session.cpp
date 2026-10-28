@@ -425,6 +425,14 @@ struct session {
         const auto shapes = part_shapes(vpart_id(brush));
         return shapes.empty() ? part_category::frames : category_of(*shapes.front());
     }
+    /// Takes the part `id` in hand, and shows its category, from the first page when that is
+    /// another one.
+    auto hold(std::string id) -> void {
+        const auto before = shown_group();
+        brush = std::move(id);
+        part_group.reset();
+        if (part_filter.empty() && shown_group() != before) { part_page = 0; }
+    }
     auto parts() const -> part_page_entries {
         const auto kinds = part_kinds();
         auto groups =
@@ -1083,8 +1091,7 @@ struct session {
             });
         if (!made || !frame) { return; }
         canvas_tool = "install";
-        brush = frame->str();
-        part_group.reset();
+        hold(frame->str());
         said = _("Pick a part on the left, then click a square next to the frame.");
     }
 
@@ -2477,9 +2484,8 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
         } else if (tool != canvas_tools.end()) {
             state.canvas_tool = tool->key;
         } else if (id == choose_id) {
-            state.brush = std::string(row_rest(row, "vpart").value_or(""));
+            state.hold(std::string(row_rest(row, "vpart").value_or("")));
             state.canvas_tool = "install";
-            state.part_group.reset();
         } else if (id == new_id) {
             state.new_vehicle(text);
         } else if (id == open_id) {
