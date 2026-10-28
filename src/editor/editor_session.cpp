@@ -99,7 +99,7 @@ auto footprint(const session& state) -> session_footprint {
     return {
         .path = state.doc ? state.doc->path().string() : "",
         .object = state.object,
-        .steps = state.doc ? state.doc->history().size() : 0,
+        .steps = state.doc ? state.doc->step_count() : 0,
         .depth = state.doc ? state.doc->depth() : 0,
         .saved = state.doc ? state.doc->saved_depth() : std::nullopt,
         .stamped = state.stamped.has_value(),
