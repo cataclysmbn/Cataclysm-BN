@@ -6097,4 +6097,45 @@ TEST_CASE(
     editor::reset_editor_session();
 }
 
+TEST_CASE(
+    "the editor turns away applying an update mapgen on save, saying why",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = kinds_file{};
+    auto step = 0;
+    const auto notice = [](const ec::screen_view& screen) {
+        const auto* const found = ec::find_component(*screen.root, "editor:notice");
+        return found ? body<ec::text_body>(*found).markup : std::string();
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK(affordance(screen, "editor:apply_on_save").enabled);
+                return invoke("editor:apply_on_save");
+            case 2:
+                return invoke("editor:object", {.row = "object:2"});
+            case 3: {
+                // The game runs an update mapgen on squares it made: saving it applies nothing.
+                const auto& toggle = affordance(screen, "editor:apply_on_save");
+                CHECK_FALSE(toggle.enabled);
+                CHECK(toggle.denial == affordance(screen, "editor:apply").denial);
+                return invoke("editor:save");
+            }
+            case 4:
+                CHECK(notice(screen).empty());
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 5);
+    editor::reset_editor_session();
+}
+
 #endif // CATA_MCP
