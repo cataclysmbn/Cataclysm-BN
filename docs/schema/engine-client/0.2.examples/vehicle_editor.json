@@ -484,40 +484,6 @@
               ]
             },
             {
-              "id": "vehicle:performance",
-              "kind": "panel",
-              "label": "Performance",
-              "slot": "inspector",
-              "title": "",
-              "stats": [
-                {
-                  "key": "speed",
-                  "label": "Safe/Top speed",
-                  "value": "37",
-                  "max": "49",
-                  "unit": "km/h"
-                },
-                {
-                  "key": "power",
-                  "label": "Engine power",
-                  "value": "1",
-                  "unit": "kW"
-                },
-                {
-                  "key": "mass",
-                  "label": "Mass",
-                  "value": "21",
-                  "unit": "kg"
-                },
-                {
-                  "key": "cargo_volume",
-                  "label": "Cargo volume",
-                  "value": "20.00",
-                  "unit": "L"
-                }
-              ]
-            },
-            {
               "id": "vehicle:canvas_tools",
               "kind": "list",
               "label": "Tools",
@@ -910,6 +876,40 @@
                 "selection": "single",
                 "activate": "vehicle:pick"
               }
+            },
+            {
+              "id": "vehicle:performance",
+              "kind": "panel",
+              "label": "Performance",
+              "slot": "inspector",
+              "title": "",
+              "stats": [
+                {
+                  "key": "speed",
+                  "label": "Safe/Top speed",
+                  "value": "37",
+                  "max": "49",
+                  "unit": "km/h"
+                },
+                {
+                  "key": "power",
+                  "label": "Engine power",
+                  "value": "1",
+                  "unit": "kW"
+                },
+                {
+                  "key": "mass",
+                  "label": "Mass",
+                  "value": "21",
+                  "unit": "kg"
+                },
+                {
+                  "key": "cargo_volume",
+                  "label": "Cargo volume",
+                  "value": "20.00",
+                  "unit": "L"
+                }
+              ]
             },
             {
               "id": "vehicle:parts",
@@ -1777,40 +1777,6 @@
               ]
             },
             {
-              "id": "vehicle:performance",
-              "kind": "panel",
-              "label": "Performance",
-              "slot": "inspector",
-              "title": "",
-              "stats": [
-                {
-                  "key": "speed",
-                  "label": "Safe/Top speed",
-                  "value": "0",
-                  "max": "0",
-                  "unit": "km/h"
-                },
-                {
-                  "key": "power",
-                  "label": "Engine power",
-                  "value": "0",
-                  "unit": "kW"
-                },
-                {
-                  "key": "mass",
-                  "label": "Mass",
-                  "value": "22",
-                  "unit": "kg"
-                },
-                {
-                  "key": "cargo_volume",
-                  "label": "Cargo volume",
-                  "value": "20.00",
-                  "unit": "L"
-                }
-              ]
-            },
-            {
               "id": "vehicle:canvas_tools",
               "kind": "list",
               "label": "Tools",
@@ -2233,6 +2199,40 @@
                 "selection": "single",
                 "activate": "vehicle:pick"
               }
+            },
+            {
+              "id": "vehicle:performance",
+              "kind": "panel",
+              "label": "Performance",
+              "slot": "inspector",
+              "title": "",
+              "stats": [
+                {
+                  "key": "speed",
+                  "label": "Safe/Top speed",
+                  "value": "0",
+                  "max": "0",
+                  "unit": "km/h"
+                },
+                {
+                  "key": "power",
+                  "label": "Engine power",
+                  "value": "0",
+                  "unit": "kW"
+                },
+                {
+                  "key": "mass",
+                  "label": "Mass",
+                  "value": "22",
+                  "unit": "kg"
+                },
+                {
+                  "key": "cargo_volume",
+                  "label": "Cargo volume",
+                  "value": "20.00",
+                  "unit": "L"
+                }
+              ]
             },
             {
               "id": "vehicle:parts",
