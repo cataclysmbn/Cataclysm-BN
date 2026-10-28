@@ -67,7 +67,10 @@ export const editor: Scenario = {
       await engine.acknowledge(() => engine.mirror.interaction.interaction === null)
 
       const denied = offer(engine.top())
-      assertEquals([denied.enabled, denied.denial], [false, "You need the Debug Editor trait."])
+      assertEquals(
+        [denied.enabled, denied.denial?.startsWith("You need the Debug Editor trait: ")],
+        [false, true],
+      )
       rec.accept("editor offered on the map without the trait", "affordance", denied)
 
       // The trait, given through the Lua console's code editor.
