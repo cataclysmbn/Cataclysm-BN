@@ -1623,3 +1623,231 @@ TEST_CASE(
     editor::run_vehicle_editor();
     CHECK(step == 7);
 }
+
+TEST_CASE(
+    "the vehicle editor lists its steps in a History the player goes back and forth in",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto labels = [](const ec::screen_view& screen) {
+        return body<ec::list_body>(part(screen, "vehicle:history")).rows
+             | std::views::transform(&ec::row::label) | std::ranges::to<std::vector>();
+    };
+    const auto at_step = [](const ec::screen_view& screen) {
+        const auto& all = body<ec::list_body>(part(screen, "vehicle:history")).rows;
+        return std::ranges::find(all, true, &ec::row::selected)->id;
+    };
+    const auto has_light = [](const ec::screen_view& screen) {
+        return std::ranges::contains(
+            body<ec::list_body>(part(screen, "vehicle:stack")).rows
+                | std::views::transform(&ec::row::label),
+            std::string("headlight"));
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                CHECK(slot_of(screen, "vehicle:history") == "log");
+                CHECK(part(screen, "vehicle:history").label == "History");
+                CHECK(labels(screen) == std::vector<std::string>{"Opened"});
+                return invoke("vehicle:choose", {.row = "vpart:headlight"});
+            case 2:
+                return invoke("vehicle:mount", {.row = "mount:1,0"});
+            case 3:
+                return invoke("vehicle:tool", {.row = "tool:vehicle"});
+            case 4:
+                return invoke("vehicle:prop_set", {.row = "name", .text = "Lit bicycle"});
+            case 5:
+                CHECK(labels(screen)
+                      == std::vector<
+                          std::string>{"Opened", "Install headlight at 1,0", "Change name"});
+                CHECK(row(screen, "vehicle:history", "step:0").description == "Saved");
+                CHECK(at_step(screen) == "step:2");
+                return invoke("vehicle:jump", {.row = "step:0"});
+            case 6:
+                CHECK(at_step(screen) == "step:0");
+                // The later steps stay to go back to.
+                CHECK(labels(screen).size() == 3);
+                CHECK(stat(screen, "saved").value == "Yes");
+                return invoke("vehicle:jump", {.row = "step:1"});
+            case 7:
+                CHECK(at_step(screen) == "step:1");
+                return invoke("vehicle:tool", {.row = "tool:mount"});
+            case 8:
+                CHECK(has_light(screen));
+                return invoke("vehicle:jump", {.row = "step:0"});
+            case 9:
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 10);
+}
+
+TEST_CASE(
+    "the vehicle editor lists the steps of a world vehicle edited in place in its History",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    clear_map();
+    const auto cleanup_vehicles = on_out_of_scope([] { clear_vehicles(); });
+    const auto at = get_avatar().bub_pos() + tripoint_rel_ms(8, 0, 0);
+    REQUIRE(editor::spawn_design(vproto_id("bicycle"), at, {}));
+    const auto labels = [](const ec::screen_view& screen) {
+        return body<ec::list_body>(part(screen, "vehicle:history")).rows
+             | std::views::transform(&ec::row::label) | std::ranges::to<std::vector>();
+    };
+    const auto title = [](const ec::screen_view& screen) {
+        return body<ec::panel_body>(part(screen, "vehicle:live")).title;
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:source", {.row = "source:world"});
+            case 1:
+                return invoke("vehicle:edit", {.row = "world:0"});
+            case 2:
+                CHECK(slot_of(screen, "vehicle:history") == "log");
+                CHECK(labels(screen) == std::vector<std::string>{"Opened"});
+                return invoke("vehicle:choose", {.row = "vpart:headlight"});
+            case 3:
+                return invoke("vehicle:mount", {.row = "mount:1,0"});
+            case 4:
+                return invoke("vehicle:tool", {.row = "tool:vehicle"});
+            case 5:
+                return invoke("vehicle:live_set", {.row = "name", .text = "Mine"});
+            case 6:
+                CHECK(labels(screen)
+                      == std::vector<
+                          std::string>{"Opened", "Install headlight at 1,0", "Rename to Mine"});
+                CHECK(row(screen, "vehicle:history", "step:2").selected);
+                return invoke("vehicle:jump", {.row = "step:0"});
+            case 7:
+                CHECK(title(screen) == "Bicycle");
+                CHECK(row(screen, "vehicle:history", "step:0").selected);
+                CHECK(labels(screen).size() == 3);
+                return invoke("vehicle:jump", {.row = "step:2"});
+            case 8:
+                CHECK(title(screen) == "Mine");
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 9);
+}
+
+TEST_CASE(
+    "the vehicle editor keeps its grid in place while the player picks and installs at its edge",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto grid = [](const ec::screen_view& screen) {
+        return body<ec::grid_body>(part(screen, "vehicle:grid"));
+    };
+    const auto place = [&](const ec::screen_view& screen) {
+        const auto& at = cell(screen, "mount:0,0").at;
+        return std::array{at.x, at.y, grid(screen).cols, grid(screen).rows};
+    };
+    /// The north-west cell of the grid.
+    const auto corner = [&](const ec::screen_view& screen) {
+        const auto& cells = grid(screen).cells;
+        return std::
+            ranges::
+                find_if(cells, [](const ec::grid_cell& entry) {
+                    return entry.at.x == 0 && entry.at.y == 0;
+                })->id;
+    };
+    const auto west = [&](const ec::screen_view& screen) {
+        const auto& cells = grid(screen).cells;
+        const auto& zero = cell(screen, "mount:-1,0").at;
+        return std::
+            ranges::
+                find_if(cells, [&](const ec::grid_cell& entry) {
+                    return entry.at.x == zero.x - 1 && entry.at.y == zero.y;
+                })->id;
+    };
+    auto first = std::array<int, 4>{};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                first = place(screen);
+                return invoke("vehicle:mount", {.row = corner(screen)});
+            case 2:
+                // The cells stay under the pointer.
+                CHECK(place(screen) == first);
+                return invoke("vehicle:choose", {.row = "vpart:xlframe_vertical"});
+            case 3:
+                return invoke("vehicle:mount", {.row = west(screen)});
+            case 4:
+                CHECK(cell(screen, "mount:-2,0").label.find("frame") != std::string::npos);
+                CHECK(place(screen) == first);
+                return invoke("vehicle:undo");
+            case 5:
+                // Nor does taking the part away move them.
+                CHECK(place(screen) == first);
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 6);
+}
+
+TEST_CASE(
+    "the vehicle editor's grid shows every part on a mount, the shown one on top",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto ids = [](const ec::screen_view& screen, const std::string& id) {
+        const auto& grid = body<ec::grid_body>(part(screen, "vehicle:grid"));
+        return cell(screen, id).looks | std::views::transform([&](const int index) {
+                   return grid.looks[index].id.value_or("");
+               })
+             | std::ranges::to<std::vector>();
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1: {
+                const auto front = ids(screen, "mount:1,0");
+                CHECK(std::ranges::is_permutation(
+                    front,
+                    std::vector<std::string>{
+                        "xlframe_vertical", "wheel_mount_light_steerable", "wheel_bicycle"}));
+                // The frame is under the rest, and the part the game shows is on top.
+                CHECK(front.front() == "xlframe_vertical");
+                CHECK(front.back() == "wheel_bicycle");
+                return invoke("vehicle:choose", {.row = "vpart:headlight"});
+            }
+            case 2:
+                return invoke("vehicle:mount", {.row = "mount:1,0"});
+            case 3:
+                CHECK(std::ranges::contains(ids(screen, "mount:1,0"), std::string("headlight")));
+                CHECK(ids(screen, "mount:1,0").size() == 4);
+                return invoke("vehicle:undo");
+            case 4:
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 5);
+}
