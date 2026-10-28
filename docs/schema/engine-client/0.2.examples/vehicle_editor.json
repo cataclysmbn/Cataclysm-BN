@@ -3106,7 +3106,9 @@
           {
             "id": "vehicle:done",
             "label": "Done",
-            "keys": [],
+            "keys": [
+              "CTRL+D"
+            ],
             "enabled": true,
             "expect": "screen",
             "group": "World"
