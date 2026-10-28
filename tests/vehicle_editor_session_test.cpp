@@ -2533,4 +2533,83 @@ TEST_CASE(
     CHECK(step == tabs.size() + 2);
 }
 
+TEST_CASE(
+    "the vehicle editor explains its world actions and says what its empty lists mean",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    clear_map();
+    const auto cleanup_vehicles = on_out_of_scope([] { clear_vehicles(); });
+    const auto top = [](const ec::boundary_state& state) {
+        return nlohmann::json::parse(ec::serialize_interaction_boundary(state))["stack"].back();
+    };
+    const auto description = [&](const ec::boundary_state& state, const std::string& id) {
+        const auto listed = top(state)["affordances"];
+        const auto found = std::ranges::find_if(listed, [&](const nlohmann::json& entry) {
+            return entry.value("id", "") == id;
+        });
+        INFO(id);
+        REQUIRE(found != listed.end());
+        return found->value("description", "");
+    };
+    /// What the list `id` says while it is empty, as the wire has it.
+    const auto empty_text = [&](const ec::boundary_state& state, const std::string& id) {
+        const auto find = [&](this const auto& self, const nlohmann::json& value) -> std::string {
+            if (value.is_object() && value.value("id", "") == id && value.contains("kind")) {
+                return value.value("empty", "");
+            }
+            if (!value.is_structured()) { return ""; }
+            for (const auto& child : value) {
+                if (auto said = self(child); !said.empty()) { return said; }
+            }
+            return "";
+        };
+        return find(top(state)["root"]);
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                CHECK_FALSE(description(state, "vehicle:paste").empty());
+                return invoke("vehicle:filter", {.text = "zzqx_no_such_id"});
+            case 1:
+                CHECK(rows(screen, "vehicle:prototypes").empty());
+                CHECK(empty_text(state, "vehicle:prototypes").find("zzqx_no_such_id")
+                      != std::string::npos);
+                return invoke("vehicle:source", {.row = "source:world"});
+            case 2:
+                CHECK(rows(screen, "vehicle:world").empty());
+                CHECK(empty_text(state, "vehicle:world") == "No vehicle is near you.");
+                for (const auto* const id : {"vehicle:export", "vehicle:copy", "vehicle:edit"}) {
+                    INFO(id);
+                    CHECK_FALSE(description(state, id).empty());
+                }
+                REQUIRE(editor::spawn_design(
+                    vproto_id("bicycle"), get_avatar().bub_pos() + tripoint_rel_ms(8, 0, 0), {}));
+                return invoke("vehicle:edit", {.row = "world:0"});
+            case 3:
+                CHECK_FALSE(description(state, "vehicle:done").empty());
+                return invoke("vehicle:done");
+            case 4:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 5:
+                CHECK_FALSE(description(state, "vehicle:spawn").empty());
+                // A label that says it all needs no more.
+                CHECK(description(state, "vehicle:undo").empty());
+                return invoke("vehicle:part_filter", {.text = "zzqx_no_such_id"});
+            case 6:
+                CHECK(rows(screen, "vehicle:parts").empty());
+                CHECK(empty_text(state, "vehicle:parts").find("zzqx_no_such_id")
+                      != std::string::npos);
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 7);
+}
+
 #endif // CATA_MCP
