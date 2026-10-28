@@ -1527,6 +1527,14 @@ TEST_CASE(
                 return invoke("vehicle:new", {.text = made.string()});
             case 10:
                 CHECK(notice_of(screen) == "That file already exists; nothing was saved.");
+                // A name alone is a file of that name in the player's mods.
+                return invoke("vehicle:new", {.text = "vehicle_editor_new/hand_cart"});
+            case 11:
+                CHECK(body<ec::panel_body>(part(screen, "vehicle:document")).title == "hand_cart");
+                CHECK(std::filesystem::exists(made.parent_path() / "hand_cart.json"));
+                return invoke("vehicle:save_as", {.text = "vehicle_editor_new/barrow"});
+            case 12:
+                CHECK(std::filesystem::exists(made.parent_path() / "barrow.json"));
                 return act("QUIT");
             default:
                 FAIL("the vehicle editor outlived its exit");
@@ -1534,7 +1542,7 @@ TEST_CASE(
         }
     });
     editor::run_vehicle_editor();
-    CHECK(step == 11);
+    CHECK(step == 13);
     const auto saved = nlohmann::ordered_json::parse(read_file(made));
     REQUIRE(saved.size() == 1);
     CHECK(saved[0]["id"] == "go_cart");
