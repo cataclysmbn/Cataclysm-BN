@@ -3048,4 +3048,54 @@ TEST_CASE(
     CHECK(denial.contains("Mutate"));
 }
 
+TEST_CASE(
+    "the vehicle editor sends a canvas tool and a history step as picked on a single click",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    // The affordance `id` as the boundary's wire carries it, null when it is not there.
+    const auto wire_affordance = [](const ec::boundary_state& state, const std::string& id) {
+        const auto wire = nlohmann::json::parse(ec::serialize_interaction_boundary(state));
+        auto found = nlohmann::json();
+        const auto walk = [&](this const auto& self, const nlohmann::json& value) -> void {
+            if (!found.is_null() || !value.is_structured()) { return; }
+            if (value.is_object() && value.contains("affordances")
+                && value["affordances"].is_array()) {
+                for (const auto& entry : value["affordances"]) {
+                    if (entry.is_object() && entry.value("id", "") == id) {
+                        found = entry;
+                        return;
+                    }
+                }
+            }
+            for (const auto& child : value) { self(child); }
+        };
+        walk(wire);
+        return found;
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        switch (step++) {
+            case 0:
+                // Opening a prototype stays an activation, as a double click opens a file.
+                CHECK(wire_affordance(state, "vehicle:open").value("role", "") != "select");
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1: {
+                const auto tool = wire_affordance(state, "vehicle:canvas_tool");
+                REQUIRE_FALSE(tool.is_null());
+                CHECK(tool.value("role", "") == "select");
+                const auto jump = wire_affordance(state, "vehicle:jump");
+                REQUIRE_FALSE(jump.is_null());
+                CHECK(jump.value("role", "") == "select");
+                return act("QUIT");
+            }
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 2);
+}
+
 #endif // CATA_MCP
