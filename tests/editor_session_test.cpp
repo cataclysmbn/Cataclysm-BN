@@ -6944,4 +6944,34 @@ TEST_CASE(
     CHECK(step == 2);
 }
 
+TEST_CASE(
+    "the map editor shows its open file again when the vehicle editor it opened closes",
+    "[editor_session][editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    auto kinds = std::vector<std::string>{};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        kinds.push_back(screen.kind);
+        switch (kinds.size()) {
+            case 1:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 2:
+                REQUIRE(ec::find_component(*screen.root, "editor:document") != nullptr);
+                return invoke("editor:vehicle");
+            case 3:
+                return act("QUIT");
+            case 4:
+                // Back on the file it had open, not on the page that opens one.
+                CHECK(ec::find_component(*screen.root, "editor:document") != nullptr);
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(kinds == std::vector<std::string>{"editor", "editor", "vehicle_editor", "editor"});
+}
+
 #endif // CATA_MCP
