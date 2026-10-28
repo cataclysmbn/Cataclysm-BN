@@ -671,6 +671,12 @@ struct session {
                 }
             } else {
                 const auto parsed = nlohmann::ordered_json::parse(field_value, nullptr, false);
+                // Bare text is a string; text that starts as JSON does is meant as JSON.
+                if (parsed.is_discarded() && field_value.find_first_of("{[\"") == 0) {
+                    notice =
+                        string_format(_("%s is no JSON value; nothing was changed."), field_value);
+                    return;
+                }
                 next[at] = parsed.is_discarded() ? nlohmann::ordered_json(field_value) : parsed;
             }
         } catch (const nlohmann::ordered_json::exception& /*error*/) {
@@ -692,6 +698,18 @@ struct session {
         if (text.empty() && !optional) {
             notice = _("A prototype keeps its name and id.");
             return;
+        }
+        if (field == "flags") {
+            const auto names = listed(text).value_or(nlohmann::ordered_json::array());
+            const auto unknown =
+                std::ranges::find_if(names, [](const nlohmann::ordered_json& name) {
+                    return !flag_id(name.get<std::string>()).is_valid();
+                });
+            if (unknown != names.end()) {
+                notice =
+                    string_format(_("%s is no flag the game knows."), unknown->get<std::string>());
+                return;
+            }
         }
         auto next = prototype();
         const auto value =
