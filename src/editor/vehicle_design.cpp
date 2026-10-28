@@ -2,7 +2,9 @@
 
 #include "calendar.h"
 #include "debug_log_capture.h"
+#include "editor/history_label.h"
 #include "editor/recent_documents.h"
+#include "engine_client_vehicle_look.h"
 #include "flag.h"
 #include "fstream_utils.h"
 #include "item.h"
@@ -621,6 +623,133 @@ auto prototype_file(const std::string& id) -> std::optional<std::filesystem::pat
         }
     }
     return found;
+}
+
+auto mount_looks(const vehicle& veh, const point& at, const int facing)
+    -> std::vector<engine_client::look> {
+    const auto mount = tripoint_mnt_veh(at.x, at.y, 0);
+    auto indexes = veh.parts_at_relative(mount, false);
+    const auto shown = veh.part_displayed_at(mount);
+    if (const auto top = std::ranges::find(indexes, shown); top != indexes.end()) {
+        std::ranges::rotate(top, std::next(top), indexes.end());
+    }
+    return indexes | std::views::transform([&](const int index) {
+               const auto turned = to_degrees(normalize(veh.cpart(index).direction)) + facing;
+               return engine_client::world::vehicle_part_own_appearance(
+                   veh, index, static_cast<int>(std::round(turned)) % 360);
+           })
+         | std::ranges::to<std::vector>();
+}
+
+namespace {
+
+/// The name of the part `id`, or the id when the game has no such part.
+auto part_name(const std::string& id) -> std::string {
+    const auto part = vpart_id(id);
+    return part.is_valid() ? part->name() : id;
+}
+
+/// What an item spawn of a prototype puts, named as the game names it.
+auto spawn_name(const nlohmann::ordered_json& entry) -> std::string {
+    auto names = std::vector<std::string>{};
+    const auto add = [&](const nlohmann::ordered_json& value, const bool group) {
+        const auto one = [&](const nlohmann::ordered_json& id) {
+            if (!id.is_string()) { return id.dump(); }
+            const auto type = itype_id(id.get<std::string>());
+            return !group && type.is_valid() ? item::nname(type) : id.get<std::string>();
+        };
+        if (value.is_array()) {
+            std::ranges::copy(value | std::views::transform(one), std::back_inserter(names));
+        } else {
+            names.push_back(one(value));
+        }
+    };
+    if (entry.contains("items")) { add(entry["items"], false); }
+    if (entry.contains("item_groups")) { add(entry["item_groups"], true); }
+    return join(names, ", ");
+}
+
+/// The entries of `after` that `before` lacks, counting repeats, in `after`'s order.
+template <typename T>
+auto added(const std::vector<T>& before, const std::vector<T>& after) -> std::vector<T> {
+    auto left = before;
+    auto result = std::vector<T>{};
+    for (const auto& entry : after) {
+        if (const auto found = std::ranges::find(left, entry); found != left.end()) {
+            left.erase(found);
+        } else {
+            result.push_back(entry);
+        }
+    }
+    return result;
+}
+
+struct mounted_part {
+    point mount;
+    std::string part;
+    auto operator==(const mounted_part&) const -> bool = default; // *NOPAD*
+};
+
+auto mounted(const nlohmann::ordered_json& prototype) -> std::vector<mounted_part> {
+    return design_parts(prototype) | std::views::transform([](const design_part& entry) {
+               return mounted_part{.mount = entry.mount, .part = entry.part};
+           })
+         | std::ranges::to<std::vector>();
+}
+
+auto at_mount(const char* const format, const std::string& name, const point& at) -> std::string {
+    return string_format(format, name, at.x, at.y);
+}
+
+} // namespace
+
+auto design_step_label(const document_edit& edit) -> std::string {
+    if (!edit.before.is_object() || !edit.after.is_object()) { return step_label(edit); }
+    const auto before = mounted(edit.before);
+    const auto after = mounted(edit.after);
+    if (const auto installed = added(before, after);
+        installed.size() == 1 && after.size() == before.size() + 1) {
+        return at_mount(_("Install %s at %d,%d"), part_name(installed[0].part), installed[0].mount);
+    }
+    if (const auto removed = added(after, before);
+        removed.size() == 1 && before.size() == after.size() + 1) {
+        return at_mount(_("Remove %s at %d,%d"), part_name(removed[0].part), removed[0].mount);
+    }
+    if (before != after && added(before, after).empty()) {
+        const auto moved = std::ranges::mismatch(before, after).in1;
+        return string_format(_("Reorder parts at %d,%d"), moved->mount.x, moved->mount.y);
+    }
+    // A part's own members, such as a tank's fuel.
+    const auto parts = design_parts(edit.after);
+    const auto changed = std::ranges::find_if(parts, [&](const design_part& entry) {
+        const auto at = nlohmann::ordered_json::json_pointer(entry.pointer);
+        return !edit.before.contains(at) || edit.before[at] != edit.after[at];
+    });
+    if (before == after && changed != parts.end()) {
+        return at_mount(_("Set %s at %d,%d"), part_name(changed->part), changed->mount);
+    }
+    const auto spawns = [](const nlohmann::ordered_json& prototype) {
+        const auto items = prototype.value("items", nlohmann::ordered_json::array());
+        return items.is_array()
+                 ? items | std::ranges::to<std::vector>()
+                 : std::vector<nlohmann::ordered_json>{};
+    };
+    const auto spawned = added(spawns(edit.before), spawns(edit.after));
+    const auto taken = added(spawns(edit.after), spawns(edit.before));
+    const auto spawn_at = [](const nlohmann::ordered_json& entry) {
+        return point(entry.value("x", 0), entry.value("y", 0));
+    };
+    if (spawned.size() == 1 && taken.empty()) {
+        return at_mount(_("Add %s at %d,%d"), spawn_name(spawned[0]), spawn_at(spawned[0]));
+    }
+    if (taken.size() == 1 && spawned.empty()) {
+        return at_mount(_("Remove %s at %d,%d"), spawn_name(taken[0]), spawn_at(taken[0]));
+    }
+    if (spawned.size() == 1 && taken.size() == 1) {
+        return at_mount(
+            _("Set chance of %s at %d,%d"), spawn_name(spawned[0]), spawn_at(spawned[0]));
+    }
+    return step_label(edit);
 }
 
 } // namespace editor

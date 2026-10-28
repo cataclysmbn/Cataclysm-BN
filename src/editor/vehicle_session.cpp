@@ -4,6 +4,7 @@
 #include "editor/catalog.h"
 #include "editor/document.h"
 #include "editor/editor_access.h"
+#include "editor/history_label.h"
 #include "editor/recent_documents.h"
 #include "editor/row_id.h"
 #include "editor/session_file.h"
@@ -12,6 +13,7 @@
 #include "editor/workspace.h"
 #include "engine_client_component.h"
 #include "engine_client_part_type.h"
+#include "engine_client_vehicle_look.h"
 #include "engine_client_world.h"
 #include "input.h"
 #include "item_group.h"
@@ -104,9 +106,41 @@ constexpr auto part_set_id = "vehicle:part_set";
 constexpr auto item_add_id = "vehicle:item_add";
 constexpr auto item_remove_id = "vehicle:item_remove";
 constexpr auto item_chance_id = "vehicle:item_chance";
+constexpr auto history_id = "vehicle:history";
+constexpr auto jump_id = "vehicle:jump";
 
 /// How far east of the avatar a spawned vehicle stands, clear of it.
 constexpr auto spawn_distance = 8;
+/// How many free mounts the grid shows around the vehicle when it is first drawn or has to grow.
+constexpr auto grid_margin = 2;
+
+/// The mounts the grid shows, from its north-west corner to its south-east one.
+struct mount_frame {
+    point low;
+    point high;
+    auto operator==(const mount_frame&) const -> bool = default; // *NOPAD*
+};
+
+/// The frame of `points` and `margin` mounts around them.
+auto frame_around(const std::vector<point>& points, const int margin) -> mount_frame {
+    const auto [min_x, max_x] = std::ranges::minmax(points | std::views::transform(&point::x));
+    const auto [min_y, max_y] = std::ranges::minmax(points | std::views::transform(&point::y));
+    return {.low = point(min_x - margin, min_y - margin),
+            .high = point(max_x + margin, max_y + margin)};
+}
+
+/// The name of the part `id`, or the id when the game has no such part.
+auto part_name(const std::string& id) -> std::string {
+    const auto part = vpart_id(id);
+    return part.is_valid() ? part->name() : id;
+}
+
+/// One change of a world's vehicle edited in place: its saved state on the other side of it, and
+/// what it did.
+struct live_step {
+    std::string state;
+    std::string label;
+};
 
 /// What a click on a mount of the grid does, the affordance that picks it and its key.
 struct canvas_tool {
@@ -196,8 +230,12 @@ struct session {
     /// each change to undo and after each undone one to redo.
     vehicle* live = nullptr;
     int live_part = -1;
-    std::vector<std::string> live_undo;
-    std::vector<std::string> live_redo;
+    std::vector<live_step> live_undo;
+    std::vector<live_step> live_redo;
+    /// The mounts the grid shows, which only grow while the same vehicle is edited, so that a
+    /// cell stays under the pointer; what that vehicle is.
+    mount_frame frame;
+    std::string framed;
 
     auto prototype() const -> const nlohmann::ordered_json& { // *NOPAD*
         return doc->objects()[object].value;
@@ -366,6 +404,11 @@ struct session {
         });
     }
 
+    /// `format` with the name `what` and the picked mount, as "Install %s at %d,%d".
+    auto at_mount(const char* const format, const std::string& what) const -> std::string {
+        return string_format(format, what, cursor.x, cursor.y);
+    }
+
     /// Picks the part on top of the picked mount, the one installed last.
     auto pick_top() -> void {
         if (live) {
@@ -397,7 +440,8 @@ struct session {
     auto remove_picked() -> void {
         if (live) {
             if (std::ranges::contains(live_here(), live_part)) {
-                live_change([&](vehicle& veh) { return remove_live_part(veh, live_part); });
+                live_change(at_mount(_("Remove %s at %d,%d"), live->cpart(live_part).info().name()),
+                            [&](vehicle& veh) { return remove_live_part(veh, live_part); });
             } else {
                 notice = _("This mount has no part to remove.");
             }
@@ -442,7 +486,7 @@ struct session {
         if (canvas_tool == "install" && brush.empty()) {
             notice = _("Choose a part from the Parts palette first.");
         } else if (canvas_tool == "install" && live) {
-            live_change([&](vehicle& veh) {
+            live_change(at_mount(_("Install %s at %d,%d"), part_name(brush)), [&](vehicle& veh) {
                 return install_live_part(veh, {.mount = cursor, .part = brush})
                     .transform([](const int /*index*/) {});
             });
@@ -698,6 +742,7 @@ struct session {
         const auto vehicles = get_map().get_vehicles();
         if (index >= vehicles.size()) { return; }
         live = vehicles[index].v;
+        framed.clear();
         cursor = point{};
         live_part = -1;
         pick_top();
@@ -714,25 +759,27 @@ struct session {
         }
     }
 
-    /// Runs `edit` on the vehicle edited in place as one undo step.
-    auto live_change(const std::function<auto(vehicle&)->std::expected<void, std::string>>& edit)
-        -> void {
+    /// Runs `edit` on the vehicle edited in place as one undo step, which `label` names.
+    auto live_change(
+        const std::string& label,
+        const std::function<auto(vehicle&)->std::expected<void, std::string>>& edit) -> void {
         auto before = vehicle_state(*live);
         if (const auto done = edit(*live); !done) {
             notice = done.error();
             return;
         }
-        live_undo.push_back(std::move(before));
+        live_undo.push_back({.state = std::move(before), .label = label});
         live_redo.clear();
     }
 
     /// Puts the vehicle edited in place back to the last state of `from`, keeping the current one
     /// in `to`.
-    auto live_step(std::vector<std::string>& from, std::vector<std::string>& to) -> void {
-        if (from.empty()) { return; }
+    auto step_live(std::vector<live_step>& from, std::vector<live_step>& to) -> void {
+        if (from.empty() || !live) { return; }
         auto now = vehicle_state(*live);
-        const auto restored = restore_vehicle_state(*live, from.back());
+        auto step = std::move(from.back());
         from.pop_back();
+        const auto restored = restore_vehicle_state(*live, step.state);
         if (!restored) {
             notice = restored.error();
             live = nullptr;
@@ -740,32 +787,117 @@ struct session {
         }
         live = *restored;
         live_part = -1;
-        to.push_back(std::move(now));
+        to.push_back({.state = std::move(now), .label = std::move(step.label)});
     }
+
+    /// The steps of the vehicle edited in place, or of the open document.
+    auto history() const -> history_steps {
+        if (!live) { return document_steps(*doc, design_step_label); }
+        auto labels =
+            live_undo | std::views::transform(&live_step::label) | std::ranges::to<std::vector>();
+        std::ranges::
+            copy(live_redo | std::views::reverse | std::views::transform(&live_step::label),
+                 std::back_inserter(labels));
+        return {.labels = std::move(labels), .depth = live_undo.size()};
+    }
+
+    /// Undoes or redoes until `depth` steps are done.
+    auto jump(const std::size_t depth) -> void {
+        if (!live) {
+            if (doc->jump(depth)) { reload(); }
+        } else {
+            while (live && live_undo.size() > depth) { step_live(live_undo, live_redo); }
+            while (live && live_undo.size() < depth && !live_redo.empty()) {
+                step_live(live_redo, live_undo);
+            }
+        }
+        if (live || doc) { keep_pick(); }
+    }
+
+    /// The mounts the vehicle shown has.
+    auto mounts() const -> std::vector<point> {
+        if (live) {
+            return std::views::iota(0, live->part_count())
+                 | std::views::filter([&](const int index) { return !live->cpart(index).removed; })
+                 | std::views::transform([&](const int index) {
+                       return live->cpart(index).mount.xy().raw();
+                   })
+                 | std::ranges::to<std::vector>();
+        }
+        return design_parts(prototype()) | std::views::transform(&design_part::mount)
+             | std::ranges::to<std::vector>();
+    }
+
+    /// Fits the grid to the vehicle shown: a margin of free mounts around it when it is first
+    /// drawn; after that it grows, never shrinks or moves, when the vehicle or the picked mount
+    /// leaves no free mount at its edge.
+    auto fit_frame() -> void {
+        if (!live && !doc) { return; }
+        auto points = mounts();
+        if (points.empty()) { points.push_back(cursor); }
+        // The picked mount needs no free mounts beyond it.
+        const auto around = [&](const int margin) {
+            const auto bounds = frame_around(points, margin);
+            return mount_frame{
+                .low = point(std::min(bounds.low.x, cursor.x), std::min(bounds.low.y, cursor.y)),
+                .high =
+                    point(std::max(bounds.high.x, cursor.x), std::max(bounds.high.y, cursor.y))};
+        };
+        // Undo puts the vehicle edited in place back as a new one, which is still the same.
+        const auto shown =
+            live ? std::string("live") : doc->path().string() + "#" + prototype().value("id", "");
+        if (shown != framed) {
+            framed = shown;
+            frame = around(grid_margin);
+            return;
+        }
+        const auto needed = around(1);
+        if (needed.low.x < frame.low.x || needed.low.y < frame.low.y || needed.high.x > frame.high.x
+            || needed.high.y > frame.high.y) {
+            const auto grown = around(grid_margin);
+            frame =
+                {.low =
+                     point(std::min(frame.low.x, grown.low.x), std::min(frame.low.y, grown.low.y)),
+                 .high = point(
+                     std::max(frame.high.x, grown.high.x), std::max(frame.high.y, grown.high.y))};
+        }
+    }
+
 
     /// Sets the field `field` of the live form.
     auto set_live(const std::string& field, const std::string& text) -> void {
         if (field == "name") {
-            live_change([&](vehicle& veh) -> std::expected<void, std::string> {
-                veh.name = text;
-                return {};
-            });
+            live_change(
+                string_format(_("Rename to %s"), text),
+                [&](vehicle& veh) -> std::expected<void, std::string> {
+                    veh.name = text;
+                    return {};
+                });
             return;
         }
         if (live_part < 0 || live_part >= live->part_count()) {
             notice = _("Pick a part first.");
             return;
         }
+        const auto name = live->cpart(live_part).info().name();
         if (field == "cargo") {
-            live_change([&](vehicle& veh) { return add_part_cargo(veh, live_part, text); });
+            const auto type = itype_id(text);
+            live_change(
+                string_format(_("Put %s in %s"), type.is_valid() ? item::nname(type) : text, name),
+                [&](vehicle& veh) { return add_part_cargo(veh, live_part, text); });
             return;
         }
         if (field == "fuel_type") {
-            live_change([&](vehicle& veh) {
-                return set_part_fuel(
-                    veh, live_part,
-                    {.fuel = text, .amount = std::max(1, veh.part(live_part).ammo_remaining())});
-            });
+            const auto type = itype_id(text);
+            live_change(
+                string_format(
+                    _("Fill %s with %s"), name, type.is_valid() ? item::nname(type) : text),
+                [&](vehicle& veh) {
+                    return set_part_fuel(
+                        veh, live_part,
+                        {.fuel = text,
+                         .amount = std::max(1, veh.part(live_part).ammo_remaining())});
+                });
             return;
         }
         auto value = 0;
@@ -776,9 +908,10 @@ struct session {
             return;
         }
         if (field == "health") {
-            live_change([&](vehicle& veh) { return set_part_health(veh, live_part, value); });
+            live_change(string_format(_("Set health of %s to %d%%"), name, value),
+                        [&](vehicle& veh) { return set_part_health(veh, live_part, value); });
         } else if (field == "fuel") {
-            live_change([&](vehicle& veh) {
+            live_change(string_format(_("Set fuel of %s to %d"), name, value), [&](vehicle& veh) {
                 return set_part_fuel(
                     veh, live_part,
                     {.fuel = veh.part(live_part).ammo_current().str(), .amount = value});
@@ -848,21 +981,20 @@ struct session {
     }
 };
 
-/// The `mounts` of the vehicle `veh` shows and a ring of free ones around them, a cell each, west
-/// to east and north to south as its blueprint reads.
-auto grid_of(const vehicle* const veh, std::vector<point> mounts, const point& cursor)
+/// The mounts of `frame` and any of `mounts` or the picked one outside it, a cell each, west to
+/// east and north to south as its blueprint reads, each showing every part of the vehicle `veh`
+/// on it.
+auto grid_of(const vehicle* const veh, const mount_frame& frame, const point& cursor)
     -> ec::component {
-    mounts.push_back(cursor);
-    const auto [min_x, max_x] = std::ranges::minmax(mounts | std::views::transform(&point::x));
-    const auto [min_y, max_y] = std::ranges::minmax(mounts | std::views::transform(&point::y));
-    const auto origin = point(min_x - 1, min_y - 1);
+    const auto low = point(std::min(frame.low.x, cursor.x), std::min(frame.low.y, cursor.y));
+    const auto high = point(std::max(frame.high.x, cursor.x), std::max(frame.high.y, cursor.y));
     auto palette = ec::look_palette{};
     auto cells = std::vector<ec::grid_cell>{};
-    for (auto y = min_y - 1; y <= max_y + 1; ++y) {
-        for (auto x = min_x - 1; x <= max_x + 1; ++x) {
+    for (auto y = low.y; y <= high.y; ++y) {
+        for (auto x = low.x; x <= high.x; ++x) {
             const auto at = point(x, y);
             auto cell = ec::grid_cell{
-                .at = {x - origin.x, y - origin.y},
+                .at = {x - low.x, y - low.y},
                 .id = point_row("mount", at),
                 .glyph = " ",
                 .affordance = mount_id,
@@ -879,10 +1011,7 @@ auto grid_of(const vehicle* const veh, std::vector<point> mounts, const point& c
                         | std::ranges::to<std::vector>(),
                     ", "));
                 cell.color = string_from_color(veh->part_color(shown));
-                cell.looks = palette.indexes({engine_client::world::vehicle_part_appearance(
-                    *veh, shown,
-                    static_cast<int>(std::round(to_degrees(
-                        normalize(veh->part_display_direction(shown) - veh->face.dir())))))});
+                cell.looks = palette.indexes(mount_looks(*veh, at, 0));
             }
             cells.push_back(std::move(cell));
         }
@@ -891,16 +1020,16 @@ auto grid_of(const vehicle* const veh, std::vector<point> mounts, const point& c
         .id = grid_id,
         .affordances = {mount_id},
         .body = ec::grid_body{
-            .cols = max_x - min_x + 3,
-            .rows = max_y - min_y + 3,
-            .cursor = ec::grid_point{cursor.x - origin.x, cursor.y - origin.y},
+            .cols = high.x - low.x + 1,
+            .rows = high.y - low.y + 1,
+            .cursor = ec::grid_point{cursor.x - low.x, cursor.y - low.y},
             .cells = std::move(cells),
             .looks = std::move(palette.looks),
             .role = "canvas"}};
 }
 
 /// The squares the vehicle `veh` covers on the map when it faces `facing` degrees clockwise from
-/// east, as the game turns it, each showing the part shown on the mount that lands there.
+/// east, as the game turns it, each showing the parts of the mount that lands there.
 auto turned_grid(const vehicle& veh, const int facing) -> ec::component {
     const auto dir = units::from_degrees(facing);
     // The game spawns a vehicle turning it about its (0,0) mount, which lands on the spawn square.
@@ -927,15 +1056,13 @@ auto turned_grid(const vehicle& veh, const int facing) -> ec::component {
     auto palette = ec::look_palette{};
     const auto cells =
         squares | std::views::transform([&](const landed& square) {
-            const auto relative = to_degrees(
-                normalize(veh.part_display_direction(square.part) - veh.face.dir()));
             return ec::grid_cell{
                 .at = {square.at.x - min_x, square.at.y - min_y},
                 .glyph = std::string(1, veh.part_sym(square.part)),
                 .label = remove_color_tags(veh.cpart(square.part).name(false)),
                 .color = string_from_color(veh.part_color(square.part)),
-                .looks = palette.indexes({engine_client::world::vehicle_part_appearance(
-                    veh, square.part, static_cast<int>(std::round(relative + facing)) % 360)})};
+                .looks = palette.indexes(
+                    mount_looks(veh, veh.cpart(square.part).mount.xy().raw(), facing))};
         })
         | std::ranges::to<std::vector>();
     return {
@@ -954,29 +1081,30 @@ auto live_stack(const session& state) -> ec::component {
     const auto mount = tripoint_mnt_veh(state.cursor.x, state.cursor.y, 0);
     return ec::list(
         {.id = stack_id,
-         .rows = veh.parts_at_relative(mount, false) | std::views::transform([&](const int index) {
-                     const auto& part = veh.cpart(index);
-                     auto columns = std::vector<game_client::interaction_column>{
-                         {.key = "health",
-                          .label = _("Health %"),
-                          .value = std::to_string(
-                              static_cast<int>(std::round(part.health_percent() * 100))),
-                          .color = ""}};
-                     if (part.is_fuel_store(false)) {
-                         columns.push_back(
-                             {.key = "fuel",
-                              .label = _("Fuel"),
-                              .value = std::to_string(part.ammo_remaining()),
-                              .color = ""});
-                     }
-                     return ec::row{
-                         .id = index_row("part", index),
-                         .label = part.info().name(),
-                         .selected = index == state.live_part,
-                         .columns = std::move(columns),
-                         .look = engine_client::world::vehicle_part_appearance(veh, index, 270)};
-                 })
-               | std::ranges::to<std::vector>(),
+         .rows =
+             veh.parts_at_relative(mount, false) | std::views::transform([&](const int index) {
+                 const auto& part = veh.cpart(index);
+                 auto columns = std::vector<game_client::interaction_column>{
+                     {.key = "health",
+                      .label = _("Health %"),
+                      .value = std::to_string(
+                          static_cast<int>(std::round(part.health_percent() * 100))),
+                      .color = ""}};
+                 if (part.is_fuel_store(false)) {
+                     columns.push_back(
+                         {.key = "fuel",
+                          .label = _("Fuel"),
+                          .value = std::to_string(part.ammo_remaining()),
+                          .color = ""});
+                 }
+                 return ec::row{
+                     .id = index_row("part", index),
+                     .label = part.info().name(),
+                     .selected = index == state.live_part,
+                     .columns = std::move(columns),
+                     .look = engine_client::world::vehicle_part_own_appearance(veh, index, 270)};
+             })
+             | std::ranges::to<std::vector>(),
          .selection = "single",
          .activate = pick_id});
 }
@@ -1223,6 +1351,14 @@ auto parts_view(const session& state) -> ec::screen_view {
                    | std::ranges::to<std::vector>(),
              .selection = "none"}));
     }
+    // Every step of the open document or of the vehicle edited in place, to go back to.
+    parts.push_back(ec::list(
+        {.id = history_id,
+         .rows = step_rows(state.history()),
+         .selection = "single",
+         .activate = jump_id}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = jump_id, .label = _("Go to step"), .args = row_of(history_id)}));
     // The canvas tools, and the mounts they act on.
     parts.push_back(ec::list(
         {.id = canvas_tools_id,
@@ -1254,14 +1390,7 @@ auto parts_view(const session& state) -> ec::screen_view {
                                        : _("Remove tool"),
              .keys = {entry.hotkey}}));
     }
-    const auto mounts =
-        state.live
-            ? std::views::iota(0, veh->part_count()) | std::views::transform([&](const int index) {
-                  return veh->cpart(index).mount.xy().raw();
-              }) | std::ranges::to<std::vector>()
-            : design_parts(state.prototype()) | std::views::transform(&design_part::mount)
-                  | std::ranges::to<std::vector>();
-    parts.push_back(grid_of(veh, mounts, state.cursor));
+    parts.push_back(grid_of(veh, state.frame, state.cursor));
     // The design column: what the picked mount holds, the settings of the picked part and the
     // vehicle's, its cargo and spawning, and its JSON.
     const auto settings =
@@ -1625,6 +1754,7 @@ auto session_view(const session& state) -> ec::screen_view {
               {performance_id, {.slot = "inspector", .label = _("Performance")}},
               {parts_id, {.slot = "palette", .label = _("Parts")}},
               {problems_id, {.slot = "log", .label = _("Problems")}},
+              {history_id, {.slot = "log", .label = _("History")}},
               {"vehicle:notice", {.slot = "log"}}},
          .groups = std::move(groups),
          .menus = {file, edit, view_menu, world}});
@@ -1647,9 +1777,11 @@ auto live_invoke(
     } else if (id == live_set_id) {
         state.set_live(row, text);
     } else if (id == undo_id) {
-        state.live_step(state.live_undo, state.live_redo);
+        state.step_live(state.live_undo, state.live_redo);
     } else if (id == redo_id) {
-        state.live_step(state.live_redo, state.live_undo);
+        state.step_live(state.live_redo, state.live_undo);
+    } else if (id == jump_id) {
+        if (const auto depth = row_index(row, "step")) { state.jump(*depth); }
     }
     if (state.live && (id == undo_id || id == redo_id)) { state.keep_pick(); }
 }
@@ -1670,6 +1802,8 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
         {.role = "workspace",
          .view = [&](const ec::boundary_state& /*boundary*/) { return session_view(state); }});
     while (true) {
+        state.check_live();
+        state.fit_frame();
         ui_manager::redraw();
         const auto action = ctxt.handle_input();
         const auto invoked = ec::invoked(ctxt.get_raw_input());
@@ -1767,6 +1901,8 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
             }
         } else if (id == field_apply_id) {
             state.set_field();
+        } else if (id == jump_id) {
+            if (const auto depth = row_index(row, "step")) { state.jump(*depth); }
         } else if (id == undo_id || id == redo_id) {
             if (id == undo_id ? state.doc->undo() : state.doc->redo()) {
                 state.reload();

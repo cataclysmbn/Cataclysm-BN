@@ -213,15 +213,14 @@ TEST_CASE(
                             &ec::panel_stat::key)
                             ->value)
                     > 0);
-                // Its three mounts in a row, and a ring of free mounts around them.
+                // Its three mounts in a row, and two rings of free mounts around them.
                 const auto& grid = body<ec::grid_body>(part(screen, "vehicle:grid"));
-                CHECK(grid.cols == 5);
-                CHECK(grid.rows == 3);
+                CHECK(grid.cols == 7);
+                CHECK(grid.rows == 5);
                 CHECK(grid.role == "canvas");
-                CHECK(cell(screen, "mount:-1,0").at == ec::grid_point{1, 1});
-                REQUIRE(cell(screen, "mount:1,0").looks.size() == 1);
-                CHECK(
-                    grid.looks.at(cell(screen, "mount:1,0").looks.front()).kind == "vehicle_part");
+                CHECK(cell(screen, "mount:-1,0").at == ec::grid_point{2, 2});
+                REQUIRE(cell(screen, "mount:1,0").looks.size() == 3);
+                CHECK(grid.looks.at(cell(screen, "mount:1,0").looks.back()).kind == "vehicle_part");
                 CHECK(cell(screen, "mount:2,0").looks.empty());
                 CHECK(cell(screen, "mount:0,0").selected);
                 CHECK(messages(screen).empty());
@@ -232,7 +231,7 @@ TEST_CASE(
                     affordance(screen, "vehicle:redo").keys == std::vector<std::string>{"CTRL+Y"});
                 CHECK(
                     affordance(screen, "vehicle:save").keys == std::vector<std::string>{"CTRL+S"});
-                CHECK(refused(state, "vehicle:mount", {.row = "mount:3,0"}));
+                CHECK(refused(state, "vehicle:mount", {.row = "mount:4,0"}));
                 // The parts are a palette, no tab of their own.
                 CHECK(refused(state, "vehicle:tool", {.row = "tool:install"}));
                 return invoke("vehicle:mount", {.row = "mount:1,0"});

@@ -1,5 +1,6 @@
 #include "engine_client_world.h"
 #include "engine_client_part_type.h"
+#include "engine_client_vehicle_look.h"
 
 #include <algorithm>
 #include <array>
@@ -1130,6 +1131,24 @@ auto vehicle_part_appearance( const vehicle &veh, const int part, const int degr
 }
 
 auto vehicle_part_type_appearance( const vpart_info &info ) -> look { return vehicle_part_look( info, 0, 270 ); }
+
+auto vehicle_part_own_appearance( const vehicle &veh, const int part, const int degrees ) -> look
+{
+    const auto &shown = veh.cpart( part );
+    const auto modifier = veh.part_flag( part, VPFLAG_OPENABLE ) && shown.open ? char{ 1 } :
+                          shown.is_broken() ? char{ 2 } :
+                          char{ 0 };
+    const auto &info = shown.proxy_part_id.is_null() ? shown.info() : shown.proxy_part_id.obj();
+    auto result = vehicle_part_look( info, modifier, degrees );
+    result.glyph = glyph_of( special_symbol( veh.part_sym( part, true ) ) );
+    result.color = color_of( veh.part_color( part, true ) );
+    result.tint_keys = tint_keys_of( shown.info().get_flags(), shown.info().get_id().str() );
+    const auto [bg, fg] = shown.get_color();
+    if( !hex_of( bg ).empty() || !hex_of( fg ).empty() ) {
+        result.tint = look_tint{ .bg = hex_of( bg ), .fg = hex_of( fg ) };
+    }
+    return result;
+}
 
 auto set_tint_ids( std::set<std::string> ids ) -> void
 {
