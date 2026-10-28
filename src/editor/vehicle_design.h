@@ -148,6 +148,16 @@ struct part_fuel {
     int amount = 0;
 };
 
+/// The liquids a prototype's tank may hold, by name.
+auto tank_fuels() -> std::vector<itype_id>;
+
+/// The rounds a prototype's turret part fires, by name; none for a part that is no turret.
+auto turret_rounds(const vpart_id& id) -> std::vector<itype_id>;
+
+/// What the vehicle's part `index` may be filled with, by name: a tank's liquids, else the
+/// charges or rounds its item takes.
+auto part_fuels(const vehicle& veh, int index) -> std::vector<itype_id>;
+
 /// Fills the tank, battery or magazine of the vehicle's part `index`.
 auto set_part_fuel(vehicle& veh, int index, const part_fuel& fuel)
     -> std::expected<void, std::string>;

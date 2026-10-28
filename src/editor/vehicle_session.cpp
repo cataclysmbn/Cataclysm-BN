@@ -197,6 +197,21 @@ auto list_text(const nlohmann::ordered_json& value) -> std::string {
          | std::views::join_with(std::string_view(", ")) | std::ranges::to<std::string>();
 }
 
+/// The choices of a field that names one of `items`, by name; the one it names now leads when it
+/// is none of them, so that the field shows it.
+auto item_options(const std::vector<itype_id>& items, const std::string& current)
+    -> std::vector<ec::form_option> {
+    auto options =
+        items | std::views::transform([](const itype_id& id) {
+            return ec::form_option{.id = id.str(), .label = item::nname(id)};
+        })
+        | std::ranges::to<std::vector>();
+    if (!current.empty() && !std::ranges::contains(options, current, &ec::form_option::id)) {
+        options.insert(options.begin(), {.id = current, .label = current});
+    }
+    return options;
+}
+
 /// The file a name the player typed stands for: a relative one outside the player's mods is in
 /// them, and one with no extension a .json file.
 auto in_mods(const std::string& name) -> std::filesystem::path {
@@ -723,6 +738,11 @@ struct session {
         }
         if (key == "ammo_min" || key == "ammo_max") {
             set_ammo_qty(*index, key == "ammo_max", text);
+            return;
+        }
+        if (key == "fuel" && !text.empty()
+            && !std::ranges::contains(tank_fuels(), itype_id(text))) {
+            notice = string_format(_("%s is no liquid a tank holds."), text);
             return;
         }
         auto value = std::optional<nlohmann::ordered_json>{};
@@ -1319,11 +1339,14 @@ auto live_form(const session& state, const bool part_fields) -> ec::component {
                  .value = std::to_string(part.ammo_remaining()),
                  .type = "integer",
                  .min = 0});
+            const auto current =
+                part.ammo_current().is_null() ? std::string{} : part.ammo_current().str();
             fields.push_back(
                 {.id = "fuel_type",
                  .label = part.is_turret() ? _("Ammunition") : _("Fuel type"),
-                 .value =
-                     part.ammo_current().is_null() ? std::string{} : part.ammo_current().str()});
+                 .value = current,
+                 .type = "select",
+                 .options = item_options(part_fuels(veh, state.live_part), current)});
         }
         if (veh.part_flag(state.live_part, VPFLAG_CARGO)) {
             fields.push_back({.id = "cargo", .label = _("Add item"), .value = ""});
@@ -1353,7 +1376,14 @@ auto part_form(const session& state) -> std::optional<ec::component> {
     };
     auto fields = std::vector<ec::form_field>{};
     if (id.is_valid() && id->has_flag(VPFLAG_FLUIDTANK)) {
-        fields.push_back({.id = "fuel", .label = _("Fuel"), .value = value("fuel")});
+        auto options = item_options(tank_fuels(), value("fuel"));
+        options.insert(options.begin(), {.id = "", .label = _("None")});
+        fields.push_back(
+            {.id = "fuel",
+             .label = _("Fuel"),
+             .value = value("fuel"),
+             .type = "select",
+             .options = std::move(options)});
     }
     if (id.is_valid() && id->has_flag("TURRET")) {
         fields.push_back(

@@ -9,6 +9,7 @@
 #include "flag.h"
 #include "fstream_utils.h"
 #include "item.h"
+#include "item_factory.h"
 #include "itype.h"
 #include "json.h"
 #include "map/map.h"
@@ -28,8 +29,11 @@
 #include <algorithm>
 #include <array>
 #include <fstream>
+#include <functional>
 #include <ranges>
+#include <set>
 #include <sstream>
+#include <tuple>
 
 namespace editor {
 namespace {
@@ -411,6 +415,51 @@ auto set_part_health(vehicle& veh, const int index, const int percent)
     auto& part = veh.part(index);
     veh.set_hp(part, part.info().durability * percent / 100);
     return {};
+}
+
+namespace {
+
+/// The game's item types that `holds`, by name.
+auto items_by_name(const std::function<auto(const itype&)->bool>& holds) -> std::vector<itype_id> {
+    struct named {
+        std::string name;
+        itype_id id;
+    };
+    auto found =
+        item_controller->all() | std::views::filter([&](const itype* type) { return holds(*type); })
+        | std::views::transform([](const itype* type) {
+              return named{.name = item::nname(type->get_id()), .id = type->get_id()};
+          })
+        | std::ranges::to<std::vector>();
+    std::ranges::sort(found, {}, [](const named& entry) { return std::tie(entry.name, entry.id); });
+    return found | std::views::transform(&named::id) | std::ranges::to<std::vector>();
+}
+
+/// The rounds of the ammunition types `types`, by name.
+auto rounds_of(const std::set<ammotype>& types) -> std::vector<itype_id> {
+    return items_by_name([&](const itype& type) {
+        return type.ammo && types.contains(type.ammo->type);
+    });
+}
+
+} // namespace
+
+auto tank_fuels() -> std::vector<itype_id> {
+    return items_by_name([](const itype& type) { return type.phase >= LIQUID; });
+}
+
+auto turret_rounds(const vpart_id& id) -> std::vector<itype_id> {
+    if (!id.is_valid() || !id->has_flag("TURRET") || !id->item.is_valid() || !id->item->gun) {
+        return {};
+    }
+    return rounds_of(id->item->gun->ammo);
+}
+
+auto part_fuels(const vehicle& veh, const int index) -> std::vector<itype_id> {
+    if (index < 0 || index >= veh.part_count()) { return {}; }
+    const auto& part = veh.cpart(index);
+    if (!part.is_fuel_store(false) && !part.is_turret()) { return {}; }
+    return part.is_tank() ? tank_fuels() : rounds_of(part.get_base().ammo_types());
 }
 
 /// The item variable of a part's base naming what the part held before it was emptied.
