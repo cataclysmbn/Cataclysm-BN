@@ -511,6 +511,11 @@ struct session {
     /// Moves the mapgen's own legend into a new palette `name` at the end of the file, which the
     /// mapgen then names last so that its symbols place what they did, as one undo step.
     auto extract_palette(const std::string& name) -> void;
+    /// Whether the game or the file has a palette `name`.
+    auto palette_taken(const std::string& name) const -> bool;
+    /// The id `editor:extract_palette` suggests: the entry's first id and `_palette`, numbered
+    /// past the palettes the game and the file have.
+    auto free_palette_id() const -> std::string;
 
     /// Draws with `picked` and puts its mapping in the legend form: the layer it places on top,
     /// its own mapping before a palette's, and what it places there; terrain and nothing for a

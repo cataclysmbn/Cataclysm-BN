@@ -1042,7 +1042,7 @@ auto drawing_affordances(const session& state) -> std::vector<ec::affordance> {
     affordances.push_back(ec::invoke_affordance(
         {.id = extract_palette_id,
          .label = _("Extract legend to palette"),
-         .args = {.text = ec::text_shape{}}}));
+         .args = {.text = ec::text_shape{.initial = state.free_palette_id()}}}));
     return affordances;
 }
 

@@ -929,14 +929,22 @@ auto session::open(const std::string& name) -> void {
     mapping_symbol = symbol;
 }
 
-auto session::extract_palette(const std::string& name) -> void {
-    if (!on_mapgen()) { return; }
-    const auto taken =
-        palette_id(name).is_valid()
+auto session::palette_taken(const std::string& name) const -> bool {
+    return palette_id(name).is_valid()
         || std::ranges::any_of(doc->objects(), [&](const document_object& entry) {
                return is_palette(entry.value) && entry.value.value("id", "") == name;
            });
-    if (name.empty() || taken) {
+}
+
+auto session::free_palette_id() const -> std::string {
+    const auto ids = entry_ids(doc->objects()[object].value);
+    return free_name((ids.empty() ? std::string("new") : ids.front()) + "_palette",
+                     [&](const std::string& name) { return palette_taken(name); });
+}
+
+auto session::extract_palette(const std::string& name) -> void {
+    if (!on_mapgen()) { return; }
+    if (name.empty() || palette_taken(name)) {
         notice =
             name.empty()
                 ? _("A palette has an id.")
