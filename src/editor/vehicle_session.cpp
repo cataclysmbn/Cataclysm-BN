@@ -152,6 +152,17 @@ auto list_text(const nlohmann::ordered_json& value) -> std::string {
          | std::views::join_with(std::string_view(", ")) | std::ranges::to<std::string>();
 }
 
+/// The file a name the player typed stands for: a relative one outside the player's mods is in
+/// them, and one with no extension a .json file.
+auto in_mods(const std::string& name) -> std::filesystem::path {
+    auto path = std::filesystem::path(name);
+    if (path.is_relative() && !inside(path, PATH_INFO::user_moddir())) {
+        path = std::filesystem::path(PATH_INFO::user_moddir()) / path;
+    }
+    if (!path.has_extension()) { path += ".json"; }
+    return path;
+}
+
 auto copied_vehicle_file() -> std::filesystem::path {
     return std::filesystem::path(PATH_INFO::user_dir()) / "vehicle_copy.json";
 }
@@ -613,7 +624,7 @@ struct session {
         const std::string& name,
         const std::function<auto(const std::string&)->nlohmann::ordered_json>& prototype_of)
         -> void {
-        const auto path = std::filesystem::path(name);
+        const auto path = in_mods(name);
         if (!is_mod_file(path)) {
             notice = string_format(
                 _("A new design goes in a new .json file in your mods, %s."),
@@ -826,7 +837,7 @@ struct session {
 
     auto save() -> bool { return told(save_document(*doc)); }
 
-    auto save_as(const std::string& name) -> void { told(save_document_as(*doc, name)); }
+    auto save_as(const std::string& name) -> void { told(save_document_as(*doc, in_mods(name))); }
 
     /// Whether to leave: at once with nothing unsaved, else as the player answers.
     auto leave() -> bool {
