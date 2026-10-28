@@ -338,8 +338,22 @@ auto refused_mount(const mount_check& check, const point& at) -> std::optional<s
             return touch_refusal;
         }
     }
+    // As vehicle::has_structural_part: a frame, not a protrusion.
+    const auto structural = [&](const point& step) {
+        return std::ranges::any_of(veh.parts_at_relative(square(step), false), [&](const int index) {
+            return info(index).location == "structure" && !info(index).has_flag("PROTRUSION");
+        });
+    };
+    const auto touches =
+        veh.part_count() == 0 || removing || std::ranges::any_of(around, structural);
     if (here.empty() && part.location != "structure") {
-        return string_format(_("%s goes on a frame: install a frame here first."), name);
+        // A frame here would be refused too, for not touching the vehicle's.
+        return touches
+                 ? string_format(_("%s goes on a frame: install a frame here first."), name)
+                 : string_format(
+                       _("%s goes on a frame, and a frame here would not touch the vehicle's "
+                         "frame."),
+                       name);
     }
     if (!here.empty()) {
         const auto& base = info(here.front());
@@ -359,15 +373,7 @@ auto refused_mount(const mount_check& check, const point& at) -> std::optional<s
             return string_format(_("This mount already holds cargo in %s."), other.name());
         }
     }
-    // As vehicle::has_structural_part: a frame, not a protrusion.
-    const auto structural = [&](const point& step) {
-        return std::ranges::any_of(veh.parts_at_relative(square(step), false), [&](const int index) {
-            return info(index).location == "structure" && !info(index).has_flag("PROTRUSION");
-        });
-    };
-    if (veh.part_count() > 0 && !removing && std::ranges::none_of(around, structural)) {
-        return touch_refusal;
-    }
+    if (!touches) { return touch_refusal; }
     if (auto conflict = std::string{}; veh.has_engine_conflict(&part, conflict)) {
         return string_format(
             _("%1$s cannot go with the vehicle's other %2$s engine."), name, conflict);
