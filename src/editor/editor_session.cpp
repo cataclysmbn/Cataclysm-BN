@@ -442,6 +442,9 @@ auto run_editor_session() -> void {
             if (state.selected) { state.roll_loot_in(*state.selected); }
         } else if (id == apply_id) {
             state.apply();
+        } else if (id == apply_on_save_id && state.on_update()) {
+            // An update mapgen is never applied, so the toggle is turned away as it is shown.
+            state.notice = state.square_refusal().value_or("");
         } else if (id == apply_on_save_id) {
             state.apply_on_save = !state.apply_on_save;
         } else if (id == stamp_id) {
