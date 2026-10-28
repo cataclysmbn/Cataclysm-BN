@@ -2,7 +2,9 @@
 
 #include "calendar.h"
 #include "debug_log_capture.h"
+#include "editor/history_label.h"
 #include "editor/recent_documents.h"
+#include "engine_client_vehicle_look.h"
 #include "flag.h"
 #include "fstream_utils.h"
 #include "item.h"
@@ -245,18 +247,22 @@ auto refused_mount(const vehicle& veh, const point& at, const vpart_id& id)
     const auto name = part.name();
     const auto here = veh.parts_at_relative(mount, false);
     const auto info = [&](const int index) -> const vpart_info& { return veh.part_info(index); };
-    const auto structural = [&](const point& square) {
-        return std::ranges::any_of(
-            veh.parts_at_relative(tripoint_mnt_veh(square.x, square.y, 0), false),
-            [&](const int index) {
-                return info(index).location == "structure" || info(index).has_flag("EXTENDABLE");
-            });
+    const auto square = [&](const point& step) {
+        return tripoint_mnt_veh(at.x + step.x, at.y + step.y, 0);
     };
+    constexpr auto around =
+        std::array{point_zero, point_east, point_south, point_west, point_north};
+    const auto touch_refusal = string_format(_("%s must touch the vehicle's frame."), name);
     if (part.has_flag("NOINSTALL")) { return string_format(_("%s cannot be installed."), name); }
-    if (part.has_flag("EXTENDABLE") && !here.empty()) {
-        return string_format(_("%s needs an empty mount of its own."), name);
+    // The game's own order of its rules, so that the reason given is the one that refuses it.
+    if (part.has_flag("EXTENDABLE")) {
+        if (!here.empty()) { return string_format(_("%s needs an empty mount of its own."), name); }
+        if (veh.part_count() > 0) {
+            // It touches a frame or another extendable part, else the game would mount it.
+            return touch_refusal;
+        }
     }
-    if (here.empty() && part.location != "structure" && !part.has_flag("EXTENDABLE")) {
+    if (here.empty() && part.location != "structure") {
         return string_format(_("%s goes on a frame: install a frame here first."), name);
     }
     if (!here.empty()) {
@@ -277,11 +283,19 @@ auto refused_mount(const vehicle& veh, const point& at, const vpart_id& id)
             return string_format(_("This mount already holds cargo in %s."), other.name());
         }
     }
-    if (veh.part_count() > 0
-        && std::ranges::none_of(
-            std::array{point_zero, point_east, point_south, point_west, point_north},
-            [&](const point& step) { return structural(at + step); })) {
-        return string_format(_("%s must touch the vehicle's frame."), name);
+    // As vehicle::has_structural_part: a frame, not a protrusion.
+    const auto structural = [&](const point& step) {
+        return std::ranges::any_of(veh.parts_at_relative(square(step), false), [&](const int index) {
+            return info(index).location == "structure" && !info(index).has_flag("PROTRUSION");
+        });
+    };
+    // As vehicle::is_structural_part_removed: a frame being taken off lets the rest stay put.
+    const auto frame_removed =
+        std::ranges::any_of(std::views::iota(0, veh.part_count()), [&](const int index) {
+            return veh.cpart(index).removed && info(index).location == "structure";
+        });
+    if (veh.part_count() > 0 && !frame_removed && std::ranges::none_of(around, structural)) {
+        return touch_refusal;
     }
     if (auto conflict = std::string{}; veh.has_engine_conflict(&part, conflict)) {
         return string_format(
@@ -304,6 +318,43 @@ auto refused_mount(const vehicle& veh, const point& at, const vpart_id& id)
                  : string_format(
                        _("%1$s needs a part such as %2$s on this mount."), name, example->name());
     }
+    // The first part on the mount that `has` takes, by name.
+    const auto with_flag = [&](const auto& has) -> std::optional<std::string> {
+        const auto found = std::ranges::find_if(here, [&](const int index) {
+            return has(info(index));
+        });
+        return found == here.end() ? std::nullopt : std::optional(info(*found).name());
+    };
+    const auto mirror = [](const vpart_info& entry) {
+        return entry.has_flag("VISION") && !entry.has_flag("CAMERA");
+    };
+    if (mirror(part)) {
+        if (const auto blocking = with_flag([](const vpart_info& entry) {
+                return entry.has_flag("OPAQUE");
+            })) {
+            return string_format(_("%1$s needs a clear view, which %2$s blocks."), name, *blocking);
+        }
+    }
+    if (part.has_flag("OPAQUE")) {
+        if (const auto seeing = with_flag(mirror)) {
+            return string_format(_("%1$s would block the view of %2$s."), name, *seeing);
+        }
+    }
+    if (part.has_flag("TURRET_MOUNT")) {
+        if (const auto mount = with_flag([](const vpart_info& entry) {
+                return entry.has_flag("TURRET_MOUNT");
+            })) {
+            return string_format(_("This mount already has a turret mount, %s."), *mount);
+        }
+    }
+    if (part.has_flag("TURRET_CONTROLS") || part.has_flag("LASER_DESIGNATOR")) {
+        if (const auto manual = with_flag([](const vpart_info& entry) {
+                return entry.has_flag("MANUAL");
+            })) {
+            return string_format(_("%1$s cannot work %2$s, which is fired by hand."), name, *manual);
+        }
+    }
+    if (here.empty()) { return string_format(_("%s cannot go on this mount."), name); }
     const auto names =
         here | std::views::transform([&](const int index) { return info(index).name(); })
         | std::ranges::to<std::vector>();
@@ -621,6 +672,132 @@ auto prototype_file(const std::string& id) -> std::optional<std::filesystem::pat
         }
     }
     return found;
+}
+
+auto mount_looks(const vehicle& veh, const point& at, const int facing)
+    -> std::vector<engine_client::look> {
+    const auto mount = tripoint_mnt_veh(at.x, at.y, 0);
+    auto indexes = veh.parts_at_relative(mount, false);
+    const auto shown = veh.part_displayed_at(mount);
+    if (const auto top = std::ranges::find(indexes, shown); top != indexes.end()) {
+        std::ranges::rotate(top, std::next(top), indexes.end());
+    }
+    return indexes | std::views::transform([&](const int index) {
+               const auto turned = to_degrees(normalize(veh.cpart(index).direction)) + facing;
+               return engine_client::world::vehicle_part_own_appearance(
+                   veh, index, static_cast<int>(std::round(turned)) % 360);
+           })
+         | std::ranges::to<std::vector>();
+}
+
+namespace {
+
+/// The name of the part `id`, or the id when the game has no such part.
+auto part_name(const std::string& id) -> std::string {
+    const auto part = vpart_id(id);
+    return part.is_valid() ? part->name() : id;
+}
+
+/// The entries of `after` that `before` lacks, counting repeats, in `after`'s order.
+template <typename T>
+auto added(const std::vector<T>& before, const std::vector<T>& after) -> std::vector<T> {
+    auto left = before;
+    auto result = std::vector<T>{};
+    for (const auto& entry : after) {
+        if (const auto found = std::ranges::find(left, entry); found != left.end()) {
+            left.erase(found);
+        } else {
+            result.push_back(entry);
+        }
+    }
+    return result;
+}
+
+struct mounted_part {
+    point mount;
+    std::string part;
+    auto operator==(const mounted_part&) const -> bool = default; // *NOPAD*
+};
+
+auto mounted(const nlohmann::ordered_json& prototype) -> std::vector<mounted_part> {
+    return design_parts(prototype) | std::views::transform([](const design_part& entry) {
+               return mounted_part{.mount = entry.mount, .part = entry.part};
+           })
+         | std::ranges::to<std::vector>();
+}
+
+auto at_mount(const char* const format, const std::string& name, const point& at) -> std::string {
+    return string_format(format, name, at.x, at.y);
+}
+
+} // namespace
+
+auto item_spawn_name(const nlohmann::ordered_json& entry) -> std::string {
+    auto names = std::vector<std::string>{};
+    const auto add = [&](const nlohmann::ordered_json& value, const bool group) {
+        const auto one = [&](const nlohmann::ordered_json& id) {
+            if (!id.is_string()) { return id.dump(); }
+            const auto type = itype_id(id.get<std::string>());
+            return !group && type.is_valid() ? item::nname(type) : id.get<std::string>();
+        };
+        if (value.is_array()) {
+            std::ranges::copy(value | std::views::transform(one), std::back_inserter(names));
+        } else {
+            names.push_back(one(value));
+        }
+    };
+    if (entry.contains("items")) { add(entry["items"], false); }
+    if (entry.contains("item_groups")) { add(entry["item_groups"], true); }
+    return join(names, ", ");
+}
+
+auto design_step_label(const document_edit& edit) -> std::string {
+    if (!edit.before.is_object() || !edit.after.is_object()) { return step_label(edit); }
+    const auto before = mounted(edit.before);
+    const auto after = mounted(edit.after);
+    if (const auto installed = added(before, after);
+        installed.size() == 1 && after.size() == before.size() + 1) {
+        return at_mount(_("Install %s at %d,%d"), part_name(installed[0].part), installed[0].mount);
+    }
+    if (const auto removed = added(after, before);
+        removed.size() == 1 && before.size() == after.size() + 1) {
+        return at_mount(_("Remove %s at %d,%d"), part_name(removed[0].part), removed[0].mount);
+    }
+    if (before != after && added(before, after).empty()) {
+        const auto moved = std::ranges::mismatch(before, after).in1;
+        return string_format(_("Reorder parts at %d,%d"), moved->mount.x, moved->mount.y);
+    }
+    // A part's own members, such as a tank's fuel.
+    const auto parts = design_parts(edit.after);
+    const auto changed = std::ranges::find_if(parts, [&](const design_part& entry) {
+        const auto at = nlohmann::ordered_json::json_pointer(entry.pointer);
+        return !edit.before.contains(at) || edit.before[at] != edit.after[at];
+    });
+    if (before == after && changed != parts.end()) {
+        return at_mount(_("Set %s at %d,%d"), part_name(changed->part), changed->mount);
+    }
+    const auto spawns = [](const nlohmann::ordered_json& prototype) {
+        const auto items = prototype.value("items", nlohmann::ordered_json::array());
+        return items.is_array()
+                 ? items | std::ranges::to<std::vector>()
+                 : std::vector<nlohmann::ordered_json>{};
+    };
+    const auto spawned = added(spawns(edit.before), spawns(edit.after));
+    const auto taken = added(spawns(edit.after), spawns(edit.before));
+    const auto spawn_at = [](const nlohmann::ordered_json& entry) {
+        return point(entry.value("x", 0), entry.value("y", 0));
+    };
+    if (spawned.size() == 1 && taken.empty()) {
+        return at_mount(_("Add %s at %d,%d"), item_spawn_name(spawned[0]), spawn_at(spawned[0]));
+    }
+    if (taken.size() == 1 && spawned.empty()) {
+        return at_mount(_("Remove %s at %d,%d"), item_spawn_name(taken[0]), spawn_at(taken[0]));
+    }
+    if (spawned.size() == 1 && taken.size() == 1) {
+        return at_mount(
+            _("Set chance of %s at %d,%d"), item_spawn_name(spawned[0]), spawn_at(spawned[0]));
+    }
+    return step_label(edit);
 }
 
 } // namespace editor
