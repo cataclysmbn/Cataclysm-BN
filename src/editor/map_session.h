@@ -494,6 +494,11 @@ struct session {
     /// mapgen then names last so that its symbols place what they did, as one undo step.
     auto extract_palette(const std::string& name) -> void;
 
+    /// Draws with `picked` and puts its mapping in the legend form: the layer it places on top,
+    /// its own mapping before a palette's, and what it places there; terrain and nothing for a
+    /// symbol nothing maps.
+    auto pick_symbol(const std::string& picked) -> void;
+
     auto set_mapping(const std::string& field, const std::string& text) -> void;
 
     /// Why the rows cannot use `glyph`, counting its own terrain mapping only when `own`: the

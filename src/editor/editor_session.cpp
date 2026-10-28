@@ -329,8 +329,7 @@ auto run_editor_session() -> void {
                 state.anchor.reset();
             }
         } else if (id == symbol_id) {
-            state.symbol = row_rest(row, "symbol").value_or("");
-            state.mapping_symbol = state.symbol;
+            state.pick_symbol(std::string(row_rest(row, "symbol").value_or("")));
         } else if (id == inside_id) {
             state.room_fill = row_rest(row, "symbol").value_or("");
         } else if (id == brush_id) {

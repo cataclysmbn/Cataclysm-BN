@@ -44,6 +44,7 @@
 #include <map>
 #include <optional>
 #include <ranges>
+#include <span>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -928,6 +929,24 @@ auto session::extract_palette(const std::string& name) -> void {
     doc->end_group();
     if (!edited) { notice = edited.error(); }
     reload();
+}
+
+auto session::pick_symbol(const std::string& picked) -> void {
+    symbol = picked;
+    mapping_symbol = picked;
+    const auto found = std::ranges::find(legend, picked, &legend_symbol::symbol);
+    const auto lines = found == legend.end() ? std::span<const legend_line>{} : found->lines;
+    const auto own = std::ranges::find_last_if(lines, &std::string::empty, &legend_line::source);
+    const auto* const top = !own.empty() ? &own.front() : lines.empty() ? nullptr : &lines.back();
+    if (top == nullptr) {
+        mapping_layer = "terrain";
+        mapping_value.clear();
+        return;
+    }
+    mapping_layer = top->layer;
+    // A plain id reads as the form takes it, bare.
+    const auto value = nlohmann::ordered_json::parse(top->value, nullptr, false);
+    mapping_value = value.is_string() ? value.get<std::string>() : top->value;
 }
 
 auto session::set_mapping(const std::string& field, const std::string& text) -> void {
