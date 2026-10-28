@@ -31,6 +31,8 @@
 #include <charconv>
 #include <fstream>
 #include <functional>
+#include <initializer_list>
+#include <map>
 #include <ranges>
 #include <set>
 #include <sstream>
@@ -944,6 +946,142 @@ auto design_step_label(const document_edit& edit) -> std::string {
             _("Set chance of %s at %d,%d"), item_spawn_name(spawned[0]), spawn_at(spawned[0]));
     }
     return step_label(edit);
+}
+
+namespace {
+
+/// How many parts of each kind the game's prototypes install.
+auto part_uses() -> std::map<vpart_id, int> {
+    auto uses = std::map<vpart_id, int>{};
+    for (const auto& id : vehicle_prototype::get_all()) {
+        for (const auto& part : id->parts) { ++uses[part.part]; }
+    }
+    return uses;
+}
+
+/// What tells the shapes of one part apart from other parts, as the game's install menu groups
+/// them: their name and item.
+auto shape_key(const vpart_info& part) -> std::string { return part.name() + part.item.str(); }
+
+/// `shapes` with the one the game's prototypes install most first, the game's order kept among
+/// equals.
+auto most_used_first(std::vector<const vpart_info*> shapes, const std::map<vpart_id, int>& uses)
+    -> std::vector<const vpart_info*> {
+    std::ranges::stable_sort(shapes, std::greater{}, [&](const vpart_info* part) {
+        const auto found = uses.find(part->get_id());
+        return found == uses.end() ? 0 : found->second;
+    });
+    return shapes;
+}
+
+} // namespace
+
+auto category_of(const vpart_info& part) -> part_category {
+    const auto any = [&](const std::initializer_list<const char*> flags) {
+        return std::ranges::any_of(flags, [&](const char* const flag) {
+            return part.has_flag(flag);
+        });
+    };
+    if (part.location == "structure") { return part_category::frames; }
+    if (part.location == "axle" || any({"WHEEL"})) { return part_category::wheels; }
+    if (any({"TURRET", "TURRET_MOUNT", "TURRET_CONTROLS", "LASER_DESIGNATOR"})) {
+        return part_category::weapons;
+    }
+    if (any({"ENGINE", "ALTERNATOR"})) { return part_category::engines; }
+    if (part.location == "fuel_source" || part.location == "on_battery_mount"
+        || any({"FLUIDTANK", "BATTERY_MOUNT"})) {
+        return part_category::fuel;
+    }
+    if (any({"SEAT", "SEATBELT", "BED", "CONTROLS", "CTRL_ELECTRONIC", "REMOTE_CONTROLS"})) {
+        return part_category::seats;
+    }
+    if (any({"OPENABLE", "WINDOW", "WINDSHIELD", "CURTAIN"})) { return part_category::doors; }
+    if (any({"LIGHT", "CONE_LIGHT", "WIDE_CONE_LIGHT", "CIRCLE_LIGHT", "DOME_LIGHT", "AISLE_LIGHT",
+             "ATOMIC_LIGHT"})) {
+        return part_category::lights;
+    }
+    if (any({"CARGO"})) { return part_category::storage; }
+    return part_category::other;
+}
+
+auto category_name(const part_category category) -> std::string {
+    switch (category) {
+        case part_category::frames:
+            return _("Frames");
+        case part_category::wheels:
+            return _("Wheels & hubs");
+        case part_category::engines:
+            return _("Engines & motors");
+        case part_category::fuel:
+            return _("Fuel & batteries");
+        case part_category::seats:
+            return _("Seats & controls");
+        case part_category::doors:
+            return _("Doors & windows");
+        case part_category::lights:
+            return _("Lights");
+        case part_category::storage:
+            return _("Storage");
+        case part_category::weapons:
+            return _("Weapons");
+        case part_category::other:
+            break;
+    }
+    return _("Other");
+}
+
+auto part_kinds() -> std::vector<part_kind> {
+    auto kinds = std::vector<part_kind>{};
+    auto found = std::map<std::string, std::size_t>{};
+    for (const auto& part : vpart_info::get_all()) {
+        const auto [at, added] = found.try_emplace(shape_key(part), kinds.size());
+        if (added) { kinds.emplace_back(); }
+        kinds[at->second].shapes.push_back(&part);
+    }
+    const auto uses = part_uses();
+    for (auto& kind : kinds) {
+        kind.shapes = most_used_first(std::move(kind.shapes), uses);
+        kind.category = category_of(*kind.shapes.front());
+    }
+    std::ranges::stable_sort(kinds, {}, [](const part_kind& kind) {
+        return std::tuple(kind.category, kind.shapes.front()->name());
+    });
+    return kinds;
+}
+
+auto part_shapes(const vpart_id& id) -> std::vector<const vpart_info*> {
+    if (!id.is_valid()) { return {}; }
+    const auto key = shape_key(*id);
+    return most_used_first(
+        vpart_info::get_all() | std::views::filter([&](const vpart_info& part) {
+            return shape_key(part) == key;
+        }) | std::views::transform([](const vpart_info& part) {
+            return &part;
+        }) | std::ranges::to<std::vector>(),
+        part_uses());
+}
+
+auto part_labels(const std::vector<const vpart_info*>& parts) -> std::vector<std::string> {
+    auto named = std::map<std::string, std::vector<std::string>>{};
+    for (const auto* const part : parts) { named[part->name()].push_back(part->get_id().str()); }
+    return parts | std::views::transform([&](const vpart_info* part) {
+               const auto name = part->name();
+               const auto& twins = named[name];
+               if (twins.size() < 2) { return name; }
+               // What the ids of one name share, up to its last `_`, tells none of them apart.
+               auto shared = std::string_view(twins.front());
+               for (const auto& other : twins) {
+                   shared = shared.substr(
+                       0, static_cast<std::size_t>(
+                              std::ranges::mismatch(shared, other).in1 - shared.begin()));
+               }
+               shared = shared.substr(0, shared.rfind('_') + 1);
+               //~ A vehicle part's name, and what tells it from another part of that name, such
+               //~ as "frame (horizontal)".
+               return string_format(
+                   _("%1$s (%2$s)"), name, part->get_id().str().substr(shared.size()));
+           })
+         | std::ranges::to<std::vector>();
 }
 
 } // namespace editor

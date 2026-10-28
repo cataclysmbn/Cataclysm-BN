@@ -364,25 +364,69 @@ struct session {
             {.kind = catalog_kind::vehicle, .filter = filter, .page = page, .page_size = page_size});
     }
 
-    /// The parts that match the filter, ordered by id: every part on all pages, and those on this
-    /// one.
+    /// A row of the parts palette: a part, or the heading of the parts after it.
+    struct palette_entry {
+        std::string id;
+        std::string label;
+        /// None for a heading.
+        const vpart_info* part = nullptr;
+        /// The part in hand is this one, or another shape of it.
+        bool held = false;
+    };
+    /// The rows of the parts palette and how many it has in all: with no filter, one per kind of
+    /// part under the heading of its category, all at once; else a page of the parts that match
+    /// it, ordered by id.
     struct part_page_entries {
-        std::vector<const vpart_info*> shown;
+        std::vector<palette_entry> shown;
         std::size_t total = 0;
     };
     auto parts() const -> part_page_entries {
+        const auto row_of = [&](const vpart_info* part, std::string label, const bool held) {
+            return palette_entry{
+                .id = "vpart:" + part->get_id().str(),
+                .label = std::move(label),
+                .part = part,
+                .held = held};
+        };
+        if (part_filter.empty()) {
+            const auto kinds = part_kinds();
+            const auto labels = part_labels(
+                kinds
+                | std::views::transform([](const part_kind& kind) { return kind.shapes.front(); })
+                | std::ranges::to<std::vector>());
+            auto shown = std::vector<palette_entry>{};
+            for (const auto& [index, kind] : kinds | std::views::enumerate) {
+                const auto at = static_cast<std::size_t>(index);
+                if (at == 0 || kinds[at - 1].category != kind.category) {
+                    shown.push_back(
+                        {.id = string_format("heading:%d", static_cast<int>(kind.category)),
+                         .label = category_name(kind.category)});
+                }
+                shown.push_back(row_of(
+                    kind.shapes.front(), labels[at],
+                    std::ranges::contains(kind.shapes, vpart_id(brush), &vpart_info::get_id)));
+            }
+            const auto total = shown.size();
+            return {.shown = std::move(shown), .total = total};
+        }
         auto found =
             vpart_info::get_all() | std::views::filter([&](const vpart_info& info) {
-                return part_filter.empty() || lcmatch(info.get_id().str(), part_filter)
+                return lcmatch(info.get_id().str(), part_filter)
                     || lcmatch(info.name(), part_filter);
             })
             | std::views::transform([](const vpart_info& info) { return &info; })
             | std::ranges::to<std::vector>();
         std::ranges::sort(found, {}, [](const vpart_info* info) { return info->get_id().str(); });
+        const auto labels = part_labels(found);
         const auto total = found.size();
         const auto first = std::min(total, part_page * page_size);
-        return {.shown = {found.begin() + first, found.begin() + std::min(total, first + page_size)},
-                .total = total};
+        return {
+            .shown = std::views::iota(first, std::min(total, first + page_size))
+                   | std::views::transform([&](const std::size_t at) {
+                         return row_of(found[at], labels[at], found[at]->get_id().str() == brush);
+                     })
+                   | std::ranges::to<std::vector>(),
+            .total = total};
     }
 
     auto reload() -> void {
@@ -802,6 +846,17 @@ struct session {
         }
         if (key == "ammo_min" || key == "ammo_max") {
             set_ammo_qty(*index, key == "ammo_max", text);
+            return;
+        }
+        if (key == "shape") {
+            const auto current = design_parts(prototype())[*index].part;
+            if (!std::ranges::
+                    contains(part_shapes(vpart_id(current)), vpart_id(text), &vpart_info::get_id)) {
+                //~ %1$s is the part id the player gave, %2$s the name of the part picked.
+                notice = string_format(_("%1$s is no shape of %2$s."), text, part_name(current));
+                return;
+            }
+            change(set_part_member(prototype(), {.index = *index, .key = "part", .value = text}));
             return;
         }
         if (key == "fuel" && !text.empty()
@@ -1463,6 +1518,20 @@ auto part_form(const session& state) -> std::optional<ec::component> {
         return state.value_at(design[*index].pointer + "/" + key);
     };
     auto fields = std::vector<ec::form_field>{};
+    if (const auto shapes = part_shapes(id); shapes.size() > 1) {
+        fields.push_back(
+            {.id = "shape",
+             .label = _("Shape"),
+             .value = design[*index].part,
+             .type = "select",
+             .options =
+                 std::views::zip(shapes, part_labels(shapes))
+                 | std::views::transform([](const auto& entry) {
+                       const auto& [shape, label] = entry;
+                       return ec::form_option{.id = shape->get_id().str(), .label = label};
+                   })
+                 | std::ranges::to<std::vector>()});
+    }
     if (id.is_valid() && id->has_flag(VPFLAG_FLUIDTANK)) {
         auto options = item_options(tank_fuels(), value("fuel"));
         options.insert(options.begin(), {.id = "", .label = _("None")});
@@ -1823,35 +1892,45 @@ auto parts_view(const session& state) -> ec::screen_view {
              .enabled = enabled,
              .denial = enabled ? std::string{} : settings_denial}));
     }
+    const auto palette = state.parts();
+    // Without a filter the palette holds every kind of part at once.
+    const auto paged = !state.part_filter.empty();
     const auto installable = [&] {
-        const auto shown = state.parts();
         return ec::list(
             {.id = parts_id,
-             .rows = shown.shown | std::views::transform([&](const vpart_info* info) {
+             .rows = palette.shown | std::views::transform([&](const auto& entry) {
+                         if (entry.part == nullptr) {
+                             return ec::row{
+                                 .id = entry.id,
+                                 .label = entry.label,
+                                 .selectable = false,
+                                 .header = true};
+                         }
+                         const auto& info = *entry.part;
                          // Whether it fits the picked mount, and why not, as the game rules.
                          const auto refused =
-                             veh ? mount_refusal(*veh, state.cursor, info->get_id()) : std::nullopt;
+                             veh ? mount_refusal(*veh, state.cursor, info.get_id()) : std::nullopt;
                          return ec::row{
-                             .id = "vpart:" + info->get_id().str(),
-                             .label = info->name(),
+                             .id = entry.id,
+                             .label = entry.label,
                              .description = refused.value_or(""),
-                             .selected = info->get_id().str() == state.brush,
+                             .selected = entry.held,
                              .columns =
                                  {{.key = "id",
                                    .label = _("ID"),
-                                   .value = info->get_id().str(),
+                                   .value = info.get_id().str(),
                                    .color = ""}},
-                             .look = engine_client::world::vehicle_part_type_appearance(*info)};
+                             .look = engine_client::world::vehicle_part_type_appearance(info)};
                      })
                    | std::ranges::to<std::vector>(),
-             .total = shown.total,
-             .offset = state.part_page * page_size,
+             .total = palette.total,
+             .offset = paged ? state.part_page * page_size : 0,
              .selection = "single",
              .activate = choose_id,
              .filterable = true,
              .filter = state.part_filter,
              .search = part_filter_id,
-             .page = part_page_id,
+             .page = paged ? part_page_id : "",
              .empty = state.part_filter.empty()
                         ? _("No vehicle part is loaded.")
                         //~ %s is the text the player searched the vehicle parts for.
@@ -2070,11 +2149,13 @@ auto parts_view(const session& state) -> ec::screen_view {
         {.id = part_filter_id, .label = _("Filter parts"), .args = {.text = ec::text_shape{}}}));
     affordances.push_back(
         ec::invoke_affordance({.id = choose_id, .label = _("Choose"), .args = row_of(parts_id)}));
-    affordances.push_back(page_affordance(
-        {.id = part_page_id,
-         .label = _("Parts page"),
-         .total = state.parts().total,
-         .page = state.part_page}));
+    if (paged) {
+        affordances.push_back(page_affordance(
+            {.id = part_page_id,
+             .label = _("Parts page"),
+             .total = palette.total,
+             .page = state.part_page}));
+    }
     /// Offers `value` while the tool tab `tab` is shown, the one whose parts it acts on.
     const auto on = [&](const std::string_view tab, ec::affordance value) {
         if (shown_tab == tab) { affordances.push_back(std::move(value)); }

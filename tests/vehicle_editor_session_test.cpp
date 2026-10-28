@@ -1215,8 +1215,10 @@ TEST_CASE("the vehicle editor's parts show what they are", "[editor_vehicle]") {
             case 2: {
                 const auto& rows = body<ec::list_body>(part(screen, "vehicle:parts")).rows;
                 REQUIRE_FALSE(rows.empty());
+                // Every part, under headings that are no part.
                 CHECK(std::ranges::all_of(rows, [](const ec::row& row) {
-                    return row.look && "vpart:" + row.look->id.value_or("") == row.id;
+                    return row.header
+                        || (row.look && "vpart:" + row.look->id.value_or("") == row.id);
                 }));
                 // So do the parts already on the mount.
                 const auto& stack = body<ec::list_body>(part(screen, "vehicle:stack")).rows;
