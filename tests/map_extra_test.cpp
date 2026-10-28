@@ -10,6 +10,7 @@
 #include "mapgen/mapgen_constructor.h"
 #include "overmap/omdata.h"
 #include "point.h"
+#include "rng.h"
 #include "state_helpers.h"
 #include "string_id.h"
 #include "type_id.h"
@@ -22,6 +23,9 @@
 
 TEST_CASE("mx_minefield real spawn", "[.][map_extra][overmap]") {
     clear_all_state();
+    // Each bridgehead rolls the extra one time in five: dice of its own keep the outcome the same
+    // whatever the cases before it rolled.
+    const auto seeded = rng_deterministic_task_scope(1);
     // Pick a point in the middle of the overmap so we don't generate quite so
     // many overmaps when searching.
     const tripoint_abs_omt origin(90, 90, 0);
