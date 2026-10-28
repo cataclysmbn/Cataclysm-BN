@@ -3787,6 +3787,8 @@ TEST_CASE(
             case 0:
                 return invoke("vehicle:new", {.text = "Fit van"});
             case 1:
+                // A single click on a part takes it in hand.
+                CHECK(affordance(screen, "vehicle:choose").role == "select");
                 return invoke("vehicle:mount", {.row = "mount:1,0"});
             case 2:
                 // After an install, the frame in hand fits nowhere it just went: no news.
@@ -3799,23 +3801,34 @@ TEST_CASE(
                 CHECK(fit(screen).empty());
                 return invoke("vehicle:canvas_tool", {.row = "canvas_tool:select"});
             case 4:
-                // Looking around, the palette says why the part in hand would not fit.
-                CHECK(fit(screen) == "This mount already has frame.");
-                return invoke("vehicle:part_filter", {.text = "tank_little"});
+                // Looking around, the palette says nothing of the part in hand already there.
+                CHECK(fit(screen).empty());
+                return invoke("vehicle:mount", {.row = "mount:5,5"});
             case 5:
-                return invoke("vehicle:choose", {.row = "vpart:tank_little"});
-            case 6:
+                // Nor does it hide why the part in hand would not fit elsewhere.
+                CHECK(fit(screen).contains("touch the vehicle's frame"));
                 return invoke("vehicle:mount", {.row = "mount:1,0"});
+            case 6:
+                return invoke("vehicle:part_filter", {.text = "tank_little"});
             case 7:
+                return invoke("vehicle:choose", {.row = "vpart:tank_little"});
+            case 8:
+                return invoke("vehicle:mount", {.row = "mount:1,0"});
+            case 9:
                 // A tank comes empty: the status says where its fuel is set.
                 CHECK(status(screen).starts_with("Installed "));
                 CHECK(status(screen).ends_with(" Set its fuel under Fuel."));
-                return invoke("vehicle:part_filter", {.text = "headlight"});
-            case 8:
-                return invoke("vehicle:choose", {.row = "vpart:headlight"});
-            case 9:
-                return invoke("vehicle:mount", {.row = "mount:1,0"});
+                return invoke("vehicle:canvas_tool", {.row = "canvas_tool:select"});
             case 10:
+                // Moving on, the palette does not call the new tank in the way of itself.
+                CHECK(status(screen).empty());
+                CHECK(fit(screen).empty());
+                return invoke("vehicle:part_filter", {.text = "headlight"});
+            case 11:
+                return invoke("vehicle:choose", {.row = "vpart:headlight"});
+            case 12:
+                return invoke("vehicle:mount", {.row = "mount:1,0"});
+            case 13:
                 CHECK(status(screen) == "Installed headlight at 1,0.");
                 return act("QUIT");
             default:
@@ -3823,7 +3836,7 @@ TEST_CASE(
         }
     });
     editor::run_vehicle_editor();
-    CHECK(step >= 11);
+    CHECK(step >= 14);
 }
 
 #endif // CATA_MCP
