@@ -2541,6 +2541,450 @@ TEST_CASE(
     const auto top = [](const ec::boundary_state& state) {
         return nlohmann::json::parse(ec::serialize_interaction_boundary(state))["stack"].back();
     };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:source", {.row = "source:world"});
+            case 1:
+                return invoke("vehicle:edit", {.row = "world:0"});
+            case 2:
+                return invoke("vehicle:mount", {.row = "mount:-3,1"});
+            case 3:
+                return invoke("vehicle:pick", {.row = named(screen, "mounted M249")});
+            case 4:
+                return invoke("vehicle:show:part");
+            case 5: {
+                const auto& ammo = form_field(screen, "vehicle:live_form", "fuel_type");
+                CHECK(ammo.label == "Ammunition");
+                CHECK(ammo.type == "select");
+                CHECK(offers(ammo, "556"));
+                CHECK_FALSE(offers(ammo, "gasoline"));
+                CHECK(refused(state, "vehicle:live_set", {.row = "fuel_type", .text = "9mm"}));
+                return invoke("vehicle:live_set", {.row = "fuel_type", .text = "556"});
+            }
+            case 6:
+                CHECK(notice_of(screen).empty());
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 7);
+}
+
+TEST_CASE(
+    "the vehicle editor puts a new vehicle in a mod folder of the player's mods and makes that "
+    "folder a mod when it saves",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto mods = std::filesystem::path(PATH_INFO::user_moddir());
+    const auto folder = mods / "vehicle_editor_mod";
+    const auto forget = [&] {
+        std::filesystem::remove_all(folder);
+        std::filesystem::remove(mods / "flat_vehicle.json");
+        std::filesystem::remove(editor::recent_documents_file());
+    };
+    forget();
+    const auto cleanup = on_out_of_scope(forget);
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0: {
+                // The suggested file is in a mod's folder, never loose in the mods.
+                const auto& text = affordance(screen, "vehicle:new").args.text;
+                REQUIRE(text.has_value());
+                CHECK(text->initial.find('/') != std::string::npos);
+                // A file loose in the mods is no mod's, so no world would load it.
+                return invoke("vehicle:new", {.text = "flat_vehicle"});
+            }
+            case 1:
+                CHECK(notice_of(screen).contains("folder"));
+                CHECK_FALSE(std::filesystem::exists(mods / "flat_vehicle.json"));
+                return invoke("vehicle:new", {.text = "vehicle_editor_mod/kart"});
+            case 2:
+                CHECK(body<ec::panel_body>(part(screen, "vehicle:document")).title == "kart");
+                // Nothing is written until the player saves.
+                CHECK(stat(screen, "saved").value == "No");
+                CHECK_FALSE(std::filesystem::exists(folder / "kart.json"));
+                return invoke("vehicle:save");
+            case 3:
+                CHECK(stat(screen, "saved").value == "Yes");
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 4);
+    REQUIRE(std::filesystem::exists(folder / "kart.json"));
+    REQUIRE(std::filesystem::exists(folder / "modinfo.json"));
+    const auto info = nlohmann::ordered_json::parse(read_file(folder / "modinfo.json"));
+    REQUIRE(info.is_array());
+    REQUIRE(info.size() == 1);
+    CHECK(info[0]["type"] == "MOD_INFO");
+    CHECK(info[0]["id"] == "vehicle_editor_mod");
+    CHECK(info[0]["name"] == "vehicle_editor_mod");
+    CHECK(info[0]["category"] == "content");
+    CHECK(
+        info[0]["dependencies"]
+        == nlohmann::ordered_json::array({mod_management::get_default_core_content_pack().str()}));
+    // Opening it again loads that mod, which defines the vehicle.
+    const auto recent = editor::recent_documents();
+    REQUIRE_FALSE(recent.empty());
+    CHECK(recent.front().name == "kart");
+    CHECK(std::ranges::contains(recent.front().mods, mod_id("vehicle_editor_mod")));
+}
+
+TEST_CASE(
+    "the vehicle editor asks before New, Open or Export replace a design with unsaved changes",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    clear_map();
+    const auto cleanup_vehicles = on_out_of_scope([] { clear_vehicles(); });
+    REQUIRE(editor::spawn_design(
+        vproto_id("bicycle"), get_avatar().bub_pos() + tripoint_rel_ms(8, 0, 0), {}));
+    const auto folder = std::filesystem::path(PATH_INFO::user_moddir()) / "vehicle_editor_ask";
+    std::filesystem::remove_all(folder);
+    const auto cleanup = on_out_of_scope([&] { std::filesystem::remove_all(folder); });
+    const auto title = [](const ec::screen_view& screen) {
+        return body<ec::panel_body>(part(screen, "vehicle:document")).title;
+    };
+    auto kinds = std::vector<std::string>{};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        kinds.push_back(screen.kind);
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                return invoke("vehicle:show:vehicle");
+            case 2:
+                return invoke("vehicle:prop_set", {.row = "name", .text = "Unsaved"});
+            case 3:
+                return invoke("vehicle:open", {.row = "prototype:car"});
+            case 4:
+                CHECK(kinds.back() == "uilist");
+                return answer("Stay");
+            case 5:
+                CHECK(title(screen) == "Unsaved");
+                return invoke("vehicle:new", {.text = "vehicle_editor_ask/kart"});
+            case 6:
+                CHECK(kinds.back() == "uilist");
+                return answer("Stay");
+            case 7:
+                CHECK(title(screen) == "Unsaved");
+                CHECK_FALSE(std::filesystem::exists(folder / "kart.json"));
+                return invoke("vehicle:source", {.row = "source:world"});
+            case 8:
+                return invoke("vehicle:export", {.row = "world:0", .text = "vehicle_editor_ask/x"});
+            case 9:
+                CHECK(kinds.back() == "uilist");
+                return answer("Stay");
+            case 10:
+                CHECK(title(screen) == "Unsaved");
+                CHECK_FALSE(std::filesystem::exists(folder / "x.json"));
+                return invoke("vehicle:show:prototypes");
+            case 11:
+                return invoke("vehicle:open", {.row = "prototype:car"});
+            case 12:
+                CHECK(kinds.back() == "uilist");
+                return answer("Leave without saving");
+            case 13:
+                CHECK(title(screen) == "Car");
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 14);
+}
+
+TEST_CASE(
+    "the vehicle editor picks the nearest world vehicle and tells apart vehicles of one name",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    clear_map();
+    const auto cleanup_vehicles = on_out_of_scope([] { clear_vehicles(); });
+    const auto here = get_avatar().bub_pos();
+    auto* const far =
+        editor::spawn_design(vproto_id("bicycle"), here + tripoint_rel_ms(0, 12, 0), {});
+    auto* const near =
+        editor::spawn_design(vproto_id("bicycle"), here + tripoint_rel_ms(8, 0, 0), {});
+    REQUIRE(far != nullptr);
+    REQUIRE(near != nullptr);
+    const auto column = [](const ec::row& entry, const std::string& key) {
+        const auto found =
+            std::ranges::find(entry.columns, key, &game_client::interaction_column::key);
+        REQUIRE(found != entry.columns.end());
+        return found->value;
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:source", {.row = "source:world"});
+            case 1: {
+                const auto& world = rows(screen, "vehicle:world");
+                REQUIRE(world.size() == 2);
+                // The nearest first, picked, so that Copy, Edit in place and Export act on it.
+                CHECK(world[0].selected);
+                CHECK_FALSE(world[1].selected);
+                CHECK(screen.focus_row == world[0].id);
+                CHECK(world[0].label == world[1].label);
+                // The distance has its unit; the direction tells two of a name apart.
+                CHECK(column(world[0], "distance") == "8 squares");
+                CHECK(column(world[0], "direction") == "east");
+                CHECK(column(world[1], "distance") == "12 squares");
+                CHECK(column(world[1], "direction") == "south");
+                // Export suggests a free file name, as New vehicle does.
+                const auto& text = affordance(screen, "vehicle:export").args.text;
+                REQUIRE(text.has_value());
+                CHECK_FALSE(text->initial.empty());
+                return act("QUIT");
+            }
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 2);
+}
+
+TEST_CASE(
+    "the vehicle editor starts with the select tool on a design it opens or starts and on a world "
+    "vehicle it edits in place",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    clear_map();
+    const auto cleanup_vehicles = on_out_of_scope([] { clear_vehicles(); });
+    REQUIRE(editor::spawn_design(
+        vproto_id("bicycle"), get_avatar().bub_pos() + tripoint_rel_ms(8, 0, 0), {}));
+    const auto folder = std::filesystem::path(PATH_INFO::user_moddir()) / "vehicle_editor_tool";
+    std::filesystem::remove_all(folder);
+    const auto cleanup = on_out_of_scope([&] { std::filesystem::remove_all(folder); });
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                CHECK(picked_tool(screen) == "canvas_tool:select");
+                return invoke("vehicle:choose", {.row = "vpart:headlight"});
+            case 2:
+                CHECK(picked_tool(screen) == "canvas_tool:install");
+                return invoke("vehicle:open", {.row = "prototype:car"});
+            case 3:
+                CHECK(picked_tool(screen) == "canvas_tool:select");
+                return invoke("vehicle:tool_install");
+            case 4:
+                return invoke("vehicle:new", {.text = "vehicle_editor_tool/kart"});
+            case 5:
+                CHECK(picked_tool(screen) == "canvas_tool:select");
+                return invoke("vehicle:tool_install");
+            case 6:
+                return invoke("vehicle:source", {.row = "source:world"});
+            case 7:
+                return invoke("vehicle:edit", {.row = "world:0"});
+            case 8:
+                CHECK(picked_tool(screen) == "canvas_tool:select");
+                return invoke("vehicle:done");
+            case 9:
+                return invoke("vehicle:show:prototypes");
+            case 10:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 11:
+                return answer("Leave without saving");
+            case 12:
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 13);
+}
+
+TEST_CASE(
+    "the vehicle editor states in one line which field broken raw JSON breaks and that Undo puts "
+    "it back",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                return invoke("vehicle:show:json");
+            case 2:
+                return invoke("vehicle:field_set", {.row = "pointer", .text = "/parts"});
+            case 3:
+                return invoke("vehicle:field_set", {.row = "value", .text = "42"});
+            case 4:
+                return invoke("vehicle:field_apply");
+            case 5: {
+                const auto said = messages(screen);
+                REQUIRE(said.size() == 2);
+                CHECK(said[0].starts_with("/parts: "));
+                CHECK_FALSE(said[0].contains('\n'));
+                CHECK_FALSE(said[0].contains("Json error"));
+                CHECK(said[1].contains("Undo"));
+                return invoke("vehicle:undo");
+            }
+            case 6:
+                CHECK(messages(screen).empty());
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 7);
+}
+
+TEST_CASE(
+    "the vehicle editor turns away raw JSON that does not parse and a flag the game does not know",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto name = [](const ec::screen_view& screen) {
+        return body<ec::panel_body>(part(screen, "vehicle:document")).title;
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                return invoke("vehicle:show:json");
+            case 2:
+                // Opening picks the top part, so the form points at it until told otherwise.
+                return invoke("vehicle:field_set", {.row = "pointer", .text = "/name"});
+            case 3:
+                return invoke("vehicle:field_set", {.row = "value", .text = "{ broken"});
+            case 4:
+                return invoke("vehicle:field_apply");
+            case 5:
+                CHECK(notice_of(screen).contains("JSON"));
+                CHECK(name(screen) == "Bicycle");
+                CHECK(stat(screen, "saved").value == "Yes");
+                // A bare word is still a string.
+                return invoke("vehicle:field_set", {.row = "value", .text = "Bike"});
+            case 6:
+                return invoke("vehicle:field_apply");
+            case 7:
+                CHECK(name(screen) == "Bike");
+                return invoke("vehicle:show:vehicle");
+            case 8:
+                return invoke("vehicle:prop_set", {.row = "flags", .text = "NOT_A_FLAG"});
+            case 9:
+                CHECK(notice_of(screen).contains("NOT_A_FLAG"));
+                CHECK(form_field(screen, "vehicle:props", "flags").value.empty());
+                return invoke("vehicle:prop_set", {.row = "flags", .text = "VEHICLE_LOCKED"});
+            case 10:
+                CHECK(notice_of(screen).empty());
+                CHECK(form_field(screen, "vehicle:props", "flags").value == "VEHICLE_LOCKED");
+                return invoke("vehicle:undo");
+            case 11:
+                return invoke("vehicle:undo");
+            case 12:
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 13);
+}
+
+TEST_CASE(
+    "the editors' refusal for want of the Debug Editor trait says where to turn it on",
+    "[editor_vehicle][editor_session]") {
+    const auto guard = screen_guard{};
+    get_avatar().unset_mutation(trait_id("DEBUG_EDITOR"));
+    editor::allow_editor_this_session(false);
+    const auto denial = editor::editor_denial();
+    CHECK(denial.contains("Debug Editor"));
+    CHECK(denial.contains("debug menu"));
+    CHECK(denial.contains("Mutate"));
+}
+
+TEST_CASE(
+    "the vehicle editor sends a canvas tool and a history step as picked on a single click",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    // The affordance `id` as the boundary's wire carries it, null when it is not there.
+    const auto wire_affordance = [](const ec::boundary_state& state, const std::string& id) {
+        const auto wire = nlohmann::json::parse(ec::serialize_interaction_boundary(state));
+        auto found = nlohmann::json();
+        const auto walk = [&](this const auto& self, const nlohmann::json& value) -> void {
+            if (!found.is_null() || !value.is_structured()) { return; }
+            if (value.is_object() && value.contains("affordances")
+                && value["affordances"].is_array()) {
+                for (const auto& entry : value["affordances"]) {
+                    if (entry.is_object() && entry.value("id", "") == id) {
+                        found = entry;
+                        return;
+                    }
+                }
+            }
+            for (const auto& child : value) { self(child); }
+        };
+        walk(wire);
+        return found;
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        switch (step++) {
+            case 0:
+                // Opening a prototype stays an activation, as a double click opens a file.
+                CHECK(wire_affordance(state, "vehicle:open").value("role", "") != "select");
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1: {
+                const auto tool = wire_affordance(state, "vehicle:canvas_tool");
+                REQUIRE_FALSE(tool.is_null());
+                CHECK(tool.value("role", "") == "select");
+                const auto jump = wire_affordance(state, "vehicle:jump");
+                REQUIRE_FALSE(jump.is_null());
+                CHECK(jump.value("role", "") == "select");
+                return act("QUIT");
+            }
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 2);
+}
+
+TEST_CASE(
+    "the vehicle editor explains its world actions and says what its empty lists mean",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    clear_map();
+    const auto cleanup_vehicles = on_out_of_scope([] { clear_vehicles(); });
+    const auto top = [](const ec::boundary_state& state) {
+        return nlohmann::json::parse(ec::serialize_interaction_boundary(state))["stack"].back();
+    };
     const auto description = [&](const ec::boundary_state& state, const std::string& id) {
         const auto listed = top(state)["affordances"];
         const auto found = std::ranges::find_if(listed, [&](const nlohmann::json& entry) {
