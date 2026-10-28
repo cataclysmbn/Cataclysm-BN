@@ -942,14 +942,14 @@ void worldfactory::show_active_world_mods( const std::vector<mod_id> &world_mods
 
 void worldfactory::edit_active_world_mods( WORLDINFO *world )
 {
-    if( const auto mods = pick_mods( world->active_mod_order, _( "Save changes?" ) ) ) {
+    if( const auto mods = pick_mods( world->active_mod_order, { .question = _( "Save changes?" ) } ) ) {
         world->active_mod_order = *mods;
         world->save();
     }
 }
 
-auto worldfactory::pick_mods( const std::vector<mod_id> &initial, const std::string &question,
-                              const std::string &heading ) -> std::optional<std::vector<mod_id>>
+auto worldfactory::pick_mods( const std::vector<mod_id> &initial,
+                              const pick_mods_options &options ) -> std::optional<std::vector<mod_id>>
 {
     // set up window
     catacurses::window wf_win;
@@ -972,22 +972,24 @@ auto worldfactory::pick_mods( const std::vector<mod_id> &initial, const std::str
     auto accepted = false;
     auto mods = initial;
     show_modselection_window( wf_win, mods, {
-        .on_quit = [&accepted, &question]()
+        .on_quit = [&accepted, &options]()
         {
-            // The player chose the mods already, so Enter takes them.
-            accepted = query_popup()
+            // Where the player chose the mods to go on with, Enter takes them.
+            accepted = options.yes_first
+            ? query_popup()
             .context( "YESNO" )
-            .message( "%s", question )
+            .message( "%s", options.question )
             .option( "YES" )
             .option( "NO" )
             .cursor( 0 )
             .query()
-            .action == "YES";
+            .action == "YES"
+            : query_yn( "%s", options.question );
             return true;
         },
         .on_backtab = nullptr,
         .standalone = true,
-        .heading = heading
+        .heading = options.heading
     } );
 
     return accepted ? std::optional( mods ) : std::nullopt;
