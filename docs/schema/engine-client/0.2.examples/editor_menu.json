@@ -283,6 +283,13 @@
               "id": "worldgen:mods:header",
               "kind": "panel",
               "title": "",
+              "stats": [
+                {
+                  "key": "heading",
+                  "label": "Turn on the mod that holds your files, then press Esc.",
+                  "value": ""
+                }
+              ],
               "child": {
                 "id": "worldgen:mods:body",
                 "kind": "split",
@@ -3512,7 +3519,7 @@
                   "id": "path",
                   "label": "Path",
                   "description": "The new .json file, inside your mods.",
-                  "value": "profile/mods/new_mapgen.json",
+                  "value": "profile/mods/my_mod/new_mapgen.json",
                   "type": "text",
                   "required": true
                 },

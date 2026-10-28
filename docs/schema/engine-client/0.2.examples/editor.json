@@ -8,7 +8,7 @@
         "label": "Map Editor",
         "keys": [],
         "enabled": false,
-        "denial": "You need the Debug Editor trait.",
+        "denial": "You need the Debug Editor trait: open the debug menu (F12), then Player…, Mutate, and pick Debug Editor.",
         "expect": "screen"
       }
     },
@@ -68,7 +68,7 @@
                   "id": "path",
                   "label": "Path",
                   "description": "The new .json file, inside your mods.",
-                  "value": "profile/mods/new_mapgen.json",
+                  "value": "profile/mods/my_mod/new_mapgen.json",
                   "type": "text",
                   "required": true
                 },
@@ -3578,7 +3578,7 @@
                   "id": "path",
                   "label": "Path",
                   "description": "The new .json file, inside your mods.",
-                  "value": "profile/mods/new_mapgen.json",
+                  "value": "profile/mods/my_mod/new_mapgen.json",
                   "type": "text",
                   "required": true
                 },
@@ -7662,7 +7662,7 @@
                   "id": "path",
                   "label": "Path",
                   "description": "The new .json file, inside your mods.",
-                  "value": "profile/mods/new_mapgen.json",
+                  "value": "profile/mods/my_mod/new_mapgen.json",
                   "type": "text",
                   "required": true
                 },
@@ -11582,7 +11582,7 @@
                   "id": "path",
                   "label": "Path",
                   "description": "The new .json file, inside your mods.",
-                  "value": "profile/mods/new_mapgen.json",
+                  "value": "profile/mods/my_mod/new_mapgen.json",
                   "type": "text",
                   "required": true
                 },
@@ -29260,7 +29260,7 @@
                   "id": "path",
                   "label": "Path",
                   "description": "The new .json file, inside your mods.",
-                  "value": "profile/mods/new_mapgen.json",
+                  "value": "profile/mods/my_mod/new_mapgen.json",
                   "type": "text",
                   "required": true
                 },
