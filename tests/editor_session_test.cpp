@@ -6178,4 +6178,45 @@ TEST_CASE(
     editor::reset_editor_session();
 }
 
+TEST_CASE(
+    "the editor keeps a refusal until an action changes something or refuses anew",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = kinds_file{};
+    auto step = 0;
+    const auto notice = [](const ec::screen_view& screen) {
+        const auto* const found = ec::find_component(*screen.root, "editor:notice");
+        return found ? body<ec::text_body>(*found).markup : std::string();
+    };
+    const auto refused = std::string("cabin_palette is a palette already.");
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                return invoke("editor:extract_palette", {.text = "cabin_palette"});
+            case 2:
+                CHECK(notice(screen) == refused);
+                return invoke("editor:tool", {.row = "tool:select"});
+            case 3:
+                // Picking a tool changes nothing the refusal was about.
+                CHECK(notice(screen) == refused);
+                return invoke("editor:extract_palette", {.text = "editor_session_test_kept"});
+            case 4:
+                CHECK(notice(screen).empty());
+                return invoke("editor:undo");
+            case 5:
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 6);
+    editor::reset_editor_session();
+}
+
 #endif // CATA_MCP
