@@ -343,7 +343,7 @@
       },
       {
         "distribution": [
-          { "group": "military_ballistic_vests_and_plates", "prob": 75 },
+          { "group": "military_ballistic_vests_and_plates", "prob": 50 },
           { "item": "dragonskin", "prob": 15 },
           { "item": "kevlar", "prob": 5 },
           { "item": "exosuit_military", "prob": 5 }
