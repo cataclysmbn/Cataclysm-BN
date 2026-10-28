@@ -505,7 +505,8 @@ Deno.test({
         await invoke("editor:paint", { row: "square:4,3" })
         await invoke("editor:save_as", { text: `${profile}/${saved}` })
         assertEquals(part(session, "editor:document").stats[0].value, "Yes")
-        await invoke("QUIT")
+        // Leaving ends the editor's world, and the command ends with it.
+        assertEquals(await session.submit({ kind: "invoke", affordance_id: "QUIT" }), "interrupted")
       },
       [saved],
     )
@@ -533,8 +534,11 @@ Deno.test({
       async (session, profile) => {
         const invoke = (affordance_id: string, args: Value = {}) =>
           session.run({ kind: "invoke", affordance_id, args })
-        const removeLast = () =>
-          invoke("vehicle:remove", { row: part(session, "vehicle:stack").rows.at(-1).id })
+        // Remove acts on the picked part.
+        const removeLast = async () => {
+          await invoke("vehicle:pick", { row: part(session, "vehicle:stack").rows.at(-1).id })
+          await invoke("vehicle:remove")
+        }
         await invoke("vehicle:open", { row: "prototype:2seater2" })
         const parts = part(session, "vehicle:stack").rows.length
         await removeLast()
@@ -543,12 +547,16 @@ Deno.test({
         await removeLast()
         assertEquals(part(session, "vehicle:stack").rows.length, parts - 2)
         await invoke("vehicle:save_as", { text: `${profile}/${saved}` })
-        assertEquals(part(session, "vehicle:document").stats[0].value, "Yes")
-        await invoke("QUIT")
+        assertEquals(
+          part(session, "vehicle:document").stats.find((stat: Value) => stat.key === "saved").value,
+          "Yes",
+        )
+        // Leaving ends the editor's world, and the command ends with it.
+        assertEquals(await session.submit({ kind: "invoke", affordance_id: "QUIT" }), "interrupted")
       },
       [saved],
     )
-    for (const id of ["open", "remove", "undo", "save_as"]) {
+    for (const id of ["open", "pick", "remove", "undo", "save_as"]) {
       assert(targets.includes(`vehicle:${id}`), `vehicle:${id} is in the recording`)
     }
     assert(recorded[0].length > 0, "a file was saved")
