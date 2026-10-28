@@ -1516,6 +1516,10 @@ auto session_view(const session& state) -> ec::screen_view {
         : state.on_oter() ? (state.terrain_mapgens().empty() ? objects_id : terrains_id)
         : state.doc       ? legend_id
                           : "";
+    // Saving leads the File menu, as editors have it.
+    std::ranges::stable_sort(affordances, {}, [](const ec::affordance& entry) {
+        return entry.id == save_id ? 0 : entry.id == save_as_id ? 1 : 2;
+    });
     auto view = ec::screen_view{
         .title = _("Map Editor"),
         .root = ec::split({.id = "editor:body", .active = active, .children = std::move(parts)}),
