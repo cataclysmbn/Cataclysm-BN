@@ -1,6 +1,7 @@
 #include "editor/vehicle_session.h"
 
 #include "avatar.h"
+#include "calendar.h"
 #include "editor/catalog.h"
 #include "editor/document.h"
 #include "editor/editor_access.h"
@@ -16,6 +17,7 @@
 #include "engine_client_vehicle_look.h"
 #include "engine_client_world.h"
 #include "input.h"
+#include "item.h"
 #include "item_group.h"
 #include "json_formatter.h"
 #include "line.h"
@@ -108,6 +110,12 @@ constexpr auto item_remove_id = "vehicle:item_remove";
 constexpr auto item_chance_id = "vehicle:item_chance";
 constexpr auto history_id = "vehicle:history";
 constexpr auto jump_id = "vehicle:jump";
+constexpr auto item_kinds_id = "vehicle:item_kinds";
+constexpr auto item_catalog_id = "vehicle:item_catalog";
+constexpr auto item_kind_id = "vehicle:item_kind";
+constexpr auto item_filter_id = "vehicle:item_filter";
+constexpr auto item_page_id = "vehicle:item_page";
+constexpr auto item_pick_id = "vehicle:item_pick";
 
 /// How far east of the avatar a spawned vehicle stands, clear of it.
 constexpr auto spawn_distance = 8;
@@ -206,6 +214,13 @@ struct session {
     /// The prototype's object in `doc`.
     std::size_t object = 0;
     std::string notice;
+    /// What the last action did to the world, when it did something the editor does not show.
+    std::string said;
+    /// What the items palette lists: items or item groups, those that match the filter, and the
+    /// page shown.
+    catalog_kind item_kind = catalog_kind::item;
+    std::string item_filter;
+    std::size_t item_page = 0;
     /// What the game builds from the object now.
     built_design built;
     point cursor;
@@ -239,6 +254,11 @@ struct session {
 
     auto prototype() const -> const nlohmann::ordered_json& { // *NOPAD*
         return doc->objects()[object].value;
+    }
+
+    auto items_found() const -> catalog_page {
+        return search_catalog(
+            {.kind = item_kind, .filter = item_filter, .page = item_page, .page_size = page_size});
     }
 
     auto prototypes() const -> catalog_page {
@@ -526,16 +546,35 @@ struct session {
 
     auto set_field() -> void {
         auto next = prototype();
+        if (!field_pointer.starts_with('/')) {
+            notice = _("A pointer starts with /, as /name does.");
+            return;
+        }
         try {
             const auto at = nlohmann::ordered_json::json_pointer(field_pointer);
+            const auto parent = at.parent_pointer();
+            // As a JSON patch adds: into an object or array that is there.
+            if (!next.contains(parent) || !(next[parent].is_object() || next[parent].is_array())) {
+                notice = string_format(
+                    _("The prototype has nothing at %s to hold %s."),
+                    parent.empty() ? std::string("/") : parent.to_string(), at.back());
+                return;
+            }
             if (field_value.empty()) {
-                next.at(at.parent_pointer()).erase(at.back());
+                if (!next.contains(at)) {
+                    notice = string_format(
+                        _("The prototype has nothing at %s to remove."), field_pointer);
+                    return;
+                }
+                next.at(parent).erase(at.back());
             } else {
                 const auto parsed = nlohmann::ordered_json::parse(field_value, nullptr, false);
                 next[at] = parsed.is_discarded() ? nlohmann::ordered_json(field_value) : parsed;
             }
-        } catch (const nlohmann::ordered_json::exception& e) {
-            notice = e.what();
+        } catch (const nlohmann::ordered_json::exception& /*error*/) {
+            notice = string_format(
+                _("%s names no place in the prototype: a list takes a number or -."),
+                field_pointer);
             return;
         }
         if (!next.is_object() || next.value("type", "") != "vehicle" || !next.contains("id")) {
@@ -742,7 +781,11 @@ struct session {
         if (index >= vehicles.size()) { return; }
         auto out = std::ofstream(copied_vehicle_file(), std::ios::binary);
         out << vehicle_state(*vehicles[index].v);
-        if (!out.flush()) { notice = _("The file could not be written."); }
+        if (!out.flush()) {
+            notice = _("The file could not be written.");
+            return;
+        }
+        said = string_format(_("Copied %s; paste it in any world."), vehicles[index].v->name);
     }
 
     /// Places an exact copy of the copied vehicle south of the avatar, clear of a spawned one.
@@ -756,6 +799,9 @@ struct session {
         const auto at = get_avatar().bub_pos() + tripoint_rel_ms(0, spawn_distance, 0);
         if (const auto placed = place_vehicle_state(state, at); !placed) {
             notice = placed.error();
+        } else {
+            said = string_format(
+                _("Pasted %s %d squares south of you."), (*placed)->name, spawn_distance);
         }
     }
 
@@ -950,10 +996,13 @@ struct session {
             return false;
         }
         const auto at = get_avatar().bub_pos() + tripoint_rel_ms(spawn_distance, 0, 0);
-        if (!spawn_design(*applied, at, spawning)) {
+        const auto* const spawned = spawn_design(*applied, at, spawning);
+        if (!spawned) {
             notice = _("Something is in the way of the vehicle there.");
             return false;
         }
+        said =
+            string_format(_("Spawned %s %d squares east of you."), spawned->name, spawn_distance);
         return true;
     }
 
@@ -1251,6 +1300,10 @@ auto parts_view(const session& state) -> ec::screen_view {
         parts.push_back(
             {.id = "vehicle:notice",
              .body = ec::text_body{.markup = state.notice, .tone = "bad", .role = "prompt"}});
+    }
+    if (!state.said.empty()) {
+        parts.push_back(
+            {.id = "vehicle:status", .body = ec::text_body{.markup = state.said, .tone = "good"}});
     }
     const auto found = state.prototypes();
     const auto vehicles = get_map().get_vehicles();
@@ -1575,32 +1628,17 @@ auto parts_view(const session& state) -> ec::screen_view {
         }
         if (tab == "cargo") {
             const auto& items = state.prototype()["items"];
-            /// What a spawn's `items` or `item_groups` names, as written.
-            const auto named = [](const nlohmann::ordered_json& value) {
-                const auto one = [](const nlohmann::ordered_json& entry) {
-                    return entry.is_string() ? entry.get<std::string>() : entry.dump();
-                };
-                return value.is_array()
-                         ? join(value | std::views::transform(one) | std::ranges::to<std::vector>(),
-                                ", ")
-                         : one(value);
-            };
             return ec::list(
                 {.id = items_id,
                  .rows = state.item_spawns() | std::views::transform([&](const std::size_t index) {
                              const auto& entry = items[index];
-                             const auto names =
-                                 std::array{"items", "item_groups"}
-                                 | std::views::filter([&](const char* const key) {
-                                       return entry.contains(key);
-                                   })
-                                 | std::views::transform([&](const char* const key) {
-                                       return named(entry[key]);
-                                   })
-                                 | std::ranges::to<std::vector>();
                              return ec::row{
                                  .id = index_row("item", index),
-                                 .label = join(names, ", "),
+                                 .label = item_spawn_name(entry),
+                                 .description =
+                                     entry.contains("item_groups")
+                                         ? std::string(_("Item group"))
+                                         : std::string{},
                                  .columns = {
                                      {.key = "chance",
                                       .label = _("Chance %"),
@@ -1662,6 +1700,51 @@ auto parts_view(const session& state) -> ec::screen_view {
     // The vehicle's figures, under the design they follow from.
     if (veh) { parts.push_back(ec::panel({.id = performance_id, .stats = design_stats(*veh)})); }
     parts.push_back(installable());
+    // The items an item spawn puts, while the item spawns show.
+    if (!state.live && shown_tab == "cargo") {
+        const auto found = state.items_found();
+        const auto group = state.item_kind == catalog_kind::item_group;
+        parts.push_back(ec::tabs(
+            {.id = item_kinds_id,
+             .tabs = {{.id = "kind:item", .label = _("Items"), .selected = !group},
+                      {.id = "kind:item_group", .label = _("Item groups"), .selected = group}},
+             .select = item_kind_id,
+             .child = ec::list(
+                 {.id = item_catalog_id,
+                  .rows =
+                      found.entries | std::views::transform([&](const catalog_entry& entry) {
+                          const auto type = itype_id(entry.id);
+                          return ec::row{
+                              .id = (group ? "group:" : "item:") + entry.id,
+                              .label = entry.name,
+                              .columns =
+                                  {{.key = "id", .label = _("ID"), .value = entry.id, .color = ""}},
+                              .look = !group && type.is_valid()
+                                        ? std::optional(engine_client::world::item_appearance(
+                                              *item::spawn_temporary(type, calendar::turn)))
+                                        : std::nullopt};
+                      })
+                      | std::ranges::to<std::vector>(),
+                  .total = found.total,
+                  .offset = state.item_page * page_size,
+                  .selection = "single",
+                  .activate = item_pick_id,
+                  .filterable = true,
+                  .filter = state.item_filter,
+                  .search = item_filter_id,
+                  .page = item_page_id})}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = item_kind_id, .label = _("Show"), .args = row_of(item_kinds_id)}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = item_filter_id, .label = _("Filter items"), .args = {.text = ec::text_shape{}}}));
+        affordances.push_back(page_affordance(
+            {.id = item_page_id,
+             .label = _("Items page"),
+             .total = found.total,
+             .page = state.item_page}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = item_pick_id, .label = _("Add here"), .args = row_of(item_catalog_id)}));
+    }
     affordances.push_back(
         ec::invoke_affordance({.id = tool_id, .label = _("Tab"), .args = row_of(tools_id)}));
     affordances.push_back(
@@ -1780,7 +1863,9 @@ auto session_view(const session& state) -> ec::screen_view {
               {parts_id, {.slot = "palette", .label = _("Parts")}},
               {problems_id, {.slot = "log", .label = _("Problems")}},
               {history_id, {.slot = "log", .label = _("History")}},
-              {"vehicle:notice", {.slot = "log"}}},
+              {"vehicle:notice", {.slot = "log"}},
+              {"vehicle:status", {.slot = "log"}},
+              {item_kinds_id, {.slot = "palette", .label = _("Items")}}},
          .groups = std::move(groups),
          .menus = {file, edit, view_menu, world}});
     return view;
@@ -1844,6 +1929,7 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
         const auto row = invoked->args.row.value_or("");
         const auto text = invoked->args.text.value_or("");
         state.notice.clear();
+        state.said.clear();
         state.watch();
         const auto tool = std::ranges::find(canvas_tools, id, &canvas_tool::affordance);
         if (id == source_id || id == tool_id) {
@@ -1910,6 +1996,18 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
         } else if (id == item_add_id) {
             state.tool_tab = "cargo";
             state.add_item(text);
+        } else if (id == item_kind_id) {
+            state.item_kind =
+                row == "kind:item_group" ? catalog_kind::item_group : catalog_kind::item;
+            state.item_page = 0;
+        } else if (id == item_filter_id) {
+            state.item_filter = text;
+            state.item_page = 0;
+        } else if (id == item_page_id) {
+            state.item_page = static_cast<std::size_t>(invoked->args.count.value_or(0));
+        } else if (id == item_pick_id) {
+            state.add_item(std::string(
+                row_rest(row, "item").or_else([&] { return row_rest(row, "group"); }).value_or("")));
         } else if (id == item_remove_id || id == item_chance_id) {
             if (const auto index = row_index(row, "item")) {
                 state.edit_item(

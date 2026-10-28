@@ -161,6 +161,10 @@ auto add_part_cargo(vehicle& veh, int index, const std::string& item_id)
 auto mount_looks(const vehicle& veh, const point& at, int facing)
     -> std::vector<engine_client::look>;
 
+/// What an item spawn of a prototype's `items` puts, as the game names it: an item by its name,
+/// a group by its id.
+auto item_spawn_name(const nlohmann::ordered_json& entry) -> std::string;
+
 /// What an edit of a prototype did, in a designer's words: the part installed, removed, reordered
 /// or set and its mount, or the item spawn added or removed; else what `step_label` says.
 auto design_step_label(const document_edit& edit) -> std::string;

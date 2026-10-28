@@ -698,26 +698,6 @@ auto part_name(const std::string& id) -> std::string {
     return part.is_valid() ? part->name() : id;
 }
 
-/// What an item spawn of a prototype puts, named as the game names it.
-auto spawn_name(const nlohmann::ordered_json& entry) -> std::string {
-    auto names = std::vector<std::string>{};
-    const auto add = [&](const nlohmann::ordered_json& value, const bool group) {
-        const auto one = [&](const nlohmann::ordered_json& id) {
-            if (!id.is_string()) { return id.dump(); }
-            const auto type = itype_id(id.get<std::string>());
-            return !group && type.is_valid() ? item::nname(type) : id.get<std::string>();
-        };
-        if (value.is_array()) {
-            std::ranges::copy(value | std::views::transform(one), std::back_inserter(names));
-        } else {
-            names.push_back(one(value));
-        }
-    };
-    if (entry.contains("items")) { add(entry["items"], false); }
-    if (entry.contains("item_groups")) { add(entry["item_groups"], true); }
-    return join(names, ", ");
-}
-
 /// The entries of `after` that `before` lacks, counting repeats, in `after`'s order.
 template <typename T>
 auto added(const std::vector<T>& before, const std::vector<T>& after) -> std::vector<T> {
@@ -751,6 +731,25 @@ auto at_mount(const char* const format, const std::string& name, const point& at
 }
 
 } // namespace
+
+auto item_spawn_name(const nlohmann::ordered_json& entry) -> std::string {
+    auto names = std::vector<std::string>{};
+    const auto add = [&](const nlohmann::ordered_json& value, const bool group) {
+        const auto one = [&](const nlohmann::ordered_json& id) {
+            if (!id.is_string()) { return id.dump(); }
+            const auto type = itype_id(id.get<std::string>());
+            return !group && type.is_valid() ? item::nname(type) : id.get<std::string>();
+        };
+        if (value.is_array()) {
+            std::ranges::copy(value | std::views::transform(one), std::back_inserter(names));
+        } else {
+            names.push_back(one(value));
+        }
+    };
+    if (entry.contains("items")) { add(entry["items"], false); }
+    if (entry.contains("item_groups")) { add(entry["item_groups"], true); }
+    return join(names, ", ");
+}
 
 auto design_step_label(const document_edit& edit) -> std::string {
     if (!edit.before.is_object() || !edit.after.is_object()) { return step_label(edit); }
@@ -789,14 +788,14 @@ auto design_step_label(const document_edit& edit) -> std::string {
         return point(entry.value("x", 0), entry.value("y", 0));
     };
     if (spawned.size() == 1 && taken.empty()) {
-        return at_mount(_("Add %s at %d,%d"), spawn_name(spawned[0]), spawn_at(spawned[0]));
+        return at_mount(_("Add %s at %d,%d"), item_spawn_name(spawned[0]), spawn_at(spawned[0]));
     }
     if (taken.size() == 1 && spawned.empty()) {
-        return at_mount(_("Remove %s at %d,%d"), spawn_name(taken[0]), spawn_at(taken[0]));
+        return at_mount(_("Remove %s at %d,%d"), item_spawn_name(taken[0]), spawn_at(taken[0]));
     }
     if (spawned.size() == 1 && taken.size() == 1) {
         return at_mount(
-            _("Set chance of %s at %d,%d"), spawn_name(spawned[0]), spawn_at(spawned[0]));
+            _("Set chance of %s at %d,%d"), item_spawn_name(spawned[0]), spawn_at(spawned[0]));
     }
     return step_label(edit);
 }
