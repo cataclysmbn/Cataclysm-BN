@@ -2958,6 +2958,55 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the editor opens the mapgen of an overmap terrain named by its type, building or name",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    auto step = 0;
+    const auto path = [](const ec::screen_view& screen) {
+        return body<ec::form_body>(part(screen, "editor:file")).fields.front().value;
+    };
+    const auto notice = [](const ec::screen_view& screen) {
+        const auto* const found = ec::find_component(*screen.root, "editor:notice");
+        return found ? body<ec::text_body>(*found).markup : std::string();
+    };
+    const auto status = [](const ec::screen_view& screen) {
+        const auto* const found = ec::find_component(*screen.root, "editor:status");
+        return found ? body<ec::text_body>(*found).markup : std::string();
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                // A type without its direction, as the mapgen's om_terrain names it.
+                return invoke("editor:open_oter", {.text = "2StoryModern06_1"});
+            case 1:
+                CHECK(notice(screen).empty());
+                CHECK(path(screen).ends_with("mapgen/house/2storymodern06.json"));
+                // A building opens the mapgen of its ground square.
+                return invoke("editor:open_oter", {.text = "house_two_story_basement"});
+            case 2:
+                CHECK(notice(screen).empty());
+                CHECK(path(screen).ends_with("mapgen/house/house_2story.json"));
+                CHECK(status(screen).find("house_2story_base") != std::string::npos);
+                // The name the overmap shows opens the first terrain of that name.
+                return invoke("editor:open_oter", {.text = "house"});
+            case 3:
+                CHECK(notice(screen).empty());
+                CHECK(path(screen).find("mapgen/") != std::string::npos);
+                CHECK(status(screen).find("named house") != std::string::npos);
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 4);
+    editor::reset_editor_session();
+}
+
+TEST_CASE(
     "the editor's browser lists only the files holding what it edits",
     "[editor_session][engine_client_component]") {
     const auto guard = screen_guard{};
