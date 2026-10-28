@@ -28,6 +28,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cctype>
 #include <charconv>
 #include <fstream>
 #include <functional>
@@ -1112,7 +1113,7 @@ auto part_labels(const std::vector<const vpart_info*>& parts) -> std::vector<std
     auto named = std::map<std::string, std::vector<std::string>>{};
     for (const auto* const part : parts) { named[part->name()].push_back(part->get_id().str()); }
     /// What tells the id of `part` from the others of its name: the rest of it after what their
-    /// ids share up to its last `_`, less the words its name says already when `terse`.
+    /// ids share up to its last `_`, less the whole words its name says already when `terse`.
     const auto apart = [&](const vpart_info& part, const bool terse) {
         const auto& twins = named[part.name()];
         auto shared = std::string_view(twins.front());
@@ -1124,11 +1125,15 @@ auto part_labels(const std::vector<const vpart_info*>& parts) -> std::vector<std
         shared = shared.substr(0, shared.rfind('_') + 1);
         const auto rest = part.get_id().str().substr(shared.size());
         if (!terse) { return rest; }
+        auto spaced = to_lower_case(part.name());
+        std::ranges::replace_if(
+            spaced, [](const unsigned char letter) { return !std::isalnum(letter); }, ' ');
+        const auto said = string_split(spaced, ' ');
         return join(
             rest | std::views::split('_') | std::views::transform([](const auto& word) {
                 return std::string(std::string_view(word));
             }) | std::views::filter([&](const std::string& word) {
-                return !lcmatch(part.name(), word);
+                return !std::ranges::contains(said, word);
             }) | std::ranges::to<std::vector>(),
             "_");
     };
