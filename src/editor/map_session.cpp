@@ -944,6 +944,21 @@ auto session::free_palette_id() const -> std::string {
                      [&](const std::string& name) { return palette_taken(name); });
 }
 
+auto session::free_export_path() const -> std::string {
+    const auto folder = doc ? mod_folder_name(doc->path()) : std::nullopt;
+    const auto mods = std::filesystem::path(PATH_INFO::user_moddir()) / folder.value_or("my_mod");
+    return (mods
+            / (free_name("exported_mapgen",
+                         [&](const std::string& name) {
+                             const auto path = mods / (name + ".json");
+                             return std::filesystem::exists(path)
+                                 || (doc
+                                     && path.lexically_normal() == doc->path().lexically_normal());
+                         })
+               + ".json"))
+        .string();
+}
+
 auto session::extract_palette(const std::string& name) -> void {
     if (!on_mapgen()) { return; }
     if (name.empty() || palette_taken(name)) {

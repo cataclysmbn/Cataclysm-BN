@@ -4200,7 +4200,7 @@
             "description": "Writes the map around you, or the marked squares, as a mapgen in a new file and opens it.",
             "args": {
               "text": {
-                "field_id": "path"
+                "default": "profile/mods/editor_menu_scenario/exported_mapgen.json"
               }
             },
             "expect": "boundary",

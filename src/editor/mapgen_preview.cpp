@@ -67,19 +67,17 @@ auto preview_mapgen(const std::string_view text, const preview_options& options)
         const auto square_of = [&](const std::size_t index) {
             return point_rel_omt(index % grid.x(), index / grid.x());
         };
-        auto terrains = std::vector<oter_id>{};
-        for (const auto& name : loaded->om_terrains) {
-            const auto terrain = overmap_terrain(name, options.direction);
-            if (!terrain) {
-                failed = string_format(_("No overmap terrain is named %s."), name);
-                return;
-            }
-            terrains.push_back(*terrain);
-        }
         // Every square is placed before any is generated, as an overmap special places them.
         const auto was =
             squares | std::views::transform([&](const auto index) {
                 return overmap.ter(options.at + square_of(index));
+            })
+            | std::ranges::to<std::vector>();
+        // An entry whose terrain is not defined is generated over the terrain already there.
+        const auto terrains =
+            squares | std::views::transform([&](const auto index) {
+                return overmap_terrain(loaded->om_terrains[index], options.direction)
+                    .value_or(was[index]);
             })
             | std::ranges::to<std::vector>();
         for (const auto index : squares) {

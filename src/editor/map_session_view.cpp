@@ -1384,7 +1384,7 @@ auto session_view(const session& state) -> ec::screen_view {
          .description = _(
              "Writes the map around you, or the marked squares, as a mapgen in a "
              "new file and opens it."),
-         .args = {.text = ec::text_shape{.field_id = path_id}}}));
+         .args = {.text = ec::text_shape{.initial = state.free_export_path()}}}));
     affordances.push_back(ec::invoke_affordance(
         {.id = export_area_id,
          .label = _("Mark squares to export"),
