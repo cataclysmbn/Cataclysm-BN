@@ -4899,6 +4899,9 @@ TEST_CASE(
                 CHECK(look(screen, 0, 0) == "house_01");
                 CHECK(look(screen, 1, 0) == "field");
                 CHECK(cell(screen, 0, 0).glyph == oter_str_id("house_01_north")->get_symbol());
+                // Squares of one name, as a big special's are, are told apart by their ids.
+                CHECK(cell(screen, 0, 0).label
+                      == oter_str_id("house_01_north")->get_name() + " (house_01_north)");
                 CHECK(cell(screen, 0, 0).affordance == "editor:open_square");
                 CHECK(cell(screen, 0, 0).id == "square:0,0");
                 CHECK(affordance(screen, "editor:level_up").enabled);
@@ -5431,7 +5434,7 @@ TEST_CASE(
                 const auto& objects = body<ec::list_body>(part(screen, "editor:objects")).rows;
                 REQUIRE(objects.size() == 1);
                 CHECK(objects[0].label == "editor_session_test_new");
-                CHECK(cell(screen, 0, 0).label == oter_str_id("field")->get_name());
+                CHECK(cell(screen, 0, 0).label == oter_str_id("field")->get_name() + " (field)");
                 CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
                 return invoke("editor:new_set", {.row = "path", .text = built.string()});
             }
