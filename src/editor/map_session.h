@@ -439,8 +439,8 @@ struct session {
     /// refuses is taken back and its reason shown.
     auto pin(const std::string& name, const std::string& value) -> void;
 
-    /// Counts what the entry puts on a square over several seeds, from the seed shown on.
-    auto roll_loot_at(const point& at) -> void;
+    /// Counts what the entry puts on the squares over several seeds, from the seed shown on.
+    auto roll_loot_in(const selection& squares) -> void;
 
     /// The levels around the canvas entry that the file makes.
     auto reload_levels() -> void;

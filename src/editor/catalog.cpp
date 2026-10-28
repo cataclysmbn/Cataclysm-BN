@@ -14,6 +14,7 @@
 #include "vehicle/veh_type.h"
 
 #include <algorithm>
+#include <map>
 #include <ranges>
 
 namespace editor {
@@ -105,6 +106,25 @@ auto search_catalog(const catalog_query& query) -> catalog_page {
     };
     auto found = entries_of(query.kind) | std::views::filter(matches) | ranges::to<std::vector>();
     ranges::sort(found, {}, &catalog_entry::id);
+    // Ordered by id, the first and last id of a name bound the start all its ids share.
+    struct id_bounds {
+        std::string first;
+        std::string last;
+    };
+    auto bounds = std::map<std::string, id_bounds>{};
+    for (const auto& entry : found) {
+        const auto [at, added] =
+            bounds.try_emplace(entry.name, id_bounds{.first = entry.id, .last = entry.id});
+        if (!added) { at->second.last = entry.id; }
+    }
+    for (auto& entry : found) {
+        const auto& [first, last] = bounds.at(entry.name);
+        if (first == last) { continue; }
+        const auto shared = ranges::mismatch(first, last).in1 - first.begin();
+        const auto rest = std::string_view(entry.id).substr(shared);
+        const auto from = rest.find_first_not_of('_');
+        entry.distinct = from == std::string_view::npos ? "" : std::string(rest.substr(from));
+    }
     const auto total = found.size();
     const auto begin = std::min(query.page * query.page_size, total);
     const auto end = std::min(begin + query.page_size, total);

@@ -1018,12 +1018,12 @@
                 {
                   "key": "symbol",
                   "label": "Symbol",
-                  "value": "#"
+                  "value": "# plastered wooden wall"
                 },
                 {
                   "key": "inside",
                   "label": "Inside",
-                  "value": "#"
+                  "value": "# plastered wooden wall"
                 },
                 {
                   "key": "brush",
@@ -1420,12 +1420,16 @@
               "slot": "palette",
               "columns": [
                 {
-                  "key": "terrain",
-                  "label": "terrain"
-                },
-                {
                   "key": "use",
                   "label": "Use"
+                },
+                {
+                  "key": "terrain",
+                  "label": "Terrain"
+                },
+                {
+                  "key": "id",
+                  "label": "ID"
                 }
               ],
               "rows": [
@@ -1439,14 +1443,19 @@
                   "selected": true,
                   "columns": [
                     {
-                      "key": "terrain",
-                      "label": "terrain",
-                      "value": "t_wall"
-                    },
-                    {
                       "key": "use",
                       "label": "Use",
                       "value": "Unused"
+                    },
+                    {
+                      "key": "terrain",
+                      "label": "Terrain",
+                      "value": "plastered wooden wall"
+                    },
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "t_wall"
                     }
                   ],
                   "look": {
@@ -1470,8 +1479,18 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "use",
+                      "label": "Use",
+                      "value": ""
+                    },
+                    {
                       "key": "terrain",
-                      "label": "terrain",
+                      "label": "Terrain",
+                      "value": "wooden floor"
+                    },
+                    {
+                      "key": "id",
+                      "label": "ID",
                       "value": "t_floor"
                     }
                   ],
@@ -1744,111 +1763,111 @@
                   "options": [
                     {
                       "id": "terrain",
-                      "label": "terrain"
+                      "label": "Terrain"
                     },
                     {
                       "id": "furniture",
-                      "label": "furniture"
+                      "label": "Furniture"
                     },
                     {
                       "id": "fields",
-                      "label": "fields"
+                      "label": "Fields"
                     },
                     {
                       "id": "npcs",
-                      "label": "npcs"
+                      "label": "NPCs"
                     },
                     {
                       "id": "signs",
-                      "label": "signs"
+                      "label": "Signs"
                     },
                     {
                       "id": "vendingmachines",
-                      "label": "vendingmachines"
+                      "label": "Vending machines"
                     },
                     {
                       "id": "toilets",
-                      "label": "toilets"
+                      "label": "Toilets"
                     },
                     {
                       "id": "gaspumps",
-                      "label": "gaspumps"
+                      "label": "Gas pumps"
                     },
                     {
                       "id": "items",
-                      "label": "items"
+                      "label": "Item groups"
                     },
                     {
                       "id": "monsters",
-                      "label": "monsters"
+                      "label": "Monster groups"
                     },
                     {
                       "id": "vehicles",
-                      "label": "vehicles"
+                      "label": "Vehicles"
                     },
                     {
                       "id": "item",
-                      "label": "item"
+                      "label": "Items"
                     },
                     {
                       "id": "artifact",
-                      "label": "artifact"
+                      "label": "Artifacts"
                     },
                     {
                       "id": "artifacts",
-                      "label": "artifacts"
+                      "label": "Artifacts"
                     },
                     {
                       "id": "traps",
-                      "label": "traps"
+                      "label": "Traps"
                     },
                     {
                       "id": "monster",
-                      "label": "monster"
+                      "label": "Monsters"
                     },
                     {
                       "id": "rubble",
-                      "label": "rubble"
+                      "label": "Rubble"
                     },
                     {
                       "id": "computers",
-                      "label": "computers"
+                      "label": "Computers"
                     },
                     {
                       "id": "sealed_item",
-                      "label": "sealed_item"
+                      "label": "Sealed items"
                     },
                     {
                       "id": "nested",
-                      "label": "nested"
+                      "label": "Nested chunks"
                     },
                     {
                       "id": "liquids",
-                      "label": "liquids"
+                      "label": "Liquids"
                     },
                     {
                       "id": "graffiti",
-                      "label": "graffiti"
+                      "label": "Graffiti"
                     },
                     {
                       "id": "translate",
-                      "label": "translate"
+                      "label": "Translate"
                     },
                     {
                       "id": "zones",
-                      "label": "zones"
+                      "label": "Zones"
                     },
                     {
                       "id": "ter_furn_transforms",
-                      "label": "ter_furn_transforms"
+                      "label": "Transforms"
                     },
                     {
                       "id": "faction_owner_character",
-                      "label": "faction_owner_character"
+                      "label": "Owner"
                     },
                     {
                       "id": "remove_all",
-                      "label": "remove_all"
+                      "label": "Remove all"
                     }
                   ]
                 },
@@ -1991,7 +2010,7 @@
                   },
                   {
                     "id": "entry:t_adobe_brick_floor_noroof",
-                    "label": "adobe floor",
+                    "label": "adobe floor (noroof)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -2251,7 +2270,7 @@
                   },
                   {
                     "id": "entry:t_backboard_in",
-                    "label": "backboard",
+                    "label": "backboard (in)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -2479,7 +2498,7 @@
                   },
                   {
                     "id": "entry:t_barndoor",
-                    "label": "rope and pulley",
+                    "label": "rope and pulley (barndoor)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -2791,7 +2810,7 @@
                   },
                   {
                     "id": "entry:t_bulkhead_floor",
-                    "label": "bulkhead",
+                    "label": "bulkhead (bulkhead_floor)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -2823,7 +2842,7 @@
                   },
                   {
                     "id": "entry:t_bulkhead_floor_underwater",
-                    "label": "underwater bulkhead",
+                    "label": "underwater bulkhead (bulkhead_floor_underwater)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -2855,7 +2874,7 @@
                   },
                   {
                     "id": "entry:t_bulkhead_floor_underwater_no_roof",
-                    "label": "underwater bulkhead",
+                    "label": "underwater bulkhead (bulkhead_floor_underwater_no_roof)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -2887,7 +2906,7 @@
                   },
                   {
                     "id": "entry:t_bulkhead_roof",
-                    "label": "bulkhead",
+                    "label": "bulkhead (bulkhead_roof)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -2922,7 +2941,7 @@
                   },
                   {
                     "id": "entry:t_card_fp",
-                    "label": "card reader",
+                    "label": "card reader (fp)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -2955,7 +2974,7 @@
                   },
                   {
                     "id": "entry:t_card_industrial",
-                    "label": "card reader",
+                    "label": "card reader (industrial)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -2988,7 +3007,7 @@
                   },
                   {
                     "id": "entry:t_card_military",
-                    "label": "card reader",
+                    "label": "card reader (military)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -3048,7 +3067,7 @@
                   },
                   {
                     "id": "entry:t_card_robofac",
-                    "label": "card reader",
+                    "label": "card reader (robofac)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -3078,7 +3097,7 @@
                   },
                   {
                     "id": "entry:t_card_science",
-                    "label": "card reader",
+                    "label": "card reader (science)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -4173,6 +4192,17 @@
         },
         "affordances": [
           {
+            "id": "editor:save",
+            "label": "Save",
+            "keys": [
+              "CTRL+S"
+            ],
+            "enabled": false,
+            "denial": "Not available now.",
+            "expect": "screen",
+            "group": "File"
+          },
+          {
             "id": "editor:save_as",
             "label": "Save as",
             "keys": [],
@@ -4233,17 +4263,6 @@
                 "default": 1
               }
             },
-            "expect": "screen",
-            "group": "File"
-          },
-          {
-            "id": "editor:save",
-            "label": "Save",
-            "keys": [
-              "CTRL+S"
-            ],
-            "enabled": false,
-            "denial": "Not available now.",
             "expect": "screen",
             "group": "File"
           },
@@ -4402,6 +4421,15 @@
                 "default": 1
               }
             },
+            "expect": "screen",
+            "group": "View"
+          },
+          {
+            "id": "editor:loot",
+            "label": "What can spawn here",
+            "keys": [],
+            "enabled": false,
+            "denial": "Mark squares with the Select tool first.",
             "expect": "screen",
             "group": "View"
           },
@@ -4814,18 +4842,6 @@
             "expect": "screen"
           },
           {
-            "id": "editor:loot",
-            "label": "What can spawn here",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "editor:canvas"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
             "id": "QUIT",
             "label": "Exit screen",
             "keys": [
@@ -5025,12 +5041,12 @@
                 {
                   "key": "symbol",
                   "label": "Symbol",
-                  "value": "#"
+                  "value": "# plastered wooden wall"
                 },
                 {
                   "key": "inside",
                   "label": "Inside",
-                  "value": "#"
+                  "value": "# plastered wooden wall"
                 },
                 {
                   "key": "brush",
@@ -5453,12 +5469,16 @@
               "slot": "palette",
               "columns": [
                 {
-                  "key": "terrain",
-                  "label": "terrain"
-                },
-                {
                   "key": "use",
                   "label": "Use"
+                },
+                {
+                  "key": "terrain",
+                  "label": "Terrain"
+                },
+                {
+                  "key": "id",
+                  "label": "ID"
                 }
               ],
               "rows": [
@@ -5472,8 +5492,18 @@
                   "selected": true,
                   "columns": [
                     {
+                      "key": "use",
+                      "label": "Use",
+                      "value": ""
+                    },
+                    {
                       "key": "terrain",
-                      "label": "terrain",
+                      "label": "Terrain",
+                      "value": "plastered wooden wall"
+                    },
+                    {
+                      "key": "id",
+                      "label": "ID",
                       "value": "t_wall"
                     }
                   ],
@@ -5498,8 +5528,18 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "use",
+                      "label": "Use",
+                      "value": ""
+                    },
+                    {
                       "key": "terrain",
-                      "label": "terrain",
+                      "label": "Terrain",
+                      "value": "wooden floor"
+                    },
+                    {
+                      "key": "id",
+                      "label": "ID",
                       "value": "t_floor"
                     }
                   ],
@@ -5522,14 +5562,19 @@
                   "selected": false,
                   "columns": [
                     {
-                      "key": "terrain",
-                      "label": "terrain",
-                      "value": "t_dirt"
-                    },
-                    {
                       "key": "use",
                       "label": "Use",
                       "value": "Unused"
+                    },
+                    {
+                      "key": "terrain",
+                      "label": "Terrain",
+                      "value": "dirt"
+                    },
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "t_dirt"
                     }
                   ],
                   "look": {
@@ -5801,111 +5846,111 @@
                   "options": [
                     {
                       "id": "terrain",
-                      "label": "terrain"
+                      "label": "Terrain"
                     },
                     {
                       "id": "furniture",
-                      "label": "furniture"
+                      "label": "Furniture"
                     },
                     {
                       "id": "fields",
-                      "label": "fields"
+                      "label": "Fields"
                     },
                     {
                       "id": "npcs",
-                      "label": "npcs"
+                      "label": "NPCs"
                     },
                     {
                       "id": "signs",
-                      "label": "signs"
+                      "label": "Signs"
                     },
                     {
                       "id": "vendingmachines",
-                      "label": "vendingmachines"
+                      "label": "Vending machines"
                     },
                     {
                       "id": "toilets",
-                      "label": "toilets"
+                      "label": "Toilets"
                     },
                     {
                       "id": "gaspumps",
-                      "label": "gaspumps"
+                      "label": "Gas pumps"
                     },
                     {
                       "id": "items",
-                      "label": "items"
+                      "label": "Item groups"
                     },
                     {
                       "id": "monsters",
-                      "label": "monsters"
+                      "label": "Monster groups"
                     },
                     {
                       "id": "vehicles",
-                      "label": "vehicles"
+                      "label": "Vehicles"
                     },
                     {
                       "id": "item",
-                      "label": "item"
+                      "label": "Items"
                     },
                     {
                       "id": "artifact",
-                      "label": "artifact"
+                      "label": "Artifacts"
                     },
                     {
                       "id": "artifacts",
-                      "label": "artifacts"
+                      "label": "Artifacts"
                     },
                     {
                       "id": "traps",
-                      "label": "traps"
+                      "label": "Traps"
                     },
                     {
                       "id": "monster",
-                      "label": "monster"
+                      "label": "Monsters"
                     },
                     {
                       "id": "rubble",
-                      "label": "rubble"
+                      "label": "Rubble"
                     },
                     {
                       "id": "computers",
-                      "label": "computers"
+                      "label": "Computers"
                     },
                     {
                       "id": "sealed_item",
-                      "label": "sealed_item"
+                      "label": "Sealed items"
                     },
                     {
                       "id": "nested",
-                      "label": "nested"
+                      "label": "Nested chunks"
                     },
                     {
                       "id": "liquids",
-                      "label": "liquids"
+                      "label": "Liquids"
                     },
                     {
                       "id": "graffiti",
-                      "label": "graffiti"
+                      "label": "Graffiti"
                     },
                     {
                       "id": "translate",
-                      "label": "translate"
+                      "label": "Translate"
                     },
                     {
                       "id": "zones",
-                      "label": "zones"
+                      "label": "Zones"
                     },
                     {
                       "id": "ter_furn_transforms",
-                      "label": "ter_furn_transforms"
+                      "label": "Transforms"
                     },
                     {
                       "id": "faction_owner_character",
-                      "label": "faction_owner_character"
+                      "label": "Owner"
                     },
                     {
                       "id": "remove_all",
-                      "label": "remove_all"
+                      "label": "Remove all"
                     }
                   ]
                 },
@@ -6048,7 +6093,7 @@
                   },
                   {
                     "id": "entry:t_adobe_brick_floor_noroof",
-                    "label": "adobe floor",
+                    "label": "adobe floor (noroof)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -6308,7 +6353,7 @@
                   },
                   {
                     "id": "entry:t_backboard_in",
-                    "label": "backboard",
+                    "label": "backboard (in)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -6536,7 +6581,7 @@
                   },
                   {
                     "id": "entry:t_barndoor",
-                    "label": "rope and pulley",
+                    "label": "rope and pulley (barndoor)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -6848,7 +6893,7 @@
                   },
                   {
                     "id": "entry:t_bulkhead_floor",
-                    "label": "bulkhead",
+                    "label": "bulkhead (bulkhead_floor)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -6880,7 +6925,7 @@
                   },
                   {
                     "id": "entry:t_bulkhead_floor_underwater",
-                    "label": "underwater bulkhead",
+                    "label": "underwater bulkhead (bulkhead_floor_underwater)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -6912,7 +6957,7 @@
                   },
                   {
                     "id": "entry:t_bulkhead_floor_underwater_no_roof",
-                    "label": "underwater bulkhead",
+                    "label": "underwater bulkhead (bulkhead_floor_underwater_no_roof)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -6944,7 +6989,7 @@
                   },
                   {
                     "id": "entry:t_bulkhead_roof",
-                    "label": "bulkhead",
+                    "label": "bulkhead (bulkhead_roof)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -6979,7 +7024,7 @@
                   },
                   {
                     "id": "entry:t_card_fp",
-                    "label": "card reader",
+                    "label": "card reader (fp)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -7012,7 +7057,7 @@
                   },
                   {
                     "id": "entry:t_card_industrial",
-                    "label": "card reader",
+                    "label": "card reader (industrial)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -7045,7 +7090,7 @@
                   },
                   {
                     "id": "entry:t_card_military",
-                    "label": "card reader",
+                    "label": "card reader (military)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -7105,7 +7150,7 @@
                   },
                   {
                     "id": "entry:t_card_robofac",
-                    "label": "card reader",
+                    "label": "card reader (robofac)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -7135,7 +7180,7 @@
                   },
                   {
                     "id": "entry:t_card_science",
-                    "label": "card reader",
+                    "label": "card reader (science)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -8230,6 +8275,16 @@
         },
         "affordances": [
           {
+            "id": "editor:save",
+            "label": "Save",
+            "keys": [
+              "CTRL+S"
+            ],
+            "enabled": true,
+            "expect": "screen",
+            "group": "File"
+          },
+          {
             "id": "editor:save_as",
             "label": "Save as",
             "keys": [],
@@ -8290,16 +8345,6 @@
                 "default": 1
               }
             },
-            "expect": "screen",
-            "group": "File"
-          },
-          {
-            "id": "editor:save",
-            "label": "Save",
-            "keys": [
-              "CTRL+S"
-            ],
-            "enabled": true,
             "expect": "screen",
             "group": "File"
           },
@@ -8457,6 +8502,15 @@
                 "default": 1
               }
             },
+            "expect": "screen",
+            "group": "View"
+          },
+          {
+            "id": "editor:loot",
+            "label": "What can spawn here",
+            "keys": [],
+            "enabled": false,
+            "denial": "Mark squares with the Select tool first.",
             "expect": "screen",
             "group": "View"
           },
@@ -8855,18 +8909,6 @@
             "expect": "screen"
           },
           {
-            "id": "editor:loot",
-            "label": "What can spawn here",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "editor:canvas"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
             "id": "QUIT",
             "label": "Exit screen",
             "keys": [
@@ -8944,12 +8986,12 @@
                 {
                   "key": "symbol",
                   "label": "Symbol",
-                  "value": "#"
+                  "value": "# plastered wooden wall"
                 },
                 {
                   "key": "inside",
                   "label": "Inside",
-                  "value": "#"
+                  "value": "# plastered wooden wall"
                 },
                 {
                   "key": "brush",
@@ -9370,7 +9412,11 @@
               "columns": [
                 {
                   "key": "terrain",
-                  "label": "terrain"
+                  "label": "Terrain"
+                },
+                {
+                  "key": "id",
+                  "label": "ID"
                 }
               ],
               "rows": [
@@ -9385,7 +9431,12 @@
                   "columns": [
                     {
                       "key": "terrain",
-                      "label": "terrain",
+                      "label": "Terrain",
+                      "value": "plastered wooden wall"
+                    },
+                    {
+                      "key": "id",
+                      "label": "ID",
                       "value": "t_wall"
                     }
                   ],
@@ -9411,7 +9462,12 @@
                   "columns": [
                     {
                       "key": "terrain",
-                      "label": "terrain",
+                      "label": "Terrain",
+                      "value": "wooden floor"
+                    },
+                    {
+                      "key": "id",
+                      "label": "ID",
                       "value": "t_floor"
                     }
                   ],
@@ -9709,111 +9765,111 @@
                   "options": [
                     {
                       "id": "terrain",
-                      "label": "terrain"
+                      "label": "Terrain"
                     },
                     {
                       "id": "furniture",
-                      "label": "furniture"
+                      "label": "Furniture"
                     },
                     {
                       "id": "fields",
-                      "label": "fields"
+                      "label": "Fields"
                     },
                     {
                       "id": "npcs",
-                      "label": "npcs"
+                      "label": "NPCs"
                     },
                     {
                       "id": "signs",
-                      "label": "signs"
+                      "label": "Signs"
                     },
                     {
                       "id": "vendingmachines",
-                      "label": "vendingmachines"
+                      "label": "Vending machines"
                     },
                     {
                       "id": "toilets",
-                      "label": "toilets"
+                      "label": "Toilets"
                     },
                     {
                       "id": "gaspumps",
-                      "label": "gaspumps"
+                      "label": "Gas pumps"
                     },
                     {
                       "id": "items",
-                      "label": "items"
+                      "label": "Item groups"
                     },
                     {
                       "id": "monsters",
-                      "label": "monsters"
+                      "label": "Monster groups"
                     },
                     {
                       "id": "vehicles",
-                      "label": "vehicles"
+                      "label": "Vehicles"
                     },
                     {
                       "id": "item",
-                      "label": "item"
+                      "label": "Items"
                     },
                     {
                       "id": "artifact",
-                      "label": "artifact"
+                      "label": "Artifacts"
                     },
                     {
                       "id": "artifacts",
-                      "label": "artifacts"
+                      "label": "Artifacts"
                     },
                     {
                       "id": "traps",
-                      "label": "traps"
+                      "label": "Traps"
                     },
                     {
                       "id": "monster",
-                      "label": "monster"
+                      "label": "Monsters"
                     },
                     {
                       "id": "rubble",
-                      "label": "rubble"
+                      "label": "Rubble"
                     },
                     {
                       "id": "computers",
-                      "label": "computers"
+                      "label": "Computers"
                     },
                     {
                       "id": "sealed_item",
-                      "label": "sealed_item"
+                      "label": "Sealed items"
                     },
                     {
                       "id": "nested",
-                      "label": "nested"
+                      "label": "Nested chunks"
                     },
                     {
                       "id": "liquids",
-                      "label": "liquids"
+                      "label": "Liquids"
                     },
                     {
                       "id": "graffiti",
-                      "label": "graffiti"
+                      "label": "Graffiti"
                     },
                     {
                       "id": "translate",
-                      "label": "translate"
+                      "label": "Translate"
                     },
                     {
                       "id": "zones",
-                      "label": "zones"
+                      "label": "Zones"
                     },
                     {
                       "id": "ter_furn_transforms",
-                      "label": "ter_furn_transforms"
+                      "label": "Transforms"
                     },
                     {
                       "id": "faction_owner_character",
-                      "label": "faction_owner_character"
+                      "label": "Owner"
                     },
                     {
                       "id": "remove_all",
-                      "label": "remove_all"
+                      "label": "Remove all"
                     }
                   ]
                 },
@@ -9956,7 +10012,7 @@
                   },
                   {
                     "id": "entry:t_adobe_brick_floor_noroof",
-                    "label": "adobe floor",
+                    "label": "adobe floor (noroof)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -10216,7 +10272,7 @@
                   },
                   {
                     "id": "entry:t_backboard_in",
-                    "label": "backboard",
+                    "label": "backboard (in)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -10444,7 +10500,7 @@
                   },
                   {
                     "id": "entry:t_barndoor",
-                    "label": "rope and pulley",
+                    "label": "rope and pulley (barndoor)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -10756,7 +10812,7 @@
                   },
                   {
                     "id": "entry:t_bulkhead_floor",
-                    "label": "bulkhead",
+                    "label": "bulkhead (bulkhead_floor)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -10788,7 +10844,7 @@
                   },
                   {
                     "id": "entry:t_bulkhead_floor_underwater",
-                    "label": "underwater bulkhead",
+                    "label": "underwater bulkhead (bulkhead_floor_underwater)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -10820,7 +10876,7 @@
                   },
                   {
                     "id": "entry:t_bulkhead_floor_underwater_no_roof",
-                    "label": "underwater bulkhead",
+                    "label": "underwater bulkhead (bulkhead_floor_underwater_no_roof)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -10852,7 +10908,7 @@
                   },
                   {
                     "id": "entry:t_bulkhead_roof",
-                    "label": "bulkhead",
+                    "label": "bulkhead (bulkhead_roof)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -10887,7 +10943,7 @@
                   },
                   {
                     "id": "entry:t_card_fp",
-                    "label": "card reader",
+                    "label": "card reader (fp)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -10920,7 +10976,7 @@
                   },
                   {
                     "id": "entry:t_card_industrial",
-                    "label": "card reader",
+                    "label": "card reader (industrial)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -10953,7 +11009,7 @@
                   },
                   {
                     "id": "entry:t_card_military",
-                    "label": "card reader",
+                    "label": "card reader (military)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -11013,7 +11069,7 @@
                   },
                   {
                     "id": "entry:t_card_robofac",
-                    "label": "card reader",
+                    "label": "card reader (robofac)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -11043,7 +11099,7 @@
                   },
                   {
                     "id": "entry:t_card_science",
-                    "label": "card reader",
+                    "label": "card reader (science)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -12138,6 +12194,16 @@
         },
         "affordances": [
           {
+            "id": "editor:save",
+            "label": "Save",
+            "keys": [
+              "CTRL+S"
+            ],
+            "enabled": true,
+            "expect": "screen",
+            "group": "File"
+          },
+          {
             "id": "editor:save_as",
             "label": "Save as",
             "keys": [],
@@ -12198,16 +12264,6 @@
                 "default": 1
               }
             },
-            "expect": "screen",
-            "group": "File"
-          },
-          {
-            "id": "editor:save",
-            "label": "Save",
-            "keys": [
-              "CTRL+S"
-            ],
-            "enabled": true,
             "expect": "screen",
             "group": "File"
           },
@@ -12372,6 +12428,15 @@
                 "default": 1
               }
             },
+            "expect": "screen",
+            "group": "View"
+          },
+          {
+            "id": "editor:loot",
+            "label": "What can spawn here",
+            "keys": [],
+            "enabled": false,
+            "denial": "Mark squares with the Select tool first.",
             "expect": "screen",
             "group": "View"
           },
@@ -12790,18 +12855,6 @@
             "expect": "screen"
           },
           {
-            "id": "editor:loot",
-            "label": "What can spawn here",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "editor:canvas"
-              }
-            },
-            "expect": "boundary"
-          },
-          {
             "id": "QUIT",
             "label": "Exit screen",
             "keys": [
@@ -13137,25 +13190,21 @@
       }
     },
     {
-      "name": "loot roll of a square in the map editor, request",
+      "name": "loot roll of the squares marked in the map editor, request",
       "def": "submit_params",
       "value": {
         "epoch": "epoch-2",
         "expect": {
-          "boundary_id": "boundary:5",
-          "revision": "36"
+          "screen_id": "screen:10"
         },
         "operation": {
           "kind": "invoke",
-          "affordance_id": "editor:loot",
-          "args": {
-            "row": "square:3,3"
-          }
+          "affordance_id": "editor:loot"
         }
       }
     },
     {
-      "name": "loot roll of a square in the map editor, receipt",
+      "name": "loot roll of the squares marked in the map editor, receipt",
       "def": "submit_result",
       "value": {
         "epoch": "epoch-2",
@@ -13165,7 +13214,7 @@
       }
     },
     {
-      "name": "loot roll of a square in the map editor, validated",
+      "name": "loot roll of the squares marked in the map editor, validated",
       "def": "command_notification",
       "value": {
         "epoch": "epoch-2",
@@ -13175,7 +13224,7 @@
       }
     },
     {
-      "name": "loot roll of a square in the map editor, executing",
+      "name": "loot roll of the squares marked in the map editor, executing",
       "def": "command_notification",
       "value": {
         "epoch": "epoch-2",
@@ -13185,7 +13234,7 @@
       }
     },
     {
-      "name": "loot roll of a square in the map editor, completed",
+      "name": "loot roll of the squares marked in the map editor, completed",
       "def": "command_notification",
       "value": {
         "epoch": "epoch-2",
@@ -13194,8 +13243,8 @@
         "stage_text": "Done.",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "43",
-          "revision": "37"
+          "sequence": "46",
+          "revision": "40"
         }
       }
     },
@@ -13247,12 +13296,12 @@
                 {
                   "key": "symbol",
                   "label": "Symbol",
-                  "value": "#"
+                  "value": "# plastered wooden wall"
                 },
                 {
                   "key": "inside",
                   "label": "Inside",
-                  "value": "#"
+                  "value": "# plastered wooden wall"
                 },
                 {
                   "key": "brush",
@@ -13361,7 +13410,7 @@
                 {
                   "id": "tool:rect",
                   "label": "Rectangle",
-                  "selected": true,
+                  "selected": false,
                   "enabled": true,
                   "hotkey": "r"
                 },
@@ -13403,7 +13452,7 @@
                 {
                   "id": "tool:select",
                   "label": "Select",
-                  "selected": false,
+                  "selected": true,
                   "enabled": true,
                   "hotkey": "s"
                 },
@@ -14038,7 +14087,8 @@
                     "id": "square:3,3",
                     "glyph": ".",
                     "affordance": "editor:paint",
-                    "enabled": true
+                    "enabled": true,
+                    "selected": true
                   },
                   {
                     "x": 4,
@@ -18057,7 +18107,6 @@
                   }
                 ],
                 "role": "canvas",
-                "drag": "span",
                 "block": {
                   "x": 24,
                   "y": 24
@@ -18089,7 +18138,11 @@
               "columns": [
                 {
                   "key": "terrain",
-                  "label": "terrain"
+                  "label": "Terrain"
+                },
+                {
+                  "key": "id",
+                  "label": "ID"
                 }
               ],
               "rows": [
@@ -18104,7 +18157,12 @@
                   "columns": [
                     {
                       "key": "terrain",
-                      "label": "terrain",
+                      "label": "Terrain",
+                      "value": "plastered wooden wall"
+                    },
+                    {
+                      "key": "id",
+                      "label": "ID",
                       "value": "t_wall"
                     }
                   ],
@@ -18130,8 +18188,13 @@
                   "columns": [
                     {
                       "key": "terrain",
-                      "label": "terrain",
-                      "value": "{\"param\":\"floor\"}"
+                      "label": "Terrain",
+                      "value": "parameter floor"
+                    },
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": ""
                     }
                   ]
                 }
@@ -18325,13 +18388,13 @@
                 {
                   "id": "x",
                   "label": "x",
-                  "value": "0",
+                  "value": "3",
                   "type": "text"
                 },
                 {
                   "id": "y",
                   "label": "y",
-                  "value": "0",
+                  "value": "3",
                   "type": "text"
                 },
                 {
@@ -18395,111 +18458,111 @@
                   "options": [
                     {
                       "id": "terrain",
-                      "label": "terrain"
+                      "label": "Terrain"
                     },
                     {
                       "id": "furniture",
-                      "label": "furniture"
+                      "label": "Furniture"
                     },
                     {
                       "id": "fields",
-                      "label": "fields"
+                      "label": "Fields"
                     },
                     {
                       "id": "npcs",
-                      "label": "npcs"
+                      "label": "NPCs"
                     },
                     {
                       "id": "signs",
-                      "label": "signs"
+                      "label": "Signs"
                     },
                     {
                       "id": "vendingmachines",
-                      "label": "vendingmachines"
+                      "label": "Vending machines"
                     },
                     {
                       "id": "toilets",
-                      "label": "toilets"
+                      "label": "Toilets"
                     },
                     {
                       "id": "gaspumps",
-                      "label": "gaspumps"
+                      "label": "Gas pumps"
                     },
                     {
                       "id": "items",
-                      "label": "items"
+                      "label": "Item groups"
                     },
                     {
                       "id": "monsters",
-                      "label": "monsters"
+                      "label": "Monster groups"
                     },
                     {
                       "id": "vehicles",
-                      "label": "vehicles"
+                      "label": "Vehicles"
                     },
                     {
                       "id": "item",
-                      "label": "item"
+                      "label": "Items"
                     },
                     {
                       "id": "artifact",
-                      "label": "artifact"
+                      "label": "Artifacts"
                     },
                     {
                       "id": "artifacts",
-                      "label": "artifacts"
+                      "label": "Artifacts"
                     },
                     {
                       "id": "traps",
-                      "label": "traps"
+                      "label": "Traps"
                     },
                     {
                       "id": "monster",
-                      "label": "monster"
+                      "label": "Monsters"
                     },
                     {
                       "id": "rubble",
-                      "label": "rubble"
+                      "label": "Rubble"
                     },
                     {
                       "id": "computers",
-                      "label": "computers"
+                      "label": "Computers"
                     },
                     {
                       "id": "sealed_item",
-                      "label": "sealed_item"
+                      "label": "Sealed items"
                     },
                     {
                       "id": "nested",
-                      "label": "nested"
+                      "label": "Nested chunks"
                     },
                     {
                       "id": "liquids",
-                      "label": "liquids"
+                      "label": "Liquids"
                     },
                     {
                       "id": "graffiti",
-                      "label": "graffiti"
+                      "label": "Graffiti"
                     },
                     {
                       "id": "translate",
-                      "label": "translate"
+                      "label": "Translate"
                     },
                     {
                       "id": "zones",
-                      "label": "zones"
+                      "label": "Zones"
                     },
                     {
                       "id": "ter_furn_transforms",
-                      "label": "ter_furn_transforms"
+                      "label": "Transforms"
                     },
                     {
                       "id": "faction_owner_character",
-                      "label": "faction_owner_character"
+                      "label": "Owner"
                     },
                     {
                       "id": "remove_all",
-                      "label": "remove_all"
+                      "label": "Remove all"
                     }
                   ]
                 },
@@ -18642,7 +18705,7 @@
                   },
                   {
                     "id": "entry:t_adobe_brick_floor_noroof",
-                    "label": "adobe floor",
+                    "label": "adobe floor (noroof)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -18902,7 +18965,7 @@
                   },
                   {
                     "id": "entry:t_backboard_in",
-                    "label": "backboard",
+                    "label": "backboard (in)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -19130,7 +19193,7 @@
                   },
                   {
                     "id": "entry:t_barndoor",
-                    "label": "rope and pulley",
+                    "label": "rope and pulley (barndoor)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -19442,7 +19505,7 @@
                   },
                   {
                     "id": "entry:t_bulkhead_floor",
-                    "label": "bulkhead",
+                    "label": "bulkhead (bulkhead_floor)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -19474,7 +19537,7 @@
                   },
                   {
                     "id": "entry:t_bulkhead_floor_underwater",
-                    "label": "underwater bulkhead",
+                    "label": "underwater bulkhead (bulkhead_floor_underwater)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -19506,7 +19569,7 @@
                   },
                   {
                     "id": "entry:t_bulkhead_floor_underwater_no_roof",
-                    "label": "underwater bulkhead",
+                    "label": "underwater bulkhead (bulkhead_floor_underwater_no_roof)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -19538,7 +19601,7 @@
                   },
                   {
                     "id": "entry:t_bulkhead_roof",
-                    "label": "bulkhead",
+                    "label": "bulkhead (bulkhead_roof)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -19573,7 +19636,7 @@
                   },
                   {
                     "id": "entry:t_card_fp",
-                    "label": "card reader",
+                    "label": "card reader (fp)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -19606,7 +19669,7 @@
                   },
                   {
                     "id": "entry:t_card_industrial",
-                    "label": "card reader",
+                    "label": "card reader (industrial)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -19639,7 +19702,7 @@
                   },
                   {
                     "id": "entry:t_card_military",
-                    "label": "card reader",
+                    "label": "card reader (military)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -19699,7 +19762,7 @@
                   },
                   {
                     "id": "entry:t_card_robofac",
-                    "label": "card reader",
+                    "label": "card reader (robofac)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -19729,7 +19792,7 @@
                   },
                   {
                     "id": "entry:t_card_science",
-                    "label": "card reader",
+                    "label": "card reader (science)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -29803,10 +29866,28 @@
               "selection": "single",
               "activate": "editor:browser_open",
               "filterable": true
+            },
+            {
+              "id": "editor:status",
+              "kind": "text",
+              "slot": "log",
+              "markup": "74 kinds of items can spawn in the square marked.",
+              "tone": "good"
             }
           ]
         },
         "affordances": [
+          {
+            "id": "editor:save",
+            "label": "Save",
+            "keys": [
+              "CTRL+S"
+            ],
+            "enabled": false,
+            "denial": "Not available now.",
+            "expect": "screen",
+            "group": "File"
+          },
           {
             "id": "editor:save_as",
             "label": "Save as",
@@ -29868,17 +29949,6 @@
                 "default": 1
               }
             },
-            "expect": "screen",
-            "group": "File"
-          },
-          {
-            "id": "editor:save",
-            "label": "Save",
-            "keys": [
-              "CTRL+S"
-            ],
-            "enabled": false,
-            "denial": "Not available now.",
             "expect": "screen",
             "group": "File"
           },
@@ -29952,8 +30022,7 @@
             "keys": [
               "CTRL+C"
             ],
-            "enabled": false,
-            "denial": "Not available now.",
+            "enabled": true,
             "expect": "screen",
             "group": "Edit"
           },
@@ -29963,8 +30032,7 @@
             "keys": [
               "CTRL+X"
             ],
-            "enabled": false,
-            "denial": "Not available now.",
+            "enabled": true,
             "expect": "screen",
             "group": "Edit"
           },
@@ -30037,6 +30105,14 @@
                 "default": 5
               }
             },
+            "expect": "screen",
+            "group": "View"
+          },
+          {
+            "id": "editor:loot",
+            "label": "What can spawn here",
+            "keys": [],
+            "enabled": true,
             "expect": "screen",
             "group": "View"
           },
@@ -30441,18 +30517,6 @@
             "keys": [],
             "enabled": true,
             "expect": "screen"
-          },
-          {
-            "id": "editor:loot",
-            "label": "What can spawn here",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "row": {
-                "component_id": "editor:canvas"
-              }
-            },
-            "expect": "boundary"
           },
           {
             "id": "editor:turn",

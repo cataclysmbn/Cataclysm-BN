@@ -373,7 +373,7 @@ auto run_editor_session() -> void {
         } else if (id == pin_set_id) {
             state.pin(row, invoked->args.text.value_or(""));
         } else if (id == loot_id) {
-            if (const auto at = row_point(row, "square")) { state.roll_loot_at(*at); }
+            if (state.selected) { state.roll_loot_in(*state.selected); }
         } else if (id == apply_id) {
             state.apply();
         } else if (id == apply_on_save_id) {

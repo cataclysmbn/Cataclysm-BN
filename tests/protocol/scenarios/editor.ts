@@ -230,9 +230,19 @@ export const editor: Scenario = {
       assertEquals(seeded(engine.top()), "6")
       assertEquals((await engine.invoke("editor:preview", { count: 5 })).stages.at(-1), "completed")
       assertEquals(labels(engine.top()), north)
-      const looted = await engine.invoke("editor:loot", { row: "square:3,3" })
+      assertEquals(
+        (await engine.invoke("editor:tool", { row: "tool:select" })).stages.at(-1),
+        "completed",
+      )
+      for (let click = 0; click < 2; click++) {
+        assertEquals(
+          (await engine.invoke("editor:paint", { row: "square:3,3" })).stages.at(-1),
+          "completed",
+        )
+      }
+      const looted = await engine.invoke("editor:loot")
       assertEquals(looted.stages.at(-1), "completed")
-      rec.command("loot roll of a square in the map editor", looted)
+      rec.command("loot roll of the squares marked in the map editor", looted)
       const loot = part(engine.top(), "editor:loot").rows
       assert(loot.length > 0, "a square with place_items lists what can spawn")
       rec.accept("map editor with a preview and its loot roll", "screen", engine.top())

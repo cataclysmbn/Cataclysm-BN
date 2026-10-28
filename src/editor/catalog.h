@@ -29,6 +29,9 @@ struct catalog_entry {
     std::string name;
     /// The mod that last defined it; empty where the game does not record it.
     std::string mod;
+    /// What tells it from the other entries the query found of the same name: the rest of its id
+    /// after the start their ids share; empty for a name of its own or the id that is that start.
+    std::string distinct;
 };
 
 struct catalog_query {

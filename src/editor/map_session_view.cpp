@@ -6,6 +6,7 @@
 #include "editor/map_session.h"
 #include "editor/mapgen_legend.h"
 #include "editor/mapgen_legend_edit.h"
+#include "editor/mapgen_legend_text.h"
 #include "editor/mapgen_levels.h"
 #include "editor/mapgen_placement.h"
 #include "editor/mapgen_preview.h"
@@ -138,15 +139,19 @@ auto named_on(const legend_symbol& entry, const char* layer) -> std::optional<st
     return line == entry.lines.end() ? std::nullopt : first_id(line->value);
 }
 
+/// The terrain the entry `object` puts where nothing maps one, if any.
+auto fill_terrain(const nlohmann::ordered_json& object) -> std::optional<std::string> {
+    return object.contains("object") && object["object"].contains("fill_ter")
+                && object["object"]["fill_ter"].is_string()
+             ? std::optional(object["object"]["fill_ter"].get<std::string>())
+             : std::nullopt;
+}
+
 /// The terrain a symbol of the entry `object` puts on a square: its own, else the entry's fill.
 auto symbol_terrain(const nlohmann::ordered_json& object, const legend_symbol& entry)
     -> ter_str_id {
-    const auto fill =
-        object.contains("object") && object["object"].contains("fill_ter")
-                && object["object"]["fill_ter"].is_string()
-            ? std::optional(object["object"]["fill_ter"].get<std::string>())
-            : std::nullopt;
-    return ter_str_id(named_on(entry, "terrain").or_else([&] { return fill; }).value_or(""));
+    return ter_str_id(
+        named_on(entry, "terrain").or_else([&] { return fill_terrain(object); }).value_or(""));
 }
 
 /// What each symbol of the entry `object` puts on a square from the bottom up, as the map shows
@@ -391,50 +396,122 @@ auto placement_rows(const session& state) -> std::vector<ec::row> {
          | std::ranges::to<std::vector>();
 }
 
+/// What each layer of the symbol places by name, and the ids it names, in the order the loader
+/// applies them; the entry's fill terrain for a symbol the rows use that nothing maps.
+auto symbol_columns(const nlohmann::ordered_json& object, const legend_symbol& entry)
+    -> std::vector<game_client::interaction_column> {
+    auto columns = std::vector<game_client::interaction_column>{};
+    auto ids = std::vector<std::string>{};
+    const auto fill = fill_terrain(object);
+    const auto lines =
+        entry.used && entry.lines.empty() && fill
+            ? std::vector{legend_line{
+                  .layer = "terrain", .value = nlohmann::ordered_json(*fill).dump()}}
+            : entry.lines;
+    for (const auto& line : lines) {
+        const auto read = legend_value(line.layer, line.value);
+        const auto found =
+            std::ranges::find(columns, line.layer, &game_client::interaction_column::key);
+        if (found != columns.end()) {
+            found->value += ", " + read.names;
+        } else {
+            columns.push_back(
+                {.key = line.layer, .label = legend_layer_label(line.layer), .value = read.names});
+        }
+        if (!read.ids.empty()) { ids.push_back(read.ids); }
+    }
+    if (!ids.empty()) {
+        columns.push_back({.key = "id", .label = _("ID"), .value = join(ids, ", ")});
+    }
+    return columns;
+}
+
+/// A symbol as the status line names it: its mark and what it places on top.
+auto symbol_summary(const session& state, const std::string& symbol) -> std::string {
+    const auto& object = state.doc->objects()[state.object].value;
+    const auto entry = std::ranges::find(state.legend, symbol, &legend_symbol::symbol);
+    if (entry == state.legend.end()) { return shown_symbol(symbol); }
+    const auto columns = symbol_columns(object, *entry);
+    const auto top = std::ranges::find_if(columns, [](const auto& column) {
+        return column.key == "furniture";
+    });
+    const auto shown =
+        top != columns.end()
+            ? top
+            : std::ranges::
+                  find(columns, std::string("terrain"), &game_client::interaction_column::key);
+    return shown == columns.end() ? shown_symbol(symbol) : shown_symbol(symbol) + " " + shown->value;
+}
+
+/// `rows` with the same columns each, in the order that keeps what matters most when room runs
+/// short: the flag, what each layer places in the loader's order, then the ids.
+auto uniform_columns(std::vector<ec::row> rows) -> std::vector<ec::row> {
+    using column = game_client::interaction_column;
+    auto keys = std::vector<std::string>{};
+    for (const auto& row : rows) {
+        for (const auto& entry : row.columns) {
+            if (!std::ranges::contains(keys, entry.key)) { keys.push_back(entry.key); }
+        }
+    }
+    const auto rank = [](const std::string& key) {
+        if (key == "use") { return -1; }
+        if (key == "id") { return static_cast<int>(legend_layers.size()) + 1; }
+        return static_cast<int>(std::ranges::find(legend_layers, key) - legend_layers.begin());
+    };
+    std::ranges::stable_sort(keys, {}, rank);
+    for (auto& row : rows) {
+        row.columns =
+            keys | std::views::transform([&](const std::string& key) {
+                const auto found = std::ranges::find(row.columns, key, &column::key);
+                if (found != row.columns.end()) { return *found; }
+                return column{
+                    .key = key,
+                    .label = key == "use" ? _("Use")
+                           : key == "id"  ? _("ID")
+                                          : legend_layer_label(key)};
+            })
+            | std::ranges::to<std::vector>();
+    }
+    return rows;
+}
+
 auto legend_rows(const session& state) -> std::vector<ec::row> {
-    const auto looks = symbol_looks(state.doc->objects()[state.object].value, state.legend);
-    return state.legend | std::views::transform([&](const legend_symbol& entry) {
-               auto columns = std::vector<game_client::interaction_column>{};
-               for (const auto& line : entry.lines) {
-                   const auto found = std::ranges::
-                       find(columns, line.layer, &game_client::interaction_column::key);
-                   // An id named alone reads as itself rather than as JSON text.
-                   const auto parsed = nlohmann::ordered_json::parse(line.value, nullptr, false);
-                   const auto value = parsed.is_string() ? parsed.get<std::string>() : line.value;
-                   if (found != columns.end()) {
-                       found->value += ", " + value;
-                   } else {
-                       columns.push_back({.key = line.layer, .label = line.layer, .value = value});
-                   }
-               }
-               // A symbol the rows never use, or one they use that nothing maps, is flagged after
-               // what it places.
-               if (state.on_mapgen() && (!entry.used || entry.lines.empty())) {
-                   columns.push_back(
-                       {.key = "use",
-                        .label = _("Use"),
-                        .value = entry.used ? _("Undefined") : _("Unused")});
-               }
-               auto sources =
-                   entry.lines | std::views::transform(&legend_line::source)
-                   | std::views::filter([](const auto& source) { return !source.empty(); })
-                   | std::ranges::to<std::vector>();
-               std::ranges::sort(sources);
-               const auto unique = std::ranges::unique(sources);
-               sources.erase(unique.begin(), unique.end());
-               return ec::row{
-                   .id = "symbol:" + entry.symbol,
-                   .label = entry.symbol,
-                   .description =
-                       sources.empty() ? std::string{}
-                                       : string_format(_("From %s"), enumerate_as_string(sources)),
-                   .selected = entry.symbol == state.symbol,
-                   .columns = std::move(columns),
-                   .look = looks.at(entry.symbol).empty()
-                             ? std::nullopt
-                             : std::optional(looks.at(entry.symbol).back())};
-           })
-         | std::ranges::to<std::vector>();
+    const auto& object = state.doc->objects()[state.object].value;
+    const auto looks = symbol_looks(object, state.legend);
+    const auto fill = fill_terrain(object);
+    return uniform_columns(
+        state.legend | std::views::transform([&](const legend_symbol& entry) {
+            auto columns = symbol_columns(object, entry);
+            // A symbol the rows never use, or one they use that nothing maps, is flagged: the
+            // loader fills the latter with the entry's fill terrain.
+            if (state.on_mapgen() && (!entry.used || entry.lines.empty())) {
+                columns.push_back(
+                    {.key = "use",
+                     .label = _("Use"),
+                     .value = !entry.used ? _("Unused")
+                            : fill        ? _("Fill")
+                                          : _("Undefined")});
+            }
+            auto sources =
+                entry.lines | std::views::transform(&legend_line::source)
+                | std::views::filter([](const auto& source) { return !source.empty(); })
+                | std::ranges::to<std::vector>();
+            std::ranges::sort(sources);
+            const auto unique = std::ranges::unique(sources);
+            sources.erase(unique.begin(), unique.end());
+            return ec::row{
+                .id = "symbol:" + entry.symbol,
+                .label = shown_symbol(entry.symbol),
+                .description =
+                    sources.empty() ? std::string{}
+                                    : string_format(_("From %s"), enumerate_as_string(sources)),
+                .selected = entry.symbol == state.symbol,
+                .columns = std::move(columns),
+                .look = looks.at(entry.symbol).empty()
+                          ? std::nullopt
+                          : std::optional(looks.at(entry.symbol).back())};
+        })
+        | std::ranges::to<std::vector>());
 }
 
 /// Begin and End of a stroke, while the canvas drags one.
@@ -478,10 +555,16 @@ auto document_stats(const session& state) -> std::vector<ec::panel_stat> {
     // A palette has no rows to draw on, and no drawing state.
     if (state.on_mapgen()) {
         if (!state.symbol.empty()) {
-            stats.push_back({.key = "symbol", .label = _("Symbol"), .value = state.symbol});
+            stats.push_back(
+                {.key = "symbol",
+                 .label = _("Symbol"),
+                 .value = symbol_summary(state, state.symbol)});
         }
         if (!state.room_fill.empty()) {
-            stats.push_back({.key = "inside", .label = _("Inside"), .value = state.room_fill});
+            stats.push_back(
+                {.key = "inside",
+                 .label = _("Inside"),
+                 .value = symbol_summary(state, state.room_fill)});
         }
         stats.push_back(
             {.key = "brush", .label = _("Brush"), .value = std::to_string(state.brush)});
@@ -613,7 +696,9 @@ auto catalog_list(
              found.entries | std::views::transform([&](const catalog_entry& entry) {
                  return ec::row{
                      .id = "entry:" + entry.id,
-                     .label = entry.name,
+                     .label = entry.distinct.empty()
+                                ? entry.name
+                                : string_format("%s (%s)", entry.name, entry.distinct),
                      .columns = {{.key = "id", .label = _("ID"), .value = entry.id},
                                  {.key = "mod", .label = _("Mod"), .value = entry.mod}},
                      .look = catalog_look(
@@ -647,10 +732,11 @@ auto mapping_parts(
                   .label = _("Layer"),
                   .value = state.mapping_layer,
                   .type = "select",
-                  .options = legend_layers | std::views::transform([](const char* const layer) {
-                                 return ec::form_option{.id = layer, .label = layer};
-                             })
-                           | std::ranges::to<std::vector>()},
+                  .options =
+                      legend_layers | std::views::transform([](const char* const layer) {
+                          return ec::form_option{.id = layer, .label = legend_layer_label(layer)};
+                      })
+                      | std::ranges::to<std::vector>()},
                  {.id = "value", .label = _("Places"), .value = state.mapping_value}},
             .submit = mapping_apply_id}});
     const auto found = state.catalog_entries();
@@ -709,7 +795,10 @@ auto game_parts(
                                                .initial = state.seed.value_or(1)}},
              .keys = {"F8"}}));
         affordances.push_back(ec::invoke_affordance(
-            {.id = loot_id, .label = _("What can spawn here"), .args = row_of(canvas_id)}));
+            {.id = loot_id,
+             .label = _("What can spawn here"),
+             .enabled = state.selected.has_value(),
+             .denial = state.selected ? "" : _("Mark squares with the Select tool first.")}));
         if (state.seed) {
             affordances.push_back(ec::invoke_affordance({.id = reroll_id, .label = _("Re-roll")}));
             affordances.push_back(ec::invoke_affordance(
@@ -1022,6 +1111,29 @@ auto special_canvas(const session& state) -> ec::component {
 } // namespace
 
 namespace {
+/// A row per entry of the file, by name; entries of the same name, such as the variants the game
+/// picks among by weight, are told apart by their place among them.
+auto entry_rows(const session& state, const std::vector<std::size_t>& entries)
+    -> std::vector<ec::row> {
+    const auto& objects = state.doc->objects();
+    const auto names =
+        entries
+        | std::views::transform([&](const auto index) { return entry_name(objects[index].value); })
+        | std::ranges::to<std::vector>();
+    return std::views::zip(entries, names) | std::views::enumerate
+         | std::views::transform([&](const auto& numbered) {
+               const auto& [at, entry] = numbered;
+               const auto& [index, name] = entry;
+               const auto same = std::ranges::count(names, name);
+               const auto place = std::ranges::count(names | std::views::take(at + 1), name);
+               return ec::row{
+                   .id = index_row("object", index),
+                   .label = same > 1 ? string_format(_("%s (%d of %d)"), name, place, same) : name,
+                   .selected = index == state.object};
+           })
+         | std::ranges::to<std::vector>();
+}
+
 /// What each part is for, and the menu of each action that is no part's own: with nothing open,
 /// the files to open are the page.
 auto layout(const session& state) -> workspace_layout {
@@ -1082,6 +1194,7 @@ auto layout(const session& state) -> workspace_layout {
              {level_down_id, view},
              {preview_id, view},
              {reroll_id, view},
+             {loot_id, view},
              {apply_id, world},
              {apply_on_save_id, world},
              {stamp_id, world},
@@ -1182,13 +1295,7 @@ auto session_view(const session& state) -> ec::screen_view {
         const auto entries = state.entries();
         parts.push_back(ec::list(
             {.id = objects_id,
-             .rows = entries | std::views::transform([&](const auto index) {
-                         return ec::row{
-                             .id = index_row("object", index),
-                             .label = entry_name(doc.objects()[index].value),
-                             .selected = index == state.object};
-                     })
-                   | std::ranges::to<std::vector>(),
+             .rows = entry_rows(state, entries),
              .selection = "single",
              .activate = object_id}));
         affordances.push_back(ec::invoke_affordance(
@@ -1409,6 +1516,10 @@ auto session_view(const session& state) -> ec::screen_view {
         : state.on_oter() ? (state.terrain_mapgens().empty() ? objects_id : terrains_id)
         : state.doc       ? legend_id
                           : "";
+    // Saving leads the File menu, as editors have it.
+    std::ranges::stable_sort(affordances, {}, [](const ec::affordance& entry) {
+        return entry.id == save_id ? 0 : entry.id == save_as_id ? 1 : 2;
+    });
     auto view = ec::screen_view{
         .title = _("Map Editor"),
         .root = ec::split({.id = "editor:body", .active = active, .children = std::move(parts)}),
