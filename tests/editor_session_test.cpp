@@ -1598,6 +1598,8 @@ TEST_CASE(
             case 6:
                 CHECK(walls(screen) == 0);
                 CHECK(placement_rows(screen).empty());
+                CHECK(
+                    body<ec::list_body>(part(screen, "editor:history")).rows.back().label == "Cut");
                 return invoke("editor:save");
             case 7:
                 return invoke("editor:open", {.text = into.path.string()});
@@ -1611,6 +1613,8 @@ TEST_CASE(
                 REQUIRE(placement_rows(screen).size() == 1);
                 CHECK(placement_rows(screen)[0].columns[0].value == "6");
                 CHECK(placement_rows(screen)[0].columns[1].value == "5");
+                CHECK(body<ec::list_body>(part(screen, "editor:history")).rows.back().label
+                      == "Paste");
                 return act("QUIT");
             case 11:
                 return answer("Leave without saving");
@@ -3756,6 +3760,9 @@ TEST_CASE(
                 CHECK(objects[0].selected);
                 CHECK(objects[1].label == "editor_session_test_extracted");
                 CHECK(body<ec::list_body>(part(screen, "editor:history")).rows.size() == 2);
+                // The step is named for what the player did, not for its last edit.
+                CHECK(body<ec::list_body>(part(screen, "editor:history")).rows.back().label
+                      == "Extract palette");
                 return invoke("editor:save");
             }
             case 4: {
@@ -3777,6 +3784,8 @@ TEST_CASE(
             case 5:
                 CHECK(lines(screen) == before);
                 CHECK(body<ec::list_body>(part(screen, "editor:objects")).rows.size() == 1);
+                CHECK(body<ec::text_body>(part(screen, "editor:status")).markup
+                      == "Undid: Extract palette");
                 return invoke("editor:save");
             default:
                 return act("QUIT");
