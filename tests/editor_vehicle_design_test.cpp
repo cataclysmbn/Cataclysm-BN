@@ -112,6 +112,20 @@ TEST_CASE(
     CHECK(prototypes > 250);
 }
 
+TEST_CASE(
+    "a mount that refuses a part says which of the game's rules it breaks", "[editor_vehicle]") {
+    const auto design = built(core_prototype("bicycle"));
+    const auto& bicycle = *design.blueprint;
+    const auto refusal = [&](const point& at, const char* const part) {
+        return editor::mount_refusal(bicycle, at, vpart_id(part)).value_or("");
+    };
+    CHECK(refusal({1, 0}, "headlight").empty());
+    CHECK(refusal({2, 0}, "headlight") == "Headlight goes on a frame: install a frame here first.");
+    CHECK(
+        refusal({5, 5}, "xlframe_vertical") == "Extra light frame must touch the vehicle's frame.");
+    CHECK(refusal({0, 0}, "xlframe_vertical").find("already") != std::string::npos);
+}
+
 TEST_CASE("a vehicle prototype is found in the data file that defines it", "[editor_vehicle]") {
     const auto path = editor::prototype_file("bicycle");
     REQUIRE(path.has_value());
@@ -152,7 +166,7 @@ TEST_CASE(
         const auto next = editor::
             install_part(bicycle, *design.blueprint, {.mount = {0, 0}, .part = "xlframe_vertical"});
         REQUIRE_FALSE(next.has_value());
-        CHECK(next.error().find("cannot be mounted at 0,0") != std::string::npos);
+        CHECK(next.error().find("already") != std::string::npos);
     }
     SECTION("a part away from the vehicle is refused") {
         CHECK_FALSE(
@@ -357,7 +371,7 @@ TEST_CASE(
         const auto refused =
             editor::install_live_part(*veh, {.mount = {0, 0}, .part = "xlframe_vertical"});
         REQUIRE_FALSE(refused.has_value());
-        CHECK(refused.error().find("cannot be mounted at 0,0") != std::string::npos);
+        CHECK(refused.error().find("already") != std::string::npos);
         CHECK(veh->part_count() == count + 1);
     }
     SECTION("a part nothing rests on comes off, a frame with parts on it stays") {

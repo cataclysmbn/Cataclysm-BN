@@ -123,6 +123,11 @@ auto place_vehicle_state(const std::string& state, const tripoint_bub_ms& at)
 auto restore_vehicle_state(vehicle& veh, const std::string& state)
     -> std::expected<vehicle*, std::string>;
 
+/// Why the game would not mount the part `id` at `at` on the vehicle, in words; none when it
+/// would.
+auto mount_refusal(const vehicle& veh, const point& at, const vpart_id& id)
+    -> std::optional<std::string>;
+
 /// Installs the part on a mount of the world's vehicle at once, without the game's requirements;
 /// the part's index, or why the game would not mount it.
 auto install_live_part(vehicle& veh, const part_install& install)
