@@ -10,6 +10,7 @@
 #include "client_interaction_validation.h"
 #include "game.h"
 #include "input.h"
+#include "string_formatter.h"
 #include "translations.h"
 #include "map/map.h"
 
@@ -517,6 +518,72 @@ auto offers( const form_field &field, const std::string &value ) -> bool
     return field.max_length < 0 || static_cast<int>( value.size() ) <= field.max_length;
 }
 
+/// What `field` takes, as the sentence that turns away a value it does not.
+auto takes( const form_field &field ) -> std::string
+{
+    // A label that leads into its value, such as "Name:", names the field without the colon.
+    const auto name = field.label.substr( 0, field.label.find_last_not_of( ": " ) + 1 );
+    const auto number = [&]( const double value ) {
+        return field.type == "integer" ? std::to_string( std::llround( value ) ) : string_format( "%g",
+                value );
+    };
+    if( field.type == "integer" || field.type == "float" ) {
+        if( field.min && field.max ) {
+            return field.type == "integer" ?
+                   //~ A form field turns away a value: %1$s is the field's name, %2$s and %3$s its bounds.
+                   string_format( _( "%1$s takes a whole number from %2$s to %3$s." ), name,
+                                  number( *field.min ),
+                                  number( *field.max ) ) :
+                   //~ A form field turns away a value: %1$s is the field's name, %2$s and %3$s its bounds.
+                   string_format( _( "%1$s takes a number from %2$s to %3$s." ), name, number( *field.min ),
+                                  number( *field.max ) );
+        }
+        if( field.min ) {
+            return field.type == "integer" ?
+                   //~ A form field turns away a value: %1$s is the field's name, %2$s its least value.
+                   string_format( _( "%1$s takes a whole number of at least %2$s." ), name,
+                                  number( *field.min ) ) :
+                   //~ A form field turns away a value: %1$s is the field's name, %2$s its least value.
+                   string_format( _( "%1$s takes a number of at least %2$s." ), name, number( *field.min ) );
+        }
+        if( field.max ) {
+            return field.type == "integer" ?
+                   //~ A form field turns away a value: %1$s is the field's name, %2$s its greatest value.
+                   string_format( _( "%1$s takes a whole number of at most %2$s." ), name,
+                                  number( *field.max ) ) :
+                   //~ A form field turns away a value: %1$s is the field's name, %2$s its greatest value.
+                   string_format( _( "%1$s takes a number of at most %2$s." ), name, number( *field.max ) );
+        }
+        return field.type == "integer" ?
+               //~ A form field turns away a value: %s is the field's name.
+               string_format( _( "%s takes a whole number." ), name ) :
+               //~ A form field turns away a value: %s is the field's name.
+               string_format( _( "%s takes a number." ), name );
+    }
+    if( field.type == "bool" || field.type == "select" ) {
+        //~ A form field turns away a value: %s is the field's name.
+        return string_format( _( "%s takes one of its choices." ), name );
+    }
+    //~ A form field turns away a text: %1$s is the field's name, %2$d how many characters it takes at most.
+    return string_format( _( "%1$s takes at most %2$d characters." ), name, field.max_length );
+}
+
+/// The field of the form `shape` names by row whose value `args` gives and it does not take; nullptr
+/// when there is none.
+auto refused_field( const screen_view &view, const arg_shape &shape,
+                    const invoke_args &args ) -> const form_field * // *NOPAD*
+{
+    if( !shape.text || !shape.row || !shape.text->field_id.empty() || !args.text || !args.row ||
+        !view.root ) {
+        return nullptr;
+    }
+    const auto *const found = find_component( *view.root, shape.row->component_id );
+    const auto *const form = found ? std::get_if<form_body>( &found->body ) : nullptr;
+    if( form == nullptr ) { return nullptr; }
+    const auto field = std::ranges::find( form->fields, *args.row, &form_field::id );
+    return field == form->fields.end() || offers( *field, *args.text ) ? nullptr : &*field;
+}
+
 /// Every member of the shape is supplied and no other; named rows are rows of their component.
 auto matches_shape( const screen_view &view, const arg_shape &shape, const invoke_args &args,
                     const bubble_frame &frame ) -> bool
@@ -549,13 +616,7 @@ auto matches_shape( const screen_view &view, const arg_shape &shape, const invok
                          ( shape.count->max && *args.count > *shape.count->max ) ) ) { return false; }
     if( shape.text && args.text->size() > maximum_inline_bytes ) { return false; }
     // The text for the field a form names by row is a value that field offers.
-    if( shape.text && shape.row && shape.text->field_id.empty() ) {
-        const auto *const found = component_in( shape.row->component_id );
-        const auto *const form = found ? std::get_if<form_body>( &found->body ) : nullptr;
-        const auto field = form ? std::ranges::find( form->fields, *args.row,
-                           &form_field::id ) : std::vector<form_field>::const_iterator{};
-        if( form && field != form->fields.end() && !offers( *field, *args.text ) ) { return false; }
-    }
+    if( refused_field( view, shape, args ) != nullptr ) { return false; }
     if( shape.pane ) {
         const auto *const parent = component_in( shape.pane->component_id );
         if( parent == nullptr || !find_component( *parent, *args.pane ) ) { return false; }
@@ -789,7 +850,12 @@ auto command_lifecycle::validate( const clock_point &at, const boundary_state &c
             return reject( error::invalid_arguments );
         }
         auto native = resolve_affordance( { .state = current, .top = *top, .found = *found, .args = invoke->args } );
-        if( !native ) { return reject( native.error() ); }
+        if( !native ) {
+            // A value a form field does not take is turned away with what the field takes.
+            const auto *const field = native.error() == error::invalid_arguments ?
+                                      refused_field( *top, found->args, invoke->args ) : nullptr;
+            return reject( native.error(), field ? takes( *field ) : std::string{} );
+        }
         operation = std::move( *native );
     } else {
         if( expect.screen_id ) { return reject( error::invalid_arguments ); }
