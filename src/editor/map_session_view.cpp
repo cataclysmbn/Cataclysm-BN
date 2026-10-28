@@ -797,8 +797,11 @@ auto game_parts(
              .keys = {"F7"},
              .enabled = !state.on_update(),
              .denial = state.on_update() ? *refused : ""}));
-        affordances.push_back(
-            ec::invoke_affordance({.id = apply_on_save_id, .label = _("Apply on save")}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = apply_on_save_id,
+             .label = _("Apply on save"),
+             .enabled = !state.on_update(),
+             .denial = state.on_update() ? *refused : ""}));
         affordances.push_back(ec::invoke_affordance(
             {.id = stamp_id,
              .label = _("Stamp"),
@@ -1391,10 +1394,7 @@ auto session_view(const session& state) -> ec::screen_view {
             if (state.on_mapgen()) {
                 // An entry without rows, such as an update mapgen placing chunks, has no squares to
                 // draw or mark; its placements are what it places.
-                const auto& value = state.doc->objects()[state.object].value;
-                const auto rowless =
-                    !value.contains("object") || !value["object"].is_object()
-                    || !value["object"].contains("rows");
+                const auto rowless = !state.has_rows();
                 parts.push_back(ec::tabs(
                     {.id = tools_id,
                      .tabs =

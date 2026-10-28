@@ -4198,7 +4198,7 @@
               "CTRL+S"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Nothing changed since the file was saved.",
             "expect": "screen",
             "group": "File"
           },
@@ -4284,7 +4284,7 @@
               "CTRL+Z"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Nothing to undo.",
             "expect": "screen",
             "group": "Edit"
           },
@@ -4295,7 +4295,7 @@
               "CTRL+Y"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Nothing to redo.",
             "expect": "screen",
             "group": "Edit"
           },
@@ -8378,7 +8378,7 @@
               "CTRL+Y"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Nothing to redo.",
             "expect": "screen",
             "group": "Edit"
           },
@@ -29890,7 +29890,7 @@
               "CTRL+S"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Nothing changed since the file was saved.",
             "expect": "screen",
             "group": "File"
           },
@@ -29976,7 +29976,7 @@
               "CTRL+Z"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Nothing to undo.",
             "expect": "screen",
             "group": "Edit"
           },
@@ -29987,7 +29987,7 @@
               "CTRL+Y"
             ],
             "enabled": false,
-            "denial": "Not available now.",
+            "denial": "Nothing to redo.",
             "expect": "screen",
             "group": "Edit"
           },

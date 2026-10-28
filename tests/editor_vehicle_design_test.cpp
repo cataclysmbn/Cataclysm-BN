@@ -380,6 +380,15 @@ TEST_CASE("a vehicle copied through its saved state is the same vehicle", "[edit
         CHECK(copy.error() == "That is no saved vehicle.");
         CHECK(here.get_vehicles().size() == vehicles);
     }
+    SECTION("a saved vehicle the loader refuses is refused in words") {
+        const auto copy = editor::
+            place_vehicle_state(R"({"parts": [], "velocity": "fast"})", tripoint_bub_ms(30, 50, 0));
+        REQUIRE_FALSE(copy.has_value());
+        CHECK_FALSE(copy.error().empty());
+        CHECK(copy.error().find("Json error") == std::string::npos);
+        CHECK(copy.error().find("<unknown source file>") == std::string::npos);
+        CHECK(here.get_vehicles().size() == vehicles);
+    }
 }
 
 TEST_CASE(
@@ -464,6 +473,11 @@ TEST_CASE("a tank's fuel is set to an amount of what it holds", "[editor_vehicle
     CHECK(veh->cpart(tank).ammo_remaining() == 100);
     REQUIRE(editor::set_part_fuel(*veh, tank, {.fuel = fuel, .amount = 0}).has_value());
     CHECK(veh->cpart(tank).ammo_remaining() == 0);
+    // An emptied tank is filled again with what it held, which it no longer names.
+    const auto none = veh->cpart(tank).ammo_current().str();
+    REQUIRE(editor::set_part_fuel(*veh, tank, {.fuel = none, .amount = 10}).has_value());
+    CHECK(veh->cpart(tank).ammo_current().str() == fuel);
+    CHECK(veh->cpart(tank).ammo_remaining() == 10);
     CHECK_FALSE(editor::set_part_fuel(*veh, tank, {.fuel = "rock", .amount = 10}).has_value());
     CHECK_FALSE(editor::set_part_fuel(*veh, 0, {.fuel = fuel, .amount = 10}).has_value());
 }
@@ -509,6 +523,12 @@ TEST_CASE("a turret is loaded with rounds it fires and emptied", "[editor_vehicl
     CHECK(veh->cpart(turret).ammo_remaining() == 20);
     REQUIRE(editor::set_part_fuel(*veh, turret, {.fuel = "556", .amount = 0}).has_value());
     CHECK(veh->cpart(turret).ammo_remaining() == 0);
+    // An emptied turret loads the rounds it held again.
+    const auto none = veh->cpart(turret).ammo_current().str();
+    REQUIRE(editor::set_part_fuel(*veh, turret, {.fuel = none, .amount = 5}).has_value());
+    CHECK(veh->cpart(turret).ammo_current().str() == "556");
+    CHECK(veh->cpart(turret).ammo_remaining() == 5);
+    REQUIRE(editor::set_part_fuel(*veh, turret, {.fuel = "556", .amount = 0}).has_value());
     // A machine gun fires no pistol rounds.
     CHECK_FALSE(editor::set_part_fuel(*veh, turret, {.fuel = "9mm", .amount = 10}).has_value());
 }

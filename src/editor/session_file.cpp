@@ -77,17 +77,35 @@ auto ask_leave() -> leave_answer {
     }
 }
 
-auto history_affordances(const document& doc, const history_ids& ids)
-    -> std::vector<engine_client::affordance> {
+auto undo_affordances(const undo_options& options) -> std::vector<engine_client::affordance> {
     namespace ec = engine_client;
     return {
         ec::invoke_affordance(
-            {.id = ids.undo, .label = _("Undo"), .keys = {"CTRL+Z"}, .enabled = doc.can_undo()}),
+            {.id = options.ids.undo,
+             .label = _("Undo"),
+             .keys = {"CTRL+Z"},
+             .enabled = options.can_undo,
+             .denial = options.can_undo ? "" : _("Nothing to undo.")}),
         ec::invoke_affordance(
-            {.id = ids.redo, .label = _("Redo"), .keys = {"CTRL+Y"}, .enabled = doc.can_redo()}),
-        ec::invoke_affordance(
-            {.id = ids.save, .label = _("Save"), .keys = {"CTRL+S"}, .enabled = doc.dirty()}),
+            {.id = options.ids.redo,
+             .label = _("Redo"),
+             .keys = {"CTRL+Y"},
+             .enabled = options.can_redo,
+             .denial = options.can_redo ? "" : _("Nothing to redo.")}),
     };
+}
+
+auto history_affordances(const document& doc, const history_ids& ids)
+    -> std::vector<engine_client::affordance> {
+    auto affordances = undo_affordances(
+        {.ids = ids, .can_undo = doc.can_undo(), .can_redo = doc.can_redo()});
+    affordances.push_back(engine_client::invoke_affordance(
+        {.id = ids.save,
+         .label = _("Save"),
+         .keys = {"CTRL+S"},
+         .enabled = doc.dirty(),
+         .denial = doc.dirty() ? "" : _("Nothing changed since the file was saved.")}));
+    return affordances;
 }
 
 } // namespace editor

@@ -1598,6 +1598,8 @@ TEST_CASE(
             case 6:
                 CHECK(walls(screen) == 0);
                 CHECK(placement_rows(screen).empty());
+                CHECK(
+                    body<ec::list_body>(part(screen, "editor:history")).rows.back().label == "Cut");
                 return invoke("editor:save");
             case 7:
                 return invoke("editor:open", {.text = into.path.string()});
@@ -1611,6 +1613,8 @@ TEST_CASE(
                 REQUIRE(placement_rows(screen).size() == 1);
                 CHECK(placement_rows(screen)[0].columns[0].value == "6");
                 CHECK(placement_rows(screen)[0].columns[1].value == "5");
+                CHECK(body<ec::list_body>(part(screen, "editor:history")).rows.back().label
+                      == "Paste");
                 return act("QUIT");
             case 11:
                 return answer("Leave without saving");
@@ -3756,6 +3760,9 @@ TEST_CASE(
                 CHECK(objects[0].selected);
                 CHECK(objects[1].label == "editor_session_test_extracted");
                 CHECK(body<ec::list_body>(part(screen, "editor:history")).rows.size() == 2);
+                // The step is named for what the player did, not for its last edit.
+                CHECK(body<ec::list_body>(part(screen, "editor:history")).rows.back().label
+                      == "Extract palette");
                 return invoke("editor:save");
             }
             case 4: {
@@ -3777,6 +3784,8 @@ TEST_CASE(
             case 5:
                 CHECK(lines(screen) == before);
                 CHECK(body<ec::list_body>(part(screen, "editor:objects")).rows.size() == 1);
+                CHECK(body<ec::text_body>(part(screen, "editor:status")).markup
+                      == "Undid: Extract palette");
                 return invoke("editor:save");
             default:
                 return act("QUIT");
@@ -6086,6 +6095,9 @@ TEST_CASE(
                 CHECK(tab(screen, "tool:point").denial.find("rows") != std::string::npos);
                 CHECK_FALSE(tab(screen, "tool:select").enabled);
                 CHECK(tab(screen, "tool:placements").enabled);
+                // The tool shown is one that works on it.
+                CHECK(tab(screen, "tool:placements").selected);
+                CHECK_FALSE(tab(screen, "tool:point").selected);
                 return act("QUIT");
             default:
                 FAIL("the editor outlived its exit");
@@ -6094,6 +6106,116 @@ TEST_CASE(
     });
     editor::run_editor_session();
     CHECK(step == 3);
+    editor::reset_editor_session();
+}
+
+TEST_CASE(
+    "the editor turns away applying an update mapgen on save, saying why",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = kinds_file{};
+    auto step = 0;
+    const auto notice = [](const ec::screen_view& screen) {
+        const auto* const found = ec::find_component(*screen.root, "editor:notice");
+        return found ? body<ec::text_body>(*found).markup : std::string();
+    };
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK(affordance(screen, "editor:apply_on_save").enabled);
+                return invoke("editor:apply_on_save");
+            case 2:
+                return invoke("editor:object", {.row = "object:2"});
+            case 3: {
+                // The game runs an update mapgen on squares it made: saving it applies nothing.
+                const auto& toggle = affordance(screen, "editor:apply_on_save");
+                CHECK_FALSE(toggle.enabled);
+                CHECK(toggle.denial == affordance(screen, "editor:apply").denial);
+                return invoke("editor:save");
+            }
+            case 4:
+                CHECK(notice(screen).empty());
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 5);
+    editor::reset_editor_session();
+}
+
+TEST_CASE(
+    "the editor says why it cannot save, undo or redo now",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = kinds_file{};
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                CHECK(affordance(screen, "editor:undo").denial == "Nothing to undo.");
+                CHECK(affordance(screen, "editor:redo").denial == "Nothing to redo.");
+                CHECK(affordance(screen, "editor:save").denial
+                      == "Nothing changed since the file was saved.");
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 2);
+    editor::reset_editor_session();
+}
+
+TEST_CASE(
+    "the editor keeps a refusal until an action changes something or refuses anew",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = kinds_file{};
+    auto step = 0;
+    const auto notice = [](const ec::screen_view& screen) {
+        const auto* const found = ec::find_component(*screen.root, "editor:notice");
+        return found ? body<ec::text_body>(*found).markup : std::string();
+    };
+    const auto refused = std::string("cabin_palette is a palette already.");
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                return invoke("editor:extract_palette", {.text = "cabin_palette"});
+            case 2:
+                CHECK(notice(screen) == refused);
+                return invoke("editor:tool", {.row = "tool:select"});
+            case 3:
+                // Picking a tool changes nothing the refusal was about.
+                CHECK(notice(screen) == refused);
+                return invoke("editor:extract_palette", {.text = "editor_session_test_kept"});
+            case 4:
+                CHECK(notice(screen).empty());
+                return invoke("editor:undo");
+            case 5:
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 6);
     editor::reset_editor_session();
 }
 

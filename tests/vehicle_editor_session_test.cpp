@@ -227,6 +227,10 @@ TEST_CASE(
                 CHECK(cell(screen, "mount:0,0").selected);
                 CHECK(messages(screen).empty());
                 CHECK_FALSE(affordance(screen, "vehicle:undo").enabled);
+                CHECK(affordance(screen, "vehicle:undo").denial == "Nothing to undo.");
+                CHECK(affordance(screen, "vehicle:redo").denial == "Nothing to redo.");
+                CHECK(affordance(screen, "vehicle:save").denial
+                      == "Nothing changed since the file was saved.");
                 CHECK(
                     affordance(screen, "vehicle:undo").keys == std::vector<std::string>{"CTRL+Z"});
                 CHECK(
@@ -672,6 +676,8 @@ TEST_CASE(
             case 2:
                 CHECK(title(screen) == "Bicycle");
                 CHECK_FALSE(affordance(screen, "vehicle:undo").enabled);
+                CHECK(affordance(screen, "vehicle:undo").denial == "Nothing to undo.");
+                CHECK(affordance(screen, "vehicle:redo").denial == "Nothing to redo.");
                 CHECK(
                     affordance(screen, "vehicle:undo").keys == std::vector<std::string>{"CTRL+Z"});
                 CHECK(
@@ -1144,8 +1150,6 @@ TEST_CASE(
     editor::run_vehicle_editor();
     CHECK(step == 10);
 }
-
-#endif
 
 namespace {
 /// The slot of the part `id` of the screen's root split.
@@ -2340,8 +2344,18 @@ TEST_CASE(
             case 7:
                 CHECK(notice_of(screen).empty());
                 CHECK(field(screen, "fuel").value == "25");
-                return invoke("vehicle:show:mount");
+                return invoke("vehicle:live_set", {.row = "fuel", .text = "0"});
             case 8:
+                CHECK(notice_of(screen).empty());
+                CHECK(field(screen, "fuel").value == "0");
+                // An emptied turret loads the rounds it held again.
+                return invoke("vehicle:live_set", {.row = "fuel", .text = "10"});
+            case 9:
+                CHECK(notice_of(screen).empty());
+                CHECK(field(screen, "fuel").value == "10");
+                CHECK(field(screen, "fuel_type").value == "556");
+                return invoke("vehicle:show:mount");
+            case 10:
                 CHECK(gun(screen).columns.size() == 2);
                 return act("QUIT");
             default:
@@ -2350,7 +2364,7 @@ TEST_CASE(
         }
     });
     editor::run_vehicle_editor();
-    CHECK(step == 9);
+    CHECK(step == 11);
 }
 
 TEST_CASE(
@@ -2443,3 +2457,5 @@ TEST_CASE(
     editor::run_vehicle_editor();
     CHECK(step == 2);
 }
+
+#endif // CATA_MCP

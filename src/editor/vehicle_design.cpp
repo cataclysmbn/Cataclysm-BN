@@ -3,6 +3,7 @@
 #include "calendar.h"
 #include "debug_log_capture.h"
 #include "editor/history_label.h"
+#include "editor/mapgen_check.h"
 #include "editor/recent_documents.h"
 #include "engine_client_vehicle_look.h"
 #include "flag.h"
@@ -214,7 +215,7 @@ auto place_vehicle_state(const std::string& state, const tripoint_bub_ms& at)
         deserialize(*copy, saved.dump());
     } catch (const JsonError& error) {
         here.destroy_vehicle(copy);
-        return std::unexpected(std::string(error.what()));
+        return std::unexpected(plain_loader_text(error.what()));
     }
     const auto blocked = std::ranges::any_of(copy->get_all_parts(), [&](const auto& part) {
         return !here.inbounds(part.pos()) || here.impassable(part.pos())
@@ -412,6 +413,9 @@ auto set_part_health(vehicle& veh, const int index, const int percent)
     return {};
 }
 
+/// The item variable of a part's base naming what the part held before it was emptied.
+constexpr auto emptied_of = "editor_emptied_of";
+
 auto set_part_fuel(vehicle& veh, const int index, const part_fuel& fuel)
     -> std::expected<void, std::string> {
     if (index < 0 || index >= veh.part_count()) { return std::unexpected(_("No such part.")); }
@@ -421,6 +425,10 @@ auto set_part_fuel(vehicle& veh, const int index, const part_fuel& fuel)
     }
     if (fuel.amount < 0) { return std::unexpected(_("That value is out of range.")); }
     if (fuel.amount == 0) {
+        // What it held is what a later fill that names nothing fills it with.
+        if (!part.ammo_current().is_null()) {
+            part.get_base().set_var(emptied_of, part.ammo_current().str());
+        }
         // A turret's rounds are its gun's, which the part does not empty.
         if (part.is_turret()) {
             part.get_base().ammo_unset();
@@ -429,15 +437,30 @@ auto set_part_fuel(vehicle& veh, const int index, const part_fuel& fuel)
         }
         return {};
     }
-    const auto type = itype_id(fuel.fuel);
+    // A part that holds nothing is filled with what it held last, else what it takes by default.
+    const auto chosen = [](const itype_id& id) { return !id.is_empty() && !id.is_null(); };
+    const auto named = itype_id(fuel.fuel);
+    const auto emptied = itype_id(part.get_base().get_var(emptied_of, ""));
+    const auto type =
+        chosen(named)     ? named
+        : chosen(emptied) ? emptied
+        : part.is_tank()  ? part.info().fuel_type
+        : chosen(part.info().default_ammo)
+            ? part.info().default_ammo
+            : part.get_base().ammo_default();
+    if (!chosen(type)) {
+        return std::unexpected(
+            part.is_turret() ? _("Choose the Ammunition first.") : _("Choose the Fuel type first."));
+    }
     // A tank holds a liquid, a battery, magazine or turret the ammunition its item takes.
     const auto holds =
         type.is_valid()
         && (part.is_tank() ? type->phase >= LIQUID
                            : type->ammo && part.get_base().ammo_types().contains(type->ammo->type));
     if (!holds || part.ammo_set(type, fuel.amount) < 0) {
-        return std::unexpected(string_format(_("This part cannot hold %s."), fuel.fuel));
+        return std::unexpected(string_format(_("This part cannot hold %s."), type.str()));
     }
+    part.get_base().erase_var(emptied_of);
     return {};
 }
 

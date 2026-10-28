@@ -213,7 +213,8 @@ auto document::record(document_edit edit) -> void {
     } else if (step && across_) {
         step->edits.push_back(std::move(edit));
     } else {
-        done_.push_back({.edits = {std::move(edit)}});
+        done_.push_back(
+            {.edits = {std::move(edit)}, .label = grouping_ ? group_label_ : std::string{}});
         grouped_ = grouping_;
     }
     undone_.clear();

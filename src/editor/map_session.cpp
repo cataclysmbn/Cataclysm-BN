@@ -415,8 +415,10 @@ auto session::open_mapgen_of(const std::string& name) -> void {
     const auto opened =
         oter_str_id(name).is_valid() || mapgen_id == name ? std::string{}
         : named.named > 1
-            ? string_format(_("%1$d overmap terrains are named %2$s; opened %3$s."), named.named,
-                            name, mapgen_id)
+            ? string_format(
+                  vgettext("%1$d overmap terrain is named %2$s; opened %3$s.",
+                           "%1$d overmap terrains are named %2$s; opened %3$s.", named.named),
+                  named.named, name, mapgen_id)
             : string_format(_("Opened %1$s, the mapgen of %2$s."), mapgen_id, name);
     const auto source = mapgen_source_of(mapgen_id);
     if (!source) {
@@ -478,6 +480,13 @@ auto session::on_mapgen() const -> bool {
 
 auto session::on_update() const -> bool {
     return on_mapgen() && doc->objects()[object].value.contains("update_mapgen_id");
+}
+
+auto session::has_rows() const -> bool {
+    if (!on_mapgen()) { return false; }
+    const auto& value = doc->objects()[object].value;
+    return value.contains("object") && value["object"].is_object()
+        && value["object"].contains("rows");
 }
 
 auto session::square_refusal() const -> std::optional<std::string> {
@@ -653,7 +662,7 @@ auto session::step_history(const bool back) -> void {
     if (back ? depth == 0 : depth >= steps.size()) { return; }
     const auto& step = steps[back ? depth - 1 : depth];
     if (!(back ? doc->undo() : doc->redo())) { return; }
-    status = string_format(back ? _("Undid: %s") : _("Redid: %s"), step_label(step.edits.back()));
+    status = string_format(back ? _("Undid: %s") : _("Redid: %s"), step_name(step));
     // An entry an undo removed is gone; the one it changed otherwise is what to look at.
     const auto changed = std::ranges::find_if(step.edits, [&](const document_edit& edit) {
         return edit.object < doc->objects().size();
@@ -696,6 +705,11 @@ auto session::reload() -> void {
         parameters.clear();
         loot.reset();
         return;
+    }
+    // An entry without rows is edited by its placements alone, so that tool is the one shown.
+    if (on_mapgen() && !has_rows() && current->region != region_use::placements) {
+        current = &*std::ranges::find(tools, region_use::placements, &tool::region);
+        anchor.reset();
     }
     const auto stand_ins = file_stand_ins(stand_in_texts());
     legend = mapgen_legend(text).value_or(std::vector<legend_symbol>{});
@@ -747,7 +761,7 @@ auto session::watch() -> void {
     if (notice.empty()) {
         notice = changed_on_disk_notice(*doc);
         // Another entry shown in place of a gone one was not what was being applied.
-        if (kept && apply_on_save && on_mapgen()) { apply(); }
+        if (kept && applies_on_save()) { apply(); }
     }
 }
 
@@ -776,7 +790,7 @@ auto session::save() -> bool { return written(save_document(*doc)); }
 auto session::save_as(const std::string& name) -> void { written(save_document_as(*doc, name)); }
 
 auto session::written(const std::expected<void, std::string>& result) -> bool {
-    if (told(result) && apply_on_save && on_mapgen()) { apply(); }
+    if (told(result) && applies_on_save()) { apply(); }
     return result.has_value();
 }
 
@@ -896,7 +910,7 @@ auto session::extract_palette(const std::string& name) -> void {
                   {"op", "add"},
                   {"path", "/object/palettes"},
                   {"value", nlohmann::ordered_json::array({name})}});
-    doc->begin_group(true);
+    doc->begin_group(true, _("Extract palette"));
     const auto added = doc->add(std::move(palette));
     const auto edited = added ? doc->edit(object, patch) : std::unexpected(added.error());
     doc->end_group();
@@ -1081,7 +1095,7 @@ auto session::cut() -> void {
         return;
     }
     copy();
-    doc->begin_group();
+    doc->begin_group(false, _("Cut"));
     const auto filled = stroke(
         *doc,
         {.object = object,
@@ -1143,7 +1157,7 @@ auto session::paste_at(const point& at) -> void {
                 | std::ranges::to<std::string>());
         return;
     }
-    doc->begin_group();
+    doc->begin_group(false, _("Paste"));
     const auto depth = doc->depth();
     auto done = std::expected<void, std::string>{};
     for (const auto& [glyph, line] : brought) {
