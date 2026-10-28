@@ -545,22 +545,6 @@ auto stroke_affordances(std::vector<ec::affordance>& affordances, const bool dra
     affordances.push_back(ec::invoke_affordance({.id = stroke_end_id, .label = _("End stroke")}));
 }
 
-/// A row per state of the document, the original first: a step is named by the edit it did, and
-/// the row of the saved state says so.
-auto history_rows(const document& doc) -> std::vector<ec::row> {
-    const auto steps = doc.history();
-    auto rows = std::vector<ec::row>{};
-    for (const auto depth : std::views::iota(std::size_t{0}, steps.size() + 1)) {
-        auto row = ec::row{
-            .id = index_row("step", depth),
-            .label = depth == 0 ? _("Opened") : step_label(steps[depth - 1].edits.back()),
-            .selected = depth == doc.depth()};
-        if (doc.saved_depth() == depth) { row.description = _("Saved"); }
-        rows.push_back(std::move(row));
-    }
-    return rows;
-}
-
 /// The argument of an affordance that takes a row of .
 auto row_of(const char* const component) -> ec::arg_shape {
     return ec::arg_shape{.row = ec::row_shape{.component_id = component}};
@@ -1349,7 +1333,7 @@ auto session_view(const session& state) -> ec::screen_view {
                  std::back_inserter(affordances));
         parts.push_back(ec::list(
             {.id = history_id,
-             .rows = history_rows(doc),
+             .rows = step_rows(document_steps(doc)),
              .selection = "single",
              .activate = jump_id}));
         affordances.push_back(ec::invoke_affordance(
