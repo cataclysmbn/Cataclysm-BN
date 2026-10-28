@@ -755,15 +755,24 @@ auto design_step_label(const document_edit& edit) -> std::string {
     if (!edit.before.is_object() || !edit.after.is_object()) { return step_label(edit); }
     const auto before = mounted(edit.before);
     const auto after = mounted(edit.after);
-    if (const auto installed = added(before, after);
-        installed.size() == 1 && after.size() == before.size() + 1) {
+    const auto installed = added(before, after);
+    const auto removed = added(after, before);
+    if (installed.size() == 1 && removed.empty()) {
         return at_mount(_("Install %s at %d,%d"), part_name(installed[0].part), installed[0].mount);
     }
-    if (const auto removed = added(after, before);
-        removed.size() == 1 && before.size() == after.size() + 1) {
+    if (removed.size() == 1 && installed.empty()) {
         return at_mount(_("Remove %s at %d,%d"), part_name(removed[0].part), removed[0].mount);
     }
-    if (before != after && added(before, after).empty()) {
+    if (!installed.empty() && removed.empty()) {
+        return string_format(
+            vgettext("Install %d part", "Install %d parts", installed.size()), installed.size());
+    }
+    if (!removed.empty() && installed.empty()) {
+        return string_format(
+            vgettext("Remove %d part", "Remove %d parts", removed.size()), removed.size());
+    }
+    // The same parts on the same mounts, in another order.
+    if (before != after && installed.empty() && removed.empty()) {
         const auto moved = std::ranges::mismatch(before, after).in1;
         return string_format(_("Reorder parts at %d,%d"), moved->mount.x, moved->mount.y);
     }

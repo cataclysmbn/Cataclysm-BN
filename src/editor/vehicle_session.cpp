@@ -209,6 +209,22 @@ auto copied_vehicle_file() -> std::filesystem::path {
     return std::filesystem::path(PATH_INFO::user_dir()) / "vehicle_copy.json";
 }
 
+/// What the player's actions can change: the design open and its steps, the world's vehicle edited
+/// in place and its steps, how a vehicle spawns, what a click on the grid does, and whether the
+/// world was told something.
+struct session_footprint {
+    std::string design;
+    std::size_t steps = 0;
+    std::size_t depth = 0;
+    std::optional<std::size_t> saved;
+    const vehicle* live = nullptr;
+    std::array<int, 3> spawning{};
+    std::string tool;
+    std::string brush;
+    bool said = false;
+    auto operator==(const session_footprint&) const -> bool = default; // *NOPAD*
+};
+
 struct session {
     std::optional<document> doc = std::nullopt;
     /// The prototype's object in `doc`.
@@ -566,7 +582,12 @@ struct session {
                         _("The prototype has nothing at %s to remove."), field_pointer);
                     return;
                 }
-                next.at(parent).erase(at.back());
+                // `contains` took the index of a list as a number within it.
+                if (auto& holder = next.at(parent); holder.is_array()) {
+                    holder.erase(static_cast<std::size_t>(std::stoull(at.back())));
+                } else {
+                    holder.erase(at.back());
+                }
             } else {
                 const auto parsed = nlohmann::ordered_json::parse(field_value, nullptr, false);
                 next[at] = parsed.is_discarded() ? nlohmann::ordered_json(field_value) : parsed;
@@ -696,10 +717,13 @@ struct session {
              | std::ranges::to<std::vector>();
     }
 
-    /// Adds a spawn of the item or item group `id` on the picked mount, every time.
-    auto add_item(const std::string& id) -> void {
-        const auto group = item_group::group_is_defined(item_group_id(id));
-        if (!group && !itype_id(id).is_valid()) {
+    /// Adds a spawn of the item or item group `id` on the picked mount, every time; `kind` says
+    /// which, else an id that names an item group stands for the group.
+    auto add_item(const std::string& id, const std::optional<catalog_kind> kind = std::nullopt)
+        -> void {
+        const auto defined_group = item_group::group_is_defined(item_group_id(id));
+        const auto group = kind ? *kind == catalog_kind::item_group : defined_group;
+        if (group ? !defined_group : !itype_id(id).is_valid()) {
             notice = _("No item or item group has that id.");
             return;
         }
@@ -867,6 +891,21 @@ struct session {
             copy(live_redo | std::views::reverse | std::views::transform(&live_step::label),
                  std::back_inserter(labels));
         return {.labels = std::move(labels), .depth = live_undo.size()};
+    }
+
+    /// What the next action may change, to tell whether it changed anything.
+    auto footprint() const -> session_footprint {
+        const auto steps = live || doc ? history() : history_steps{};
+        return {
+            .design = doc ? doc->path().string() + "#" + prototype().value("id", "") : "",
+            .steps = steps.labels.size(),
+            .depth = steps.depth,
+            .saved = steps.saved,
+            .live = live,
+            .spawning = {spawning.facing, spawning.fuel, spawning.condition},
+            .tool = canvas_tool,
+            .brush = brush,
+            .said = !said.empty()};
     }
 
     /// Undoes or redoes until `depth` steps are done.
@@ -1781,7 +1820,8 @@ auto parts_view(const session& state) -> ec::screen_view {
              .label = _("Redo"),
              .keys = {"CTRL+Y"},
              .enabled = !state.live_redo.empty()}));
-        affordances.push_back(ec::invoke_affordance({.id = done_id, .label = _("Done")}));
+        affordances.push_back(
+            ec::invoke_affordance({.id = done_id, .label = _("Done"), .keys = {"CTRL+D"}}));
     } else {
         const auto& doc = *state.doc;
         on("vehicle",
@@ -1928,8 +1968,10 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
         const auto& id = invoked->affordance_id;
         const auto row = invoked->args.row.value_or("");
         const auto text = invoked->args.text.value_or("");
-        state.notice.clear();
+        // A notice stays until an action changes something or brings a notice of its own.
         state.said.clear();
+        const auto before = state.footprint();
+        auto kept = std::exchange(state.notice, {});
         state.watch();
         const auto tool = std::ranges::find(canvas_tools, id, &canvas_tool::affordance);
         if (id == source_id || id == tool_id) {
@@ -1968,7 +2010,6 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
             state.part_page = static_cast<std::size_t>(invoked->args.count.value_or(0));
         } else if (!state.live && !state.doc) {
             // Nothing is open to act on.
-            continue;
         } else if (id == mount_id) {
             if (const auto at = row_point(row, "mount")) { state.click(*at); }
         } else if (id == remove_id) {
@@ -1976,7 +2017,7 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
         } else if (state.live) {
             live_invoke(state, id, row, text);
         } else if (!state.doc) {
-            continue;
+            // The vehicle edited in place left the map.
         } else if (id == pick_id) {
             if (const auto index = row_index(row, "part")) {
                 const auto design = design_parts(state.prototype());
@@ -2006,8 +2047,11 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
         } else if (id == item_page_id) {
             state.item_page = static_cast<std::size_t>(invoked->args.count.value_or(0));
         } else if (id == item_pick_id) {
-            state.add_item(std::string(
-                row_rest(row, "item").or_else([&] { return row_rest(row, "group"); }).value_or("")));
+            if (const auto item = row_rest(row, "item")) {
+                state.add_item(std::string(*item), catalog_kind::item);
+            } else if (const auto group = row_rest(row, "group")) {
+                state.add_item(std::string(*group), catalog_kind::item_group);
+            }
         } else if (id == item_remove_id || id == item_chance_id) {
             if (const auto index = row_index(row, "item")) {
                 state.edit_item(
@@ -2043,6 +2087,7 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
             state.live = nullptr;
             return true;
         }
+        if (state.notice.empty() && state.footprint() == before) { state.notice = std::move(kept); }
     }
 }
 
