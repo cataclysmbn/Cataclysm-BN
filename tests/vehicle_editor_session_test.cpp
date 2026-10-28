@@ -3002,7 +3002,8 @@ TEST_CASE(
                 // Opening picks the top part, so the form points at it until told otherwise.
                 return invoke("vehicle:field_set", {.row = "pointer", .text = "/name"});
             case 3:
-                return invoke("vehicle:field_set", {.row = "value", .text = "{ broken"});
+                // Text that starts as JSON does after a space is still meant as JSON.
+                return invoke("vehicle:field_set", {.row = "value", .text = " [1, broken"});
             case 4:
                 return invoke("vehicle:field_apply");
             case 5:
