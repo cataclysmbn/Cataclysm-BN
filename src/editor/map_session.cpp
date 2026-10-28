@@ -500,15 +500,17 @@ auto session::roll_loot_in(const selection& squares) -> void {
         const auto count =
             (std::abs(squares.to.x - squares.from.x) + 1)
             * (std::abs(squares.to.y - squares.from.y) + 1);
-        const auto where =
-            count == 1 ? std::string(_("the square marked"))
-                       : string_format(_("the %d squares marked"), count);
+        // Each sentence translates whole, with one count to pick its plural by.
         status =
             loot->empty()
-                ? string_format(_("Nothing can spawn in %s."), where)
-                : string_format(vgettext("%1$d kind of item can spawn in %2$s.",
-                                         "%1$d kinds of items can spawn in %2$s.", loot->size()),
-                                loot->size(), where);
+                ? string_format(vgettext("%d square marked: nothing can spawn there.",
+                                         "%d squares marked: nothing can spawn there.", count),
+                                count)
+                : string_format(vgettext("%d square marked.", "%d squares marked.", count), count)
+                      + " "
+                      + string_format(vgettext("%d kind of item can spawn there.",
+                                               "%d kinds of items can spawn there.", loot->size()),
+                                      loot->size());
     } else {
         notice = rolled.error();
     }
