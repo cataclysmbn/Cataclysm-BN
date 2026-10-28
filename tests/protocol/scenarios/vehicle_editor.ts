@@ -3,13 +3,13 @@
  * The vehicle editor from the main menu: the Editor tab's vehicle editor entry starts the editor world and opens
  * the vehicle editor at once; it opens a prototype by its id, shows the vehicle the game builds from it, chooses a
  * part from the parts palette and installs it on the mount clicked, says why a mount refuses another, undoes the
- * install, spawns the prototype and leaves for the map beside it, comes back to the vehicle editor through the
- * editor action, edits the spawned vehicle in place from the world tab, copies and pastes it with its state, and
- * leaves for the map editor.
+ * install, spawns the prototype beside the avatar while the vehicle editor stays open, edits the spawned vehicle in
+ * place from the world tab, copies and pastes it with its state, and leaves.
  */
 import { assert, assertEquals } from "@std/assert"
 import { Engine, type Scenario, type Value } from "./driver.ts"
 import { walk } from "./inventory.ts"
+import { atMainMenu } from "../mirror.ts"
 
 const part = (screen: Value, id: string) => walk(screen.root).find((entry) => entry.id === id)
 const stack = (screen: Value) => part(screen, "vehicle:stack").rows.map((row: Value) => row.label)
@@ -81,16 +81,10 @@ export const vehicleEditor: Scenario = {
       )
       assertEquals(stack(engine.top()), before)
 
-      // The editor world is shown only to try a vehicle: spawning leaves for the map beside it.
+      // Spawning puts the vehicle beside the avatar and keeps the vehicle editor open.
       const spawned = await engine.invoke("vehicle:spawn")
       rec.command("prototype spawned beside the avatar", spawned)
-      assertEquals(engine.top().role, "map")
-      assertEquals(
-        (await engine.submit({ kind: "action", action_id: "editor" })).stages.at(-1),
-        "completed",
-      )
-      // The editor opens on the vehicle editor it left.
-      await engine.follow(() => engine.top().kind === "vehicle_editor")
+      assertEquals(engine.top().kind, "vehicle_editor")
       assertEquals(
         (await engine.invoke("vehicle:source", { row: "source:world" })).stages.at(-1),
         "completed",
@@ -131,7 +125,10 @@ export const vehicleEditor: Scenario = {
       const pasted = await engine.invoke("vehicle:paste")
       rec.command("world vehicle pasted with its state beside the avatar", pasted)
       assertEquals(world().length, 2)
-      assertEquals((await engine.invoke("QUIT")).stages.at(-1), "completed")
-      assertEquals(engine.top().kind, "editor")
+      // The main menu started the editor in the vehicle editor: leaving it ends the editor's world.
+      assertEquals((await engine.invoke("QUIT")).stages.at(-1), "interrupted")
+      await engine.follow(() => engine.stale)
+      await engine.subscribe()
+      await engine.acknowledge(() => atMainMenu(engine.mirror))
     }),
 }

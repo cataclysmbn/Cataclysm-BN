@@ -2098,7 +2098,9 @@ TEST_CASE("the vehicle editor says what it did to the world's vehicles", "[edito
             case 5:
                 return invoke("vehicle:spawn");
             case 6:
-                CHECK(status(screen) == "Spawned Bicycle 8 squares east of you.");
+                CHECK(status(screen)
+                      == "Spawned Bicycle 8 squares east of you. Vehicles > World > Edit in place "
+                         "changes it where it stands.");
                 return act("QUIT");
             default:
                 FAIL("the vehicle editor outlived its exit");
@@ -2409,7 +2411,7 @@ TEST_CASE(
                 return invoke("vehicle:spawn");
             case 2:
                 CHECK(status(screen).starts_with("SN "));
-                CHECK(status(screen).ends_with(" 8 Bicycle"));
+                CHECK(status(screen).contains(" 8 Bicycle "));
                 return invoke("vehicle:source", {.row = "source:world"});
             case 3:
                 return invoke("vehicle:copy", {.row = "world:0"});

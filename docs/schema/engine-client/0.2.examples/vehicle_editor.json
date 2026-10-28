@@ -3421,11 +3421,11 @@
                         "options": [
                           {
                             "id": "wheel_bicycle",
-                            "label": "bicycle wheel (bicycle)"
+                            "label": "bicycle wheel"
                           },
                           {
                             "id": "wheel_bicycle_rear",
-                            "label": "bicycle wheel (bicycle_rear)"
+                            "label": "bicycle wheel (rear)"
                           }
                         ]
                       }
@@ -4310,7 +4310,7 @@
         "stage_text": "Done.",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "15",
+          "sequence": "14",
           "revision": "10"
         }
       }
@@ -4322,7 +4322,7 @@
         "epoch": "epoch-2",
         "expect": {
           "boundary_id": "boundary:2",
-          "revision": "17"
+          "revision": "16"
         },
         "operation": {
           "kind": "invoke",
@@ -4373,8 +4373,8 @@
         "stage_text": "Done.",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "23",
-          "revision": "18"
+          "sequence": "21",
+          "revision": "17"
         }
       }
     },
@@ -4382,7 +4382,7 @@
       "name": "vehicle editor editing a world vehicle in place",
       "def": "screen",
       "value": {
-        "screen_id": "screen:5",
+        "screen_id": "screen:4",
         "role": "workspace",
         "kind": "vehicle_editor",
         "title": "Vehicle Editor",
@@ -4587,7 +4587,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 1,
@@ -4596,7 +4596,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 2,
@@ -4605,7 +4605,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 3,
@@ -4614,7 +4614,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 4,
@@ -4623,7 +4623,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 5,
@@ -4632,7 +4632,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 6,
@@ -4641,7 +4641,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 7,
@@ -4650,7 +4650,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 8,
@@ -4659,7 +4659,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 9,
@@ -4668,7 +4668,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 10,
@@ -4677,7 +4677,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 11,
@@ -4686,7 +4686,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 12,
@@ -4695,7 +4695,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 13,
@@ -4704,7 +4704,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 14,
@@ -4713,7 +4713,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 15,
@@ -4722,7 +4722,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 16,
@@ -4731,7 +4731,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 17,
@@ -4740,7 +4740,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 18,
@@ -4749,7 +4749,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 19,
@@ -4758,7 +4758,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 20,
@@ -4767,7 +4767,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 0,
@@ -4776,7 +4776,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 1,
@@ -4785,7 +4785,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 2,
@@ -4794,7 +4794,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 3,
@@ -4803,7 +4803,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 4,
@@ -4812,7 +4812,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 5,
@@ -4821,7 +4821,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 6,
@@ -4830,7 +4830,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 7,
@@ -4839,7 +4839,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 8,
@@ -4848,7 +4848,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 9,
@@ -4857,7 +4857,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 10,
@@ -4866,7 +4866,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 11,
@@ -4875,7 +4875,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 12,
@@ -4884,7 +4884,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 13,
@@ -4893,7 +4893,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 14,
@@ -4902,7 +4902,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 15,
@@ -4911,7 +4911,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 16,
@@ -4920,7 +4920,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 17,
@@ -4929,7 +4929,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 18,
@@ -4938,7 +4938,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 19,
@@ -4947,7 +4947,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 20,
@@ -4956,7 +4956,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 0,
@@ -4965,7 +4965,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 1,
@@ -4974,7 +4974,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 2,
@@ -4983,7 +4983,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 3,
@@ -4992,7 +4992,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 4,
@@ -5001,7 +5001,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 5,
@@ -5010,7 +5010,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 6,
@@ -5019,7 +5019,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 7,
@@ -5028,7 +5028,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 8,
@@ -5037,7 +5037,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 9,
@@ -5046,7 +5046,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 10,
@@ -5055,7 +5055,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 11,
@@ -5064,7 +5064,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 12,
@@ -5073,7 +5073,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 13,
@@ -5082,7 +5082,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 14,
@@ -5091,7 +5091,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 15,
@@ -5100,7 +5100,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 16,
@@ -5109,7 +5109,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 17,
@@ -5118,7 +5118,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 18,
@@ -5127,7 +5127,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 19,
@@ -5136,7 +5136,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 20,
@@ -5145,7 +5145,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 0,
@@ -5154,7 +5154,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 1,
@@ -5163,7 +5163,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 2,
@@ -5172,7 +5172,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 3,
@@ -5181,7 +5181,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 4,
@@ -5190,7 +5190,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 5,
@@ -5199,7 +5199,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 6,
@@ -5208,7 +5208,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 7,
@@ -5217,7 +5217,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 8,
@@ -5226,7 +5226,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 9,
@@ -5235,7 +5235,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 10,
@@ -5244,7 +5244,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 11,
@@ -5253,7 +5253,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 12,
@@ -5262,7 +5262,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 13,
@@ -5271,7 +5271,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 14,
@@ -5280,7 +5280,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 15,
@@ -5289,7 +5289,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 16,
@@ -5298,7 +5298,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 17,
@@ -5307,7 +5307,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 18,
@@ -5316,7 +5316,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 19,
@@ -5325,7 +5325,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 20,
@@ -5334,7 +5334,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 0,
@@ -5343,7 +5343,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 1,
@@ -5352,7 +5352,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 2,
@@ -5361,7 +5361,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 3,
@@ -5370,7 +5370,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 4,
@@ -5379,7 +5379,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 5,
@@ -5388,7 +5388,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 6,
@@ -5397,7 +5397,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 7,
@@ -5406,7 +5406,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 8,
@@ -5415,7 +5415,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 9,
@@ -5424,7 +5424,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 10,
@@ -5433,7 +5433,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 11,
@@ -5442,7 +5442,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 12,
@@ -5451,7 +5451,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 13,
@@ -5460,7 +5460,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 14,
@@ -5469,7 +5469,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 15,
@@ -5478,7 +5478,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 16,
@@ -5487,7 +5487,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 17,
@@ -5496,7 +5496,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 18,
@@ -5505,7 +5505,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 19,
@@ -5514,7 +5514,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 20,
@@ -5523,7 +5523,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 0,
@@ -5532,7 +5532,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 1,
@@ -5541,7 +5541,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 2,
@@ -5550,7 +5550,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 3,
@@ -5559,7 +5559,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 4,
@@ -5568,7 +5568,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 5,
@@ -5577,7 +5577,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 6,
@@ -5586,7 +5586,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 7,
@@ -5595,7 +5595,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 8,
@@ -5604,7 +5604,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 9,
@@ -5613,7 +5613,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 10,
@@ -5622,7 +5622,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 11,
@@ -5631,7 +5631,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 12,
@@ -5640,7 +5640,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 13,
@@ -5649,7 +5649,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 14,
@@ -5658,7 +5658,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 15,
@@ -5667,7 +5667,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 16,
@@ -5676,7 +5676,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 17,
@@ -5685,7 +5685,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 18,
@@ -5694,7 +5694,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 19,
@@ -5703,7 +5703,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 20,
@@ -5712,7 +5712,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 0,
@@ -5721,7 +5721,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 1,
@@ -5730,7 +5730,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 2,
@@ -5739,7 +5739,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 3,
@@ -5748,7 +5748,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 4,
@@ -5757,7 +5757,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 5,
@@ -5766,7 +5766,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 6,
@@ -5775,7 +5775,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 7,
@@ -5784,7 +5784,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 8,
@@ -5793,7 +5793,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 9,
@@ -5829,7 +5829,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 13,
@@ -5838,7 +5838,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 14,
@@ -5847,7 +5847,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 15,
@@ -5856,7 +5856,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 16,
@@ -5865,7 +5865,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 17,
@@ -5874,7 +5874,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 18,
@@ -5883,7 +5883,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 19,
@@ -5892,7 +5892,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 20,
@@ -5901,7 +5901,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 0,
@@ -5910,7 +5910,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 1,
@@ -5919,7 +5919,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 2,
@@ -5928,7 +5928,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 3,
@@ -5937,7 +5937,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 4,
@@ -5946,7 +5946,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 5,
@@ -5955,7 +5955,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 6,
@@ -5964,7 +5964,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 7,
@@ -5973,7 +5973,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 8,
@@ -6050,7 +6050,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 14,
@@ -6059,7 +6059,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 15,
@@ -6068,7 +6068,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 16,
@@ -6077,7 +6077,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 17,
@@ -6086,7 +6086,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 18,
@@ -6095,7 +6095,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 19,
@@ -6104,7 +6104,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 20,
@@ -6113,7 +6113,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 0,
@@ -6122,7 +6122,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 1,
@@ -6131,7 +6131,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 2,
@@ -6140,7 +6140,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 3,
@@ -6149,7 +6149,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 4,
@@ -6158,7 +6158,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 5,
@@ -6167,7 +6167,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 6,
@@ -6176,7 +6176,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 7,
@@ -6185,7 +6185,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 8,
@@ -6194,7 +6194,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 9,
@@ -6230,7 +6230,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 13,
@@ -6239,7 +6239,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 14,
@@ -6248,7 +6248,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 15,
@@ -6257,7 +6257,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 16,
@@ -6266,7 +6266,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 17,
@@ -6275,7 +6275,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 18,
@@ -6284,7 +6284,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 19,
@@ -6293,7 +6293,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 20,
@@ -6302,7 +6302,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 0,
@@ -6311,7 +6311,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 1,
@@ -6320,7 +6320,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 2,
@@ -6329,7 +6329,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 3,
@@ -6338,7 +6338,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 4,
@@ -6347,7 +6347,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 5,
@@ -6356,7 +6356,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 6,
@@ -6365,7 +6365,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 7,
@@ -6374,7 +6374,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 8,
@@ -6383,7 +6383,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 9,
@@ -6392,7 +6392,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 10,
@@ -6401,7 +6401,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 11,
@@ -6410,7 +6410,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 12,
@@ -6419,7 +6419,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 13,
@@ -6428,7 +6428,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 14,
@@ -6437,7 +6437,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 15,
@@ -6446,7 +6446,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 16,
@@ -6455,7 +6455,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 17,
@@ -6464,7 +6464,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 18,
@@ -6473,7 +6473,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 19,
@@ -6482,7 +6482,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 20,
@@ -6491,7 +6491,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 0,
@@ -6500,7 +6500,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 1,
@@ -6509,7 +6509,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 2,
@@ -6518,7 +6518,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 3,
@@ -6527,7 +6527,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 4,
@@ -6536,7 +6536,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 5,
@@ -6545,7 +6545,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 6,
@@ -6554,7 +6554,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 7,
@@ -6563,7 +6563,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 8,
@@ -6572,7 +6572,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 9,
@@ -6581,7 +6581,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 10,
@@ -6590,7 +6590,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 11,
@@ -6599,7 +6599,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 12,
@@ -6608,7 +6608,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 13,
@@ -6617,7 +6617,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 14,
@@ -6626,7 +6626,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 15,
@@ -6635,7 +6635,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 16,
@@ -6644,7 +6644,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 17,
@@ -6653,7 +6653,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 18,
@@ -6662,7 +6662,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 19,
@@ -6671,7 +6671,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 20,
@@ -6680,7 +6680,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 0,
@@ -6689,7 +6689,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 1,
@@ -6698,7 +6698,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 2,
@@ -6707,7 +6707,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 3,
@@ -6716,7 +6716,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 4,
@@ -6725,7 +6725,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 5,
@@ -6734,7 +6734,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 6,
@@ -6743,7 +6743,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 7,
@@ -6752,7 +6752,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 8,
@@ -6761,7 +6761,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 9,
@@ -6770,7 +6770,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 10,
@@ -6779,7 +6779,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 11,
@@ -6788,7 +6788,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 12,
@@ -6797,7 +6797,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 13,
@@ -6806,7 +6806,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 14,
@@ -6815,7 +6815,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 15,
@@ -6824,7 +6824,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 16,
@@ -6833,7 +6833,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 17,
@@ -6842,7 +6842,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 18,
@@ -6851,7 +6851,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 19,
@@ -6860,7 +6860,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 20,
@@ -6869,7 +6869,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 0,
@@ -6878,7 +6878,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 1,
@@ -6887,7 +6887,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 2,
@@ -6896,7 +6896,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 3,
@@ -6905,7 +6905,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 4,
@@ -6914,7 +6914,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 5,
@@ -6923,7 +6923,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 6,
@@ -6932,7 +6932,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 7,
@@ -6941,7 +6941,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 8,
@@ -6950,7 +6950,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 9,
@@ -6959,7 +6959,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 10,
@@ -6968,7 +6968,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 11,
@@ -6977,7 +6977,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 12,
@@ -6986,7 +6986,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 13,
@@ -6995,7 +6995,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 14,
@@ -7004,7 +7004,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 15,
@@ -7013,7 +7013,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 16,
@@ -7022,7 +7022,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 17,
@@ -7031,7 +7031,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 18,
@@ -7040,7 +7040,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 19,
@@ -7049,7 +7049,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 20,
@@ -7058,7 +7058,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 0,
@@ -7067,7 +7067,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 1,
@@ -7076,7 +7076,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 2,
@@ -7085,7 +7085,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 3,
@@ -7094,7 +7094,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 4,
@@ -7103,7 +7103,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 5,
@@ -7112,7 +7112,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 6,
@@ -7121,7 +7121,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 7,
@@ -7130,7 +7130,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 8,
@@ -7139,7 +7139,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 9,
@@ -7148,7 +7148,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 10,
@@ -7157,7 +7157,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 11,
@@ -7166,7 +7166,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 12,
@@ -7175,7 +7175,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 13,
@@ -7184,7 +7184,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 14,
@@ -7193,7 +7193,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 15,
@@ -7202,7 +7202,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 16,
@@ -7211,7 +7211,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 17,
@@ -7220,7 +7220,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 18,
@@ -7229,7 +7229,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 19,
@@ -7238,7 +7238,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 20,
@@ -7247,7 +7247,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 0,
@@ -7256,7 +7256,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 1,
@@ -7265,7 +7265,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 2,
@@ -7274,7 +7274,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 3,
@@ -7283,7 +7283,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 4,
@@ -7292,7 +7292,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 5,
@@ -7301,7 +7301,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 6,
@@ -7310,7 +7310,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 7,
@@ -7319,7 +7319,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 8,
@@ -7328,7 +7328,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 9,
@@ -7337,7 +7337,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 10,
@@ -7346,7 +7346,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 11,
@@ -7355,7 +7355,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 12,
@@ -7364,7 +7364,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 13,
@@ -7373,7 +7373,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 14,
@@ -7382,7 +7382,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 15,
@@ -7391,7 +7391,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 16,
@@ -7400,7 +7400,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 17,
@@ -7409,7 +7409,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 18,
@@ -7418,7 +7418,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 19,
@@ -7427,7 +7427,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 },
                 {
                   "x": 20,
@@ -7436,7 +7436,7 @@
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
-                  "refused": "Headlight goes on a frame: install a frame here first."
+                  "refused": "Headlight goes on a frame, and a frame here would not touch the vehicle's frame."
                 }
               ],
               "looks": [
@@ -7872,7 +7872,7 @@
                   {
                     "id": "vpart:headlight",
                     "label": "headlight",
-                    "description": "This mount already has headlight.",
+                    "description": "",
                     "denial": "",
                     "enabled": true,
                     "selectable": true,
@@ -8380,7 +8380,7 @@
       "value": {
         "epoch": "epoch-2",
         "expect": {
-          "screen_id": "screen:5"
+          "screen_id": "screen:4"
         },
         "operation": {
           "kind": "invoke",
@@ -8428,8 +8428,8 @@
         "stage_text": "Done.",
         "at": {
           "epoch": "epoch-2",
-          "sequence": "27",
-          "revision": "22"
+          "sequence": "25",
+          "revision": "21"
         }
       }
     }

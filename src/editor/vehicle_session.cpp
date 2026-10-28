@@ -1,12 +1,9 @@
 #include "editor/vehicle_session.h"
 
-#include "action.h"
 #include "avatar.h"
 #include "calendar.h"
 #include "editor/catalog.h"
 #include "editor/document.h"
-#include "editor/editor_access.h"
-#include "editor/editor_session.h"
 #include "editor/history_label.h"
 #include "editor/recent_documents.h"
 #include "editor/row_id.h"
@@ -24,7 +21,6 @@
 #include "json_formatter.h"
 #include "line.h"
 #include "map/map.h"
-#include "messages.h"
 #include "output.h"
 #include "path_info.h"
 #include "string_formatter.h"
@@ -761,8 +757,14 @@ struct session {
                                    .transform([](const int /*index*/) {});
                            })
                      : install(brush))) {
-            //~ What the vehicle editor did: the part's name and the mount it is on.
-            said = at_mount(_("Installed %s at %d,%d."), part_name(brush));
+            const auto held = vpart_id(brush);
+            // A tank comes empty, which the part's settings change.
+            said = held.is_valid() && held->has_flag(VPFLAG_FLUIDTANK)
+                     //~ What the vehicle editor did: the part's name and the mount it is on.
+                     ? at_mount(_("Installed %s at %d,%d. Set its fuel under Fuel."),
+                                part_name(brush))
+                     //~ What the vehicle editor did: the part's name and the mount it is on.
+                     : at_mount(_("Installed %s at %d,%d."), part_name(brush));
         }
         pick_top();
     }
@@ -1095,7 +1097,7 @@ struct session {
         if (!made || !frame) { return; }
         canvas_tool = "install";
         hold(frame->str());
-        said = _("Pick a part on the left, then click a square next to the frame.");
+        said = _("Pick a part under Parts, then click a square next to the frame.");
     }
 
     /// Keeps the world's vehicle `index` with its whole state in a file of the user directory, so
@@ -1335,13 +1337,12 @@ struct session {
         }
     }
 
-    /// Puts the design in the game in place of its prototype and spawns it east of the avatar; true
-    /// when it is there.
-    auto spawn() -> bool {
+    /// Puts the design in the game in place of its prototype and spawns it east of the avatar.
+    auto spawn() -> void {
         const auto applied = apply_design(prototype().dump());
         if (!applied) {
             notice = applied.error();
-            return false;
+            return;
         }
         const auto spawned = place_clear(
             tripoint_rel_ms(spawn_distance, 0, 0),
@@ -1354,10 +1355,12 @@ struct session {
             });
         if (!spawned) {
             notice = spawned.error();
-            return false;
+            return;
         }
-        said = placed_sentence(false, **spawned);
-        return true;
+        //~ %s says where the vehicle spawned.
+        said = string_format(
+            _("%s Vehicles > World > Edit in place changes it where it stands."),
+            placed_sentence(false, **spawned));
     }
 
     auto set_spawning(const std::string& field, const std::string& text) -> void {
@@ -2027,9 +2030,13 @@ auto parts_view(const session& state) -> ec::screen_view {
                  {.id = parts_id,
                   .rows = palette.shown | std::views::transform([&](const auto& entry) {
                               const auto& info = *entry.part;
-                              // Whether it fits the picked mount, and why not, as the game rules.
+                              // Whether it fits the picked mount, and why not, as the game
+                              // rules; for the part in hand only when the last action brought
+                              // no news of its own.
+                              const auto news = !state.said.empty() || !state.notice.empty();
                               const auto refused =
-                                  veh ? mount_refusal(*veh, state.cursor, info.get_id())
+                                  veh && !(entry.held && news)
+                                      ? mount_refusal(*veh, state.cursor, info.get_id())
                                       : std::nullopt;
                               return ec::row{
                                   .id = entry.id,
@@ -2594,22 +2601,8 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
             state.save_as(text);
         } else if (id == spawn_set_id) {
             state.set_spawning(row, text);
-        } else if (id == spawn_id && state.spawn() && in_editor_game()) {
-            // The editor game shows no world behind the editor: the avatar goes to try it, and the
-            // editor opens on this one again.
-            if (const auto key = press_x_if_bound(ACTION_EDITOR)) {
-                //~ %1$s says where the vehicle spawned; %2$s how to open the editor, as "Press ~".
-                add_msg(m_info, to_translation("%1$s %2$s to go back to the vehicle editor."),
-                        state.said, *key);
-            } else {
-                //~ %s says where the vehicle spawned.
-                add_msg(m_info,
-                        to_translation("%s The Map Editor action goes back to the vehicle editor."),
-                        state.said);
-            }
-            return_to_vehicle_editor();
-            state.live = nullptr;
-            return true;
+        } else if (id == spawn_id) {
+            state.spawn();
         }
         if (state.notice.empty() && state.footprint() == before) { state.notice = std::move(kept); }
     }
