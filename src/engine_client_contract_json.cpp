@@ -530,6 +530,7 @@ auto to_json( const arg_shape &shape ) -> json
     if( shape.text ) {
         result["text"] = json::object();
         if( !shape.text->field_id.empty() ) { result["text"]["field_id"] = shape.text->field_id; }
+        if( !shape.text->initial.empty() ) { result["text"]["default"] = shape.text->initial; }
     }
     if( shape.pos ) {
         result["pos"] = {{"unit", shape.pos->unit}};

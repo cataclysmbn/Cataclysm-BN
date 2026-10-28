@@ -262,6 +262,15 @@ auto placed_sentence(const bool pasted, const vehicle& veh) -> std::string {
     return string_format(format, veh.name, distance, direction_name(direction_from(here, at)));
 }
 
+/// `base`, else `base_2`, `base_3` and on: the first name whose file the player's mods lack.
+auto free_name(const std::string& base) -> std::string {
+    auto name = base;
+    for (auto count = 2; std::filesystem::exists(in_mods(name)); ++count) {
+        name = base + "_" + std::to_string(count);
+    }
+    return name;
+}
+
 auto copied_vehicle_file() -> std::filesystem::path {
     return std::filesystem::path(PATH_INFO::user_dir()) / "vehicle_copy.json";
 }
@@ -1502,7 +1511,7 @@ auto parts_view(const session& state) -> ec::screen_view {
     affordances.push_back(ec::invoke_affordance(
         {.id = new_id,
          .label = _("New vehicle"),
-         .args = {.text = ec::text_shape{}},
+         .args = {.text = ec::text_shape{.initial = free_name("my_vehicle")}},
          .keys = {"CTRL+N"}}));
     affordances.push_back(ec::invoke_affordance(
         {.id = std::string(show_prefix) + "prototypes", .label = _("Prototypes"), .keys = {"p"}}));
@@ -1944,7 +1953,8 @@ auto parts_view(const session& state) -> ec::screen_view {
         affordances.push_back(ec::invoke_affordance(
             {.id = save_as_id,
              .label = _("Save as"),
-             .args = {.text = ec::text_shape{}},
+             .args =
+                 {.text = ec::text_shape{.initial = free_name(state.prototype().value("id", ""))}},
              .keys = {"F12"}}));
     }
     return {
