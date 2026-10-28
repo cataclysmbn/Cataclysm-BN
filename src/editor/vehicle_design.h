@@ -10,6 +10,7 @@
 
 #include <expected>
 #include <filesystem>
+#include <functional>
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <optional>
@@ -130,6 +131,10 @@ auto restore_vehicle_state(vehicle& veh, const std::string& state)
 auto mount_refusal(const vehicle& veh, const point& at, const vpart_id& id)
     -> std::optional<std::string>;
 
+/// `mount_refusal` for many mounts of `veh`, which stays as it is while the result is used.
+auto mount_refusals(const vehicle& veh, const vpart_id& id)
+    -> std::function<auto(const point&)->std::optional<std::string>>;
+
 /// Installs the part on a mount of the world's vehicle at once, without the game's requirements;
 /// the part's index, or why the game would not mount it.
 auto install_live_part(vehicle& veh, const part_install& install)
@@ -207,22 +212,25 @@ struct part_kind {
     part_category category = part_category::other;
 };
 
-/// Every kind of part the game has, by category and then by name.
-auto part_kinds() -> std::vector<part_kind>;
+/// The game's parts as a designer picks them, read once for an editor visit, since the game's data
+/// stays as it is while the editor is open.
+struct part_catalog {
+    /// Every kind of part the game has, by category and then by name.
+    std::vector<part_kind> kinds;
+    /// The liquids the game's prototypes fill their parts with, most often first.
+    std::vector<itype_id> tank_fuels;
+    /// The frame the game's prototypes install most, which a new design starts with; none when
+    /// they install none.
+    std::optional<vpart_id> frame;
+    /// The shapes of the part `id`, as its kind has them; none for a part the game lacks.
+    auto shapes_of(const vpart_id& id) const -> std::vector<const vpart_info*>;
+};
 
-/// The shapes of the part `id`, as `part_kind` has them; none for a part the game lacks.
-auto part_shapes(const vpart_id& id) -> std::vector<const vpart_info*>;
+auto read_part_catalog() -> part_catalog;
 
 /// The names of `parts` as a list of them shows them: a name two of them share is followed by
 /// what tells their ids apart.
 auto part_labels(const std::vector<const vpart_info*>& parts) -> std::vector<std::string>;
-
-/// The liquids the game's prototypes fill their parts with, most often first.
-auto usual_tank_fuels() -> std::vector<itype_id>;
-
-/// The frame the game's prototypes install most, which a new design starts with; none when they
-/// install none.
-auto usual_frame() -> std::optional<vpart_id>;
 
 /// The data file of the loaded mods that defines the prototype `id` last, as the game loads them.
 auto prototype_file(const std::string& id) -> std::optional<std::filesystem::path>;
