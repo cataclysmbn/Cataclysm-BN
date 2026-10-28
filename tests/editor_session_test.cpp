@@ -6416,4 +6416,45 @@ TEST_CASE(
     editor::reset_editor_session();
 }
 
+TEST_CASE(
+    "the map editor's help lists the keys of its actions and tools",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = kinds_file{};
+    auto step = 0;
+    /// The keys the help lists for the row named `label`; empty when it lists no such row.
+    const auto keys_of = [](const ec::screen_view& screen, const std::string& label) {
+        const auto& rows = body<ec::list_body>(part(screen, "keybindings:actions")).rows;
+        const auto found = std::ranges::find(rows, label, &ec::row::label);
+        if (found == rows.end()) { return std::string{}; }
+        const auto keys =
+            std::ranges::find(found->columns, "keys", &game_client::interaction_column::key);
+        return keys == found->columns.end() ? std::string{} : keys->value;
+    };
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                return act("HELP_KEYBINDINGS");
+            case 2:
+                REQUIRE(screen.context == "HELP_KEYBINDINGS");
+                CHECK(keys_of(screen, "Undo") == "CTRL+Z");
+                CHECK(keys_of(screen, "Redo") == "CTRL+Y");
+                CHECK(keys_of(screen, "Pencil") == "b");
+                return act("QUIT");
+            case 3:
+                CHECK(screen.kind == "editor");
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 4);
+    editor::reset_editor_session();
+}
+
 #endif // CATA_MCP
