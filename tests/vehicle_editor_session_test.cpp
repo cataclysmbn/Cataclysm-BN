@@ -3560,4 +3560,83 @@ TEST_CASE(
     CHECK(step >= 2);
 }
 
+TEST_CASE(
+    "the vehicle editor's canvas marks the squares the part in hand cannot go on, which still "
+    "take a click",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    /// The canvas's cells as a client reads them.
+    const auto wire_cells = [](const ec::boundary_state& state) {
+        auto found = std::vector<nlohmann::json>{};
+        const auto walk = [&](this const auto& self, const nlohmann::json& node) -> void {
+            if (node.is_object()) {
+                if (node.value("id", "") == "vehicle:grid") {
+                    for (const auto& entry : node.at("cells")) { found.push_back(entry); }
+                    return;
+                }
+                for (const auto& [key, value] : node.items()) { self(value); }
+            } else if (node.is_array()) {
+                for (const auto& value : node) { self(value); }
+            }
+        };
+        walk(nlohmann::json::parse(ec::serialize_interaction_boundary(state)));
+        return found;
+    };
+    const auto refused = [&](const ec::boundary_state& state, const std::string& id) {
+        const auto cells = wire_cells(state);
+        const auto found = std::ranges::find_if(cells, [&](const nlohmann::json& entry) {
+            return entry.value("id", "") == id;
+        });
+        INFO(id);
+        REQUIRE(found != cells.end());
+        CHECK(found->value("enabled", false));
+        return found->value("refused", "");
+    };
+    const auto none_refused = [&](const ec::boundary_state& state) {
+        return std::ranges::none_of(wire_cells(state), [](const nlohmann::json& entry) {
+            return entry.contains("refused");
+        });
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                // Nothing in hand refuses no square.
+                CHECK_FALSE(wire_cells(state).empty());
+                CHECK(none_refused(state));
+                return invoke("vehicle:part_filter", {.text = "headlight"});
+            case 2:
+                return invoke("vehicle:choose", {.row = "vpart:headlight"});
+            case 3:
+                // East of the rear wheel nothing holds a headlight up, and the square says so.
+                CHECK(refused(state, "mount:2,0").contains("frame"));
+                // Far from the frame too.
+                CHECK_FALSE(refused(state, "mount:-5,0").empty());
+                // A frame takes it.
+                CHECK_FALSE(none_refused(state));
+                CHECK(std::ranges::any_of(wire_cells(state), [](const nlohmann::json& entry) {
+                    return !entry.contains("refused");
+                }));
+                // The square still takes the click, which says why.
+                return invoke("vehicle:mount", {.row = "mount:2,0"});
+            case 4:
+                CHECK(notice_of(screen).find("frame") != std::string::npos);
+                CHECK(cell(screen, "mount:2,0").selected);
+                return invoke("vehicle:canvas_tool", {.row = "canvas_tool:select"});
+            case 5:
+                // Only the install tool refuses squares.
+                CHECK(none_refused(state));
+                return act("QUIT");
+            default:
+                return answer("Leave without saving");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step >= 6);
+}
+
 #endif // CATA_MCP
