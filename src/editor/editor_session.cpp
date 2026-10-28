@@ -34,6 +34,7 @@
 
 #include <algorithm>
 #include <array>
+#include <charconv>
 #include <cstdint>
 #include <expected>
 #include <filesystem>
@@ -232,12 +233,16 @@ auto run_editor_session() -> void {
                     .corner = corner,
                     .size = (bub_to_abs(area->second) - corner).xy() + point_rel_ms(1, 1)};
             }
-        } else if (id == export_width_id || id == export_height_id) {
+        } else if (id == export_set_id && row == "palette") {
+            state.export_palette = invoked->args.text.value_or("");
+        } else if (id == export_set_id && (row == "width" || row == "height")) {
+            const auto text = invoked->args.text.value_or("");
+            auto count = 1;
+            std::from_chars(text.data(), text.data() + text.size(), count);
+            count = std::clamp(count, 1, max_export);
             state.export_area.reset();
-            const auto count = static_cast<int>(
-                std::clamp<std::int64_t>(invoked->args.count.value_or(1), 1, max_export));
             state.export_size =
-                id == export_width_id
+                row == "width"
                     ? point_rel_omt(count, state.export_size.y())
                     : point_rel_omt(state.export_size.x(), count);
         } else if (id == advance_id) {
@@ -262,8 +267,6 @@ auto run_editor_session() -> void {
             state.import_text = invoked->args.text.value_or("");
         } else if (id == import_id) {
             state.import_pasted();
-        } else if (id == export_palette_id) {
-            state.export_palette = invoked->args.text.value_or("");
         } else if (id == browser_open_id || id == recent_open_id) {
             state.open(std::string(row_rest(row, "file").value_or("")));
         } else if (id == browser_filter_id) {

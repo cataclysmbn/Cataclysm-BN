@@ -1275,8 +1275,6 @@ auto layout(const session& state) -> workspace_layout {
              {save_as_id, file},
              {export_id, file},
              {export_area_id, file},
-             {export_width_id, file},
-             {export_height_id, file},
              {extract_palette_id, file},
              {undo_id, edit},
              {redo_id, edit},
@@ -1348,21 +1346,10 @@ auto session_view(const session& state) -> ec::screen_view {
     affordances.push_back(
         ec::invoke_affordance({.id = export_area_id, .label = _("Mark squares to export")}));
     affordances.push_back(ec::invoke_affordance(
-        {.id = export_width_id,
-         .label = _("Export width"),
-         .args = {
-             .count =
-                 ec::count_shape{.min = 1, .max = max_export, .initial = state.export_size.x()}}}));
-    affordances.push_back(ec::invoke_affordance(
-        {.id = export_height_id,
-         .label = _("Export height"),
-         .args = {
-             .count =
-                 ec::count_shape{.min = 1, .max = max_export, .initial = state.export_size.y()}}}));
-    affordances.push_back(ec::invoke_affordance(
-        {.id = export_palette_id,
-         .label = _("Export palette"),
-         .args = {.text = ec::text_shape{.field_id = "palette"}}}));
+        {.id = export_set_id,
+         .label = _("Value"),
+         .args =
+             {.row = ec::row_shape{.component_id = export_options_id}, .text = ec::text_shape{}}}));
     affordances.push_back(ec::invoke_affordance(
         {.id = unstamp_id,
          .label = _("Take back stamp"),
@@ -1554,11 +1541,28 @@ auto session_view(const session& state) -> ec::screen_view {
     parts.push_back(new_file_form(state));
     parts.push_back(ec::component{
         .id = export_options_id,
-        .affordances = {export_palette_id},
+        .affordances = {export_set_id},
         .body = ec::form_body{
-            .fields =
-                {{.id = "palette", .label = _("Export palette"), .value = state.export_palette}},
-            .submit = export_palette_id}});
+            .fields = {
+                {.id = "palette",
+                 .label = _("Export palette"),
+                 .description = _("A palette of the game whose symbols the export reuses; empty "
+                                  "for none."),
+                 .value = state.export_palette},
+                {.id = "width",
+                 .label = _("Width"),
+                 .description = _("Overmap squares across, around yours."),
+                 .value = std::to_string(state.export_size.x()),
+                 .type = "integer",
+                 .min = 1,
+                 .max = max_export},
+                {.id = "height",
+                 .label = _("Height"),
+                 .description = _("Overmap squares down, around yours."),
+                 .value = std::to_string(state.export_size.y()),
+                 .type = "integer",
+                 .min = 1,
+                 .max = max_export}}}});
     parts.push_back(ec::component{
         .id = import_form_id,
         .affordances = {import_set_id, import_id},
