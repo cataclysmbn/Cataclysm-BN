@@ -102,6 +102,22 @@ TEST_CASE("the same seed gives the same preview and another seed another", "[edi
     CHECK(squares(3) != squares(4));
 }
 
+TEST_CASE(
+    "no map extra of the overmap terrain lands over what the preview draws", "[editor_mapgen]") {
+    // A field rolls its map extras, most of them patches of grass, one time in six.
+    const auto text =
+        R"({"type":"mapgen","method":"json","om_terrain":"field","object":{"fill_ter":"t_floor"}})";
+    for (const auto seed : std::views::iota(1U, 25U)) {
+        CAPTURE(seed);
+        const auto preview = editor::preview_mapgen(text, {.at = at, .seed = seed});
+        REQUIRE(preview);
+        const auto other = std::ranges::find_if(preview->squares, [](const auto& square) {
+            return square.ter != "t_floor";
+        });
+        CHECK((other == preview->squares.end() ? std::string("t_floor") : other->ter) == "t_floor");
+    }
+}
+
 TEST_CASE("a preview of several overmap squares is one map", "[editor_mapgen]") {
     const auto text = entry_text("data/json/mapgen/apartment_con.json", "apartments_con_tower_NW");
     const auto preview = editor::preview_mapgen(text, {.at = at, .seed = 1});

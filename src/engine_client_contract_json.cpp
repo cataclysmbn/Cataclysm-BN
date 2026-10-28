@@ -660,6 +660,7 @@ auto body_json( const form_body &body, const bubble_frame & /*frame*/ ) -> json
         if( field.max_length != -1 ) { entry["max_length"] = field.max_length; }
         if( field.printable ) { entry["printable"] = true; }
         if( field.multiline ) { entry["multiline"] = true; }
+        if( field.required ) { entry["required"] = true; }
         if( field.cursor ) { entry["cursor"] = *field.cursor; }
         if( !field.options.empty() ) {
             entry["options"] = json::array();

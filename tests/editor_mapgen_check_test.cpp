@@ -107,6 +107,20 @@ TEST_CASE("an unknown terrain id is reported", "[editor_mapgen]") {
     CHECK(names(messages, "t_no_such_terrain"));
 }
 
+TEST_CASE("a symbol on every square is checked once", "[editor_mapgen]") {
+    auto entry = floor_entry();
+    entry["object"].erase("fill_ter");
+    entry["object"]["terrain"]["."] = {{"param", "no_such_parameter"}};
+    const auto messages = check(entry);
+    CHECK(
+        std::ranges::count_if(
+            messages,
+            [](const auto& message) {
+                return message.text.find("undefined parameter") != std::string::npos;
+            })
+        == 1);
+}
+
 TEST_CASE("an unknown overmap terrain points at its id", "[editor_mapgen]") {
     auto entry = floor_entry();
     entry["om_terrain"] = "no_such_terrain";

@@ -82,9 +82,7 @@ inline constexpr auto mirror_x_id = "editor:mirror_x";
 inline constexpr auto mirror_y_id = "editor:mirror_y";
 inline constexpr auto export_id = "editor:export";
 inline constexpr auto export_area_id = "editor:export_area";
-inline constexpr auto export_width_id = "editor:export_width";
-inline constexpr auto export_height_id = "editor:export_height";
-inline constexpr auto export_palette_id = "editor:export_palette";
+inline constexpr auto export_set_id = "editor:export_set";
 inline constexpr auto export_options_id = "editor:export_options";
 inline constexpr auto import_id = "editor:import";
 inline constexpr auto import_set_id = "editor:import_set";
@@ -278,6 +276,18 @@ struct export_squares {
     auto operator==(const export_squares&) const -> bool = default; // *NOPAD*
 };
 
+/// A JSON file the browser lists, with the ids of the entries the editor edits in it.
+struct data_file {
+    std::filesystem::path path;
+    std::vector<std::string> ids;
+};
+/// A file the browser shows, with the ids of its entries that the filter matched when its path
+/// did not.
+struct browser_entry {
+    std::filesystem::path path;
+    std::vector<std::string> matched = {};
+};
+
 struct diagnostic {
     std::string text;
     std::string pointer;
@@ -287,8 +297,10 @@ auto catalog_label(const catalog_use& use) -> std::string;
 /// The mapping of `use`'s layer that places `id`, as the legend form writes it.
 auto mapping_of(const catalog_use& use, const std::string& id) -> std::string;
 auto tool_label(const tool& value) -> std::string;
-/// What names an entry: a mapgen's overmap terrain, or the id it is nested or updated by; a
-/// palette's id.
+/// The ids that name an entry: a mapgen's overmap terrains, or the id it is nested or updated by;
+/// a palette's, special's or overmap terrain's id.
+auto entry_ids(const nlohmann::ordered_json& value) -> std::vector<std::string>;
+/// What names an entry: its ids, joined by commas.
 auto entry_name(const nlohmann::ordered_json& value) -> std::string;
 auto range_text(const placement_range& range) -> std::string;
 /// The row that names `entry` in the placements list and the canvas.
@@ -300,6 +312,9 @@ auto write_new_file(const std::string& made, const nlohmann::ordered_json& entri
     -> std::expected<void, std::string>;
 /// Writes `made`'s file; the error says why it was not written.
 auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string>;
+/// The path the new mapgen form suggests: the first `new_mapgen.json`, `new_mapgen_2.json` and on
+/// that the player's mods lack.
+auto free_new_path() -> std::string;
 
 struct session {
     std::optional<document> doc = std::nullopt;
@@ -384,7 +399,7 @@ struct session {
     std::string mapping_symbol;
     std::string mapping_layer = "terrain";
     std::string mapping_value;
-    new_mapgen made;
+    new_mapgen made = {.path = free_new_path()};
     /// How many overmap squares an export spans east and south, centred on the avatar's.
     point_rel_omt export_size = point_rel_omt(1, 1);
     /// The squares of the live world the player marked to export instead, until a size is set.
@@ -397,8 +412,8 @@ struct session {
     std::vector<code_mapgen> code_mapgens;
     /// The special last placed in the world, and its origin there.
     std::optional<placed_special> placed = std::nullopt;
-    /// The files the browser lists; read again after a file is made.
-    mutable std::optional<std::vector<std::filesystem::path>> files = std::nullopt;
+    /// The files the browser lists, read once; a file the editor opens or writes is read again.
+    mutable std::optional<std::vector<data_file>> files = std::nullopt;
     std::string browser_filter;
     std::size_t browser_page = 0;
     const catalog_use* catalog = catalog_uses.data();
@@ -407,8 +422,11 @@ struct session {
     /// Whether the catalog's filter and page are those of a special's.
     bool catalog_of_special = false;
 
-    /// The files whose path holds the filter, ignoring case.
-    auto browser_entries() const -> std::vector<std::filesystem::path>;
+    /// The files whose path, or an entry's id or overmap terrain name, holds the filter, ignoring
+    /// case.
+    auto browser_entries() const -> std::vector<browser_entry>;
+    /// Reads the file at `path` again into the files the browser lists, while it lists them.
+    auto refresh_file(const std::filesystem::path& path) -> void;
 
     /// Opens the mapgen the game registered for an overmap terrain, on the entry that holds it.
     auto open_mapgen_of(const std::string& name) -> void;
@@ -493,6 +511,16 @@ struct session {
     /// Moves the mapgen's own legend into a new palette `name` at the end of the file, which the
     /// mapgen then names last so that its symbols place what they did, as one undo step.
     auto extract_palette(const std::string& name) -> void;
+    /// Whether the game or the file has a palette `name`.
+    auto palette_taken(const std::string& name) const -> bool;
+    /// The id `editor:extract_palette` suggests: the entry's first id and `_palette`, numbered
+    /// past the palettes the game and the file have.
+    auto free_palette_id() const -> std::string;
+
+    /// Draws with `picked` and puts its mapping in the legend form: the layer it places on top,
+    /// its own mapping before a palette's, and what it places there; terrain and nothing for a
+    /// symbol nothing maps.
+    auto pick_symbol(const std::string& picked) -> void;
 
     auto set_mapping(const std::string& field, const std::string& text) -> void;
 
