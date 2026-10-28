@@ -3460,4 +3460,104 @@ TEST_CASE(
     CHECK(step >= 4);
 }
 
+TEST_CASE(
+    "the vehicle editor's palette shows one category of parts at a time, the part in hand's first, "
+    "and a filter searches them all",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto groups = [](const ec::screen_view& screen) -> const ec::tabs_body& {
+        return body<ec::tabs_body>(part(screen, "vehicle:part_groups"));
+    };
+    /// The tab of the category labelled `label`.
+    const auto group = [&](const ec::screen_view& screen, const std::string& label) {
+        const auto& tabs = groups(screen).tabs;
+        const auto found = std::ranges::find(tabs, label, &ec::tab_entry::label);
+        INFO(label);
+        REQUIRE(found != tabs.end());
+        return *found;
+    };
+    const auto shown_group = [&](const ec::screen_view& screen) {
+        const auto& tabs = groups(screen).tabs;
+        const auto found = std::ranges::find(tabs, true, &ec::tab_entry::selected);
+        REQUIRE(found != tabs.end());
+        return found->label;
+    };
+    const auto ids = [](const ec::screen_view& screen) {
+        return rows(screen, "vehicle:parts") | std::views::transform(&ec::row::id)
+             | std::ranges::to<std::vector>();
+    };
+    const auto shows = [&](const ec::screen_view& screen, const std::string& id) {
+        return std::ranges::contains(ids(screen), id);
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1: {
+                // The categories are tabs of the palette, which shows the parts of one.
+                CHECK(slot_of(screen, "vehicle:part_groups") == "palette");
+                CHECK(part(screen, "vehicle:part_groups").label == "Parts");
+                CHECK(groups(screen).select == "vehicle:part_group");
+                CHECK(
+                    (groups(screen).tabs | std::views::transform(&ec::tab_entry::label)
+                     | std::ranges::to<std::vector>())
+                    == std::vector<std::string>{
+                        "Frames", "Wheels & hubs", "Engines & motors", "Fuel & batteries",
+                        "Seats & controls", "Doors & windows", "Lights", "Storage", "Weapons",
+                        "Other"});
+                CHECK(shown_group(screen) == "Frames");
+                CHECK(std::ranges::none_of(rows(screen, "vehicle:parts"), &ec::row::header));
+                CHECK(shows(screen, "vpart:frame_vertical"));
+                CHECK_FALSE(shows(screen, "vpart:headlight"));
+                // A page at a time, however many parts a category has.
+                const auto& list = body<ec::list_body>(part(screen, "vehicle:parts"));
+                CHECK(list.rows.size() <= 50);
+                CHECK(list.total >= list.rows.size());
+                return invoke("vehicle:part_group", {.row = group(screen, "Lights").id});
+            }
+            case 2:
+                CHECK(shown_group(screen) == "Lights");
+                CHECK(shows(screen, "vpart:headlight"));
+                CHECK_FALSE(shows(screen, "vpart:frame_vertical"));
+                return invoke("vehicle:part_filter", {.text = "wheel_mount_medium"});
+            case 3:
+                // A filter searches every category.
+                CHECK(shows(screen, "vpart:wheel_mount_medium"));
+                return invoke("vehicle:choose", {.row = "vpart:wheel_mount_medium"});
+            case 4:
+                return invoke("vehicle:part_filter", {.text = ""});
+            case 5:
+                // The part in hand's category shows.
+                CHECK(shown_group(screen) == "Wheels & hubs");
+                CHECK(row(screen, "vehicle:parts", "vpart:wheel_mount_medium").selected);
+                return invoke("vehicle:part_group", {.row = group(screen, "Storage").id});
+            case 6:
+                return act("QUIT");
+            default:
+                return answer("Leave without saving");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step >= 7);
+
+    // The editor keeps the category shown.
+    step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                CHECK(shown_group(screen) == "Storage");
+                return act("QUIT");
+            default:
+                return answer("Leave without saving");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step >= 2);
+}
+
 #endif // CATA_MCP
