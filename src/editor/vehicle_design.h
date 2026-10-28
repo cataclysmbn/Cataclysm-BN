@@ -1,8 +1,10 @@
 #pragma once
 
 #include "coordinates.h"
+#include "editor/document.h"
 #include "editor/mapgen_check.h"
 #include "engine_client_component.h"
+#include "engine_client_state.h"
 #include "point.h"
 #include "type_id.h"
 
@@ -153,6 +155,19 @@ auto set_part_fuel(vehicle& veh, int index, const part_fuel& fuel)
 /// Puts an item of the type `item_id` in the cargo space of the vehicle's part `index`.
 auto add_part_cargo(vehicle& veh, int index, const std::string& item_id)
     -> std::expected<void, std::string>;
+
+/// What the parts on the mount `at` of the vehicle look like from the bottom up: in the order the
+/// game installed them, the one the game shows on top; turned `facing` degrees clockwise.
+auto mount_looks(const vehicle& veh, const point& at, int facing)
+    -> std::vector<engine_client::look>;
+
+/// What an item spawn of a prototype's `items` puts, as the game names it: an item by its name,
+/// a group by its id.
+auto item_spawn_name(const nlohmann::ordered_json& entry) -> std::string;
+
+/// What an edit of a prototype did, in a designer's words: the part installed, removed, reordered
+/// or set and its mount, or the item spawn added or removed; else what `step_label` says.
+auto design_step_label(const document_edit& edit) -> std::string;
 
 /// The data file of the loaded mods that defines the prototype `id` last, as the game loads them.
 auto prototype_file(const std::string& id) -> std::optional<std::filesystem::path>;

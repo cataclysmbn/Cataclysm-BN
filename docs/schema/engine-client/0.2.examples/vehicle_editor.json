@@ -484,6 +484,31 @@
               ]
             },
             {
+              "id": "vehicle:history",
+              "kind": "list",
+              "label": "History",
+              "affordances": [
+                "vehicle:jump"
+              ],
+              "slot": "log",
+              "columns": [],
+              "rows": [
+                {
+                  "id": "step:0",
+                  "label": "Opened",
+                  "description": "Saved",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": true,
+                  "columns": []
+                }
+              ],
+              "total": 1,
+              "selection": "single",
+              "activate": "vehicle:jump"
+            },
+            {
               "id": "vehicle:canvas_tools",
               "kind": "list",
               "label": "Tools",
@@ -538,17 +563,17 @@
                 "vehicle:mount"
               ],
               "slot": "canvas",
-              "cols": 5,
-              "rows": 3,
+              "cols": 7,
+              "rows": 5,
               "cursor": {
-                "x": 3,
-                "y": 1
+                "x": 4,
+                "y": 2
               },
               "cells": [
                 {
                   "x": 0,
                   "y": 0,
-                  "id": "mount:-2,-1",
+                  "id": "mount:-3,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true
@@ -556,7 +581,7 @@
                 {
                   "x": 1,
                   "y": 0,
-                  "id": "mount:-1,-1",
+                  "id": "mount:-2,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true
@@ -564,7 +589,7 @@
                 {
                   "x": 2,
                   "y": 0,
-                  "id": "mount:0,-1",
+                  "id": "mount:-1,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true
@@ -572,7 +597,7 @@
                 {
                   "x": 3,
                   "y": 0,
-                  "id": "mount:1,-1",
+                  "id": "mount:0,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true
@@ -580,7 +605,23 @@
                 {
                   "x": 4,
                   "y": 0,
-                  "id": "mount:2,-1",
+                  "id": "mount:1,-2",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 5,
+                  "y": 0,
+                  "id": "mount:2,-2",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 6,
+                  "y": 0,
+                  "id": "mount:3,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true
@@ -588,7 +629,7 @@
                 {
                   "x": 0,
                   "y": 1,
-                  "id": "mount:-2,0",
+                  "id": "mount:-3,-1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true
@@ -596,6 +637,70 @@
                 {
                   "x": 1,
                   "y": 1,
+                  "id": "mount:-2,-1",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 2,
+                  "y": 1,
+                  "id": "mount:-1,-1",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 3,
+                  "y": 1,
+                  "id": "mount:0,-1",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 4,
+                  "y": 1,
+                  "id": "mount:1,-1",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 5,
+                  "y": 1,
+                  "id": "mount:2,-1",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 6,
+                  "y": 1,
+                  "id": "mount:3,-1",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 0,
+                  "y": 2,
+                  "id": "mount:-3,0",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 1,
+                  "y": 2,
+                  "id": "mount:-2,0",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 2,
+                  "y": 2,
                   "id": "mount:-1,0",
                   "glyph": "o",
                   "label": "extra light frame, light wheel mount, 67.5cm bicycle wheel, small folding wire basket",
@@ -603,12 +708,15 @@
                   "affordance": "vehicle:mount",
                   "enabled": true,
                   "looks": [
-                    0
+                    0,
+                    1,
+                    2,
+                    3
                   ]
                 },
                 {
-                  "x": 2,
-                  "y": 1,
+                  "x": 3,
+                  "y": 2,
                   "id": "mount:0,0",
                   "glyph": "#",
                   "label": "extra light frame, saddle, bicycle horn, foot pedals",
@@ -616,12 +724,15 @@
                   "affordance": "vehicle:mount",
                   "enabled": true,
                   "looks": [
-                    1
+                    4,
+                    5,
+                    6,
+                    7
                   ]
                 },
                 {
-                  "x": 3,
-                  "y": 1,
+                  "x": 4,
+                  "y": 2,
                   "id": "mount:1,0",
                   "glyph": "|",
                   "label": "extra light frame, light wheel mount (steerable), 67.5cm bicycle wheel",
@@ -630,59 +741,175 @@
                   "enabled": true,
                   "selected": true,
                   "looks": [
-                    2
+                    0,
+                    8,
+                    9
                   ]
                 },
                 {
-                  "x": 4,
-                  "y": 1,
+                  "x": 5,
+                  "y": 2,
                   "id": "mount:2,0",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true
                 },
                 {
-                  "x": 0,
+                  "x": 6,
                   "y": 2,
-                  "id": "mount:-2,1",
+                  "id": "mount:3,0",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 0,
+                  "y": 3,
+                  "id": "mount:-3,1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true
                 },
                 {
                   "x": 1,
-                  "y": 2,
-                  "id": "mount:-1,1",
+                  "y": 3,
+                  "id": "mount:-2,1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true
                 },
                 {
                   "x": 2,
-                  "y": 2,
-                  "id": "mount:0,1",
+                  "y": 3,
+                  "id": "mount:-1,1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true
                 },
                 {
                   "x": 3,
-                  "y": 2,
-                  "id": "mount:1,1",
+                  "y": 3,
+                  "id": "mount:0,1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true
                 },
                 {
                   "x": 4,
-                  "y": 2,
+                  "y": 3,
+                  "id": "mount:1,1",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 5,
+                  "y": 3,
                   "id": "mount:2,1",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 6,
+                  "y": 3,
+                  "id": "mount:3,1",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 0,
+                  "y": 4,
+                  "id": "mount:-3,2",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 1,
+                  "y": 4,
+                  "id": "mount:-2,2",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 2,
+                  "y": 4,
+                  "id": "mount:-1,2",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 3,
+                  "y": 4,
+                  "id": "mount:0,2",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 4,
+                  "y": 4,
+                  "id": "mount:1,2",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 5,
+                  "y": 4,
+                  "id": "mount:2,2",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 6,
+                  "y": 4,
+                  "id": "mount:3,2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true
                 }
               ],
               "looks": [
+                {
+                  "kind": "vehicle_part",
+                  "id": "xlframe_vertical",
+                  "glyph": "│",
+                  "color": "c_light_gray",
+                  "name": "extra light frame",
+                  "tile": "vp_xlframe_vertical",
+                  "subtile": "center",
+                  "rotation": 3
+                },
+                {
+                  "kind": "vehicle_part",
+                  "id": "wheel_mount_light",
+                  "glyph": "-",
+                  "color": "c_light_gray",
+                  "name": "light wheel mount",
+                  "tile": "vp_wheel_mount_light",
+                  "subtile": "center",
+                  "rotation": 3
+                },
+                {
+                  "kind": "vehicle_part",
+                  "id": "wheel_bicycle_rear",
+                  "glyph": "|",
+                  "color": "c_dark_gray",
+                  "name": "bicycle wheel",
+                  "tile": "vp_wheel_bicycle_rear",
+                  "looks_like": [
+                    "vp_wheel_bicycle",
+                    "vp_wheel"
+                  ],
+                  "subtile": "center",
+                  "rotation": 3
+                },
                 {
                   "kind": "vehicle_part",
                   "id": "basketsm_bike_rear",
@@ -707,6 +934,39 @@
                 },
                 {
                   "kind": "vehicle_part",
+                  "id": "xlframe_vertical_2",
+                  "glyph": "H",
+                  "color": "c_light_gray",
+                  "name": "extra light frame",
+                  "tile": "vp_xlframe_vertical_2",
+                  "subtile": "center",
+                  "rotation": 3
+                },
+                {
+                  "kind": "vehicle_part",
+                  "id": "horn_bicycle",
+                  "glyph": "*",
+                  "color": "c_light_gray",
+                  "name": "bicycle horn",
+                  "tile": "vp_horn_bicycle",
+                  "subtile": "center",
+                  "rotation": 3
+                },
+                {
+                  "kind": "vehicle_part",
+                  "id": "foot_pedals",
+                  "glyph": "*",
+                  "color": "c_light_gray",
+                  "name": "foot pedals",
+                  "tile": "vp_foot_pedals",
+                  "looks_like": [
+                    "vp_engine_manual"
+                  ],
+                  "subtile": "center",
+                  "rotation": 3
+                },
+                {
+                  "kind": "vehicle_part",
                   "id": "saddle_pedal",
                   "glyph": "#",
                   "color": "c_red",
@@ -723,6 +983,19 @@
                     "vp_reclining_seat",
                     "vp_seat",
                     "vp_reclining_seat"
+                  ],
+                  "subtile": "center",
+                  "rotation": 3
+                },
+                {
+                  "kind": "vehicle_part",
+                  "id": "wheel_mount_light_steerable",
+                  "glyph": "-",
+                  "color": "c_light_gray",
+                  "name": "light wheel mount (steerable)",
+                  "tile": "vp_wheel_mount_light_steerable",
+                  "looks_like": [
+                    "vp_wheel_mount_light"
                   ],
                   "subtile": "center",
                   "rotation": 3
@@ -1363,6 +1636,18 @@
             "expect": "screen"
           },
           {
+            "id": "vehicle:jump",
+            "label": "Go to step",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "vehicle:history"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
             "id": "vehicle:canvas_tool",
             "label": "Use",
             "keys": [],
@@ -1777,6 +2062,41 @@
               ]
             },
             {
+              "id": "vehicle:history",
+              "kind": "list",
+              "label": "History",
+              "affordances": [
+                "vehicle:jump"
+              ],
+              "slot": "log",
+              "columns": [],
+              "rows": [
+                {
+                  "id": "step:0",
+                  "label": "Opened",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "step:1",
+                  "label": "Install headlight at 1,0",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": true,
+                  "columns": []
+                }
+              ],
+              "total": 2,
+              "selection": "single",
+              "activate": "vehicle:jump"
+            },
+            {
               "id": "vehicle:canvas_tools",
               "kind": "list",
               "label": "Tools",
@@ -1831,17 +2151,17 @@
                 "vehicle:mount"
               ],
               "slot": "canvas",
-              "cols": 5,
-              "rows": 3,
+              "cols": 7,
+              "rows": 5,
               "cursor": {
-                "x": 3,
-                "y": 1
+                "x": 4,
+                "y": 2
               },
               "cells": [
                 {
                   "x": 0,
                   "y": 0,
-                  "id": "mount:-2,-1",
+                  "id": "mount:-3,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true
@@ -1849,7 +2169,7 @@
                 {
                   "x": 1,
                   "y": 0,
-                  "id": "mount:-1,-1",
+                  "id": "mount:-2,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true
@@ -1857,7 +2177,7 @@
                 {
                   "x": 2,
                   "y": 0,
-                  "id": "mount:0,-1",
+                  "id": "mount:-1,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true
@@ -1865,7 +2185,7 @@
                 {
                   "x": 3,
                   "y": 0,
-                  "id": "mount:1,-1",
+                  "id": "mount:0,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true
@@ -1873,7 +2193,23 @@
                 {
                   "x": 4,
                   "y": 0,
-                  "id": "mount:2,-1",
+                  "id": "mount:1,-2",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 5,
+                  "y": 0,
+                  "id": "mount:2,-2",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 6,
+                  "y": 0,
+                  "id": "mount:3,-2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true
@@ -1881,7 +2217,7 @@
                 {
                   "x": 0,
                   "y": 1,
-                  "id": "mount:-2,0",
+                  "id": "mount:-3,-1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true
@@ -1889,6 +2225,70 @@
                 {
                   "x": 1,
                   "y": 1,
+                  "id": "mount:-2,-1",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 2,
+                  "y": 1,
+                  "id": "mount:-1,-1",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 3,
+                  "y": 1,
+                  "id": "mount:0,-1",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 4,
+                  "y": 1,
+                  "id": "mount:1,-1",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 5,
+                  "y": 1,
+                  "id": "mount:2,-1",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 6,
+                  "y": 1,
+                  "id": "mount:3,-1",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 0,
+                  "y": 2,
+                  "id": "mount:-3,0",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 1,
+                  "y": 2,
+                  "id": "mount:-2,0",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 2,
+                  "y": 2,
                   "id": "mount:-1,0",
                   "glyph": "o",
                   "label": "extra light frame, light wheel mount, 67.5cm bicycle wheel, small folding wire basket",
@@ -1896,12 +2296,15 @@
                   "affordance": "vehicle:mount",
                   "enabled": true,
                   "looks": [
-                    0
+                    0,
+                    1,
+                    2,
+                    3
                   ]
                 },
                 {
-                  "x": 2,
-                  "y": 1,
+                  "x": 3,
+                  "y": 2,
                   "id": "mount:0,0",
                   "glyph": "#",
                   "label": "extra light frame, saddle, bicycle horn, foot pedals",
@@ -1909,12 +2312,15 @@
                   "affordance": "vehicle:mount",
                   "enabled": true,
                   "looks": [
-                    1
+                    4,
+                    5,
+                    6,
+                    7
                   ]
                 },
                 {
-                  "x": 3,
-                  "y": 1,
+                  "x": 4,
+                  "y": 2,
                   "id": "mount:1,0",
                   "glyph": "|",
                   "label": "extra light frame, light wheel mount (steerable), 67.5cm bicycle wheel, headlight",
@@ -1923,59 +2329,176 @@
                   "enabled": true,
                   "selected": true,
                   "looks": [
-                    2
+                    0,
+                    8,
+                    9,
+                    10
                   ]
                 },
                 {
-                  "x": 4,
-                  "y": 1,
+                  "x": 5,
+                  "y": 2,
                   "id": "mount:2,0",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true
                 },
                 {
-                  "x": 0,
+                  "x": 6,
                   "y": 2,
-                  "id": "mount:-2,1",
+                  "id": "mount:3,0",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 0,
+                  "y": 3,
+                  "id": "mount:-3,1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true
                 },
                 {
                   "x": 1,
-                  "y": 2,
-                  "id": "mount:-1,1",
+                  "y": 3,
+                  "id": "mount:-2,1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true
                 },
                 {
                   "x": 2,
-                  "y": 2,
-                  "id": "mount:0,1",
+                  "y": 3,
+                  "id": "mount:-1,1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true
                 },
                 {
                   "x": 3,
-                  "y": 2,
-                  "id": "mount:1,1",
+                  "y": 3,
+                  "id": "mount:0,1",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true
                 },
                 {
                   "x": 4,
-                  "y": 2,
+                  "y": 3,
+                  "id": "mount:1,1",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 5,
+                  "y": 3,
                   "id": "mount:2,1",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 6,
+                  "y": 3,
+                  "id": "mount:3,1",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 0,
+                  "y": 4,
+                  "id": "mount:-3,2",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 1,
+                  "y": 4,
+                  "id": "mount:-2,2",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 2,
+                  "y": 4,
+                  "id": "mount:-1,2",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 3,
+                  "y": 4,
+                  "id": "mount:0,2",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 4,
+                  "y": 4,
+                  "id": "mount:1,2",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 5,
+                  "y": 4,
+                  "id": "mount:2,2",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
+                  "x": 6,
+                  "y": 4,
+                  "id": "mount:3,2",
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true
                 }
               ],
               "looks": [
+                {
+                  "kind": "vehicle_part",
+                  "id": "xlframe_vertical",
+                  "glyph": "│",
+                  "color": "c_light_gray",
+                  "name": "extra light frame",
+                  "tile": "vp_xlframe_vertical",
+                  "subtile": "center",
+                  "rotation": 3
+                },
+                {
+                  "kind": "vehicle_part",
+                  "id": "wheel_mount_light",
+                  "glyph": "-",
+                  "color": "c_light_gray",
+                  "name": "light wheel mount",
+                  "tile": "vp_wheel_mount_light",
+                  "subtile": "center",
+                  "rotation": 3
+                },
+                {
+                  "kind": "vehicle_part",
+                  "id": "wheel_bicycle_rear",
+                  "glyph": "|",
+                  "color": "c_dark_gray",
+                  "name": "bicycle wheel",
+                  "tile": "vp_wheel_bicycle_rear",
+                  "looks_like": [
+                    "vp_wheel_bicycle",
+                    "vp_wheel"
+                  ],
+                  "subtile": "center",
+                  "rotation": 3
+                },
                 {
                   "kind": "vehicle_part",
                   "id": "basketsm_bike_rear",
@@ -2000,6 +2523,39 @@
                 },
                 {
                   "kind": "vehicle_part",
+                  "id": "xlframe_vertical_2",
+                  "glyph": "H",
+                  "color": "c_light_gray",
+                  "name": "extra light frame",
+                  "tile": "vp_xlframe_vertical_2",
+                  "subtile": "center",
+                  "rotation": 3
+                },
+                {
+                  "kind": "vehicle_part",
+                  "id": "horn_bicycle",
+                  "glyph": "*",
+                  "color": "c_light_gray",
+                  "name": "bicycle horn",
+                  "tile": "vp_horn_bicycle",
+                  "subtile": "center",
+                  "rotation": 3
+                },
+                {
+                  "kind": "vehicle_part",
+                  "id": "foot_pedals",
+                  "glyph": "*",
+                  "color": "c_light_gray",
+                  "name": "foot pedals",
+                  "tile": "vp_foot_pedals",
+                  "looks_like": [
+                    "vp_engine_manual"
+                  ],
+                  "subtile": "center",
+                  "rotation": 3
+                },
+                {
+                  "kind": "vehicle_part",
                   "id": "saddle_pedal",
                   "glyph": "#",
                   "color": "c_red",
@@ -2017,6 +2573,29 @@
                     "vp_seat",
                     "vp_reclining_seat"
                   ],
+                  "subtile": "center",
+                  "rotation": 3
+                },
+                {
+                  "kind": "vehicle_part",
+                  "id": "wheel_mount_light_steerable",
+                  "glyph": "-",
+                  "color": "c_light_gray",
+                  "name": "light wheel mount (steerable)",
+                  "tile": "vp_wheel_mount_light_steerable",
+                  "looks_like": [
+                    "vp_wheel_mount_light"
+                  ],
+                  "subtile": "center",
+                  "rotation": 3
+                },
+                {
+                  "kind": "vehicle_part",
+                  "id": "headlight",
+                  "glyph": "*",
+                  "color": "c_white",
+                  "name": "headlight",
+                  "tile": "vp_headlight",
                   "subtile": "center",
                   "rotation": 3
                 },
@@ -2099,14 +2678,11 @@
                     ],
                     "look": {
                       "kind": "vehicle_part",
-                      "id": "wheel_bicycle",
-                      "glyph": "|",
-                      "color": "c_dark_gray",
-                      "name": "bicycle wheel",
-                      "tile": "vp_wheel_bicycle",
-                      "looks_like": [
-                        "vp_wheel"
-                      ],
+                      "id": "xlframe_vertical",
+                      "glyph": "│",
+                      "color": "c_light_gray",
+                      "name": "extra light frame",
+                      "tile": "vp_xlframe_vertical",
                       "subtile": "center"
                     }
                   },
@@ -2127,13 +2703,13 @@
                     ],
                     "look": {
                       "kind": "vehicle_part",
-                      "id": "wheel_bicycle",
-                      "glyph": "|",
-                      "color": "c_dark_gray",
-                      "name": "bicycle wheel",
-                      "tile": "vp_wheel_bicycle",
+                      "id": "wheel_mount_light_steerable",
+                      "glyph": "-",
+                      "color": "c_light_gray",
+                      "name": "light wheel mount (steerable)",
+                      "tile": "vp_wheel_mount_light_steerable",
                       "looks_like": [
-                        "vp_wheel"
+                        "vp_wheel_mount_light"
                       ],
                       "subtile": "center"
                     }
@@ -2183,14 +2759,11 @@
                     ],
                     "look": {
                       "kind": "vehicle_part",
-                      "id": "wheel_bicycle",
-                      "glyph": "|",
-                      "color": "c_dark_gray",
-                      "name": "bicycle wheel",
-                      "tile": "vp_wheel_bicycle",
-                      "looks_like": [
-                        "vp_wheel"
-                      ],
+                      "id": "headlight",
+                      "glyph": "*",
+                      "color": "c_white",
+                      "name": "headlight",
+                      "tile": "vp_headlight",
                       "subtile": "center"
                     }
                   }
@@ -2583,6 +3156,18 @@
             "args": {
               "row": {
                 "component_id": "vehicle:world"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "vehicle:jump",
+            "label": "Go to step",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "vehicle:history"
               }
             },
             "expect": "boundary"

@@ -1,9 +1,11 @@
 #include "editor/history_label.h"
 
+#include "editor/row_id.h"
 #include "string_formatter.h"
 #include "translations.h"
 
 #include <algorithm>
+#include <ranges>
 #include <vector>
 
 namespace editor {
@@ -39,6 +41,31 @@ auto step_label(const document_edit& edit) -> std::string {
         : !has ? _("Remove")
                : _("Change");
     return words.empty() ? verb : string_format(pgettext("editor history", "%s %s"), verb, words);
+}
+
+auto document_steps(
+    const document& doc, const std::function<auto(const document_edit&)->std::string>& label)
+    -> history_steps {
+    return {
+        .labels =
+            doc.history() | std::views::transform([&](const document_step& step) {
+                return label(step.edits.back());
+            })
+            | std::ranges::to<std::vector>(),
+        .depth = doc.depth(),
+        .saved = doc.saved_depth()};
+}
+
+auto step_rows(const history_steps& steps) -> std::vector<engine_client::row> {
+    return std::views::iota(std::size_t{0}, steps.labels.size() + 1)
+         | std::views::transform([&](const std::size_t depth) {
+               return engine_client::row{
+                   .id = index_row("step", depth),
+                   .label = depth == 0 ? std::string(_("Opened")) : steps.labels[depth - 1],
+                   .description = steps.saved == depth ? std::string(_("Saved")) : std::string{},
+                   .selected = depth == steps.depth};
+           })
+         | std::ranges::to<std::vector>();
 }
 
 } // namespace editor
