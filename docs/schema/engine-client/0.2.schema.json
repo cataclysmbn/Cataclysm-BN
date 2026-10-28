@@ -6549,7 +6549,7 @@
         "max_length": {
           "type": "integer",
           "minimum": -1,
-          "description": "-1: unbounded."
+          "description": "How many characters the text takes at most, a letter with its combining marks counting as one; -1: unbounded."
         },
         "printable": {
           "type": "boolean",

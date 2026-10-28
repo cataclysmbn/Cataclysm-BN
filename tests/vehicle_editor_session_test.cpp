@@ -7,6 +7,7 @@
 #    include "client_interaction.h"
 #    include "client_memory.h"
 #    include "client_memory_scope.h"
+#    include "command_refusal.h"
 #    include "cursesdef.h"
 #    include "cursesport.h"
 #    include "editor/editor_session.h"
@@ -2459,35 +2460,6 @@ TEST_CASE(
     editor::run_vehicle_editor();
     CHECK(step == 2);
 }
-
-namespace {
-/// Why the command lifecycle turns away an invoke of `affordance` with `args` at `state`, as the
-/// client reads it; empty when it takes the invoke.
-auto refusal(
-    const ec::boundary_state& state, const std::string& affordance, const ec::invoke_args& args)
-    -> std::string {
-    class authority final: public ec::command_authority {
-    public:
-        auto current_permissions() const -> ec::command_permissions override {
-            return {.accepts_interaction_commands = true, .accepts_registered_actions = true};
-        }
-    };
-    const auto owner = authority{};
-    auto lifecycle = ec::command_lifecycle{state.epoch, owner};
-    const auto submitted = lifecycle.submit(
-        {.epoch = state.epoch,
-         .expect = {.revision = 1, .boundary_id = state.id},
-         .operation = ec::invoke_operation{.affordance_id = affordance, .args = args}});
-    REQUIRE(submitted);
-    if (lifecycle.validate({.epoch = state.epoch, .sequence = 1, .revision = 1}, state, {80, 24})) {
-        return {};
-    }
-    const auto result = lifecycle.result(submitted->command_id);
-    REQUIRE(result);
-    REQUIRE(result->failure == ec::error::invalid_arguments);
-    return result->message;
-}
-} // namespace
 
 TEST_CASE(
     "the vehicle editor turns away a spawn value out of its bounds, naming the field and them",

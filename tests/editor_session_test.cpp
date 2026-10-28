@@ -8,6 +8,7 @@
 #    include "client_interaction.h"
 #    include "client_memory.h"
 #    include "client_memory_scope.h"
+#    include "command_refusal.h"
 #    include "cursesdef.h"
 #    include "cursesport.h"
 #    include "debug_menu.h"
@@ -6454,6 +6455,38 @@ TEST_CASE(
     });
     editor::run_editor_session();
     CHECK(step == 4);
+    editor::reset_editor_session();
+}
+
+TEST_CASE(
+    "the map editor's symbol takes one character, however many bytes it is, and says so in the singular",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = kinds_file{};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1: {
+                const auto symbol = [&](const std::string& text) {
+                    return refusal(state, "editor:mapping_set", {.row = "symbol", .text = text});
+                };
+                CHECK(symbol("ab") == "Symbol takes at most 1 character.");
+                CHECK(symbol("\u00e9").empty());
+                // A letter and its combining accent are one character as the map rows split them.
+                CHECK(symbol("e\u0301").empty());
+                CHECK(symbol("\u00e9a") == "Symbol takes at most 1 character.");
+                return act("QUIT");
+            }
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 2);
     editor::reset_editor_session();
 }
 
