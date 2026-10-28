@@ -73,7 +73,7 @@
     "looks_like": "modularvestkevlar",
     "color": "light_gray",
     "covers": [ "torso" ],
-    "coverage": 95,
+    "coverage": 85,
     "encumbrance": 2,
     "warmth": 5,
     "material_thickness": 1,
@@ -179,23 +179,6 @@
     "warmth": 0,
     "material_thickness": 8,
     "flags": [ "FRAGILE", "OUTER", "ALLOWS_WINGS", "ARMOR_PLATE", "COMPACT", "NO_REPAIR" ]
-  },
-  {
-    "id": "dragonskin_ballistic_plate",
-    "copy-from": "ceramic_ballistic_plate",
-    "type": "ARMOR",
-    "name": { "str_sp": "dragonskin ballistic plates" },
-    "description": "Flexible ballistic plates made from overlapping scales of graphene composite, adapting an old design to modern standards.  More durable and covers gaps that standard SAPI plates leave exposed, but only protects against rounds up to 7.62x51mm.  These are intended to be worn in a plate carrier.",
-    "weight": "2 kg",
-    "price": "2000 USD",
-    "price_postapoc": "50 USD",
-    "material": [ "ceramic" ],
-    "coverage": 95,
-    "encumbrance": 4,
-    "material_thickness": 3,
-    "resistance": { "bullet": 48 },
-    "environmental_protection": 2,
-    "delete": { "flags": [ "FRAGILE" ] }
   },
   {
     "id": "hard_ballistic_plate",
