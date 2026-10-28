@@ -3409,6 +3409,80 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the vehicle editor gives a new design an id no prototype has, from a file name or a name "
+    "with no letters of its id",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto folder = std::filesystem::path(PATH_INFO::user_moddir()) / "my_mod";
+    std::filesystem::remove_all(folder);
+    const auto cleanup = on_out_of_scope([&] { std::filesystem::remove_all(folder); });
+    const auto notice = [](const ec::screen_view& screen) {
+        const auto* const found = ec::find_component(*screen.root, "vehicle:notice");
+        return found ? body<ec::text_body>(*found).markup : std::string{};
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                // A file named as the game's own prototype gets an id of its own all the same.
+                return invoke("vehicle:new", {.text = "my_mod/Bicycle.json"});
+            case 1:
+                CHECK(stat(screen, "file").value.ends_with("my_mod/Bicycle.json"));
+                return invoke("vehicle:save");
+            case 2:
+                // A name with none of an id's letters keeps its name.
+                return invoke("vehicle:new", {.text = "내 차"});
+            case 3:
+                CHECK(stat(screen, "file").value.ends_with("my_mod/my_vehicle.json"));
+                return invoke("vehicle:save");
+            case 4:
+                return invoke("vehicle:new", {.text = "★★"});
+            case 5:
+                CHECK(stat(screen, "file").value.ends_with("my_mod/my_vehicle_2.json"));
+                return invoke("vehicle:save");
+            case 6:
+                return invoke("vehicle:new", {.text = "my_mod/차.json"});
+            case 7:
+                CHECK(stat(screen, "file").value.ends_with("my_mod/차.json"));
+                return invoke("vehicle:save");
+            case 8:
+                // A file needs a name before its .json.
+                return invoke("vehicle:new", {.text = "my_mod/.json"});
+            case 9:
+                CHECK(notice(screen) == "A new vehicle needs a name.");
+                CHECK(stat(screen, "file").value.ends_with("my_mod/차.json"));
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 10);
+    const auto prototype = [&](const char* const file) {
+        const auto read = nlohmann::ordered_json::parse(read_file(folder / file));
+        REQUIRE(read.size() == 1);
+        return read[0];
+    };
+    const auto bicycle = prototype("Bicycle.json");
+    CHECK(bicycle["id"] == "bicycle_2");
+    CHECK(bicycle["name"] == "Bicycle");
+    const auto korean = prototype("my_vehicle.json");
+    CHECK(korean["id"] == "my_vehicle");
+    CHECK(korean["name"] == "내 차");
+    const auto stars = prototype("my_vehicle_2.json");
+    CHECK(stars["id"] == "my_vehicle_2");
+    CHECK(stars["name"] == "★★");
+    // A file of the same id elsewhere is no prototype the game has, but this folder's are.
+    const auto car = prototype("차.json");
+    CHECK(car["name"] == "차");
+    CHECK(car["id"] != "my_vehicle");
+    CHECK(car["id"] != "my_vehicle_2");
+    CHECK(std::filesystem::exists(folder / ".json") == false);
+}
+
+TEST_CASE(
     "the vehicle editor's canvas removes the top part of a square on its secondary click",
     "[editor_vehicle][engine_client_component]") {
     const auto guard = screen_guard{};
