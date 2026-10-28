@@ -1951,3 +1951,138 @@ TEST_CASE(
     editor::run_vehicle_editor();
     CHECK(step == 5);
 }
+
+TEST_CASE(
+    "the vehicle editor puts item spawns on a mount from a palette of items and groups by name",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto spawns = [](const ec::screen_view& screen) {
+        return rows(screen, "vehicle:items") | std::views::transform(&ec::row::label)
+             | std::ranges::to<std::vector>();
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                // The items show only while the item spawns do.
+                CHECK(ec::find_component(*screen.root, "vehicle:item_kinds") == nullptr);
+                return invoke("vehicle:mount", {.row = "mount:-1,0"});
+            case 2:
+                return invoke("vehicle:show:cargo");
+            case 3:
+                CHECK(slot_of(screen, "vehicle:item_kinds") == "palette");
+                CHECK(part(screen, "vehicle:item_kinds").label == "Items");
+                CHECK(body<ec::list_body>(part(screen, "vehicle:item_catalog")).total > 1000);
+                return invoke("vehicle:item_filter", {.text = "flashlight"});
+            case 4:
+                CHECK(row(screen, "vehicle:item_catalog", "item:flashlight").look.has_value());
+                return invoke("vehicle:item_pick", {.row = "item:flashlight"});
+            case 5:
+                CHECK(spawns(screen) == std::vector<std::string>{"flashlight (off)"});
+                CHECK(body<ec::list_body>(part(screen, "vehicle:history")).rows.back().label
+                      == "Add flashlight (off) at -1,0");
+                return invoke("vehicle:item_kind", {.row = "kind:item_group"});
+            case 6:
+                return invoke("vehicle:item_filter", {.text = "tools_common"});
+            case 7:
+                return invoke("vehicle:item_pick", {.row = "group:tools_common"});
+            case 8:
+                CHECK(spawns(screen).size() == 2);
+                CHECK(row(screen, "vehicle:items", "item:1").description == "Item group");
+                return invoke("vehicle:undo");
+            case 9:
+                return invoke("vehicle:undo");
+            case 10:
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 11);
+}
+
+TEST_CASE(
+    "the vehicle editor says in words why the raw JSON cannot be set there", "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                return invoke("vehicle:show:json");
+            case 2:
+                return invoke("vehicle:field_set", {.row = "pointer", .text = "name"});
+            case 3:
+                return invoke("vehicle:field_apply");
+            case 4:
+                CHECK(notice_of(screen) == "A pointer starts with /, as /name does.");
+                return invoke("vehicle:field_set", {.row = "pointer", .text = "/nothing/here"});
+            case 5:
+                return invoke("vehicle:field_set", {.row = "value", .text = "1"});
+            case 6:
+                return invoke("vehicle:field_apply");
+            case 7:
+                CHECK(notice_of(screen) == "The prototype has nothing at /nothing to hold here.");
+                CHECK(stat(screen, "saved").value == "Yes");
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 8);
+}
+
+TEST_CASE("the vehicle editor says what it did to the world's vehicles", "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    clear_map();
+    const auto cleanup_vehicles = on_out_of_scope([] { clear_vehicles(); });
+    REQUIRE(editor::spawn_design(
+        vproto_id("bicycle"), get_avatar().bub_pos() + tripoint_rel_ms(-8, 0, 0), {}));
+    const auto copied = std::filesystem::path(PATH_INFO::user_dir()) / "vehicle_copy.json";
+    std::filesystem::remove(copied);
+    const auto cleanup = on_out_of_scope([&] { std::filesystem::remove(copied); });
+    const auto status = [](const ec::screen_view& screen) {
+        const auto& said = body<ec::text_body>(part(screen, "vehicle:status"));
+        CHECK(said.tone == "good");
+        CHECK(slot_of(screen, "vehicle:status") == "log");
+        return said.markup;
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:source", {.row = "source:world"});
+            case 1:
+                return invoke("vehicle:copy", {.row = "world:0"});
+            case 2:
+                CHECK(status(screen) == "Copied Bicycle; paste it in any world.");
+                return invoke("vehicle:paste");
+            case 3:
+                CHECK(status(screen) == "Pasted Bicycle 8 squares south of you.");
+                return invoke("vehicle:show:prototypes");
+            case 4:
+                CHECK(ec::find_component(*screen.root, "vehicle:status") == nullptr);
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 5:
+                return invoke("vehicle:spawn");
+            case 6:
+                CHECK(status(screen) == "Spawned Bicycle 8 squares east of you.");
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 7);
+}
