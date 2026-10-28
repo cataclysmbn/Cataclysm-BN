@@ -427,8 +427,10 @@ struct session {
             notice = string_format(_("No data file of the loaded mods defines %s."), id);
             return;
         }
+        // Before the document moves, which takes `objects` with it.
+        const auto index = static_cast<std::size_t>(found - objects.begin());
         if (!leave()) { return; }
-        take(std::move(*opened), static_cast<std::size_t>(found - objects.begin()));
+        take(std::move(*opened), index);
     }
 
     /// Edits the prototype `index` of `opened` from now on, with the select tool.
