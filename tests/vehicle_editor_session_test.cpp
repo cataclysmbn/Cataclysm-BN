@@ -2226,3 +2226,67 @@ TEST_CASE(
     editor::run_vehicle_editor();
     CHECK(step == 11);
 }
+
+TEST_CASE(
+    "the vehicle editor spawns and pastes at the nearest clear place when walls stand at the first",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    clear_map();
+    const auto cleanup_vehicles = on_out_of_scope([] { clear_vehicles(); });
+    const auto copied = std::filesystem::path(PATH_INFO::user_dir()) / "vehicle_copy.json";
+    std::filesystem::remove(copied);
+    const auto cleanup = on_out_of_scope([&] {
+        std::filesystem::remove(copied);
+        clear_map();
+    });
+    const auto here = get_avatar().bub_pos();
+    // Walls on the squares a bicycle would cover 8 east and 8 south of the avatar.
+    for (const auto& first : {tripoint_rel_ms(8, 0, 0), tripoint_rel_ms(0, 8, 0)}) {
+        for (auto dx = -2; dx <= 2; ++dx) {
+            for (auto dy = -2; dy <= 2; ++dy) {
+                get_map().ter_set(here + first + tripoint_rel_ms(dx, dy, 0), ter_id("t_wall"));
+            }
+        }
+    }
+    const auto status = [](const ec::screen_view& screen) {
+        const auto* const found = ec::find_component(*screen.root, "vehicle:status");
+        return found ? body<ec::text_body>(*found).markup : std::string{};
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:source", {.row = "source:world"});
+            case 1:
+                // Nothing near to act on: the world's actions say so.
+                CHECK_FALSE(affordance(screen, "vehicle:edit").enabled);
+                CHECK(affordance(screen, "vehicle:edit").denial == "No vehicle is near you.");
+                CHECK_FALSE(affordance(screen, "vehicle:copy").enabled);
+                CHECK_FALSE(affordance(screen, "vehicle:export").enabled);
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 2:
+                return invoke("vehicle:spawn");
+            case 3:
+                CHECK(notice_of(screen).empty());
+                CHECK(status(screen).starts_with("Spawned Bicycle "));
+                CHECK(get_map().get_vehicles().size() == 1);
+                return invoke("vehicle:source", {.row = "source:world"});
+            case 4:
+                CHECK(affordance(screen, "vehicle:edit").enabled);
+                return invoke("vehicle:copy", {.row = "world:0"});
+            case 5:
+                return invoke("vehicle:paste");
+            case 6:
+                CHECK(notice_of(screen).empty());
+                CHECK(status(screen).starts_with("Pasted Bicycle "));
+                CHECK(get_map().get_vehicles().size() == 2);
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 7);
+}
