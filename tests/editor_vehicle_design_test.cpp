@@ -126,6 +126,45 @@ TEST_CASE(
     CHECK(refusal({0, 0}, "xlframe_vertical").find("already") != std::string::npos);
 }
 
+TEST_CASE(
+    "a mount refuses a part for the reason the game has, by every rule of its own",
+    "[editor_vehicle]") {
+    const auto design = built(ordered_json::parse(R"({
+        "type": "vehicle", "id": "refusal_test", "name": "Refusal test",
+        "parts": [
+            { "x": 0, "y": 0, "parts": [ "xlframe_vertical", "board_vertical_left" ] },
+            { "x": 1, "y": 0, "parts": [ "xlframe_vertical", "inboard_mirror" ] },
+            { "x": 0, "y": 1, "parts": [ "xlframe_vertical", "turret_mount_manual_steel", "m249" ] },
+            { "x": 2, "y": 0, "parts": [ "mounted_spare_tire" ] }
+        ]
+    })"));
+    const auto& veh = *design.blueprint;
+    const auto said =
+        design.messages | std::views::transform(&editor::loader_message::text)
+        | std::ranges::to<std::vector>();
+    CAPTURE(said);
+    REQUIRE(veh.part_count() == 8);
+    const auto refusal = [&](const point& at, const char* const part) {
+        return editor::mount_refusal(veh, at, vpart_id(part)).value_or("");
+    };
+    // A protrusion is no frame to build on from.
+    CHECK(refusal({3, 0}, "xlframe_vertical").ends_with("must touch the vehicle's frame."));
+    CHECK(refusal({0, 0}, "inboard_mirror").find("clear view") != std::string::npos);
+    CHECK(refusal({1, 0}, "board_vertical_left").find("block the view") != std::string::npos);
+    CHECK(refusal({0, 1}, "turret_mount").find("already has a turret mount") != std::string::npos);
+    CHECK(refusal({0, 1}, "controls_turret").find("by hand") != std::string::npos);
+    CHECK(refusal({0, 1}, "laser_designator_part").find("by hand") != std::string::npos);
+    // Each refusal names what is in the way, never an empty list.
+    for (const auto* const part :
+         {"inboard_mirror", "board_vertical_left", "turret_mount", "controls_turret"}) {
+        for (const auto& at : {point(0, 0), point(1, 0), point(0, 1), point(3, 0), point(5, 5)}) {
+            const auto said = refusal(at, part);
+            INFO(part << " at " << at.to_string() << ": " << said);
+            CHECK(said.find("with .") == std::string::npos);
+        }
+    }
+}
+
 TEST_CASE("a vehicle prototype is found in the data file that defines it", "[editor_vehicle]") {
     const auto path = editor::prototype_file("bicycle");
     REQUIRE(path.has_value());

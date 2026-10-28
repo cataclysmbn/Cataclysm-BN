@@ -1850,3 +1850,104 @@ TEST_CASE(
     editor::run_vehicle_editor();
     CHECK(step == 5);
 }
+
+TEST_CASE(
+    "the vehicle editor sets nothing of a part on a mount that has none", "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto settings = [](const ec::screen_view& screen) {
+        return body<ec::tabs_body>(part(screen, "vehicle:tools")).tabs[1];
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:filter", {.text = "armored"});
+            case 1:
+                return invoke("vehicle:open", {.row = "prototype:armored_car"});
+            case 2:
+                return invoke("vehicle:mount", {.row = "mount:-3,1"});
+            case 3:
+                return invoke("vehicle:pick", {.row = "part:3"});
+            case 4:
+                CHECK(settings(screen).enabled);
+                // An empty mount of the grid.
+                return invoke(
+                    "vehicle:mount",
+                    {.row = std::ranges::find_if(
+                                body<ec::grid_body>(part(screen, "vehicle:grid")).cells,
+                                [](const ec::grid_cell& entry) { return entry.label.empty(); })
+                                ->id});
+            case 5:
+                CHECK_FALSE(settings(screen).enabled);
+                return invoke("vehicle:show:part");
+            case 6:
+                CHECK(ec::find_component(*screen.root, "vehicle:part_form") == nullptr);
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 7);
+}
+
+TEST_CASE(
+    "the vehicle editor ignores what acts on a vehicle while none is open", "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:mount", {.row = "mount:0,0"});
+            case 1:
+                return invoke("vehicle:remove");
+            case 2:
+                CHECK(ec::find_component(*screen.root, "vehicle:grid") == nullptr);
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 3);
+}
+
+TEST_CASE(
+    "the vehicle editor shows no tab a world vehicle edited in place lacks", "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    clear_map();
+    const auto cleanup_vehicles = on_out_of_scope([] { clear_vehicles(); });
+    REQUIRE(editor::spawn_design(
+        vproto_id("bicycle"), get_avatar().bub_pos() + tripoint_rel_ms(8, 0, 0), {}));
+    const auto tabs = [](const ec::screen_view& screen) {
+        return body<ec::tabs_body>(part(screen, "vehicle:tools")).tabs;
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:source", {.row = "source:world"});
+            case 1:
+                return invoke("vehicle:edit", {.row = "world:0"});
+            case 2:
+                return invoke("vehicle:show:cargo");
+            case 3:
+                CHECK(std::ranges::count_if(tabs(screen), &ec::tab_entry::selected) == 1);
+                CHECK(tabs(screen)[0].selected);
+                return invoke("vehicle:tool", {.row = "tool:json"});
+            case 4:
+                CHECK(tabs(screen)[0].selected);
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 5);
+}
