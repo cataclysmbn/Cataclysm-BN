@@ -1068,32 +1068,31 @@ struct session {
     }
 
     /// Starts a vehicle on a frame in a new file of the user mods, with the install tool and a
-    /// frame in hand: `text` is its name, which the file and the id follow, or the path of that
-    /// .json file, whose stem names it.
+    /// frame in hand: `text` is its name, which the file follows, or the path of that .json file,
+    /// whose stem names it; either way the id follows the name and is no prototype's.
     auto new_vehicle(const std::string& text) -> void {
-        const auto name = trim(text);
+        const auto typed = trim(text);
+        // A name may hold any character; only a file name says where the file goes.
+        const auto is_path = typed.ends_with(".json");
+        const auto file = std::filesystem::path(typed).filename().string();
+        const auto name =
+            is_path ? trim(file.substr(0, file.size() - std::string_view(".json").size())) : typed;
         if (name.empty()) {
             notice = _("A new vehicle needs a name.");
             return;
         }
-        // A name may hold any character; only a file name says where the file goes.
-        const auto is_path = name.ends_with(".json");
+        const auto free = suggested(id_of(name), true);
+        const auto id = std::filesystem::path(free).filename().string();
         const auto frame = catalog.frame;
-        const auto made =
-            create(is_path ? name : suggested(id_of(name), true), [&](const std::string& id) {
-                auto parts = nlohmann::ordered_json::array();
-                if (frame) {
-                    parts.push_back(
-                        {{"x", 0},
-                         {"y", 0},
-                         {"parts", nlohmann::ordered_json::array({frame->str()})}});
-                }
-                return nlohmann::ordered_json{
-                    {"type", "vehicle"},
-                    {"id", id_of(id)},
-                    {"name", is_path ? id : name},
-                    {"parts", std::move(parts)}};
-            });
+        const auto made = create(is_path ? typed : free, [&](const std::string& /*stem*/) {
+            auto parts = nlohmann::ordered_json::array();
+            if (frame) {
+                parts.push_back(
+                    {{"x", 0}, {"y", 0}, {"parts", nlohmann::ordered_json::array({frame->str()})}});
+            }
+            return nlohmann::ordered_json{
+                {"type", "vehicle"}, {"id", id}, {"name", name}, {"parts", std::move(parts)}};
+        });
         if (!made || !frame) { return; }
         canvas_tool = "install";
         hold(frame->str());
