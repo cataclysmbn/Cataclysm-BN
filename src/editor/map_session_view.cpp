@@ -1242,7 +1242,7 @@ auto layout(const session& state) -> workspace_layout {
              {place_id, {.slot = "inspector", .label = _("New placement")}},
              {pins_id, {.slot = "inspector", .label = _("Pinned choices")}},
              {rotation_id, {.slot = "inspector", .label = _("Preview facing")}},
-             {connection_id, {.slot = "inspector"}},
+             {connection_id, {.slot = "inspector", .label = _("Connect tool")}},
              {"editor:preview", {.slot = "inspector", .label = _("Generated map")}},
              {loot_id, {.slot = "inspector", .label = _("Spawn chances")}},
              {new_id, {.slot = "inspector", .label = _("New mapgen file")}},
