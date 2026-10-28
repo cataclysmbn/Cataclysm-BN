@@ -227,6 +227,10 @@ TEST_CASE(
                 CHECK(cell(screen, "mount:0,0").selected);
                 CHECK(messages(screen).empty());
                 CHECK_FALSE(affordance(screen, "vehicle:undo").enabled);
+                CHECK(affordance(screen, "vehicle:undo").denial == "Nothing to undo.");
+                CHECK(affordance(screen, "vehicle:redo").denial == "Nothing to redo.");
+                CHECK(affordance(screen, "vehicle:save").denial
+                      == "Nothing changed since the file was saved.");
                 CHECK(
                     affordance(screen, "vehicle:undo").keys == std::vector<std::string>{"CTRL+Z"});
                 CHECK(
@@ -672,6 +676,8 @@ TEST_CASE(
             case 2:
                 CHECK(title(screen) == "Bicycle");
                 CHECK_FALSE(affordance(screen, "vehicle:undo").enabled);
+                CHECK(affordance(screen, "vehicle:undo").denial == "Nothing to undo.");
+                CHECK(affordance(screen, "vehicle:redo").denial == "Nothing to redo.");
                 CHECK(
                     affordance(screen, "vehicle:undo").keys == std::vector<std::string>{"CTRL+Z"});
                 CHECK(
