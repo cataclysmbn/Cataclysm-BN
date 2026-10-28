@@ -3732,15 +3732,29 @@ void jmapgen_objects::finalize() {
     });
 }
 
+namespace {
+
+/// Each piece of `objects` once: a symbol of the rows places the same piece on every square of it.
+auto distinct_pieces(const auto& objects) -> std::vector<const jmapgen_piece*> {
+    auto seen = std::unordered_set<const jmapgen_piece*>{};
+    auto pieces = std::vector<const jmapgen_piece*>{};
+    for (const auto& obj : objects) {
+        if (seen.insert(obj.second.get()).second) { pieces.push_back(obj.second.get()); }
+    }
+    return pieces;
+}
+
+} // namespace
+
 void jmapgen_objects::check(
     const std::string& oter_name, const mapgen_parameters& parameters) const {
-    for (const jmapgen_obj& obj : objects) { obj.second->check(oter_name, parameters); }
+    for (const auto* piece : distinct_pieces(objects)) { piece->check(oter_name, parameters); }
 }
 
 void jmapgen_objects::merge_parameters_into(
     mapgen_parameters& params, const std::string& outer_context) const {
-    for (const jmapgen_obj& obj : objects) {
-        obj.second->merge_parameters_into(params, outer_context);
+    for (const auto* piece : distinct_pieces(objects)) {
+        piece->merge_parameters_into(params, outer_context);
     }
 }
 
