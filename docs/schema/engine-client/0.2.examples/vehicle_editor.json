@@ -1730,6 +1730,7 @@
             "label": "Pick",
             "keys": [],
             "enabled": true,
+            "role": "select",
             "args": {
               "row": {
                 "component_id": "vehicle:stack"
@@ -3259,6 +3260,7 @@
             "label": "Pick",
             "keys": [],
             "enabled": true,
+            "role": "select",
             "args": {
               "row": {
                 "component_id": "vehicle:stack"

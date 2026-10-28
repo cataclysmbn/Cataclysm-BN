@@ -6853,7 +6853,7 @@
         "stage": "rejected",
         "stage_text": "Refused.",
         "error": "invalid_arguments",
-        "error_text": "That needs other details."
+        "error_text": "Custom Invert color takes one of its choices."
       }
     },
     {

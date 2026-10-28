@@ -1159,7 +1159,7 @@
             {
               "id": "editor:file",
               "kind": "form",
-              "label": "Open",
+              "label": "File path",
               "affordances": [
                 "editor:open",
                 "editor:save_as"
@@ -1496,7 +1496,7 @@
             {
               "id": "editor:placements",
               "kind": "list",
-              "label": "Placements",
+              "label": "Placed by this entry",
               "affordances": [
                 "editor:placement"
               ],
@@ -1510,7 +1510,7 @@
             {
               "id": "editor:place",
               "kind": "form",
-              "label": "Add placement",
+              "label": "New placement",
               "affordances": [
                 "editor:place_set",
                 "editor:place_apply"
@@ -3501,7 +3501,7 @@
             {
               "id": "editor:new",
               "kind": "form",
-              "label": "New file",
+              "label": "New mapgen file",
               "affordances": [
                 "editor:new_set",
                 "editor:new_apply"
