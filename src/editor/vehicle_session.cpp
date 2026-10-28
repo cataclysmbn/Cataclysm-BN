@@ -264,11 +264,9 @@ auto placed_sentence(const bool pasted, const vehicle& veh) -> std::string {
 
 /// `base`, else `base_2`, `base_3` and on: the first name whose file the player's mods lack.
 auto free_name(const std::string& base) -> std::string {
-    auto name = base;
-    for (auto count = 2; std::filesystem::exists(in_mods(name)); ++count) {
-        name = base + "_" + std::to_string(count);
-    }
-    return name;
+    return editor::free_name(base, [](const std::string& name) {
+        return std::filesystem::exists(in_mods(name));
+    });
 }
 
 auto copied_vehicle_file() -> std::filesystem::path {

@@ -5,6 +5,7 @@
 
 #include <expected>
 #include <filesystem>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -17,6 +18,9 @@ auto inside(const std::filesystem::path& path, const std::string& root) -> bool;
 auto shown_path(const std::filesystem::path& path) -> std::string;
 /// Whether `path` is a .json file in the player's mods, the only place the editors make files.
 auto is_mod_file(const std::filesystem::path& path) -> bool;
+/// `base`, else `base_2`, `base_3` and on: the first name not `taken`.
+auto free_name(const std::string& base, const std::function<bool(const std::string&)>& taken)
+    -> std::string;
 
 /// Writes `doc`; the error is what to tell the player.
 auto save_document(document& doc) -> std::expected<void, std::string>;

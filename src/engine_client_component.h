@@ -197,6 +197,8 @@ struct form_field {
     bool printable = false;
     /// The text may run over several lines.
     bool multiline = false;
+    /// The form's submit refuses while the field is empty, which a client may mark.
+    bool required = false;
     /// Where the cursor stands in a text, in characters from its start; none: the field has no cursor.
     std::optional<int> cursor = std::nullopt;
     std::vector<form_option> options = {};

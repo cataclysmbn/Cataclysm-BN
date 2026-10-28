@@ -42,6 +42,13 @@ auto is_mod_file(const std::filesystem::path& path) -> bool {
     return path.extension() == ".json" && inside(path, PATH_INFO::user_moddir());
 }
 
+auto free_name(const std::string& base, const std::function<bool(const std::string&)>& taken)
+    -> std::string {
+    auto name = base;
+    for (auto count = 2; taken(name); ++count) { name = base + "_" + std::to_string(count); }
+    return name;
+}
+
 auto changed_on_disk_notice(const document& doc) -> std::string {
     const auto name = doc.path().string();
     return doc.dirty()

@@ -898,28 +898,46 @@ auto game_parts(
 
 /// The form that creates a new file.
 auto new_file_form(const session& state) -> ec::component {
+    const auto& kind = state.made.kind;
+    const auto special = kind == "special" || kind == "building";
     return ec::component{
         .id = new_id,
         .affordances = {new_set_id, new_apply_id},
         .body = ec::form_body{
             .fields =
-                {{.id = "path", .label = _("Path"), .value = state.made.path},
+                {{.id = "path",
+                  .label = _("Path"),
+                  .description = _("The new .json file, inside your mods."),
+                  .value = state.made.path,
+                  .required = true},
                  {.id = "om_terrain",
-                  .label = state.made.kind == "palette" ? _("Palette id")
-                         : state.made.kind == "nested"  ? _("Chunk id")
-                         : state.made.kind == "special" ? _("Special id")
-                         : state.made.kind == "building"
-                             ? _("Building id")
-                             : _("Overmap terrain"),
-                  .value = state.made.om_terrain},
+                  .label = kind == "palette"  ? _("Palette id")
+                         : kind == "nested"   ? _("Chunk id")
+                         : kind == "special"  ? _("Special id")
+                         : kind == "building" ? _("Building id")
+                                              : _("Overmap terrain"),
+                  .description =
+                      kind == "palette"  ? _("The id mapgens name the palette by.")
+                      : kind == "nested" ? _("The id mapgens place the chunk by.")
+                      : special          ? _("The id the game places it by.")
+                                         : _("The id of the overmap terrain the mapgen makes."),
+                  .value = state.made.om_terrain,
+                  .required = true},
                  {.id = "fill",
                   // A special's first square places an overmap terrain.
-                  .label = state.made.kind == "special" || state.made.kind == "building"
-                             ? _("Overmap terrain")
-                             : _("Terrain"),
-                  .value = state.made.fill},
+                  .label = special ? _("Overmap terrain") : _("Terrain"),
+                  .description =
+                      special             ? _("The overmap terrain of its first square.")
+                      : kind == "palette" ? _("The terrain its symbol . places.")
+                      : kind == "nested"
+                          ? _("The terrain of every square.")
+                          : _("The terrain of every square, and under any symbol that "
+                              "maps none."),
+                  .value = state.made.fill,
+                  .required = true},
                  {.id = "kind",
                   .label = _("Kind"),
+                  .description = _("What the file holds."),
                   .value = state.made.kind,
                   .type = "select",
                   .options =
@@ -928,25 +946,29 @@ auto new_file_form(const session& state) -> ec::component {
                        {.id = "palette", .label = _("Palette")},
                        {.id = "special", .label = _("Overmap special")},
                        {.id = "building", .label = _("Building")}}},
-                 {.id = "size", .label = _("Chunk size"), .value = state.made.size}},
+                 {.id = "size",
+                  .label = _("Chunk size"),
+                  .description = _("The side of a nested chunk, in squares."),
+                  .value = state.made.size}},
             .submit = new_apply_id}};
 }
 
 /// The page of data files shown.
-auto browser_list(const session& state, const std::vector<std::filesystem::path>& listed)
-    -> ec::component {
+auto browser_list(const session& state, const std::vector<browser_entry>& listed) -> ec::component {
     const auto shown =
         std::views::drop(listed, state.browser_page * page_size) | std::views::take(page_size);
     const auto data = std::filesystem::path(PATH_INFO::datadir());
     return ec::list(
         {.id = browser_id,
          .rows =
-             shown | std::views::transform([&](const std::filesystem::path& path) {
+             shown | std::views::transform([&](const browser_entry& entry) {
+                 const auto& path = entry.path;
                  return ec::row{
                      .id = "file:" + path.generic_string(),
                      .label =
                          (inside(path, PATH_INFO::datadir()) ? path.lexically_relative(data) : path)
-                             .generic_string()};
+                             .generic_string(),
+                     .description = join(entry.matched, ", ")};
              })
              | std::ranges::to<std::vector>(),
          .total = listed.size(),
@@ -1020,7 +1042,7 @@ auto drawing_affordances(const session& state) -> std::vector<ec::affordance> {
     affordances.push_back(ec::invoke_affordance(
         {.id = extract_palette_id,
          .label = _("Extract legend to palette"),
-         .args = {.text = ec::text_shape{}}}));
+         .args = {.text = ec::text_shape{.initial = state.free_palette_id()}}}));
     return affordances;
 }
 
@@ -1123,7 +1145,8 @@ auto special_canvas(const session& state) -> ec::component {
             if (found != squares.end() && oter_str_id(found->overmap).is_valid()) {
                 const auto& terrain = oter_str_id(found->overmap).obj();
                 cell.glyph = terrain.get_symbol();
-                cell.label = terrain.get_name();
+                // Squares of one name, as a big special has, are told apart by their ids.
+                cell.label = overmap_terrain_name(found->overmap);
                 cell.color = string_from_color(terrain.get_color());
                 // As the overmap's tiles show it.
                 auto rotation = 0;
@@ -1253,8 +1276,6 @@ auto layout(const session& state) -> workspace_layout {
              {save_as_id, file},
              {export_id, file},
              {export_area_id, file},
-             {export_width_id, file},
-             {export_height_id, file},
              {extract_palette_id, file},
              {undo_id, edit},
              {redo_id, edit},
@@ -1326,21 +1347,10 @@ auto session_view(const session& state) -> ec::screen_view {
     affordances.push_back(
         ec::invoke_affordance({.id = export_area_id, .label = _("Mark squares to export")}));
     affordances.push_back(ec::invoke_affordance(
-        {.id = export_width_id,
-         .label = _("Export width"),
-         .args = {
-             .count =
-                 ec::count_shape{.min = 1, .max = max_export, .initial = state.export_size.x()}}}));
-    affordances.push_back(ec::invoke_affordance(
-        {.id = export_height_id,
-         .label = _("Export height"),
-         .args = {
-             .count =
-                 ec::count_shape{.min = 1, .max = max_export, .initial = state.export_size.y()}}}));
-    affordances.push_back(ec::invoke_affordance(
-        {.id = export_palette_id,
-         .label = _("Export palette"),
-         .args = {.text = ec::text_shape{.field_id = "palette"}}}));
+        {.id = export_set_id,
+         .label = _("Value"),
+         .args =
+             {.row = ec::row_shape{.component_id = export_options_id}, .text = ec::text_shape{}}}));
     affordances.push_back(ec::invoke_affordance(
         {.id = unstamp_id,
          .label = _("Take back stamp"),
@@ -1532,11 +1542,28 @@ auto session_view(const session& state) -> ec::screen_view {
     parts.push_back(new_file_form(state));
     parts.push_back(ec::component{
         .id = export_options_id,
-        .affordances = {export_palette_id},
+        .affordances = {export_set_id},
         .body = ec::form_body{
-            .fields =
-                {{.id = "palette", .label = _("Export palette"), .value = state.export_palette}},
-            .submit = export_palette_id}});
+            .fields = {
+                {.id = "palette",
+                 .label = _("Export palette"),
+                 .description = _("A palette of the game whose symbols the export reuses; empty "
+                                  "for none."),
+                 .value = state.export_palette},
+                {.id = "width",
+                 .label = _("Width"),
+                 .description = _("Overmap squares across, around yours."),
+                 .value = std::to_string(state.export_size.x()),
+                 .type = "integer",
+                 .min = 1,
+                 .max = max_export},
+                {.id = "height",
+                 .label = _("Height"),
+                 .description = _("Overmap squares down, around yours."),
+                 .value = std::to_string(state.export_size.y()),
+                 .type = "integer",
+                 .min = 1,
+                 .max = max_export}}}});
     parts.push_back(ec::component{
         .id = import_form_id,
         .affordances = {import_set_id, import_id},
