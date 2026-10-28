@@ -487,6 +487,11 @@
                   "key": "mount",
                   "label": "Mount",
                   "value": "1,0"
+                },
+                {
+                  "key": "front",
+                  "label": "Front",
+                  "value": "Right"
                 }
               ]
             },
@@ -524,7 +529,12 @@
                 "vehicle:canvas_tool"
               ],
               "slot": "tools",
-              "columns": [],
+              "columns": [
+                {
+                  "key": "state",
+                  "label": "State"
+                }
+              ],
               "rows": [
                 {
                   "id": "canvas_tool:select",
@@ -539,7 +549,73 @@
                 },
                 {
                   "id": "canvas_tool:install",
-                  "label": "Install",
+                  "label": "Pencil",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "b",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "canvas_tool:line",
+                  "label": "Line",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "l",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "canvas_tool:rect",
+                  "label": "Rectangle",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "r",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "canvas_tool:rect_filled",
+                  "label": "Filled rectangle",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "u",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "canvas_tool:fill",
+                  "label": "Fill",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "f",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "canvas_tool:remove",
+                  "label": "Eraser",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "e",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "canvas_tool:pick",
+                  "label": "Eyedropper",
                   "description": "",
                   "denial": "",
                   "hotkey": "i",
@@ -549,18 +625,39 @@
                   "columns": []
                 },
                 {
-                  "id": "canvas_tool:remove",
-                  "label": "Remove",
+                  "id": "canvas_tool:mirror_sides",
+                  "label": "Mirror left and right",
                   "description": "",
                   "denial": "",
-                  "hotkey": "e",
                   "enabled": true,
                   "selectable": true,
                   "selected": false,
-                  "columns": []
+                  "columns": [
+                    {
+                      "key": "state",
+                      "label": "State",
+                      "value": "Off"
+                    }
+                  ]
+                },
+                {
+                  "id": "canvas_tool:mirror_ends",
+                  "label": "Mirror front and back",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "state",
+                      "label": "State",
+                      "value": "Off"
+                    }
+                  ]
                 }
               ],
-              "total": 3,
+              "total": 10,
               "selection": "single",
               "activate": "vehicle:canvas_tool"
             },
@@ -569,7 +666,9 @@
               "kind": "grid",
               "affordances": [
                 "vehicle:mount",
-                "vehicle:clear"
+                "vehicle:clear",
+                "vehicle:stroke_begin",
+                "vehicle:stroke_end"
               ],
               "slot": "canvas",
               "cols": 21,
@@ -3264,7 +3363,10 @@
                 }
               ],
               "role": "canvas",
-              "secondary": "vehicle:clear"
+              "drag_begin": "vehicle:stroke_begin",
+              "drag_end": "vehicle:stroke_end",
+              "secondary": "vehicle:clear",
+              "secondary_drag": "trail"
             },
             {
               "id": "vehicle:tools",
@@ -3745,7 +3847,7 @@
           },
           {
             "id": "vehicle:tool_select",
-            "label": "Select tool",
+            "label": "Select",
             "keys": [
               "s"
             ],
@@ -3755,9 +3857,49 @@
           },
           {
             "id": "vehicle:tool_install",
-            "label": "Install tool",
+            "label": "Pencil",
             "keys": [
-              "i"
+              "b"
+            ],
+            "enabled": true,
+            "expect": "screen",
+            "group": "Edit"
+          },
+          {
+            "id": "vehicle:tool_line",
+            "label": "Line",
+            "keys": [
+              "l"
+            ],
+            "enabled": true,
+            "expect": "screen",
+            "group": "Edit"
+          },
+          {
+            "id": "vehicle:tool_rect",
+            "label": "Rectangle",
+            "keys": [
+              "r"
+            ],
+            "enabled": true,
+            "expect": "screen",
+            "group": "Edit"
+          },
+          {
+            "id": "vehicle:tool_rect_filled",
+            "label": "Filled rectangle",
+            "keys": [
+              "u"
+            ],
+            "enabled": true,
+            "expect": "screen",
+            "group": "Edit"
+          },
+          {
+            "id": "vehicle:tool_fill",
+            "label": "Fill",
+            "keys": [
+              "f"
             ],
             "enabled": true,
             "expect": "screen",
@@ -3765,10 +3907,37 @@
           },
           {
             "id": "vehicle:tool_remove",
-            "label": "Remove tool",
+            "label": "Eraser",
             "keys": [
               "e"
             ],
+            "enabled": true,
+            "expect": "screen",
+            "group": "Edit"
+          },
+          {
+            "id": "vehicle:tool_pick",
+            "label": "Eyedropper",
+            "keys": [
+              "i",
+              "q"
+            ],
+            "enabled": true,
+            "expect": "screen",
+            "group": "Edit"
+          },
+          {
+            "id": "vehicle:mirror_sides",
+            "label": "Mirror left and right",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen",
+            "group": "Edit"
+          },
+          {
+            "id": "vehicle:mirror_ends",
+            "label": "Mirror front and back",
+            "keys": [],
             "enabled": true,
             "expect": "screen",
             "group": "Edit"
@@ -3841,6 +4010,26 @@
             "label": "World vehicles",
             "keys": [
               "w"
+            ],
+            "enabled": true,
+            "expect": "screen",
+            "group": "View"
+          },
+          {
+            "id": "vehicle:view_cw",
+            "label": "Turn view clockwise",
+            "keys": [
+              "z"
+            ],
+            "enabled": true,
+            "expect": "screen",
+            "group": "View"
+          },
+          {
+            "id": "vehicle:view_ccw",
+            "label": "Turn view counterclockwise",
+            "keys": [
+              "Z"
             ],
             "enabled": true,
             "expect": "screen",
@@ -3932,7 +4121,7 @@
             "id": "vehicle:turn_cw",
             "label": "Turn clockwise",
             "keys": [
-              "r"
+              "t"
             ],
             "enabled": true,
             "expect": "screen",
@@ -3942,7 +4131,7 @@
             "id": "vehicle:turn_ccw",
             "label": "Turn counterclockwise",
             "keys": [
-              "R"
+              "T"
             ],
             "enabled": true,
             "expect": "screen",
@@ -4021,6 +4210,20 @@
               }
             },
             "expect": "boundary"
+          },
+          {
+            "id": "vehicle:stroke_begin",
+            "label": "Begin stroke",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "vehicle:stroke_end",
+            "label": "End stroke",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
           },
           {
             "id": "vehicle:tool",
@@ -4479,6 +4682,11 @@
                   "key": "mount",
                   "label": "Mount",
                   "value": "1,0"
+                },
+                {
+                  "key": "front",
+                  "label": "Front",
+                  "value": "Right"
                 }
               ]
             },
@@ -4526,7 +4734,12 @@
                 "vehicle:canvas_tool"
               ],
               "slot": "tools",
-              "columns": [],
+              "columns": [
+                {
+                  "key": "state",
+                  "label": "State"
+                }
+              ],
               "rows": [
                 {
                   "id": "canvas_tool:select",
@@ -4541,18 +4754,62 @@
                 },
                 {
                   "id": "canvas_tool:install",
-                  "label": "Install headlight",
+                  "label": "Pencil",
                   "description": "",
                   "denial": "",
-                  "hotkey": "i",
+                  "hotkey": "b",
                   "enabled": true,
                   "selectable": true,
                   "selected": true,
                   "columns": []
                 },
                 {
+                  "id": "canvas_tool:line",
+                  "label": "Line",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "l",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "canvas_tool:rect",
+                  "label": "Rectangle",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "r",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "canvas_tool:rect_filled",
+                  "label": "Filled rectangle",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "u",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "canvas_tool:fill",
+                  "label": "Fill",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "f",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
                   "id": "canvas_tool:remove",
-                  "label": "Remove",
+                  "label": "Eraser",
                   "description": "",
                   "denial": "",
                   "hotkey": "e",
@@ -4560,9 +4817,52 @@
                   "selectable": true,
                   "selected": false,
                   "columns": []
+                },
+                {
+                  "id": "canvas_tool:pick",
+                  "label": "Eyedropper",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "i",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "canvas_tool:mirror_sides",
+                  "label": "Mirror left and right",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "state",
+                      "label": "State",
+                      "value": "Off"
+                    }
+                  ]
+                },
+                {
+                  "id": "canvas_tool:mirror_ends",
+                  "label": "Mirror front and back",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "state",
+                      "label": "State",
+                      "value": "Off"
+                    }
+                  ]
                 }
               ],
-              "total": 3,
+              "total": 10,
               "selection": "single",
               "activate": "vehicle:canvas_tool"
             },
@@ -4571,7 +4871,9 @@
               "kind": "grid",
               "affordances": [
                 "vehicle:mount",
-                "vehicle:clear"
+                "vehicle:clear",
+                "vehicle:stroke_begin",
+                "vehicle:stroke_end"
               ],
               "slot": "canvas",
               "cols": 21,
@@ -7590,7 +7892,11 @@
                 }
               ],
               "role": "canvas",
-              "secondary": "vehicle:clear"
+              "drag": "trail",
+              "drag_begin": "vehicle:stroke_begin",
+              "drag_end": "vehicle:stroke_end",
+              "secondary": "vehicle:clear",
+              "secondary_drag": "trail"
             },
             {
               "id": "vehicle:tools",
@@ -8035,7 +8341,7 @@
           },
           {
             "id": "vehicle:tool_select",
-            "label": "Select tool",
+            "label": "Select",
             "keys": [
               "s"
             ],
@@ -8045,9 +8351,49 @@
           },
           {
             "id": "vehicle:tool_install",
-            "label": "Install tool",
+            "label": "Pencil",
             "keys": [
-              "i"
+              "b"
+            ],
+            "enabled": true,
+            "expect": "screen",
+            "group": "Edit"
+          },
+          {
+            "id": "vehicle:tool_line",
+            "label": "Line",
+            "keys": [
+              "l"
+            ],
+            "enabled": true,
+            "expect": "screen",
+            "group": "Edit"
+          },
+          {
+            "id": "vehicle:tool_rect",
+            "label": "Rectangle",
+            "keys": [
+              "r"
+            ],
+            "enabled": true,
+            "expect": "screen",
+            "group": "Edit"
+          },
+          {
+            "id": "vehicle:tool_rect_filled",
+            "label": "Filled rectangle",
+            "keys": [
+              "u"
+            ],
+            "enabled": true,
+            "expect": "screen",
+            "group": "Edit"
+          },
+          {
+            "id": "vehicle:tool_fill",
+            "label": "Fill",
+            "keys": [
+              "f"
             ],
             "enabled": true,
             "expect": "screen",
@@ -8055,10 +8401,37 @@
           },
           {
             "id": "vehicle:tool_remove",
-            "label": "Remove tool",
+            "label": "Eraser",
             "keys": [
               "e"
             ],
+            "enabled": true,
+            "expect": "screen",
+            "group": "Edit"
+          },
+          {
+            "id": "vehicle:tool_pick",
+            "label": "Eyedropper",
+            "keys": [
+              "i",
+              "q"
+            ],
+            "enabled": true,
+            "expect": "screen",
+            "group": "Edit"
+          },
+          {
+            "id": "vehicle:mirror_sides",
+            "label": "Mirror left and right",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen",
+            "group": "Edit"
+          },
+          {
+            "id": "vehicle:mirror_ends",
+            "label": "Mirror front and back",
+            "keys": [],
             "enabled": true,
             "expect": "screen",
             "group": "Edit"
@@ -8109,6 +8482,26 @@
             "label": "World vehicles",
             "keys": [
               "w"
+            ],
+            "enabled": true,
+            "expect": "screen",
+            "group": "View"
+          },
+          {
+            "id": "vehicle:view_cw",
+            "label": "Turn view clockwise",
+            "keys": [
+              "z"
+            ],
+            "enabled": true,
+            "expect": "screen",
+            "group": "View"
+          },
+          {
+            "id": "vehicle:view_ccw",
+            "label": "Turn view counterclockwise",
+            "keys": [
+              "Z"
             ],
             "enabled": true,
             "expect": "screen",
@@ -8245,6 +8638,20 @@
               }
             },
             "expect": "boundary"
+          },
+          {
+            "id": "vehicle:stroke_begin",
+            "label": "Begin stroke",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "vehicle:stroke_end",
+            "label": "End stroke",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
           },
           {
             "id": "vehicle:tool",
