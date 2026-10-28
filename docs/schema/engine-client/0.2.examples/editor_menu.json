@@ -3511,24 +3511,31 @@
                 {
                   "id": "path",
                   "label": "Path",
-                  "value": "",
-                  "type": "text"
+                  "description": "The new .json file, inside your mods.",
+                  "value": "profile/mods/new_mapgen.json",
+                  "type": "text",
+                  "required": true
                 },
                 {
                   "id": "om_terrain",
                   "label": "Overmap terrain",
+                  "description": "The id of the overmap terrain the mapgen makes.",
                   "value": "",
-                  "type": "text"
+                  "type": "text",
+                  "required": true
                 },
                 {
                   "id": "fill",
                   "label": "Terrain",
+                  "description": "The terrain of every square, and under any symbol that maps none.",
                   "value": "t_floor",
-                  "type": "text"
+                  "type": "text",
+                  "required": true
                 },
                 {
                   "id": "kind",
                   "label": "Kind",
+                  "description": "What the file holds.",
                   "value": "mapgen",
                   "type": "select",
                   "options": [
@@ -3557,6 +3564,7 @@
                 {
                   "id": "size",
                   "label": "Chunk size",
+                  "description": "The side of a nested chunk, in squares.",
                   "value": "4",
                   "type": "text"
                 }
@@ -3568,18 +3576,36 @@
               "kind": "form",
               "label": "Export",
               "affordances": [
-                "editor:export_palette"
+                "editor:export_set"
               ],
               "slot": "inspector",
               "fields": [
                 {
                   "id": "palette",
                   "label": "Export palette",
+                  "description": "A palette of the game whose symbols the export reuses; empty for none.",
                   "value": "",
                   "type": "text"
+                },
+                {
+                  "id": "width",
+                  "label": "Width",
+                  "description": "Overmap squares across, around yours.",
+                  "value": "1",
+                  "type": "integer",
+                  "min": 1,
+                  "max": 3
+                },
+                {
+                  "id": "height",
+                  "label": "Height",
+                  "description": "Overmap squares down, around yours.",
+                  "value": "1",
+                  "type": "integer",
+                  "min": 1,
+                  "max": 3
                 }
-              ],
-              "submit": "editor:export_palette"
+              ]
             },
             {
               "id": "editor:import_form",
@@ -4168,42 +4194,14 @@
             "group": "File"
           },
           {
-            "id": "editor:export_width",
-            "label": "Export width",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "count": {
-                "min": 1,
-                "max": 3,
-                "default": 1
-              }
-            },
-            "expect": "screen",
-            "group": "File"
-          },
-          {
-            "id": "editor:export_height",
-            "label": "Export height",
-            "keys": [],
-            "enabled": true,
-            "args": {
-              "count": {
-                "min": 1,
-                "max": 3,
-                "default": 1
-              }
-            },
-            "expect": "screen",
-            "group": "File"
-          },
-          {
             "id": "editor:extract_palette",
             "label": "Extract legend to palette",
             "keys": [],
             "enabled": true,
             "args": {
-              "text": {}
+              "text": {
+                "default": "editor_menu_scenario_chunk_palette"
+              }
             },
             "expect": "boundary",
             "group": "File"
@@ -4489,14 +4487,15 @@
             "expect": "screen"
           },
           {
-            "id": "editor:export_palette",
-            "label": "Export palette",
+            "id": "editor:export_set",
+            "label": "Value",
             "keys": [],
             "enabled": true,
             "args": {
-              "text": {
-                "field_id": "palette"
-              }
+              "row": {
+                "component_id": "editor:export_options"
+              },
+              "text": {}
             },
             "expect": "boundary"
           },
