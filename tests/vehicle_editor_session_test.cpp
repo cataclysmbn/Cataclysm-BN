@@ -716,6 +716,8 @@ TEST_CASE(
                 return invoke("vehicle:redo");
             case 15:
                 CHECK(labels(screen).size() == plain.size() + 1);
+                CHECK(
+                    affordance(screen, "vehicle:done").keys == std::vector<std::string>{"CTRL+D"});
                 return invoke("vehicle:done");
             case 16:
                 CHECK(ec::find_component(*screen.root, "vehicle:live") == nullptr);
@@ -1127,7 +1129,9 @@ TEST_CASE(
                 CHECK_FALSE(ec::find_component(*screen.root, "vehicle:document"));
                 return invoke("vehicle:filter", {.text = "bicycle"});
             case 9:
-                CHECK_FALSE(ec::find_component(*screen.root, "vehicle:notice"));
+                // Filtering changes nothing, so the notice stays.
+                CHECK(notice(screen)
+                      == saved_as.string() + " changed on disk and no longer defines bicycle.");
                 return act("QUIT");
             default:
                 FAIL("the vehicle editor outlived its exit");
@@ -2085,4 +2089,140 @@ TEST_CASE("the vehicle editor says what it did to the world's vehicles", "[edito
     });
     editor::run_vehicle_editor();
     CHECK(step == 7);
+}
+
+TEST_CASE(
+    "the vehicle editor adds the item a palette row names even when a group has its id",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                return invoke("vehicle:mount", {.row = "mount:-1,0"});
+            case 2:
+                return invoke("vehicle:show:cargo");
+            case 3:
+                return invoke("vehicle:item_filter", {.text = "beer"});
+            case 4:
+                // `beer` is an item and an item group both.
+                return invoke("vehicle:item_pick", {.row = "item:beer"});
+            case 5:
+                REQUIRE(rows(screen, "vehicle:items").size() == 1);
+                CHECK(row(screen, "vehicle:items", "item:0").description.empty());
+                return invoke("vehicle:item_kind", {.row = "kind:item_group"});
+            case 6:
+                return invoke("vehicle:item_pick", {.row = "group:beer"});
+            case 7:
+                REQUIRE(rows(screen, "vehicle:items").size() == 2);
+                CHECK(row(screen, "vehicle:items", "item:1").description == "Item group");
+                return invoke("vehicle:undo");
+            case 8:
+                return invoke("vehicle:undo");
+            case 9:
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 10);
+}
+
+TEST_CASE(
+    "the vehicle editor's raw JSON removes a list entry by its index and names the step",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto last_step = [](const ec::screen_view& screen) {
+        return body<ec::list_body>(part(screen, "vehicle:history")).rows.back().label;
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                return invoke("vehicle:show:json");
+            case 2:
+                // The front wheel's mount: a frame, a wheel mount and a wheel.
+                return invoke("vehicle:field_set", {.row = "pointer", .text = "/parts/1"});
+            case 3:
+                return invoke("vehicle:field_set", {.row = "value", .text = ""});
+            case 4:
+                return invoke("vehicle:field_apply");
+            case 5:
+                CHECK(notice_of(screen).empty());
+                CHECK(stat(screen, "saved").value == "No");
+                CHECK(last_step(screen) == "Remove 3 parts");
+                return invoke("vehicle:field_set", {.row = "pointer", .text = "/parts/9"});
+            case 6:
+                return invoke("vehicle:field_set", {.row = "value", .text = ""});
+            case 7:
+                return invoke("vehicle:field_apply");
+            case 8:
+                CHECK(notice_of(screen) == "The prototype has nothing at /parts/9 to remove.");
+                return invoke("vehicle:undo");
+            case 9:
+                CHECK(stat(screen, "saved").value == "Yes");
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 10);
+}
+
+TEST_CASE(
+    "the vehicle editor keeps a refusal in view until an action changes something",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto refusal = std::string("A pointer starts with /, as /name does.");
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 1:
+                return invoke("vehicle:show:json");
+            case 2:
+                return invoke("vehicle:field_set", {.row = "pointer", .text = "name"});
+            case 3:
+                return invoke("vehicle:field_apply");
+            case 4:
+                CHECK(notice_of(screen) == refusal);
+                // Looking around changes nothing.
+                return invoke("vehicle:show:mount");
+            case 5:
+                CHECK(notice_of(screen) == refusal);
+                return invoke("vehicle:mount", {.row = "mount:0,0"});
+            case 6:
+                CHECK(notice_of(screen) == refusal);
+                return invoke("vehicle:part_filter", {.text = "light"});
+            case 7:
+                CHECK(notice_of(screen) == refusal);
+                return invoke("vehicle:prop_set", {.row = "name", .text = ""});
+            case 8:
+                // A new refusal takes its place.
+                CHECK(notice_of(screen) == "A prototype keeps its name and id.");
+                return invoke("vehicle:prop_set", {.row = "name", .text = "Kept"});
+            case 9:
+                CHECK(notice_of(screen).empty());
+                return invoke("vehicle:undo");
+            case 10:
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 11);
 }

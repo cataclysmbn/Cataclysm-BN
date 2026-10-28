@@ -467,3 +467,27 @@ TEST_CASE("a tank's fuel is set to an amount of what it holds", "[editor_vehicle
     CHECK_FALSE(editor::set_part_fuel(*veh, tank, {.fuel = "rock", .amount = 10}).has_value());
     CHECK_FALSE(editor::set_part_fuel(*veh, 0, {.fuel = fuel, .amount = 10}).has_value());
 }
+
+TEST_CASE("a step names a reorder only when it keeps every mounted part", "[editor_vehicle]") {
+    const auto before = core_prototype("bicycle");
+    const auto label = [&](const ordered_json& after) {
+        return editor::design_step_label(
+            {.object = 0,
+             .patch = ordered_json::diff(before, after),
+             .before = before,
+             .after = after});
+    };
+    auto without_front = before;
+    without_front["parts"].erase(1);
+    CHECK(label(without_front) == "Remove 3 parts");
+    auto with_two = before;
+    with_two["parts"].push_back({{"x", 2}, {"y", 0}, {"parts", {"xlframe_vertical", "headlight"}}});
+    CHECK(label(with_two) == "Install 2 parts");
+    auto reordered = before;
+    std::swap(reordered["parts"][0]["parts"][2], reordered["parts"][0]["parts"][3]);
+    CHECK(label(reordered) == "Reorder parts at 0,0");
+    // A part traded for another is no reorder.
+    auto traded = before;
+    traded["parts"][0]["parts"][2] = "horn_car";
+    CHECK(label(traded).find("Reorder") == std::string::npos);
+}
