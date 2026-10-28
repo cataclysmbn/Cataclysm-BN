@@ -2294,8 +2294,8 @@ auto parts_view(const session& state) -> ec::screen_view {
          .args = row_of(grid_id)}));
     affordances.push_back(ec::invoke_affordance(
         {.id = part_filter_id, .label = _("Filter parts"), .args = {.text = ec::text_shape{}}}));
-    affordances.push_back(
-        ec::invoke_affordance({.id = choose_id, .label = _("Choose"), .args = row_of(parts_id)}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = choose_id, .label = _("Choose"), .args = row_of(parts_id), .role = "select"}));
     affordances.push_back(ec::invoke_affordance(
         {.id = part_group_id, .label = _("Category"), .args = row_of(part_groups_id)}));
     affordances.push_back(page_affordance(
