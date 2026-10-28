@@ -872,6 +872,11 @@ TEST_CASE(
             case 6:
                 first = lines(screen);
                 REQUIRE_FALSE(first.empty());
+                // The log says what the count found, wherever the list is drawn.
+                REQUIRE(first.size() > 1);
+                CHECK(body<ec::text_body>(part(screen, "editor:status")).markup
+                      == std::to_string(first.size())
+                             + " kinds of items can spawn in the square marked.");
                 for (const auto& row : rows(screen)) {
                     CHECK(itype_id(row.id.substr(std::string_view("loot:").size())).is_valid());
                     CHECK(row.columns.size() == 3);
@@ -888,6 +893,8 @@ TEST_CASE(
                 return invoke("editor:loot");
             case 10:
                 CHECK(rows(screen).empty());
+                CHECK(body<ec::text_body>(part(screen, "editor:status")).markup
+                      == "Nothing can spawn in the 9 squares marked.");
                 return act("QUIT");
             default:
                 FAIL("the editor outlived its exit");
@@ -5501,6 +5508,16 @@ TEST_CASE(
                 CHECK(part(screen, "editor:history").label == "History");
                 CHECK(affordance(screen, "editor:save").group == "File");
                 CHECK(affordance(screen, "editor:export").group == "File");
+                {
+                    // The File menu starts with saving, as editors have it.
+                    const auto file =
+                        screen.affordances | std::views::filter([](const ec::affordance& entry) {
+                            return entry.group == "File";
+                        })
+                        | std::views::transform(&ec::affordance::id) | std::views::take(2)
+                        | std::ranges::to<std::vector>();
+                    CHECK(file == std::vector<std::string>{"editor:save", "editor:save_as"});
+                }
                 CHECK(affordance(screen, "editor:undo").group == "Edit");
                 CHECK(affordance(screen, "editor:brush").group == "Edit");
                 CHECK(affordance(screen, "editor:level_up").group == "View");
