@@ -9,6 +9,7 @@
 /// Nested captures are not supported. Existing observed errors are preserved.
 auto capture_debug_errors_during( const std::function < auto() -> void > &function ) -> std::string;
 
-/// The debug messages `function` raises, one entry each, in order; none of them is shown or logged.
+/// The debug messages `function` raises on this thread, one entry each, in order; none of them is
+/// shown, and debug.log keeps each. A worker thread's messages go on as they would without it.
 auto capture_each_debugmsg_during( const std::function < auto() -> void > &function ) ->
 std::vector<std::string>;
