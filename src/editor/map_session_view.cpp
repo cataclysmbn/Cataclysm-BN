@@ -867,7 +867,7 @@ auto new_file_form(const session& state) -> ec::component {
         .affordances = {new_set_id, new_apply_id},
         .body = ec::form_body{
             .fields =
-                {{.id = "path", .label = _("New file"), .value = state.made.path},
+                {{.id = "path", .label = _("Path"), .value = state.made.path},
                  {.id = "om_terrain",
                   .label = state.made.kind == "palette" ? _("Palette id")
                          : state.made.kind == "nested"  ? _("Chunk id")
@@ -1225,7 +1225,7 @@ auto session_view(const session& state) -> ec::screen_view {
                       : std::vector<std::string>{open_id},
         .body = ec::form_body{
             .fields = {{.id = path_id,
-                        .label = _("File"),
+                        .label = _("Path"),
                         .value = state.doc ? state.doc->path().generic_string() : ""}},
             .submit = open_id}});
     affordances.push_back(ec::invoke_affordance(
