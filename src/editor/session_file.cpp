@@ -7,7 +7,9 @@
 #include "translations.h"
 #include "ui.h"
 
+#include <algorithm>
 #include <fstream>
+#include <functional>
 #include <iterator>
 #include <nlohmann/json.hpp>
 
@@ -43,6 +45,32 @@ auto mod_folders(const std::filesystem::path& path) -> std::vector<std::filesyst
         folders.push_back(folder);
     }
     return folders;
+}
+
+/// Whether a folder from `folders` already holds a mod, so no new one is made of it.
+auto in_a_mod(const std::vector<std::filesystem::path>& folders) -> bool {
+    return std::ranges::any_of(folders, [](const std::filesystem::path& folder) {
+        return std::filesystem::exists(folder / "modinfo.json");
+    });
+}
+
+/// The first folder below `folder` that holds a mod; none when none does.
+auto mod_below(const std::filesystem::path& folder) -> std::optional<std::filesystem::path> {
+    auto error = std::error_code{};
+    for (const auto& entry : std::filesystem::recursive_directory_iterator(folder, error)) {
+        if (entry.path().filename() == "modinfo.json") { return entry.path().parent_path(); }
+    }
+    return std::nullopt;
+}
+
+/// Whether `c` may be in a mod id: a letter, a digit, _ or -.
+auto is_id_char(const char c) -> bool {
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_'
+        || c == '-';
+}
+
+auto is_mod_id(const std::string& name) -> bool {
+    return !name.empty() && std::ranges::all_of(name, is_id_char);
 }
 
 } // namespace
@@ -86,13 +114,35 @@ auto mod_of(const std::filesystem::path& path) -> std::optional<mod_id> {
     return std::nullopt;
 }
 
+auto check_mod_folder(const std::filesystem::path& path) -> std::expected<void, std::string> {
+    const auto folders = mod_folders(path);
+    if (folders.empty() || in_a_mod(folders)) { return {}; }
+    const auto& top = folders.front();
+    if (const auto below = mod_below(top)) {
+        return std::unexpected(string_format(
+            _("%s holds the mod in %s, whose files a mod of it would load again; save in that "
+              "mod's folder or in a new one."),
+            top.filename().string(), below->lexically_relative(top).generic_string()));
+    }
+    const auto name = top.filename().string();
+    if (is_mod_id(name) && !mod_id(name).is_valid()) { return {}; }
+    auto base = name;
+    std::ranges::replace_if(base, std::not_fn(is_id_char), '_');
+    const auto suggestion = free_name(base.empty() ? "my_mod" : base, [&](const std::string& id) {
+        return mod_id(id).is_valid() || std::filesystem::exists(top.parent_path() / id);
+    });
+    return std::unexpected(string_format(
+        is_mod_id(name)
+            ? _("A new mod takes its folder's name as its id, and the mod %1$s has it already; "
+                "save in %2$s/ instead.")
+            : _("A new mod takes its folder's name as its id, and %1$s holds more than letters, "
+                "digits, _ and -; save in %2$s/ instead."),
+        name, suggestion));
+}
+
 auto make_mod_of(const std::filesystem::path& path) -> std::expected<void, std::string> {
     const auto folders = mod_folders(path);
-    if (folders.empty() || std::ranges::any_of(folders, [](const std::filesystem::path& folder) {
-            return std::filesystem::exists(folder / "modinfo.json");
-        })) {
-        return {};
-    }
+    if (folders.empty() || in_a_mod(folders)) { return {}; }
     const auto name = folders.front().filename().string();
     const auto info = nlohmann::ordered_json::array(
         {{{"type", "MOD_INFO"},
@@ -125,7 +175,9 @@ auto changed_on_disk_notice(const document& doc) -> std::string {
 }
 
 auto save_document(document& doc) -> std::expected<void, std::string> {
-    return told(doc.save()).and_then([&] { return make_mod_of(doc.path()); });
+    return check_mod_folder(doc.path()).and_then([&] { return told(doc.save()); }).and_then([&] {
+        return make_mod_of(doc.path());
+    });
 }
 
 auto save_document_as(document& doc, const std::filesystem::path& path)
@@ -136,7 +188,9 @@ auto save_document_as(document& doc, const std::filesystem::path& path)
               "my_mod/."),
             PATH_INFO::user_moddir()));
     }
-    return told(doc.save_as(path)).and_then([&] { return make_mod_of(path); });
+    return check_mod_folder(path).and_then([&] { return told(doc.save_as(path)); }).and_then([&] {
+        return make_mod_of(path);
+    });
 }
 
 auto ask_leave() -> leave_answer {

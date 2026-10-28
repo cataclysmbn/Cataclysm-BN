@@ -902,6 +902,10 @@ struct session {
             notice = _("That file already exists; nothing was saved.");
             return;
         }
+        if (const auto checked = check_mod_folder(path); !checked) {
+            notice = checked.error();
+            return;
+        }
         if (!leave()) { return; }
         // Saving the design it left may have made that file.
         if (std::filesystem::exists(path)) {

@@ -271,7 +271,7 @@ auto check_new_path(const std::string& made) -> std::expected<void, std::string>
     if (std::filesystem::exists(path)) {
         return std::unexpected(string_format(_("%s already exists."), made));
     }
-    return {};
+    return check_mod_folder(path);
 }
 
 auto write_new_file(const std::string& made, const nlohmann::ordered_json& entries)
