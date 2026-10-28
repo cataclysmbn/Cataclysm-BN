@@ -6086,6 +6086,9 @@ TEST_CASE(
                 CHECK(tab(screen, "tool:point").denial.find("rows") != std::string::npos);
                 CHECK_FALSE(tab(screen, "tool:select").enabled);
                 CHECK(tab(screen, "tool:placements").enabled);
+                // The tool shown is one that works on it.
+                CHECK(tab(screen, "tool:placements").selected);
+                CHECK_FALSE(tab(screen, "tool:point").selected);
                 return act("QUIT");
             default:
                 FAIL("the editor outlived its exit");
