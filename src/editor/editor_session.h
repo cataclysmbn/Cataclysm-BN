@@ -20,6 +20,10 @@ auto reset_editor_session() -> void;
 /// with it.
 auto open_vehicle_editor_first() -> void;
 
+/// Makes the next visit open the vehicle editor, which left for the map to try a vehicle, and the
+/// map editor once the player leaves it.
+auto return_to_vehicle_editor() -> void;
+
 /// Makes the next visit open `recent` in its editor, as the main menu's recent documents do; a
 /// vehicle editor's document is left with that editor.
 auto open_first(const recent_document& recent) -> void;

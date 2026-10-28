@@ -19,6 +19,7 @@
 #    include "editor/mapgen_source.h"
 #    include "editor/recent_documents.h"
 #    include "editor/special_grid.h"
+#    include "editor/vehicle_session.h"
 #    include "editor_heading_names.h"
 #    include "engine_client_component.h"
 #    include "engine_client_contract.h"
@@ -32,6 +33,8 @@
 #    include "map/mapdata.h"
 #    include "mapgen/mapgen_constructor.h"
 #    include "mapgen/mapgen_functions.h"
+#    include "message_feed.h"
+#    include "messages.h"
 #    include "options_helpers.h"
 #    include "output.h"
 #    include "overmap/omdata.h"
@@ -6978,6 +6981,92 @@ TEST_CASE(
 
     editor::run_editor_session();
     CHECK(step == 2);
+}
+
+TEST_CASE(
+    "the map editor shows its open file again when the vehicle editor it opened closes",
+    "[editor_session][editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    auto kinds = std::vector<std::string>{};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        kinds.push_back(screen.kind);
+        switch (kinds.size()) {
+            case 1:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 2:
+                REQUIRE(ec::find_component(*screen.root, "editor:document") != nullptr);
+                return invoke("editor:vehicle");
+            case 3:
+                return act("QUIT");
+            case 4:
+                // Back on the file it had open, not on the page that opens one.
+                CHECK(ec::find_component(*screen.root, "editor:document") != nullptr);
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(kinds == std::vector<std::string>{"editor", "editor", "vehicle_editor", "editor"});
+}
+
+TEST_CASE(
+    "the vehicle editor of the editor game leaves to try a spawned vehicle, says how to come back, "
+    "and comes back to it",
+    "[editor_session][editor_vehicle][gamemode]") {
+    const auto origin = get_map().get_abs_sub();
+    const auto name = get_avatar().name;
+    const auto restore = on_out_of_scope([&] {
+        g->uquit = QUIT_NO;
+        g->load_map(origin);
+        get_primary_overmapbuffer().clear();
+        clear_all_state();
+        get_avatar().name = name;
+        editor::reset_vehicle_editor();
+    });
+    const auto guard = screen_guard{};
+    editor::reset_vehicle_editor();
+    const auto animations = override_option("ANIMATIONS", "false");
+    auto mode = get_special_game(special_game_type::EDITOR);
+    REQUIRE(mode->init());
+    get_avatar().set_moves(100);
+    Messages::clear_messages();
+    auto kinds = std::vector<std::string>{};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        kinds.push_back(screen.kind);
+        switch (kinds.size()) {
+            case 1:
+                return invoke("editor:vehicle");
+            case 2:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 3:
+                return invoke("vehicle:spawn");
+            default:
+                FAIL("the editor outlived its spawn");
+                return act("QUIT");
+        }
+    });
+    handle_action(std::move(mode));
+    CHECK(kinds.size() == 3);
+    // The map says where the vehicle is and how to get back to the vehicle editor.
+    const auto said = Messages::feed_since({});
+    REQUIRE_FALSE(said.empty());
+    CHECK(said.back().text.contains("Spawned Bicycle"));
+    CHECK(said.back().text.contains("vehicle editor"));
+
+    // The editor opens on the vehicle editor again, and closing it shows the map editor.
+    kinds.clear();
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        kinds.push_back(ec::top_screen(captured()).kind);
+        if (kinds.size() > 2) { FAIL("the editor outlived its exit"); }
+        return act("QUIT");
+    });
+    handle_action(get_special_game(special_game_type::EDITOR));
+    CHECK(kinds == std::vector<std::string>{"vehicle_editor", "editor"});
 }
 
 #endif // CATA_MCP

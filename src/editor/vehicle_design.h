@@ -179,6 +179,51 @@ auto item_spawn_name(const nlohmann::ordered_json& entry) -> std::string;
 /// or set and its mount, or the item spawn added or removed; else what `step_label` says.
 auto design_step_label(const document_edit& edit) -> std::string;
 
+/// What a vehicle part is for, as the editor's palette heads its parts: the game names no
+/// categories of its own, so they follow from where a part goes and its flags.
+enum class part_category {
+    frames,
+    wheels,
+    engines,
+    fuel,
+    seats,
+    doors,
+    lights,
+    storage,
+    weapons,
+    other,
+};
+
+auto category_of(const vpart_info& part) -> part_category;
+
+/// The heading of `category`, localized.
+auto category_name(part_category category) -> std::string;
+
+/// One part as a designer picks it: its shapes, the parts of one name and item that differ only in
+/// how they look, as the game's install menu takes them, the one the game's prototypes install
+/// most first.
+struct part_kind {
+    std::vector<const vpart_info*> shapes;
+    part_category category = part_category::other;
+};
+
+/// Every kind of part the game has, by category and then by name.
+auto part_kinds() -> std::vector<part_kind>;
+
+/// The shapes of the part `id`, as `part_kind` has them; none for a part the game lacks.
+auto part_shapes(const vpart_id& id) -> std::vector<const vpart_info*>;
+
+/// The names of `parts` as a list of them shows them: a name two of them share is followed by
+/// what tells their ids apart.
+auto part_labels(const std::vector<const vpart_info*>& parts) -> std::vector<std::string>;
+
+/// The liquids the game's prototypes fill their parts with, most often first.
+auto usual_tank_fuels() -> std::vector<itype_id>;
+
+/// The frame the game's prototypes install most, which a new design starts with; none when they
+/// install none.
+auto usual_frame() -> std::optional<vpart_id>;
+
 /// The data file of the loaded mods that defines the prototype `id` last, as the game loads them.
 auto prototype_file(const std::string& id) -> std::optional<std::filesystem::path>;
 

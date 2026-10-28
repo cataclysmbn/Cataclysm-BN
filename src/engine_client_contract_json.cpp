@@ -706,6 +706,7 @@ auto body_json( const grid_body &body, const bubble_frame & /*frame*/ ) -> json
         if( cell.selected ) { entry["selected"] = true; }
         if( !cell.looks.empty() ) { entry["looks"] = cell.looks; }
         if( cell.faded ) { entry["faded"] = true; }
+        if( !cell.refused.empty() ) { entry["refused"] = cell.refused; }
         result["cells"].push_back( std::move( entry ) );
     }
     if( !body.looks.empty() ) { result["looks"] = to_array( body.looks ); }
@@ -725,6 +726,7 @@ auto body_json( const grid_body &body, const bubble_frame & /*frame*/ ) -> json
         }
     }
     if( !body.region_drag.empty() ) { result["region_drag"] = body.region_drag; }
+    if( !body.secondary.empty() ) { result["secondary"] = body.secondary; }
     return result;
 }
 auto body_json( const map_body &body, const bubble_frame &frame ) -> json

@@ -6849,6 +6849,10 @@
               "faded": {
                 "type": "boolean",
                 "description": "Whether the cell shows another level, such as the one below seen through open air on the map editor's canvas, which a client draws faded. Absent for false."
+              },
+              "refused": {
+                "type": "string",
+                "description": "Why the tool in hand cannot act on the cell, as the vehicle editor's canvas says where the part in hand cannot go; a client draws the cell dimmed and shows the text on hover. The cell stays enabled and its click still runs. Absent when the tool can act."
               }
             },
             "required": [
@@ -6991,6 +6995,10 @@
         "region_drag": {
           "$ref": "#/$defs/opaque_id",
           "description": "The affordance a client runs after a pointer drag of a region: pressed inside it the drag moves the whole region, pressed on a corner it moves that corner. The row is the region's `id` and the text how far its top-left and bottom-right squares moved east and south, `dx0,dy0,dx1,dy1`. Absent while regions are not dragged."
+        },
+        "secondary": {
+          "$ref": "#/$defs/opaque_id",
+          "description": "The affordance a client runs on a secondary click of a cell, such as a right click, with the cell's `id` as the row, as the vehicle editor's canvas removes the top part of a square. Absent for none."
         }
       },
       "required": [

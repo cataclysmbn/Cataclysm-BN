@@ -55,6 +55,8 @@ using namespace map_editor;
 auto kept_session = std::optional<session>{};
 /// What the next visit opens, as the main menu asked.
 auto first = std::optional<recent_document>{};
+/// The vehicle editor left for the map to try a vehicle: the next visit goes back to it.
+auto back_to_vehicle = false;
 /// When the turns the editor lets pass began, while they pass.
 auto advancing = std::optional<time_point>{};
 
@@ -145,6 +147,7 @@ auto open_map_editor() -> void {
 auto reset_editor_session() -> void {
     kept_session.reset();
     first.reset();
+    back_to_vehicle = false;
     advancing.reset();
     allow_editor_this_session(false);
 }
@@ -152,6 +155,8 @@ auto reset_editor_session() -> void {
 auto open_vehicle_editor_first() -> void { first = recent_document{.editor = "vehicle"}; }
 
 auto open_first(const recent_document& recent) -> void { first = recent; }
+
+auto return_to_vehicle_editor() -> void { back_to_vehicle = true; }
 
 auto reopens_after_waiting() -> bool {
     const auto& waiting = get_avatar().activity;
@@ -168,6 +173,7 @@ auto run_editor_session() -> void {
         if (!run_vehicle_editor(opening->name)) { end_editor_game(); }
         return;
     }
+    if (std::exchange(back_to_vehicle, false) && run_vehicle_editor()) { return; }
     auto ctxt = input_context("EDITOR");
     ctxt.register_action("QUIT");
     ctxt.register_action("HELP_KEYBINDINGS");
