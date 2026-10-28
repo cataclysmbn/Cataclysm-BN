@@ -2760,6 +2760,10 @@ TEST_CASE(
         const auto& stats = body<ec::panel_body>(part(screen, "editor:document")).stats;
         return std::ranges::contains(stats, std::string("stamped"), &ec::panel_stat::key);
     };
+    const auto status = [](const ec::screen_view& screen) {
+        const auto* const found = ec::find_component(*screen.root, "editor:status");
+        return found ? std::get<ec::text_body>(found->body).markup : std::string{};
+    };
 
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
         const auto state = captured();
@@ -2778,10 +2782,13 @@ TEST_CASE(
                 return invoke("editor:apply");
             case 3:
                 CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                // Each action of the World menu says what it did.
+                CHECK(status(screen) == "The game generates house_04 with this entry now.");
                 CHECK(live(2, 3) == before);
                 return invoke("editor:stamp");
             case 4:
                 CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                CHECK(status(screen) == "Stamped over the overmap square you stand on.");
                 CHECK(live(2, 3) == ter_id("t_wall"));
                 CHECK(live(3, 3) == ter_id("t_floor"));
                 CHECK(stamped(screen));
@@ -2789,6 +2796,7 @@ TEST_CASE(
                 return invoke("editor:unstamp");
             case 5:
                 CHECK(live(2, 3) == before);
+                CHECK(status(screen) == "Put back what the stamp replaced.");
                 CHECK_FALSE(stamped(screen));
                 return invoke("editor:stamp");
             case 6:
@@ -5194,10 +5202,16 @@ TEST_CASE(
                       == std::vector<std::string>{"F6"});
                 CHECK(affordance(screen, "editor:test").keys == std::vector<std::string>{"F5"});
                 return invoke("editor:place_special");
-            case 2:
+            case 2: {
                 CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
+                // Placing says where the special went and how to get there.
+                const auto* const said = ec::find_component(*screen.root, "editor:status");
+                REQUIRE(said);
+                CHECK(std::get<ec::text_body>(said->body).markup
+                      == "Placed editor_session_test_special nearby; Test takes you there.");
                 CHECK(affordance(screen, "editor:test").enabled);
                 return invoke("editor:test");
+            }
             default:
                 FAIL("the editor outlived its test");
                 return act("QUIT");
