@@ -397,6 +397,33 @@
   },
   {
     "type": "recipe",
+    "result": "bot_handy_hauler",
+    "category": "CC_ELECTRONIC",
+    "subcategory": "CSC_ELECTRONIC_OTHER",
+    "skill_used": "electronics",
+    "skills_required": [ [ "mechanics", 4 ], [ "computer", 3 ] ],
+    "reversible": true,
+    "decomp_learn": 5,
+    "book_learn": [ [ "schematics_handy_hauler", 4 ] ],
+    "difficulty": 5,
+    "time": "40 m",
+    "using": [ [ "soldering_standard", 10 ], [ "welding_standard", 3 ] ],
+    "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "WRENCH", "level": 1 } ],
+    "components": [
+      [ [ "ai_module_basic", 1 ] ],
+      [ [ "sensor_module", 1 ] ],
+      [ [ "pathfinding_module", 1 ] ],
+      [ [ "identification_module", 1 ] ],
+      [ [ "pipe", 4 ] ],
+      [ [ "motor_tiny", 4 ], [ "motor_small", 2 ] ],
+      [ [ "cable", 8 ] ],
+      [ [ "scrap", 4 ] ],
+      [ [ "medium_storage_battery", 1 ] ],
+      [ [ "sheet_metal", 1 ], [ "sheet_metal_small", 24 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
     "result": "bot_copbot",
     "category": "CC_ELECTRONIC",
     "subcategory": "CSC_ELECTRONIC_OTHER",

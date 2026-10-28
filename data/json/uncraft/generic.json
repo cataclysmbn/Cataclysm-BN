@@ -1160,6 +1160,24 @@
     ]
   },
   {
+    "result": "broken_handy_hauler",
+    "type": "uncraft",
+    "skill_used": "electronics",
+    "difficulty": 2,
+    "time": "20 m",
+    "using": [ [ "soldering_standard", 5 ] ],
+    "qualities": [ { "id": "SCREW", "level": 1 } ],
+    "components": [
+      [ [ "pathfinding_module", 1 ] ],
+      [ [ "identification_module", 1 ] ],
+      [ [ "pipe", 4 ] ],
+      [ [ "motor_tiny", 2 ] ],
+      [ [ "cable", 6 ] ],
+      [ [ "scrap", 8 ] ],
+      [ [ "medium_storage_battery", 1 ] ]
+    ]
+  },
+  {
     "result": "broken_dispatch",
     "type": "uncraft",
     "skill_used": "electronics",

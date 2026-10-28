@@ -550,6 +550,33 @@
     "flags": [ "ALLOWS_REMOTE_USE" ]
   },
   {
+    "id": "bot_handy_hauler",
+    "type": "TOOL",
+    "name": { "str": "inactive handy hauler" },
+    "description": "This is an inactive handy hauler, a small consumer cargo robot.  Using this item involves placing it on the ground and pairing it with you.  If paired successfully, the handy hauler will follow you and carry a bag for you.  If you botch the setup, its cheap electronics may fry for good.",
+    "weight": "30 kg",
+    "volume": "40 L",
+    "price": "1200 USD",
+    "price_postapoc": "5 USD",
+    "to_hit": -3,
+    "bashing": 4,
+    "material": [ "steel", "plastic" ],
+    "symbol": ";",
+    "color": "light_green",
+    "use_action": {
+      "type": "place_monster",
+      "monster_id": "mon_handy_hauler",
+      "friendly_msg": "The handy hauler chirps happily and shuffles to your side.",
+      "failure_result": "broken_handy_hauler",
+      "failure_msg": "The handy hauler's status light flickers red, something inside it pops, and it slumps over.  You fried it.",
+      "difficulty": 6,
+      "moves": 100,
+      "is_pet": true,
+      "skills": [ "computer" ]
+    },
+    "flags": [ "ALLOWS_REMOTE_USE" ]
+  },
+  {
     "id": "bot_molebot",
     "looks_like": "broken_molebot",
     "type": "TOOL",

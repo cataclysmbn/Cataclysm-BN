@@ -961,5 +961,25 @@
     "symbol": "]",
     "color": "light_gray",
     "container_data": { "contains": "3000000 L" }
+  },
+  {
+    "id": "test_handy_hauler_random",
+    "type": "TOOL",
+    "name": { "str": "test handy hauler" },
+    "description": "Handy hauler that places itself randomly, so tests don't need to pick a square.",
+    "weight": "30 kg",
+    "volume": "40 L",
+    "material": [ "steel" ],
+    "symbol": ";",
+    "color": "light_green",
+    "use_action": {
+      "type": "place_monster",
+      "monster_id": "mon_handy_hauler",
+      "failure_result": "broken_handy_hauler",
+      "difficulty": 6,
+      "place_randomly": true,
+      "is_pet": true,
+      "skills": [ "computer" ]
+    }
   }
 ]
