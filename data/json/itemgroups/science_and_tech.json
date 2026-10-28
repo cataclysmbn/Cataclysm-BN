@@ -145,7 +145,7 @@
       [ "schematics_chickenbot", 5 ],
       [ "schematics_hazmatbot", 50 ],
       [ "schematics_haulerbot", 25 ],
-      [ "schematics_handy_hauler", 25 ],
+      [ "schematics_handy_hauler", 5 ],
       [ "schematics_riotbot", 50 ],
       [ "schematics_sciencebot", 10 ],
       [ "schematics_tankbot", 5 ],
