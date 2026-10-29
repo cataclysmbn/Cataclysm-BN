@@ -2,6 +2,7 @@
 
 #include "avatar.h"
 #include "catacharset.h"
+#include "color.h"
 #include "editor/catalog.h"
 #include "editor/document.h"
 #include "editor/history_label.h"
@@ -20,13 +21,19 @@
 #include "editor/session_file.h"
 #include "editor/session_page.h"
 #include "editor/special_grid.h"
+#include "engine_client_part_type.h"
 #include "engine_client_world.h"
 #include "filesystem.h"
 #include "game.h"
 #include "game_constants.h"
 #include "item.h"
+#include "item_group.h"
+#include "itype.h"
 #include "json_formatter.h"
+#include "map/field_type.h"
 #include "map/mapdata.h"
+#include "mongroup.h"
+#include "mtype.h"
 #include "overmap/omdata.h"
 #include "overmap/overmap_special.h"
 #include "path_info.h"
@@ -36,6 +43,7 @@
 #include "translations.h"
 #include "trap.h"
 #include "type_id.h"
+#include "vehicle/veh_type.h"
 
 #include <algorithm>
 #include <array>
@@ -241,22 +249,83 @@ auto catalog_row_label(const catalog_entry& entry) -> std::string {
              : string_format("%s (%s)", entry.name, entry.distinct);
 }
 
-auto catalog_look(const catalog_kind kind, const std::string& id)
+auto layer_look(const std::string_view layer, const std::string& id)
     -> std::optional<engine_client::look> {
     namespace world = engine_client::world;
-    if (kind == catalog_kind::terrain && ter_str_id(id).is_valid()) {
+    const auto creature = [](const mtype& type) {
+        return engine_client::look{
+            .kind = "monster",
+            .id = type.id.str(),
+            .name = type.nname(),
+            .glyph = type.sym,
+            .color = string_from_color(type.color),
+            .looks_like =
+                type.looks_like.empty() ? std::vector<std::string>{} : std::vector{type.looks_like}};
+    };
+    if (layer == "terrain" && ter_str_id(id).is_valid()) {
         return world::terrain_appearance(ter_str_id(id).id());
     }
-    if (kind == catalog_kind::furniture && furn_str_id(id).is_valid()) {
+    if (layer == "furniture" && furn_str_id(id).is_valid()) {
         return world::furniture_appearance(furn_str_id(id).id());
     }
-    if (kind == catalog_kind::trap && trap_str_id(id).is_valid()) {
+    if (layer == "traps" && trap_str_id(id).is_valid()) {
         return world::trap_appearance(trap_str_id(id).obj());
     }
-    if (kind == catalog_kind::item && itype_id(id).is_valid()) {
+    if (layer == "fields" && field_type_str_id(id).is_valid()) {
+        const auto& type = field_type_str_id(id).obj();
+        return engine_client::look{
+            .kind = "field",
+            .id = id,
+            .name = type.get_name(),
+            .glyph = type.get_symbol(),
+            .color = string_from_color(type.get_color())};
+    }
+    if ((layer == "item" || layer == "sealed_item") && itype_id(id).is_valid()) {
         return world::item_appearance(*item::spawn_temporary(itype_id(id), calendar::turn));
     }
+    if (layer == "items" && item_group::group_is_defined(item_group_id(id))) {
+        const auto possible = item_group::every_possible_item_from(item_group_id(id));
+        if (possible.empty()) { return std::nullopt; }
+        const auto* const first = std::ranges::min(possible, {}, [](const itype* type) {
+            return type->get_id().str();
+        });
+        return layer_look("item", first->get_id().str());
+    }
+    if (layer == "monster" && mtype_id(id).is_valid()) { return creature(mtype_id(id).obj()); }
+    if (layer == "monsters" && MonsterGroupManager::isValidMonsterGroup(mongroup_id(id))) {
+        const auto& usual = MonsterGroupManager::GetMonsterGroup(mongroup_id(id)).defaultMonster;
+        return usual.is_valid() && !usual.is_null()
+                 ? std::optional(creature(usual.obj()))
+                 : std::nullopt;
+    }
+    if (layer == "npcs") {
+        return engine_client::
+            look{.kind = "npc", .id = id, .glyph = "@", .color = string_from_color(c_white)};
+    }
+    if (layer == "vehicles" && vproto_id(id).is_valid() && !vproto_id(id)->parts.empty()) {
+        const auto part = vproto_id(id)->parts.front().part;
+        return part.is_valid()
+                 ? std::optional(world::vehicle_part_type_appearance(part.obj()))
+                 : std::nullopt;
+    }
     return std::nullopt;
+}
+
+auto catalog_look(const catalog_kind kind, const std::string& id)
+    -> std::optional<engine_client::look> {
+    const auto use = std::ranges::find(catalog_uses, kind, &catalog_use::kind);
+    return use == catalog_uses.end() ? std::nullopt : layer_look(use->layer, id);
+}
+
+auto first_named(const std::string_view layer, const nlohmann::ordered_json& value)
+    -> std::optional<std::string> {
+    if (value.is_string()) { return value.get<std::string>(); }
+    if (value.is_array() && !value.empty()) { return first_named(layer, value.front()); }
+    const auto use = std::ranges::find(catalog_uses, layer, &catalog_use::layer);
+    if (!value.is_object() || use == catalog_uses.end() || !use->key || !value.contains(use->key)) {
+        return std::nullopt;
+    }
+    return first_named(layer, value[use->key]);
 }
 
 auto mapping_of(const catalog_use& use, const std::string& id) -> std::string {

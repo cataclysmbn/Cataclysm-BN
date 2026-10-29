@@ -17,6 +17,7 @@
 #include <map>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 /// The map editor screen's state and view, which editor_session.cpp runs.
@@ -299,8 +300,16 @@ auto catalog_label(const catalog_use& use) -> std::string;
 /// A catalog entry as its row names it: its name, followed by its id when entries of its name are
 /// listed with it.
 auto catalog_row_label(const catalog_entry& entry) -> std::string;
-/// What a catalog entry of `kind` named `id` shows on the map, for what has a look of its own.
+/// What the legend layer `layer` placing `id` shows on the map: the thing itself, a group's first
+/// item or usual monster, an NPC's mark or a vehicle's first part; none for what has no look.
+auto layer_look(std::string_view layer, const std::string& id)
+    -> std::optional<engine_client::look>;
+/// What a catalog entry of `kind` named `id` shows on the map, as its layer places it.
 auto catalog_look(catalog_kind kind, const std::string& id) -> std::optional<engine_client::look>;
+/// The id the value a legend layer maps a symbol to names first; none for what only generation
+/// decides, such as a parameter.
+auto first_named(std::string_view layer, const nlohmann::ordered_json& value)
+    -> std::optional<std::string>;
 /// The mapping of `use`'s layer that places `id`, as the legend form writes it.
 auto mapping_of(const catalog_use& use, const std::string& id) -> std::string;
 /// The same as JSON, as a legend line holds it.

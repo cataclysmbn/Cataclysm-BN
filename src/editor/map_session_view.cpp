@@ -36,6 +36,7 @@
 #include "type_id.h"
 
 #include <algorithm>
+#include <array>
 #include <filesystem>
 #include <iterator>
 #include <limits>
@@ -206,6 +207,17 @@ auto symbol_looks(const nlohmann::ordered_json& object, const std::vector<legend
         if (const auto tr = trap_str_id(named("traps").value_or(""));
             tr.is_valid() && !tr.is_null()) {
             looks.push_back(world::trap_appearance(tr.obj()));
+        }
+        // What spawns there goes over the square, as the map draws it.
+        for (const auto& line : entry.lines) {
+            if (std::ranges::contains(std::array{"terrain", "furniture", "traps"}, line.layer)) {
+                continue;
+            }
+            const auto id =
+                first_named(line.layer, nlohmann::ordered_json::parse(line.value, nullptr, false));
+            if (auto look = id ? layer_look(line.layer, *id) : std::nullopt) {
+                looks.push_back(std::move(*look));
+            }
         }
         result[entry.symbol] = std::move(looks);
     }
