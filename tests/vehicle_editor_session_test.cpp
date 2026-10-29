@@ -2183,7 +2183,9 @@ TEST_CASE(
             case 5:
                 CHECK(notice_of(screen).empty());
                 CHECK(stat(screen, "saved").value == "No");
-                CHECK(last_step(screen) == "Remove 3 parts");
+                CHECK(last_step(screen)
+                      == "Remove 3 parts (bicycle wheel, extra light frame, light wheel mount "
+                         "(steerable))");
                 return invoke("vehicle:field_set", {.row = "pointer", .text = "/parts/9"});
             case 6:
                 return invoke("vehicle:field_set", {.row = "value", .text = ""});

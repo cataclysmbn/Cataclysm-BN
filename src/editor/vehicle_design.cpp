@@ -969,6 +969,17 @@ auto at_mount(const char* const format, const std::string& name, const point& at
     return string_format(format, name, at.x, at.y);
 }
 
+/// The names of the parts, each once, in the order of the alphabet.
+auto part_names(const std::vector<mounted_part>& parts) -> std::vector<std::string> {
+    auto names =
+        parts
+        | std::views::transform([](const mounted_part& entry) { return part_name(entry.part); })
+        | std::ranges::to<std::vector>();
+    std::ranges::sort(names);
+    names.erase(std::ranges::unique(names).begin(), names.end());
+    return names;
+}
+
 } // namespace
 
 auto item_spawn_name(const nlohmann::ordered_json& entry) -> std::string {
@@ -1003,12 +1014,26 @@ auto design_step_label(const document_edit& edit) -> std::string {
         return at_mount(_("Remove %s at %d,%d"), part_name(removed[0].part), removed[0].mount);
     }
     if (!installed.empty() && removed.empty()) {
+        const auto names = part_names(installed);
+        if (names.size() == 1) {
+            //~ A step of the vehicle editor that installed one part on many mounts: its name and
+            //~ how many.
+            return string_format(_("Install %1$s ×%2$d"), names[0], installed.size());
+        }
         return string_format(
             vgettext("Install %d part", "Install %d parts", installed.size()), installed.size());
     }
     if (!removed.empty() && installed.empty()) {
+        const auto names = part_names(removed);
+        if (names.size() == 1) {
+            //~ A step of the vehicle editor that removed one part from many mounts: its name and
+            //~ how many.
+            return string_format(_("Remove %1$s ×%2$d"), names[0], removed.size());
+        }
+        //~ A step of the vehicle editor that removed many parts: how many, and their names.
         return string_format(
-            vgettext("Remove %d part", "Remove %d parts", removed.size()), removed.size());
+            vgettext("Remove %1$d part (%2$s)", "Remove %1$d parts (%2$s)", removed.size()),
+            removed.size(), join(names, ", "));
     }
     // The same parts on the same mounts, in another order.
     if (before != after && installed.empty() && removed.empty()) {

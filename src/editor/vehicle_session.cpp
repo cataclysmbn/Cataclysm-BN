@@ -928,9 +928,9 @@ struct session {
                 label =
                     squares.size() == 1
                         ? at_mount(_("Install %s at %d,%d"), name)
-                        : string_format(vgettext("Install %1$s on %2$d square",
-                                                 "Install %1$s on %2$d squares", tally.installed),
-                                        name, tally.installed);
+                        //~ A step of the vehicle editor that installed one part on many
+                        //~ mounts: its name and how many.
+                        : string_format(_("Install %1$s ×%2$d"), name, tally.installed);
                 return {};
             });
         } else {

@@ -505,10 +505,15 @@ TEST_CASE("a step names a reorder only when it keeps every mounted part", "[edit
     };
     auto without_front = before;
     without_front["parts"].erase(1);
-    CHECK(label(without_front) == "Remove 3 parts");
+    CHECK(label(without_front)
+          == "Remove 3 parts (bicycle wheel, extra light frame, light wheel mount (steerable))");
     auto with_two = before;
     with_two["parts"].push_back({{"x", 2}, {"y", 0}, {"parts", {"xlframe_vertical", "headlight"}}});
     CHECK(label(with_two) == "Install 2 parts");
+    auto with_frames = before;
+    with_frames["parts"].push_back({{"x", 2}, {"y", 0}, {"parts", {"xlframe_vertical"}}});
+    with_frames["parts"].push_back({{"x", 3}, {"y", 0}, {"parts", {"xlframe_vertical"}}});
+    CHECK(label(with_frames) == "Install extra light frame ×2");
     auto reordered = before;
     std::swap(reordered["parts"][0]["parts"][2], reordered["parts"][0]["parts"][3]);
     CHECK(label(reordered) == "Reorder parts at 0,0");
