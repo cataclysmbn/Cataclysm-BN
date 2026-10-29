@@ -549,8 +549,20 @@ void set_displaybuffer_rendertarget()
 static void invalidate_framebuffer( std::vector<curseline> &framebuffer, point p, int width,
                                     int height )
 {
-    for( int j = 0, fby = p.y; j < height; j++, fby++ ) {
-        std::fill_n( framebuffer[fby].chars.begin() + p.x, width, cursecell( "" ) );
+    if( width <= 0 || height <= 0 ) {
+        return;
+    }
+    const auto fb_height = static_cast<int>( framebuffer.size() );
+    const auto start_y = std::max( 0, p.y );
+    const auto end_y = std::min( fb_height, p.y + height );
+    for( auto fby = start_y; fby < end_y; ++fby ) {
+        const auto fb_width = static_cast<int>( framebuffer[fby].chars.size() );
+        const auto start_x = std::max( 0, p.x );
+        const auto end_x = std::min( fb_width, p.x + width );
+        if( start_x < end_x ) {
+            std::fill_n( framebuffer[fby].chars.begin() + start_x, end_x - start_x,
+                         cursecell( "" ) );
+        }
     }
 }
 
@@ -566,11 +578,14 @@ void reinitialize_framebuffer( const bool force_invalidate )
     static int prev_height = -1;
     static int prev_width = -1;
     //Re-initialize the framebuffer with new values.
-    const int new_height = std::max( { TERMY, OVERMAP_WINDOW_HEIGHT, TERRAIN_WINDOW_HEIGHT } );
-    const int new_width = std::max( { TERMX, OVERMAP_WINDOW_WIDTH, TERRAIN_WINDOW_WIDTH } );
+    const auto map_height = std::max( OVERMAP_WINDOW_HEIGHT, TERRAIN_WINDOW_HEIGHT );
+    const auto map_width = std::max( OVERMAP_WINDOW_WIDTH, TERRAIN_WINDOW_WIDTH );
+    const auto new_height = std::max( { TERMINAL_HEIGHT, TERMY, map_height } );
+    const auto new_width = std::max( { TERMINAL_WIDTH, TERMX, map_width } );
     if( new_height != prev_height || new_width != prev_width ) {
         prev_height = new_height;
         prev_width = new_width;
+        need_invalidate_framebuffers = false;
         oversized_framebuffer.resize( new_height );
         for( int i = 0; i < new_height; i++ ) {
             oversized_framebuffer[i].chars.assign( new_width, cursecell( "" ) );
