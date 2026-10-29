@@ -6047,9 +6047,9 @@ TEST_CASE(
         const auto screen = ec::top_screen(captured());
         switch (step++) {
             case 0:
-                // Nothing is open: the files to open are the page, with the form that makes one.
+                // Nothing is open: the form that makes a file and the files to open are the page.
                 CHECK(slot_of(screen, "editor:browser") == "canvas");
-                CHECK(slot_of(screen, "editor:new") == "inspector");
+                CHECK(slot_of(screen, "editor:new") == "canvas");
                 CHECK(slot_of(screen, "editor:file") == "outline");
                 CHECK(part(screen, "editor:new").label == "New mapgen file");
                 // A field is named by what it asks, not by the heading of its form.
@@ -7544,6 +7544,41 @@ TEST_CASE(
     CHECK(exported["rows"][4].get<std::string>()[4] == 'w');
     CHECK(exported["terrain"]["w"] == "t_window");
     editor::reset_editor_session();
+}
+
+TEST_CASE(
+    "the start page offers a new mapgen first, in a new mod folder when asked",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    auto made = std::filesystem::path{};
+    const auto walk = std::vector<map_step>{
+        [&](const auto& screen) {
+            const auto& parts = screen.root->children;
+            const auto at = [&](const std::string& id) {
+                return std::ranges::find(parts, id, &ec::component::id) - parts.begin();
+            };
+            CHECK(part(screen, "editor:new").slot == "canvas");
+            CHECK_FALSE(part(screen, "editor:new").collapsed);
+            CHECK(at("editor:new") < at("editor:browser"));
+            return invoke("editor:new_folder");
+        },
+        [&](const auto& screen) {
+            const auto& fields = body<ec::form_body>(part(screen, "editor:new")).fields;
+            made = std::filesystem::path(fields.front().value);
+            CHECK_FALSE(std::filesystem::exists(made.parent_path()));
+            CHECK(made.filename() == "new_mapgen.json");
+            CHECK(said(screen).contains(made.parent_path().filename().string()));
+            return invoke("editor:new_set", {.row = "om_terrain", .text = "house_04"});
+        },
+        [](const auto&) { return invoke("editor:new_apply"); },
+        [&](const auto& screen) {
+            CHECK(told(screen).empty());
+            CHECK(std::filesystem::exists(made));
+            CHECK(std::filesystem::exists(made.parent_path() / "modinfo.json"));
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    if (!made.empty()) { std::filesystem::remove_all(made.parent_path()); }
 }
 
 #endif // CATA_MCP
