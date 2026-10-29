@@ -421,6 +421,8 @@ struct session {
     std::string field_pointer;
     std::string field_value;
     std::vector<legend_symbol> legend;
+    /// Why the entry's legend could not be read; empty while it could.
+    std::string legend_error;
     std::vector<diagnostic> diagnostics;
     /// The seed of the preview while one is shown; it follows every edit.
     std::optional<unsigned int> seed = std::nullopt;

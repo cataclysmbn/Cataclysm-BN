@@ -187,9 +187,9 @@ constexpr auto spare_symbols = std::string_view(
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789,;:!%&*+-/<>=?@^~_()[]{}|$");
 
 /// The symbol a new mapping of what shows as `glyph`, named `name`, takes: that glyph, else the
-/// first letter of the name in either case, else a spare symbol; the first the legend lacks.
+/// first letter of the name in either case, else a spare symbol; the first not `taken`.
 auto free_symbol(
-    const std::vector<legend_symbol>& legend, const std::string& glyph, const std::string& name)
+    const std::vector<std::string>& taken, const std::string& glyph, const std::string& name)
     -> std::optional<std::string> {
     const auto printable = [](const std::string& text) {
         return text.size() == 1 && text[0] > ' ' && text[0] < '\x7f' && text[0] != '\\';
@@ -204,8 +204,7 @@ auto free_symbol(
         copy(spare_symbols | std::views::transform([](const char c) { return std::string(1, c); }),
              std::back_inserter(wanted));
     const auto found = std::ranges::find_if(wanted, [&](const std::string& candidate) {
-        return printable(candidate)
-            && !std::ranges::contains(legend, candidate, &legend_symbol::symbol);
+        return printable(candidate) && !std::ranges::contains(taken, candidate);
     });
     return found == wanted.end() ? std::nullopt : std::optional(*found);
 }
@@ -880,6 +879,7 @@ auto session::step_history(const bool back) -> void {
 
 auto session::reload() -> void {
     legend.clear();
+    legend_error.clear();
     diagnostics.clear();
     level.reset();
     level_up.reset();
@@ -917,7 +917,9 @@ auto session::reload() -> void {
         anchor.reset();
     }
     const auto stand_ins = file_stand_ins(stand_in_texts());
-    legend = mapgen_legend(text).value_or(std::vector<legend_symbol>{});
+    const auto read = mapgen_legend(text);
+    legend = read.value_or(std::vector<legend_symbol>{});
+    legend_error = read ? std::string{} : read.error();
     reload_levels();
     diagnostics =
         check_mapgen(text) | std::views::transform([&](const auto& message) {
@@ -1180,6 +1182,11 @@ auto session::pick_symbol(const std::string& picked) -> void {
 }
 
 auto session::take(const catalog_use& use, const std::string& id, const std::string& name) -> void {
+    if (!legend_error.empty()) {
+        //~ %s is what is wrong with the entry's legend, as the game's loader says it.
+        status = string_format(_("The legend cannot be read: %s"), plain_loader_text(legend_error));
+        return;
+    }
     const auto value = mapping_json_of(use, id);
     const auto mapped = std::ranges::find_if(legend, [&](const legend_symbol& entry) {
         return entry.lines.size() == 1 && entry.lines.front().layer == use.layer
@@ -1189,8 +1196,20 @@ auto session::take(const catalog_use& use, const std::string& id, const std::str
         pick_symbol(mapped->symbol);
         return;
     }
+    // A symbol the file maps keeps its mapping, whatever of it the legend could read.
+    auto taken =
+        legend | std::views::transform(&legend_symbol::symbol) | std::ranges::to<std::vector>();
+    const auto& own = doc->objects()[object].value;
+    if (own.contains("object") && own["object"].is_object()) {
+        for (const auto* const layer : legend_layers) {
+            if (!own["object"].contains(layer) || !own["object"][layer].is_object()) { continue; }
+            for (const auto& member : own["object"][layer].items()) {
+                taken.push_back(member.key());
+            }
+        }
+    }
     const auto look = catalog_look(use.kind, id);
-    const auto free = free_symbol(legend, look ? look->glyph : "", name);
+    const auto free = free_symbol(taken, look ? look->glyph : "", name);
     if (!free) {
         notice = _("Every symbol is taken; map one in the Mapping form.");
         return;
