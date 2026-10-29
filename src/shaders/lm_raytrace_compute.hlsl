@@ -38,6 +38,8 @@ cbuffer Constants : register(b0, space2)
     uint  num_sources;
     int   max_radius;
     uint  source_offset;
+    uint  trigdist;
+    uint3 _pad;
 };
 
 StructuredBuffer<float>          transparency_all : register(t0, space0);
@@ -108,7 +110,13 @@ float trace_intensity(
     float fdx = (float)dx;
     float fdy = (float)dy;
     float fdz = ( (float)tz + target_frac - ( (float)src.z_idx + src.z_frac ) ) * z_scale;
-    float dist = sqrt( fdx * fdx + fdy * fdy + fdz * fdz );
+    int sdz = src.z_idx - tz;
+    float dist;
+    if( trigdist == 0u ) {
+        dist = (float)max( abs( dx ), max( abs( dy ), (int)ceil( (float)abs( sdz ) * z_scale ) ) );
+    } else {
+        dist = sqrt( fdx * fdx + fdy * fdy + fdz * fdz );
+    }
 
     if( dist > src.radius ) {
         return 0.0;
@@ -120,7 +128,6 @@ float trace_intensity(
 
     int sdx = src.x - tx;
     int sdy = src.y - ty;
-    int sdz = src.z_idx - tz;
     if( vehicle_target_roof_blocks( src, tx, ty, tz, target_frac ) ) {
         return 0.0;
     }
