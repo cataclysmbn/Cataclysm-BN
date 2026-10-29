@@ -466,6 +466,8 @@ struct session {
     /// Whether a stroke on the vehicle edited in place is open, and whether it has made its step.
     bool live_stroke = false;
     bool live_stroke_made = false;
+    /// The vehicle edited in place as the open stroke found it, to name the step it made.
+    nlohmann::ordered_json live_stroke_before;
     /// Twice the middle the mirrors reflect across while a stroke is open, as it was when the
     /// stroke began, so that what the stroke changes does not move it.
     std::optional<point> stroke_axis;
@@ -912,12 +914,19 @@ struct session {
         if (live) {
             live_stroke = true;
             live_stroke_made = false;
+            live_stroke_before = export_design(*live, "");
         } else if (doc) {
             doc->begin_group();
         }
     }
     auto end_stroke() -> void {
+        // As a design's stroke, the step names all the stroke did.
+        if (live && live_stroke_made && !live_undo.empty()) {
+            live_undo.back().label = design_step_label(
+                {.before = live_stroke_before, .after = export_design(*live, "")});
+        }
         live_stroke = false;
+        live_stroke_made = false;
         stroke_axis.reset();
         if (doc) { doc->end_group(); }
         // A selection spans one drag.
@@ -956,7 +965,7 @@ struct session {
             });
         } else {
             made = change(
-                install_parts(prototype(), install)
+                install_parts(prototype(), built.blueprint.get(), install)
                     .and_then([&](const stroke_design& done)
                                   -> std::expected<nlohmann::ordered_json, std::string> {
                         tally = done.tally;
@@ -1101,8 +1110,9 @@ struct session {
         return marked;
     }
 
-    /// Takes the parts on the marked mounts as the clip; whether there were any.
-    auto copy_mounts() -> bool {
+    /// The parts on the marked mounts, by mount in install order; none, with a notice that says
+    /// so, when they have none.
+    auto marked_clip() -> std::optional<std::vector<clip_mount>> {
         const auto* const veh = shown_vehicle();
         const auto marked = marked_mounts();
         auto taken = std::vector<clip_mount>{};
@@ -1121,14 +1131,20 @@ struct session {
         if (taken.empty()) {
             notice = selection ? _("The selection has no part to copy.")
                                : _("This mount has no part to copy.");
-            return false;
+            return std::nullopt;
         }
-        clip = std::move(taken);
+        return taken;
+    }
+
+    /// Takes the parts on the marked mounts as the clip.
+    auto copy_mounts() -> void {
+        auto taken = marked_clip();
+        if (!taken) { return; }
+        clip = std::move(*taken);
         const auto count = static_cast<int>(std::ranges::distance(
             clip | std::views::transform(&clip_mount::parts) | std::views::join));
         //~ What the vehicle editor's Copy took: how many parts.
         said = string_format(vgettext("Copied %d part.", "Copied %d parts.", count), count);
-        return true;
     }
 
     /// How many parts of a paste or removal refused and why the first did, after a space; empty
@@ -1145,7 +1161,9 @@ struct session {
     /// Removes the parts on the marked mounts as one step, top down, after copying them for a
     /// `cut`.
     auto delete_mounts(const bool cut) -> void {
-        if (cut && !copy_mounts()) { return; }
+        // A cut takes what it removes as the clip, once something went.
+        auto taken = cut ? marked_clip() : std::nullopt;
+        if (cut && !taken) { return; }
         const auto label = std::string(cut ? _("Cut") : _("Delete"));
         const auto marked = marked_mounts();
         auto tally = stroke_tally{};
@@ -1176,6 +1194,7 @@ struct session {
         }
         pick_top();
         if (!made) { return; }
+        if (taken) { clip = std::move(*taken); }
         said = cut
                  //~ What the vehicle editor's Cut took away: how many parts.
                  ? string_format(vgettext("Cut %d part.", "Cut %d parts.", tally.done), tally.done)
@@ -1215,7 +1234,7 @@ struct session {
             const auto open = !in_stroke();
             if (open) { doc->begin_group(false, label); }
             made = change(
-                paste_parts(prototype(), paste)
+                paste_parts(prototype(), built.blueprint.get(), paste)
                     .and_then([&](const stroke_design& done)
                                   -> std::expected<nlohmann::ordered_json, std::string> {
                         tally = done.tally;
@@ -1640,10 +1659,12 @@ struct session {
         const std::string& label,
         const std::function<auto(vehicle&)->std::expected<void, std::string>>& edit) -> bool {
         auto before = vehicle_state(*live);
+        const auto anchor = live->pivot_anchor[0];
         if (const auto done = edit(*live); !done) {
             notice = done.error();
             return false;
         }
+        follow_mounts((anchor - live->pivot_anchor[0]).raw().xy());
         // A stroke is one step, the one its first change made.
         if (!live_stroke || !live_stroke_made) {
             live_undo.push_back({.state = std::move(before), .label = label});
@@ -1653,11 +1674,30 @@ struct session {
         return true;
     }
 
+    /// Moves what the session holds in mounts by `moved` as the vehicle edited in place moved its
+    /// mounts, as taking away the part at 0,0 does, so that it stays over the same parts.
+    auto follow_mounts(const point& moved) -> void {
+        if (moved == point_zero) { return; }
+        cursor -= moved;
+        frame = {.low = frame.low - moved, .high = frame.high - moved};
+        if (selection) {
+            selection = {.low = selection->low - moved, .high = selection->high - moved};
+        }
+        if (anchor) { *anchor -= moved; }
+        if (stroke_axis) { *stroke_axis -= moved * 2; }
+        if (!live_stroke) { return; }
+        for (auto& entry : live_stroke_before["parts"]) {
+            entry["x"] = entry.value("x", 0) - moved.x;
+            entry["y"] = entry.value("y", 0) - moved.y;
+        }
+    }
+
     /// Puts the vehicle edited in place back to the last state of `from`, keeping the current one
     /// in `to`.
     auto step_live(std::vector<live_step>& from, std::vector<live_step>& to) -> void {
         if (from.empty() || !live) { return; }
         auto now = vehicle_state(*live);
+        const auto anchor = live->pivot_anchor[0];
         auto step = std::move(from.back());
         from.pop_back();
         const auto restored = restore_vehicle_state(*live, step.state);
@@ -1668,6 +1708,7 @@ struct session {
         }
         live = *restored;
         live_part = -1;
+        follow_mounts((anchor - live->pivot_anchor[0]).raw().xy());
         // As a design's undo ends its group, the stroke's later changes make steps of their own.
         live_stroke = false;
         live_stroke_made = false;
@@ -1927,6 +1968,7 @@ struct grid_options {
 auto grid_of(const grid_options& options) -> ec::component {
     const auto& [veh, frame, cursor, held, drag, quarters, selection, stamp] = options;
     const auto refusal = veh && held ? std::optional(mount_refusals(*veh, *held)) : std::nullopt;
+    const auto stacks = veh ? mount_stacks(*veh) : std::map<point, std::vector<int>>{};
     const auto low = point(std::min(frame.low.x, cursor.x), std::min(frame.low.y, cursor.y));
     const auto high = point(std::max(frame.high.x, cursor.x), std::max(frame.high.y, cursor.y));
     const auto cols = high.x - low.x + 1;
@@ -1964,19 +2006,19 @@ auto grid_of(const grid_options& options) -> ec::component {
                 .affordance = mount_id,
                 .selected = at == cursor,
                 .refused = refusal ? (*refusal)(at).value_or("") : ""};
-            const auto shown = veh ? veh->part_displayed_at(tripoint_mnt_veh(x, y, 0)) : -1;
+            const auto here = stacks.find(at);
+            const auto shown =
+                here != stacks.end() ? veh->part_displayed_at(tripoint_mnt_veh(x, y, 0)) : -1;
             if (shown >= 0) {
                 cell.glyph = std::string(1, veh->part_sym(shown));
                 // Every part on the mount, in the order the game installed them.
-                cell.label = remove_color_tags(join(
-                    veh->parts_at_relative(tripoint_mnt_veh(x, y, 0), false)
-                        | std::views::transform([&](const int index) {
-                              return veh->cpart(index).name(false);
-                          })
-                        | std::ranges::to<std::vector>(),
-                    ", "));
+                cell.label = remove_color_tags(
+                    join(here->second | std::views::transform([&](const int index) {
+                             return veh->cpart(index).name(false);
+                         }) | std::ranges::to<std::vector>(),
+                         ", "));
                 cell.color = string_from_color(veh->part_color(shown));
-                cell.looks = palette.indexes(mount_looks(*veh, at, 90 * quarters));
+                cell.looks = palette.indexes(mount_looks(*veh, here->second, 90 * quarters));
             }
             cells.push_back(std::move(cell));
         }
@@ -2053,6 +2095,7 @@ auto turned_grid(const vehicle& veh, const int facing) -> ec::component {
     const auto [min_y, max_y] = std::ranges::minmax(
         squares | std::views::transform([](const landed& square) { return square.at.y; }));
     auto palette = ec::look_palette{};
+    auto stacks = mount_stacks(veh);
     const auto cells =
         squares | std::views::transform([&](const landed& square) {
             return ec::grid_cell{
@@ -2061,7 +2104,7 @@ auto turned_grid(const vehicle& veh, const int facing) -> ec::component {
                 .label = remove_color_tags(veh.cpart(square.part).name(false)),
                 .color = string_from_color(veh.part_color(square.part)),
                 .looks = palette.indexes(
-                    mount_looks(veh, veh.cpart(square.part).mount.xy().raw(), facing))};
+                    mount_looks(veh, stacks[veh.cpart(square.part).mount.xy().raw()], facing))};
         })
         | std::ranges::to<std::vector>();
     return {
@@ -2428,11 +2471,13 @@ auto parts_view(const session& state) -> ec::screen_view {
     if (!state.live) {
         status.push_back(
             {.key = "file", .label = _("File"), .value = shown_path(state.doc->path())});
+        // Whether the document is dirty renders all of it.
+        const auto dirty = state.doc->dirty();
         status.push_back(
             {.key = "saved",
              .label = _("Saved"),
-             .value = state.doc->dirty() ? _("No") : _("Yes"),
-             .tone = state.doc->dirty() ? "bad" : "good"});
+             .value = dirty ? _("No") : _("Yes"),
+             .tone = dirty ? "bad" : "good"});
     }
     status.push_back(
         {.key = "mount",

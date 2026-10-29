@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cmath>
 #include <tuple>
+#include <unordered_map>
 #include <nlohmann/json.hpp>
 #include <ranges>
 
@@ -730,12 +731,13 @@ auto body_json( const grid_body &body, const bubble_frame & /*frame*/ ) -> json
         // first and the others as they first show from the north-west, and each row's squares
         // of one style as a run east; the squares that show the blank cell are left to it.
         auto styles = json::array();
+        // Each style's index by its text, so a canvas of many looks stays quick.
+        auto indexes = std::unordered_map<std::string, std::size_t> {};
         const auto style_of = [&]( const grid_cell & cell ) {
             auto look = look_of( cell );
-            const auto found = std::ranges::find( styles, look );
-            const auto index = std::distance( styles.begin(), found );
-            if( found == styles.end() ) { styles.push_back( std::move( look ) ); }
-            return index;
+            const auto [found, added] = indexes.try_emplace( look.dump(), styles.size() );
+            if( added ) { styles.push_back( std::move( look ) ); }
+            return found->second;
         };
         result["blank"] = style_of( *body.blank );
         auto shown = body.cells | std::views::filter( [&]( const grid_cell & entry ) { return !blank_square( body, entry ); } )

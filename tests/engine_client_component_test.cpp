@@ -1188,9 +1188,13 @@ TEST_CASE(
                         .id = "grid:blank",
                         .affordances = {"grid:pick"},
                         .body = ec::grid_body{.cols = 4, .rows = 2, .cells = cells, .blank = blank}},
-                .affordances = {ec::invoke_affordance(
-                    {.id = "grid:pick",
-                     .args = {.row = ec::row_shape{.component_id = "grid:blank"}}})},
+                .affordances =
+                    {ec::invoke_affordance(
+                         {.id = "grid:pick",
+                          .args = {.row = ec::row_shape{.component_id = "grid:blank"}}}),
+                     ec::invoke_affordance(
+                         {.id = "grid:many",
+                          .args = {.rows = ec::rows_shape{.component_id = "grid:blank"}}})},
                 .focus_component = "grid:blank",
                 .focus_row = "cell:c"};
         }});
@@ -1233,6 +1237,16 @@ TEST_CASE(
         resolve_invoke(map_only(), {.affordance_id = "grid:pick", .args = {.row = "square:4,0"}});
     REQUIRE_FALSE(off);
     CHECK(off.error() == ec::error::invalid_arguments);
+    // So do the rows of an affordance that takes many.
+    const auto many = ec::resolve_invoke(
+        map_only(),
+        {.affordance_id = "grid:many",
+         .args = {.rows = std::vector<ec::invoke_row>{{.id = "square:2,1"}, {.id = "cell:a"}}}});
+    REQUIRE(many);
+    const auto& rows = *std::get<ec::invoke_operation>(*many).args.rows;
+    REQUIRE(rows.size() == 2);
+    CHECK(rows[0].id == "cell:f");
+    CHECK(rows[1].id == "cell:a");
 }
 
 namespace {

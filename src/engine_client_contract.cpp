@@ -749,10 +749,19 @@ auto resolve_affordance( const resolve_options &opts ) -> std::expected<command_
         case invoke_kind::screen: {
             auto named = args;
             // A screen reads the id of the cell at a grid square a client names by its position.
-            const auto *const part = args.row && opts.top.root ?
-                                     find_component( *opts.top.root, found.args.row->component_id ) : nullptr;
-            const auto *const grid = part ? std::get_if<grid_body>( &part->body ) : nullptr;
-            if( const auto *const cell = grid ? cell_of( *grid, *args.row ) : nullptr ) { named.row = cell->id; }
+            const auto grid_of = [&]( const std::string & component_id ) -> const grid_body * { // *NOPAD*
+                const auto *const part = opts.top.root ? find_component( *opts.top.root, component_id ) : nullptr;
+                return part ? std::get_if<grid_body>( &part->body ) : nullptr;
+            };
+            const auto cell_id = [&]( const grid_body * grid, const std::string & row ) {
+                const auto *const cell = grid ? cell_of( *grid, row ) : nullptr;
+                return cell ? cell->id : row;
+            };
+            if( named.row ) { named.row = cell_id( grid_of( found.args.row->component_id ), *named.row ); }
+            if( named.rows ) {
+                const auto *const grid = grid_of( found.args.rows->component_id );
+                for( auto &entry : *named.rows ) { entry.id = cell_id( grid, entry.id ); }
+            }
             return invoke_operation{ .affordance_id = found.id, .args = std::move( named ) };
         }
     }
