@@ -81,6 +81,21 @@ auto open_ground_near(const tripoint_abs_ms& wanted, const int south_of) -> trip
     return found == near.end() ? wanted : *found;
 }
 
+/// How far the view turns from the avatar at `at` to show the stamp `stamped` with it: to the
+/// stamp's middle column and halfway between its north edge and the avatar, but no further than
+/// keeps the avatar inside the terrain window.
+auto view_showing(const stamp& stamped, const tripoint_abs_ms& at) -> tripoint_rel_ms {
+    const auto corner = project_to<coords::ms>(stamped.at);
+    auto middle = point(corner.x() + stamped.grid.x() * SEEX, (corner.y() + at.y()) / 2);
+    if (const auto window = g->click_window()) {
+        const auto size = (window->p_max - window->p_min).raw();
+        const auto half = point(size.x / 2 - 1, size.y / 2 - 1);
+        middle.x = std::clamp(middle.x, at.x() - half.x, at.x() + half.x);
+        middle.y = std::max(middle.y, at.y() - half.y);
+    }
+    return tripoint_rel_ms(middle.x - at.x(), middle.y - at.y(), 0);
+}
+
 /// What `editor:export` writes to `path`: the squares the player marked, as the mapgen of whole
 /// overmap squares when they are that and else as a nested chunk named after the file, or the
 /// overmap squares around the avatar's.
@@ -541,6 +556,7 @@ auto run_editor_session() -> void {
                                     south_edge + test_distance, corner.z()),
                     south_edge);
                 g->place_player(abs_to_bub(landing));
+                get_avatar().view_offset = view_showing(*state.stamped, landing);
                 const auto away = landing.y() - south_edge;
                 add_msg(
                     m_info,
