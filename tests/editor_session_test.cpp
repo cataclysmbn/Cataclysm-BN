@@ -2345,8 +2345,8 @@ TEST_CASE(
                 CHECK(column_value(legend[0], "terrain") == "dirt");
                 CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
                 CHECK(saved(screen) == "Yes");
-                // The form starts over for the next file: what it named is not typed after, and
-                // its path is the next free file of the user mods, in a mod's folder.
+                // The form starts over for the next file: its path is the next free file of the
+                // user mods, in a mod's folder, and what it names is named after that file.
                 const auto& fields = body<ec::form_body>(part(screen, "editor:new")).fields;
                 const auto value = [&](const std::string& id) {
                     return std::ranges::find(fields, id, &ec::form_field::id)->value;
@@ -2356,7 +2356,7 @@ TEST_CASE(
                     == (std::filesystem::path(PATH_INFO::user_moddir()) / "my_mod"
                         / "new_mapgen.json")
                            .string());
-                CHECK(value("om_terrain").empty());
+                CHECK(value("om_terrain") == "new_mapgen");
                 return invoke("editor:new_set", {.row = "path", .text = made.string()});
             }
             case 9:
@@ -7785,6 +7785,45 @@ TEST_CASE(
             return act("QUIT");
         }};
     CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
+}
+
+TEST_CASE(
+    "the new-file form names the overmap terrain after the file and asks a chunk size only for a "
+    "nested chunk",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto folder = mod_file{};
+    const auto made = folder.path.parent_path() / "Corner Shop-2.json";
+    const auto field = [](const ec::screen_view& screen, const std::string& id) {
+        const auto& fields = body<ec::form_body>(part(screen, "editor:new")).fields;
+        const auto found = std::ranges::find(fields, id, &ec::form_field::id);
+        return found == fields.end() ? std::optional<std::string>{} : std::optional(found->value);
+    };
+    const auto walk = std::vector<map_step>{
+        [&](const auto& screen) {
+            const auto path = std::filesystem::path(field(screen, "path").value_or(""));
+            CHECK(field(screen, "om_terrain") == path.stem().string());
+            CHECK_FALSE(field(screen, "size"));
+            return invoke("editor:new_set", {.row = "path", .text = made.string()});
+        },
+        [&](const auto& screen) {
+            // The name follows the file until the player types one.
+            CHECK(field(screen, "om_terrain") == "corner_shop_2");
+            return invoke("editor:new_set", {.row = "kind", .text = "nested"});
+        },
+        [&](const auto& screen) {
+            CHECK(field(screen, "size") == "4");
+            return invoke("editor:new_set", {.row = "om_terrain", .text = "my_shop"});
+        },
+        [&](const auto& screen) {
+            CHECK(field(screen, "om_terrain") == "my_shop");
+            return invoke("editor:new_set", {.row = "kind", .text = "mapgen"});
+        },
+        [](const auto&) { return invoke("editor:new_apply"); }};
+    CHECK(walk_map(walk) == walk.size());
+    const auto written = nlohmann::ordered_json::parse(read_file(made));
+    CHECK(written[0]["om_terrain"] == "my_shop");
     editor::reset_editor_session();
 }
 
