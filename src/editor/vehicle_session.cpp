@@ -466,6 +466,8 @@ struct session {
     /// Whether a stroke on the vehicle edited in place is open, and whether it has made its step.
     bool live_stroke = false;
     bool live_stroke_made = false;
+    /// The vehicle edited in place as the open stroke found it, to name the step it made.
+    nlohmann::ordered_json live_stroke_before;
     /// Twice the middle the mirrors reflect across while a stroke is open, as it was when the
     /// stroke began, so that what the stroke changes does not move it.
     std::optional<point> stroke_axis;
@@ -912,12 +914,19 @@ struct session {
         if (live) {
             live_stroke = true;
             live_stroke_made = false;
+            live_stroke_before = export_design(*live, "");
         } else if (doc) {
             doc->begin_group();
         }
     }
     auto end_stroke() -> void {
+        // As a design's stroke, the step names all the stroke did.
+        if (live && live_stroke_made && !live_undo.empty()) {
+            live_undo.back().label = design_step_label(
+                {.before = live_stroke_before, .after = export_design(*live, "")});
+        }
         live_stroke = false;
+        live_stroke_made = false;
         stroke_axis.reset();
         if (doc) { doc->end_group(); }
         // A selection spans one drag.
