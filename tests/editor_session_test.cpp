@@ -7581,4 +7581,52 @@ TEST_CASE(
     if (!made.empty()) { std::filesystem::remove_all(made.parent_path()); }
 }
 
+TEST_CASE(
+    "testing a stamp of two by two overmap squares puts the avatar on open ground south of all "
+    "of it",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    {
+        auto rows = nlohmann::ordered_json::array();
+        for (auto row = 0; row < 48; ++row) { rows.push_back(std::string(48, '.')); }
+        const auto entry = nlohmann::ordered_json::array(
+            {{{"type", "mapgen"},
+              {"method", "json"},
+              {"om_terrain",
+               nlohmann::ordered_json::array(
+                   {nlohmann::ordered_json::array({"house_04", "house_05"}),
+                    nlohmann::ordered_json::array({"house_06", "house_07"})})},
+              {"object", {{"rows", rows}, {"terrain", {{".", "t_floor"}}}}}}});
+        auto out = std::ofstream(file.path, std::ios::binary | std::ios::trunc);
+        out << format_json(entry.dump()).value();
+    }
+    Messages::clear_messages();
+    const auto corner = project_to<coords::ms>(get_avatar().abs_omt_pos());
+    // The square below the middle of the stamp's south edge is a wall: the avatar stands beside it.
+    const auto blocked = corner + tripoint_rel_ms(SEEX * 2, SEEY * 4 + 1, 0);
+    get_map().ter_set(abs_to_bub(blocked), ter_str_id("t_wall"));
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:stamp"); },
+        [](const auto& screen) {
+            CHECK(told(screen) == std::string{});
+            CHECK_FALSE(stat_of(screen, "stamped").empty());
+            return invoke("editor:test");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    const auto at = get_avatar().abs_pos();
+    const auto south_edge = corner.y() + SEEY * 4 - 1;
+    CHECK(at.y() > south_edge);
+    CHECK(at != blocked);
+    CHECK(std::abs(at.x() - blocked.x()) <= 2);
+    CHECK(at.y() - blocked.y() <= 2);
+    CHECK(get_map().passable(abs_to_bub(at)));
+    const auto lines = Messages::feed_since({});
+    REQUIRE(!lines.empty());
+    CHECK(lines.back().text
+          == string_format("The mapgen is stamped %d squares north of you.", at.y() - south_edge));
+    editor::reset_editor_session();
+}
+
 #endif // CATA_MCP
