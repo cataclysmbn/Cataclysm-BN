@@ -7441,6 +7441,45 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "a catalog entry drawn is named by its symbol's mapping once the mapping changes",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{{{"fill_ter", "t_floor"}}};
+    const auto last_step = [](const ec::screen_view& screen) {
+        const auto& rows = rows_in(screen, "editor:history");
+        const auto found = std::ranges::find(rows, true, &ec::row::selected);
+        REQUIRE(found != rows.end());
+        return found->label;
+    };
+    auto wall = std::string{};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:catalog_filter", {.text = "t_brick_wall"}); },
+        [](const auto&) { return invoke("editor:catalog_pick", {.row = "entry:t_brick_wall"}); },
+        [](const auto&) { return square_at(2, 2); },
+        [&](const auto& screen) {
+            wall = stat_of(screen, "symbol").substr(0, 1);
+            REQUIRE(has_row(screen, "editor:legend", "symbol:" + wall));
+            CHECK(row_in(screen, "editor:catalog", "entry:t_brick_wall").selected);
+            // The symbol drawn maps brick wall no more: the fill terrain shows under it.
+            return invoke("editor:mapping_set", {.row = "value", .text = ""});
+        },
+        [](const auto&) { return invoke("editor:mapping_apply"); },
+        [](const auto& screen) {
+            CHECK(told(screen).empty());
+            CHECK_FALSE(row_in(screen, "editor:catalog", "entry:t_brick_wall").selected);
+            return invoke("editor:tool", {.row = "tool:fill"});
+        },
+        [](const auto&) { return square_at(5, 5); },
+        [&](const auto& screen) {
+            CHECK(cell(screen, 5, 5).glyph == wall);
+            CHECK(last_step(screen) != "Fill brick wall");
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+}
+
+TEST_CASE(
     "testing a stamp puts the avatar beside it, looking at it, and says where it is",
     "[editor_session]") {
     const auto guard = screen_guard{};
