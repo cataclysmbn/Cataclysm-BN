@@ -2736,7 +2736,7 @@ TEST_CASE(
                 CHECK(history(screen)[0].description == "Saved");
                 // A step says what it changed in words, not as a JSON pointer.
                 CHECK(history(screen)[0].label == "Opened");
-                CHECK(history(screen)[1].label == "Change rows");
+                CHECK(history(screen)[1].label == "Room");
                 return invoke("editor:jump", {.row = "step:0"});
             case 6:
                 CHECK(walls(screen) == 0);
@@ -7386,6 +7386,54 @@ TEST_CASE(
                 | std::ranges::to<std::vector>();
             std::ranges::sort(labels);
             CHECK(std::ranges::adjacent_find(labels) == labels.end());
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+}
+
+TEST_CASE(
+    "the history names each step by what it drew, and saving says where the file went",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{{{"fill_ter", "t_floor"}}};
+    const auto last_step = [](const ec::screen_view& screen) {
+        const auto& rows = rows_in(screen, "editor:history");
+        const auto found = std::ranges::find(rows, true, &ec::row::selected);
+        REQUIRE(found != rows.end());
+        return found->label;
+    };
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:catalog_filter", {.text = "t_brick_wall"}); },
+        [](const auto&) { return invoke("editor:catalog_pick", {.row = "entry:t_brick_wall"}); },
+        [](const auto&) { return invoke("editor:tool", {.row = "tool:rect"}); },
+        [](const auto&) { return square_at(2, 2); },
+        [](const auto&) { return square_at(9, 7); },
+        [&](const auto& screen) {
+            CHECK(last_step(screen) == "Paint brick wall ×24");
+            return invoke("editor:symbol", {.row = "symbol:#"});
+        },
+        [](const auto&) { return invoke("editor:tool", {.row = "tool:room"}); },
+        [](const auto&) { return square_at(12, 2); },
+        [](const auto&) { return square_at(20, 8); },
+        [&](const auto& screen) {
+            CHECK(last_step(screen) == "Room");
+            return invoke("editor:catalog_filter", {.text = "t_dirt"});
+        },
+        [](const auto&) { return invoke("editor:catalog_pick", {.row = "entry:t_dirt"}); },
+        [](const auto&) { return invoke("editor:tool", {.row = "tool:fill"}); },
+        [](const auto&) { return square_at(5, 5); },
+        [&](const auto& screen) {
+            CHECK(last_step(screen) == "Fill dirt (t_dirt)");
+            CHECK(cell(screen, 3, 3).glyph != ".");
+            return invoke("editor:undo");
+        },
+        [](const auto& screen) {
+            CHECK(said(screen) == "Undid: Fill dirt (t_dirt)");
+            return invoke("editor:save");
+        },
+        [](const auto& screen) {
+            CHECK(said(screen) == "Saved editor_session_test/floor.json.");
             return act("QUIT");
         }};
     CHECK(walk_map(walk) == walk.size());
