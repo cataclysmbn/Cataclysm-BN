@@ -212,6 +212,38 @@ auto symbol_looks(const nlohmann::ordered_json& object, const std::vector<legend
     return result;
 }
 
+/// What each symbol of the entry `object` places on a square from the bottom up, as its cell names
+/// it: terrain and furniture by name, anything else after its layer, with its chance; the entry's
+/// fill terrain under a symbol that maps none.
+auto symbol_labels(const nlohmann::ordered_json& object, const std::vector<legend_symbol>& legend)
+    -> std::map<std::string, std::string> {
+    const auto fill = fill_terrain(object);
+    auto result = std::map<std::string, std::string>{};
+    for (const auto& entry : legend) {
+        auto parts = std::vector<std::string>{};
+        if (fill
+            && !std::ranges::contains(entry.lines, std::string("terrain"), &legend_line::layer)) {
+            parts.push_back(legend_value("terrain", nlohmann::ordered_json(*fill).dump()).names);
+        }
+        for (const auto& line : entry.lines) {
+            const auto names = legend_value(line.layer, line.value).names;
+            const auto value = nlohmann::ordered_json::parse(line.value, nullptr, false);
+            const auto named =
+                line.layer == "terrain" || line.layer == "furniture"
+                    ? names
+                    //~ %1$s is a legend layer, such as Items; %2$s is what it places there.
+                    : string_format(_("%1$s: %2$s"), legend_layer_label(line.layer), names);
+            parts.push_back(
+                value.is_object() && value.contains("chance") && value["chance"].is_number_integer()
+                    //~ %1$s is what a symbol places; %2$d is the chance it is placed, in percent.
+                    ? string_format(_("%1$s %2$d%%"), named, value["chance"].get<int>())
+                    : named);
+        }
+        result[entry.symbol] = join(parts, "; ");
+    }
+    return result;
+}
+
 /// Whether the square is inside the rectangle the select tool marked.
 auto in_selection(const session& state, const point& at) -> bool {
     return state.selected && at.x >= std::min(state.selected->from.x, state.selected->to.x)
@@ -310,6 +342,7 @@ auto canvas(const session& state) -> ec::component {
         })
         | std::ranges::to<std::map>();
     const auto faded = faded_squares(state, palette);
+    const auto labels = symbol_labels(object, state.legend);
     const auto cursor = state.anchor ? state.anchor : state.focus;
     const auto cols = std::ranges::fold_left(
         grid | std::views::transform([](const auto& row) { return static_cast<int>(row.size()); }),
@@ -330,6 +363,9 @@ auto canvas(const session& state) -> ec::component {
                 {.at = {x + shift.x, y + shift.y},
                  .id = point_row("square", at),
                  .glyph = under != faded.end() ? under->second.glyph : grid[y][x],
+                 .label = under == faded.end() && labels.contains(grid[y][x])
+                            ? labels.at(grid[y][x])
+                            : std::string{},
                  .affordance = paint_id,
                  .selected = state.anchor == at || in_selection(state, at),
                  .looks = under != faded.end() ? under->second.looks
