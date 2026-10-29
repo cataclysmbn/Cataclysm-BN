@@ -29,7 +29,7 @@
     "name": { "str": "lamellar ballistic vest" },
     "description": "A flexible bullet-resistant vest based on the failed \"dragon skin\" design from decades ago, made from a composite of overlapping superalloy plates sandwiched between layers of kevlar.  More durable and covers gaps normal ballistic plates leave exposed, but only protects against rounds up to 5.56x46mm.  It has four pouches capable of carrying magazines.",
     "//": "Weight matches a ballistic vest plus 10 superalloy sheets, 2 extra used to fill gaps and provide overlap.",
-    "weight": "9 g",
+    "weight": "9 kg",
     "volume": "6 L",
     "price": "1900 USD",
     "price_postapoc": "60 USD",
