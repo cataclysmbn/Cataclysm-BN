@@ -9,6 +9,7 @@
 #include "editor/mapgen_check.h"
 #include "editor/mapgen_legend.h"
 #include "editor/mapgen_legend_edit.h"
+#include "editor/mapgen_legend_text.h"
 #include "editor/mapgen_levels.h"
 #include "editor/mapgen_placement.h"
 #include "editor/mapgen_preview.h"
@@ -23,6 +24,7 @@
 #include "filesystem.h"
 #include "game.h"
 #include "game_constants.h"
+#include "item.h"
 #include "json_formatter.h"
 #include "map/mapdata.h"
 #include "overmap/omdata.h"
@@ -32,6 +34,7 @@
 #include "string_formatter.h"
 #include "string_utils.h"
 #include "translations.h"
+#include "trap.h"
 #include "type_id.h"
 
 #include <algorithm>
@@ -41,6 +44,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <iterator>
 #include <map>
 #include <optional>
 #include <ranges>
@@ -169,6 +173,34 @@ auto range_read(std::string_view text) -> std::optional<placement_range> {
     return placement_range{.min = *min, .max = *max};
 }
 
+/// The symbols a new mapping falls back on, as an export uses them.
+constexpr auto spare_symbols = std::string_view(
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789,;:!%&*+-/<>=?@^~_()[]{}|$");
+
+/// The symbol a new mapping of what shows as `glyph`, named `name`, takes: that glyph, else the
+/// first letter of the name in either case, else a spare symbol; the first the legend lacks.
+auto free_symbol(
+    const std::vector<legend_symbol>& legend, const std::string& glyph, const std::string& name)
+    -> std::optional<std::string> {
+    const auto printable = [](const std::string& text) {
+        return text.size() == 1 && text[0] > ' ' && text[0] < '\x7f' && text[0] != '\\';
+    };
+    auto wanted = std::vector{glyph};
+    if (!name.empty()) {
+        const auto first = static_cast<unsigned char>(name.front());
+        wanted.emplace_back(1, static_cast<char>(std::tolower(first)));
+        wanted.emplace_back(1, static_cast<char>(std::toupper(first)));
+    }
+    std::ranges::
+        copy(spare_symbols | std::views::transform([](const char c) { return std::string(1, c); }),
+             std::back_inserter(wanted));
+    const auto found = std::ranges::find_if(wanted, [&](const std::string& candidate) {
+        return printable(candidate)
+            && !std::ranges::contains(legend, candidate, &legend_symbol::symbol);
+    });
+    return found == wanted.end() ? std::nullopt : std::optional(*found);
+}
+
 } // namespace
 
 auto catalog_label(const catalog_use& use) -> std::string {
@@ -203,11 +235,39 @@ auto catalog_label(const catalog_use& use) -> std::string {
     return {};
 }
 
+auto catalog_row_label(const catalog_entry& entry) -> std::string {
+    return entry.distinct.empty()
+             ? entry.name
+             : string_format("%s (%s)", entry.name, entry.distinct);
+}
+
+auto catalog_look(const catalog_kind kind, const std::string& id)
+    -> std::optional<engine_client::look> {
+    namespace world = engine_client::world;
+    if (kind == catalog_kind::terrain && ter_str_id(id).is_valid()) {
+        return world::terrain_appearance(ter_str_id(id).id());
+    }
+    if (kind == catalog_kind::furniture && furn_str_id(id).is_valid()) {
+        return world::furniture_appearance(furn_str_id(id).id());
+    }
+    if (kind == catalog_kind::trap && trap_str_id(id).is_valid()) {
+        return world::trap_appearance(trap_str_id(id).obj());
+    }
+    if (kind == catalog_kind::item && itype_id(id).is_valid()) {
+        return world::item_appearance(*item::spawn_temporary(itype_id(id), calendar::turn));
+    }
+    return std::nullopt;
+}
+
 auto mapping_of(const catalog_use& use, const std::string& id) -> std::string {
     if (!use.key) { return id; }
     const auto named =
         use.listed ? nlohmann::ordered_json::array({id}) : nlohmann::ordered_json(id);
     return nlohmann::ordered_json{{use.key, named}}.dump();
+}
+
+auto mapping_json_of(const catalog_use& use, const std::string& id) -> nlohmann::ordered_json {
+    return use.key ? nlohmann::ordered_json::parse(mapping_of(use, id)) : nlohmann::ordered_json(id);
 }
 
 auto tool_label(const tool& value) -> std::string {
@@ -708,6 +768,7 @@ auto session::open_square(const point& at) -> void {
 
 auto session::show_object(const std::size_t index) -> void {
     object = index;
+    held.reset();
     special_level = ground_level(special_levels(doc->objects()[index].value));
     anchor.reset();
     selected.reset();
@@ -806,7 +867,9 @@ auto session::reload() -> void {
             notice = shown.error();
         }
     }
-    if (std::ranges::none_of(legend, [&](const auto& entry) { return entry.symbol == symbol; })) {
+    // What the catalog put in hand stays there until it is drawn, and after an undo of that.
+    if (std::ranges::none_of(legend, [&](const auto& entry) { return entry.symbol == symbol; })
+        && !(held && held->symbol == symbol)) {
         symbol = legend.empty() ? std::string{} : legend.front().symbol;
     }
     if (std::ranges::none_of(legend, [&](const auto& entry) {
@@ -905,6 +968,7 @@ auto session::open(const std::string& name) -> void {
         return;
     }
     doc = std::move(*opened);
+    held.reset();
     refresh_file(path);
     ++openings;
     remember_document({.editor = "map", .name = path.generic_string(), .mods = mods_for(path)});
@@ -1012,10 +1076,17 @@ auto session::extract_palette(const std::string& name) -> void {
 auto session::pick_symbol(const std::string& picked) -> void {
     symbol = picked;
     mapping_symbol = picked;
+    held.reset();
     const auto found = std::ranges::find(legend, picked, &legend_symbol::symbol);
     const auto lines = found == legend.end() ? std::span<const legend_line>{} : found->lines;
     const auto own = std::ranges::find_last_if(lines, &std::string::empty, &legend_line::source);
     const auto* const top = !own.empty() ? &own.front() : lines.empty() ? nullptr : &lines.back();
+    if (on_mapgen()) {
+        arm();
+        //~ %1$s is what the symbol drawn with places, such as brick wall; %2$s is the symbol.
+        status =
+            string_format(_("Painting %1$s (%2$s)."), symbol_name(picked), shown_symbol(picked));
+    }
     if (top == nullptr) {
         mapping_layer = "terrain";
         mapping_value.clear();
@@ -1025,6 +1096,67 @@ auto session::pick_symbol(const std::string& picked) -> void {
     // A plain id reads as the form takes it, bare.
     const auto value = nlohmann::ordered_json::parse(top->value, nullptr, false);
     mapping_value = value.is_string() ? value.get<std::string>() : top->value;
+}
+
+auto session::take(const catalog_use& use, const std::string& id, const std::string& name) -> void {
+    const auto value = mapping_json_of(use, id);
+    const auto mapped = std::ranges::find_if(legend, [&](const legend_symbol& entry) {
+        return entry.lines.size() == 1 && entry.lines.front().layer == use.layer
+            && nlohmann::ordered_json::parse(entry.lines.front().value, nullptr, false) == value;
+    });
+    if (mapped != legend.end()) {
+        pick_symbol(mapped->symbol);
+        return;
+    }
+    const auto look = catalog_look(use.kind, id);
+    const auto free = free_symbol(legend, look ? look->glyph : "", name);
+    if (!free) {
+        notice = _("Every symbol is taken; map one in the Mapping form.");
+        return;
+    }
+    held = held_mapping{.symbol = *free, .layer = use.layer, .value = value, .name = name};
+    symbol = *free;
+    mapping_symbol = *free;
+    mapping_layer = use.layer;
+    mapping_value = mapping_of(use, id);
+    arm();
+    status = string_format(_("Painting %1$s (%2$s)."), name, shown_symbol(*free));
+}
+
+auto session::symbol_name(const std::string& glyph) const -> std::string {
+    if (held && held->symbol == glyph) { return held->name; }
+    const auto found = std::ranges::find(legend, glyph, &legend_symbol::symbol);
+    if (found == legend.end() || found->lines.empty()) { return shown_symbol(glyph); }
+    const auto& lines = found->lines;
+    const auto on = [&](const char* const layer) {
+        return std::ranges::find(lines | std::views::reverse, layer, &legend_line::layer);
+    };
+    const auto furniture = on("furniture");
+    const auto terrain = on("terrain");
+    const auto& top =
+        furniture != lines.rend() ? *furniture
+        : terrain != lines.rend()
+            ? *terrain
+            : lines.front();
+    return legend_value(top.layer, top.value).names;
+}
+
+auto session::in_hand() const -> std::optional<held_mapping> {
+    if (held && held->symbol == symbol) { return held; }
+    const auto found = std::ranges::find(legend, symbol, &legend_symbol::symbol);
+    if (found == legend.end() || found->lines.size() != 1) { return std::nullopt; }
+    const auto& line = found->lines.front();
+    return held_mapping{
+        .symbol = symbol,
+        .layer = line.layer,
+        .value = nlohmann::ordered_json::parse(line.value, nullptr, false)};
+}
+
+auto session::arm() -> void {
+    if (current->kind || !has_rows()) { return; }
+    current = tools.data();
+    unforced = nullptr;
+    anchor.reset();
 }
 
 auto session::set_mapping(const std::string& field, const std::string& text) -> void {
@@ -1080,6 +1212,7 @@ auto session::apply_mapping() -> void {
     const auto set = set_legend(
         *doc, {.object = object, .layer = mapping_layer, .symbol = mapping_symbol, .value = value});
     if (!set) { notice = set.error(); }
+    if (set && held && held->symbol == mapping_symbol) { held.reset(); }
     reload();
 }
 
@@ -1510,12 +1643,18 @@ auto session::paint(const point& at) -> void {
     }
     if (!current->kind) {
         symbol = symbol_at(grid, at);
+        held.reset();
         return;
     }
+    // What the catalog put in hand is mapped by the stroke that first draws it.
+    const auto maps =
+        held && held->symbol == symbol
+        && !std::ranges::contains(legend, symbol, &legend_symbol::symbol);
     const auto inks =
         *current->kind == shape_kind::room ? std::vector{symbol, room_fill} : std::vector{symbol};
     for (const auto& ink : inks) {
-        if (const auto refused = bare(ink, true)) {
+        const auto grounded = maps && ink == held->symbol && held->layer == "terrain";
+        if (const auto refused = grounded ? std::nullopt : bare(ink, true)) {
             notice = *refused;
             return;
         }
@@ -1524,18 +1663,28 @@ auto session::paint(const point& at) -> void {
         anchor = at;
         return;
     }
-    const auto drawn = stroke(
-        *doc,
-        {.object = object,
-         .drawn =
-             {.kind = *current->kind,
-              .from = anchor.value_or(at),
-              .to = at,
-              .size = brush,
-              .mirror_x = mirror_x,
-              .mirror_y = mirror_y},
-         .symbol = symbol,
-         .fill_symbol = room_fill});
+    const auto grouped = maps && !doc->grouping();
+    if (grouped) { doc->begin_group(); }
+    const auto mapped =
+        maps ? set_legend(
+                   *doc,
+                   {.object = object, .layer = held->layer, .symbol = symbol, .value = held->value})
+             : std::expected<void, std::string>{};
+    const auto drawn = mapped.and_then([&] {
+        return stroke(
+            *doc,
+            {.object = object,
+             .drawn =
+                 {.kind = *current->kind,
+                  .from = anchor.value_or(at),
+                  .to = at,
+                  .size = brush,
+                  .mirror_x = mirror_x,
+                  .mirror_y = mirror_y},
+             .symbol = symbol,
+             .fill_symbol = room_fill});
+    });
+    if (grouped) { doc->end_group(); }
     anchor.reset();
     notice = drawn ? "" : drawn.error();
     reload();

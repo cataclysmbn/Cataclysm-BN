@@ -424,6 +424,8 @@ auto run_editor_session() -> void {
             });
             if (found != entries.end() && state.on_special()) {
                 state.special_terrain = found->id;
+            } else if (found != entries.end() && state.has_rows()) {
+                state.take(*state.catalog, found->id, catalog_row_label(*found));
             } else if (found != entries.end()) {
                 state.mapping_layer = state.catalog->layer;
                 state.mapping_value = mapping_of(*state.catalog, found->id);

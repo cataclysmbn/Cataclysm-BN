@@ -453,6 +453,9 @@ auto symbol_columns(const nlohmann::ordered_json& object, const legend_symbol& e
 auto symbol_summary(const session& state, const std::string& symbol) -> std::string {
     const auto& object = state.doc->objects()[state.object].value;
     const auto entry = std::ranges::find(state.legend, symbol, &legend_symbol::symbol);
+    if (state.held && state.held->symbol == symbol && entry == state.legend.end()) {
+        return shown_symbol(symbol) + " " + state.held->name;
+    }
     if (entry == state.legend.end()) { return shown_symbol(symbol); }
     const auto columns = symbol_columns(object, *entry);
     const auto top = std::ranges::find_if(columns, [](const auto& column) {
@@ -670,25 +673,6 @@ auto placement_forms(
         ec::invoke_affordance({.id = place_apply_id, .label = _("Add placement")}));
 }
 
-/// What a catalog entry of `kind` named `id` shows on the map, for what has a look of its own.
-auto catalog_look(const catalog_kind kind, const std::string& id)
-    -> std::optional<engine_client::look> {
-    namespace world = engine_client::world;
-    if (kind == catalog_kind::terrain && ter_str_id(id).is_valid()) {
-        return world::terrain_appearance(ter_str_id(id).id());
-    }
-    if (kind == catalog_kind::furniture && furn_str_id(id).is_valid()) {
-        return world::furniture_appearance(furn_str_id(id).id());
-    }
-    if (kind == catalog_kind::trap && trap_str_id(id).is_valid()) {
-        return world::trap_appearance(trap_str_id(id).obj());
-    }
-    if (kind == catalog_kind::item && itype_id(id).is_valid()) {
-        return world::item_appearance(*item::spawn_temporary(itype_id(id), calendar::turn));
-    }
-    return std::nullopt;
-}
-
 /// The legend form and the catalog that fills it.
 /// The catalog's page of `found`, with the affordances that filter, page and pick it.
 auto catalog_list(
@@ -701,24 +685,28 @@ auto catalog_list(
          .label = _("Page"),
          .total = found.total,
          .page = state.catalog_page}));
+    // A click takes an entry in hand, as Factorio's palettes do.
     affordances.push_back(ec::invoke_affordance(
-        {.id = catalog_pick_id, .label = _("Use"), .args = row_of(catalog_id)}));
+        {.id = catalog_pick_id, .label = _("Use"), .args = row_of(catalog_id), .role = "select"}));
+    const auto kind = state.on_special() ? catalog_kind::overmap_terrain : state.catalog->kind;
+    const auto hand = state.on_special() ? std::nullopt : state.in_hand();
     return ec::list(
         {.id = catalog_id,
-         .rows =
-             found.entries | std::views::transform([&](const catalog_entry& entry) {
-                 return ec::row{
-                     .id = "entry:" + entry.id,
-                     .label = entry.distinct.empty()
-                                ? entry.name
-                                : string_format("%s (%s)", entry.name, entry.distinct),
-                     .columns = {{.key = "id", .label = _("ID"), .value = entry.id},
-                                 {.key = "mod", .label = _("Mod"), .value = entry.mod}},
-                     .look = catalog_look(
-                         state.on_special() ? catalog_kind::overmap_terrain : state.catalog->kind,
-                         entry.id)};
-             })
-             | std::ranges::to<std::vector>(),
+         .rows = found.entries | std::views::transform([&](const catalog_entry& entry) {
+                     const auto held =
+                         state.on_special()
+                             ? entry.id == state.special_terrain
+                             : hand && hand->layer == state.catalog->layer
+                                   && hand->value == mapping_json_of(*state.catalog, entry.id);
+                     return ec::row{
+                         .id = "entry:" + entry.id,
+                         .label = catalog_row_label(entry),
+                         .selected = held,
+                         .columns = {{.key = "id", .label = _("ID"), .value = entry.id},
+                                     {.key = "mod", .label = _("Mod"), .value = entry.mod}},
+                         .look = catalog_look(kind, entry.id)};
+                 })
+               | std::ranges::to<std::vector>(),
          .total = found.total,
          .offset = state.catalog_page * page_size,
          .selection = "single",

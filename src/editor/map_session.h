@@ -296,8 +296,15 @@ struct diagnostic {
 };
 
 auto catalog_label(const catalog_use& use) -> std::string;
+/// A catalog entry as its row names it: its name, followed by its id when entries of its name are
+/// listed with it.
+auto catalog_row_label(const catalog_entry& entry) -> std::string;
+/// What a catalog entry of `kind` named `id` shows on the map, for what has a look of its own.
+auto catalog_look(catalog_kind kind, const std::string& id) -> std::optional<engine_client::look>;
 /// The mapping of `use`'s layer that places `id`, as the legend form writes it.
 auto mapping_of(const catalog_use& use, const std::string& id) -> std::string;
+/// The same as JSON, as a legend line holds it.
+auto mapping_json_of(const catalog_use& use, const std::string& id) -> nlohmann::ordered_json;
 auto tool_label(const tool& value) -> std::string;
 /// The ids that name an entry: a mapgen's overmap terrains, or the id it is nested or updated by;
 /// a palette's, special's or overmap terrain's id.
@@ -317,6 +324,15 @@ auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string>;
 /// The path the new mapgen form suggests: the first `new_mapgen.json`, `new_mapgen_2.json` and on
 /// that the my_mod folder of the player's mods lacks.
 auto free_new_path() -> std::string;
+
+/// What the catalog put in hand that no symbol of the entry maps yet: the symbol it takes, the
+/// mapping the first stroke that draws it writes, and its name.
+struct held_mapping {
+    std::string symbol;
+    std::string layer;
+    nlohmann::ordered_json value;
+    std::string name;
+};
 
 struct session {
     std::optional<document> doc = std::nullopt;
@@ -348,6 +364,8 @@ struct session {
     std::vector<neighbour_square> beside;
     std::map<std::size_t, std::vector<legend_symbol>> other_legends;
     std::string symbol;
+    /// What the catalog put in hand under `symbol` while no symbol mapped it.
+    std::optional<held_mapping> held = std::nullopt;
     /// The symbol inside a room.
     std::string room_fill;
     /// The side of the square of squares a pencil, line or outline draws with.
@@ -524,8 +542,19 @@ struct session {
 
     /// Draws with `picked` and puts its mapping in the legend form: the layer it places on top,
     /// its own mapping before a palette's, and what it places there; terrain and nothing for a
-    /// symbol nothing maps.
+    /// symbol nothing maps. A drawing tool comes in hand with it, and the status says so.
     auto pick_symbol(const std::string& picked) -> void;
+    /// Takes the catalog's entry `id` of `use`, named `name`, in hand: the symbol that maps it
+    /// alone, else a symbol the legend lacks, which the next stroke maps to it; as `pick_symbol`.
+    auto take(const catalog_use& use, const std::string& id, const std::string& name) -> void;
+    /// What `glyph` places on top by name: its furniture, else its terrain, else what it places
+    /// first; the symbol itself for one that places nothing.
+    auto symbol_name(const std::string& glyph) const -> std::string;
+    /// What is in hand: the mapping held, or the one line the symbol drawn with maps; none for a
+    /// symbol of several lines or none.
+    auto in_hand() const -> std::optional<held_mapping>;
+    /// Puts the pencil in hand unless a drawing tool is, on an entry with rows.
+    auto arm() -> void;
 
     auto set_mapping(const std::string& field, const std::string& text) -> void;
 
