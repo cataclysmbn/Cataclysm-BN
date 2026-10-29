@@ -84,6 +84,7 @@ TEST_CASE(
     for (auto y = 0; y < 24; ++y) { rows.push_back(std::string(24, '.')); }
     rows[3] = "..###" + std::string(19, '.');
     rows[5] = ".....h" + std::string(18, '.');
+    rows[7] = "..ccc" + std::string(19, '.');
     const auto text =
         nlohmann::ordered_json{
             {"type", "mapgen"},
@@ -91,8 +92,8 @@ TEST_CASE(
             {"om_terrain", "house_04"},
             {"object",
              {{"rows", rows},
-              {"terrain", {{".", "t_floor"}, {"#", "t_wall"}, {"h", "t_floor"}}},
-              {"furniture", {{"h", "f_chair"}}}}}}
+              {"terrain", {{".", "t_floor"}, {"#", "t_wall"}, {"h", "t_floor"}, {"c", "t_floor"}}},
+              {"furniture", {{"h", "f_chair"}, {"c", "f_counter"}}}}}}
             .dump();
     for (const auto& p : {point(3, 3), point(5, 5)}) {
         you.memorize_terrain_tile(square(p.x, p.y), "t_rock", 0, 0);
@@ -110,6 +111,11 @@ TEST_CASE(
     CHECK(wall.rotation == joined.rotation);
     CHECK(you.get_terrain_tile(square(5, 5)).tile == "t_floor");
     CHECK(you.get_memorized_tile(square(5, 5)).tile == "f_chair");
+    // So does the middle of a run of counters, whose east end is remembered after it.
+    const auto counter = you.get_memorized_tile(square(3, 7));
+    CHECK(counter.tile == "f_counter");
+    CHECK(counter.subtile == joined.subtile);
+    CHECK(counter.rotation == joined.rotation);
 
     editor::swap_stamp(*stamped);
     CHECK(you.get_terrain_tile(square(3, 3)).tile == was.id().str());

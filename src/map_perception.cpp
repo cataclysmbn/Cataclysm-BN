@@ -885,16 +885,17 @@ auto remember( const map &here, const std::vector<tripoint_bub_ms> &squares ) ->
 {
     auto &you = get_avatar();
     const auto view = current_sight();
-    // Neighbours out of sight join by what is remembered of them, so all of it is remembered first.
-    for( const auto &p : squares ) {
-        you.memorize_terrain_tile( map_local_to_abs( here, p ), here.ter( p ).id().str(), 0, 0 );
-    }
-    for( const auto &p : squares ) {
-        const auto cell = derive( here, observe( here, p, view, true ), view );
-        you.memorize_terrain_tile( cell.position, cell.terrain.tile, cell.terrain.subtile,
-                                   cell.terrain.rotation );
-        you.memorize_tile( cell.position, cell.overlay.tile, cell.overlay.subtile, cell.overlay.rotation );
-        you.memorize_symbol( cell.position, cell.symbol );
+    // Neighbours out of sight join by what is remembered of them: the first pass remembers what each
+    // square holds, the second how it joins what is now beside it.
+    for( auto pass = 0; pass < 2; ++pass ) {
+        for( const auto &p : squares ) {
+            const auto cell = derive( here, observe( here, p, view, true ), view );
+            you.memorize_terrain_tile( cell.position, cell.terrain.tile, cell.terrain.subtile,
+                                       cell.terrain.rotation );
+            you.memorize_tile( cell.position, cell.overlay.tile, cell.overlay.subtile,
+                               cell.overlay.rotation );
+            you.memorize_symbol( cell.position, cell.symbol );
+        }
     }
 }
 
