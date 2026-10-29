@@ -7472,4 +7472,43 @@ TEST_CASE(
     editor::reset_editor_session();
 }
 
+TEST_CASE(
+    "the placements tool says what to do on an empty square, and the new placement form names "
+    "its kinds",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{{{"fill_ter", "t_floor"}}};
+    const auto field = [](const ec::screen_view& screen, const std::string& id) {
+        const auto& fields = body<ec::form_body>(part(screen, "editor:place")).fields;
+        const auto found = std::ranges::find(fields, id, &ec::form_field::id);
+        REQUIRE(found != fields.end());
+        return *found;
+    };
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:tool", {.row = "tool:placements"}); },
+        [](const auto&) { return square_at(5, 5); },
+        [&](const auto& screen) {
+            CHECK(said(screen)
+                  == "No placement here. Mark squares with the Select tool, then add one under "
+                     "New placement.");
+            const auto kind = field(screen, "kind");
+            const auto option = [&](const std::string& id) {
+                const auto found = std::ranges::find(kind.options, id, &ec::form_option::id);
+                REQUIRE(found != kind.options.end());
+                return found->label;
+            };
+            CHECK(option("place_items") == "Item groups (place_items)");
+            CHECK(option("place_monster") == "Monsters (place_monster)");
+            CHECK(option("place_loot") == "Loot (place_loot)");
+            CHECK(field(screen, "value").description.contains("item group"));
+            return invoke("editor:place_set", {.row = "kind", .text = "place_monster"});
+        },
+        [&](const auto& screen) {
+            CHECK(field(screen, "value").description.contains("monster"));
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+}
+
 #endif // CATA_MCP
