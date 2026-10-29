@@ -1046,7 +1046,7 @@ auto game_parts(
 auto new_file_form(const session& state) -> ec::component {
     const auto& kind = state.made.kind;
     const auto special = kind == "special" || kind == "building";
-    return ec::component{
+    auto form = ec::component{
         .id = new_id,
         .affordances = {new_set_id, new_apply_id, new_folder_id},
         .body = ec::form_body{
@@ -1067,7 +1067,7 @@ auto new_file_form(const session& state) -> ec::component {
                       : kind == "nested" ? _("The id mapgens place the chunk by.")
                       : special          ? _("The id the game places it by.")
                                          : _("The id of the overmap terrain the mapgen makes."),
-                  .value = state.made.om_terrain,
+                  .value = new_entry_id(state.made),
                   .required = true},
                  {.id = "fill",
                   // A special's first square places an overmap terrain.
@@ -1100,6 +1100,13 @@ auto new_file_form(const session& state) -> ec::component {
                   .min = 1,
                   .max = max_chunk}},
             .submit = new_apply_id}};
+    // Only a nested chunk has a size of its own.
+    if (kind != "nested") {
+        std::erase_if(std::get<ec::form_body>(form.body).fields, [](const ec::form_field& field) {
+            return field.id == "size";
+        });
+    }
+    return form;
 }
 
 /// The page of data files shown.

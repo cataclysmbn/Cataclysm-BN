@@ -362,10 +362,12 @@ auto run_editor_session() -> void {
             //~ %s is the name of a new folder in the player's mods.
             state.status = string_format(_("The new file goes in a new mod folder, %s."), folder);
         } else if (id == new_apply_id) {
-            const auto made = create_mapgen(state.made);
+            auto named = state.made;
+            named.om_terrain = new_entry_id(named);
+            const auto made = create_mapgen(named);
             if (made) {
                 const auto path = std::exchange(state.made.path, free_new_path());
-                // The next file is named afresh, at the next free path; its kind, fill and size
+                // The next file is named afresh, after the next free path; its kind, fill and size
                 // stay as chosen.
                 state.made.om_terrain.clear();
                 state.open(path);

@@ -5608,8 +5608,8 @@ TEST_CASE(
                 return invoke("editor:new_set", {.row = "kind", .text = "building"});
             case 11:
                 CHECK(label(screen, "om_terrain") == "Building id");
-                // The form starts over after the special was made.
-                CHECK(value(screen, "om_terrain").empty());
+                // The form starts over after the special was made, naming it after the file.
+                CHECK(value(screen, "om_terrain") == "building");
                 return invoke(
                     "editor:new_set", {.row = "om_terrain", .text = "editor_session_test_new"});
             case 12:
@@ -6961,7 +6961,10 @@ TEST_CASE(
         const auto state = captured();
         const auto screen = ec::top_screen(state);
         switch (step++) {
-            case 0: {
+            case 0:
+                // Only a nested chunk asks for a size.
+                return invoke("editor:new_set", {.row = "kind", .text = "nested"});
+            case 1: {
                 const auto& fields = body<ec::form_body>(part(screen, "editor:new")).fields;
                 const auto size = std::ranges::find(fields, "size", &ec::form_field::id);
                 REQUIRE(size != fields.end());
@@ -6975,7 +6978,7 @@ TEST_CASE(
                 CHECK(refusal(state, "editor:new_set", {.row = "size", .text = "12"}).empty());
                 return invoke("editor:open", {.text = file.path.string()});
             }
-            case 1:
+            case 2:
                 // A client picks a history row with one click, which is the jump.
                 CHECK(affordance(screen, "editor:jump").role == "select");
                 return act("QUIT");
@@ -6986,7 +6989,7 @@ TEST_CASE(
     });
 
     editor::run_editor_session();
-    CHECK(step == 2);
+    CHECK(step == 3);
 }
 
 TEST_CASE(

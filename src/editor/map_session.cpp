@@ -492,6 +492,22 @@ auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string> {
     return write_new_file(made.path, entry);
 }
 
+auto new_entry_id(const new_mapgen& made) -> std::string {
+    if (!made.om_terrain.empty()) { return made.om_terrain; }
+    // Words of the file's name, lower case, joined by single underscores.
+    auto id = std::string{};
+    for (const auto c : std::filesystem::path(made.path).stem().string()) {
+        const auto letter = static_cast<unsigned char>(c);
+        if (std::isalnum(letter)) {
+            id += static_cast<char>(std::tolower(letter));
+        } else if (!id.empty() && id.back() != '_') {
+            id += '_';
+        }
+    }
+    while (!id.empty() && id.back() == '_') { id.pop_back(); }
+    return id;
+}
+
 auto free_new_path() -> std::string {
     // A file loose in the mods is no mod's, so the suggestion is in a mod's folder.
     const auto mods = std::filesystem::path(PATH_INFO::user_moddir()) / "my_mod";
