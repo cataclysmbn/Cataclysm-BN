@@ -24,11 +24,13 @@
 #include "input.h"
 #include "item.h"
 #include "map/map.h"
+#include "map/mapdata.h"
 #include "messages.h"
 #include "output.h"
 #include "overmap/overmapbuffer.h"
 #include "path_info.h"
 #include "player_activity.h"
+#include "point.h"
 #include "string_formatter.h"
 #include "translations.h"
 #include "trap.h"
@@ -62,6 +64,22 @@ auto first = std::optional<recent_document>{};
 auto advancing = std::optional<time_point>{};
 /// How far south of the stamped square testing puts the avatar.
 constexpr auto test_distance = 2;
+/// How far from where testing wants the avatar it looks for ground to stand on.
+constexpr auto test_reach = 12;
+
+/// The square nearest `wanted` south of the row `south_of`, the stamp's last, that the avatar can
+/// stand on: no wall, tree, deep water or creature; `wanted` itself when there is none in reach.
+auto open_ground_near(const tripoint_abs_ms& wanted, const int south_of) -> tripoint_abs_ms {
+    auto& here = get_map();
+    const auto open = [&](const tripoint_abs_ms& at) {
+        const auto square = abs_to_bub(at);
+        return at.y() > south_of && here.inbounds(square) && here.passable(square)
+            && !here.has_flag(TFLAG_DEEP_WATER, square) && g->critter_at(square) == nullptr;
+    };
+    const auto near = closest_points_first(wanted, test_reach);
+    const auto found = std::ranges::find_if(near, open);
+    return found == near.end() ? wanted : *found;
+}
 
 /// What `editor:export` writes to `path`: the squares the player marked, as the mapgen of whole
 /// overmap squares when they are that and else as a nested chunk named after the file, or the
@@ -507,18 +525,23 @@ auto run_editor_session() -> void {
             // Nothing stamped yet in the editor's world: the mapgen goes where the avatar is first.
             if (!state.stamped) { state.stamp_here(); }
             if (state.stamped) {
-                // The avatar walks up to the stamped square from the south, with all of it in
+                // The avatar walks up to the stamped squares from the south, with all of them in
                 // view; the editor keeps its document.
-                g->place_player(abs_to_bub(
-                    project_to<coords::ms>(state.stamped->at)
-                    + tripoint_rel_ms(SEEX, SEEY * 2 - 1 + test_distance, 0)));
+                const auto corner = project_to<coords::ms>(state.stamped->at);
+                const auto south_edge = corner.y() + state.stamped->grid.y() * SEEY * 2 - 1;
+                const auto landing = open_ground_near(
+                    tripoint_abs_ms(corner.x() + state.stamped->grid.x() * SEEX,
+                                    south_edge + test_distance, corner.z()),
+                    south_edge);
+                g->place_player(abs_to_bub(landing));
+                const auto away = landing.y() - south_edge;
                 add_msg(
                     m_info,
                     localised::counted{
                         .format = pl_translation("The mapgen is stamped %d square north of you.",
                                                  "The mapgen is stamped %d squares north of you."),
-                        .count = test_distance},
-                    test_distance);
+                        .count = away},
+                    away);
                 return;
             }
         } else if (id == save_id) {
