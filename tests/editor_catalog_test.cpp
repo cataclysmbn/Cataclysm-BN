@@ -2,8 +2,10 @@
 #include "editor/catalog.h"
 
 #include <algorithm>
+#include <cctype>
 #include <ranges>
 #include <string>
+#include <utility>
 
 namespace {
 
@@ -55,7 +57,7 @@ TEST_CASE("catalog pages split the matches without gaps", "[editor_catalog]") {
         std::ranges::copy(ids(editor::search_catalog(next)), std::back_inserter(all));
     }
     CHECK(all.size() == first.total);
-    CHECK(std::ranges::is_sorted(all));
+    std::ranges::sort(all);
     CHECK(std::ranges::adjacent_find(all) == all.end());
     auto past = query;
     past.page = first.total;
@@ -69,4 +71,44 @@ TEST_CASE("a catalog keeps what one mod last defined", "[editor_catalog]") {
     CHECK(editor::search_catalog({.kind = editor::catalog_kind::furniture, .mod = "no_such_mod"})
               .total
           == 0);
+}
+
+TEST_CASE(
+    "a catalog search ranks an exact name first, then names and words starting with it, names "
+    "holding it, and ids holding it",
+    "[editor_catalog]") {
+    const auto found = editor::search_catalog(
+        {.kind = editor::catalog_kind::furniture, .filter = "Bed", .page_size = 1000});
+    REQUIRE(found.total > 5);
+    const auto rank = [](const editor::catalog_entry& entry) {
+        auto name = entry.name;
+        std::ranges::transform(name, name.begin(), [](const unsigned char c) {
+            return static_cast<char>(std::tolower(c));
+        });
+        if (name == "bed") { return 0; }
+        if (name.starts_with("bed")) { return 1; }
+        if (name.contains(" bed")) { return 2; }
+        if (name.contains("bed")) { return 3; }
+        return 4;
+    };
+    CHECK(found.entries.front().id == "f_bed");
+    CHECK(std::ranges::is_sorted(found.entries, {}, [&](const editor::catalog_entry& entry) {
+        return std::pair{rank(entry), entry.id};
+    }));
+    // Something matched by its id alone comes last.
+    CHECK(rank(found.entries.back()) == 4);
+}
+
+TEST_CASE("catalog entries that share a name are each followed by their id", "[editor_catalog]") {
+    const auto found = editor::search_catalog(
+        {.kind = editor::catalog_kind::terrain, .page_size = 100000});
+    auto shared = 0;
+    for (const auto& entry : found.entries) {
+        const auto twins =
+            std::ranges::count(found.entries, entry.name, &editor::catalog_entry::name);
+        INFO(entry.id);
+        CHECK(entry.distinct == (twins > 1 ? entry.id : std::string{}));
+        shared += twins > 1 ? 1 : 0;
+    }
+    CHECK(shared > 0);
 }

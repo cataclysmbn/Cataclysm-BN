@@ -1118,7 +1118,11 @@ TEST_CASE(
                 const auto labels =
                     body<ec::list_body>(part(screen, "editor:catalog")).rows
                     | std::views::transform(&ec::row::label) | std::ranges::to<std::vector>();
-                CHECK(labels == std::vector<std::string>{"adobe floor", "adobe floor (noroof)"});
+                CHECK(
+                    labels
+                    == std::vector<std::string>{
+                        "adobe floor (t_adobe_brick_floor)",
+                        "adobe floor (t_adobe_brick_floor_noroof)"});
                 return invoke("editor:catalog_filter", {.text = "t_grass"});
             }
             case 3:
@@ -7348,6 +7352,43 @@ TEST_CASE(
     });
     editor::run_editor_session();
     CHECK(step == 2);
+}
+
+TEST_CASE(
+    "each catalog tab keeps its own search, and entries of one name are told apart by their ids",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{{{"fill_ter", "t_floor"}}};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:catalog_filter", {.text = "brick wall"}); },
+        [](const auto& screen) {
+            // The name searched for comes first.
+            CHECK(rows_in(screen, "editor:catalog").front().id == "entry:t_brick_wall");
+            return invoke("editor:catalog_kind", {.row = "catalog:furniture"});
+        },
+        [](const auto& screen) {
+            CHECK(body<ec::list_body>(part(screen, "editor:catalog")).filter.empty());
+            return invoke("editor:catalog_filter", {.text = "bed"});
+        },
+        [](const auto& screen) {
+            CHECK(rows_in(screen, "editor:catalog").front().id == "entry:f_bed");
+            return invoke("editor:catalog_kind", {.row = "catalog:terrain"});
+        },
+        [](const auto& screen) {
+            CHECK(body<ec::list_body>(part(screen, "editor:catalog")).filter == "brick wall");
+            return invoke("editor:catalog_filter", {.text = ""});
+        },
+        [](const auto& screen) {
+            // Every row reads differently.
+            auto labels =
+                rows_in(screen, "editor:catalog") | std::views::transform(&ec::row::label)
+                | std::ranges::to<std::vector>();
+            std::ranges::sort(labels);
+            CHECK(std::ranges::adjacent_find(labels) == labels.end());
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
 }
 
 #endif // CATA_MCP
