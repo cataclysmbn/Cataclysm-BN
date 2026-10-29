@@ -3673,42 +3673,19 @@ TEST_CASE(
     "take a click",
     "[editor_vehicle][engine_client_component]") {
     const auto guard = screen_guard{};
-    /// The canvas's cells as a client reads them, each refusal looked up in the grid's list.
-    const auto wire_cells = [](const ec::boundary_state& state) {
-        auto found = std::vector<nlohmann::json>{};
-        const auto walk = [&](this const auto& self, const nlohmann::json& node) -> void {
-            if (node.is_object()) {
-                if (node.value("id", "") == "vehicle:grid") {
-                    for (auto entry : node.at("cells")) {
-                        if (entry.contains("refused")) {
-                            entry["refused"] = node.at("refusals").at(entry["refused"].get<int>());
-                        }
-                        found.push_back(entry);
-                    }
-                    return;
-                }
-                for (const auto& [key, value] : node.items()) { self(value); }
-            } else if (node.is_array()) {
-                for (const auto& value : node) { self(value); }
-            }
-        };
-        walk(nlohmann::json::parse(ec::serialize_interaction_boundary(state)));
-        return found;
-    };
-    const auto refused = [&](const ec::boundary_state& state, const std::string& id) {
-        const auto cells = wire_cells(state);
-        const auto found = std::ranges::find_if(cells, [&](const nlohmann::json& entry) {
-            return entry.value("id", "") == id;
-        });
+    /// Why the cell of `id` refuses the part in hand, as a client reads it at that cell's square.
+    const auto refused = [&](const ec::screen_view& screen, const std::string& id) {
+        const auto grid = wire_grid();
+        const auto entry = wire_square(grid, cell(screen, id).at.x, cell(screen, id).at.y);
         INFO(id);
-        REQUIRE(found != cells.end());
-        CHECK(found->value("enabled", false));
-        return found->value("refused", "");
+        CHECK(entry.value("enabled", false));
+        return entry.contains("refused")
+                 ? grid.at("refusals").at(entry["refused"].get<int>()).get<std::string>()
+                 : std::string{};
     };
-    const auto none_refused = [&](const ec::boundary_state& state) {
-        return std::ranges::none_of(wire_cells(state), [](const nlohmann::json& entry) {
-            return entry.contains("refused");
-        });
+    const auto none_refused = [] {
+        const auto grid = wire_grid();
+        return !grid.contains("refusals") && !grid.at("blank").contains("refused");
     };
     auto step = 0;
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
@@ -3719,19 +3696,21 @@ TEST_CASE(
                 return invoke("vehicle:open", {.row = "prototype:bicycle"});
             case 1:
                 // Nothing in hand refuses no square.
-                CHECK_FALSE(wire_cells(state).empty());
-                CHECK(none_refused(state));
+                CHECK_FALSE(wire_grid().at("cells").empty());
+                CHECK(none_refused());
                 return invoke("vehicle:part_filter", {.text = "headlight"});
             case 2:
                 return invoke("vehicle:choose", {.row = "vpart:headlight"});
             case 3:
                 // East of the rear wheel nothing holds a headlight up, and the square says so.
-                CHECK(refused(state, "mount:2,0").contains("frame"));
+                CHECK(refused(screen, "mount:2,0").contains("frame"));
                 // Far from the frame, where a frame would not hold either, it says so.
-                CHECK(refused(state, "mount:-5,0").contains("touch the vehicle's frame"));
+                CHECK(refused(screen, "mount:-5,0").contains("touch the vehicle's frame"));
+                // Most squares refuse it for that, so the grid's blank cell says it.
+                CHECK(wire_grid().at("blank").contains("refused"));
                 // A frame takes it.
-                CHECK_FALSE(none_refused(state));
-                CHECK(std::ranges::any_of(wire_cells(state), [](const nlohmann::json& entry) {
+                CHECK_FALSE(none_refused());
+                CHECK(std::ranges::any_of(wire_grid().at("cells"), [](const nlohmann::json& entry) {
                     return !entry.contains("refused");
                 }));
                 // The square still takes the click, which says why.
@@ -3742,7 +3721,7 @@ TEST_CASE(
                 return invoke("vehicle:canvas_tool", {.row = "canvas_tool:select"});
             case 5:
                 // Only the install tool refuses squares.
-                CHECK(none_refused(state));
+                CHECK(none_refused());
                 return act("QUIT");
             default:
                 return answer("Leave without saving");
@@ -4399,6 +4378,39 @@ TEST_CASE(
         [](const auto& screen) {
             CHECK(notice_of(screen) == "This mount has no part to remove.");
             CHECK(cell(screen, "mount:5,-1").selected);
+            return act("QUIT");
+        }};
+    CHECK(walk(steps) == steps.size());
+}
+
+TEST_CASE(
+    "the vehicle editor's canvas grows to keep free mounts only once a stroke ends",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto folder = my_mod_folder{};
+    auto origin = ec::grid_point{};
+    auto cols = 0;
+    const auto steps = std::vector<walk_step>{
+        [](const auto&) { return invoke("vehicle:new", {.text = "Long cart"}); },
+        [](const auto&) { return invoke("vehicle:tool_line"); },
+        [&](const auto& screen) {
+            origin = shown_at(screen, 0, 0);
+            cols = canvas(screen).cols;
+            return invoke("vehicle:stroke_begin");
+        },
+        [](const auto&) { return mount_at(0, 0); },
+        // Twelve free mounts west of mount -9,0 lie beyond the canvas.
+        [](const auto&) { return mount_at(-9, 0); },
+        [&](const auto& screen) {
+            CHECK(has_part(screen, -9, 0));
+            // The squares a drag names by their place stay where they were.
+            CHECK(shown_at(screen, 0, 0) == origin);
+            CHECK(canvas(screen).cols == cols);
+            return invoke("vehicle:stroke_end");
+        },
+        [&](const auto& screen) {
+            CHECK(shown_at(screen, -9, 0).x == 12);
+            CHECK(canvas(screen).cols > cols);
             return act("QUIT");
         }};
     CHECK(walk(steps) == steps.size());

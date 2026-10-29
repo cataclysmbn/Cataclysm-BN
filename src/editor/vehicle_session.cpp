@@ -43,6 +43,7 @@
 #include <functional>
 #include <iterator>
 #include <limits>
+#include <map>
 #include <optional>
 #include <ranges>
 #include <string>
@@ -1729,9 +1730,10 @@ struct session {
 
     /// Fits the grid to the vehicle shown: a margin of free mounts around it, and room to build
     /// it out, when it is first drawn; after that it grows, never shrinks or moves, to keep the
-    /// margin around the vehicle and the picked mount.
+    /// margin around the vehicle and the picked mount, once a stroke ends.
     auto fit_frame() -> void {
-        if (!live && !doc) { return; }
+        // A stroke keeps the squares a client names by their place where they are.
+        if ((!live && !doc) || in_stroke()) { return; }
         auto points = mounts();
         if (points.empty()) { points.push_back(cursor); }
         // The picked mount needs no free mounts beyond it.
@@ -1979,6 +1981,20 @@ auto grid_of(const grid_options& options) -> ec::component {
             cells.push_back(std::move(cell));
         }
     }
+    // The empty square most of the canvas shows, which the wire leaves out: its refusal is the
+    // one most empty squares share.
+    auto refusals = std::map<std::string, int>{};
+    for (const auto& cell : cells) {
+        if (cell.label.empty() && !cell.selected) { ++refusals[cell.refused]; }
+    }
+    const auto blank = ec::grid_cell{
+        .glyph = " ",
+        .affordance = mount_id,
+        .refused =
+            refusals.empty()
+                ? std::string()
+                : std::ranges::max_element(refusals, {}, &decltype(refusals)::value_type::second)
+                      ->first};
     auto regions = std::vector<ec::grid_region>{};
     if (selection) {
         const auto a = shown_at(selection->low);
@@ -2007,6 +2023,7 @@ auto grid_of(const grid_options& options) -> ec::component {
             .regions = std::move(regions),
             .secondary = clear_id,
             .secondary_drag = "trail",
+            .blank = blank,
             .stamp = stamp | std::views::transform(turned) | std::ranges::to<std::vector>()}};
 }
 
