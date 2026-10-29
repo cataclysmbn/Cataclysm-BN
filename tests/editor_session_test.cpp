@@ -7629,4 +7629,27 @@ TEST_CASE(
     editor::reset_editor_session();
 }
 
+TEST_CASE(
+    "a catalog pick on an entry whose legend cannot be read takes no symbol and says why",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{{{"terrain", {{".", "t_floor"}, {"#", "t_wall"}, {"x", 5}}}}};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:catalog_filter", {.text = "t_brick_wall"}); },
+        [](const auto&) { return invoke("editor:catalog_pick", {.row = "entry:t_brick_wall"}); },
+        [](const auto& screen) {
+            // Nothing is in hand, so no stroke can map a symbol over one the file has.
+            CHECK(said(screen).starts_with("The legend cannot be read: "));
+            CHECK_FALSE(row_in(screen, "editor:catalog", "entry:t_brick_wall").selected);
+            CHECK(stat_of(screen, "symbol").substr(0, 1) != "#");
+            return square_at(3, 3);
+        },
+        [](const auto&) { return invoke("editor:save"); }};
+    CHECK(walk_map(walk) == walk.size());
+    const auto saved = nlohmann::ordered_json::parse(read_file(file.path))[0]["object"];
+    CHECK(saved["terrain"]["#"] == "t_wall");
+    editor::reset_editor_session();
+}
+
 #endif // CATA_MCP
