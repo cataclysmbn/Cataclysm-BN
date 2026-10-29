@@ -108,7 +108,10 @@ auto standing_in(const stamp& stamped) -> std::optional<tripoint_abs_ms> {
     for (auto y = 0; y < size.y; ++y) {
         for (auto x = 0; x < size.x; ++x) {
             const auto p = point(x, y);
-            const auto edge = x == 0 || y == 0 || x == size.x - 1 || y == size.y - 1;
+            // Beside what is beyond the stamp or the loaded map.
+            const auto edge = std::ranges::any_of(four_adjacent_offsets, [&](const point& step) {
+                return !within(p + step);
+            });
             if (edge && walked(p)) {
                 reached[index(p)] = true;
                 frontier.push_back(p);
@@ -604,8 +607,8 @@ auto run_editor_session() -> void {
             // Nothing stamped yet in the editor's world: the mapgen goes where the avatar is first.
             if (!state.stamped) { state.stamp_here(); }
             if (state.stamped) {
-                // The avatar stands on the stamped squares, indoors when they hold a room, and
-                // else walks up to them from the south; the editor keeps its document.
+                // The avatar stands on the stamped squares, indoors when they hold a room, or
+                // south of them when none is open; the editor keeps its document.
                 const auto corner = project_to<coords::ms>(state.stamped->at);
                 const auto inside = standing_in(*state.stamped);
                 const auto south_edge = corner.y() + state.stamped->grid.y() * SEEY * 2 - 1;
