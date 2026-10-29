@@ -725,6 +725,23 @@
     "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "SAW_M", "level": 1 } ]
   },
   {
+    "result": "dragonskin",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_TORSO",
+    "skill_used": "tailor",
+    "difficulty": 8,
+    "skills_required": [ [ "fabrication", 6 ] ],
+    "time": "40 m",
+    "reversible": true,
+    "decomp_learn": 6,
+    "autolearn": true,
+    "using": [ [ "sewing_standard", 30 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "DRILL", "level": 2 }, { "id": "SAW_M_FINE", "level": 1 } ],
+    "//": "2 extra sheets compared to superalloy ballistic plates, used to fill gaps and provide overlap.",
+    "components": [ [ [ "ballistic_vest_esapi", 1 ] ], [ [ "alloy_sheet", 10 ] ] ]
+  },
+  {
     "result": "peacoat",
     "type": "recipe",
     "category": "CC_ARMOR",
@@ -1551,5 +1568,22 @@
     "autolearn": true,
     "using": [ [ "sewing_standard", 22 ] ],
     "components": [ [ [ "nylon", 18 ] ] ]
+  },
+  {
+    "result": "stab_plate",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_TORSO",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "skills_required": [ [ "computer", 2 ] ],
+    "//": "Additional time required since also welding in addition to printing.",
+    "time": "45 m",
+    "reversible": true,
+    "decomp_learn": 2,
+    "book_learn": [ [ "textbook_computer", 3 ], [ "advanced_electronics", 3 ], [ "reference_fabrication1", 3 ], [ "recipe_melee", 4 ] ],
+    "using": [ [ "3d_printing_standard", 10 ], [ "welding_standard", 20 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 } ],
+    "components": [ [ [ "material_aluminium_ingot", 10 ] ], [ [ "carbon_fiber_filament", 150 ] ] ]
   }
 ]

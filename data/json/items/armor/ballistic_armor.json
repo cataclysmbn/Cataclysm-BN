@@ -28,7 +28,8 @@
     "type": "ARMOR",
     "name": { "str": "lamellar ballistic vest" },
     "description": "A flexible bullet-resistant vest based on the failed \"dragon skin\" design from decades ago, made from a composite of overlapping superalloy plates sandwiched between layers of kevlar.  More durable and covers gaps normal ballistic plates leave exposed, but only protects against rounds up to 5.56x46mm.  It has four pouches capable of carrying magazines.",
-    "weight": "2860 g",
+    "//": "Weight matches a ballistic vest plus 10 superalloy sheets, 2 extra used to fill gaps and provide overlap.",
+    "weight": "9 g",
     "volume": "6 L",
     "price": "1900 USD",
     "price_postapoc": "60 USD",
@@ -177,7 +178,8 @@
     "coverage": 85,
     "encumbrance": 6,
     "warmth": 0,
-    "material_thickness": 8,
+    "material_thickness": 5,
+    "resistance": { "bullet": 58 },
     "flags": [ "FRAGILE", "OUTER", "ALLOWS_WINGS", "ARMOR_PLATE", "COMPACT", "NO_REPAIR" ]
   },
   {
@@ -199,7 +201,7 @@
     "coverage": 85,
     "encumbrance": 15,
     "warmth": 0,
-    "material_thickness": 4,
+    "material_thickness": 3,
     "resistance": { "bullet": 48 },
     "flags": [ "OUTER", "ALLOWS_WINGS", "ARMOR_PLATE", "COMPACT" ]
   },
@@ -222,7 +224,7 @@
     "coverage": 85,
     "encumbrance": 10,
     "warmth": 0,
-    "material_thickness": 4,
+    "material_thickness": 3,
     "resistance": { "bullet": 28 },
     "flags": [ "OUTER", "ALLOWS_WINGS", "ARMOR_PLATE", "COMPACT" ]
   },
@@ -262,6 +264,30 @@
     "warmth": 0,
     "material_thickness": 3,
     "resistance": { "bullet": 18 },
+    "flags": [ "OUTER", "ALLOWS_WINGS", "ARMOR_PLATE", "COMPACT" ]
+  },
+  {
+    "id": "stab_plate",
+    "type": "ARMOR",
+    "name": { "str_sp": "stab-resistant plates" },
+    "description": "A thin composite of aluminum sheets and high-density carbon fiber, designed to provide protection from knives.  Fairly light and easy to move in, and provides excellent protection against cutting and stabbing damage, but not very effective against bullets or blunt impact.  Must be worn in a plate carrier.",
+    "//": "Half as bulky as normal ballistic plates.",
+    "weight": "3450 g",
+    "volume": "2 L",
+    "price": "100 USD",
+    "price_postapoc": "5 USD",
+    "to_hit": -2,
+    "bashing": 3,
+    "material": [ "aluminum", "carbon_fiber" ],
+    "looks_like": "esbi_plate",
+    "symbol": ",",
+    "color": "white",
+    "covers": [ "torso" ],
+    "coverage": 85,
+    "encumbrance": 5,
+    "warmth": 0,
+    "material_thickness": 3,
+    "resistance": { "cut": 32 },
     "flags": [ "OUTER", "ALLOWS_WINGS", "ARMOR_PLATE", "COMPACT" ]
   },
   {
