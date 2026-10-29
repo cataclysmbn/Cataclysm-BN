@@ -151,6 +151,41 @@ auto cell(const ec::screen_view& screen, const std::string& id) -> const ec::gri
     REQUIRE(found != cells.end());
     return *found;
 }
+/// Picking the row `row` of the affordance `id` as a client does, through the engine's reading of
+/// it at the boundary just captured.
+auto pick(const std::string& id, const std::string& row) -> input_event {
+    const auto resolved =
+        ec::resolve_invoke(captured(), {.affordance_id = id, .args = {.row = row}});
+    INFO(row);
+    REQUIRE(resolved.has_value());
+    REQUIRE(std::holds_alternative<ec::invoke_operation>(*resolved));
+    return invoke(id, {.row = std::get<ec::invoke_operation>(*resolved).args.row});
+}
+/// The canvas as a client reads it from the boundary just captured.
+auto wire_grid() -> nlohmann::json {
+    auto found = nlohmann::json{};
+    const auto walk_node = [&](this const auto& self, const nlohmann::json& node) -> void {
+        if (node.is_object() && node.value("id", "") == "vehicle:grid") {
+            found = node;
+        } else if (node.is_structured()) {
+            for (const auto& value : node) { self(value); }
+        }
+    };
+    walk_node(nlohmann::json::parse(ec::serialize_interaction_boundary(captured())));
+    return found;
+}
+/// The cell a client reads at square `x`,`y`: the one listed there, else the grid's blank one.
+auto wire_square(const nlohmann::json& grid, const int x, const int y) -> nlohmann::json {
+    for (const auto& entry : grid.at("cells")) {
+        if (entry.at("x") == x && entry.at("y") == y) { return entry; }
+    }
+    return grid.value("blank", nlohmann::json{});
+}
+/// Picking square `x`,`y` of the canvas as a client does: by the id of the cell listed there,
+/// else by the square.
+auto square_at(const nlohmann::json& grid, const int x, const int y) -> std::string {
+    return wire_square(grid, x, y).value("id", string_format("square:%d,%d", x, y));
+}
 auto stat(const ec::screen_view& screen, const std::string& key) -> const ec::panel_stat& {
     const auto& stats = body<ec::panel_body>(part(screen, "vehicle:document")).stats;
     const auto found = std::ranges::find(stats, key, &ec::panel_stat::key);
@@ -4280,6 +4315,93 @@ TEST_CASE(
     CHECK(mounts.size() == 400);
     CHECK(mounts.contains(point(-9, -9)));
     CHECK(mounts.contains(point(10, 10)));
+}
+
+TEST_CASE(
+    "the vehicle editor installs on the mount a client picks by an unlisted square, in a turned "
+    "view too",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto folder = my_mod_folder{};
+    /// How a client picks the square `east` and `south` of where mount 0,0 shows on the canvas
+    /// `grid`, and whether the grid lists a cell there.
+    struct picked {
+        std::string row;
+        bool listed = false;
+    };
+    const auto beside = [](const nlohmann::json& grid, const int east, const int south) -> picked {
+        const auto origin = std::ranges::find_if(grid.at("cells"), [](const nlohmann::json& entry) {
+            return entry.value("id", "") == "mount:0,0";
+        });
+        REQUIRE(origin != grid.at("cells").end());
+        const auto x = origin->at("x").get<int>() + east;
+        const auto y = origin->at("y").get<int>() + south;
+        return {.row = square_at(grid, x, y), .listed = wire_square(grid, x, y).contains("id")};
+    };
+    // A drag reads the squares off the canvas as it was when the drag began.
+    auto trail = std::vector<picked>{};
+    auto line = std::vector<picked>{};
+    const auto steps = std::vector<walk_step>{
+        [](const auto&) { return invoke("vehicle:new", {.text = "Turn cart"}); },
+        // The front, east, turns south.
+        [](const auto&) { return invoke("vehicle:view_cw"); },
+        [](const auto&) { return invoke("vehicle:tool_install"); },
+        [&](const auto&) {
+            const auto grid = wire_grid();
+            // South of mount 0,0 on the canvas are the mounts in front of it.
+            trail = {beside(grid, 0, 1), beside(grid, 0, 2), beside(grid, 0, 3)};
+            // Next to the frame a frame can go, so that square is listed; the ones beyond are not.
+            CHECK(trail[0].row == "mount:1,0");
+            CHECK_FALSE(trail[1].listed);
+            CHECK_FALSE(trail[2].listed);
+            return invoke("vehicle:stroke_begin");
+        },
+        [&](const auto&) { return pick("vehicle:mount", trail[0].row); },
+        [&](const auto&) { return pick("vehicle:mount", trail[1].row); },
+        [&](const auto&) { return pick("vehicle:mount", trail[2].row); },
+        [](const auto&) { return invoke("vehicle:stroke_end"); },
+        [&](const auto& screen) {
+            CHECK(has_part(screen, 1, 0));
+            CHECK(has_part(screen, 2, 0));
+            CHECK(has_part(screen, 3, 0));
+            CHECK(cell(screen, "mount:3,0").selected);
+            // West of mount 0,0 is the mount on its right, too far from the frame for one.
+            const auto far = beside(wire_grid(), -2, 0);
+            CHECK_FALSE(far.listed);
+            return pick("vehicle:mount", far.row);
+        },
+        [](const auto& screen) {
+            CHECK(cell(screen, "mount:0,2").selected);
+            CHECK_FALSE(has_part(screen, 0, 2));
+            CHECK(notice_of(screen).contains("touch the vehicle's frame"));
+            return invoke("vehicle:tool_line");
+        },
+        [&](const auto&) {
+            const auto grid = wire_grid();
+            // East of mount 0,0 on the canvas are the mounts on its left.
+            line = {beside(grid, 1, 0), beside(grid, 3, 0)};
+            CHECK_FALSE(line[1].listed);
+            return invoke("vehicle:stroke_begin");
+        },
+        [&](const auto&) { return pick("vehicle:mount", line[0].row); },
+        [&](const auto&) { return pick("vehicle:mount", line[1].row); },
+        [](const auto&) { return invoke("vehicle:stroke_end"); },
+        [&](const auto& screen) {
+            INFO(notice_of(screen));
+            CHECK(said(screen) == "Installed frame on 3 squares.");
+            CHECK(has_part(screen, 0, -1));
+            CHECK(has_part(screen, 0, -3));
+            // A secondary click on a square the grid does not list erases on its mount.
+            const auto empty = beside(wire_grid(), 1, 5);
+            CHECK_FALSE(empty.listed);
+            return pick("vehicle:clear", empty.row);
+        },
+        [](const auto& screen) {
+            CHECK(notice_of(screen) == "This mount has no part to remove.");
+            CHECK(cell(screen, "mount:5,-1").selected);
+            return act("QUIT");
+        }};
+    CHECK(walk(steps) == steps.size());
 }
 
 TEST_CASE(
