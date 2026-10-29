@@ -31,6 +31,7 @@
 #    include "map/map.h"
 #    include "map/mapbuffer.h"
 #    include "map/mapdata.h"
+#    include "map_memory.h"
 #    include "mapgen/mapgen_constructor.h"
 #    include "mapgen/mapgen_functions.h"
 #    include "message_feed.h"
@@ -3052,9 +3053,9 @@ TEST_CASE(
     });
 
     editor::run_editor_session();
-    // The avatar plays just south of the stamped square, looking at it.
+    // The avatar plays on the stamped square, by the middle of its south edge.
     CHECK(get_avatar().abs_pos()
-          == project_to<coords::ms>(omt) + tripoint_rel_ms(SEEX, SEEY * 2 + 1, 0));
+          == project_to<coords::ms>(omt) + tripoint_rel_ms(SEEX, SEEY * 2 - 1, 0));
     CHECK(step == 7);
     editor::reset_editor_session();
 }
@@ -7532,7 +7533,8 @@ TEST_CASE(
     rows[22] = ".##########+###########.";
     const auto file = mod_file{
         {{"rows", rows},
-         {"terrain", {{".", "t_grass"}, {"_", "t_floor"}, {"#", "t_wall"}, {"+", "t_door_c"}}},
+         {"terrain",
+          {{".", "t_grass"}, {"_", "t_floor"}, {"h", "t_floor"}, {"#", "t_wall"}, {"+", "t_door_c"}}},
          {"furniture", {{"h", "f_chair"}}}}};
     Messages::clear_messages();
     const auto corner = project_to<coords::ms>(get_avatar().abs_omt_pos());
