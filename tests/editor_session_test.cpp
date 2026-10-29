@@ -2037,8 +2037,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "the editor opens a mapgen of an overmap terrain the game lacks and says so among the "
-    "diagnostics",
+    "the editor opens a mapgen of an overmap terrain the game lacks without calling it a problem",
     "[editor_session][engine_client_component]") {
     const auto guard = screen_guard{};
     const auto file = mod_file{};
@@ -2059,7 +2058,8 @@ TEST_CASE(
                 CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
                 CHECK(walls(screen) == 0);
                 const auto& rows = body<ec::list_body>(part(screen, "editor:diagnostics")).rows;
-                CHECK(std::ranges::any_of(rows, [](const ec::row& row) {
+                // A new mapgen's terrain is one the game lacks; the document stats hint at it.
+                CHECK_FALSE(std::ranges::any_of(rows, [](const ec::row& row) {
                     return row.label.contains("zz_no_such_terrain");
                 }));
                 return act("QUIT");

@@ -6463,42 +6463,14 @@ auto check_placements_inside(const JsonObject& object, const point_rel_ms& size)
     }
 }
 
-/// Names, where they are written, the overmap terrains nothing uses and the palettes nobody
-/// defines; the loader names them only after loading every file, or without a place.
-auto check_ids(const JsonObject& entry, const JsonObject& object) -> void {
+/// Names, where they are written, the palettes nobody defines; the loader names them only after
+/// loading every file, or without a place.
+auto check_ids(const JsonObject& object) -> void {
     const auto said_at = [](auto&& holder, const std::string& message, const auto& where) {
         try {
             holder.throw_error(message, where);
         } catch (const JsonError& e) { debugmsg("(json-error)\n%s", e.what()); }
     };
-    // The loader registers no mapgen of weight 0 and drops the one for "null".
-    const auto registered = entry.get_int("weight", 1000) > 0 && !entry.get_bool("disabled", false);
-    if (registered && entry.has_member("om_terrain")) {
-        const auto& usages = oter_mapgen.usages();
-        const auto unused = [&](const std::string& name) {
-            return name != "null" && !usages.contains(name);
-        };
-        const auto message = [](const std::string& name) {
-            return string_format("Mapgen %s is not used by anything!", name);
-        };
-        if (entry.has_string("om_terrain")) {
-            const auto name = entry.get_string("om_terrain");
-            if (unused(name)) { said_at(entry, message(name), std::string("om_terrain")); }
-        } else {
-            auto names = entry.get_array("om_terrain");
-            for (auto index = 0; index < static_cast<int>(names.size()); ++index) {
-                if (names.has_array(index)) {
-                    auto row = names.get_array(index);
-                    for (auto column = 0; column < static_cast<int>(row.size()); ++column) {
-                        const auto name = row.get_string(column);
-                        if (unused(name)) { said_at(row, message(name), column); }
-                    }
-                } else if (const auto name = names.get_string(index); unused(name)) {
-                    said_at(names, message(name), index);
-                }
-            }
-        }
-    }
     if (!object.has_array("palettes")) { return; }
     auto palettes = object.get_array("palettes");
     for (auto index = 0; index < static_cast<int>(palettes.size()); ++index) {
@@ -6571,7 +6543,7 @@ auto load_detached(const JsonObject& entry, const JsonObject& object) -> editor:
 /// using it would, and checks the result. The entry stands in for the palette of its id meanwhile,
 /// so that a loop through it is found.
 auto check_palette(const JsonObject& entry) -> void {
-    check_ids(entry, entry);
+    check_ids(entry);
     const auto id = palette_id(entry.get_string("id"));
     auto kept = palettes.extract(id);
     const auto restore = on_out_of_scope([&] {
@@ -6591,6 +6563,10 @@ auto check_palette(const JsonObject& entry) -> void {
 
 } // namespace
 
+auto editor::terrain_placed(const std::string& name) -> bool {
+    return name == "null" || oter_mapgen.usages().contains(name);
+}
+
 auto editor::check_mapgen(const std::string_view text) -> std::vector<loader_message> {
     auto thrown = std::optional<std::string>{};
     const auto said = capture_each_debugmsg_during([&] {
@@ -6607,7 +6583,7 @@ auto editor::check_mapgen(const std::string_view text) -> std::vector<loader_mes
                 entry.throw_error("the editor reads only \"json\" mapgen", "method");
             }
             const auto object = entry.get_object("object");
-            check_ids(entry, object);
+            check_ids(object);
             load_detached(entry, object);
         } catch (const JsonError& e) { thrown = e.what(); }
     });

@@ -27,6 +27,10 @@ auto plain_loader_text(std::string_view message) -> std::string;
 /// mapgen using it would, so that a loop through it is reported.
 auto check_mapgen(std::string_view text) -> std::vector<loader_message>;
 
+/// Whether an overmap terrain, overmap special or building the game loaded places the overmap
+/// terrain `name`, so that the game generates its mapgen in play.
+auto terrain_placed(const std::string& name) -> bool;
+
 /// While it lives, each palette and nested chunk entry of `texts` stands in for the game's ones of
 /// its id, as if the game had loaded it, so that a mapgen reads the palettes and places the chunks
 /// of its own file as they are edited. What loading them said is dropped: checking one reports it.

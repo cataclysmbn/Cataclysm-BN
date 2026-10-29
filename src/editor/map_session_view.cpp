@@ -4,6 +4,7 @@
 #include "editor/editor_access.h"
 #include "editor/history_label.h"
 #include "editor/map_session.h"
+#include "editor/mapgen_check.h"
 #include "editor/mapgen_legend.h"
 #include "editor/mapgen_legend_edit.h"
 #include "editor/mapgen_legend_text.h"
@@ -634,6 +635,24 @@ auto document_stats(const session& state) -> std::vector<ec::panel_stat> {
          .value = doc.dirty() ? _("No") : _("Yes"),
          .tone = doc.dirty() ? "bad" : "good"},
     };
+    // A mapgen nothing places yet is what a new one is: a hint of how to see it, not a problem.
+    const auto& entry =
+        state.on_mapgen() ? doc.objects()[state.object].value : nlohmann::ordered_json::object();
+    const auto number = [&](const char* const key, const int otherwise) {
+        return entry.contains(key) && entry[key].is_number_integer()
+                 ? entry[key].get<int>()
+                 : otherwise;
+    };
+    const auto registered =
+        number("weight", 1000) > 0 && !(entry.contains("disabled") && entry["disabled"] == true);
+    if (registered && entry.contains("om_terrain")
+        && !std::ranges::all_of(entry_ids(entry), &terrain_placed)) {
+        stats.push_back(
+            {.key = "placed",
+             .label = _("Placed by"),
+             .value = _("Not placed by any overmap terrain or special yet; World > Test stamps it "
+                        "here.")});
+    }
     // A palette has no rows to draw on, and no drawing state.
     if (state.on_mapgen()) {
         if (!state.symbol.empty()) {
