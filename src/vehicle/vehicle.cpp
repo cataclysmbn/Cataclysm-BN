@@ -2093,8 +2093,9 @@ auto vehicle::install_part(const tripoint_mnt_veh& dp, vehicle_part&& new_part) 
         }
     }
 
+    // Parts the vector moves as it grows keep their item locations; see vehicle_part's move
+    // constructor. Only the new part takes this vehicle's.
     parts.push_back(std::move(new_part));
-    refresh_locations_hack();
     auto& pt = parts.back();
     pt.set_vehicle_hack(this);
 
