@@ -4505,6 +4505,56 @@ TEST_CASE("the vehicle editor fills a 60 by 60 rectangle of frames at once", "[e
 }
 
 TEST_CASE(
+    "the vehicle editor erases a square of a 60 by 60 frame and deletes the rest at once",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto folder = my_mod_folder{};
+    auto began = steady::time_point{};
+    auto erased = steady::duration{};
+    auto deleted = steady::duration{};
+    auto steps = std::vector<walk_step>{[](const auto&) {
+        return invoke("vehicle:new", {.text = "Raft"});
+    }};
+    std::ranges::move(frames_on(mounts_in({-29, -29}, {30, 30}, [](const point&) { return true; })),
+                      std::back_inserter(steps));
+    std::ranges::move(
+        std::vector<walk_step>{
+            [](const auto&) { return invoke("vehicle:tool_remove"); },
+            [&](const auto&) {
+                began = steady::now();
+                return mount_at(-29, -29);
+            },
+            [&](const auto& screen) {
+                erased = steady::now() - began;
+                CHECK(said(screen) == "Removed frame at -29,-29.");
+                return invoke("vehicle:tool_select");
+            },
+            [](const auto&) { return invoke("vehicle:stroke_begin"); },
+            [](const auto&) { return mount_at(-29, -29); },
+            [](const auto&) { return mount_at(30, 30); },
+            [](const auto&) { return invoke("vehicle:stroke_end"); },
+            [&](const auto&) {
+                began = steady::now();
+                return invoke("vehicle:delete_mounts");
+            },
+            [&](const auto& screen) {
+                deleted = steady::now() - began;
+                CHECK(said(screen)
+                      == "Deleted 3598 parts. 1 part refused: A vehicle keeps its last part.");
+                return act("QUIT");
+            }},
+        std::back_inserter(steps));
+    CHECK(walk(steps) == steps.size());
+    const auto ms = [](const steady::duration& took) {
+        return std::chrono::duration_cast<std::chrono::milliseconds>(took).count();
+    };
+    WARN("R10 erase " << ms(erased) << " ms, delete " << ms(deleted) << " ms");
+    // Mostly drawing the canvas again, as for the line of seats.
+    CHECK(ms(erased) < 1000);
+    CHECK(ms(deleted) < 600);
+}
+
+TEST_CASE(
     "the vehicle editor shows the canvas of a 60 by 60 frame with a part held at once",
     "[editor_vehicle][engine_client_component]") {
     const auto guard = screen_guard{};

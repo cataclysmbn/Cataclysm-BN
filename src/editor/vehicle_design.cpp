@@ -57,13 +57,20 @@ auto part_named(const nlohmann::ordered_json& value) -> std::string {
              : std::string{};
 }
 
-/// The prototype with its display `blueprint` drawn again from what it builds, unless a palette
-/// reads it, so that it shows the parts it has.
+/// The prototype with its display `blueprint` drawn again from `veh`, the vehicle it builds,
+/// unless a palette reads it, so that it shows the parts it has.
+auto drawn(nlohmann::ordered_json prototype, const vehicle& veh) -> nlohmann::ordered_json {
+    if (prototype.contains("blueprint") && !prototype.contains("palette")) {
+        prototype["blueprint"] = blueprint_rows(veh);
+    }
+    return prototype;
+}
+
+/// The prototype `drawn` from the vehicle it builds; as it is when the game cannot build it.
 auto redrawn(nlohmann::ordered_json prototype) -> nlohmann::ordered_json {
     if (!prototype.contains("blueprint") || prototype.contains("palette")) { return prototype; }
     const auto built = build_design(prototype.dump());
-    if (built.blueprint) { prototype["blueprint"] = blueprint_rows(*built.blueprint); }
-    return prototype;
+    return built.blueprint ? drawn(std::move(prototype), *built.blueprint) : prototype;
 }
 
 auto read_text(const std::filesystem::path& path) -> std::string {
@@ -671,8 +678,8 @@ auto spread(
     const auto mount_of = [](const point& at) { return tripoint_mnt_veh(at.x, at.y, 0); };
     auto pending =
         wanted | std::views::filter([&](const part_install& install) {
-            return std::ranges::none_of(
-                veh.parts_at_relative(mount_of(install.mount), false), [&](const int index) {
+            return std::ranges::
+                none_of(veh.parts_at_relative(mount_of(install.mount), true), [&](const int index) {
                     return veh.part_info(index).get_id().str() == install.part;
                 });
         })
@@ -687,7 +694,7 @@ auto spread(
         for (const auto& install : pending) {
             const auto id = vpart_id(install.part);
             const auto at = mount_of(install.mount);
-            if (veh.can_mount(at, id) && veh.install_part(at, id) >= 0) {
+            if (veh.install_part(at, id) >= 0) {
                 if (id->has_flag(VPFLAG_ENGINE)) {
                     veh.enable_refresh();
                     veh.suspend_refresh();
@@ -774,22 +781,28 @@ auto erase_parts(nlohmann::ordered_json& prototype, const std::vector<std::strin
     }
 }
 
-/// How many pieces the mounts make, joined side to side.
-auto pieces(std::set<point> mounts) -> int {
-    auto count = 0;
-    while (!mounts.empty()) {
-        ++count;
-        auto reached = std::vector<point>{*mounts.begin()};
-        mounts.erase(mounts.begin());
-        while (!reached.empty()) {
-            const auto at = reached.back();
-            reached.pop_back();
-            for (const auto& step : four_adjacent_offsets) {
-                if (mounts.erase(at + step) > 0) { reached.push_back(at + step); }
+/// Whether taking the mount `at` out of `mounts` leaves the mounts beside it in more than one
+/// piece, joined side to side.
+auto splits(const std::set<point>& mounts, const point& at) -> bool {
+    auto beside =
+        four_adjacent_offsets | std::views::transform([&](const point& step) { return at + step; })
+        | std::views::filter([&](const point& next) { return mounts.contains(next); })
+        | std::ranges::to<std::set>();
+    if (beside.size() < 2) { return false; }
+    // Spreads from one of them nearest first, so that a way around `at` close by ends it soon.
+    auto reached = std::vector<point>{*beside.begin()};
+    auto seen = std::set<point>{at, *beside.begin()};
+    beside.erase(beside.begin());
+    for (auto next = std::size_t{0}; next < reached.size() && !beside.empty(); ++next) {
+        const auto from = reached[next];
+        for (const auto& step : four_adjacent_offsets) {
+            if (mounts.contains(from + step) && seen.insert(from + step).second) {
+                beside.erase(from + step);
+                reached.push_back(from + step);
             }
         }
     }
-    return count;
+    return !beside.empty();
 }
 
 } // namespace
@@ -845,21 +858,20 @@ auto remove_parts(const nlohmann::ordered_json& prototype, const std::vector<poi
                 _("The game cannot build this prototype; fix what it reports first."));
         }
         const auto& veh = *built.blueprint;
-        auto occupied =
-            parts | std::views::transform(&design_part::mount) | std::ranges::to<std::set>();
-        auto shown = pieces(occupied);
+        // The indexes of the parts on each mount, in the order the game installs them.
+        auto stacks = std::map<point, std::vector<std::size_t>>{};
+        for (const auto& [index, part] : parts | std::views::enumerate) {
+            stacks[part.mount].push_back(static_cast<std::size_t>(index));
+        }
+        auto occupied = stacks | std::views::keys | std::ranges::to<std::set>();
         auto removed = std::vector<std::string>{};
         auto taken_from = std::vector<point>{};
         auto left = 0;
         auto reason = std::string{};
         for (const auto& at : mounts) {
-            const auto here =
-                std::views::iota(std::size_t{0}, parts.size())
-                | std::views::filter([&](const std::size_t index) {
-                      return parts[index].mount == at;
-                  })
-                | std::ranges::to<std::vector>();
-            if (here.empty()) { continue; }
+            const auto found = stacks.find(at);
+            if (found == stacks.end()) { continue; }
+            const auto& here = found->second;
             const auto top = here.back();
             auto why = std::string{};
             if (parts[top].from_palette) {
@@ -870,14 +882,10 @@ auto remove_parts(const nlohmann::ordered_json& prototype, const std::vector<poi
                 if (why.empty()) { why = _("The game keeps this part."); }
             } else if (here.size() == 1) {
                 // Parts going together may split what each alone would not.
-                auto without = occupied;
-                without.erase(at);
-                const auto apart = pieces(without);
-                if (apart > shown) {
+                if (splits(occupied, at)) {
                     why = _("Removing this part would split the vehicle.");
                 } else {
-                    occupied = std::move(without);
-                    shown = apart;
+                    occupied.erase(at);
                 }
             }
             if (why.empty()) {
@@ -891,13 +899,13 @@ auto remove_parts(const nlohmann::ordered_json& prototype, const std::vector<poi
         if (removed.empty()) {
             tally.refused = left;
             tally.reason = reason;
-            break;
+            // The pass built what is left.
+            return stroke_design{.prototype = drawn(std::move(next), veh), .tally = tally};
         }
         tally.done += static_cast<int>(removed.size());
         std::ranges::copy(taken_from, std::back_inserter(tally.removed));
         erase_parts(next, removed);
     }
-    return stroke_design{.prototype = redrawn(std::move(next)), .tally = tally};
 }
 
 auto install_live_parts(vehicle& veh, const stroke_install& install)

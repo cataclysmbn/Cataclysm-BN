@@ -299,6 +299,51 @@ TEST_CASE("removing a part follows the game's unmount rules", "[editor_vehicle]"
     }
 }
 
+TEST_CASE("removing parts together keeps the vehicle in one piece", "[editor_vehicle]") {
+    /// A design of a frame on each of `mounts`.
+    const auto frames = [](const std::vector<point>& mounts) {
+        auto parts = ordered_json::array();
+        for (const auto& at : mounts) {
+            parts.push_back({{"x", at.x}, {"y", at.y}, {"parts", {"frame_cross"}}});
+        }
+        return ordered_json{
+            {"id", "frame_square"}, {"type", "vehicle"}, {"name", "Square"}, {"parts", parts}};
+    };
+    const auto mounts_left = [](const ordered_json& prototype) {
+        return editor::design_parts(prototype) | std::views::transform(&editor::design_part::mount)
+             | std::ranges::to<std::set>();
+    };
+
+    SECTION("of two opposite corners of a square, the second stays to hold the others together") {
+        const auto done =
+            editor::remove_parts(frames({{0, 0}, {1, 0}, {0, 1}, {1, 1}}), {{0, 0}, {1, 1}});
+        REQUIRE(done.has_value());
+        CHECK(done->tally.done == 1);
+        CHECK(done->tally.refused == 1);
+        CHECK(done->tally.reason == "Removing this part would split the vehicle.");
+        CHECK(mounts_left(done->prototype) == std::set<point>{{1, 0}, {0, 1}, {1, 1}});
+    }
+    SECTION("the middle and a corner of a square go, the rest joined the long way around") {
+        const auto square = frames(
+            {{0, 0}, {1, 0}, {2, 0}, {0, 1}, {1, 1}, {2, 1}, {0, 2}, {1, 2}, {2, 2}});
+        const auto done = editor::remove_parts(square, {{1, 1}, {0, 0}});
+        REQUIRE(done.has_value());
+        CHECK(done->tally.done == 2);
+        CHECK(done->tally.refused == 0);
+        CHECK(mounts_left(done->prototype)
+              == std::set<point>{{1, 0}, {2, 0}, {0, 1}, {2, 1}, {0, 2}, {1, 2}, {2, 2}});
+    }
+    SECTION("the blueprint is drawn again from what is left") {
+        auto row = frames({{0, 0}, {1, 0}, {2, 0}});
+        row["blueprint"] = ordered_json::array({"###"});
+        const auto done = editor::remove_parts(row, {{2, 0}});
+        REQUIRE(done.has_value());
+        CHECK(done->prototype.at("blueprint")
+              == ordered_json(editor::blueprint_rows(*built(done->prototype).blueprint)));
+        CHECK(done->prototype.at("blueprint")[0].get<std::string>().size() == 2);
+    }
+}
+
 TEST_CASE("a part moves within its mount's install order as the game allows", "[editor_vehicle]") {
     const auto bicycle = core_prototype("bicycle");
     const auto listed = [](const ordered_json& prototype) {
