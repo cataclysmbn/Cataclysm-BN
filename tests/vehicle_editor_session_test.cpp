@@ -4788,6 +4788,129 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the vehicle editor names a pencil or eraser drag on a world vehicle in place by what it did",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    clear_map();
+    const auto cleanup_vehicles = on_out_of_scope([] { clear_vehicles(); });
+    const auto at = get_avatar().bub_pos() + tripoint_rel_ms(8, 0, 0);
+    REQUIRE(editor::spawn_design(vproto_id("bicycle"), at, {}) != nullptr);
+    const auto steps = std::vector<walk_step>{
+        [](const auto&) { return invoke("vehicle:source", {.row = "source:world"}); },
+        [](const auto&) { return invoke("vehicle:edit", {.row = "world:0"}); },
+        [](const auto&) { return invoke("vehicle:part_filter", {.text = "xlframe_vertical"}); },
+        [](const auto&) { return invoke("vehicle:choose", {.row = "vpart:xlframe_vertical"}); },
+        [](const auto&) { return invoke("vehicle:tool_install"); },
+        [](const auto&) { return invoke("vehicle:stroke_begin"); },
+        [](const auto&) { return mount_at(0, 1); },
+        [](const auto&) { return mount_at(0, 2); },
+        [](const auto&) { return mount_at(0, 3); },
+        [](const auto&) { return invoke("vehicle:stroke_end"); },
+        [](const auto& screen) {
+            CHECK(step_at(screen) == "Install extra light frame ×3");
+            return invoke("vehicle:stroke_begin");
+        },
+        [](const auto&) { return invoke("vehicle:clear", {.row = "mount:0,3"}); },
+        [](const auto&) { return invoke("vehicle:clear", {.row = "mount:0,2"}); },
+        [](const auto&) { return invoke("vehicle:stroke_end"); },
+        [](const auto& screen) {
+            CHECK(step_at(screen) == "Remove extra light frame ×2");
+            // A click is a step of its own, named by the mount.
+            return mount_at(0, 2);
+        },
+        [](const auto& screen) {
+            CHECK(step_at(screen) == "Install extra light frame at 0,2");
+            return invoke("vehicle:done");
+        },
+        [](const auto&) { return act("QUIT"); },
+    };
+    CHECK(walk(steps) == steps.size());
+}
+
+TEST_CASE(
+    "the vehicle editor keeps what it copied when a cut removes nothing", "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto folder = my_mod_folder{};
+    const auto steps = std::vector<walk_step>{
+        [](const auto&) { return invoke("vehicle:new", {.text = "Solo"}); },
+        [](const auto&) { return invoke("vehicle:part_filter", {.text = "seat"}); },
+        [](const auto&) { return invoke("vehicle:choose", {.row = "vpart:seat"}); },
+        [](const auto&) { return mount_at(0, 0); },
+        [](const auto&) { return invoke("vehicle:copy_mounts"); },
+        [](const auto& screen) {
+            CHECK(said(screen) == "Copied 2 parts.");
+            // The seat goes, the frame stays: the last part of a vehicle.
+            return invoke("vehicle:remove");
+        },
+        [](const auto&) { return invoke("vehicle:cut_mounts"); },
+        [](const auto& screen) {
+            CHECK(said(screen).empty());
+            CHECK(notice_of(screen) == "A vehicle keeps its last part.");
+            return invoke("vehicle:tool_paste");
+        },
+        [](const auto&) { return mount_at(0, 1); },
+        [](const auto& screen) {
+            // What was copied before, the frame and the seat.
+            CHECK(said(screen) == "Pasted 2 parts.");
+            CHECK(cell(screen, "mount:0,1").label.contains("seat"));
+            return act("QUIT");
+        },
+    };
+    CHECK(walk(steps) == steps.size());
+}
+
+TEST_CASE(
+    "the vehicle editor keeps its canvas over the same parts when deleting moves a world "
+    "vehicle's mounts",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    clear_map();
+    const auto cleanup_vehicles = on_out_of_scope([] { clear_vehicles(); });
+    const auto at = get_avatar().bub_pos() + tripoint_rel_ms(8, 0, 0);
+    REQUIRE(editor::spawn_design(vproto_id("bicycle"), at, {}) != nullptr);
+    auto rear = ec::grid_point{};
+    auto marked = ec::grid_region{};
+    const auto selection = [](const ec::screen_view& screen) -> ec::grid_region {
+        const auto& regions = canvas(screen).regions;
+        const auto found =
+            std::ranges::find(regions, std::string("selection"), &ec::grid_region::id);
+        REQUIRE(found != regions.end());
+        return *found;
+    };
+    const auto steps = std::vector<walk_step>{
+        [](const auto&) { return invoke("vehicle:source", {.row = "source:world"}); },
+        [](const auto&) { return invoke("vehicle:edit", {.row = "world:0"}); },
+        [](const auto&) { return invoke("vehicle:tool_select"); },
+        [](const auto&) { return invoke("vehicle:stroke_begin"); },
+        [](const auto&) { return mount_at(0, 0); },
+        [](const auto&) { return mount_at(1, 0); },
+        [](const auto&) { return invoke("vehicle:stroke_end"); },
+        [&](const auto& screen) {
+            rear = shown_at(screen, -1, 0);
+            marked = selection(screen);
+            return invoke("vehicle:delete_mounts");
+        },
+        [&](const auto& screen) {
+            // Taking 0,0 away moved every mount; the rear wheel and its basket still show where
+            // they did, and the selection over the squares it marked.
+            const auto& cells = canvas(screen).cells;
+            const auto shown = std::ranges::find(cells, rear, &ec::grid_cell::at);
+            REQUIRE(shown != cells.end());
+            CHECK(shown->label.contains("basket"));
+            CHECK(selection(screen).from == marked.from);
+            CHECK(selection(screen).to == marked.to);
+            CHECK(
+                std::ranges::
+                    count_if(cells, [](const ec::grid_cell& entry) { return !entry.label.empty(); })
+                == 1);
+            return invoke("vehicle:done");
+        },
+        [](const auto&) { return act("QUIT"); },
+    };
+    CHECK(walk(steps) == steps.size());
+}
+
+TEST_CASE(
     "the vehicle editor makes a new step for a change after an undo in the middle of a stroke on "
     "a world vehicle",
     "[editor_vehicle]") {
