@@ -137,11 +137,28 @@ auto search_catalog(const catalog_query& query) -> catalog_page {
         return std::tuple(found.rank, std::string_view(found.entry.id));
     });
     auto found = ranked | std::views::transform(&ranked_entry::entry) | ranges::to<std::vector>();
-    // Entries of one name are told apart by their ids.
-    auto named = std::map<std::string, int>{};
-    for (const auto& entry : found) { ++named[entry.name]; }
+    // Entries of one name are told apart by the rest of their ids after the start all of them
+    // share, which is the start the first and last of those ids share.
+    struct id_bounds {
+        std::string first;
+        std::string last;
+    };
+    auto bounds = std::map<std::string, id_bounds>{};
+    for (const auto& entry : found) {
+        const auto [at, added] =
+            bounds.try_emplace(entry.name, id_bounds{.first = entry.id, .last = entry.id});
+        if (!added) {
+            at->second.first = std::min(at->second.first, entry.id);
+            at->second.last = std::max(at->second.last, entry.id);
+        }
+    }
     for (auto& entry : found) {
-        if (named.at(entry.name) > 1) { entry.distinct = entry.id; }
+        const auto& [first, last] = bounds.at(entry.name);
+        if (first == last) { continue; }
+        const auto shared = ranges::mismatch(first, last).in1 - first.begin();
+        const auto rest = std::string_view(entry.id).substr(shared);
+        const auto from = rest.find_first_not_of('_');
+        entry.distinct = from == std::string_view::npos ? "" : std::string(rest.substr(from));
     }
     const auto total = found.size();
     const auto begin = std::min(query.page * query.page_size, total);
