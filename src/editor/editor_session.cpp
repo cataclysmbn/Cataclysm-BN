@@ -236,33 +236,40 @@ auto run_editor_session() -> void {
                     .ter(get_avatar().abs_omt_pos())
                     .id()
                     .str());
-        } else if (id == export_id && state.leave()) {
+        } else if (id == export_id) {
             const auto path = invoked->args.text.value_or("");
-            // The export opens in place of the file open, whose changes were saved or let go.
-            const auto closed = state.doc ? std::optional(state.doc->path()) : std::nullopt;
-            const auto exported =
+            // The export is made before the open file is let go, so a path or square it refuses
+            // never costs the file's changes.
+            const auto entry =
                 check_new_path(path)
                     .and_then([&] { return export_to(state, path); })
-                    .and_then([&](nlohmann::ordered_json entry) {
+                    .transform([&](nlohmann::ordered_json made) {
                         // What the entry open draws with a symbol keeps that symbol.
                         if (state.on_mapgen() && state.export_palette.empty()) {
-                            entry["object"] = keep_symbols(entry["object"], state.legend);
+                            made["object"] = keep_symbols(made["object"], state.legend);
                         }
-                        return write_new_file(path, nlohmann::ordered_json::array({entry}));
+                        return made;
                     });
-            if (exported) {
-                state.open(path);
-                state.status =
-                    closed
-                        //~ %1$s is the new file the export wrote; %2$s the file it closed.
-                        ? string_format(
-                              _("Exported the live world's squares to %1$s, open now; %2$s is "
-                                "closed."),
-                              mods_path(path), mods_path(*closed))
-                        : string_format(_("Exported the live world's squares to %s, open now."),
-                                        mods_path(path));
-            } else {
-                state.notice = exported.error();
+            if (!entry) {
+                state.notice = entry.error();
+            } else if (state.leave()) {
+                // The export opens in place of the file open, whose changes were saved or let go.
+                const auto closed = state.doc ? std::optional(state.doc->path()) : std::nullopt;
+                const auto written = write_new_file(path, nlohmann::ordered_json::array({*entry}));
+                if (written) {
+                    state.open(path);
+                    state.status =
+                        closed
+                            //~ %1$s is the new file the export wrote; %2$s the file it closed.
+                            ? string_format(
+                                  _("Exported the live world's squares to %1$s, open now; %2$s "
+                                    "is closed."),
+                                  mods_path(path), mods_path(*closed))
+                            : string_format(_("Exported the live world's squares to %s, open now."),
+                                            mods_path(path));
+                } else {
+                    state.notice = written.error();
+                }
             }
         } else if (id == export_area_id) {
             if (const auto area = choose_area(_("Export which squares?"), {}, false)) {
