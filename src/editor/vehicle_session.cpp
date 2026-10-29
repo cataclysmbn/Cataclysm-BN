@@ -1101,8 +1101,9 @@ struct session {
         return marked;
     }
 
-    /// Takes the parts on the marked mounts as the clip; whether there were any.
-    auto copy_mounts() -> bool {
+    /// The parts on the marked mounts, by mount in install order; none, with a notice that says
+    /// so, when they have none.
+    auto marked_clip() -> std::optional<std::vector<clip_mount>> {
         const auto* const veh = shown_vehicle();
         const auto marked = marked_mounts();
         auto taken = std::vector<clip_mount>{};
@@ -1121,14 +1122,20 @@ struct session {
         if (taken.empty()) {
             notice = selection ? _("The selection has no part to copy.")
                                : _("This mount has no part to copy.");
-            return false;
+            return std::nullopt;
         }
-        clip = std::move(taken);
+        return taken;
+    }
+
+    /// Takes the parts on the marked mounts as the clip.
+    auto copy_mounts() -> void {
+        auto taken = marked_clip();
+        if (!taken) { return; }
+        clip = std::move(*taken);
         const auto count = static_cast<int>(std::ranges::distance(
             clip | std::views::transform(&clip_mount::parts) | std::views::join));
         //~ What the vehicle editor's Copy took: how many parts.
         said = string_format(vgettext("Copied %d part.", "Copied %d parts.", count), count);
-        return true;
     }
 
     /// How many parts of a paste or removal refused and why the first did, after a space; empty
@@ -1145,7 +1152,9 @@ struct session {
     /// Removes the parts on the marked mounts as one step, top down, after copying them for a
     /// `cut`.
     auto delete_mounts(const bool cut) -> void {
-        if (cut && !copy_mounts()) { return; }
+        // A cut takes what it removes as the clip, once something went.
+        auto taken = cut ? marked_clip() : std::nullopt;
+        if (cut && !taken) { return; }
         const auto label = std::string(cut ? _("Cut") : _("Delete"));
         const auto marked = marked_mounts();
         auto tally = stroke_tally{};
@@ -1176,6 +1185,7 @@ struct session {
         }
         pick_top();
         if (!made) { return; }
+        if (taken) { clip = std::move(*taken); }
         said = cut
                  //~ What the vehicle editor's Cut took away: how many parts.
                  ? string_format(vgettext("Cut %d part.", "Cut %d parts.", tally.done), tally.done)
