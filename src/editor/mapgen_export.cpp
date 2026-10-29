@@ -345,6 +345,8 @@ auto keep_symbols(nlohmann::ordered_json exported, const std::vector<legend_symb
             members = std::move(moved);
         }
     };
+    // A symbol kept keeps its kind, though a later symbol of the legend maps it too.
+    auto kept = std::vector<std::string>{};
     for (const auto& symbol : legend) {
         const auto wanted = symbol.symbol.size() == 1 ? plain_kind(symbol) : std::nullopt;
         if (!wanted) { continue; }
@@ -354,10 +356,11 @@ auto keep_symbols(nlohmann::ordered_json exported, const std::vector<legend_symb
             | std::ranges::to<std::vector>();
         const auto found = std::ranges::find_if(own, [&](const std::string& key) {
             const auto drawn = kind_of(key);
-            return drawn && same(*drawn, *wanted);
+            return drawn && same(*drawn, *wanted) && !std::ranges::contains(kept, key);
         });
-        if (found == own.end() || *found == symbol.symbol) { continue; }
-        swap(found->front(), symbol.symbol.front());
+        if (found == own.end()) { continue; }
+        if (*found != symbol.symbol) { swap(found->front(), symbol.symbol.front()); }
+        kept.push_back(symbol.symbol);
     }
     return exported;
 }
