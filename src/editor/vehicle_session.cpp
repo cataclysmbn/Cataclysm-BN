@@ -133,11 +133,11 @@ constexpr auto item_pick_id = "vehicle:item_pick";
 constexpr auto spawn_distance = 8;
 /// How far around the square a vehicle goes to first it looks for room.
 constexpr auto spawn_search = 6;
-/// How many free mounts the grid shows around the vehicle when it is first drawn or has to grow.
-constexpr auto grid_margin = 2;
-/// The fewest mounts across and down the grid shows a vehicle in, room to build it out.
-constexpr auto grid_cols = 21;
-constexpr auto grid_rows = 15;
+/// How many free mounts the grid keeps around the vehicle on every side, room to draw it out.
+constexpr auto grid_margin = 12;
+/// The fewest mounts across and down the grid shows a vehicle in.
+constexpr auto grid_cols = 41;
+constexpr auto grid_rows = 31;
 
 /// The mounts the grid shows, from its north-west corner to its south-east one.
 struct mount_frame {
@@ -1539,8 +1539,8 @@ struct session {
     }
 
     /// Fits the grid to the vehicle shown: a margin of free mounts around it, and room to build
-    /// it out, when it is first drawn; after that it grows, never shrinks or moves, when the
-    /// vehicle or the picked mount leaves no free mount at its edge.
+    /// it out, when it is first drawn; after that it grows, never shrinks or moves, to keep the
+    /// margin around the vehicle and the picked mount.
     auto fit_frame() -> void {
         if (!live && !doc) { return; }
         auto points = mounts();
@@ -1561,16 +1561,11 @@ struct session {
             frame = roomy(around(grid_margin));
             return;
         }
-        const auto needed = around(1);
-        if (needed.low.x < frame.low.x || needed.low.y < frame.low.y || needed.high.x > frame.high.x
-            || needed.high.y > frame.high.y) {
-            const auto grown = around(grid_margin);
-            frame =
-                {.low =
-                     point(std::min(frame.low.x, grown.low.x), std::min(frame.low.y, grown.low.y)),
-                 .high = point(
-                     std::max(frame.high.x, grown.high.x), std::max(frame.high.y, grown.high.y))};
-        }
+        const auto needed = around(grid_margin);
+        frame =
+            {.low = point(std::min(frame.low.x, needed.low.x), std::min(frame.low.y, needed.low.y)),
+             .high = point(
+                 std::max(frame.high.x, needed.high.x), std::max(frame.high.y, needed.high.y))};
     }
 
 
