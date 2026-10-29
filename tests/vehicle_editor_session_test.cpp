@@ -3876,6 +3876,13 @@ auto said(const ec::screen_view& screen) -> std::string {
 auto steps_done(const ec::screen_view& screen) -> std::size_t {
     return rows(screen, "vehicle:history").size();
 }
+/// The label of the step the history is at.
+auto step_at(const ec::screen_view& screen) -> std::string {
+    const auto& steps = rows(screen, "vehicle:history");
+    const auto found = std::ranges::find(steps, true, &ec::row::selected);
+    REQUIRE(found != steps.end());
+    return found->label;
+}
 auto canvas(const ec::screen_view& screen) -> const ec::grid_body& {
     return body<ec::grid_body>(part(screen, "vehicle:grid"));
 }
@@ -3947,6 +3954,8 @@ TEST_CASE(
         [&](const auto& screen) {
             // The frame already at 0,0 is no refusal.
             CHECK(said(screen) == "Installed frame on 14 squares.");
+            // The step names the part a stroke drew.
+            CHECK(step_at(screen) == "Install frame ×14");
             CHECK(steps_done(screen) == before + 1);
             for (auto y = 0; y <= 2; ++y) {
                 for (auto x = 0; x <= 4; ++x) { CHECK(has_part(screen, x, y)); }
@@ -4258,14 +4267,6 @@ TEST_CASE(
     CHECK(mounts.contains(point(10, 10)));
 }
 
-/// The label of the step the history is at.
-auto step_at(const ec::screen_view& screen) -> std::string {
-    const auto& steps = rows(screen, "vehicle:history");
-    const auto found = std::ranges::find(steps, true, &ec::row::selected);
-    REQUIRE(found != steps.end());
-    return found->label;
-}
-
 TEST_CASE(
     "the vehicle editor draws a line on a world vehicle in place as one undo step",
     "[editor_vehicle]") {
@@ -4290,14 +4291,14 @@ TEST_CASE(
         [](const auto&) { return mount_at(0, 3); },
         [](const auto& screen) {
             CHECK(said(screen) == "Installed extra light frame on 3 squares.");
-            CHECK(step_at(screen) == "Install extra light frame on 3 squares");
+            CHECK(step_at(screen) == "Install extra light frame ×3");
             return mount_at(0, 1);
         },
         [](const auto&) { return mount_at(0, 4); },
         [](const auto& screen) {
             // The step names what the stroke installed, not the squares that had it already.
             CHECK(said(screen) == "Installed extra light frame on 1 square.");
-            CHECK(step_at(screen) == "Install extra light frame on 1 square");
+            CHECK(step_at(screen) == "Install extra light frame ×1");
             return invoke("vehicle:undo");
         },
         [](const auto& screen) {
@@ -4402,6 +4403,8 @@ TEST_CASE(
             CHECK_FALSE(has_part(screen, 4, 0));
             CHECK_FALSE(has_part(screen, 3, 0));
             CHECK(has_part(screen, 0, 0));
+            // A step of more than one part names them.
+            CHECK(step_at(screen) == "Remove 3 parts (frame, seat)");
             return act("QUIT");
         },
     };
