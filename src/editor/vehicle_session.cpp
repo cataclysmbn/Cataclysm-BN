@@ -447,6 +447,9 @@ struct session {
     /// Whether a stroke on the vehicle edited in place is open, and whether it has made its step.
     bool live_stroke = false;
     bool live_stroke_made = false;
+    /// Twice the middle the mirrors reflect across while a stroke is open, as it was when the
+    /// stroke began, so that what the stroke changes does not move it.
+    std::optional<point> stroke_axis;
     /// The part the install tool puts on a clicked mount; empty before one is chosen.
     std::string brush;
     /// The world's vehicle edited in place, the part picked on it, and its saved states before
@@ -821,18 +824,21 @@ struct session {
                 .high = point(std::max(frame.high.x, cursor.x), std::max(frame.high.y, cursor.y))};
     }
 
-    /// `squares` and, for each mirror on, their images across the middle of the vehicle's
-    /// mounts, each once.
-    auto mirrored(std::vector<point> squares) const -> std::vector<point> {
+    /// Twice the middle of the vehicle's mounts, so that an even span has it between mounts.
+    auto mirror_axis() const -> point {
         const auto points = mounts();
         const auto xs = points | std::views::transform(&point::x);
         const auto ys = points | std::views::transform(&point::y);
-        // Twice the middle, so that an even span has it between mounts.
-        const auto twice =
-            points.empty()
-                ? point_zero
-                : point(std::ranges::min(xs) + std::ranges::max(xs),
-                        std::ranges::min(ys) + std::ranges::max(ys));
+        return points.empty()
+                 ? point_zero
+                 : point(std::ranges::min(xs) + std::ranges::max(xs),
+                         std::ranges::min(ys) + std::ranges::max(ys));
+    }
+
+    /// `squares` and, for each mirror on, their images across the middle of the vehicle's
+    /// mounts, each once, the squares given first.
+    auto mirrored(std::vector<point> squares) const -> std::vector<point> {
+        const auto twice = stroke_axis.value_or(mirror_axis());
         const auto drawn = squares.size();
         for (auto index = std::size_t{0}; index < drawn; ++index) {
             const auto at = squares[index];
@@ -842,11 +848,15 @@ struct session {
                 squares.emplace_back(twice.x - at.x, twice.y - at.y);
             }
         }
-        std::ranges::sort(squares, [](const point& a, const point& b) {
-            return std::tie(a.y, a.x) < std::tie(b.y, b.x);
-        });
-        squares.erase(std::ranges::unique(squares).begin(), squares.end());
-        return squares;
+        std::ranges::
+            sort(squares.begin() + drawn, squares.end(), [](const point& a, const point& b) {
+                return std::tie(a.y, a.x) < std::tie(b.y, b.x);
+            });
+        auto unique = std::vector<point>{};
+        for (const auto& square : squares) {
+            if (!std::ranges::contains(unique, square)) { unique.push_back(square); }
+        }
+        return unique;
     }
 
     /// The mounts the drawing tool in hand covers from the anchor to `at`, as the map editor's
@@ -879,6 +889,7 @@ struct session {
     /// Whether a stroke is open, so that its changes make one step.
     auto in_stroke() const -> bool { return live ? live_stroke : doc && doc->grouping(); }
     auto begin_stroke() -> void {
+        stroke_axis = mirror_axis();
         if (live) {
             live_stroke = true;
             live_stroke_made = false;
@@ -888,6 +899,7 @@ struct session {
     }
     auto end_stroke() -> void {
         live_stroke = false;
+        stroke_axis.reset();
         if (doc) { doc->end_group(); }
     }
 
