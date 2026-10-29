@@ -478,9 +478,7 @@
         "####;;;;;;;;;;;;;;;;####"
       ],
       "palettes": [ "shelter" ],
-      "items": {
-        "_": [ { "item": "trash", "chance": 1 }, { "item": "shelter_supplies", "chance": 1 } ]
-      }
+      "items": { "_": [ { "item": "trash", "chance": 1 }, { "item": "shelter_supplies", "chance": 1 } ] }
     }
   },
   {
@@ -517,16 +515,12 @@
         "####;;;;;;;;;;;;;;;;####"
       ],
       "palettes": [ "shelter" ],
-      "terrain": {
-        "X": "t_door_boarded",
-      },
+      "terrain": { "X": "t_door_boarded" },
       "items": {
         "_": [ { "item": "trash", "chance": 5 }, { "item": "shelter_supplies", "chance": 1 } ],
         "b": { "item": "shelter", "chance": 10 }
       },
-      "place_monster": [
-        { "group": "GROUP_ZOMBIE", "x": [ 16, 18 ], "y": [ 10, 21 ], "repeat": [ 2, 4 ] }
-      ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 16, 18 ], "y": [ 10, 21 ], "repeat": [ 2, 4 ] } ]
     }
   }
 ]
