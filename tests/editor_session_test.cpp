@@ -7269,4 +7269,23 @@ TEST_CASE(
     CHECK(walk_map(walk) == walk.size());
 }
 
+TEST_CASE("a canvas square names what its symbol places there, bottom up", "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{furnished()};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:symbol", {.row = "symbol:B"}); },
+        [](const auto&) { return square_at(3, 3); },
+        [](const auto&) { return invoke("editor:symbol", {.row = "symbol:Z"}); },
+        [](const auto&) { return square_at(4, 3); },
+        [](const auto& screen) {
+            // The terrain from the fill, then the furniture, then what spawns there.
+            CHECK(cell(screen, 3, 3).label == "wooden floor; bed; Items: pillow 50%");
+            CHECK(cell(screen, 4, 3).label == "wooden floor; Monsters: zombie");
+            CHECK(cell(screen, 5, 5).label == "wooden floor");
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+}
+
 #endif // CATA_MCP
