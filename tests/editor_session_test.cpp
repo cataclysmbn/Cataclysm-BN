@@ -45,6 +45,7 @@
 #    include "point.h"
 #    include "rng.h"
 #    include "state_helpers.h"
+#    include "string_formatter.h"
 #    include "translations.h"
 #    include "type_id.h"
 #    include "world.h"
@@ -7075,6 +7076,162 @@ TEST_CASE(
         == std::vector<std::string>{
             "editor", "vehicle_editor", "vehicle_editor", "vehicle_editor", "vehicle_editor",
             "vehicle_editor", "editor"});
+}
+
+namespace {
+/// What the player does next in the map editor, from what the screen shows.
+using map_step = std::function<auto(const ec::screen_view&)->input_event>;
+/// Runs the map editor through `steps`, then leaves it without saving; how many steps ran.
+auto walk_map(const std::vector<map_step>& steps) -> std::size_t {
+    auto step = std::size_t{0};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        if (step < steps.size()) { return steps[step++](screen); }
+        return screen.kind == "editor" ? act("QUIT") : answer("Leave without saving");
+    });
+    editor::run_editor_session();
+    return std::min(step, steps.size());
+}
+auto square_at(const int x, const int y) -> input_event {
+    return invoke("editor:paint", {.row = string_format("square:%d,%d", x, y)});
+}
+auto rows_in(const ec::screen_view& screen, const std::string& list)
+    -> const std::vector<ec::row>& {
+    return body<ec::list_body>(part(screen, list)).rows;
+}
+auto has_row(const ec::screen_view& screen, const std::string& list, const std::string& id)
+    -> bool {
+    return std::ranges::contains(rows_in(screen, list), id, &ec::row::id);
+}
+auto row_in(const ec::screen_view& screen, const std::string& list, const std::string& id)
+    -> const ec::row& {
+    const auto& rows = rows_in(screen, list);
+    const auto found = std::ranges::find(rows, id, &ec::row::id);
+    INFO(list << " " << id);
+    REQUIRE(found != rows.end());
+    return *found;
+}
+/// What `editor:status`, or `editor:notice`, says; empty when it is not shown.
+auto text_of(const ec::screen_view& screen, const std::string& id) -> std::string {
+    const auto* const found = ec::find_component(*screen.root, id);
+    return found ? body<ec::text_body>(*found).markup : std::string{};
+}
+auto said(const ec::screen_view& screen) -> std::string { return text_of(screen, "editor:status"); }
+auto told(const ec::screen_view& screen) -> std::string { return text_of(screen, "editor:notice"); }
+auto stat_of(const ec::screen_view& screen, const std::string& key) -> std::string {
+    const auto& stats = body<ec::panel_body>(part(screen, "editor:document")).stats;
+    const auto found = std::ranges::find(stats, key, &ec::panel_stat::key);
+    return found == stats.end() ? std::string{} : found->value;
+}
+auto tool_in_hand(const ec::screen_view& screen) -> std::string {
+    const auto& tabs = body<ec::tabs_body>(part(screen, "editor:tools")).tabs;
+    const auto found = std::ranges::find(tabs, true, &ec::tab_entry::selected);
+    return found == tabs.end() ? std::string{} : found->id;
+}
+/// The kinds and ids of what a cell shows, bottom up.
+auto cell_looks(const ec::screen_view& screen, const int x, const int y)
+    -> std::vector<std::string> {
+    const auto& canvas = body<ec::grid_body>(part(screen, "editor:canvas"));
+    return cell(screen, x, y).looks | std::views::transform([&](const int index) {
+               const auto& shown = canvas.looks.at(index);
+               return shown.kind + ":" + shown.id.value_or("");
+           })
+         | std::ranges::to<std::vector>();
+}
+/// A floor mapgen with a fill terrain, a bed with a pillow under `B` and a zombie under `Z`.
+auto furnished() -> nlohmann::ordered_json {
+    return {{"fill_ter", "t_floor"},
+            {"furniture", {{"B", "f_bed"}}},
+            {"item", {{"B", {{"item", "pillow"}, {"chance", 50}}}}},
+            {"monster", {{"Z", {{"monster", "mon_zombie"}}}}}};
+}
+} // namespace
+
+TEST_CASE(
+    "picking a catalog entry puts it in hand: the next stroke maps it to a free symbol and paints "
+    "it",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{{{"fill_ter", "t_floor"}}};
+    auto steps = std::size_t{0};
+    auto wall = std::string{};
+    auto bed = std::string{};
+    auto symbols = std::size_t{0};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [&](const auto& screen) {
+            // One click takes an entry, as a palette of Factorio's does.
+            CHECK(affordance(screen, "editor:catalog_pick").role == "select");
+            steps = rows_in(screen, "editor:history").size();
+            symbols = rows_in(screen, "editor:legend").size();
+            return invoke("editor:tool", {.row = "tool:select"});
+        },
+        [](const auto&) { return invoke("editor:catalog_filter", {.text = "t_brick_wall"}); },
+        [](const auto&) { return invoke("editor:catalog_pick", {.row = "entry:t_brick_wall"}); },
+        [&](const auto& screen) {
+            // In hand with the pencil to draw it; nothing is written until it is drawn.
+            wall = stat_of(screen, "symbol").substr(0, 1);
+            CHECK(wall != "#");
+            CHECK(wall != ".");
+            CHECK(said(screen) == string_format("Painting brick wall (%s).", wall));
+            CHECK(tool_in_hand(screen) == "tool:point");
+            CHECK(rows_in(screen, "editor:history").size() == steps);
+            CHECK(rows_in(screen, "editor:legend").size() == symbols);
+            CHECK(row_in(screen, "editor:catalog", "entry:t_brick_wall").selected);
+            return invoke("editor:tool", {.row = "tool:rect"});
+        },
+        [](const auto&) { return square_at(2, 2); },
+        [](const auto&) { return square_at(9, 7); },
+        [&](const auto& screen) {
+            // One step maps the symbol and draws with it.
+            CHECK(told(screen).empty());
+            CHECK(rows_in(screen, "editor:history").size() == steps + 1);
+            CHECK(cell(screen, 2, 2).glyph == wall);
+            CHECK(cell(screen, 9, 5).glyph == wall);
+            CHECK(cell(screen, 5, 5).glyph == ".");
+            CHECK(placed_value(row_in(screen, "editor:legend", "symbol:" + wall)) == "brick wall");
+            return invoke("editor:undo");
+        },
+        [&](const auto& screen) {
+            // Undo takes the drawing and its mapping back together; the wall stays in hand.
+            CHECK(cell(screen, 2, 2).glyph == ".");
+            CHECK_FALSE(has_row(screen, "editor:legend", "symbol:" + wall));
+            CHECK(stat_of(screen, "symbol").starts_with(wall));
+            return invoke("editor:redo");
+        },
+        [](const auto&) { return invoke("editor:catalog_pick", {.row = "entry:t_brick_wall"}); },
+        [&](const auto& screen) {
+            // Taken again, it keeps its symbol and maps nothing new.
+            CHECK(stat_of(screen, "symbol").starts_with(wall));
+            CHECK(rows_in(screen, "editor:legend").size() == symbols + 1);
+            return invoke("editor:catalog_filter", {.text = "t_wall"});
+        },
+        [](const auto&) { return invoke("editor:catalog_pick", {.row = "entry:t_wall"}); },
+        [&](const auto& screen) {
+            // What a symbol of the legend maps already is drawn with that symbol.
+            CHECK(said(screen) == "Painting plastered wooden wall (#).");
+            CHECK(rows_in(screen, "editor:legend").size() == symbols + 1);
+            CHECK(tool_in_hand(screen) == "tool:rect");
+            return invoke("editor:catalog_kind", {.row = "catalog:furniture"});
+        },
+        [](const auto&) { return invoke("editor:catalog_filter", {.text = "f_bed"}); },
+        [](const auto&) { return invoke("editor:catalog_pick", {.row = "entry:f_bed"}); },
+        [&](const auto& screen) {
+            bed = stat_of(screen, "symbol").substr(0, 1);
+            // No symbol of another meaning is taken.
+            CHECK(bed != "#");
+            CHECK(bed != ".");
+            CHECK(bed != wall);
+            return invoke("editor:tool", {.row = "tool:point"});
+        },
+        [](const auto&) { return square_at(4, 4); },
+        [&](const auto& screen) {
+            CHECK(cell(screen, 4, 4).glyph == bed);
+            CHECK(column_value(row_in(screen, "editor:legend", "symbol:" + bed), "furniture")
+                  == "bed");
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
 }
 
 #endif // CATA_MCP
