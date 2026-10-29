@@ -81,17 +81,72 @@ auto open_ground_near(const tripoint_abs_ms& wanted, const int south_of) -> trip
     return found == near.end() ? wanted : *found;
 }
 
-/// How far the view turns from the avatar at `at` to show the stamp `stamped` with it: to the
-/// stamp's middle column and halfway between its north edge and the avatar, but no further than
-/// keeps the avatar inside the terrain window.
+/// The square of the stamp `stamped` nearest the middle of its south edge that the avatar can stand
+/// on, one that walls, windows and closed doors close in when there is any; none when no square is
+/// open.
+auto standing_in(const stamp& stamped) -> std::optional<tripoint_abs_ms> {
+    auto& here = get_map();
+    const auto corner = project_to<coords::ms>(stamped.at);
+    const auto size = point(stamped.grid.x() * SEEX * 2, stamped.grid.y() * SEEY * 2);
+    const auto bub = [&](const point& p) {
+        return abs_to_bub(corner + tripoint_rel_ms(p.x, p.y, 0));
+    };
+    const auto within = [&](const point& p) {
+        return p.x >= 0 && p.y >= 0 && p.x < size.x && p.y < size.y && here.inbounds(bub(p));
+    };
+    const auto open = [&](const point& p) {
+        const auto* const there = g->critter_at(bub(p));
+        return here.passable(bub(p)) && !here.has_flag(TFLAG_DEEP_WATER, bub(p))
+            && (there == nullptr || there == &get_avatar());
+    };
+    // What is walked to from beyond the stamp, past no wall, window or closed door, is not closed
+    // in.
+    const auto walked = [&](const point& p) { return within(p) && here.passable(bub(p)); };
+    auto reached = std::vector<bool>(static_cast<std::size_t>(size.x * size.y), false);
+    const auto index = [&](const point& p) { return static_cast<std::size_t>(p.y * size.x + p.x); };
+    auto frontier = std::vector<point>{};
+    for (auto y = 0; y < size.y; ++y) {
+        for (auto x = 0; x < size.x; ++x) {
+            const auto p = point(x, y);
+            const auto edge = x == 0 || y == 0 || x == size.x - 1 || y == size.y - 1;
+            if (edge && walked(p)) {
+                reached[index(p)] = true;
+                frontier.push_back(p);
+            }
+        }
+    }
+    while (!frontier.empty()) {
+        const auto p = frontier.back();
+        frontier.pop_back();
+        for (const auto& step : four_adjacent_offsets) {
+            const auto next = p + step;
+            if (walked(next) && !reached[index(next)]) {
+                reached[index(next)] = true;
+                frontier.push_back(next);
+            }
+        }
+    }
+    const auto candidates =
+        closest_points_first(point(size.x / 2, size.y - 1), std::max(size.x, size.y))
+        | std::views::filter(within) | std::views::filter(open) | std::ranges::to<std::vector>();
+    const auto closed = std::ranges::find_if(candidates, [&](const point& p) {
+        return !reached[index(p)];
+    });
+    const auto found = closed != candidates.end() ? closed : candidates.begin();
+    if (found == candidates.end()) { return std::nullopt; }
+    return corner + tripoint_rel_ms(found->x, found->y, 0);
+}
+
+/// How far the view turns from the avatar at `at` to the middle of the stamp `stamped`, but no
+/// further than keeps the avatar inside the terrain window.
 auto view_showing(const stamp& stamped, const tripoint_abs_ms& at) -> tripoint_rel_ms {
     const auto corner = project_to<coords::ms>(stamped.at);
-    auto middle = point(corner.x() + stamped.grid.x() * SEEX, (corner.y() + at.y()) / 2);
+    auto middle = point(corner.x() + stamped.grid.x() * SEEX, corner.y() + stamped.grid.y() * SEEY);
     if (const auto window = g->click_window()) {
         const auto size = (window->p_max - window->p_min).raw();
         const auto half = point(size.x / 2 - 1, size.y / 2 - 1);
         middle.x = std::clamp(middle.x, at.x() - half.x, at.x() + half.x);
-        middle.y = std::max(middle.y, at.y() - half.y);
+        middle.y = std::clamp(middle.y, at.y() - half.y, at.y() + half.y);
     }
     return tripoint_rel_ms(middle.x - at.x(), middle.y - at.y(), 0);
 }
@@ -549,24 +604,35 @@ auto run_editor_session() -> void {
             // Nothing stamped yet in the editor's world: the mapgen goes where the avatar is first.
             if (!state.stamped) { state.stamp_here(); }
             if (state.stamped) {
-                // The avatar walks up to the stamped squares from the south, with all of them in
-                // view; the editor keeps its document.
+                // The avatar stands on the stamped squares, indoors when they hold a room, and
+                // else walks up to them from the south; the editor keeps its document.
                 const auto corner = project_to<coords::ms>(state.stamped->at);
+                const auto inside = standing_in(*state.stamped);
                 const auto south_edge = corner.y() + state.stamped->grid.y() * SEEY * 2 - 1;
-                const auto landing = open_ground_near(
+                const auto landing = inside.value_or(open_ground_near(
                     tripoint_abs_ms(corner.x() + state.stamped->grid.x() * SEEX,
                                     south_edge + test_distance, corner.z()),
-                    south_edge);
+                    south_edge));
                 g->place_player(abs_to_bub(landing));
                 get_avatar().view_offset = view_showing(*state.stamped, landing);
-                const auto away = landing.y() - south_edge;
-                add_msg(
-                    m_info,
-                    localised::counted{
-                        .format = pl_translation("The mapgen is stamped %d square north of you.",
-                                                 "The mapgen is stamped %d squares north of you."),
-                        .count = away},
-                    away);
+                if (inside) {
+                    //~ Testing a mapgen put the avatar on it: %1$d,%2$d is the square, counted from
+                    //~ the mapgen's north-west corner.
+                    add_msg(m_info, _("You stand on the stamped mapgen's square %1$d,%2$d."),
+                            landing.x() - corner.x(), landing.y() - corner.y());
+                } else {
+                    const auto away = landing.y() - south_edge;
+                    add_msg(
+                        m_info,
+                        localised::counted{
+                            .format = pl_translation(
+                                "No square of the mapgen is safe to stand on; it is stamped %d "
+                                "square north of you.",
+                                "No square of the mapgen is safe to stand on; it is stamped %d "
+                                "squares north of you."),
+                            .count = away},
+                        away);
+                }
                 return;
             }
         } else if (id == save_id) {
