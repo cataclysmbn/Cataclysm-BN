@@ -178,8 +178,7 @@
     "coverage": 85,
     "encumbrance": 6,
     "warmth": 0,
-    "material_thickness": 5,
-    "resistance": { "bullet": 58 },
+    "material_thickness": 8,
     "flags": [ "FRAGILE", "OUTER", "ALLOWS_WINGS", "ARMOR_PLATE", "COMPACT", "NO_REPAIR" ]
   },
   {
@@ -287,7 +286,7 @@
     "encumbrance": 5,
     "warmth": 0,
     "material_thickness": 3,
-    "resistance": { "cut": 32 },
+    "resistance": { "cut": 22 },
     "flags": [ "OUTER", "ALLOWS_WINGS", "ARMOR_PLATE", "COMPACT" ]
   },
   {
