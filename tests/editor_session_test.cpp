@@ -7234,4 +7234,39 @@ TEST_CASE(
     CHECK(walk_map(walk) == walk.size());
 }
 
+TEST_CASE(
+    "a click on a legend row makes it the pen, and a mapping set is the pen at once",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{{{"fill_ter", "t_floor"}}};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto& screen) {
+            CHECK(affordance(screen, "editor:symbol").role == "select");
+            return invoke("editor:tool", {.row = "tool:select"});
+        },
+        [](const auto&) { return invoke("editor:symbol", {.row = "symbol:#"}); },
+        [](const auto& screen) {
+            CHECK(stat_of(screen, "symbol").starts_with("#"));
+            CHECK(tool_in_hand(screen) == "tool:point");
+            CHECK(said(screen) == "Painting plastered wooden wall (#).");
+            return invoke("editor:mapping_set", {.row = "symbol", .text = "x"});
+        },
+        [](const auto&) {
+            return invoke("editor:mapping_set", {.row = "value", .text = "t_dirt"});
+        },
+        [](const auto&) { return invoke("editor:mapping_apply"); },
+        [](const auto& screen) {
+            CHECK(stat_of(screen, "symbol").starts_with("x"));
+            CHECK(row_in(screen, "editor:legend", "symbol:x").selected);
+            CHECK(said(screen) == "Painting dirt (x).");
+            return square_at(1, 1);
+        },
+        [](const auto& screen) {
+            CHECK(cell(screen, 1, 1).glyph == "x");
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+}
+
 #endif // CATA_MCP
