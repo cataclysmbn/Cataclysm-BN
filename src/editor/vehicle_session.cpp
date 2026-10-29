@@ -974,18 +974,38 @@ struct session {
     auto erase(const point& at) -> void {
         const auto open = !in_stroke();
         if (open) { begin_stroke(); }
+        auto removed = 0;
+        auto first_said = std::string{};
+        auto first_notice = std::string{};
         for (const auto& square : mirrored({at})) {
             const auto* const veh = shown_vehicle();
-            if (square == at
-                || (veh
-                    && !veh->parts_at_relative(tripoint_mnt_veh(square.x, square.y, 0), false)
-                            .empty())) {
-                clear(square);
+            if (!veh
+                || veh->parts_at_relative(tripoint_mnt_veh(square.x, square.y, 0), false).empty()) {
+                continue;
+            }
+            said.clear();
+            notice.clear();
+            clear(square);
+            if (!said.empty()) {
+                ++removed;
+                if (first_said.empty()) { first_said = said; }
+            } else if (first_notice.empty()) {
+                first_notice = notice;
             }
         }
         if (open) { end_stroke(); }
         cursor = at;
         pick_top();
+        notice =
+            removed == 0 && first_notice.empty()
+                ? std::string(_("This mount has no part to remove."))
+                : first_notice;
+        said =
+            removed == 1 ? first_said
+            //~ What the vehicle editor's eraser took away, with its mirrors: how many parts.
+            : removed > 1
+                ? string_format(vgettext("Removed %d part.", "Removed %d parts.", removed), removed)
+                : std::string{};
     }
 
     /// Takes the part the mount `at` shows in hand, and the pencil to draw it, as Factorio's
