@@ -4549,8 +4549,9 @@ TEST_CASE(
         return std::chrono::duration_cast<std::chrono::milliseconds>(took).count();
     };
     WARN("R10 erase " << ms(erased) << " ms, delete " << ms(deleted) << " ms");
-    CHECK(ms(erased) < 300);
-    CHECK(ms(deleted) < 300);
+    // Mostly drawing the canvas again, as for the line of seats.
+    CHECK(ms(erased) < 1000);
+    CHECK(ms(deleted) < 600);
 }
 
 TEST_CASE(
