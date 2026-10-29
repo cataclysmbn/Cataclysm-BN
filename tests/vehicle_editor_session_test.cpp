@@ -4815,6 +4815,21 @@ TEST_CASE(
                       "vehicle.");
              CHECK(has_part(screen, 1, 0) != has_part(screen, 1, 1));
              CHECK(steps_done(screen) == before + 5);
+             return invoke("vehicle:undo");
+         },
+         [](const auto&) { return invoke("vehicle:cut_mounts"); },
+         [&](const auto& screen) {
+             CHECK(said(screen)
+                   == "Cut 2 parts. 1 part refused: Removing this part would split the vehicle.");
+             return invoke("vehicle:tool_paste");
+         },
+         [](const auto&) { return mount_at(3, 0); },
+         [&](const auto& screen) {
+             // The clip holds what the cut took: the seat, which needs a frame there, and the
+             // frame below it, never the frame that stayed.
+             CHECK(said(screen).starts_with("Pasted 1 part. 1 part refused: "));
+             CHECK(cell(screen, "mount:3,1").label == "frame");
+             CHECK_FALSE(has_part(screen, 3, 0));
              return act("QUIT");
          }});
     CHECK(walk(steps) == steps.size());
