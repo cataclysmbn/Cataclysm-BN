@@ -576,6 +576,7 @@ struct editing: session {
     auto in_stroke() const -> bool { return live ? live_stroke : doc && doc->grouping(); }
     auto begin_stroke() -> void {
         stroke_axis = mirror_axis();
+        stroke_erased.clear();
         if (live) {
             live_stroke = true;
             live_stroke_made = false;
@@ -593,6 +594,7 @@ struct editing: session {
         live_stroke = false;
         live_stroke_made = false;
         stroke_axis.reset();
+        stroke_erased.clear();
         if (doc) { doc->end_group(); }
         // A selection spans one drag.
         if (canvas_tool == "select") { anchor.reset(); }
@@ -692,14 +694,19 @@ struct editing: session {
     }
 
     /// Removes the top part of the mount `at`, and of its mirror images that have one, as one
-    /// step.
+    /// step; a stroke takes one part off each square however often it crosses it.
     auto erase(const point& at) -> void {
         const auto open = !in_stroke();
         if (open) { begin_stroke(); }
         auto removed = 0;
+        auto crossed = false;
         auto first_said = std::string{};
         auto first_notice = std::string{};
         for (const auto& square : mirrored({at})) {
+            if (std::ranges::contains(stroke_erased, square)) {
+                crossed = true;
+                continue;
+            }
             const auto* const veh = shown_vehicle();
             if (!veh
                 || veh->parts_at_relative(tripoint_mnt_veh(square.x, square.y, 0), false).empty()) {
@@ -713,6 +720,8 @@ struct editing: session {
             remove_picked();
             if (!said.empty()) {
                 ++removed;
+                // The cursor followed the mounts if taking the part away moved them.
+                stroke_erased.push_back(cursor);
                 if (first_said.empty()) { first_said = said; }
             } else if (first_notice.empty()) {
                 first_notice = notice;
@@ -722,7 +731,7 @@ struct editing: session {
         cursor = at;
         pick_top();
         notice =
-            removed == 0 && first_notice.empty()
+            removed == 0 && first_notice.empty() && !crossed
                 ? std::string(_("This mount has no part to remove."))
                 : first_notice;
         said =
@@ -1306,6 +1315,7 @@ struct editing: session {
         }
         if (anchor) { *anchor -= moved; }
         if (stroke_axis) { *stroke_axis -= moved * 2; }
+        for (auto& square : stroke_erased) { square -= moved; }
         if (!live_stroke) { return; }
         for (auto& entry : live_stroke_before["parts"]) {
             entry["x"] = entry.value("x", 0) - moved.x;

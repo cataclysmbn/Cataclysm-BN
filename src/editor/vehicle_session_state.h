@@ -231,6 +231,8 @@ struct session {
     /// Twice the middle the mirrors reflect across while a stroke is open, as it was when the
     /// stroke began, so that what the stroke changes does not move it.
     std::optional<point> stroke_axis;
+    /// The squares the open stroke's eraser took a part off, which it takes no more off.
+    std::vector<point> stroke_erased;
     /// The part the install tool puts on a clicked mount; empty before one is chosen.
     std::string brush;
     /// The world's vehicle edited in place, the part picked on it, and its saved states before
