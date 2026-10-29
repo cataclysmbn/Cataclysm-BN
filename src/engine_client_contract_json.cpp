@@ -704,6 +704,8 @@ auto body_json( const grid_body &body, const bubble_frame & /*frame*/ ) -> json
              } ) {
             if( !text->empty() ) { entry[name] = *text; }
         }
+        // The grid names the affordance most cells share.
+        if( !body.affordance.empty() && cell.affordance == body.affordance ) { entry.erase( "affordance" ); }
         entry["enabled"] = cell.enabled;
         if( !cell.denial.empty() ) { entry["denial"] = cell.denial; }
         if( cell.selected ) { entry["selected"] = true; }
@@ -717,6 +719,7 @@ auto body_json( const grid_body &body, const bubble_frame & /*frame*/ ) -> json
         result["cells"].push_back( std::move( entry ) );
     }
     if( !refusals.empty() ) { result["refusals"] = refusals; }
+    if( !body.affordance.empty() ) { result["affordance"] = body.affordance; }
     if( !body.looks.empty() ) { result["looks"] = to_array( body.looks ); }
     if( !body.role.empty() ) { result["role"] = body.role; }
     if( !body.drag.empty() ) { result["drag"] = body.drag; }

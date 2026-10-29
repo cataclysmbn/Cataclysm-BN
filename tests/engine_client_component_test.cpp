@@ -1162,6 +1162,37 @@ TEST_CASE(
     CHECK_FALSE(cells[3].contains("refused"));
 }
 
+TEST_CASE(
+    "a grid names the affordance its cells share once, and a cell names only its own",
+    "[engine_client_component]") {
+    const auto context = input_context("TEST_GRID_AFFORDANCE");
+    const auto scope = ec::screen_scope(
+        context, "test", {.view = [](const auto&) {
+            return ec::screen_view{
+                .root =
+                    ec::component{
+                        .id = "grid:shared",
+                        .affordances = {"grid:pick", "grid:other"},
+                        .body =
+                            ec::grid_body{
+                                .cols = 2,
+                                .rows = 1,
+                                .cells =
+                                    {{.at = {0, 0}, .id = "cell:a", .affordance = "grid:pick"},
+                                     {.at = {1, 0}, .id = "cell:b", .affordance = "grid:other"}},
+                                .affordance = "grid:pick"}},
+                .affordances =
+                    {ec::invoke_affordance({.id = "grid:pick"}),
+                     ec::invoke_affordance({.id = "grid:other"})}};
+        }});
+    const auto input = client::input_context_scope(context, "TEST_GRID_AFFORDANCE");
+    const auto grid = with_id(wire(map_only())["stack"].back(), "grid:shared");
+    REQUIRE(grid.is_object());
+    CHECK(grid["affordance"] == "grid:pick");
+    CHECK_FALSE(grid["cells"][0].contains("affordance"));
+    CHECK(grid["cells"][1]["affordance"] == "grid:other");
+}
+
 namespace {
 auto holdable_on_wire(const ec::boundary_state& state, const std::string& id) -> bool {
     const auto json = wire(state);

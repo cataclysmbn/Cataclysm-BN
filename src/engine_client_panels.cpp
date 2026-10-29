@@ -23,6 +23,7 @@ auto passive( component &value ) -> void
             body.submit.clear();
         } else if constexpr( std::is_same_v<body_t, grid_body> ) {
             std::ranges::for_each( body.cells, []( auto & cell ) { cell.affordance.clear(); } );
+            body.affordance.clear();
         }
     }, value.body );
     std::ranges::for_each( value.children, passive );

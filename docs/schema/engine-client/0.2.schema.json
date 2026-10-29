@@ -6826,7 +6826,7 @@
               },
               "affordance": {
                 "$ref": "#/$defs/opaque_id",
-                "description": "What picking the cell invokes."
+                "description": "What picking the cell invokes. Absent for the grid's `affordance`, or for none when the grid has none."
               },
               "enabled": {
                 "type": "boolean"
@@ -6896,6 +6896,10 @@
             "$ref": "#/$defs/look"
           },
           "description": "The looks the cells name, each once."
+        },
+        "affordance": {
+          "$ref": "#/$defs/opaque_id",
+          "description": "What picking a cell that names no affordance of its own invokes, with the cell's `id` as the row, the one most cells share. Absent for none."
         },
         "refusals": {
           "type": "array",

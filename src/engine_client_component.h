@@ -281,6 +281,9 @@ struct grid_body {
     /// `trail` for a secondary drag, such as a right drag, whose every crossed square runs
     /// `secondary`, between `drag_begin` and `drag_end`; empty for none.
     std::string secondary_drag = {};
+    /// The affordance a cell runs that names none of its own on the wire, the one most of them
+    /// share; empty for none.
+    std::string affordance = {};
 };
 /// The looks of a grid, each once, which its cells name by index.
 struct look_palette {
