@@ -285,7 +285,13 @@ auto session::shown_tab_count() const -> std::size_t {
 
 auto session::picked_part() const -> std::optional<std::size_t> {
     const auto design = design_parts(prototype());
-    const auto found = std::ranges::find(design, field_pointer, &design_part::pointer);
+    const auto here = std::ranges::find_if(design, [&](const design_part& part) {
+        return part.pointer == field_pointer && part.mount == cursor;
+    });
+    const auto found =
+        here != design.end()
+            ? here
+            : std::ranges::find(design, field_pointer, &design_part::pointer);
     return found == design.end()
              ? std::nullopt
              : std::optional(static_cast<std::size_t>(found - design.begin()));

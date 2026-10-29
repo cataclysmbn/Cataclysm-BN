@@ -267,8 +267,8 @@ struct session {
     auto canvas_bounds() const -> mount_frame;
     /// How many tabs the design column has: a world's vehicle edited in place has fewer.
     auto shown_tab_count() const -> std::size_t;
-    /// The index in `design_parts` of the part the field form points at; none when it points at
-    /// no part.
+    /// The index in `design_parts` of the part the field form points at, the one on the picked
+    /// mount when a palette symbol draws it on several; none when it points at no part.
     auto picked_part() const -> std::optional<std::size_t>;
     /// The indexes in the prototype's `items` of the item spawns on the picked mount.
     auto item_spawns() const -> std::vector<std::size_t>;
