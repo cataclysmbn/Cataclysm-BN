@@ -7718,6 +7718,67 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "testing a stamp reaching past the loaded map puts the avatar in the room closed in by walls, "
+    "not in the open ground the map's edge cuts off",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    // The map shrinks to 11 by 11 submaps, so the 4 by 4 overmap squares reach past it east and
+    // south while the submaps they stand on are still in memory.
+    auto& here = get_map();
+    const auto full = here.getmapsize();
+    here.resize(11);
+    const auto restore = on_out_of_scope([&] {
+        here.resize(full);
+        here.build_map_cache(0, true);
+    });
+    const auto corner = project_to<coords::ms>(get_avatar().abs_omt_pos());
+    const auto loaded = [&](const int x, const int y) {
+        return here.inbounds(abs_to_bub(corner + tripoint_rel_ms(x, y, 0)));
+    };
+    REQUIRE(loaded(83, 83));
+    REQUIRE_FALSE(loaded(84, 84));
+    {
+        auto rows = std::vector<std::string>(SEEY * 8, std::string(SEEX * 8, '#'));
+        // Open ground whose only way on is the map's east edge, the nearer to the south edge's
+        // middle; a room walled in, the farther.
+        for (auto x = 76; x < 84; ++x) { rows[60][x] = '.'; }
+        for (auto y = 10; y < 14; ++y) { rows[y].replace(10, 4, "...."); }
+        auto grid = nlohmann::ordered_json::array();
+        for (auto y = 0; y < 4; ++y) {
+            auto line = nlohmann::ordered_json::array();
+            for (auto x = 0; x < 4; ++x) {
+                line.push_back(string_format("house_%02d", 4 + y * 4 + x));
+            }
+            grid.push_back(line);
+        }
+        const auto entry = nlohmann::ordered_json::array(
+            {{{"type", "mapgen"},
+              {"method", "json"},
+              {"om_terrain", grid},
+              {"object", {{"rows", rows}, {"terrain", {{".", "t_floor"}, {"#", "t_wall"}}}}}}});
+        auto out = std::ofstream(file.path, std::ios::binary | std::ios::trunc);
+        out << format_json(entry.dump()).value();
+    }
+    Messages::clear_messages();
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:stamp"); },
+        [](const auto& screen) {
+            REQUIRE(told(screen) == std::string{});
+            REQUIRE_FALSE(stat_of(screen, "stamped").empty());
+            return invoke("editor:test");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    const auto at = get_avatar().abs_pos() - corner;
+    CHECK(at.x() >= 10);
+    CHECK(at.x() < 14);
+    CHECK(at.y() >= 10);
+    CHECK(at.y() < 14);
+    editor::reset_editor_session();
+}
+
+TEST_CASE(
     "a catalog pick on an entry whose legend cannot be read takes no symbol and says why",
     "[editor_session]") {
     const auto guard = screen_guard{};
