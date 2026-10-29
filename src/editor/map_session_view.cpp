@@ -225,33 +225,50 @@ auto symbol_looks(const nlohmann::ordered_json& object, const std::vector<legend
 }
 
 /// What each symbol of the entry `object` places on a square from the bottom up, as its cell names
-/// it: terrain and furniture by name, anything else after its layer, with its chance; the entry's
-/// fill terrain under a symbol that maps none.
+/// it: terrain and furniture by name, anything else after its layer, with its chance, and the
+/// choices of one layer joined by "or"; the entry's fill terrain under a symbol that maps none.
 auto symbol_labels(const nlohmann::ordered_json& object, const std::vector<legend_symbol>& legend)
     -> std::map<std::string, std::string> {
     const auto fill = fill_terrain(object);
+    struct layer_names {
+        std::string layer;
+        std::vector<std::string> names;
+    };
     auto result = std::map<std::string, std::string>{};
     for (const auto& entry : legend) {
-        auto parts = std::vector<std::string>{};
+        auto layers = std::vector<layer_names>{};
         if (fill
             && !std::ranges::contains(entry.lines, std::string("terrain"), &legend_line::layer)) {
-            parts.push_back(legend_value("terrain", nlohmann::ordered_json(*fill).dump()).names);
+            layers.push_back(
+                {.layer = "terrain",
+                 .names = {legend_value("terrain", nlohmann::ordered_json(*fill).dump()).names}});
         }
         for (const auto& line : entry.lines) {
             const auto names = legend_value(line.layer, line.value).names;
             const auto value = nlohmann::ordered_json::parse(line.value, nullptr, false);
             const auto named =
-                line.layer == "terrain" || line.layer == "furniture"
-                    ? names
-                    //~ %1$s is a legend layer, such as Items; %2$s is what it places there.
-                    : string_format(_("%1$s: %2$s"), legend_layer_label(line.layer), names);
-            parts.push_back(
                 value.is_object() && value.contains("chance") && value["chance"].is_number_integer()
                     //~ %1$s is what a symbol places; %2$d is the chance it is placed, in percent.
-                    ? string_format(_("%1$s %2$d%%"), named, value["chance"].get<int>())
-                    : named);
+                    ? string_format(_("%1$s %2$d%%"), names, value["chance"].get<int>())
+                    : names;
+            const auto found = std::ranges::find(layers, line.layer, &layer_names::layer);
+            if (found == layers.end()) {
+                layers.push_back({.layer = line.layer, .names = {named}});
+            } else {
+                found->names.push_back(named);
+            }
         }
-        result[entry.symbol] = join(parts, "; ");
+        result[entry.symbol] = join(
+            layers | std::views::transform([](const layer_names& placed) {
+                //~ Joins what one legend layer may place on a square, such as brick wall or wooden
+                //~ wall.
+                const auto either = join(placed.names, _(" or "));
+                return placed.layer == "terrain" || placed.layer == "furniture"
+                         ? either
+                         //~ %1$s is a legend layer, such as Items; %2$s is what it places there.
+                         : string_format(_("%1$s: %2$s"), legend_layer_label(placed.layer), either);
+            }) | std::ranges::to<std::vector>(),
+            "; ");
     }
     return result;
 }
