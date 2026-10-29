@@ -702,7 +702,10 @@ struct editing: session {
         auto crossed = false;
         auto first_said = std::string{};
         auto first_notice = std::string{};
-        for (const auto& square : mirrored({at})) {
+        // How far taking parts away moved the mounts, which the squares still to erase follow.
+        auto moved = point_zero;
+        for (const auto& mirror : mirrored({at})) {
+            const auto square = mirror - moved;
             if (std::ranges::contains(stroke_erased, square)) {
                 crossed = true;
                 continue;
@@ -718,9 +721,10 @@ struct editing: session {
             tool_tab = "mount";
             pick_top();
             remove_picked();
+            // The cursor followed the mounts if taking the part away moved them.
+            moved += square - cursor;
             if (!said.empty()) {
                 ++removed;
-                // The cursor followed the mounts if taking the part away moved them.
                 stroke_erased.push_back(cursor);
                 if (first_said.empty()) { first_said = said; }
             } else if (first_notice.empty()) {
@@ -728,7 +732,7 @@ struct editing: session {
             }
         }
         if (open) { end_stroke(); }
-        cursor = at;
+        cursor = at - moved;
         pick_top();
         notice =
             removed == 0 && first_notice.empty() && !crossed
