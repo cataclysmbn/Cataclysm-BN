@@ -271,7 +271,16 @@ constexpr auto design_tabs = std::array{
 constexpr auto live_tab_count = std::size_t{3};
 
 
-/// The file a copied vehicle waits in, outside every world so that another world can paste it.
+/// The whole of `text` read as a number from `low` to `high`; none for anything else.
+auto number_in(const std::string& text, const int low, const int high) -> std::optional<int> {
+    auto value = 0;
+    const auto* const end = text.data() + text.size();
+    const auto [ptr, error] = std::from_chars(text.data(), end, value);
+    return error == std::errc{} && ptr == end && value >= low && value <= high
+             ? std::optional(value)
+             : std::nullopt;
+}
+
 /// The trimmed entries of a comma-separated list, as a JSON array; none when it lists nothing.
 auto listed(const std::string& text) -> std::optional<nlohmann::ordered_json> {
     auto entries =
@@ -395,6 +404,7 @@ auto placed_sentence(const bool pasted, const vehicle& veh) -> std::string {
     return string_format(format, veh.name, distance, direction_name(direction_from(here, at)));
 }
 
+/// The file a copied vehicle waits in, outside every world so that another world can paste it.
 auto copied_vehicle_file() -> std::filesystem::path {
     return std::filesystem::path(PATH_INFO::user_dir()) / "vehicle_copy.json";
 }
@@ -851,19 +861,15 @@ struct session {
 
     /// The mounts the canvas shows, from its north-west corner to its south-east one.
     auto canvas_bounds() const -> mount_frame {
-        return {.low = point(std::min(frame.low.x, cursor.x), std::min(frame.low.y, cursor.y)),
-                .high = point(std::max(frame.high.x, cursor.x), std::max(frame.high.y, cursor.y))};
+        return frame_around({frame.low, frame.high, cursor}, 0);
     }
 
     /// Twice the middle of the vehicle's mounts, so that an even span has it between mounts.
     auto mirror_axis() const -> point {
         const auto points = mounts();
-        const auto xs = points | std::views::transform(&point::x);
-        const auto ys = points | std::views::transform(&point::y);
-        return points.empty()
-                 ? point_zero
-                 : point(std::ranges::min(xs) + std::ranges::max(xs),
-                         std::ranges::min(ys) + std::ranges::max(ys));
+        if (points.empty()) { return point_zero; }
+        const auto [low, high] = frame_around(points, 0);
+        return low + high;
     }
 
     /// `squares` and, for each mirror on, their images across the middle of the vehicle's
@@ -1110,10 +1116,8 @@ struct session {
             // click marks none.
             selection =
                 in_stroke() && anchor && *anchor != at
-                    ? std::optional(mount_frame{
-                          .low = point(std::min(anchor->x, at.x), std::min(anchor->y, at.y)),
-                          .high = point(std::max(anchor->x, at.x), std::max(anchor->y, at.y))})
-                    : std::optional<mount_frame>{};
+                    ? std::optional(frame_around({*anchor, at}, 0))
+                    : std::nullopt;
             anchor = in_stroke() ? std::optional(anchor.value_or(at)) : std::optional<point>{};
         }
         cursor = at;
@@ -1437,14 +1441,12 @@ struct session {
         if (!text.empty()) {
             value = nlohmann::ordered_json(text);
             if (key == "ammo") {
-                auto number = 0;
-                const auto* const end = text.data() + text.size();
-                if (const auto [ptr, error] = std::from_chars(text.data(), end, number);
-                    error != std::errc{} || ptr != end || number < 0 || number > 100) {
+                const auto number = number_in(text, 0, 100);
+                if (!number) {
                     notice = _("That value is out of range.");
                     return;
                 }
-                value = number;
+                value = *number;
             }
         }
         change(set_part_member(prototype(), {.index = *index, .key = key, .value = value}));
@@ -1455,13 +1457,12 @@ struct session {
     auto set_ammo_qty(const std::size_t index, const bool most, const std::string& text) -> void {
         auto value = std::optional<nlohmann::ordered_json>{};
         if (!text.empty()) {
-            auto number = 0;
-            const auto* const end = text.data() + text.size();
-            if (const auto [ptr, error] = std::from_chars(text.data(), end, number);
-                error != std::errc{} || ptr != end || number < 0) {
+            const auto read = number_in(text, 0, std::numeric_limits<int>::max());
+            if (!read) {
                 notice = _("That value is out of range.");
                 return;
             }
+            const auto number = *read;
             const auto current = nlohmann::ordered_json::parse(
                 value_at(design_parts(prototype())[index].pointer + "/ammo_qty"), nullptr, false);
             auto range =
@@ -1796,27 +1797,18 @@ struct session {
         auto points = mounts();
         if (points.empty()) { points.push_back(cursor); }
         // The picked mount needs no free mounts beyond it.
-        const auto around = [&](const int margin) {
-            const auto bounds = frame_around(points, margin);
-            return mount_frame{
-                .low = point(std::min(bounds.low.x, cursor.x), std::min(bounds.low.y, cursor.y)),
-                .high =
-                    point(std::max(bounds.high.x, cursor.x), std::max(bounds.high.y, cursor.y))};
-        };
+        const auto around = frame_around(points, grid_margin);
+        const auto needed = frame_around({around.low, around.high, cursor}, 0);
         // Undo puts the vehicle edited in place back as a new one, which is still the same.
         const auto shown =
             live ? std::string("live") : doc->path().string() + "#" + prototype().value("id", "");
-        if (shown != framed) {
-            framed = shown;
-            frame = roomy(around(grid_margin));
-            selection.reset();
+        if (shown == framed) {
+            frame = frame_around({frame.low, frame.high, needed.low, needed.high}, 0);
             return;
         }
-        const auto needed = around(grid_margin);
-        frame =
-            {.low = point(std::min(frame.low.x, needed.low.x), std::min(frame.low.y, needed.low.y)),
-             .high = point(
-                 std::max(frame.high.x, needed.high.x), std::max(frame.high.y, needed.high.y))};
+        framed = shown;
+        frame = roomy(needed);
+        selection.reset();
     }
 
 
@@ -1857,13 +1849,13 @@ struct session {
                 });
             return;
         }
-        auto value = 0;
-        const auto* const end = text.data() + text.size();
-        if (const auto [ptr, error] = std::from_chars(text.data(), end, value);
-            error != std::errc{} || ptr != end) {
+        const auto read =
+            number_in(text, std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
+        if (!read) {
             notice = _("That value is out of range.");
             return;
         }
+        const auto value = *read;
         if (field == "health") {
             live_change(string_format(_("Set health of %s to %d%%"), name, value),
                         [&](vehicle& veh) { return set_part_health(veh, live_part, value); });
@@ -1906,26 +1898,16 @@ struct session {
     }
 
     auto set_spawning(const std::string& field, const std::string& text) -> void {
-        const auto number = [&](const int low, const int high) -> std::optional<int> {
-            auto value = 0;
-            const auto [end, error] =
-                std::from_chars(text.data(), text.data() + text.size(), value);
-            if (error != std::errc{} || end != text.data() + text.size() || value < low
-                || value > high) {
-                return std::nullopt;
-            }
-            return value;
-        };
         auto& value =
             field == "facing" ? spawning.facing
             : field == "fuel"
                 ? spawning.fuel
                 : spawning.condition;
         const auto read =
-            field == "facing" ? number(0, 359)
+            field == "facing" ? number_in(text, 0, 359)
             : field == "fuel"
-                ? number(0, 100)
-                : number(-1, 1);
+                ? number_in(text, 0, 100)
+                : number_in(text, -1, 1);
         if (read) {
             value = *read;
         } else {
@@ -1967,6 +1949,7 @@ struct session {
 /// What the canvas shows.
 struct grid_options {
     const vehicle* veh = nullptr;
+    /// The mounts shown, the picked one among them.
     mount_frame frame;
     point cursor;
     /// The part a drawing tool holds, whose refusals the squares show; none for another tool.
@@ -1980,15 +1963,13 @@ struct grid_options {
     /// Where the mounts a click pastes on lie from the mount clicked; none for no paste.
     std::vector<point> stamp;
 };
-/// The mounts of `frame` and the picked one outside it, a cell each, west to east and north to
-/// south as its blueprint reads, each showing every part of the vehicle `veh` on it and why the
-/// part held cannot go there.
+/// The mounts of `frame`, a cell each, west to east and north to south as its blueprint reads,
+/// each showing every part of the vehicle `veh` on it and why the part held cannot go there.
 auto grid_of(const grid_options& options) -> ec::component {
     const auto& [veh, frame, cursor, held, drag, quarters, selection, stamp] = options;
     const auto refusal = veh && held ? std::optional(mount_refusals(*veh, *held)) : std::nullopt;
     const auto stacks = veh ? mount_stacks(*veh) : std::map<point, std::vector<int>>{};
-    const auto low = point(std::min(frame.low.x, cursor.x), std::min(frame.low.y, cursor.y));
-    const auto high = point(std::max(frame.high.x, cursor.x), std::max(frame.high.y, cursor.y));
+    const auto& [low, high] = frame;
     const auto cols = high.x - low.x + 1;
     const auto rows = high.y - low.y + 1;
     // How far east and south a step `d` of mounts shows on the canvas turned: the front, east,
@@ -2108,16 +2089,14 @@ auto turned_grid(const vehicle& veh, const int facing) -> ec::component {
         squares.push_back({.at = at.raw(), .part = shown});
     }
     if (squares.empty()) { return {.id = turned_id, .body = ec::grid_body{}}; }
-    const auto [min_x, max_x] = std::ranges::minmax(
-        squares | std::views::transform([](const landed& square) { return square.at.x; }));
-    const auto [min_y, max_y] = std::ranges::minmax(
-        squares | std::views::transform([](const landed& square) { return square.at.y; }));
+    const auto [low, high] = frame_around(
+        squares | std::views::transform(&landed::at) | std::ranges::to<std::vector>(), 0);
     auto palette = ec::look_palette{};
     auto stacks = mount_stacks(veh);
     const auto cells =
         squares | std::views::transform([&](const landed& square) {
             return ec::grid_cell{
-                .at = {square.at.x - min_x, square.at.y - min_y},
+                .at = {square.at.x - low.x, square.at.y - low.y},
                 .glyph = std::string(1, veh.part_sym(square.part)),
                 .label = remove_color_tags(veh.cpart(square.part).name(false)),
                 .color = string_from_color(veh.part_color(square.part)),
@@ -2129,8 +2108,8 @@ auto turned_grid(const vehicle& veh, const int facing) -> ec::component {
         .id = turned_id,
         .label = _("Facing"),
         .body = ec::grid_body{
-            .cols = max_x - min_x + 1,
-            .rows = max_y - min_y + 1,
+            .cols = high.x - low.x + 1,
+            .rows = high.y - low.y + 1,
             .cells = cells,
             .looks = std::move(palette.looks)}};
 }
@@ -2651,28 +2630,24 @@ auto parts_view(const session& state) -> ec::screen_view {
                                           std::string_view(state.tool_tab))
             ? std::string("mount")
             : state.tool_tab;
-    auto tabs =
-        shown_tabs | std::views::transform([&](const design_tab& entry) {
-            const auto key = std::string_view(entry.key);
-            const auto enabled = key != "part" || settings;
-            return ec::tab_entry{
-                .id = std::string("tool:") + entry.key,
-                .label = tab_label(key),
-                .selected = key == shown_tab,
-                .enabled = enabled,
-                .denial = enabled ? std::string{} : settings_denial,
-                .hotkey = entry.hotkey};
-        })
-        | std::ranges::to<std::vector>();
+    auto tabs = std::vector<ec::tab_entry>{};
     for (const auto& entry : shown_tabs) {
         const auto key = std::string_view(entry.key);
         const auto enabled = key != "part" || settings;
+        const auto denial = enabled ? std::string{} : settings_denial;
+        tabs.push_back(
+            {.id = std::string("tool:") + entry.key,
+             .label = tab_label(key),
+             .selected = key == shown_tab,
+             .enabled = enabled,
+             .denial = denial,
+             .hotkey = entry.hotkey});
         affordances.push_back(ec::invoke_affordance(
             {.id = std::string(show_prefix) + entry.key,
              .label = tab_label(key),
              .keys = {entry.hotkey},
              .enabled = enabled,
-             .denial = enabled ? std::string{} : settings_denial}));
+             .denial = denial}));
     }
     const auto palette = state.parts();
     // The parts on the picked mount.
@@ -3058,18 +3033,14 @@ auto session_view(const session& state) -> ec::screen_view {
     const auto world = std::string(_("World"));
     auto view = parts_view(state);
     auto groups = std::map<std::string, std::string, std::less<>>{
-        {new_id, file},    {save_id, file},     {save_as_id, file},   {undo_id, edit},
-        {redo_id, edit},   {remove_id, edit},   {earlier_id, edit},   {later_id, edit},
-        {spawn_id, world}, {turn_cw_id, world}, {turn_ccw_id, world}, {paste_id, world},
-        {done_id, world}};
+        {new_id, file},         {save_id, file},          {save_as_id, file},
+        {undo_id, edit},        {redo_id, edit},          {remove_id, edit},
+        {earlier_id, edit},     {later_id, edit},         {copy_mounts_id, edit},
+        {cut_mounts_id, edit},  {delete_mounts_id, edit}, {mirror_sides_id, edit},
+        {mirror_ends_id, edit}, {view_cw_id, view_menu},  {view_ccw_id, view_menu},
+        {spawn_id, world},      {turn_cw_id, world},      {turn_ccw_id, world},
+        {paste_id, world},      {done_id, world}};
     for (const auto& entry : canvas_tools) { groups.emplace(entry.affordance, edit); }
-    groups.emplace(copy_mounts_id, edit);
-    groups.emplace(cut_mounts_id, edit);
-    groups.emplace(delete_mounts_id, edit);
-    groups.emplace(mirror_sides_id, edit);
-    groups.emplace(mirror_ends_id, edit);
-    groups.emplace(view_cw_id, view_menu);
-    groups.emplace(view_ccw_id, view_menu);
     for (const auto& entry : view.affordances) {
         if (entry.id.starts_with(show_prefix)) { groups.emplace(entry.id, view_menu); }
     }
