@@ -1000,8 +1000,9 @@ auto browser_list(const session& state, const std::vector<browser_entry>& listed
 
 /// The affordances that pick what to draw with and draw; a palette only picks its symbol.
 auto drawing_affordances(const session& state) -> std::vector<ec::affordance> {
+    // A click on a legend row makes it the pen.
     const auto symbol = ec::invoke_affordance(
-        {.id = symbol_id, .label = _("Symbol"), .args = row_of(legend_id)});
+        {.id = symbol_id, .label = _("Symbol"), .args = row_of(legend_id), .role = "select"});
     if (!state.on_mapgen()) { return {symbol}; }
     auto affordances = std::vector<ec::affordance>{};
     affordances.push_back(

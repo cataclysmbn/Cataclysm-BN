@@ -1212,8 +1212,9 @@ auto session::apply_mapping() -> void {
     const auto set = set_legend(
         *doc, {.object = object, .layer = mapping_layer, .symbol = mapping_symbol, .value = value});
     if (!set) { notice = set.error(); }
-    if (set && held && held->symbol == mapping_symbol) { held.reset(); }
     reload();
+    // A symbol just mapped is what to draw with next.
+    if (set && value && has_rows()) { pick_symbol(mapping_symbol); }
 }
 
 auto session::square_named(const std::string& pointer) const -> std::optional<point> {
