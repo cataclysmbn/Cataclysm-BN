@@ -2,8 +2,10 @@
 #include "catch/catch.hpp"
 #include "editor/document.h"
 #include "editor/vehicle_design.h"
+#include "game_constants.h"
 #include "item.h"
 #include "map/map.h"
+#include "map/mapbuffer.h"
 #include "map_helpers.h"
 #include "mod_manager.h"
 #include "vehicle/veh_type.h"
@@ -179,6 +181,34 @@ TEST_CASE(
     const auto above = refusals({3, 0});
     CHECK(above.has_value());
     CHECK(above == editor::mount_refusal(veh, {3, 0}, vpart_id("seat")));
+}
+
+TEST_CASE(
+    "a part installed on a world vehicle is found where it stands once the map moves away",
+    "[editor_vehicle]") {
+    clear_map();
+    auto& here = get_map();
+    const auto origin = here.get_abs_sub();
+    const auto cleanup = on_out_of_scope([&] {
+        get_map().load(origin, false);
+        clear_vehicles();
+    });
+    auto* const veh = editor::spawn_design(vproto_id("bicycle"), tripoint_bub_ms(60, 60, 0), {});
+    REQUIRE(veh != nullptr);
+    const auto tally =
+        editor::install_live_parts(*veh, {.mounts = {{2, 0}}, .part = "xlframe_vertical"});
+    REQUIRE(tally.has_value());
+    REQUIRE(tally->done == 1);
+    const auto installed = veh->parts_at_relative(tripoint_mnt_veh(2, 0, 0), false);
+    REQUIRE(installed.size() == 1);
+    const auto at = veh->abs_part_location(veh->cpart(installed.front()));
+    // Off the reality bubble, the map buffer finds a vehicle by the squares it indexed.
+    here.load(origin + point_rel_sm(MAPSIZE, 0), false);
+    REQUIRE_FALSE(here.inbounds(abs_to_map_local(here, at)));
+    const auto found = here.get_mapbuffer().veh_at(at);
+    REQUIRE(found.has_value());
+    CHECK(&found->vehicle() == veh);
+    CHECK(static_cast<int>(found->part_index()) == installed.front());
 }
 
 TEST_CASE("a vehicle prototype is found in the data file that defines it", "[editor_vehicle]") {
