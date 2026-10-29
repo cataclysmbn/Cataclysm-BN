@@ -307,6 +307,9 @@ auto faded_squares(const session& state, ec::look_palette& palette)
     return result;
 }
 
+/// The most legend rows shown at once.
+constexpr auto legend_rows_shown = std::size_t{6};
+
 /// How far into the overmap squares beside the canvas entry the canvas shows them.
 constexpr auto neighbour_strip = 4;
 
@@ -1316,7 +1319,8 @@ auto layout(const session& state) -> workspace_layout {
         .slots =
             {{tools_id, {.slot = "canvas"}},
              {legend_id, {.slot = "palette", .label = _("Legend")}},
-             {mapping_id, {.slot = "palette", .label = _("Mapping")}},
+             // Picking from the catalog maps what it draws; the form renames a symbol by hand.
+             {mapping_id, {.slot = "palette", .label = _("Mapping"), .collapsed = true}},
              {catalog_kinds_id, {.slot = "palette", .label = _("Catalog")}},
              {catalog_id, {.slot = "palette", .label = _("Catalog")}},
              {file_id, {.slot = "outline", .label = _("File path"), .collapsed = opened}},
@@ -1570,12 +1574,14 @@ auto session_view(const session& state) -> ec::screen_view {
                 }
             } else {
 
+                // A long legend scrolls, so the catalog under it keeps its rows.
                 parts.push_back(ec::list(
                     {.id = legend_id,
                      .rows = legend_rows(state),
                      .selection = "single",
                      .activate = symbol_id,
-                     .empty = _("No symbol is mapped yet.")}));
+                     .empty = _("No symbol is mapped yet."),
+                     .rows_shown = legend_rows_shown}));
             }
             parts.push_back(ec::list(
                 {.id = diagnostics_id,
