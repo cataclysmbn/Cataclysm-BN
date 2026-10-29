@@ -7827,4 +7827,33 @@ TEST_CASE(
     editor::reset_editor_session();
 }
 
+TEST_CASE(
+    "the right column folds an empty placements list and the new placement form until the "
+    "placements tool is in hand",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    const auto placed = mod_file{
+        {{"place_monster",
+          nlohmann::ordered_json::array({{{"monster", "mon_zombie"}, {"x", 3}, {"y", 3}}})}},
+        "placed.json"};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [&](const auto& screen) {
+            CHECK(part(screen, "editor:placements").collapsed);
+            CHECK(part(screen, "editor:place").collapsed);
+            return invoke("editor:tool", {.row = "tool:placements"});
+        },
+        [&](const auto& screen) {
+            CHECK_FALSE(part(screen, "editor:place").collapsed);
+            return invoke("editor:open", {.text = placed.path.string()});
+        },
+        [&](const auto& screen) {
+            CHECK_FALSE(part(screen, "editor:placements").collapsed);
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
+}
+
 #endif // CATA_MCP
