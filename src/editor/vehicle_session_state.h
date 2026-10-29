@@ -244,26 +244,8 @@ struct session {
     mount_frame frame;
     std::string framed;
     auto prototype() const -> const nlohmann::ordered_json&; // *NOPAD*
-    /// A row of the parts palette.
-    struct palette_entry {
-        std::string id;
-        std::string label;
-        const vpart_info* part = nullptr;
-        /// The part in hand is this one, or another shape of it.
-        bool held = false;
-    };
-    /// A page of the parts palette and how many rows it has in all: with no filter, one per kind
-    /// of part of the category shown; else the parts that match it, ordered by id.
-    struct part_page_entries {
-        std::vector<palette_entry> shown;
-        std::size_t total = 0;
-        /// The categories the game has parts of, in order.
-        std::vector<part_category> groups;
-        part_category group = part_category::frames;
-    };
     /// The category the palette shows: the one picked, else the part in hand's, else frames.
     auto shown_group() const -> part_category;
-    auto parts() const -> part_page_entries;
     /// The JSON at `pointer` in the prototype; empty when there is none.
     auto value_at(const std::string& pointer) const -> std::string;
     /// The file a new design suggests: `base` in the mod folder of the open file, else in
@@ -277,9 +259,6 @@ struct session {
     auto picked_here() const -> std::optional<std::size_t>;
     /// The name of the picked part on the picked mount; none when the mount has none.
     auto picked_name() const -> std::optional<std::string>;
-    /// Whether the picked part has a part installed before it on its mount, for a negative
-    /// `step`, or after it.
-    auto can_move(int step) const -> bool;
     /// The canvas tool in hand.
     auto tool() const -> const struct canvas_tool&; // *NOPAD*
     /// The vehicle the canvas shows.

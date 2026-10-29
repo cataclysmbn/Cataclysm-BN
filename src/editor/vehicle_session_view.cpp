@@ -95,6 +95,80 @@ auto item_options(const std::vector<itype_id>& items, const std::string& current
     return options;
 }
 
+/// A row of the parts palette.
+struct palette_entry {
+    std::string id;
+    std::string label;
+    const vpart_info* part = nullptr;
+    /// The part in hand is this one, or another shape of it.
+    bool held = false;
+};
+/// A page of the parts palette and how many rows it has in all: with no filter, one per kind
+/// of part of the category shown; else the parts that match it, ordered by id.
+struct part_page_entries {
+    std::vector<palette_entry> shown;
+    std::size_t total = 0;
+    /// The categories the game has parts of, in order.
+    std::vector<part_category> groups;
+    part_category group = part_category::frames;
+};
+auto parts_palette(const session& state) -> part_page_entries {
+    const auto& kinds = state.catalog.kinds;
+    auto groups =
+        kinds | std::views::transform(&part_kind::category) | std::ranges::to<std::vector>();
+    groups.erase(std::ranges::unique(groups).begin(), groups.end());
+    const auto group = state.shown_group();
+    auto found = std::vector<const vpart_info*>{};
+    if (state.part_filter.empty()) {
+        found =
+            kinds
+            | std::views::filter([&](const part_kind& kind) { return kind.category == group; })
+            | std::views::transform([](const part_kind& kind) { return kind.shapes.front(); })
+            | std::ranges::to<std::vector>();
+    } else {
+        found =
+            vpart_info::get_all() | std::views::filter([&](const vpart_info& info) {
+                return lcmatch(info.get_id().str(), state.part_filter)
+                    || lcmatch(info.name(), state.part_filter);
+            })
+            | std::views::transform([](const vpart_info& info) { return &info; })
+            | std::ranges::to<std::vector>();
+        std::ranges::sort(found, {}, [](const vpart_info* info) { return info->get_id().str(); });
+    }
+    // A row of a category stands for all the shapes of its part.
+    const auto in_hand =
+        state.part_filter.empty()
+            ? state.catalog.shapes_of(vpart_id(state.brush))
+            : std::vector<const vpart_info*>{};
+    const auto labels = part_labels(found);
+    const auto total = found.size();
+    const auto first = std::min(total, state.part_page * page_size);
+    return {
+        .shown = std::views::iota(first, std::min(total, first + page_size))
+               | std::views::transform([&](const std::size_t at) {
+                     return palette_entry{
+                         .id = "vpart:" + found[at]->get_id().str(),
+                         .label = labels[at],
+                         .part = found[at],
+                         .held = found[at]->get_id().str() == state.brush
+                              || std::ranges::contains(in_hand, found[at])};
+                 })
+               | std::ranges::to<std::vector>(),
+        .total = total,
+        .groups = std::move(groups),
+        .group = group};
+}
+
+/// Whether the picked part has a part installed before it on its mount, for a negative
+/// `step`, or after it.
+auto can_move(const session& state, const int step) -> bool {
+    const auto here = state.parts_here();
+    const auto picked = state.picked_here();
+    const auto found = picked ? std::ranges::find(here, *picked) : here.end();
+    if (found == here.end()) { return false; }
+    return step < 0 ? found != here.begin() : std::next(found) != here.end();
+}
+
 /// What the canvas shows.
 struct grid_options {
     const vehicle* veh = nullptr;
@@ -797,7 +871,7 @@ auto parts_view(const session& state) -> ec::screen_view {
              .enabled = enabled,
              .denial = denial}));
     }
-    const auto palette = state.parts();
+    const auto palette = parts_palette(state);
     // The parts on the picked mount.
     const auto on_mount =
         veh ? veh->parts_at_relative(mount, false) | std::views::transform([&](const int index) {
@@ -866,7 +940,7 @@ auto parts_view(const session& state) -> ec::screen_view {
              .denial = picked ? std::string{} : _("This mount has no part to remove.")})};
         if (!state.live) {
             const auto move = [&](const char* const id, const int step) {
-                const auto can = state.can_move(step);
+                const auto can = can_move(state, step);
                 const auto label =
                     step < 0
                         ? (picked ? string_format(_("Move %s up"), *picked) : _("Move up"))

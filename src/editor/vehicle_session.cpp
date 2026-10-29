@@ -8,7 +8,6 @@
 #include "editor/recent_documents.h"
 #include "editor/row_id.h"
 #include "editor/session_file.h"
-#include "editor/session_page.h"
 #include "editor/vehicle_design.h"
 #include "editor/vehicle_session_state.h"
 #include "engine_client_component.h"
@@ -197,7 +196,6 @@ auto copied_vehicle_file() -> std::filesystem::path {
 
 } // namespace
 
-/// The frame of `points` and `margin` mounts around them.
 auto frame_around(const std::vector<point>& points, const int margin) -> mount_frame {
     const auto [min_x, max_x] = std::ranges::minmax(points | std::views::transform(&point::x));
     const auto [min_y, max_y] = std::ranges::minmax(points | std::views::transform(&point::y));
@@ -213,51 +211,6 @@ auto session::shown_group() const -> part_category {
     if (part_group) { return *part_group; }
     const auto shapes = catalog.shapes_of(vpart_id(brush));
     return shapes.empty() ? part_category::frames : category_of(*shapes.front());
-}
-
-auto session::parts() const -> part_page_entries {
-    const auto& kinds = catalog.kinds;
-    auto groups =
-        kinds | std::views::transform(&part_kind::category) | std::ranges::to<std::vector>();
-    groups.erase(std::ranges::unique(groups).begin(), groups.end());
-    const auto group = shown_group();
-    auto found = std::vector<const vpart_info*>{};
-    if (part_filter.empty()) {
-        found =
-            kinds
-            | std::views::filter([&](const part_kind& kind) { return kind.category == group; })
-            | std::views::transform([](const part_kind& kind) { return kind.shapes.front(); })
-            | std::ranges::to<std::vector>();
-    } else {
-        found =
-            vpart_info::get_all() | std::views::filter([&](const vpart_info& info) {
-                return lcmatch(info.get_id().str(), part_filter)
-                    || lcmatch(info.name(), part_filter);
-            })
-            | std::views::transform([](const vpart_info& info) { return &info; })
-            | std::ranges::to<std::vector>();
-        std::ranges::sort(found, {}, [](const vpart_info* info) { return info->get_id().str(); });
-    }
-    // A row of a category stands for all the shapes of its part.
-    const auto in_hand =
-        part_filter.empty() ? catalog.shapes_of(vpart_id(brush)) : std::vector<const vpart_info*>{};
-    const auto labels = part_labels(found);
-    const auto total = found.size();
-    const auto first = std::min(total, part_page * page_size);
-    return {
-        .shown = std::views::iota(first, std::min(total, first + page_size))
-               | std::views::transform([&](const std::size_t at) {
-                     return palette_entry{
-                         .id = "vpart:" + found[at]->get_id().str(),
-                         .label = labels[at],
-                         .part = found[at],
-                         .held = found[at]->get_id().str() == brush
-                              || std::ranges::contains(in_hand, found[at])};
-                 })
-               | std::ranges::to<std::vector>(),
-        .total = total,
-        .groups = std::move(groups),
-        .group = group};
 }
 
 auto session::value_at(const std::string& pointer) const -> std::string {
@@ -309,14 +262,6 @@ auto session::picked_name() const -> std::optional<std::string> {
         return live ? live->cpart(static_cast<int>(index)).info().name()
                     : part_name(design_parts(prototype())[index].part);
     });
-}
-
-auto session::can_move(const int step) const -> bool {
-    const auto here = parts_here();
-    const auto picked = picked_here();
-    const auto found = picked ? std::ranges::find(here, *picked) : here.end();
-    if (found == here.end()) { return false; }
-    return step < 0 ? found != here.begin() : std::next(found) != here.end();
 }
 
 auto session::tool() const -> const struct canvas_tool& { // *NOPAD*
