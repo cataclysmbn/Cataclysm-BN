@@ -222,13 +222,12 @@ TEST_CASE(
                             &ec::panel_stat::key)
                             ->value)
                     > 0);
-                // Its three mounts in a row, and two rings of free mounts around them.
                 const auto& grid = body<ec::grid_body>(part(screen, "vehicle:grid"));
                 // Room to build around its three mounts in a row, the vehicle in the middle.
-                CHECK(grid.cols == 21);
-                CHECK(grid.rows == 15);
+                CHECK(grid.cols == 41);
+                CHECK(grid.rows == 31);
                 CHECK(grid.role == "canvas");
-                CHECK(cell(screen, "mount:-1,0").at == ec::grid_point{9, 7});
+                CHECK(cell(screen, "mount:-1,0").at == ec::grid_point{19, 15});
                 REQUIRE(cell(screen, "mount:1,0").looks.size() == 3);
                 CHECK(grid.looks.at(cell(screen, "mount:1,0").looks.back()).kind == "vehicle_part");
                 CHECK(cell(screen, "mount:2,0").looks.empty());
@@ -245,7 +244,7 @@ TEST_CASE(
                     affordance(screen, "vehicle:redo").keys == std::vector<std::string>{"CTRL+Y"});
                 CHECK(
                     affordance(screen, "vehicle:save").keys == std::vector<std::string>{"CTRL+S"});
-                CHECK(refused(state, "vehicle:mount", {.row = "mount:11,0"}));
+                CHECK(refused(state, "vehicle:mount", {.row = "mount:21,0"}));
                 // The parts are a palette, no tab of their own.
                 CHECK(refused(state, "vehicle:tool", {.row = "tool:install"}));
                 return invoke("vehicle:mount", {.row = "mount:1,0"});
@@ -1340,12 +1339,14 @@ TEST_CASE(
                     == std::vector<std::string>{
                         "canvas_tool:select", "canvas_tool:install", "canvas_tool:line",
                         "canvas_tool:rect", "canvas_tool:rect_filled", "canvas_tool:fill",
-                        "canvas_tool:remove", "canvas_tool:pick", "canvas_tool:mirror_sides",
-                        "canvas_tool:mirror_ends"});
+                        "canvas_tool:remove", "canvas_tool:pick", "canvas_tool:paste",
+                        "canvas_tool:mirror_sides", "canvas_tool:mirror_ends"});
                 CHECK(tools.front().selected);
-                CHECK((tools | std::views::transform(&ec::row::hotkey)
-                       | std::ranges::to<std::vector>())
-                      == std::vector<std::string>{"s", "b", "l", "r", "u", "f", "e", "i", "", ""});
+                CHECK(
+                    (tools | std::views::transform(&ec::row::hotkey)
+                     | std::ranges::to<std::vector>())
+                    == std::vector<
+                        std::string>{"s", "b", "l", "r", "u", "f", "e", "i", "v", "", ""});
                 // The design tabs say what they hold.
                 CHECK(
                     (body<ec::tabs_body>(part(screen, "vehicle:tools")).tabs
@@ -3935,7 +3936,7 @@ TEST_CASE(
                     "canvas_tool:line Line l", "canvas_tool:rect Rectangle r",
                     "canvas_tool:rect_filled Filled rectangle u", "canvas_tool:fill Fill f",
                     "canvas_tool:remove Eraser e", "canvas_tool:pick Eyedropper i",
-                    "canvas_tool:mirror_sides Mirror left and right ",
+                    "canvas_tool:paste Paste v", "canvas_tool:mirror_sides Mirror left and right ",
                     "canvas_tool:mirror_ends Mirror front and back "});
             CHECK(
                 affordance(screen, "vehicle:tool_pick").keys == std::vector<std::string>{"i", "q"});
@@ -4208,10 +4209,17 @@ TEST_CASE(
     const auto add = [&](std::vector<walk_step> more) {
         std::ranges::move(more, std::back_inserter(steps));
     };
-    // The canvas grows as the frame reaches its edge.
-    add(span({-9, -7}, {10, 7}));
-    add(span({-9, -9}, {10, 9}));
-    add(span({-9, 10}, {10, 10}));
+    // A new design has room for the whole frame, drawn in one stroke.
+    add(span({-9, -9}, {10, 10}));
+    add({[](const auto& screen) {
+        CHECK(said(screen) == "Installed frame on 399 squares.");
+        // Still twelve free mounts around it on every side.
+        CHECK(shown_at(screen, -9, -9).x >= 12);
+        CHECK(shown_at(screen, -9, -9).y >= 12);
+        CHECK(canvas(screen).cols - 1 - shown_at(screen, 10, 10).x >= 12);
+        CHECK(canvas(screen).rows - 1 - shown_at(screen, 10, 10).y >= 12);
+        return invoke("vehicle:part_filter", {.text = ""});
+    }});
     // A wheel mount and its wheel on each corner, drawn once on one of them.
     add(take("wheel_mount_medium"));
     add({[](const auto&) { return invoke("vehicle:tool_install"); },
@@ -4254,7 +4262,7 @@ TEST_CASE(
          },
          [](const auto&) { return act("QUIT"); }});
     CHECK(walk(steps) == steps.size());
-    CHECK(strokes == 8);
+    CHECK(strokes == 6);
     const auto saved = nlohmann::ordered_json::parse(read_file(folder.path / "big_van.json"));
     REQUIRE(saved.size() == 1);
     const auto parts = editor::design_parts(saved[0]);
@@ -4272,6 +4280,219 @@ TEST_CASE(
     CHECK(mounts.size() == 400);
     CHECK(mounts.contains(point(-9, -9)));
     CHECK(mounts.contains(point(10, 10)));
+}
+
+TEST_CASE(
+    "the vehicle editor selects a rectangle of mounts and copies, pastes, cuts and deletes it, "
+    "each one undo step",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto folder = my_mod_folder{};
+    auto before = std::size_t{0};
+    /// Selects the mounts from `from` to `to` with a drag of the Select tool.
+    const auto select = [](const point& from, const point& to) {
+        return std::vector<walk_step>{
+            [](const auto&) { return invoke("vehicle:tool_select"); },
+            [](const auto&) { return invoke("vehicle:stroke_begin"); },
+            [=](const auto&) { return mount_at(from.x, from.y); },
+            [=](const auto&) { return mount_at(to.x, to.y); },
+            [](const auto&) { return invoke("vehicle:stroke_end"); }};
+    };
+    const auto selection = [](const ec::screen_view& screen) {
+        const auto& regions = canvas(screen).regions;
+        return std::ranges::find(regions, std::string("selection"), &ec::grid_region::id);
+    };
+    const auto stamp = [](const ec::screen_view& screen) {
+        return canvas(screen).stamp | std::views::transform([](const ec::grid_point& offset) {
+                   return string_format("%d,%d", offset.x, offset.y);
+               })
+             | std::ranges::to<std::vector>();
+    };
+    auto steps = std::vector<walk_step>{
+        [](const auto&) { return invoke("vehicle:new", {.text = "Clip van"}); },
+        [](const auto&) { return invoke("vehicle:tool_rect_filled"); },
+        [](const auto&) { return mount_at(0, 0); },
+        [](const auto&) { return mount_at(2, 1); },
+        [](const auto&) { return invoke("vehicle:part_filter", {.text = "seat"}); },
+        [](const auto&) { return invoke("vehicle:choose", {.row = "vpart:seat"}); },
+        [](const auto&) { return invoke("vehicle:tool_line"); },
+        [](const auto&) { return mount_at(0, 0); },
+        [](const auto&) { return mount_at(2, 0); },
+        [&](const auto& screen) {
+            CHECK(said(screen) == "Installed seat on 3 squares.");
+            // Nothing to paste yet.
+            CHECK_FALSE(affordance(screen, "vehicle:tool_paste").enabled);
+            CHECK(affordance(screen, "vehicle:copy_mounts").keys
+                  == std::vector<std::string>{"CTRL+C"});
+            CHECK(affordance(screen, "vehicle:cut_mounts").keys
+                  == std::vector<std::string>{"CTRL+X"});
+            CHECK(affordance(screen, "vehicle:tool_paste").keys
+                  == std::vector<std::string>{"v", "CTRL+V"});
+            // The world's Paste vehicle leaves Ctrl+V to the canvas.
+            CHECK(affordance(screen, "vehicle:paste").keys.empty());
+            return invoke("vehicle:tool_select");
+        },
+        [](const auto& screen) {
+            // The Select tool spans from the square pressed to the one released.
+            CHECK(canvas(screen).drag == "span");
+            return invoke("vehicle:stroke_begin");
+        },
+    };
+    const auto add = [&](std::vector<walk_step> more) {
+        std::ranges::move(more, std::back_inserter(steps));
+    };
+    add({[](const auto&) { return mount_at(0, 0); }, [](const auto&) { return mount_at(2, 1); },
+         [](const auto&) { return invoke("vehicle:stroke_end"); },
+         [&](const auto& screen) {
+             const auto found = selection(screen);
+             REQUIRE(found != canvas(screen).regions.end());
+             CHECK(found->from == shown_at(screen, 0, 0));
+             CHECK(found->to == shown_at(screen, 2, 1));
+             CHECK(found->label == "Selection");
+             // With squares marked, Delete deletes them instead of the picked part.
+             CHECK(affordance(screen, "vehicle:delete_mounts").keys
+                   == std::vector<std::string>{"DELETE"});
+             CHECK(affordance(screen, "vehicle:remove").keys.empty());
+             return invoke("vehicle:copy_mounts");
+         },
+         [&](const auto& screen) {
+             CHECK(said(screen) == "Copied 9 parts.");
+             return invoke("vehicle:tool_paste");
+         },
+         [&](const auto& screen) {
+             CHECK(picked_tool(screen) == "canvas_tool:paste");
+             // Where the paste lands follows the pointer.
+             CHECK(stamp(screen)
+                   == std::vector<std::string>{"0,0", "1,0", "2,0", "0,1", "1,1", "2,1"});
+             before = steps_done(screen);
+             return mount_at(10, 10);
+         },
+         [&](const auto& screen) {
+             // Off the vehicle no frame holds on: nothing changes, and it says why.
+             CHECK_FALSE(notice_of(screen).empty());
+             CHECK_FALSE(has_part(screen, 10, 10));
+             CHECK(steps_done(screen) == before);
+             return mount_at(3, 0);
+         },
+         [&](const auto& screen) {
+             // Frames first, spreading from the vehicle, then the seats on them.
+             CHECK(said(screen) == "Pasted 9 parts.");
+             CHECK(cell(screen, "mount:5,0").label == "frame, seat");
+             CHECK(cell(screen, "mount:5,1").label == "frame");
+             CHECK(steps_done(screen) == before + 1);
+             return invoke("vehicle:view_cw");
+         },
+         [](const auto& screen) {
+             // The footprint turns with the canvas.
+             CHECK(canvas(screen).stamp.back() == ec::grid_point{-1, 2});
+             return mount_at(0, 2);
+         },
+         [&](const auto& screen) {
+             CHECK(said(screen) == "Pasted 9 parts.");
+             CHECK(cell(screen, "mount:2,2").label == "frame, seat");
+             CHECK(cell(screen, "mount:2,3").label == "frame");
+             CHECK(steps_done(screen) == before + 2);
+             return invoke("vehicle:view_ccw");
+         }});
+    add(select({3, 0}, {5, 1}));
+    add({[](const auto&) { return invoke("vehicle:cut_mounts"); },
+         [&](const auto& screen) {
+             CHECK(said(screen) == "Cut 9 parts.");
+             CHECK_FALSE(has_part(screen, 3, 0));
+             CHECK_FALSE(has_part(screen, 5, 1));
+             CHECK(steps_done(screen) == before + 3);
+             return invoke("vehicle:undo");
+         },
+         [&](const auto& screen) {
+             CHECK(cell(screen, "mount:3,0").label == "frame, seat");
+             // The step undone stays in the history, to redo.
+             CHECK(steps_done(screen) == before + 3);
+             return invoke("vehicle:redo");
+         }});
+    add(select({0, 2}, {2, 3}));
+    add({[](const auto&) { return invoke("vehicle:delete_mounts"); },
+         [&](const auto& screen) {
+             CHECK(said(screen) == "Deleted 9 parts.");
+             CHECK_FALSE(has_part(screen, 0, 2));
+             CHECK_FALSE(has_part(screen, 2, 3));
+             CHECK(steps_done(screen) == before + 4);
+             return invoke("vehicle:stroke_begin");
+         },
+         // A click without a drag marks nothing.
+         [](const auto&) { return mount_at(1, 1); },
+         [](const auto&) { return invoke("vehicle:stroke_end"); },
+         [&](const auto& screen) {
+             CHECK(selection(screen) == canvas(screen).regions.end());
+             CHECK(affordance(screen, "vehicle:remove").keys == std::vector<std::string>{"DELETE"});
+             return invoke("vehicle:tool_select");
+         }});
+    add(select({1, 0}, {1, 1}));
+    add({[](const auto&) { return invoke("vehicle:delete_mounts"); },
+         [&](const auto& screen) {
+             // The last frame between the two halves stays, as the game keeps the vehicle whole.
+             CHECK(said(screen)
+                   == "Deleted 2 parts. 1 part refused: Removing this part would split the "
+                      "vehicle.");
+             CHECK(has_part(screen, 1, 0) != has_part(screen, 1, 1));
+             CHECK(steps_done(screen) == before + 5);
+             return act("QUIT");
+         }});
+    CHECK(walk(steps) == steps.size());
+}
+
+TEST_CASE(
+    "the vehicle editor copies, pastes and deletes mounts of a world vehicle in place",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    clear_map();
+    const auto cleanup_vehicles = on_out_of_scope([] { clear_vehicles(); });
+    const auto at = get_avatar().bub_pos() + tripoint_rel_ms(8, 0, 0);
+    auto* const veh = editor::spawn_design(vproto_id("bicycle"), at, {});
+    REQUIRE(veh != nullptr);
+    const auto parts = veh->part_count();
+    auto before = std::size_t{0};
+    const auto steps = std::vector<walk_step>{
+        [](const auto&) { return invoke("vehicle:source", {.row = "source:world"}); },
+        [](const auto&) { return invoke("vehicle:edit", {.row = "world:0"}); },
+        [](const auto&) { return invoke("vehicle:tool_select"); },
+        [](const auto&) { return invoke("vehicle:stroke_begin"); },
+        [](const auto&) { return mount_at(-1, 0); },
+        [](const auto&) { return mount_at(1, 0); },
+        [](const auto&) { return invoke("vehicle:stroke_end"); },
+        [](const auto&) { return invoke("vehicle:copy_mounts"); },
+        [](const auto&) { return invoke("vehicle:tool_paste"); },
+        [&](const auto& screen) {
+            before = steps_done(screen);
+            return mount_at(-1, 1);
+        },
+        [&](const auto& screen) {
+            CHECK(said(screen).starts_with("Pasted "));
+            CHECK(has_part(screen, 0, 1));
+            CHECK(steps_done(screen) == before + 1);
+            return invoke("vehicle:tool_select");
+        },
+        [](const auto&) { return invoke("vehicle:stroke_begin"); },
+        [](const auto&) { return mount_at(-1, 1); },
+        [](const auto&) { return mount_at(1, 1); },
+        [](const auto&) { return invoke("vehicle:stroke_end"); },
+        [](const auto&) { return invoke("vehicle:delete_mounts"); },
+        [&](const auto& screen) {
+            CHECK(said(screen).starts_with("Deleted "));
+            CHECK_FALSE(has_part(screen, -1, 1));
+            CHECK_FALSE(has_part(screen, 0, 1));
+            CHECK_FALSE(has_part(screen, 1, 1));
+            CHECK(has_part(screen, 0, 0));
+            CHECK(steps_done(screen) == before + 2);
+            return invoke("vehicle:undo");
+        },
+        [](const auto&) { return invoke("vehicle:undo"); },
+        [](const auto&) { return invoke("vehicle:done"); },
+        [](const auto&) { return act("QUIT"); },
+    };
+    CHECK(walk(steps) == steps.size());
+    const auto placed = get_map().veh_at(at);
+    REQUIRE(placed);
+    CHECK(placed->vehicle().part_count() == parts);
 }
 
 TEST_CASE(
