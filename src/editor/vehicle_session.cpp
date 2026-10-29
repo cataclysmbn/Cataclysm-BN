@@ -1698,9 +1698,11 @@ struct session {
         }
     }
 
-    /// Puts the vehicle edited in place back to the last state of `from`, keeping the current one
-    /// in `to`.
-    auto step_live(std::vector<live_step>& from, std::vector<live_step>& to) -> void {
+    /// Puts the vehicle edited in place back as it was before its last step, or after the next
+    /// step undone when `!back`.
+    auto step_live(const bool back) -> void {
+        auto& from = back ? live_undo : live_redo;
+        auto& to = back ? live_redo : live_undo;
         if (from.empty() || !live) { return; }
         auto now = vehicle_state(*live);
         const auto anchor = live->pivot_anchor[0];
@@ -1753,12 +1755,22 @@ struct session {
         if (!live) {
             if (doc->jump(depth)) { reload(); }
         } else {
-            while (live && live_undo.size() > depth) { step_live(live_undo, live_redo); }
-            while (live && live_undo.size() < depth && !live_redo.empty()) {
-                step_live(live_redo, live_undo);
-            }
+            while (live && live_undo.size() > depth) { step_live(true); }
+            while (live && live_undo.size() < depth && !live_redo.empty()) { step_live(false); }
         }
         if (live || doc) { keep_pick(); }
+    }
+
+    /// Undoes the last step of the vehicle edited in place or of the open document, or redoes
+    /// the next one when `!back`.
+    auto step_history(const bool back) -> void {
+        if (live) {
+            step_live(back);
+            if (live) { keep_pick(); }
+        } else if (back ? doc->undo() : doc->redo()) {
+            reload();
+            keep_pick();
+        }
     }
 
     /// The mounts the vehicle shown has.
@@ -3087,24 +3099,6 @@ auto session_view(const session& state) -> ec::screen_view {
 
 auto kept_session = std::optional<session>{};
 
-/// Runs the affordance `id` on the world's vehicle the editor edits in place.
-auto live_invoke(
-    session& state, const std::string& id, const std::string& row, const std::string& text)
-    -> void {
-    if (id == done_id) {
-        state.live = nullptr;
-    } else if (id == live_set_id) {
-        state.set_live(row, text);
-    } else if (id == undo_id) {
-        state.step_live(state.live_undo, state.live_redo);
-    } else if (id == redo_id) {
-        state.step_live(state.live_redo, state.live_undo);
-    } else if (id == jump_id) {
-        if (const auto depth = row_index(row, "step")) { state.jump(*depth); }
-    }
-    if (state.live && (id == undo_id || id == redo_id)) { state.keep_pick(); }
-}
-
 } // namespace
 
 auto reset_vehicle_editor() -> void { kept_session.reset(); }
@@ -3216,10 +3210,17 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
             state.remove_picked();
         } else if (id == pick_id) {
             if (const auto index = row_index(row, "part")) { state.pick(*index); }
+        } else if (id == undo_id || id == redo_id) {
+            state.step_history(id == undo_id);
+        } else if (id == jump_id) {
+            if (const auto depth = row_index(row, "step")) { state.jump(*depth); }
         } else if (state.live) {
-            live_invoke(state, id, row, text);
-        } else if (!state.doc) {
-            // The vehicle edited in place left the map.
+            // The world's vehicle edited in place takes these alone.
+            if (id == done_id) {
+                state.live = nullptr;
+            } else if (id == live_set_id) {
+                state.set_live(row, text);
+            }
         } else if (id == earlier_id || id == later_id) {
             state.move_picked(id == earlier_id ? -1 : 1);
         } else if (id == turn_cw_id || id == turn_ccw_id) {
@@ -3262,13 +3263,6 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
             }
         } else if (id == field_apply_id) {
             state.set_field();
-        } else if (id == jump_id) {
-            if (const auto depth = row_index(row, "step")) { state.jump(*depth); }
-        } else if (id == undo_id || id == redo_id) {
-            if (id == undo_id ? state.doc->undo() : state.doc->redo()) {
-                state.reload();
-                state.keep_pick();
-            }
         } else if (id == save_id) {
             state.save();
         } else if (id == save_as_id) {
