@@ -336,3 +336,18 @@ TEST_CASE("an export leaves a palette symbol that maps one of several choices", 
     CHECK(dirt != "a");
     CHECK(object["terrain"][dirt] == "t_dirt");
 }
+
+TEST_CASE(
+    "an export keeps the first of two symbols of the open entry that map the same kind",
+    "[editor_mapgen]") {
+    const auto exported = nlohmann::ordered_json::parse(R"({
+        "rows": [ "ab" ], "terrain": { "a": "t_dirt", "b": "t_floor" }
+    })");
+    const auto dirt = [](const std::string& symbol) {
+        return editor::legend_symbol{
+            .symbol = symbol, .lines = {{.layer = "terrain", .value = R"("t_dirt")"}}};
+    };
+    const auto kept = editor::keep_symbols(exported, {dirt(","), dirt(".")});
+    CHECK(kept["rows"] == nlohmann::ordered_json::array({",b"}));
+    CHECK(kept["terrain"] == nlohmann::ordered_json::parse(R"({ ",": "t_dirt", "b": "t_floor" })"));
+}
