@@ -1755,7 +1755,13 @@ auto session::paint(const point& at) -> void {
                 return entry.x.min <= at.x && at.x <= entry.x.max && entry.y.min <= at.y
                     && at.y <= entry.y.max;
             });
-        if (found != std::ranges::rend(placed)) { pick(*found); }
+        if (found != std::ranges::rend(placed)) {
+            pick(*found);
+        } else {
+            status = _(
+                "No placement here. Mark squares with the Select tool, then add one under New "
+                "placement.");
+        }
         return;
     }
     if (!current->kind) {

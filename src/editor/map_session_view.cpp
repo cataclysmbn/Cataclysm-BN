@@ -677,6 +677,47 @@ auto document_stats(const session& state) -> std::vector<ec::panel_stat> {
     return stats;
 }
 
+/// A `place_*` array as the player knows what it places, followed by the array.
+auto placement_kind_label(const std::string_view kind) -> std::string {
+    const auto layer = kind.substr(std::string_view("place_").size());
+    return string_format(
+        "%s (%s)", layer == "loot" ? std::string(_("Loot")) : legend_layer_label(layer), kind);
+}
+
+/// The members a placement of the `place_*` array `kind` takes, as an example.
+auto placement_value_hint(const std::string_view kind) -> std::string {
+    if (kind == "place_item") {
+        return _("An item: {\"item\": \"<item id>\", \"amount\": 1, \"chance\": 100}");
+    }
+    if (kind == "place_items") {
+        return _("An item group: {\"item\": \"<item group id>\", \"chance\": 100}");
+    }
+    if (kind == "place_loot") {
+        return _(
+            "An item group or item: {\"group\": \"<item group id>\"} or {\"item\": \"<item id>\"}");
+    }
+    if (kind == "place_monster") {
+        return _(
+            "A monster: {\"monster\": \"<monster id>\"}, or {\"group\": \"<monster group id>\"}");
+    }
+    if (kind == "place_monsters") {
+        return _(
+            "A monster group: {\"monster\": \"<monster group id>\", \"density\": 1, \"chance\": 1}");
+    }
+    if (kind == "place_vehicles") {
+        return _("A vehicle: {\"vehicle\": \"<vehicle id>\", \"chance\": 100, \"rotation\": 0}");
+    }
+    if (kind == "place_npcs") { return _("An NPC: {\"class\": \"<NPC template id>\"}"); }
+    if (kind == "place_fields") {
+        return _("A field: {\"field\": \"<field id>\", \"intensity\": 1}");
+    }
+    if (kind == "place_traps") { return _("A trap: {\"trap\": \"<trap id>\"}"); }
+    if (kind == "place_furniture") { return _("Furniture: {\"furn\": \"<furniture id>\"}"); }
+    if (kind == "place_terrain") { return _("Terrain: {\"ter\": \"<terrain id>\"}"); }
+    if (kind == "place_nested") { return _("Nested chunks: {\"chunks\": [\"<chunk id>\"]}"); }
+    return _("Its members other than x and y, as a JSON object.");
+}
+
 /// The forms that move the picked placement and add one.
 auto placement_forms(
     const session& state, std::vector<ec::component>& parts,
@@ -708,13 +749,17 @@ auto placement_forms(
                   .type = "select",
                   .options =
                       placement_kinds | std::views::transform([](const std::string_view kind) {
-                          return ec::
-                              form_option{.id = std::string(kind), .label = std::string(kind)};
+                          return ec::form_option{
+                              .id = std::string(kind), .label = placement_kind_label(kind)};
                       })
                       | std::ranges::to<std::vector>()},
                  {.id = "x", .label = "x", .value = state.place_x},
                  {.id = "y", .label = "y", .value = state.place_y},
-                 {.id = "value", .label = _("Value"), .value = state.place_value, .multiline = true}},
+                 {.id = "value",
+                  .label = _("Value"),
+                  .description = placement_value_hint(state.place_kind),
+                  .value = state.place_value,
+                  .multiline = true}},
             .submit = place_apply_id}});
     affordances.push_back(ec::invoke_affordance(
         {.id = place_set_id,
