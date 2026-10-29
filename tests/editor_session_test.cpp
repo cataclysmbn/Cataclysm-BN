@@ -33,6 +33,7 @@
 #    include "map/mapdata.h"
 #    include "mapgen/mapgen_constructor.h"
 #    include "mapgen/mapgen_functions.h"
+#    include "message_feed.h"
 #    include "messages.h"
 #    include "options_helpers.h"
 #    include "output.h"
@@ -3048,9 +3049,9 @@ TEST_CASE(
     });
 
     editor::run_editor_session();
-    // The avatar plays in the middle of the stamped square.
-    CHECK(get_avatar().abs_omt_pos() == omt);
-    CHECK(get_avatar().abs_pos() == project_to<coords::ms>(omt) + tripoint_rel_ms(SEEX, SEEY, 0));
+    // The avatar plays just south of the stamped square, looking at it.
+    CHECK(get_avatar().abs_pos()
+          == project_to<coords::ms>(omt) + tripoint_rel_ms(SEEX, SEEY * 2 + 1, 0));
     CHECK(step == 7);
     editor::reset_editor_session();
 }
@@ -3880,8 +3881,9 @@ TEST_CASE(
     handle_action(std::move(mode));
     CHECK(step == 2);
     CHECK(g->uquit == QUIT_NO);
-    // The avatar plays the stamped mapgen.
-    CHECK(get_map().ter(get_avatar().bub_pos()) == ter_str_id("t_floor"));
+    // The avatar plays beside the stamped mapgen, whose middle is in view north of it.
+    CHECK(get_map().ter(get_avatar().bub_pos() + tripoint_rel_ms(0, -SEEY - 1, 0))
+          == ter_str_id("t_floor"));
 
     // The editor comes back to the same document, and closing it ends the editor game.
     step = 0;
@@ -7437,6 +7439,37 @@ TEST_CASE(
             return act("QUIT");
         }};
     CHECK(walk_map(walk) == walk.size());
+}
+
+TEST_CASE(
+    "testing a stamp puts the avatar beside it, looking at it, and says where it is",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{{{"fill_ter", "t_floor"}}};
+    Messages::clear_messages();
+    const auto omt = get_avatar().abs_omt_pos();
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto& screen) {
+            // The seed says what it is for.
+            CHECK(affordance(screen, "editor:preview").description.contains("seed"));
+            return invoke("editor:preview", {.count = 3});
+        },
+        [](const auto& screen) {
+            // Where the preview is shown.
+            CHECK(said(screen) == "Generated map shows the entry with seed 3.");
+            return invoke("editor:stamp");
+        },
+        [](const auto&) { return invoke("editor:test"); }};
+    CHECK(walk_map(walk) == walk.size());
+    // Just south of the stamped square, two squares from its edge.
+    CHECK(get_avatar().abs_omt_pos() == omt + tripoint_rel_omt(0, 1, 0));
+    CHECK(get_avatar().abs_pos()
+          == project_to<coords::ms>(omt) + tripoint_rel_ms(SEEX, SEEY * 2 + 1, 0));
+    const auto lines = Messages::feed_since({});
+    REQUIRE(!lines.empty());
+    CHECK(lines.back().text == "The mapgen is stamped 2 squares north of you.");
+    editor::reset_editor_session();
 }
 
 #endif // CATA_MCP
