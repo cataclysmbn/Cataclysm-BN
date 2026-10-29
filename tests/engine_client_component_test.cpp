@@ -1163,19 +1163,23 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "a grid lists only the cells that differ from its blank one, which a client names by square",
+    "a grid with a blank cell sends each look once and runs of squares east, named by place",
     "[engine_client_component]") {
     const auto context = input_context("TEST_GRID_BLANK");
     const auto blank =
         ec::grid_cell{.glyph = " ", .affordance = "grid:pick", .refused = "Too far."};
-    const auto at = [&](const int x, const std::string& id) {
+    const auto at = [&](const int x, const int y, const std::string& id, const std::string& glyph) {
         auto cell = blank;
-        cell.at = {x, 0};
+        cell.at = {x, y};
         cell.id = id;
+        cell.glyph = glyph;
         return cell;
     };
-    auto kept = at(2, "cell:kept");
-    kept.glyph = "#";
+    // Listed out of order, as a screen may build them.
+    const auto cells = std::vector<ec::grid_cell>{
+        at(0, 1, "cell:d", "#"), at(1, 1, "cell:e", " "), at(2, 1, "cell:f", " "),
+        at(3, 1, "cell:g", " "), at(0, 0, "cell:a", " "), at(1, 0, "cell:b", "#"),
+        at(2, 0, "cell:c", "#"), at(3, 0, "cell:o", "@")};
     const auto scope = ec::screen_scope(
         context, "test", {.view = [&](const auto&) {
             return ec::screen_view{
@@ -1183,46 +1187,50 @@ TEST_CASE(
                     ec::component{
                         .id = "grid:blank",
                         .affordances = {"grid:pick"},
-                        .body = ec::
-                            grid_body{.cols = 3,
-                                      .rows = 1,
-                                      .cells = {at(0, "cell:a"), at(1, "cell:b"), kept},
-                                      .blank = blank}},
+                        .body = ec::grid_body{.cols = 4, .rows = 2, .cells = cells, .blank = blank}},
                 .affordances = {ec::invoke_affordance(
                     {.id = "grid:pick",
-                     .args = {.row = ec::row_shape{.component_id = "grid:blank"}}})}};
+                     .args = {.row = ec::row_shape{.component_id = "grid:blank"}}})},
+                .focus_component = "grid:blank",
+                .focus_row = "cell:c"};
         }});
     const auto input = client::input_context_scope(context, "TEST_GRID_BLANK");
-    const auto grid = with_id(wire(map_only())["stack"].back(), "grid:blank");
+    const auto top = wire(map_only())["stack"].back();
+    const auto grid = with_id(top, "grid:blank");
     REQUIRE(grid.is_object());
-    // The blank cell has no place or id, and its refusal is listed like a cell's.
-    CHECK(grid["blank"]
-          == nlohmann::json::parse(
-              R"({"glyph":" ","affordance":"grid:pick","enabled":true,"refused":0})"));
+    // Each look once, the blank one first, then as they show from the north-west; a refusal is
+    // listed once and named by index.
+    CHECK(grid["styles"] == nlohmann::json::parse(R"([
+        {"glyph":" ","affordance":"grid:pick","enabled":true,"refused":0},
+        {"glyph":"#","affordance":"grid:pick","enabled":true,"refused":0},
+        {"glyph":"@","affordance":"grid:pick","enabled":true,"refused":0}])"));
+    CHECK(grid["blank"] == 0);
     CHECK(grid["refusals"] == nlohmann::json::array({"Too far."}));
-    // Only the cell that shows something else is listed, whole.
-    REQUIRE(grid["cells"].size() == 1);
-    CHECK(grid["cells"][0]["id"] == "cell:kept");
-    CHECK(grid["cells"][0]["affordance"] == "grid:pick");
-    CHECK(grid["cells"][0]["refused"] == 0);
+    // The other squares as runs east within a row, with no ids.
+    CHECK(grid["cells"] == nlohmann::json::parse(R"([
+        {"x":1,"y":0,"style":1,"n":2},
+        {"x":3,"y":0,"style":2},
+        {"x":0,"y":1,"style":1}])"));
+    // The focused cell is named by its square too.
+    CHECK(top["focus"]["row_id"] == "square:2,0");
     // A square names the cell there, listed or not; one off the grid names none.
     const auto screen = ec::top_screen(map_only());
     const auto& body = std::get<ec::grid_body>(screen.root->body);
-    REQUIRE(ec::cell_of(body, "square:1,0") != nullptr);
-    CHECK(ec::cell_of(body, "square:1,0")->id == "cell:b");
-    CHECK(ec::cell_of(body, "square:2,0")->id == "cell:kept");
+    REQUIRE(ec::cell_of(body, "square:1,1") != nullptr);
+    CHECK(ec::cell_of(body, "square:1,1")->id == "cell:e");
+    CHECK(ec::cell_of(body, "square:2,0")->id == "cell:c");
     CHECK(ec::cell_of(body, "cell:a")->id == "cell:a");
-    CHECK(ec::cell_of(body, "square:3,0") == nullptr);
+    CHECK(ec::cell_of(body, "square:4,0") == nullptr);
     CHECK(ec::cell_of(body, "square:1") == nullptr);
     CHECK(ec::cell_of(body, "square:1,0x") == nullptr);
     CHECK(ec::square_id({4, 7}) == "square:4,7");
     // The screen reads the id of the cell at the square a client picks.
     const auto picked = ec::
-        resolve_invoke(map_only(), {.affordance_id = "grid:pick", .args = {.row = "square:1,0"}});
+        resolve_invoke(map_only(), {.affordance_id = "grid:pick", .args = {.row = "square:2,1"}});
     REQUIRE(picked);
-    CHECK(std::get<ec::invoke_operation>(*picked).args.row == "cell:b");
+    CHECK(std::get<ec::invoke_operation>(*picked).args.row == "cell:f");
     const auto off = ec::
-        resolve_invoke(map_only(), {.affordance_id = "grid:pick", .args = {.row = "square:3,0"}});
+        resolve_invoke(map_only(), {.affordance_id = "grid:pick", .args = {.row = "square:4,0"}});
     REQUIRE_FALSE(off);
     CHECK(off.error() == ec::error::invalid_arguments);
 }

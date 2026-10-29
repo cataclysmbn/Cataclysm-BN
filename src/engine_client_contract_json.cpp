@@ -5,7 +5,9 @@
 #include "string_formatter.h"
 #include "translations.h"
 
+#include <algorithm>
 #include <cmath>
+#include <tuple>
 #include <nlohmann/json.hpp>
 #include <ranges>
 
@@ -714,14 +716,49 @@ auto body_json( const grid_body &body, const bubble_frame & /*frame*/ ) -> json
         }
         return entry;
     };
-    if( body.blank ) { result["blank"] = look_of( *body.blank ); }
-    result["cells"] = json::array();
-    // The squares that show the blank cell are left to it.
-    for( const auto &cell : body.cells | std::views::filter( [&]( const grid_cell & entry ) { return !blank_square( body, entry ); } ) ) {
-        auto entry = json{{"x", cell.at.x}, {"y", cell.at.y}};
-        if( !cell.id.empty() ) { entry["id"] = cell.id; }
-        entry.update( look_of( cell ) );
-        result["cells"].push_back( std::move( entry ) );
+    if( !body.blank ) {
+        result["cells"] = json::array();
+        for( const auto &cell : body.cells ) {
+            auto entry = json{{"x", cell.at.x}, {"y", cell.at.y}};
+            if( !cell.id.empty() ) { entry["id"] = cell.id; }
+            entry.update( look_of( cell ) );
+            result["cells"].push_back( std::move( entry ) );
+        }
+    } else {
+        // A grid of squares named by place sends each look once, as a style, the blank one
+        // first and the others as they first show from the north-west, and each row's squares
+        // of one style as a run east; the squares that show the blank cell are left to it.
+        auto styles = json::array();
+        const auto style_of = [&]( const grid_cell & cell ) {
+            auto look = look_of( cell );
+            const auto found = std::ranges::find( styles, look );
+            const auto index = std::distance( styles.begin(), found );
+            if( found == styles.end() ) { styles.push_back( std::move( look ) ); }
+            return index;
+        };
+        result["blank"] = style_of( *body.blank );
+        auto shown = body.cells | std::views::filter( [&]( const grid_cell & entry ) { return !blank_square( body, entry ); } )
+        | std::views::transform( []( const grid_cell & entry ) { return &entry; } )
+        | std::ranges::to<std::vector>();
+        std::ranges::sort( shown, []( const grid_cell * a, const grid_cell * b ) {
+            return std::tie( a->at.y, a->at.x ) < std::tie( b->at.y, b->at.x );
+        } );
+        auto cells = json::array();
+        for( const auto *const cell : shown ) {
+            const auto style = style_of( *cell );
+            if( !cells.empty() ) {
+                auto &last = cells.back();
+                const auto run = last.value( "n", 1 );
+                if( last["y"] == cell->at.y && last["style"] == style &&
+                    last["x"].get<int>() + run == cell->at.x ) {
+                    last["n"] = run + 1;
+                    continue;
+                }
+            }
+            cells.push_back( {{"x", cell->at.x}, {"y", cell->at.y}, {"style", style}} );
+        }
+        result["styles"] = std::move( styles );
+        result["cells"] = std::move( cells );
     }
     if( !refusals.empty() ) { result["refusals"] = refusals; }
     if( !body.looks.empty() ) { result["looks"] = to_array( body.looks ); }
@@ -799,7 +836,12 @@ auto to_json( const screen_view &view, const bubble_frame &frame ) -> json
     if( !view.focus_component.empty() || !view.focus_row.empty() ) {
         auto &focus = result["focus"] = json::object();
         if( !view.focus_component.empty() ) { focus["component_id"] = view.focus_component; }
-        if( !view.focus_row.empty() ) { focus["row_id"] = view.focus_row; }
+        // A grid that names its squares by place names the focused cell so too.
+        const auto *const part = view.root && !view.focus_component.empty() ?
+                                 find_component( *view.root, view.focus_component ) : nullptr;
+        const auto *const grid = part ? std::get_if<grid_body>( &part->body ) : nullptr;
+        const auto *const cell = grid && grid->blank ? cell_of( *grid, view.focus_row ) : nullptr;
+        if( !view.focus_row.empty() ) { focus["row_id"] = cell ? square_id( cell->at ) : view.focus_row; }
     }
     if( view.refresh_ms > 0 ) { result["refresh_ms"] = view.refresh_ms; }
     if( !view.dock.empty() ) { result["dock"] = view.dock; }

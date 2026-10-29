@@ -283,7 +283,8 @@ struct grid_body {
     /// `secondary`, between `drag_begin` and `drag_end`; empty for none.
     std::string secondary_drag = {};
     /// The cell every square shows that the wire lists no cell for, as most of a canvas's empty
-    /// squares are; its `at` and `id` are not sent. A client names such a square by `square_id`.
+    /// squares are. A grid with one names every square by `square_id` on the wire, and sends
+    /// each look once among its `styles` and the other squares as runs east of one style.
     std::optional<grid_cell> blank = std::nullopt;
     /// The squares a client outlines around the square under the pointer, as offsets east and
     /// south of it, such as where a paste lands; none for none.

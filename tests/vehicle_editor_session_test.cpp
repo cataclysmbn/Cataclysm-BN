@@ -175,17 +175,24 @@ auto wire_grid() -> nlohmann::json {
     walk_node(nlohmann::json::parse(ec::serialize_interaction_boundary(captured())));
     return found;
 }
-/// The cell a client reads at square `x`,`y`: the one listed there, else the grid's blank one.
-auto wire_square(const nlohmann::json& grid, const int x, const int y) -> nlohmann::json {
-    for (const auto& entry : grid.at("cells")) {
-        if (entry.at("x") == x && entry.at("y") == y) { return entry; }
-    }
-    return grid.value("blank", nlohmann::json{});
+/// Whether the canvas `grid` lists square `x`,`y` in a run of cells, rather than leaving it to
+/// its blank cell.
+auto wire_listed(const nlohmann::json& grid, const int x, const int y) -> bool {
+    return std::ranges::any_of(grid.at("cells"), [&](const nlohmann::json& entry) {
+        const auto from = entry.at("x").get<int>();
+        return entry.at("y") == y && from <= x && x < from + entry.value("n", 1);
+    });
 }
-/// Picking square `x`,`y` of the canvas as a client does: by the id of the cell listed there,
-/// else by the square.
-auto square_at(const nlohmann::json& grid, const int x, const int y) -> std::string {
-    return wire_square(grid, x, y).value("id", string_format("square:%d,%d", x, y));
+/// What a client reads at square `x`,`y` of the canvas `grid`: the style of the run there, else
+/// the blank one.
+auto wire_square(const nlohmann::json& grid, const int x, const int y) -> nlohmann::json {
+    const auto& cells = grid.at("cells");
+    const auto run = std::ranges::find_if(cells, [&](const nlohmann::json& entry) {
+        const auto from = entry.at("x").get<int>();
+        return entry.at("y") == y && from <= x && x < from + entry.value("n", 1);
+    });
+    return grid.at("styles").at(
+        run == cells.end() ? grid.at("blank").get<int>() : run->at("style").get<int>());
 }
 auto stat(const ec::screen_view& screen, const std::string& key) -> const ec::panel_stat& {
     const auto& stats = body<ec::panel_body>(part(screen, "vehicle:document")).stats;
@@ -3686,7 +3693,7 @@ TEST_CASE(
     };
     const auto none_refused = [] {
         const auto grid = wire_grid();
-        return !grid.contains("refusals") && !grid.at("blank").contains("refused");
+        return !grid.contains("refusals");
     };
     auto step = 0;
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
@@ -3708,12 +3715,17 @@ TEST_CASE(
                 // Far from the frame, where a frame would not hold either, it says so.
                 CHECK(refused(screen, "mount:-5,0").contains("touch the vehicle's frame"));
                 // Most squares refuse it for that, so the grid's blank cell says it.
-                CHECK(wire_grid().at("blank").contains("refused"));
+                CHECK(
+                    wire_grid()
+                        .at("styles")
+                        .at(wire_grid().at("blank").get<int>())
+                        .contains("refused"));
                 // A frame takes it.
                 CHECK_FALSE(none_refused());
-                CHECK(std::ranges::any_of(wire_grid().at("cells"), [](const nlohmann::json& entry) {
-                    return !entry.contains("refused");
-                }));
+                CHECK(
+                    std::ranges::any_of(wire_grid().at("styles"), [](const nlohmann::json& entry) {
+                        return !entry.contains("refused");
+                    }));
                 // The square still takes the click, which says why.
                 return invoke("vehicle:mount", {.row = "mount:2,0"});
             case 4:
@@ -4401,14 +4413,13 @@ TEST_CASE(
         std::string row;
         bool listed = false;
     };
-    const auto beside = [](const nlohmann::json& grid, const int east, const int south) -> picked {
-        const auto origin = std::ranges::find_if(grid.at("cells"), [](const nlohmann::json& entry) {
-            return entry.value("id", "") == "mount:0,0";
-        });
-        REQUIRE(origin != grid.at("cells").end());
-        const auto x = origin->at("x").get<int>() + east;
-        const auto y = origin->at("y").get<int>() + south;
-        return {.row = square_at(grid, x, y), .listed = wire_square(grid, x, y).contains("id")};
+    const auto beside =
+        [](const ec::screen_view& screen, const nlohmann::json& grid, const int east,
+           const int south) -> picked {
+        const auto origin = shown_at(screen, 0, 0);
+        const auto x = origin.x + east;
+        const auto y = origin.y + south;
+        return {.row = string_format("square:%d,%d", x, y), .listed = wire_listed(grid, x, y)};
     };
     // A drag reads the squares off the canvas as it was when the drag began.
     auto trail = std::vector<picked>{};
@@ -4418,12 +4429,13 @@ TEST_CASE(
         // The front, east, turns south.
         [](const auto&) { return invoke("vehicle:view_cw"); },
         [](const auto&) { return invoke("vehicle:tool_install"); },
-        [&](const auto&) {
+        [&](const auto& screen) {
             const auto grid = wire_grid();
             // South of mount 0,0 on the canvas are the mounts in front of it.
-            trail = {beside(grid, 0, 1), beside(grid, 0, 2), beside(grid, 0, 3)};
+            trail = {beside(screen, grid, 0, 1), beside(screen, grid, 0, 2),
+                     beside(screen, grid, 0, 3)};
             // Next to the frame a frame can go, so that square is listed; the ones beyond are not.
-            CHECK(trail[0].row == "mount:1,0");
+            CHECK(trail[0].listed);
             CHECK_FALSE(trail[1].listed);
             CHECK_FALSE(trail[2].listed);
             return invoke("vehicle:stroke_begin");
@@ -4438,7 +4450,7 @@ TEST_CASE(
             CHECK(has_part(screen, 3, 0));
             CHECK(cell(screen, "mount:3,0").selected);
             // West of mount 0,0 is the mount on its right, too far from the frame for one.
-            const auto far = beside(wire_grid(), -2, 0);
+            const auto far = beside(screen, wire_grid(), -2, 0);
             CHECK_FALSE(far.listed);
             return pick("vehicle:mount", far.row);
         },
@@ -4448,10 +4460,10 @@ TEST_CASE(
             CHECK(notice_of(screen).contains("touch the vehicle's frame"));
             return invoke("vehicle:tool_line");
         },
-        [&](const auto&) {
+        [&](const auto& screen) {
             const auto grid = wire_grid();
             // East of mount 0,0 on the canvas are the mounts on its left.
-            line = {beside(grid, 1, 0), beside(grid, 3, 0)};
+            line = {beside(screen, grid, 1, 0), beside(screen, grid, 3, 0)};
             CHECK_FALSE(line[1].listed);
             return invoke("vehicle:stroke_begin");
         },
@@ -4464,7 +4476,7 @@ TEST_CASE(
             CHECK(has_part(screen, 0, -1));
             CHECK(has_part(screen, 0, -3));
             // A secondary click on a square the grid does not list erases on its mount.
-            const auto empty = beside(wire_grid(), 1, 5);
+            const auto empty = beside(screen, wire_grid(), 1, 5);
             CHECK_FALSE(empty.listed);
             return pick("vehicle:clear", empty.row);
         },
