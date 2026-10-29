@@ -7652,4 +7652,49 @@ TEST_CASE(
     editor::reset_editor_session();
 }
 
+TEST_CASE(
+    "exporting with unsaved changes checks the path before it asks, and asks before it closes the "
+    "file",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{{{"fill_ter", "t_floor"}}};
+    const auto made = file.path.parent_path() / "exported.json";
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return square_at(2, 3); },
+        [](const auto&) { return invoke("editor:stamp"); },
+        // A path that is taken is refused before the edits are put at risk.
+        [&](const auto&) { return invoke("editor:export", {.text = file.path.string()}); },
+        [&](const auto& screen) {
+            CHECK(screen.kind == "editor");
+            CHECK_FALSE(told(screen).empty());
+            CHECK(stat_of(screen, "saved") == "No");
+            return invoke("editor:export", {.text = made.string()});
+        },
+        // A free path asks first; staying exports nothing.
+        [](const auto& screen) {
+            CHECK(screen.kind != "editor");
+            return answer("Stay");
+        },
+        [&](const auto& screen) {
+            CHECK(screen.kind == "editor");
+            CHECK_FALSE(std::filesystem::exists(made));
+            CHECK(stat_of(screen, "saved") == "No");
+            return invoke("editor:export", {.text = made.string()});
+        },
+        [](const auto& screen) {
+            CHECK(screen.kind != "editor");
+            return answer("Leave without saving");
+        },
+        [&](const auto& screen) {
+            CHECK(said(screen)
+                  == "Exported the live world's squares to editor_session_test/exported.json, "
+                     "open now; editor_session_test/floor.json is closed.");
+            return invoke("editor:unstamp");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    CHECK(std::filesystem::exists(made));
+    editor::reset_editor_session();
+}
+
 #endif // CATA_MCP
