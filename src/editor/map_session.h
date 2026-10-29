@@ -192,7 +192,7 @@ inline const auto tools = std::array{
     tool{.id = "tool:room", .kind = shape_kind::room, .spans = true, .hotkey = "m"},
     tool{.id = "tool:fill", .kind = shape_kind::fill, .hotkey = "f"},
     tool{.id = "tool:pick", .kind = std::nullopt, .hotkey = "i"},
-    tool{.id = "tool:select", .region = region_use::select, .hotkey = "s"},
+    tool{.id = "tool:select", .spans = true, .region = region_use::select, .hotkey = "s"},
     tool{.id = "tool:paste", .region = region_use::paste, .hotkey = "v"},
     tool{.id = "tool:placements", .region = region_use::placements, .hotkey = "p"},
 };

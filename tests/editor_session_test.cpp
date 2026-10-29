@@ -372,7 +372,8 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "the canvas drags as a trail for the pencil, as a span for shapes and not for the fill",
+    "the canvas drags as a trail for the pencil, as a span for shapes and the selection and not for "
+    "the fill",
     "[editor_session][engine_client_component]") {
     const auto guard = screen_guard{};
     const auto file = mod_file{};
@@ -405,6 +406,12 @@ TEST_CASE(
                 return invoke("editor:tool", {.row = "tool:pick"});
             case 4:
                 CHECK(drag().empty());
+                return invoke("editor:tool", {.row = "tool:select"});
+            case 5:
+                // A drag marks the squares from the one pressed to the one released, as two clicks
+                // do.
+                CHECK(drag() == "span");
+                CHECK_FALSE(wire_part(state, "editor:canvas").contains("drag_begin"));
                 return act("QUIT");
             default:
                 FAIL("the editor outlived its exit");
@@ -413,7 +420,7 @@ TEST_CASE(
     });
 
     editor::run_editor_session();
-    CHECK(step == 5);
+    CHECK(step == 6);
 }
 
 TEST_CASE(
