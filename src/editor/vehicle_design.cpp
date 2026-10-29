@@ -849,6 +849,7 @@ auto remove_parts(const nlohmann::ordered_json& prototype, const std::vector<poi
             parts | std::views::transform(&design_part::mount) | std::ranges::to<std::set>();
         auto shown = pieces(occupied);
         auto removed = std::vector<std::string>{};
+        auto taken_from = std::vector<point>{};
         auto left = 0;
         auto reason = std::string{};
         for (const auto& at : mounts) {
@@ -881,6 +882,7 @@ auto remove_parts(const nlohmann::ordered_json& prototype, const std::vector<poi
             }
             if (why.empty()) {
                 removed.push_back(parts[top].pointer);
+                taken_from.push_back(at);
             } else {
                 left += static_cast<int>(here.size());
                 if (reason.empty()) { reason = remove_color_tags(why); }
@@ -892,6 +894,7 @@ auto remove_parts(const nlohmann::ordered_json& prototype, const std::vector<poi
             break;
         }
         tally.done += static_cast<int>(removed.size());
+        std::ranges::copy(taken_from, std::back_inserter(tally.removed));
         erase_parts(next, removed);
     }
     return stroke_design{.prototype = redrawn(std::move(next)), .tally = tally};
@@ -921,7 +924,7 @@ auto remove_live_parts(vehicle& veh, const std::vector<point>& removed) -> strok
         removing = false;
         tally.refused = 0;
         tally.reason.clear();
-        for (auto& at : mounts) {
+        for (const auto& [at, given] : std::views::zip(mounts, removed)) {
             const auto here = veh.parts_at_relative(tripoint_mnt_veh(at.x, at.y, 0), false);
             if (here.empty()) { continue; }
             // Taking the part at 0,0 away moves every mount, which the anchor follows.
@@ -933,6 +936,7 @@ auto remove_live_parts(vehicle& veh, const std::vector<point>& removed) -> strok
                 continue;
             }
             ++tally.done;
+            tally.removed.push_back(given);
             removing = true;
             const auto moved = (anchor - veh.pivot_anchor[0]).raw().xy();
             for (auto& mount : mounts) { mount -= moved; }

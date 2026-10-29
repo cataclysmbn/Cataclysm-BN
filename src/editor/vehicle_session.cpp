@@ -1194,7 +1194,15 @@ struct session {
         }
         pick_top();
         if (!made) { return; }
-        if (taken) { clip = std::move(*taken); }
+        if (taken) {
+            // The clip holds what went: the top parts of each mount, as many as it lost.
+            for (auto& [offset, parts] : *taken) {
+                const auto went = std::ranges::count(tally.removed, marked.front() + offset);
+                parts.erase(parts.begin(), parts.end() - went);
+            }
+            std::erase_if(*taken, [](const clip_mount& mount) { return mount.parts.empty(); });
+            clip = std::move(*taken);
+        }
         said = cut
                  //~ What the vehicle editor's Cut took away: how many parts.
                  ? string_format(vgettext("Cut %d part.", "Cut %d parts.", tally.done), tally.done)

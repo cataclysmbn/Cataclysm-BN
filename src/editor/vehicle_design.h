@@ -87,6 +87,8 @@ struct stroke_tally {
     int done = 0;
     int refused = 0;
     std::string reason = {};
+    /// The mount, of those a removal was given, of each part it removed, in the order they went.
+    std::vector<point> removed = {};
 };
 struct stroke_design {
     nlohmann::ordered_json prototype;
