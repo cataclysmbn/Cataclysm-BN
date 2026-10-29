@@ -1479,6 +1479,9 @@ struct session {
         }
         live = *restored;
         live_part = -1;
+        // As a design's undo ends its group, the stroke's later changes make steps of their own.
+        live_stroke = false;
+        live_stroke_made = false;
         to.push_back({.state = std::move(now), .label = std::move(step.label)});
     }
 
