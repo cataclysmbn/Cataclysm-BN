@@ -125,14 +125,6 @@ auto id_of(const std::string& name) -> std::string {
     return id.empty() ? std::string("my_vehicle") : id;
 }
 
-/// The file at `path` as the player names it: from the player's mods when it is in them.
-auto mods_path(const std::filesystem::path& path) -> std::string {
-    if (!inside(path, PATH_INFO::user_moddir())) { return shown_path(path); }
-    return std::filesystem::weakly_canonical(path)
-        .lexically_relative(std::filesystem::weakly_canonical(PATH_INFO::user_moddir()))
-        .generic_string();
-}
-
 /// The squares at least `spawn_distance` from the avatar around the one `toward` it, nearest that
 /// one first.
 auto spawn_spots(const tripoint_rel_ms& toward) -> std::vector<tripoint_bub_ms> {

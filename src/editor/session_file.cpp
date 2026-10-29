@@ -92,6 +92,13 @@ auto shown_path(const std::filesystem::path& path) -> std::string {
     return (relative.empty() || *relative.begin() == ".." ? path : relative).generic_string();
 }
 
+auto mods_path(const std::filesystem::path& path) -> std::string {
+    if (!inside(path, PATH_INFO::user_moddir())) { return shown_path(path); }
+    return std::filesystem::weakly_canonical(path)
+        .lexically_relative(std::filesystem::weakly_canonical(PATH_INFO::user_moddir()))
+        .generic_string();
+}
+
 auto is_mod_file(const std::filesystem::path& path) -> bool {
     return path.extension() == ".json" && !mod_folders(path).empty();
 }

@@ -298,8 +298,6 @@ struct diagnostic {
 };
 
 auto catalog_label(const catalog_use& use) -> std::string;
-/// The file at `path` as the player names it: from the player's mods when it is in them.
-auto mods_path(const std::filesystem::path& path) -> std::string;
 /// A catalog entry as its row names it: its name, followed by its id when entries of its name are
 /// listed with it.
 auto catalog_row_label(const catalog_entry& entry) -> std::string;
