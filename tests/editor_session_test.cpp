@@ -7697,4 +7697,42 @@ TEST_CASE(
     editor::reset_editor_session();
 }
 
+TEST_CASE(
+    "a canvas square names the alternatives of one layer with or, not as layers stacked",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    {
+        auto rows = nlohmann::ordered_json::array();
+        for (auto row = 0; row < 24; ++row) { rows.push_back(std::string(24, '.')); }
+        rows[3] = std::string(3, '.') + "#" + std::string(20, '.');
+        const auto entries = nlohmann::ordered_json::array(
+            {{{"type", "palette"},
+              {"id", "editor_session_test_walls"},
+              {"terrain", {{"#", "t_brick_wall"}}}},
+             {{"type", "mapgen"},
+              {"method", "json"},
+              {"om_terrain", "house_04"},
+              {"object",
+               {{"palettes", nlohmann::ordered_json::array({"editor_session_test_walls"})},
+                {"rows", rows},
+                {"terrain", {{".", "t_floor"}, {"#", "t_wall"}}}}}}});
+        auto out = std::ofstream(file.path, std::ios::binary | std::ios::trunc);
+        out << format_json(entries.dump()).value();
+    }
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:object", {.row = "object:1"}); },
+        [](const auto& screen) {
+            const auto label = cell(screen, 3, 3).label;
+            CHECK(label.contains("brick wall"));
+            CHECK(label.contains("wooden wall"));
+            CHECK(label.contains(" or "));
+            CHECK_FALSE(label.contains(";"));
+            return invoke("editor:object", {.row = "object:1"});
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
+}
+
 #endif // CATA_MCP
