@@ -7320,4 +7320,34 @@ TEST_CASE(
     CHECK(walk_map(walk) == walk.size());
 }
 
+TEST_CASE(
+    "the right column keeps the catalog in view: the mapping form starts folded and the legend "
+    "scrolls past a few rows",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{furnished()};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                // Picking from the catalog draws; the form is for renaming a symbol by hand.
+                CHECK(part(screen, "editor:mapping").collapsed);
+                CHECK_FALSE(part(screen, "editor:catalog_kinds").collapsed);
+                CHECK(wire_part(state, "editor:legend").value("rows_shown", 0) == 6);
+                // A list that shows all its rows says nothing.
+                CHECK_FALSE(wire_part(state, "editor:catalog").contains("rows_shown"));
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 2);
+}
+
 #endif // CATA_MCP
