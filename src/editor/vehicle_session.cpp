@@ -3094,8 +3094,9 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
         const auto& id = invoked->affordance_id;
         const auto row = invoked->args.row.value_or("");
         const auto text = invoked->args.text.value_or("");
-        // A notice stays until an action changes something or brings a notice of its own.
-        state.said.clear();
+        // A notice stays until an action changes something or brings a notice of its own; what a
+        // drag did stays past the drag's end.
+        if (id != stroke_end_id) { state.said.clear(); }
         const auto before = state.footprint();
         auto kept = std::exchange(state.notice, {});
         state.watch();
