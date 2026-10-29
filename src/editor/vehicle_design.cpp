@@ -445,11 +445,14 @@ auto refused_mount(const mount_check& check, const point& at) -> std::optional<s
 
 auto mount_refusals(const vehicle& veh, const vpart_id& id)
     -> std::function<auto(const point&)->std::optional<std::string>> {
-    // The game's rules read only the parts on the mount and on the four beside it, besides what
-    // the whole vehicle shares, so that mounts whose five stacks are alike share their answer.
+    // The game's rules read only the parts on the ground-level mount and on the four beside it,
+    // besides what the whole vehicle shares, so that mounts whose five stacks are alike share
+    // their answer.
     auto stacks = std::map<point, std::string>{};
     for (const auto& vp : veh.get_all_parts()) {
-        if (!vp.part().removed) { stacks[vp.mount().xy().raw()] += vp.info().get_id().str() + ","; }
+        if (!vp.part().removed && vp.mount().z() == 0) {
+            stacks[vp.mount().xy().raw()] += vp.info().get_id().str() + ",";
+        }
     }
     return [check = mount_check{.veh = veh, .id = id, .removing = frame_removed(veh)},
             stacks = std::move(stacks),
