@@ -1240,8 +1240,9 @@ auto session::take(const catalog_use& use, const std::string& id, const std::str
 }
 
 auto session::symbol_name(const std::string& glyph) const -> std::string {
-    if (held && held->symbol == glyph) { return held->name; }
+    // What the catalog put in hand names its symbol until the legend has it.
     const auto found = std::ranges::find(legend, glyph, &legend_symbol::symbol);
+    if (found == legend.end() && held && held->symbol == glyph) { return held->name; }
     if (found == legend.end() || found->lines.empty()) { return shown_symbol(glyph); }
     const auto& lines = found->lines;
     const auto on = [&](const char* const layer) {
@@ -1258,8 +1259,8 @@ auto session::symbol_name(const std::string& glyph) const -> std::string {
 }
 
 auto session::in_hand() const -> std::optional<held_mapping> {
-    if (held && held->symbol == symbol) { return held; }
     const auto found = std::ranges::find(legend, symbol, &legend_symbol::symbol);
+    if (found == legend.end() && held && held->symbol == symbol) { return held; }
     if (found == legend.end() || found->lines.size() != 1) { return std::nullopt; }
     const auto& line = found->lines.front();
     return held_mapping{

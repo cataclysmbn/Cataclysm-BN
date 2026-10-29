@@ -574,8 +574,8 @@ struct session {
     /// What `glyph` places on top by name: its furniture, else its terrain, else what it places
     /// first; the symbol itself for one that places nothing.
     auto symbol_name(const std::string& glyph) const -> std::string;
-    /// What is in hand: the mapping held, or the one line the symbol drawn with maps; none for a
-    /// symbol of several lines or none.
+    /// What is in hand: the mapping held while the legend lacks its symbol, or the one line the
+    /// symbol drawn with maps; none for a symbol of several lines or none.
     auto in_hand() const -> std::optional<held_mapping>;
     /// Puts the pencil in hand unless a drawing tool is, on an entry with rows.
     auto arm() -> void;
