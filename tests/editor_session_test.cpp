@@ -7288,4 +7288,36 @@ TEST_CASE("a canvas square names what its symbol places there, bottom up", "[edi
     CHECK(walk_map(walk) == walk.size());
 }
 
+TEST_CASE(
+    "items and monsters a symbol places show on the canvas over what is under them",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{furnished()};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:symbol", {.row = "symbol:B"}); },
+        [](const auto&) { return square_at(3, 3); },
+        [](const auto&) { return invoke("editor:symbol", {.row = "symbol:Z"}); },
+        [](const auto&) { return square_at(4, 3); },
+        [](const auto& screen) {
+            CHECK(cell_looks(screen, 3, 3)
+                  == std::vector<std::string>{"terrain:t_floor", "furniture:f_bed", "item:pillow"});
+            CHECK(cell_looks(screen, 4, 3)
+                  == std::vector<std::string>{"terrain:t_floor", "monster:mon_zombie"});
+            // The legend shows the top of what a symbol places.
+            const auto zombie = row_in(screen, "editor:legend", "symbol:Z");
+            REQUIRE(zombie.look);
+            CHECK(zombie.look->kind == "monster");
+            return invoke("editor:catalog_kind", {.row = "catalog:monster"});
+        },
+        [](const auto&) { return invoke("editor:catalog_filter", {.text = "mon_zombie"}); },
+        [](const auto& screen) {
+            const auto zombie = row_in(screen, "editor:catalog", "entry:mon_zombie");
+            REQUIRE(zombie.look);
+            CHECK(zombie.look->kind == "monster");
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+}
+
 #endif // CATA_MCP
