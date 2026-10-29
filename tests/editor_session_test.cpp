@@ -7757,4 +7757,35 @@ TEST_CASE(
     editor::reset_editor_session();
 }
 
+TEST_CASE(
+    "a mapgen no overmap terrain places yet is told as a hint, not as a problem",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto folder = mod_file{};
+    const auto made = folder.path.parent_path() / "unplaced.json";
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) {
+            return invoke("editor:new_set", {.row = "path", .text = made.string()});
+        },
+        [](const auto&) {
+            return invoke(
+                "editor:new_set", {.row = "om_terrain", .text = "editor_session_test_unplaced"});
+        },
+        [](const auto&) { return invoke("editor:new_apply"); },
+        [&](const auto& screen) {
+            CHECK(rows_in(screen, "editor:diagnostics").empty());
+            CHECK(stat_of(screen, "placed")
+                  == "Not placed by any overmap terrain or special yet; World > Test stamps it "
+                     "here.");
+            return invoke("editor:open", {.text = (made.parent_path() / "floor.json").string()});
+        },
+        [&](const auto& screen) {
+            // house_04 is placed by the game's overmap.
+            CHECK(stat_of(screen, "placed").empty());
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
+}
+
 #endif // CATA_MCP
