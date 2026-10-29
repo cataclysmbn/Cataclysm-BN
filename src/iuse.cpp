@@ -2270,10 +2270,8 @@ int iuse::note_bionics( player *p, item *it, bool t, const tripoint_bub_ms &pos 
 
         auto charges = std::max( 1, static_cast<int>( cbms.size() ) );
         charges -= it->ammo_consume( charges, pos );
-        if( possess && it->has_flag( flag_USE_UPS ) ) {
-            if( p->use_charges_if_avail( itype_UPS, charges ) ) {
-                charges = 0;
-            }
+        if( possess && it->uses_external_resource() && it->consume_external_resource( *p, charges ) ) {
+            charges = 0;
         }
         if( charges ) {
             p->add_msg_if_player( m_bad, "Your %s doesn't have enough power for the %s", it->tname(),
