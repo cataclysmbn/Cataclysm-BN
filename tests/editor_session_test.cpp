@@ -7487,7 +7487,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "testing a stamp puts the avatar beside it, looking at it, and says where it is",
+    "testing a stamp puts the avatar on it by the middle of its south edge and says where",
     "[editor_session]") {
     const auto guard = screen_guard{};
     const auto file = mod_file{{{"fill_ter", "t_floor"}}};
@@ -7507,13 +7507,51 @@ TEST_CASE(
         },
         [](const auto&) { return invoke("editor:test"); }};
     CHECK(walk_map(walk) == walk.size());
-    // Just south of the stamped square, two squares from its edge.
-    CHECK(get_avatar().abs_omt_pos() == omt + tripoint_rel_omt(0, 1, 0));
+    // All of it is open floor, so the avatar stands on its south edge, in the middle.
     CHECK(get_avatar().abs_pos()
-          == project_to<coords::ms>(omt) + tripoint_rel_ms(SEEX, SEEY * 2 + 1, 0));
+          == project_to<coords::ms>(omt) + tripoint_rel_ms(SEEX, SEEY * 2 - 1, 0));
     const auto lines = Messages::feed_since({});
     REQUIRE(!lines.empty());
-    CHECK(lines.back().text == "The mapgen is stamped 2 squares north of you.");
+    CHECK(lines.back().text == "You stand on the stamped mapgen's square 12,23.");
+    editor::reset_editor_session();
+}
+
+TEST_CASE(
+    "testing a stamp puts the avatar inside its walls by the south door and shows the rooms it "
+    "cannot see",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    // A house on a lawn, with a closet no door opens.
+    auto rows = std::vector<std::string>(24, std::string(24, '.'));
+    rows[1] = "." + std::string(22, '#') + ".";
+    for (auto y = 2; y < 22; ++y) { rows[y] = ".#" + std::string(20, '_') + "#."; }
+    rows[2] = ".#_____#______________#.";
+    rows[3] = ".#__h__#______________#.";
+    rows[4] = ".#_____#______________#.";
+    rows[5] = ".#######______________#.";
+    rows[22] = ".##########+###########.";
+    const auto file = mod_file{
+        {{"rows", rows},
+         {"terrain", {{".", "t_grass"}, {"_", "t_floor"}, {"#", "t_wall"}, {"+", "t_door_c"}}},
+         {"furniture", {{"h", "f_chair"}}}}};
+    Messages::clear_messages();
+    const auto corner = project_to<coords::ms>(get_avatar().abs_omt_pos());
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:stamp"); },
+        [](const auto&) { return invoke("editor:test"); }};
+    CHECK(walk_map(walk) == walk.size());
+    const auto at = get_avatar().abs_pos() - corner;
+    // Just inside the south wall, near its door, not on the lawn outside.
+    CHECK(at.y() == 21);
+    CHECK(std::abs(at.x() - SEEX) <= 2);
+    const auto lines = Messages::feed_since({});
+    REQUIRE(!lines.empty());
+    CHECK(lines.back().text
+          == string_format("You stand on the stamped mapgen's square %d,%d.", at.x(), at.y()));
+    // The closet is remembered as stamped, though no one has seen into it.
+    CHECK(get_avatar().get_terrain_tile(corner + tripoint_rel_ms(3, 3, 0)).tile == "t_floor");
+    CHECK(get_avatar().get_memorized_tile(corner + tripoint_rel_ms(4, 3, 0)).tile == "f_chair");
     editor::reset_editor_session();
 }
 
@@ -7627,14 +7665,14 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "testing a stamp of two by two overmap squares puts the avatar on open ground south of all "
-    "of it",
+    "testing a stamp of two by two overmap squares with no square to stand on puts the avatar on "
+    "open ground south of all of it and says why",
     "[editor_session]") {
     const auto guard = screen_guard{};
     const auto file = mod_file{};
     {
         auto rows = nlohmann::ordered_json::array();
-        for (auto row = 0; row < 48; ++row) { rows.push_back(std::string(48, '.')); }
+        for (auto row = 0; row < 48; ++row) { rows.push_back(std::string(48, '#')); }
         const auto entry = nlohmann::ordered_json::array(
             {{{"type", "mapgen"},
               {"method", "json"},
@@ -7642,7 +7680,7 @@ TEST_CASE(
                nlohmann::ordered_json::array(
                    {nlohmann::ordered_json::array({"house_04", "house_05"}),
                     nlohmann::ordered_json::array({"house_06", "house_07"})})},
-              {"object", {{"rows", rows}, {"terrain", {{".", "t_floor"}}}}}}});
+              {"object", {{"rows", rows}, {"terrain", {{"#", "t_wall"}}}}}}});
         auto out = std::ofstream(file.path, std::ios::binary | std::ios::trunc);
         out << format_json(entry.dump()).value();
     }
@@ -7669,8 +7707,11 @@ TEST_CASE(
     CHECK(get_map().passable(abs_to_bub(at)));
     const auto lines = Messages::feed_since({});
     REQUIRE(!lines.empty());
-    CHECK(lines.back().text
-          == string_format("The mapgen is stamped %d squares north of you.", at.y() - south_edge));
+    CHECK(
+        lines.back().text
+        == string_format(
+            "No square of the mapgen is safe to stand on; it is stamped %d squares north of you.",
+            at.y() - south_edge));
     editor::reset_editor_session();
 }
 
@@ -7781,7 +7822,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "testing a stamp turns the view to show the stamp with the avatar south of it",
+    "testing a stamp turns the view to the middle of the stamp the avatar stands on",
     "[editor_session]") {
     const auto guard = screen_guard{};
     const auto file = mod_file{{{"fill_ter", "t_floor"}}};
@@ -7793,10 +7834,7 @@ TEST_CASE(
     CHECK(walk_map(walk) == walk.size());
     const auto at = get_avatar().abs_pos();
     const auto middle = at + get_avatar().view_offset;
-    // The view's middle is over the stamp's middle column, between its north edge and the avatar.
-    CHECK(middle.x() == corner.x() + SEEX);
-    CHECK(middle.y() >= corner.y());
-    CHECK(middle.y() < at.y());
+    CHECK(middle == corner + tripoint_rel_ms(SEEX, SEEY, 0));
     CHECK(get_avatar().view_offset.y() < 0);
     get_avatar().view_offset = tripoint_rel_ms::zero();
     editor::reset_editor_session();

@@ -332,9 +332,10 @@ auto derive( const map &here, const cell_facts &facts, const sight &view ) -> ce
     return result;
 }
 
-auto observe( const map &here, const tripoint_bub_ms &p, const sight &view ) -> cell_facts
+auto observe( const map &here, const tripoint_bub_ms &p, const sight &view,
+              const bool in_sight ) -> cell_facts
 {
-    auto facts = cell_facts{ .position = p, .vehicle_only = !normally_visible( here, p, view ) };
+    auto facts = cell_facts{ .position = p, .vehicle_only = !in_sight };
     const auto &you = get_avatar();
     if( !facts.vehicle_only ) {
         facts.terrain = here.ter( p );
@@ -766,7 +767,7 @@ auto acquire( const acquire_options &options ) -> acquisition_counts
                 if( !here.inbounds( p ) ) {
                     continue;
                 }
-                const auto facts = observe( here, p, view );
+                const auto facts = observe( here, p, view, normally_visible( here, p, view ) );
                 vehicles.emplace( p, vehicle_appearance{ .tile = facts.vehicle_tile,
                                   .symbol = facts.vehicle_symbol, .stationary = facts.stationary_vehicle,
                                   .detailed = detailed_at( here, p, view ) } );
@@ -784,7 +785,7 @@ auto acquire( const acquire_options &options ) -> acquisition_counts
     const auto acquire_cell = [&]( const auto & p ) {
         ++counts.candidates;
         if( detailed_at( here, p, view ) ) {
-            facts.push_back( observe( here, p, view ) );
+            facts.push_back( observe( here, p, view, normally_visible( here, p, view ) ) );
             state.pending.erase( p );
         }
     };
@@ -878,6 +879,23 @@ auto acquire( const acquire_options &options ) -> acquisition_counts
     state.dirty.clear();
     counts.acquired = memories.size();
     return counts;
+}
+
+auto remember( const map &here, const std::vector<tripoint_bub_ms> &squares ) -> void
+{
+    auto &you = get_avatar();
+    const auto view = current_sight();
+    // Neighbours out of sight join by what is remembered of them, so all of it is remembered first.
+    for( const auto &p : squares ) {
+        you.memorize_terrain_tile( map_local_to_abs( here, p ), here.ter( p ).id().str(), 0, 0 );
+    }
+    for( const auto &p : squares ) {
+        const auto cell = derive( here, observe( here, p, view, true ), view );
+        you.memorize_terrain_tile( cell.position, cell.terrain.tile, cell.terrain.subtile,
+                                   cell.terrain.rotation );
+        you.memorize_tile( cell.position, cell.overlay.tile, cell.overlay.subtile, cell.overlay.rotation );
+        you.memorize_symbol( cell.position, cell.symbol );
+    }
 }
 
 auto contact( const tripoint_bub_ms &p ) -> void

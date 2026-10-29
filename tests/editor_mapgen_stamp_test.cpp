@@ -5,6 +5,7 @@
 #include "editor/mapgen_stamp.h"
 #include "map/map.h"
 #include "map/mapbuffer.h"
+#include "map_perception.h"
 #include "mapgen/mapgen_constructor.h"
 #include "mapgen/mapgen_functions.h"
 #include "overmap/omdata.h"
@@ -66,6 +67,53 @@ TEST_CASE(
     editor::swap_stamp(*stamped);
     CHECK(live_ter(omt, point(2, 3)) == ter_id("t_wall"));
     editor::swap_stamp(*stamped);
+}
+
+TEST_CASE(
+    "the avatar remembers a stamp's squares as it holds them, and as they were once it is taken "
+    "back",
+    "[editor_mapgen]") {
+    clear_all_state();
+    auto& you = get_avatar();
+    const auto omt = you.abs_omt_pos();
+    const auto square = [&](const int x, const int y) {
+        return project_to<coords::ms>(omt) + tripoint_rel_ms(x, y, 0);
+    };
+    // A run of wall and a chair where the avatar remembers rock.
+    auto rows = nlohmann::ordered_json::array();
+    for (auto y = 0; y < 24; ++y) { rows.push_back(std::string(24, '.')); }
+    rows[3] = "..###" + std::string(19, '.');
+    rows[5] = ".....h" + std::string(18, '.');
+    const auto text =
+        nlohmann::ordered_json{
+            {"type", "mapgen"},
+            {"method", "json"},
+            {"om_terrain", "house_04"},
+            {"object",
+             {{"rows", rows},
+              {"terrain", {{".", "t_floor"}, {"#", "t_wall"}, {"h", "t_floor"}}},
+              {"furniture", {{"h", "f_chair"}}}}}}
+            .dump();
+    for (const auto& p : {point(3, 3), point(5, 5)}) {
+        you.memorize_terrain_tile(square(p.x, p.y), "t_rock", 0, 0);
+    }
+    const auto was = live_ter(omt, point(3, 3));
+    REQUIRE(was != ter_id("t_rock"));
+
+    auto stamped = editor::stamp_mapgen(text, {.at = omt});
+    REQUIRE(stamped);
+    const auto wall = you.get_terrain_tile(square(3, 3));
+    CHECK(wall.tile == "t_wall");
+    // The middle of the run joins the walls east and west of it, as when it is seen.
+    const auto joined = map_perception::orient(0b0110);
+    CHECK(wall.subtile == joined.subtile);
+    CHECK(wall.rotation == joined.rotation);
+    CHECK(you.get_terrain_tile(square(5, 5)).tile == "t_floor");
+    CHECK(you.get_memorized_tile(square(5, 5)).tile == "f_chair");
+
+    editor::swap_stamp(*stamped);
+    CHECK(you.get_terrain_tile(square(3, 3)).tile == was.id().str());
+    CHECK(you.get_memorized_tile(square(5, 5)).tile.empty());
 }
 
 TEST_CASE(

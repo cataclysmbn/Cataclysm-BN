@@ -131,6 +131,10 @@ auto visibility_refresh_count() -> size_t;
 /// Called by map::update_visibility_cache.
 auto visibility_refreshed() -> void;
 
+/// Remember `squares` as they are now, as if each were in sight, for a change the avatar is shown
+/// without seeing it.
+auto remember( const map &here, const std::vector<tripoint_bub_ms> &squares ) -> void;
+
 /// Explicit blind obstacle contact. Does not inspect neighbors or disclose the ground under it.
 auto contact( const tripoint_bub_ms &p ) -> void;
 
