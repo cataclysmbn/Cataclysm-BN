@@ -948,6 +948,7 @@ TEST_CASE("food spoilage estimate uses current temperature", "[item][iteminfo][f
         set_temperature(18_c);
         const auto carton =
             item::in_container(itype_id("carton_sealed"), item::spawn(itype_id("milk")));
+        REQUIRE(carton->contents.front().is_in_preserving_container());
         test_info_equals(carton->contents.front(), q, wont_spoil);
     }
 }
