@@ -5396,4 +5396,55 @@ TEST_CASE(
     CHECK(walk(steps) == steps.size());
 }
 
+TEST_CASE(
+    "the vehicle editor's mirrored eraser takes the part off the mirror square of a world vehicle "
+    "where the mounts moved to",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    clear_map();
+    const auto cleanup_vehicles = on_out_of_scope([] { clear_vehicles(); });
+    const auto at = get_avatar().bub_pos() + tripoint_rel_ms(8, 0, 0);
+    REQUIRE(editor::spawn_design(vproto_id("bicycle"), at, {}) != nullptr);
+    /// The cell the canvas shows at `where`.
+    const auto shown_cell =
+        [](const ec::screen_view& screen, const ec::grid_point& where) -> const ec::grid_cell& {
+        const auto& cells = canvas(screen).cells;
+        const auto found = std::ranges::find(cells, where, &ec::grid_cell::at);
+        REQUIRE(found != cells.end());
+        return *found;
+    };
+    auto rear = ec::grid_point{};
+    auto rear_parts = std::size_t{0};
+    const auto steps = std::vector<walk_step>{
+        [](const auto&) { return invoke("vehicle:source", {.row = "source:world"}); },
+        [](const auto&) { return invoke("vehicle:edit", {.row = "world:0"}); },
+        [](const auto&) { return invoke("vehicle:tool_remove"); },
+        // The front wheel goes, then all of the middle but its frame.
+        [](const auto&) { return mount_at(1, 0); },
+        [](const auto&) { return mount_at(1, 0); },
+        [](const auto&) { return mount_at(1, 0); },
+        [](const auto&) { return mount_at(0, 0); },
+        [](const auto&) { return mount_at(0, 0); },
+        [](const auto&) { return mount_at(0, 0); },
+        [&](const auto& screen) {
+            CHECK_FALSE(has_part(screen, 1, 0));
+            CHECK(cell(screen, "mount:0,0").looks.size() == 1);
+            rear = shown_at(screen, -1, 0);
+            rear_parts = shown_cell(screen, rear).looks.size();
+            REQUIRE(rear_parts > 1);
+            return invoke("vehicle:mirror_ends");
+        },
+        [](const auto&) { return mount_at(0, 0); },
+        [&](const auto& screen) {
+            // Taking the frame of 0,0 away moved every mount: the rear is 0,0 now, where its
+            // image across the middle is, and loses its top part as well.
+            CHECK(shown_cell(screen, rear).id == "mount:0,0");
+            CHECK(shown_cell(screen, rear).looks.size() == rear_parts - 1);
+            return invoke("vehicle:done");
+        },
+        [](const auto&) { return act("QUIT"); },
+    };
+    CHECK(walk(steps) == steps.size());
+}
+
 #endif // CATA_MCP
