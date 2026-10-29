@@ -18838,6 +18838,7 @@
                   }
                 ],
                 "role": "canvas",
+                "drag": "span",
                 "block": {
                   "x": 24,
                   "y": 24
