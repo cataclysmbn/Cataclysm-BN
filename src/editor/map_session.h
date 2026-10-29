@@ -37,6 +37,7 @@ inline constexpr auto save_as_id = "editor:save_as";
 inline constexpr auto new_id = "editor:new";
 inline constexpr auto new_set_id = "editor:new_set";
 inline constexpr auto new_apply_id = "editor:new_apply";
+inline constexpr auto new_folder_id = "editor:new_folder";
 inline constexpr auto object_id = "editor:object";
 inline constexpr auto tool_id = "editor:tool";
 inline constexpr auto symbol_id = "editor:symbol";

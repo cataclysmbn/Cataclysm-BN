@@ -1012,7 +1012,7 @@ auto new_file_form(const session& state) -> ec::component {
     const auto special = kind == "special" || kind == "building";
     return ec::component{
         .id = new_id,
-        .affordances = {new_set_id, new_apply_id},
+        .affordances = {new_set_id, new_apply_id, new_folder_id},
         .body = ec::form_body{
             .fields =
                 {{.id = "path",
@@ -1393,7 +1393,11 @@ auto layout(const session& state) -> workspace_layout {
              {connection_id, {.slot = "inspector", .label = _("Connect tool")}},
              {"editor:preview", {.slot = "inspector", .label = _("Generated map")}},
              {loot_id, {.slot = "inspector", .label = _("Spawn chances")}},
-             {new_id, {.slot = "inspector", .label = _("New mapgen file"), .collapsed = opened}},
+             // With nothing open, making a mapgen comes first.
+             {new_id,
+              {.slot = opened ? "inspector" : "canvas",
+               .label = _("New mapgen file"),
+               .collapsed = opened}},
              {export_options_id, {.slot = "inspector", .label = _("Export")}},
              {import_form_id,
               {.slot = "inspector", .label = _("Stamp mapgen text"), .collapsed = opened}}},
@@ -1457,6 +1461,12 @@ auto session_view(const session& state) -> ec::screen_view {
          .label = _("New file"),
          .args = {.row = ec::row_shape{.component_id = new_id}, .text = ec::text_shape{}}}));
     affordances.push_back(ec::invoke_affordance({.id = new_apply_id, .label = _("Create")}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = new_folder_id,
+         .label = _("New mod folder"),
+         .description = _(
+             "Puts the new file in a mod folder of its own; creating the file makes the "
+             "folder a mod.")}));
     affordances.push_back(ec::invoke_affordance(
         {.id = open_oter_id,
          .label = _("Open overmap terrain"),
@@ -1688,6 +1698,7 @@ auto session_view(const session& state) -> ec::screen_view {
         }
     }
     parts.push_back(new_file_form(state));
+    if (!state.doc) { parts.push_back(browser_list(state, listed)); }
     parts.push_back(ec::component{
         .id = export_options_id,
         .affordances = {export_set_id},
@@ -1740,7 +1751,7 @@ auto session_view(const session& state) -> ec::screen_view {
                 {.id = recent_open_id, .label = _("Open"), .args = row_of(recent_id)}));
         }
     }
-    parts.push_back(browser_list(state, listed));
+    if (state.doc) { parts.push_back(browser_list(state, listed)); }
     if (!state.code_mapgens.empty()) {
         parts.push_back(ec::list(
             {.id = "editor:code_mapgens",

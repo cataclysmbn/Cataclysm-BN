@@ -27,6 +27,7 @@
 #include "messages.h"
 #include "output.h"
 #include "overmap/overmapbuffer.h"
+#include "path_info.h"
 #include "player_activity.h"
 #include "string_formatter.h"
 #include "translations.h"
@@ -312,6 +313,14 @@ auto run_editor_session() -> void {
              : row == "size"
                  ? state.made.size
                  : state.made.fill) = text;
+        } else if (id == new_folder_id) {
+            const auto mods = std::filesystem::path(PATH_INFO::user_moddir());
+            const auto folder = free_name("new_mod", [&](const std::string& name) {
+                return std::filesystem::exists(mods / name) || mod_id(name).is_valid();
+            });
+            state.made.path = (mods / folder / "new_mapgen.json").string();
+            //~ %s is the name of a new folder in the player's mods.
+            state.status = string_format(_("The new file goes in a new mod folder, %s."), folder);
         } else if (id == new_apply_id) {
             const auto made = create_mapgen(state.made);
             if (made) {
