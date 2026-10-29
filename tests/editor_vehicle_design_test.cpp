@@ -165,6 +165,22 @@ TEST_CASE(
     }
 }
 
+TEST_CASE(
+    "mounts alike on the ground share a refusal, whatever stands above them", "[editor_vehicle]") {
+    auto design = built(ordered_json::parse(R"({
+        "type": "vehicle", "id": "level_refusal_test", "name": "Level refusal test",
+        "parts": [ { "x": 0, "y": 0, "parts": [ "xlframe_vertical" ] } ]
+    })"));
+    auto& veh = *design.blueprint;
+    // A frame a level up at 3,0, where the ground level has none.
+    REQUIRE(veh.install_part(tripoint_mnt_veh(3, 0, 1), vpart_id("xlframe_vertical"), true) >= 0);
+    const auto refusals = editor::mount_refusals(veh, vpart_id("seat"));
+    CHECK_FALSE(refusals({0, 0}).has_value());
+    const auto above = refusals({3, 0});
+    CHECK(above.has_value());
+    CHECK(above == editor::mount_refusal(veh, {3, 0}, vpart_id("seat")));
+}
+
 TEST_CASE("a vehicle prototype is found in the data file that defines it", "[editor_vehicle]") {
     const auto path = editor::prototype_file("bicycle");
     REQUIRE(path.has_value());
