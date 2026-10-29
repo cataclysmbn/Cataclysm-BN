@@ -249,7 +249,8 @@ struct grid_cell {
     /// Whether it shows another level, which a client draws faded.
     bool faded = false;
     /// Why the tool in hand cannot act on the cell, which a client draws dimmed and shows on hover;
-    /// the cell still takes a click. Empty when it can.
+    /// the cell still takes a click. Empty when it can. On the wire it is an index into the
+    /// grid's `refusals`, which lists each reason once.
     std::string refused = {};
 };
 struct grid_body {

@@ -3637,13 +3637,18 @@ TEST_CASE(
     "take a click",
     "[editor_vehicle][engine_client_component]") {
     const auto guard = screen_guard{};
-    /// The canvas's cells as a client reads them.
+    /// The canvas's cells as a client reads them, each refusal looked up in the grid's list.
     const auto wire_cells = [](const ec::boundary_state& state) {
         auto found = std::vector<nlohmann::json>{};
         const auto walk = [&](this const auto& self, const nlohmann::json& node) -> void {
             if (node.is_object()) {
                 if (node.value("id", "") == "vehicle:grid") {
-                    for (const auto& entry : node.at("cells")) { found.push_back(entry); }
+                    for (auto entry : node.at("cells")) {
+                        if (entry.contains("refused")) {
+                            entry["refused"] = node.at("refusals").at(entry["refused"].get<int>());
+                        }
+                        found.push_back(entry);
+                    }
                     return;
                 }
                 for (const auto& [key, value] : node.items()) { self(value); }

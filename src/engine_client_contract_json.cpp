@@ -692,6 +692,9 @@ auto body_json( const grid_body &body, const bubble_frame & /*frame*/ ) -> json
     auto result = json{{"cols", body.cols}, {"rows", body.rows}};
     if( body.cursor ) { result["cursor"] = {{"x", body.cursor->x}, {"y", body.cursor->y}}; }
     result["cells"] = json::array();
+    // Each reason once, as the cells name it by its index: a canvas full of empty squares
+    // refuses most of them for the same reason.
+    auto refusals = std::vector<std::string> {};
     for( const auto &cell : body.cells ) {
         auto entry = json{{"x", cell.at.x}, {"y", cell.at.y}};
         for( const auto &[name, text] : {
@@ -706,9 +709,14 @@ auto body_json( const grid_body &body, const bubble_frame & /*frame*/ ) -> json
         if( cell.selected ) { entry["selected"] = true; }
         if( !cell.looks.empty() ) { entry["looks"] = cell.looks; }
         if( cell.faded ) { entry["faded"] = true; }
-        if( !cell.refused.empty() ) { entry["refused"] = cell.refused; }
+        if( !cell.refused.empty() ) {
+            const auto found = std::ranges::find( refusals, cell.refused );
+            entry["refused"] = std::distance( refusals.begin(), found );
+            if( found == refusals.end() ) { refusals.push_back( cell.refused ); }
+        }
         result["cells"].push_back( std::move( entry ) );
     }
+    if( !refusals.empty() ) { result["refusals"] = refusals; }
     if( !body.looks.empty() ) { result["looks"] = to_array( body.looks ); }
     if( !body.role.empty() ) { result["role"] = body.role; }
     if( !body.drag.empty() ) { result["drag"] = body.drag; }

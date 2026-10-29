@@ -6851,8 +6851,9 @@
                 "description": "Whether the cell shows another level, such as the one below seen through open air on the map editor's canvas, which a client draws faded. Absent for false."
               },
               "refused": {
-                "type": "string",
-                "description": "Why the tool in hand cannot act on the cell, as the vehicle editor's canvas says where the part in hand cannot go; a client draws the cell dimmed and shows the text on hover. The cell stays enabled and its click still runs. Absent when the tool can act."
+                "type": "integer",
+                "minimum": 0,
+                "description": "Why the tool in hand cannot act on the cell, as an index into the grid's `refusals`, as the vehicle editor's canvas says where the part in hand cannot go; a client draws the cell dimmed and shows the text on hover. The cell stays enabled and its click still runs. Absent when the tool can act."
               }
             },
             "required": [
@@ -6895,6 +6896,13 @@
             "$ref": "#/$defs/look"
           },
           "description": "The looks the cells name, each once."
+        },
+        "refusals": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Why the tool in hand cannot act on cells, each reason once, which the cells' `refused` name by index. Absent for none."
         },
         "role": {
           "enum": [

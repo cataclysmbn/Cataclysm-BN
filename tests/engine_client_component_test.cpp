@@ -1122,6 +1122,47 @@ TEST_CASE(
 }
 
 namespace {
+/// The object of `value` with the id `id`, null when there is none.
+auto with_id(const nlohmann::json& value, const std::string& id) -> nlohmann::json {
+    if (value.is_object() && value.value("id", "") == id) { return value; }
+    if (!value.is_structured()) { return nullptr; }
+    for (const auto& member : value) {
+        if (auto found = with_id(member, id); !found.is_null()) { return found; }
+    }
+    return nullptr;
+}
+} // namespace
+
+TEST_CASE(
+    "a grid's cells name why they are refused from a list of each reason once",
+    "[engine_client_component]") {
+    const auto context = input_context("TEST_REFUSALS");
+    const auto scope = ec::screen_scope(
+        context, "test", {.view = [](const auto&) {
+            return ec::screen_view{
+                .root = ec::component{
+                    .id = "grid:refusals",
+                    .body = ec::grid_body{
+                        .cols = 4,
+                        .rows = 1,
+                        .cells = {{.at = {0, 0}, .id = "cell:a", .refused = "No frame here."},
+                                  {.at = {1, 0}, .id = "cell:b", .refused = "Too heavy."},
+                                  {.at = {2, 0}, .id = "cell:c", .refused = "No frame here."},
+                                  {.at = {3, 0}, .id = "cell:d"}}}}};
+        }});
+    const auto input = client::input_context_scope(context, "TEST_REFUSALS");
+    const auto grid = with_id(wire(map_only())["stack"].back(), "grid:refusals");
+    REQUIRE(grid.is_object());
+    CHECK(grid["refusals"] == nlohmann::json::array({"No frame here.", "Too heavy."}));
+    const auto& cells = grid["cells"];
+    REQUIRE(cells.size() == 4);
+    CHECK(cells[0]["refused"] == 0);
+    CHECK(cells[1]["refused"] == 1);
+    CHECK(cells[2]["refused"] == 0);
+    CHECK_FALSE(cells[3].contains("refused"));
+}
+
+namespace {
 auto holdable_on_wire(const ec::boundary_state& state, const std::string& id) -> bool {
     const auto json = wire(state);
     const auto& affordances = json["stack"].back()["affordances"];
