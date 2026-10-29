@@ -1864,7 +1864,10 @@ auto vehicle::can_unmount(const int p, std::string& reason) const -> bool {
 
     // Find all the flags on parts in this tile that require other flags
     const auto pt = parts[p].mount;
-    std::vector<int> parts_here = parts_at_relative(pt, false);
+    // The parts by mount as the last refresh indexed them, which `is_connected` reads too; in the
+    // order they were installed, so the first part to name in a reason stays the same.
+    auto parts_here = parts_at_relative(pt, true);
+    std::ranges::sort(parts_here);
 
     if (part_info(p).has_flag("NOREMOVE_SECURITY")) {
         const auto [c, s] = get_controls_and_security();
@@ -1917,7 +1920,7 @@ auto vehicle::can_unmount(const int p, std::string& reason) const -> bool {
     if (part_info(p).location == part_location_structure
         || part_info(p).has_flag(VPFLAG_EXTENDABLE)) {
 
-        std::vector<int> parts_in_square = parts_at_relative(parts[p].mount, false);
+        const auto parts_in_square = parts_at_relative(parts[p].mount, true);
         /* To remove a structural part, there can be only structural parts left
          * in that square (might be more than one in the case of wreckage) */
         for (auto& elem : parts_in_square) {
@@ -1944,7 +1947,7 @@ auto vehicle::can_unmount(const int p, std::string& reason) const -> bool {
                 const auto next =
                     parts[p].mount
                     + point_rel_veh(i < 2 ? (i == 0 ? -1 : 1) : 0, i < 2 ? 0 : (i == 2 ? -1 : 1));
-                std::vector<int> parts_over_there = parts_at_relative(next, false);
+                const auto parts_over_there = parts_at_relative(next, true);
                 // Ignore empty squares
                 if (!parts_over_there.empty()) {
                     // Just need one part from the square to track the x/y
