@@ -572,6 +572,9 @@ struct session {
     auto in_hand() const -> std::optional<held_mapping>;
     /// Puts the pencil in hand unless a drawing tool is, on an entry with rows.
     auto arm() -> void;
+    /// What `edit` did in words: the symbol a drawing painted by name and on how many squares, else
+    /// the member it changed.
+    auto edit_title(const document_edit& edit) const -> std::string;
 
     auto set_mapping(const std::string& field, const std::string& text) -> void;
 

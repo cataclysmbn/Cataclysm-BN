@@ -1483,7 +1483,8 @@ auto session_view(const session& state) -> ec::screen_view {
                  std::back_inserter(affordances));
         parts.push_back(ec::list(
             {.id = history_id,
-             .rows = step_rows(document_steps(doc)),
+             .rows = step_rows(document_steps(
+                 doc, [&](const document_edit& edit) { return state.edit_title(edit); })),
              .selection = "single",
              .activate = jump_id,
              .empty = _("No edits yet.")}));

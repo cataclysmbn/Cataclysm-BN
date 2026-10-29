@@ -52,6 +52,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <iterator>
 #include <map>
 #include <optional>
@@ -179,6 +180,14 @@ auto range_read(std::string_view text) -> std::optional<placement_range> {
     const auto max = dash == std::string_view::npos ? min : number(text.substr(dash + 1));
     if (!min || !max || *max < *min) { return std::nullopt; }
     return placement_range{.min = *min, .max = *max};
+}
+
+/// The file at `path` as the player names it: from the player's mods when it is in them.
+auto mods_path(const std::filesystem::path& path) -> std::string {
+    if (!inside(path, PATH_INFO::user_moddir())) { return shown_path(path); }
+    return std::filesystem::weakly_canonical(path)
+        .lexically_relative(std::filesystem::weakly_canonical(PATH_INFO::user_moddir()))
+        .generic_string();
 }
 
 /// The symbols a new mapping falls back on, as an export uses them.
@@ -852,7 +861,9 @@ auto session::step_history(const bool back) -> void {
     if (back ? depth == 0 : depth >= steps.size()) { return; }
     const auto& step = steps[back ? depth - 1 : depth];
     if (!(back ? doc->undo() : doc->redo())) { return; }
-    status = string_format(back ? _("Undid: %s") : _("Redid: %s"), step_name(step));
+    status = string_format(
+        back ? _("Undid: %s") : _("Redid: %s"),
+        step_name(step, [&](const document_edit& edit) { return edit_title(edit); }));
     // An entry an undo removed is gone; the one it changed otherwise is what to look at.
     const auto changed = std::ranges::find_if(step.edits, [&](const document_edit& edit) {
         return edit.object < doc->objects().size();
@@ -987,6 +998,8 @@ auto session::save() -> bool { return written(save_document(*doc)); }
 auto session::save_as(const std::string& name) -> void { written(save_document_as(*doc, name)); }
 
 auto session::written(const std::expected<void, std::string>& result) -> bool {
+    //~ %s is the file the map editor wrote, such as my_mod/house.json.
+    if (result) { status = string_format(_("Saved %s."), mods_path(doc->path())); }
     if (told(result) && applies_on_save()) { apply(); }
     if (result) { refresh_file(doc->path()); }
     return result.has_value();
@@ -1219,6 +1232,40 @@ auto session::in_hand() const -> std::optional<held_mapping> {
         .symbol = symbol,
         .layer = line.layer,
         .value = nlohmann::ordered_json::parse(line.value, nullptr, false)};
+}
+
+auto session::edit_title(const document_edit& edit) const -> std::string {
+    const auto rows = [](const nlohmann::ordered_json& value) {
+        const auto pointer = nlohmann::ordered_json::json_pointer("/object/rows");
+        auto grid = symbol_grid{};
+        if (!value.is_object() || !value.contains(pointer) || !value[pointer].is_array()) {
+            return grid;
+        }
+        for (const auto& row : value[pointer]) {
+            grid.push_back(
+                row.is_string()
+                    ? utf8_display_split(row.get<std::string>())
+                    : std::vector<std::string>{});
+        }
+        return grid;
+    };
+    const auto before = rows(edit.before);
+    const auto after = rows(edit.after);
+    auto painted = std::map<std::string, int>{};
+    for (auto y = 0; y < static_cast<int>(std::min(before.size(), after.size())); ++y) {
+        for (auto x = 0; x < static_cast<int>(after[y].size()); ++x) {
+            if (symbol_at(before, point(x, y)) != after[y][x]) { ++painted[after[y][x]]; }
+        }
+    }
+    if (painted.empty()) { return step_label(edit); }
+    if (painted.size() == 1) {
+        //~ A step of the map editor's history: %1$s is what was painted, such as brick wall, and
+        //~ %2$d on how many squares.
+        return string_format(
+            _("Paint %1$s ×%2$d"), symbol_name(painted.begin()->first), painted.begin()->second);
+    }
+    const auto squares = std::ranges::fold_left(painted | std::views::values, 0, std::plus{});
+    return string_format(vgettext("Paint %d square", "Paint %d squares", squares), squares);
 }
 
 auto session::arm() -> void {
@@ -1733,8 +1780,15 @@ auto session::paint(const point& at) -> void {
         anchor = at;
         return;
     }
-    const auto grouped = maps && !doc->grouping();
-    if (grouped) { doc->begin_group(); }
+    // A room and a fill are named by what they are; any other drawing by what it painted.
+    const auto title =
+        *current->kind == shape_kind::room ? std::string(_("Room"))
+        : *current->kind == shape_kind::fill
+            //~ A step of the map editor's history: %s is what was filled in, such as dirt.
+            ? string_format(_("Fill %s"), symbol_name(symbol))
+            : std::string{};
+    const auto grouped = (maps || !title.empty()) && !doc->grouping();
+    if (grouped) { doc->begin_group(false, title); }
     const auto mapped =
         maps ? set_legend(
                    *doc,
