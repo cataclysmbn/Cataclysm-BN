@@ -671,8 +671,8 @@ auto spread(
     const auto mount_of = [](const point& at) { return tripoint_mnt_veh(at.x, at.y, 0); };
     auto pending =
         wanted | std::views::filter([&](const part_install& install) {
-            return std::ranges::none_of(
-                veh.parts_at_relative(mount_of(install.mount), false), [&](const int index) {
+            return std::ranges::
+                none_of(veh.parts_at_relative(mount_of(install.mount), true), [&](const int index) {
                     return veh.part_info(index).get_id().str() == install.part;
                 });
         })
@@ -687,7 +687,7 @@ auto spread(
         for (const auto& install : pending) {
             const auto id = vpart_id(install.part);
             const auto at = mount_of(install.mount);
-            if (veh.can_mount(at, id) && veh.install_part(at, id) >= 0) {
+            if (veh.install_part(at, id) >= 0) {
                 if (id->has_flag(VPFLAG_ENGINE)) {
                     veh.enable_refresh();
                     veh.suspend_refresh();
