@@ -13,6 +13,7 @@
 #include "itype.h"
 #include "json.h"
 #include "map/map.h"
+#include "map/mapbuffer.h"
 #include "mod_manager.h"
 #include "output.h"
 #include "string_formatter.h"
@@ -904,7 +905,12 @@ auto install_live_parts(vehicle& veh, const stroke_install& install)
 auto paste_live_parts(vehicle& veh, const paste_install& paste)
     -> std::expected<stroke_tally, std::string> {
     const auto tally = spread_layers(veh, paste, [](const part_install& /*install*/) {});
-    if (tally && tally->done > 0) { get_map().add_vehicle_to_cache(&veh); }
+    if (tally && tally->done > 0) {
+        get_map().add_vehicle_to_cache(&veh);
+        // The parts went on while the vehicle did not refresh, so the map buffer indexed them
+        // before their places were known.
+        get_map().get_mapbuffer().refresh_vehicle_footprint(&veh);
+    }
     return tally;
 }
 
