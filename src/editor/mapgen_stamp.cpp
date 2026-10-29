@@ -5,6 +5,7 @@
 #include "map/map.h"
 #include "map/mapbuffer.h"
 #include "map/submap.h"
+#include "map_perception.h"
 #include "mapgen/mapgen_constructor.h"
 #include "overmap/omdata.h"
 #include "overmap/overmapbuffer.h"
@@ -137,6 +138,18 @@ auto swap_stamp(stamp& stamped) -> void {
         stamped.was[index] = now;
     }
     refresh_caches(here, stamped.at.z());
+    // The avatar is shown what changed, and remembers it so, seen or not.
+    auto squares = std::vector<tripoint_bub_ms>{};
+    for (const auto index : std::views::iota(std::size_t{0}, stamped.was.size())) {
+        const auto corner = abs_to_bub(project_to<coords::ms>(square_at(stamped, index)));
+        for (auto y = 0; y < SEEY * 2; ++y) {
+            for (auto x = 0; x < SEEX * 2; ++x) {
+                const auto p = corner + tripoint_rel_ms(x, y, 0);
+                if (here.inbounds(p)) { squares.push_back(p); }
+            }
+        }
+    }
+    map_perception::remember(here, squares);
 }
 
 } // namespace editor
