@@ -284,6 +284,9 @@ struct grid_body {
     /// The affordance a cell runs that names none of its own on the wire, the one most of them
     /// share; empty for none.
     std::string affordance = {};
+    /// The squares a client outlines around the square under the pointer, as offsets east and
+    /// south of it, such as where a paste lands; none for none.
+    std::vector<grid_point> stamp = {};
 };
 /// The looks of a grid, each once, which its cells name by index.
 struct look_palette {

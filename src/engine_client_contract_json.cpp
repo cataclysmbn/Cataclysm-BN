@@ -739,6 +739,12 @@ auto body_json( const grid_body &body, const bubble_frame & /*frame*/ ) -> json
     if( !body.region_drag.empty() ) { result["region_drag"] = body.region_drag; }
     if( !body.secondary.empty() ) { result["secondary"] = body.secondary; }
     if( !body.secondary_drag.empty() ) { result["secondary_drag"] = body.secondary_drag; }
+    if( !body.stamp.empty() ) {
+        result["stamp"] = json::array();
+        for( const auto &offset : body.stamp ) {
+            result["stamp"].push_back( {{"x", offset.x}, {"y", offset.y}} );
+        }
+    }
     return result;
 }
 auto body_json( const map_body &body, const bubble_frame &frame ) -> json

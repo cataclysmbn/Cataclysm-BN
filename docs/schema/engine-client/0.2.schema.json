@@ -7017,6 +7017,26 @@
             "trail"
           ],
           "description": "`trail` when a secondary drag, such as a right drag, runs `secondary` on every square it crosses, each once, with `drag_begin` sent before and `drag_end` after, so the drag is one step. Absent for none: a secondary click only."
+        },
+        "stamp": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "integer"
+              },
+              "y": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "x",
+              "y"
+            ],
+            "additionalProperties": false
+          },
+          "description": "The squares a client outlines around the square under the pointer while the pointer is over the cells, as offsets east (`x`) and south (`y`) of it, such as where the vehicle editor's paste lands when that square is clicked. Absent for none."
         }
       },
       "required": [
