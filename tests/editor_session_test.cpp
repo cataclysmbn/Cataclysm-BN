@@ -7511,4 +7511,39 @@ TEST_CASE(
     CHECK(walk_map(walk) == walk.size());
 }
 
+TEST_CASE(
+    "exporting with a file open says it wrote the live world's squares and keeps the file's "
+    "symbols",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{
+        {{"fill_ter", "t_floor"},
+         {"terrain", {{".", "t_floor"}, {"#", "t_wall"}, {"w", "t_window"}}}}};
+    const auto made = file.path.parent_path() / "exported.json";
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return square_at(2, 3); },
+        [](const auto&) { return invoke("editor:symbol", {.row = "symbol:w"}); },
+        [](const auto&) { return square_at(4, 4); },
+        [](const auto&) { return invoke("editor:save"); },
+        [](const auto&) { return invoke("editor:stamp"); },
+        [&](const auto& screen) {
+            CHECK(affordance(screen, "editor:export").description.contains("live world"));
+            return invoke("editor:export", {.text = made.string()});
+        },
+        [&](const auto& screen) {
+            CHECK(said(screen)
+                  == "Exported the live world's squares to editor_session_test/exported.json, "
+                     "open now; editor_session_test/floor.json is closed.");
+            return invoke("editor:unstamp");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    const auto exported = nlohmann::ordered_json::parse(read_file(made))[0]["object"];
+    // What the file draws as w is w in the export too.
+    CHECK(exported["rows"][3].get<std::string>()[2] == '#');
+    CHECK(exported["rows"][4].get<std::string>()[4] == 'w');
+    CHECK(exported["terrain"]["w"] == "t_window");
+    editor::reset_editor_session();
+}
+
 #endif // CATA_MCP
