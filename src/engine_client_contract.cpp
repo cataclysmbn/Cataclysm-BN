@@ -498,6 +498,41 @@ auto read_choices( const choices_request &request, const std::string &epoch )
     return page;
 }
 
+auto square_id( const grid_point at ) -> std::string
+{
+    return "square:" + std::to_string( at.x ) + "," + std::to_string( at.y );
+}
+
+auto blank_square( const grid_body &body, const grid_cell &cell ) -> bool
+{
+    if( !body.blank ) { return false; }
+    auto blank = *body.blank;
+    blank.at = cell.at;
+    blank.id = cell.id;
+    return blank == cell;
+}
+
+auto cell_of( const grid_body &body, const std::string_view row ) -> const grid_cell * // *NOPAD*
+{
+    const auto named = std::ranges::find( body.cells, row, &grid_cell::id );
+    if( named != body.cells.end() ) { return &*named; }
+    // Only a grid that leaves squares to its blank cell names them by place.
+    if( !body.blank || !row.starts_with( "square:" ) ) { return nullptr; }
+    const auto at = row.substr( std::string_view( "square:" ).size() );
+    const auto comma = at.find( ',' );
+    auto square = grid_point{};
+    const auto read = [&]( const std::string_view text, int &value ) {
+        const auto [end, failed] = std::from_chars( text.data(), text.data() + text.size(), value );
+        return failed == std::errc{} &&end == text.data() + text.size();
+    };
+    if( comma == std::string_view::npos || !read( at.substr( 0, comma ), square.x ) ||
+        !read( at.substr( comma + 1 ), square.y ) ) {
+        return nullptr;
+    }
+    const auto found = std::ranges::find( body.cells, square, &grid_cell::at );
+    return found == body.cells.end() ? nullptr : &*found;
+}
+
 namespace
 {
 /// Whether the form field offers the value: a bool or select only its values, a number whole digits
@@ -608,7 +643,10 @@ auto matches_shape( const screen_view &view, const arg_shape &shape, const invok
         const auto *const found = component_in( component_id );
         if( found == nullptr ) { return false; }
         const auto ids = row_ids( *found );
-        return !ids || std::ranges::contains( *ids, row );
+        // A grid's square is named by its position too, as the wire lists no cell for a blank one.
+        const auto *const grid = std::get_if<grid_body>( &found->body );
+        const auto *const cell = grid ? cell_of( *grid, row ) : nullptr;
+        return !ids || std::ranges::contains( *ids, row ) || ( cell && cell->enabled );
     };
     if( shape.row && ( !valid_id( *args.row ) || !holds( shape.row->component_id, *args.row ) ) ) { return false; }
     if( shape.rows && ( args.rows->empty() ||
@@ -708,8 +746,15 @@ auto resolve_affordance( const resolve_options &opts ) -> std::expected<command_
         case invoke_kind::drop:
             return item_operation{ .drop = found.runs == invoke_kind::drop, .item_id = *args.row,
                                    .count = static_cast<std::uint64_t>( *args.count ) };
-        case invoke_kind::screen:
-            return invoke_operation{ .affordance_id = found.id, .args = args };
+        case invoke_kind::screen: {
+            auto named = args;
+            // A screen reads the id of the cell at a grid square a client names by its position.
+            const auto *const part = args.row && opts.top.root ?
+                                     find_component( *opts.top.root, found.args.row->component_id ) : nullptr;
+            const auto *const grid = part ? std::get_if<grid_body>( &part->body ) : nullptr;
+            if( const auto *const cell = grid ? cell_of( *grid, *args.row ) : nullptr ) { named.row = cell->id; }
+            return invoke_operation{ .affordance_id = found.id, .args = std::move( named ) };
+        }
     }
     return std::unexpected( error::unknown_affordance );
 }

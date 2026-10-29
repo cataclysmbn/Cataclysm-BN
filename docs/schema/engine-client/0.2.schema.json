@@ -6812,7 +6812,8 @@
                 "minimum": 0
               },
               "id": {
-                "$ref": "#/$defs/opaque_id"
+                "$ref": "#/$defs/opaque_id",
+                "description": "The row the cell's affordance names; a client names a square the grid lists no cell for `square:<x>,<y>` instead."
               },
               "glyph": {
                 "type": "string"
@@ -6826,7 +6827,7 @@
               },
               "affordance": {
                 "$ref": "#/$defs/opaque_id",
-                "description": "What picking the cell invokes. Absent for the grid's `affordance`, or for none when the grid has none."
+                "description": "What picking the cell invokes."
               },
               "enabled": {
                 "type": "boolean"
@@ -6890,16 +6891,89 @@
             ]
           }
         },
+        "blank": {
+          "type": "object",
+          "properties": {
+            "glyph": {
+              "type": "string"
+            },
+            "label": {
+              "$ref": "#/$defs/text"
+            },
+            "color": {
+              "type": "string",
+              "description": "A game color name."
+            },
+            "affordance": {
+              "$ref": "#/$defs/opaque_id",
+              "description": "What picking the cell invokes."
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "denial": {
+              "$ref": "#/$defs/text",
+              "description": "Why it is off, in the player's language: the screen's own reason, else that it is not available now. Present whenever it is off."
+            },
+            "selected": {
+              "type": "boolean"
+            },
+            "looks": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "description": "What the cell shows from the bottom up, as indexes into the grid's `looks`, for a client that draws sprites; `glyph` stands for it otherwise."
+            },
+            "faded": {
+              "type": "boolean",
+              "description": "Whether the cell shows another level, such as the one below seen through open air on the map editor's canvas, which a client draws faded. Absent for false."
+            },
+            "refused": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Why the tool in hand cannot act on the cell, as an index into the grid's `refusals`, as the vehicle editor's canvas says where the part in hand cannot go; a client draws the cell dimmed and shows the text on hover. The cell stays enabled and its click still runs. Absent when the tool can act."
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "additionalProperties": false,
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "enabled": {
+                    "const": false
+                  }
+                },
+                "required": [
+                  "enabled"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "denial": {
+                    "not": {
+                      "const": ""
+                    }
+                  }
+                },
+                "required": [
+                  "denial"
+                ]
+              }
+            }
+          ],
+          "description": "The cell every square shows that `cells` does not list, without a place or id: the empty square most of a canvas shows, as the vehicle editor's has. Its `refused` indexes `refusals` as a cell's does. A client names such a square by `square:<x>,<y>` as a row, which the engine reads as the cell there. Absent when `cells` lists every square shown."
+        },
         "looks": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/look"
           },
           "description": "The looks the cells name, each once."
-        },
-        "affordance": {
-          "$ref": "#/$defs/opaque_id",
-          "description": "What picking a cell that names no affordance of its own invokes, with the cell's `id` as the row, the one most cells share. Absent for none."
         },
         "refusals": {
           "type": "array",

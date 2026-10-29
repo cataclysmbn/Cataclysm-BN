@@ -1163,34 +1163,68 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "a grid names the affordance its cells share once, and a cell names only its own",
+    "a grid lists only the cells that differ from its blank one, which a client names by square",
     "[engine_client_component]") {
-    const auto context = input_context("TEST_GRID_AFFORDANCE");
+    const auto context = input_context("TEST_GRID_BLANK");
+    const auto blank =
+        ec::grid_cell{.glyph = " ", .affordance = "grid:pick", .refused = "Too far."};
+    const auto at = [&](const int x, const std::string& id) {
+        auto cell = blank;
+        cell.at = {x, 0};
+        cell.id = id;
+        return cell;
+    };
+    auto kept = at(2, "cell:kept");
+    kept.glyph = "#";
     const auto scope = ec::screen_scope(
-        context, "test", {.view = [](const auto&) {
+        context, "test", {.view = [&](const auto&) {
             return ec::screen_view{
                 .root =
                     ec::component{
-                        .id = "grid:shared",
-                        .affordances = {"grid:pick", "grid:other"},
-                        .body =
-                            ec::grid_body{
-                                .cols = 2,
-                                .rows = 1,
-                                .cells =
-                                    {{.at = {0, 0}, .id = "cell:a", .affordance = "grid:pick"},
-                                     {.at = {1, 0}, .id = "cell:b", .affordance = "grid:other"}},
-                                .affordance = "grid:pick"}},
-                .affordances =
-                    {ec::invoke_affordance({.id = "grid:pick"}),
-                     ec::invoke_affordance({.id = "grid:other"})}};
+                        .id = "grid:blank",
+                        .affordances = {"grid:pick"},
+                        .body = ec::
+                            grid_body{.cols = 3,
+                                      .rows = 1,
+                                      .cells = {at(0, "cell:a"), at(1, "cell:b"), kept},
+                                      .blank = blank}},
+                .affordances = {ec::invoke_affordance(
+                    {.id = "grid:pick",
+                     .args = {.row = ec::row_shape{.component_id = "grid:blank"}}})}};
         }});
-    const auto input = client::input_context_scope(context, "TEST_GRID_AFFORDANCE");
-    const auto grid = with_id(wire(map_only())["stack"].back(), "grid:shared");
+    const auto input = client::input_context_scope(context, "TEST_GRID_BLANK");
+    const auto grid = with_id(wire(map_only())["stack"].back(), "grid:blank");
     REQUIRE(grid.is_object());
-    CHECK(grid["affordance"] == "grid:pick");
-    CHECK_FALSE(grid["cells"][0].contains("affordance"));
-    CHECK(grid["cells"][1]["affordance"] == "grid:other");
+    // The blank cell has no place or id, and its refusal is listed like a cell's.
+    CHECK(grid["blank"]
+          == nlohmann::json::parse(
+              R"({"glyph":" ","affordance":"grid:pick","enabled":true,"refused":0})"));
+    CHECK(grid["refusals"] == nlohmann::json::array({"Too far."}));
+    // Only the cell that shows something else is listed, whole.
+    REQUIRE(grid["cells"].size() == 1);
+    CHECK(grid["cells"][0]["id"] == "cell:kept");
+    CHECK(grid["cells"][0]["affordance"] == "grid:pick");
+    CHECK(grid["cells"][0]["refused"] == 0);
+    // A square names the cell there, listed or not; one off the grid names none.
+    const auto screen = ec::top_screen(map_only());
+    const auto& body = std::get<ec::grid_body>(screen.root->body);
+    REQUIRE(ec::cell_of(body, "square:1,0") != nullptr);
+    CHECK(ec::cell_of(body, "square:1,0")->id == "cell:b");
+    CHECK(ec::cell_of(body, "square:2,0")->id == "cell:kept");
+    CHECK(ec::cell_of(body, "cell:a")->id == "cell:a");
+    CHECK(ec::cell_of(body, "square:3,0") == nullptr);
+    CHECK(ec::cell_of(body, "square:1") == nullptr);
+    CHECK(ec::cell_of(body, "square:1,0x") == nullptr);
+    CHECK(ec::square_id({4, 7}) == "square:4,7");
+    // The screen reads the id of the cell at the square a client picks.
+    const auto picked = ec::
+        resolve_invoke(map_only(), {.affordance_id = "grid:pick", .args = {.row = "square:1,0"}});
+    REQUIRE(picked);
+    CHECK(std::get<ec::invoke_operation>(*picked).args.row == "cell:b");
+    const auto off = ec::
+        resolve_invoke(map_only(), {.affordance_id = "grid:pick", .args = {.row = "square:3,0"}});
+    REQUIRE_FALSE(off);
+    CHECK(off.error() == ec::error::invalid_arguments);
 }
 
 namespace {

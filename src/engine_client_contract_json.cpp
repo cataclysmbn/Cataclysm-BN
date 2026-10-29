@@ -691,21 +691,17 @@ auto body_json( const grid_body &body, const bubble_frame & /*frame*/ ) -> json
 {
     auto result = json{{"cols", body.cols}, {"rows", body.rows}};
     if( body.cursor ) { result["cursor"] = {{"x", body.cursor->x}, {"y", body.cursor->y}}; }
-    result["cells"] = json::array();
     // Each reason once, as the cells name it by its index: a canvas full of empty squares
     // refuses most of them for the same reason.
     auto refusals = std::vector<std::string> {};
-    for( const auto &cell : body.cells ) {
-        auto entry = json{{"x", cell.at.x}, {"y", cell.at.y}};
+    const auto look_of = [&]( const grid_cell & cell ) {
+        auto entry = json::object();
         for( const auto &[name, text] : {
-                 std::pair{"id", &cell.id}, std::pair{"glyph", &cell.glyph},
-                 std::pair{"label", &cell.label}, std::pair{"color", &cell.color},
-                 std::pair{"affordance", &cell.affordance}
+                 std::pair{"glyph", &cell.glyph}, std::pair{"label", &cell.label},
+                 std::pair{"color", &cell.color}, std::pair{"affordance", &cell.affordance}
              } ) {
             if( !text->empty() ) { entry[name] = *text; }
         }
-        // The grid names the affordance most cells share.
-        if( !body.affordance.empty() && cell.affordance == body.affordance ) { entry.erase( "affordance" ); }
         entry["enabled"] = cell.enabled;
         if( !cell.denial.empty() ) { entry["denial"] = cell.denial; }
         if( cell.selected ) { entry["selected"] = true; }
@@ -716,10 +712,18 @@ auto body_json( const grid_body &body, const bubble_frame & /*frame*/ ) -> json
             entry["refused"] = std::distance( refusals.begin(), found );
             if( found == refusals.end() ) { refusals.push_back( cell.refused ); }
         }
+        return entry;
+    };
+    if( body.blank ) { result["blank"] = look_of( *body.blank ); }
+    result["cells"] = json::array();
+    // The squares that show the blank cell are left to it.
+    for( const auto &cell : body.cells | std::views::filter( [&]( const grid_cell & entry ) { return !blank_square( body, entry ); } ) ) {
+        auto entry = json{{"x", cell.at.x}, {"y", cell.at.y}};
+        if( !cell.id.empty() ) { entry["id"] = cell.id; }
+        entry.update( look_of( cell ) );
         result["cells"].push_back( std::move( entry ) );
     }
     if( !refusals.empty() ) { result["refusals"] = refusals; }
-    if( !body.affordance.empty() ) { result["affordance"] = body.affordance; }
     if( !body.looks.empty() ) { result["looks"] = to_array( body.looks ); }
     if( !body.role.empty() ) { result["role"] = body.role; }
     if( !body.drag.empty() ) { result["drag"] = body.drag; }

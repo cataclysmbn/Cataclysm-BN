@@ -2007,7 +2007,6 @@ auto grid_of(const grid_options& options) -> ec::component {
             .regions = std::move(regions),
             .secondary = clear_id,
             .secondary_drag = "trail",
-            .affordance = mount_id,
             .stamp = stamp | std::views::transform(turned) | std::ranges::to<std::vector>()}};
 }
 

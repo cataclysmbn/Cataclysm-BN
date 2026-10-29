@@ -252,6 +252,7 @@ struct grid_cell {
     /// the cell still takes a click. Empty when it can. On the wire it is an index into the
     /// grid's `refusals`, which lists each reason once.
     std::string refused = {};
+    auto operator==( const grid_cell & ) const -> bool = default; // *NOPAD*
 };
 struct grid_body {
     int cols = 0;
@@ -281,13 +282,21 @@ struct grid_body {
     /// `trail` for a secondary drag, such as a right drag, whose every crossed square runs
     /// `secondary`, between `drag_begin` and `drag_end`; empty for none.
     std::string secondary_drag = {};
-    /// The affordance a cell runs that names none of its own on the wire, the one most of them
-    /// share; empty for none.
-    std::string affordance = {};
+    /// The cell every square shows that the wire lists no cell for, as most of a canvas's empty
+    /// squares are; its `at` and `id` are not sent. A client names such a square by `square_id`.
+    std::optional<grid_cell> blank = std::nullopt;
     /// The squares a client outlines around the square under the pointer, as offsets east and
     /// south of it, such as where a paste lands; none for none.
     std::vector<grid_point> stamp = {};
 };
+/// The row id `square:<x>,<y>` a client gives the square `at` of a grid that lists no cell there.
+auto square_id( grid_point at ) -> std::string;
+/// Whether the wire leaves out `cell` of `body`: it shows the grid's blank cell, whatever its id,
+/// so that a client names it by `square_id`, which `cell_of` reads back to it.
+auto blank_square( const grid_body &body, const grid_cell &cell ) -> bool;
+/// The cell of `body` that `row` names: the one of that id, else, in a grid with a blank cell,
+/// the one at the square a `square:<x>,<y>` id names; nullptr when there is none.
+auto cell_of( const grid_body &body, std::string_view row ) -> const grid_cell *; // *NOPAD*
 /// The looks of a grid, each once, which its cells name by index.
 struct look_palette {
     std::vector<engine_client::look> looks = {};
