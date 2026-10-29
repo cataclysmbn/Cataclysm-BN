@@ -34,6 +34,7 @@
 #    include "vehicle/vpart_position.h"
 
 #    include <algorithm>
+#    include <array>
 #    include <filesystem>
 #    include <fstream>
 #    include <functional>
@@ -4294,6 +4295,98 @@ TEST_CASE(
     CHECK(mounts.size() == 400);
     CHECK(mounts.contains(point(-9, -9)));
     CHECK(mounts.contains(point(10, 10)));
+}
+
+namespace {
+/// A new design drawn as a 60 by 60 frame in filled rectangles, the canvas growing between them,
+/// each leaving the size of the boundary in `bytes`.
+auto frame_60(std::size_t& bytes) -> std::vector<walk_step> {
+    auto steps = std::vector<walk_step>{
+        [](const auto&) { return invoke("vehicle:new", {.text = "Land train"}); },
+        [](const auto&) { return invoke("vehicle:tool_rect_filled"); }};
+    for (const auto& [from, to] :
+         {std::pair{point(-15, -15), point(15, 15)}, std::pair{point(-27, -27), point(27, 27)},
+          std::pair{point(-29, -29), point(30, 30)}}) {
+        steps.push_back([=](const auto&) { return mount_at(from.x, from.y); });
+        steps.push_back([=](const auto&) { return mount_at(to.x, to.y); });
+        steps.push_back([&bytes](const auto& screen) {
+            CHECK(said(screen).starts_with("Installed frame on "));
+            bytes = ec::serialize_interaction_boundary(captured()).size();
+            CHECK(bytes < ec::maximum_inline_bytes);
+            return invoke("vehicle:tool_rect_filled");
+        });
+    }
+    return steps;
+}
+} // namespace
+
+TEST_CASE(
+    "the vehicle editor sends the canvas of a 60 by 60 frame design within the inline limit",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto folder = my_mod_folder{};
+    auto bytes = std::size_t{0};
+    auto steps = frame_60(bytes);
+    steps.push_back([](const auto& screen) {
+        CHECK(has_part(screen, -29, -29));
+        CHECK(has_part(screen, 30, 30));
+        CHECK(canvas(screen).cols == 84);
+        CHECK(canvas(screen).rows == 84);
+        // Each row of frames is one run, with the empty squares beside it where a frame can go.
+        CHECK(wire_grid().at("cells").size() <= 3 * 62);
+        return act("QUIT");
+    });
+    CHECK(walk(steps) == steps.size());
+    CAPTURE(bytes);
+    CHECK(bytes < 64 * 1024);
+}
+
+TEST_CASE(
+    "the vehicle editor sends the canvas of a 60 by 60 design of different stacks side by side "
+    "within the inline limit",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto folder = my_mod_folder{};
+    // A frame on each mount, and a seat, a headlight or both on top by turns, so that no two
+    // squares side by side show the same.
+    const auto stacks = std::array{
+        nlohmann::json::array({"frame_cross"}), nlohmann::json::array({"frame_cross", "seat"}),
+        nlohmann::json::array({"frame_cross", "headlight"}),
+        nlohmann::json::array({"frame_cross", "seat", "headlight"})};
+    auto parts = nlohmann::json::array();
+    for (auto y = -29; y <= 30; ++y) {
+        for (auto x = -29; x <= 30; ++x) {
+            parts.push_back({{"x", x}, {"y", y}, {"parts", stacks[(x + y + 58) % 4]}});
+        }
+    }
+    auto bytes = std::size_t{0};
+    const auto steps = std::vector<walk_step>{
+        [](const auto&) { return invoke("vehicle:new", {.text = "Parade float"}); },
+        [](const auto&) { return invoke("vehicle:show:json"); },
+        [](const auto&) {
+            return invoke("vehicle:field_set", {.row = "pointer", .text = "/parts"});
+        },
+        [&](const auto&) {
+            return invoke("vehicle:field_set", {.row = "value", .text = parts.dump()});
+        },
+        [](const auto&) { return invoke("vehicle:field_apply"); },
+        // The field shows a short value again.
+        [](const auto&) {
+            return invoke("vehicle:field_set", {.row = "pointer", .text = "/name"});
+        },
+        [&](const auto& screen) {
+            // The game builds it.
+            CHECK(ec::find_component(*screen.root, "vehicle:problems") == nullptr);
+            CHECK(canvas(screen).cols == 84);
+            CHECK(cell(screen, "mount:0,0").label != cell(screen, "mount:1,0").label);
+            CHECK(cell(screen, "mount:1,0").label != cell(screen, "mount:2,0").label);
+            CHECK(cell(screen, "mount:2,0").label != cell(screen, "mount:3,0").label);
+            bytes = ec::serialize_interaction_boundary(captured()).size();
+            return act("QUIT");
+        }};
+    CHECK(walk(steps) == steps.size());
+    CAPTURE(bytes);
+    CHECK(bytes < 160 * 1024);
 }
 
 TEST_CASE(
