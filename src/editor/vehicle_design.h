@@ -11,6 +11,7 @@
 #include <expected>
 #include <filesystem>
 #include <functional>
+#include <map>
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <optional>
@@ -94,8 +95,10 @@ struct stroke_design {
 
 /// The prototype with the part installed on each mount of the stroke the game takes it on, again
 /// and again while one more does, so that frames spread from the frame there is; a mount that
-/// already has the part is left as it is. Its `blueprint` is drawn again.
-auto install_parts(const nlohmann::ordered_json& prototype, const stroke_install& install)
+/// already has the part is left as it is. Its `blueprint` is drawn again. The parts go on
+/// `blueprint`, the prototype's vehicle, too; none when the game cannot build the prototype.
+auto install_parts(
+    const nlohmann::ordered_json& prototype, vehicle* blueprint, const stroke_install& install)
     -> std::expected<stroke_design, std::string>;
 
 /// The parts a paste installs, a layer at a time: the first part of each mount, then the second
@@ -105,8 +108,10 @@ struct paste_install {
 };
 
 /// The prototype with each layer of the paste installed as `install_parts` installs a stroke,
-/// one after the other; the tally counts parts. Its `blueprint` is drawn again.
-auto paste_parts(const nlohmann::ordered_json& prototype, const paste_install& paste)
+/// one after the other, on `blueprint` too; the tally counts parts. Its `blueprint` is drawn
+/// again.
+auto paste_parts(
+    const nlohmann::ordered_json& prototype, vehicle* blueprint, const paste_install& paste)
     -> std::expected<stroke_design, std::string>;
 
 /// The prototype without the parts on `mounts`, taking the top part of each mount again and again
@@ -223,9 +228,14 @@ auto set_part_fuel(vehicle& veh, int index, const part_fuel& fuel)
 auto add_part_cargo(vehicle& veh, int index, const std::string& item_id)
     -> std::expected<void, std::string>;
 
-/// What the parts on the mount `at` of the vehicle look like from the bottom up: in the order the
-/// game installed them, the one the game shows on top; turned `facing` degrees clockwise.
-auto mount_looks(const vehicle& veh, const point& at, int facing)
+/// The parts on each mount of the vehicle in the order the game installed them, as
+/// `vehicle::parts_at_relative` lists them without its cache.
+auto mount_stacks(const vehicle& veh) -> std::map<point, std::vector<int>>;
+
+/// What the parts `here`, those on one mount of the vehicle in the order the game installed them,
+/// look like from the bottom up: the one the game shows on top; turned `facing` degrees
+/// clockwise.
+auto mount_looks(const vehicle& veh, std::vector<int> here, int facing)
     -> std::vector<engine_client::look>;
 
 /// What an item spawn of a prototype's `items` puts, as the game names it: an item by its name,

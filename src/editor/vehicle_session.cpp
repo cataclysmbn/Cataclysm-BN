@@ -965,7 +965,7 @@ struct session {
             });
         } else {
             made = change(
-                install_parts(prototype(), install)
+                install_parts(prototype(), built.blueprint.get(), install)
                     .and_then([&](const stroke_design& done)
                                   -> std::expected<nlohmann::ordered_json, std::string> {
                         tally = done.tally;
@@ -1234,7 +1234,7 @@ struct session {
             const auto open = !in_stroke();
             if (open) { doc->begin_group(false, label); }
             made = change(
-                paste_parts(prototype(), paste)
+                paste_parts(prototype(), built.blueprint.get(), paste)
                     .and_then([&](const stroke_design& done)
                                   -> std::expected<nlohmann::ordered_json, std::string> {
                         tally = done.tally;
@@ -1968,6 +1968,7 @@ struct grid_options {
 auto grid_of(const grid_options& options) -> ec::component {
     const auto& [veh, frame, cursor, held, drag, quarters, selection, stamp] = options;
     const auto refusal = veh && held ? std::optional(mount_refusals(*veh, *held)) : std::nullopt;
+    const auto stacks = veh ? mount_stacks(*veh) : std::map<point, std::vector<int>>{};
     const auto low = point(std::min(frame.low.x, cursor.x), std::min(frame.low.y, cursor.y));
     const auto high = point(std::max(frame.high.x, cursor.x), std::max(frame.high.y, cursor.y));
     const auto cols = high.x - low.x + 1;
@@ -2005,19 +2006,19 @@ auto grid_of(const grid_options& options) -> ec::component {
                 .affordance = mount_id,
                 .selected = at == cursor,
                 .refused = refusal ? (*refusal)(at).value_or("") : ""};
-            const auto shown = veh ? veh->part_displayed_at(tripoint_mnt_veh(x, y, 0)) : -1;
+            const auto here = stacks.find(at);
+            const auto shown =
+                here != stacks.end() ? veh->part_displayed_at(tripoint_mnt_veh(x, y, 0)) : -1;
             if (shown >= 0) {
                 cell.glyph = std::string(1, veh->part_sym(shown));
                 // Every part on the mount, in the order the game installed them.
-                cell.label = remove_color_tags(join(
-                    veh->parts_at_relative(tripoint_mnt_veh(x, y, 0), false)
-                        | std::views::transform([&](const int index) {
-                              return veh->cpart(index).name(false);
-                          })
-                        | std::ranges::to<std::vector>(),
-                    ", "));
+                cell.label = remove_color_tags(
+                    join(here->second | std::views::transform([&](const int index) {
+                             return veh->cpart(index).name(false);
+                         }) | std::ranges::to<std::vector>(),
+                         ", "));
                 cell.color = string_from_color(veh->part_color(shown));
-                cell.looks = palette.indexes(mount_looks(*veh, at, 90 * quarters));
+                cell.looks = palette.indexes(mount_looks(*veh, here->second, 90 * quarters));
             }
             cells.push_back(std::move(cell));
         }
@@ -2094,6 +2095,7 @@ auto turned_grid(const vehicle& veh, const int facing) -> ec::component {
     const auto [min_y, max_y] = std::ranges::minmax(
         squares | std::views::transform([](const landed& square) { return square.at.y; }));
     auto palette = ec::look_palette{};
+    auto stacks = mount_stacks(veh);
     const auto cells =
         squares | std::views::transform([&](const landed& square) {
             return ec::grid_cell{
@@ -2102,7 +2104,7 @@ auto turned_grid(const vehicle& veh, const int facing) -> ec::component {
                 .label = remove_color_tags(veh.cpart(square.part).name(false)),
                 .color = string_from_color(veh.part_color(square.part)),
                 .looks = palette.indexes(
-                    mount_looks(veh, veh.cpart(square.part).mount.xy().raw(), facing))};
+                    mount_looks(veh, stacks[veh.cpart(square.part).mount.xy().raw()], facing))};
         })
         | std::ranges::to<std::vector>();
     return {
@@ -2469,11 +2471,13 @@ auto parts_view(const session& state) -> ec::screen_view {
     if (!state.live) {
         status.push_back(
             {.key = "file", .label = _("File"), .value = shown_path(state.doc->path())});
+        // Whether the document is dirty renders all of it.
+        const auto dirty = state.doc->dirty();
         status.push_back(
             {.key = "saved",
              .label = _("Saved"),
-             .value = state.doc->dirty() ? _("No") : _("Yes"),
-             .tone = state.doc->dirty() ? "bad" : "good"});
+             .value = dirty ? _("No") : _("Yes"),
+             .tone = dirty ? "bad" : "good"});
     }
     status.push_back(
         {.key = "mount",

@@ -445,11 +445,28 @@ auto refused_mount(const mount_check& check, const point& at) -> std::optional<s
 
 auto mount_refusals(const vehicle& veh, const vpart_id& id)
     -> std::function<auto(const point&)->std::optional<std::string>> {
-    return [check = mount_check{.veh = veh, .id = id, .removing = frame_removed(veh)}](
-               const point& at) {
-        return refused_mount(check, at).transform([](std::string text) {
-            return capitalize_letter(text);
-        });
+    // The game's rules read only the parts on the mount and on the four beside it, besides what
+    // the whole vehicle shares, so that mounts whose five stacks are alike share their answer.
+    auto stacks = std::map<point, std::string>{};
+    for (const auto& vp : veh.get_all_parts()) {
+        if (!vp.part().removed) { stacks[vp.mount().xy().raw()] += vp.info().get_id().str() + ","; }
+    }
+    return [check = mount_check{.veh = veh, .id = id, .removing = frame_removed(veh)},
+            stacks = std::move(stacks),
+            known = std::map<std::string, std::optional<std::string>>{}](const point& at) mutable {
+        auto key = std::string{};
+        for (const auto& step :
+             std::array{point_zero, point_east, point_south, point_west, point_north}) {
+            const auto found = stacks.find(at + step);
+            key += (found == stacks.end() ? std::string{} : found->second) + ";";
+        }
+        const auto [entry, added] = known.try_emplace(std::move(key));
+        if (added) {
+            entry->second = refused_mount(check, at).transform([](std::string text) {
+                return capitalize_letter(text);
+            });
+        }
+        return entry->second;
     };
 }
 
@@ -617,21 +634,27 @@ auto add_part_cargo(vehicle& veh, const int index, const std::string& item_id)
 
 namespace {
 
-/// Lists the part after the parts already at its mount, in the entry that lists them.
-auto append_part(nlohmann::ordered_json& prototype, const part_install& install) -> void {
+/// Lists each part after the parts already at its mount, in the last entry that lists them.
+auto append_parts(nlohmann::ordered_json& prototype, const std::vector<part_install>& installs)
+    -> void {
     auto& parts = prototype["parts"];
     if (!parts.is_array()) { parts = nlohmann::ordered_json::array(); }
-    const auto found = std::ranges::find_if(parts | std::views::reverse, [&](const auto& entry) {
-        return int_of(entry, "x") == install.mount.x && int_of(entry, "y") == install.mount.y
-            && int_of(entry, "z") == 0 && entry.contains("parts") && entry["parts"].is_array();
-    });
-    if (found != (parts | std::views::reverse).end()) {
-        (*found)["parts"].push_back(install.part);
-    } else {
-        parts.push_back(
-            {{"x", install.mount.x},
-             {"y", install.mount.y},
-             {"parts", nlohmann::ordered_json::array({install.part})}});
+    auto listed = std::map<point, std::size_t>{};
+    for (auto index = std::size_t{0}; index < parts.size(); ++index) {
+        const auto& entry = parts[index];
+        if (int_of(entry, "z") == 0 && entry.contains("parts") && entry["parts"].is_array()) {
+            listed[point(int_of(entry, "x"), int_of(entry, "y"))] = index;
+        }
+    }
+    for (const auto& install : installs) {
+        const auto [found, added] = listed.try_emplace(install.mount, parts.size());
+        if (added) {
+            parts.push_back(
+                {{"x", install.mount.x},
+                 {"y", install.mount.y},
+                 {"parts", nlohmann::ordered_json::array()}});
+        }
+        parts[found->second]["parts"].push_back(install.part);
     }
 }
 
@@ -651,6 +674,9 @@ auto spread(
         })
         | std::ranges::to<std::vector>();
     auto tally = stroke_tally{};
+    // The game refreshes the whole vehicle on each part it installs; a stroke refreshes it once,
+    // and after each engine, whose exclusions `can_mount` reads from the refreshed vehicle.
+    veh.suspend_refresh();
     for (auto spreading = true; spreading;) {
         spreading = false;
         auto left = std::vector<part_install>{};
@@ -658,6 +684,10 @@ auto spread(
             const auto id = vpart_id(install.part);
             const auto at = mount_of(install.mount);
             if (veh.can_mount(at, id) && veh.install_part(at, id) >= 0) {
+                if (id->has_flag(VPFLAG_ENGINE)) {
+                    veh.enable_refresh();
+                    veh.suspend_refresh();
+                }
                 placed(install);
                 ++tally.done;
                 spreading = true;
@@ -667,6 +697,7 @@ auto spread(
         }
         pending = std::move(left);
     }
+    veh.enable_refresh();
     tally.refused = static_cast<int>(pending.size());
     if (!pending.empty()) {
         const auto& [at, part] = pending.front();
@@ -770,26 +801,29 @@ auto install_part(
         return std::unexpected(std::move(*refused));
     }
     auto next = prototype;
-    append_part(next, install);
+    append_parts(next, {install});
     return redrawn(std::move(next));
 }
 
-auto install_parts(const nlohmann::ordered_json& prototype, const stroke_install& install)
-    -> std::expected<stroke_design, std::string> {
-    return paste_parts(prototype, one_layer(install));
+auto install_parts(
+    const nlohmann::ordered_json& prototype, vehicle* const blueprint,
+    const stroke_install& install) -> std::expected<stroke_design, std::string> {
+    return paste_parts(prototype, blueprint, one_layer(install));
 }
 
-auto paste_parts(const nlohmann::ordered_json& prototype, const paste_install& paste)
+auto paste_parts(
+    const nlohmann::ordered_json& prototype, vehicle* const blueprint, const paste_install& paste)
     -> std::expected<stroke_design, std::string> {
-    const auto built = build_design(prototype.dump());
-    if (!built.blueprint) {
+    if (!blueprint) {
         return std::unexpected(
             _("The game cannot build this prototype; fix what it reports first."));
     }
-    auto next = prototype;
-    return spread_layers(*built.blueprint, paste,
-                         [&](const part_install& install) { append_part(next, install); })
+    auto placed = std::vector<part_install>{};
+    return spread_layers(
+               *blueprint, paste, [&](const part_install& install) { placed.push_back(install); })
         .transform([&](const stroke_tally& tally) {
+            auto next = prototype;
+            append_parts(next, placed);
             return stroke_design{.prototype = redrawn(std::move(next)), .tally = tally};
         });
 }
@@ -1085,11 +1119,19 @@ auto prototype_file(const std::string& id) -> std::optional<std::filesystem::pat
     return found;
 }
 
-auto mount_looks(const vehicle& veh, const point& at, const int facing)
+auto mount_stacks(const vehicle& veh) -> std::map<point, std::vector<int>> {
+    auto stacks = std::map<point, std::vector<int>>{};
+    for (const auto& vp : veh.get_all_parts()) {
+        if (!vp.part().removed && vp.mount().z() == 0) {
+            stacks[vp.mount().xy().raw()].push_back(static_cast<int>(vp.part_index()));
+        }
+    }
+    return stacks;
+}
+
+auto mount_looks(const vehicle& veh, std::vector<int> indexes, const int facing)
     -> std::vector<engine_client::look> {
-    const auto mount = tripoint_mnt_veh(at.x, at.y, 0);
-    auto indexes = veh.parts_at_relative(mount, false);
-    const auto shown = veh.part_displayed_at(mount);
+    const auto shown = indexes.empty() ? -1 : veh.part_displayed_at(veh.cpart(indexes[0]).mount);
     if (const auto top = std::ranges::find(indexes, shown); top != indexes.end()) {
         std::ranges::rotate(top, std::next(top), indexes.end());
     }
@@ -1112,11 +1154,12 @@ auto part_name(const std::string& id) -> std::string {
 /// The entries of `after` that `before` lacks, counting repeats, in `after`'s order.
 template <typename T>
 auto added(const std::vector<T>& before, const std::vector<T>& after) -> std::vector<T> {
-    auto left = before;
+    auto left = std::map<T, int>{};
+    for (const auto& entry : before) { ++left[entry]; }
     auto result = std::vector<T>{};
     for (const auto& entry : after) {
-        if (const auto found = std::ranges::find(left, entry); found != left.end()) {
-            left.erase(found);
+        if (const auto found = left.find(entry); found != left.end() && found->second > 0) {
+            --found->second;
         } else {
             result.push_back(entry);
         }
@@ -1127,7 +1170,8 @@ auto added(const std::vector<T>& before, const std::vector<T>& after) -> std::ve
 struct mounted_part {
     point mount;
     std::string part;
-    auto operator==(const mounted_part&) const -> bool = default; // *NOPAD*
+    auto operator==(const mounted_part&) const -> bool = default;                // *NOPAD*
+    auto operator<=>(const mounted_part&) const -> std::weak_ordering = default; // *NOPAD*
 };
 
 auto mounted(const nlohmann::ordered_json& prototype) -> std::vector<mounted_part> {

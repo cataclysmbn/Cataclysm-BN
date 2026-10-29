@@ -243,12 +243,14 @@ auto history_affordances(const document& doc, const history_ids& ids)
     -> std::vector<engine_client::affordance> {
     auto affordances = undo_affordances(
         {.ids = ids, .can_undo = doc.can_undo(), .can_redo = doc.can_redo()});
+    // Whether the document is dirty renders all of it.
+    const auto dirty = doc.dirty();
     affordances.push_back(engine_client::invoke_affordance(
         {.id = ids.save,
          .label = _("Save"),
          .keys = {"CTRL+S"},
-         .enabled = doc.dirty(),
-         .denial = doc.dirty() ? "" : _("Nothing changed since the file was saved.")}));
+         .enabled = dirty,
+         .denial = dirty ? "" : _("Nothing changed since the file was saved.")}));
     return affordances;
 }
 
