@@ -1119,11 +1119,7 @@ TEST_CASE(
                 const auto labels =
                     body<ec::list_body>(part(screen, "editor:catalog")).rows
                     | std::views::transform(&ec::row::label) | std::ranges::to<std::vector>();
-                CHECK(
-                    labels
-                    == std::vector<std::string>{
-                        "adobe floor (t_adobe_brick_floor)",
-                        "adobe floor (t_adobe_brick_floor_noroof)"});
+                CHECK(labels == std::vector<std::string>{"adobe floor", "adobe floor (noroof)"});
                 return invoke("editor:catalog_filter", {.text = "t_grass"});
             }
             case 3:
@@ -7429,12 +7425,12 @@ TEST_CASE(
         [](const auto&) { return invoke("editor:tool", {.row = "tool:fill"}); },
         [](const auto&) { return square_at(5, 5); },
         [&](const auto& screen) {
-            CHECK(last_step(screen) == "Fill dirt (t_dirt)");
+            CHECK(last_step(screen) == "Fill dirt");
             CHECK(cell(screen, 3, 3).glyph != ".");
             return invoke("editor:undo");
         },
         [](const auto& screen) {
-            CHECK(said(screen) == "Undid: Fill dirt (t_dirt)");
+            CHECK(said(screen) == "Undid: Fill dirt");
             return invoke("editor:save");
         },
         [](const auto& screen) {

@@ -99,16 +99,32 @@ TEST_CASE(
     CHECK(rank(found.entries.back()) == 4);
 }
 
-TEST_CASE("catalog entries that share a name are each followed by their id", "[editor_catalog]") {
+TEST_CASE(
+    "catalog entries that share a name are told apart by the part of their id that differs",
+    "[editor_catalog]") {
     const auto found = editor::search_catalog(
         {.kind = editor::catalog_kind::terrain, .page_size = 100000});
     auto shared = 0;
     for (const auto& entry : found.entries) {
         const auto twins =
-            std::ranges::count(found.entries, entry.name, &editor::catalog_entry::name);
+            found.entries | std::views::filter([&](const editor::catalog_entry& other) {
+                return other.name == entry.name;
+            })
+            | std::views::transform(&editor::catalog_entry::id) | std::ranges::to<std::vector>();
         INFO(entry.id);
-        CHECK(entry.distinct == (twins > 1 ? entry.id : std::string{}));
-        shared += twins > 1 ? 1 : 0;
+        if (twins.size() == 1) {
+            CHECK(entry.distinct.empty());
+            continue;
+        }
+        ++shared;
+        // The suffix is what follows the start every twin's id shares, without separators,
+        // so it never repeats the whole id shown beside it.
+        CHECK(entry.distinct != entry.id);
+        CHECK(entry.id.ends_with(entry.distinct));
+        CHECK_FALSE(entry.distinct.starts_with('_'));
+        const auto& [first, last] = std::ranges::minmax(twins);
+        const auto common = std::ranges::mismatch(first, last).in1 - first.begin();
+        CHECK(entry.id.size() - entry.distinct.size() >= static_cast<std::size_t>(common));
     }
     CHECK(shared > 0);
 }
