@@ -80,10 +80,10 @@ struct stroke_install {
     std::vector<point> mounts;
     std::string part;
 };
-/// How a stroke went: the mounts that took the part, those that refused it, and why the first of
+/// How a stroke went: the parts it installed or removed, those that refused, and why the first of
 /// them did.
 struct stroke_tally {
-    int installed = 0;
+    int done = 0;
     int refused = 0;
     std::string reason = {};
 };
@@ -96,6 +96,24 @@ struct stroke_design {
 /// and again while one more does, so that frames spread from the frame there is; a mount that
 /// already has the part is left as it is. Its `blueprint` is drawn again.
 auto install_parts(const nlohmann::ordered_json& prototype, const stroke_install& install)
+    -> std::expected<stroke_design, std::string>;
+
+/// The parts a paste installs, a layer at a time: the first part of each mount, then the second
+/// on them, and so on.
+struct paste_install {
+    std::vector<std::vector<part_install>> layers;
+};
+
+/// The prototype with each layer of the paste installed as `install_parts` installs a stroke,
+/// one after the other; the tally counts parts. Its `blueprint` is drawn again.
+auto paste_parts(const nlohmann::ordered_json& prototype, const paste_install& paste)
+    -> std::expected<stroke_design, std::string>;
+
+/// The prototype without the parts on `mounts`, taking the top part of each mount again and again
+/// while the game lets one more go and the vehicle stays in as many pieces; the tally counts
+/// the parts removed and those left, and why the first of them stays. Its `blueprint` is drawn
+/// again.
+auto remove_parts(const nlohmann::ordered_json& prototype, const std::vector<point>& mounts)
     -> std::expected<stroke_design, std::string>;
 
 /// The prototype without the part `index` of `design_parts`, its `blueprint` drawn again; the
@@ -166,6 +184,13 @@ auto install_live_part(vehicle& veh, const part_install& install)
 /// `install_parts` on the world's vehicle, at once, without the game's requirements.
 auto install_live_parts(vehicle& veh, const stroke_install& install)
     -> std::expected<stroke_tally, std::string>;
+
+/// `paste_parts` on the world's vehicle, at once, without the game's requirements.
+auto paste_live_parts(vehicle& veh, const paste_install& paste)
+    -> std::expected<stroke_tally, std::string>;
+
+/// `remove_parts` on the world's vehicle, at once, without the game's requirements.
+auto remove_live_parts(vehicle& veh, const std::vector<point>& mounts) -> stroke_tally;
 
 /// Removes the world's vehicle's part `index` at once; the error says why it stays.
 auto remove_live_part(vehicle& veh, int index) -> std::expected<void, std::string>;

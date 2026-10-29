@@ -635,48 +635,126 @@ auto append_part(nlohmann::ordered_json& prototype, const part_install& install)
     }
 }
 
-/// Installs the part on each mount of `veh` the stroke names that takes it, passing over them
-/// while one more does; `placed` hears of each mount it went on.
+/// Installs each part on its mount of `veh` that takes it, passing over them while one more
+/// does; a mount that already has the part keeps it as it is, and `placed` hears of each part
+/// that went on.
 auto spread(
-    vehicle& veh, const stroke_install& install, const std::function<void(const point&)>& placed)
-    -> std::expected<stroke_tally, std::string> {
-    const auto id = vpart_id(install.part);
-    if (!id.is_valid()) {
-        return std::unexpected(string_format(_("%s is no vehicle part."), install.part));
-    }
+    vehicle& veh, const std::vector<part_install>& wanted,
+    const std::function<void(const part_install&)>& placed) -> stroke_tally {
     const auto mount_of = [](const point& at) { return tripoint_mnt_veh(at.x, at.y, 0); };
     auto pending =
-        install.mounts | std::views::filter([&](const point& at) {
-            return std::ranges::
-                none_of(veh.parts_at_relative(mount_of(at), false), [&](const int index) {
-                    return veh.part_info(index).get_id() == id;
+        wanted | std::views::filter([&](const part_install& install) {
+            return std::ranges::none_of(
+                veh.parts_at_relative(mount_of(install.mount), false), [&](const int index) {
+                    return veh.part_info(index).get_id().str() == install.part;
                 });
         })
         | std::ranges::to<std::vector>();
     auto tally = stroke_tally{};
     for (auto spreading = true; spreading;) {
         spreading = false;
-        auto left = std::vector<point>{};
-        for (const auto& at : pending) {
-            if (veh.can_mount(mount_of(at), id) && veh.install_part(mount_of(at), id) >= 0) {
-                placed(at);
-                ++tally.installed;
+        auto left = std::vector<part_install>{};
+        for (const auto& install : pending) {
+            const auto id = vpart_id(install.part);
+            const auto at = mount_of(install.mount);
+            if (veh.can_mount(at, id) && veh.install_part(at, id) >= 0) {
+                placed(install);
+                ++tally.done;
                 spreading = true;
             } else {
-                left.push_back(at);
+                left.push_back(install);
             }
         }
         pending = std::move(left);
     }
     tally.refused = static_cast<int>(pending.size());
     if (!pending.empty()) {
-        const auto& at = pending.front();
+        const auto& [at, part] = pending.front();
+        const auto id = vpart_id(part);
         tally.reason =
             mount_refusal(veh, at, id)
                 .value_or(
                     string_format(_("%s cannot be mounted at %d,%d."), id->name(), at.x, at.y));
     }
     return tally;
+}
+
+/// `spread` of each layer of the paste on `veh` in turn, their tallies added up.
+auto spread_layers(
+    vehicle& veh, const paste_install& paste,
+    const std::function<void(const part_install&)>& placed)
+    -> std::expected<stroke_tally, std::string> {
+    for (const auto& install : paste.layers | std::views::join) {
+        if (!vpart_id(install.part).is_valid()) {
+            return std::unexpected(string_format(_("%s is no vehicle part."), install.part));
+        }
+    }
+    auto total = stroke_tally{};
+    for (const auto& layer : paste.layers) {
+        const auto tally = spread(veh, layer, placed);
+        total.done += tally.done;
+        total.refused += tally.refused;
+        if (total.reason.empty()) { total.reason = tally.reason; }
+    }
+    return total;
+}
+
+/// The stroke as a paste of one layer.
+auto one_layer(const stroke_install& install) -> paste_install {
+    return {
+        .layers = {
+            install.mounts | std::views::transform([&](const point& at) {
+                return part_install{.mount = at, .part = install.part};
+            })
+            | std::ranges::to<std::vector>()}};
+}
+
+/// Takes the parts at the JSON pointers of `design_parts` out of the prototype, and the entries
+/// they leave empty.
+auto erase_parts(nlohmann::ordered_json& prototype, const std::vector<std::string>& pointers)
+    -> void {
+    struct listed_at {
+        int entry = 0;
+        int member = -1;
+        auto operator<=>(const listed_at&) const = default; // *NOPAD*
+    };
+    auto places =
+        pointers | std::views::transform([](const std::string& pointer) {
+            auto at = listed_at{};
+            std::sscanf(pointer.c_str(), "/parts/%d/parts/%d", &at.entry, &at.member);
+            return at;
+        })
+        | std::ranges::to<std::vector>();
+    // Last first, so that each place still names its part.
+    std::ranges::sort(places, std::greater{});
+    auto& parts = prototype["parts"];
+    for (const auto& [entry, member] : places) {
+        if (member < 0) {
+            parts.erase(static_cast<std::size_t>(entry));
+            continue;
+        }
+        auto& listed = parts[entry]["parts"];
+        listed.erase(static_cast<std::size_t>(member));
+        if (listed.empty()) { parts.erase(static_cast<std::size_t>(entry)); }
+    }
+}
+
+/// How many pieces the mounts make, joined side to side.
+auto pieces(std::set<point> mounts) -> int {
+    auto count = 0;
+    while (!mounts.empty()) {
+        ++count;
+        auto reached = std::vector<point>{*mounts.begin()};
+        mounts.erase(mounts.begin());
+        while (!reached.empty()) {
+            const auto at = reached.back();
+            reached.pop_back();
+            for (const auto& step : four_adjacent_offsets) {
+                if (mounts.erase(at + step) > 0) { reached.push_back(at + step); }
+            }
+        }
+    }
+    return count;
 }
 
 } // namespace
@@ -698,23 +776,125 @@ auto install_part(
 
 auto install_parts(const nlohmann::ordered_json& prototype, const stroke_install& install)
     -> std::expected<stroke_design, std::string> {
+    return paste_parts(prototype, one_layer(install));
+}
+
+auto paste_parts(const nlohmann::ordered_json& prototype, const paste_install& paste)
+    -> std::expected<stroke_design, std::string> {
     const auto built = build_design(prototype.dump());
     if (!built.blueprint) {
         return std::unexpected(
             _("The game cannot build this prototype; fix what it reports first."));
     }
     auto next = prototype;
-    return spread(*built.blueprint, install,
-                  [&](const point& at) { append_part(next, {.mount = at, .part = install.part}); })
+    return spread_layers(*built.blueprint, paste,
+                         [&](const part_install& install) { append_part(next, install); })
         .transform([&](const stroke_tally& tally) {
             return stroke_design{.prototype = redrawn(std::move(next)), .tally = tally};
         });
 }
 
+auto remove_parts(const nlohmann::ordered_json& prototype, const std::vector<point>& mounts)
+    -> std::expected<stroke_design, std::string> {
+    auto next = prototype;
+    auto tally = stroke_tally{};
+    for (;;) {
+        const auto built = build_design(next.dump());
+        const auto parts = design_parts(next);
+        // The blueprint holds the parts in the order they are listed when each was mounted.
+        if (!built.blueprint || built.blueprint->part_count() != static_cast<int>(parts.size())) {
+            return std::unexpected(
+                _("The game cannot build this prototype; fix what it reports first."));
+        }
+        const auto& veh = *built.blueprint;
+        auto occupied =
+            parts | std::views::transform(&design_part::mount) | std::ranges::to<std::set>();
+        auto shown = pieces(occupied);
+        auto removed = std::vector<std::string>{};
+        auto left = 0;
+        auto reason = std::string{};
+        for (const auto& at : mounts) {
+            const auto here =
+                std::views::iota(std::size_t{0}, parts.size())
+                | std::views::filter([&](const std::size_t index) {
+                      return parts[index].mount == at;
+                  })
+                | std::ranges::to<std::vector>();
+            if (here.empty()) { continue; }
+            const auto top = here.back();
+            auto why = std::string{};
+            if (parts[top].from_palette) {
+                why = _("The blueprint's palette places this part; edit the palette.");
+            } else if (parts.size() - removed.size() < 2) {
+                why = _("A vehicle keeps its last part.");
+            } else if (!veh.can_unmount(static_cast<int>(top), why)) {
+                if (why.empty()) { why = _("The game keeps this part."); }
+            } else if (here.size() == 1) {
+                // Parts going together may split what each alone would not.
+                auto without = occupied;
+                without.erase(at);
+                const auto apart = pieces(without);
+                if (apart > shown) {
+                    why = _("Removing this part would split the vehicle.");
+                } else {
+                    occupied = std::move(without);
+                    shown = apart;
+                }
+            }
+            if (why.empty()) {
+                removed.push_back(parts[top].pointer);
+            } else {
+                left += static_cast<int>(here.size());
+                if (reason.empty()) { reason = remove_color_tags(why); }
+            }
+        }
+        if (removed.empty()) {
+            tally.refused = left;
+            tally.reason = reason;
+            break;
+        }
+        tally.done += static_cast<int>(removed.size());
+        erase_parts(next, removed);
+    }
+    return stroke_design{.prototype = redrawn(std::move(next)), .tally = tally};
+}
+
 auto install_live_parts(vehicle& veh, const stroke_install& install)
     -> std::expected<stroke_tally, std::string> {
-    const auto tally = spread(veh, install, [](const point& /*at*/) {});
-    if (tally && tally->installed > 0) { get_map().add_vehicle_to_cache(&veh); }
+    return paste_live_parts(veh, one_layer(install));
+}
+
+auto paste_live_parts(vehicle& veh, const paste_install& paste)
+    -> std::expected<stroke_tally, std::string> {
+    const auto tally = spread_layers(veh, paste, [](const part_install& /*install*/) {});
+    if (tally && tally->done > 0) { get_map().add_vehicle_to_cache(&veh); }
+    return tally;
+}
+
+auto remove_live_parts(vehicle& veh, const std::vector<point>& removed) -> stroke_tally {
+    auto mounts = removed;
+    auto tally = stroke_tally{};
+    for (auto removing = true; removing;) {
+        removing = false;
+        tally.refused = 0;
+        tally.reason.clear();
+        for (auto& at : mounts) {
+            const auto here = veh.parts_at_relative(tripoint_mnt_veh(at.x, at.y, 0), false);
+            if (here.empty()) { continue; }
+            // Taking the part at 0,0 away moves every mount, which the anchor follows.
+            const auto anchor = veh.pivot_anchor[0];
+            const auto gone = remove_live_part(veh, here.back());
+            if (!gone) {
+                tally.refused += static_cast<int>(here.size());
+                if (tally.reason.empty()) { tally.reason = remove_color_tags(gone.error()); }
+                continue;
+            }
+            ++tally.done;
+            removing = true;
+            const auto moved = (anchor - veh.pivot_anchor[0]).raw().xy();
+            for (auto& mount : mounts) { mount -= moved; }
+        }
+    }
     return tally;
 }
 
@@ -734,15 +914,7 @@ auto remove_part(
         return std::unexpected(remove_color_tags(reason));
     }
     auto next = prototype;
-    auto entry = 0;
-    auto member = 0;
-    if (std::sscanf(removed.pointer.c_str(), "/parts/%d/parts/%d", &entry, &member) == 2) {
-        auto& listed = next["parts"][entry]["parts"];
-        listed.erase(static_cast<std::size_t>(member));
-        if (listed.empty()) { next["parts"].erase(static_cast<std::size_t>(entry)); }
-    } else if (std::sscanf(removed.pointer.c_str(), "/parts/%d", &entry) == 1) {
-        next["parts"].erase(static_cast<std::size_t>(entry));
-    }
+    erase_parts(next, {removed.pointer});
     return redrawn(std::move(next));
 }
 
