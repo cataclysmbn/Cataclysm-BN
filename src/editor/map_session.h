@@ -334,6 +334,12 @@ auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string>;
 /// that the my_mod folder of the player's mods lacks.
 auto free_new_path() -> std::string;
 
+/// The search a catalog tab keeps while another tab is shown.
+struct catalog_search {
+    std::string filter;
+    std::size_t page = 0;
+};
+
 /// What the catalog put in hand that no symbol of the entry maps yet: the symbol it takes, the
 /// mapping the first stroke that draws it writes, and its name.
 struct held_mapping {
@@ -448,6 +454,8 @@ struct session {
     const catalog_use* catalog = catalog_uses.data();
     std::string catalog_filter;
     std::size_t catalog_page = 0;
+    /// The searches of the catalog tabs not shown, by tab.
+    std::map<std::string, catalog_search> catalog_searches;
     /// Whether the catalog's filter and page are those of a special's.
     bool catalog_of_special = false;
 

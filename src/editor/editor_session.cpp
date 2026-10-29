@@ -409,8 +409,13 @@ auto run_editor_session() -> void {
                 return row == std::string("catalog:") + use.id;
             });
             if (found != catalog_uses.end()) {
+                // Each tab keeps its own search.
+                state.catalog_searches[state.catalog->id] =
+                    {.filter = state.catalog_filter, .page = state.catalog_page};
                 state.catalog = &*found;
-                state.catalog_page = 0;
+                const auto kept = state.catalog_searches[found->id];
+                state.catalog_filter = kept.filter;
+                state.catalog_page = kept.page;
             }
         } else if (id == catalog_filter_id) {
             state.catalog_filter = invoked->args.text.value_or("");

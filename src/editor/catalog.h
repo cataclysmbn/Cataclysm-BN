@@ -29,8 +29,8 @@ struct catalog_entry {
     std::string name;
     /// The mod that last defined it; empty where the game does not record it.
     std::string mod;
-    /// What tells it from the other entries the query found of the same name: the rest of its id
-    /// after the start their ids share; empty for a name of its own or the id that is that start.
+    /// What tells it from the other entries the query found of the same name: its id; empty for
+    /// a name of its own.
     std::string distinct;
 };
 
@@ -45,7 +45,9 @@ struct catalog_query {
 };
 
 struct catalog_page {
-    /// Ordered by id.
+    /// Ordered by id; with a filter, first by how well the name matches it: the name itself, a
+    /// name starting with it, a word of the name starting with it, a name holding it, then an id
+    /// holding it.
     std::vector<catalog_entry> entries;
     /// How many match, on every page.
     std::size_t total = 0;
