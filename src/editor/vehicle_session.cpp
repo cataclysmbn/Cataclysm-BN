@@ -943,47 +943,71 @@ struct session {
         if (canvas_tool == "select") { anchor.reset(); }
     }
 
-    /// Installs the part in hand on `squares` as one step, and says how it went.
-    auto install_stroke(const std::vector<point>& squares) -> void {
-        const auto name = part_name(brush);
+    /// A change of the parts of the vehicle shown: `live` on the vehicle edited in place, else
+    /// `design` on the prototype; `nothing` says why no part changed when none refused.
+    struct parts_change {
+        std::function<
+            auto(const nlohmann::ordered_json&)->std::expected<stroke_design, std::string>>
+            design;
+        std::function<auto(vehicle&)->std::expected<stroke_tally, std::string>> live;
+        std::string nothing;
+    };
+
+    /// Makes `parts` as one step named `label`, which is read once the change ran; a design's step
+    /// without a name is named by what it changed. How it went; none, with the notice saying why,
+    /// when no part changed.
+    auto change_parts(const std::string& label, const parts_change& parts)
+        -> std::optional<stroke_tally> {
         auto tally = stroke_tally{};
-        const auto install = stroke_install{.mounts = squares, .part = brush};
-        // Why nothing went on: the first refusal, else every square has the part already.
-        const auto none = [&] {
-            if (tally.refused > 0) { return tally.reason; }
-            return squares.size() == 1
-                     ? string_format(_("This mount already has %s."), name)
-                     : string_format(_("Every square of the stroke already has %s."), name);
+        const auto counted = [&](const stroke_tally& done) -> std::expected<void, std::string> {
+            tally = done;
+            if (tally.done > 0) { return {}; }
+            return std::unexpected(tally.refused > 0 ? tally.reason : parts.nothing);
         };
         auto made = false;
         if (live) {
-            // The step names what the stroke installed, known once it ran; `live_change` reads
-            // the label after the change.
-            auto label = std::string{};
-            made = live_change(label, [&](vehicle& veh) -> std::expected<void, std::string> {
-                const auto done = install_live_parts(veh, install);
-                if (!done) { return std::unexpected(done.error()); }
-                tally = *done;
-                if (tally.done == 0) { return std::unexpected(none()); }
-                label =
-                    squares.size() == 1
-                        ? at_mount(_("Install %s at %d,%d"), name)
-                        //~ A step of the vehicle editor that installed one part on many
-                        //~ mounts: its name and how many.
-                        : string_format(_("Install %1$s ×%2$d"), name, tally.done);
-                return {};
+            made = live_change(label, [&](vehicle& veh) {
+                return parts.live(veh).and_then(counted);
             });
         } else {
-            made = change(
-                install_parts(prototype(), built.blueprint.get(), install)
-                    .and_then([&](const stroke_design& done)
-                                  -> std::expected<nlohmann::ordered_json, std::string> {
-                        tally = done.tally;
-                        if (tally.done == 0) { return std::unexpected(none()); }
-                        return done.prototype;
-                    }));
+            const auto open = !in_stroke();
+            if (open) { doc->begin_group(false, label); }
+            made = change(parts.design(prototype()).and_then([&](const stroke_design& done) {
+                return counted(done.tally).transform([&] { return done.prototype; });
+            }));
+            if (open) { doc->end_group(); }
         }
-        if (!made) { return; }
+        return made ? std::optional(tally) : std::nullopt;
+    }
+
+    /// Installs the part in hand on `squares` as one step, and says how it went.
+    auto install_stroke(const std::vector<point>& squares) -> void {
+        const auto name = part_name(brush);
+        const auto install = stroke_install{.mounts = squares, .part = brush};
+        // The step of the vehicle edited in place names what the stroke installed, known once it
+        // ran.
+        auto label = std::string{};
+        const auto named = [&](const stroke_tally& done) {
+            label =
+                squares.size() == 1
+                    ? at_mount(_("Install %s at %d,%d"), name)
+                    //~ A step of the vehicle editor that installed one part on many mounts:
+                    //~ its name and how many.
+                    : string_format(_("Install %1$s ×%2$d"), name, done.done);
+            return done;
+        };
+        const auto tally = change_parts(
+            label,
+            {.design =
+                 [&](const nlohmann::ordered_json& from) {
+                     return install_parts(from, built.blueprint.get(), install);
+                 },
+             .live = [&](vehicle& veh) { return install_live_parts(veh, install).transform(named); },
+             // Every square has the part already.
+             .nothing = squares.size() == 1
+                          ? string_format(_("This mount already has %s."), name)
+                          : string_format(_("Every square of the stroke already has %s."), name)});
+        if (!tally) { return; }
         const auto held = vpart_id(brush);
         // A tank comes empty, which the part's settings change.
         const auto tank = held.is_valid() && held->has_flag(VPFLAG_FLUIDTANK);
@@ -998,16 +1022,16 @@ struct session {
         //~ What a stroke of the vehicle editor did: the part's name and how many squares took it.
         said = string_format(
             vgettext("Installed %1$s on %2$d square.", "Installed %1$s on %2$d squares.",
-                     tally.done),
-            name, tally.done);
-        if (tally.refused > 0) {
+                     tally->done),
+            name, tally->done);
+        if (tally->refused > 0) {
             //~ How many squares of a stroke would not take the part, and why the first would not.
             said +=
                 " "
                 + string_format(
                     vgettext("%1$d square refused: %2$s", "%1$d squares refused: %2$s",
-                             tally.refused),
-                    tally.refused, tally.reason);
+                             tally->refused),
+                    tally->refused, tally->reason);
         }
         if (tank) { said += " " + std::string(_("Set their fuel under Fuel.")); }
     }
@@ -1174,52 +1198,35 @@ struct session {
         // A cut takes what it removes as the clip, once something went.
         auto taken = cut ? marked_clip() : std::nullopt;
         if (cut && !taken) { return; }
-        const auto label = std::string(cut ? _("Cut") : _("Delete"));
         const auto marked = marked_mounts();
-        auto tally = stroke_tally{};
-        const auto none = [&]() -> std::string {
-            if (tally.refused > 0) { return tally.reason; }
-            return selection ? _("The selection has no part to delete.")
-                             : _("This mount has no part to remove.");
-        };
-        auto made = false;
-        if (live) {
-            made = live_change(label, [&](vehicle& veh) -> std::expected<void, std::string> {
-                tally = remove_live_parts(veh, marked);
-                if (tally.done == 0) { return std::unexpected(none()); }
-                return {};
-            });
-        } else {
-            const auto open = !in_stroke();
-            if (open) { doc->begin_group(false, label); }
-            made = change(
-                remove_parts(prototype(), marked)
-                    .and_then([&](const stroke_design& done)
-                                  -> std::expected<nlohmann::ordered_json, std::string> {
-                        tally = done.tally;
-                        if (tally.done == 0) { return std::unexpected(none()); }
-                        return done.prototype;
-                    }));
-            if (open) { doc->end_group(); }
-        }
+        const auto tally = change_parts(
+            cut ? _("Cut") : _("Delete"),
+            {.design =
+                 [&](const nlohmann::ordered_json& from) { return remove_parts(from, marked); },
+             .live = [&](vehicle& veh) -> std::expected<stroke_tally, std::string> {
+                 return remove_live_parts(veh, marked);
+             },
+             .nothing = selection ? _("The selection has no part to delete.")
+                                  : _("This mount has no part to remove.")});
         pick_top();
-        if (!made) { return; }
+        if (!tally) { return; }
         if (taken) {
             // The clip holds what went: the top parts of each mount, as many as it lost.
             for (auto& [offset, parts] : *taken) {
-                const auto went = std::ranges::count(tally.removed, marked.front() + offset);
+                const auto went = std::ranges::count(tally->removed, marked.front() + offset);
                 parts.erase(parts.begin(), parts.end() - went);
             }
             std::erase_if(*taken, [](const clip_mount& mount) { return mount.parts.empty(); });
             clip = std::move(*taken);
         }
-        said = cut
-                 //~ What the vehicle editor's Cut took away: how many parts.
-                 ? string_format(vgettext("Cut %d part.", "Cut %d parts.", tally.done), tally.done)
-                 //~ What the vehicle editor's Delete took away: how many parts.
-                 : string_format(
-                       vgettext("Deleted %d part.", "Deleted %d parts.", tally.done), tally.done);
-        said += refused_parts(tally);
+        said =
+            cut
+                //~ What the vehicle editor's Cut took away: how many parts.
+                ? string_format(vgettext("Cut %d part.", "Cut %d parts.", tally->done), tally->done)
+                //~ What the vehicle editor's Delete took away: how many parts.
+                : string_format(
+                      vgettext("Deleted %d part.", "Deleted %d parts.", tally->done), tally->done);
+        said += refused_parts(*tally);
     }
 
     /// Installs the clip with its north-west corner on the mount `at`, a layer of parts at a
@@ -1234,38 +1241,19 @@ struct session {
                 paste.layers[layer].push_back({.mount = at + offset, .part = parts[layer]});
             }
         }
-        auto tally = stroke_tally{};
-        const auto none = [&]() -> std::string {
-            return tally.refused > 0 ? tally.reason : std::string(_("Copy or cut squares first."));
-        };
-        const auto label = std::string(_("Paste"));
-        auto made = false;
-        if (live) {
-            made = live_change(label, [&](vehicle& veh) -> std::expected<void, std::string> {
-                const auto done = paste_live_parts(veh, paste);
-                if (!done) { return std::unexpected(done.error()); }
-                tally = *done;
-                if (tally.done == 0) { return std::unexpected(none()); }
-                return {};
-            });
-        } else {
-            const auto open = !in_stroke();
-            if (open) { doc->begin_group(false, label); }
-            made = change(
-                paste_parts(prototype(), built.blueprint.get(), paste)
-                    .and_then([&](const stroke_design& done)
-                                  -> std::expected<nlohmann::ordered_json, std::string> {
-                        tally = done.tally;
-                        if (tally.done == 0) { return std::unexpected(none()); }
-                        return done.prototype;
-                    }));
-            if (open) { doc->end_group(); }
-        }
-        if (made) {
+        const auto tally = change_parts(
+            _("Paste"),
+            {.design =
+                 [&](const nlohmann::ordered_json& from) {
+                     return paste_parts(from, built.blueprint.get(), paste);
+                 },
+             .live = [&](vehicle& veh) { return paste_live_parts(veh, paste); },
+             .nothing = _("Copy or cut squares first.")});
+        if (tally) {
             //~ What the vehicle editor's Paste installed: how many parts.
             said = string_format(
-                       vgettext("Pasted %d part.", "Pasted %d parts.", tally.done), tally.done)
-                 + refused_parts(tally);
+                       vgettext("Pasted %d part.", "Pasted %d parts.", tally->done), tally->done)
+                 + refused_parts(*tally);
         }
         pick_top();
     }
