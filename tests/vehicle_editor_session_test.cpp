@@ -3506,6 +3506,8 @@ TEST_CASE(
                 // The canvas names it for a client to bind its right click to.
                 const auto wire = nlohmann::json::parse(ec::serialize_interaction_boundary(state));
                 CHECK(wire.dump().contains(R"("secondary":"vehicle:clear")"));
+                // A right drag erases as it goes.
+                CHECK(wire.dump().contains(R"("secondary_drag":"trail")"));
                 CHECK(affordance(screen, "vehicle:clear").args.row->component_id == "vehicle:grid");
                 return invoke("vehicle:clear", {.row = "mount:1,0"});
             }
@@ -4256,6 +4258,14 @@ TEST_CASE(
     CHECK(mounts.contains(point(10, 10)));
 }
 
+/// The label of the step the history is at.
+auto step_at(const ec::screen_view& screen) -> std::string {
+    const auto& steps = rows(screen, "vehicle:history");
+    const auto found = std::ranges::find(steps, true, &ec::row::selected);
+    REQUIRE(found != steps.end());
+    return found->label;
+}
+
 TEST_CASE(
     "the vehicle editor draws a line on a world vehicle in place as one undo step",
     "[editor_vehicle]") {
@@ -4266,7 +4276,7 @@ TEST_CASE(
     auto* const veh = editor::spawn_design(vproto_id("bicycle"), at, {});
     REQUIRE(veh != nullptr);
     const auto parts = veh->part_count();
-    auto before = std::size_t{0};
+    auto opened = std::string{};
     const auto steps = std::vector<walk_step>{
         [](const auto&) { return invoke("vehicle:source", {.row = "source:world"}); },
         [](const auto&) { return invoke("vehicle:edit", {.row = "world:0"}); },
@@ -4274,17 +4284,31 @@ TEST_CASE(
         [](const auto&) { return invoke("vehicle:choose", {.row = "vpart:xlframe_vertical"}); },
         [](const auto&) { return invoke("vehicle:tool_line"); },
         [&](const auto& screen) {
-            before = steps_done(screen);
+            opened = step_at(screen);
             return mount_at(0, 1);
         },
         [](const auto&) { return mount_at(0, 3); },
-        [&](const auto& screen) {
+        [](const auto& screen) {
             CHECK(said(screen) == "Installed extra light frame on 3 squares.");
-            CHECK(steps_done(screen) == before + 1);
+            CHECK(step_at(screen) == "Install extra light frame on 3 squares");
+            return mount_at(0, 1);
+        },
+        [](const auto&) { return mount_at(0, 4); },
+        [](const auto& screen) {
+            // The step names what the stroke installed, not the squares that had it already.
+            CHECK(said(screen) == "Installed extra light frame on 1 square.");
+            CHECK(step_at(screen) == "Install extra light frame on 1 square");
+            return invoke("vehicle:undo");
+        },
+        [](const auto& screen) {
+            CHECK_FALSE(has_part(screen, 0, 4));
+            CHECK(has_part(screen, 0, 3));
             return invoke("vehicle:undo");
         },
         [&](const auto& screen) {
-            CHECK(steps_done(screen) == before + 1);
+            // The whole line went with one undo.
+            CHECK_FALSE(has_part(screen, 0, 1));
+            CHECK(step_at(screen) == opened);
             return invoke("vehicle:done");
         },
         [](const auto&) { return act("QUIT"); },
@@ -4293,6 +4317,95 @@ TEST_CASE(
     const auto placed = get_map().veh_at(at);
     REQUIRE(placed);
     CHECK(placed->vehicle().part_count() == parts);
+}
+
+TEST_CASE(
+    "the vehicle editor makes a new step for a change after an undo in the middle of a stroke on "
+    "a world vehicle",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    clear_map();
+    const auto cleanup_vehicles = on_out_of_scope([] { clear_vehicles(); });
+    const auto at = get_avatar().bub_pos() + tripoint_rel_ms(8, 0, 0);
+    REQUIRE(editor::spawn_design(vproto_id("bicycle"), at, {}) != nullptr);
+    const auto steps = std::vector<walk_step>{
+        [](const auto&) { return invoke("vehicle:source", {.row = "source:world"}); },
+        [](const auto&) { return invoke("vehicle:edit", {.row = "world:0"}); },
+        [](const auto&) { return invoke("vehicle:part_filter", {.text = "xlframe_vertical"}); },
+        [](const auto&) { return invoke("vehicle:choose", {.row = "vpart:xlframe_vertical"}); },
+        [](const auto&) { return invoke("vehicle:tool_install"); },
+        [](const auto&) { return invoke("vehicle:stroke_begin"); },
+        [](const auto&) { return mount_at(0, 1); },
+        [](const auto&) { return invoke("vehicle:undo"); },
+        [](const auto& screen) {
+            CHECK_FALSE(has_part(screen, 0, 1));
+            return mount_at(0, 1);
+        },
+        [](const auto&) { return mount_at(0, 2); },
+        [](const auto&) { return invoke("vehicle:stroke_end"); },
+        [](const auto& screen) {
+            CHECK(has_part(screen, 0, 2));
+            return invoke("vehicle:undo");
+        },
+        [](const auto& screen) {
+            // The undo ended the stroke, as it ends a design's, so each change after it is a step
+            // of its own that undo takes back.
+            CHECK_FALSE(has_part(screen, 0, 2));
+            CHECK(has_part(screen, 0, 1));
+            return invoke("vehicle:undo");
+        },
+        [](const auto& screen) {
+            CHECK_FALSE(has_part(screen, 0, 1));
+            return invoke("vehicle:done");
+        },
+        [](const auto&) { return act("QUIT"); },
+    };
+    CHECK(walk(steps) == steps.size());
+}
+
+TEST_CASE(
+    "the vehicle editor's eraser keeps the mirror's axis through a stroke and tells what it "
+    "removed",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto folder = my_mod_folder{};
+    const auto steps = std::vector<walk_step>{
+        [](const auto&) { return invoke("vehicle:new", {.text = "Axis van"}); },
+        [](const auto&) { return invoke("vehicle:tool_line"); },
+        [](const auto&) { return mount_at(0, 0); },
+        [](const auto&) { return mount_at(4, 0); },
+        [](const auto&) { return invoke("vehicle:tool_install"); },
+        [](const auto&) { return mount_at(0, 1); },
+        [](const auto&) { return invoke("vehicle:part_filter", {.text = "seat"}); },
+        [](const auto&) { return invoke("vehicle:choose", {.row = "vpart:seat"}); },
+        [](const auto&) { return mount_at(0, 0); },
+        [](const auto&) { return invoke("vehicle:mirror_ends"); },
+        [](const auto&) { return invoke("vehicle:tool_remove"); },
+        // An empty square whose image across the middle has a part.
+        [](const auto&) { return mount_at(4, 1); },
+        [](const auto& screen) {
+            CHECK_FALSE(has_part(screen, 0, 1));
+            CHECK(said(screen) == "Removed frame at 0,1.");
+            CHECK(notice_of(screen).empty());
+            return invoke("vehicle:stroke_begin");
+        },
+        [](const auto&) { return mount_at(4, 0); },
+        [](const auto& screen) {
+            // The frame clicked and the seat across the middle.
+            CHECK(said(screen) == "Removed 2 parts.");
+            CHECK(cell(screen, "mount:0,0").label == "frame");
+            return mount_at(3, 0);
+        },
+        [](const auto&) { return invoke("vehicle:stroke_end"); },
+        [](const auto& screen) {
+            // The axis stays where the stroke began, so 3,0 mirrors to 1,0, never to 0,0.
+            CHECK_FALSE(has_part(screen, 4, 0));
+            CHECK_FALSE(has_part(screen, 3, 0));
+            CHECK(has_part(screen, 0, 0));
+            return act("QUIT");
+        },
+    };
+    CHECK(walk(steps) == steps.size());
 }
 
 #endif // CATA_MCP
