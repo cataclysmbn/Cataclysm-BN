@@ -871,8 +871,8 @@ auto game_parts(
             {.id = test_id,
              .label = _("Test"),
              .description = _(
-                 "Puts you in the middle of the stamped entry to play there; in the "
-                 "editor's own world it stamps the entry first."),
+                 "Puts you just south of the stamped entry, looking at it, to play there; in "
+                 "the editor's own world it stamps the entry first."),
              .keys = {"F5"},
              .enabled = testable,
              .denial = testable ? ""
@@ -881,6 +881,10 @@ auto game_parts(
         affordances.push_back(ec::invoke_affordance(
             {.id = preview_id,
              .label = _("Preview"),
+             .description = _(
+                 "Shows under Generated map what the game makes of the entry on the square you "
+                 "stand on, leaving the world as it is. The number is the seed: each seed rolls "
+                 "the entry's random choices another way."),
              .args = {.count = ec::count_shape{.min = 1,
                                                .max = std::numeric_limits<unsigned int>::max(),
                                                .initial = state.seed.value_or(1)}},

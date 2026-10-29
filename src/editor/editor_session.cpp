@@ -23,6 +23,7 @@
 #include "input.h"
 #include "item.h"
 #include "map/map.h"
+#include "messages.h"
 #include "output.h"
 #include "overmap/overmapbuffer.h"
 #include "player_activity.h"
@@ -57,6 +58,8 @@ auto kept_session = std::optional<session>{};
 auto first = std::optional<recent_document>{};
 /// When the turns the editor lets pass began, while they pass.
 auto advancing = std::optional<time_point>{};
+/// How far south of the stamped square testing puts the avatar.
+constexpr auto test_distance = 2;
 
 /// What `editor:export` writes to `path`: the squares the player marked, as the mapgen of whole
 /// overmap squares when they are that and else as a nested chunk named after the file, or the
@@ -442,6 +445,10 @@ auto run_editor_session() -> void {
         } else if (id == preview_id) {
             state.seed = static_cast<unsigned int>(invoked->args.count.value_or(1));
             state.reload();
+            if (state.preview) {
+                state.status =
+                    string_format(_("Generated map shows the entry with seed %d."), *state.seed);
+            }
         } else if (id == reroll_id && state.seed) {
             state.seed = *state.seed + 1;
             state.reload();
@@ -475,10 +482,18 @@ auto run_editor_session() -> void {
             // Nothing stamped yet in the editor's world: the mapgen goes where the avatar is first.
             if (!state.stamped) { state.stamp_here(); }
             if (state.stamped) {
-                // The avatar plays in the middle of the stamped square; the editor keeps its
-                // document.
+                // The avatar walks up to the stamped square from the south, with all of it in
+                // view; the editor keeps its document.
                 g->place_player(abs_to_bub(
-                    project_to<coords::ms>(state.stamped->at) + tripoint_rel_ms(SEEX, SEEY, 0)));
+                    project_to<coords::ms>(state.stamped->at)
+                    + tripoint_rel_ms(SEEX, SEEY * 2 - 1 + test_distance, 0)));
+                add_msg(
+                    m_info,
+                    localised::counted{
+                        .format = pl_translation("The mapgen is stamped %d square north of you.",
+                                                 "The mapgen is stamped %d squares north of you."),
+                        .count = test_distance},
+                    test_distance);
                 return;
             }
         } else if (id == save_id) {
