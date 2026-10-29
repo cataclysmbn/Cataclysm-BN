@@ -1659,10 +1659,12 @@ struct session {
         const std::string& label,
         const std::function<auto(vehicle&)->std::expected<void, std::string>>& edit) -> bool {
         auto before = vehicle_state(*live);
+        const auto anchor = live->pivot_anchor[0];
         if (const auto done = edit(*live); !done) {
             notice = done.error();
             return false;
         }
+        follow_mounts((anchor - live->pivot_anchor[0]).raw().xy());
         // A stroke is one step, the one its first change made.
         if (!live_stroke || !live_stroke_made) {
             live_undo.push_back({.state = std::move(before), .label = label});
@@ -1672,11 +1674,30 @@ struct session {
         return true;
     }
 
+    /// Moves what the session holds in mounts by `moved` as the vehicle edited in place moved its
+    /// mounts, as taking away the part at 0,0 does, so that it stays over the same parts.
+    auto follow_mounts(const point& moved) -> void {
+        if (moved == point_zero) { return; }
+        cursor -= moved;
+        frame = {.low = frame.low - moved, .high = frame.high - moved};
+        if (selection) {
+            selection = {.low = selection->low - moved, .high = selection->high - moved};
+        }
+        if (anchor) { *anchor -= moved; }
+        if (stroke_axis) { *stroke_axis -= moved * 2; }
+        if (!live_stroke) { return; }
+        for (auto& entry : live_stroke_before["parts"]) {
+            entry["x"] = entry.value("x", 0) - moved.x;
+            entry["y"] = entry.value("y", 0) - moved.y;
+        }
+    }
+
     /// Puts the vehicle edited in place back to the last state of `from`, keeping the current one
     /// in `to`.
     auto step_live(std::vector<live_step>& from, std::vector<live_step>& to) -> void {
         if (from.empty() || !live) { return; }
         auto now = vehicle_state(*live);
+        const auto anchor = live->pivot_anchor[0];
         auto step = std::move(from.back());
         from.pop_back();
         const auto restored = restore_vehicle_state(*live, step.state);
@@ -1687,6 +1708,7 @@ struct session {
         }
         live = *restored;
         live_part = -1;
+        follow_mounts((anchor - live->pivot_anchor[0]).raw().xy());
         // As a design's undo ends its group, the stroke's later changes make steps of their own.
         live_stroke = false;
         live_stroke_made = false;
