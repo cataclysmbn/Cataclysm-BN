@@ -917,19 +917,22 @@ struct session {
         };
         auto made = false;
         if (live) {
-            made = live_change(
-                squares.size() == 1
-                    ? at_mount(_("Install %s at %d,%d"), name)
-                    : string_format(vgettext("Install %1$s on %2$d square",
-                                             "Install %1$s on %2$d squares", squares.size()),
-                                    name, static_cast<int>(squares.size())),
-                [&](vehicle& veh) -> std::expected<void, std::string> {
-                    const auto done = install_live_parts(veh, install);
-                    if (!done) { return std::unexpected(done.error()); }
-                    tally = *done;
-                    if (tally.installed == 0) { return std::unexpected(none()); }
-                    return {};
-                });
+            // The step names what the stroke installed, known once it ran; `live_change` reads
+            // the label after the change.
+            auto label = std::string{};
+            made = live_change(label, [&](vehicle& veh) -> std::expected<void, std::string> {
+                const auto done = install_live_parts(veh, install);
+                if (!done) { return std::unexpected(done.error()); }
+                tally = *done;
+                if (tally.installed == 0) { return std::unexpected(none()); }
+                label =
+                    squares.size() == 1
+                        ? at_mount(_("Install %s at %d,%d"), name)
+                        : string_format(vgettext("Install %1$s on %2$d square",
+                                                 "Install %1$s on %2$d squares", tally.installed),
+                                        name, tally.installed);
+                return {};
+            });
         } else {
             made = change(
                 install_parts(prototype(), install)
