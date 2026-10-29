@@ -1472,8 +1472,9 @@ auto session_view(const session& state) -> ec::screen_view {
                                     state.export_area->size.y())
                     : _("Export mapgen here"),
          .description = _(
-             "Writes the map around you, or the marked squares, as a mapgen in a "
-             "new file and opens it."),
+             "Writes the live world's squares around you, or the marked squares, as a mapgen "
+             "in a new file, keeping the open entry's symbols, and opens it in place of the "
+             "open file. The open file itself is not exported."),
          .args = {.text = ec::text_shape{.initial = state.free_export_path()}}}));
     affordances.push_back(ec::invoke_affordance(
         {.id = export_area_id,

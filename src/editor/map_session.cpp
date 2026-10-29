@@ -182,14 +182,6 @@ auto range_read(std::string_view text) -> std::optional<placement_range> {
     return placement_range{.min = *min, .max = *max};
 }
 
-/// The file at `path` as the player names it: from the player's mods when it is in them.
-auto mods_path(const std::filesystem::path& path) -> std::string {
-    if (!inside(path, PATH_INFO::user_moddir())) { return shown_path(path); }
-    return std::filesystem::weakly_canonical(path)
-        .lexically_relative(std::filesystem::weakly_canonical(PATH_INFO::user_moddir()))
-        .generic_string();
-}
-
 /// The symbols a new mapping falls back on, as an export uses them.
 constexpr auto spare_symbols = std::string_view(
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789,;:!%&*+-/<>=?@^~_()[]{}|$");
@@ -250,6 +242,13 @@ auto catalog_label(const catalog_use& use) -> std::string {
             return _("Overmap terrain");
     }
     return {};
+}
+
+auto mods_path(const std::filesystem::path& path) -> std::string {
+    if (!inside(path, PATH_INFO::user_moddir())) { return shown_path(path); }
+    return std::filesystem::weakly_canonical(path)
+        .lexically_relative(std::filesystem::weakly_canonical(PATH_INFO::user_moddir()))
+        .generic_string();
 }
 
 auto catalog_row_label(const catalog_entry& entry) -> std::string {

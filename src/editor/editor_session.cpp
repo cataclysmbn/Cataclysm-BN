@@ -14,6 +14,7 @@
 #include "editor/mapgen_stamp.h"
 #include "editor/mapgen_stroke.h"
 #include "editor/row_id.h"
+#include "editor/session_file.h"
 #include "editor/vehicle_session.h"
 #include "engine_client_component.h"
 #include "engine_client_world.h"
@@ -216,16 +217,31 @@ auto run_editor_session() -> void {
                     .ter(get_avatar().abs_omt_pos())
                     .id()
                     .str());
-        } else if (id == export_id) {
+        } else if (id == export_id && state.leave()) {
             const auto path = invoked->args.text.value_or("");
+            // The export opens in place of the file open, whose changes were saved or let go.
+            const auto closed = state.doc ? std::optional(state.doc->path()) : std::nullopt;
             const auto exported =
                 check_new_path(path)
                     .and_then([&] { return export_to(state, path); })
-                    .and_then([&](const nlohmann::ordered_json& entry) {
+                    .and_then([&](nlohmann::ordered_json entry) {
+                        // What the entry open draws with a symbol keeps that symbol.
+                        if (state.on_mapgen() && state.export_palette.empty()) {
+                            entry["object"] = keep_symbols(entry["object"], state.legend);
+                        }
                         return write_new_file(path, nlohmann::ordered_json::array({entry}));
                     });
             if (exported) {
                 state.open(path);
+                state.status =
+                    closed
+                        //~ %1$s is the new file the export wrote; %2$s the file it closed.
+                        ? string_format(
+                              _("Exported the live world's squares to %1$s, open now; %2$s is "
+                                "closed."),
+                              mods_path(path), mods_path(*closed))
+                        : string_format(_("Exported the live world's squares to %s, open now."),
+                                        mods_path(path));
             } else {
                 state.notice = exported.error();
             }
