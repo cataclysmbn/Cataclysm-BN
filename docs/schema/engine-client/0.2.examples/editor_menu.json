@@ -1518,6 +1518,7 @@
                 "editor:placement"
               ],
               "slot": "outline",
+              "collapsed": true,
               "columns": [],
               "rows": [],
               "total": 0,
@@ -1534,6 +1535,7 @@
                 "editor:place_apply"
               ],
               "slot": "inspector",
+              "collapsed": true,
               "fields": [
                 {
                   "id": "kind",
@@ -1929,7 +1931,7 @@
                 "rows": [
                   {
                     "id": "entry:t_adobe_brick_floor",
-                    "label": "adobe floor (t_adobe_brick_floor)",
+                    "label": "adobe floor",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -1961,7 +1963,7 @@
                   },
                   {
                     "id": "entry:t_adobe_brick_floor_noroof",
-                    "label": "adobe floor (t_adobe_brick_floor_noroof)",
+                    "label": "adobe floor (noroof)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -2188,7 +2190,7 @@
                   },
                   {
                     "id": "entry:t_backboard",
-                    "label": "backboard (t_backboard)",
+                    "label": "backboard",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -2221,7 +2223,7 @@
                   },
                   {
                     "id": "entry:t_backboard_in",
-                    "label": "backboard (t_backboard_in)",
+                    "label": "backboard (in)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -2449,7 +2451,7 @@
                   },
                   {
                     "id": "entry:t_barndoor",
-                    "label": "rope and pulley (t_barndoor)",
+                    "label": "rope and pulley (barndoor)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -2761,7 +2763,7 @@
                   },
                   {
                     "id": "entry:t_bulkhead_floor",
-                    "label": "bulkhead (t_bulkhead_floor)",
+                    "label": "bulkhead (bulkhead_floor)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -2793,7 +2795,7 @@
                   },
                   {
                     "id": "entry:t_bulkhead_floor_underwater",
-                    "label": "underwater bulkhead (t_bulkhead_floor_underwater)",
+                    "label": "underwater bulkhead (bulkhead_floor_underwater)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -2825,7 +2827,7 @@
                   },
                   {
                     "id": "entry:t_bulkhead_floor_underwater_no_roof",
-                    "label": "underwater bulkhead (t_bulkhead_floor_underwater_no_roof)",
+                    "label": "underwater bulkhead (bulkhead_floor_underwater_no_roof)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -2857,7 +2859,7 @@
                   },
                   {
                     "id": "entry:t_bulkhead_roof",
-                    "label": "bulkhead (t_bulkhead_roof)",
+                    "label": "bulkhead (bulkhead_roof)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -2892,7 +2894,7 @@
                   },
                   {
                     "id": "entry:t_card_fp",
-                    "label": "card reader (t_card_fp)",
+                    "label": "card reader (fp)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -2925,7 +2927,7 @@
                   },
                   {
                     "id": "entry:t_card_industrial",
-                    "label": "card reader (t_card_industrial)",
+                    "label": "card reader (industrial)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -2958,7 +2960,7 @@
                   },
                   {
                     "id": "entry:t_card_military",
-                    "label": "card reader (t_card_military)",
+                    "label": "card reader (military)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -3018,7 +3020,7 @@
                   },
                   {
                     "id": "entry:t_card_robofac",
-                    "label": "card reader (t_card_robofac)",
+                    "label": "card reader (robofac)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -3048,7 +3050,7 @@
                   },
                   {
                     "id": "entry:t_card_science",
-                    "label": "card reader (t_card_science)",
+                    "label": "card reader (science)",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -3543,7 +3545,7 @@
                   "id": "om_terrain",
                   "label": "Overmap terrain",
                   "description": "The id of the overmap terrain the mapgen makes.",
-                  "value": "",
+                  "value": "new_mapgen",
                   "type": "text",
                   "required": true
                 },
@@ -3583,15 +3585,6 @@
                       "label": "Building"
                     }
                   ]
-                },
-                {
-                  "id": "size",
-                  "label": "Chunk size",
-                  "description": "The side of a nested chunk, in squares.",
-                  "value": "4",
-                  "type": "integer",
-                  "min": 1,
-                  "max": 24
                 }
               ],
               "submit": "editor:new_apply"
