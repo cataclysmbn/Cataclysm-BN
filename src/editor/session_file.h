@@ -17,6 +17,8 @@ auto inside(const std::filesystem::path& path, const std::string& root) -> bool;
 /// `path` from the game's directory, the one that holds `data`, when it lies inside it, as a
 /// modder finds it there.
 auto shown_path(const std::filesystem::path& path) -> std::string;
+/// The file at `path` as the player names it: from the player's mods when it is in them.
+auto mods_path(const std::filesystem::path& path) -> std::string;
 /// Whether `path` is a .json file in a folder of the player's mods, the only place the editors
 /// make files: a file loose in the mods is no mod's, so no world loads it.
 auto is_mod_file(const std::filesystem::path& path) -> bool;

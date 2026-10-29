@@ -5207,4 +5207,193 @@ TEST_CASE(
     CHECK(walk(steps) == steps.size());
 }
 
+TEST_CASE(
+    "the vehicle editor picks the part a palette symbol puts on each mount it is drawn on",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto folder = my_mod_folder{};
+    const auto frame = vpart_id("frame_vertical")->name();
+    const auto seat = vpart_id("seat")->name();
+    /// Where the picked part is among the parts on the picked mount; none for none.
+    const auto picked_at = [](const ec::screen_view& screen) -> std::optional<std::ptrdiff_t> {
+        const auto& stack = rows(screen, "vehicle:stack");
+        const auto found = std::ranges::find(stack, true, &ec::row::selected);
+        return found == stack.end() ? std::nullopt : std::optional(found - stack.begin());
+    };
+    const auto set = [](const char* const pointer, const char* const value) {
+        return std::vector<walk_step>{
+            [=](const auto&) {
+                return invoke("vehicle:field_set", {.row = "pointer", .text = pointer});
+            },
+            [=](const auto&) {
+                return invoke("vehicle:field_set", {.row = "value", .text = value});
+            },
+            [](const auto&) { return invoke("vehicle:field_apply"); }};
+    };
+    auto steps = std::vector<walk_step>{
+        [](const auto&) { return invoke("vehicle:new", {.text = "Palette van"}); },
+        [](const auto&) { return invoke("vehicle:show:json"); }};
+    const auto add = [&](std::vector<walk_step> more) {
+        std::ranges::move(more, std::back_inserter(steps));
+    };
+    add(set("/palette", R"({"x":["frame_vertical","seat"]})"));
+    add(set("/blueprint", R"(["xx"])"));
+    add(set("/parts", "[]"));
+    add({[](const auto& screen) {
+             // One symbol draws a frame and a seat on two mounts.
+             CHECK(messages(screen).empty());
+             CHECK(cell(screen, "mount:1,0").looks.size() == 2);
+             return invoke("vehicle:tool_select");
+         },
+         [](const auto&) { return invoke("vehicle:show:mount"); },
+         [](const auto&) { return mount_at(1, 0); },
+         [&](const auto& screen) {
+             // The second mount the symbol is drawn on has its top part picked, as the first.
+             CHECK(picked_at(screen) == 1);
+             CHECK(affordance(screen, "vehicle:remove").label == "Remove " + seat);
+             return invoke("vehicle:pick", {.row = rows(screen, "vehicle:stack").front().id});
+         },
+         [&](const auto& screen) {
+             CHECK(picked_at(screen) == 0);
+             CHECK(affordance(screen, "vehicle:remove").label == "Remove " + frame);
+             CHECK(affordance(screen, "vehicle:later").enabled);
+             CHECK(affordance(screen, "vehicle:show:part").enabled);
+             return invoke("vehicle:remove");
+         },
+         [](const auto& screen) {
+             // Remove says why the part stays, rather than that the mount has none.
+             CHECK(notice_of(screen)
+                   == "The blueprint's palette places this part; edit the palette.");
+             CHECK(rows(screen, "vehicle:stack").size() == 2);
+             return mount_at(0, 0);
+         },
+         [&](const auto& screen) {
+             CHECK(picked_at(screen) == 1);
+             return act("QUIT");
+         }});
+    CHECK(walk(steps) == steps.size());
+}
+
+TEST_CASE(
+    "the vehicle editor's eraser takes one part off each square a stroke crosses, however often "
+    "it crosses it",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto folder = my_mod_folder{};
+    auto before = std::size_t{0};
+    const auto parts_on = [](const ec::screen_view& screen, const int x, const int y) {
+        return cell(screen, string_format("mount:%d,%d", x, y)).looks.size();
+    };
+    const auto steps = std::vector<walk_step>{
+        [](const auto&) { return invoke("vehicle:new", {.text = "Rub van"}); },
+        [](const auto&) { return invoke("vehicle:tool_line"); },
+        [](const auto&) { return mount_at(0, 0); },
+        [](const auto&) { return mount_at(3, 0); },
+        [](const auto&) { return invoke("vehicle:part_filter", {.text = "seat"}); },
+        [](const auto&) { return invoke("vehicle:choose", {.row = "vpart:seat"}); },
+        [](const auto&) { return invoke("vehicle:tool_install"); },
+        [](const auto&) { return invoke("vehicle:stroke_begin"); },
+        [](const auto&) { return mount_at(3, 0); },
+        [](const auto&) { return mount_at(2, 0); },
+        [](const auto&) { return mount_at(3, 0); },
+        [](const auto&) { return invoke("vehicle:stroke_end"); },
+        [&](const auto& screen) {
+            // The pencil back over a square puts no second seat on it.
+            CHECK(parts_on(screen, 3, 0) == 2);
+            CHECK(parts_on(screen, 2, 0) == 2);
+            before = steps_done(screen);
+            return invoke("vehicle:tool_remove");
+        },
+        [](const auto&) { return invoke("vehicle:stroke_begin"); },
+        [](const auto&) { return mount_at(3, 0); },
+        [](const auto&) { return mount_at(2, 0); },
+        // Back over the squares erased, as a shaky hand goes, and a secondary drag too.
+        [](const auto&) { return mount_at(3, 0); },
+        [](const auto&) { return invoke("vehicle:clear", {.row = "mount:2,0"}); },
+        [](const auto&) { return invoke("vehicle:stroke_end"); },
+        [&](const auto& screen) {
+            // The seats went; the frames under them stay.
+            CHECK(parts_on(screen, 3, 0) == 1);
+            CHECK(parts_on(screen, 2, 0) == 1);
+            CHECK(steps_done(screen) == before + 1);
+            CHECK(notice_of(screen).empty());
+            return invoke("vehicle:stroke_begin");
+        },
+        [](const auto&) { return mount_at(3, 0); },
+        [](const auto&) { return invoke("vehicle:stroke_end"); },
+        [](const auto& screen) {
+            // A new stroke takes the part under.
+            CHECK_FALSE(has_part(screen, 3, 0));
+            CHECK(has_part(screen, 2, 0));
+            return act("QUIT");
+        },
+    };
+    CHECK(walk(steps) == steps.size());
+}
+
+TEST_CASE(
+    "the vehicle editor's eraser takes one part off each square of a world vehicle a stroke "
+    "crosses, as its mounts move",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    clear_map();
+    const auto cleanup_vehicles = on_out_of_scope([] { clear_vehicles(); });
+    const auto at = get_avatar().bub_pos() + tripoint_rel_ms(8, 0, 0);
+    REQUIRE(editor::spawn_design(vproto_id("bicycle"), at, {}) != nullptr);
+    const auto parts_on = [](const ec::screen_view& screen, const int x, const int y) {
+        return cell(screen, string_format("mount:%d,%d", x, y)).looks.size();
+    };
+    /// The cell the canvas shows at `where`.
+    const auto shown_cell =
+        [](const ec::screen_view& screen, const ec::grid_point& where) -> const ec::grid_cell& {
+        const auto& cells = canvas(screen).cells;
+        const auto found = std::ranges::find(cells, where, &ec::grid_cell::at);
+        REQUIRE(found != cells.end());
+        return *found;
+    };
+    auto rear = ec::grid_point{};
+    const auto steps = std::vector<walk_step>{
+        [](const auto&) { return invoke("vehicle:source", {.row = "source:world"}); },
+        [](const auto&) { return invoke("vehicle:edit", {.row = "world:0"}); },
+        [](const auto&) { return invoke("vehicle:tool_remove"); },
+        [](const auto&) { return invoke("vehicle:stroke_begin"); },
+        [](const auto&) { return mount_at(0, 0); },
+        [](const auto&) { return mount_at(-1, 0); },
+        [](const auto&) { return mount_at(0, 0); },
+        [](const auto&) { return invoke("vehicle:stroke_end"); },
+        [&](const auto& screen) {
+            // The pedals and the basket on top went, nothing under them.
+            CHECK(parts_on(screen, 0, 0) == 3);
+            CHECK(parts_on(screen, -1, 0) == 3);
+            return mount_at(1, 0);
+        },
+        // Each click is a stroke of its own: the front wheel, its mount and its frame go, then
+        // all of the middle but its frame.
+        [](const auto&) { return mount_at(1, 0); },
+        [](const auto&) { return mount_at(1, 0); },
+        [](const auto&) { return mount_at(0, 0); },
+        [](const auto&) { return mount_at(0, 0); },
+        [&](const auto& screen) {
+            CHECK_FALSE(has_part(screen, 1, 0));
+            CHECK(parts_on(screen, 0, 0) == 1);
+            rear = shown_at(screen, -1, 0);
+            return invoke("vehicle:stroke_begin");
+        },
+        [](const auto&) { return mount_at(0, 0); },
+        [&](const auto& screen) {
+            // Taking the last part of 0,0 away moved every mount: the rear is 0,0 now, a square
+            // the stroke has not erased on.
+            CHECK(shown_cell(screen, rear).id == "mount:0,0");
+            return invoke("vehicle:clear", {.row = shown_cell(screen, rear).id});
+        },
+        [](const auto&) { return invoke("vehicle:stroke_end"); },
+        [&](const auto& screen) {
+            CHECK(shown_cell(screen, rear).looks.size() == 2);
+            return invoke("vehicle:done");
+        },
+        [](const auto&) { return act("QUIT"); },
+    };
+    CHECK(walk(steps) == steps.size());
+}
+
 #endif // CATA_MCP

@@ -243,13 +243,6 @@ auto catalog_label(const catalog_use& use) -> std::string {
     return {};
 }
 
-auto mods_path(const std::filesystem::path& path) -> std::string {
-    if (!inside(path, PATH_INFO::user_moddir())) { return shown_path(path); }
-    return std::filesystem::weakly_canonical(path)
-        .lexically_relative(std::filesystem::weakly_canonical(PATH_INFO::user_moddir()))
-        .generic_string();
-}
-
 auto catalog_row_label(const catalog_entry& entry) -> std::string {
     return entry.distinct.empty()
              ? entry.name
