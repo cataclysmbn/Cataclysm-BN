@@ -333,6 +333,15 @@ TEST_CASE("removing parts together keeps the vehicle in one piece", "[editor_veh
         CHECK(mounts_left(done->prototype)
               == std::set<point>{{1, 0}, {2, 0}, {0, 1}, {2, 1}, {0, 2}, {1, 2}, {2, 2}});
     }
+    SECTION("the blueprint is drawn again from what is left") {
+        auto row = frames({{0, 0}, {1, 0}, {2, 0}});
+        row["blueprint"] = ordered_json::array({"###"});
+        const auto done = editor::remove_parts(row, {{2, 0}});
+        REQUIRE(done.has_value());
+        CHECK(done->prototype.at("blueprint")
+              == ordered_json(editor::blueprint_rows(*built(done->prototype).blueprint)));
+        CHECK(done->prototype.at("blueprint")[0].get<std::string>().size() == 2);
+    }
 }
 
 TEST_CASE("a part moves within its mount's install order as the game allows", "[editor_vehicle]") {

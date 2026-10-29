@@ -57,13 +57,20 @@ auto part_named(const nlohmann::ordered_json& value) -> std::string {
              : std::string{};
 }
 
-/// The prototype with its display `blueprint` drawn again from what it builds, unless a palette
-/// reads it, so that it shows the parts it has.
+/// The prototype with its display `blueprint` drawn again from `veh`, the vehicle it builds,
+/// unless a palette reads it, so that it shows the parts it has.
+auto drawn(nlohmann::ordered_json prototype, const vehicle& veh) -> nlohmann::ordered_json {
+    if (prototype.contains("blueprint") && !prototype.contains("palette")) {
+        prototype["blueprint"] = blueprint_rows(veh);
+    }
+    return prototype;
+}
+
+/// The prototype `drawn` from the vehicle it builds; as it is when the game cannot build it.
 auto redrawn(nlohmann::ordered_json prototype) -> nlohmann::ordered_json {
     if (!prototype.contains("blueprint") || prototype.contains("palette")) { return prototype; }
     const auto built = build_design(prototype.dump());
-    if (built.blueprint) { prototype["blueprint"] = blueprint_rows(*built.blueprint); }
-    return prototype;
+    return built.blueprint ? drawn(std::move(prototype), *built.blueprint) : prototype;
 }
 
 auto read_text(const std::filesystem::path& path) -> std::string {
@@ -892,13 +899,13 @@ auto remove_parts(const nlohmann::ordered_json& prototype, const std::vector<poi
         if (removed.empty()) {
             tally.refused = left;
             tally.reason = reason;
-            break;
+            // The pass built what is left.
+            return stroke_design{.prototype = drawn(std::move(next), veh), .tally = tally};
         }
         tally.done += static_cast<int>(removed.size());
         std::ranges::copy(taken_from, std::back_inserter(tally.removed));
         erase_parts(next, removed);
     }
-    return stroke_design{.prototype = redrawn(std::move(next)), .tally = tally};
 }
 
 auto install_live_parts(vehicle& veh, const stroke_install& install)
