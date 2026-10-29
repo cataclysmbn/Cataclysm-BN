@@ -618,7 +618,8 @@ auto run_editor_session() -> void {
                 if (inside) {
                     //~ Testing a mapgen put the avatar on it: %1$d,%2$d is the square, counted from
                     //~ the mapgen's north-west corner.
-                    add_msg(m_info, _("You stand on the stamped mapgen's square %1$d,%2$d."),
+                    add_msg(m_info,
+                            to_translation("You stand on the stamped mapgen's square %1$d,%2$d."),
                             landing.x() - corner.x(), landing.y() - corner.y());
                 } else {
                     const auto away = landing.y() - south_edge;
