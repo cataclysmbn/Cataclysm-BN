@@ -7735,4 +7735,26 @@ TEST_CASE(
     editor::reset_editor_session();
 }
 
+TEST_CASE(
+    "testing a stamp turns the view to show the stamp with the avatar south of it",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{{{"fill_ter", "t_floor"}}};
+    const auto corner = project_to<coords::ms>(get_avatar().abs_omt_pos());
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:stamp"); },
+        [](const auto&) { return invoke("editor:test"); }};
+    CHECK(walk_map(walk) == walk.size());
+    const auto at = get_avatar().abs_pos();
+    const auto middle = at + get_avatar().view_offset;
+    // The view's middle is over the stamp's middle column, between its north edge and the avatar.
+    CHECK(middle.x() == corner.x() + SEEX);
+    CHECK(middle.y() >= corner.y());
+    CHECK(middle.y() < at.y());
+    CHECK(get_avatar().view_offset.y() < 0);
+    get_avatar().view_offset = tripoint_rel_ms::zero();
+    editor::reset_editor_session();
+}
+
 #endif // CATA_MCP
