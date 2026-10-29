@@ -712,9 +712,16 @@ struct session {
         return change(remove_part(prototype(), *built.blueprint, index));
     }
 
-    /// The indexes in `design_parts` of the prototype's parts on the picked mount, in the order
-    /// the game installs them.
+    /// The parts on the picked mount in the order the game installs them: indexes of the vehicle
+    /// edited in place, else of `design_parts`.
     auto parts_here() const -> std::vector<std::size_t> {
+        if (live) {
+            return live->parts_at_relative(tripoint_mnt_veh(cursor.x, cursor.y, 0), false)
+                 | std::views::transform([](const int index) {
+                       return static_cast<std::size_t>(index);
+                   })
+                 | std::ranges::to<std::vector>();
+        }
         const auto design = design_parts(prototype());
         return std::views::iota(std::size_t{0}, design.size())
              | std::views::filter([&](const std::size_t index) {
@@ -723,29 +730,37 @@ struct session {
              | std::ranges::to<std::vector>();
     }
 
-    /// The world's vehicle's parts on the picked mount, in the order the game installed them.
-    auto live_here() const -> std::vector<int> {
-        return live->parts_at_relative(tripoint_mnt_veh(cursor.x, cursor.y, 0), false);
-    }
-
-    /// The picked part when it is on the picked mount, as an index of `design_parts`.
+    /// The picked part when it is on the picked mount, as `parts_here` names it.
     auto picked_here() const -> std::optional<std::size_t> {
-        const auto index = picked_part();
+        const auto index =
+            !live ? picked_part()
+            : live_part >= 0
+                ? std::optional(static_cast<std::size_t>(live_part))
+                : std::nullopt;
         return index && std::ranges::contains(parts_here(), *index) ? index : std::nullopt;
     }
 
     /// The name of the picked part on the picked mount; none when the mount has none.
     auto picked_name() const -> std::optional<std::string> {
-        if (live) {
-            return std::ranges::contains(live_here(), live_part)
-                     ? std::optional(live->cpart(live_part).info().name())
-                     : std::nullopt;
-        }
         return picked_here().transform([&](const std::size_t index) {
-            const auto part = design_parts(prototype())[index].part;
-            const auto id = vpart_id(part);
-            return id.is_valid() ? id->name() : part;
+            return live ? live->cpart(static_cast<int>(index)).info().name()
+                        : part_name(design_parts(prototype())[index].part);
         });
+    }
+
+    /// Points the field form at `pointer`, with the value there.
+    auto point_field(std::string pointer) -> void {
+        field_pointer = std::move(pointer);
+        field_value = value_at(field_pointer);
+    }
+
+    /// Picks the part `index` as `parts_here` names it.
+    auto pick(const std::size_t index) -> void {
+        if (live) {
+            live_part = static_cast<int>(index);
+        } else if (const auto design = design_parts(prototype()); index < design.size()) {
+            point_field(design[index].pointer);
+        }
     }
 
     /// `format` with the name `what` and the picked mount, as "Install %s at %d,%d".
@@ -755,24 +770,19 @@ struct session {
 
     /// Picks the part on top of the picked mount, the one installed last.
     auto pick_top() -> void {
-        if (live) {
-            const auto here = live_here();
-            live_part = here.empty() ? -1 : here.back();
-            return;
-        }
         if (const auto here = parts_here(); !here.empty()) {
-            field_pointer = design_parts(prototype())[here.back()].pointer;
-            field_value = value_at(field_pointer);
+            pick(here.back());
+        } else if (live) {
+            live_part = -1;
         } else if (picked_part()) {
             // A part of another mount stays picked no longer, nor one an index now names anew.
-            field_pointer = "/name";
-            field_value = value_at(field_pointer);
+            point_field("/name");
         }
     }
 
     /// Picks the top part of the picked mount unless a part on it is picked.
     auto keep_pick() -> void {
-        if (live ? !std::ranges::contains(live_here(), live_part) : !picked_here()) { pick_top(); }
+        if (!picked_here()) { pick_top(); }
     }
 
     /// Whether the picked part has a part installed before it on its mount, for a negative
@@ -787,11 +797,14 @@ struct session {
 
     auto remove_picked() -> void {
         const auto name = picked_name();
+        const auto index = picked_here();
         const auto removed =
-            !name  ? false
-            : live ? live_change(at_mount(_("Remove %s at %d,%d"), *name),
-                                 [&](vehicle& veh) { return remove_live_part(veh, live_part); })
-                   : remove(*picked_here());
+            !name ? false
+            : live
+                ? live_change(
+                      at_mount(_("Remove %s at %d,%d"), *name),
+                      [&](vehicle& veh) { return remove_live_part(veh, static_cast<int>(*index)); })
+                : remove(*index);
         if (!name) { notice = _("This mount has no part to remove."); }
         if (removed) {
             //~ What the vehicle editor did: the part's name and the mount it was on.
@@ -814,10 +827,7 @@ struct session {
         const auto moved = std::ranges::find_if(design, [&](const design_part& entry) {
             return entry.mount == cursor && entry.part == part;
         });
-        if (moved != design.end()) {
-            field_pointer = moved->pointer;
-            field_value = value_at(field_pointer);
-        }
+        if (moved != design.end()) { point_field(moved->pointer); }
     }
 
     /// Picks the mount `at` and removes the part on top of it, showing what is left.
@@ -3093,13 +3103,8 @@ auto kept_session = std::optional<session>{};
 auto live_invoke(
     session& state, const std::string& id, const std::string& row, const std::string& text)
     -> void {
-    const auto index = row_index(row, "part").transform([](const std::size_t at) {
-        return static_cast<int>(at);
-    });
     if (id == done_id) {
         state.live = nullptr;
-    } else if (id == pick_id && index) {
-        state.live_part = *index;
     } else if (id == live_set_id) {
         state.set_live(row, text);
     } else if (id == undo_id) {
@@ -3221,18 +3226,12 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
             state.delete_mounts(id == cut_mounts_id);
         } else if (id == remove_id) {
             state.remove_picked();
+        } else if (id == pick_id) {
+            if (const auto index = row_index(row, "part")) { state.pick(*index); }
         } else if (state.live) {
             live_invoke(state, id, row, text);
         } else if (!state.doc) {
             // The vehicle edited in place left the map.
-        } else if (id == pick_id) {
-            if (const auto index = row_index(row, "part")) {
-                const auto design = design_parts(state.prototype());
-                if (*index < design.size()) {
-                    state.field_pointer = design[*index].pointer;
-                    state.field_value = state.value_at(state.field_pointer);
-                }
-            }
         } else if (id == earlier_id || id == later_id) {
             state.move_picked(id == earlier_id ? -1 : 1);
         } else if (id == turn_cw_id || id == turn_ccw_id) {
@@ -3269,8 +3268,7 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
             }
         } else if (id == field_set_id) {
             if (row == "pointer") {
-                state.field_pointer = text;
-                state.field_value = state.value_at(text);
+                state.point_field(text);
             } else {
                 state.field_value = text;
             }
