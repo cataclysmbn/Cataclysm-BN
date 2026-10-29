@@ -1407,6 +1407,9 @@ auto layout(const session& state) -> workspace_layout {
     const auto world = std::string(_("World"));
     // While a document is open, the start page folds away beside it.
     const auto opened = state.doc.has_value();
+    // Placements take room only while there are some, or while the placements tool is in hand.
+    const auto placed = state.on_mapgen() && !placements_of(*state.doc, state.object).empty();
+    const auto placing = state.current->region == region_use::placements;
     return {
         .slots =
             {{tools_id, {.slot = "canvas"}},
@@ -1417,7 +1420,8 @@ auto layout(const session& state) -> workspace_layout {
              {catalog_id, {.slot = "palette", .label = _("Catalog")}},
              {file_id, {.slot = "outline", .label = _("File path"), .collapsed = opened}},
              {objects_id, {.slot = "outline", .label = _("Entries")}},
-             {placements_id, {.slot = "outline", .label = _("Placed by this entry")}},
+             {placements_id,
+              {.slot = "outline", .label = _("Placed by this entry"), .collapsed = !placed}},
              {terrains_id, {.slot = "outline", .label = _("Mapgens")}},
              {"editor:code_mapgens", {.slot = "outline", .label = _("Mapgens in code")}},
              {browser_id,
@@ -1430,7 +1434,7 @@ auto layout(const session& state) -> workspace_layout {
              {"editor:document", {.slot = "status"}},
              {field_id, {.slot = "inspector", .label = _("JSON value")}},
              {move_id, {.slot = "inspector", .label = _("Placement position")}},
-             {place_id, {.slot = "inspector", .label = _("New placement")}},
+             {place_id, {.slot = "inspector", .label = _("New placement"), .collapsed = !placing}},
              {pins_id, {.slot = "inspector", .label = _("Pinned choices")}},
              {rotation_id, {.slot = "inspector", .label = _("Preview facing")}},
              {connection_id, {.slot = "inspector", .label = _("Connect tool")}},
