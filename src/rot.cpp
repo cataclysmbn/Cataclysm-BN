@@ -90,4 +90,14 @@ auto for_part( const vehicle &veh, const size_t part_index,
     return temperature_flag::TEMP_NORMAL;
 }
 
+auto for_part( const vehicle &veh, const size_t part_index ) -> temperature_flag
+{
+    return for_part( veh, part_index, engine_heater_is_on( veh ) );
+}
+
+auto engine_heater_is_on( const vehicle &veh ) -> bool
+{
+    return veh.has_part( "E_HEATER", true ) && veh.engine_on;
+}
+
 } // namespace rot::temp

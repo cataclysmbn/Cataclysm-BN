@@ -1375,9 +1375,17 @@ static float get_ranged_armor_mult( const common_ranged_data &ranged )
     return ranged.damage.damage_units.front().res_mult;
 }
 
+namespace
+{
+auto rot_temperature_at_location( const item &it,
+                                  temperature_flag fallback ) -> units::temperature;
+auto time_to_rot( time_duration remaining_rot, units::temperature temp ) -> time_duration;
+} // namespace
+
 // Generates a long-form description of the freshness of the given rottable food item.
 // NB: Doesn't check for non-rottable!
-static std::string get_freshness_description( const item &food_item )
+static std::string get_freshness_description( const item &food_item,
+        const temperature_flag temperature )
 {
     // So, skilled characters looking at food that is neither super-fresh nor about to rot
     // can guess its age as one of {quite fresh,midlife,past midlife,old soon}, and also
@@ -1392,6 +1400,14 @@ static std::string get_freshness_description( const item &food_item )
         time_left = shelf_life;
     }
     avatar &you = get_avatar();
+    const auto real_time_left = food_item.is_in_preserving_container()
+                                ? calendar::INDEFINITELY_LONG_DURATION
+                                : time_to_rot( time_left, rot_temperature_at_location( food_item, temperature ) );
+    if( real_time_left < calendar::INDEFINITELY_LONG_DURATION ) {
+        time_left = real_time_left;
+    } else if( you.can_estimate_rot() ) {
+        return _( "* This food <good>won't spoil</good> where it is stored now." );
+    }
     if( food_item.is_fresh() ) {
         // Fresh food is assumed to be obviously so regardless of skill.
         if( you.can_estimate_rot() ) {
@@ -2183,7 +2199,7 @@ void item::food_info( const item *food_item, std::vector<iteminfo> &info,
         }
 
         if( !food_item->rotten() ) {
-            info.emplace_back( "DESCRIPTION", get_freshness_description( *food_item ) );
+            info.emplace_back( "DESCRIPTION", get_freshness_description( *food_item, temperature ) );
         }
 
         if( food_item->has_flag( flag_NO_PARASITES ) ) {
@@ -6659,6 +6675,24 @@ auto temperature_flag_to_highest_temperature( temperature_flag temperature ) -> 
     return units::temperature_max;
 }
 
+/// Real time for @p remaining_rot to accumulate at @p temp; INDEFINITELY_LONG_DURATION if it never does.
+auto time_to_rot( const time_duration remaining_rot,
+                  const units::temperature temp ) -> time_duration
+{
+    if( remaining_rot <= 0_turns ) {
+        return 0_turns;
+    }
+    const auto rot_per_hour = get_hourly_rotpoints_at_temp( temp );
+    if( rot_per_hour <= 0 ) {
+        return calendar::INDEFINITELY_LONG_DURATION;
+    }
+    // Rot is counted in room temperature turns, so scale it by the rot speed at temp.
+    const auto turns = to_turns<double>( remaining_rot ) * to_turns<double>( 1_hours ) / rot_per_hour;
+    return turns < to_turns<double>( calendar::INDEFINITELY_LONG_DURATION )
+           ? time_duration::from_turns( static_cast<int>( turns ) )
+           : calendar::INDEFINITELY_LONG_DURATION;
+}
+
 } // namespace
 
 
@@ -6667,23 +6701,11 @@ time_duration item::minimum_freshness_duration( temperature_flag temperature ) c
     if( is_in_preserving_container() ) {
         return calendar::INDEFINITELY_LONG_DURATION;
     }
-    const units::temperature temp = temperature_flag_to_highest_temperature( temperature );
-    unsigned long long rot_per_hour = get_hourly_rotpoints_at_temp( temp );
-
-    if( rot_per_hour <= 0 || !type->comestible ) {
+    if( !type->comestible ) {
         return calendar::INDEFINITELY_LONG_DURATION;
     }
-
-    time_duration remaining_rot = type->comestible->spoils - rot;
-    // Has to be in int64 or it will overflow for long lasting food
-    unsigned long long duration = to_turns<unsigned long long>( remaining_rot )
-                                  * to_turns<unsigned long long>( 1_hours )
-                                  / rot_per_hour;
-    if( duration > to_turns<unsigned long long>( calendar::INDEFINITELY_LONG_DURATION ) ) {
-        return calendar::INDEFINITELY_LONG_DURATION;
-    }
-
-    return time_duration::from_turns( static_cast<int>( duration ) );
+    return time_to_rot( type->comestible->spoils - rot,
+                        temperature_flag_to_highest_temperature( temperature ) );
 }
 
 void item::mod_last_rot_check( time_duration processing_duration )
@@ -10351,6 +10373,41 @@ static units::temperature clip_by_temperature_flag( units::temperature temperatu
     return temperature;
 }
 
+namespace
+{
+
+struct rot_location {
+    tripoint_bub_ms pos;
+    temperature_flag flag;
+};
+
+/// Where @p it rots and the storage flag there; unplaced items use @p fallback at the origin.
+auto rot_location_of( const item &it, const temperature_flag fallback ) -> rot_location
+{
+    if( it.is_loaded() && it.has_position() ) {
+        return { .pos = it.bub_pos(), .flag = rot::temp::for_location( get_map(), it ) };
+    }
+    return { .pos = tripoint_bub_ms::zero(), .flag = fallback };
+}
+
+/// Temperature that update_rot applies right now to an item rotting in @p context.
+auto current_rot_temperature( const item::rot_context &context ) -> units::temperature
+{
+    const auto &weather = context.weather == nullptr ? get_weather() : *context.weather;
+    return clip_by_temperature_flag( weather.get_temperature( context.position ),
+                                     context.temperature );
+}
+
+/// Temperature that update_rot currently applies to @p it.
+auto rot_temperature_at_location( const item &it,
+                                  const temperature_flag fallback ) -> units::temperature
+{
+    const auto loc = rot_location_of( it, fallback );
+    return current_rot_temperature( { .position = bub_to_abs( loc.pos ), .temperature = loc.flag } );
+}
+
+} // namespace
+
 void item::update_rot_from_location( const temperature_flag temperature )
 {
     if( !goes_bad() || last_rot_check == calendar::turn ) {
@@ -10361,13 +10418,8 @@ void item::update_rot_from_location( const temperature_flag temperature )
         return;
     }
 
-    auto pos = tripoint_bub_ms::zero();
-    auto flag = temperature;
-    if( is_loaded() && has_position() ) {
-        pos = bub_pos();
-        flag = rot::temp::for_location( get_map(), *this );
-    }
-    update_rot( pos, flag, get_weather() );
+    const auto loc = rot_location_of( *this, temperature );
+    update_rot( loc.pos, loc.flag, get_weather() );
 }
 
 auto item::update_rot( const tripoint_bub_ms &pos, const temperature_flag flag,
@@ -10397,8 +10449,7 @@ auto item::update_rot( const rot_context &context ) -> void
     static constexpr auto smallest_interval = 10_minutes;
 
     const auto &weather = context.weather == nullptr ? get_weather() : *context.weather;
-    auto temp = weather.get_temperature( context.position );
-    temp = clip_by_temperature_flag( temp, context.temperature );
+    const auto temp = current_rot_temperature( context );
 
     auto time = last_rot_check;
     item_internal::scoped_goes_bad_cache _cache( this );

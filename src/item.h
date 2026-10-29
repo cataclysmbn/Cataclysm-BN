@@ -1013,6 +1013,9 @@ class item : public location_visitable<item>, public game_object<item>
             return get_relative_rot() > 1.0;
         }
 
+        /** true if a parent container keeps this item from rotting */
+        auto is_in_preserving_container() const -> bool;
+
         /**
          * Whether the item has enough rot that it should get removed.
          * Regular shelf life perishable foods rot away completely at 2x shelf life. Corpses last 10 days
@@ -2450,7 +2453,6 @@ class item : public location_visitable<item>, public game_object<item>
                                    const rot_context &context, bool seals ) -> detached_ptr<item>;
         static auto process_rot( detached_ptr<item> &&self,
                                  const absolute_rot_process_options &options ) -> detached_ptr<item>;
-        auto is_in_preserving_container() const -> bool;
         auto is_in_sealing_container() const -> bool;
         auto mark_rot_checked_now() -> void;
 

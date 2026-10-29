@@ -1,3 +1,4 @@
+#include "../src/map/map.h"
 #include "avatar.h"
 #include "catch/catch.hpp"
 #include "game.h"
@@ -9,7 +10,9 @@
 #include "recipe.h"
 #include "state_helpers.h"
 #include "type_id.h"
+#include "units_temperature.h"
 #include "value_ptr.h"
+#include "weather/weather.h"
 
 #include <memory>
 #include <string>
@@ -854,6 +857,21 @@ TEST_CASE("food freshness and lifetime", "[item][iteminfo][food]") {
             temperature_flag::TEMP_FRIDGE);
     }
 
+    SECTION("rotten food in a fridge has no freshness left") {
+        detached_ptr<item> milk = item::spawn("milk");
+        milk->set_relative_rot(1.5);
+        test_info_equals(
+            *milk, q,
+            "--\n"
+            "* This food is <color_c_yellow>perishable</color>, and at room temperature"
+            " has an estimated nominal shelf life of <color_c_cyan>1 day</color>.\n"
+            "* Current storage conditions <color_c_yellow>partially</color> protect this"
+            " item from rot.  It will stay fresh at least <color_c_cyan>0 seconds</color>.\n"
+            "This food has started to <color_c_red>rot</color>. <color_c_cyan>Eating</color>"
+            " it would be a <color_c_red>very bad idea</color>.\n",
+            temperature_flag::TEMP_FRIDGE);
+    }
+
     SECTION("liquid food is stored in a container in a fridge") {
         detached_ptr<item> food_item =
             item::in_container(itype_id("can_medium_unsealed"), item::spawn(itype_id("milk")));
@@ -866,6 +884,72 @@ TEST_CASE("food freshness and lifetime", "[item][iteminfo][food]") {
             " item from rot.  It will stay fresh at least <color_c_cyan>4 days</color>.\n"
             "* This food looks as <color_c_green>fresh</color> as it can be.\n",
             temperature_flag::TEMP_FRIDGE);
+    }
+}
+
+TEST_CASE("food spoilage estimate uses current temperature", "[item][iteminfo][food]") {
+    clear_all_state();
+    iteminfo_query q = q_vec({iteminfo_parts::FOOD_ROT});
+    g->u.set_skill_level(skill_id("cooking"), 3);
+    REQUIRE(g->u.can_estimate_rot());
+
+    const auto expected = [](const std::string& time_left) {
+        return "--\n"
+               "* This food is <color_c_yellow>perishable</color>, and at room temperature has"
+               " an estimated nominal shelf life of <color_c_cyan>1 day</color>.\n"
+               "* This food looks as <color_c_green>fresh</color> as it can be.  It still has"
+               " <color_c_cyan>"
+             + time_left + "</color> until it spoils.\n";
+    };
+    const auto set_temperature = [](units::temperature temperature) {
+        get_weather().temperature = temperature;
+        get_weather().clear_temp_cache();
+    };
+
+    SECTION("room temperature keeps the nominal estimate") {
+        set_temperature(18_c);
+        test_info_equals("milk", q, expected("about 1 day"));
+    }
+
+    SECTION("half the rot speed doubles the estimate") {
+        set_temperature(9_c);
+        test_info_equals("milk", q, expected("about 2 days"));
+    }
+
+    SECTION("unplaced food uses the storage temperature passed to info") {
+        set_temperature(18_c);
+        test_info_equals("milk", q, expected("less than 5 days"), temperature_flag::TEMP_FRIDGE);
+    }
+
+    SECTION("food on the map uses the storage of its tile") {
+        set_temperature(18_c);
+        const auto pos = tripoint_bub_ms(60, 60, 0);
+        get_map().furn_set(pos, furn_str_id("f_fridge_on"));
+        get_map().add_item(
+            pos,
+            item::in_container(itype_id("can_medium_unsealed"), item::spawn(itype_id("milk"))));
+        REQUIRE(get_map().i_at(pos).size() == 1);
+        const auto& milk = get_map().i_at(pos).only_item().contents.front();
+        test_info_equals(milk, q, expected("less than 5 days"));
+    }
+
+    const auto wont_spoil =
+        "--\n"
+        "* This food is <color_c_yellow>perishable</color>, and at room temperature has"
+        " an estimated nominal shelf life of <color_c_cyan>1 day</color>.\n"
+        "* This food <color_c_green>won't spoil</color> where it is stored now.\n";
+
+    SECTION("frozen food does not spoil") {
+        set_temperature(-5_c);
+        test_info_equals("milk", q, wont_spoil);
+    }
+
+    SECTION("food in a preserving container does not spoil") {
+        set_temperature(18_c);
+        const auto carton =
+            item::in_container(itype_id("carton_sealed"), item::spawn(itype_id("milk")));
+        REQUIRE(carton->contents.front().is_in_preserving_container());
+        test_info_equals(carton->contents.front(), q, wont_spoil);
     }
 }
 
