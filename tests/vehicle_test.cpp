@@ -232,6 +232,24 @@ TEST_CASE("vehicle_cargo_uses_full_part_volume", "[vehicle][cargo][volume]") {
     CHECK(veh_ptr->free_volume(cargo_index) == 3000000_liter);
 }
 
+TEST_CASE("a vehicle mounts parts on those it mounted while its refresh waits", "[vehicle]") {
+    clear_map();
+    auto veh = vehicle();
+    REQUIRE(veh.install_part(tripoint_mnt_veh::zero(), vpart_id("frame_vertical"), true) >= 0);
+    veh.suspend_refresh();
+    // Each frame holds on to the one mounted just before it.
+    for (auto x = 1; x < 5; ++x) {
+        CHECK(veh.install_part(tripoint_mnt_veh(x, 0, 0), vpart_id("frame_vertical")) >= 0);
+    }
+    CHECK(veh.install_part(tripoint_mnt_veh(4, 0, 0), vpart_id("seat")) >= 0);
+    // The seat mounted takes the place of a second one.
+    CHECK(veh.install_part(tripoint_mnt_veh(4, 0, 0), vpart_id("seat")) < 0);
+    // Nothing holds on to a frame away from the others.
+    CHECK(veh.install_part(tripoint_mnt_veh(6, 0, 0), vpart_id("frame_vertical")) < 0);
+    veh.enable_refresh();
+    CHECK(veh.part_count() == 6);
+}
+
 TEST_CASE("vehicle deserialize accepts legacy two coordinate pivot", "[vehicle][save]") {
     auto json = std::istringstream(vehicle_with_legacy_pivot_json());
     auto jsin = JsonIn(json);

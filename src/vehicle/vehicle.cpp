@@ -1691,7 +1691,7 @@ auto vehicle::vhp_to_watts(const int power_vhp) -> int {
 }
 
 auto vehicle::has_structural_part(const tripoint_mnt_veh& dp) const -> bool {
-    for (const int elem : parts_at_relative(dp, false)) {
+    for (const int elem : parts_at_relative(dp, true)) {
         if (part_info(elem).location == part_location_structure
             && !part_info(elem).has_flag("PROTRUSION")) {
             return true;
@@ -1701,7 +1701,7 @@ auto vehicle::has_structural_part(const tripoint_mnt_veh& dp) const -> bool {
 }
 
 auto vehicle::has_structural_or_extendable_part(const tripoint_mnt_veh& dp) const -> bool {
-    for (const int elem : parts_at_relative(dp, false)) {
+    for (const int elem : parts_at_relative(dp, true)) {
         if ((part_info(elem).location == part_location_structure
              && !part_info(elem).has_flag("PROTRUSION"))
             || part_info(elem).has_flag(VPFLAG_EXTENDABLE)) {
@@ -1737,7 +1737,10 @@ auto vehicle::can_mount(const tripoint_mnt_veh& dp, const vpart_id& id) const ->
     const vpart_info& part = id.obj();
     if (part.has_flag("NOINSTALL")) { return false; }
 
-    const std::vector<int> parts_in_square = parts_at_relative(dp, false);
+    // The parts here as refresh indexes them, and install_part while refresh waits; in the order
+    // they were installed, as the rules below read the first of them.
+    auto parts_in_square = parts_at_relative(dp, true);
+    std::ranges::sort(parts_in_square);
 
     // New Subpath for balloon type structures when on the edge
     if (part.has_flag("EXTENDABLE")) {
@@ -1796,9 +1799,9 @@ auto vehicle::can_mount(const tripoint_mnt_veh& dp, const vpart_id& id) const ->
     // All parts after the first must be installed on or next to an existing part
     // the exception is when a single tile only structural object is being repaired
     if (!parts.empty()) {
-        if (!is_structural_part_removed() && !has_structural_part(dp)
-            && !has_structural_part(dp + point_east) && !has_structural_part(dp + point_south)
-            && !has_structural_part(dp + point_west) && !has_structural_part(dp + point_north)) {
+        if (!has_structural_part(dp) && !has_structural_part(dp + point_east)
+            && !has_structural_part(dp + point_south) && !has_structural_part(dp + point_west)
+            && !has_structural_part(dp + point_north) && !is_structural_part_removed()) {
             return false;
         }
     }
@@ -2105,6 +2108,15 @@ auto vehicle::install_part(const tripoint_mnt_veh& dp, vehicle_part&& new_part) 
     pt.enabled = enable;
 
     pt.mount = dp;
+    if (no_refresh) {
+        // `can_mount` reads the parts by mount, which refresh indexes again once it runs.
+        auto& here = relative_parts[dp];
+        here.insert(
+            std::ranges::lower_bound(
+                here, pt.info().list_order, {},
+                [&](const int p) { return part_info(p).list_order; }),
+            static_cast<int>(parts.size() - 1));
+    }
 
     if (pt.base->has_var(TINT_COLOR_VAR_NAME) || pt.base->has_var(TINT_COLOR_FG_VAR_NAME)
         || pt.base->has_var(TINT_COLOR_BG_VAR_NAME)) {
