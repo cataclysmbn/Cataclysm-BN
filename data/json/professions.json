@@ -480,7 +480,10 @@
     "type": "item_group",
     "subtype": "collection",
     "id": "army_mags_mp5",
-    "entries": [ { "item": "mp5mag", "ammo-item": "9mmfmj", "charges": 30 }, { "item": "mp5mag", "ammo-item": "9mmfmj", "charges": 30 } ]
+    "entries": [
+      { "item": "mp5mag", "ammo-item": "9mmfmj", "charges": 30 },
+      { "item": "mp5mag", "ammo-item": "9mmfmj", "charges": 30 }
+    ]
   },
   {
     "type": "item_group",
@@ -591,10 +594,7 @@
     "type": "item_group",
     "subtype": "collection",
     "id": "police_mags_usp9",
-    "entries": [
-      { "item": "usp9mag", "ammo-item": "9mm", "charges": 15 },
-      { "item": "usp9mag", "ammo-item": "9mm", "charges": 15 }
-    ]
+    "entries": [ { "item": "usp9mag", "ammo-item": "9mm", "charges": 15 }, { "item": "usp9mag", "ammo-item": "9mm", "charges": 15 } ]
   },
   {
     "type": "item_group",
@@ -609,10 +609,7 @@
     "type": "item_group",
     "subtype": "collection",
     "id": "mags_glock19",
-    "entries": [
-      { "item": "glockmag", "ammo-item": "9mm", "charges": 15 },
-      { "item": "glockmag", "ammo-item": "9mm", "charges": 15 }
-    ]
+    "entries": [ { "item": "glockmag", "ammo-item": "9mm", "charges": 15 }, { "item": "glockmag", "ammo-item": "9mm", "charges": 15 } ]
   },
   {
     "type": "item_group",
@@ -2150,7 +2147,12 @@
           { "item": "e_tool", "container-item": "webbing_belt" },
           { "item": "knife_combat", "container-item": "sheath" },
           { "item": "grenadebandolier", "contents-item": [ "grenade", "grenade" ] },
-          { "item": "m249", "ammo-item": "556_incendiary", "charges": 200, "contents-item": [ "shoulder_strap", "acog_scope" ] },
+          {
+            "item": "m249",
+            "ammo-item": "556_incendiary",
+            "charges": 200,
+            "contents-item": [ "shoulder_strap", "acog_scope" ]
+          },
           { "item": "m17", "ammo-item": "9mmfmj", "charges": 17, "container-item": "holster" }
         ]
       },
