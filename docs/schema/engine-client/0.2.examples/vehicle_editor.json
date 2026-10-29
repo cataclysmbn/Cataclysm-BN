@@ -686,16 +686,14 @@
                 "x": 21,
                 "y": 15
               },
-              "blank": {
-                "glyph": " ",
-                "affordance": "vehicle:mount",
-                "enabled": true
-              },
-              "cells": [
+              "blank": 0,
+              "styles": [
                 {
-                  "x": 19,
-                  "y": 15,
-                  "id": "mount:-1,0",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true
+                },
+                {
                   "glyph": "o",
                   "label": "extra light frame, light wheel mount, 67.5cm bicycle wheel, small folding wire basket",
                   "color": "c_brown",
@@ -709,9 +707,6 @@
                   ]
                 },
                 {
-                  "x": 20,
-                  "y": 15,
-                  "id": "mount:0,0",
                   "glyph": "#",
                   "label": "extra light frame, saddle, bicycle horn, foot pedals",
                   "color": "c_red",
@@ -725,9 +720,6 @@
                   ]
                 },
                 {
-                  "x": 21,
-                  "y": 15,
-                  "id": "mount:1,0",
                   "glyph": "|",
                   "label": "extra light frame, light wheel mount (steerable), 67.5cm bicycle wheel",
                   "color": "c_dark_gray",
@@ -739,6 +731,23 @@
                     8,
                     9
                   ]
+                }
+              ],
+              "cells": [
+                {
+                  "x": 19,
+                  "y": 15,
+                  "style": 1
+                },
+                {
+                  "x": 20,
+                  "y": 15,
+                  "style": 2
+                },
+                {
+                  "x": 21,
+                  "y": 15,
+                  "style": 3
                 }
               ],
               "looks": [
@@ -1923,7 +1932,7 @@
         ],
         "focus": {
           "component_id": "vehicle:grid",
-          "row_id": "mount:1,0"
+          "row_id": "square:21,15"
         },
         "context": "EDITOR"
       }
@@ -2453,53 +2462,21 @@
                 "x": 21,
                 "y": 15
               },
-              "blank": {
-                "glyph": " ",
-                "affordance": "vehicle:mount",
-                "enabled": true,
-                "refused": 0
-              },
-              "cells": [
+              "blank": 0,
+              "styles": [
                 {
-                  "x": 19,
-                  "y": 14,
-                  "id": "mount:-1,-1",
+                  "glyph": " ",
+                  "affordance": "vehicle:mount",
+                  "enabled": true,
+                  "refused": 0
+                },
+                {
                   "glyph": " ",
                   "affordance": "vehicle:mount",
                   "enabled": true,
                   "refused": 1
                 },
                 {
-                  "x": 20,
-                  "y": 14,
-                  "id": "mount:0,-1",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
-                  "enabled": true,
-                  "refused": 1
-                },
-                {
-                  "x": 21,
-                  "y": 14,
-                  "id": "mount:1,-1",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
-                  "enabled": true,
-                  "refused": 1
-                },
-                {
-                  "x": 18,
-                  "y": 15,
-                  "id": "mount:-2,0",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
-                  "enabled": true,
-                  "refused": 1
-                },
-                {
-                  "x": 19,
-                  "y": 15,
-                  "id": "mount:-1,0",
                   "glyph": "o",
                   "label": "extra light frame, light wheel mount, 67.5cm bicycle wheel, small folding wire basket",
                   "color": "c_brown",
@@ -2513,9 +2490,6 @@
                   ]
                 },
                 {
-                  "x": 20,
-                  "y": 15,
-                  "id": "mount:0,0",
                   "glyph": "#",
                   "label": "extra light frame, saddle, bicycle horn, foot pedals",
                   "color": "c_red",
@@ -2529,9 +2503,6 @@
                   ]
                 },
                 {
-                  "x": 21,
-                  "y": 15,
-                  "id": "mount:1,0",
                   "glyph": "|",
                   "label": "extra light frame, light wheel mount (steerable), 67.5cm bicycle wheel, headlight",
                   "color": "c_dark_gray",
@@ -2545,42 +2516,45 @@
                     10
                   ],
                   "refused": 2
+                }
+              ],
+              "cells": [
+                {
+                  "x": 19,
+                  "y": 14,
+                  "style": 1,
+                  "n": 3
+                },
+                {
+                  "x": 18,
+                  "y": 15,
+                  "style": 1
+                },
+                {
+                  "x": 19,
+                  "y": 15,
+                  "style": 2
+                },
+                {
+                  "x": 20,
+                  "y": 15,
+                  "style": 3
+                },
+                {
+                  "x": 21,
+                  "y": 15,
+                  "style": 4
                 },
                 {
                   "x": 22,
                   "y": 15,
-                  "id": "mount:2,0",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
-                  "enabled": true,
-                  "refused": 1
+                  "style": 1
                 },
                 {
                   "x": 19,
                   "y": 16,
-                  "id": "mount:-1,1",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
-                  "enabled": true,
-                  "refused": 1
-                },
-                {
-                  "x": 20,
-                  "y": 16,
-                  "id": "mount:0,1",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
-                  "enabled": true,
-                  "refused": 1
-                },
-                {
-                  "x": 21,
-                  "y": 16,
-                  "id": "mount:1,1",
-                  "glyph": " ",
-                  "affordance": "vehicle:mount",
-                  "enabled": true,
-                  "refused": 1
+                  "style": 1,
+                  "n": 3
                 }
               ],
               "refusals": [
@@ -3665,7 +3639,7 @@
         ],
         "focus": {
           "component_id": "vehicle:grid",
-          "row_id": "mount:1,0"
+          "row_id": "square:21,15"
         },
         "context": "EDITOR"
       }
