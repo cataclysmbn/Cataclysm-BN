@@ -1380,6 +1380,7 @@
                     "y": 0,
                     "id": "square:0,0",
                     "glyph": ".",
+                    "label": "wooden floor",
                     "affordance": "editor:paint",
                     "enabled": true,
                     "looks": [
@@ -1391,6 +1392,7 @@
                     "y": 0,
                     "id": "square:1,0",
                     "glyph": ".",
+                    "label": "wooden floor",
                     "affordance": "editor:paint",
                     "enabled": true,
                     "looks": [
@@ -1402,6 +1404,7 @@
                     "y": 1,
                     "id": "square:0,1",
                     "glyph": ".",
+                    "label": "wooden floor",
                     "affordance": "editor:paint",
                     "enabled": true,
                     "looks": [
@@ -1413,6 +1416,7 @@
                     "y": 1,
                     "id": "square:1,1",
                     "glyph": ".",
+                    "label": "wooden floor",
                     "affordance": "editor:paint",
                     "enabled": true,
                     "looks": [
@@ -1488,7 +1492,8 @@
               "total": 1,
               "selection": "single",
               "activate": "editor:symbol",
-              "empty": "No symbol is mapped yet."
+              "empty": "No symbol is mapped yet.",
+              "rows_shown": 6
             },
             {
               "id": "editor:diagnostics",
@@ -1513,6 +1518,7 @@
                 "editor:placement"
               ],
               "slot": "outline",
+              "collapsed": true,
               "columns": [],
               "rows": [],
               "total": 0,
@@ -1529,6 +1535,7 @@
                 "editor:place_apply"
               ],
               "slot": "inspector",
+              "collapsed": true,
               "fields": [
                 {
                   "id": "kind",
@@ -1538,99 +1545,99 @@
                   "options": [
                     {
                       "id": "place_item",
-                      "label": "place_item"
+                      "label": "Items (place_item)"
                     },
                     {
                       "id": "place_fields",
-                      "label": "place_fields"
+                      "label": "Fields (place_fields)"
                     },
                     {
                       "id": "place_npcs",
-                      "label": "place_npcs"
+                      "label": "NPCs (place_npcs)"
                     },
                     {
                       "id": "place_signs",
-                      "label": "place_signs"
+                      "label": "Signs (place_signs)"
                     },
                     {
                       "id": "place_vendingmachines",
-                      "label": "place_vendingmachines"
+                      "label": "Vending machines (place_vendingmachines)"
                     },
                     {
                       "id": "place_toilets",
-                      "label": "place_toilets"
+                      "label": "Toilets (place_toilets)"
                     },
                     {
                       "id": "place_liquids",
-                      "label": "place_liquids"
+                      "label": "Liquids (place_liquids)"
                     },
                     {
                       "id": "place_gaspumps",
-                      "label": "place_gaspumps"
+                      "label": "Gas pumps (place_gaspumps)"
                     },
                     {
                       "id": "place_items",
-                      "label": "place_items"
+                      "label": "Item groups (place_items)"
                     },
                     {
                       "id": "place_loot",
-                      "label": "place_loot"
+                      "label": "Loot (place_loot)"
                     },
                     {
                       "id": "place_artifact",
-                      "label": "place_artifact"
+                      "label": "Artifacts (place_artifact)"
                     },
                     {
                       "id": "place_monsters",
-                      "label": "place_monsters"
+                      "label": "Monster groups (place_monsters)"
                     },
                     {
                       "id": "place_vehicles",
-                      "label": "place_vehicles"
+                      "label": "Vehicles (place_vehicles)"
                     },
                     {
                       "id": "place_traps",
-                      "label": "place_traps"
+                      "label": "Traps (place_traps)"
                     },
                     {
                       "id": "place_furniture",
-                      "label": "place_furniture"
+                      "label": "Furniture (place_furniture)"
                     },
                     {
                       "id": "place_terrain",
-                      "label": "place_terrain"
+                      "label": "Terrain (place_terrain)"
                     },
                     {
                       "id": "place_monster",
-                      "label": "place_monster"
+                      "label": "Monsters (place_monster)"
                     },
                     {
                       "id": "place_rubble",
-                      "label": "place_rubble"
+                      "label": "Rubble (place_rubble)"
                     },
                     {
                       "id": "place_computers",
-                      "label": "place_computers"
+                      "label": "Computers (place_computers)"
                     },
                     {
                       "id": "place_nested",
-                      "label": "place_nested"
+                      "label": "Nested chunks (place_nested)"
                     },
                     {
                       "id": "place_graffiti",
-                      "label": "place_graffiti"
+                      "label": "Graffiti (place_graffiti)"
                     },
                     {
                       "id": "place_zones",
-                      "label": "place_zones"
+                      "label": "Zones (place_zones)"
                     },
                     {
                       "id": "place_ter_furn_transforms",
-                      "label": "place_ter_furn_transforms"
+                      "label": "Transforms (place_ter_furn_transforms)"
                     },
                     {
                       "id": "place_remove_all",
-                      "label": "place_remove_all"
+                      "label": "Remove all (place_remove_all)"
                     }
                   ]
                 },
@@ -1649,6 +1656,7 @@
                 {
                   "id": "value",
                   "label": "Value",
+                  "description": "An item group: {\"item\": \"<item group id>\", \"chance\": 100}",
                   "value": "",
                   "type": "text",
                   "multiline": true
@@ -1691,6 +1699,7 @@
                 "editor:mapping_apply"
               ],
               "slot": "palette",
+              "collapsed": true,
               "fields": [
                 {
                   "id": "symbol",
@@ -3518,7 +3527,8 @@
               "label": "New mapgen file",
               "affordances": [
                 "editor:new_set",
-                "editor:new_apply"
+                "editor:new_apply",
+                "editor:new_folder"
               ],
               "slot": "inspector",
               "collapsed": true,
@@ -3535,7 +3545,7 @@
                   "id": "om_terrain",
                   "label": "Overmap terrain",
                   "description": "The id of the overmap terrain the mapgen makes.",
-                  "value": "",
+                  "value": "new_mapgen",
                   "type": "text",
                   "required": true
                 },
@@ -3575,15 +3585,6 @@
                       "label": "Building"
                     }
                   ]
-                },
-                {
-                  "id": "size",
-                  "label": "Chunk size",
-                  "description": "The side of a nested chunk, in squares.",
-                  "value": "4",
-                  "type": "integer",
-                  "min": 1,
-                  "max": 24
                 }
               ],
               "submit": "editor:new_apply"
@@ -4197,7 +4198,7 @@
             "label": "Export mapgen here",
             "keys": [],
             "enabled": true,
-            "description": "Writes the map around you, or the marked squares, as a mapgen in a new file and opens it.",
+            "description": "Writes the live world's squares around you, or the marked squares, as a mapgen in a new file, keeping the open entry's symbols, and opens it in place of the open file. The open file itself is not exported.",
             "args": {
               "text": {
                 "default": "profile/mods/editor_menu_scenario/exported_mapgen.json"
@@ -4366,6 +4367,7 @@
               "F8"
             ],
             "enabled": false,
+            "description": "Shows under Generated map what the game makes of the entry on the square you stand on, leaving the world as it is. The number is the seed: each seed rolls the entry's random choices another way.",
             "denial": "A nested chunk goes on a map with the mapgen that places it; open that mapgen to stamp, test or preview it.",
             "args": {
               "count": {
@@ -4478,7 +4480,7 @@
               "F5"
             ],
             "enabled": false,
-            "description": "Puts you in the middle of the stamped entry to play there; in the editor's own world it stamps the entry first.",
+            "description": "Puts you just south of the stamped entry, looking at it, to play there; in the editor's own world it stamps the entry first.",
             "denial": "A nested chunk goes on a map with the mapgen that places it; open that mapgen to stamp, test or preview it.",
             "expect": "screen",
             "group": "World"
@@ -4513,6 +4515,14 @@
             "label": "Create",
             "keys": [],
             "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:new_folder",
+            "label": "New mod folder",
+            "keys": [],
+            "enabled": true,
+            "description": "Puts the new file in a mod folder of its own; creating the file makes the folder a mod.",
             "expect": "screen"
           },
           {
@@ -4690,6 +4700,7 @@
             "label": "Symbol",
             "keys": [],
             "enabled": true,
+            "role": "select",
             "args": {
               "row": {
                 "component_id": "editor:legend"
@@ -4764,6 +4775,7 @@
             "label": "Use",
             "keys": [],
             "enabled": true,
+            "role": "select",
             "args": {
               "row": {
                 "component_id": "editor:catalog"

@@ -14,6 +14,7 @@
 #include "editor/mapgen_stamp.h"
 #include "editor/mapgen_stroke.h"
 #include "editor/row_id.h"
+#include "editor/session_file.h"
 #include "editor/vehicle_session.h"
 #include "engine_client_component.h"
 #include "engine_client_world.h"
@@ -23,9 +24,13 @@
 #include "input.h"
 #include "item.h"
 #include "map/map.h"
+#include "map/mapdata.h"
+#include "messages.h"
 #include "output.h"
 #include "overmap/overmapbuffer.h"
+#include "path_info.h"
 #include "player_activity.h"
+#include "point.h"
 #include "string_formatter.h"
 #include "translations.h"
 #include "trap.h"
@@ -57,6 +62,39 @@ auto kept_session = std::optional<session>{};
 auto first = std::optional<recent_document>{};
 /// When the turns the editor lets pass began, while they pass.
 auto advancing = std::optional<time_point>{};
+/// How far south of the stamped square testing puts the avatar.
+constexpr auto test_distance = 2;
+/// How far from where testing wants the avatar it looks for ground to stand on.
+constexpr auto test_reach = 12;
+
+/// The square nearest `wanted` south of the row `south_of`, the stamp's last, that the avatar can
+/// stand on: no wall, tree, deep water or creature; `wanted` itself when there is none in reach.
+auto open_ground_near(const tripoint_abs_ms& wanted, const int south_of) -> tripoint_abs_ms {
+    auto& here = get_map();
+    const auto open = [&](const tripoint_abs_ms& at) {
+        const auto square = abs_to_bub(at);
+        return at.y() > south_of && here.inbounds(square) && here.passable(square)
+            && !here.has_flag(TFLAG_DEEP_WATER, square) && g->critter_at(square) == nullptr;
+    };
+    const auto near = closest_points_first(wanted, test_reach);
+    const auto found = std::ranges::find_if(near, open);
+    return found == near.end() ? wanted : *found;
+}
+
+/// How far the view turns from the avatar at `at` to show the stamp `stamped` with it: to the
+/// stamp's middle column and halfway between its north edge and the avatar, but no further than
+/// keeps the avatar inside the terrain window.
+auto view_showing(const stamp& stamped, const tripoint_abs_ms& at) -> tripoint_rel_ms {
+    const auto corner = project_to<coords::ms>(stamped.at);
+    auto middle = point(corner.x() + stamped.grid.x() * SEEX, (corner.y() + at.y()) / 2);
+    if (const auto window = g->click_window()) {
+        const auto size = (window->p_max - window->p_min).raw();
+        const auto half = point(size.x / 2 - 1, size.y / 2 - 1);
+        middle.x = std::clamp(middle.x, at.x() - half.x, at.x() + half.x);
+        middle.y = std::max(middle.y, at.y() - half.y);
+    }
+    return tripoint_rel_ms(middle.x - at.x(), middle.y - at.y(), 0);
+}
 
 /// What `editor:export` writes to `path`: the squares the player marked, as the mapgen of whole
 /// overmap squares when they are that and else as a nested chunk named after the file, or the
@@ -215,16 +253,38 @@ auto run_editor_session() -> void {
                     .str());
         } else if (id == export_id) {
             const auto path = invoked->args.text.value_or("");
-            const auto exported =
+            // The export is made before the open file is let go, so a path or square it refuses
+            // never costs the file's changes.
+            const auto entry =
                 check_new_path(path)
                     .and_then([&] { return export_to(state, path); })
-                    .and_then([&](const nlohmann::ordered_json& entry) {
-                        return write_new_file(path, nlohmann::ordered_json::array({entry}));
+                    .transform([&](nlohmann::ordered_json made) {
+                        // What the entry open draws with a symbol keeps that symbol.
+                        if (state.on_mapgen() && state.export_palette.empty()) {
+                            made["object"] = keep_symbols(made["object"], state.legend);
+                        }
+                        return made;
                     });
-            if (exported) {
-                state.open(path);
-            } else {
-                state.notice = exported.error();
+            if (!entry) {
+                state.notice = entry.error();
+            } else if (state.leave()) {
+                // The export opens in place of the file open, whose changes were saved or let go.
+                const auto closed = state.doc ? std::optional(state.doc->path()) : std::nullopt;
+                const auto written = write_new_file(path, nlohmann::ordered_json::array({*entry}));
+                if (written) {
+                    state.open(path);
+                    state.status =
+                        closed
+                            //~ %1$s is the new file the export wrote; %2$s the file it closed.
+                            ? string_format(
+                                  _("Exported the live world's squares to %1$s, open now; %2$s "
+                                    "is closed."),
+                                  mods_path(path), mods_path(*closed))
+                            : string_format(_("Exported the live world's squares to %s, open now."),
+                                            mods_path(path));
+                } else {
+                    state.notice = written.error();
+                }
             }
         } else if (id == export_area_id) {
             if (const auto area = choose_area(_("Export which squares?"), {}, false)) {
@@ -293,11 +353,21 @@ auto run_editor_session() -> void {
              : row == "size"
                  ? state.made.size
                  : state.made.fill) = text;
+        } else if (id == new_folder_id) {
+            const auto mods = std::filesystem::path(PATH_INFO::user_moddir());
+            const auto folder = free_name("new_mod", [&](const std::string& name) {
+                return std::filesystem::exists(mods / name) || mod_id(name).is_valid();
+            });
+            state.made.path = (mods / folder / "new_mapgen.json").string();
+            //~ %s is the name of a new folder in the player's mods.
+            state.status = string_format(_("The new file goes in a new mod folder, %s."), folder);
         } else if (id == new_apply_id) {
-            const auto made = create_mapgen(state.made);
+            auto named = state.made;
+            named.om_terrain = new_entry_id(named);
+            const auto made = create_mapgen(named);
             if (made) {
                 const auto path = std::exchange(state.made.path, free_new_path());
-                // The next file is named afresh, at the next free path; its kind, fill and size
+                // The next file is named afresh, after the next free path; its kind, fill and size
                 // stay as chosen.
                 state.made.om_terrain.clear();
                 state.open(path);
@@ -409,8 +479,13 @@ auto run_editor_session() -> void {
                 return row == std::string("catalog:") + use.id;
             });
             if (found != catalog_uses.end()) {
+                // Each tab keeps its own search.
+                state.catalog_searches[state.catalog->id] =
+                    {.filter = state.catalog_filter, .page = state.catalog_page};
                 state.catalog = &*found;
-                state.catalog_page = 0;
+                const auto kept = state.catalog_searches[found->id];
+                state.catalog_filter = kept.filter;
+                state.catalog_page = kept.page;
             }
         } else if (id == catalog_filter_id) {
             state.catalog_filter = invoked->args.text.value_or("");
@@ -424,6 +499,8 @@ auto run_editor_session() -> void {
             });
             if (found != entries.end() && state.on_special()) {
                 state.special_terrain = found->id;
+            } else if (found != entries.end() && state.has_rows()) {
+                state.take(*state.catalog, found->id, catalog_row_label(*found));
             } else if (found != entries.end()) {
                 state.mapping_layer = state.catalog->layer;
                 state.mapping_value = mapping_of(*state.catalog, found->id);
@@ -435,6 +512,10 @@ auto run_editor_session() -> void {
         } else if (id == preview_id) {
             state.seed = static_cast<unsigned int>(invoked->args.count.value_or(1));
             state.reload();
+            if (state.preview) {
+                state.status =
+                    string_format(_("Generated map shows the entry with seed %d."), *state.seed);
+            }
         } else if (id == reroll_id && state.seed) {
             state.seed = *state.seed + 1;
             state.reload();
@@ -468,10 +549,24 @@ auto run_editor_session() -> void {
             // Nothing stamped yet in the editor's world: the mapgen goes where the avatar is first.
             if (!state.stamped) { state.stamp_here(); }
             if (state.stamped) {
-                // The avatar plays in the middle of the stamped square; the editor keeps its
-                // document.
-                g->place_player(abs_to_bub(
-                    project_to<coords::ms>(state.stamped->at) + tripoint_rel_ms(SEEX, SEEY, 0)));
+                // The avatar walks up to the stamped squares from the south, with all of them in
+                // view; the editor keeps its document.
+                const auto corner = project_to<coords::ms>(state.stamped->at);
+                const auto south_edge = corner.y() + state.stamped->grid.y() * SEEY * 2 - 1;
+                const auto landing = open_ground_near(
+                    tripoint_abs_ms(corner.x() + state.stamped->grid.x() * SEEX,
+                                    south_edge + test_distance, corner.z()),
+                    south_edge);
+                g->place_player(abs_to_bub(landing));
+                get_avatar().view_offset = view_showing(*state.stamped, landing);
+                const auto away = landing.y() - south_edge;
+                add_msg(
+                    m_info,
+                    localised::counted{
+                        .format = pl_translation("The mapgen is stamped %d square north of you.",
+                                                 "The mapgen is stamped %d squares north of you."),
+                        .count = away},
+                    away);
                 return;
             }
         } else if (id == save_id) {

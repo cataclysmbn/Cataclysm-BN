@@ -598,7 +598,7 @@ auto list( list_options options ) -> component
 {
     auto body = list_body{ .rows = std::move( options.rows ), .offset = options.offset, .activate = options.activate,
                            .filterable = options.filterable, .filter = std::move( options.filter ),
-                           .empty = std::move( options.empty ) };
+                           .empty = std::move( options.empty ), .rows_shown = options.rows_shown };
     body.total = std::max( options.total.value_or( 0 ), options.offset + body.rows.size() );
     auto seen = std::set<std::string> {};
     for( const auto &entry : body.rows ) {

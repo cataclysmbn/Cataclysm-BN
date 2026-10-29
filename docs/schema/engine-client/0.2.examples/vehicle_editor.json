@@ -140,22 +140,6 @@
                     ]
                   },
                   {
-                    "id": "prototype:bicycle_dirt",
-                    "label": "Mountain bike",
-                    "description": "",
-                    "denial": "",
-                    "enabled": true,
-                    "selectable": true,
-                    "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "bicycle_dirt"
-                      }
-                    ]
-                  },
-                  {
                     "id": "prototype:bicycle_electric",
                     "label": "Electric Bicycle",
                     "description": "",
@@ -184,6 +168,22 @@
                         "key": "id",
                         "label": "ID",
                         "value": "bicycle_plastic"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "prototype:bicycle_dirt",
+                    "label": "Mountain bike",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "bicycle_dirt"
                       }
                     ]
                   }
@@ -408,22 +408,6 @@
                     ]
                   },
                   {
-                    "id": "prototype:bicycle_dirt",
-                    "label": "Mountain bike",
-                    "description": "",
-                    "denial": "",
-                    "enabled": true,
-                    "selectable": true,
-                    "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "bicycle_dirt"
-                      }
-                    ]
-                  },
-                  {
                     "id": "prototype:bicycle_electric",
                     "label": "Electric Bicycle",
                     "description": "",
@@ -452,6 +436,22 @@
                         "key": "id",
                         "label": "ID",
                         "value": "bicycle_plastic"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "prototype:bicycle_dirt",
+                    "label": "Mountain bike",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "bicycle_dirt"
                       }
                     ]
                   }

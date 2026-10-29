@@ -147,6 +147,8 @@ struct list_body {
     std::string filter = {};
     /// What the list says while it has no rows, localized; empty for nothing.
     std::string empty = {};
+    /// The most rows a client shows at once, scrolling the rest; zero for no limit.
+    std::size_t rows_shown = 0;
 };
 struct tab_entry {
     std::string id = {};
@@ -377,6 +379,8 @@ struct list_options {
     std::string page = {};
     /// What the list says while it has no rows; empty for nothing.
     std::string empty = {};
+    /// The most rows a client shows at once, scrolling the rest; zero for no limit.
+    std::size_t rows_shown = 0;
 };
 /// A list over `rows`, with the column header they use.
 auto list( list_options options ) -> component;

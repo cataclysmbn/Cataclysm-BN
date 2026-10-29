@@ -33,6 +33,7 @@
 #    include "map/mapdata.h"
 #    include "mapgen/mapgen_constructor.h"
 #    include "mapgen/mapgen_functions.h"
+#    include "message_feed.h"
 #    include "messages.h"
 #    include "options_helpers.h"
 #    include "output.h"
@@ -45,6 +46,7 @@
 #    include "point.h"
 #    include "rng.h"
 #    include "state_helpers.h"
+#    include "string_formatter.h"
 #    include "translations.h"
 #    include "type_id.h"
 #    include "world.h"
@@ -2031,8 +2033,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "the editor opens a mapgen of an overmap terrain the game lacks and says so among the "
-    "diagnostics",
+    "the editor opens a mapgen of an overmap terrain the game lacks without calling it a problem",
     "[editor_session][engine_client_component]") {
     const auto guard = screen_guard{};
     const auto file = mod_file{};
@@ -2053,7 +2054,8 @@ TEST_CASE(
                 CHECK_FALSE(ec::find_component(*screen.root, "editor:notice"));
                 CHECK(walls(screen) == 0);
                 const auto& rows = body<ec::list_body>(part(screen, "editor:diagnostics")).rows;
-                CHECK(std::ranges::any_of(rows, [](const ec::row& row) {
+                // A new mapgen's terrain is one the game lacks; the document stats hint at it.
+                CHECK_FALSE(std::ranges::any_of(rows, [](const ec::row& row) {
                     return row.label.contains("zz_no_such_terrain");
                 }));
                 return act("QUIT");
@@ -2339,8 +2341,8 @@ TEST_CASE(
                 CHECK(column_value(legend[0], "terrain") == "dirt");
                 CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
                 CHECK(saved(screen) == "Yes");
-                // The form starts over for the next file: what it named is not typed after, and
-                // its path is the next free file of the user mods, in a mod's folder.
+                // The form starts over for the next file: its path is the next free file of the
+                // user mods, in a mod's folder, and what it names is named after that file.
                 const auto& fields = body<ec::form_body>(part(screen, "editor:new")).fields;
                 const auto value = [&](const std::string& id) {
                     return std::ranges::find(fields, id, &ec::form_field::id)->value;
@@ -2350,7 +2352,7 @@ TEST_CASE(
                     == (std::filesystem::path(PATH_INFO::user_moddir()) / "my_mod"
                         / "new_mapgen.json")
                            .string());
-                CHECK(value("om_terrain").empty());
+                CHECK(value("om_terrain") == "new_mapgen");
                 return invoke("editor:new_set", {.row = "path", .text = made.string()});
             }
             case 9:
@@ -2731,7 +2733,7 @@ TEST_CASE(
                 CHECK(history(screen)[0].description == "Saved");
                 // A step says what it changed in words, not as a JSON pointer.
                 CHECK(history(screen)[0].label == "Opened");
-                CHECK(history(screen)[1].label == "Change rows");
+                CHECK(history(screen)[1].label == "Room");
                 return invoke("editor:jump", {.row = "step:0"});
             case 6:
                 CHECK(walls(screen) == 0);
@@ -3043,9 +3045,9 @@ TEST_CASE(
     });
 
     editor::run_editor_session();
-    // The avatar plays in the middle of the stamped square.
-    CHECK(get_avatar().abs_omt_pos() == omt);
-    CHECK(get_avatar().abs_pos() == project_to<coords::ms>(omt) + tripoint_rel_ms(SEEX, SEEY, 0));
+    // The avatar plays just south of the stamped square, looking at it.
+    CHECK(get_avatar().abs_pos()
+          == project_to<coords::ms>(omt) + tripoint_rel_ms(SEEX, SEEY * 2 + 1, 0));
     CHECK(step == 7);
     editor::reset_editor_session();
 }
@@ -3875,8 +3877,9 @@ TEST_CASE(
     handle_action(std::move(mode));
     CHECK(step == 2);
     CHECK(g->uquit == QUIT_NO);
-    // The avatar plays the stamped mapgen.
-    CHECK(get_map().ter(get_avatar().bub_pos()) == ter_str_id("t_floor"));
+    // The avatar plays beside the stamped mapgen, whose middle is in view north of it.
+    CHECK(get_map().ter(get_avatar().bub_pos() + tripoint_rel_ms(0, -SEEY - 1, 0))
+          == ter_str_id("t_floor"));
 
     // The editor comes back to the same document, and closing it ends the editor game.
     step = 0;
@@ -5601,8 +5604,8 @@ TEST_CASE(
                 return invoke("editor:new_set", {.row = "kind", .text = "building"});
             case 11:
                 CHECK(label(screen, "om_terrain") == "Building id");
-                // The form starts over after the special was made.
-                CHECK(value(screen, "om_terrain").empty());
+                // The form starts over after the special was made, naming it after the file.
+                CHECK(value(screen, "om_terrain") == "building");
                 return invoke(
                     "editor:new_set", {.row = "om_terrain", .text = "editor_session_test_new"});
             case 12:
@@ -6040,9 +6043,9 @@ TEST_CASE(
         const auto screen = ec::top_screen(captured());
         switch (step++) {
             case 0:
-                // Nothing is open: the files to open are the page, with the form that makes one.
+                // Nothing is open: the form that makes a file and the files to open are the page.
                 CHECK(slot_of(screen, "editor:browser") == "canvas");
-                CHECK(slot_of(screen, "editor:new") == "inspector");
+                CHECK(slot_of(screen, "editor:new") == "canvas");
                 CHECK(slot_of(screen, "editor:file") == "outline");
                 CHECK(part(screen, "editor:new").label == "New mapgen file");
                 // A field is named by what it asks, not by the heading of its form.
@@ -6954,7 +6957,10 @@ TEST_CASE(
         const auto state = captured();
         const auto screen = ec::top_screen(state);
         switch (step++) {
-            case 0: {
+            case 0:
+                // Only a nested chunk asks for a size.
+                return invoke("editor:new_set", {.row = "kind", .text = "nested"});
+            case 1: {
                 const auto& fields = body<ec::form_body>(part(screen, "editor:new")).fields;
                 const auto size = std::ranges::find(fields, "size", &ec::form_field::id);
                 REQUIRE(size != fields.end());
@@ -6968,7 +6974,7 @@ TEST_CASE(
                 CHECK(refusal(state, "editor:new_set", {.row = "size", .text = "12"}).empty());
                 return invoke("editor:open", {.text = file.path.string()});
             }
-            case 1:
+            case 2:
                 // A client picks a history row with one click, which is the jump.
                 CHECK(affordance(screen, "editor:jump").role == "select");
                 return act("QUIT");
@@ -6979,7 +6985,7 @@ TEST_CASE(
     });
 
     editor::run_editor_session();
-    CHECK(step == 2);
+    CHECK(step == 3);
 }
 
 TEST_CASE(
@@ -7075,6 +7081,778 @@ TEST_CASE(
         == std::vector<std::string>{
             "editor", "vehicle_editor", "vehicle_editor", "vehicle_editor", "vehicle_editor",
             "vehicle_editor", "editor"});
+}
+
+namespace {
+/// What the player does next in the map editor, from what the screen shows.
+using map_step = std::function<auto(const ec::screen_view&)->input_event>;
+/// Runs the map editor through `steps`, then leaves it without saving; how many steps ran.
+auto walk_map(const std::vector<map_step>& steps) -> std::size_t {
+    auto step = std::size_t{0};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        if (step < steps.size()) { return steps[step++](screen); }
+        return screen.kind == "editor" ? act("QUIT") : answer("Leave without saving");
+    });
+    editor::run_editor_session();
+    return std::min(step, steps.size());
+}
+auto square_at(const int x, const int y) -> input_event {
+    return invoke("editor:paint", {.row = string_format("square:%d,%d", x, y)});
+}
+auto rows_in(const ec::screen_view& screen, const std::string& list)
+    -> const std::vector<ec::row>& {
+    return body<ec::list_body>(part(screen, list)).rows;
+}
+auto has_row(const ec::screen_view& screen, const std::string& list, const std::string& id)
+    -> bool {
+    return std::ranges::contains(rows_in(screen, list), id, &ec::row::id);
+}
+auto row_in(const ec::screen_view& screen, const std::string& list, const std::string& id)
+    -> const ec::row& {
+    const auto& rows = rows_in(screen, list);
+    const auto found = std::ranges::find(rows, id, &ec::row::id);
+    INFO(list << " " << id);
+    REQUIRE(found != rows.end());
+    return *found;
+}
+/// What `editor:status`, or `editor:notice`, says; empty when it is not shown.
+auto text_of(const ec::screen_view& screen, const std::string& id) -> std::string {
+    const auto* const found = ec::find_component(*screen.root, id);
+    return found ? body<ec::text_body>(*found).markup : std::string{};
+}
+auto said(const ec::screen_view& screen) -> std::string { return text_of(screen, "editor:status"); }
+auto told(const ec::screen_view& screen) -> std::string { return text_of(screen, "editor:notice"); }
+auto stat_of(const ec::screen_view& screen, const std::string& key) -> std::string {
+    const auto& stats = body<ec::panel_body>(part(screen, "editor:document")).stats;
+    const auto found = std::ranges::find(stats, key, &ec::panel_stat::key);
+    return found == stats.end() ? std::string{} : found->value;
+}
+auto tool_in_hand(const ec::screen_view& screen) -> std::string {
+    const auto& tabs = body<ec::tabs_body>(part(screen, "editor:tools")).tabs;
+    const auto found = std::ranges::find(tabs, true, &ec::tab_entry::selected);
+    return found == tabs.end() ? std::string{} : found->id;
+}
+/// The kinds and ids of what a cell shows, bottom up.
+auto cell_looks(const ec::screen_view& screen, const int x, const int y)
+    -> std::vector<std::string> {
+    const auto& canvas = body<ec::grid_body>(part(screen, "editor:canvas"));
+    return cell(screen, x, y).looks | std::views::transform([&](const int index) {
+               const auto& shown = canvas.looks.at(index);
+               return shown.kind + ":" + shown.id.value_or("");
+           })
+         | std::ranges::to<std::vector>();
+}
+/// A floor mapgen with a fill terrain, a bed with a pillow under `B` and a zombie under `Z`.
+auto furnished() -> nlohmann::ordered_json {
+    return {{"fill_ter", "t_floor"},
+            {"furniture", {{"B", "f_bed"}}},
+            {"item", {{"B", {{"item", "pillow"}, {"chance", 50}}}}},
+            {"monster", {{"Z", {{"monster", "mon_zombie"}}}}}};
+}
+} // namespace
+
+TEST_CASE(
+    "picking a catalog entry puts it in hand: the next stroke maps it to a free symbol and paints "
+    "it",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{{{"fill_ter", "t_floor"}}};
+    auto steps = std::size_t{0};
+    auto wall = std::string{};
+    auto bed = std::string{};
+    auto symbols = std::size_t{0};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [&](const auto& screen) {
+            // One click takes an entry, as a palette of Factorio's does.
+            CHECK(affordance(screen, "editor:catalog_pick").role == "select");
+            steps = rows_in(screen, "editor:history").size();
+            symbols = rows_in(screen, "editor:legend").size();
+            return invoke("editor:tool", {.row = "tool:select"});
+        },
+        [](const auto&) { return invoke("editor:catalog_filter", {.text = "t_brick_wall"}); },
+        [](const auto&) { return invoke("editor:catalog_pick", {.row = "entry:t_brick_wall"}); },
+        [&](const auto& screen) {
+            // In hand with the pencil to draw it; nothing is written until it is drawn.
+            wall = stat_of(screen, "symbol").substr(0, 1);
+            CHECK(wall != "#");
+            CHECK(wall != ".");
+            CHECK(said(screen) == string_format("Painting brick wall (%s).", wall));
+            CHECK(tool_in_hand(screen) == "tool:point");
+            CHECK(rows_in(screen, "editor:history").size() == steps);
+            CHECK(rows_in(screen, "editor:legend").size() == symbols);
+            CHECK(row_in(screen, "editor:catalog", "entry:t_brick_wall").selected);
+            return invoke("editor:tool", {.row = "tool:rect"});
+        },
+        [](const auto&) { return square_at(2, 2); },
+        [](const auto&) { return square_at(9, 7); },
+        [&](const auto& screen) {
+            // One step maps the symbol and draws with it.
+            CHECK(told(screen).empty());
+            CHECK(rows_in(screen, "editor:history").size() == steps + 1);
+            CHECK(cell(screen, 2, 2).glyph == wall);
+            CHECK(cell(screen, 9, 5).glyph == wall);
+            CHECK(cell(screen, 5, 5).glyph == ".");
+            CHECK(placed_value(row_in(screen, "editor:legend", "symbol:" + wall)) == "brick wall");
+            return invoke("editor:undo");
+        },
+        [&](const auto& screen) {
+            // Undo takes the drawing and its mapping back together; the wall stays in hand.
+            CHECK(cell(screen, 2, 2).glyph == ".");
+            CHECK_FALSE(has_row(screen, "editor:legend", "symbol:" + wall));
+            CHECK(stat_of(screen, "symbol").starts_with(wall));
+            return invoke("editor:redo");
+        },
+        [](const auto&) { return invoke("editor:catalog_pick", {.row = "entry:t_brick_wall"}); },
+        [&](const auto& screen) {
+            // Taken again, it keeps its symbol and maps nothing new.
+            CHECK(stat_of(screen, "symbol").starts_with(wall));
+            CHECK(rows_in(screen, "editor:legend").size() == symbols + 1);
+            return invoke("editor:catalog_filter", {.text = "t_wall"});
+        },
+        [](const auto&) { return invoke("editor:catalog_pick", {.row = "entry:t_wall"}); },
+        [&](const auto& screen) {
+            // What a symbol of the legend maps already is drawn with that symbol.
+            CHECK(said(screen) == "Painting plastered wooden wall (#).");
+            CHECK(rows_in(screen, "editor:legend").size() == symbols + 1);
+            CHECK(tool_in_hand(screen) == "tool:rect");
+            return invoke("editor:catalog_kind", {.row = "catalog:furniture"});
+        },
+        [](const auto&) { return invoke("editor:catalog_filter", {.text = "f_bed"}); },
+        [](const auto&) { return invoke("editor:catalog_pick", {.row = "entry:f_bed"}); },
+        [&](const auto& screen) {
+            bed = stat_of(screen, "symbol").substr(0, 1);
+            // No symbol of another meaning is taken.
+            CHECK(bed != "#");
+            CHECK(bed != ".");
+            CHECK(bed != wall);
+            return invoke("editor:tool", {.row = "tool:point"});
+        },
+        [](const auto&) { return square_at(4, 4); },
+        [&](const auto& screen) {
+            CHECK(cell(screen, 4, 4).glyph == bed);
+            CHECK(column_value(row_in(screen, "editor:legend", "symbol:" + bed), "furniture")
+                  == "bed");
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+}
+
+TEST_CASE(
+    "a click on a legend row makes it the pen, and a mapping set is the pen at once",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{{{"fill_ter", "t_floor"}}};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto& screen) {
+            CHECK(affordance(screen, "editor:symbol").role == "select");
+            return invoke("editor:tool", {.row = "tool:select"});
+        },
+        [](const auto&) { return invoke("editor:symbol", {.row = "symbol:#"}); },
+        [](const auto& screen) {
+            CHECK(stat_of(screen, "symbol").starts_with("#"));
+            CHECK(tool_in_hand(screen) == "tool:point");
+            CHECK(said(screen) == "Painting plastered wooden wall (#).");
+            return invoke("editor:mapping_set", {.row = "symbol", .text = "x"});
+        },
+        [](const auto&) {
+            return invoke("editor:mapping_set", {.row = "value", .text = "t_dirt"});
+        },
+        [](const auto&) { return invoke("editor:mapping_apply"); },
+        [](const auto& screen) {
+            CHECK(stat_of(screen, "symbol").starts_with("x"));
+            CHECK(row_in(screen, "editor:legend", "symbol:x").selected);
+            CHECK(said(screen) == "Painting dirt (x).");
+            return square_at(1, 1);
+        },
+        [](const auto& screen) {
+            CHECK(cell(screen, 1, 1).glyph == "x");
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+}
+
+TEST_CASE("a canvas square names what its symbol places there, bottom up", "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{furnished()};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:symbol", {.row = "symbol:B"}); },
+        [](const auto&) { return square_at(3, 3); },
+        [](const auto&) { return invoke("editor:symbol", {.row = "symbol:Z"}); },
+        [](const auto&) { return square_at(4, 3); },
+        [](const auto& screen) {
+            // The terrain from the fill, then the furniture, then what spawns there.
+            CHECK(cell(screen, 3, 3).label == "wooden floor; bed; Items: pillow 50%");
+            CHECK(cell(screen, 4, 3).label == "wooden floor; Monsters: zombie");
+            CHECK(cell(screen, 5, 5).label == "wooden floor");
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+}
+
+TEST_CASE(
+    "items and monsters a symbol places show on the canvas over what is under them",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{furnished()};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:symbol", {.row = "symbol:B"}); },
+        [](const auto&) { return square_at(3, 3); },
+        [](const auto&) { return invoke("editor:symbol", {.row = "symbol:Z"}); },
+        [](const auto&) { return square_at(4, 3); },
+        [](const auto& screen) {
+            CHECK(cell_looks(screen, 3, 3)
+                  == std::vector<std::string>{"terrain:t_floor", "furniture:f_bed", "item:pillow"});
+            CHECK(cell_looks(screen, 4, 3)
+                  == std::vector<std::string>{"terrain:t_floor", "monster:mon_zombie"});
+            // The legend shows the top of what a symbol places.
+            const auto zombie = row_in(screen, "editor:legend", "symbol:Z");
+            REQUIRE(zombie.look);
+            CHECK(zombie.look->kind == "monster");
+            return invoke("editor:catalog_kind", {.row = "catalog:monster"});
+        },
+        [](const auto&) { return invoke("editor:catalog_filter", {.text = "mon_zombie"}); },
+        [](const auto& screen) {
+            const auto zombie = row_in(screen, "editor:catalog", "entry:mon_zombie");
+            REQUIRE(zombie.look);
+            CHECK(zombie.look->kind == "monster");
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+}
+
+TEST_CASE(
+    "the right column keeps the catalog in view: the mapping form starts folded and the legend "
+    "scrolls past a few rows",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{furnished()};
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = file.path.string()});
+            case 1:
+                // Picking from the catalog draws; the form is for renaming a symbol by hand.
+                CHECK(part(screen, "editor:mapping").collapsed);
+                CHECK_FALSE(part(screen, "editor:catalog_kinds").collapsed);
+                CHECK(wire_part(state, "editor:legend").value("rows_shown", 0) == 6);
+                // A list that shows all its rows says nothing.
+                CHECK_FALSE(wire_part(state, "editor:catalog").contains("rows_shown"));
+                return act("QUIT");
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 2);
+}
+
+TEST_CASE(
+    "each catalog tab keeps its own search, and entries of one name are told apart by their ids",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{{{"fill_ter", "t_floor"}}};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:catalog_filter", {.text = "brick wall"}); },
+        [](const auto& screen) {
+            // The name searched for comes first.
+            CHECK(rows_in(screen, "editor:catalog").front().id == "entry:t_brick_wall");
+            return invoke("editor:catalog_kind", {.row = "catalog:furniture"});
+        },
+        [](const auto& screen) {
+            CHECK(body<ec::list_body>(part(screen, "editor:catalog")).filter.empty());
+            return invoke("editor:catalog_filter", {.text = "bed"});
+        },
+        [](const auto& screen) {
+            CHECK(rows_in(screen, "editor:catalog").front().id == "entry:f_bed");
+            return invoke("editor:catalog_kind", {.row = "catalog:terrain"});
+        },
+        [](const auto& screen) {
+            CHECK(body<ec::list_body>(part(screen, "editor:catalog")).filter == "brick wall");
+            return invoke("editor:catalog_filter", {.text = ""});
+        },
+        [](const auto& screen) {
+            // Every row reads differently.
+            auto labels =
+                rows_in(screen, "editor:catalog") | std::views::transform(&ec::row::label)
+                | std::ranges::to<std::vector>();
+            std::ranges::sort(labels);
+            CHECK(std::ranges::adjacent_find(labels) == labels.end());
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+}
+
+TEST_CASE(
+    "the history names each step by what it drew, and saving says where the file went",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{{{"fill_ter", "t_floor"}}};
+    const auto last_step = [](const ec::screen_view& screen) {
+        const auto& rows = rows_in(screen, "editor:history");
+        const auto found = std::ranges::find(rows, true, &ec::row::selected);
+        REQUIRE(found != rows.end());
+        return found->label;
+    };
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:catalog_filter", {.text = "t_brick_wall"}); },
+        [](const auto&) { return invoke("editor:catalog_pick", {.row = "entry:t_brick_wall"}); },
+        [](const auto&) { return invoke("editor:tool", {.row = "tool:rect"}); },
+        [](const auto&) { return square_at(2, 2); },
+        [](const auto&) { return square_at(9, 7); },
+        [&](const auto& screen) {
+            CHECK(last_step(screen) == "Paint brick wall ×24");
+            return invoke("editor:symbol", {.row = "symbol:#"});
+        },
+        [](const auto&) { return invoke("editor:tool", {.row = "tool:room"}); },
+        [](const auto&) { return square_at(12, 2); },
+        [](const auto&) { return square_at(20, 8); },
+        [&](const auto& screen) {
+            CHECK(last_step(screen) == "Room");
+            return invoke("editor:catalog_filter", {.text = "t_dirt"});
+        },
+        [](const auto&) { return invoke("editor:catalog_pick", {.row = "entry:t_dirt"}); },
+        [](const auto&) { return invoke("editor:tool", {.row = "tool:fill"}); },
+        [](const auto&) { return square_at(5, 5); },
+        [&](const auto& screen) {
+            CHECK(last_step(screen) == "Fill dirt");
+            CHECK(cell(screen, 3, 3).glyph != ".");
+            return invoke("editor:undo");
+        },
+        [](const auto& screen) {
+            CHECK(said(screen) == "Undid: Fill dirt");
+            return invoke("editor:save");
+        },
+        [](const auto& screen) {
+            CHECK(said(screen) == "Saved editor_session_test/floor.json.");
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+}
+
+TEST_CASE(
+    "testing a stamp puts the avatar beside it, looking at it, and says where it is",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{{{"fill_ter", "t_floor"}}};
+    Messages::clear_messages();
+    const auto omt = get_avatar().abs_omt_pos();
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto& screen) {
+            // The seed says what it is for.
+            CHECK(affordance(screen, "editor:preview").description.contains("seed"));
+            return invoke("editor:preview", {.count = 3});
+        },
+        [](const auto& screen) {
+            // Where the preview is shown.
+            CHECK(said(screen) == "Generated map shows the entry with seed 3.");
+            return invoke("editor:stamp");
+        },
+        [](const auto&) { return invoke("editor:test"); }};
+    CHECK(walk_map(walk) == walk.size());
+    // Just south of the stamped square, two squares from its edge.
+    CHECK(get_avatar().abs_omt_pos() == omt + tripoint_rel_omt(0, 1, 0));
+    CHECK(get_avatar().abs_pos()
+          == project_to<coords::ms>(omt) + tripoint_rel_ms(SEEX, SEEY * 2 + 1, 0));
+    const auto lines = Messages::feed_since({});
+    REQUIRE(!lines.empty());
+    CHECK(lines.back().text == "The mapgen is stamped 2 squares north of you.");
+    editor::reset_editor_session();
+}
+
+TEST_CASE(
+    "the placements tool says what to do on an empty square, and the new placement form names "
+    "its kinds",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{{{"fill_ter", "t_floor"}}};
+    const auto field = [](const ec::screen_view& screen, const std::string& id) {
+        const auto& fields = body<ec::form_body>(part(screen, "editor:place")).fields;
+        const auto found = std::ranges::find(fields, id, &ec::form_field::id);
+        REQUIRE(found != fields.end());
+        return *found;
+    };
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:tool", {.row = "tool:placements"}); },
+        [](const auto&) { return square_at(5, 5); },
+        [&](const auto& screen) {
+            CHECK(said(screen)
+                  == "No placement here. Mark squares with the Select tool, then add one under "
+                     "New placement.");
+            const auto kind = field(screen, "kind");
+            const auto option = [&](const std::string& id) {
+                const auto found = std::ranges::find(kind.options, id, &ec::form_option::id);
+                REQUIRE(found != kind.options.end());
+                return found->label;
+            };
+            CHECK(option("place_items") == "Item groups (place_items)");
+            CHECK(option("place_monster") == "Monsters (place_monster)");
+            CHECK(option("place_loot") == "Loot (place_loot)");
+            CHECK(field(screen, "value").description.contains("item group"));
+            return invoke("editor:place_set", {.row = "kind", .text = "place_monster"});
+        },
+        [&](const auto& screen) {
+            CHECK(field(screen, "value").description.contains("monster"));
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+}
+
+TEST_CASE(
+    "exporting with a file open says it wrote the live world's squares and keeps the file's "
+    "symbols",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{
+        {{"fill_ter", "t_floor"},
+         {"terrain", {{".", "t_floor"}, {"#", "t_wall"}, {"w", "t_window"}}}}};
+    const auto made = file.path.parent_path() / "exported.json";
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return square_at(2, 3); },
+        [](const auto&) { return invoke("editor:symbol", {.row = "symbol:w"}); },
+        [](const auto&) { return square_at(4, 4); },
+        [](const auto&) { return invoke("editor:save"); },
+        [](const auto&) { return invoke("editor:stamp"); },
+        [&](const auto& screen) {
+            CHECK(affordance(screen, "editor:export").description.contains("live world"));
+            return invoke("editor:export", {.text = made.string()});
+        },
+        [&](const auto& screen) {
+            CHECK(said(screen)
+                  == "Exported the live world's squares to editor_session_test/exported.json, "
+                     "open now; editor_session_test/floor.json is closed.");
+            return invoke("editor:unstamp");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    const auto exported = nlohmann::ordered_json::parse(read_file(made))[0]["object"];
+    // What the file draws as w is w in the export too.
+    CHECK(exported["rows"][3].get<std::string>()[2] == '#');
+    CHECK(exported["rows"][4].get<std::string>()[4] == 'w');
+    CHECK(exported["terrain"]["w"] == "t_window");
+    editor::reset_editor_session();
+}
+
+TEST_CASE(
+    "the start page offers a new mapgen first, in a new mod folder when asked",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    auto made = std::filesystem::path{};
+    const auto walk = std::vector<map_step>{
+        [&](const auto& screen) {
+            const auto& parts = screen.root->children;
+            const auto at = [&](const std::string& id) {
+                return std::ranges::find(parts, id, &ec::component::id) - parts.begin();
+            };
+            CHECK(part(screen, "editor:new").slot == "canvas");
+            CHECK_FALSE(part(screen, "editor:new").collapsed);
+            CHECK(at("editor:new") < at("editor:browser"));
+            return invoke("editor:new_folder");
+        },
+        [&](const auto& screen) {
+            const auto& fields = body<ec::form_body>(part(screen, "editor:new")).fields;
+            made = std::filesystem::path(fields.front().value);
+            CHECK_FALSE(std::filesystem::exists(made.parent_path()));
+            CHECK(made.filename() == "new_mapgen.json");
+            CHECK(said(screen).contains(made.parent_path().filename().string()));
+            return invoke("editor:new_set", {.row = "om_terrain", .text = "house_04"});
+        },
+        [](const auto&) { return invoke("editor:new_apply"); },
+        [&](const auto& screen) {
+            CHECK(told(screen).empty());
+            CHECK(std::filesystem::exists(made));
+            CHECK(std::filesystem::exists(made.parent_path() / "modinfo.json"));
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    if (!made.empty()) { std::filesystem::remove_all(made.parent_path()); }
+}
+
+TEST_CASE(
+    "testing a stamp of two by two overmap squares puts the avatar on open ground south of all "
+    "of it",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    {
+        auto rows = nlohmann::ordered_json::array();
+        for (auto row = 0; row < 48; ++row) { rows.push_back(std::string(48, '.')); }
+        const auto entry = nlohmann::ordered_json::array(
+            {{{"type", "mapgen"},
+              {"method", "json"},
+              {"om_terrain",
+               nlohmann::ordered_json::array(
+                   {nlohmann::ordered_json::array({"house_04", "house_05"}),
+                    nlohmann::ordered_json::array({"house_06", "house_07"})})},
+              {"object", {{"rows", rows}, {"terrain", {{".", "t_floor"}}}}}}});
+        auto out = std::ofstream(file.path, std::ios::binary | std::ios::trunc);
+        out << format_json(entry.dump()).value();
+    }
+    Messages::clear_messages();
+    const auto corner = project_to<coords::ms>(get_avatar().abs_omt_pos());
+    // The square below the middle of the stamp's south edge is a wall: the avatar stands beside it.
+    const auto blocked = corner + tripoint_rel_ms(SEEX * 2, SEEY * 4 + 1, 0);
+    get_map().ter_set(abs_to_bub(blocked), ter_str_id("t_wall"));
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:stamp"); },
+        [](const auto& screen) {
+            CHECK(told(screen) == std::string{});
+            CHECK_FALSE(stat_of(screen, "stamped").empty());
+            return invoke("editor:test");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    const auto at = get_avatar().abs_pos();
+    const auto south_edge = corner.y() + SEEY * 4 - 1;
+    CHECK(at.y() > south_edge);
+    CHECK(at != blocked);
+    CHECK(std::abs(at.x() - blocked.x()) <= 2);
+    CHECK(at.y() - blocked.y() <= 2);
+    CHECK(get_map().passable(abs_to_bub(at)));
+    const auto lines = Messages::feed_since({});
+    REQUIRE(!lines.empty());
+    CHECK(lines.back().text
+          == string_format("The mapgen is stamped %d squares north of you.", at.y() - south_edge));
+    editor::reset_editor_session();
+}
+
+TEST_CASE(
+    "a catalog pick on an entry whose legend cannot be read takes no symbol and says why",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{{{"terrain", {{".", "t_floor"}, {"#", "t_wall"}, {"x", 5}}}}};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:catalog_filter", {.text = "t_brick_wall"}); },
+        [](const auto&) { return invoke("editor:catalog_pick", {.row = "entry:t_brick_wall"}); },
+        [](const auto& screen) {
+            // Nothing is in hand, so no stroke can map a symbol over one the file has.
+            CHECK(said(screen).starts_with("The legend cannot be read: "));
+            CHECK_FALSE(row_in(screen, "editor:catalog", "entry:t_brick_wall").selected);
+            CHECK(stat_of(screen, "symbol").substr(0, 1) != "#");
+            return square_at(3, 3);
+        },
+        [](const auto&) { return invoke("editor:save"); }};
+    CHECK(walk_map(walk) == walk.size());
+    const auto saved = nlohmann::ordered_json::parse(read_file(file.path))[0]["object"];
+    CHECK(saved["terrain"]["#"] == "t_wall");
+    editor::reset_editor_session();
+}
+
+TEST_CASE(
+    "exporting with unsaved changes checks the path before it asks, and asks before it closes the "
+    "file",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{{{"fill_ter", "t_floor"}}};
+    const auto made = file.path.parent_path() / "exported.json";
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return square_at(2, 3); },
+        [](const auto&) { return invoke("editor:stamp"); },
+        // A path that is taken is refused before the edits are put at risk.
+        [&](const auto&) { return invoke("editor:export", {.text = file.path.string()}); },
+        [&](const auto& screen) {
+            CHECK(screen.kind == "editor");
+            CHECK_FALSE(told(screen).empty());
+            CHECK(stat_of(screen, "saved") == "No");
+            return invoke("editor:export", {.text = made.string()});
+        },
+        // A free path asks first; staying exports nothing.
+        [](const auto& screen) {
+            CHECK(screen.kind != "editor");
+            return answer("Stay");
+        },
+        [&](const auto& screen) {
+            CHECK(screen.kind == "editor");
+            CHECK_FALSE(std::filesystem::exists(made));
+            CHECK(stat_of(screen, "saved") == "No");
+            return invoke("editor:export", {.text = made.string()});
+        },
+        [](const auto& screen) {
+            CHECK(screen.kind != "editor");
+            return answer("Leave without saving");
+        },
+        [&](const auto& screen) {
+            CHECK(said(screen)
+                  == "Exported the live world's squares to editor_session_test/exported.json, "
+                     "open now; editor_session_test/floor.json is closed.");
+            return invoke("editor:unstamp");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    CHECK(std::filesystem::exists(made));
+    editor::reset_editor_session();
+}
+
+TEST_CASE(
+    "a canvas square names the alternatives of one layer with or, not as layers stacked",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    {
+        auto rows = nlohmann::ordered_json::array();
+        for (auto row = 0; row < 24; ++row) { rows.push_back(std::string(24, '.')); }
+        rows[3] = std::string(3, '.') + "#" + std::string(20, '.');
+        const auto entries = nlohmann::ordered_json::array(
+            {{{"type", "palette"},
+              {"id", "editor_session_test_walls"},
+              {"terrain", {{"#", "t_brick_wall"}}}},
+             {{"type", "mapgen"},
+              {"method", "json"},
+              {"om_terrain", "house_04"},
+              {"object",
+               {{"palettes", nlohmann::ordered_json::array({"editor_session_test_walls"})},
+                {"rows", rows},
+                {"terrain", {{".", "t_floor"}, {"#", "t_wall"}}}}}}});
+        auto out = std::ofstream(file.path, std::ios::binary | std::ios::trunc);
+        out << format_json(entries.dump()).value();
+    }
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:object", {.row = "object:1"}); },
+        [](const auto& screen) {
+            const auto label = cell(screen, 3, 3).label;
+            CHECK(label.contains("brick wall"));
+            CHECK(label.contains("wooden wall"));
+            CHECK(label.contains(" or "));
+            CHECK_FALSE(label.contains(";"));
+            return invoke("editor:object", {.row = "object:1"});
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
+}
+
+TEST_CASE(
+    "testing a stamp turns the view to show the stamp with the avatar south of it",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{{{"fill_ter", "t_floor"}}};
+    const auto corner = project_to<coords::ms>(get_avatar().abs_omt_pos());
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:stamp"); },
+        [](const auto&) { return invoke("editor:test"); }};
+    CHECK(walk_map(walk) == walk.size());
+    const auto at = get_avatar().abs_pos();
+    const auto middle = at + get_avatar().view_offset;
+    // The view's middle is over the stamp's middle column, between its north edge and the avatar.
+    CHECK(middle.x() == corner.x() + SEEX);
+    CHECK(middle.y() >= corner.y());
+    CHECK(middle.y() < at.y());
+    CHECK(get_avatar().view_offset.y() < 0);
+    get_avatar().view_offset = tripoint_rel_ms::zero();
+    editor::reset_editor_session();
+}
+
+TEST_CASE(
+    "a mapgen no overmap terrain places yet is told as a hint, not as a problem",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto folder = mod_file{};
+    const auto made = folder.path.parent_path() / "unplaced.json";
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) {
+            return invoke("editor:new_set", {.row = "path", .text = made.string()});
+        },
+        [](const auto&) {
+            return invoke(
+                "editor:new_set", {.row = "om_terrain", .text = "editor_session_test_unplaced"});
+        },
+        [](const auto&) { return invoke("editor:new_apply"); },
+        [&](const auto& screen) {
+            CHECK(rows_in(screen, "editor:diagnostics").empty());
+            CHECK(stat_of(screen, "placed")
+                  == "Not placed by any overmap terrain or special yet; World > Test stamps it "
+                     "here.");
+            return invoke("editor:open", {.text = (made.parent_path() / "floor.json").string()});
+        },
+        [&](const auto& screen) {
+            // house_04 is placed by the game's overmap.
+            CHECK(stat_of(screen, "placed").empty());
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
+}
+
+TEST_CASE(
+    "the new-file form names the overmap terrain after the file and asks a chunk size only for a "
+    "nested chunk",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto folder = mod_file{};
+    const auto made = folder.path.parent_path() / "Corner Shop-2.json";
+    const auto field = [](const ec::screen_view& screen, const std::string& id) {
+        const auto& fields = body<ec::form_body>(part(screen, "editor:new")).fields;
+        const auto found = std::ranges::find(fields, id, &ec::form_field::id);
+        return found == fields.end() ? std::optional<std::string>{} : std::optional(found->value);
+    };
+    const auto walk = std::vector<map_step>{
+        [&](const auto& screen) {
+            const auto path = std::filesystem::path(field(screen, "path").value_or(""));
+            CHECK(field(screen, "om_terrain") == path.stem().string());
+            CHECK_FALSE(field(screen, "size"));
+            return invoke("editor:new_set", {.row = "path", .text = made.string()});
+        },
+        [&](const auto& screen) {
+            // The name follows the file until the player types one.
+            CHECK(field(screen, "om_terrain") == "corner_shop_2");
+            return invoke("editor:new_set", {.row = "kind", .text = "nested"});
+        },
+        [&](const auto& screen) {
+            CHECK(field(screen, "size") == "4");
+            return invoke("editor:new_set", {.row = "om_terrain", .text = "my_shop"});
+        },
+        [&](const auto& screen) {
+            CHECK(field(screen, "om_terrain") == "my_shop");
+            return invoke("editor:new_set", {.row = "kind", .text = "mapgen"});
+        },
+        [](const auto&) { return invoke("editor:new_apply"); }};
+    CHECK(walk_map(walk) == walk.size());
+    const auto written = nlohmann::ordered_json::parse(read_file(made));
+    CHECK(written[0]["om_terrain"] == "my_shop");
+    editor::reset_editor_session();
+}
+
+TEST_CASE(
+    "the right column folds an empty placements list and the new placement form until the "
+    "placements tool is in hand",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    const auto placed = mod_file{
+        {{"place_monster",
+          nlohmann::ordered_json::array({{{"monster", "mon_zombie"}, {"x", 3}, {"y", 3}}})}},
+        "placed.json"};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [&](const auto& screen) {
+            CHECK(part(screen, "editor:placements").collapsed);
+            CHECK(part(screen, "editor:place").collapsed);
+            return invoke("editor:tool", {.row = "tool:placements"});
+        },
+        [&](const auto& screen) {
+            CHECK_FALSE(part(screen, "editor:place").collapsed);
+            return invoke("editor:open", {.text = placed.path.string()});
+        },
+        [&](const auto& screen) {
+            CHECK_FALSE(part(screen, "editor:placements").collapsed);
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
 }
 
 #endif // CATA_MCP

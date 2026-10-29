@@ -6278,6 +6278,12 @@
         "empty": {
           "$ref": "#/$defs/text",
           "description": "What the list says while it has no rows, in the player's language, naming the filter text when one leaves none. Absent: a client shows nothing in its place."
+        },
+        "rows_shown": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200,
+          "description": "The most rows a client shows at once, scrolling the rest, so the parts beside the list keep their room. Absent: no limit."
         }
       },
       "required": [

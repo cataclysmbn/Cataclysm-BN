@@ -121,13 +121,13 @@ TEST_CASE("a symbol on every square is checked once", "[editor_mapgen]") {
         == 1);
 }
 
-TEST_CASE("an unknown overmap terrain points at its id", "[editor_mapgen]") {
+TEST_CASE("an overmap terrain nothing places is no loader problem", "[editor_mapgen]") {
     auto entry = floor_entry();
     entry["om_terrain"] = "no_such_terrain";
-    const auto messages = check(entry);
-    REQUIRE_FALSE(messages.empty());
-    CHECK(names(messages, "no_such_terrain"));
-    CHECK(messages[0].pointer == "/om_terrain");
+    CHECK(check(entry).empty());
+    CHECK_FALSE(editor::terrain_placed("no_such_terrain"));
+    CHECK(editor::terrain_placed("house_04"));
+    CHECK(editor::terrain_placed("null"));
 }
 
 TEST_CASE("an unknown palette points at its id", "[editor_mapgen]") {

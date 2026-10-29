@@ -4,6 +4,7 @@
 #include "editor/editor_access.h"
 #include "editor/history_label.h"
 #include "editor/map_session.h"
+#include "editor/mapgen_check.h"
 #include "editor/mapgen_legend.h"
 #include "editor/mapgen_legend_edit.h"
 #include "editor/mapgen_legend_text.h"
@@ -36,6 +37,7 @@
 #include "type_id.h"
 
 #include <algorithm>
+#include <array>
 #include <filesystem>
 #include <iterator>
 #include <limits>
@@ -207,7 +209,67 @@ auto symbol_looks(const nlohmann::ordered_json& object, const std::vector<legend
             tr.is_valid() && !tr.is_null()) {
             looks.push_back(world::trap_appearance(tr.obj()));
         }
+        // What spawns there goes over the square, as the map draws it.
+        for (const auto& line : entry.lines) {
+            if (std::ranges::contains(std::array{"terrain", "furniture", "traps"}, line.layer)) {
+                continue;
+            }
+            const auto id =
+                first_named(line.layer, nlohmann::ordered_json::parse(line.value, nullptr, false));
+            if (auto look = id ? layer_look(line.layer, *id) : std::nullopt) {
+                looks.push_back(std::move(*look));
+            }
+        }
         result[entry.symbol] = std::move(looks);
+    }
+    return result;
+}
+
+/// What each symbol of the entry `object` places on a square from the bottom up, as its cell names
+/// it: terrain and furniture by name, anything else after its layer, with its chance, and the
+/// choices of one layer joined by "or"; the entry's fill terrain under a symbol that maps none.
+auto symbol_labels(const nlohmann::ordered_json& object, const std::vector<legend_symbol>& legend)
+    -> std::map<std::string, std::string> {
+    const auto fill = fill_terrain(object);
+    struct layer_names {
+        std::string layer;
+        std::vector<std::string> names;
+    };
+    auto result = std::map<std::string, std::string>{};
+    for (const auto& entry : legend) {
+        auto layers = std::vector<layer_names>{};
+        if (fill
+            && !std::ranges::contains(entry.lines, std::string("terrain"), &legend_line::layer)) {
+            layers.push_back(
+                {.layer = "terrain",
+                 .names = {legend_value("terrain", nlohmann::ordered_json(*fill).dump()).names}});
+        }
+        for (const auto& line : entry.lines) {
+            const auto names = legend_value(line.layer, line.value).names;
+            const auto value = nlohmann::ordered_json::parse(line.value, nullptr, false);
+            const auto named =
+                value.is_object() && value.contains("chance") && value["chance"].is_number_integer()
+                    //~ %1$s is what a symbol places; %2$d is the chance it is placed, in percent.
+                    ? string_format(_("%1$s %2$d%%"), names, value["chance"].get<int>())
+                    : names;
+            const auto found = std::ranges::find(layers, line.layer, &layer_names::layer);
+            if (found == layers.end()) {
+                layers.push_back({.layer = line.layer, .names = {named}});
+            } else {
+                found->names.push_back(named);
+            }
+        }
+        result[entry.symbol] = join(
+            layers | std::views::transform([](const layer_names& placed) {
+                //~ Joins what one legend layer may place on a square, such as brick wall or wooden
+                //~ wall.
+                const auto either = join(placed.names, _(" or "));
+                return placed.layer == "terrain" || placed.layer == "furniture"
+                         ? either
+                         //~ %1$s is a legend layer, such as Items; %2$s is what it places there.
+                         : string_format(_("%1$s: %2$s"), legend_layer_label(placed.layer), either);
+            }) | std::ranges::to<std::vector>(),
+            "; ");
     }
     return result;
 }
@@ -263,6 +325,9 @@ auto faded_squares(const session& state, ec::look_palette& palette)
     return result;
 }
 
+/// The most legend rows shown at once.
+constexpr auto legend_rows_shown = std::size_t{6};
+
 /// How far into the overmap squares beside the canvas entry the canvas shows them.
 constexpr auto neighbour_strip = 4;
 
@@ -310,6 +375,7 @@ auto canvas(const session& state) -> ec::component {
         })
         | std::ranges::to<std::map>();
     const auto faded = faded_squares(state, palette);
+    const auto labels = symbol_labels(object, state.legend);
     const auto cursor = state.anchor ? state.anchor : state.focus;
     const auto cols = std::ranges::fold_left(
         grid | std::views::transform([](const auto& row) { return static_cast<int>(row.size()); }),
@@ -330,6 +396,9 @@ auto canvas(const session& state) -> ec::component {
                 {.at = {x + shift.x, y + shift.y},
                  .id = point_row("square", at),
                  .glyph = under != faded.end() ? under->second.glyph : grid[y][x],
+                 .label = under == faded.end() && labels.contains(grid[y][x])
+                            ? labels.at(grid[y][x])
+                            : std::string{},
                  .affordance = paint_id,
                  .selected = state.anchor == at || in_selection(state, at),
                  .looks = under != faded.end() ? under->second.looks
@@ -453,6 +522,9 @@ auto symbol_columns(const nlohmann::ordered_json& object, const legend_symbol& e
 auto symbol_summary(const session& state, const std::string& symbol) -> std::string {
     const auto& object = state.doc->objects()[state.object].value;
     const auto entry = std::ranges::find(state.legend, symbol, &legend_symbol::symbol);
+    if (state.held && state.held->symbol == symbol && entry == state.legend.end()) {
+        return shown_symbol(symbol) + " " + state.held->name;
+    }
     if (entry == state.legend.end()) { return shown_symbol(symbol); }
     const auto columns = symbol_columns(object, *entry);
     const auto top = std::ranges::find_if(columns, [](const auto& column) {
@@ -563,6 +635,24 @@ auto document_stats(const session& state) -> std::vector<ec::panel_stat> {
          .value = doc.dirty() ? _("No") : _("Yes"),
          .tone = doc.dirty() ? "bad" : "good"},
     };
+    // A mapgen nothing places yet is what a new one is: a hint of how to see it, not a problem.
+    const auto& entry =
+        state.on_mapgen() ? doc.objects()[state.object].value : nlohmann::ordered_json::object();
+    const auto number = [&](const char* const key, const int otherwise) {
+        return entry.contains(key) && entry[key].is_number_integer()
+                 ? entry[key].get<int>()
+                 : otherwise;
+    };
+    const auto registered =
+        number("weight", 1000) > 0 && !(entry.contains("disabled") && entry["disabled"] == true);
+    if (registered && entry.contains("om_terrain")
+        && !std::ranges::all_of(entry_ids(entry), &terrain_placed)) {
+        stats.push_back(
+            {.key = "placed",
+             .label = _("Placed by"),
+             .value = _("Not placed by any overmap terrain or special yet; World > Test stamps it "
+                        "here.")});
+    }
     // A palette has no rows to draw on, and no drawing state.
     if (state.on_mapgen()) {
         if (!state.symbol.empty()) {
@@ -623,6 +713,47 @@ auto document_stats(const session& state) -> std::vector<ec::panel_stat> {
     return stats;
 }
 
+/// A `place_*` array as the player knows what it places, followed by the array.
+auto placement_kind_label(const std::string_view kind) -> std::string {
+    const auto layer = kind.substr(std::string_view("place_").size());
+    return string_format(
+        "%s (%s)", layer == "loot" ? std::string(_("Loot")) : legend_layer_label(layer), kind);
+}
+
+/// The members a placement of the `place_*` array `kind` takes, as an example.
+auto placement_value_hint(const std::string_view kind) -> std::string {
+    if (kind == "place_item") {
+        return _("An item: {\"item\": \"<item id>\", \"amount\": 1, \"chance\": 100}");
+    }
+    if (kind == "place_items") {
+        return _("An item group: {\"item\": \"<item group id>\", \"chance\": 100}");
+    }
+    if (kind == "place_loot") {
+        return _(
+            "An item group or item: {\"group\": \"<item group id>\"} or {\"item\": \"<item id>\"}");
+    }
+    if (kind == "place_monster") {
+        return _(
+            "A monster: {\"monster\": \"<monster id>\"}, or {\"group\": \"<monster group id>\"}");
+    }
+    if (kind == "place_monsters") {
+        return _(
+            "A monster group: {\"monster\": \"<monster group id>\", \"density\": 1, \"chance\": 1}");
+    }
+    if (kind == "place_vehicles") {
+        return _("A vehicle: {\"vehicle\": \"<vehicle id>\", \"chance\": 100, \"rotation\": 0}");
+    }
+    if (kind == "place_npcs") { return _("An NPC: {\"class\": \"<NPC template id>\"}"); }
+    if (kind == "place_fields") {
+        return _("A field: {\"field\": \"<field id>\", \"intensity\": 1}");
+    }
+    if (kind == "place_traps") { return _("A trap: {\"trap\": \"<trap id>\"}"); }
+    if (kind == "place_furniture") { return _("Furniture: {\"furn\": \"<furniture id>\"}"); }
+    if (kind == "place_terrain") { return _("Terrain: {\"ter\": \"<terrain id>\"}"); }
+    if (kind == "place_nested") { return _("Nested chunks: {\"chunks\": [\"<chunk id>\"]}"); }
+    return _("Its members other than x and y, as a JSON object.");
+}
+
 /// The forms that move the picked placement and add one.
 auto placement_forms(
     const session& state, std::vector<ec::component>& parts,
@@ -654,13 +785,17 @@ auto placement_forms(
                   .type = "select",
                   .options =
                       placement_kinds | std::views::transform([](const std::string_view kind) {
-                          return ec::
-                              form_option{.id = std::string(kind), .label = std::string(kind)};
+                          return ec::form_option{
+                              .id = std::string(kind), .label = placement_kind_label(kind)};
                       })
                       | std::ranges::to<std::vector>()},
                  {.id = "x", .label = "x", .value = state.place_x},
                  {.id = "y", .label = "y", .value = state.place_y},
-                 {.id = "value", .label = _("Value"), .value = state.place_value, .multiline = true}},
+                 {.id = "value",
+                  .label = _("Value"),
+                  .description = placement_value_hint(state.place_kind),
+                  .value = state.place_value,
+                  .multiline = true}},
             .submit = place_apply_id}});
     affordances.push_back(ec::invoke_affordance(
         {.id = place_set_id,
@@ -668,25 +803,6 @@ auto placement_forms(
          .args = {.row = ec::row_shape{.component_id = place_id}, .text = ec::text_shape{}}}));
     affordances.push_back(
         ec::invoke_affordance({.id = place_apply_id, .label = _("Add placement")}));
-}
-
-/// What a catalog entry of `kind` named `id` shows on the map, for what has a look of its own.
-auto catalog_look(const catalog_kind kind, const std::string& id)
-    -> std::optional<engine_client::look> {
-    namespace world = engine_client::world;
-    if (kind == catalog_kind::terrain && ter_str_id(id).is_valid()) {
-        return world::terrain_appearance(ter_str_id(id).id());
-    }
-    if (kind == catalog_kind::furniture && furn_str_id(id).is_valid()) {
-        return world::furniture_appearance(furn_str_id(id).id());
-    }
-    if (kind == catalog_kind::trap && trap_str_id(id).is_valid()) {
-        return world::trap_appearance(trap_str_id(id).obj());
-    }
-    if (kind == catalog_kind::item && itype_id(id).is_valid()) {
-        return world::item_appearance(*item::spawn_temporary(itype_id(id), calendar::turn));
-    }
-    return std::nullopt;
 }
 
 /// The legend form and the catalog that fills it.
@@ -701,24 +817,28 @@ auto catalog_list(
          .label = _("Page"),
          .total = found.total,
          .page = state.catalog_page}));
+    // A click takes an entry in hand, as Factorio's palettes do.
     affordances.push_back(ec::invoke_affordance(
-        {.id = catalog_pick_id, .label = _("Use"), .args = row_of(catalog_id)}));
+        {.id = catalog_pick_id, .label = _("Use"), .args = row_of(catalog_id), .role = "select"}));
+    const auto kind = state.on_special() ? catalog_kind::overmap_terrain : state.catalog->kind;
+    const auto hand = state.on_special() ? std::nullopt : state.in_hand();
     return ec::list(
         {.id = catalog_id,
-         .rows =
-             found.entries | std::views::transform([&](const catalog_entry& entry) {
-                 return ec::row{
-                     .id = "entry:" + entry.id,
-                     .label = entry.distinct.empty()
-                                ? entry.name
-                                : string_format("%s (%s)", entry.name, entry.distinct),
-                     .columns = {{.key = "id", .label = _("ID"), .value = entry.id},
-                                 {.key = "mod", .label = _("Mod"), .value = entry.mod}},
-                     .look = catalog_look(
-                         state.on_special() ? catalog_kind::overmap_terrain : state.catalog->kind,
-                         entry.id)};
-             })
-             | std::ranges::to<std::vector>(),
+         .rows = found.entries | std::views::transform([&](const catalog_entry& entry) {
+                     const auto held =
+                         state.on_special()
+                             ? entry.id == state.special_terrain
+                             : hand && hand->layer == state.catalog->layer
+                                   && hand->value == mapping_json_of(*state.catalog, entry.id);
+                     return ec::row{
+                         .id = "entry:" + entry.id,
+                         .label = catalog_row_label(entry),
+                         .selected = held,
+                         .columns = {{.key = "id", .label = _("ID"), .value = entry.id},
+                                     {.key = "mod", .label = _("Mod"), .value = entry.mod}},
+                         .look = catalog_look(kind, entry.id)};
+                 })
+               | std::ranges::to<std::vector>(),
          .total = found.total,
          .offset = state.catalog_page * page_size,
          .selection = "single",
@@ -832,8 +952,8 @@ auto game_parts(
             {.id = test_id,
              .label = _("Test"),
              .description = _(
-                 "Puts you in the middle of the stamped entry to play there; in the "
-                 "editor's own world it stamps the entry first."),
+                 "Puts you just south of the stamped entry, looking at it, to play there; in "
+                 "the editor's own world it stamps the entry first."),
              .keys = {"F5"},
              .enabled = testable,
              .denial = testable ? ""
@@ -842,6 +962,10 @@ auto game_parts(
         affordances.push_back(ec::invoke_affordance(
             {.id = preview_id,
              .label = _("Preview"),
+             .description = _(
+                 "Shows under Generated map what the game makes of the entry on the square you "
+                 "stand on, leaving the world as it is. The number is the seed: each seed rolls "
+                 "the entry's random choices another way."),
              .args = {.count = ec::count_shape{.min = 1,
                                                .max = std::numeric_limits<unsigned int>::max(),
                                                .initial = state.seed.value_or(1)}},
@@ -922,9 +1046,9 @@ auto game_parts(
 auto new_file_form(const session& state) -> ec::component {
     const auto& kind = state.made.kind;
     const auto special = kind == "special" || kind == "building";
-    return ec::component{
+    auto form = ec::component{
         .id = new_id,
-        .affordances = {new_set_id, new_apply_id},
+        .affordances = {new_set_id, new_apply_id, new_folder_id},
         .body = ec::form_body{
             .fields =
                 {{.id = "path",
@@ -943,7 +1067,7 @@ auto new_file_form(const session& state) -> ec::component {
                       : kind == "nested" ? _("The id mapgens place the chunk by.")
                       : special          ? _("The id the game places it by.")
                                          : _("The id of the overmap terrain the mapgen makes."),
-                  .value = state.made.om_terrain,
+                  .value = new_entry_id(state.made),
                   .required = true},
                  {.id = "fill",
                   // A special's first square places an overmap terrain.
@@ -976,6 +1100,13 @@ auto new_file_form(const session& state) -> ec::component {
                   .min = 1,
                   .max = max_chunk}},
             .submit = new_apply_id}};
+    // Only a nested chunk has a size of its own.
+    if (kind != "nested") {
+        std::erase_if(std::get<ec::form_body>(form.body).fields, [](const ec::form_field& field) {
+            return field.id == "size";
+        });
+    }
+    return form;
 }
 
 /// The page of data files shown.
@@ -1012,8 +1143,9 @@ auto browser_list(const session& state, const std::vector<browser_entry>& listed
 
 /// The affordances that pick what to draw with and draw; a palette only picks its symbol.
 auto drawing_affordances(const session& state) -> std::vector<ec::affordance> {
+    // A click on a legend row makes it the pen.
     const auto symbol = ec::invoke_affordance(
-        {.id = symbol_id, .label = _("Symbol"), .args = row_of(legend_id)});
+        {.id = symbol_id, .label = _("Symbol"), .args = row_of(legend_id), .role = "select"});
     if (!state.on_mapgen()) { return {symbol}; }
     auto affordances = std::vector<ec::affordance>{};
     affordances.push_back(
@@ -1275,16 +1407,21 @@ auto layout(const session& state) -> workspace_layout {
     const auto world = std::string(_("World"));
     // While a document is open, the start page folds away beside it.
     const auto opened = state.doc.has_value();
+    // Placements take room only while there are some, or while the placements tool is in hand.
+    const auto placed = state.on_mapgen() && !placements_of(*state.doc, state.object).empty();
+    const auto placing = state.current->region == region_use::placements;
     return {
         .slots =
             {{tools_id, {.slot = "canvas"}},
              {legend_id, {.slot = "palette", .label = _("Legend")}},
-             {mapping_id, {.slot = "palette", .label = _("Mapping")}},
+             // Picking from the catalog maps what it draws; the form renames a symbol by hand.
+             {mapping_id, {.slot = "palette", .label = _("Mapping"), .collapsed = true}},
              {catalog_kinds_id, {.slot = "palette", .label = _("Catalog")}},
              {catalog_id, {.slot = "palette", .label = _("Catalog")}},
              {file_id, {.slot = "outline", .label = _("File path"), .collapsed = opened}},
              {objects_id, {.slot = "outline", .label = _("Entries")}},
-             {placements_id, {.slot = "outline", .label = _("Placed by this entry")}},
+             {placements_id,
+              {.slot = "outline", .label = _("Placed by this entry"), .collapsed = !placed}},
              {terrains_id, {.slot = "outline", .label = _("Mapgens")}},
              {"editor:code_mapgens", {.slot = "outline", .label = _("Mapgens in code")}},
              {browser_id,
@@ -1297,13 +1434,17 @@ auto layout(const session& state) -> workspace_layout {
              {"editor:document", {.slot = "status"}},
              {field_id, {.slot = "inspector", .label = _("JSON value")}},
              {move_id, {.slot = "inspector", .label = _("Placement position")}},
-             {place_id, {.slot = "inspector", .label = _("New placement")}},
+             {place_id, {.slot = "inspector", .label = _("New placement"), .collapsed = !placing}},
              {pins_id, {.slot = "inspector", .label = _("Pinned choices")}},
              {rotation_id, {.slot = "inspector", .label = _("Preview facing")}},
              {connection_id, {.slot = "inspector", .label = _("Connect tool")}},
              {"editor:preview", {.slot = "inspector", .label = _("Generated map")}},
              {loot_id, {.slot = "inspector", .label = _("Spawn chances")}},
-             {new_id, {.slot = "inspector", .label = _("New mapgen file"), .collapsed = opened}},
+             // With nothing open, making a mapgen comes first.
+             {new_id,
+              {.slot = opened ? "inspector" : "canvas",
+               .label = _("New mapgen file"),
+               .collapsed = opened}},
              {export_options_id, {.slot = "inspector", .label = _("Export")}},
              {import_form_id,
               {.slot = "inspector", .label = _("Stamp mapgen text"), .collapsed = opened}}},
@@ -1368,6 +1509,12 @@ auto session_view(const session& state) -> ec::screen_view {
          .args = {.row = ec::row_shape{.component_id = new_id}, .text = ec::text_shape{}}}));
     affordances.push_back(ec::invoke_affordance({.id = new_apply_id, .label = _("Create")}));
     affordances.push_back(ec::invoke_affordance(
+        {.id = new_folder_id,
+         .label = _("New mod folder"),
+         .description = _(
+             "Puts the new file in a mod folder of its own; creating the file makes the "
+             "folder a mod.")}));
+    affordances.push_back(ec::invoke_affordance(
         {.id = open_oter_id,
          .label = _("Open overmap terrain"),
          .args = {.text = ec::text_shape{}}}));
@@ -1382,8 +1529,9 @@ auto session_view(const session& state) -> ec::screen_view {
                                     state.export_area->size.y())
                     : _("Export mapgen here"),
          .description = _(
-             "Writes the map around you, or the marked squares, as a mapgen in a "
-             "new file and opens it."),
+             "Writes the live world's squares around you, or the marked squares, as a mapgen "
+             "in a new file, keeping the open entry's symbols, and opens it in place of the "
+             "open file. The open file itself is not exported."),
          .args = {.text = ec::text_shape{.initial = state.free_export_path()}}}));
     affordances.push_back(ec::invoke_affordance(
         {.id = export_area_id,
@@ -1442,7 +1590,8 @@ auto session_view(const session& state) -> ec::screen_view {
                  std::back_inserter(affordances));
         parts.push_back(ec::list(
             {.id = history_id,
-             .rows = step_rows(document_steps(doc)),
+             .rows = step_rows(document_steps(
+                 doc, [&](const document_edit& edit) { return state.edit_title(edit); })),
              .selection = "single",
              .activate = jump_id,
              .empty = _("No edits yet.")}));
@@ -1533,12 +1682,14 @@ auto session_view(const session& state) -> ec::screen_view {
                 }
             } else {
 
+                // A long legend scrolls, so the catalog under it keeps its rows.
                 parts.push_back(ec::list(
                     {.id = legend_id,
                      .rows = legend_rows(state),
                      .selection = "single",
                      .activate = symbol_id,
-                     .empty = _("No symbol is mapped yet.")}));
+                     .empty = _("No symbol is mapped yet."),
+                     .rows_shown = legend_rows_shown}));
             }
             parts.push_back(ec::list(
                 {.id = diagnostics_id,
@@ -1594,6 +1745,7 @@ auto session_view(const session& state) -> ec::screen_view {
         }
     }
     parts.push_back(new_file_form(state));
+    if (!state.doc) { parts.push_back(browser_list(state, listed)); }
     parts.push_back(ec::component{
         .id = export_options_id,
         .affordances = {export_set_id},
@@ -1646,7 +1798,7 @@ auto session_view(const session& state) -> ec::screen_view {
                 {.id = recent_open_id, .label = _("Open"), .args = row_of(recent_id)}));
         }
     }
-    parts.push_back(browser_list(state, listed));
+    if (state.doc) { parts.push_back(browser_list(state, listed)); }
     if (!state.code_mapgens.empty()) {
         parts.push_back(ec::list(
             {.id = "editor:code_mapgens",

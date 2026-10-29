@@ -14,8 +14,11 @@
 #include "vehicle/veh_type.h"
 
 #include <algorithm>
+#include <cctype>
 #include <map>
 #include <ranges>
+#include <string_view>
+#include <tuple>
 
 namespace editor {
 namespace {
@@ -104,9 +107,38 @@ auto search_catalog(const catalog_query& query) -> catalog_page {
             && (query.filter.empty() || lcmatch(entry.id, query.filter)
                 || lcmatch(entry.name, query.filter));
     };
-    auto found = entries_of(query.kind) | std::views::filter(matches) | ranges::to<std::vector>();
-    ranges::sort(found, {}, &catalog_entry::id);
-    // Ordered by id, the first and last id of a name bound the start all its ids share.
+    // What is searched for comes first: the name itself, a name or a word of it starting with it,
+    // a name holding it, and last an id holding it; each by id.
+    const auto wanted = to_lower_case(query.filter);
+    const auto rank = [&](const catalog_entry& entry) {
+        const auto name = to_lower_case(entry.name);
+        if (wanted.empty() || name == wanted) { return 0; }
+        if (name.starts_with(wanted)) { return 1; }
+        auto from = name.find(wanted);
+        while (
+            from != std::string::npos && std::isalnum(static_cast<unsigned char>(name[from - 1]))) {
+            from = name.find(wanted, from + 1);
+        }
+        if (from != std::string::npos) { return 2; }
+        return name.contains(wanted) ? 3 : 4;
+    };
+    struct ranked_entry {
+        int rank;
+        catalog_entry entry;
+    };
+    auto ranked =
+        entries_of(query.kind) | std::views::filter(matches)
+        | std::views::transform([&](catalog_entry entry) {
+              const auto at = rank(entry);
+              return ranked_entry{.rank = at, .entry = std::move(entry)};
+          })
+        | ranges::to<std::vector>();
+    ranges::sort(ranked, {}, [](const ranked_entry& found) {
+        return std::tuple(found.rank, std::string_view(found.entry.id));
+    });
+    auto found = ranked | std::views::transform(&ranked_entry::entry) | ranges::to<std::vector>();
+    // Entries of one name are told apart by the rest of their ids after the start all of them
+    // share, which is the start the first and last of those ids share.
     struct id_bounds {
         std::string first;
         std::string last;
@@ -115,7 +147,10 @@ auto search_catalog(const catalog_query& query) -> catalog_page {
     for (const auto& entry : found) {
         const auto [at, added] =
             bounds.try_emplace(entry.name, id_bounds{.first = entry.id, .last = entry.id});
-        if (!added) { at->second.last = entry.id; }
+        if (!added) {
+            at->second.first = std::min(at->second.first, entry.id);
+            at->second.last = std::max(at->second.last, entry.id);
+        }
     }
     for (auto& entry : found) {
         const auto& [first, last] = bounds.at(entry.name);

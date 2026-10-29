@@ -1,10 +1,12 @@
 #pragma once
 
 #include "coordinates.h"
+#include "editor/mapgen_legend.h"
 
 #include <expected>
 #include <nlohmann/json.hpp>
 #include <string>
+#include <vector>
 
 namespace editor {
 
@@ -21,5 +23,11 @@ auto export_region(
 auto export_chunk(
     const tripoint_abs_ms& corner, const point_rel_ms& size, const std::string& palette,
     const std::string& id) -> std::expected<nlohmann::ordered_json, std::string>;
+
+/// `exported`, the object of an export made without a palette, with each kind of square that a
+/// one-character symbol of `legend` maps alone (terrain, at most furniture and a trap, each a plain
+/// id) drawn with that symbol, so an export keeps the symbols of the entry open.
+auto keep_symbols(nlohmann::ordered_json exported, const std::vector<legend_symbol>& legend)
+    -> nlohmann::ordered_json;
 
 } // namespace editor

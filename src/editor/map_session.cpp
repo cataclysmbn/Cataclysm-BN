@@ -2,6 +2,7 @@
 
 #include "avatar.h"
 #include "catacharset.h"
+#include "color.h"
 #include "editor/catalog.h"
 #include "editor/document.h"
 #include "editor/history_label.h"
@@ -9,6 +10,7 @@
 #include "editor/mapgen_check.h"
 #include "editor/mapgen_legend.h"
 #include "editor/mapgen_legend_edit.h"
+#include "editor/mapgen_legend_text.h"
 #include "editor/mapgen_levels.h"
 #include "editor/mapgen_placement.h"
 #include "editor/mapgen_preview.h"
@@ -19,12 +21,19 @@
 #include "editor/session_file.h"
 #include "editor/session_page.h"
 #include "editor/special_grid.h"
+#include "engine_client_part_type.h"
 #include "engine_client_world.h"
 #include "filesystem.h"
 #include "game.h"
 #include "game_constants.h"
+#include "item.h"
+#include "item_group.h"
+#include "itype.h"
 #include "json_formatter.h"
+#include "map/field_type.h"
 #include "map/mapdata.h"
+#include "mongroup.h"
+#include "mtype.h"
 #include "overmap/omdata.h"
 #include "overmap/overmap_special.h"
 #include "path_info.h"
@@ -32,7 +41,9 @@
 #include "string_formatter.h"
 #include "string_utils.h"
 #include "translations.h"
+#include "trap.h"
 #include "type_id.h"
+#include "vehicle/veh_type.h"
 
 #include <algorithm>
 #include <array>
@@ -41,6 +52,8 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <functional>
+#include <iterator>
 #include <map>
 #include <optional>
 #include <ranges>
@@ -169,6 +182,33 @@ auto range_read(std::string_view text) -> std::optional<placement_range> {
     return placement_range{.min = *min, .max = *max};
 }
 
+/// The symbols a new mapping falls back on, as an export uses them.
+constexpr auto spare_symbols = std::string_view(
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789,;:!%&*+-/<>=?@^~_()[]{}|$");
+
+/// The symbol a new mapping of what shows as `glyph`, named `name`, takes: that glyph, else the
+/// first letter of the name in either case, else a spare symbol; the first not `taken`.
+auto free_symbol(
+    const std::vector<std::string>& taken, const std::string& glyph, const std::string& name)
+    -> std::optional<std::string> {
+    const auto printable = [](const std::string& text) {
+        return text.size() == 1 && text[0] > ' ' && text[0] < '\x7f' && text[0] != '\\';
+    };
+    auto wanted = std::vector{glyph};
+    if (!name.empty()) {
+        const auto first = static_cast<unsigned char>(name.front());
+        wanted.emplace_back(1, static_cast<char>(std::tolower(first)));
+        wanted.emplace_back(1, static_cast<char>(std::toupper(first)));
+    }
+    std::ranges::
+        copy(spare_symbols | std::views::transform([](const char c) { return std::string(1, c); }),
+             std::back_inserter(wanted));
+    const auto found = std::ranges::find_if(wanted, [&](const std::string& candidate) {
+        return printable(candidate) && !std::ranges::contains(taken, candidate);
+    });
+    return found == wanted.end() ? std::nullopt : std::optional(*found);
+}
+
 } // namespace
 
 auto catalog_label(const catalog_use& use) -> std::string {
@@ -203,11 +243,107 @@ auto catalog_label(const catalog_use& use) -> std::string {
     return {};
 }
 
+auto mods_path(const std::filesystem::path& path) -> std::string {
+    if (!inside(path, PATH_INFO::user_moddir())) { return shown_path(path); }
+    return std::filesystem::weakly_canonical(path)
+        .lexically_relative(std::filesystem::weakly_canonical(PATH_INFO::user_moddir()))
+        .generic_string();
+}
+
+auto catalog_row_label(const catalog_entry& entry) -> std::string {
+    return entry.distinct.empty()
+             ? entry.name
+             : string_format("%s (%s)", entry.name, entry.distinct);
+}
+
+auto layer_look(const std::string_view layer, const std::string& id)
+    -> std::optional<engine_client::look> {
+    namespace world = engine_client::world;
+    const auto creature = [](const mtype& type) {
+        return engine_client::look{
+            .kind = "monster",
+            .id = type.id.str(),
+            .name = type.nname(),
+            .glyph = type.sym,
+            .color = string_from_color(type.color),
+            .looks_like =
+                type.looks_like.empty() ? std::vector<std::string>{} : std::vector{type.looks_like}};
+    };
+    if (layer == "terrain" && ter_str_id(id).is_valid()) {
+        return world::terrain_appearance(ter_str_id(id).id());
+    }
+    if (layer == "furniture" && furn_str_id(id).is_valid()) {
+        return world::furniture_appearance(furn_str_id(id).id());
+    }
+    if (layer == "traps" && trap_str_id(id).is_valid()) {
+        return world::trap_appearance(trap_str_id(id).obj());
+    }
+    if (layer == "fields" && field_type_str_id(id).is_valid()) {
+        const auto& type = field_type_str_id(id).obj();
+        return engine_client::look{
+            .kind = "field",
+            .id = id,
+            .name = type.get_name(),
+            .glyph = type.get_symbol(),
+            .color = string_from_color(type.get_color())};
+    }
+    if ((layer == "item" || layer == "sealed_item") && itype_id(id).is_valid()) {
+        return world::item_appearance(*item::spawn_temporary(itype_id(id), calendar::turn));
+    }
+    if (layer == "items" && item_group::group_is_defined(item_group_id(id))) {
+        const auto possible = item_group::every_possible_item_from(item_group_id(id));
+        if (possible.empty()) { return std::nullopt; }
+        const auto* const first = std::ranges::min(possible, {}, [](const itype* type) {
+            return type->get_id().str();
+        });
+        return layer_look("item", first->get_id().str());
+    }
+    if (layer == "monster" && mtype_id(id).is_valid()) { return creature(mtype_id(id).obj()); }
+    if (layer == "monsters" && MonsterGroupManager::isValidMonsterGroup(mongroup_id(id))) {
+        const auto& usual = MonsterGroupManager::GetMonsterGroup(mongroup_id(id)).defaultMonster;
+        return usual.is_valid() && !usual.is_null()
+                 ? std::optional(creature(usual.obj()))
+                 : std::nullopt;
+    }
+    if (layer == "npcs") {
+        return engine_client::
+            look{.kind = "npc", .id = id, .glyph = "@", .color = string_from_color(c_white)};
+    }
+    if (layer == "vehicles" && vproto_id(id).is_valid() && !vproto_id(id)->parts.empty()) {
+        const auto part = vproto_id(id)->parts.front().part;
+        return part.is_valid()
+                 ? std::optional(world::vehicle_part_type_appearance(part.obj()))
+                 : std::nullopt;
+    }
+    return std::nullopt;
+}
+
+auto catalog_look(const catalog_kind kind, const std::string& id)
+    -> std::optional<engine_client::look> {
+    const auto use = std::ranges::find(catalog_uses, kind, &catalog_use::kind);
+    return use == catalog_uses.end() ? std::nullopt : layer_look(use->layer, id);
+}
+
+auto first_named(const std::string_view layer, const nlohmann::ordered_json& value)
+    -> std::optional<std::string> {
+    if (value.is_string()) { return value.get<std::string>(); }
+    if (value.is_array() && !value.empty()) { return first_named(layer, value.front()); }
+    const auto use = std::ranges::find(catalog_uses, layer, &catalog_use::layer);
+    if (!value.is_object() || use == catalog_uses.end() || !use->key || !value.contains(use->key)) {
+        return std::nullopt;
+    }
+    return first_named(layer, value[use->key]);
+}
+
 auto mapping_of(const catalog_use& use, const std::string& id) -> std::string {
     if (!use.key) { return id; }
     const auto named =
         use.listed ? nlohmann::ordered_json::array({id}) : nlohmann::ordered_json(id);
     return nlohmann::ordered_json{{use.key, named}}.dump();
+}
+
+auto mapping_json_of(const catalog_use& use, const std::string& id) -> nlohmann::ordered_json {
+    return use.key ? nlohmann::ordered_json::parse(mapping_of(use, id)) : nlohmann::ordered_json(id);
 }
 
 auto tool_label(const tool& value) -> std::string {
@@ -354,6 +490,22 @@ auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string> {
           {nested ? "nested_mapgen_id" : "om_terrain", made.om_terrain},
           {"object", object}}});
     return write_new_file(made.path, entry);
+}
+
+auto new_entry_id(const new_mapgen& made) -> std::string {
+    if (!made.om_terrain.empty()) { return made.om_terrain; }
+    // Words of the file's name, lower case, joined by single underscores.
+    auto id = std::string{};
+    for (const auto c : std::filesystem::path(made.path).stem().string()) {
+        const auto letter = static_cast<unsigned char>(c);
+        if (std::isalnum(letter)) {
+            id += static_cast<char>(std::tolower(letter));
+        } else if (!id.empty() && id.back() != '_') {
+            id += '_';
+        }
+    }
+    while (!id.empty() && id.back() == '_') { id.pop_back(); }
+    return id;
 }
 
 auto free_new_path() -> std::string {
@@ -708,6 +860,7 @@ auto session::open_square(const point& at) -> void {
 
 auto session::show_object(const std::size_t index) -> void {
     object = index;
+    held.reset();
     special_level = ground_level(special_levels(doc->objects()[index].value));
     anchor.reset();
     selected.reset();
@@ -722,7 +875,9 @@ auto session::step_history(const bool back) -> void {
     if (back ? depth == 0 : depth >= steps.size()) { return; }
     const auto& step = steps[back ? depth - 1 : depth];
     if (!(back ? doc->undo() : doc->redo())) { return; }
-    status = string_format(back ? _("Undid: %s") : _("Redid: %s"), step_name(step));
+    status = string_format(
+        back ? _("Undid: %s") : _("Redid: %s"),
+        step_name(step, [&](const document_edit& edit) { return edit_title(edit); }));
     // An entry an undo removed is gone; the one it changed otherwise is what to look at.
     const auto changed = std::ranges::find_if(step.edits, [&](const document_edit& edit) {
         return edit.object < doc->objects().size();
@@ -740,6 +895,7 @@ auto session::step_history(const bool back) -> void {
 
 auto session::reload() -> void {
     legend.clear();
+    legend_error.clear();
     diagnostics.clear();
     level.reset();
     level_up.reset();
@@ -777,7 +933,9 @@ auto session::reload() -> void {
         anchor.reset();
     }
     const auto stand_ins = file_stand_ins(stand_in_texts());
-    legend = mapgen_legend(text).value_or(std::vector<legend_symbol>{});
+    const auto read = mapgen_legend(text);
+    legend = read.value_or(std::vector<legend_symbol>{});
+    legend_error = read ? std::string{} : read.error();
     reload_levels();
     diagnostics =
         check_mapgen(text) | std::views::transform([&](const auto& message) {
@@ -806,7 +964,9 @@ auto session::reload() -> void {
             notice = shown.error();
         }
     }
-    if (std::ranges::none_of(legend, [&](const auto& entry) { return entry.symbol == symbol; })) {
+    // What the catalog put in hand stays there until it is drawn, and after an undo of that.
+    if (std::ranges::none_of(legend, [&](const auto& entry) { return entry.symbol == symbol; })
+        && !(held && held->symbol == symbol)) {
         symbol = legend.empty() ? std::string{} : legend.front().symbol;
     }
     if (std::ranges::none_of(legend, [&](const auto& entry) {
@@ -855,6 +1015,8 @@ auto session::save() -> bool { return written(save_document(*doc)); }
 auto session::save_as(const std::string& name) -> void { written(save_document_as(*doc, name)); }
 
 auto session::written(const std::expected<void, std::string>& result) -> bool {
+    //~ %s is the file the map editor wrote, such as my_mod/house.json.
+    if (result) { status = string_format(_("Saved %s."), mods_path(doc->path())); }
     if (told(result) && applies_on_save()) { apply(); }
     if (result) { refresh_file(doc->path()); }
     return result.has_value();
@@ -905,6 +1067,7 @@ auto session::open(const std::string& name) -> void {
         return;
     }
     doc = std::move(*opened);
+    held.reset();
     refresh_file(path);
     ++openings;
     remember_document({.editor = "map", .name = path.generic_string(), .mods = mods_for(path)});
@@ -1012,10 +1175,17 @@ auto session::extract_palette(const std::string& name) -> void {
 auto session::pick_symbol(const std::string& picked) -> void {
     symbol = picked;
     mapping_symbol = picked;
+    held.reset();
     const auto found = std::ranges::find(legend, picked, &legend_symbol::symbol);
     const auto lines = found == legend.end() ? std::span<const legend_line>{} : found->lines;
     const auto own = std::ranges::find_last_if(lines, &std::string::empty, &legend_line::source);
     const auto* const top = !own.empty() ? &own.front() : lines.empty() ? nullptr : &lines.back();
+    if (on_mapgen()) {
+        arm();
+        //~ %1$s is what the symbol drawn with places, such as brick wall; %2$s is the symbol.
+        status =
+            string_format(_("Painting %1$s (%2$s)."), symbol_name(picked), shown_symbol(picked));
+    }
     if (top == nullptr) {
         mapping_layer = "terrain";
         mapping_value.clear();
@@ -1025,6 +1195,118 @@ auto session::pick_symbol(const std::string& picked) -> void {
     // A plain id reads as the form takes it, bare.
     const auto value = nlohmann::ordered_json::parse(top->value, nullptr, false);
     mapping_value = value.is_string() ? value.get<std::string>() : top->value;
+}
+
+auto session::take(const catalog_use& use, const std::string& id, const std::string& name) -> void {
+    if (!legend_error.empty()) {
+        //~ %s is what is wrong with the entry's legend, as the game's loader says it.
+        status = string_format(_("The legend cannot be read: %s"), plain_loader_text(legend_error));
+        return;
+    }
+    const auto value = mapping_json_of(use, id);
+    const auto mapped = std::ranges::find_if(legend, [&](const legend_symbol& entry) {
+        return entry.lines.size() == 1 && entry.lines.front().layer == use.layer
+            && nlohmann::ordered_json::parse(entry.lines.front().value, nullptr, false) == value;
+    });
+    if (mapped != legend.end()) {
+        pick_symbol(mapped->symbol);
+        return;
+    }
+    // A symbol the file maps keeps its mapping, whatever of it the legend could read.
+    auto taken =
+        legend | std::views::transform(&legend_symbol::symbol) | std::ranges::to<std::vector>();
+    const auto& own = doc->objects()[object].value;
+    if (own.contains("object") && own["object"].is_object()) {
+        for (const auto* const layer : legend_layers) {
+            if (!own["object"].contains(layer) || !own["object"][layer].is_object()) { continue; }
+            for (const auto& member : own["object"][layer].items()) {
+                taken.push_back(member.key());
+            }
+        }
+    }
+    const auto look = catalog_look(use.kind, id);
+    const auto free = free_symbol(taken, look ? look->glyph : "", name);
+    if (!free) {
+        notice = _("Every symbol is taken; map one in the Mapping form.");
+        return;
+    }
+    held = held_mapping{.symbol = *free, .layer = use.layer, .value = value, .name = name};
+    symbol = *free;
+    mapping_symbol = *free;
+    mapping_layer = use.layer;
+    mapping_value = mapping_of(use, id);
+    arm();
+    status = string_format(_("Painting %1$s (%2$s)."), name, shown_symbol(*free));
+}
+
+auto session::symbol_name(const std::string& glyph) const -> std::string {
+    if (held && held->symbol == glyph) { return held->name; }
+    const auto found = std::ranges::find(legend, glyph, &legend_symbol::symbol);
+    if (found == legend.end() || found->lines.empty()) { return shown_symbol(glyph); }
+    const auto& lines = found->lines;
+    const auto on = [&](const char* const layer) {
+        return std::ranges::find(lines | std::views::reverse, layer, &legend_line::layer);
+    };
+    const auto furniture = on("furniture");
+    const auto terrain = on("terrain");
+    const auto& top =
+        furniture != lines.rend() ? *furniture
+        : terrain != lines.rend()
+            ? *terrain
+            : lines.front();
+    return legend_value(top.layer, top.value).names;
+}
+
+auto session::in_hand() const -> std::optional<held_mapping> {
+    if (held && held->symbol == symbol) { return held; }
+    const auto found = std::ranges::find(legend, symbol, &legend_symbol::symbol);
+    if (found == legend.end() || found->lines.size() != 1) { return std::nullopt; }
+    const auto& line = found->lines.front();
+    return held_mapping{
+        .symbol = symbol,
+        .layer = line.layer,
+        .value = nlohmann::ordered_json::parse(line.value, nullptr, false)};
+}
+
+auto session::edit_title(const document_edit& edit) const -> std::string {
+    const auto rows = [](const nlohmann::ordered_json& value) {
+        const auto pointer = nlohmann::ordered_json::json_pointer("/object/rows");
+        auto grid = symbol_grid{};
+        if (!value.is_object() || !value.contains(pointer) || !value[pointer].is_array()) {
+            return grid;
+        }
+        for (const auto& row : value[pointer]) {
+            grid.push_back(
+                row.is_string()
+                    ? utf8_display_split(row.get<std::string>())
+                    : std::vector<std::string>{});
+        }
+        return grid;
+    };
+    const auto before = rows(edit.before);
+    const auto after = rows(edit.after);
+    auto painted = std::map<std::string, int>{};
+    for (auto y = 0; y < static_cast<int>(std::min(before.size(), after.size())); ++y) {
+        for (auto x = 0; x < static_cast<int>(after[y].size()); ++x) {
+            if (symbol_at(before, point(x, y)) != after[y][x]) { ++painted[after[y][x]]; }
+        }
+    }
+    if (painted.empty()) { return step_label(edit); }
+    if (painted.size() == 1) {
+        //~ A step of the map editor's history: %1$s is what was painted, such as brick wall, and
+        //~ %2$d on how many squares.
+        return string_format(
+            _("Paint %1$s ×%2$d"), symbol_name(painted.begin()->first), painted.begin()->second);
+    }
+    const auto squares = std::ranges::fold_left(painted | std::views::values, 0, std::plus{});
+    return string_format(vgettext("Paint %d square", "Paint %d squares", squares), squares);
+}
+
+auto session::arm() -> void {
+    if (current->kind || !has_rows()) { return; }
+    current = tools.data();
+    unforced = nullptr;
+    anchor.reset();
 }
 
 auto session::set_mapping(const std::string& field, const std::string& text) -> void {
@@ -1081,6 +1363,8 @@ auto session::apply_mapping() -> void {
         *doc, {.object = object, .layer = mapping_layer, .symbol = mapping_symbol, .value = value});
     if (!set) { notice = set.error(); }
     reload();
+    // A symbol just mapped is what to draw with next.
+    if (set && value && has_rows()) { pick_symbol(mapping_symbol); }
 }
 
 auto session::square_named(const std::string& pointer) const -> std::optional<point> {
@@ -1505,17 +1789,29 @@ auto session::paint(const point& at) -> void {
                 return entry.x.min <= at.x && at.x <= entry.x.max && entry.y.min <= at.y
                     && at.y <= entry.y.max;
             });
-        if (found != std::ranges::rend(placed)) { pick(*found); }
+        if (found != std::ranges::rend(placed)) {
+            pick(*found);
+        } else {
+            status = _(
+                "No placement here. Mark squares with the Select tool, then add one under New "
+                "placement.");
+        }
         return;
     }
     if (!current->kind) {
         symbol = symbol_at(grid, at);
+        held.reset();
         return;
     }
+    // What the catalog put in hand is mapped by the stroke that first draws it.
+    const auto maps =
+        held && held->symbol == symbol
+        && !std::ranges::contains(legend, symbol, &legend_symbol::symbol);
     const auto inks =
         *current->kind == shape_kind::room ? std::vector{symbol, room_fill} : std::vector{symbol};
     for (const auto& ink : inks) {
-        if (const auto refused = bare(ink, true)) {
+        const auto grounded = maps && ink == held->symbol && held->layer == "terrain";
+        if (const auto refused = grounded ? std::nullopt : bare(ink, true)) {
             notice = *refused;
             return;
         }
@@ -1524,18 +1820,35 @@ auto session::paint(const point& at) -> void {
         anchor = at;
         return;
     }
-    const auto drawn = stroke(
-        *doc,
-        {.object = object,
-         .drawn =
-             {.kind = *current->kind,
-              .from = anchor.value_or(at),
-              .to = at,
-              .size = brush,
-              .mirror_x = mirror_x,
-              .mirror_y = mirror_y},
-         .symbol = symbol,
-         .fill_symbol = room_fill});
+    // A room and a fill are named by what they are; any other drawing by what it painted.
+    const auto title =
+        *current->kind == shape_kind::room ? std::string(_("Room"))
+        : *current->kind == shape_kind::fill
+            //~ A step of the map editor's history: %s is what was filled in, such as dirt.
+            ? string_format(_("Fill %s"), symbol_name(symbol))
+            : std::string{};
+    const auto grouped = (maps || !title.empty()) && !doc->grouping();
+    if (grouped) { doc->begin_group(false, title); }
+    const auto mapped =
+        maps ? set_legend(
+                   *doc,
+                   {.object = object, .layer = held->layer, .symbol = symbol, .value = held->value})
+             : std::expected<void, std::string>{};
+    const auto drawn = mapped.and_then([&] {
+        return stroke(
+            *doc,
+            {.object = object,
+             .drawn =
+                 {.kind = *current->kind,
+                  .from = anchor.value_or(at),
+                  .to = at,
+                  .size = brush,
+                  .mirror_x = mirror_x,
+                  .mirror_y = mirror_y},
+             .symbol = symbol,
+             .fill_symbol = room_fill});
+    });
+    if (grouped) { doc->end_group(); }
     anchor.reset();
     notice = drawn ? "" : drawn.error();
     reload();

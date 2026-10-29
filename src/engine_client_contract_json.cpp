@@ -614,6 +614,7 @@ auto body_json( const list_body &body, const bubble_frame & /*frame*/ ) -> json
     if( body.filterable ) { result["filterable"] = true; }
     if( !body.filter.empty() ) { result["filter"] = body.filter; }
     if( !body.empty.empty() ) { result["empty"] = body.empty; }
+    if( body.rows_shown != 0 ) { result["rows_shown"] = body.rows_shown; }
     return result;
 }
 auto body_json( const tabs_body &body, const bubble_frame & /*frame*/ ) -> json

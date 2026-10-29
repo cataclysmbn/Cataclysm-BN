@@ -17,6 +17,7 @@
 #include <map>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 /// The map editor screen's state and view, which editor_session.cpp runs.
@@ -36,6 +37,7 @@ inline constexpr auto save_as_id = "editor:save_as";
 inline constexpr auto new_id = "editor:new";
 inline constexpr auto new_set_id = "editor:new_set";
 inline constexpr auto new_apply_id = "editor:new_apply";
+inline constexpr auto new_folder_id = "editor:new_folder";
 inline constexpr auto object_id = "editor:object";
 inline constexpr auto tool_id = "editor:tool";
 inline constexpr auto symbol_id = "editor:symbol";
@@ -296,8 +298,25 @@ struct diagnostic {
 };
 
 auto catalog_label(const catalog_use& use) -> std::string;
+/// The file at `path` as the player names it: from the player's mods when it is in them.
+auto mods_path(const std::filesystem::path& path) -> std::string;
+/// A catalog entry as its row names it: its name, followed by its id when entries of its name are
+/// listed with it.
+auto catalog_row_label(const catalog_entry& entry) -> std::string;
+/// What the legend layer `layer` placing `id` shows on the map: the thing itself, a group's first
+/// item or usual monster, an NPC's mark or a vehicle's first part; none for what has no look.
+auto layer_look(std::string_view layer, const std::string& id)
+    -> std::optional<engine_client::look>;
+/// What a catalog entry of `kind` named `id` shows on the map, as its layer places it.
+auto catalog_look(catalog_kind kind, const std::string& id) -> std::optional<engine_client::look>;
+/// The id the value a legend layer maps a symbol to names first; none for what only generation
+/// decides, such as a parameter.
+auto first_named(std::string_view layer, const nlohmann::ordered_json& value)
+    -> std::optional<std::string>;
 /// The mapping of `use`'s layer that places `id`, as the legend form writes it.
 auto mapping_of(const catalog_use& use, const std::string& id) -> std::string;
+/// The same as JSON, as a legend line holds it.
+auto mapping_json_of(const catalog_use& use, const std::string& id) -> nlohmann::ordered_json;
 auto tool_label(const tool& value) -> std::string;
 /// The ids that name an entry: a mapgen's overmap terrains, or the id it is nested or updated by;
 /// a palette's, special's or overmap terrain's id.
@@ -314,9 +333,26 @@ auto write_new_file(const std::string& made, const nlohmann::ordered_json& entri
     -> std::expected<void, std::string>;
 /// Writes `made`'s file; the error says why it was not written.
 auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string>;
+/// The id the new file's entry takes: the one typed, else the file's name in snake_case.
+auto new_entry_id(const new_mapgen& made) -> std::string;
 /// The path the new mapgen form suggests: the first `new_mapgen.json`, `new_mapgen_2.json` and on
 /// that the my_mod folder of the player's mods lacks.
 auto free_new_path() -> std::string;
+
+/// The search a catalog tab keeps while another tab is shown.
+struct catalog_search {
+    std::string filter;
+    std::size_t page = 0;
+};
+
+/// What the catalog put in hand that no symbol of the entry maps yet: the symbol it takes, the
+/// mapping the first stroke that draws it writes, and its name.
+struct held_mapping {
+    std::string symbol;
+    std::string layer;
+    nlohmann::ordered_json value;
+    std::string name;
+};
 
 struct session {
     std::optional<document> doc = std::nullopt;
@@ -348,6 +384,8 @@ struct session {
     std::vector<neighbour_square> beside;
     std::map<std::size_t, std::vector<legend_symbol>> other_legends;
     std::string symbol;
+    /// What the catalog put in hand under `symbol` while no symbol mapped it.
+    std::optional<held_mapping> held = std::nullopt;
     /// The symbol inside a room.
     std::string room_fill;
     /// The side of the square of squares a pencil, line or outline draws with.
@@ -385,6 +423,8 @@ struct session {
     std::string field_pointer;
     std::string field_value;
     std::vector<legend_symbol> legend;
+    /// Why the entry's legend could not be read; empty while it could.
+    std::string legend_error;
     std::vector<diagnostic> diagnostics;
     /// The seed of the preview while one is shown; it follows every edit.
     std::optional<unsigned int> seed = std::nullopt;
@@ -421,6 +461,8 @@ struct session {
     const catalog_use* catalog = catalog_uses.data();
     std::string catalog_filter;
     std::size_t catalog_page = 0;
+    /// The searches of the catalog tabs not shown, by tab.
+    std::map<std::string, catalog_search> catalog_searches;
     /// Whether the catalog's filter and page are those of a special's.
     bool catalog_of_special = false;
 
@@ -524,8 +566,22 @@ struct session {
 
     /// Draws with `picked` and puts its mapping in the legend form: the layer it places on top,
     /// its own mapping before a palette's, and what it places there; terrain and nothing for a
-    /// symbol nothing maps.
+    /// symbol nothing maps. A drawing tool comes in hand with it, and the status says so.
     auto pick_symbol(const std::string& picked) -> void;
+    /// Takes the catalog's entry `id` of `use`, named `name`, in hand: the symbol that maps it
+    /// alone, else a symbol the legend lacks, which the next stroke maps to it; as `pick_symbol`.
+    auto take(const catalog_use& use, const std::string& id, const std::string& name) -> void;
+    /// What `glyph` places on top by name: its furniture, else its terrain, else what it places
+    /// first; the symbol itself for one that places nothing.
+    auto symbol_name(const std::string& glyph) const -> std::string;
+    /// What is in hand: the mapping held, or the one line the symbol drawn with maps; none for a
+    /// symbol of several lines or none.
+    auto in_hand() const -> std::optional<held_mapping>;
+    /// Puts the pencil in hand unless a drawing tool is, on an entry with rows.
+    auto arm() -> void;
+    /// What `edit` did in words: the symbol a drawing painted by name and on how many squares, else
+    /// the member it changed.
+    auto edit_title(const document_edit& edit) const -> std::string;
 
     auto set_mapping(const std::string& field, const std::string& text) -> void;
 

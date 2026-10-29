@@ -20,6 +20,7 @@
 #include "vehicle/vehicle.h"
 
 #include <algorithm>
+#include <array>
 #include <map>
 #include <optional>
 #include <ranges>
@@ -303,6 +304,62 @@ auto export_chunk(
     sized.update(*object);
     return nlohmann::ordered_json{
         {"type", "mapgen"}, {"method", "json"}, {"nested_mapgen_id", id}, {"object", sized}};
+}
+
+auto keep_symbols(nlohmann::ordered_json exported, const std::vector<legend_symbol>& legend)
+    -> nlohmann::ordered_json {
+    const auto layers = std::array{"terrain", "furniture", "traps", "fields"};
+    const auto mapped = [&](const std::string& layer) -> const nlohmann::ordered_json& {
+        static const auto none = nlohmann::ordered_json::object();
+        return exported.contains(layer) ? exported[layer] : none;
+    };
+    // The kind of square each own symbol of the export draws; one with fields is no plain kind.
+    const auto kind_of = [&](const std::string& symbol) -> std::optional<kind> {
+        const auto id = [&](const char* const layer) {
+            return mapped(layer).value(symbol, std::string{});
+        };
+        if (id("terrain").empty() || mapped("fields").contains(symbol)) { return std::nullopt; }
+        return kind{
+            .ter = ter_str_id(id("terrain")).id(),
+            .furn = id("furniture").empty() ? furn_id("f_null") : furn_str_id(id("furniture")).id(),
+            .trap = id("traps").empty() ? tr_null : trap_str_id(id("traps")).id()};
+    };
+    const auto same = [](const kind& a, const kind& b) { return !(a < b) && !(b < a); };
+    const auto swap = [&](const char a, const char b) {
+        for (auto& row : exported["rows"]) {
+            auto text = row.get<std::string>();
+            std::ranges::transform(text, text.begin(), [&](const char c) {
+                return c == a ? b : c == b ? a : c;
+            });
+            row = text;
+        }
+        for (const auto* const layer : layers) {
+            if (!exported.contains(layer)) { continue; }
+            auto& members = exported[layer];
+            const auto at = std::string(1, a);
+            const auto bt = std::string(1, b);
+            auto moved = nlohmann::ordered_json::object();
+            for (const auto& [key, value] : members.items()) {
+                moved[key == at ? bt : key == bt ? at : key] = value;
+            }
+            members = std::move(moved);
+        }
+    };
+    for (const auto& symbol : legend) {
+        const auto wanted = symbol.symbol.size() == 1 ? plain_kind(symbol) : std::nullopt;
+        if (!wanted) { continue; }
+        const auto own =
+            mapped("terrain").items()
+            | std::views::transform([](const auto& member) { return member.key(); })
+            | std::ranges::to<std::vector>();
+        const auto found = std::ranges::find_if(own, [&](const std::string& key) {
+            const auto drawn = kind_of(key);
+            return drawn && same(*drawn, *wanted);
+        });
+        if (found == own.end() || *found == symbol.symbol) { continue; }
+        swap(found->front(), symbol.symbol.front());
+    }
+    return exported;
 }
 
 } // namespace editor
