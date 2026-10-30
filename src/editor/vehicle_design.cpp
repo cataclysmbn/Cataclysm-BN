@@ -1257,6 +1257,17 @@ auto design_step_label(const document_edit& edit) -> std::string {
     if (removed.size() == 1 && installed.empty()) {
         return at_mount(_("Remove %s at %d,%d"), part_name(removed[0].part), removed[0].mount);
     }
+    // A part swapped for another shape or kind of it on its mount.
+    if (installed.size() == 1 && removed.size() == 1 && installed[0].mount == removed[0].mount
+        && vpart_id(installed[0].part).is_valid() && vpart_id(removed[0].part).is_valid()) {
+        const auto labels = part_labels(
+            {&*vpart_id(removed[0].part), &*vpart_id(installed[0].part)});
+        //~ A step of the vehicle editor that swapped a part for another: the part before, the
+        //~ part after and their mount.
+        return string_format(
+            _("Change %1$s to %2$s at %3$d,%4$d"), labels[0], labels[1], installed[0].mount.x,
+            installed[0].mount.y);
+    }
     if (!installed.empty() && removed.empty()) {
         // The same parts on each mount, in the order they went on, as a wheel and its hub.
         auto stacks = std::map<point, std::vector<std::string>>{};
@@ -1306,7 +1317,22 @@ auto design_step_label(const document_edit& edit) -> std::string {
         return !edit.before.contains(at) || edit.before[at] != edit.after[at];
     });
     if (before == after && changed != parts.end()) {
-        return at_mount(_("Set %s at %d,%d"), part_name(changed->part), changed->mount);
+        const auto at = nlohmann::ordered_json::json_pointer(changed->pointer);
+        const auto fuel_of = [](const nlohmann::ordered_json& entry) {
+            return entry.is_object() ? entry.value("fuel", "") : std::string{};
+        };
+        const auto was = edit.before.contains(at) ? fuel_of(edit.before[at]) : std::string{};
+        const auto fuel = fuel_of(edit.after[at]);
+        const auto name = part_name(changed->part);
+        if (was != fuel) {
+            const auto type = itype_id(fuel);
+            //~ A step of the vehicle editor: the tank, and the fuel it is filled with.
+            return fuel.empty()
+                     ? string_format(_("Empty %s"), name)
+                     : string_format(_("Set fuel of %1$s to %2$s"), name,
+                                     type.is_valid() ? item::nname(type) : fuel);
+        }
+        return at_mount(_("Set %s at %d,%d"), name, changed->mount);
     }
     const auto spawns = [](const nlohmann::ordered_json& prototype) {
         const auto items = prototype.value("items", nlohmann::ordered_json::array());

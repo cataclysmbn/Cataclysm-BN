@@ -247,8 +247,9 @@ auto item_spawn_name(const nlohmann::ordered_json& entry) -> std::string;
 /// `names` as a sentence lists them: "a", "a and b", "a, b and c".
 auto named_together(const std::vector<std::string>& names) -> std::string;
 
-/// What an edit of a prototype did, in a designer's words: the part installed, removed, reordered
-/// or set and its mount, or the item spawn added or removed; else what `step_label` says.
+/// What an edit of a prototype did, in a designer's words: the parts installed, removed, swapped,
+/// reordered or set and their mount, a part's fuel and what it became, or the item spawn added
+/// or removed; else what `step_label` says.
 auto design_step_label(const document_edit& edit) -> std::string;
 
 /// What a vehicle part is for, as the editor's palette heads its parts: the game names no

@@ -1109,6 +1109,17 @@ struct editing: session {
             notice = string_format(_("%s is no liquid a tank holds."), text);
             return;
         }
+        if (key == "fuel") {
+            if (change(set_part_member(
+                    prototype(),
+                    {.index = *index,
+                     .key = key,
+                     .value = text.empty() ? std::nullopt
+                                           : std::optional(nlohmann::ordered_json(text))}))) {
+                say_step();
+            }
+            return;
+        }
         auto value = std::optional<nlohmann::ordered_json>{};
         if (!text.empty()) {
             value = nlohmann::ordered_json(text);
@@ -1122,6 +1133,14 @@ struct editing: session {
             }
         }
         change(set_part_member(prototype(), {.index = *index, .key = key, .value = value}));
+    }
+
+    /// Says what the step just made did, as the history names it.
+    auto say_step() -> void {
+        const auto steps = history();
+        if (steps.depth == 0) { return; }
+        //~ What the vehicle editor did, as its history names the step.
+        said = string_format(_("%s."), steps.labels[steps.depth - 1]);
     }
 
     /// Sets the fewest (or, `most`, the most) rounds a turret spawns loaded with; a turret with
