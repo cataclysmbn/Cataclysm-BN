@@ -24,6 +24,8 @@
 #    include "map/map.h"
 #    include "map_helpers.h"
 #    include "mod_manager.h"
+#    include "options.h"
+#    include "options_helpers.h"
 #    include "output.h"
 #    include "path_info.h"
 #    include "point.h"
@@ -53,6 +55,8 @@ namespace ec = engine_client;
 
 struct screen_guard {
     const game_client::memory::scoped_state memory;
+    /// Most tests read ids and JSON, which Simple mode hides.
+    const override_option advanced{"EDITOR_ADVANCED", "true"};
     bool old_test_mode = test_mode;
     int old_termx = TERMX;
     int old_termy = TERMY;
@@ -5888,6 +5892,51 @@ TEST_CASE(
     };
     CHECK(walk(steps) == steps.size());
     CHECK(saved_fuels(mods, "tanker.json") == std::map<int, std::string>{{-1, "diesel"}});
+}
+
+TEST_CASE(
+    "the vehicle editor in Simple mode shows no ids or JSON, and Advanced mode is kept",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto simple = override_option("EDITOR_ADVANCED", "false");
+    const auto mods = my_mod_folder{};
+    const auto ids = [](const std::vector<ec::row>& listed) {
+        return std::ranges::count_if(listed, [](const ec::row& entry) {
+            return std::ranges::
+                contains(entry.columns, std::string("id"), &game_client::interaction_column::key);
+        });
+    };
+    const auto fields = [](const ec::screen_view& screen, const std::string& id) {
+        return body<ec::form_body>(part(screen, id)).fields
+             | std::views::transform(&ec::form_field::id) | std::ranges::to<std::vector>();
+    };
+    const auto steps = std::vector<walk_step>{
+        [&](const auto& screen) {
+            CHECK(ids(rows(screen, "vehicle:prototypes")) == 0);
+            CHECK(affordance(screen, "vehicle:advanced").group == "View");
+            CHECK(affordance(screen, "vehicle:advanced").label == "Show advanced settings");
+            return invoke("vehicle:new", {.text = "Simple kart"});
+        },
+        [&](const auto& screen) {
+            CHECK(ids(rows(screen, "vehicle:parts")) == 0);
+            CHECK_FALSE(has_affordance(screen, "vehicle:show:json"));
+            return invoke("vehicle:show:vehicle");
+        },
+        [&](const auto& screen) {
+            CHECK(fields(screen, "vehicle:props") == std::vector<std::string>{"name"});
+            return invoke("vehicle:advanced");
+        },
+        [&](const auto& screen) {
+            CHECK(ids(rows(screen, "vehicle:parts")) > 0);
+            CHECK(has_affordance(screen, "vehicle:show:json"));
+            CHECK(std::ranges::contains(fields(screen, "vehicle:props"), std::string("flags")));
+            CHECK(affordance(screen, "vehicle:advanced").label == "Hide advanced settings");
+            return invoke("vehicle:save");
+        },
+    };
+    CHECK(walk(steps) == steps.size());
+    // The choice is the player's, kept for the next time either editor opens.
+    CHECK(get_option<bool>("EDITOR_ADVANCED"));
 }
 
 #endif // CATA_MCP
