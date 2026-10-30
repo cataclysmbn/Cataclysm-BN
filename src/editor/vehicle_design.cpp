@@ -29,6 +29,7 @@
 
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <cctype>
 #include <charconv>
 #include <fstream>
@@ -973,6 +974,32 @@ auto remove_part(
     return redrawn(std::move(next));
 }
 
+auto entry_part(const nlohmann::ordered_json& entry) -> std::string {
+    return entry.is_object() ? entry.value("part", "") : entry.get<std::string>();
+}
+
+auto given_members(
+    const nlohmann::ordered_json& before, const nlohmann::ordered_json& after,
+    const std::vector<placed_entry>& placed) -> nlohmann::ordered_json {
+    // How many of each part each mount had, so the parts beyond them are the new ones.
+    auto had = std::map<std::pair<point, std::string>, int>{};
+    for (const auto& entry : design_parts(before)) { ++had[{entry.mount, entry.part}]; }
+    auto left = placed;
+    auto next = after;
+    for (const auto& entry : design_parts(after)) {
+        if (had[{entry.mount, entry.part}]-- > 0 || entry.from_palette) { continue; }
+        const auto found = std::ranges::find_if(left, [&](const placed_entry& place) {
+            return place.mount == entry.mount && entry_part(place.entry) == entry.part;
+        });
+        if (found == left.end()) { continue; }
+        if (found->entry.is_object()) {
+            next[nlohmann::ordered_json::json_pointer(entry.pointer)] = found->entry;
+        }
+        left.erase(found);
+    }
+    return next;
+}
+
 auto set_part_member(const nlohmann::ordered_json& prototype, const part_member& change)
     -> std::expected<nlohmann::ordered_json, std::string> {
     const auto parts = design_parts(prototype);
@@ -1238,19 +1265,84 @@ auto item_spawn_name(const nlohmann::ordered_json& entry) -> std::string {
     return join(names, ", ");
 }
 
+auto named_together(const std::vector<std::string>& names) -> std::string {
+    if (names.size() < 2) { return names.empty() ? std::string{} : names.front(); }
+    const auto head = join(std::vector(names.begin(), names.end() - 1), ", ");
+    //~ The last two of a list of names, such as "wheel hub assembly and wheel".
+    return string_format(_("%1$s and %2$s"), head, names.back());
+}
+
 auto design_step_label(const document_edit& edit) -> std::string {
     if (!edit.before.is_object() || !edit.after.is_object()) { return step_label(edit); }
     const auto before = mounted(edit.before);
     const auto after = mounted(edit.after);
-    const auto installed = added(before, after);
-    const auto removed = added(after, before);
+    auto installed = added(before, after);
+    auto removed = added(after, before);
+    // Beside other changes, a part that took another shape of it on its mount, as frames joining
+    // the ones installed beside them do, goes without saying.
+    const auto reshaped = [&](const mounted_part& from, const mounted_part& to) {
+        const auto a = vpart_id(from.part);
+        const auto b = vpart_id(to.part);
+        return from.mount == to.mount && a.is_valid() && b.is_valid() && a != b
+            && a->name() == b->name() && a->item == b->item;
+    };
+    auto kept_installed = std::vector<mounted_part>{};
+    auto kept_removed = removed;
+    for (const auto& entry : installed) {
+        const auto found = std::ranges::find_if(kept_removed, [&](const mounted_part& gone) {
+            return reshaped(gone, entry);
+        });
+        if (found == kept_removed.end()) {
+            kept_installed.push_back(entry);
+        } else {
+            kept_removed.erase(found);
+        }
+    }
+    if (!kept_installed.empty() || !kept_removed.empty()) {
+        installed = std::move(kept_installed);
+        removed = std::move(kept_removed);
+    } else if (installed.size() > 1) {
+        // Parts of one kind that all took another shape of it.
+        const auto names = part_names(installed);
+        if (names.size() == 1) {
+            //~ A step of the vehicle editor that gave many parts of one kind another shape: its
+            //~ name and how many.
+            return string_format(_("Change shape of %1$s ×%2$d"), names[0], installed.size());
+        }
+    }
     if (installed.size() == 1 && removed.empty()) {
         return at_mount(_("Install %s at %d,%d"), part_name(installed[0].part), installed[0].mount);
     }
     if (removed.size() == 1 && installed.empty()) {
         return at_mount(_("Remove %s at %d,%d"), part_name(removed[0].part), removed[0].mount);
     }
+    // A part swapped for another shape or kind of it on its mount.
+    if (installed.size() == 1 && removed.size() == 1 && installed[0].mount == removed[0].mount
+        && vpart_id(installed[0].part).is_valid() && vpart_id(removed[0].part).is_valid()) {
+        const auto labels = part_labels(
+            {&*vpart_id(removed[0].part), &*vpart_id(installed[0].part)});
+        //~ A step of the vehicle editor that swapped a part for another: the part before, the
+        //~ part after and their mount.
+        return string_format(
+            _("Change %1$s to %2$s at %3$d,%4$d"), labels[0], labels[1], installed[0].mount.x,
+            installed[0].mount.y);
+    }
     if (!installed.empty() && removed.empty()) {
+        // The same parts on each mount, in the order they went on, as a wheel and its hub.
+        auto stacks = std::map<point, std::vector<std::string>>{};
+        for (const auto& entry : installed) {
+            stacks[entry.mount].push_back(part_name(entry.part));
+        }
+        const auto& first = stacks.begin()->second;
+        if (first.size() > 1
+            && std::ranges::all_of(stacks | std::views::values, [&](const auto& names) {
+                   return names == first;
+               })) {
+            return stacks.size() == 1
+                     ? at_mount(_("Install %s at %d,%d"), named_together(first),
+                                stacks.begin()->first)
+                     : string_format(_("Install %1$s ×%2$d"), named_together(first), stacks.size());
+        }
         const auto names = part_names(installed);
         if (names.size() == 1) {
             //~ A step of the vehicle editor that installed one part on many mounts: its name and
@@ -1277,14 +1369,49 @@ auto design_step_label(const document_edit& edit) -> std::string {
         const auto moved = std::ranges::mismatch(before, after).in1;
         return string_format(_("Reorder parts at %d,%d"), moved->mount.x, moved->mount.y);
     }
-    // A part's own members, such as a tank's fuel.
-    const auto parts = design_parts(edit.after);
-    const auto changed = std::ranges::find_if(parts, [&](const design_part& entry) {
+    // A part's own members, such as a tank's fuel, on one part or on many of one kind.
+    const auto changed =
+        design_parts(edit.after) | std::views::filter([&](const design_part& entry) {
+            const auto at = nlohmann::ordered_json::json_pointer(entry.pointer);
+            return !edit.before.contains(at) || edit.before[at] != edit.after[at];
+        })
+        | std::ranges::to<std::vector>();
+    const auto fuel_of = [](const nlohmann::ordered_json& prototype, const design_part& entry) {
         const auto at = nlohmann::ordered_json::json_pointer(entry.pointer);
-        return !edit.before.contains(at) || edit.before[at] != edit.after[at];
-    });
-    if (before == after && changed != parts.end()) {
-        return at_mount(_("Set %s at %d,%d"), part_name(changed->part), changed->mount);
+        const auto part = prototype.contains(at) ? prototype[at] : nlohmann::ordered_json();
+        return part.is_object() ? part.value("fuel", "") : std::string{};
+    };
+    if (before == after && !changed.empty()) {
+        const auto name = part_name(changed[0].part);
+        // Parts of more kinds go by the first.
+        const auto count =
+            std::ranges::all_of(
+                changed, [&](const design_part& entry) { return part_name(entry.part) == name; })
+                ? changed.size()
+                : 1;
+        const auto fuel = fuel_of(edit.after, changed[0]);
+        const auto refuelled =
+            std::ranges::all_of(changed | std::views::take(count), [&](const design_part& entry) {
+                return fuel_of(edit.after, entry) == fuel && fuel_of(edit.before, entry) != fuel;
+            });
+        if (refuelled) {
+            const auto type = itype_id(fuel);
+            const auto fuel_name = type.is_valid() ? item::nname(type) : fuel;
+            if (count == 1) {
+                //~ A step of the vehicle editor: the tank, and the fuel it is filled with.
+                return fuel.empty()
+                         ? string_format(_("Empty %s"), name)
+                         : string_format(_("Set fuel of %1$s to %2$s"), name, fuel_name);
+            }
+            //~ A step of the vehicle editor that set the fuel of many tanks of one kind: their
+            //~ name, how many and the fuel.
+            return fuel.empty()
+                     ? string_format(_("Empty %1$s ×%2$d"), name, count)
+                     : string_format(_("Set fuel of %1$s ×%2$d to %3$s"), name, count, fuel_name);
+        }
+        //~ A step of the vehicle editor that set many parts of one kind: their name and how many.
+        return count == 1 ? at_mount(_("Set %s at %d,%d"), name, changed[0].mount)
+                          : string_format(_("Set %1$s ×%2$d"), name, count);
     }
     const auto spawns = [](const nlohmann::ordered_json& prototype) {
         const auto items = prototype.value("items", nlohmann::ordered_json::array());
@@ -1399,12 +1526,16 @@ auto category_name(const part_category category) -> std::string {
 
 auto read_part_catalog() -> part_catalog {
     auto uses = std::map<vpart_id, int>{};
+    auto vehicles = std::map<vpart_id, int>{};
     auto filled = std::map<itype_id, int>{};
     for (const auto& id : vehicle_prototype::get_all()) {
+        auto installed = std::set<vpart_id>{};
         for (const auto& part : id->parts) {
             ++uses[part.part];
+            installed.insert(part.part);
             if (!part.fuel.is_null()) { ++filled[part.fuel]; }
         }
+        for (const auto& part : installed) { ++vehicles[part]; }
     }
     auto kinds = std::vector<part_kind>{};
     auto found = std::map<std::string, std::size_t>{};
@@ -1431,11 +1562,231 @@ auto read_part_catalog() -> part_catalog {
     return {
         .kinds = std::move(kinds),
         .tank_fuels = std::move(fuels),
-        .frame = frames.empty()
-                   ? std::nullopt
-                   : std::optional(std::ranges::max_element(frames, {}, [](const auto& entry) {
-                                       return entry.second;
-                                   })->first)};
+        .frame =
+            frames.empty()
+                ? std::nullopt
+                : std::optional(
+                      std::ranges::
+                          max_element(frames, {}, [](const auto& entry) { return entry.second; })
+                              ->first),
+        .uses = std::move(uses),
+        .vehicles = std::move(vehicles)};
+}
+
+auto most_installed(
+    const part_catalog& catalog, const std::function<auto(const vpart_info&)->bool>& wanted)
+    -> const vpart_info* {
+    const auto candidates =
+        vpart_info::get_all() | std::views::filter([&](const vpart_info& part) {
+            return !part.has_flag("NOINSTALL") && wanted(part);
+        })
+        | std::views::transform([](const vpart_info& part) { return &part; })
+        | std::ranges::to<std::vector>();
+    if (candidates.empty()) { return nullptr; }
+    const auto uses = [&](const vpart_info* part) {
+        const auto found = catalog.uses.find(part->get_id());
+        return found == catalog.uses.end() ? 0 : found->second;
+    };
+    // The first of the most installed, in the game's order.
+    return *std::ranges::max_element(candidates, [&](const vpart_info* a, const vpart_info* b) {
+        return uses(a) < uses(b);
+    });
+}
+
+auto in_front_half(const vehicle& veh, const point& at) -> bool {
+    const auto stacks = mount_stacks(veh);
+    if (stacks.empty()) { return false; }
+    const auto [low, high] = std::ranges::minmax(
+        stacks | std::views::keys | std::views::transform(&point::x));
+    return at.x * 2 > low + high;
+}
+
+auto prerequisite_of(const part_catalog& catalog, const vehicle& veh, const part_install& install)
+    -> std::optional<vpart_id> {
+    const auto id = vpart_id(install.part);
+    if (!id.is_valid()) { return std::nullopt; }
+    const auto here =
+        veh.parts_at_relative(tripoint_mnt_veh(install.mount.x, install.mount.y, 0), false);
+    const auto missing =
+        id->get_flags() | std::views::transform([](const std::string& flag) {
+            return json_flag::get(flag).requires_flag();
+        })
+        | std::views::filter([&](const std::string& needed) {
+              return !needed.empty() && std::ranges::none_of(here, [&](const int index) {
+                  return veh.part_info(index).has_flag(needed);
+              });
+          })
+        | std::ranges::to<std::vector>();
+    if (missing.empty()) { return std::nullopt; }
+    const auto& needed = missing.front();
+    const auto front = in_front_half(veh, install.mount);
+    const auto refusal = [&](const vpart_info& part) {
+        return mount_refusal(veh, install.mount, part.get_id());
+    };
+    const auto fits = [&](const vpart_info& part) {
+        return part.has_flag(needed) && !refusal(part);
+    };
+    const auto* chosen = most_installed(catalog, [&](const vpart_info& part) {
+        return part.has_flag("STEERABLE") == front && fits(part);
+    });
+    if (!chosen) { chosen = most_installed(catalog, fits); }
+    return chosen ? std::optional(chosen->get_id()) : std::nullopt;
+}
+
+auto steerable_of(const part_catalog& catalog, const vpart_info& part) -> const vpart_info* {
+    return most_installed(catalog, [&](const vpart_info& other) {
+        return other.has_flag("STEERABLE") && other.item == part.item
+            && other.location == part.location
+            && std::ranges::all_of(part.get_flags(), [&](const std::string& flag) {
+                   return other.has_flag(flag);
+               });
+    });
+}
+
+namespace {
+
+/// The sides of its mount a line shape's symbol joins, as the game draws a vehicle facing up:
+/// front, right, back and left are the bits 1, 2, 4 and 8; none for a symbol that is no line.
+auto joined_sides(const int symbol) -> std::optional<int> {
+    switch (symbol) {
+        case 'j':
+            return 0b0101;
+        case 'h':
+            return 0b1010;
+        case 'c':
+            return 0b1111;
+        case 'y':
+            return 0b0110;
+        case 'u':
+            return 0b1100;
+        case 'n':
+            return 0b1001;
+        case 'b':
+            return 0b0011;
+        default:
+            return std::nullopt;
+    }
+}
+
+/// The mounts beside a mount, on the sides of `joined_sides`, in order.
+constexpr auto sides = std::array{point_east, point_south, point_west, point_north};
+
+/// A part of a kind with line shapes on its mount of a design.
+struct line_part {
+    std::size_t index;
+    const part_kind* kind;
+    vpart_id id;
+    point mount;
+    std::string pointer;
+};
+
+auto line_parts(const nlohmann::ordered_json& prototype, const part_catalog& catalog)
+    -> std::vector<line_part> {
+    auto lines = std::vector<line_part>{};
+    for (const auto& [index, part] : design_parts(prototype) | std::views::enumerate) {
+        const auto id = vpart_id(part.part);
+        if (part.from_palette || !id.is_valid()) { continue; }
+        const auto kind = std::ranges::find_if(catalog.kinds, [&](const part_kind& entry) {
+            return std::ranges::contains(entry.shapes, id, &vpart_info::get_id);
+        });
+        if (kind == catalog.kinds.end()
+            || std::ranges::none_of(kind->shapes, [](const vpart_info* shape) {
+                   return joined_sides(shape->sym).has_value();
+               })) {
+            continue;
+        }
+        lines.push_back(
+            {.index = static_cast<std::size_t>(index),
+             .kind = &*kind,
+             .id = id,
+             .mount = part.mount,
+             .pointer = part.pointer});
+    }
+    return lines;
+}
+
+/// The shape of `kind` that joins a part to its neighbours of the kind on `joined` sides: a line
+/// through one, a corner of two, a crossing of three or four; none for no neighbour or no such
+/// shape.
+auto joining_shape(const part_kind& kind, const part_catalog& catalog, const int joined)
+    -> std::optional<vpart_id> {
+    const auto count = std::popcount(static_cast<unsigned>(joined));
+    if (count == 0) { return std::nullopt; }
+    const auto wanted =
+        count == 1 ? (joined & 0b0101 ? 0b0101 : 0b1010)
+        : count == 3
+            ? 0b1111
+            : joined;
+    const auto* chosen = most_installed(catalog, [&](const vpart_info& part) {
+        return std::ranges::contains(kind.shapes, &part) && joined_sides(part.sym) == wanted;
+    });
+    return chosen ? std::optional(chosen->get_id()) : std::nullopt;
+}
+
+} // namespace
+
+auto joined_shapes(
+    const nlohmann::ordered_json& before, const nlohmann::ordered_json& after,
+    const part_catalog& catalog) -> nlohmann::ordered_json {
+    const auto old_lines = line_parts(before, catalog);
+    const auto new_lines = line_parts(after, catalog);
+    const auto has =
+        [](const std::vector<line_part>& lines, const part_kind* kind, const point& at) {
+            return std::ranges::any_of(lines, [&](const line_part& line) {
+                return line.kind == kind && line.mount == at;
+            });
+        };
+    const auto joined = [&](const std::vector<line_part>& lines, const line_part& part) {
+        auto bits = 0;
+        for (const auto& [bit, side] : sides | std::views::enumerate) {
+            if (has(lines, part.kind, part.mount + side)) { bits |= 1 << bit; }
+        }
+        return bits;
+    };
+    // The mounts that gained or lost a part of a kind.
+    auto changed = std::set<point>{};
+    for (const auto& line : new_lines) {
+        if (!has(old_lines, line.kind, line.mount)) { changed.insert(line.mount); }
+    }
+    for (const auto& line : old_lines) {
+        if (!has(new_lines, line.kind, line.mount)) { changed.insert(line.mount); }
+    }
+    auto next = after;
+    for (const auto& line : new_lines) {
+        const auto near =
+            changed.contains(line.mount) || std::ranges::any_of(sides, [&](const point& side) {
+                return changed.contains(line.mount + side);
+            });
+        if (!near) { continue; }
+        // A shape its neighbours did not give it was picked by hand, and stays.
+        if (has(old_lines, line.kind, line.mount)) {
+            const auto was = joining_shape(*line.kind, catalog, joined(old_lines, line));
+            if (was && *was != line.id) { continue; }
+        }
+        const auto shape = joining_shape(*line.kind, catalog, joined(new_lines, line));
+        if (shape && *shape != line.id) {
+            // A part with members of its own names itself by its `part`.
+            auto& entry = next[nlohmann::ordered_json::json_pointer(line.pointer)];
+            (entry.is_object() ? entry["part"] : entry) = shape->str();
+        }
+    }
+    return next;
+}
+
+auto search_rank(const std::string& name, const std::string& id, const std::string& filter)
+    -> std::optional<int> {
+    const auto wanted = to_lower_case(trim(filter));
+    const auto named = to_lower_case(name);
+    if (named == wanted) { return 0; }
+    auto found = named.find(wanted);
+    if (found == std::string::npos) {
+        return lcmatch(id, wanted) ? std::optional(3) : std::nullopt;
+    }
+    // A name that starts with it or has a word that does, as "vehicle tank" for "tank".
+    for (; found != std::string::npos; found = named.find(wanted, found + 1)) {
+        if (found == 0 || !std::isalnum(static_cast<unsigned char>(named[found - 1]))) { return 1; }
+    }
+    return 2;
 }
 
 auto part_catalog::shapes_of(const vpart_id& id) const -> std::vector<const vpart_info*> {

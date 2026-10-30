@@ -3,7 +3,9 @@
 #include "editor/catalog.h"
 #include "editor/document.h"
 #include "editor/history_label.h"
+#include "editor/library.h"
 #include "editor/mapgen_stroke.h"
+#include "editor/vehicle_check.h"
 #include "editor/vehicle_design.h"
 #include "engine_client_component.h"
 #include "point.h"
@@ -49,7 +51,21 @@ inline constexpr auto stroke_end_id = "vehicle:stroke_end";
 inline constexpr auto mirror_sides_id = "vehicle:mirror_sides";
 inline constexpr auto mirror_ends_id = "vehicle:mirror_ends";
 inline constexpr auto copy_mounts_id = "vehicle:copy_mounts";
+inline constexpr auto copy_settings_id = "vehicle:copy_settings";
+inline constexpr auto paste_settings_id = "vehicle:paste_settings";
 inline constexpr auto cut_mounts_id = "vehicle:cut_mounts";
+inline constexpr auto clip_turn_id = "vehicle:clip_turn";
+inline constexpr auto clip_flip_sides_id = "vehicle:clip_flip_sides";
+inline constexpr auto clip_flip_ends_id = "vehicle:clip_flip_ends";
+inline constexpr auto clip_text_id = "vehicle:clip_text";
+inline constexpr auto show_clip_text_id = "vehicle:show_clip_text";
+inline constexpr auto paste_text_id = "vehicle:paste_text";
+inline constexpr auto library_id = "vehicle:library";
+inline constexpr auto library_save_id = "vehicle:library_save";
+inline constexpr auto library_take_id = "vehicle:library_take";
+inline constexpr auto marked_kinds_id = "vehicle:marked_kinds";
+inline constexpr auto replace_kind_id = "vehicle:replace_kind";
+inline constexpr auto delete_kind_id = "vehicle:delete_kind";
 inline constexpr auto delete_mounts_id = "vehicle:delete_mounts";
 inline constexpr auto view_cw_id = "vehicle:view_cw";
 inline constexpr auto view_ccw_id = "vehicle:view_ccw";
@@ -59,6 +75,7 @@ inline constexpr auto new_id = "vehicle:new";
 inline constexpr auto turn_cw_id = "vehicle:turn_cw";
 inline constexpr auto turn_ccw_id = "vehicle:turn_ccw";
 /// The affordance that shows a tab of the design or vehicles column is this and the tab's key.
+inline constexpr auto advanced_id = "vehicle:advanced";
 inline constexpr auto show_prefix = std::string_view("vehicle:show:");
 inline constexpr auto part_filter_id = "vehicle:part_filter";
 inline constexpr auto part_page_id = "vehicle:part_page";
@@ -73,6 +90,7 @@ inline constexpr auto export_id = "vehicle:export";
 inline constexpr auto spawn_form_id = "vehicle:spawn_form";
 inline constexpr auto spawn_set_id = "vehicle:spawn_set";
 inline constexpr auto spawn_id = "vehicle:spawn";
+inline constexpr auto test_drive_id = "vehicle:test_drive";
 inline constexpr auto copy_id = "vehicle:copy";
 inline constexpr auto paste_id = "vehicle:paste";
 inline constexpr auto edit_id = "vehicle:edit";
@@ -94,12 +112,24 @@ inline constexpr auto item_kind_id = "vehicle:item_kind";
 inline constexpr auto item_filter_id = "vehicle:item_filter";
 inline constexpr auto item_page_id = "vehicle:item_page";
 inline constexpr auto item_pick_id = "vehicle:item_pick";
+inline constexpr auto check_id = "vehicle:check";
+/// The affordance that fixes a failed check of `check_id` is this and the check's key.
+inline constexpr auto fix_prefix = std::string_view("vehicle:fix:");
 
 /// The mounts the grid shows, from its north-west corner to its south-east one.
 struct mount_frame {
     point low;
     point high;
     auto operator==(const mount_frame&) const -> bool = default; // *NOPAD*
+};
+
+/// The settings of a part Copy settings took, for Paste settings to give parts of its kind.
+struct part_settings {
+    /// The id of the first shape of its kind.
+    std::string kind;
+    std::string name;
+    /// Its members but its `part`.
+    nlohmann::ordered_json members = nlohmann::ordered_json::object();
 };
 
 /// The frame of `points` and `margin` mounts around them.
@@ -113,11 +143,15 @@ struct live_step {
 };
 
 /// A mount of what was copied: where it lies from the north-west corner of the copy, and its
-/// parts in the order they were installed.
+/// parts in the order they were installed, as the prototype's entries name them with their
+/// settings.
 struct clip_mount {
     point offset;
-    std::vector<std::string> parts;
+    std::vector<nlohmann::ordered_json> parts;
 };
+
+/// The clip as the library and text keep it, which the Paste tool takes again.
+auto clip_json(const std::vector<clip_mount>& clip) -> nlohmann::ordered_json;
 
 /// What a click on a mount of the grid does, the affordance that picks it and its keys, as the
 /// map editor's tools have them; a tool that draws the part in hand has the shape it draws, which
@@ -217,6 +251,12 @@ struct session {
     std::optional<mount_frame> selection;
     /// What Copy or Cut took, which the Paste tool installs where it clicks.
     std::vector<clip_mount> clip;
+    /// Whether the clip shows as text to share, where text pasted becomes the clip.
+    bool clip_text_shown = false;
+    /// The pieces the player keeps in the library.
+    std::vector<library_piece> library;
+    /// What Copy settings took.
+    std::optional<part_settings> copied;
     /// Whether a drawing tool also draws side to side across the vehicle's middle, or end to
     /// end, as the map editor's mirrors.
     bool mirror_sides = false;
@@ -261,6 +301,11 @@ struct session {
     auto picked_here() const -> std::optional<std::size_t>;
     /// The name of the picked part on the picked mount; none when the mount has none.
     auto picked_name() const -> std::optional<std::string>;
+    /// What tells the kind of the part `id` from others: the id of its first shape.
+    auto kind_name(const vpart_id& id) const -> std::string;
+    /// The mounts Copy, Cut and Delete act on: those marked, else the picked one, north to south
+    /// and west to east.
+    auto marked_mounts() const -> std::vector<point>;
     /// The canvas tool in hand.
     auto tool() const -> const struct canvas_tool&; // *NOPAD*
     /// The vehicle the canvas shows.
@@ -276,6 +321,8 @@ struct session {
     auto item_spawns() const -> std::vector<std::size_t>;
     /// The steps of the vehicle edited in place, or of the open document.
     auto history() const -> history_steps;
+    /// Whether the vehicle shown can be driven away, check by check.
+    auto drive() const -> std::vector<drive_check>;
 };
 
 /// The screen the session shows.

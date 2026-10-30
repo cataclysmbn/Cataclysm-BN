@@ -2,11 +2,13 @@
 #include "calendar.h"
 #include "editor/catalog.h"
 #include "editor/document.h"
+#include "editor/editor_mode.h"
 #include "editor/history_label.h"
 #include "editor/mapgen_stroke.h"
 #include "editor/row_id.h"
 #include "editor/session_file.h"
 #include "editor/session_page.h"
+#include "editor/vehicle_check.h"
 #include "editor/vehicle_design.h"
 #include "editor/vehicle_session_state.h"
 #include "editor/workspace.h"
@@ -35,6 +37,7 @@
 #include <ranges>
 #include <string>
 #include <string_view>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -104,7 +107,7 @@ struct palette_entry {
     bool held = false;
 };
 /// A page of the parts palette and how many rows it has in all: with no filter, one per kind
-/// of part of the category shown; else the parts that match it, ordered by id.
+/// of part of the category shown; else the parts that match it, the best match first.
 struct part_page_entries {
     std::vector<palette_entry> shown;
     std::size_t total = 0;
@@ -126,14 +129,28 @@ auto parts_palette(const session& state) -> part_page_entries {
             | std::views::transform([](const part_kind& kind) { return kind.shapes.front(); })
             | std::ranges::to<std::vector>();
     } else {
-        found =
-            vpart_info::get_all() | std::views::filter([&](const vpart_info& info) {
-                return lcmatch(info.get_id().str(), state.part_filter)
-                    || lcmatch(info.name(), state.part_filter);
-            })
-            | std::views::transform([](const vpart_info& info) { return &info; })
-            | std::ranges::to<std::vector>();
-        std::ranges::sort(found, {}, [](const vpart_info* info) { return info->get_id().str(); });
+        struct ranked {
+            const vpart_info* part;
+            int rank;
+            int uses;
+        };
+        const auto uses = [&](const vpart_info& info) {
+            const auto counted = state.catalog.vehicles.find(info.get_id());
+            return counted == state.catalog.vehicles.end() ? 0 : counted->second;
+        };
+        auto matches = std::vector<ranked>{};
+        for (const auto& info : vpart_info::get_all()) {
+            if (const auto rank =
+                    search_rank(info.name(), info.get_id().str(), state.part_filter)) {
+                matches.push_back({.part = &info, .rank = *rank, .uses = uses(info)});
+            }
+        }
+        // The best match first, then what most of the game's vehicles install, then by name.
+        std::ranges::sort(matches, {}, [](const ranked& entry) {
+            return std::
+                tuple(entry.rank, -entry.uses, entry.part->name(), entry.part->get_id().str());
+        });
+        found = matches | std::views::transform(&ranked::part) | std::ranges::to<std::vector>();
     }
     // A row of a category stands for all the shapes of its part.
     const auto in_hand =
@@ -426,6 +443,12 @@ auto tab_of(const char* const id, const std::string& label, const std::string& s
     return {.id = id, .label = label, .selected = key == selected};
 }
 
+/// The column of a row's id, shown in advanced mode alone.
+auto id_column(const std::string& id) -> std::vector<game_client::interaction_column> {
+    if (!advanced_mode()) { return {}; }
+    return {{.key = "id", .label = _("ID"), .value = id, .color = ""}};
+}
+
 /// The prototype part the field form points at, with the members a modder sets on it: the fuel
 /// of a tank, the ammunition of a turret.
 auto part_form(const session& state) -> std::optional<ec::component> {
@@ -494,12 +517,14 @@ auto part_form(const session& state) -> std::optional<ec::component> {
         const auto end = [&](const std::size_t side) {
             return qty.is_array() && qty.size() == 2 ? qty[side].dump() : std::string{};
         };
-        fields.push_back(
-            {.id = "ammo_types",
-             .label = _("Ammo types"),
-             .value = entry.is_object()
-                        ? list_text(entry.value("ammo_types", nlohmann::ordered_json()))
-                        : std::string{}});
+        if (advanced_mode()) {
+            fields.push_back(
+                {.id = "ammo_types",
+                 .label = _("Ammo types"),
+                 .value = entry.is_object()
+                            ? list_text(entry.value("ammo_types", nlohmann::ordered_json()))
+                            : std::string{}});
+        }
         fields.push_back(
             {.id = "ammo_min",
              .label = _("Rounds, fewest"),
@@ -517,7 +542,7 @@ auto part_form(const session& state) -> std::optional<ec::component> {
     return ec::component{
         .id = part_form_id,
         .label = id.is_valid() ? id->name() : design[*index].part,
-        .affordances = {part_set_id},
+        .affordances = {part_set_id, copy_settings_id, paste_settings_id},
         .body = ec::form_body{.fields = std::move(fields)}};
 }
 
@@ -575,8 +600,9 @@ auto parts_view(const session& state) -> ec::screen_view {
         })
         | std::ranges::to<std::vector>();
     if (!world_rows.empty()) { world_rows.front().selected = true; }
-    // The left column: the prototypes to open, or the world's vehicles to export, copy or edit.
-    parts.push_back(ec::tabs(
+    // The left column: the prototypes to open, or the world's vehicles to export, copy or edit;
+    // with nothing open, the button that starts a new one over them.
+    auto sources = ec::tabs(
         {.id = sources_id,
          .tabs = {tab_of("source:prototypes", _("Prototypes"), state.source_tab),
                   tab_of("source:world", _("World"), state.source_tab)},
@@ -597,11 +623,7 @@ auto parts_view(const session& state) -> ec::screen_view {
                                     .label = entry.name,
                                     .selected =
                                         state.doc && state.prototype().value("id", "") == entry.id,
-                                    .columns = {
-                                        {.key = "id",
-                                         .label = _("ID"),
-                                         .value = entry.id,
-                                         .color = ""}}};
+                                    .columns = id_column(entry.id)};
                             })
                             | std::ranges::to<std::vector>(),
                         .total = found.total,
@@ -615,7 +637,9 @@ auto parts_view(const session& state) -> ec::screen_view {
                         .empty = state.filter.empty()
                                    ? _("No vehicle prototype is loaded.")
                                    //~ %s is the text the player searched the prototypes for.
-                                   : string_format(_("No vehicle matches “%s”."), state.filter)})}));
+                                   : string_format(_("No vehicle matches “%s”."), state.filter)})});
+    if (!state.live && !state.doc) { sources.affordances.push_back(new_id); }
+    parts.push_back(std::move(sources));
     affordances.push_back(
         ec::invoke_affordance({.id = source_id, .label = _("Show"), .args = row_of(sources_id)}));
     if (state.source_tab == "world") {
@@ -671,6 +695,10 @@ auto parts_view(const session& state) -> ec::screen_view {
         {.id = std::string(show_prefix) + "prototypes", .label = _("Prototypes"), .keys = {"p"}}));
     affordances.push_back(ec::invoke_affordance(
         {.id = std::string(show_prefix) + "world", .label = _("World vehicles"), .keys = {"w"}}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = advanced_id,
+         .label = advanced_mode() ? _("Hide advanced settings") : _("Show advanced settings"),
+         .description = _("Shows ids, JSON and the settings that need them, in both editors.")}));
     if (!state.live && !state.doc) {
         return {
             .title = _("Vehicle Editor"),
@@ -791,6 +819,26 @@ auto parts_view(const session& state) -> ec::screen_view {
              "Copies the parts on the marked squares, or on the picked one, and "
              "removes them."),
          .keys = {"CTRL+X"}}));
+    // The copy turns and flips, as Factorio's blueprint in hand, and the library keeps it.
+    const auto clip_action = [&](const ec::invoke_options& options) {
+        auto shown = options;
+        shown.enabled = !state.clip.empty();
+        shown.denial = nothing_copied;
+        affordances.push_back(ec::invoke_affordance(shown));
+    };
+    clip_action({.id = clip_turn_id, .label = _("Turn copy"), .keys = {"R"}});
+    clip_action({.id = clip_flip_sides_id, .label = _("Flip copy left and right"), .keys = {"F"}});
+    clip_action(
+        {.id = clip_flip_ends_id, .label = _("Flip copy front and back"), .keys = {"CTRL+F"}});
+    clip_action(
+        {.id = library_save_id,
+         .label = _("Save copy to library"),
+         .description = _("Keeps the copy under Library for any vehicle you make."),
+         .args = {.text = ec::text_shape{.initial = _("My piece")}}});
+    affordances.push_back(ec::invoke_affordance(
+        {.id = show_clip_text_id,
+         .label = _("Copy or paste as text"),
+         .description = _("Shows the copy as text to share, and takes text someone shared.")}));
     // With squares marked, the Delete key deletes them, else the picked part.
     affordances.push_back(ec::invoke_affordance(
         {.id = delete_mounts_id,
@@ -908,11 +956,7 @@ auto parts_view(const session& state) -> ec::screen_view {
                                   .label = entry.label,
                                   .description = refused.value_or(""),
                                   .selected = entry.held,
-                                  .columns =
-                                      {{.key = "id",
-                                        .label = _("ID"),
-                                        .value = info.get_id().str(),
-                                        .color = ""}},
+                                  .columns = id_column(info.get_id().str()),
                                   .look = engine_client::world::vehicle_part_type_appearance(info)};
                           })
                         | std::ranges::to<std::vector>(),
@@ -971,22 +1015,24 @@ auto parts_view(const session& state) -> ec::screen_view {
         }
         if (tab == "part") { return std::move(*part_form(state)); }
         if (tab == "vehicle") {
-            return {
-                .id = props_id,
-                .affordances = {prop_set_id},
-                .body = ec::form_body{
-                    .fields = {
-                        {.id = "name",
-                         .label = _("Name"),
-                         .value = state.prototype().value("name", "")},
-                        {.id = "id", .label = _("ID"), .value = state.prototype().value("id", "")},
-                        {.id = "color_palette",
-                         .label = _("Colour palette"),
-                         .value = state.prototype().value("color_palette", "")},
-                        {.id = "flags",
-                         .label = _("Flags"),
-                         .value = list_text(
-                             state.prototype().value("flags", nlohmann::ordered_json()))}}}};
+            auto fields = std::vector<ec::form_field>{
+                {.id = "name", .label = _("Name"), .value = state.prototype().value("name", "")}};
+            if (advanced_mode()) {
+                fields.push_back(
+                    {.id = "id", .label = _("ID"), .value = state.prototype().value("id", "")});
+                fields.push_back(
+                    {.id = "color_palette",
+                     .label = _("Colour palette"),
+                     .value = state.prototype().value("color_palette", "")});
+                fields.push_back(
+                    {.id = "flags",
+                     .label = _("Flags"),
+                     .value = list_text(
+                         state.prototype().value("flags", nlohmann::ordered_json()))});
+            }
+            return {.id = props_id,
+                    .affordances = {prop_set_id},
+                    .body = ec::form_body{.fields = std::move(fields)}};
         }
         if (tab == "cargo") {
             const auto& items = state.prototype()["items"];
@@ -1067,9 +1113,140 @@ auto parts_view(const session& state) -> ec::screen_view {
     };
     parts.push_back(
         ec::tabs({.id = tools_id, .tabs = std::move(tabs), .select = tool_id, .child = tool()}));
-    // The vehicle's figures, under the design they follow from.
-    if (veh) { parts.push_back(ec::panel({.id = performance_id, .stats = design_stats(*veh)})); }
+    // Whether it can be driven away, each failed check with the button that fixes it, and the
+    // vehicle's figures under the design they follow from: its speeds once it can drive.
+    if (veh) {
+        const auto checks = state.drive();
+        auto check_list = ec::list(
+            {.id = check_id,
+             .rows = checks | std::views::transform([](const drive_check& entry) {
+                         return ec::row{
+                             .id = "check:" + entry.key,
+                             .label = entry.text,
+                             .selectable = false,
+                             .columns = {
+                                 {.key = "ok",
+                                  .label = _("OK"),
+                                  .value = entry.ok ? "✓" : "✗",
+                                  .color = entry.ok ? "light_green" : "light_red"}}};
+                     })
+                   | std::ranges::to<std::vector>(),
+             .selection = "none"});
+        for (const auto& entry : checks) {
+            if (state.live || entry.fix == drive_fix::none) { continue; }
+            const auto id = std::string(fix_prefix) + entry.key;
+            check_list.affordances.push_back(id);
+            affordances.push_back(ec::invoke_affordance({.id = id, .label = entry.action}));
+        }
+        if (!state.live) {
+            const auto ready = ready_to_drive(checks);
+            check_list.affordances.push_back(test_drive_id);
+            affordances.push_back(ec::invoke_affordance(
+                {.id = test_drive_id,
+                 .label = _("Test drive"),
+                 .description = _(
+                     "Spawns the design east of you and seats you at its controls; the editor "
+                     "key brings you back to it."),
+                 .keys = {"F6"},
+                 .enabled = ready,
+                 .denial =
+                     ready ? std::string{}
+                           : std::string(_("It is not ready to drive yet: see Ready to drive."))}));
+        }
+        parts.push_back(std::move(check_list));
+        auto stats = design_stats(*veh);
+        if (!ready_to_drive(checks)) {
+            std::erase_if(stats, [](const ec::panel_stat& stat) { return stat.key == "speed"; });
+        }
+        parts.push_back(ec::panel({.id = performance_id, .stats = std::move(stats)}));
+    }
     parts.push_back(installable());
+    if (!state.library.empty()) {
+        parts.push_back(ec::list(
+            {.id = library_id,
+             .rows =
+                 std::views::enumerate(state.library) | std::views::transform([](const auto& entry) {
+                     const auto& [index, piece] = entry;
+                     const auto mounts =
+                         piece.data.value("mounts", nlohmann::ordered_json::array());
+                     const auto first =
+                         mounts.is_array() && !mounts.empty()
+                             ? mounts[0].value("parts", nlohmann::ordered_json::array())
+                             : nlohmann::ordered_json::array();
+                     const auto part =
+                         first.is_array() && !first.empty()
+                             ? vpart_id(entry_part(first[0]))
+                             : vpart_id::NULL_ID();
+                     return ec::row{
+                         .id = index_row("piece", static_cast<std::size_t>(index)),
+                         .label = piece.name,
+                         .look = part.is_valid() && !part.is_null()
+                                   ? std::optional(
+                                         engine_client::world::vehicle_part_type_appearance(*part))
+                                   : std::nullopt};
+                 })
+                 | std::ranges::to<std::vector>(),
+             .selection = "single",
+             .activate = library_take_id}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = library_take_id, .label = _("Take"), .args = row_of(library_id)}));
+    }
+    if (state.clip_text_shown) {
+        parts.push_back(
+            {.id = clip_text_id,
+             .affordances = {paste_text_id},
+             .body = ec::form_body{
+                 .fields =
+                     {{.id = "text",
+                       .label = _("Text"),
+                       .description = _("Copy this to share the copy; paste shared text here."),
+                       .value = state.clip.empty() ? std::string{}
+                                                   : piece_text("vehicle", clip_json(state.clip)),
+                       .multiline = true}},
+                 .submit = paste_text_id}});
+        affordances.push_back(ec::invoke_affordance(
+            {.id = paste_text_id, .label = _("Paste text"), .args = text_of(clip_text_id)}));
+    }
+    // What the marked squares hold, by kind, to replace or delete all of one at once, as
+    // Factorio's upgrade and deconstruction planners.
+    if (!state.live && state.selection) {
+        const auto marked = state.marked_mounts();
+        auto kinds = std::vector<std::string>{};
+        auto counts = std::map<std::string, int>{};
+        for (const auto& entry : design_parts(state.prototype())) {
+            if (entry.from_palette || !std::ranges::contains(marked, entry.mount)) { continue; }
+            const auto kind = state.kind_name(vpart_id(entry.part));
+            if (counts[kind]++ == 0) { kinds.push_back(kind); }
+        }
+        const auto held = vpart_id(state.brush);
+        const auto can_replace = held.is_valid() && !held.is_null();
+        parts.push_back(ec::list(
+            {.id = marked_kinds_id,
+             .rows =
+                 kinds | std::views::transform([&](const std::string& kind) {
+                     return ec::row{
+                         .id = "kind:" + kind,
+                         //~ A kind of part on the marked squares and how many of it there are.
+                         .label =
+                             string_format(_("%1$s ×%2$d"), vpart_id(kind)->name(), counts[kind]),
+                         .look = engine_client::world::vehicle_part_type_appearance(
+                             *vpart_id(kind))};
+                 })
+                 | std::ranges::to<std::vector>(),
+             .selection = "single",
+             .empty = _("The marked squares hold no part.")}));
+        parts.back().affordances = {replace_kind_id, delete_kind_id};
+        affordances.push_back(ec::invoke_affordance(
+            {.id = replace_kind_id,
+             .label = can_replace ? string_format(_("Replace with %s"), held->name()) : _("Replace"),
+             .args = row_of(marked_kinds_id),
+             .enabled = can_replace,
+             .denial = _("Choose the part to put in their place under Parts first.")}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = delete_kind_id,
+             .label = _("Delete all of these"),
+             .args = row_of(marked_kinds_id)}));
+    }
     // The items an item spawn puts, while the item spawns show.
     if (!state.live && shown_tab == "cargo") {
         const auto found = search_catalog(
@@ -1085,20 +1262,18 @@ auto parts_view(const session& state) -> ec::screen_view {
              .select = item_kind_id,
              .child = ec::list(
                  {.id = item_catalog_id,
-                  .rows =
-                      found.entries | std::views::transform([&](const catalog_entry& entry) {
-                          const auto type = itype_id(entry.id);
-                          return ec::row{
-                              .id = (group ? "group:" : "item:") + entry.id,
-                              .label = entry.name,
-                              .columns =
-                                  {{.key = "id", .label = _("ID"), .value = entry.id, .color = ""}},
-                              .look = !group && type.is_valid()
-                                        ? std::optional(engine_client::world::item_appearance(
-                                              *item::spawn_temporary(type, calendar::turn)))
-                                        : std::nullopt};
-                      })
-                      | std::ranges::to<std::vector>(),
+                  .rows = found.entries | std::views::transform([&](const catalog_entry& entry) {
+                              const auto type = itype_id(entry.id);
+                              return ec::row{
+                                  .id = (group ? "group:" : "item:") + entry.id,
+                                  .label = entry.name,
+                                  .columns = id_column(entry.id),
+                                  .look = !group && type.is_valid()
+                                            ? std::optional(engine_client::world::item_appearance(
+                                                  *item::spawn_temporary(type, calendar::turn)))
+                                            : std::nullopt};
+                          })
+                        | std::ranges::to<std::vector>(),
                   .total = found.total,
                   .offset = state.item_page * page_size,
                   .selection = "single",
@@ -1177,6 +1352,21 @@ auto parts_view(const session& state) -> ec::screen_view {
             affordances.push_back(ec::invoke_affordance(
                 {.id = part_set_id, .label = _("Value"), .args = text_of(part_form_id)}));
         }
+        affordances.push_back(ec::invoke_affordance(
+            {.id = copy_settings_id,
+             .label = _("Copy settings"),
+             .description = _(
+                 "Keeps the settings of the picked part to paste on others of its kind."),
+             .enabled = state.picked_name().has_value()}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = paste_settings_id,
+             .label = _("Paste settings"),
+             .description = _(
+                 "Gives the picked part, and the parts of its kind on the marked squares, the "
+                 "settings copied."),
+             .enabled = state.copied && state.picked_name(),
+             .denial = state.copied ? _("Pick a part to paste on first.")
+                                    : _("Copy the settings of a part first.")}));
         on("cargo",
            ec::invoke_affordance(
                {.id = item_add_id, .label = _("Add item"), .args = {.text = ec::text_shape{}}}));
@@ -1237,13 +1427,35 @@ auto session_view(const session& state) -> ec::screen_view {
     const auto world = std::string(_("World"));
     auto view = parts_view(state);
     auto groups = std::map<std::string, std::string, std::less<>>{
-        {new_id, file},         {save_id, file},          {save_as_id, file},
-        {undo_id, edit},        {redo_id, edit},          {remove_id, edit},
-        {earlier_id, edit},     {later_id, edit},         {copy_mounts_id, edit},
-        {cut_mounts_id, edit},  {delete_mounts_id, edit}, {mirror_sides_id, edit},
-        {mirror_ends_id, edit}, {view_cw_id, view_menu},  {view_ccw_id, view_menu},
-        {spawn_id, world},      {turn_cw_id, world},      {turn_ccw_id, world},
-        {paste_id, world},      {done_id, world}};
+        {new_id, file},
+        {save_id, file},
+        {save_as_id, file},
+        {undo_id, edit},
+        {redo_id, edit},
+        {remove_id, edit},
+        {earlier_id, edit},
+        {later_id, edit},
+        {copy_mounts_id, edit},
+        {cut_mounts_id, edit},
+        {delete_mounts_id, edit},
+        {mirror_sides_id, edit},
+        {mirror_ends_id, edit},
+        {copy_settings_id, edit},
+        {paste_settings_id, edit},
+        {clip_turn_id, edit},
+        {clip_flip_sides_id, edit},
+        {clip_flip_ends_id, edit},
+        {library_save_id, edit},
+        {show_clip_text_id, edit},
+        {view_cw_id, view_menu},
+        {view_ccw_id, view_menu},
+        {advanced_id, view_menu},
+        {spawn_id, world},
+        {test_drive_id, world},
+        {turn_cw_id, world},
+        {turn_ccw_id, world},
+        {paste_id, world},
+        {done_id, world}};
     for (const auto& entry : canvas_tools) { groups.emplace(entry.affordance, edit); }
     for (const auto& entry : view.affordances) {
         if (entry.id.starts_with(show_prefix)) { groups.emplace(entry.id, view_menu); }
@@ -1259,8 +1471,12 @@ auto session_view(const session& state) -> ec::screen_view {
               {"vehicle:live", {.slot = "status"}},
               {grid_id, {.slot = "canvas"}},
               {canvas_tools_id, {.slot = "tools", .label = _("Tools")}},
+              {check_id, {.slot = "tools", .label = _("Ready to drive")}},
               {tools_id, {.slot = "inspector", .label = _("Design")}},
               {performance_id, {.slot = "inspector", .label = _("Performance")}},
+              {marked_kinds_id, {.slot = "inspector", .label = _("Marked squares")}},
+              {clip_text_id, {.slot = "inspector", .label = _("Copy as text")}},
+              {library_id, {.slot = "palette", .label = _("Library")}},
               {part_groups_id, {.slot = "palette", .label = _("Parts")}},
               {problems_id, {.slot = "log", .label = _("Problems")}},
               {history_id, {.slot = "log", .label = _("History")}},

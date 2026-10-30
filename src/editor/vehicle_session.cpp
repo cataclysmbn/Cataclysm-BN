@@ -3,6 +3,8 @@
 #include "avatar.h"
 #include "editor/catalog.h"
 #include "editor/document.h"
+#include "editor/editor_mode.h"
+#include "editor/editor_session.h"
 #include "editor/history_label.h"
 #include "editor/mapgen_stroke.h"
 #include "editor/recent_documents.h"
@@ -14,12 +16,14 @@
 #include "engine_client_part_type.h"
 #include "engine_client_vehicle_look.h"
 #include "engine_client_world.h"
+#include "game.h"
 #include "input.h"
 #include "item.h"
 #include "item_group.h"
 #include "json_formatter.h"
 #include "line.h"
 #include "map/map.h"
+#include "messages.h"
 #include "path_info.h"
 #include "string_formatter.h"
 #include "string_utils.h"
@@ -29,6 +33,7 @@
 #include "vehicle/vehicle.h"
 #include "vehicle/vehicle_part.h"
 #include "vehicle/vpart_position.h"
+#include "vehicle/vpart_range.h"
 
 #include <algorithm>
 #include <array>
@@ -41,6 +46,7 @@
 #include <limits>
 #include <optional>
 #include <ranges>
+#include <set>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -196,6 +202,14 @@ auto copied_vehicle_file() -> std::filesystem::path {
 
 } // namespace
 
+auto clip_json(const std::vector<clip_mount>& clip) -> nlohmann::ordered_json {
+    auto mounts = nlohmann::ordered_json::array();
+    for (const auto& [offset, parts] : clip) {
+        mounts.push_back({{"x", offset.x}, {"y", offset.y}, {"parts", parts}});
+    }
+    return {{"mounts", mounts}};
+}
+
 auto frame_around(const std::vector<point>& points, const int margin) -> mount_frame {
     const auto [min_x, max_x] = std::ranges::minmax(points | std::views::transform(&point::x));
     const auto [min_y, max_y] = std::ranges::minmax(points | std::views::transform(&point::y));
@@ -264,6 +278,20 @@ auto session::picked_name() const -> std::optional<std::string> {
     });
 }
 
+auto session::kind_name(const vpart_id& id) const -> std::string {
+    const auto shapes = catalog.shapes_of(id);
+    return shapes.empty() ? id.str() : shapes.front()->get_id().str();
+}
+
+auto session::marked_mounts() const -> std::vector<point> {
+    const auto [low, high] = selection.value_or(mount_frame{.low = cursor, .high = cursor});
+    auto marked = std::vector<point>{};
+    for (auto y = low.y; y <= high.y; ++y) {
+        for (auto x = low.x; x <= high.x; ++x) { marked.emplace_back(x, y); }
+    }
+    return marked;
+}
+
 auto session::tool() const -> const struct canvas_tool& { // *NOPAD*
     const auto found = std::ranges::find_if(canvas_tools, [&](const struct canvas_tool& entry) {
         return canvas_tool == entry.key;
@@ -280,7 +308,8 @@ auto session::canvas_bounds() const -> mount_frame {
 }
 
 auto session::shown_tab_count() const -> std::size_t {
-    return live ? live_tab_count : design_tabs.size();
+    // Raw JSON, the last, is advanced.
+    return live ? live_tab_count : design_tabs.size() - (advanced_mode() ? 0 : 1);
 }
 
 auto session::picked_part() const -> std::optional<std::size_t> {
@@ -306,6 +335,28 @@ auto session::item_spawns() const -> std::vector<std::size_t> {
                    && items[index].value("y", 0) == cursor.y;
            })
          | std::ranges::to<std::vector>();
+}
+
+auto session::drive() const -> std::vector<drive_check> {
+    const auto* const veh = shown_vehicle();
+    if (!veh) { return {}; }
+    if (live) {
+        return drive_checks(*veh, [&](const int index) {
+            return veh->cpart(index).ammo_current();
+        });
+    }
+    // The blueprint holds the parts in the order the prototype lists them, without their fuel.
+    const auto design = design_parts(prototype());
+    return drive_checks(*veh, [&](const int index) {
+        if (index < 0 || static_cast<std::size_t>(index) >= design.size()) {
+            return itype_id::NULL_ID();
+        }
+        const auto at = nlohmann::ordered_json::json_pointer(design[index].pointer);
+        const auto& entry = prototype().contains(at) ? prototype()[at] : nlohmann::ordered_json();
+        return entry.is_object() && entry.contains("fuel") && entry["fuel"].is_string()
+                 ? itype_id(entry["fuel"].get<std::string>())
+                 : itype_id::NULL_ID();
+    });
 }
 
 auto session::history() const -> history_steps {
@@ -427,7 +478,10 @@ struct editing: session {
             notice = next.error();
             return false;
         }
-        const auto edited = doc->edit(object, nlohmann::ordered_json::diff(prototype(), *next));
+        // Frames and armour join the ones beside them as parts come and go.
+        const auto edited = doc->edit(
+            object,
+            nlohmann::ordered_json::diff(prototype(), joined_shapes(prototype(), *next, catalog)));
         if (!edited) { notice = edited.error(); }
         reload();
         return edited.has_value();
@@ -546,8 +600,8 @@ struct editing: session {
     }
 
     /// The mounts the drawing tool in hand covers from the anchor to `at`, as the map editor's
-    /// shapes cover squares; a fill spreads over the mounts of the canvas that show the part
-    /// `at` shows, or none.
+    /// shapes cover squares; a fill spreads over the mounts of the canvas that show a part of the
+    /// kind `at` shows, in any shape, or none.
     auto stroke_squares(const point& at) const -> std::vector<point> {
         const auto bounds = canvas_bounds();
         const auto* const veh = shown_vehicle();
@@ -558,7 +612,8 @@ struct editing: session {
             for (auto x = bounds.low.x; x <= bounds.high.x; ++x) {
                 const auto shown = veh ? veh->part_displayed_at(tripoint_mnt_veh(x, y, 0)) : -1;
                 if (shown >= 0) {
-                    grid[y - bounds.low.y][x - bounds.low.x] = veh->part_info(shown).get_id().str();
+                    grid[y - bounds.low.y][x - bounds.low.x] = kind_name(
+                        veh->part_info(shown).get_id());
                 }
             }
         }
@@ -637,50 +692,98 @@ struct editing: session {
         return made ? std::optional(tally) : std::nullopt;
     }
 
-    /// Installs the part in hand on `squares` as one step, and says how it went.
+    /// Installs the part in hand on `squares` as one step, each after the part it needs on its
+    /// square first, as a wheel its hub, and says how it went.
     auto install_stroke(const std::vector<point>& squares) -> void {
+        const auto* const veh = shown_vehicle();
+        auto paste = paste_install{.layers = {{}, {}}};
+        // The names of what goes on, the parts needed first leading, each once.
+        auto names = std::vector<std::string>{};
+        for (const auto& at : squares) {
+            const auto first =
+                veh ? prerequisite_of(catalog, *veh, {.mount = at, .part = brush}) : std::nullopt;
+            if (first) {
+                paste.layers[0].push_back({.mount = at, .part = first->str()});
+                if (!std::ranges::contains(names, (*first)->name())) {
+                    names.push_back((*first)->name());
+                }
+            }
+            paste.layers[1].push_back({.mount = at, .part = brush});
+        }
         const auto name = part_name(brush);
-        const auto install = stroke_install{.mounts = squares, .part = brush};
+        names.push_back(name);
+        const auto together = named_together(names);
+        // How many squares have the part in hand, in any shape, to tell how many the stroke gave
+        // it.
+        const auto holding = [&] {
+            const auto* const shown = shown_vehicle();
+            return shown
+                     ? std::ranges::count_if(
+                           squares,
+                           [&](const point& at) {
+                               return std::ranges::any_of(
+                                   shown->parts_at_relative(tripoint_mnt_veh(at.x, at.y, 0), false),
+                                   [&](const int index) {
+                                       return kind_name(shown->part_info(index).get_id())
+                                           == kind_name(vpart_id(brush));
+                                   });
+                           })
+                     : 0;
+        };
+        const auto held_before = holding();
         // The step of the vehicle edited in place names what the stroke installed, known once it
         // ran.
         auto label = std::string{};
         const auto named = [&](const stroke_tally& done) {
             label =
                 squares.size() == 1
-                    ? at_mount(_("Install %s at %d,%d"), name)
+                    ? at_mount(_("Install %s at %d,%d"), together)
                     //~ A step of the vehicle editor that installed one part on many mounts:
                     //~ its name and how many.
-                    : string_format(_("Install %1$s ×%2$d"), name, done.done);
+                    : string_format(_("Install %1$s ×%2$d"), together, holding() - held_before);
             return done;
         };
+        // A new tank comes filled with the fuel the engine burns.
+        const auto fuel = built.blueprint ? engine_liquid(*built.blueprint) : std::nullopt;
         const auto tally = change_parts(
             label,
             {.design =
                  [&](const nlohmann::ordered_json& from) {
-                     return install_parts(from, built.blueprint.get(), install);
+                     auto next = paste_parts(from, built.blueprint.get(), paste);
+                     if (!next || !fuel) { return next; }
+                     return filled_tanks(from, next->prototype, *fuel)
+                         .transform([&](nlohmann::ordered_json filled) {
+                             return stroke_design{
+                                 .prototype = std::move(filled), .tally = next->tally};
+                         });
                  },
-             .live = [&](vehicle& veh) { return install_live_parts(veh, install).transform(named); },
+             .live = [&](vehicle& veh) { return paste_live_parts(veh, paste).transform(named); },
              // Every square has the part already.
              .nothing = squares.size() == 1
                           ? string_format(_("This mount already has %s."), name)
                           : string_format(_("Every square of the stroke already has %s."), name)});
         if (!tally) { return; }
         const auto held = vpart_id(brush);
-        // A tank comes empty, which the part's settings change.
+        // A tank comes empty but in a design whose engine burns a liquid, which the part's
+        // settings change.
         const auto tank = held.is_valid() && held->has_flag(VPFLAG_FLUIDTANK);
         if (squares.size() == 1) {
-            said = tank
-                     //~ What the vehicle editor did: the part's name and the mount it is on.
-                     ? at_mount(_("Installed %s at %d,%d. Set its fuel under Fuel."), name)
-                     //~ What the vehicle editor did: the part's name and the mount it is on.
-                     : at_mount(_("Installed %s at %d,%d."), name);
+            said =
+                !tank ? at_mount(_("Installed %s at %d,%d."), together)
+                : !live && fuel
+                    //~ What the vehicle editor did: the tank's name, the mount it is on and the
+                    //~ fuel it is filled with.
+                    ? string_format(_("Installed %1$s at %2$d,%3$d, filled with %4$s."), together,
+                                    cursor.x, cursor.y, item::nname(*fuel))
+                    //~ What the vehicle editor did: the part's name and the mount it is on.
+                    : at_mount(_("Installed %s at %d,%d. Set its fuel under Fuel."), together);
             return;
         }
+        const auto given = static_cast<int>(holding() - held_before);
         //~ What a stroke of the vehicle editor did: the part's name and how many squares took it.
         said = string_format(
-            vgettext("Installed %1$s on %2$d square.", "Installed %1$s on %2$d squares.",
-                     tally->done),
-            name, tally->done);
+            vgettext("Installed %1$s on %2$d square.", "Installed %1$s on %2$d squares.", given),
+            together, given);
         if (tally->refused > 0) {
             //~ How many squares of a stroke would not take the part, and why the first would not.
             said +=
@@ -802,34 +905,40 @@ struct editing: session {
         pick_top();
     }
 
-    /// The mounts Copy, Cut and Delete act on: those marked, else the picked one, north to south
-    /// and west to east.
-    auto marked_mounts() const -> std::vector<point> {
-        const auto [low, high] = selection.value_or(mount_frame{.low = cursor, .high = cursor});
-        auto marked = std::vector<point>{};
-        for (auto y = low.y; y <= high.y; ++y) {
-            for (auto x = low.x; x <= high.x; ++x) { marked.emplace_back(x, y); }
-        }
-        return marked;
-    }
-
-    /// The parts on the marked mounts, by mount in install order; none, with a notice that says
-    /// so, when they have none.
+    /// The parts on the marked mounts, by mount in install order, with the settings the design
+    /// gives them; none, with a notice that says so, when they have none.
     auto marked_clip() -> std::optional<std::vector<clip_mount>> {
         const auto* const veh = shown_vehicle();
         const auto marked = marked_mounts();
+        const auto design = live ? std::vector<design_part>{} : design_parts(prototype());
         auto taken = std::vector<clip_mount>{};
         for (const auto& at : marked) {
             const auto here =
                 veh ? veh->parts_at_relative(tripoint_mnt_veh(at.x, at.y, 0), false)
                     : std::vector<int>{};
             if (here.empty()) { continue; }
-            taken.push_back(
-                {.offset = at - marked.front(),
-                 .parts = here | std::views::transform([&](const int index) {
-                              return veh->part_info(index).get_id().str();
-                          })
-                        | std::ranges::to<std::vector>()});
+            auto parts =
+                here | std::views::transform([&](const int index) {
+                    return nlohmann::ordered_json(veh->part_info(index).get_id().str());
+                })
+                | std::ranges::to<std::vector>();
+            // The design's entries of the mount, when they are the parts the vehicle shows.
+            const auto entries =
+                design
+                | std::views::filter([&](const design_part& entry) { return entry.mount == at; })
+                | std::ranges::to<std::vector>();
+            if (entries.size() == parts.size()
+                && std::ranges::equal(
+                    entries, parts, {},
+                    [](const design_part& entry) { return entry.from_palette ? "" : entry.part; },
+                    [](const nlohmann::ordered_json& part) { return part.get<std::string>(); })) {
+                parts =
+                    entries | std::views::transform([&](const design_part& entry) {
+                        return prototype()[nlohmann::ordered_json::json_pointer(entry.pointer)];
+                    })
+                    | std::ranges::to<std::vector>();
+            }
+            taken.push_back({.offset = at - marked.front(), .parts = std::move(parts)});
         }
         if (taken.empty()) {
             notice = selection ? _("The selection has no part to copy.")
@@ -893,17 +1002,25 @@ struct editing: session {
         cursor = at;
         tool_tab = "mount";
         auto paste = paste_install{};
+        auto placed = std::vector<placed_entry>{};
         for (const auto& [offset, parts] : clip) {
             for (auto layer = std::size_t{0}; layer < parts.size(); ++layer) {
                 if (paste.layers.size() <= layer) { paste.layers.emplace_back(); }
-                paste.layers[layer].push_back({.mount = at + offset, .part = parts[layer]});
+                paste.layers[layer].push_back(
+                    {.mount = at + offset, .part = entry_part(parts[layer])});
+                placed.push_back({.mount = at + offset, .entry = parts[layer]});
             }
         }
         const auto tally = change_parts(
             _("Paste"),
             {.design =
                  [&](const nlohmann::ordered_json& from) {
-                     return paste_parts(from, built.blueprint.get(), paste);
+                     // The parts keep the settings they had, such as a tank's fuel.
+                     return paste_parts(from, built.blueprint.get(), paste)
+                         .transform([&](stroke_design done) {
+                             done.prototype = given_members(from, done.prototype, placed);
+                             return done;
+                         });
                  },
              .live = [&](vehicle& veh) { return paste_live_parts(veh, paste); },
              .nothing = _("Copy or cut squares first.")});
@@ -914,6 +1031,176 @@ struct editing: session {
                  + refused_parts(*tally);
         }
         pick_top();
+    }
+
+    /// Moves each mount of the clip to where `moved` takes its offset, its north-west corner
+    /// again at none, and says what it did.
+    auto reshape_clip(const std::function<auto(const point&)->point>& moved, const char* const what)
+        -> void {
+        if (clip.empty()) {
+            notice = _("Copy or cut squares first.");
+            return;
+        }
+        for (auto& mount : clip) { mount.offset = moved(mount.offset); }
+        const auto low = point(
+            std::ranges::min(
+                clip
+                | std::views::transform([](const clip_mount& mount) { return mount.offset.x; })),
+            std::ranges::min(
+                clip
+                | std::views::transform([](const clip_mount& mount) { return mount.offset.y; })));
+        for (auto& mount : clip) { mount.offset -= low; }
+        // Frames and armour join their new neighbours once pasted.
+        said = what;
+        take_tool("paste");
+    }
+
+    /// Takes what `clip_json` made as the clip, with Paste in hand; whether it held parts.
+    auto take_clip(const nlohmann::ordered_json& data) -> bool {
+        auto taken = std::vector<clip_mount>{};
+        const auto mounts = data.value("mounts", nlohmann::ordered_json::array());
+        for (const auto& mount : mounts.is_array() ? mounts : nlohmann::ordered_json::array()) {
+            const auto parts =
+                mount.is_object()
+                    ? mount.value("parts", nlohmann::ordered_json())
+                    : nlohmann::ordered_json();
+            if (!parts.is_array() || !mount.value("x", nlohmann::ordered_json()).is_number_integer()
+                || !mount.value("y", nlohmann::ordered_json()).is_number_integer()) {
+                continue;
+            }
+            auto kept =
+                parts | std::views::filter([](const nlohmann::ordered_json& part) {
+                    return (part.is_string() || part.is_object())
+                        && vpart_id(entry_part(part)).is_valid();
+                })
+                | std::ranges::to<std::vector>();
+            if (!kept.empty()) {
+                taken.push_back(
+                    {.offset = {mount["x"].get<int>(), mount["y"].get<int>()},
+                     .parts = std::move(kept)});
+            }
+        }
+        if (taken.empty()) { return false; }
+        clip = std::move(taken);
+        take_tool("paste");
+        return true;
+    }
+
+    /// Keeps the clip in the library as `name`.
+    auto save_to_library(const std::string& name) -> void {
+        if (clip.empty()) {
+            notice = _("Copy or cut squares first.");
+            return;
+        }
+        if (name.empty()) {
+            notice = _("Give the piece a name.");
+            return;
+        }
+        keep_piece("vehicle", {.name = name, .data = clip_json(clip)});
+        library = library_pieces("vehicle");
+        //~ %s is the name the player gave a piece kept in the vehicle editor's library.
+        said = string_format(_("Saved %s to the library."), name);
+    }
+
+    /// Takes the library's piece `index` as the clip.
+    auto take_from_library(const std::size_t index) -> void {
+        if (index >= library.size()) { return; }
+        if (!take_clip(library[index].data)) {
+            notice = _("This piece has no part the game knows.");
+            return;
+        }
+        //~ %s is the name of a piece kept in the vehicle editor's library.
+        said = string_format(_("Click where %s goes."), library[index].name);
+    }
+
+    /// Takes the clip shared as `text`.
+    auto paste_text(const std::string& text) -> void {
+        const auto data = piece_of_text("vehicle", text);
+        if (!data || !take_clip(*data)) {
+            notice = _("That text holds no vehicle parts.");
+            return;
+        }
+        clip_text_shown = false;
+        said = _("Click where the parts go.");
+    }
+
+    /// The design's parts on the marked mounts of the kind `kind`, last first.
+    auto marked_of_kind(const std::string& kind) const -> std::vector<std::size_t> {
+        const auto marked = marked_mounts();
+        const auto design = design_parts(prototype());
+        return std::views::iota(std::size_t{0}, design.size()) | std::views::reverse
+             | std::views::filter([&](const std::size_t index) {
+                   return !design[index].from_palette
+                       && std::ranges::contains(marked, design[index].mount)
+                       && kind_name(vpart_id(design[index].part)) == kind;
+               })
+             | std::ranges::to<std::vector>();
+    }
+
+    /// Swaps every part of the kind `kind` on the marked mounts for the part in hand, as one
+    /// step.
+    auto replace_kind(const std::string& kind) -> void {
+        const auto held = vpart_id(brush);
+        if (!held.is_valid()) {
+            notice = _("Choose the part to put in their place under Parts first.");
+            return;
+        }
+        const auto targets = marked_of_kind(kind);
+        if (targets.empty()) { return; }
+        auto next = prototype();
+        for (const auto index : targets) {
+            auto swapped = set_part_member(next, {.index = index, .key = "part", .value = brush});
+            if (!swapped) {
+                notice = swapped.error();
+                return;
+            }
+            next = std::move(*swapped);
+        }
+        doc->begin_group(false, _("Replace"));
+        const auto changed = change(next);
+        doc->end_group();
+        if (changed) {
+            //~ What the vehicle editor's Replace did: the parts it swapped, how many and the
+            //~ part that took their place.
+            said = string_format(
+                _("Replaced %1$s ×%2$d with %3$s."), part_name(kind), targets.size(),
+                part_name(brush));
+        }
+    }
+
+    /// Removes every part of the kind `kind` on the marked mounts that can go, as one step.
+    auto delete_kind(const std::string& kind) -> void {
+        auto next = prototype();
+        auto done = 0;
+        auto refused = stroke_tally{};
+        for (const auto index : marked_of_kind(kind)) {
+            // Each removal checks the vehicle the ones before it left.
+            const auto now = build_design(next.dump());
+            if (!now.blueprint) { break; }
+            auto removed = remove_part(next, *now.blueprint, index);
+            if (!removed) {
+                if (refused.refused++ == 0) { refused.reason = removed.error(); }
+                continue;
+            }
+            next = std::move(*removed);
+            ++done;
+        }
+        if (done == 0) {
+            notice =
+                refused.refused > 0
+                    ? refused.reason
+                    : _("The game cannot build this prototype; fix what it reports first.");
+            return;
+        }
+        doc->begin_group(false, _("Delete"));
+        const auto changed = change(next);
+        doc->end_group();
+        pick_top();
+        if (changed) {
+            //~ What the vehicle editor's Delete took away: how many parts.
+            said = string_format(vgettext("Deleted %d part.", "Deleted %d parts.", done), done)
+                 + refused_parts(refused);
+        }
     }
 
     /// Takes the canvas tool `key` in hand, which Paste only is with something copied.
@@ -1042,81 +1329,190 @@ struct editing: session {
         change(next);
     }
 
-    /// Sets the member `key` of the picked part from the part form: a number for `ammo`, a list
-    /// for `ammo_types`, either end of `ammo_qty` for `ammo_min` and `ammo_max`, text for the
-    /// rest; empty removes it.
-    auto set_part(const std::string& key, const std::string& text) -> void {
-        const auto index = picked_here();
-        if (!index) {
-            notice = _("Pick a part first.");
-            return;
-        }
+    /// The parts a setting of the picked part `index` goes to: with the picked mount inside the
+    /// selection, every part of its kind there, else the picked part alone.
+    auto setting_targets(const std::size_t index) const -> std::vector<std::size_t> {
+        const auto design = design_parts(prototype());
+        const auto inside = [&](const point& at) {
+            return selection && at.x >= selection->low.x && at.x <= selection->high.x
+                && at.y >= selection->low.y && at.y <= selection->high.y;
+        };
+        if (!inside(design[index].mount)) { return {index}; }
+        const auto kind = kind_name(vpart_id(design[index].part));
+        return std::views::iota(std::size_t{0}, design.size())
+             | std::views::filter([&](const std::size_t other) {
+                   return !design[other].from_palette && inside(design[other].mount)
+                       && kind_name(vpart_id(design[other].part)) == kind;
+               })
+             | std::ranges::to<std::vector>();
+    }
+
+    /// `from` with the member `key` of its part `index` set from the part form: a number for
+    /// `ammo`, a list for `ammo_types`, either end of `ammo_qty` for `ammo_min` and `ammo_max`,
+    /// another shape of it for `shape`, text for the rest; empty removes it.
+    auto part_setting(
+        const nlohmann::ordered_json& from, const std::size_t index, const std::string& key,
+        const std::string& text) const -> std::expected<nlohmann::ordered_json, std::string> {
+        const auto design = design_parts(from);
         if (key == "ammo_types") {
-            change(
-                set_part_member(prototype(), {.index = *index, .key = key, .value = listed(text)}));
-            return;
+            return set_part_member(from, {.index = index, .key = key, .value = listed(text)});
         }
         if (key == "ammo_min" || key == "ammo_max") {
-            set_ammo_qty(*index, key == "ammo_max", text);
-            return;
+            // A turret with no range is full, so a first end sets both; empty makes it full again.
+            auto value = std::optional<nlohmann::ordered_json>{};
+            if (!text.empty()) {
+                const auto read = number_in(text, 0, std::numeric_limits<int>::max());
+                if (!read) { return std::unexpected(_("That value is out of range.")); }
+                const auto at = nlohmann::ordered_json::json_pointer(design[index].pointer);
+                const auto current =
+                    from[at].is_object()
+                        ? from[at].value("ammo_qty", nlohmann::ordered_json())
+                        : nlohmann::ordered_json();
+                auto range =
+                    current.is_array() && current.size() == 2 && current[0].is_number_integer()
+                            && current[1].is_number_integer()
+                        ? std::array{current[0].get<int>(), current[1].get<int>()}
+                        : std::array{*read, *read};
+                range[key == "ammo_max" ? 1 : 0] = *read;
+                if (range[0] > range[1]) {
+                    return std::unexpected(
+                        _("A turret cannot load fewer rounds at most than at least."));
+                }
+                value = range;
+            }
+            return set_part_member(from, {.index = index, .key = "ammo_qty", .value = value});
         }
         if (key == "shape") {
-            const auto current = design_parts(prototype())[*index].part;
+            const auto& current = design[index].part;
             if (!std::ranges::contains(
                     catalog.shapes_of(vpart_id(current)), vpart_id(text), &vpart_info::get_id)) {
                 //~ %1$s is the part id the player gave, %2$s the name of the part picked.
-                notice = string_format(_("%1$s is no shape of %2$s."), text, part_name(current));
-                return;
+                return std::unexpected(
+                    string_format(_("%1$s is no shape of %2$s."), text, part_name(current)));
             }
-            change(set_part_member(prototype(), {.index = *index, .key = "part", .value = text}));
-            return;
+            return set_part_member(from, {.index = index, .key = "part", .value = text});
         }
         if (key == "fuel" && !text.empty()
             && !std::ranges::contains(tank_fuels(), itype_id(text))) {
-            notice = string_format(_("%s is no liquid a tank holds."), text);
-            return;
+            return std::unexpected(string_format(_("%s is no liquid a tank holds."), text));
         }
         auto value = std::optional<nlohmann::ordered_json>{};
         if (!text.empty()) {
             value = nlohmann::ordered_json(text);
             if (key == "ammo") {
                 const auto number = number_in(text, 0, 100);
-                if (!number) {
-                    notice = _("That value is out of range.");
-                    return;
-                }
+                if (!number) { return std::unexpected(_("That value is out of range.")); }
                 value = *number;
             }
         }
-        change(set_part_member(prototype(), {.index = *index, .key = key, .value = value}));
+        return set_part_member(from, {.index = index, .key = key, .value = value});
     }
 
-    /// Sets the fewest (or, `most`, the most) rounds a turret spawns loaded with; a turret with
-    /// no range is full, so a first end sets both, and empty makes it full again.
-    auto set_ammo_qty(const std::size_t index, const bool most, const std::string& text) -> void {
-        auto value = std::optional<nlohmann::ordered_json>{};
-        if (!text.empty()) {
-            const auto read = number_in(text, 0, std::numeric_limits<int>::max());
-            if (!read) {
-                notice = _("That value is out of range.");
-                return;
-            }
-            const auto number = *read;
-            const auto current = nlohmann::ordered_json::parse(
-                value_at(design_parts(prototype())[index].pointer + "/ammo_qty"), nullptr, false);
-            auto range =
-                current.is_array() && current.size() == 2 && current[0].is_number_integer()
-                        && current[1].is_number_integer()
-                    ? std::array{current[0].get<int>(), current[1].get<int>()}
-                    : std::array{number, number};
-            range[most ? 1 : 0] = number;
-            if (range[0] > range[1]) {
-                notice = _("A turret cannot load fewer rounds at most than at least.");
-                return;
-            }
-            value = range;
+    /// Sets the member `key` of the picked part from the part form, as `part_setting` reads
+    /// `text`, and of every part of its kind in the selection around it, as one step.
+    auto set_part(const std::string& key, const std::string& text) -> void {
+        const auto index = picked_here();
+        if (!index) {
+            notice = _("Pick a part first.");
+            return;
         }
-        change(set_part_member(prototype(), {.index = index, .key = "ammo_qty", .value = value}));
+        const auto targets = setting_targets(*index);
+        auto next = prototype();
+        for (const auto target : targets) {
+            auto set = part_setting(next, target, key, text);
+            if (!set) {
+                notice = set.error();
+                return;
+            }
+            next = std::move(*set);
+        }
+        if (change(next) && (key == "fuel" || targets.size() > 1)) { say_step(); }
+    }
+
+    /// Keeps the settings of the picked part for Paste settings.
+    auto copy_settings() -> void {
+        const auto index = picked_here();
+        if (live || !index) {
+            notice = _("Pick a part first.");
+            return;
+        }
+        const auto design = design_parts(prototype());
+        const auto& entry =
+            prototype()[nlohmann::ordered_json::json_pointer(design[*index].pointer)];
+        auto members = entry.is_object() ? entry : nlohmann::ordered_json::object();
+        members.erase("part");
+        const auto name = part_name(design[*index].part);
+        copied = part_settings{
+            .kind = kind_name(vpart_id(design[*index].part)), .name = name, .members = members};
+        //~ %s is the part whose settings the vehicle editor copied.
+        said = string_format(_("Copied the settings of %s."), name);
+    }
+
+    /// Gives the picked part, and every part of its kind in the selection around it, the settings
+    /// Copy settings took, as one step.
+    auto paste_settings() -> void {
+        const auto index = picked_here();
+        if (live || !index || !copied) { return; }
+        const auto design = design_parts(prototype());
+        if (kind_name(vpart_id(design[*index].part)) != copied->kind) {
+            //~ %s is the part whose settings the vehicle editor holds.
+            notice = string_format(_("Pick a %s to paste its settings on."), copied->name);
+            return;
+        }
+        auto next = prototype();
+        for (const auto target : setting_targets(*index)) {
+            const auto& entry = next[nlohmann::ordered_json::json_pointer(design[target].pointer)];
+            auto keys = std::set<std::string>{};
+            if (entry.is_object()) {
+                for (const auto& [key, value] : entry.items()) { keys.insert(key); }
+            }
+            for (const auto& [key, value] : copied->members.items()) { keys.insert(key); }
+            keys.erase("part");
+            for (const auto& key : keys) {
+                auto set = set_part_member(
+                    next,
+                    {.index = target,
+                     .key = key,
+                     .value = copied->members.contains(key)
+                                ? std::optional(copied->members[key])
+                                : std::nullopt});
+                if (!set) {
+                    notice = set.error();
+                    return;
+                }
+                next = std::move(*set);
+            }
+        }
+        if (change(next)) { say_step(); }
+    }
+
+    /// Says what the step just made did, as the history names it.
+    auto say_step() -> void {
+        const auto steps = history();
+        if (steps.depth == 0) { return; }
+        //~ What the vehicle editor did, as its history names the step.
+        said = string_format(_("%s."), steps.labels[steps.depth - 1]);
+    }
+
+    /// Makes the design pass its check `key` as the check's fix does, as one step named by it.
+    auto fix_drive(const std::string& key) -> void {
+        const auto checks = drive();
+        const auto found = std::ranges::find(checks, key, &drive_check::key);
+        if (found == checks.end() || found->fix == drive_fix::none) { return; }
+        if (found->fix == drive_fix::show_engines) {
+            part_group = part_category::engines;
+            part_filter.clear();
+            part_page = 0;
+            canvas_tool = "install";
+            anchor.reset();
+            said = _("Choose an engine under Parts, then click a square of the frame.");
+            return;
+        }
+        doc->begin_group(false, found->action);
+        const auto changed = change(fixed_design(prototype(), catalog, found->fix));
+        doc->end_group();
+        keep_pick();
+        if (changed) { say_step(); }
     }
 
     /// Adds a spawn of the item or item group `id` on the picked mount, every time; `kind` says
@@ -1471,12 +1867,13 @@ struct editing: session {
         }
     }
 
-    /// Puts the design in the game in place of its prototype and spawns it east of the avatar.
-    auto spawn() -> void {
+    /// Puts the design in the game in place of its prototype and spawns it east of the avatar;
+    /// the vehicle spawned, none when it could not.
+    auto spawn() -> vehicle* {
         const auto applied = apply_design(prototype().dump());
         if (!applied) {
             notice = applied.error();
-            return;
+            return nullptr;
         }
         const auto spawned = place_clear(
             tripoint_rel_ms(spawn_distance, 0, 0),
@@ -1489,12 +1886,45 @@ struct editing: session {
             });
         if (!spawned) {
             notice = spawned.error();
-            return;
+            return nullptr;
         }
         //~ %s says where the vehicle spawned.
         said = string_format(
             _("%s Vehicles > World > Edit in place changes it where it stands."),
             placed_sentence(false, **spawned));
+        return *spawned;
+    }
+
+    /// Spawns the design as Spawn does and seats the avatar at its controls, its engines
+    /// starting, for the editor key to bring the editor back with the design open; whether it
+    /// did.
+    auto test_drive() -> bool {
+        if (!ready_to_drive(drive())) { return false; }
+        auto* const veh = spawn();
+        if (!veh) { return false; }
+        auto& here = get_map();
+        auto seat = std::optional<tripoint_bub_ms>{};
+        for (const vpart_reference& part : veh->get_avail_parts(VPFLAG_CONTROLS)) {
+            if (here.veh_at(part.pos()).part_with_feature(VPFLAG_BOARDABLE, true)) {
+                seat = part.pos();
+                break;
+            }
+        }
+        if (!seat) {
+            here.destroy_vehicle(veh);
+            notice = _("No seat has controls to drive it from.");
+            return false;
+        }
+        auto& you = get_avatar();
+        veh->set_owner(you);
+        // Stepping onto the seat boards it.
+        g->place_player(*seat);
+        if (!you.in_vehicle) { here.board_vehicle(*seat, &you); }
+        veh->start_engines(true);
+        open_vehicle_editor_first();
+        //~ %s is the vehicle the editor's test drive put the avatar in.
+        add_msg(_("Test driving the %s: the editor key brings you back to its design."), veh->name);
+        return true;
     }
 
     auto set_spawning(const std::string& field, const std::string& text) -> void {
@@ -1600,6 +2030,7 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
     state.notice.clear();
     state.said.clear();
     state.catalog = read_part_catalog();
+    state.library = library_pieces("vehicle");
     if (!prototype.empty()) { state.open(prototype); }
     const auto screen = ec::screen_scope(
         ctxt, "vehicle_editor",
@@ -1633,6 +2064,8 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
             state.show(row.substr(row.find(':') + 1));
         } else if (id.starts_with(show_prefix)) {
             state.show(id.substr(show_prefix.size()));
+        } else if (id == advanced_id) {
+            set_advanced_mode(!advanced_mode());
         } else if (id == canvas_tool_id || id == mirror_sides_id || id == mirror_ends_id) {
             const auto key =
                 id == canvas_tool_id
@@ -1692,6 +2125,25 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
             state.end_stroke();
         } else if (id == copy_mounts_id) {
             state.copy_mounts();
+        } else if (id == clip_turn_id) {
+            state.reshape_clip(
+                [](const point& at) { return point(-at.y, at.x); }, _("Turned the copy."));
+        } else if (id == clip_flip_sides_id) {
+            state.reshape_clip(
+                [](const point& at) { return point(at.x, -at.y); },
+                _("Flipped the copy left and right."));
+        } else if (id == clip_flip_ends_id) {
+            state.reshape_clip(
+                [](const point& at) { return point(-at.x, at.y); },
+                _("Flipped the copy front and back."));
+        } else if (id == show_clip_text_id) {
+            state.clip_text_shown = !state.clip_text_shown;
+        } else if (id == paste_text_id) {
+            state.paste_text(text);
+        } else if (id == library_save_id) {
+            state.save_to_library(text);
+        } else if (id == library_take_id) {
+            if (const auto index = row_index(row, "piece")) { state.take_from_library(*index); }
         } else if (id == cut_mounts_id || id == delete_mounts_id) {
             state.delete_mounts(id == cut_mounts_id);
         } else if (id == remove_id) {
@@ -1717,6 +2169,18 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
             state.set_prop(row, text);
         } else if (id == part_set_id) {
             state.set_part(row, text);
+        } else if (id == replace_kind_id || id == delete_kind_id) {
+            if (const auto kind = row_rest(row, "kind")) {
+                if (id == replace_kind_id) {
+                    state.replace_kind(std::string(*kind));
+                } else {
+                    state.delete_kind(std::string(*kind));
+                }
+            }
+        } else if (id == copy_settings_id) {
+            state.copy_settings();
+        } else if (id == paste_settings_id) {
+            state.paste_settings();
         } else if (id == item_add_id) {
             state.tool_tab = "cargo";
             state.add_item(text);
@@ -1759,6 +2223,10 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
             state.set_spawning(row, text);
         } else if (id == spawn_id) {
             state.spawn();
+        } else if (id == test_drive_id) {
+            if (state.test_drive()) { return true; }
+        } else if (id.starts_with(fix_prefix)) {
+            state.fix_drive(id.substr(fix_prefix.size()));
         }
         if (state.notice.empty() && footprint(state) == before) { state.notice = std::move(kept); }
     }

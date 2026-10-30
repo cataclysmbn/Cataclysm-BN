@@ -143,6 +143,22 @@ struct part_member {
     std::optional<nlohmann::ordered_json> value = std::nullopt;
 };
 
+/// A part a paste installs as its entry in a prototype has it: its id alone, or an object with
+/// its `part` and the members set on it, such as a tank's fuel.
+struct placed_entry {
+    point mount;
+    nlohmann::ordered_json entry;
+};
+
+/// The id of the part a prototype's entry names.
+auto entry_part(const nlohmann::ordered_json& entry) -> std::string;
+
+/// `after` with the members of each of `placed` on the part of its mount and id that `before`
+/// lacks, as a paste of them leaves it.
+auto given_members(
+    const nlohmann::ordered_json& before, const nlohmann::ordered_json& after,
+    const std::vector<placed_entry>& placed) -> nlohmann::ordered_json;
+
 /// The prototype with the member of a part set or removed: a part named by its id alone becomes
 /// an object, and one left with its id alone is named by it again; the error says why the game
 /// would not load it.
@@ -244,8 +260,12 @@ auto mount_looks(const vehicle& veh, std::vector<int> here, int facing)
 /// a group by its id.
 auto item_spawn_name(const nlohmann::ordered_json& entry) -> std::string;
 
-/// What an edit of a prototype did, in a designer's words: the part installed, removed, reordered
-/// or set and its mount, or the item spawn added or removed; else what `step_label` says.
+/// `names` as a sentence lists them: "a", "a and b", "a, b and c".
+auto named_together(const std::vector<std::string>& names) -> std::string;
+
+/// What an edit of a prototype did, in a designer's words: the parts installed, removed, swapped,
+/// reordered or set and their mount, a part's fuel and what it became, or the item spawn added
+/// or removed; else what `step_label` says.
 auto design_step_label(const document_edit& edit) -> std::string;
 
 /// What a vehicle part is for, as the editor's palette heads its parts: the game names no
@@ -286,11 +306,49 @@ struct part_catalog {
     /// The frame the game's prototypes install most, which a new design starts with; none when
     /// they install none.
     std::optional<vpart_id> frame;
+    /// How many of each part the game's prototypes install.
+    std::map<vpart_id, int> uses;
+    /// How many of the game's prototypes install each part.
+    std::map<vpart_id, int> vehicles;
     /// The shapes of the part `id`, as its kind has them; none for a part the game lacks.
     auto shapes_of(const vpart_id& id) const -> std::vector<const vpart_info*>;
 };
 
 auto read_part_catalog() -> part_catalog;
+
+/// Of the game's parts that `wanted` takes and a designer can install, the one its prototypes
+/// install most; none when there is none.
+auto most_installed(
+    const part_catalog& catalog, const std::function<auto(const vpart_info&)->bool>& wanted)
+    -> const vpart_info*;
+
+/// Whether the mount `at` lies in the front half of the vehicle's mounts, east of its middle.
+auto in_front_half(const vehicle& veh, const point& at) -> bool;
+
+/// The part that the part of `install` needs on its mount of `veh` before it goes on there, as a
+/// wheel needs its hub: the one the game's prototypes install most of those the game would mount
+/// there, steerable in the front half of the vehicle and not behind it when there are both; none
+/// when it needs none, or none would go on.
+auto prerequisite_of(const part_catalog& catalog, const vehicle& veh, const part_install& install)
+    -> std::optional<vpart_id>;
+
+/// The steerable kind of `part`, as the game's steerable hubs extend theirs; none when it has
+/// none.
+auto steerable_of(const part_catalog& catalog, const vpart_info& part) -> const vpart_info*;
+
+/// `after` with the line shapes of its frames and armour joined where `before` became it: each
+/// such part on a mount that gained or lost a part of its kind, or beside one, takes the shape that
+/// joins it to its neighbours of its kind, unless its shape is one they did not give it, which was
+/// picked by hand.
+auto joined_shapes(
+    const nlohmann::ordered_json& before, const nlohmann::ordered_json& after,
+    const part_catalog& catalog) -> nlohmann::ordered_json;
+
+/// How well a part named `name` of the id `id` matches what a player searched for, the best
+/// first: the whole name, the start of a word of it, anywhere in it, or in the id; none when it
+/// does not match.
+auto search_rank(const std::string& name, const std::string& id, const std::string& filter)
+    -> std::optional<int>;
 
 /// The names of `parts` as a list of them shows them: a name two of them share is followed by
 /// what tells their ids apart.

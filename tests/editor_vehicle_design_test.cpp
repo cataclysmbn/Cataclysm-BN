@@ -600,7 +600,7 @@ TEST_CASE("a step names a reorder only when it keeps every mounted part", "[edit
           == "Remove 3 parts (bicycle wheel, extra light frame, light wheel mount (steerable))");
     auto with_two = before;
     with_two["parts"].push_back({{"x", 2}, {"y", 0}, {"parts", {"xlframe_vertical", "headlight"}}});
-    CHECK(label(with_two) == "Install 2 parts");
+    CHECK(label(with_two) == "Install extra light frame and headlight at 2,0");
     auto with_frames = before;
     with_frames["parts"].push_back({{"x", 2}, {"y", 0}, {"parts", {"xlframe_vertical"}}});
     with_frames["parts"].push_back({{"x", 3}, {"y", 0}, {"parts", {"xlframe_vertical"}}});

@@ -2386,6 +2386,23 @@
                     ]
                   },
                   {
+                    "id": "option:EDITOR_ADVANCED",
+                    "label": "Advanced editor settings",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "value",
+                        "label": "Value",
+                        "value": "False",
+                        "color": "c_light_red"
+                      }
+                    ]
+                  },
+                  {
                     "id": "option:LOG_ACTIVITY_SKIP_STATE",
                     "label": "Log Reason for No Activity Skip State",
                     "description": "",
@@ -2937,7 +2954,7 @@
                     "color": "c_light_gray"
                   }
                 ],
-                "total": 37,
+                "total": 38,
                 "selection": "single",
                 "activate": "options:activate"
               },

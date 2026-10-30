@@ -74,7 +74,8 @@
               "kind": "tabs",
               "label": "Vehicles",
               "affordances": [
-                "vehicle:source"
+                "vehicle:source",
+                "vehicle:new"
               ],
               "slot": "canvas",
               "tabs": [
@@ -100,12 +101,7 @@
                   "vehicle:filter",
                   "vehicle:page"
                 ],
-                "columns": [
-                  {
-                    "key": "id",
-                    "label": "ID"
-                  }
-                ],
+                "columns": [],
                 "rows": [
                   {
                     "id": "prototype:bicycle",
@@ -115,13 +111,17 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "bicycle"
-                      }
-                    ]
+                    "columns": []
+                  },
+                  {
+                    "id": "prototype:bicycle_carbon",
+                    "label": "Carbon Fiber Bicycle",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": []
                   },
                   {
                     "id": "prototype:bicycle_electric",
@@ -131,13 +131,7 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "bicycle_electric"
-                      }
-                    ]
+                    "columns": []
                   },
                   {
                     "id": "prototype:bicycle_plastic",
@@ -147,13 +141,7 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "bicycle_plastic"
-                      }
-                    ]
+                    "columns": []
                   },
                   {
                     "id": "prototype:bicycle_carbon",
@@ -179,13 +167,7 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "bicycle_dirt"
-                      }
-                    ]
+                    "columns": []
                   }
                 ],
                 "total": 5,
@@ -232,6 +214,15 @@
               "w"
             ],
             "enabled": true,
+            "expect": "screen",
+            "group": "View"
+          },
+          {
+            "id": "vehicle:advanced",
+            "label": "Show advanced settings",
+            "keys": [],
+            "enabled": true,
+            "description": "Shows ids, JSON and the settings that need them, in both editors.",
             "expect": "screen",
             "group": "View"
           },
@@ -368,12 +359,7 @@
                   "vehicle:filter",
                   "vehicle:page"
                 ],
-                "columns": [
-                  {
-                    "key": "id",
-                    "label": "ID"
-                  }
-                ],
+                "columns": [],
                 "rows": [
                   {
                     "id": "prototype:bicycle",
@@ -383,13 +369,17 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": true,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "bicycle"
-                      }
-                    ]
+                    "columns": []
+                  },
+                  {
+                    "id": "prototype:bicycle_carbon",
+                    "label": "Carbon Fiber Bicycle",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": []
                   },
                   {
                     "id": "prototype:bicycle_electric",
@@ -399,13 +389,7 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "bicycle_electric"
-                      }
-                    ]
+                    "columns": []
                   },
                   {
                     "id": "prototype:bicycle_plastic",
@@ -415,13 +399,7 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "bicycle_plastic"
-                      }
-                    ]
+                    "columns": []
                   },
                   {
                     "id": "prototype:bicycle_carbon",
@@ -447,13 +425,7 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "bicycle_dirt"
-                      }
-                    ]
+                    "columns": []
                   }
                 ],
                 "total": 5,
@@ -939,13 +911,6 @@
                   "selected": false,
                   "enabled": true,
                   "hotkey": "5"
-                },
-                {
-                  "id": "tool:json",
-                  "label": "Raw JSON",
-                  "selected": false,
-                  "enabled": true,
-                  "hotkey": "6"
                 }
               ],
               "select": "vehicle:tool",
@@ -1040,7 +1005,9 @@
                     "kind": "form",
                     "label": "bicycle wheel",
                     "affordances": [
-                      "vehicle:part_set"
+                      "vehicle:part_set",
+                      "vehicle:copy_settings",
+                      "vehicle:paste_settings"
                     ],
                     "fields": [
                       {
@@ -1063,6 +1030,110 @@
                   }
                 ]
               }
+            },
+            {
+              "id": "vehicle:check",
+              "kind": "list",
+              "label": "Ready to drive",
+              "affordances": [
+                "vehicle:test_drive"
+              ],
+              "slot": "tools",
+              "columns": [
+                {
+                  "key": "ok",
+                  "label": "OK"
+                }
+              ],
+              "rows": [
+                {
+                  "id": "check:wheels",
+                  "label": "It stands on its wheels.",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "ok",
+                      "label": "OK",
+                      "value": "✓",
+                      "color": "light_green"
+                    }
+                  ]
+                },
+                {
+                  "id": "check:steering",
+                  "label": "Its wheels steer.",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "ok",
+                      "label": "OK",
+                      "value": "✓",
+                      "color": "light_green"
+                    }
+                  ]
+                },
+                {
+                  "id": "check:engine",
+                  "label": "It has an engine.",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "ok",
+                      "label": "OK",
+                      "value": "✓",
+                      "color": "light_green"
+                    }
+                  ]
+                },
+                {
+                  "id": "check:controls",
+                  "label": "A seat has controls to drive it from.",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "ok",
+                      "label": "OK",
+                      "value": "✓",
+                      "color": "light_green"
+                    }
+                  ]
+                },
+                {
+                  "id": "check:power",
+                  "label": "The engine can move it.",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "ok",
+                      "label": "OK",
+                      "value": "✓",
+                      "color": "light_green"
+                    }
+                  ]
+                }
+              ],
+              "total": 5,
+              "selection": "none"
             },
             {
               "id": "vehicle:performance",
@@ -1177,12 +1248,7 @@
                   "vehicle:part_filter",
                   "vehicle:part_page"
                 ],
-                "columns": [
-                  {
-                    "key": "id",
-                    "label": "ID"
-                  }
-                ],
+                "columns": [],
                 "rows": [
                   {
                     "id": "vpart:headlight",
@@ -1192,13 +1258,7 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "headlight"
-                      }
-                    ],
+                    "columns": [],
                     "look": {
                       "kind": "vehicle_part",
                       "id": "headlight",
@@ -1217,13 +1277,7 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "headlight_reinforced"
-                      }
-                    ],
+                    "columns": [],
                     "look": {
                       "kind": "vehicle_part",
                       "id": "headlight_reinforced",
@@ -1245,13 +1299,7 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "motorcycle_headlight"
-                      }
-                    ],
+                    "columns": [],
                     "look": {
                       "kind": "vehicle_part",
                       "id": "motorcycle_headlight",
@@ -1263,34 +1311,6 @@
                     }
                   },
                   {
-                    "id": "vpart:wide_headlight",
-                    "label": "wide angle headlight",
-                    "description": "",
-                    "denial": "",
-                    "enabled": true,
-                    "selectable": true,
-                    "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "wide_headlight"
-                      }
-                    ],
-                    "look": {
-                      "kind": "vehicle_part",
-                      "id": "wide_headlight",
-                      "glyph": "*",
-                      "color": "c_white",
-                      "name": "wide angle headlight",
-                      "tile": "vp_wide_headlight",
-                      "looks_like": [
-                        "vp_headlight"
-                      ],
-                      "subtile": "center"
-                    }
-                  },
-                  {
                     "id": "vpart:wide_headlight_reinforced",
                     "label": "reinforced wide-angle headlight",
                     "description": "",
@@ -1298,13 +1318,7 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "wide_headlight_reinforced"
-                      }
-                    ],
+                    "columns": [],
                     "look": {
                       "kind": "vehicle_part",
                       "id": "wide_headlight_reinforced",
@@ -1314,6 +1328,28 @@
                       "tile": "vp_wide_headlight_reinforced",
                       "looks_like": [
                         "vp_wide_headlight",
+                        "vp_headlight"
+                      ],
+                      "subtile": "center"
+                    }
+                  },
+                  {
+                    "id": "vpart:wide_headlight",
+                    "label": "wide angle headlight",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [],
+                    "look": {
+                      "kind": "vehicle_part",
+                      "id": "wide_headlight",
+                      "glyph": "*",
+                      "color": "c_white",
+                      "name": "wide angle headlight",
+                      "tile": "vp_wide_headlight",
+                      "looks_like": [
                         "vp_headlight"
                       ],
                       "subtile": "center"
@@ -1489,6 +1525,63 @@
             "group": "Edit"
           },
           {
+            "id": "vehicle:clip_turn",
+            "label": "Turn copy",
+            "keys": [
+              "R"
+            ],
+            "enabled": false,
+            "denial": "Copy or cut squares first.",
+            "expect": "screen",
+            "group": "Edit"
+          },
+          {
+            "id": "vehicle:clip_flip_sides",
+            "label": "Flip copy left and right",
+            "keys": [
+              "F"
+            ],
+            "enabled": false,
+            "denial": "Copy or cut squares first.",
+            "expect": "screen",
+            "group": "Edit"
+          },
+          {
+            "id": "vehicle:clip_flip_ends",
+            "label": "Flip copy front and back",
+            "keys": [
+              "CTRL+F"
+            ],
+            "enabled": false,
+            "denial": "Copy or cut squares first.",
+            "expect": "screen",
+            "group": "Edit"
+          },
+          {
+            "id": "vehicle:library_save",
+            "label": "Save copy to library",
+            "keys": [],
+            "enabled": false,
+            "description": "Keeps the copy under Library for any vehicle you make.",
+            "denial": "Copy or cut squares first.",
+            "args": {
+              "text": {
+                "default": "My piece"
+              }
+            },
+            "expect": "boundary",
+            "group": "Edit"
+          },
+          {
+            "id": "vehicle:show_clip_text",
+            "label": "Copy or paste as text",
+            "keys": [],
+            "enabled": true,
+            "description": "Shows the copy as text to share, and takes text someone shared.",
+            "expect": "screen",
+            "group": "Edit"
+          },
+          {
             "id": "vehicle:delete_mounts",
             "label": "Delete",
             "keys": [],
@@ -1545,6 +1638,25 @@
             "group": "Edit"
           },
           {
+            "id": "vehicle:copy_settings",
+            "label": "Copy settings",
+            "keys": [],
+            "enabled": true,
+            "description": "Keeps the settings of the picked part to paste on others of its kind.",
+            "expect": "screen",
+            "group": "Edit"
+          },
+          {
+            "id": "vehicle:paste_settings",
+            "label": "Paste settings",
+            "keys": [],
+            "enabled": false,
+            "description": "Gives the picked part, and the parts of its kind on the marked squares, the settings copied.",
+            "denial": "Copy the settings of a part first.",
+            "expect": "screen",
+            "group": "Edit"
+          },
+          {
             "id": "vehicle:undo",
             "label": "Undo",
             "keys": [
@@ -1583,6 +1695,15 @@
               "w"
             ],
             "enabled": true,
+            "expect": "screen",
+            "group": "View"
+          },
+          {
+            "id": "vehicle:advanced",
+            "label": "Show advanced settings",
+            "keys": [],
+            "enabled": true,
+            "description": "Shows ids, JSON and the settings that need them, in both editors.",
             "expect": "screen",
             "group": "View"
           },
@@ -1657,21 +1778,22 @@
             "group": "View"
           },
           {
-            "id": "vehicle:show:json",
-            "label": "Raw JSON",
-            "keys": [
-              "6"
-            ],
-            "enabled": true,
-            "expect": "screen",
-            "group": "View"
-          },
-          {
             "id": "vehicle:paste",
             "label": "Paste vehicle",
             "keys": [],
             "enabled": true,
             "description": "Puts an exact copy of the copied vehicle south of you.",
+            "expect": "screen",
+            "group": "World"
+          },
+          {
+            "id": "vehicle:test_drive",
+            "label": "Test drive",
+            "keys": [
+              "F6"
+            ],
+            "enabled": true,
+            "description": "Spawns the design east of you and seats you at its controls; the editor key brings you back to it.",
             "expect": "screen",
             "group": "World"
           },
@@ -2011,13 +2133,7 @@
         "enabled": true,
         "selectable": true,
         "selected": false,
-        "columns": [
-          {
-            "key": "id",
-            "label": "ID",
-            "value": "xlframe_vertical"
-          }
-        ],
+        "columns": [],
         "look": {
           "kind": "vehicle_part",
           "id": "xlframe_vertical",
@@ -2877,19 +2993,113 @@
               }
             },
             {
+              "id": "vehicle:check",
+              "kind": "list",
+              "label": "Ready to drive",
+              "slot": "tools",
+              "columns": [
+                {
+                  "key": "ok",
+                  "label": "OK"
+                }
+              ],
+              "rows": [
+                {
+                  "id": "check:wheels",
+                  "label": "It stands on its wheels.",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "ok",
+                      "label": "OK",
+                      "value": "✓",
+                      "color": "light_green"
+                    }
+                  ]
+                },
+                {
+                  "id": "check:steering",
+                  "label": "Its wheels steer.",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "ok",
+                      "label": "OK",
+                      "value": "✓",
+                      "color": "light_green"
+                    }
+                  ]
+                },
+                {
+                  "id": "check:engine",
+                  "label": "It has an engine.",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "ok",
+                      "label": "OK",
+                      "value": "✓",
+                      "color": "light_green"
+                    }
+                  ]
+                },
+                {
+                  "id": "check:controls",
+                  "label": "A seat has controls to drive it from.",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "ok",
+                      "label": "OK",
+                      "value": "✓",
+                      "color": "light_green"
+                    }
+                  ]
+                },
+                {
+                  "id": "check:power",
+                  "label": "The engine is too weak to move it.",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "ok",
+                      "label": "OK",
+                      "value": "✗",
+                      "color": "light_red"
+                    }
+                  ]
+                }
+              ],
+              "total": 5,
+              "selection": "none"
+            },
+            {
               "id": "vehicle:performance",
               "kind": "panel",
               "label": "Performance",
               "slot": "inspector",
               "title": "",
               "stats": [
-                {
-                  "key": "speed",
-                  "label": "Safe/Top speed",
-                  "value": "0",
-                  "max": "0",
-                  "unit": "km/h"
-                },
                 {
                   "key": "power",
                   "label": "Engine power",
@@ -2989,12 +3199,7 @@
                   "vehicle:part_filter",
                   "vehicle:part_page"
                 ],
-                "columns": [
-                  {
-                    "key": "id",
-                    "label": "ID"
-                  }
-                ],
+                "columns": [],
                 "rows": [
                   {
                     "id": "vpart:headlight",
@@ -3004,13 +3209,7 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": true,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "headlight"
-                      }
-                    ],
+                    "columns": [],
                     "look": {
                       "kind": "vehicle_part",
                       "id": "headlight",
@@ -3029,13 +3228,7 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "headlight_reinforced"
-                      }
-                    ],
+                    "columns": [],
                     "look": {
                       "kind": "vehicle_part",
                       "id": "headlight_reinforced",
@@ -3057,13 +3250,7 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "motorcycle_headlight"
-                      }
-                    ],
+                    "columns": [],
                     "look": {
                       "kind": "vehicle_part",
                       "id": "motorcycle_headlight",
@@ -3075,34 +3262,6 @@
                     }
                   },
                   {
-                    "id": "vpart:wide_headlight",
-                    "label": "wide angle headlight",
-                    "description": "",
-                    "denial": "",
-                    "enabled": true,
-                    "selectable": true,
-                    "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "wide_headlight"
-                      }
-                    ],
-                    "look": {
-                      "kind": "vehicle_part",
-                      "id": "wide_headlight",
-                      "glyph": "*",
-                      "color": "c_white",
-                      "name": "wide angle headlight",
-                      "tile": "vp_wide_headlight",
-                      "looks_like": [
-                        "vp_headlight"
-                      ],
-                      "subtile": "center"
-                    }
-                  },
-                  {
                     "id": "vpart:wide_headlight_reinforced",
                     "label": "reinforced wide-angle headlight",
                     "description": "",
@@ -3110,13 +3269,7 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "wide_headlight_reinforced"
-                      }
-                    ],
+                    "columns": [],
                     "look": {
                       "kind": "vehicle_part",
                       "id": "wide_headlight_reinforced",
@@ -3126,6 +3279,28 @@
                       "tile": "vp_wide_headlight_reinforced",
                       "looks_like": [
                         "vp_wide_headlight",
+                        "vp_headlight"
+                      ],
+                      "subtile": "center"
+                    }
+                  },
+                  {
+                    "id": "vpart:wide_headlight",
+                    "label": "wide angle headlight",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [],
+                    "look": {
+                      "kind": "vehicle_part",
+                      "id": "wide_headlight",
+                      "glyph": "*",
+                      "color": "c_white",
+                      "name": "wide angle headlight",
+                      "tile": "vp_wide_headlight",
+                      "looks_like": [
                         "vp_headlight"
                       ],
                       "subtile": "center"
@@ -3275,6 +3450,63 @@
             "group": "Edit"
           },
           {
+            "id": "vehicle:clip_turn",
+            "label": "Turn copy",
+            "keys": [
+              "R"
+            ],
+            "enabled": false,
+            "denial": "Copy or cut squares first.",
+            "expect": "screen",
+            "group": "Edit"
+          },
+          {
+            "id": "vehicle:clip_flip_sides",
+            "label": "Flip copy left and right",
+            "keys": [
+              "F"
+            ],
+            "enabled": false,
+            "denial": "Copy or cut squares first.",
+            "expect": "screen",
+            "group": "Edit"
+          },
+          {
+            "id": "vehicle:clip_flip_ends",
+            "label": "Flip copy front and back",
+            "keys": [
+              "CTRL+F"
+            ],
+            "enabled": false,
+            "denial": "Copy or cut squares first.",
+            "expect": "screen",
+            "group": "Edit"
+          },
+          {
+            "id": "vehicle:library_save",
+            "label": "Save copy to library",
+            "keys": [],
+            "enabled": false,
+            "description": "Keeps the copy under Library for any vehicle you make.",
+            "denial": "Copy or cut squares first.",
+            "args": {
+              "text": {
+                "default": "My piece"
+              }
+            },
+            "expect": "boundary",
+            "group": "Edit"
+          },
+          {
+            "id": "vehicle:show_clip_text",
+            "label": "Copy or paste as text",
+            "keys": [],
+            "enabled": true,
+            "description": "Shows the copy as text to share, and takes text someone shared.",
+            "expect": "screen",
+            "group": "Edit"
+          },
+          {
             "id": "vehicle:delete_mounts",
             "label": "Delete",
             "keys": [],
@@ -3347,6 +3579,15 @@
               "w"
             ],
             "enabled": true,
+            "expect": "screen",
+            "group": "View"
+          },
+          {
+            "id": "vehicle:advanced",
+            "label": "Show advanced settings",
+            "keys": [],
+            "enabled": true,
+            "description": "Shows ids, JSON and the settings that need them, in both editors.",
             "expect": "screen",
             "group": "View"
           },
