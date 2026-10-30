@@ -6273,7 +6273,7 @@ TEST_CASE(
     };
     // Each tank stays on its mount with the fuel pasted on it.
     CHECK(tank_at({0, 0}).value("fuel", "") == "gasoline");
-    CHECK(tank_at({1, 0}) == nlohmann::ordered_json{{"part", "tank"}, {"fuel", "diesel"}});
+    CHECK(tank_at({1, 0}) == nlohmann::ordered_json{{"part", "tank"}, {"fuel", "gasoline"}});
     CHECK(tank_at({0, 1}) == nlohmann::ordered_json{{"part", "tank"}, {"fuel", "gasoline"}});
     // The library keeps the parts without the mount they were copied from.
     const auto pieces = editor::library_pieces("vehicle");

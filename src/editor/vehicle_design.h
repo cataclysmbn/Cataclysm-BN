@@ -152,6 +152,9 @@ struct placed_entry {
 
 /// The id of the part a prototype's entry names.
 auto entry_part(const nlohmann::ordered_json& entry) -> std::string;
+/// A prototype's entry as it goes on any mount: without the `x`, `y` and `z` of the mount it was
+/// listed on, and its id alone when nothing else is set on it.
+auto unmounted_entry(const nlohmann::ordered_json& entry) -> nlohmann::ordered_json;
 
 /// `after` with the members of each of `placed` on the part of its mount and id that `before`
 /// lacks, as a paste of them leaves it.

@@ -922,7 +922,8 @@ struct editing: session {
                     return nlohmann::ordered_json(veh->part_info(index).get_id().str());
                 })
                 | std::ranges::to<std::vector>();
-            // The design's entries of the mount, when they are the parts the vehicle shows.
+            // The design's entries of the mount, when they are the parts the vehicle shows, without
+            // the mount they are listed on.
             const auto entries =
                 design
                 | std::views::filter([&](const design_part& entry) { return entry.mount == at; })
@@ -934,7 +935,8 @@ struct editing: session {
                     [](const nlohmann::ordered_json& part) { return part.get<std::string>(); })) {
                 parts =
                     entries | std::views::transform([&](const design_part& entry) {
-                        return prototype()[nlohmann::ordered_json::json_pointer(entry.pointer)];
+                        return unmounted_entry(
+                            prototype()[nlohmann::ordered_json::json_pointer(entry.pointer)]);
                     })
                     | std::ranges::to<std::vector>();
             }
@@ -1073,7 +1075,7 @@ struct editing: session {
                     return (part.is_string() || part.is_object())
                         && vpart_id(entry_part(part)).is_valid();
                 })
-                | std::ranges::to<std::vector>();
+                | std::views::transform(unmounted_entry) | std::ranges::to<std::vector>();
             if (!kept.empty()) {
                 taken.push_back(
                     {.offset = {mount["x"].get<int>(), mount["y"].get<int>()},
@@ -1437,8 +1439,8 @@ struct editing: session {
             return;
         }
         const auto design = design_parts(prototype());
-        const auto& entry =
-            prototype()[nlohmann::ordered_json::json_pointer(design[*index].pointer)];
+        const auto entry = unmounted_entry(
+            prototype()[nlohmann::ordered_json::json_pointer(design[*index].pointer)]);
         auto members = entry.is_object() ? entry : nlohmann::ordered_json::object();
         members.erase("part");
         const auto name = part_name(design[*index].part);
@@ -1461,7 +1463,9 @@ struct editing: session {
         }
         auto next = prototype();
         for (const auto target : setting_targets(*index)) {
-            const auto& entry = next[nlohmann::ordered_json::json_pointer(design[target].pointer)];
+            // Its mount stays as it is.
+            const auto entry = unmounted_entry(
+                next[nlohmann::ordered_json::json_pointer(design[target].pointer)]);
             auto keys = std::set<std::string>{};
             if (entry.is_object()) {
                 for (const auto& [key, value] : entry.items()) { keys.insert(key); }
