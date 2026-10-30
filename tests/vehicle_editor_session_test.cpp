@@ -39,6 +39,7 @@
 #    include <filesystem>
 #    include <fstream>
 #    include <functional>
+#    include <map>
 #    include <nlohmann/json.hpp>
 #    include <ranges>
 #    include <set>
@@ -5766,6 +5767,127 @@ TEST_CASE("the vehicle editor's frames join the ones installed beside them", "[e
     CHECK(at({0, 0}).ends_with("_sw"));
     CHECK(at({1, 0}).ends_with("_vertical"));
     CHECK(at({0, 1}).ends_with("_horizontal"));
+}
+
+namespace {
+/// Steps that start a design of three frames across -1,0 to 1,0, each with a vehicle tank.
+auto three_tanks() -> std::vector<walk_step> {
+    return {
+        [](const auto&) { return invoke("vehicle:new", {.text = "Tanker"}); },
+        [](const auto&) { return invoke("vehicle:tool_rect_filled"); },
+        [](const auto&) { return mount_at(-1, 0); },
+        [](const auto&) { return mount_at(1, 0); },
+        [](const auto&) { return invoke("vehicle:part_filter", {.text = "tank"}); },
+        [](const auto&) { return invoke("vehicle:choose", {.row = "vpart:tank"}); },
+        [](const auto&) { return invoke("vehicle:tool_rect_filled"); },
+        [](const auto&) { return mount_at(-1, 0); },
+        [](const auto&) { return mount_at(1, 0); },
+    };
+}
+/// The fuel of each tank the saved `name` of my_mod has, by the x of its mount.
+auto saved_fuels(const my_mod_folder& mods, const std::string& name) -> std::map<int, std::string> {
+    const auto saved = nlohmann::ordered_json::parse(read_file(mods.path / name))[0];
+    auto fuels = std::map<int, std::string>{};
+    for (const auto& part : editor::design_parts(saved)) {
+        if (part.part != "tank") { continue; }
+        const auto& entry = saved[nlohmann::ordered_json::json_pointer(part.pointer)];
+        fuels[part.mount.x] = entry.is_object() ? entry.value("fuel", "") : std::string{};
+    }
+    return fuels;
+}
+} // namespace
+
+TEST_CASE(
+    "the vehicle editor sets a setting on every part of the picked kind in the selection, as one "
+    "step",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto mods = my_mod_folder{};
+    auto done = std::size_t{0};
+    auto steps = three_tanks();
+    steps.insert(
+        steps.end(),
+        {[&](const auto& screen) {
+             done = steps_done(screen);
+             return invoke("vehicle:tool_select");
+         },
+         [](const auto&) { return invoke("vehicle:stroke_begin"); },
+         [](const auto&) { return mount_at(0, 0); }, [](const auto&) { return mount_at(1, 0); },
+         [](const auto&) { return invoke("vehicle:stroke_end"); },
+         [](const auto&) { return invoke("vehicle:part_set", {.row = "fuel", .text = "diesel"}); },
+         [&](const auto& screen) {
+             CHECK(notice_of(screen).empty());
+             CHECK(steps_done(screen) == done + 1);
+             CHECK(step_at(screen) == "Set fuel of vehicle tank (60L) ×2 to diesel");
+             return invoke("vehicle:save");
+         }});
+    CHECK(walk(steps) == steps.size());
+    // The tank outside the selection keeps none.
+    CHECK(saved_fuels(mods, "tanker.json")
+          == std::map<int, std::string>{{-1, ""}, {0, "diesel"}, {1, "diesel"}});
+}
+
+TEST_CASE(
+    "the vehicle editor copies a part's settings and pastes them on another of its kind",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto mods = my_mod_folder{};
+    auto steps = three_tanks();
+    steps.insert(
+        steps.end(),
+        {[](const auto&) { return invoke("vehicle:tool_select"); },
+         [](const auto&) { return mount_at(-1, 0); },
+         [](const auto& screen) {
+             // Nothing is copied yet.
+             CHECK_FALSE(affordance(screen, "vehicle:paste_settings").enabled);
+             return invoke("vehicle:part_set", {.row = "fuel", .text = "gasoline"});
+         },
+         [](const auto& screen) {
+             CHECK(std::ranges::contains(
+                 part(screen, "vehicle:part_form").affordances,
+                 std::string("vehicle:copy_settings")));
+             return invoke("vehicle:copy_settings");
+         },
+         [](const auto& screen) {
+             CHECK(said(screen) == "Copied the settings of vehicle tank (60L).");
+             return mount_at(1, 0);
+         },
+         [](const auto& screen) {
+             CHECK(affordance(screen, "vehicle:paste_settings").enabled);
+             return invoke("vehicle:paste_settings");
+         },
+         [](const auto& screen) {
+             CHECK(step_at(screen) == "Set fuel of vehicle tank (60L) to gasoline");
+             return invoke("vehicle:save");
+         }});
+    CHECK(walk(steps) == steps.size());
+    CHECK(saved_fuels(mods, "tanker.json")
+          == std::map<int, std::string>{{-1, "gasoline"}, {0, ""}, {1, "gasoline"}});
+}
+
+TEST_CASE(
+    "the vehicle editor fills a new tank with the fuel its engine burns", "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto mods = my_mod_folder{};
+    const auto steps = std::vector<walk_step>{
+        [](const auto&) { return invoke("vehicle:new", {.text = "Tanker"}); },
+        [](const auto&) { return invoke("vehicle:tool_rect_filled"); },
+        [](const auto&) { return mount_at(-1, 0); },
+        [](const auto&) { return mount_at(1, 0); },
+        [](const auto&) { return invoke("vehicle:part_filter", {.text = "diesel"}); },
+        [](const auto&) { return invoke("vehicle:choose", {.row = "vpart:diesel_engine_i6"}); },
+        [](const auto&) { return invoke("vehicle:tool_install"); },
+        [](const auto&) { return mount_at(1, 0); },
+        [](const auto&) { return invoke("vehicle:part_filter", {.text = "tank"}); },
+        [](const auto&) { return invoke("vehicle:choose", {.row = "vpart:tank"}); },
+        [](const auto&) { return mount_at(-1, 0); },
+        [](const auto& screen) {
+            CHECK(said(screen) == "Installed vehicle tank (60L) at -1,0, filled with diesel.");
+            return invoke("vehicle:save");
+        },
+    };
+    CHECK(walk(steps) == steps.size());
+    CHECK(saved_fuels(mods, "tanker.json") == std::map<int, std::string>{{-1, "diesel"}});
 }
 
 #endif // CATA_MCP
