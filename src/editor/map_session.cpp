@@ -209,6 +209,25 @@ auto free_symbol(
     return found == wanted.end() ? std::nullopt : std::optional(*found);
 }
 
+/// The symbol of `legend` that maps a floor under a roof alone and that `grid` uses most; none
+/// when no symbol maps one.
+auto indoor_floor(const std::vector<legend_symbol>& legend, const symbol_grid& grid)
+    -> std::optional<std::string> {
+    const auto floor = [](const legend_symbol& entry) {
+        if (entry.lines.size() != 1 || entry.lines.front().layer != "terrain") { return false; }
+        const auto value = nlohmann::ordered_json::parse(entry.lines.front().value, nullptr, false);
+        if (!value.is_string()) { return false; }
+        const auto id = ter_str_id(value.get<std::string>());
+        return id.is_valid() && id->has_flag(TFLAG_FLAT) && id->has_flag(TFLAG_SUPPORTS_ROOF);
+    };
+    const auto uses = [&](const legend_symbol& entry) {
+        return std::ranges::count(grid | std::views::join, entry.symbol);
+    };
+    const auto floors = legend | std::views::filter(floor) | std::ranges::to<std::vector>();
+    if (floors.empty()) { return std::nullopt; }
+    return std::ranges::max(floors, {}, uses).symbol;
+}
+
 } // namespace
 
 auto catalog_label(const catalog_use& use) -> std::string {
@@ -965,7 +984,9 @@ auto session::reload() -> void {
     if (std::ranges::none_of(legend, [&](const auto& entry) {
             return entry.symbol == room_fill;
         })) {
-        room_fill = legend.empty() ? std::string{} : legend.front().symbol;
+        room_fill =
+            indoor_floor(legend, symbols_of(*doc, object))
+                .value_or(legend.empty() ? std::string{} : legend.front().symbol);
     }
 }
 
