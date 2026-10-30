@@ -114,16 +114,6 @@
                     "columns": []
                   },
                   {
-                    "id": "prototype:bicycle_carbon",
-                    "label": "Carbon Fiber Bicycle",
-                    "description": "",
-                    "denial": "",
-                    "enabled": true,
-                    "selectable": true,
-                    "selected": false,
-                    "columns": []
-                  },
-                  {
                     "id": "prototype:bicycle_electric",
                     "label": "Electric Bicycle",
                     "description": "",
@@ -151,13 +141,7 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "bicycle_carbon"
-                      }
-                    ]
+                    "columns": []
                   },
                   {
                     "id": "prototype:bicycle_dirt",
@@ -372,16 +356,6 @@
                     "columns": []
                   },
                   {
-                    "id": "prototype:bicycle_carbon",
-                    "label": "Carbon Fiber Bicycle",
-                    "description": "",
-                    "denial": "",
-                    "enabled": true,
-                    "selectable": true,
-                    "selected": false,
-                    "columns": []
-                  },
-                  {
                     "id": "prototype:bicycle_electric",
                     "label": "Electric Bicycle",
                     "description": "",
@@ -409,13 +383,7 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "bicycle_carbon"
-                      }
-                    ]
+                    "columns": []
                   },
                   {
                     "id": "prototype:bicycle_dirt",
