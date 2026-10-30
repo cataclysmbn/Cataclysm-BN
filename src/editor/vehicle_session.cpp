@@ -724,11 +724,19 @@ struct editing: session {
                     : string_format(_("Install %1$s ×%2$d"), together, holding() - held_before);
             return done;
         };
+        // A new tank comes filled with the fuel the engine burns.
+        const auto fuel = built.blueprint ? engine_liquid(*built.blueprint) : std::nullopt;
         const auto tally = change_parts(
             label,
             {.design =
                  [&](const nlohmann::ordered_json& from) {
-                     return paste_parts(from, built.blueprint.get(), paste);
+                     auto next = paste_parts(from, built.blueprint.get(), paste);
+                     if (!next || !fuel) { return next; }
+                     return filled_tanks(from, next->prototype, *fuel)
+                         .transform([&](nlohmann::ordered_json filled) {
+                             return stroke_design{
+                                 .prototype = std::move(filled), .tally = next->tally};
+                         });
                  },
              .live = [&](vehicle& veh) { return paste_live_parts(veh, paste).transform(named); },
              // Every square has the part already.
@@ -737,14 +745,19 @@ struct editing: session {
                           : string_format(_("Every square of the stroke already has %s."), name)});
         if (!tally) { return; }
         const auto held = vpart_id(brush);
-        // A tank comes empty, which the part's settings change.
+        // A tank comes empty but in a design whose engine burns a liquid, which the part's
+        // settings change.
         const auto tank = held.is_valid() && held->has_flag(VPFLAG_FLUIDTANK);
         if (squares.size() == 1) {
-            said = tank
-                     //~ What the vehicle editor did: the part's name and the mount it is on.
-                     ? at_mount(_("Installed %s at %d,%d. Set its fuel under Fuel."), together)
-                     //~ What the vehicle editor did: the part's name and the mount it is on.
-                     : at_mount(_("Installed %s at %d,%d."), together);
+            said =
+                !tank ? at_mount(_("Installed %s at %d,%d."), together)
+                : !live && fuel
+                    //~ What the vehicle editor did: the tank's name, the mount it is on and the
+                    //~ fuel it is filled with.
+                    ? string_format(_("Installed %1$s at %2$d,%3$d, filled with %4$s."), together,
+                                    cursor.x, cursor.y, item::nname(*fuel))
+                    //~ What the vehicle editor did: the part's name and the mount it is on.
+                    : at_mount(_("Installed %s at %d,%d. Set its fuel under Fuel."), together);
             return;
         }
         const auto given = static_cast<int>(holding() - held_before);

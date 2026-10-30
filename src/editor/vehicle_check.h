@@ -6,6 +6,7 @@
 #include <expected>
 #include <functional>
 #include <nlohmann/json.hpp>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -52,6 +53,14 @@ auto ready_to_drive(const std::vector<drive_check>& checks) -> bool;
 /// says why it cannot. `show_engines` changes nothing.
 auto fixed_design(
     const nlohmann::ordered_json& prototype, const part_catalog& catalog, drive_fix fix)
+    -> std::expected<nlohmann::ordered_json, std::string>;
+
+/// The liquid the first engine of the vehicle that burns one burns.
+auto engine_liquid(const vehicle& veh) -> std::optional<itype_id>;
+
+/// `after` with `fuel` in each tank it has that `before` lacks and that holds nothing yet.
+auto filled_tanks(
+    const nlohmann::ordered_json& before, const nlohmann::ordered_json& after, const itype_id& fuel)
     -> std::expected<nlohmann::ordered_json, std::string>;
 
 } // namespace editor

@@ -14,6 +14,7 @@
 #include <optional>
 #include <ranges>
 #include <set>
+#include <utility>
 
 namespace editor {
 namespace {
@@ -352,6 +353,40 @@ auto fixed_design(
         }
     }
     return prototype;
+}
+
+auto engine_liquid(const vehicle& veh) -> std::optional<itype_id> {
+    const auto fuels =
+        veh.engines
+        | std::views::transform([&](const int index) { return liquid_fuel(veh.part_info(index)); });
+    const auto found = std::ranges::find_if(fuels, [](const auto& fuel) {
+        return fuel.has_value();
+    });
+    return found == fuels.end() ? std::nullopt : *found;
+}
+
+auto filled_tanks(
+    const nlohmann::ordered_json& before, const nlohmann::ordered_json& after, const itype_id& fuel)
+    -> std::expected<nlohmann::ordered_json, std::string> {
+    // How many of each part each mount had, so the parts beyond them are the new ones.
+    auto had = std::map<std::pair<point, std::string>, int>{};
+    for (const auto& entry : design_parts(before)) { ++had[{entry.mount, entry.part}]; }
+    auto next = after;
+    const auto parts = design_parts(after);
+    for (const auto index : std::views::iota(std::size_t{0}, parts.size())) {
+        const auto& entry = parts[index];
+        if (had[{entry.mount, entry.part}]-- > 0) { continue; }
+        const auto id = vpart_id(entry.part);
+        const auto& part = after[nlohmann::ordered_json::json_pointer(entry.pointer)];
+        if (entry.from_palette || !id.is_valid() || !id->has_flag(VPFLAG_FLUIDTANK)
+            || (part.is_object() && part.contains("fuel"))) {
+            continue;
+        }
+        auto filled = set_part_member(next, {.index = index, .key = "fuel", .value = fuel.str()});
+        if (!filled) { return filled; }
+        next = std::move(*filled);
+    }
+    return next;
 }
 
 } // namespace editor
