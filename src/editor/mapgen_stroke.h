@@ -4,6 +4,7 @@
 
 #include <cstddef>
 #include <expected>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -56,6 +57,8 @@ struct stroke_options {
     std::string symbol;
     /// The inside of a room.
     std::string fill_symbol = {};
+    /// The symbol drawn instead of `symbol` on a square that holds the key.
+    std::map<std::string, std::string> over = {};
 };
 
 /// Sets the squares `options.drawn` covers to `options.symbol` as one undo step of `doc`; how many

@@ -5,6 +5,7 @@
 #include "line.h"
 
 #include <algorithm>
+#include <iterator>
 #include <nlohmann/json.hpp>
 #include <ranges>
 #include <set>
@@ -153,8 +154,9 @@ auto stroke(document& doc, const stroke_options& options)
         return std::unexpected("no object " + std::to_string(options.object));
     }
     const auto room = options.drawn.kind == shape_kind::room;
-    const auto symbols =
+    auto symbols =
         room ? std::vector{options.symbol, options.fill_symbol} : std::vector{options.symbol};
+    std::ranges::copy(options.over | std::views::values, std::back_inserter(symbols));
     for (const auto& symbol : symbols) {
         if (utf8_display_split(symbol).size() != 1 || utf8_width(symbol) != 1) {
             return std::unexpected("\"" + symbol + "\" is not one symbol");
@@ -164,10 +166,12 @@ auto stroke(document& doc, const stroke_options& options)
     if (grid.empty()) { return std::unexpected(std::string("the object has no rows")); }
     auto changed_rows = std::set<int>{};
     auto changed = std::size_t{0};
-    const auto paint = [&](const shape& drawn, const std::string& symbol) {
+    const auto paint = [&](const shape& drawn, const std::string& symbol, const auto& over) {
         for (const auto& p : squares_of(drawn, grid)) {
-            if (grid[p.y][p.x] == symbol) { continue; }
-            grid[p.y][p.x] = symbol;
+            const auto found = over.find(grid[p.y][p.x]);
+            const auto& ink = found == over.end() ? symbol : found->second;
+            if (grid[p.y][p.x] == ink) { continue; }
+            grid[p.y][p.x] = ink;
             changed_rows.insert(p.y);
             ++changed;
         }
@@ -183,10 +187,10 @@ auto stroke(document& doc, const stroke_options& options)
                    .size = size,
                    .mirror_x = mirror_x,
                    .mirror_y = mirror_y},
-                  options.fill_symbol);
+                  options.fill_symbol, std::map<std::string, std::string>{});
         }
     }
-    paint(options.drawn, options.symbol);
+    paint(options.drawn, options.symbol, options.over);
     if (changed == 0) { return 0; }
     if (auto edited = commit_rows(doc, options.object, grid, changed_rows); !edited) {
         return std::unexpected(edited.error());

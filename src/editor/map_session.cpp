@@ -1205,20 +1205,8 @@ auto session::take(const catalog_use& use, const std::string& id, const std::str
         pick_symbol(mapped->symbol);
         return;
     }
-    // A symbol the file maps keeps its mapping, whatever of it the legend could read.
-    auto taken =
-        legend | std::views::transform(&legend_symbol::symbol) | std::ranges::to<std::vector>();
-    const auto& own = doc->objects()[object].value;
-    if (own.contains("object") && own["object"].is_object()) {
-        for (const auto* const layer : legend_layers) {
-            if (!own["object"].contains(layer) || !own["object"][layer].is_object()) { continue; }
-            for (const auto& member : own["object"][layer].items()) {
-                taken.push_back(member.key());
-            }
-        }
-    }
     const auto look = catalog_look(use.kind, id);
-    const auto free = free_symbol(taken, look ? look->glyph : "", name);
+    const auto free = free_symbol(taken_symbols(), look ? look->glyph : "", name);
     if (!free) {
         notice = _("Every symbol is taken; map one in the Mapping form.");
         return;
@@ -1260,6 +1248,72 @@ auto session::in_hand() const -> std::optional<held_mapping> {
         .symbol = symbol,
         .layer = line.layer,
         .value = nlohmann::ordered_json::parse(line.value, nullptr, false)};
+}
+
+auto session::taken_symbols() const -> std::vector<std::string> {
+    // A symbol the file maps keeps its mapping, whatever of it the legend could read.
+    auto taken =
+        legend | std::views::transform(&legend_symbol::symbol) | std::ranges::to<std::vector>();
+    const auto& own = doc->objects()[object].value;
+    if (own.contains("object") && own["object"].is_object()) {
+        for (const auto* const layer : legend_layers) {
+            if (!own["object"].contains(layer) || !own["object"][layer].is_object()) { continue; }
+            for (const auto& member : own["object"][layer].items()) {
+                taken.push_back(member.key());
+            }
+        }
+    }
+    return taken;
+}
+
+auto session::layered(const held_mapping& brush, const std::vector<std::string>& under) const
+    -> std::expected<layered_ink, std::string> {
+    // What a symbol places, whatever order or palette maps it.
+    const auto places = [](const std::vector<legend_line>& lines) {
+        auto key =
+            lines | std::views::transform([](const legend_line& line) {
+                return line.layer + '\n'
+                     + nlohmann::ordered_json::parse(line.value, nullptr, false).dump();
+            })
+            | std::ranges::to<std::vector>();
+        std::ranges::sort(key);
+        return key;
+    };
+    auto taken = taken_symbols();
+    taken.push_back(brush.symbol);
+    auto inks = layered_ink{};
+    for (const auto& old : under) {
+        if (old == brush.symbol || inks.over.contains(old)) { continue; }
+        const auto found = std::ranges::find(legend, old, &legend_symbol::symbol);
+        if (found == legend.end()) { continue; }
+        auto lines =
+            found->lines
+            | std::views::filter([&](const legend_line& line) { return line.layer != brush.layer; })
+            | std::views::transform([](const legend_line& line) {
+                  return legend_line{.layer = line.layer, .value = line.value};
+              })
+            | std::ranges::to<std::vector>();
+        if (lines.empty()) { continue; }
+        lines.push_back({.layer = brush.layer, .value = brush.value.dump()});
+        const auto wanted = places(lines);
+        const auto same = [&](const legend_symbol& entry) { return places(entry.lines) == wanted; };
+        if (const auto mapped = std::ranges::find_if(legend, same); mapped != legend.end()) {
+            inks.over[old] = mapped->symbol;
+            continue;
+        }
+        if (const auto added = std::ranges::find_if(inks.added, same); added != inks.added.end()) {
+            inks.over[old] = added->symbol;
+            continue;
+        }
+        const auto free = free_symbol(taken, "", symbol_name(brush.symbol));
+        if (!free) {
+            return std::unexpected(_("Every symbol is taken; map one in the Mapping form."));
+        }
+        taken.push_back(*free);
+        inks.over[old] = *free;
+        inks.added.push_back({.symbol = *free, .lines = std::move(lines)});
+    }
+    return inks;
 }
 
 auto session::edit_title(const document_edit& edit) const -> std::string {
@@ -1801,19 +1855,42 @@ auto session::paint(const point& at) -> void {
     const auto maps =
         held && held->symbol == symbol
         && !std::ranges::contains(legend, symbol, &legend_symbol::symbol);
-    const auto inks =
-        *current->kind == shape_kind::room ? std::vector{symbol, room_fill} : std::vector{symbol};
-    for (const auto& ink : inks) {
-        const auto grounded = maps && ink == held->symbol && held->layer == "terrain";
-        if (const auto refused = grounded ? std::nullopt : bare(ink, true)) {
-            notice = *refused;
-            return;
-        }
-    }
+    // One layer in hand goes over what the squares place on the others; a symbol of several
+    // layers, and the inside of a room, take the squares whole.
+    const auto hand = in_hand();
+    const auto grounded = [&](const std::string& ink) {
+        const auto own_terrain = maps && ink == held->symbol && held->layer == "terrain";
+        const auto refused = own_terrain ? std::nullopt : bare(ink, true);
+        if (refused) { notice = *refused; }
+        return !refused;
+    };
+    if (*current->kind == shape_kind::room && !grounded(room_fill)) { return; }
+    if (!hand && !grounded(symbol)) { return; }
     if (current->spans && !anchor) {
         anchor = at;
         return;
     }
+    const auto drawing = shape{
+        .kind = *current->kind,
+        .from = anchor.value_or(at),
+        .to = at,
+        .size = brush,
+        .mirror_x = mirror_x,
+        .mirror_y = mirror_y};
+    anchor.reset();
+    const auto under =
+        squares_of(drawing, grid)
+        | std::views::transform([&](const point& p) { return symbol_at(grid, p); })
+        | std::ranges::to<std::vector>();
+    const auto inks = hand ? layered(*hand, under) : layered_ink{};
+    if (!inks) {
+        notice = inks.error();
+        return;
+    }
+    const auto direct = !hand || std::ranges::any_of(under, [&](const std::string& old) {
+        return old != symbol && !inks->over.contains(old);
+    });
+    if (hand && direct && !grounded(symbol)) { return; }
     // A room and a fill are named by what they are; any other drawing by what it painted.
     const auto title =
         *current->kind == shape_kind::room ? std::string(_("Room"))
@@ -1821,29 +1898,37 @@ auto session::paint(const point& at) -> void {
             //~ A step of the map editor's history: %s is what was filled in, such as dirt.
             ? string_format(_("Fill %s"), symbol_name(symbol))
             : std::string{};
-    const auto grouped = (maps || !title.empty()) && !doc->grouping();
+    const auto grouped =
+        ((maps && direct) || !inks->added.empty() || !title.empty()) && !doc->grouping();
     if (grouped) { doc->begin_group(false, title); }
-    const auto mapped =
-        maps ? set_legend(
-                   *doc,
-                   {.object = object, .layer = held->layer, .symbol = symbol, .value = held->value})
-             : std::expected<void, std::string>{};
+    auto mapped =
+        maps && direct
+            ? set_legend(
+                  *doc,
+                  {.object = object, .layer = held->layer, .symbol = symbol, .value = held->value})
+            : std::expected<void, std::string>{};
+    for (const auto& added : inks->added) {
+        for (const auto& line : added.lines) {
+            mapped = mapped.and_then([&] {
+                return set_legend(
+                    *doc,
+                    {.object = object,
+                     .layer = line.layer,
+                     .symbol = added.symbol,
+                     .value = nlohmann::ordered_json::parse(line.value, nullptr, false)});
+            });
+        }
+    }
     const auto drawn = mapped.and_then([&] {
         return stroke(
             *doc,
             {.object = object,
-             .drawn =
-                 {.kind = *current->kind,
-                  .from = anchor.value_or(at),
-                  .to = at,
-                  .size = brush,
-                  .mirror_x = mirror_x,
-                  .mirror_y = mirror_y},
+             .drawn = drawing,
              .symbol = symbol,
-             .fill_symbol = room_fill});
+             .fill_symbol = room_fill,
+             .over = inks->over});
     });
     if (grouped) { doc->end_group(); }
-    anchor.reset();
     notice = drawn ? "" : drawn.error();
     reload();
 }

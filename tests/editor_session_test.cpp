@@ -1197,12 +1197,12 @@ TEST_CASE(
             case 10:
                 return invoke("editor:paint", {.row = "square:2,3"});
             case 11:
-                CHECK(notice(screen)
-                      == "C has no terrain under it: map its terrain first, or set "
-                         "/object/fill_ter in the JSON value form.");
-                CHECK(cell(screen, 2, 3).glyph == ".");
-                CHECK(bare(screen));
+                // Drawn on a floor, the chair keeps the floor's terrain under it.
+                CHECK(ec::find_component(*screen.root, "editor:notice") == nullptr);
+                CHECK(cell(screen, 2, 3).label == "wooden floor; chair");
                 return act("QUIT");
+            case 12:
+                return answer("Leave without saving");
             default:
                 FAIL("the editor outlived its exit");
                 return act("QUIT");
@@ -1210,7 +1210,7 @@ TEST_CASE(
     });
 
     editor::run_editor_session();
-    CHECK(step == 12);
+    CHECK(step == 13);
     CHECK(read_file(file.path) == file.text);
 }
 
@@ -7239,8 +7239,11 @@ TEST_CASE(
         },
         [](const auto&) { return square_at(4, 4); },
         [&](const auto& screen) {
-            CHECK(cell(screen, 4, 4).glyph == bed);
-            CHECK(column_value(row_in(screen, "editor:legend", "symbol:" + bed), "furniture")
+            // The bed goes on the floor there, under a symbol mapping both.
+            const auto& drawn = cell(screen, 4, 4).glyph;
+            CHECK(drawn != ".");
+            CHECK(cell(screen, 4, 4).label == "wooden floor; bed");
+            CHECK(column_value(row_in(screen, "editor:legend", "symbol:" + drawn), "furniture")
                   == "bed");
             return act("QUIT");
         }};

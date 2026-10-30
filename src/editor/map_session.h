@@ -352,6 +352,13 @@ struct held_mapping {
     std::string name;
 };
 
+/// What a stroke draws on squares that hold other layers: for each symbol under it, the symbol
+/// that places those layers with the stroke's, and the symbols the legend still lacks for that.
+struct layered_ink {
+    std::map<std::string, std::string> over;
+    std::vector<legend_symbol> added;
+};
+
 struct session {
     std::optional<document> doc = std::nullopt;
     /// How many times a file was opened, or read again, so far.
@@ -575,6 +582,12 @@ struct session {
     /// What is in hand: the mapping held while the legend lacks its symbol, or the one line the
     /// symbol drawn with maps; none for a symbol of several lines or none.
     auto in_hand() const -> std::optional<held_mapping>;
+    /// The symbols the legend has, or the file maps whether the legend could read them or not.
+    auto taken_symbols() const -> std::vector<std::string>;
+    /// What a stroke of `brush` draws over the symbols `under`: on a square whose symbol places
+    /// other layers too, a symbol placing those and the brush; the error when no symbol is free.
+    auto layered(const held_mapping& brush, const std::vector<std::string>& under) const
+        -> std::expected<layered_ink, std::string>;
     /// Puts the pencil in hand unless a drawing tool is, on an entry with rows.
     auto arm() -> void;
     /// What `edit` did in words: the symbol a drawing painted by name and on how many squares, else
