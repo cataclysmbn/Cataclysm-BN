@@ -100,6 +100,18 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "among names that match a search alike, the game's own and shortest come first",
+    "[editor_catalog]") {
+    const auto first = [](const editor::catalog_kind kind, const std::string& filter) {
+        const auto found = editor::search_catalog({.kind = kind, .filter = filter, .page_size = 1});
+        REQUIRE_FALSE(found.entries.empty());
+        return found.entries.front().id;
+    };
+    CHECK(first(editor::catalog_kind::terrain, "door") == "t_door_c");
+    CHECK(first(editor::catalog_kind::furniture, "counter") == "f_counter");
+}
+
+TEST_CASE(
     "catalog entries that share a name are told apart by the part of their id that differs",
     "[editor_catalog]") {
     const auto found = editor::search_catalog(
