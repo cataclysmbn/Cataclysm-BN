@@ -72,6 +72,8 @@ namespace ec = engine_client;
 
 struct screen_guard {
     const game_client::memory::scoped_state memory;
+    /// Most tests read ids and JSON, which Simple mode hides.
+    const override_option advanced{"EDITOR_ADVANCED", "true"};
     bool old_test_mode = test_mode;
     int old_termx = TERMX;
     int old_termy = TERMY;
@@ -8313,6 +8315,42 @@ TEST_CASE("a cut inside walls leaves the ground, not the walls", "[editor_sessio
             return act("QUIT");
         }};
     CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
+}
+
+TEST_CASE("the map editor in Simple mode shows no ids or JSON", "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto simple = override_option("EDITOR_ADVANCED", "false");
+    const auto file = mod_file{{{"terrain", {{".", "t_floor"}}}}};
+    const auto ids = [](const std::vector<ec::row>& listed) {
+        return std::ranges::count_if(listed, [](const ec::row& entry) {
+            return std::ranges::
+                contains(entry.columns, std::string("id"), &game_client::interaction_column::key);
+        });
+    };
+    const auto json = [](const ec::screen_view& screen) {
+        return screen.root && ec::find_component(*screen.root, "editor:field") != nullptr;
+    };
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [&](const auto& screen) {
+            CHECK(ids(rows_in(screen, "editor:legend")) == 0);
+            CHECK(ids(rows_in(screen, "editor:catalog")) == 0);
+            CHECK_FALSE(json(screen));
+            CHECK(affordance(screen, "editor:advanced").group == "View");
+            CHECK(affordance(screen, "editor:advanced").label == "Show advanced settings");
+            return invoke("editor:advanced");
+        },
+        [&](const auto& screen) {
+            CHECK(ids(rows_in(screen, "editor:legend")) > 0);
+            CHECK(ids(rows_in(screen, "editor:catalog")) > 0);
+            CHECK(json(screen));
+            CHECK(affordance(screen, "editor:advanced").label == "Hide advanced settings");
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    // The choice is the player's, kept for the next time either editor opens.
+    CHECK(get_option<bool>("EDITOR_ADVANCED"));
     editor::reset_editor_session();
 }
 
