@@ -439,6 +439,8 @@ export async function makeProfile(): Promise<string> {
         ANIMATIONS: "false",
         AUTOSAVE: "false",
         COMPUTE_ACCELERATION: "gpu_software",
+        // The examples show every field the editors send, ids and JSON among them.
+        EDITOR_ADVANCED: "true",
       }).map(([name, value]) => ({ name, value })),
     ),
   )
