@@ -1564,7 +1564,15 @@ auto session::copy() -> void {
 }
 
 auto session::cut() -> void {
-    if (const auto refused = bare(room_fill, true)) {
+    // What is cut away leaves the ground most of the rows stand on.
+    const auto grid = symbols_of(*doc, object);
+    auto counts = std::map<std::string, std::size_t>{};
+    for (const auto& symbol : grid | std::views::join) { ++counts[symbol]; }
+    const auto ground =
+        counts.empty()
+            ? room_fill
+            : std::ranges::max_element(counts, {}, [](const auto& c) { return c.second; })->first;
+    if (const auto refused = bare(ground, true)) {
         notice = *refused;
         return;
     }
@@ -1574,7 +1582,7 @@ auto session::cut() -> void {
         *doc,
         {.object = object,
          .drawn = {.kind = shape_kind::rect_filled, .from = selected->from, .to = selected->to},
-         .symbol = room_fill});
+         .symbol = ground});
     // Later entries go first, so the indices of the earlier ones still hold.
     auto removed = std::expected<void, std::string>{};
     for (const auto& entry : clip_placed | std::views::reverse) {
