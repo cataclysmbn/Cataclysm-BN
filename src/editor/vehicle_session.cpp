@@ -1126,64 +1126,104 @@ struct editing: session {
         change(next);
     }
 
-    /// Sets the member `key` of the picked part from the part form: a number for `ammo`, a list
-    /// for `ammo_types`, either end of `ammo_qty` for `ammo_min` and `ammo_max`, text for the
-    /// rest; empty removes it.
-    auto set_part(const std::string& key, const std::string& text) -> void {
-        const auto index = picked_here();
-        if (!index) {
-            notice = _("Pick a part first.");
-            return;
-        }
+    /// The parts a setting of the picked part `index` goes to: with the picked mount inside the
+    /// selection, every part of its kind there, else the picked part alone.
+    auto setting_targets(const std::size_t index) const -> std::vector<std::size_t> {
+        const auto design = design_parts(prototype());
+        const auto inside = [&](const point& at) {
+            return selection && at.x >= selection->low.x && at.x <= selection->high.x
+                && at.y >= selection->low.y && at.y <= selection->high.y;
+        };
+        if (!inside(design[index].mount)) { return {index}; }
+        const auto kind = kind_name(vpart_id(design[index].part));
+        return std::views::iota(std::size_t{0}, design.size())
+             | std::views::filter([&](const std::size_t other) {
+                   return !design[other].from_palette && inside(design[other].mount)
+                       && kind_name(vpart_id(design[other].part)) == kind;
+               })
+             | std::ranges::to<std::vector>();
+    }
+
+    /// `from` with the member `key` of its part `index` set from the part form: a number for
+    /// `ammo`, a list for `ammo_types`, either end of `ammo_qty` for `ammo_min` and `ammo_max`,
+    /// another shape of it for `shape`, text for the rest; empty removes it.
+    auto part_setting(
+        const nlohmann::ordered_json& from, const std::size_t index, const std::string& key,
+        const std::string& text) const -> std::expected<nlohmann::ordered_json, std::string> {
+        const auto design = design_parts(from);
         if (key == "ammo_types") {
-            change(
-                set_part_member(prototype(), {.index = *index, .key = key, .value = listed(text)}));
-            return;
+            return set_part_member(from, {.index = index, .key = key, .value = listed(text)});
         }
         if (key == "ammo_min" || key == "ammo_max") {
-            set_ammo_qty(*index, key == "ammo_max", text);
-            return;
+            // A turret with no range is full, so a first end sets both; empty makes it full again.
+            auto value = std::optional<nlohmann::ordered_json>{};
+            if (!text.empty()) {
+                const auto read = number_in(text, 0, std::numeric_limits<int>::max());
+                if (!read) { return std::unexpected(_("That value is out of range.")); }
+                const auto at = nlohmann::ordered_json::json_pointer(design[index].pointer);
+                const auto current =
+                    from[at].is_object()
+                        ? from[at].value("ammo_qty", nlohmann::ordered_json())
+                        : nlohmann::ordered_json();
+                auto range =
+                    current.is_array() && current.size() == 2 && current[0].is_number_integer()
+                            && current[1].is_number_integer()
+                        ? std::array{current[0].get<int>(), current[1].get<int>()}
+                        : std::array{*read, *read};
+                range[key == "ammo_max" ? 1 : 0] = *read;
+                if (range[0] > range[1]) {
+                    return std::unexpected(
+                        _("A turret cannot load fewer rounds at most than at least."));
+                }
+                value = range;
+            }
+            return set_part_member(from, {.index = index, .key = "ammo_qty", .value = value});
         }
         if (key == "shape") {
-            const auto current = design_parts(prototype())[*index].part;
+            const auto& current = design[index].part;
             if (!std::ranges::contains(
                     catalog.shapes_of(vpart_id(current)), vpart_id(text), &vpart_info::get_id)) {
                 //~ %1$s is the part id the player gave, %2$s the name of the part picked.
-                notice = string_format(_("%1$s is no shape of %2$s."), text, part_name(current));
-                return;
+                return std::unexpected(
+                    string_format(_("%1$s is no shape of %2$s."), text, part_name(current)));
             }
-            change(set_part_member(prototype(), {.index = *index, .key = "part", .value = text}));
-            return;
+            return set_part_member(from, {.index = index, .key = "part", .value = text});
         }
         if (key == "fuel" && !text.empty()
             && !std::ranges::contains(tank_fuels(), itype_id(text))) {
-            notice = string_format(_("%s is no liquid a tank holds."), text);
-            return;
-        }
-        if (key == "fuel") {
-            if (change(set_part_member(
-                    prototype(),
-                    {.index = *index,
-                     .key = key,
-                     .value = text.empty() ? std::nullopt
-                                           : std::optional(nlohmann::ordered_json(text))}))) {
-                say_step();
-            }
-            return;
+            return std::unexpected(string_format(_("%s is no liquid a tank holds."), text));
         }
         auto value = std::optional<nlohmann::ordered_json>{};
         if (!text.empty()) {
             value = nlohmann::ordered_json(text);
             if (key == "ammo") {
                 const auto number = number_in(text, 0, 100);
-                if (!number) {
-                    notice = _("That value is out of range.");
-                    return;
-                }
+                if (!number) { return std::unexpected(_("That value is out of range.")); }
                 value = *number;
             }
         }
-        change(set_part_member(prototype(), {.index = *index, .key = key, .value = value}));
+        return set_part_member(from, {.index = index, .key = key, .value = value});
+    }
+
+    /// Sets the member `key` of the picked part from the part form, as `part_setting` reads
+    /// `text`, and of every part of its kind in the selection around it, as one step.
+    auto set_part(const std::string& key, const std::string& text) -> void {
+        const auto index = picked_here();
+        if (!index) {
+            notice = _("Pick a part first.");
+            return;
+        }
+        const auto targets = setting_targets(*index);
+        auto next = prototype();
+        for (const auto target : targets) {
+            auto set = part_setting(next, target, key, text);
+            if (!set) {
+                notice = set.error();
+                return;
+            }
+            next = std::move(*set);
+        }
+        if (change(next) && (key == "fuel" || targets.size() > 1)) { say_step(); }
     }
 
     /// Says what the step just made did, as the history names it.
@@ -1213,34 +1253,6 @@ struct editing: session {
         doc->end_group();
         keep_pick();
         if (changed) { say_step(); }
-    }
-
-    /// Sets the fewest (or, `most`, the most) rounds a turret spawns loaded with; a turret with
-    /// no range is full, so a first end sets both, and empty makes it full again.
-    auto set_ammo_qty(const std::size_t index, const bool most, const std::string& text) -> void {
-        auto value = std::optional<nlohmann::ordered_json>{};
-        if (!text.empty()) {
-            const auto read = number_in(text, 0, std::numeric_limits<int>::max());
-            if (!read) {
-                notice = _("That value is out of range.");
-                return;
-            }
-            const auto number = *read;
-            const auto current = nlohmann::ordered_json::parse(
-                value_at(design_parts(prototype())[index].pointer + "/ammo_qty"), nullptr, false);
-            auto range =
-                current.is_array() && current.size() == 2 && current[0].is_number_integer()
-                        && current[1].is_number_integer()
-                    ? std::array{current[0].get<int>(), current[1].get<int>()}
-                    : std::array{number, number};
-            range[most ? 1 : 0] = number;
-            if (range[0] > range[1]) {
-                notice = _("A turret cannot load fewer rounds at most than at least.");
-                return;
-            }
-            value = range;
-        }
-        change(set_part_member(prototype(), {.index = index, .key = "ammo_qty", .value = value}));
     }
 
     /// Adds a spawn of the item or item group `id` on the picked mount, every time; `kind` says

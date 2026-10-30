@@ -1275,6 +1275,14 @@ auto design_step_label(const document_edit& edit) -> std::string {
     if (!kept_installed.empty() || !kept_removed.empty()) {
         installed = std::move(kept_installed);
         removed = std::move(kept_removed);
+    } else if (installed.size() > 1) {
+        // Parts of one kind that all took another shape of it.
+        const auto names = part_names(installed);
+        if (names.size() == 1) {
+            //~ A step of the vehicle editor that gave many parts of one kind another shape: its
+            //~ name and how many.
+            return string_format(_("Change shape of %1$s ×%2$d"), names[0], installed.size());
+        }
     }
     if (installed.size() == 1 && removed.empty()) {
         return at_mount(_("Install %s at %d,%d"), part_name(installed[0].part), installed[0].mount);
@@ -1335,29 +1343,49 @@ auto design_step_label(const document_edit& edit) -> std::string {
         const auto moved = std::ranges::mismatch(before, after).in1;
         return string_format(_("Reorder parts at %d,%d"), moved->mount.x, moved->mount.y);
     }
-    // A part's own members, such as a tank's fuel.
-    const auto parts = design_parts(edit.after);
-    const auto changed = std::ranges::find_if(parts, [&](const design_part& entry) {
+    // A part's own members, such as a tank's fuel, on one part or on many of one kind.
+    const auto changed =
+        design_parts(edit.after) | std::views::filter([&](const design_part& entry) {
+            const auto at = nlohmann::ordered_json::json_pointer(entry.pointer);
+            return !edit.before.contains(at) || edit.before[at] != edit.after[at];
+        })
+        | std::ranges::to<std::vector>();
+    const auto fuel_of = [](const nlohmann::ordered_json& prototype, const design_part& entry) {
         const auto at = nlohmann::ordered_json::json_pointer(entry.pointer);
-        return !edit.before.contains(at) || edit.before[at] != edit.after[at];
-    });
-    if (before == after && changed != parts.end()) {
-        const auto at = nlohmann::ordered_json::json_pointer(changed->pointer);
-        const auto fuel_of = [](const nlohmann::ordered_json& entry) {
-            return entry.is_object() ? entry.value("fuel", "") : std::string{};
-        };
-        const auto was = edit.before.contains(at) ? fuel_of(edit.before[at]) : std::string{};
-        const auto fuel = fuel_of(edit.after[at]);
-        const auto name = part_name(changed->part);
-        if (was != fuel) {
+        const auto part = prototype.contains(at) ? prototype[at] : nlohmann::ordered_json();
+        return part.is_object() ? part.value("fuel", "") : std::string{};
+    };
+    if (before == after && !changed.empty()) {
+        const auto name = part_name(changed[0].part);
+        // Parts of more kinds go by the first.
+        const auto count =
+            std::ranges::all_of(
+                changed, [&](const design_part& entry) { return part_name(entry.part) == name; })
+                ? changed.size()
+                : 1;
+        const auto fuel = fuel_of(edit.after, changed[0]);
+        const auto refuelled =
+            std::ranges::all_of(changed | std::views::take(count), [&](const design_part& entry) {
+                return fuel_of(edit.after, entry) == fuel && fuel_of(edit.before, entry) != fuel;
+            });
+        if (refuelled) {
             const auto type = itype_id(fuel);
-            //~ A step of the vehicle editor: the tank, and the fuel it is filled with.
+            const auto fuel_name = type.is_valid() ? item::nname(type) : fuel;
+            if (count == 1) {
+                //~ A step of the vehicle editor: the tank, and the fuel it is filled with.
+                return fuel.empty()
+                         ? string_format(_("Empty %s"), name)
+                         : string_format(_("Set fuel of %1$s to %2$s"), name, fuel_name);
+            }
+            //~ A step of the vehicle editor that set the fuel of many tanks of one kind: their
+            //~ name, how many and the fuel.
             return fuel.empty()
-                     ? string_format(_("Empty %s"), name)
-                     : string_format(_("Set fuel of %1$s to %2$s"), name,
-                                     type.is_valid() ? item::nname(type) : fuel);
+                     ? string_format(_("Empty %1$s ×%2$d"), name, count)
+                     : string_format(_("Set fuel of %1$s ×%2$d to %3$s"), name, count, fuel_name);
         }
-        return at_mount(_("Set %s at %d,%d"), name, changed->mount);
+        //~ A step of the vehicle editor that set many parts of one kind: their name and how many.
+        return count == 1 ? at_mount(_("Set %s at %d,%d"), name, changed[0].mount)
+                          : string_format(_("Set %1$s ×%2$d"), name, count);
     }
     const auto spawns = [](const nlohmann::ordered_json& prototype) {
         const auto items = prototype.value("items", nlohmann::ordered_json::array());
