@@ -1348,9 +1348,12 @@ auto session::layered(const held_mapping& brush, const std::vector<std::string>&
         lines.push_back({.layer = brush.layer, .value = brush.value.dump()});
         lines = merged(lines);
         const auto wanted = places(lines);
-        // Drawn again with what it places already, a square is drawn over whole: a floor drawn on
-        // a table on that floor takes the table away.
-        if (wanted == places(merged(found->lines))) { continue; }
+        // Drawn again with what it places already, a square is drawn over whole by terrain, so a
+        // floor drawn on a table on that floor takes the table away, and kept by the rest.
+        if (wanted == places(merged(found->lines))) {
+            if (brush.layer != "terrain") { inks.over[old] = old; }
+            continue;
+        }
         const auto same = [&](const legend_symbol& entry) {
             return places(merged(entry.lines)) == wanted;
         };
