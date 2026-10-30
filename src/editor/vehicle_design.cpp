@@ -29,6 +29,7 @@
 
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <cctype>
 #include <charconv>
 #include <fstream>
@@ -1249,8 +1250,32 @@ auto design_step_label(const document_edit& edit) -> std::string {
     if (!edit.before.is_object() || !edit.after.is_object()) { return step_label(edit); }
     const auto before = mounted(edit.before);
     const auto after = mounted(edit.after);
-    const auto installed = added(before, after);
-    const auto removed = added(after, before);
+    auto installed = added(before, after);
+    auto removed = added(after, before);
+    // Beside other changes, a part that took another shape of it on its mount, as frames joining
+    // the ones installed beside them do, goes without saying.
+    const auto reshaped = [&](const mounted_part& from, const mounted_part& to) {
+        const auto a = vpart_id(from.part);
+        const auto b = vpart_id(to.part);
+        return from.mount == to.mount && a.is_valid() && b.is_valid() && a != b
+            && a->name() == b->name() && a->item == b->item;
+    };
+    auto kept_installed = std::vector<mounted_part>{};
+    auto kept_removed = removed;
+    for (const auto& entry : installed) {
+        const auto found = std::ranges::find_if(kept_removed, [&](const mounted_part& gone) {
+            return reshaped(gone, entry);
+        });
+        if (found == kept_removed.end()) {
+            kept_installed.push_back(entry);
+        } else {
+            kept_removed.erase(found);
+        }
+    }
+    if (!kept_installed.empty() || !kept_removed.empty()) {
+        installed = std::move(kept_installed);
+        removed = std::move(kept_removed);
+    }
     if (installed.size() == 1 && removed.empty()) {
         return at_mount(_("Install %s at %d,%d"), part_name(installed[0].part), installed[0].mount);
     }
@@ -1562,6 +1587,136 @@ auto steerable_of(const part_catalog& catalog, const vpart_info& part) -> const 
                    return other.has_flag(flag);
                });
     });
+}
+
+namespace {
+
+/// The sides of its mount a line shape's symbol joins, as the game draws a vehicle facing up:
+/// front, right, back and left are the bits 1, 2, 4 and 8; none for a symbol that is no line.
+auto joined_sides(const int symbol) -> std::optional<int> {
+    switch (symbol) {
+        case 'j':
+            return 0b0101;
+        case 'h':
+            return 0b1010;
+        case 'c':
+            return 0b1111;
+        case 'y':
+            return 0b0110;
+        case 'u':
+            return 0b1100;
+        case 'n':
+            return 0b1001;
+        case 'b':
+            return 0b0011;
+        default:
+            return std::nullopt;
+    }
+}
+
+/// The mounts beside a mount, on the sides of `joined_sides`, in order.
+constexpr auto sides = std::array{point_east, point_south, point_west, point_north};
+
+/// A part of a kind with line shapes on its mount of a design.
+struct line_part {
+    std::size_t index;
+    const part_kind* kind;
+    vpart_id id;
+    point mount;
+    std::string pointer;
+};
+
+auto line_parts(const nlohmann::ordered_json& prototype, const part_catalog& catalog)
+    -> std::vector<line_part> {
+    auto lines = std::vector<line_part>{};
+    for (const auto& [index, part] : design_parts(prototype) | std::views::enumerate) {
+        const auto id = vpart_id(part.part);
+        if (part.from_palette || !id.is_valid()) { continue; }
+        const auto kind = std::ranges::find_if(catalog.kinds, [&](const part_kind& entry) {
+            return std::ranges::contains(entry.shapes, id, &vpart_info::get_id);
+        });
+        if (kind == catalog.kinds.end()
+            || std::ranges::none_of(kind->shapes, [](const vpart_info* shape) {
+                   return joined_sides(shape->sym).has_value();
+               })) {
+            continue;
+        }
+        lines.push_back(
+            {.index = static_cast<std::size_t>(index),
+             .kind = &*kind,
+             .id = id,
+             .mount = part.mount,
+             .pointer = part.pointer});
+    }
+    return lines;
+}
+
+/// The shape of `kind` that joins a part to its neighbours of the kind on `joined` sides: a line
+/// through one, a corner of two, a crossing of three or four; none for no neighbour or no such
+/// shape.
+auto joining_shape(const part_kind& kind, const part_catalog& catalog, const int joined)
+    -> std::optional<vpart_id> {
+    const auto count = std::popcount(static_cast<unsigned>(joined));
+    if (count == 0) { return std::nullopt; }
+    const auto wanted =
+        count == 1 ? (joined & 0b0101 ? 0b0101 : 0b1010)
+        : count == 3
+            ? 0b1111
+            : joined;
+    const auto* chosen = most_installed(catalog, [&](const vpart_info& part) {
+        return std::ranges::contains(kind.shapes, &part) && joined_sides(part.sym) == wanted;
+    });
+    return chosen ? std::optional(chosen->get_id()) : std::nullopt;
+}
+
+} // namespace
+
+auto joined_shapes(
+    const nlohmann::ordered_json& before, const nlohmann::ordered_json& after,
+    const part_catalog& catalog) -> nlohmann::ordered_json {
+    const auto old_lines = line_parts(before, catalog);
+    const auto new_lines = line_parts(after, catalog);
+    const auto has =
+        [](const std::vector<line_part>& lines, const part_kind* kind, const point& at) {
+            return std::ranges::any_of(lines, [&](const line_part& line) {
+                return line.kind == kind && line.mount == at;
+            });
+        };
+    const auto joined = [&](const std::vector<line_part>& lines, const line_part& part) {
+        auto bits = 0;
+        for (const auto& [bit, side] : sides | std::views::enumerate) {
+            if (has(lines, part.kind, part.mount + side)) { bits |= 1 << bit; }
+        }
+        return bits;
+    };
+    // The mounts that gained or lost a part of a kind.
+    auto changed = std::set<point>{};
+    for (const auto& line : new_lines) {
+        if (!has(old_lines, line.kind, line.mount)) { changed.insert(line.mount); }
+    }
+    for (const auto& line : old_lines) {
+        if (!has(new_lines, line.kind, line.mount)) { changed.insert(line.mount); }
+    }
+    auto next = after;
+    for (const auto& line : new_lines) {
+        const auto near =
+            changed.contains(line.mount) || std::ranges::any_of(sides, [&](const point& side) {
+                return changed.contains(line.mount + side);
+            });
+        if (!near) { continue; }
+        // A shape its neighbours did not give it was picked by hand, and stays.
+        if (has(old_lines, line.kind, line.mount)) {
+            const auto was = joining_shape(*line.kind, catalog, joined(old_lines, line));
+            if (was && *was != line.id) { continue; }
+        }
+        const auto shape = joining_shape(*line.kind, catalog, joined(new_lines, line));
+        if (shape && *shape != line.id) {
+            // A part with members of its own names itself by its `part`.
+            auto& entry = next[nlohmann::ordered_json::json_pointer(line.pointer)];
+            (entry.is_object() ? entry["part"] : entry) = shape->str();
+        }
+    }
+    return next;
 }
 
 auto search_rank(const std::string& name, const std::string& id, const std::string& filter)

@@ -453,7 +453,10 @@ struct editing: session {
             notice = next.error();
             return false;
         }
-        const auto edited = doc->edit(object, nlohmann::ordered_json::diff(prototype(), *next));
+        // Frames and armour join the ones beside them as parts come and go.
+        const auto edited = doc->edit(
+            object,
+            nlohmann::ordered_json::diff(prototype(), joined_shapes(prototype(), *next, catalog)));
         if (!edited) { notice = edited.error(); }
         reload();
         return edited.has_value();
@@ -572,8 +575,8 @@ struct editing: session {
     }
 
     /// The mounts the drawing tool in hand covers from the anchor to `at`, as the map editor's
-    /// shapes cover squares; a fill spreads over the mounts of the canvas that show the part
-    /// `at` shows, or none.
+    /// shapes cover squares; a fill spreads over the mounts of the canvas that show a part of the
+    /// kind `at` shows, in any shape, or none.
     auto stroke_squares(const point& at) const -> std::vector<point> {
         const auto bounds = canvas_bounds();
         const auto* const veh = shown_vehicle();
@@ -584,7 +587,8 @@ struct editing: session {
             for (auto x = bounds.low.x; x <= bounds.high.x; ++x) {
                 const auto shown = veh ? veh->part_displayed_at(tripoint_mnt_veh(x, y, 0)) : -1;
                 if (shown >= 0) {
-                    grid[y - bounds.low.y][x - bounds.low.x] = veh->part_info(shown).get_id().str();
+                    grid[y - bounds.low.y][x - bounds.low.x] = kind_name(
+                        veh->part_info(shown).get_id());
                 }
             }
         }
@@ -596,6 +600,12 @@ struct editing: session {
         return mirrored(
             drawn | std::views::transform([&](const point& square) { return square + bounds.low; })
             | std::ranges::to<std::vector>());
+    }
+
+    /// What tells the kind of the part `id` from others: the id of its first shape.
+    auto kind_name(const vpart_id& id) const -> std::string {
+        const auto shapes = catalog.shapes_of(id);
+        return shapes.empty() ? id.str() : shapes.front()->get_id().str();
     }
 
     /// Whether a stroke is open, so that its changes make one step.
@@ -684,7 +694,8 @@ struct editing: session {
         const auto name = part_name(brush);
         names.push_back(name);
         const auto together = named_together(names);
-        // How many squares have the part in hand, to tell how many the stroke gave it.
+        // How many squares have the part in hand, in any shape, to tell how many the stroke gave
+        // it.
         const auto holding = [&] {
             const auto* const shown = shown_vehicle();
             return shown
@@ -694,7 +705,8 @@ struct editing: session {
                                return std::ranges::any_of(
                                    shown->parts_at_relative(tripoint_mnt_veh(at.x, at.y, 0), false),
                                    [&](const int index) {
-                                       return shown->part_info(index).get_id().str() == brush;
+                                       return kind_name(shown->part_info(index).get_id())
+                                           == kind_name(vpart_id(brush));
                                    });
                            })
                      : 0;

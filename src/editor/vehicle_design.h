@@ -320,6 +320,14 @@ auto prerequisite_of(const part_catalog& catalog, const vehicle& veh, const part
 /// none.
 auto steerable_of(const part_catalog& catalog, const vpart_info& part) -> const vpart_info*;
 
+/// `after` with the line shapes of its frames and armour joined where `before` became it: each
+/// such part on a mount that gained or lost a part of its kind, or beside one, takes the shape that
+/// joins it to its neighbours of its kind, unless its shape is one they did not give it, which was
+/// picked by hand.
+auto joined_shapes(
+    const nlohmann::ordered_json& before, const nlohmann::ordered_json& after,
+    const part_catalog& catalog) -> nlohmann::ordered_json;
+
 /// How well a part named `name` of the id `id` matches what a player searched for, the best
 /// first: the whole name, the start of a word of it, anywhere in it, or in the id; none when it
 /// does not match.
