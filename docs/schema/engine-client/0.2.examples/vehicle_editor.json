@@ -74,7 +74,8 @@
               "kind": "tabs",
               "label": "Vehicles",
               "affordances": [
-                "vehicle:source"
+                "vehicle:source",
+                "vehicle:new"
               ],
               "slot": "canvas",
               "tabs": [
@@ -1040,7 +1041,9 @@
                     "kind": "form",
                     "label": "bicycle wheel",
                     "affordances": [
-                      "vehicle:part_set"
+                      "vehicle:part_set",
+                      "vehicle:copy_settings",
+                      "vehicle:paste_settings"
                     ],
                     "fields": [
                       {
@@ -1068,6 +1071,9 @@
               "id": "vehicle:check",
               "kind": "list",
               "label": "Ready to drive",
+              "affordances": [
+                "vehicle:test_drive"
+              ],
               "slot": "tools",
               "columns": [
                 {
@@ -1646,6 +1652,25 @@
             "group": "Edit"
           },
           {
+            "id": "vehicle:copy_settings",
+            "label": "Copy settings",
+            "keys": [],
+            "enabled": true,
+            "description": "Keeps the settings of the picked part to paste on others of its kind.",
+            "expect": "screen",
+            "group": "Edit"
+          },
+          {
+            "id": "vehicle:paste_settings",
+            "label": "Paste settings",
+            "keys": [],
+            "enabled": false,
+            "description": "Gives the picked part, and the parts of its kind on the marked squares, the settings copied.",
+            "denial": "Copy the settings of a part first.",
+            "expect": "screen",
+            "group": "Edit"
+          },
+          {
             "id": "vehicle:undo",
             "label": "Undo",
             "keys": [
@@ -1773,6 +1798,17 @@
             "keys": [],
             "enabled": true,
             "description": "Puts an exact copy of the copied vehicle south of you.",
+            "expect": "screen",
+            "group": "World"
+          },
+          {
+            "id": "vehicle:test_drive",
+            "label": "Test drive",
+            "keys": [
+              "F6"
+            ],
+            "enabled": true,
+            "description": "Spawns the design east of you and seats you at its controls; the editor key brings you back to it.",
             "expect": "screen",
             "group": "World"
           },
