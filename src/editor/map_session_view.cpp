@@ -429,6 +429,50 @@ auto canvas(const session& state) -> ec::component {
           })
         | std::ranges::to<std::vector>();
     const auto drags = state.current->region == region_use::placements;
+    // What a span drag would draw shows while it lasts: the symbol in hand, or what the catalog put
+    // there before the legend maps it.
+    const auto drawn_looks = [&](const std::string& glyph) {
+        if (looks.contains(glyph)) { return looks.at(glyph); }
+        if (!state.held || state.held->symbol != glyph) { return std::vector<int>{}; }
+        const auto held = symbol_looks(
+            object,
+            {legend_symbol{
+                .symbol = glyph,
+                .lines = {{.layer = state.held->layer, .value = state.held->value.dump()}}}});
+        return held.contains(glyph) ? palette.indexes(held.at(glyph)) : std::vector<int>{};
+    };
+    const auto span_shape = [](const shape_kind kind) -> std::string {
+        switch (kind) {
+            case shape_kind::line:
+                return "line";
+            case shape_kind::rect:
+                return "rect";
+            case shape_kind::rect_filled:
+                return "rect_filled";
+            case shape_kind::ellipse:
+                return "ellipse";
+            case shape_kind::room:
+                return "room";
+            case shape_kind::point:
+            case shape_kind::fill:
+                break;
+        }
+        return {};
+    };
+    const auto span =
+        state.current->spans && state.current->kind
+            ? std::optional(ec::grid_span{
+                  .shape = span_shape(*state.current->kind),
+                  .size = state.brush,
+                  .mirror_x = state.mirror_x,
+                  .mirror_y = state.mirror_y,
+                  .from = {shift.x, shift.y},
+                  .to = {shift.x + cols - 1, shift.y + rows - 1},
+                  .looks = drawn_looks(state.symbol),
+                  .fill = *state.current->kind == shape_kind::room
+                            ? drawn_looks(state.room_fill)
+                            : std::vector<int>{}})
+            : std::nullopt;
     return {
         .id = canvas_id,
         // The drag runs the placement's move; it is no command of the canvas to list.
@@ -454,7 +498,8 @@ auto canvas(const session& state) -> ec::component {
                        ? ec::grid_point{SEEX * 2, SEEY * 2}
                        : ec::grid_point{},
             .regions = regions,
-            .region_drag = drags ? placement_span_id : ""}};
+            .region_drag = drags ? placement_span_id : "",
+            .span = span}};
 }
 
 /// What a placement places, a `key: value` for each member: a string as it reads, anything else as

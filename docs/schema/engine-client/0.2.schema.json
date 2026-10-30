@@ -7036,6 +7036,32 @@
             "additionalProperties": false
           },
           "description": "The squares a client outlines around the square under the pointer while the pointer is over the cells, as offsets east (`x`) and south (`y`) of it, such as where the vehicle editor's paste lands when that square is clicked. Absent for none."
+        },
+        "span": {
+          "type": "object",
+          "properties": {
+            "shape": { "enum": ["line", "rect", "rect_filled", "ellipse", "room"] },
+            "size": { "type": "integer", "minimum": 1 },
+            "mirror_x": { "type": "boolean" },
+            "mirror_y": { "type": "boolean" },
+            "from": {
+              "type": "object",
+              "properties": { "x": { "type": "integer" }, "y": { "type": "integer" } },
+              "required": ["x", "y"],
+              "additionalProperties": false
+            },
+            "to": {
+              "type": "object",
+              "properties": { "x": { "type": "integer" }, "y": { "type": "integer" } },
+              "required": ["x", "y"],
+              "additionalProperties": false
+            },
+            "looks": { "type": "array", "items": { "type": "integer", "minimum": 0 } },
+            "fill": { "type": "array", "items": { "type": "integer", "minimum": 0 } }
+          },
+          "required": ["shape", "size", "from", "to", "looks"],
+          "additionalProperties": false,
+          "description": "What a `span` drag draws from its press square to the square under the pointer, which a client shows over the cells while the drag lasts, as the release would draw it. `line` joins the two squares; `rect` is the outline of the rectangle they span, `rect_filled` all of it, `ellipse` the ellipse inscribed in it, `room` its outline in `looks` around its inside in `fill`. Each square stands for a `size` by `size` square of squares centred on it (the extra one east and south for an even size); `mirror_x` and `mirror_y` also draw it mirrored across the middle column or row of the squares `from` to `to`, and nothing outside those is drawn. `looks` and `fill` index the grid's `looks`, bottom up. The squares each shape covers are listed in `span_shapes.json` beside this schema. Absent for none."
         }
       },
       "required": [

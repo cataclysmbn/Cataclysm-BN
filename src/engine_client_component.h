@@ -235,6 +235,24 @@ struct grid_region {
     std::string label = {};
     bool selected = false;
 };
+/// What a span drag draws from its press square to the square under the pointer, which a client
+/// shows over the cells while the drag lasts.
+struct grid_span {
+    /// `line`, `rect` (the outline), `rect_filled`, `ellipse` or `room` (the outline in `looks`
+    /// around its inside in `fill`).
+    std::string shape = {};
+    /// The side of the square of squares each square of the shape stands for.
+    int size = 1;
+    /// Whether the shape is also drawn mirrored across the middle column, or the middle row, of
+    /// the squares from `from` to `to`; squares outside those are not drawn.
+    bool mirror_x = false;
+    bool mirror_y = false;
+    grid_point from = {};
+    grid_point to = {};
+    /// What it draws, bottom up, as indexes into the grid's `looks`.
+    std::vector<int> looks = {};
+    std::vector<int> fill = {};
+};
 struct grid_cell {
     grid_point at = {};
     std::string id = {};
@@ -291,6 +309,8 @@ struct grid_body {
     /// The squares a client outlines around the square under the pointer, as offsets east and
     /// south of it, such as where a paste lands; none for none.
     std::vector<grid_point> stamp = {};
+    /// What a `span` drag draws; none for no shape to show.
+    std::optional<grid_span> span = std::nullopt;
 };
 /// The row id `square:<x>,<y>` a client gives the square `at` of a grid that lists no cell there.
 auto square_id( grid_point at ) -> std::string;

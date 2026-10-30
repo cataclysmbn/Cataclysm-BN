@@ -2,8 +2,13 @@
 #include "editor/document.h"
 #include "editor/mapgen_stroke.h"
 
+#include <algorithm>
+#include <cstdlib>
+#include <fstream>
+#include <nlohmann/json.hpp>
 #include <ranges>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -175,4 +180,78 @@ TEST_CASE("mirroring a clip flips it left to right or top to bottom", "[editor_m
     CHECK(editor::mirrored_x(clip) == editor::symbol_grid{{"c", "b", "a"}, {"f", "e", "d"}});
     CHECK(editor::mirrored_y(clip) == editor::symbol_grid{{"d", "e", "f"}, {"a", "b", "c"}});
     CHECK(editor::mirrored_x(editor::mirrored_x(clip)) == clip);
+}
+
+TEST_CASE(
+    "span_shapes.json lists the squares each span shape of the map editor covers",
+    "[editor_mapgen]") {
+    // Clients draw a span drag from this file; BN_WRITE_SPAN_SHAPES rewrites it from the editor.
+    const auto path = std::string("docs/schema/engine-client/span_shapes.json");
+    const auto kinds = std::vector<std::pair<std::string, editor::shape_kind>>{
+        {"line", editor::shape_kind::line},
+        {"rect", editor::shape_kind::rect},
+        {"rect_filled", editor::shape_kind::rect_filled},
+        {"ellipse", editor::shape_kind::ellipse},
+        {"room", editor::shape_kind::room}};
+    const auto spans = std::vector<std::pair<point, point>>{
+        {{3, 3}, {3, 3}}, {{1, 2}, {8, 5}},  {{8, 5}, {1, 2}}, {{2, 1}, {4, 9}},
+        {{0, 0}, {9, 9}}, {{9, 0}, {0, 7}},  {{4, 4}, {6, 5}}, {{2, 7}, {9, 8}},
+        {{5, 1}, {5, 8}}, {{0, 9}, {10, 9}}, {{3, 2}, {7, 7}}, {{6, 9}, {1, 1}}};
+    const auto grid = editor::symbol_grid(10, std::vector<std::string>(11, "."));
+    const auto listed = [](const std::vector<point>& squares) {
+        auto out = nlohmann::ordered_json::array();
+        for (const auto& p : squares) { out.push_back({p.x, p.y}); }
+        return out;
+    };
+    auto cases = nlohmann::ordered_json::array();
+    for (const auto& [name, kind] : kinds) {
+        for (const auto& [from, to] : spans) {
+            for (const auto size : {1, 2, 3}) {
+                for (const auto mirrors : {0, 1, 2, 3}) {
+                    const auto drawn = editor::shape{
+                        .kind = kind,
+                        .from = from,
+                        .to = to,
+                        .size = size,
+                        .mirror_x = (mirrors & 1) != 0,
+                        .mirror_y = (mirrors & 2) != 0};
+                    auto entry = nlohmann::ordered_json{
+                        {"shape", name},
+                        {"from", {from.x, from.y}},
+                        {"to", {to.x, to.y}},
+                        {"size", size},
+                        {"mirror_x", drawn.mirror_x},
+                        {"mirror_y", drawn.mirror_y},
+                        {"squares", listed(editor::squares_of(drawn, grid))}};
+                    if (kind == editor::shape_kind::room) {
+                        // The inside, as the stroke fills it before the outline.
+                        const auto inside_from =
+                            point(std::min(from.x, to.x) + 1, std::min(from.y, to.y) + 1);
+                        const auto inside_to =
+                            point(std::max(from.x, to.x) - 1, std::max(from.y, to.y) - 1);
+                        entry["fill"] =
+                            inside_from.x <= inside_to.x && inside_from.y <= inside_to.y
+                                ? listed(editor::squares_of(
+                                      {.kind = editor::shape_kind::rect_filled,
+                                       .from = inside_from,
+                                       .to = inside_to,
+                                       .size = size,
+                                       .mirror_x = drawn.mirror_x,
+                                       .mirror_y = drawn.mirror_y},
+                                      grid))
+                                : nlohmann::ordered_json::array();
+                    }
+                    cases.push_back(std::move(entry));
+                }
+            }
+        }
+    }
+    const auto fixture = nlohmann::ordered_json{{"cols", 11}, {"rows", 10}, {"cases", cases}};
+    if (std::getenv("BN_WRITE_SPAN_SHAPES") != nullptr) {
+        auto out = std::ofstream(path, std::ios::binary | std::ios::trunc);
+        out << fixture.dump() << '\n';
+    }
+    auto in = std::ifstream(path, std::ios::binary);
+    REQUIRE(in.good());
+    CHECK(nlohmann::ordered_json::parse(in) == fixture);
 }

@@ -789,6 +789,16 @@ auto body_json( const grid_body &body, const bubble_frame & /*frame*/ ) -> json
             result["stamp"].push_back( {{"x", offset.x}, {"y", offset.y}} );
         }
     }
+    if( body.span ) {
+        const auto &span = *body.span;
+        auto entry = json{{"shape", span.shape}, {"size", span.size},
+            {"from", {{"x", span.from.x}, {"y", span.from.y}}}, {"to", {{"x", span.to.x}, {"y", span.to.y}}},
+            {"looks", span.looks}};
+        if( span.mirror_x ) { entry["mirror_x"] = true; }
+        if( span.mirror_y ) { entry["mirror_y"] = true; }
+        if( !span.fill.empty() ) { entry["fill"] = span.fill; }
+        result["span"] = std::move( entry );
+    }
     return result;
 }
 auto body_json( const map_body &body, const bubble_frame &frame ) -> json

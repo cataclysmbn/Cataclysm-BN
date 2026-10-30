@@ -8120,4 +8120,44 @@ TEST_CASE(
     editor::reset_editor_session();
 }
 
+TEST_CASE(
+    "a span tool's canvas tells a client the shape a drag draws and with what",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    const auto span = [](const ec::screen_view& screen) {
+        return body<ec::grid_body>(part(screen, "editor:canvas")).span;
+    };
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [&](const auto& screen) {
+            CHECK_FALSE(span(screen));
+            return invoke("editor:catalog_kind", {.row = "catalog:furniture"});
+        },
+        [](const auto&) { return invoke("editor:catalog_filter", {.text = "f_counter"}); },
+        [](const auto&) { return invoke("editor:catalog_pick", {.row = "entry:f_counter"}); },
+        [](const auto&) { return invoke("editor:tool", {.row = "tool:room"}); },
+        [&](const auto& screen) {
+            // What the catalog put in hand shows before the legend maps it.
+            const auto shown = span(screen);
+            REQUIRE(shown);
+            CHECK(shown->shape == "room");
+            CHECK(shown->size == 1);
+            CHECK(shown->from == ec::grid_point{0, 0});
+            CHECK(shown->to == ec::grid_point{23, 23});
+            const auto& looks = body<ec::grid_body>(part(screen, "editor:canvas")).looks;
+            REQUIRE_FALSE(shown->looks.empty());
+            CHECK(looks.at(shown->looks.back()).id == "f_counter");
+            REQUIRE_FALSE(shown->fill.empty());
+            CHECK(looks.at(shown->fill.front()).id == "t_floor");
+            return invoke("editor:tool", {.row = "tool:point"});
+        },
+        [&](const auto& screen) {
+            CHECK_FALSE(span(screen));
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
+}
+
 #endif // CATA_MCP
