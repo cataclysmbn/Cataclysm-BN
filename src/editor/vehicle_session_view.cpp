@@ -819,7 +819,7 @@ auto parts_view(const session& state) -> ec::screen_view {
              "Copies the parts on the marked squares, or on the picked one, and "
              "removes them."),
          .keys = {"CTRL+X"}}));
-    // The copy turns and flips, as Factorio's blueprint in hand.
+    // The copy turns and flips, as Factorio's blueprint in hand, and the library keeps it.
     const auto clip_action = [&](const ec::invoke_options& options) {
         auto shown = options;
         shown.enabled = !state.clip.empty();
@@ -830,6 +830,15 @@ auto parts_view(const session& state) -> ec::screen_view {
     clip_action({.id = clip_flip_sides_id, .label = _("Flip copy left and right"), .keys = {"F"}});
     clip_action(
         {.id = clip_flip_ends_id, .label = _("Flip copy front and back"), .keys = {"CTRL+F"}});
+    clip_action(
+        {.id = library_save_id,
+         .label = _("Save copy to library"),
+         .description = _("Keeps the copy under Library for any vehicle you make."),
+         .args = {.text = ec::text_shape{.initial = _("My piece")}}});
+    affordances.push_back(ec::invoke_affordance(
+        {.id = show_clip_text_id,
+         .label = _("Copy or paste as text"),
+         .description = _("Shows the copy as text to share, and takes text someone shared.")}));
     // With squares marked, the Delete key deletes them, else the picked part.
     affordances.push_back(ec::invoke_affordance(
         {.id = delete_mounts_id,
@@ -1152,6 +1161,52 @@ auto parts_view(const session& state) -> ec::screen_view {
         parts.push_back(ec::panel({.id = performance_id, .stats = std::move(stats)}));
     }
     parts.push_back(installable());
+    if (!state.library.empty()) {
+        parts.push_back(ec::list(
+            {.id = library_id,
+             .rows =
+                 std::views::enumerate(state.library) | std::views::transform([](const auto& entry) {
+                     const auto& [index, piece] = entry;
+                     const auto mounts =
+                         piece.data.value("mounts", nlohmann::ordered_json::array());
+                     const auto first =
+                         mounts.is_array() && !mounts.empty()
+                             ? mounts[0].value("parts", nlohmann::ordered_json::array())
+                             : nlohmann::ordered_json::array();
+                     const auto part =
+                         first.is_array() && !first.empty()
+                             ? vpart_id(entry_part(first[0]))
+                             : vpart_id::NULL_ID();
+                     return ec::row{
+                         .id = index_row("piece", static_cast<std::size_t>(index)),
+                         .label = piece.name,
+                         .look = part.is_valid() && !part.is_null()
+                                   ? std::optional(
+                                         engine_client::world::vehicle_part_type_appearance(*part))
+                                   : std::nullopt};
+                 })
+                 | std::ranges::to<std::vector>(),
+             .selection = "single",
+             .activate = library_take_id}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = library_take_id, .label = _("Take"), .args = row_of(library_id)}));
+    }
+    if (state.clip_text_shown) {
+        parts.push_back(
+            {.id = clip_text_id,
+             .affordances = {paste_text_id},
+             .body = ec::form_body{
+                 .fields =
+                     {{.id = "text",
+                       .label = _("Text"),
+                       .description = _("Copy this to share the copy; paste shared text here."),
+                       .value = state.clip.empty() ? std::string{}
+                                                   : piece_text("vehicle", clip_json(state.clip)),
+                       .multiline = true}},
+                 .submit = paste_text_id}});
+        affordances.push_back(ec::invoke_affordance(
+            {.id = paste_text_id, .label = _("Paste text"), .args = text_of(clip_text_id)}));
+    }
     // What the marked squares hold, by kind, to replace or delete all of one at once, as
     // Factorio's upgrade and deconstruction planners.
     if (!state.live && state.selection) {
@@ -1390,6 +1445,8 @@ auto session_view(const session& state) -> ec::screen_view {
         {clip_turn_id, edit},
         {clip_flip_sides_id, edit},
         {clip_flip_ends_id, edit},
+        {library_save_id, edit},
+        {show_clip_text_id, edit},
         {view_cw_id, view_menu},
         {view_ccw_id, view_menu},
         {advanced_id, view_menu},
@@ -1418,6 +1475,8 @@ auto session_view(const session& state) -> ec::screen_view {
               {tools_id, {.slot = "inspector", .label = _("Design")}},
               {performance_id, {.slot = "inspector", .label = _("Performance")}},
               {marked_kinds_id, {.slot = "inspector", .label = _("Marked squares")}},
+              {clip_text_id, {.slot = "inspector", .label = _("Copy as text")}},
+              {library_id, {.slot = "palette", .label = _("Library")}},
               {part_groups_id, {.slot = "palette", .label = _("Parts")}},
               {problems_id, {.slot = "log", .label = _("Problems")}},
               {history_id, {.slot = "log", .label = _("History")}},

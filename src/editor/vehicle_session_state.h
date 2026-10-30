@@ -3,6 +3,7 @@
 #include "editor/catalog.h"
 #include "editor/document.h"
 #include "editor/history_label.h"
+#include "editor/library.h"
 #include "editor/mapgen_stroke.h"
 #include "editor/vehicle_check.h"
 #include "editor/vehicle_design.h"
@@ -56,6 +57,12 @@ inline constexpr auto cut_mounts_id = "vehicle:cut_mounts";
 inline constexpr auto clip_turn_id = "vehicle:clip_turn";
 inline constexpr auto clip_flip_sides_id = "vehicle:clip_flip_sides";
 inline constexpr auto clip_flip_ends_id = "vehicle:clip_flip_ends";
+inline constexpr auto clip_text_id = "vehicle:clip_text";
+inline constexpr auto show_clip_text_id = "vehicle:show_clip_text";
+inline constexpr auto paste_text_id = "vehicle:paste_text";
+inline constexpr auto library_id = "vehicle:library";
+inline constexpr auto library_save_id = "vehicle:library_save";
+inline constexpr auto library_take_id = "vehicle:library_take";
 inline constexpr auto marked_kinds_id = "vehicle:marked_kinds";
 inline constexpr auto replace_kind_id = "vehicle:replace_kind";
 inline constexpr auto delete_kind_id = "vehicle:delete_kind";
@@ -142,6 +149,9 @@ struct clip_mount {
     point offset;
     std::vector<nlohmann::ordered_json> parts;
 };
+
+/// The clip as the library and text keep it, which the Paste tool takes again.
+auto clip_json(const std::vector<clip_mount>& clip) -> nlohmann::ordered_json;
 
 /// What a click on a mount of the grid does, the affordance that picks it and its keys, as the
 /// map editor's tools have them; a tool that draws the part in hand has the shape it draws, which
@@ -241,6 +251,10 @@ struct session {
     std::optional<mount_frame> selection;
     /// What Copy or Cut took, which the Paste tool installs where it clicks.
     std::vector<clip_mount> clip;
+    /// Whether the clip shows as text to share, where text pasted becomes the clip.
+    bool clip_text_shown = false;
+    /// The pieces the player keeps in the library.
+    std::vector<library_piece> library;
     /// What Copy settings took.
     std::optional<part_settings> copied;
     /// Whether a drawing tool also draws side to side across the vehicle's middle, or end to

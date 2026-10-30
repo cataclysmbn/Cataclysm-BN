@@ -202,6 +202,14 @@ auto copied_vehicle_file() -> std::filesystem::path {
 
 } // namespace
 
+auto clip_json(const std::vector<clip_mount>& clip) -> nlohmann::ordered_json {
+    auto mounts = nlohmann::ordered_json::array();
+    for (const auto& [offset, parts] : clip) {
+        mounts.push_back({{"x", offset.x}, {"y", offset.y}, {"parts", parts}});
+    }
+    return {{"mounts", mounts}};
+}
+
 auto frame_around(const std::vector<point>& points, const int margin) -> mount_frame {
     const auto [min_x, max_x] = std::ranges::minmax(points | std::views::transform(&point::x));
     const auto [min_y, max_y] = std::ranges::minmax(points | std::views::transform(&point::y));
@@ -1045,6 +1053,75 @@ struct editing: session {
         // Frames and armour join their new neighbours once pasted.
         said = what;
         take_tool("paste");
+    }
+
+    /// Takes what `clip_json` made as the clip, with Paste in hand; whether it held parts.
+    auto take_clip(const nlohmann::ordered_json& data) -> bool {
+        auto taken = std::vector<clip_mount>{};
+        const auto mounts = data.value("mounts", nlohmann::ordered_json::array());
+        for (const auto& mount : mounts.is_array() ? mounts : nlohmann::ordered_json::array()) {
+            const auto parts =
+                mount.is_object()
+                    ? mount.value("parts", nlohmann::ordered_json())
+                    : nlohmann::ordered_json();
+            if (!parts.is_array() || !mount.value("x", nlohmann::ordered_json()).is_number_integer()
+                || !mount.value("y", nlohmann::ordered_json()).is_number_integer()) {
+                continue;
+            }
+            auto kept =
+                parts | std::views::filter([](const nlohmann::ordered_json& part) {
+                    return (part.is_string() || part.is_object())
+                        && vpart_id(entry_part(part)).is_valid();
+                })
+                | std::ranges::to<std::vector>();
+            if (!kept.empty()) {
+                taken.push_back(
+                    {.offset = {mount["x"].get<int>(), mount["y"].get<int>()},
+                     .parts = std::move(kept)});
+            }
+        }
+        if (taken.empty()) { return false; }
+        clip = std::move(taken);
+        take_tool("paste");
+        return true;
+    }
+
+    /// Keeps the clip in the library as `name`.
+    auto save_to_library(const std::string& name) -> void {
+        if (clip.empty()) {
+            notice = _("Copy or cut squares first.");
+            return;
+        }
+        if (name.empty()) {
+            notice = _("Give the piece a name.");
+            return;
+        }
+        keep_piece("vehicle", {.name = name, .data = clip_json(clip)});
+        library = library_pieces("vehicle");
+        //~ %s is the name the player gave a piece kept in the vehicle editor's library.
+        said = string_format(_("Saved %s to the library."), name);
+    }
+
+    /// Takes the library's piece `index` as the clip.
+    auto take_from_library(const std::size_t index) -> void {
+        if (index >= library.size()) { return; }
+        if (!take_clip(library[index].data)) {
+            notice = _("This piece has no part the game knows.");
+            return;
+        }
+        //~ %s is the name of a piece kept in the vehicle editor's library.
+        said = string_format(_("Click where %s goes."), library[index].name);
+    }
+
+    /// Takes the clip shared as `text`.
+    auto paste_text(const std::string& text) -> void {
+        const auto data = piece_of_text("vehicle", text);
+        if (!data || !take_clip(*data)) {
+            notice = _("That text holds no vehicle parts.");
+            return;
+        }
+        clip_text_shown = false;
+        said = _("Click where the parts go.");
     }
 
     /// The design's parts on the marked mounts of the kind `kind`, last first.
@@ -1953,6 +2030,7 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
     state.notice.clear();
     state.said.clear();
     state.catalog = read_part_catalog();
+    state.library = library_pieces("vehicle");
     if (!prototype.empty()) { state.open(prototype); }
     const auto screen = ec::screen_scope(
         ctxt, "vehicle_editor",
@@ -2058,6 +2136,14 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
             state.reshape_clip(
                 [](const point& at) { return point(-at.x, at.y); },
                 _("Flipped the copy front and back."));
+        } else if (id == show_clip_text_id) {
+            state.clip_text_shown = !state.clip_text_shown;
+        } else if (id == paste_text_id) {
+            state.paste_text(text);
+        } else if (id == library_save_id) {
+            state.save_to_library(text);
+        } else if (id == library_take_id) {
+            if (const auto index = row_index(row, "piece")) { state.take_from_library(*index); }
         } else if (id == cut_mounts_id || id == delete_mounts_id) {
             state.delete_mounts(id == cut_mounts_id);
         } else if (id == remove_id) {
