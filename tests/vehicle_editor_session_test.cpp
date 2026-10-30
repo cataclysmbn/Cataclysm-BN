@@ -5710,6 +5710,53 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "a test drive begun from the map editor's vehicle editor goes back to the map editor when the "
+    "vehicle editor closes",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    editor::reset_editor_session();
+    clear_map();
+    auto& you = get_avatar();
+    const auto start = you.bub_pos();
+    const auto restore = on_out_of_scope([&] {
+        if (you.in_vehicle) { get_map().unboard_vehicle(you.bub_pos()); }
+        you.controlling_vehicle = false;
+        you.cancel_activity();
+        clear_vehicles();
+        you.setpos(start);
+        editor::reset_editor_session();
+    });
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        switch (step++) {
+            case 0:
+                return invoke("editor:vehicle");
+            case 1:
+                return invoke("vehicle:filter", {.text = "car"});
+            case 2:
+                return invoke("vehicle:open", {.row = "prototype:car"});
+            case 3:
+                return invoke("vehicle:test_drive");
+            default:
+                FAIL("an editor stayed open after the test drive began");
+                return act("QUIT");
+        }
+    });
+    editor::run_editor_session();
+    CHECK(step == 4);
+    REQUIRE(you.in_vehicle);
+
+    // The editor key brings back the vehicle editor, and closing it the map editor under it.
+    auto kinds = std::vector<std::string>{};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        kinds.push_back(ec::top_screen(captured()).kind);
+        return act("QUIT");
+    });
+    editor::run_editor_session();
+    CHECK(kinds == std::vector<std::string>{"vehicle_editor", "editor"});
+}
+
+TEST_CASE(
     "the vehicle editor's test drive waits until the design is ready to drive",
     "[editor_vehicle]") {
     const auto guard = screen_guard{};
