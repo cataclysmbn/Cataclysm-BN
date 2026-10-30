@@ -1307,6 +1307,29 @@ auto session::layered(const held_mapping& brush, const std::vector<std::string>&
         std::ranges::sort(key);
         return key;
     };
+    // The lines of a layer a palette and the mapgen both map, as one line placing the same: terrain
+    // and furniture laid last stand, the other layers place each.
+    constexpr auto laid_last = std::array<std::string_view, 3>{"terrain", "furniture", "traps"};
+    const auto merged = [&](const std::vector<legend_line>& lines) {
+        auto one = std::vector<legend_line>{};
+        for (const auto& line : lines) {
+            const auto found = std::ranges::find(one, line.layer, &legend_line::layer);
+            if (found == one.end()) {
+                one.push_back({.layer = line.layer, .value = line.value});
+            } else if (std::ranges::contains(laid_last, line.layer)) {
+                found->value = line.value;
+            } else {
+                const auto listed = [](const std::string& text) {
+                    const auto value = nlohmann::ordered_json::parse(text, nullptr, false);
+                    return value.is_array() ? value : nlohmann::ordered_json::array({value});
+                };
+                auto both = listed(found->value);
+                for (const auto& value : listed(line.value)) { both.push_back(value); }
+                found->value = both.dump();
+            }
+        }
+        return one;
+    };
     auto taken = taken_symbols();
     taken.push_back(brush.symbol);
     auto inks = layered_ink{};
@@ -1323,11 +1346,14 @@ auto session::layered(const held_mapping& brush, const std::vector<std::string>&
             | std::ranges::to<std::vector>();
         if (lines.empty()) { continue; }
         lines.push_back({.layer = brush.layer, .value = brush.value.dump()});
+        lines = merged(lines);
         const auto wanted = places(lines);
         // Drawn again with what it places already, a square is drawn over whole: a floor drawn on
         // a table on that floor takes the table away.
-        if (wanted == places(found->lines)) { continue; }
-        const auto same = [&](const legend_symbol& entry) { return places(entry.lines) == wanted; };
+        if (wanted == places(merged(found->lines))) { continue; }
+        const auto same = [&](const legend_symbol& entry) {
+            return places(merged(entry.lines)) == wanted;
+        };
         if (const auto mapped = std::ranges::find_if(legend, same); mapped != legend.end()) {
             inks.over[old] = mapped->symbol;
             continue;
