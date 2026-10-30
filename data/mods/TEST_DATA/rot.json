@@ -1,0 +1,216 @@
+[
+  {
+    "type": "COMESTIBLE",
+    "id": "test_rot_long_lived",
+    "copy-from": "test_rot_food",
+    "name": "test long-lived food",
+    "spoils_in": "10000 days"
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "test_rot_harvest_food",
+    "copy-from": "test_rot_food",
+    "name": "test harvested food",
+    "charges": 8
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "test_rot_seed",
+    "copy-from": "test_rot_egg",
+    "name": "test infested seed",
+    "seed_data": { "plant_name": "test plant", "fruit": "test_rot_food", "grow": "1 day" }
+  },
+  {
+    "type": "GENERIC",
+    "id": "test_rot_inedible_seed",
+    "copy-from": "test_rot_remains",
+    "name": "test inedible seed",
+    "seed_data": { "plant_name": "test inedible plant", "fruit": "test_rot_remains", "grow": "1 day" }
+  },
+  {
+    "type": "BIONIC_ITEM",
+    "id": "test_rot_bionic",
+    "copy-from": "bio_power_storage",
+    "name": "test recoverable bionic",
+    "bionic_id": "bio_power_storage"
+  },
+  {
+    "type": "item_group",
+    "id": "test_rot_bionic_group",
+    "subtype": "collection",
+    "items": [ "test_rot_bionic" ]
+  },
+  {
+    "type": "harvest",
+    "id": "test_rot_mixed_harvest",
+    "entries": [
+      { "drop": "test_rot_bionic", "type": "bionic", "base_num": [ 1, 1 ], "max": 1 },
+      { "drop": "test_rot_bionic_group", "type": "bionic_group", "base_num": [ 1, 1 ], "max": 1 },
+      { "drop": "blood", "type": "blood", "mass_ratio": 0.1 },
+      { "drop": "test_rot_remains", "type": "bone", "mass_ratio": 0.2 },
+      { "drop": "test_rot_remains", "type": "bone", "base_num": [ 0, 0 ], "max": 1 },
+      { "drop": "test_rot_harvest_food", "type": "flesh", "base_num": [ 1, 1 ], "max": 1 }
+    ]
+  },
+  {
+    "type": "MONSTER",
+    "id": "mon_test_rot_mixed_harvest",
+    "copy-from": "mon_test_rot_corpse",
+    "name": { "str": "mixed harvest rot test source" },
+    "weight": "100 g",
+    "harvest": "test_rot_mixed_harvest"
+  },
+  {
+    "type": "MONSTER",
+    "id": "mon_test_rot_components",
+    "copy-from": "mon_test_rot_corpse",
+    "name": { "str": "component recovery rot test source" },
+    "harvest": "exempt"
+  },
+  {
+    "type": "MONSTER",
+    "id": "mon_test_rot_blacklisted",
+    "copy-from": "debug_mon",
+    "name": { "str": "blacklisted rot test monster" }
+  },
+  {
+    "type": "MONSTER",
+    "id": "mon_test_rot_evolving",
+    "copy-from": "debug_mon",
+    "name": { "str": "evolving rot test monster" },
+    "upgrades": { "age_grow": 1, "into": "mon_test_rot_blacklisted" }
+  },
+  {
+    "type": "MONSTER_BLACKLIST",
+    "monsters": [ "mon_test_rot_blacklisted" ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_TEST_ROT_EMPTY",
+    "default": "mon_null",
+    "monsters": [  ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_TEST_ROT_EVOLVING",
+    "default": "mon_test_rot_evolving",
+    "evolve_repeat": 1,
+    "evolve_chance": 101,
+    "monsters": [  ]
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "test_rot_egg_empty",
+    "copy-from": "test_rot_egg",
+    "name": "test empty egg",
+    "rot_spawn": "GROUP_TEST_ROT_EMPTY"
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "test_rot_egg_blacklisted",
+    "copy-from": "test_rot_egg",
+    "name": "test blacklisted egg",
+    "rot_spawn": "GROUP_TEST_ROT_EVOLVING"
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "test_rot_food",
+    "name": "test perishable food",
+    "description": "Food with a fixed shelf life for rot tests.",
+    "symbol": "%",
+    "color": "white",
+    "material": [ "flesh" ],
+    "weight": "1 g",
+    "volume": "1 ml",
+    "comestible_type": "FOOD",
+    "calories": 1,
+    "spoils_in": "1 day"
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "test_rot_nonperishable",
+    "copy-from": "test_rot_food",
+    "name": "test nonperishable food",
+    "spoils_in": "0 days"
+  },
+  {
+    "type": "CONTAINER",
+    "id": "test_rot_open",
+    "name": "test open container",
+    "description": "A container for testing nested food storage.",
+    "symbol": ")",
+    "color": "white",
+    "material": [ "plastic" ],
+    "weight": "1 g",
+    "volume": "1 ml",
+    "contains": "10 L",
+    "seals": false,
+    "preserves": false
+  },
+  {
+    "type": "CONTAINER",
+    "id": "test_rot_sealed",
+    "copy-from": "test_rot_open",
+    "name": "test sealed container",
+    "seals": true
+  },
+  {
+    "type": "CONTAINER",
+    "id": "test_rot_preserving",
+    "copy-from": "test_rot_sealed",
+    "name": "test preserving container",
+    "preserves": true
+  },
+  {
+    "type": "MONSTER",
+    "id": "mon_test_rot_inorganic",
+    "copy-from": "mon_test_rot_corpse",
+    "name": { "str": "nonrotting test corpse source" },
+    "material": [ "steel" ]
+  },
+  {
+    "type": "MONSTER",
+    "id": "mon_test_rot_reviver",
+    "copy-from": "mon_test_rot_corpse",
+    "name": { "str": "reviving rot test corpse source" },
+    "flags": [ "REVIVES" ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_TEST_ROT",
+    "default": "mon_test_rot_corpse",
+    "monsters": [  ]
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "test_rot_egg",
+    "copy-from": "test_rot_food",
+    "name": "test hatching egg",
+    "rot_spawn": "GROUP_TEST_ROT",
+    "rot_spawn_chance": 101
+  },
+  {
+    "type": "GENERIC",
+    "id": "test_rot_remains",
+    "name": "test rot remains",
+    "description": "A nonperishable, non-charge-counted corpse decay product for tests.",
+    "symbol": ",",
+    "color": "white",
+    "material": [ "bone" ],
+    "weight": "1 g",
+    "volume": "1 ml"
+  },
+  {
+    "type": "harvest",
+    "id": "test_rot_harvest",
+    "entries": [ { "drop": "test_rot_remains", "type": "bone", "base_num": [ 64, 64 ], "max": 64 } ]
+  },
+  {
+    "type": "MONSTER",
+    "id": "mon_test_rot_corpse",
+    "copy-from": "debug_mon",
+    "name": { "str": "rot test corpse source" },
+    "harvest": "test_rot_harvest",
+    "flags": [ "IMMOBILE" ]
+  }
+]
