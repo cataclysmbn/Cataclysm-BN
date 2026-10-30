@@ -3801,6 +3801,7 @@ input_context get_default_mode_input_context()
     ctxt.register_action( "MOUSE_MOVE" );
     ctxt.register_action( "SELECT" );
     ctxt.register_action( "SEC_SELECT" );
+    ctxt.register_action( "DESCRIBE_TILE" );
     return ctxt;
 }
 
@@ -8766,6 +8767,102 @@ static std::string get_fire_fuel_string( const tripoint_bub_ms &examp )
     return {};
 }
 
+namespace
+{
+
+enum class map_examine_target : int {
+    terrain,
+    furniture,
+};
+
+template<typename MapPart>
+auto describe_map_part( const MapPart &part, const tripoint_bub_ms &target ) -> void
+{
+    const auto distance = rl_dist( get_player_character().bub_pos(), target );
+    add_msg( _( "That is a %s. It's about %d tiles away." ),
+             colorize( part.name(), part.color() ), distance );
+
+    const auto description = part.description.translated();
+    if( !description.empty() ) {
+        add_msg( "%s", colorize( description, c_light_gray ) );
+    }
+}
+
+auto describe_monster( const monster &mon, const tripoint_bub_ms &target ) -> void
+{
+    const auto distance = rl_dist( get_player_character().bub_pos(), target );
+    add_msg( _( "That is a %s. It's about %d tiles away." ),
+             colorize( mon.name(), mon.symbol_color() ), distance );
+
+    const auto description = mon.type->get_description();
+    if( !description.empty() ) {
+        add_msg( "%s", colorize( description, c_light_gray ) );
+    }
+}
+
+template<typename MapPart>
+auto maybe_play_describe_sound( const tripoint_bub_ms &target, const MapPart &part ) -> void
+{
+    if( !get_option<bool>( "DESCRIBE_TILE_SOUND" ) || part.bash.sound_fail.empty() ) {
+        return;
+    }
+
+    const auto variant = part.id.str();
+    if( sfx::has_variant_sound( "smash_fail", variant ) ) {
+        const auto heard_volume = sfx::get_heard_volume( target,
+                                  std::min( 120, units::to_decibel( part.bash.sound_fail_vol.value_or( 70_dB ) ) ) );
+        sfx::play_variant_sound( "smash_fail", variant, heard_volume );
+    } else if( sfx::has_variant_sound( "smash_success", variant ) ) {
+        const auto heard_volume = sfx::get_heard_volume( target,
+                                  std::min( 120, units::to_decibel( part.bash.sound_vol.value_or( 70_dB ) ) ) );
+        sfx::play_variant_sound( "smash_success", variant, heard_volume );
+    }
+}
+
+auto describe_memorized_terrain( const memorized_terrain_tile &memory,
+                                 const tripoint_bub_ms &target ) -> bool
+{
+    if( memory.tile.empty() ) {
+        return false;
+    }
+
+    const auto terrain = ter_str_id( memory.tile );
+    if( !terrain.is_valid() ) {
+        return false;
+    }
+
+    describe_map_part( terrain.obj(), target );
+    return true;
+}
+
+auto choose_map_examine_target( map &here, const tripoint_bub_ms &examp )
+-> std::optional<map_examine_target>
+{
+    if( !here.has_furn( examp ) ) {
+        return map_examine_target::terrain;
+    }
+
+    const auto &terrain = here.ter( examp ).obj();
+    const auto &furniture = here.furn( examp ).obj();
+    uilist menu;
+    menu.text = _( "Describe what?" );
+    menu.addentry( static_cast<int>( map_examine_target::furniture ), true, 'f',
+                   _( "%s" ), colorize( furniture.name(), furniture.color() ) );
+    menu.addentry( static_cast<int>( map_examine_target::terrain ), true, 't',
+                   _( "%s" ), colorize( terrain.name(), terrain.color() ) );
+    menu.query();
+
+    if( menu.ret == static_cast<int>( map_examine_target::terrain ) ) {
+        return map_examine_target::terrain;
+    }
+    if( menu.ret == static_cast<int>( map_examine_target::furniture ) ) {
+        return map_examine_target::furniture;
+    }
+    return std::nullopt;
+}
+
+} // namespace
+
 void game::examine( const tripoint_bub_ms &examp )
 {
 
@@ -8848,15 +8945,17 @@ void game::examine( const tripoint_bub_ms &examp )
     const auto player_pos = u.bub_pos();
 
     if( m.has_furn( examp ) && !u.is_mounted() ) {
-        xfurn_t.examine( u, examp );
+        if( xfurn_t.examine != &iexamine::none ) {
+            xfurn_t.examine( u, examp );
+        }
     } else if( m.has_furn( examp ) && u.is_mounted() ) {
         add_msg( m_warning, _( "You cannot do that while mounted." ) );
     } else {
         if( !u.is_mounted() ) {
-            xter_t.examine( u, examp );
-        } else if( u.is_mounted() && xter_t.examine == &iexamine::none ) {
-            xter_t.examine( u, examp );
-        } else {
+            if( xter_t.examine != &iexamine::none ) {
+                xter_t.examine( u, examp );
+            }
+        } else if( xter_t.examine != &iexamine::none ) {
             add_msg( m_warning, _( "You cannot do that while mounted." ) );
         }
     }
@@ -8914,6 +9013,42 @@ void game::examine( const tripoint_bub_ms &examp )
                 pickup::pick_up( examp, 0 );
             }
         }
+    }
+}
+
+auto game::describe_tile( const tripoint_bub_ms &target ) -> void
+{
+    if( !u.sees( target ) ) {
+        if( u.should_show_map_memory() ) {
+            const auto abs_target = bub_to_abs( target );
+            if( describe_memorized_terrain( u.get_terrain_tile( abs_target ), target ) ||
+                describe_memorized_terrain( u.get_memorized_tile( abs_target ), target ) ) {
+                return;
+            }
+        }
+
+        add_msg( _( "Nothing relevant here." ) );
+        return;
+    }
+
+    if( const auto *const mon = critter_at<monster>( target ); mon != nullptr && u.sees( *mon ) ) {
+        describe_monster( *mon, target );
+        return;
+    }
+
+    const auto map_target = choose_map_examine_target( m, target );
+    if( !map_target ) {
+        return;
+    }
+
+    if( *map_target == map_examine_target::furniture ) {
+        const auto &furniture = m.furn( target ).obj();
+        maybe_play_describe_sound( target, furniture );
+        describe_map_part( furniture, target );
+    } else {
+        const auto &terrain = m.ter( target ).obj();
+        maybe_play_describe_sound( target, terrain );
+        describe_map_part( terrain, target );
     }
 }
 
