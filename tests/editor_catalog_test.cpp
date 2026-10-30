@@ -5,7 +5,9 @@
 #include <cctype>
 #include <ranges>
 #include <string>
+#include <string_view>
 #include <utility>
+#include <vector>
 
 namespace {
 
@@ -139,4 +141,11 @@ TEST_CASE(
         CHECK(entry.id.size() - entry.distinct.size() >= static_cast<std::size_t>(common));
     }
     CHECK(shared > 0);
+}
+
+TEST_CASE("the strings of a JSON text are read past escaped quotes", "[editor_catalog]") {
+    const auto text = std::string(R"({ "name": "a \"quoted\" word", "id": "t_floor", "x": "\\" })");
+    CHECK(editor::quoted_strings(text)
+          == std::vector<
+              std::string_view>{"name", R"(a \"quoted\" word)", "id", "t_floor", "x", R"(\\)"});
 }

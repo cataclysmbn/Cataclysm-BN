@@ -21,6 +21,7 @@
 #include <fstream>
 #include <iterator>
 #include <map>
+#include <optional>
 #include <ranges>
 #include <string_view>
 #include <tuple>
@@ -104,6 +105,24 @@ auto entries_of(const catalog_kind kind) -> std::vector<catalog_entry> {
     return {};
 }
 
+} // namespace
+
+auto quoted_strings(const std::string_view text) -> std::vector<std::string_view> {
+    auto found = std::vector<std::string_view>{};
+    auto start = std::optional<std::size_t>{};
+    for (auto at = std::size_t{0}; at < text.size(); ++at) {
+        if (start && text[at] == '\\') {
+            ++at;
+        } else if (text[at] == '"') {
+            if (start) { found.push_back(text.substr(*start + 1, at - *start - 1)); }
+            start = start ? std::nullopt : std::optional(at);
+        }
+    }
+    return found;
+}
+
+namespace {
+
 /// How many times the game's own JSON names each id-like string.
 auto uses_in_data() -> const std::unordered_map<std::string, int>& {
     static const auto counted = [] {
@@ -121,12 +140,8 @@ auto uses_in_data() -> const std::unordered_map<std::string, int>& {
              get_files_from_path(".json", PATH_INFO::datadir() + "json", true, true)) {
             auto in = std::ifstream(path, std::ios::binary);
             const auto text = std::string(std::istreambuf_iterator<char>(in), {});
-            for (auto at = text.find('"'); at != std::string::npos;) {
-                const auto end = text.find('"', at + 1);
-                if (end == std::string::npos) { break; }
-                const auto quoted = std::string_view(text).substr(at + 1, end - at - 1);
+            for (const auto quoted : quoted_strings(text)) {
                 if (id_like(quoted)) { ++counts[std::string(quoted)]; }
-                at = text.find('"', end + 1);
             }
         }
         return counts;
