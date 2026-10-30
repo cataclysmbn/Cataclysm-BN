@@ -974,9 +974,7 @@ auto remove_part(
     return redrawn(std::move(next));
 }
 
-auto entry_part(const nlohmann::ordered_json& entry) -> std::string {
-    return entry.is_object() ? entry.value("part", "") : entry.get<std::string>();
-}
+auto entry_part(const nlohmann::ordered_json& entry) -> std::string { return part_named(entry); }
 
 auto unmounted_entry(const nlohmann::ordered_json& entry) -> nlohmann::ordered_json {
     if (!entry.is_object()) { return entry; }

@@ -200,6 +200,13 @@ auto copied_vehicle_file() -> std::filesystem::path {
     return std::filesystem::path(PATH_INFO::user_dir()) / "vehicle_copy.json";
 }
 
+/// The library's pieces that hold vehicle parts to paste.
+auto vehicle_library() -> std::vector<library_piece> {
+    auto pieces = library_pieces("vehicle");
+    std::erase_if(pieces, [](const library_piece& piece) { return clip_of(piece.data).empty(); });
+    return pieces;
+}
+
 } // namespace
 
 auto clip_json(const std::vector<clip_mount>& clip) -> nlohmann::ordered_json {
@@ -208,6 +215,34 @@ auto clip_json(const std::vector<clip_mount>& clip) -> nlohmann::ordered_json {
         mounts.push_back({{"x", offset.x}, {"y", offset.y}, {"parts", parts}});
     }
     return {{"mounts", mounts}};
+}
+
+auto clip_of(const nlohmann::ordered_json& data) -> std::vector<clip_mount> {
+    auto taken = std::vector<clip_mount>{};
+    const auto mounts =
+        data.is_object() ? data.value("mounts", nlohmann::ordered_json()) : nlohmann::ordered_json();
+    for (const auto& mount : mounts.is_array() ? mounts : nlohmann::ordered_json::array()) {
+        const auto parts =
+            mount.is_object()
+                ? mount.value("parts", nlohmann::ordered_json())
+                : nlohmann::ordered_json();
+        if (!parts.is_array() || !mount.value("x", nlohmann::ordered_json()).is_number_integer()
+            || !mount.value("y", nlohmann::ordered_json()).is_number_integer()) {
+            continue;
+        }
+        auto kept =
+            parts | std::views::filter([](const nlohmann::ordered_json& part) {
+                const auto id = entry_part(part);
+                return !id.empty() && vpart_id(id).is_valid();
+            })
+            | std::views::transform(unmounted_entry) | std::ranges::to<std::vector>();
+        if (!kept.empty()) {
+            taken.push_back(
+                {.offset = {mount["x"].get<int>(), mount["y"].get<int>()},
+                 .parts = std::move(kept)});
+        }
+    }
+    return taken;
 }
 
 auto frame_around(const std::vector<point>& points, const int margin) -> mount_frame {
@@ -1059,29 +1094,7 @@ struct editing: session {
 
     /// Takes what `clip_json` made as the clip, with Paste in hand; whether it held parts.
     auto take_clip(const nlohmann::ordered_json& data) -> bool {
-        auto taken = std::vector<clip_mount>{};
-        const auto mounts = data.value("mounts", nlohmann::ordered_json::array());
-        for (const auto& mount : mounts.is_array() ? mounts : nlohmann::ordered_json::array()) {
-            const auto parts =
-                mount.is_object()
-                    ? mount.value("parts", nlohmann::ordered_json())
-                    : nlohmann::ordered_json();
-            if (!parts.is_array() || !mount.value("x", nlohmann::ordered_json()).is_number_integer()
-                || !mount.value("y", nlohmann::ordered_json()).is_number_integer()) {
-                continue;
-            }
-            auto kept =
-                parts | std::views::filter([](const nlohmann::ordered_json& part) {
-                    return (part.is_string() || part.is_object())
-                        && vpart_id(entry_part(part)).is_valid();
-                })
-                | std::views::transform(unmounted_entry) | std::ranges::to<std::vector>();
-            if (!kept.empty()) {
-                taken.push_back(
-                    {.offset = {mount["x"].get<int>(), mount["y"].get<int>()},
-                     .parts = std::move(kept)});
-            }
-        }
+        auto taken = clip_of(data);
         if (taken.empty()) { return false; }
         clip = std::move(taken);
         take_tool("paste");
@@ -1099,7 +1112,7 @@ struct editing: session {
             return;
         }
         keep_piece("vehicle", {.name = name, .data = clip_json(clip)});
-        library = library_pieces("vehicle");
+        library = vehicle_library();
         //~ %s is the name the player gave a piece kept in the vehicle editor's library.
         said = string_format(_("Saved %s to the library."), name);
     }
@@ -2034,7 +2047,7 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
     state.notice.clear();
     state.said.clear();
     state.catalog = read_part_catalog();
-    state.library = library_pieces("vehicle");
+    state.library = vehicle_library();
     if (!prototype.empty()) { state.open(prototype); }
     const auto screen = ec::screen_scope(
         ctxt, "vehicle_editor",

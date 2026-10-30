@@ -7,8 +7,26 @@
 #include <cctype>
 #include <filesystem>
 #include <fstream>
+#include <utility>
 
 namespace editor {
+namespace {
+
+/// Deeper than any piece nests; text that goes deeper is cut there, so that reading it does not
+/// overflow the stack.
+constexpr auto deepest = 32;
+
+/// `text` read as JSON, its values nested deeper than `deepest` left out; discarded when it is not
+/// JSON.
+auto parsed(auto&& text) -> nlohmann::ordered_json {
+    return nlohmann::ordered_json::parse(
+        std::forward<decltype(text)>(text),
+        [](const int depth, nlohmann::ordered_json::parse_event_t /*event*/,
+           nlohmann::ordered_json& /*value*/) { return depth <= deepest; },
+        false);
+}
+
+} // namespace
 
 auto library_file(const std::string& kind) -> std::string {
     return PATH_INFO::config_dir() + "editor_library_" + kind + ".json";
@@ -16,7 +34,7 @@ auto library_file(const std::string& kind) -> std::string {
 
 auto library_pieces(const std::string& kind) -> std::vector<library_piece> {
     auto in = std::ifstream(library_file(kind), std::ios::binary);
-    const auto read = nlohmann::ordered_json::parse(in, nullptr, false);
+    const auto read = parsed(in);
     if (!read.is_array()) { return {}; }
     auto pieces = std::vector<library_piece>{};
     // An entry in another shape, as a hand edit leaves, is skipped.
@@ -54,8 +72,9 @@ auto piece_of_text(const std::string& kind, const std::string& text)
         return std::isspace(static_cast<unsigned char>(letter));
     });
     if (trimmed.empty()) { return std::nullopt; }
-    const auto read = nlohmann::ordered_json::parse(base64_decode(trimmed), nullptr, false);
-    if (!read.is_object() || read.value("kind", "") != kind || !read.contains("data")) {
+    const auto read = parsed(base64_decode(trimmed));
+    if (!read.is_object() || !read.contains("kind") || read["kind"] != kind
+        || !read.contains("data")) {
         return std::nullopt;
     }
     return read["data"];
