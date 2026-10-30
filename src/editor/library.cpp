@@ -1,7 +1,10 @@
 #include "editor/library.h"
 
 #include "catacharset.h"
+#include "fstream_utils.h"
 #include "path_info.h"
+#include "string_formatter.h"
+#include "translations.h"
 
 #include <algorithm>
 #include <cctype>
@@ -48,17 +51,39 @@ auto library_pieces(const std::string& kind) -> std::vector<library_piece> {
     return pieces;
 }
 
-auto keep_piece(const std::string& kind, const library_piece& piece) -> void {
-    auto pieces = library_pieces(kind);
-    std::erase_if(pieces, [&](const library_piece& entry) { return entry.name == piece.name; });
-    pieces.push_back(piece);
+auto keep_piece(const std::string& kind, const library_piece& piece)
+    -> std::expected<void, std::string> {
+    const auto file = library_file(kind);
     auto written = nlohmann::ordered_json::array();
-    for (const auto& entry : pieces) {
-        written.push_back({{"name", entry.name}, {"data", entry.data}});
+    // The file stays when it cannot be read, so that a hand edit gone wrong loses no piece.
+    if (auto error = std::error_code{}; std::filesystem::exists(file, error) || error) {
+        auto in = std::ifstream(file, std::ios::binary);
+        written = parsed(in);
+        if (!written.is_array()) {
+            //~ %s is the file of the editor's library.
+            return std::unexpected(string_format(
+                _("The game cannot read the library file %s; fix or remove it to save there."),
+                file));
+        }
     }
-    std::filesystem::create_directories(PATH_INFO::config_dir());
-    auto out = std::ofstream(library_file(kind), std::ios::binary | std::ios::trunc);
-    out << written.dump(2) << '\n';
+    // Entries in another shape stay as they are.
+    written.erase(
+        std::ranges::remove_if(
+            written,
+            [&](const nlohmann::ordered_json& entry) {
+                return entry.is_object() && entry.contains("name") && entry["name"] == piece.name;
+            })
+            .begin(),
+        written.end());
+    written.push_back({{"name", piece.name}, {"data", piece.data}});
+    auto error = std::error_code{};
+    std::filesystem::create_directories(PATH_INFO::config_dir(), error);
+    if (!write_to_file(file, [&](std::ostream& out) { out << written.dump(2) << '\n'; }, "")) {
+        //~ %s is the file of the editor's library.
+        return std::unexpected(
+            string_format(_("The game could not write the library file %s."), file));
+    }
+    return {};
 }
 
 auto piece_text(const std::string& kind, const nlohmann::ordered_json& data) -> std::string {

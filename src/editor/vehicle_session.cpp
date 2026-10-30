@@ -1111,7 +1111,11 @@ struct editing: session {
             notice = _("Give the piece a name.");
             return;
         }
-        keep_piece("vehicle", {.name = name, .data = clip_json(clip)});
+        if (const auto kept = keep_piece("vehicle", {.name = name, .data = clip_json(clip)});
+            !kept) {
+            notice = kept.error();
+            return;
+        }
         library = vehicle_library();
         //~ %s is the name the player gave a piece kept in the vehicle editor's library.
         said = string_format(_("Saved %s to the library."), name);

@@ -6352,8 +6352,9 @@ TEST_CASE(
     // A piece in another shape stays when the file can be read.
     std::ofstream(editor::library_file("vehicle"), std::ios::binary | std::ios::trunc)
         << R"([{"name":5}])";
-    editor::keep_piece(
-        "vehicle", {.name = "Tank", .data = {{"mounts", nlohmann::ordered_json::array()}}});
+    CHECK(editor::keep_piece(
+              "vehicle", {.name = "Tank", .data = {{"mounts", nlohmann::ordered_json::array()}}})
+              .has_value());
     CHECK(nlohmann::ordered_json::parse(read_file(editor::library_file("vehicle")))
           == nlohmann::ordered_json::parse(R"([{"name":5},{"name":"Tank","data":{"mounts":[]}}])"));
 }
