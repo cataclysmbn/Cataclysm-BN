@@ -1,13 +1,16 @@
 #include "editor/catalog.h"
 
+#include "filesystem.h"
 #include "item_factory.h"
 #include "itype.h"
 #include "map/field_type.h"
 #include "map/mapdata.h"
+#include "mod_manager.h"
 #include "mongroup.h"
 #include "monstergenerator.h"
 #include "mtype.h"
 #include "overmap/omdata.h"
+#include "path_info.h"
 #include "string_utils.h"
 #include "translations.h"
 #include "trap.h"
@@ -15,10 +18,13 @@
 
 #include <algorithm>
 #include <cctype>
+#include <fstream>
+#include <iterator>
 #include <map>
 #include <ranges>
 #include <string_view>
 #include <tuple>
+#include <unordered_map>
 
 namespace editor {
 namespace {
@@ -98,6 +104,36 @@ auto entries_of(const catalog_kind kind) -> std::vector<catalog_entry> {
     return {};
 }
 
+/// How many times the game's own JSON names each id-like string.
+auto uses_in_data() -> const std::unordered_map<std::string, int>& {
+    static const auto counted = [] {
+        const auto id_like = [](const std::string_view text) {
+            return !text.empty() && text.size() < 64
+                && std::ranges::all_of(
+                    text,
+                    [](const char c) {
+                        return std::islower(static_cast<unsigned char>(c))
+                            || std::isdigit(static_cast<unsigned char>(c)) || c == '_';
+                    });
+        };
+        auto counts = std::unordered_map<std::string, int>{};
+        for (const auto& path :
+             get_files_from_path(".json", PATH_INFO::datadir() + "json", true, true)) {
+            auto in = std::ifstream(path, std::ios::binary);
+            const auto text = std::string(std::istreambuf_iterator<char>(in), {});
+            for (auto at = text.find('"'); at != std::string::npos;) {
+                const auto end = text.find('"', at + 1);
+                if (end == std::string::npos) { break; }
+                const auto quoted = std::string_view(text).substr(at + 1, end - at - 1);
+                if (id_like(quoted)) { ++counts[std::string(quoted)]; }
+                at = text.find('"', end + 1);
+            }
+        }
+        return counts;
+    }();
+    return counted;
+}
+
 } // namespace
 
 auto search_catalog(const catalog_query& query) -> catalog_page {
@@ -133,8 +169,18 @@ auto search_catalog(const catalog_query& query) -> catalog_page {
               return ranked_entry{.rank = at, .entry = std::move(entry)};
           })
         | ranges::to<std::vector>();
-    ranges::sort(ranked, {}, [](const ranked_entry& found) {
-        return std::tuple(found.rank, std::string_view(found.entry.id));
+    // Among names that match alike, the game's own come before a mod's, and what its data names
+    // most, then the shortest name, first; unsearched, all go by id.
+    const auto core = mod_management::get_default_core_content_pack().str();
+    const auto& uses =
+        query.filter.empty() ? std::unordered_map<std::string, int>{} : uses_in_data();
+    ranges::sort(ranked, {}, [&](const ranked_entry& found) {
+        const auto& [id, name, mod, distinct] = found.entry;
+        const auto used = uses.find(id);
+        return std::tuple(
+            found.rank, !query.filter.empty() && !mod.empty() && mod != core,
+            used == uses.end() ? 0 : -used->second, query.filter.empty() ? 0 : name.size(),
+            std::string_view(id));
     });
     auto found = ranked | std::views::transform(&ranked_entry::entry) | ranges::to<std::vector>();
     // Entries of one name are told apart by the rest of their ids after the start all of them

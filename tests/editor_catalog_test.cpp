@@ -93,7 +93,7 @@ TEST_CASE(
     };
     CHECK(found.entries.front().id == "f_bed");
     CHECK(std::ranges::is_sorted(found.entries, {}, [&](const editor::catalog_entry& entry) {
-        return std::pair{rank(entry), entry.id};
+        return rank(entry);
     }));
     // Something matched by its id alone comes last.
     CHECK(rank(found.entries.back()) == 4);

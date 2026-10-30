@@ -45,9 +45,10 @@ struct catalog_query {
 };
 
 struct catalog_page {
-    /// Ordered by id; with a filter, first by how well the name matches it: the name itself, a
-    /// name starting with it, a word of the name starting with it, a name holding it, then an id
-    /// holding it.
+    /// With a filter, first by how well the name matches it: the name itself, a name starting
+    /// with it, a word of the name starting with it, a name holding it, then an id holding it;
+    /// then the game's own before a mod's, what the game's data names most, the shortest name,
+    /// then by id. Without a filter, by id.
     std::vector<catalog_entry> entries;
     /// How many match, on every page.
     std::size_t total = 0;
