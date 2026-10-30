@@ -57,7 +57,7 @@ struct stroke_options {
     std::string symbol;
     /// The inside of a room.
     std::string fill_symbol = {};
-    /// The symbol drawn instead of `symbol` on a square that holds the key.
+    /// The symbol drawn instead of `symbol` on a square that held the key before the stroke.
     std::map<std::string, std::string> over = {};
 };
 

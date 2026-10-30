@@ -166,9 +166,11 @@ auto stroke(document& doc, const stroke_options& options)
     if (grid.empty()) { return std::unexpected(std::string("the object has no rows")); }
     auto changed_rows = std::set<int>{};
     auto changed = std::size_t{0};
+    // What a square held before the stroke picks its symbol, though a room's inside came first.
+    const auto before = grid;
     const auto paint = [&](const shape& drawn, const std::string& symbol, const auto& over) {
         for (const auto& p : squares_of(drawn, grid)) {
-            const auto found = over.find(grid[p.y][p.x]);
+            const auto found = over.find(before[p.y][p.x]);
             const auto& ink = found == over.end() ? symbol : found->second;
             if (grid[p.y][p.x] == ink) { continue; }
             grid[p.y][p.x] = ink;
