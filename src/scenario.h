@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "catalua_type_operators.h"
 #include "string_id.h"
 #include "translations.h"
 #include "type_id.h"
@@ -99,6 +100,17 @@ class scenario
         bool is_locked_trait( const trait_id &trait ) const;
         bool is_forbidden_trait( const trait_id &trait ) const;
 
+        /** Read access to the JSON-defined trait/bionic/spell lists, for UI and Lua. */
+        const std::set<trait_id> &allowed_traits() const;
+        const std::set<trait_id> &forbidden_traits() const;
+        const std::set<bionic_id> &allowed_bionics() const;
+        const std::set<bionic_id> &forbidden_bionics() const;
+        const std::set<spell_id> &allowed_spells() const;
+        const std::set<spell_id> &forbidden_spells() const;
+        const std::set<spell_id> &forced_spells() const;
+        const std::set<std::string> &get_flags() const;
+        const std::vector<start_location_id> &allowed_start_locations() const;
+
         bool bionicquery( const bionic_id &bionic ) const;
         std::set<bionic_id> get_locked_bionics() const;
         bool is_locked_bionic( const bionic_id &bionic ) const;
@@ -137,6 +149,8 @@ class scenario
         const std::vector<mission_type_id> &missions() const;
 
         const std::vector<std::pair<mongroup_id, float>> &surround_groups() const;
+
+        LUA_TYPE_OPS( scenario, id );
 };
 
 struct scen_blacklist {

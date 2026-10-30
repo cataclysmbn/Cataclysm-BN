@@ -44,6 +44,7 @@
 #include "overmap/overmapbuffer_registry.h"
 #include "player_activity.h"
 #include "player_helpers.h"
+#include "scenario.h"
 #include "sqlite3.h"
 #include "state_helpers.h"
 #include "string_formatter.h"
@@ -444,6 +445,34 @@ TEST_CASE("lua_global_functions", "[lua]") {
     REQUIRE(lua_monster_avatar_name == "nil");
     REQUIRE(lua_character_avatar_name == expected_name);
     REQUIRE(lua_npc_avatar_name == "nil");
+}
+
+TEST_CASE("lua_scenario_binding", "[lua]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    sol::state lua = make_lua_state();
+
+    sol::table test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    // Restore the active scenario after the test: leaving g->scen null makes
+    // avatar::store omit the "scenario" member, which fails later save/load
+    // round-trips with "Tried to use non-existent scenario '(null)'".
+    const auto scen_cleanup = on_out_of_scope([]() { set_scenario(scenario::generic()); });
+
+    set_scenario(&string_id<scenario>("hunted_start").obj());
+    run_lua_test_script(lua, "scenario_binding_test.lua");
+    CHECK(test_data.get<bool>("has_scenario"));
+    CHECK(test_data.get<std::string>("scenario_id") == "hunted_start");
+    CHECK(test_data.get<int>("point_cost") == -2);
+    CHECK(test_data.get<int>("forced_count") == 1);
+    CHECK(test_data.get<bool>("has_nemesis"));
+    CHECK(test_data.get<bool>("has_flag"));
+
+    // Without a scenario, gapi.get_scenario() returns nil
+    set_scenario(nullptr);
+    sol::object res = lua["gapi"]["get_scenario"]();
+    CHECK(res.get_type() == sol::type::lua_nil);
 }
 
 TEST_CASE("lua_weather_override_can_expire", "[lua][weather]") {
