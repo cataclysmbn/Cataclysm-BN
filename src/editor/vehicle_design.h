@@ -291,6 +291,8 @@ struct part_catalog {
     std::optional<vpart_id> frame;
     /// How many of each part the game's prototypes install.
     std::map<vpart_id, int> uses;
+    /// How many of the game's prototypes install each part.
+    std::map<vpart_id, int> vehicles;
     /// The shapes of the part `id`, as its kind has them; none for a part the game lacks.
     auto shapes_of(const vpart_id& id) const -> std::vector<const vpart_info*>;
 };
@@ -312,6 +314,12 @@ auto in_front_half(const vehicle& veh, const point& at) -> bool;
 /// when it needs none, or none would go on.
 auto prerequisite_of(const part_catalog& catalog, const vehicle& veh, const part_install& install)
     -> std::optional<vpart_id>;
+
+/// How well a part named `name` of the id `id` matches what a player searched for, the best
+/// first: the whole name, the start of a word of it, anywhere in it, or in the id; none when it
+/// does not match.
+auto search_rank(const std::string& name, const std::string& id, const std::string& filter)
+    -> std::optional<int>;
 
 /// The names of `parts` as a list of them shows them: a name two of them share is followed by
 /// what tells their ids apart.

@@ -35,6 +35,7 @@
 #include <ranges>
 #include <string>
 #include <string_view>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -104,7 +105,7 @@ struct palette_entry {
     bool held = false;
 };
 /// A page of the parts palette and how many rows it has in all: with no filter, one per kind
-/// of part of the category shown; else the parts that match it, ordered by id.
+/// of part of the category shown; else the parts that match it, the best match first.
 struct part_page_entries {
     std::vector<palette_entry> shown;
     std::size_t total = 0;
@@ -126,14 +127,28 @@ auto parts_palette(const session& state) -> part_page_entries {
             | std::views::transform([](const part_kind& kind) { return kind.shapes.front(); })
             | std::ranges::to<std::vector>();
     } else {
-        found =
-            vpart_info::get_all() | std::views::filter([&](const vpart_info& info) {
-                return lcmatch(info.get_id().str(), state.part_filter)
-                    || lcmatch(info.name(), state.part_filter);
-            })
-            | std::views::transform([](const vpart_info& info) { return &info; })
-            | std::ranges::to<std::vector>();
-        std::ranges::sort(found, {}, [](const vpart_info* info) { return info->get_id().str(); });
+        struct ranked {
+            const vpart_info* part;
+            int rank;
+            int uses;
+        };
+        const auto uses = [&](const vpart_info& info) {
+            const auto counted = state.catalog.vehicles.find(info.get_id());
+            return counted == state.catalog.vehicles.end() ? 0 : counted->second;
+        };
+        auto matches = std::vector<ranked>{};
+        for (const auto& info : vpart_info::get_all()) {
+            if (const auto rank =
+                    search_rank(info.name(), info.get_id().str(), state.part_filter)) {
+                matches.push_back({.part = &info, .rank = *rank, .uses = uses(info)});
+            }
+        }
+        // The best match first, then what most of the game's vehicles install, then by name.
+        std::ranges::sort(matches, {}, [](const ranked& entry) {
+            return std::
+                tuple(entry.rank, -entry.uses, entry.part->name(), entry.part->get_id().str());
+        });
+        found = matches | std::views::transform(&ranked::part) | std::ranges::to<std::vector>();
     }
     // A row of a category stands for all the shapes of its part.
     const auto in_hand =

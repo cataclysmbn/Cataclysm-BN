@@ -1421,12 +1421,16 @@ auto category_name(const part_category category) -> std::string {
 
 auto read_part_catalog() -> part_catalog {
     auto uses = std::map<vpart_id, int>{};
+    auto vehicles = std::map<vpart_id, int>{};
     auto filled = std::map<itype_id, int>{};
     for (const auto& id : vehicle_prototype::get_all()) {
+        auto installed = std::set<vpart_id>{};
         for (const auto& part : id->parts) {
             ++uses[part.part];
+            installed.insert(part.part);
             if (!part.fuel.is_null()) { ++filled[part.fuel]; }
         }
+        for (const auto& part : installed) { ++vehicles[part]; }
     }
     auto kinds = std::vector<part_kind>{};
     auto found = std::map<std::string, std::size_t>{};
@@ -1460,7 +1464,8 @@ auto read_part_catalog() -> part_catalog {
                       std::ranges::
                           max_element(frames, {}, [](const auto& entry) { return entry.second; })
                               ->first),
-        .uses = std::move(uses)};
+        .uses = std::move(uses),
+        .vehicles = std::move(vehicles)};
 }
 
 auto most_installed(
@@ -1521,6 +1526,22 @@ auto prerequisite_of(const part_catalog& catalog, const vehicle& veh, const part
     });
     if (!chosen) { chosen = most_installed(catalog, fits); }
     return chosen ? std::optional(chosen->get_id()) : std::nullopt;
+}
+
+auto search_rank(const std::string& name, const std::string& id, const std::string& filter)
+    -> std::optional<int> {
+    const auto wanted = to_lower_case(trim(filter));
+    const auto named = to_lower_case(name);
+    if (named == wanted) { return 0; }
+    auto found = named.find(wanted);
+    if (found == std::string::npos) {
+        return lcmatch(id, wanted) ? std::optional(3) : std::nullopt;
+    }
+    // A name that starts with it or has a word that does, as "vehicle tank" for "tank".
+    for (; found != std::string::npos; found = named.find(wanted, found + 1)) {
+        if (found == 0 || !std::isalnum(static_cast<unsigned char>(named[found - 1]))) { return 1; }
+    }
+    return 2;
 }
 
 auto part_catalog::shapes_of(const vpart_id& id) const -> std::vector<const vpart_info*> {
