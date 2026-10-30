@@ -76,6 +76,7 @@ inline constexpr auto place_id = "editor:place";
 inline constexpr auto place_set_id = "editor:place_set";
 inline constexpr auto place_apply_id = "editor:place_apply";
 inline constexpr auto field_id = "editor:field";
+inline constexpr auto advanced_id = "editor:advanced";
 inline constexpr auto field_set_id = "editor:field_set";
 inline constexpr auto field_apply_id = "editor:field_apply";
 inline constexpr auto inside_id = "editor:inside";

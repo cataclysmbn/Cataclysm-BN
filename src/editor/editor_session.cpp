@@ -7,6 +7,7 @@
 #include "editor/catalog.h"
 #include "editor/document.h"
 #include "editor/editor_access.h"
+#include "editor/editor_mode.h"
 #include "editor/map_session.h"
 #include "editor/mapgen_export.h"
 #include "editor/mapgen_legend_edit.h"
@@ -477,6 +478,8 @@ auto run_editor_session() -> void {
             state.copy();
         } else if (id == cut_id && state.selected) {
             state.cut();
+        } else if (id == advanced_id) {
+            set_advanced_mode(!advanced_mode());
         } else if (id == rotate_id || id == flip_x_id || id == flip_y_id) {
             const auto size = state.clip_size_now();
             for (auto& entry : state.clip_placed) {

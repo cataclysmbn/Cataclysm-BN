@@ -2,6 +2,7 @@
 #include "editor/catalog.h"
 #include "editor/document.h"
 #include "editor/editor_access.h"
+#include "editor/editor_mode.h"
 #include "editor/history_label.h"
 #include "editor/map_session.h"
 #include "editor/mapgen_check.h"
@@ -54,6 +55,15 @@ namespace editor::map_editor {
 namespace {
 
 namespace ec = engine_client;
+
+/// `columns` after the column of a row's id, which advanced mode alone shows.
+auto with_id(const std::string& id, std::vector<game_client::interaction_column> columns)
+    -> std::vector<game_client::interaction_column> {
+    if (advanced_mode()) {
+        columns.insert(columns.begin(), {.key = "id", .label = _("ID"), .value = id});
+    }
+    return columns;
+}
 
 /// What a square holds from the bottom up, as the map shows it: terrain, furniture, trap, top item.
 auto square_looks(const preview_square& square) -> std::vector<engine_client::look> {
@@ -557,7 +567,7 @@ auto symbol_columns(const nlohmann::ordered_json& object, const legend_symbol& e
         }
         if (!read.ids.empty()) { ids.push_back(read.ids); }
     }
-    if (!ids.empty()) {
+    if (!ids.empty() && advanced_mode()) {
         columns.push_back({.key = "id", .label = _("ID"), .value = join(ids, ", ")});
     }
     return columns;
@@ -869,21 +879,22 @@ auto catalog_list(
     const auto hand = state.on_special() ? std::nullopt : state.in_hand();
     return ec::list(
         {.id = catalog_id,
-         .rows = found.entries | std::views::transform([&](const catalog_entry& entry) {
-                     const auto held =
-                         state.on_special()
-                             ? entry.id == state.special_terrain
-                             : hand && hand->layer == state.catalog->layer
-                                   && hand->value == mapping_json_of(*state.catalog, entry.id);
-                     return ec::row{
-                         .id = "entry:" + entry.id,
-                         .label = catalog_row_label(entry),
-                         .selected = held,
-                         .columns = {{.key = "id", .label = _("ID"), .value = entry.id},
-                                     {.key = "mod", .label = _("Mod"), .value = entry.mod}},
-                         .look = catalog_look(kind, entry.id)};
-                 })
-               | std::ranges::to<std::vector>(),
+         .rows =
+             found.entries | std::views::transform([&](const catalog_entry& entry) {
+                 const auto held =
+                     state.on_special()
+                         ? entry.id == state.special_terrain
+                         : hand && hand->layer == state.catalog->layer
+                               && hand->value == mapping_json_of(*state.catalog, entry.id);
+                 return ec::row{
+                     .id = "entry:" + entry.id,
+                     .label = catalog_row_label(entry),
+                     .selected = held,
+                     .columns =
+                         with_id(entry.id, {{.key = "mod", .label = _("Mod"), .value = entry.mod}}),
+                     .look = catalog_look(kind, entry.id)};
+             })
+             | std::ranges::to<std::vector>(),
          .total = found.total,
          .offset = state.catalog_page * page_size,
          .selection = "single",
@@ -1073,14 +1084,14 @@ auto game_parts(
                      return ec::row{
                          .id = "loot:" + share.item,
                          .label = type.is_valid() ? item::nname(type) : share.item,
-                         .columns =
-                             {{.key = "id", .label = _("ID"), .value = share.item},
-                              {.key = "chance",
+                         .columns = with_id(
+                             share.item,
+                             {{.key = "chance",
                                .label = _("Chance"),
                                .value = string_format("%.0f%%", share.chance * 100)},
                               {.key = "mean",
                                .label = _("Average"),
-                               .value = string_format("%.2f", share.mean)}}};
+                               .value = string_format("%.2f", share.mean)}})};
                  }) | std::ranges::to<std::vector>(),
                  .empty = _("Nothing can spawn on the marked squares.")}));
         }
@@ -1515,6 +1526,7 @@ auto layout(const session& state) -> workspace_layout {
              {preview_id, view},
              {reroll_id, view},
              {loot_id, view},
+             {advanced_id, view},
              {apply_id, world},
              {apply_on_save_id, world},
              {stamp_id, world},
@@ -1532,6 +1544,10 @@ auto layout(const session& state) -> workspace_layout {
 auto session_view(const session& state) -> ec::screen_view {
     auto affordances = std::vector<ec::affordance>{ec::invoke_affordance(
         {.id = open_id, .label = _("Open"), .args = {.text = ec::text_shape{.field_id = path_id}}})};
+    affordances.push_back(ec::invoke_affordance(
+        {.id = advanced_id,
+         .label = advanced_mode() ? _("Hide advanced settings") : _("Show advanced settings"),
+         .description = _("Shows ids, JSON and the settings that need them, in both editors.")}));
     if (state.doc) {
         affordances.push_back(ec::invoke_affordance(
             {.id = save_as_id,
@@ -1764,23 +1780,27 @@ auto session_view(const session& state) -> ec::screen_view {
                     {.id = placement_id, .label = _("Show"), .args = row_of(placements_id)}));
             }
             if (state.on_mapgen()) { placement_forms(state, parts, affordances); }
-            parts.push_back(ec::component{
-                .id = field_id,
-                .affordances = {field_set_id, field_apply_id},
-                .body = ec::form_body{
-                    .fields =
-                        {{.id = "pointer", .label = _("Pointer"), .value = state.field_pointer},
-                         {.id = "value",
-                          .label = _("Value"),
-                          .value = state.field_value,
-                          .multiline = true}},
-                    .submit = field_apply_id}});
-            affordances.push_back(ec::invoke_affordance(
-                {.id = field_set_id,
-                 .label = _("Value"),
-                 .args =
-                     {.row = ec::row_shape{.component_id = field_id}, .text = ec::text_shape{}}}));
-            affordances.push_back(ec::invoke_affordance({.id = field_apply_id, .label = _("Set")}));
+            // The JSON value form is for modders who know the game's files.
+            if (advanced_mode()) {
+                parts.push_back(ec::component{
+                    .id = field_id,
+                    .affordances = {field_set_id, field_apply_id},
+                    .body = ec::form_body{
+                        .fields =
+                            {{.id = "pointer", .label = _("Pointer"), .value = state.field_pointer},
+                             {.id = "value",
+                              .label = _("Value"),
+                              .value = state.field_value,
+                              .multiline = true}},
+                        .submit = field_apply_id}});
+                affordances.push_back(ec::invoke_affordance(
+                    {.id = field_set_id,
+                     .label = _("Value"),
+                     .args = {.row = ec::row_shape{.component_id = field_id},
+                              .text = ec::text_shape{}}}));
+                affordances.push_back(
+                    ec::invoke_affordance({.id = field_apply_id, .label = _("Set")}));
+            }
             std::ranges::move(level_affordances(state), std::back_inserter(affordances));
             if (!state.on_special() && !state.on_oter()) {
                 std::ranges::move(drawing_affordances(state), std::back_inserter(affordances));
