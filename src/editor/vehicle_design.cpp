@@ -1554,6 +1554,16 @@ auto prerequisite_of(const part_catalog& catalog, const vehicle& veh, const part
     return chosen ? std::optional(chosen->get_id()) : std::nullopt;
 }
 
+auto steerable_of(const part_catalog& catalog, const vpart_info& part) -> const vpart_info* {
+    return most_installed(catalog, [&](const vpart_info& other) {
+        return other.has_flag("STEERABLE") && other.item == part.item
+            && other.location == part.location
+            && std::ranges::all_of(part.get_flags(), [&](const std::string& flag) {
+                   return other.has_flag(flag);
+               });
+    });
+}
+
 auto search_rank(const std::string& name, const std::string& id, const std::string& filter)
     -> std::optional<int> {
     const auto wanted = to_lower_case(trim(filter));

@@ -7,6 +7,7 @@
 #include "editor/row_id.h"
 #include "editor/session_file.h"
 #include "editor/session_page.h"
+#include "editor/vehicle_check.h"
 #include "editor/vehicle_design.h"
 #include "editor/vehicle_session_state.h"
 #include "editor/workspace.h"
@@ -1082,8 +1083,36 @@ auto parts_view(const session& state) -> ec::screen_view {
     };
     parts.push_back(
         ec::tabs({.id = tools_id, .tabs = std::move(tabs), .select = tool_id, .child = tool()}));
-    // The vehicle's figures, under the design they follow from.
-    if (veh) { parts.push_back(ec::panel({.id = performance_id, .stats = design_stats(*veh)})); }
+    // Whether it can be driven away, each failed check with the button that fixes it, and the
+    // vehicle's figures under the design they follow from: its speeds once it can drive.
+    if (veh) {
+        const auto checks = state.drive();
+        auto check_list = ec::list(
+            {.id = check_id,
+             .rows =
+                 checks | std::views::transform([](const drive_check& entry) {
+                     return ec::row{
+                         .id = "check:" + entry.key,
+                         .label = entry.text,
+                         .selectable = false,
+                         .mark = game_client::interaction_mark{
+                             .glyph = entry.ok ? "✓" : "✗", .color = entry.ok ? "green" : "red"}};
+                 })
+                 | std::ranges::to<std::vector>(),
+             .selection = "none"});
+        for (const auto& entry : checks) {
+            if (state.live || entry.fix == drive_fix::none) { continue; }
+            const auto id = std::string(fix_prefix) + entry.key;
+            check_list.affordances.push_back(id);
+            affordances.push_back(ec::invoke_affordance({.id = id, .label = entry.action}));
+        }
+        parts.push_back(std::move(check_list));
+        auto stats = design_stats(*veh);
+        if (!ready_to_drive(checks)) {
+            std::erase_if(stats, [](const ec::panel_stat& stat) { return stat.key == "speed"; });
+        }
+        parts.push_back(ec::panel({.id = performance_id, .stats = std::move(stats)}));
+    }
     parts.push_back(installable());
     // The items an item spawn puts, while the item spawns show.
     if (!state.live && shown_tab == "cargo") {
@@ -1274,6 +1303,7 @@ auto session_view(const session& state) -> ec::screen_view {
               {"vehicle:live", {.slot = "status"}},
               {grid_id, {.slot = "canvas"}},
               {canvas_tools_id, {.slot = "tools", .label = _("Tools")}},
+              {check_id, {.slot = "tools", .label = _("Ready to drive")}},
               {tools_id, {.slot = "inspector", .label = _("Design")}},
               {performance_id, {.slot = "inspector", .label = _("Performance")}},
               {part_groups_id, {.slot = "palette", .label = _("Parts")}},

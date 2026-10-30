@@ -308,6 +308,28 @@ auto session::item_spawns() const -> std::vector<std::size_t> {
          | std::ranges::to<std::vector>();
 }
 
+auto session::drive() const -> std::vector<drive_check> {
+    const auto* const veh = shown_vehicle();
+    if (!veh) { return {}; }
+    if (live) {
+        return drive_checks(*veh, [&](const int index) {
+            return veh->cpart(index).ammo_current();
+        });
+    }
+    // The blueprint holds the parts in the order the prototype lists them, without their fuel.
+    const auto design = design_parts(prototype());
+    return drive_checks(*veh, [&](const int index) {
+        if (index < 0 || static_cast<std::size_t>(index) >= design.size()) {
+            return itype_id::NULL_ID();
+        }
+        const auto at = nlohmann::ordered_json::json_pointer(design[index].pointer);
+        const auto& entry = prototype().contains(at) ? prototype()[at] : nlohmann::ordered_json();
+        return entry.is_object() && entry.contains("fuel") && entry["fuel"].is_string()
+                 ? itype_id(entry["fuel"].get<std::string>())
+                 : itype_id::NULL_ID();
+    });
+}
+
 auto session::history() const -> history_steps {
     if (!live) { return document_steps(*doc, design_step_label); }
     auto labels =
@@ -1143,6 +1165,26 @@ struct editing: session {
         said = string_format(_("%s."), steps.labels[steps.depth - 1]);
     }
 
+    /// Makes the design pass its check `key` as the check's fix does, as one step named by it.
+    auto fix_drive(const std::string& key) -> void {
+        const auto checks = drive();
+        const auto found = std::ranges::find(checks, key, &drive_check::key);
+        if (found == checks.end() || found->fix == drive_fix::none) { return; }
+        if (found->fix == drive_fix::show_engines) {
+            part_group = part_category::engines;
+            part_filter.clear();
+            part_page = 0;
+            canvas_tool = "install";
+            anchor.reset();
+            said = _("Choose an engine under Parts, then click a square of the frame.");
+            return;
+        }
+        doc->begin_group(false, found->action);
+        change(fixed_design(prototype(), catalog, found->fix));
+        doc->end_group();
+        keep_pick();
+    }
+
     /// Sets the fewest (or, `most`, the most) rounds a turret spawns loaded with; a turret with
     /// no range is full, so a first end sets both, and empty makes it full again.
     auto set_ammo_qty(const std::size_t index, const bool most, const std::string& text) -> void {
@@ -1811,6 +1853,8 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
             state.set_spawning(row, text);
         } else if (id == spawn_id) {
             state.spawn();
+        } else if (id.starts_with(fix_prefix)) {
+            state.fix_drive(id.substr(fix_prefix.size()));
         }
         if (state.notice.empty() && footprint(state) == before) { state.notice = std::move(kept); }
     }

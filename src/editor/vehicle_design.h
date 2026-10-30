@@ -316,6 +316,10 @@ auto in_front_half(const vehicle& veh, const point& at) -> bool;
 auto prerequisite_of(const part_catalog& catalog, const vehicle& veh, const part_install& install)
     -> std::optional<vpart_id>;
 
+/// The steerable kind of `part`, as the game's steerable hubs extend theirs; none when it has
+/// none.
+auto steerable_of(const part_catalog& catalog, const vpart_info& part) -> const vpart_info*;
+
 /// How well a part named `name` of the id `id` matches what a player searched for, the best
 /// first: the whole name, the start of a word of it, anywhere in it, or in the id; none when it
 /// does not match.

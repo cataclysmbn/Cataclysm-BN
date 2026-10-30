@@ -4,6 +4,7 @@
 #include "editor/document.h"
 #include "editor/history_label.h"
 #include "editor/mapgen_stroke.h"
+#include "editor/vehicle_check.h"
 #include "editor/vehicle_design.h"
 #include "engine_client_component.h"
 #include "point.h"
@@ -94,6 +95,9 @@ inline constexpr auto item_kind_id = "vehicle:item_kind";
 inline constexpr auto item_filter_id = "vehicle:item_filter";
 inline constexpr auto item_page_id = "vehicle:item_page";
 inline constexpr auto item_pick_id = "vehicle:item_pick";
+inline constexpr auto check_id = "vehicle:check";
+/// The affordance that fixes a failed check of `check_id` is this and the check's key.
+inline constexpr auto fix_prefix = std::string_view("vehicle:fix:");
 
 /// The mounts the grid shows, from its north-west corner to its south-east one.
 struct mount_frame {
@@ -276,6 +280,8 @@ struct session {
     auto item_spawns() const -> std::vector<std::size_t>;
     /// The steps of the vehicle edited in place, or of the open document.
     auto history() const -> history_steps;
+    /// Whether the vehicle shown can be driven away, check by check.
+    auto drive() const -> std::vector<drive_check>;
 };
 
 /// The screen the session shows.
