@@ -50,6 +50,8 @@ inline constexpr auto stroke_end_id = "vehicle:stroke_end";
 inline constexpr auto mirror_sides_id = "vehicle:mirror_sides";
 inline constexpr auto mirror_ends_id = "vehicle:mirror_ends";
 inline constexpr auto copy_mounts_id = "vehicle:copy_mounts";
+inline constexpr auto copy_settings_id = "vehicle:copy_settings";
+inline constexpr auto paste_settings_id = "vehicle:paste_settings";
 inline constexpr auto cut_mounts_id = "vehicle:cut_mounts";
 inline constexpr auto delete_mounts_id = "vehicle:delete_mounts";
 inline constexpr auto view_cw_id = "vehicle:view_cw";
@@ -105,6 +107,15 @@ struct mount_frame {
     point low;
     point high;
     auto operator==(const mount_frame&) const -> bool = default; // *NOPAD*
+};
+
+/// The settings of a part Copy settings took, for Paste settings to give parts of its kind.
+struct part_settings {
+    /// The id of the first shape of its kind.
+    std::string kind;
+    std::string name;
+    /// Its members but its `part`.
+    nlohmann::ordered_json members = nlohmann::ordered_json::object();
 };
 
 /// The frame of `points` and `margin` mounts around them.
@@ -222,6 +233,8 @@ struct session {
     std::optional<mount_frame> selection;
     /// What Copy or Cut took, which the Paste tool installs where it clicks.
     std::vector<clip_mount> clip;
+    /// What Copy settings took.
+    std::optional<part_settings> copied;
     /// Whether a drawing tool also draws side to side across the vehicle's middle, or end to
     /// end, as the map editor's mirrors.
     bool mirror_sides = false;

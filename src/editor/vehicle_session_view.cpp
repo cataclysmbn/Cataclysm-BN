@@ -533,7 +533,7 @@ auto part_form(const session& state) -> std::optional<ec::component> {
     return ec::component{
         .id = part_form_id,
         .label = id.is_valid() ? id->name() : design[*index].part,
-        .affordances = {part_set_id},
+        .affordances = {part_set_id, copy_settings_id, paste_settings_id},
         .body = ec::form_body{.fields = std::move(fields)}};
 }
 
@@ -1241,6 +1241,21 @@ auto parts_view(const session& state) -> ec::screen_view {
             affordances.push_back(ec::invoke_affordance(
                 {.id = part_set_id, .label = _("Value"), .args = text_of(part_form_id)}));
         }
+        affordances.push_back(ec::invoke_affordance(
+            {.id = copy_settings_id,
+             .label = _("Copy settings"),
+             .description = _(
+                 "Keeps the settings of the picked part to paste on others of its kind."),
+             .enabled = state.picked_name().has_value()}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = paste_settings_id,
+             .label = _("Paste settings"),
+             .description = _(
+                 "Gives the picked part, and the parts of its kind on the marked squares, the "
+                 "settings copied."),
+             .enabled = state.copied && state.picked_name(),
+             .denial = state.copied ? _("Pick a part to paste on first.")
+                                    : _("Copy the settings of a part first.")}));
         on("cargo",
            ec::invoke_affordance(
                {.id = item_add_id, .label = _("Add item"), .args = {.text = ec::text_shape{}}}));
@@ -1301,13 +1316,14 @@ auto session_view(const session& state) -> ec::screen_view {
     const auto world = std::string(_("World"));
     auto view = parts_view(state);
     auto groups = std::map<std::string, std::string, std::less<>>{
-        {new_id, file},         {save_id, file},          {save_as_id, file},
-        {undo_id, edit},        {redo_id, edit},          {remove_id, edit},
-        {earlier_id, edit},     {later_id, edit},         {copy_mounts_id, edit},
-        {cut_mounts_id, edit},  {delete_mounts_id, edit}, {mirror_sides_id, edit},
-        {mirror_ends_id, edit}, {view_cw_id, view_menu},  {view_ccw_id, view_menu},
-        {spawn_id, world},      {test_drive_id, world},   {turn_cw_id, world},
-        {turn_ccw_id, world},   {paste_id, world},        {done_id, world}};
+        {new_id, file},          {save_id, file},          {save_as_id, file},
+        {undo_id, edit},         {redo_id, edit},          {remove_id, edit},
+        {earlier_id, edit},      {later_id, edit},         {copy_mounts_id, edit},
+        {cut_mounts_id, edit},   {delete_mounts_id, edit}, {mirror_sides_id, edit},
+        {mirror_ends_id, edit},  {copy_settings_id, edit}, {paste_settings_id, edit},
+        {view_cw_id, view_menu}, {view_ccw_id, view_menu}, {spawn_id, world},
+        {test_drive_id, world},  {turn_cw_id, world},      {turn_ccw_id, world},
+        {paste_id, world},       {done_id, world}};
     for (const auto& entry : canvas_tools) { groups.emplace(entry.affordance, edit); }
     for (const auto& entry : view.affordances) {
         if (entry.id.starts_with(show_prefix)) { groups.emplace(entry.id, view_menu); }

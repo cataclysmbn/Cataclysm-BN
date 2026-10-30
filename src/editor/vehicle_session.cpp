@@ -45,6 +45,7 @@
 #include <limits>
 #include <optional>
 #include <ranges>
+#include <set>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -1226,6 +1227,63 @@ struct editing: session {
         if (change(next) && (key == "fuel" || targets.size() > 1)) { say_step(); }
     }
 
+    /// Keeps the settings of the picked part for Paste settings.
+    auto copy_settings() -> void {
+        const auto index = picked_here();
+        if (live || !index) {
+            notice = _("Pick a part first.");
+            return;
+        }
+        const auto design = design_parts(prototype());
+        const auto& entry =
+            prototype()[nlohmann::ordered_json::json_pointer(design[*index].pointer)];
+        auto members = entry.is_object() ? entry : nlohmann::ordered_json::object();
+        members.erase("part");
+        const auto name = part_name(design[*index].part);
+        copied = part_settings{
+            .kind = kind_name(vpart_id(design[*index].part)), .name = name, .members = members};
+        //~ %s is the part whose settings the vehicle editor copied.
+        said = string_format(_("Copied the settings of %s."), name);
+    }
+
+    /// Gives the picked part, and every part of its kind in the selection around it, the settings
+    /// Copy settings took, as one step.
+    auto paste_settings() -> void {
+        const auto index = picked_here();
+        if (live || !index || !copied) { return; }
+        const auto design = design_parts(prototype());
+        if (kind_name(vpart_id(design[*index].part)) != copied->kind) {
+            //~ %s is the part whose settings the vehicle editor holds.
+            notice = string_format(_("Pick a %s to paste its settings on."), copied->name);
+            return;
+        }
+        auto next = prototype();
+        for (const auto target : setting_targets(*index)) {
+            const auto& entry = next[nlohmann::ordered_json::json_pointer(design[target].pointer)];
+            auto keys = std::set<std::string>{};
+            if (entry.is_object()) {
+                for (const auto& [key, value] : entry.items()) { keys.insert(key); }
+            }
+            for (const auto& [key, value] : copied->members.items()) { keys.insert(key); }
+            keys.erase("part");
+            for (const auto& key : keys) {
+                auto set = set_part_member(
+                    next,
+                    {.index = target,
+                     .key = key,
+                     .value = copied->members.contains(key)
+                                ? std::optional(copied->members[key])
+                                : std::nullopt});
+                if (!set) {
+                    notice = set.error();
+                    return;
+                }
+                next = std::move(*set);
+            }
+        }
+        if (change(next)) { say_step(); }
+    }
+
     /// Says what the step just made did, as the history names it.
     auto say_step() -> void {
         const auto steps = history();
@@ -1887,6 +1945,10 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
             state.set_prop(row, text);
         } else if (id == part_set_id) {
             state.set_part(row, text);
+        } else if (id == copy_settings_id) {
+            state.copy_settings();
+        } else if (id == paste_settings_id) {
+            state.paste_settings();
         } else if (id == item_add_id) {
             state.tool_tab = "cargo";
             state.add_item(text);
