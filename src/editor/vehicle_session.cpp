@@ -270,6 +270,20 @@ auto session::picked_name() const -> std::optional<std::string> {
     });
 }
 
+auto session::kind_name(const vpart_id& id) const -> std::string {
+    const auto shapes = catalog.shapes_of(id);
+    return shapes.empty() ? id.str() : shapes.front()->get_id().str();
+}
+
+auto session::marked_mounts() const -> std::vector<point> {
+    const auto [low, high] = selection.value_or(mount_frame{.low = cursor, .high = cursor});
+    auto marked = std::vector<point>{};
+    for (auto y = low.y; y <= high.y; ++y) {
+        for (auto x = low.x; x <= high.x; ++x) { marked.emplace_back(x, y); }
+    }
+    return marked;
+}
+
 auto session::tool() const -> const struct canvas_tool& { // *NOPAD*
     const auto found = std::ranges::find_if(canvas_tools, [&](const struct canvas_tool& entry) {
         return canvas_tool == entry.key;
@@ -605,12 +619,6 @@ struct editing: session {
             | std::ranges::to<std::vector>());
     }
 
-    /// What tells the kind of the part `id` from others: the id of its first shape.
-    auto kind_name(const vpart_id& id) const -> std::string {
-        const auto shapes = catalog.shapes_of(id);
-        return shapes.empty() ? id.str() : shapes.front()->get_id().str();
-    }
-
     /// Whether a stroke is open, so that its changes make one step.
     auto in_stroke() const -> bool { return live ? live_stroke : doc && doc->grouping(); }
     auto begin_stroke() -> void {
@@ -889,17 +897,6 @@ struct editing: session {
         pick_top();
     }
 
-    /// The mounts Copy, Cut and Delete act on: those marked, else the picked one, north to south
-    /// and west to east.
-    auto marked_mounts() const -> std::vector<point> {
-        const auto [low, high] = selection.value_or(mount_frame{.low = cursor, .high = cursor});
-        auto marked = std::vector<point>{};
-        for (auto y = low.y; y <= high.y; ++y) {
-            for (auto x = low.x; x <= high.x; ++x) { marked.emplace_back(x, y); }
-        }
-        return marked;
-    }
-
     /// The parts on the marked mounts, by mount in install order; none, with a notice that says
     /// so, when they have none.
     auto marked_clip() -> std::optional<std::vector<clip_mount>> {
@@ -1001,6 +998,85 @@ struct editing: session {
                  + refused_parts(*tally);
         }
         pick_top();
+    }
+
+    /// The design's parts on the marked mounts of the kind `kind`, last first.
+    auto marked_of_kind(const std::string& kind) const -> std::vector<std::size_t> {
+        const auto marked = marked_mounts();
+        const auto design = design_parts(prototype());
+        return std::views::iota(std::size_t{0}, design.size()) | std::views::reverse
+             | std::views::filter([&](const std::size_t index) {
+                   return !design[index].from_palette
+                       && std::ranges::contains(marked, design[index].mount)
+                       && kind_name(vpart_id(design[index].part)) == kind;
+               })
+             | std::ranges::to<std::vector>();
+    }
+
+    /// Swaps every part of the kind `kind` on the marked mounts for the part in hand, as one
+    /// step.
+    auto replace_kind(const std::string& kind) -> void {
+        const auto held = vpart_id(brush);
+        if (!held.is_valid()) {
+            notice = _("Choose the part to put in their place under Parts first.");
+            return;
+        }
+        const auto targets = marked_of_kind(kind);
+        if (targets.empty()) { return; }
+        auto next = prototype();
+        for (const auto index : targets) {
+            auto swapped = set_part_member(next, {.index = index, .key = "part", .value = brush});
+            if (!swapped) {
+                notice = swapped.error();
+                return;
+            }
+            next = std::move(*swapped);
+        }
+        doc->begin_group(false, _("Replace"));
+        const auto changed = change(next);
+        doc->end_group();
+        if (changed) {
+            //~ What the vehicle editor's Replace did: the parts it swapped, how many and the
+            //~ part that took their place.
+            said = string_format(
+                _("Replaced %1$s ×%2$d with %3$s."), part_name(kind), targets.size(),
+                part_name(brush));
+        }
+    }
+
+    /// Removes every part of the kind `kind` on the marked mounts that can go, as one step.
+    auto delete_kind(const std::string& kind) -> void {
+        auto next = prototype();
+        auto done = 0;
+        auto refused = stroke_tally{};
+        for (const auto index : marked_of_kind(kind)) {
+            // Each removal checks the vehicle the ones before it left.
+            const auto now = build_design(next.dump());
+            if (!now.blueprint) { break; }
+            auto removed = remove_part(next, *now.blueprint, index);
+            if (!removed) {
+                if (refused.refused++ == 0) { refused.reason = removed.error(); }
+                continue;
+            }
+            next = std::move(*removed);
+            ++done;
+        }
+        if (done == 0) {
+            notice =
+                refused.refused > 0
+                    ? refused.reason
+                    : _("The game cannot build this prototype; fix what it reports first.");
+            return;
+        }
+        doc->begin_group(false, _("Delete"));
+        const auto changed = change(next);
+        doc->end_group();
+        pick_top();
+        if (changed) {
+            //~ What the vehicle editor's Delete took away: how many parts.
+            said = string_format(vgettext("Deleted %d part.", "Deleted %d parts.", done), done)
+                 + refused_parts(refused);
+        }
     }
 
     /// Takes the canvas tool `key` in hand, which Paste only is with something copied.
@@ -1949,6 +2025,14 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
             state.set_prop(row, text);
         } else if (id == part_set_id) {
             state.set_part(row, text);
+        } else if (id == replace_kind_id || id == delete_kind_id) {
+            if (const auto kind = row_rest(row, "kind")) {
+                if (id == replace_kind_id) {
+                    state.replace_kind(std::string(*kind));
+                } else {
+                    state.delete_kind(std::string(*kind));
+                }
+            }
         } else if (id == copy_settings_id) {
             state.copy_settings();
         } else if (id == paste_settings_id) {

@@ -1141,6 +1141,46 @@ auto parts_view(const session& state) -> ec::screen_view {
         parts.push_back(ec::panel({.id = performance_id, .stats = std::move(stats)}));
     }
     parts.push_back(installable());
+    // What the marked squares hold, by kind, to replace or delete all of one at once, as
+    // Factorio's upgrade and deconstruction planners.
+    if (!state.live && state.selection) {
+        const auto marked = state.marked_mounts();
+        auto kinds = std::vector<std::string>{};
+        auto counts = std::map<std::string, int>{};
+        for (const auto& entry : design_parts(state.prototype())) {
+            if (entry.from_palette || !std::ranges::contains(marked, entry.mount)) { continue; }
+            const auto kind = state.kind_name(vpart_id(entry.part));
+            if (counts[kind]++ == 0) { kinds.push_back(kind); }
+        }
+        const auto held = vpart_id(state.brush);
+        const auto can_replace = held.is_valid() && !held.is_null();
+        parts.push_back(ec::list(
+            {.id = marked_kinds_id,
+             .rows =
+                 kinds | std::views::transform([&](const std::string& kind) {
+                     return ec::row{
+                         .id = "kind:" + kind,
+                         //~ A kind of part on the marked squares and how many of it there are.
+                         .label =
+                             string_format(_("%1$s ×%2$d"), vpart_id(kind)->name(), counts[kind]),
+                         .look = engine_client::world::vehicle_part_type_appearance(
+                             *vpart_id(kind))};
+                 })
+                 | std::ranges::to<std::vector>(),
+             .selection = "single",
+             .empty = _("The marked squares hold no part.")}));
+        parts.back().affordances = {replace_kind_id, delete_kind_id};
+        affordances.push_back(ec::invoke_affordance(
+            {.id = replace_kind_id,
+             .label = can_replace ? string_format(_("Replace with %s"), held->name()) : _("Replace"),
+             .args = row_of(marked_kinds_id),
+             .enabled = can_replace,
+             .denial = _("Choose the part to put in their place under Parts first.")}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = delete_kind_id,
+             .label = _("Delete all of these"),
+             .args = row_of(marked_kinds_id)}));
+    }
     // The items an item spawn puts, while the item spawns show.
     if (!state.live && shown_tab == "cargo") {
         const auto found = search_catalog(
@@ -1347,6 +1387,7 @@ auto session_view(const session& state) -> ec::screen_view {
               {check_id, {.slot = "tools", .label = _("Ready to drive")}},
               {tools_id, {.slot = "inspector", .label = _("Design")}},
               {performance_id, {.slot = "inspector", .label = _("Performance")}},
+              {marked_kinds_id, {.slot = "inspector", .label = _("Marked squares")}},
               {part_groups_id, {.slot = "palette", .label = _("Parts")}},
               {problems_id, {.slot = "log", .label = _("Problems")}},
               {history_id, {.slot = "log", .label = _("History")}},

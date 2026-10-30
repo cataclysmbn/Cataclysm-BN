@@ -53,6 +53,9 @@ inline constexpr auto copy_mounts_id = "vehicle:copy_mounts";
 inline constexpr auto copy_settings_id = "vehicle:copy_settings";
 inline constexpr auto paste_settings_id = "vehicle:paste_settings";
 inline constexpr auto cut_mounts_id = "vehicle:cut_mounts";
+inline constexpr auto marked_kinds_id = "vehicle:marked_kinds";
+inline constexpr auto replace_kind_id = "vehicle:replace_kind";
+inline constexpr auto delete_kind_id = "vehicle:delete_kind";
 inline constexpr auto delete_mounts_id = "vehicle:delete_mounts";
 inline constexpr auto view_cw_id = "vehicle:view_cw";
 inline constexpr auto view_ccw_id = "vehicle:view_ccw";
@@ -280,6 +283,11 @@ struct session {
     auto picked_here() const -> std::optional<std::size_t>;
     /// The name of the picked part on the picked mount; none when the mount has none.
     auto picked_name() const -> std::optional<std::string>;
+    /// What tells the kind of the part `id` from others: the id of its first shape.
+    auto kind_name(const vpart_id& id) const -> std::string;
+    /// The mounts Copy, Cut and Delete act on: those marked, else the picked one, north to south
+    /// and west to east.
+    auto marked_mounts() const -> std::vector<point>;
     /// The canvas tool in hand.
     auto tool() const -> const struct canvas_tool&; // *NOPAD*
     /// The vehicle the canvas shows.
