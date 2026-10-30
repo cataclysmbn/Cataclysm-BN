@@ -2,6 +2,7 @@
 #include "calendar.h"
 #include "editor/catalog.h"
 #include "editor/document.h"
+#include "editor/editor_mode.h"
 #include "editor/history_label.h"
 #include "editor/mapgen_stroke.h"
 #include "editor/row_id.h"
@@ -442,6 +443,12 @@ auto tab_of(const char* const id, const std::string& label, const std::string& s
     return {.id = id, .label = label, .selected = key == selected};
 }
 
+/// The column of a row's id, shown in advanced mode alone.
+auto id_column(const std::string& id) -> std::vector<game_client::interaction_column> {
+    if (!advanced_mode()) { return {}; }
+    return {{.key = "id", .label = _("ID"), .value = id, .color = ""}};
+}
+
 /// The prototype part the field form points at, with the members a modder sets on it: the fuel
 /// of a tank, the ammunition of a turret.
 auto part_form(const session& state) -> std::optional<ec::component> {
@@ -510,12 +517,14 @@ auto part_form(const session& state) -> std::optional<ec::component> {
         const auto end = [&](const std::size_t side) {
             return qty.is_array() && qty.size() == 2 ? qty[side].dump() : std::string{};
         };
-        fields.push_back(
-            {.id = "ammo_types",
-             .label = _("Ammo types"),
-             .value = entry.is_object()
-                        ? list_text(entry.value("ammo_types", nlohmann::ordered_json()))
-                        : std::string{}});
+        if (advanced_mode()) {
+            fields.push_back(
+                {.id = "ammo_types",
+                 .label = _("Ammo types"),
+                 .value = entry.is_object()
+                            ? list_text(entry.value("ammo_types", nlohmann::ordered_json()))
+                            : std::string{}});
+        }
         fields.push_back(
             {.id = "ammo_min",
              .label = _("Rounds, fewest"),
@@ -614,11 +623,7 @@ auto parts_view(const session& state) -> ec::screen_view {
                                     .label = entry.name,
                                     .selected =
                                         state.doc && state.prototype().value("id", "") == entry.id,
-                                    .columns = {
-                                        {.key = "id",
-                                         .label = _("ID"),
-                                         .value = entry.id,
-                                         .color = ""}}};
+                                    .columns = id_column(entry.id)};
                             })
                             | std::ranges::to<std::vector>(),
                         .total = found.total,
@@ -690,6 +695,10 @@ auto parts_view(const session& state) -> ec::screen_view {
         {.id = std::string(show_prefix) + "prototypes", .label = _("Prototypes"), .keys = {"p"}}));
     affordances.push_back(ec::invoke_affordance(
         {.id = std::string(show_prefix) + "world", .label = _("World vehicles"), .keys = {"w"}}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = advanced_id,
+         .label = advanced_mode() ? _("Hide advanced settings") : _("Show advanced settings"),
+         .description = _("Shows ids, JSON and the settings that need them, in both editors.")}));
     if (!state.live && !state.doc) {
         return {
             .title = _("Vehicle Editor"),
@@ -927,11 +936,7 @@ auto parts_view(const session& state) -> ec::screen_view {
                                   .label = entry.label,
                                   .description = refused.value_or(""),
                                   .selected = entry.held,
-                                  .columns =
-                                      {{.key = "id",
-                                        .label = _("ID"),
-                                        .value = info.get_id().str(),
-                                        .color = ""}},
+                                  .columns = id_column(info.get_id().str()),
                                   .look = engine_client::world::vehicle_part_type_appearance(info)};
                           })
                         | std::ranges::to<std::vector>(),
@@ -990,22 +995,24 @@ auto parts_view(const session& state) -> ec::screen_view {
         }
         if (tab == "part") { return std::move(*part_form(state)); }
         if (tab == "vehicle") {
-            return {
-                .id = props_id,
-                .affordances = {prop_set_id},
-                .body = ec::form_body{
-                    .fields = {
-                        {.id = "name",
-                         .label = _("Name"),
-                         .value = state.prototype().value("name", "")},
-                        {.id = "id", .label = _("ID"), .value = state.prototype().value("id", "")},
-                        {.id = "color_palette",
-                         .label = _("Colour palette"),
-                         .value = state.prototype().value("color_palette", "")},
-                        {.id = "flags",
-                         .label = _("Flags"),
-                         .value = list_text(
-                             state.prototype().value("flags", nlohmann::ordered_json()))}}}};
+            auto fields = std::vector<ec::form_field>{
+                {.id = "name", .label = _("Name"), .value = state.prototype().value("name", "")}};
+            if (advanced_mode()) {
+                fields.push_back(
+                    {.id = "id", .label = _("ID"), .value = state.prototype().value("id", "")});
+                fields.push_back(
+                    {.id = "color_palette",
+                     .label = _("Colour palette"),
+                     .value = state.prototype().value("color_palette", "")});
+                fields.push_back(
+                    {.id = "flags",
+                     .label = _("Flags"),
+                     .value = list_text(
+                         state.prototype().value("flags", nlohmann::ordered_json()))});
+            }
+            return {.id = props_id,
+                    .affordances = {prop_set_id},
+                    .body = ec::form_body{.fields = std::move(fields)}};
         }
         if (tab == "cargo") {
             const auto& items = state.prototype()["items"];
@@ -1149,20 +1156,18 @@ auto parts_view(const session& state) -> ec::screen_view {
              .select = item_kind_id,
              .child = ec::list(
                  {.id = item_catalog_id,
-                  .rows =
-                      found.entries | std::views::transform([&](const catalog_entry& entry) {
-                          const auto type = itype_id(entry.id);
-                          return ec::row{
-                              .id = (group ? "group:" : "item:") + entry.id,
-                              .label = entry.name,
-                              .columns =
-                                  {{.key = "id", .label = _("ID"), .value = entry.id, .color = ""}},
-                              .look = !group && type.is_valid()
-                                        ? std::optional(engine_client::world::item_appearance(
-                                              *item::spawn_temporary(type, calendar::turn)))
-                                        : std::nullopt};
-                      })
-                      | std::ranges::to<std::vector>(),
+                  .rows = found.entries | std::views::transform([&](const catalog_entry& entry) {
+                              const auto type = itype_id(entry.id);
+                              return ec::row{
+                                  .id = (group ? "group:" : "item:") + entry.id,
+                                  .label = entry.name,
+                                  .columns = id_column(entry.id),
+                                  .look = !group && type.is_valid()
+                                            ? std::optional(engine_client::world::item_appearance(
+                                                  *item::spawn_temporary(type, calendar::turn)))
+                                            : std::nullopt};
+                          })
+                        | std::ranges::to<std::vector>(),
                   .total = found.total,
                   .offset = state.item_page * page_size,
                   .selection = "single",
@@ -1321,9 +1326,9 @@ auto session_view(const session& state) -> ec::screen_view {
         {earlier_id, edit},      {later_id, edit},         {copy_mounts_id, edit},
         {cut_mounts_id, edit},   {delete_mounts_id, edit}, {mirror_sides_id, edit},
         {mirror_ends_id, edit},  {copy_settings_id, edit}, {paste_settings_id, edit},
-        {view_cw_id, view_menu}, {view_ccw_id, view_menu}, {spawn_id, world},
-        {test_drive_id, world},  {turn_cw_id, world},      {turn_ccw_id, world},
-        {paste_id, world},       {done_id, world}};
+        {view_cw_id, view_menu}, {view_ccw_id, view_menu}, {advanced_id, view_menu},
+        {spawn_id, world},       {test_drive_id, world},   {turn_cw_id, world},
+        {turn_ccw_id, world},    {paste_id, world},        {done_id, world}};
     for (const auto& entry : canvas_tools) { groups.emplace(entry.affordance, edit); }
     for (const auto& entry : view.affordances) {
         if (entry.id.starts_with(show_prefix)) { groups.emplace(entry.id, view_menu); }

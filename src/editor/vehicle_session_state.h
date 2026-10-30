@@ -62,6 +62,7 @@ inline constexpr auto new_id = "vehicle:new";
 inline constexpr auto turn_cw_id = "vehicle:turn_cw";
 inline constexpr auto turn_ccw_id = "vehicle:turn_ccw";
 /// The affordance that shows a tab of the design or vehicles column is this and the tab's key.
+inline constexpr auto advanced_id = "vehicle:advanced";
 inline constexpr auto show_prefix = std::string_view("vehicle:show:");
 inline constexpr auto part_filter_id = "vehicle:part_filter";
 inline constexpr auto part_page_id = "vehicle:part_page";

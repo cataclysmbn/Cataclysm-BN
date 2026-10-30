@@ -2648,6 +2648,11 @@ void options_manager::add_options_debug()
          false
        );
 
+    add( "EDITOR_ADVANCED", debug, translate_marker( "Advanced editor settings" ),
+         translate_marker( "If true, the map and vehicle editors show ids, JSON and the settings that need them." ),
+         false
+       );
+
     add( "LOG_ACTIVITY_SKIP_STATE", debug, translate_marker( "Log Reason for No Activity Skip State" ),
          translate_marker( "Logs the rough reason for when activity skip state returns, used for debugging slow activities." ),
          false );

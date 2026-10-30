@@ -3,6 +3,7 @@
 #include "avatar.h"
 #include "editor/catalog.h"
 #include "editor/document.h"
+#include "editor/editor_mode.h"
 #include "editor/editor_session.h"
 #include "editor/history_label.h"
 #include "editor/mapgen_stroke.h"
@@ -285,7 +286,8 @@ auto session::canvas_bounds() const -> mount_frame {
 }
 
 auto session::shown_tab_count() const -> std::size_t {
-    return live ? live_tab_count : design_tabs.size();
+    // Raw JSON, the last, is advanced.
+    return live ? live_tab_count : design_tabs.size() - (advanced_mode() ? 0 : 1);
 }
 
 auto session::picked_part() const -> std::optional<std::size_t> {
@@ -1861,6 +1863,8 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
             state.show(row.substr(row.find(':') + 1));
         } else if (id.starts_with(show_prefix)) {
             state.show(id.substr(show_prefix.size()));
+        } else if (id == advanced_id) {
+            set_advanced_mode(!advanced_mode());
         } else if (id == canvas_tool_id || id == mirror_sides_id || id == mirror_ends_id) {
             const auto key =
                 id == canvas_tool_id
