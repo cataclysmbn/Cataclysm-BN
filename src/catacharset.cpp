@@ -319,7 +319,10 @@ std::string base64_decode( const std::string &str )
 
     int input_length = instr.length();
 
-    if( input_length == 0 || input_length % 4 != 0 ) {
+    if( input_length == 0 ) {
+        return {};
+    }
+    if( input_length % 4 != 0 ) {
         return str;
     }
 
