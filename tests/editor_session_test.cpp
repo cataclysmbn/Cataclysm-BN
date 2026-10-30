@@ -8002,4 +8002,81 @@ TEST_CASE(
     editor::reset_editor_session();
 }
 
+TEST_CASE(
+    "painting one layer from the catalog keeps the other layers of the squares it covers",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    auto counter = std::string{};
+    auto symbols = std::size_t{0};
+    auto steps = std::size_t{0};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:catalog_kind", {.row = "catalog:furniture"}); },
+        [](const auto&) { return invoke("editor:catalog_filter", {.text = "f_counter"}); },
+        [](const auto&) { return invoke("editor:catalog_pick", {.row = "entry:f_counter"}); },
+        [&](const auto& screen) {
+            symbols = rows_in(screen, "editor:legend").size();
+            steps = rows_in(screen, "editor:history").size();
+            return invoke("editor:tool", {.row = "tool:line"});
+        },
+        [](const auto&) { return square_at(3, 3); },
+        [](const auto&) { return square_at(6, 3); },
+        [&](const auto& screen) {
+            // The counters stand on the floor the squares had.
+            CHECK(told(screen).empty());
+            counter = cell(screen, 3, 3).glyph;
+            CHECK(counter != ".");
+            CHECK(cell(screen, 6, 3).glyph == counter);
+            CHECK(cell(screen, 3, 3).label == "wooden floor; counter");
+            CHECK(rows_in(screen, "editor:legend").size() == symbols + 1);
+            CHECK(rows_in(screen, "editor:history").size() == steps + 1);
+            return invoke("editor:undo");
+        },
+        [&](const auto& screen) {
+            // One undo takes the drawing and the symbol it mapped back.
+            CHECK(cell(screen, 3, 3).glyph == ".");
+            CHECK(rows_in(screen, "editor:legend").size() == symbols);
+            return invoke("editor:redo");
+        },
+        [](const auto&) { return invoke("editor:tool", {.row = "tool:point"}); },
+        [](const auto&) { return square_at(3, 5); },
+        [&](const auto& screen) {
+            // The same counter on the same floor is the same symbol.
+            CHECK(cell(screen, 3, 5).glyph == counter);
+            CHECK(rows_in(screen, "editor:legend").size() == symbols + 1);
+            return invoke("editor:catalog_kind", {.row = "catalog:item_group"});
+        },
+        [](const auto&) { return invoke("editor:catalog_filter", {.text = "kitchen"}); },
+        [](const auto&) { return invoke("editor:catalog_pick", {.row = "entry:kitchen"}); },
+        [](const auto&) { return invoke("editor:tool", {.row = "tool:line"}); },
+        [](const auto&) { return square_at(3, 3); },
+        [](const auto&) { return square_at(3, 4); },
+        [&](const auto& screen) {
+            // Things to find go on the counter without taking it, and on the bare floor below it.
+            CHECK(told(screen).empty());
+            CHECK(cell(screen, 3, 3).label.starts_with("wooden floor; counter; "));
+            CHECK(cell(screen, 3, 3).label.contains("kitchen"));
+            CHECK(cell(screen, 3, 4).label.starts_with("wooden floor; "));
+            CHECK(cell(screen, 3, 4).label.contains("kitchen"));
+            CHECK_FALSE(cell(screen, 3, 4).label.contains("counter"));
+            CHECK(cell(screen, 5, 3).label == "wooden floor; counter");
+            return invoke("editor:catalog_kind", {.row = "catalog:terrain"});
+        },
+        [](const auto&) { return invoke("editor:catalog_filter", {.text = "t_linoleum_white"}); },
+        [](const auto&) {
+            return invoke("editor:catalog_pick", {.row = "entry:t_linoleum_white"});
+        },
+        [](const auto&) { return invoke("editor:tool", {.row = "tool:point"}); },
+        [](const auto&) { return square_at(5, 3); },
+        [](const auto& screen) {
+            // A new floor goes under the counter.
+            CHECK(told(screen).empty());
+            CHECK(cell(screen, 5, 3).label == "linoleum tile; counter");
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
+}
+
 #endif // CATA_MCP
