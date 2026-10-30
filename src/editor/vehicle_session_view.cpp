@@ -591,8 +591,9 @@ auto parts_view(const session& state) -> ec::screen_view {
         })
         | std::ranges::to<std::vector>();
     if (!world_rows.empty()) { world_rows.front().selected = true; }
-    // The left column: the prototypes to open, or the world's vehicles to export, copy or edit.
-    parts.push_back(ec::tabs(
+    // The left column: the prototypes to open, or the world's vehicles to export, copy or edit;
+    // with nothing open, the button that starts a new one over them.
+    auto sources = ec::tabs(
         {.id = sources_id,
          .tabs = {tab_of("source:prototypes", _("Prototypes"), state.source_tab),
                   tab_of("source:world", _("World"), state.source_tab)},
@@ -631,7 +632,9 @@ auto parts_view(const session& state) -> ec::screen_view {
                         .empty = state.filter.empty()
                                    ? _("No vehicle prototype is loaded.")
                                    //~ %s is the text the player searched the prototypes for.
-                                   : string_format(_("No vehicle matches “%s”."), state.filter)})}));
+                                   : string_format(_("No vehicle matches “%s”."), state.filter)})});
+    if (!state.live && !state.doc) { sources.affordances.push_back(new_id); }
+    parts.push_back(std::move(sources));
     affordances.push_back(
         ec::invoke_affordance({.id = source_id, .label = _("Show"), .args = row_of(sources_id)}));
     if (state.source_tab == "world") {
