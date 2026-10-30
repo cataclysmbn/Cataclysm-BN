@@ -1548,7 +1548,7 @@
       "transform_charges": 5,
       "need_dry": true
     },
-    "flags": [ "NONCONDUCTIVE", "POWERED", "ALWAYS_TWOHAND", "COMBAT_NPC_USE" ]
+    "flags": [ "SHEATH_SPEAR", "NONCONDUCTIVE", "POWERED", "ALWAYS_TWOHAND", "COMBAT_NPC_USE" ]
   },
   {
     "id": "cs_lajatang_on",
@@ -1606,7 +1606,7 @@
       "transform_charges": 5,
       "need_dry": true
     },
-    "flags": [ "NONCONDUCTIVE", "POWERED", "ALWAYS_TWOHAND", "COMBAT_NPC_USE" ],
+    "flags": [ "SHEATH_SPEAR", "NONCONDUCTIVE", "POWERED", "ALWAYS_TWOHAND", "COMBAT_NPC_USE" ],
     "magazines": [ [ "battery", [ "heavy_battery_cell" ] ] ],
     "magazine_well": "1000 ml"
   },
@@ -1772,7 +1772,7 @@
       "need_dry": true
     },
     "techniques": [ "WBLOCK_1", "SWEEP" ],
-    "flags": [ "ALWAYS_TWOHAND", "POWERED", "COMBAT_NPC_USE" ]
+    "flags": [ "SHEATH_SWORD", "ALWAYS_TWOHAND", "POWERED", "COMBAT_NPC_USE" ]
   },
   {
     "id": "combatsaw_on",
@@ -1820,7 +1820,7 @@
       "need_dry": true
     },
     "techniques": [ "WBLOCK_1", "SWEEP" ],
-    "flags": [ "ALWAYS_TWOHAND", "POWERED", "COMBAT_NPC_USE" ],
+    "flags": [ "SHEATH_SWORD", "ALWAYS_TWOHAND", "POWERED", "COMBAT_NPC_USE" ],
     "magazines": [ [ "battery", [ "medium_battery_cell" ] ] ],
     "magazine_well": "500 ml"
   },
