@@ -1180,9 +1180,10 @@ struct editing: session {
             return;
         }
         doc->begin_group(false, found->action);
-        change(fixed_design(prototype(), catalog, found->fix));
+        const auto changed = change(fixed_design(prototype(), catalog, found->fix));
         doc->end_group();
         keep_pick();
+        if (changed) { say_step(); }
     }
 
     /// Sets the fewest (or, `most`, the most) rounds a turret spawns loaded with; a turret with
