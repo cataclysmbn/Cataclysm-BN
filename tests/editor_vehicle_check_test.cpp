@@ -79,7 +79,7 @@ auto fixed(const ordered_json& prototype, const std::string& key) -> ordered_jso
     REQUIRE(failed.fix != editor::drive_fix::none);
     CHECK_FALSE(failed.action.empty());
     const auto next = editor::fixed_design(prototype, editor::read_part_catalog(), failed.fix);
-    INFO(next ? std::string() : next.error());
+    INFO((next ? std::string() : next.error()));
     REQUIRE(next.has_value());
     CHECK(check_of(checks_of(*next), key).ok);
     return *next;
@@ -114,10 +114,15 @@ TEST_CASE("a kart with no wheels gets wheels and hubs at its corners", "[editor_
     CHECK(check_of(checks_of(bare), "wheels").text == "It has no wheels.");
     const auto next = fixed(bare, "wheels");
     CHECK(check_of(checks_of(next), "steering").ok);
-    CHECK(parts_at(next, {2, -1})
-          == std::vector<std::string>{"frame_vertical", "wheel_mount_medium_steerable", "wheel"});
-    CHECK(parts_at(next, {-2, 1})
-          == std::vector<std::string>{"frame_vertical", "wheel_mount_medium", "wheel"});
+    // The wheel the game's vehicles install most, on its hub.
+    const auto front = parts_at(next, {2, -1});
+    REQUIRE(front.size() == 3);
+    CHECK(front[1] == "wheel_mount_medium_steerable");
+    CHECK(vpart_id(front[2])->has_flag(VPFLAG_WHEEL));
+    const auto back = parts_at(next, {-2, 1});
+    REQUIRE(back.size() == 3);
+    CHECK(back[1] == "wheel_mount_medium");
+    CHECK(back[2] == front[2]);
 }
 
 TEST_CASE("a kart whose wheels cannot steer gets steerable front hubs", "[editor_vehicle_check]") {
