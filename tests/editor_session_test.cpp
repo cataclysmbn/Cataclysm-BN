@@ -2712,7 +2712,8 @@ TEST_CASE(
                 const auto& tools = body<ec::tabs_body>(part(screen, "editor:tools")).tabs;
                 REQUIRE(tools.size() == 11);
                 CHECK(tools[5].id == "tool:room");
-                CHECK(stat(screen, "inside") == "# plastered wooden wall");
+                // A room fills with the floor until another inside is picked.
+                CHECK(stat(screen, "inside") == ". wooden floor");
                 CHECK(stat(screen, "brush") == "1");
                 CHECK(stat(screen, "mirror_x") == "Off");
                 CHECK(affordance(screen, "editor:undo").keys == std::vector<std::string>{"CTRL+Z"});
@@ -2723,15 +2724,18 @@ TEST_CASE(
                 CHECK(history(screen).size() == 1);
                 CHECK(history(screen)[0].selected);
                 CHECK(history(screen)[0].description == "Saved");
-                return invoke("editor:symbol", {.row = "symbol:."});
+                return invoke("editor:inside", {.row = "symbol:#"});
             }
             case 2:
-                return invoke("editor:tool", {.row = "tool:room"});
+                CHECK(stat(screen, "inside") == "# plastered wooden wall");
+                return invoke("editor:symbol", {.row = "symbol:."});
             case 3:
-                return invoke("editor:paint", {.row = "square:2,2"});
+                return invoke("editor:tool", {.row = "tool:room"});
             case 4:
-                return invoke("editor:paint", {.row = "square:6,5"});
+                return invoke("editor:paint", {.row = "square:2,2"});
             case 5:
+                return invoke("editor:paint", {.row = "square:6,5"});
+            case 6:
                 // The outline in the floor symbol, the inside in the wall symbol, in one step.
                 CHECK(walls(screen) == 6);
                 CHECK(cell(screen, 3, 3).glyph == "#");
@@ -2743,7 +2747,7 @@ TEST_CASE(
                 CHECK(history(screen)[0].label == "Opened");
                 CHECK(history(screen)[1].label == "Room");
                 return invoke("editor:jump", {.row = "step:0"});
-            case 6:
+            case 7:
                 CHECK(walls(screen) == 0);
                 CHECK_FALSE(affordance(screen, "editor:undo").enabled);
                 CHECK(affordance(screen, "editor:redo").enabled);
@@ -2751,51 +2755,51 @@ TEST_CASE(
                 CHECK(history(screen).size() == 2);
                 CHECK(history(screen)[0].selected);
                 return invoke("editor:jump", {.row = "step:1"});
-            case 7:
+            case 8:
                 CHECK(walls(screen) == 6);
                 CHECK(saved(screen) == "No");
                 return invoke("editor:symbol", {.row = "symbol:#"});
-            case 8:
-                return invoke("editor:tool", {.row = "tool:point"});
             case 9:
-                return invoke("editor:brush", {.count = 2});
+                return invoke("editor:tool", {.row = "tool:point"});
             case 10:
+                return invoke("editor:brush", {.count = 2});
+            case 11:
                 CHECK(stat(screen, "brush") == "2");
                 return invoke("editor:paint", {.row = "square:10,10"});
-            case 11:
+            case 12:
                 CHECK(walls(screen) == 10);
                 return invoke("editor:mirror_x");
-            case 12:
+            case 13:
                 CHECK(stat(screen, "mirror_x") == "On");
                 return invoke("editor:paint", {.row = "square:1,15"});
-            case 13:
+            case 14:
                 // Two columns of two squares, and their mirror image across the middle column.
                 CHECK(walls(screen) == 18);
                 CHECK(cell(screen, 22, 15).glyph == "#");
                 CHECK(cell(screen, 21, 16).glyph == "#");
                 CHECK(history(screen).size() == 4);
                 return invoke("editor:jump", {.row = "step:2"});
-            case 14:
+            case 15:
                 CHECK(walls(screen) == 10);
                 CHECK(history(screen).size() == 4);
                 CHECK(history(screen)[2].selected);
                 CHECK(refused(state, "editor:jump", {.row = "step:4"}));
                 return invoke("editor:save");
-            case 15:
+            case 16:
                 CHECK(history(screen)[2].description == "Saved");
                 CHECK(history(screen)[0].description.empty());
                 // An edit after going back drops the steps undone, and the saved state with them
                 // once it lay among them.
                 return invoke("editor:jump", {.row = "step:1"});
-            case 16:
-                return invoke("editor:paint", {.row = "square:0,0"});
             case 17:
+                return invoke("editor:paint", {.row = "square:0,0"});
+            case 18:
                 CHECK(history(screen).size() == 3);
                 CHECK(std::ranges::none_of(history(screen), [](const auto& row) {
                     return row.description == "Saved";
                 }));
                 return act("QUIT");
-            case 18:
+            case 19:
                 // Unsaved, so leaving asks.
                 return answer("Leave without saving");
             default:
